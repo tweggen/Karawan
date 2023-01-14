@@ -25,7 +25,6 @@ namespace Karawan.cause
         public Total( engine.Engine engine )
         {
             _engine = engine;
-
         }
     }
 }

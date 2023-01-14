@@ -7,10 +7,27 @@ namespace Karawan.engine
         private DefaultEcs.World _ecsWorld;
         private engine.IPlatform _platform;
 
-
         public DefaultEcs.World GetEcsWorld()
         {
             return _ecsWorld;
+        }
+
+        public void OnPhysicalFrame(float dt)
+        {
+        }
+
+
+        /**
+         * Call after all dependencies are set.
+         */
+        public void SetupDone()
+        {
+
+        }
+
+        public void PlatformSetupDone()
+        {
+
         }
 
         public Engine( engine.IPlatform platform )
