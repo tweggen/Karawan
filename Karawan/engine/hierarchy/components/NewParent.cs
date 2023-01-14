@@ -3,9 +3,9 @@ namespace Karawan.engine.hierarchy.components
 {
     struct NewParent
     {
-        public DefaultEcs.Entity Entity;
+        public DefaultEcs.Entity? Entity;
 
-        public NewParent( DefaultEcs.Entity newParentEntity )
+        public NewParent( DefaultEcs.Entity? newParentEntity )
         {
             Entity = newParentEntity;
         }

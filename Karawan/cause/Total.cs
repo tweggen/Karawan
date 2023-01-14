@@ -18,7 +18,7 @@ namespace Karawan.cause
             /*
              * Big bang it.
              */
-            var rootFrame = _engine.Ecs().CreateEntity();
+            var rootFrame = _engine.GetEcsWorld().CreateEntity();
 
         }
 

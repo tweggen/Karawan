@@ -17,7 +17,7 @@ namespace Karawan.engine.hierarchy
          */
         public void SetParent( 
             DefaultEcs.Entity entity,
-            DefaultEcs.Entity newParent )
+            DefaultEcs.Entity? newParent )
         {
             /*
              * 1. Read any current parent component. If it exists, store it in oldParent

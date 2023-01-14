@@ -8,7 +8,7 @@ namespace Karawan.engine
         private engine.IPlatform _platform;
 
 
-        public DefaultEcs.World Ecs()
+        public DefaultEcs.World GetEcsWorld()
         {
             return _ecsWorld;
         }
