@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33214.272
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Karawan", "Karawan\Karawan.csproj", "{C8C8DD14-DF84-4FB6-9941-576215389694}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8C8DD14-DF84-4FB6-9941-576215389694}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8C8DD14-DF84-4FB6-9941-576215389694}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8C8DD14-DF84-4FB6-9941-576215389694}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8C8DD14-DF84-4FB6-9941-576215389694}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2C4A52FC-73DE-4876-8426-824572D9365E}
+	EndGlobalSection
+EndGlobal
