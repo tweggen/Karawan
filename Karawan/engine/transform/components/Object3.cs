@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace Karawan.engine
+namespace Karawan.engine.components
 {
     struct Object3
     {
