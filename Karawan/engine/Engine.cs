@@ -7,6 +7,12 @@ namespace Karawan.engine
         private DefaultEcs.World _ecsWorld;
         private engine.IPlatform _platform;
 
+
+        public DefaultEcs.World Ecs()
+        {
+            return _ecsWorld;
+        }
+
         public Engine( engine.IPlatform platform )
         {
             _platform = platform;

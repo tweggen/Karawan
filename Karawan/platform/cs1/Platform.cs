@@ -5,7 +5,7 @@ namespace Karawan.platform.cs1
     class Platform 
         : engine.IPlatform
     {
-        public void execute()
+        public void Execute()
         {
             Raylib.InitWindow(1280, 720, "Hello, Raylib-CsLo");
             Raylib.SetTargetFPS(60);
