@@ -4,7 +4,7 @@
     {
         static void Main(string[] args)
         {
-            platform.cs1.PlatformMain.Execute(args);
+            platform.cs1.PlatformMain.execute(args);
         }
     }
 }
