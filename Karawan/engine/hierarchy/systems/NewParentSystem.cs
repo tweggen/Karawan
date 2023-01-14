@@ -38,11 +38,13 @@ namespace Karawan.engine.hierarchy.systems
                 if (entity.Has<components.OldParent>())
                 {
                     var oldParent = entity.Get<components.OldParent>();
+
                     /*
                      * OldParent must have a children list.
                      */
                     var oldParentsChildren = oldParent.Entity.Get<Children>();
                     oldParentsChildren.Entities.Remove(entity);
+                    // TXWTODO: Is it a good idea? I think so. We leave the children data structure in place.
                     entity.Remove<components.OldParent>();
 
                     /*
@@ -57,7 +59,22 @@ namespace Karawan.engine.hierarchy.systems
                     var newParent = entity.Get<components.NewParent>();
                     if( null != newParent.Entity )
                     {
-                        entity.Set<components.Parent>( new components.Parent( newParent.Entity.GetValueOrDefault() ) );
+                        var newParentEntity = newParent.Entity.GetValueOrDefault();
+
+                        entity.Set<components.Parent>( new components.Parent( newParentEntity ) );
+                        /*
+                         * Create children component if it does not exist.
+                         */
+                        components.Children newParentsChildren;
+                        if( !newParentEntity.Has<components.Children>() )
+                        {
+                            newParentsChildren = new components.Children(entity);
+                            newParentEntity.Set<components.Children>(newParentsChildren);
+                        } else
+                        {
+                            newParentsChildren = newParentEntity.Get<components.Children>();
+                            newParentsChildren.Entities.Add(entity);
+                        }
                     } else
                     {
                         entity.Remove<components.Parent>();
