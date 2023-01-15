@@ -1,5 +1,4 @@
 ﻿using DefaultEcs;
-using Karawan.engine.hierarchy.components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +10,7 @@ namespace Karawan.engine.hierarchy.systems
     /**
      * Update the hierarchy entites after any change.
      */
-    [DefaultEcs.System.With(typeof(NewParent))]
+    [DefaultEcs.System.With(typeof(components.NewParent))]
     sealed class NewParentSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
@@ -42,7 +41,7 @@ namespace Karawan.engine.hierarchy.systems
                     /*
                      * OldParent must have a children list.
                      */
-                    var oldParentsChildren = oldParent.Entity.Get<Children>();
+                    var oldParentsChildren = oldParent.Entity.Get<components.Children>();
                     oldParentsChildren.Entities.Remove(entity);
                     // TXWTODO: Is it a good idea? I think so. We leave the children data structure in place.
                     entity.Remove<components.OldParent>();

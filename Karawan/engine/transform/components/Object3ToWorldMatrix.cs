@@ -4,9 +4,9 @@ namespace Karawan.engine.transform.components
 {
     struct Object3ToWorldMatrix
     {
-        Matrix4x4 Matrix;
+        public Matrix4x4 Matrix;
 
-        Object3ToWorldMatrix( Matrix4x4 matrix )
+        public Object3ToWorldMatrix( in Matrix4x4 matrix )
         {
             Matrix = matrix;
         }
