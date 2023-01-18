@@ -38,6 +38,7 @@ namespace Karawan.engine.transform.systems
             foreach(var childEntity in children)
             {
                 _updateChildToWorld(parentObject3ToWorld, childEntity);
+
                 if( childEntity.Has<hierarchy.components.Children>() 
                     && childEntity.Has<transform.components.Object3ToParentMatrix>())
                 {
@@ -45,7 +46,6 @@ namespace Karawan.engine.transform.systems
                 }
             }
         }
-
 
         protected override void Update(Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {

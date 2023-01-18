@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Karawan.engine
+namespace Karawan.engine.joyce.components
 {
     class Camera3
     {

@@ -2,7 +2,7 @@
 
 namespace Karawan.engine.transform.components
 {
-    class Object3ToParentMatrix
+    struct Object3ToParentMatrix
     {
         public Matrix4x4 Matrix;
 
