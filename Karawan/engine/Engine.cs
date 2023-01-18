@@ -1,4 +1,5 @@
-﻿
+﻿using System.Numerics;
+
 
 namespace Karawan.engine
 {
@@ -12,16 +13,27 @@ namespace Karawan.engine
         {
             var aHierarchy = new engine.hierarchy.API( this );
 
-            var eParent = _ecsWorld.CreateEntity();
-            var eKid1 = _ecsWorld.CreateEntity();
-            var eKid2 = _ecsWorld.CreateEntity();
+            {
+                var eParent = _ecsWorld.CreateEntity();
+                var eKid1 = _ecsWorld.CreateEntity();
+                var eKid2 = _ecsWorld.CreateEntity();
 
-            aHierarchy.SetParent(eKid1, eParent);
-            aHierarchy.SetParent(eKid2, eParent);
-            aHierarchy.Update();
-            aHierarchy.SetParent(eKid1, null);
-            aHierarchy.SetParent(eKid2, eKid1);
-            aHierarchy.SetParent(eKid2, eParent);
+                aHierarchy.SetParent(eKid1, eParent);
+                aHierarchy.SetParent(eKid2, eParent);
+                aHierarchy.Update();
+                aHierarchy.SetParent(eKid1, null);
+                aHierarchy.SetParent(eKid2, eKid1);
+                aHierarchy.SetParent(eKid2, eParent);
+            }
+            
+            var aTransform = new engine.transform.API(this);
+
+            {
+                var eCube = _ecsWorld.CreateEntity();
+                joyce.Tools.CreateCube(eCube);
+                aTransform.SetPosition(eCube, new Vector3(2f, 0f, 0f));
+            }
+
         }
 
         public DefaultEcs.World GetEcsWorld()

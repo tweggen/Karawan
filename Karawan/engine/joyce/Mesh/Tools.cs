@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Karawan.engine.joyce.Mesh
+namespace Karawan.engine.joyce.mesh
 {
     class Tools
     {
         public static components.Mesh1 CreateCubeMesh()
         {
-            var m = new components.Mesh1();
+            var m = components.Mesh1.CreateArrayListInstance();
 
             m.Vertices.Add(new Vector3(-.5f, -.5f, -.5f));
             m.UVs.Add(new Vector2(0, 0));
