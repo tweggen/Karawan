@@ -8,9 +8,9 @@ namespace Karawan.engine.joyce
 {
     class Tools
     {
-        public static void CreateCube( DefaultEcs.Entity entity )
+        public static void AddCubeMesh( DefaultEcs.Entity entity )
         {
-            entity.Set<components.Mesh1>( mesh.Tools.CreateCubeMesh() );
+            entity.Set<components.Mesh>( mesh.Tools.CreateCubeMesh() );
         }
     }
 }

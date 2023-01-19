@@ -8,9 +8,9 @@ namespace Karawan.engine.joyce.mesh
 {
     class Tools
     {
-        public static components.Mesh1 CreateCubeMesh()
+        public static components.Mesh CreateCubeMesh()
         {
-            var m = components.Mesh1.CreateArrayListInstance();
+            var m = components.Mesh.CreateArrayListInstance();
 
             m.Vertices.Add(new Vector3(-.5f, -.5f, -.5f));
             m.UVs.Add(new Vector2(0, 0));

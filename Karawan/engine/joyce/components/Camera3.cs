@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Karawan.engine.joyce.components
 {
-    class Camera3
+    struct Camera3
     {
         public float Angle;
-        public float nearFrustrum;
-        public float farFrustrum;
+        public float NearFrustrum;
+        public float FarFrustrum;
     }
 }
