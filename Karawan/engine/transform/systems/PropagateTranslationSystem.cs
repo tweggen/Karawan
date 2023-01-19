@@ -8,7 +8,6 @@ namespace Karawan.engine.transform.systems
     sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
-        private Matrix4x4 _mUnity;
 
 
         protected override void PreUpdate(Engine state)
@@ -59,7 +58,7 @@ namespace Karawan.engine.transform.systems
                 /*
                  * Update the root itself.
                  */
-                _updateChildToWorld(_mUnity, entity);
+                _updateChildToWorld(Matrix4x4.Identity, entity);
                 if ( entity.Has<hierarchy.components.Children>())
                 { 
                     _recurseChildren(entity);
@@ -77,12 +76,6 @@ namespace Karawan.engine.transform.systems
             : base(engine.GetEcsWorld())
         {
             _engine = engine;
-            _mUnity = new Matrix4x4(
-                1f, 0f, 0f, 0f,
-                0f, 1f, 0f, 0f,
-                0f, 0f, 1f, 0f,
-                0f, 0f, 0f, 1f
-            );
         }
     }
 }

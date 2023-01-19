@@ -18,7 +18,7 @@ namespace Karawan.engine.transform
             {
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
-                mToParent *= mTranslate;
+                mToParent = mTranslate * mToParent;
                 entity.Set<transform.components.Object3ToParentMatrix>(
                     new transform.components.Object3ToParentMatrix(mToParent) );
                 _isDirty = true;

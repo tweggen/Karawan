@@ -10,7 +10,6 @@ namespace Karawan.platform.cs1.splash
     {
         private engine.Engine _engine;
 
-
         /**
          * Render all camera objects.
          */
@@ -28,6 +27,16 @@ namespace Karawan.platform.cs1.splash
             foreach(var eCamera in listCameras)
             {
                 Console.WriteLine("Found Camera.");
+
+                var cCameraParams = eCamera.Get<engine.joyce.components.Camera3>();
+                var mToWorld = eCamera.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix;
+
+                var vPosition = mToWorld.Translation;
+                var vUp = new Vector3(mToWorld.M12, mToWorld.M22, mToWorld.M32);
+                var vFront = new Vector3(-mToWorld.M13, mToWorld.M23, mToWorld.M33);
+
+                var rCamera = new Raylib_CsLo.Camera3D( vPosition, vFront, vUp, 
+                    cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
             }
 
