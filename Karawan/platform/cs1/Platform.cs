@@ -1,4 +1,5 @@
-﻿using Raylib_CsLo;
+﻿
+using Raylib_CsLo;
 
 namespace Karawan.platform.cs1
 {
@@ -6,6 +7,7 @@ namespace Karawan.platform.cs1
         : engine.IPlatform
     {
         private engine.Engine _engine;
+        private splash.API _aSplash;
 
         public void SetEngine(engine.Engine engine)
         {
@@ -20,18 +22,14 @@ namespace Karawan.platform.cs1
             while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
                 _engine.OnPhysicalFrame( 1 / 60 );
-
-                Raylib.BeginDrawing();
-                Raylib.ClearBackground(Raylib.SKYBLUE);
-                Raylib.DrawFPS(10, 10);
-                Raylib.DrawText("Raylib is easy!!!", 640, 360, 50, Raylib.RED);
-                Raylib.EndDrawing();
+                _aSplash.Render();
             }
             Raylib.CloseWindow();
         }
 
         public void SetupDone()
         {
+            _aSplash = new splash.API(_engine);
         }
 
         public Platform(string[] args)

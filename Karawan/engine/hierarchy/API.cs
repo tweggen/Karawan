@@ -49,7 +49,7 @@ namespace Karawan.engine.hierarchy
 
         public void Update()
         {
-            if (_isDirty)
+            if(_isDirty)
             {
                 _newParentSystem.Update(_engine);
                 _isDirty = false;

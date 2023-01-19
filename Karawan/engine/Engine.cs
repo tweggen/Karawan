@@ -9,12 +9,11 @@ namespace Karawan.engine
         private DefaultEcs.World _ecsWorld;
         private engine.IPlatform _platform;
 
+        private engine.hierarchy.API _aHierarchy;
+        private engine.transform.API _aTransform;
 
         private void _selfTest()
         {
-            var aHierarchy = new engine.hierarchy.API( this );
-            var aTransform = new engine.transform.API(this);
-
             /*
              * Create a simple hierarchy test case
              */
@@ -23,12 +22,12 @@ namespace Karawan.engine
                 var eKid1 = _ecsWorld.CreateEntity();
                 var eKid2 = _ecsWorld.CreateEntity();
 
-                aHierarchy.SetParent(eKid1, eParent);
-                aHierarchy.SetParent(eKid2, eParent);
-                aHierarchy.Update();
-                aHierarchy.SetParent(eKid1, null);
-                aHierarchy.SetParent(eKid2, eKid1);
-                aHierarchy.SetParent(eKid2, eParent);
+                _aHierarchy.SetParent(eKid1, eParent);
+                _aHierarchy.SetParent(eKid2, eParent);
+                _aHierarchy.Update();
+                _aHierarchy.SetParent(eKid1, null);
+                _aHierarchy.SetParent(eKid2, eKid1);
+                _aHierarchy.SetParent(eKid2, eParent);
             }
 
             /*
@@ -37,7 +36,7 @@ namespace Karawan.engine
             {
                 var eCube = _ecsWorld.CreateEntity();
                 joyce.Tools.AddCubeMesh(eCube);
-                aTransform.SetPosition(eCube, new Vector3(2f, 0f, 0f));
+                _aTransform.SetPosition(eCube, new Vector3(2f, 0f, 0f));
             }
 
             /*
@@ -50,9 +49,20 @@ namespace Karawan.engine
                 cCamera.NearFrustrum = 1f;
                 cCamera.FarFrustrum = 100f;
                 eCamera.Set<joyce.components.Camera3>(cCamera);
-                aTransform.SetPosition(eCamera, new Vector3(0f, 0f, 5f));
+                _aTransform.SetPosition(eCamera, new Vector3(0f, 0f, 5f));
             }
 
+        }
+
+
+        public engine.hierarchy.API GetAHierarchy()
+        {
+            return _aHierarchy;
+        }
+
+        public engine.transform.API GetATransform()
+        {
+            return _aTransform;
         }
 
         public DefaultEcs.World GetEcsWorld()
@@ -63,15 +73,18 @@ namespace Karawan.engine
 
         public void OnPhysicalFrame(float dt)
         {
+            _aHierarchy.Update();
+            _aTransform.Update();
         }
 
-
+         
         /**
          * Call after all dependencies are set.
          */
         public void SetupDone()
         {
-
+            _aHierarchy = new engine.hierarchy.API(this);
+            _aTransform = new engine.transform.API(this);
         }
 
 

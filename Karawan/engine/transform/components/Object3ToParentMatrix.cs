@@ -6,7 +6,7 @@ namespace Karawan.engine.transform.components
     {
         public Matrix4x4 Matrix;
 
-        Object3ToParentMatrix( Matrix4x4 matrix )
+        public Object3ToParentMatrix( Matrix4x4 matrix )
         {
             Matrix = matrix;
         }

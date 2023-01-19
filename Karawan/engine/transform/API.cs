@@ -7,13 +7,22 @@ namespace Karawan.engine.transform
     {
         private engine.Engine _engine;
         private systems.PropagateTranslationSystem _propagateTranslationSystem;
+        private bool _isDirty;
 
         public void SetTransforms(DefaultEcs.Entity entity, 
             bool isVisible,
             in Quaternion rotation,
             in Vector3 position)
         {
-            entity.Set(new transform.components.Object3(isVisible, rotation, position));
+            entity.Set<transform.components.Object3>(new transform.components.Object3(isVisible, rotation, position));
+            {
+                var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
+                var mTranslate = Matrix4x4.CreateTranslation(position);
+                mToParent *= mTranslate;
+                entity.Set<transform.components.Object3ToParentMatrix>(
+                    new transform.components.Object3ToParentMatrix(mToParent) );
+                _isDirty = true;
+            }
         }
 
 
@@ -47,6 +56,15 @@ namespace Karawan.engine.transform
         {
             var object3 = GetTransform(entity);
             SetTransforms(entity, object3.IsVisible, object3.Rotation, position);
+        }
+
+        public void Update()
+        {
+            if(_isDirty)
+            {
+                _propagateTranslationSystem.Update(_engine);
+                _isDirty = false;
+            }
         }
 
 

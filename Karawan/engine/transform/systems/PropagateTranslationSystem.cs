@@ -4,11 +4,11 @@ using System.Numerics;
 namespace Karawan.engine.transform.systems
 {
     [DefaultEcs.System.Without(typeof(hierarchy.components.Parent))]
-    [DefaultEcs.System.With(typeof(hierarchy.components.Children))]
     [DefaultEcs.System.With(typeof(transform.components.Object3ToParentMatrix))]
     sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
+        private Matrix4x4 _mUnity;
 
 
         protected override void PreUpdate(Engine state)
@@ -33,13 +33,14 @@ namespace Karawan.engine.transform.systems
 
         private void _recurseChildren(DefaultEcs.Entity entity)
         {
-            var children = entity.Get<hierarchy.components.Children>().Entities;
             var parentObject3ToWorld = entity.Get<transform.components.Object3ToWorldMatrix>().Matrix;
-            foreach(var childEntity in children)
+
+            var children = entity.Get<hierarchy.components.Children>().Entities;
+            foreach (var childEntity in children)
             {
                 _updateChildToWorld(parentObject3ToWorld, childEntity);
 
-                if( childEntity.Has<hierarchy.components.Children>() 
+                if (childEntity.Has<hierarchy.components.Children>()
                     && childEntity.Has<transform.components.Object3ToParentMatrix>())
                 {
                     _recurseChildren(childEntity);
@@ -55,7 +56,14 @@ namespace Karawan.engine.transform.systems
              */
             foreach (var entity in entities)
             {
-                _recurseChildren(entity);
+                /*
+                 * Update the root itself.
+                 */
+                _updateChildToWorld(_mUnity, entity);
+                if ( entity.Has<hierarchy.components.Children>())
+                { 
+                    _recurseChildren(entity);
+                }
             }
         }
 
@@ -69,6 +77,12 @@ namespace Karawan.engine.transform.systems
             : base(engine.GetEcsWorld())
         {
             _engine = engine;
+            _mUnity = new Matrix4x4(
+                1f, 0f, 0f, 0f,
+                0f, 1f, 0f, 0f,
+                0f, 0f, 1f, 0f,
+                0f, 0f, 0f, 1f
+            );
         }
     }
 }
