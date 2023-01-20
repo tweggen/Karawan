@@ -14,7 +14,9 @@ namespace Karawan.engine.transform
             in Quaternion rotation,
             in Vector3 position)
         {
-            entity.Set<transform.components.Object3>(new transform.components.Object3(isVisible, rotation, position));
+            entity.Set<transform.components.Object3>(
+                new transform.components.Object3(
+                    isVisible, rotation, position));
             {
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);

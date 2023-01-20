@@ -10,11 +10,18 @@ namespace Karawan.platform.cs1.splash
     {
         private engine.Engine _engine;
 
+        private systems.CreateRlMeshesSystem _createRlMeshesSystem;
+
         /**
          * Render all camera objects.
          */
         public void Render()
         {
+            /*
+             * Create/upload all ressources that haven't been uploaded.
+             */
+            _createRlMeshesSystem.Update(_engine); 
+
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Raylib.SKYBLUE);
             Raylib.DrawFPS(10, 10);
@@ -51,6 +58,7 @@ namespace Karawan.platform.cs1.splash
         public API(engine.Engine engine)
         {
             _engine = engine;
+            _createRlMeshesSystem = new(_engine);
         }
     }
 }
