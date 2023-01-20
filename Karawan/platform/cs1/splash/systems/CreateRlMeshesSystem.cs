@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Karawan.platform.cs1.splash.systems
 {
     [DefaultEcs.System.With(typeof(engine.joyce.components.Mesh))]
-    [DefaultEcs.System.With(typeof(engine.transform.components.Object3))]
+    [DefaultEcs.System.With(typeof(engine.transform.components.Object3ToWorldMatrix))]
     [DefaultEcs.System.Without(typeof(splash.components.RlMesh))]
     /**
      * Create a raylib mesh for every mesh defined.

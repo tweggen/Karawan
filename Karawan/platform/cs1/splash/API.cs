@@ -11,6 +11,7 @@ namespace Karawan.platform.cs1.splash
         private engine.Engine _engine;
 
         private systems.CreateRlMeshesSystem _createRlMeshesSystem;
+        private systems.DrawRlMeshesSystem _drawRlMeshesSystem;
 
         /**
          * Render all camera objects.
@@ -46,6 +47,7 @@ namespace Karawan.platform.cs1.splash
                 Raylib.BeginMode3D(rCamera);
 
                 // TXWTODO: Draw here
+                _drawRlMeshesSystem.Update(_engine);
 
                 Raylib.EndMode3D();
             }
@@ -57,6 +59,7 @@ namespace Karawan.platform.cs1.splash
         {
             _engine = engine;
             _createRlMeshesSystem = new(_engine);
+            _drawRlMeshesSystem = new(_engine);
         }
     }
 }
