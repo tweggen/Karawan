@@ -38,6 +38,11 @@ namespace Karawan.platform.cs1.splash
                 var rCamera = new Raylib_CsLo.Camera3D( vPosition, vFront, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
+                Raylib.BeginMode3D(rCamera);
+
+                // TXWTODO: Draw here
+
+                Raylib.EndMode3D();
             }
 
             Raylib.EndDrawing();
