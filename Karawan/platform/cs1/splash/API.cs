@@ -33,8 +33,6 @@ namespace Karawan.platform.cs1.splash
                 .AsEnumerable();
             foreach(var eCamera in listCameras)
             {
-                Console.WriteLine("Found Camera.");
-
                 var cCameraParams = eCamera.Get<engine.joyce.components.Camera3>();
                 var mToWorld = eCamera.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix;
 
