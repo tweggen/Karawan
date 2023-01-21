@@ -25,17 +25,24 @@ namespace Karawan.platform.cs1.splash.systems
         {
             foreach (var entity in entities)
             {
+#if false
                 var rMaterial = new Raylib_CsLo.Material();
                 rMaterial.maps = (Raylib_CsLo.MaterialMap*)
                     Raylib_CsLo.Raylib.MemAlloc((uint)
                         sizeof(Raylib_CsLo.MaterialMap) 
                         * (((int)(Raylib_CsLo.MaterialMapIndex.MATERIAL_MAP_BRDF)) + 1));
-
-                rMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib_CsLo.Raylib.RED;
+#endif
                      
-                var rMesh = entity.Get<splash.components.RlMesh>().Mesh;
+                var rMesh = entity.Get<splash.components.RlMesh>();
                 var rMatrix = Matrix4x4.Transpose(entity.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix);
-                Raylib_CsLo.Raylib.DrawMesh(rMesh, rMaterial, rMatrix);
+#if false
+                Raylib_CsLo.Raylib.DrawMesh(
+                    rMesh.Model.meshes[0],
+                    rMesh.Model.materials[0],
+                    rMatrix
+                );
+#endif        
+                Raylib_CsLo.Raylib.DrawMesh(rMesh.Mesh, rMesh.Material, rMatrix);
             }
         }
 

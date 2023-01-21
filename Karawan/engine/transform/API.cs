@@ -47,14 +47,14 @@ namespace Karawan.engine.transform
         }
 
 
-        public void SetRotation(DefaultEcs.Entity entity, Quaternion rotation)
+        public void SetRotation(DefaultEcs.Entity entity, in Quaternion rotation)
         {
             var object3 = GetTransform(entity);
             SetTransforms(entity, object3.IsVisible, rotation, object3.Position);
         }
 
 
-        public void SetPosition(DefaultEcs.Entity entity, Vector3 position)
+        public void SetPosition(DefaultEcs.Entity entity, in Vector3 position)
         {
             var object3 = GetTransform(entity);
             SetTransforms(entity, object3.IsVisible, object3.Rotation, position);

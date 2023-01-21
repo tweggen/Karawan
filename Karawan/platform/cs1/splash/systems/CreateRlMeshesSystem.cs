@@ -1,9 +1,5 @@
-﻿using Karawan.engine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using Raylib_CsLo;
 
 namespace Karawan.platform.cs1.splash.systems
 {
@@ -26,13 +22,29 @@ namespace Karawan.platform.cs1.splash.systems
         {
         }
 
-        protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
+        protected override unsafe void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-            foreach(var entity in entities)
+            Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
+            Texture texture = Raylib.LoadTextureFromImage(checkedImage);
+            Raylib.UnloadImage(checkedImage);
+
+            foreach (var entity in entities)
             {
                 var cMesh = entity.Get<engine.joyce.components.Mesh>();
                 var rMesh = MeshGenerator.CreateRaylibMesh(cMesh);
-                entity.Set<splash.components.RlMesh>(new splash.components.RlMesh(rMesh));
+#if false
+                // Generating a material is wrong at this point, however, I need it for testing now.
+                var rMaterial = new Material();
+                // 12 matches the raylib define MAX_MATERIAL_MAP
+                rMaterial.maps = (MaterialMap*)Raylib.MemAlloc((uint)(12*sizeof(MaterialMap)));
+                rMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = texture;
+                // rMaterial.params = (float*)Raylib.MemAlloc((uint)(4 * sizeof(float)));
+#else
+                var rMaterial = Raylib.LoadMaterialDefault();
+#endif
+
+                Raylib.UploadMesh(&rMesh, false);
+                entity.Set<splash.components.RlMesh>(new splash.components.RlMesh(rMesh,rMaterial));
             }
         }
 
@@ -43,3 +55,4 @@ namespace Karawan.platform.cs1.splash.systems
         }
     }
 }
+;

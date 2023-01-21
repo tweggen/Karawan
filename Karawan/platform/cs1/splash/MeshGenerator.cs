@@ -17,7 +17,7 @@ namespace Karawan.platform.cs1.splash
 
 
 
-        public static Raylib_CsLo.Mesh CreateRaylibMesh( engine.joyce.components.Mesh mesh )
+        public static Raylib_CsLo.Mesh CreateRaylibMesh( in engine.joyce.components.Mesh mesh )
         {
             if( null==mesh.Normals )
             {
@@ -54,6 +54,7 @@ namespace Karawan.platform.cs1.splash
                  */
                 rlm.indices[i] = (ushort)(int)mesh.Indices[i];
             }
+
             return rlm;
         }
     }

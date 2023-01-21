@@ -24,6 +24,7 @@ namespace Karawan.platform.cs1.splash
             _createRlMeshesSystem.Update(_engine); 
 
             Raylib.BeginDrawing();
+
             Raylib.ClearBackground(Raylib.SKYBLUE);
             Raylib.DrawFPS(10, 10);
             Raylib.DrawText("Raylib is easy!!!", 640, 360, 50, Raylib.RED);
@@ -44,6 +45,7 @@ namespace Karawan.platform.cs1.splash
                 var rCamera = new Raylib_CsLo.Camera3D( vPosition, vFront, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
+                Raylib.UpdateCamera(ref rCamera);
                 Raylib.BeginMode3D(rCamera);
 
                 // TXWTODO: Draw here

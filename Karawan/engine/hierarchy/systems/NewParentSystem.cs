@@ -21,7 +21,8 @@ namespace Karawan.engine.hierarchy.systems
         }
 
 
-        protected override void Update(Engine state, ReadOnlySpan<Entity> entities)
+        protected override void Update(
+            Engine state, ReadOnlySpan<Entity> entities)
         {
             /*
              * We need to iterate through a copy of the entities because delete components.

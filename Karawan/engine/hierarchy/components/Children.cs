@@ -6,7 +6,7 @@ namespace Karawan.engine.hierarchy.components
     {
         public List<DefaultEcs.Entity> Entities;
 
-        public Children( DefaultEcs.Entity entity )
+        public Children( in DefaultEcs.Entity entity )
         {
             Entities = new List<DefaultEcs.Entity>();
             Entities.Add(entity);

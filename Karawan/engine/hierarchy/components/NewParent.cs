@@ -5,7 +5,7 @@ namespace Karawan.engine.hierarchy.components
     {
         public DefaultEcs.Entity? Entity;
 
-        public NewParent( DefaultEcs.Entity? newParentEntity )
+        public NewParent( in DefaultEcs.Entity? newParentEntity )
         {
             Entity = newParentEntity;
         }
