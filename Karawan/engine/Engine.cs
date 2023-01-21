@@ -83,7 +83,8 @@ namespace Karawan.engine
              * Do test rotation
              */
             {
-                var q = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f),
+                var q = Quaternion.CreateFromAxisAngle(
+                    Vector3.Normalize(new Vector3(0.2f, 1f, 0.4f)),
                     _testCount * (float)Math.PI / 180f);
                 _aTransform.SetRotation(_eCube, q);
             }

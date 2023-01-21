@@ -1,13 +1,20 @@
 ﻿using System.Numerics;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Karawan.engine.joyce.mesh
 {
     class Tools
     {
+        private static void _addQuadIndicesCW(
+            in IList indices,
+            int i0, int i1, int i2, int i3
+        )
+        {
+            indices.Add(i0); indices.Add(i1); indices.Add(i2);
+            indices.Add(i2); indices.Add(i3); indices.Add(i0);
+        }
+
         public static components.Mesh CreateCubeMesh()
         {
             var m = components.Mesh.CreateArrayListInstance();
@@ -30,23 +37,17 @@ namespace Karawan.engine.joyce.mesh
             m.UVs.Add(new Vector2(0, 0));
 
             // Back
-            m.Indices.Add(0); m.Indices.Add(1); m.Indices.Add(2);
-            m.Indices.Add(1); m.Indices.Add(3); m.Indices.Add(2);
+            _addQuadIndicesCW(m.Indices, 1, 0, 2, 3);
             // Front
-            m.Indices.Add(5); m.Indices.Add(4); m.Indices.Add(6);
-            m.Indices.Add(5); m.Indices.Add(7); m.Indices.Add(6);
+            _addQuadIndicesCW(m.Indices, 4, 5, 7, 6);
             // Top
-            m.Indices.Add(7); m.Indices.Add(6); m.Indices.Add(2);
-            m.Indices.Add(7); m.Indices.Add(2); m.Indices.Add(3);
+            _addQuadIndicesCW(m.Indices, 6, 7, 3, 2);
             // Bottom
-            m.Indices.Add(1); m.Indices.Add(0); m.Indices.Add(4);
-            m.Indices.Add(1); m.Indices.Add(4); m.Indices.Add(5);
+            _addQuadIndicesCW(m.Indices, 5, 4, 0, 1);
             // Right
-            m.Indices.Add(1); m.Indices.Add(5); m.Indices.Add(7);
-            m.Indices.Add(1); m.Indices.Add(3); m.Indices.Add(7);
+            _addQuadIndicesCW(m.Indices, 5, 1, 3, 7);
             // Left
-            m.Indices.Add(4); m.Indices.Add(0); m.Indices.Add(5);
-            m.Indices.Add(4); m.Indices.Add(1); m.Indices.Add(5);
+            _addQuadIndicesCW(m.Indices, 4, 6, 2, 0);
             
             return m;
         }

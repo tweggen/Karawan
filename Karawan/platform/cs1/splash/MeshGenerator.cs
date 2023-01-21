@@ -21,7 +21,7 @@ namespace Karawan.platform.cs1.splash
         {
             if( null==mesh.Normals )
             {
-                mesh.GenerateNormals();
+                //mesh.GenerateNormals();
             }
             Raylib_CsLo.Mesh rlm = new();
 
