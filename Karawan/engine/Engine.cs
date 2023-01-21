@@ -12,6 +12,11 @@ namespace Karawan.engine
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
+        private DefaultEcs.Entity _eCube;
+        private DefaultEcs.Entity _eCamera;
+
+        private int _testCount;
+
         private void _selfTest()
         {
             /*
@@ -34,22 +39,22 @@ namespace Karawan.engine
              * Create a cube positioned at 2/0/0
              */
             {
-                var eCube = _ecsWorld.CreateEntity();
-                joyce.Tools.AddCubeMesh(eCube);
-                _aTransform.SetPosition(eCube, new Vector3(2f, 0f, 0f));
+                _eCube = _ecsWorld.CreateEntity();
+                joyce.Tools.AddCubeMesh(_eCube);
+                _aTransform.SetPosition(_eCube, new Vector3(2f, 0f, 0f));
             }
 
             /*
              * Create a camera.
              */
             {
-                var eCamera = _ecsWorld.CreateEntity();
+                _eCamera = _ecsWorld.CreateEntity();
                 var cCamera = new joyce.components.Camera3();
-                cCamera.Angle = 60.0f * (float)Math.PI / 360.0f;
+                cCamera.Angle = 60.0f; 
                 cCamera.NearFrustrum = 1f;
                 cCamera.FarFrustrum = 100f;
-                eCamera.Set<joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(eCamera, new Vector3(0f, 0f, 20f));
+                _eCamera.Set<joyce.components.Camera3>(cCamera);
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 50f));
             }
 
         }
@@ -73,6 +78,15 @@ namespace Karawan.engine
 
         public void OnPhysicalFrame(float dt)
         {
+            _testCount++;
+            /*
+             * Do test rotation
+             */
+            {
+                var q = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f),
+                    _testCount * (float)Math.PI / 180f);
+                _aTransform.SetRotation(_eCube, q);
+            }
             _aHierarchy.Update();
             _aTransform.Update();
         }
@@ -98,6 +112,7 @@ namespace Karawan.engine
         {
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();
+            _testCount = 0;            
         }
     }
 }
