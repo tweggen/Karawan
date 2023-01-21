@@ -12,7 +12,10 @@ namespace Karawan.engine
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
-        private DefaultEcs.Entity _eCube;
+        private DefaultEcs.Entity _eCubeNear;
+        private DefaultEcs.Entity _eCubeFar;
+        private DefaultEcs.Entity _eCubeParent;
+
         private DefaultEcs.Entity _eCamera;
 
         private int _testCount;
@@ -39,10 +42,21 @@ namespace Karawan.engine
              * Create a cube positioned at 2/0/0
              */
             {
-                _eCube = _ecsWorld.CreateEntity();
+                _eCubeParent = _ecsWorld.CreateEntity();
+                _aTransform.SetPosition(_eCubeParent, new Vector3(0f, 0f, 0f));
+
                 var jMesh = joyce.mesh.Tools.CreateCubeMesh();
-                _eCube.Set<joyce.components.Instance3>(new joyce.components.Instance3(jMesh));
-                _aTransform.SetPosition(_eCube, new Vector3(0.1f, 0f, 0f));
+
+                _eCubeNear = _ecsWorld.CreateEntity();
+                _eCubeNear.Set<joyce.components.Instance3>(new joyce.components.Instance3(jMesh));
+                _aTransform.SetPosition(_eCubeNear, new Vector3(2.5f, 0f, 0f));
+                _aHierarchy.SetParent(_eCubeNear, _eCubeParent);
+
+                _eCubeFar = _ecsWorld.CreateEntity();
+                _eCubeFar.Set<joyce.components.Instance3>(new joyce.components.Instance3(jMesh));
+                _aTransform.SetPosition(_eCubeFar, new Vector3(-1.5f, 0f, 0f));
+                _aHierarchy.SetParent(_eCubeFar, _eCubeParent);
+
             }
 
             /*
@@ -83,12 +97,19 @@ namespace Karawan.engine
             /*
              * Do test rotation
              */
-            {
-                var q = Quaternion.CreateFromAxisAngle(
+            if( true ) {
+                var qNear = Quaternion.CreateFromAxisAngle(
                     Vector3.Normalize(new Vector3(0.2f, 1f, 0.4f)),
                     _testCount * (float)Math.PI / 180f);
-                _aTransform.SetRotation(_eCube, q);
+                _aTransform.SetRotation(_eCubeNear, qNear);
             }
+            if( true ) {
+                var qParent = Quaternion.CreateFromAxisAngle(
+                    Vector3.Normalize(new Vector3(2.1f, 0.2f, -1.4f)),
+                    (_testCount/2) * (float)Math.PI / 180f);
+                _aTransform.SetRotation(_eCubeParent, qParent);
+            }
+
             _aHierarchy.Update();
             _aTransform.Update();
         }

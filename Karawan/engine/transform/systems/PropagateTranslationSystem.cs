@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Karawan.engine.transform.systems
 {
     [DefaultEcs.System.Without(typeof(hierarchy.components.Parent))]
-    [DefaultEcs.System.With(typeof(transform.components.Transform3ToParentMatrix))]
+    [DefaultEcs.System.With(typeof(transform.components.Transform3ToParent))]
     sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
@@ -20,31 +20,31 @@ namespace Karawan.engine.transform.systems
          * (Over-)Write the child's object to world matrix.
          */
         private void _updateChildToWorld(
-            in components.Transform3ToWorldMatrix cParentTransform3ToWorld, 
+            in components.Transform3ToWorld cParentTransform3ToWorld, 
             DefaultEcs.Entity childEntity,
-            ref components.Transform3ToWorldMatrix cChildTransform3ToWorld ) 
+            ref components.Transform3ToWorld cChildTransform3ToWorld ) 
         {
-            var cTransform3 = childEntity.Get<transform.components.Transform3ToParentMatrix>();
+            var cTransform3 = childEntity.Get<transform.components.Transform3ToParent>();
 
             cChildTransform3ToWorld.IsTotalVisible = cParentTransform3ToWorld.IsTotalVisible && cTransform3.IsVisible;
             cChildTransform3ToWorld.Matrix = 
-                 childEntity.Get<transform.components.Transform3ToParentMatrix>().Matrix
+                 childEntity.Get<transform.components.Transform3ToParent>().Matrix
                  * cParentTransform3ToWorld.Matrix;
-            childEntity.Set<transform.components.Transform3ToWorldMatrix>(cChildTransform3ToWorld);
+            childEntity.Set<transform.components.Transform3ToWorld>(cChildTransform3ToWorld);
         }
 
         private void _recurseChildren(
-            in components.Transform3ToWorldMatrix cParentTransform3ToWorld, 
+            in components.Transform3ToWorld cParentTransform3ToWorld, 
             DefaultEcs.Entity entity )
         {
             var children = entity.Get<hierarchy.components.Children>().Entities;
             foreach (var childEntity in children)
             {
-                var cChildTransform3ToWorld = new transform.components.Transform3ToWorldMatrix();
+                var cChildTransform3ToWorld = new transform.components.Transform3ToWorld();
                 _updateChildToWorld( cParentTransform3ToWorld, childEntity, ref cChildTransform3ToWorld);
 
                 if (childEntity.Has<hierarchy.components.Children>()
-                    && childEntity.Has<transform.components.Transform3ToParentMatrix>())
+                    && childEntity.Has<transform.components.Transform3ToParent>())
                 {
                     _recurseChildren(cChildTransform3ToWorld, childEntity);
                 }
@@ -53,7 +53,7 @@ namespace Karawan.engine.transform.systems
 
         protected override void Update(Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-            var cRootTransform3World = new components.Transform3ToWorldMatrix(true, Matrix4x4.Identity);
+            var cRootTransform3World = new components.Transform3ToWorld(true, Matrix4x4.Identity);
 
             /**
              * We are iterating through all of the root objects with children
@@ -64,7 +64,7 @@ namespace Karawan.engine.transform.systems
                 /*
                  * Update the root itself. The root's parent always is visible.
                  */
-                var cChildTransform3ToWorld = new transform.components.Transform3ToWorldMatrix();
+                var cChildTransform3ToWorld = new transform.components.Transform3ToWorld();
                 _updateChildToWorld(cRootTransform3World, entity, ref cChildTransform3ToWorld);
                 if ( entity.Has<hierarchy.components.Children>() )
                 { 

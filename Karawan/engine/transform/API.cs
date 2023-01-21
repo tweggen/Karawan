@@ -20,9 +20,9 @@ namespace Karawan.engine.transform
             {
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
-                mToParent = mTranslate * mToParent;
-                entity.Set<transform.components.Transform3ToParentMatrix>(
-                    new transform.components.Transform3ToParentMatrix(isVisible, mToParent) );
+                mToParent = mToParent * mTranslate;
+                entity.Set<transform.components.Transform3ToParent>(
+                    new transform.components.Transform3ToParent(isVisible, mToParent) );
                 _isDirty = true;
             }
         }

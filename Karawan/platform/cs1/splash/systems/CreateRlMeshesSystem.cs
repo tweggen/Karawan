@@ -4,7 +4,7 @@ using Raylib_CsLo;
 namespace Karawan.platform.cs1.splash.systems
 {
     [DefaultEcs.System.With(typeof(engine.joyce.components.Instance3))]
-    [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorldMatrix))]
+    [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
     [DefaultEcs.System.Without(typeof(splash.components.RlMesh))]
     /**
      * Create a raylib mesh for every mesh defined.
