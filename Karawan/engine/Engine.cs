@@ -49,7 +49,7 @@ namespace Karawan.engine
                 cCamera.NearFrustrum = 1f;
                 cCamera.FarFrustrum = 100f;
                 eCamera.Set<joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(eCamera, new Vector3(0f, 0f, 5f));
+                _aTransform.SetPosition(eCamera, new Vector3(0f, 0f, 20f));
             }
 
         }

@@ -24,9 +24,11 @@ namespace Karawan.platform.cs1.splash.systems
 
         protected override unsafe void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
+#if false
             Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
             Texture texture = Raylib.LoadTextureFromImage(checkedImage);
             Raylib.UnloadImage(checkedImage);
+#endif
 
             foreach (var entity in entities)
             {

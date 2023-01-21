@@ -34,14 +34,15 @@ namespace Karawan.platform.cs1.splash.systems
 #endif
                      
                 var rMesh = entity.Get<splash.components.RlMesh>();
-                var rMatrix = Matrix4x4.Transpose(entity.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix);
+                // var rMatrix = Matrix4x4.Transpose(entity.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix);
+                var rMatrix = entity.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix;
 #if false
                 Raylib_CsLo.Raylib.DrawMesh(
                     rMesh.Model.meshes[0],
                     rMesh.Model.materials[0],
                     rMatrix
                 );
-#endif        
+#endif
                 Raylib_CsLo.Raylib.DrawMesh(rMesh.Mesh, rMesh.Material, rMatrix);
             }
         }
