@@ -106,7 +106,7 @@ namespace Karawan.engine
             if( true ) {
                 var qParent = Quaternion.CreateFromAxisAngle(
                     Vector3.Normalize(new Vector3(2.1f, 0.2f, -1.4f)),
-                    (_testCount/2) * (float)Math.PI / 180f);
+                    (50f+_testCount/2) * (float)Math.PI / 180f);
                 _aTransform.SetRotation(_eCubeParent, qParent);
             }
 

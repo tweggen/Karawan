@@ -68,7 +68,7 @@ namespace Karawan.engine.transform.systems
                 _updateChildToWorld(cRootTransform3World, entity, ref cChildTransform3ToWorld);
                 if ( entity.Has<hierarchy.components.Children>() )
                 { 
-                    _recurseChildren(cRootTransform3World, entity);
+                    _recurseChildren(cChildTransform3ToWorld, entity);
                 }
             }
         }
