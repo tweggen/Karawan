@@ -21,12 +21,18 @@ namespace Karawan.platform.cs1.splash.systems
         {
         }
 
-        protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
+        protected unsafe override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
             foreach (var entity in entities)
             {
                 var rMaterial = new Raylib_CsLo.Material();
+                rMaterial.maps = (Raylib_CsLo.MaterialMap*)
+                    Raylib_CsLo.Raylib.MemAlloc((uint)
+                        sizeof(Raylib_CsLo.MaterialMap) 
+                        * (((int)(Raylib_CsLo.MaterialMapIndex.MATERIAL_MAP_BRDF)) + 1));
 
+                rMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib_CsLo.Raylib.RED;
+                     
                 var rMesh = entity.Get<splash.components.RlMesh>().Mesh;
                 var rMatrix = Matrix4x4.Transpose(entity.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix);
                 Raylib_CsLo.Raylib.DrawMesh(rMesh, rMaterial, rMatrix);
