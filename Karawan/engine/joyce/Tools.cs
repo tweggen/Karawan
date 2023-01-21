@@ -10,7 +10,7 @@ namespace Karawan.engine.joyce
     {
         public static void AddCubeMesh( DefaultEcs.Entity entity )
         {
-            entity.Set<components.Mesh>( mesh.Tools.CreateCubeMesh() );
+            //tity.Set<joyce.Mesh>( mesh.Tools.CreateCubeMesh() );
         }
     }
 }

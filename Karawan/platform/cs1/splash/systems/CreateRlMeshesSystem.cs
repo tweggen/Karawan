@@ -3,7 +3,7 @@ using Raylib_CsLo;
 
 namespace Karawan.platform.cs1.splash.systems
 {
-    [DefaultEcs.System.With(typeof(engine.joyce.components.Mesh))]
+    [DefaultEcs.System.With(typeof(engine.joyce.components.Instance3))]
     [DefaultEcs.System.With(typeof(engine.transform.components.Object3ToWorldMatrix))]
     [DefaultEcs.System.Without(typeof(splash.components.RlMesh))]
     /**
@@ -13,6 +13,13 @@ namespace Karawan.platform.cs1.splash.systems
     sealed class CreateRlMeshesSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
+
+        private bool _haveDefaults;
+        /**
+         * The global placeholder texture.
+         */
+        private Texture _loadingTexture;
+        private Material _loadingMaterial;
 
         protected override void PreUpdate(engine.Engine state)
         {
@@ -24,46 +31,52 @@ namespace Karawan.platform.cs1.splash.systems
 
         protected override unsafe void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-#if true
-            Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
-            Texture texture = Raylib.LoadTextureFromImage(checkedImage);
-            Raylib.UnloadImage(checkedImage);
-#endif
+            if( !_haveDefaults )
+            {
+                _haveDefaults = true;
+                Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
+                _loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
+                _loadingMaterial = Raylib.LoadMaterialDefault();
+                _loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = _loadingTexture;
+                // _loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.RED;
 
-#if false
-                var rMaterial = new Raylib_CsLo.Material();
-                rMaterial.maps = (Raylib_CsLo.MaterialMap*)
-                    Raylib_CsLo.Raylib.MemAlloc((uint)
-                        sizeof(Raylib_CsLo.MaterialMap) 
-                        * (((int)(Raylib_CsLo.MaterialMapIndex.MATERIAL_MAP_BRDF)) + 1));
-#endif
-
+                Raylib.UnloadImage(checkedImage);
+            }
             foreach (var entity in entities)
             {
-                var cMesh = entity.Get<engine.joyce.components.Mesh>();
-                var rMesh = MeshGenerator.CreateRaylibMesh(cMesh);
-#if false
-                // Generating a material is wrong at this point, however, I need it for testing now.
-                var rMaterial = new Material();
-                // 12 matches the raylib define MAX_MATERIAL_MAP
-                rMaterial.maps = (MaterialMap*)Raylib.MemAlloc((uint)(12*sizeof(MaterialMap)));
-                rMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = texture;
-                // rMaterial.params = (float*)Raylib.MemAlloc((uint)(4 * sizeof(float)));
-#else
-                var rMaterial = Raylib.LoadMaterialDefault();
-                rMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = texture;
-#endif
+                var cInstance3 = entity.Get<engine.joyce.components.Instance3>();
 
-                Raylib.UploadMesh(&rMesh, false);
-                entity.Set<splash.components.RlMesh>(
-                    new splash.components.RlMesh(rMesh,rMaterial));
+                var nMeshes = cInstance3.Meshes.Count;
+                var nMeshMaterials = cInstance3.MeshMaterials.Count;
+                
+                if( nMeshes!=nMeshMaterials)
+                {
+                    Console.WriteLine("We have a problem.");
+                    return;
+                }
+                var nMaterials = cInstance3.Materials.Count;
+
+                for(var i=0; i<nMeshes; ++i)
+                {
+                    var jMesh = (engine.joyce.Mesh) cInstance3.Meshes[i];
+                    var materialIndex = (int) cInstance3.MeshMaterials[i];
+                    var jMaterial = (engine.joyce.Material) cInstance3.Materials[materialIndex];
+
+                    // TXWTODO: We need a mesh cache to enable proper allocation and upload of maehgs
+                    var rMesh = MeshGenerator.CreateRaylibMesh(jMesh);
+
+                    Raylib.UploadMesh(&rMesh, false);
+                    entity.Set<splash.components.RlMesh>( 
+                        new splash.components.RlMesh(rMesh, _loadingMaterial));
+                }
             }
         }
 
-        public CreateRlMeshesSystem(engine.Engine engine)
+        public unsafe CreateRlMeshesSystem(engine.Engine engine)
             : base( engine.GetEcsWorld() )
         {
             _engine = engine;
+            _haveDefaults = false;
         }
     }
 }

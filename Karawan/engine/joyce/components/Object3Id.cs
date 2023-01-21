@@ -1,0 +1,13 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Karawan.engine.components
+{
+    struct Object3Id
+    {
+        public UInt64 Id;
+    }
+}

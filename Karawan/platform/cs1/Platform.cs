@@ -16,7 +16,7 @@ namespace Karawan.platform.cs1
 
         public void Execute()
         {
-            Raylib.InitWindow(1280, 720, "Hello, Raylib-CsLo");
+            Raylib.InitWindow(1280, 720, "codename Karawan");
             Raylib.SetTargetFPS(60);
             // Main game loop
             while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key

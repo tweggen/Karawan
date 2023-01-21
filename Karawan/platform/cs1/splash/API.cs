@@ -25,9 +25,9 @@ namespace Karawan.platform.cs1.splash
 
             Raylib.BeginDrawing();
 
-            Raylib.ClearBackground(Raylib.SKYBLUE);
-            Raylib.DrawFPS(10, 10);
-            Raylib.DrawText("Raylib is easy!!!", 640, 360, 50, Raylib.RED);
+            Raylib.ClearBackground(Raylib.BLACK);
+            Raylib.DrawFPS(20, 40);
+            Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
 
             var listCameras = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Camera3>()

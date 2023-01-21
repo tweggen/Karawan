@@ -7,7 +7,7 @@ namespace Karawan.engine.joyce.mesh
     class Tools
     {
         private static void _addQuadIndicesXY(
-            in components.Mesh m,
+            in joyce.Mesh m,
             int i0, int i1, int i2, int i3
         )
         {
@@ -16,7 +16,7 @@ namespace Karawan.engine.joyce.mesh
         }
 
         private static void _addQuadXYUV(
-            in components.Mesh m,
+            in joyce.Mesh m,
             in Vector3 v0,
             in Vector3 vx,
             in Vector3 vy,
@@ -32,14 +32,14 @@ namespace Karawan.engine.joyce.mesh
         }
 
         private static void _addQuadXY(
-            in components.Mesh m, in Vector3 v0, in Vector3 vx, in Vector3 vy )
+            in joyce.Mesh m, in Vector3 v0, in Vector3 vx, in Vector3 vy )
         {
             _addQuadXYUV( m, v0, vx, vy, new Vector2( 0f, 0f ), new Vector2( 1f, 0f ), new Vector2( 0f, 1f ) );
         }
 
-        public static components.Mesh CreateCubeMesh()
+        public static joyce.Mesh CreateCubeMesh()
         {
-            var m = components.Mesh.CreateArrayListInstance();
+            var m = joyce.Mesh.CreateArrayListInstance();
 
             // Back
             _addQuadXY( m, new Vector3(.5f, -.5f, -.5f), new Vector3(-1f, 0f, 0f), new Vector3(0f, 1f, 0f) );

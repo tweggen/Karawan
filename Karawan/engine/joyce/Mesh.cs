@@ -2,9 +2,9 @@
 using System.Numerics;
 using System.Collections;
 
-namespace Karawan.engine.joyce.components
+namespace Karawan.engine.joyce
 {
-    public struct Mesh
+    public class Mesh
     {
         // TXWTODO: Come up with a supersmart concept only storing the mesh source/factory
         // TXWTODO: Let it use the IList interface

@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Karawan.engine
+namespace Karawan.engine.joyce
 {
-    struct Object3Id
+    public class Material
     {
-        public UInt64 Id;
     }
 }

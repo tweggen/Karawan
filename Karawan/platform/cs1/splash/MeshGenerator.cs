@@ -17,7 +17,7 @@ namespace Karawan.platform.cs1.splash
 
 
 
-        public static Raylib_CsLo.Mesh CreateRaylibMesh( in engine.joyce.components.Mesh mesh )
+        public static Raylib_CsLo.Mesh CreateRaylibMesh( in engine.joyce.Mesh mesh )
         {
             if( null==mesh.Normals )
             {
@@ -33,6 +33,7 @@ namespace Karawan.platform.cs1.splash
                 {
                     // TXWTODO: Throw an exception
                     System.Console.WriteLine("Problem");
+                    return rlm;
                 }
             }
 

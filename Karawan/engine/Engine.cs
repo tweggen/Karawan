@@ -40,7 +40,8 @@ namespace Karawan.engine
              */
             {
                 _eCube = _ecsWorld.CreateEntity();
-                joyce.Tools.AddCubeMesh(_eCube);
+                var jMesh = joyce.mesh.Tools.CreateCubeMesh();
+                _eCube.Set<joyce.components.Instance3>(new joyce.components.Instance3(jMesh));
                 _aTransform.SetPosition(_eCube, new Vector3(0.1f, 0f, 0f));
             }
 
