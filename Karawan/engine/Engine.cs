@@ -41,7 +41,7 @@ namespace Karawan.engine
             {
                 _eCube = _ecsWorld.CreateEntity();
                 joyce.Tools.AddCubeMesh(_eCube);
-                _aTransform.SetPosition(_eCube, new Vector3(2f, 0f, 0f));
+                _aTransform.SetPosition(_eCube, new Vector3(0.1f, 0f, 0f));
             }
 
             /*
@@ -54,7 +54,7 @@ namespace Karawan.engine
                 cCamera.NearFrustrum = 1f;
                 cCamera.FarFrustrum = 100f;
                 _eCamera.Set<joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 50f));
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
             }
 
         }

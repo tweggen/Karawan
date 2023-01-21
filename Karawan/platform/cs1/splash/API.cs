@@ -41,14 +41,14 @@ namespace Karawan.platform.cs1.splash
                 var vPosition = mToWorld.Translation;
                 var vUp = new Vector3(mToWorld.M12, mToWorld.M22, mToWorld.M32);
                 var vFront = new Vector3(-mToWorld.M13, -mToWorld.M23, -mToWorld.M33);
+                var vTarget = vPosition - vFront;
 
-                var rCamera = new Raylib_CsLo.Camera3D( vPosition, vFront, vUp, 
+                var rCamera = new Raylib_CsLo.Camera3D( vPosition, vTarget, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
                 // Raylib.UpdateCamera(ref rCamera);
                 Raylib.BeginMode3D(rCamera);
 
-                // TXWTODO: Draw here
                 _drawRlMeshesSystem.Update(_engine);
 
                 Raylib.EndMode3D();
