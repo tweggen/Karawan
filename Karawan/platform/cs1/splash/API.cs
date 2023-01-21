@@ -31,12 +31,12 @@ namespace Karawan.platform.cs1.splash
 
             var listCameras = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Camera3>()
-                .With<engine.transform.components.Object3ToWorldMatrix>()
+                .With<engine.transform.components.Transform3ToWorldMatrix>()
                 .AsEnumerable();
             foreach(var eCamera in listCameras)
             {
                 var cCameraParams = eCamera.Get<engine.joyce.components.Camera3>();
-                var mToWorld = eCamera.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix;
+                var mToWorld = eCamera.Get<engine.transform.components.Transform3ToWorldMatrix>().Matrix;
 
                 var vPosition = mToWorld.Translation;
                 var vUp = new Vector3(mToWorld.M12, mToWorld.M22, mToWorld.M32);

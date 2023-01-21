@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Karawan.engine.transform.systems
 {
     [DefaultEcs.System.Without(typeof(hierarchy.components.Parent))]
-    [DefaultEcs.System.With(typeof(transform.components.Object3ToParentMatrix))]
+    [DefaultEcs.System.With(typeof(transform.components.Transform3ToParentMatrix))]
     sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
@@ -20,35 +20,41 @@ namespace Karawan.engine.transform.systems
          * (Over-)Write the child's object to world matrix.
          */
         private void _updateChildToWorld(
-            in Matrix4x4 parentObject3ToWorld, 
-            DefaultEcs.Entity childEntity) 
+            in components.Transform3ToWorldMatrix cParentTransform3ToWorld, 
+            DefaultEcs.Entity childEntity,
+            ref components.Transform3ToWorldMatrix cChildTransform3ToWorld ) 
         {
-            var result =
-                 childEntity.Get<transform.components.Object3ToParentMatrix>().Matrix
-                 * parentObject3ToWorld;
-            childEntity.Set<transform.components.Object3ToWorldMatrix>(
-                new transform.components.Object3ToWorldMatrix(result));
+            var cTransform3 = childEntity.Get<transform.components.Transform3ToParentMatrix>();
+
+            cChildTransform3ToWorld.IsTotalVisible = cParentTransform3ToWorld.IsTotalVisible && cTransform3.IsVisible;
+            cChildTransform3ToWorld.Matrix = 
+                 childEntity.Get<transform.components.Transform3ToParentMatrix>().Matrix
+                 * cParentTransform3ToWorld.Matrix;
+            childEntity.Set<transform.components.Transform3ToWorldMatrix>(cChildTransform3ToWorld);
         }
 
-        private void _recurseChildren(DefaultEcs.Entity entity)
+        private void _recurseChildren(
+            in components.Transform3ToWorldMatrix cParentTransform3ToWorld, 
+            DefaultEcs.Entity entity )
         {
-            var parentObject3ToWorld = entity.Get<transform.components.Object3ToWorldMatrix>().Matrix;
-
             var children = entity.Get<hierarchy.components.Children>().Entities;
             foreach (var childEntity in children)
             {
-                _updateChildToWorld(parentObject3ToWorld, childEntity);
+                var cChildTransform3ToWorld = new transform.components.Transform3ToWorldMatrix();
+                _updateChildToWorld( cParentTransform3ToWorld, childEntity, ref cChildTransform3ToWorld);
 
                 if (childEntity.Has<hierarchy.components.Children>()
-                    && childEntity.Has<transform.components.Object3ToParentMatrix>())
+                    && childEntity.Has<transform.components.Transform3ToParentMatrix>())
                 {
-                    _recurseChildren(childEntity);
+                    _recurseChildren(cChildTransform3ToWorld, childEntity);
                 }
             }
         }
 
         protected override void Update(Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
+            var cRootTransform3World = new components.Transform3ToWorldMatrix(true, Matrix4x4.Identity);
+
             /**
              * We are iterating through all of the root objects with children
              * and transformations attached.
@@ -56,12 +62,13 @@ namespace Karawan.engine.transform.systems
             foreach (var entity in entities)
             {
                 /*
-                 * Update the root itself.
+                 * Update the root itself. The root's parent always is visible.
                  */
-                _updateChildToWorld(Matrix4x4.Identity, entity);
-                if ( entity.Has<hierarchy.components.Children>())
+                var cChildTransform3ToWorld = new transform.components.Transform3ToWorldMatrix();
+                _updateChildToWorld(cRootTransform3World, entity, ref cChildTransform3ToWorld);
+                if ( entity.Has<hierarchy.components.Children>() )
                 { 
-                    _recurseChildren(entity);
+                    _recurseChildren(cRootTransform3World, entity);
                 }
             }
         }

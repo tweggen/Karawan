@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Karawan.platform.cs1.splash.systems
 {
-    [DefaultEcs.System.With(typeof(engine.transform.components.Object3ToWorldMatrix))]
+    [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorldMatrix))]
     [DefaultEcs.System.With(typeof(splash.components.RlMesh))]
     /**
      * Create a raylib mesh for every mesh defined.
@@ -26,7 +26,7 @@ namespace Karawan.platform.cs1.splash.systems
             foreach (var entity in entities)
             {                     
                 var rMesh = entity.Get<splash.components.RlMesh>();
-                var rMatrix = Matrix4x4.Transpose(entity.Get<engine.transform.components.Object3ToWorldMatrix>().Matrix);
+                var rMatrix = Matrix4x4.Transpose(entity.Get<engine.transform.components.Transform3ToWorldMatrix>().Matrix);
                 Raylib_CsLo.Raylib.DrawMesh(rMesh.Mesh, rMesh.Material, rMatrix);
             }
         }

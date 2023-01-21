@@ -14,28 +14,28 @@ namespace Karawan.engine.transform
             in Quaternion rotation,
             in Vector3 position)
         {
-            entity.Set<transform.components.Object3>(
-                new transform.components.Object3(
+            entity.Set<transform.components.Transform3>(
+                new transform.components.Transform3(
                     isVisible, rotation, position));
             {
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
                 mToParent = mTranslate * mToParent;
-                entity.Set<transform.components.Object3ToParentMatrix>(
-                    new transform.components.Object3ToParentMatrix(mToParent) );
+                entity.Set<transform.components.Transform3ToParentMatrix>(
+                    new transform.components.Transform3ToParentMatrix(isVisible, mToParent) );
                 _isDirty = true;
             }
         }
 
 
-        public transform.components.Object3 GetTransform(DefaultEcs.Entity entity)
+        public transform.components.Transform3 GetTransform(DefaultEcs.Entity entity)
         {
-            if( entity.Has<transform.components.Object3>() )
+            if( entity.Has<transform.components.Transform3>() )
             {
-                return entity.Get<transform.components.Object3>();
+                return entity.Get<transform.components.Transform3>();
             } else
             {
-                return new transform.components.Object3();
+                return new transform.components.Transform3();
             }
         }
 
