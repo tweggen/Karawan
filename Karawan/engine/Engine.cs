@@ -50,11 +50,13 @@ namespace Karawan.engine
                 _eCubeNear = _ecsWorld.CreateEntity();
                 _eCubeNear.Set<joyce.components.Instance3>(new joyce.components.Instance3(jMesh));
                 _aTransform.SetPosition(_eCubeNear, new Vector3(2.5f, 0f, 0f));
+                _aTransform.SetVisible(_eCubeNear, true);
                 _aHierarchy.SetParent(_eCubeNear, _eCubeParent);
 
                 _eCubeFar = _ecsWorld.CreateEntity();
                 _eCubeFar.Set<joyce.components.Instance3>(new joyce.components.Instance3(jMesh));
                 _aTransform.SetPosition(_eCubeFar, new Vector3(-1.5f, 0f, 0f));
+                _aTransform.SetVisible(_eCubeFar, true);
                 _aHierarchy.SetParent(_eCubeFar, _eCubeParent);
 
             }
@@ -108,6 +110,16 @@ namespace Karawan.engine
                     Vector3.Normalize(new Vector3(2.1f, 0.2f, -1.4f)),
                     (50f+_testCount/2) * (float)Math.PI / 180f);
                 _aTransform.SetRotation(_eCubeParent, qParent);
+            }
+            if( true )
+            {
+                if( 0==(_testCount&0x30) )
+                {
+                    _aTransform.SetVisible(_eCubeParent, false);
+                } else
+                {
+                    _aTransform.SetVisible(_eCubeParent, true);
+                }
             }
 
             _aHierarchy.Update();

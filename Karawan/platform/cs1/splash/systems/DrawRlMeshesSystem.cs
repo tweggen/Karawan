@@ -24,10 +24,14 @@ namespace Karawan.platform.cs1.splash.systems
         protected unsafe override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
             foreach (var entity in entities)
-            {                     
-                var rMesh = entity.Get<splash.components.RlMesh>();
-                var rMatrix = Matrix4x4.Transpose(entity.Get<engine.transform.components.Transform3ToWorld>().Matrix);
-                Raylib_CsLo.Raylib.DrawMesh(rMesh.Mesh, rMesh.Material, rMatrix);
+            {
+                var transform3ToWorld = entity.Get<engine.transform.components.Transform3ToWorld>();
+                if (transform3ToWorld.IsTotalVisible)
+                {
+                    var rMesh = entity.Get<splash.components.RlMesh>();
+                    var rMatrix = Matrix4x4.Transpose(transform3ToWorld.Matrix);
+                    Raylib_CsLo.Raylib.DrawMesh(rMesh.Mesh, rMesh.Material, rMatrix);
+                }
             }
         }
 
