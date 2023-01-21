@@ -8,10 +8,26 @@ namespace Karawan.engine.joyce.components
     {
         // TXWTODO: Come up with a supersmart concept only storing the mesh source/factory
         // TXWTODO: Let it use the IList interface
+
+        /**
+         * Indexable array like of Vector3
+         */
         public IList Vertices;
+
+        /**
+         * Indexable array like of int
+         */
         public IList Indices;
+
+        /**
+         * Indexable array like of Vector2
+         */
         public IList UVs;
-        public IList Normals;
+
+        /**
+         * Indexable array like of Vector3 or null.
+         */
+        public IList? Normals;
 
         /**
          * Generate smoothed normals for this mesh.

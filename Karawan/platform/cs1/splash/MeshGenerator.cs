@@ -47,6 +47,13 @@ namespace Karawan.platform.cs1.splash
                 rlm.texcoords[v * 2 + 0] = uv.X;
                 rlm.texcoords[v * 2 + 1] = uv.Y;
             }
+            for(int i=0;i<nIndices;++i)
+            {
+                /*
+                 * As we just copy, we can ignore the fact these are triangles.
+                 */
+                rlm.indices[i] = (ushort)(int)mesh.Indices[i];
+            }
             return rlm;
         }
     }
