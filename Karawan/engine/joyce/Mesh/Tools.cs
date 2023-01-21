@@ -6,49 +6,54 @@ namespace Karawan.engine.joyce.mesh
 {
     class Tools
     {
-        private static void _addQuadIndicesCW(
-            in IList indices,
+        private static void _addQuadIndicesXY(
+            in components.Mesh m,
             int i0, int i1, int i2, int i3
         )
         {
-            indices.Add(i0); indices.Add(i1); indices.Add(i2);
-            indices.Add(i2); indices.Add(i3); indices.Add(i0);
+            m.Indices.Add(i0); m.Indices.Add(i1); m.Indices.Add(i2);
+            m.Indices.Add(i2); m.Indices.Add(i1); m.Indices.Add(i3);
+        }
+
+        private static void _addQuadXYUV(
+            in components.Mesh m,
+            in Vector3 v0,
+            in Vector3 vx,
+            in Vector3 vy,
+            in Vector2 u0,
+            in Vector2 ux,
+            in Vector2 uy
+        )
+        {
+            var idx = m.Vertices.Count;
+            m.Vertices.Add(v0); m.Vertices.Add(v0 + vx); m.Vertices.Add(v0 + vy); m.Vertices.Add(v0 + vx + vy);
+            m.UVs.Add(u0); m.UVs.Add(u0 + ux); m.UVs.Add(u0 + uy); m.UVs.Add(u0 + ux + uy);
+            _addQuadIndicesXY(m, idx+0, idx+1, idx+2, idx+3);
+        }
+
+        private static void _addQuadXY(
+            in components.Mesh m, in Vector3 v0, in Vector3 vx, in Vector3 vy )
+        {
+            _addQuadXYUV( m, v0, vx, vy, new Vector2( 0f, 0f ), new Vector2( 1f, 0f ), new Vector2( 0f, 1f ) );
         }
 
         public static components.Mesh CreateCubeMesh()
         {
             var m = components.Mesh.CreateArrayListInstance();
 
-            m.Vertices.Add(new Vector3(-.5f, -.5f, -.5f));
-            m.UVs.Add(new Vector2(0, 0));
-            m.Vertices.Add(new Vector3(.5f, -.5f, -.5f));
-            m.UVs.Add(new Vector2(0, 0));
-            m.Vertices.Add(new Vector3(-.5f, .5f, -.5f));
-            m.UVs.Add(new Vector2(0, 0));
-            m.Vertices.Add(new Vector3(.5f, .5f, -.5f));
-            m.UVs.Add(new Vector2(0, 0));
-            m.Vertices.Add(new Vector3(-.5f, -.5f, .5f));
-            m.UVs.Add(new Vector2(0, 0));
-            m.Vertices.Add(new Vector3(.5f, -.5f, .5f));
-            m.UVs.Add(new Vector2(0, 0));
-            m.Vertices.Add(new Vector3(-.5f, .5f, .5f));
-            m.UVs.Add(new Vector2(0, 0));
-            m.Vertices.Add(new Vector3(.5f, .5f, .5f));
-            m.UVs.Add(new Vector2(0, 0));
-
             // Back
-            _addQuadIndicesCW(m.Indices, 1, 0, 2, 3);
+            _addQuadXY( m, new Vector3(.5f, -.5f, -.5f), new Vector3(-1f, 0f, 0f), new Vector3(0f, 1f, 0f) );
             // Front
-            _addQuadIndicesCW(m.Indices, 4, 5, 7, 6);
+            _addQuadXY( m, new Vector3(-.5f, -.5f, .5f), new Vector3(1f, 0f, 0f), new Vector3(0f, 1f, 0f) );
             // Top
-            _addQuadIndicesCW(m.Indices, 6, 7, 3, 2);
+            _addQuadXY(m, new Vector3(-.5f, .5f, .5f), new Vector3(1f, 0f, 0f), new Vector3(0f, 0f, -1f) );
             // Bottom
-            _addQuadIndicesCW(m.Indices, 5, 4, 0, 1);
+            _addQuadXY(m, new Vector3(-.5f, -.5f, -.5f), new Vector3(1f, 0f, 0f), new Vector3(0f, 0f, 1f));
             // Right
-            _addQuadIndicesCW(m.Indices, 5, 1, 3, 7);
+            _addQuadXY(m, new Vector3(.5f, -.5f, .5f), new Vector3(0f, 0f, -1f), new Vector3(0f, 1f, 0f));
             // Left
-            _addQuadIndicesCW(m.Indices, 4, 6, 2, 0);
-            
+            _addQuadXY(m, new Vector3(-.5f, -.5f, -.5f), new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f));
+
             return m;
         }
     }
