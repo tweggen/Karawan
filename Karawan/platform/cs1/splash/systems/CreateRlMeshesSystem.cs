@@ -1,6 +1,14 @@
-﻿using System;
+﻿// #if defined(PLATFORM_DESKTOP)
+// #define GLSL_VERSION 330
+// #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
+// #define GLSL_VERSION            100
+//#endif
+
+using System;
+using System.Text;
 using System.Collections.Generic;
 using Raylib_CsLo;
+
 
 namespace Karawan.platform.cs1.splash.systems
 {
@@ -22,8 +30,11 @@ namespace Karawan.platform.cs1.splash.systems
          */
         // private Texture _loadingTexture;
         private RlMaterialEntry _loadingMaterial;
+        private RlShaderEntry _rlShaderEntry;
 
         private Dictionary<engine.joyce.Mesh, splash.RlMeshEntry> _dictMeshes;
+
+        static private string _glslVersion = "330";
 
         private unsafe splash.RlMeshEntry _findRlMesh(engine.joyce.Mesh jMesh)
         {
@@ -49,20 +60,37 @@ namespace Karawan.platform.cs1.splash.systems
         {
         }
 
-        protected override unsafe void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
+        private unsafe void _createDefaultMaterial()
+        {
+            var loadingMaterial = new RlMaterialEntry();
+            var rlShaderEntry = new RlShaderEntry();
+
+            rlShaderEntry.RlShader = Raylib.LoadShader(
+                Raylib.TextFormat("resources/shaders/glsl%i/lighting_instancing.vs", _glslVersion),
+                Raylib.TextFormat("resources/shaders/glsl%i/lighting.fs", _glslVersion));
+            rlShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
+                Raylib.GetShaderLocation(rlShaderEntry.RlShader, "mvp");
+            rlShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW] =
+                Raylib.GetShaderLocation(rlShaderEntry.RlShader, "viewPos");
+            rlShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MODEL] =
+                Raylib.GetShaderLocationAttrib(rlShaderEntry.RlShader, "instanceTransform");
+
+            Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
+            var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
+            loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
+            loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
+            // loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.RED;
+            Raylib.UnloadImage(checkedImage);
+            _loadingMaterial = loadingMaterial;
+            _rlShaderEntry = rlShaderEntry;
+        }
+
+        protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
             if( !_haveDefaults )
             {
                 _haveDefaults = true;
-                var loadingMaterial = new RlMaterialEntry();
-
-                Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
-                var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
-                loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
-                loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
-                // loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.RED;
-                Raylib.UnloadImage(checkedImage);
-                _loadingMaterial = loadingMaterial;
+                _createDefaultMaterial();
             }
             foreach (var entity in entities)
             {

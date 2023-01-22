@@ -25,7 +25,7 @@ namespace Karawan.platform.cs1.splash
 
             Raylib.BeginDrawing();
 
-            Raylib.ClearBackground(Raylib.BLACK);
+            Raylib.ClearBackground(Raylib.BLUE);
             Raylib.DrawFPS(20, 40);
             Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
 
