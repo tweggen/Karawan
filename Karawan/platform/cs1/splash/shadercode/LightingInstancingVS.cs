@@ -15,12 +15,12 @@ namespace Karawan.platform.cs1.splash.shadercode
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec3 vertexNormal;
-//in vec4 vertexColor;      // Not required
+in vec4 vertexColor;
 
 in mat4 instanceTransform;
 
-        // Input uniform values
-        uniform mat4 mvp;
+// Input uniform values
+uniform mat4 mvp;
 uniform mat4 matNormal;
 
 // Output vertex attributes (to fragment shader)
@@ -34,17 +34,19 @@ out vec3 fragNormal;
 void main()
 {
     // Compute MVP for current instance
-    mat4 mvpi = mvp * instanceTransform;
+    mat4 mvpi = mvp*instanceTransform;
 
     // Send vertex attributes to fragment shader
-    fragPosition = vec3(mvpi * vec4(vertexPosition, 1.0));
+    fragPosition = vec3(mvpi*vec4(vertexPosition, 1.0));
     fragTexCoord = vertexTexCoord;
-    //fragColor = vertexColor;
-    fragNormal = normalize(vec3(matNormal * vec4(vertexNormal, 1.0)));
+    fragColor = vertexColor;
+    //fragNormal = normalize(vec3(matNormal*vec4(vertexNormal, 1.0)));
+    fragNormal = normalize(vec3(instanceTransform*vec4(vertexNormal, 1.0)));
 
     // Calculate final vertex position
-    gl_Position = mvpi * vec4(vertexPosition, 1.0);
+    gl_Position = mvpi*vec4(vertexPosition, 1.0);
 }
+
 ";
     }
 }

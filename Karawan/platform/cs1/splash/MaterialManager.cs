@@ -3,6 +3,7 @@
 // #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
 // #define GLSL_VERSION            100
 //#endif
+using System;
 using Raylib_CsLo;
 using System.Numerics;
 using System.Text;
@@ -51,11 +52,29 @@ namespace Karawan.platform.cs1.splash
                 Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "viewPos");
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MODEL] =
                 Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "instanceTransform");
+            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_NORMAL] =
+                Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "matNormal");
+#if true
+            // Set default shader locations: attributes locations
+            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_POSITION] =
+                Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexPosition");
+            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_TEXCOORD01] =
+                Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexTexCoord");
+            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_COLOR] =
+                Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexColor");
 
+            // Set default shader locations: uniform locations
+            // _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
+                // Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
+            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_COLOR_DIFFUSE] =
+                Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "colDiffuse");
+            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_ALBEDO] =
+                Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture0");
+#endif
             /* 
              * Test code: Set some ambient lighting:
              */
-            if( true ) {
+            if ( true ) {
                 int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
                 var colAmbient = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
                 Raylib.SetShaderValue(
