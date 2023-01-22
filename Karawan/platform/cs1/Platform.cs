@@ -27,7 +27,9 @@ namespace Karawan.platform.cs1
 
         public void SetupDone()
         {
-            Raylib.InitWindow(1280, 720, "codename Karawan");
+            var display = Raylib.GetCurrentMonitor();
+            Raylib.InitWindow(Raylib.GetMonitorWidth(display), Raylib.GetMonitorHeight(display), "codename Karawan");
+            Raylib.ToggleFullscreen();
             Raylib.SetTargetFPS(60);
 
             _aSplash = new splash.API(_engine);

@@ -135,7 +135,7 @@ namespace Karawan.nogame
             _cubeSpinnerSystem = new(_engine);
 
             /*
-             * Create a cube positioned at 2/0/0
+             * Create one parent that rotates.
              */
             _eCubeParent = _ecsWorld.CreateEntity();
             _aTransform.SetPosition(_eCubeParent, new Vector3(0f, 0f, 0f));
@@ -145,6 +145,7 @@ namespace Karawan.nogame
             /*
              * Create a camera.
              */
+            // TXWTODO: Not really in a scene, right?
             {
                 _eCamera = _ecsWorld.CreateEntity();
                 var cCamera = new engine.joyce.components.Camera3();
