@@ -59,13 +59,13 @@ namespace Karawan.nogame
 
 
         /**
-         * Create 1000 entities with
+         * Create 5000 entities with
          * - cube mesh, instance etc.
          * - a Scene Specific Spinner to make them turn
          */
         private void _createCubes()
         {
-            _nCubes = 1000;
+            _nCubes = 5000;
             _eCubes = new DefaultEcs.Entity[_nCubes];
             _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh();
 
@@ -79,9 +79,9 @@ namespace Karawan.nogame
                     new engine.joyce.components.Instance3(_jMeshCube));
                 _aTransform.SetPosition(_eCubes[i], 
                     new Vector3(
-                        (float) _rnd.NextDouble()*30-15,
-                        (float) _rnd.NextDouble()*30-15,
-                        (float) _rnd.NextDouble()*30-15));
+                        (float) _rnd.NextDouble()*200-100,
+                        (float) _rnd.NextDouble()*200-100,
+                        (float) _rnd.NextDouble()*200-100));
                 _aTransform.SetRotation(
                     _eCubes[i],
                     Quaternion.CreateFromAxisAngle(
@@ -151,9 +151,9 @@ namespace Karawan.nogame
                 var cCamera = new engine.joyce.components.Camera3();
                 cCamera.Angle = 60.0f;
                 cCamera.NearFrustrum = 1f;
-                cCamera.FarFrustrum = 100f;
+                cCamera.FarFrustrum = 200f;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 100f));
             }
 
             _engine.AddScene(this);
