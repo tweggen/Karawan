@@ -25,7 +25,7 @@ namespace Karawan.platform.cs1.splash
         {
             if( null==mesh.Normals )
             {
-                //mesh.GenerateNormals();
+                mesh.GenerateNormals();
             }
             rlMeshEntry = new();
 
@@ -49,11 +49,15 @@ namespace Karawan.platform.cs1.splash
             {
                 Vector3 vertex = (Vector3) mesh.Vertices[v];
                 Vector2 uv = (Vector2)mesh.UVs[v];
+                Vector3 normals = (Vector3)mesh.Normals[v];
                 rlMeshEntry.RlMesh.vertices[v * 3 + 0] = vertex.X;
                 rlMeshEntry.RlMesh.vertices[v * 3 + 1] = vertex.Y;
                 rlMeshEntry.RlMesh.vertices[v * 3 + 2] = vertex.Z;
                 rlMeshEntry.RlMesh.texcoords[v * 2 + 0] = uv.X;
                 rlMeshEntry.RlMesh.texcoords[v * 2 + 1] = uv.Y;
+                rlMeshEntry.RlMesh.normals[v * 3 + 0] = normals.X;
+                rlMeshEntry.RlMesh.normals[v * 3 + 1] = normals.Y;
+                rlMeshEntry.RlMesh.normals[v * 3 + 2] = normals.Z;
 #if false
                 rlMeshEntry.RlMesh.colors[v * 4 + 0] = 0x00;
                 rlMeshEntry.RlMesh.colors[v * 4 + 1] = 0xff;
