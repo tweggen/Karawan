@@ -2,14 +2,14 @@
 using System.Numerics;
 using System.Collections;
 using System.Collections.Generic;
-
+using System.Runtime.InteropServices;
 
 namespace Karawan.platform.cs1.splash.systems
 {
     class MeshBatch
     {
         // public Raylib_CsLo.Mesh Mesh;
-        public ArrayList Matrices;
+        public List<Matrix4x4> Matrices;
 
         public MeshBatch()
         {
@@ -20,7 +20,7 @@ namespace Karawan.platform.cs1.splash.systems
     class MaterialBatch
     {
         // public Raylib_CsLo.Material Material;
-        public Dictionary<Raylib_CsLo.Mesh, MeshBatch> MeshBatches;
+        public Dictionary<RlMeshEntry, MeshBatch> MeshBatches;
 
         public MaterialBatch()
         {
@@ -39,8 +39,7 @@ namespace Karawan.platform.cs1.splash.systems
     {
         private engine.Engine _engine;
 
-        private Dictionary<Raylib_CsLo.Material, MaterialBatch> _materialBatches;
-
+        private Dictionary<RlMaterialEntry, MaterialBatch> _materialBatches;
 
         private void _renderBatches()
         {
@@ -53,14 +52,26 @@ namespace Karawan.platform.cs1.splash.systems
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
                     var nMatrices = meshItem.Value.Matrices.Count;
-                    for( int i=0; i< nMatrices; ++i )
+#if false
+                    var arrayMatrices = meshItem.Value.Matrices.ToArray();
+                    // var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
+                    Span<Matrix4x4> spanMatrices = arrayMatrices;
+                    Raylib_CsLo.Raylib.DrawMeshInstanced(
+                            meshItem.Key.RlMesh,
+                            materialItem.Key.RlMaterial,
+                            spanMatrices,
+                            nMatrices
+                    );
+#else
+                    for ( int i=0; i< nMatrices; ++i )
                     {
                         Raylib_CsLo.Raylib.DrawMesh(
-                            meshItem.Key,
-                            materialItem.Key,
+                            meshItem.Key.RlMesh,
+                            materialItem.Key.RlMaterial,
                             (Matrix4x4) meshItem.Value.Matrices[i]
                         );
                     }
+#endif
                 }
             }
         }
@@ -79,22 +90,22 @@ namespace Karawan.platform.cs1.splash.systems
                      * Do we have an entry for the material?
                      */
                     MaterialBatch materialBatch;
-                    _materialBatches.TryGetValue( cMesh.Material, out materialBatch );
+                    _materialBatches.TryGetValue( cMesh.MaterialEntry, out materialBatch );
                     if (null == materialBatch)
                     {
                         materialBatch = new MaterialBatch();
-                        _materialBatches[cMesh.Material] = materialBatch;
+                        _materialBatches[cMesh.MaterialEntry] = materialBatch;
                     }
 
                     /*
                      * And do we have an entry for the mesh in the material?
                      */
                     MeshBatch meshBatch;
-                    materialBatch.MeshBatches.TryGetValue( cMesh.Mesh, out meshBatch );
+                    materialBatch.MeshBatches.TryGetValue( cMesh.MeshEntry, out meshBatch );
                     if (null == meshBatch)
                     {
                         meshBatch = new MeshBatch();
-                        materialBatch.MeshBatches[cMesh.Mesh] = meshBatch;
+                        materialBatch.MeshBatches[cMesh.MeshEntry] = meshBatch;
                     }
 
                     /*

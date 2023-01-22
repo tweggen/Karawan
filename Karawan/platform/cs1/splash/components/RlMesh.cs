@@ -9,16 +9,16 @@ namespace Karawan.platform.cs1.splash.components
 
     struct RlMesh
     {
-        public Raylib_CsLo.Mesh Mesh;
-        public Raylib_CsLo.Material Material;
+        public RlMeshEntry MeshEntry;
+        public RlMaterialEntry MaterialEntry;
 
         public RlMesh(
-            in Raylib_CsLo.Mesh rlMesh,
-            in Raylib_CsLo.Material rlMaterial
+            RlMeshEntry meshEntry,
+            RlMaterialEntry materialEntry
         )
         {
-            Mesh = rlMesh;
-            Material = rlMaterial;
+            MeshEntry = meshEntry;
+            MaterialEntry = materialEntry;
         }
     };
 

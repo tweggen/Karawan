@@ -111,7 +111,7 @@ namespace Karawan.engine
                     (50f+_testCount/2) * (float)Math.PI / 180f);
                 _aTransform.SetRotation(_eCubeParent, qParent);
             }
-            if( true )
+            if( false )
             {
                 if( 0==(_testCount&0x30) )
                 {
@@ -120,6 +120,9 @@ namespace Karawan.engine
                 {
                     _aTransform.SetVisible(_eCubeParent, true);
                 }
+            } else
+            {
+                _aTransform.SetVisible(_eCubeParent, true);
             }
 
             _aHierarchy.Update();

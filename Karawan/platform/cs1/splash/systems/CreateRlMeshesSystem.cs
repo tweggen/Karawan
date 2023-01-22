@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Raylib_CsLo;
 
 namespace Karawan.platform.cs1.splash.systems
@@ -19,8 +20,26 @@ namespace Karawan.platform.cs1.splash.systems
         /**
          * The global placeholder texture.
          */
-        private Texture _loadingTexture;
-        private Material _loadingMaterial;
+        // private Texture _loadingTexture;
+        private RlMaterialEntry _loadingMaterial;
+
+        private Dictionary<engine.joyce.Mesh, splash.RlMeshEntry> _dictMeshes;
+
+        private unsafe splash.RlMeshEntry _findRlMesh(engine.joyce.Mesh jMesh)
+        {
+            splash.RlMeshEntry rlMeshEntry;
+            if ( _dictMeshes.TryGetValue(jMesh, out rlMeshEntry) )
+            {
+            } else
+            {
+                MeshGenerator.CreateRaylibMesh(jMesh, out rlMeshEntry);
+                fixed (Raylib_CsLo.Mesh *pRlMeshEntry = &rlMeshEntry.RlMesh) {
+                    Raylib.UploadMesh(pRlMeshEntry, false);
+                }
+                _dictMeshes.Add(jMesh, rlMeshEntry);
+            }
+            return rlMeshEntry;
+        }
 
         protected override void PreUpdate(engine.Engine state)
         {
@@ -35,13 +54,15 @@ namespace Karawan.platform.cs1.splash.systems
             if( !_haveDefaults )
             {
                 _haveDefaults = true;
-                Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
-                _loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
-                _loadingMaterial = Raylib.LoadMaterialDefault();
-                _loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = _loadingTexture;
-                // _loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.RED;
+                var loadingMaterial = new RlMaterialEntry();
 
+                Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
+                var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
+                loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
+                loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
+                // loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.RED;
                 Raylib.UnloadImage(checkedImage);
+                _loadingMaterial = loadingMaterial;
             }
             foreach (var entity in entities)
             {
@@ -63,12 +84,11 @@ namespace Karawan.platform.cs1.splash.systems
                     var materialIndex = (int) cInstance3.MeshMaterials[i];
                     var jMaterial = (engine.joyce.Material) cInstance3.Materials[materialIndex];
 
-                    // TXWTODO: We need a mesh cache to enable proper allocation and upload of maehgs
-                    var rMesh = MeshGenerator.CreateRaylibMesh(jMesh);
+                    var rlMeshEntry =_findRlMesh(jMesh);
 
-                    Raylib.UploadMesh(&rMesh, false);
+                    // TXWTODO: Actually we don't need to copy it to the entity as we gather the meshes anyway, right?
                     entity.Set<splash.components.RlMesh>( 
-                        new splash.components.RlMesh(rMesh, _loadingMaterial));
+                        new splash.components.RlMesh(rlMeshEntry, _loadingMaterial));
                 }
             }
         }
@@ -78,6 +98,7 @@ namespace Karawan.platform.cs1.splash.systems
         {
             _engine = engine;
             _haveDefaults = false;
+            _dictMeshes = new();
         }
     }
 }
