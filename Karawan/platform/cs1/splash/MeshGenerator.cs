@@ -16,7 +16,7 @@ namespace Karawan.platform.cs1.splash
             /*
              * We don't use it currently, but the shader needs it.
              */
-            rlm->colors = (byte*)Raylib_CsLo.Raylib.MemAlloc((uint)(rlm->vertexCount * 4 * sizeof(byte)));
+            // rlm->colors = (byte*)Raylib_CsLo.Raylib.MemAlloc((uint)(rlm->vertexCount * 4 * sizeof(byte)));
         }
 
 
@@ -54,10 +54,12 @@ namespace Karawan.platform.cs1.splash
                 rlMeshEntry.RlMesh.vertices[v * 3 + 2] = vertex.Z;
                 rlMeshEntry.RlMesh.texcoords[v * 2 + 0] = uv.X;
                 rlMeshEntry.RlMesh.texcoords[v * 2 + 1] = uv.Y;
-                rlMeshEntry.RlMesh.colors[v * 4 + 0] = 0xff;
+#if false
+                rlMeshEntry.RlMesh.colors[v * 4 + 0] = 0x00;
                 rlMeshEntry.RlMesh.colors[v * 4 + 1] = 0xff;
                 rlMeshEntry.RlMesh.colors[v * 4 + 2] = 0xff;
-                rlMeshEntry.RlMesh.colors[v * 4 + 3] = 0xff;
+                rlMeshEntry.RlMesh.colors[v * 4 + 3] = 0x00;
+#endif
             }
             for (int i=0;i<nIndices;++i)
             {

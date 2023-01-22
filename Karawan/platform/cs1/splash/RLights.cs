@@ -116,7 +116,7 @@ namespace Karawan.platform.cs1.splash
 		//----------------------------------------------------------------------------------
 
 		// Create a light and get shader locations
-		public Light CreateLight(LightType type, Vector3 position, Vector3 target, Color color, Shader shader)
+		public Light CreateLight(LightType type, Vector3 position, Vector3 target, Color color, ref Shader shader)
 		{
 			Light light = new();
 
@@ -150,7 +150,7 @@ namespace Karawan.platform.cs1.splash
 				light.targetLoc = Raylib.GetShaderLocation(shader, targetName);
 				light.colorLoc = Raylib.GetShaderLocation(shader, colorName);
 
-				UpdateLightValues(shader, light);
+				UpdateLightValues(ref shader, light);
 
 				lightsCount++;
 			}
@@ -160,7 +160,7 @@ namespace Karawan.platform.cs1.splash
 
 		// Send light properties to shader
 		// NOTE: Light shader locations should be available 
-		public void UpdateLightValues(Shader shader, Light light)
+		public void UpdateLightValues(ref Shader shader, Light light)
 		{
 			// Send to shader light enabled state and type
 			Raylib.SetShaderValue(shader, light.enabledLoc, &light.enabled, ShaderUniformDataType.SHADER_UNIFORM_INT);
