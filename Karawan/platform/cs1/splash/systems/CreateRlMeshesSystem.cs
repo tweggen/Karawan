@@ -1,13 +1,5 @@
-﻿// #if defined(PLATFORM_DESKTOP)
-// #define GLSL_VERSION 330
-// #else   // PLATFORM_RPI, PLATFORM_ANDROID, PLATFORM_WEB
-// #define GLSL_VERSION            100
-//#endif
-
+﻿
 using System;
-using System.Text;
-using System.Collections.Generic;
-using Raylib_CsLo;
 
 
 namespace Karawan.platform.cs1.splash.systems
@@ -24,33 +16,8 @@ namespace Karawan.platform.cs1.splash.systems
     {
         private engine.Engine _engine;
 
-        private bool _haveDefaults;
-        /**
-         * The global placeholder texture.
-         */
-        // private Texture _loadingTexture;
-        private RlMaterialEntry _loadingMaterial;
-        private RlShaderEntry _rlShaderEntry;
-
-        private Dictionary<engine.joyce.Mesh, splash.RlMeshEntry> _dictMeshes;
-
-        static private string _glslVersion = "330";
-
-        private unsafe splash.RlMeshEntry _findRlMesh(engine.joyce.Mesh jMesh)
-        {
-            splash.RlMeshEntry rlMeshEntry;
-            if ( _dictMeshes.TryGetValue(jMesh, out rlMeshEntry) )
-            {
-            } else
-            {
-                MeshGenerator.CreateRaylibMesh(jMesh, out rlMeshEntry);
-                fixed (Raylib_CsLo.Mesh *pRlMeshEntry = &rlMeshEntry.RlMesh) {
-                    Raylib.UploadMesh(pRlMeshEntry, false);
-                }
-                _dictMeshes.Add(jMesh, rlMeshEntry);
-            }
-            return rlMeshEntry;
-        }
+        private MeshManager _meshManager;
+        private MaterialManager _materialManager;
 
         protected override void PreUpdate(engine.Engine state)
         {
@@ -60,40 +27,12 @@ namespace Karawan.platform.cs1.splash.systems
         {
         }
 
-        private unsafe void _createDefaultMaterial()
-        {
-            var loadingMaterial = new RlMaterialEntry();
-            var rlShaderEntry = new RlShaderEntry();
-
-            rlShaderEntry.RlShader = Raylib.LoadShader(
-                Raylib.TextFormat("resources/shaders/glsl%i/lighting_instancing.vs", _glslVersion),
-                Raylib.TextFormat("resources/shaders/glsl%i/lighting.fs", _glslVersion));
-            rlShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
-                Raylib.GetShaderLocation(rlShaderEntry.RlShader, "mvp");
-            rlShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW] =
-                Raylib.GetShaderLocation(rlShaderEntry.RlShader, "viewPos");
-            rlShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MODEL] =
-                Raylib.GetShaderLocationAttrib(rlShaderEntry.RlShader, "instanceTransform");
-
-            Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
-            var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
-            loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
-            loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
-            // loadingMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.RED;
-            Raylib.UnloadImage(checkedImage);
-            _loadingMaterial = loadingMaterial;
-            _rlShaderEntry = rlShaderEntry;
-        }
-
         protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-            if( !_haveDefaults )
-            {
-                _haveDefaults = true;
-                _createDefaultMaterial();
-            }
             foreach (var entity in entities)
             {
+                // TXWTODO: Only consider visible Instace3 things.
+
                 var cInstance3 = entity.Get<engine.joyce.components.Instance3>();
                 
                 var nMeshes = cInstance3.Meshes.Count;
@@ -112,21 +51,24 @@ namespace Karawan.platform.cs1.splash.systems
                     var materialIndex = (int) cInstance3.MeshMaterials[i];
                     var jMaterial = (engine.joyce.Material) cInstance3.Materials[materialIndex];
 
-                    var rlMeshEntry =_findRlMesh(jMesh);
+                    var rlMeshEntry =_meshManager.FindRlMesh(jMesh);
+                    var rlMaterialEntry = _materialManager.FindRlMaterial(jMaterial);
 
-                    // TXWTODO: Actually we don't need to copy it to the entity as we gather the meshes anyway, right?
-                    entity.Set<splash.components.RlMesh>( 
-                        new splash.components.RlMesh(rlMeshEntry, _loadingMaterial));
+                    entity.Set<splash.components.RlMesh>( new splash.components.RlMesh(rlMeshEntry, null));
                 }
             }
         }
 
-        public unsafe CreateRlMeshesSystem(engine.Engine engine)
+        public unsafe CreateRlMeshesSystem(
+            engine.Engine engine,
+            MeshManager meshManager,
+            MaterialManager materialManager
+        )
             : base( engine.GetEcsWorld() )
         {
             _engine = engine;
-            _haveDefaults = false;
-            _dictMeshes = new();
+            _meshManager = meshManager;
+            _materialManager = materialManager;
         }
     }
 }

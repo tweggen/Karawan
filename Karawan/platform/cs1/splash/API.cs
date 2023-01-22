@@ -13,6 +13,9 @@ namespace Karawan.platform.cs1.splash
         private systems.CreateRlMeshesSystem _createRlMeshesSystem;
         private systems.DrawRlMeshesSystem _drawRlMeshesSystem;
 
+        private MaterialManager _materialManager;
+        private MeshManager _meshManager;
+
         /**
          * Render all camera objects.
          */
@@ -60,8 +63,10 @@ namespace Karawan.platform.cs1.splash
         public API(engine.Engine engine)
         {
             _engine = engine;
-            _createRlMeshesSystem = new(_engine);
-            _drawRlMeshesSystem = new(_engine);
+            _materialManager = new();
+            _meshManager = new();
+            _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
+            _drawRlMeshesSystem = new(_engine, _materialManager);
         }
     }
 }

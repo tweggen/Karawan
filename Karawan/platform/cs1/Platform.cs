@@ -16,8 +16,6 @@ namespace Karawan.platform.cs1
 
         public void Execute()
         {
-            Raylib.InitWindow(1280, 720, "codename Karawan");
-            Raylib.SetTargetFPS(60);
             // Main game loop
             while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
@@ -29,6 +27,9 @@ namespace Karawan.platform.cs1
 
         public void SetupDone()
         {
+            Raylib.InitWindow(1280, 720, "codename Karawan");
+            Raylib.SetTargetFPS(60);
+
             _aSplash = new splash.API(_engine);
         }
 

@@ -38,6 +38,7 @@ namespace Karawan.platform.cs1.splash.systems
     sealed class DrawRlMeshesSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
+        private MaterialManager _materialManager;
 
         private Dictionary<RlMaterialEntry, MaterialBatch> _materialBatches;
 
@@ -84,17 +85,31 @@ namespace Karawan.platform.cs1.splash.systems
                 if (transform3ToWorld.IsTotalVisible)
                 {
                     var cMesh = entity.Get<splash.components.RlMesh>();
+                    RlMaterialEntry materialEntry;
+
+                    // Skip things that incompletely are loaded.
+                    if( null==cMesh.MeshEntry ) {
+                        continue;
+                    }
+                    if( null==cMesh.MaterialEntry )
+                    {
+                        materialEntry = _materialManager.GetUnloadedMaterial();
+                    } else
+                    {
+                        materialEntry = cMesh.MaterialEntry;
+                    }
+
                     var rMatrix = Matrix4x4.Transpose(transform3ToWorld.Matrix);
 
                     /*
                      * Do we have an entry for the material?
                      */
                     MaterialBatch materialBatch;
-                    _materialBatches.TryGetValue( cMesh.MaterialEntry, out materialBatch );
+                    _materialBatches.TryGetValue( materialEntry, out materialBatch );
                     if (null == materialBatch)
                     {
                         materialBatch = new MaterialBatch();
-                        _materialBatches[cMesh.MaterialEntry] = materialBatch;
+                        _materialBatches[materialEntry] = materialBatch;
                     }
 
                     /*
@@ -133,10 +148,14 @@ namespace Karawan.platform.cs1.splash.systems
             _appendMeshRenderList(entities);
         }
 
-        public DrawRlMeshesSystem(engine.Engine engine)
+        public DrawRlMeshesSystem(
+            engine.Engine engine,
+            MaterialManager materialManager
+        )
             : base(engine.GetEcsWorld())
         {
             _engine = engine;
+            _materialManager = materialManager;
         }
     }
 }
