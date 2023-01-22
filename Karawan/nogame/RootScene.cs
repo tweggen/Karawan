@@ -74,7 +74,7 @@ namespace Karawan.nogame
 
         private void _createCubes()
         {
-            _nCubes = 100;
+            _nCubes = 1000;
             _eCubes = new DefaultEcs.Entity[_nCubes];
             _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh();
 
@@ -91,6 +91,19 @@ namespace Karawan.nogame
                         (float) _rnd.NextDouble()*30-15,
                         (float) _rnd.NextDouble()*30-15,
                         (float) _rnd.NextDouble()*30-15));
+                _aTransform.SetRotation(
+                    _eCubes[i],
+                    Quaternion.CreateFromAxisAngle(
+                        Vector3.Normalize(
+                            new Vector3(
+                                (float)_rnd.NextDouble() - 0.5f,
+                                (float)_rnd.NextDouble() - 0.5f,
+                                (float)_rnd.NextDouble() - 0.5f
+                            )
+                        ),
+                        (float)((_rnd.NextDouble() * 100 - 5) * Math.PI / 180)
+                    )
+                );
                 _aTransform.SetVisible(_eCubes[i], true);
                 _aHierarchy.SetParent(_eCubes[i], _eCubeParent);
 

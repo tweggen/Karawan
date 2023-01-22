@@ -25,6 +25,8 @@ namespace Karawan.engine.transform.systems
             ref components.Transform3ToWorld cChildTransform3ToWorld ) 
         {
             var cTransform3 = childEntity.Get<transform.components.Transform3ToParent>();
+            // Console.WriteLine("parent transform {0}", cTransform3.Matrix);
+
 
             cChildTransform3ToWorld.IsTotalVisible = cParentTransform3ToWorld.IsTotalVisible && cTransform3.IsVisible;
             cChildTransform3ToWorld.Matrix =

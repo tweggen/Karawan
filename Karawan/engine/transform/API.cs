@@ -69,8 +69,8 @@ namespace Karawan.engine.transform
 
             SetTransforms(entity, 
                 object3.IsVisible,
-                rotation, 
-                // Quaternion.Concatenate( object3.Rotation, rotation ), 
+                // rotation, 
+                Quaternion.Concatenate( object3.Rotation, rotation ), 
                 object3.Position);
         }
         public void SetPosition(DefaultEcs.Entity entity, in Vector3 position)
