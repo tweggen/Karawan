@@ -86,7 +86,7 @@ namespace Karawan.engine.transform
         {
             if(_isDirty)
             {
-                _propagateTranslationSystem.Update(_engine);
+                 _propagateTranslationSystem.Update(_engine);
                 _isDirty = false;
             }
         }

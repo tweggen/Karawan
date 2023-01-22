@@ -34,10 +34,9 @@ namespace Karawan.nogame
             _cubeSpinnerSystem.Update(dt);
 
             /*
-             * Do test rotation
+             * Do test rotation of everything. That's what the eCubeParent is for.
              */
             ++_testCount;
-            if (true)
             {
                 var qParent = Quaternion.CreateFromAxisAngle(
                     Vector3.Normalize(new Vector3(2.1f, 0.2f, -1.4f)),
@@ -45,33 +44,25 @@ namespace Karawan.nogame
                 _aTransform.SetRotation(_eCubeParent, qParent);
             }
 
-            if (false)
-            {
-                if (0 == (_testCount & 0x30))
-                {
-                    _aTransform.SetVisible(_eCubeParent, false);
-                }
-                else
-                {
-                    _aTransform.SetVisible(_eCubeParent, true);
-                }
-            }
-            else
-            {
-                _aTransform.SetVisible(_eCubeParent, true);
-            }
-
         }
 
 
         public void SceneDeactivate()
         {
+            /*
+             * Null out everything we don't need when the scene is unloaded.
+             */
             _engine.RemoveScene(this);
             _rnd = null;
             _cubeSpinnerSystem = null;
         }
 
 
+        /**
+         * Create 1000 entities with
+         * - cube mesh, instance etc.
+         * - a Scene Specific Spinner to make them turn
+         */
         private void _createCubes()
         {
             _nCubes = 1000;
@@ -146,11 +137,9 @@ namespace Karawan.nogame
             /*
              * Create a cube positioned at 2/0/0
              */
-            {
-                _eCubeParent = _ecsWorld.CreateEntity();
-                _aTransform.SetPosition(_eCubeParent, new Vector3(0f, 0f, 0f));
-            }
-
+            _eCubeParent = _ecsWorld.CreateEntity();
+            _aTransform.SetPosition(_eCubeParent, new Vector3(0f, 0f, 0f));
+            _aTransform.SetVisible(_eCubeParent, true);
             _createCubes();
 
             /*
