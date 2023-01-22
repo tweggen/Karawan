@@ -6,6 +6,7 @@ namespace Karawan.platform.cs1.splash.systems
     [DefaultEcs.System.With(typeof(engine.joyce.components.Instance3))]
     [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
     [DefaultEcs.System.Without(typeof(splash.components.RlMesh))]
+
     /**
      * Create a raylib mesh for every mesh defined.
      * Totally unoptimized.
@@ -45,7 +46,7 @@ namespace Karawan.platform.cs1.splash.systems
             foreach (var entity in entities)
             {
                 var cInstance3 = entity.Get<engine.joyce.components.Instance3>();
-
+                
                 var nMeshes = cInstance3.Meshes.Count;
                 var nMeshMaterials = cInstance3.MeshMaterials.Count;
                 
