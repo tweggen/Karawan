@@ -27,9 +27,10 @@ namespace Karawan.engine.transform.systems
             var cTransform3 = childEntity.Get<transform.components.Transform3ToParent>();
 
             cChildTransform3ToWorld.IsTotalVisible = cParentTransform3ToWorld.IsTotalVisible && cTransform3.IsVisible;
-            cChildTransform3ToWorld.Matrix = 
-                 childEntity.Get<transform.components.Transform3ToParent>().Matrix
-                 * cParentTransform3ToWorld.Matrix;
+            cChildTransform3ToWorld.Matrix =
+                cTransform3.Matrix
+                *
+                cParentTransform3ToWorld.Matrix;
             childEntity.Set<transform.components.Transform3ToWorld>(cChildTransform3ToWorld);
         }
 
@@ -38,6 +39,7 @@ namespace Karawan.engine.transform.systems
             DefaultEcs.Entity entity )
         {
             var children = entity.Get<hierarchy.components.Children>().Entities;
+            // Console.WriteLine("nChildren = {0}", children.Count);
             foreach (var childEntity in children)
             {
                 var cChildTransform3ToWorld = new transform.components.Transform3ToWorld();

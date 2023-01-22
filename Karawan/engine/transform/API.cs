@@ -15,8 +15,12 @@ namespace Karawan.engine.transform
             in Vector3 position)
         {
             entity.Set<transform.components.Transform3>(
-                new transform.components.Transform3(
-                    isVisible, rotation, position));
+                new transform.components.Transform3(isVisible, rotation, position));
+
+            /*
+             * Write it back to parent transformation
+             * TXWTODO: IN a system only for the changed ones.
+             */
             {
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
@@ -62,9 +66,11 @@ namespace Karawan.engine.transform
         public void AppendRotation(DefaultEcs.Entity entity, in Quaternion rotation)
         {
             var object3 = GetTransform(entity);
+
             SetTransforms(entity, 
                 object3.IsVisible,
-                Quaternion.Concatenate( object3.Rotation, rotation ), 
+                rotation, 
+                // Quaternion.Concatenate( object3.Rotation, rotation ), 
                 object3.Position);
         }
         public void SetPosition(DefaultEcs.Entity entity, in Vector3 position)
