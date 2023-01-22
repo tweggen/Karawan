@@ -13,8 +13,13 @@ namespace Karawan.nogame
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
-        private DefaultEcs.Entity _eCubeNear;
-        private DefaultEcs.Entity _eCubeFar;
+        private systems.CubeSpinnerSystem _cubeSpinnerSystem;
+
+        private int _nCubes;
+        private DefaultEcs.Entity[] _eCubes;
+        private engine.joyce.Mesh _jMeshCube;
+        private Random _rnd;
+
         private DefaultEcs.Entity _eCubeParent;
 
         private DefaultEcs.Entity _eCamera;
@@ -23,17 +28,15 @@ namespace Karawan.nogame
 
         public void SceneOnLogicalFrame( float dt )
         {
-            _testCount++;
+            /*
+             * Advance all cubes
+             */
+            _cubeSpinnerSystem.Update(dt);
+
             /*
              * Do test rotation
              */
-            if (true)
-            {
-                var qNear = Quaternion.CreateFromAxisAngle(
-                    Vector3.Normalize(new Vector3(0.2f, 1f, 0.4f)),
-                    _testCount * (float)Math.PI / 180f);
-                _aTransform.SetRotation(_eCubeNear, qNear);
-            }
+            ++_testCount;
             if (true)
             {
                 var qParent = Quaternion.CreateFromAxisAngle(
@@ -41,6 +44,7 @@ namespace Karawan.nogame
                     (50f + _testCount / 2) * (float)Math.PI / 180f);
                 _aTransform.SetRotation(_eCubeParent, qParent);
             }
+
             if (false)
             {
                 if (0 == (_testCount & 0x30))
@@ -59,9 +63,53 @@ namespace Karawan.nogame
 
         }
 
+
         public void SceneDeactivate()
         {
             _engine.RemoveScene(this);
+            _rnd = null;
+            _cubeSpinnerSystem = null;
+        }
+
+
+        private void _createCubes()
+        {
+            _nCubes = 100;
+            _eCubes = new DefaultEcs.Entity[_nCubes];
+            _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh();
+
+            for (int i = 0; i < _nCubes; ++i)
+            {
+                /*
+                 * Create a standard Instance3
+                 */
+                _eCubes[i] = _ecsWorld.CreateEntity();
+                _eCubes[i].Set<engine.joyce.components.Instance3>(
+                    new engine.joyce.components.Instance3(_jMeshCube));
+                _aTransform.SetPosition(_eCubes[i], 
+                    new Vector3(
+                        (float) _rnd.NextDouble()*30-15,
+                        (float) _rnd.NextDouble()*30-15,
+                        (float) _rnd.NextDouble()*30-15));
+                _aTransform.SetVisible(_eCubes[i], true);
+                _aHierarchy.SetParent(_eCubes[i], _eCubeParent);
+
+                /*
+                 * Add our own component
+                 */
+                _eCubes[i].Set<components.CubeSpinner>(
+                    new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
+                        Vector3.Normalize(
+                            new Vector3(
+                                (float)_rnd.NextDouble() - 0.5f,
+                                (float)_rnd.NextDouble() - 0.5f,
+                                (float)_rnd.NextDouble() - 0.5f
+                            )
+                        ),
+                        (float)((_rnd.NextDouble() * 10 - 5) * Math.PI / 180)
+                    ))
+                );
+            }
         }
 
 
@@ -77,27 +125,20 @@ namespace Karawan.nogame
             _aTransform = _engine.GetATransform();
 
             /*
+             * Local state
+             */
+            _rnd = new Random();
+            _cubeSpinnerSystem = new(_engine);
+
+            /*
              * Create a cube positioned at 2/0/0
              */
             {
                 _eCubeParent = _ecsWorld.CreateEntity();
                 _aTransform.SetPosition(_eCubeParent, new Vector3(0f, 0f, 0f));
-
-                var jMesh = engine.joyce.mesh.Tools.CreateCubeMesh();
-
-                _eCubeNear = _ecsWorld.CreateEntity();
-                _eCubeNear.Set<engine.joyce.components.Instance3>(new engine.joyce.components.Instance3(jMesh));
-                _aTransform.SetPosition(_eCubeNear, new Vector3(2.5f, 0f, 0f));
-                _aTransform.SetVisible(_eCubeNear, true);
-                _aHierarchy.SetParent(_eCubeNear, _eCubeParent);
-
-                _eCubeFar = _ecsWorld.CreateEntity();
-                _eCubeFar.Set<engine.joyce.components.Instance3>(new engine.joyce.components.Instance3(jMesh));
-                _aTransform.SetPosition(_eCubeFar, new Vector3(-1.5f, 0f, 0f));
-                _aTransform.SetVisible(_eCubeFar, true);
-                _aHierarchy.SetParent(_eCubeFar, _eCubeParent);
-
             }
+
+            _createCubes();
 
             /*
              * Create a camera.
