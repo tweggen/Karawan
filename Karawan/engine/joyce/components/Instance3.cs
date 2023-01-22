@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Karawan.engine.joyce.components
 {
-    struct Instance3
+    public struct Instance3
     {
         // public Matrix4x4 PreTransform;
         public IList Meshes;

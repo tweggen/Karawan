@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Karawan.engine.joyce.mesh
 {
-    class Tools
+    public class Tools
     {
         private static void _addQuadIndicesXY(
             in joyce.Mesh m,

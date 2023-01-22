@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Karawan.engine.hierarchy
 {
-    class API
+    public class API
     {
         private engine.Engine _engine;
 

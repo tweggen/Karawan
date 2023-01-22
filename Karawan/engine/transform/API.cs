@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Karawan.engine.transform
 {
-    class API
+    public class API
     {
         private engine.Engine _engine;
         private systems.PropagateTranslationSystem _propagateTranslationSystem;

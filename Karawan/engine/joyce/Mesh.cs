@@ -27,7 +27,7 @@ namespace Karawan.engine.joyce
         /**
          * Indexable array like of Vector3 or null.
          */
-        public IList? Normals;
+        public IList Normals;
 
         /**
          * Generate smoothed normals for this mesh.

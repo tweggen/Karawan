@@ -15,6 +15,9 @@ namespace Karawan.platform.cs1
             platform.SetupDone();
             engine.PlatformSetupDone();
 
+            var scnNogameRoot = new nogame.RootScene();
+            scnNogameRoot.SceneActivate(engine);
+
             platform.Execute();
         }
     }

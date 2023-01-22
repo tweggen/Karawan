@@ -58,7 +58,7 @@ namespace Karawan.platform.cs1.splash
                 rlMeshEntry.RlMesh.normals[v * 3 + 0] = normals.X;
                 rlMeshEntry.RlMesh.normals[v * 3 + 1] = normals.Y;
                 rlMeshEntry.RlMesh.normals[v * 3 + 2] = normals.Z;
-                Console.WriteLine("Normal:  {0}", normals.ToString());
+                // Console.WriteLine("Normal:  {0}", normals.ToString());
 #if false
                 rlMeshEntry.RlMesh.colors[v * 4 + 0] = 0x00;
                 rlMeshEntry.RlMesh.colors[v * 4 + 1] = 0xff;

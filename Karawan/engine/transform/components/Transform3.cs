@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Karawan.engine.transform.components
 {
-    struct Transform3
+    public struct Transform3
     {
         public bool IsVisible;
         public Quaternion Rotation;
