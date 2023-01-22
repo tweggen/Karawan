@@ -32,7 +32,7 @@ namespace Karawan.engine.joyce
         /**
          * Generate smoothed normals for this mesh.
          */
-        public void GenerateNormals()
+        public void GenerateCCWNormals()
         {
             if( null != Normals )
             {
@@ -70,7 +70,7 @@ namespace Karawan.engine.joyce
                 v2 -= v0;
                 v1 -= v0;
 
-                var vn = Vector3.Cross(v2, v1);
+                var vn = Vector3.Cross(v1, v2);
 
                 for( int j=0; j<3; ++j)
                 {

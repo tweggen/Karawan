@@ -78,7 +78,7 @@ namespace Karawan.platform.cs1.splash
 		// Light type
 		public enum LightType
 		{
-			LIGHT_DIRECTIONAL,
+			LIGHT_DIRECTIONAL = 0,
 			LIGHT_POINT
 		}
 

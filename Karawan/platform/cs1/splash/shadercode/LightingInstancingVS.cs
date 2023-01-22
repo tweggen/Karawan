@@ -21,7 +21,7 @@ in mat4 instanceTransform;
 
 // Input uniform values
 uniform mat4 mvp;
-uniform mat4 matNormal;
+// uniform mat4 matNormal;
 
 // Output vertex attributes (to fragment shader)
 out vec3 fragPosition;
