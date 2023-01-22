@@ -49,7 +49,9 @@ namespace Karawan.platform.cs1.splash
                 var rCamera = new Raylib_CsLo.Camera3D( vPosition, vTarget, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
-                // Raylib.UpdateCamera(ref rCamera);
+                // TXWTODO: Hack the camera position into the main shader.
+                _materialManager.HackSetCameraPos(vPosition);
+
                 Raylib.BeginMode3D(rCamera);
 
                 _drawRlMeshesSystem.Update(_engine);

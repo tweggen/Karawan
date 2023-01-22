@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Karawan": {
+      "commandName": "Project",
+      "workingDirectory": "$(SoloutionDir)"
+    }
+  }
+}

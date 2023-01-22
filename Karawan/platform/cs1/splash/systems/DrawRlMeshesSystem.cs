@@ -53,7 +53,7 @@ namespace Karawan.platform.cs1.splash.systems
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
                     var nMatrices = meshItem.Value.Matrices.Count;
-#if false
+#if true
                     var arrayMatrices = meshItem.Value.Matrices.ToArray();
                     // var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
                     Span<Matrix4x4> spanMatrices = arrayMatrices;
