@@ -37,22 +37,24 @@ namespace Karawan.engine.joyce.mesh
             _addQuadXYUV( m, v0, vx, vy, new Vector2( 0f, 0f ), new Vector2( 1f, 0f ), new Vector2( 0f, 1f ) );
         }
 
-        public static joyce.Mesh CreateCubeMesh()
+        public static joyce.Mesh CreateCubeMesh(float size)
         {
+            float h /* half */ = size / 2;
+
             var m = joyce.Mesh.CreateArrayListInstance();
 
             // Back
-            _addQuadXY( m, new Vector3(.5f, -.5f, -.5f), new Vector3(-1f, 0f, 0f), new Vector3(0f, 1f, 0f) );
+            _addQuadXY( m, new Vector3(h, -h, -h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f) );
             // Front
-            _addQuadXY( m, new Vector3(-.5f, -.5f, .5f), new Vector3(1f, 0f, 0f), new Vector3(0f, 1f, 0f) );
+            _addQuadXY( m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f) );
             // Top
-            _addQuadXY(m, new Vector3(-.5f, .5f, .5f), new Vector3(1f, 0f, 0f), new Vector3(0f, 0f, -1f) );
+            _addQuadXY(m, new Vector3(-h, h, h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, -size) );
             // Bottom
-            _addQuadXY(m, new Vector3(-.5f, -.5f, -.5f), new Vector3(1f, 0f, 0f), new Vector3(0f, 0f, 1f));
+            _addQuadXY(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, size));
             // Right
-            _addQuadXY(m, new Vector3(.5f, -.5f, .5f), new Vector3(0f, 0f, -1f), new Vector3(0f, 1f, 0f));
+            _addQuadXY(m, new Vector3(h, -h, h), new Vector3(0f, 0f, -size), new Vector3(0f, size, 0f));
             // Left
-            _addQuadXY(m, new Vector3(-.5f, -.5f, -.5f), new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f));
+            _addQuadXY(m, new Vector3(-h, -h, -h), new Vector3(0f, 0f, size), new Vector3(0f, size, 0f));
 
             return m;
         }
