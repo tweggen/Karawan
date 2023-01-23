@@ -65,7 +65,7 @@ namespace Karawan.nogame
          */
         private void _createCubes()
         {
-            _nCubes = 50000;
+            _nCubes = 5000;
             _eCubes = new DefaultEcs.Entity[_nCubes];
             _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh(1.3f);
 
