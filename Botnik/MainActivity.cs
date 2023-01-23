@@ -14,6 +14,24 @@ namespace Botnik
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.activity_main);
+
+            Karawan.platform.cs1.Platform platform = new Karawan.platform.cs1.Platform(args);
+
+            engine.Engine engine = new engine.Engine(platform);
+            engine.SetupDone();
+
+            platform.SetEngine(engine);
+            platform.SetupDone();
+            engine.PlatformSetupDone();
+
+
+            var scnNogameRoot = new nogame.RootScene();
+            scnNogameRoot.SceneActivate(engine);
+
+            platform.Execute();
+
+            scnNogameRoot.SceneDeactivate();
+
         }
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
         {

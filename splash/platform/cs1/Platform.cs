@@ -42,7 +42,7 @@ namespace Karawan.platform.cs1
                 _engine.OnPhysicalFrame( (float)(thisFrame-lastFrame) );
 
                 _aSplash.Render();
-
+#if false
                 Raylib.BeginDrawing();
                 if (showMessageBox)
                 {
@@ -60,7 +60,7 @@ namespace Karawan.platform.cs1
                     else if (result == 1) showMessageBox = true;
                 }
                 Raylib.EndDrawing();
-
+#endif
                 lastFrame = thisFrame;
             }
             Raylib.CloseWindow();

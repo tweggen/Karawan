@@ -104,6 +104,20 @@
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.0.0.1" />
     <PackageReference Include="Xamarin.Essentials" Version="1.6.1" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Joyce\Joyce.csproj">
+      <Project>{4c6243f1-1b4f-4ecf-ace7-3e8e75b3b917}</Project>
+      <Name>Joyce</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\nogame\nogame.csproj">
+      <Project>{4f362d4b-f5a4-4b0d-9bdf-3b5a808f15de}</Project>
+      <Name>nogame</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\splash\splash.csproj">
+      <Project>{990b4c3d-1e5e-4d39-a76a-0c191c5f4a32}</Project>
+      <Name>splash</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
     Other similar extension points exist, see Microsoft.Common.targets.
