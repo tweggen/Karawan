@@ -1,5 +1,5 @@
 ﻿
-namespace Karawan.engine.xray
+namespace engine.xray
 {
     class RootScene : engine.IScene
     {
