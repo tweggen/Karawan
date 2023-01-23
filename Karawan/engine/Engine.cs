@@ -61,17 +61,24 @@ namespace Karawan.engine
             }
         }
 
+        private double _timeLeft;
+        private int _fpsLogical = 60;
+
         public void OnPhysicalFrame(float dt)
         {
-            // TXWTODO: Iterate through logical frames.
+            _timeLeft += dt;
+            do
+            {
+                _timeLeft -= 1 / (double)_fpsLogical;
 
-            /*
-             * First, let the scenes update themselves.
-             */
-            _onLogicalFrame(dt);
+                /*
+                 * First, let the scenes update themselves.
+                 */
+                _onLogicalFrame((float)(1/(double)_fpsLogical));
 
-            _aHierarchy.Update();
-            _aTransform.Update();
+                _aHierarchy.Update();
+                _aTransform.Update();
+            } while (_timeLeft > 0);
         }
 
         /**
