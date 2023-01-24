@@ -3,9 +3,10 @@ using System.Collections.Generic;
 
 namespace Karawan.platform.cs1.splash
 {
-    class TextureManager
+    public class TextureManager
     {
         TextureGenerator _textureGenerator;
+
 
         private Dictionary<engine.joyce.Texture, splash.RlTextureEntry> _dictTextures;
 
