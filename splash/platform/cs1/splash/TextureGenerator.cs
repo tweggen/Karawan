@@ -20,6 +20,7 @@ namespace Karawan.platform.cs1.splash
                     _imgChessboard = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
                 }
                 imgNew = _imgChessboard;
+                canFreeImage = false;
             } else if(jTexture.Source=="joyce://64MB")
             {
                 if( _img64MB.width == 0)

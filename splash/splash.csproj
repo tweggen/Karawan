@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="platform\cs1\splash\scenes\" />
+  </ItemGroup>
+
 </Project>

@@ -96,6 +96,12 @@ namespace engine
         }
          
 
+        public void Execute()
+        {
+            _platform.Execute();
+        }
+
+
         /**
          * Call after all dependencies are set.
          */

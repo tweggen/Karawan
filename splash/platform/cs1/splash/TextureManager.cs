@@ -1,4 +1,5 @@
 ﻿using Raylib_CsLo;
+using System;
 using System.Collections.Generic;
 
 namespace Karawan.platform.cs1.splash
@@ -24,12 +25,35 @@ namespace Karawan.platform.cs1.splash
             return rlTextureEntry;
         }
 
-        public void LoadBackTexture( RlTextureEntry rlTextureEntry )
+        private void _purgeLoadTexture(engine.joyce.Texture jTexture, bool doDownload)
         {
-            Image image = Raylib.LoadImageFromTexture(rlTextureEntry.RlTexture);
-            Raylib.UnloadTexture(rlTextureEntry.RlTexture);
-            rlTextureEntry.RlTexture = new();
-            Raylib.UnloadImage(image);
+            splash.RlTextureEntry rlTextureEntry;
+            if (_dictTextures.TryGetValue(jTexture, out rlTextureEntry))
+            {
+                if (doDownload)
+                {
+                    Image image = Raylib.LoadImageFromTexture(rlTextureEntry.RlTexture);
+                }
+                Raylib.UnloadTexture(rlTextureEntry.RlTexture);
+                _dictTextures.Remove(jTexture);
+                rlTextureEntry.RlTexture = new();
+            }
+            else
+            {
+                Console.WriteLine("problem");
+            }
+        }
+
+
+        public void LoadBackTexture(engine.joyce.Texture jTexture)
+        {
+            _purgeLoadTexture(jTexture, true);
+        }
+
+
+        public void PurgeTexture(engine.joyce.Texture jTexture)
+        {
+            _purgeLoadTexture(jTexture, false);
         }
 
         public TextureManager()

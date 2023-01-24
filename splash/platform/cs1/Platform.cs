@@ -42,25 +42,6 @@ namespace Karawan.platform.cs1
                 _engine.OnPhysicalFrame( (float)(thisFrame-lastFrame) );
 
                 _aSplash.Render();
-#if false
-                Raylib.BeginDrawing();
-                if (showMessageBox)
-                {
-                    Raylib.DrawRectangle(
-                        0,
-                        0,
-                        (int)(Raylib.GetScreenWidth() * 0.8),
-                        (int)(Raylib.GetScreenHeight() * 0.8),
-                        Raylib.Fade(Raylib.RAYWHITE, 0.8f));
-                    int result = RayGui.GuiMessageBox(
-                        new Rectangle(
-                            (float)Raylib.GetScreenWidth() / 2 - 125, (float)Raylib.GetScreenHeight() / 2 - 50, 250, 100),
-                        RayGui.GuiIconText(5, "Close Window"), "Do you really want to exit?", "Yes;No");
-                    if ((result == 0) || (result == 2)) showMessageBox = false;
-                    else if (result == 1) showMessageBox = true;
-                }
-                Raylib.EndDrawing();
-#endif
                 lastFrame = thisFrame;
             }
             Raylib.CloseWindow();
@@ -70,7 +51,7 @@ namespace Karawan.platform.cs1
         {
             var display = Raylib.GetCurrentMonitor();
             Raylib.InitWindow(Raylib.GetMonitorWidth(display), Raylib.GetMonitorHeight(display), "codename Karawan");
-            Raylib.ToggleFullscreen();
+            //Raylib.ToggleFullscreen();
             Raylib.SetTargetFPS(60);
 
             _aSplash = new splash.API(_engine);
@@ -78,6 +59,33 @@ namespace Karawan.platform.cs1
 
         public Platform(string[] args)
         {
+        }
+
+        static public engine.Engine EasyCreatePlatform(string[] args, out Karawan.platform.cs1.Platform platform)
+        {
+            platform = new Platform(args);
+            engine.Engine engine = new engine.Engine(platform);
+            engine.SetupDone();
+
+            platform.SetEngine(engine);
+            platform.SetupDone();
+            engine.PlatformSetupDone();
+
+            return engine;
+        }
+
+
+        static public engine.Engine EasyCreate(string[] args)
+        {
+            var platform = new Platform(args);
+            engine.Engine engine = new engine.Engine(platform);
+            engine.SetupDone();
+
+            platform.SetEngine(engine);
+            platform.SetupDone();
+            engine.PlatformSetupDone();
+
+            return engine;
         }
     }
 }
