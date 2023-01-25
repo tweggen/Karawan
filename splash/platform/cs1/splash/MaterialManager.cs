@@ -12,9 +12,6 @@ namespace Karawan.platform.cs1.splash
 {
     public class MaterialManager
     {
-        // TXWTODO: Add a define for the GLSL platform
-        static private int _glslVersion = 330;
-
 
         private bool _haveDefaults;
         /**
