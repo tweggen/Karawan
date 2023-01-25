@@ -20,9 +20,9 @@ namespace Karawan.platform.cs1
 
             // Main game loop
             lastFrame = Raylib.GetTime();
+            Raylib.BeginDrawing();
             _engine.OnPhysicalFrame(1/60);
-
-            bool showMessageBox = false;
+            Raylib.EndDrawing();
 
             while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
@@ -34,24 +34,49 @@ namespace Karawan.platform.cs1
                     }
                     if( keyCode == 65 )
                     {
-                        showMessageBox = !showMessageBox;
+                        // TXWTODO: Forward 
                     }
                 }
 
+                /*
+                 * Call the render operations.
+                 */
                 thisFrame = Raylib.GetTime();
+                Raylib.BeginDrawing();
                 _engine.OnPhysicalFrame( (float)(thisFrame-lastFrame) );
-
-                _aSplash.Render();
+                Raylib.EndDrawing();
                 lastFrame = thisFrame;
             }
             Raylib.CloseWindow();
         }
 
+        public void Render3D()
+        {
+            _aSplash.Render();
+        }
+
+        public engine.IUI CreateUI()
+        {
+            return new PlatformUI();
+        }
+
         public void SetupDone()
         {
             var display = Raylib.GetCurrentMonitor();
-            Raylib.InitWindow(Raylib.GetMonitorWidth(display), Raylib.GetMonitorHeight(display), "codename Karawan");
-            //Raylib.ToggleFullscreen();
+#if DEBUG
+            var width = 1280;
+            var height = width / 16 * 9;
+            bool isFullscreen = false;
+#else
+            var width = Raylib.GetMonitorWidth(display);
+            var height = Raylib.GetMonitorHeight(display);
+            bool isFullscreen = true;
+#endif
+            Raylib.InitWindow(width, height, "codename Karawan");
+            if (isFullscreen)
+            {
+                Raylib.ToggleFullscreen();
+            }
             Raylib.SetTargetFPS(60);
 
             _aSplash = new splash.API(_engine);

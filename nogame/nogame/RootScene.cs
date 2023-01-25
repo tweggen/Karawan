@@ -25,6 +25,8 @@ namespace nogame
 
         private int _testCount;
 
+        private engine.IScene _xray;
+
         public void SceneOnLogicalFrame( float dt )
         {
             /*
@@ -45,9 +47,17 @@ namespace nogame
 
         }
 
+        public void SceneOnPhysicalFrame( float dt )
+        {
+            _engine.Render3D();
+        }
+
 
         public void SceneDeactivate()
         {
+            _xray.SceneDeactivate();
+            _xray = null;
+
             /*
              * Null out everything we don't need when the scene is unloaded.
              */
@@ -155,7 +165,10 @@ namespace nogame
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 100f));
             }
 
-            _engine.AddScene(this);
+            _engine.AddScene(0, this);
+
+            _xray = new engine.xray.RootScene();
+            _xray.SceneActivate(_engine);
 
         }
 

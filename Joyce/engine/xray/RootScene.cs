@@ -1,22 +1,38 @@
 ﻿
+
 namespace engine.xray
 {
-    class RootScene : engine.IScene
+    public class RootScene : engine.IScene
     {
+        private engine.Engine _engine;
+        private engine.IUI _ui;
 
         public void SceneActivate(Engine engine)
         {
-            throw new System.NotImplementedException();
+            _engine = engine;
+
+            _ui = engine.CreateUI();
+
+            _engine.AddScene(10, this);
         }
 
         public void SceneDeactivate()
         {
-            throw new System.NotImplementedException();
+            _engine.RemoveScene(this);
         }
 
         public void SceneOnLogicalFrame(float dt)
         {
-            throw new System.NotImplementedException();
         }
+
+        public void SceneOnPhysicalFrame(float dt)
+        {
+            _ui.Render();
+        }
+
+        public RootScene()
+        {
+        }
+
     }
 }

@@ -77,6 +77,10 @@ namespace Benchmark
         {
         }
 
+        public void SceneOnPhysicalFrame(float dt)
+        {
+        }
+
         public Benchmark()
         {
             _listSummary = new();

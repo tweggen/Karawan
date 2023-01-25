@@ -10,7 +10,7 @@ namespace engine
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
-        private List<IScene> _listScenes;
+        private SortedDictionary<float, IScene> _dictScenes;
 
         private void _selfTest()
         {
@@ -31,7 +31,6 @@ namespace engine
             }
 
         }
-
 
         public engine.hierarchy.API GetAHierarchy()
         {
@@ -54,10 +53,22 @@ namespace engine
             /*
              * We need a local copy in case anybody adds scenes.
              */
-            var listScenes = new List<IScene>(_listScenes);
-            foreach( var scene in listScenes )
+            var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
+            foreach( KeyValuePair<float, IScene> kvp in dictScenes )
             {
-                scene.SceneOnLogicalFrame(dt);
+                kvp.Value.SceneOnLogicalFrame(dt);
+            }
+        }
+
+        public void _onPhysicalFrame(float dt)
+        {
+            /*
+             * We need a local copy in case anybody adds scenes.
+             */
+            var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
+            foreach (KeyValuePair<float, IScene> kvp in dictScenes)
+            {
+                kvp.Value.SceneOnPhysicalFrame(dt);
             }
         }
 
@@ -79,22 +90,40 @@ namespace engine
                 _aHierarchy.Update();
                 _aTransform.Update();
             } while (_timeLeft > 0);
+
+            _onPhysicalFrame(dt);
         }
 
         /**
          * Add another scene.
          */
-        public void AddScene(IScene scene)
+        public void AddScene(float zOrder, IScene scene)
         {
-            _listScenes.Add(scene);
+            _dictScenes.Add(zOrder, scene);
         }
 
 
         public void RemoveScene(IScene scene)
         {
-            _listScenes.Remove(scene);
+            foreach( KeyValuePair<float, IScene> kvp in _dictScenes )
+            {
+                if( kvp.Value == scene )
+                {
+                    _dictScenes.Remove(kvp.Key);
+                    return;
+                }
+            }
         }
-         
+
+        public void Render3D()
+        {
+            _platform.Render3D();
+        }
+
+        public IUI CreateUI()
+        {
+            return _platform.CreateUI();
+        }
 
         public void Execute()
         {
@@ -122,7 +151,7 @@ namespace engine
         {
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();
-            _listScenes = new();
+            _dictScenes = new();
         }
     }
 }

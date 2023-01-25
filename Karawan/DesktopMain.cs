@@ -7,37 +7,12 @@ namespace Karawan
     {
         public static void Main(string[] args)
         {
-            var platform = new Karawan.platform.cs1.Platform( args );
-
-            engine.Engine engine = new engine.Engine(platform);
-            engine.SetupDone();
-
-            platform.SetEngine(engine);
-            platform.SetupDone();
-            engine.PlatformSetupDone();
-
-#if false
-            Karawan.platform.cs1.splash.TextureManager textureManager = new();
-
-            for (int n = 0; n < 20; ++n)
-            {
-                double now = Raylib.GetTime();
-                int nIterations = 10;
-                for (int i = 0; i < nIterations; ++i)
-                {
-                    Karawan.platform.cs1.splash.RlTextureEntry rlTextureEntry;
-                    rlTextureEntry = textureManager.FindRlTexture(new engine.joyce.Texture("joyce://64MB"));
-                    textureManager.LoadBackTexture(rlTextureEntry);
-                }
-                double then = Raylib.GetTime();
-                Console.WriteLine("Upload of {0} * 64MB took {1}s.", nIterations, then - now);
-            }
-#endif
+            var engine = Karawan.platform.cs1.Platform.EasyCreate(args);
 
             var scnNogameRoot = new nogame.RootScene();
             scnNogameRoot.SceneActivate(engine);
 
-            // platform.Execute();
+            engine.Execute();
 
             scnNogameRoot.SceneDeactivate();
         }

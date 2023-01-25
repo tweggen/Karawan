@@ -26,8 +26,6 @@ namespace Karawan.platform.cs1.splash
              */
             _createRlMeshesSystem.Update(_engine); 
 
-            Raylib.BeginDrawing();
-
             Raylib.ClearBackground(Raylib.BLUE);
 
             var listCameras = _engine.GetEcsWorld().GetEntities()
@@ -60,7 +58,6 @@ namespace Karawan.platform.cs1.splash
             Raylib.DrawFPS(20, 40);
             Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
 
-            Raylib.EndDrawing();
         }
 
         public API(engine.Engine engine)
