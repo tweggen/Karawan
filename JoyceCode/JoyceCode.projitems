@@ -14,6 +14,9 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\FactoryEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IElevationProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Rect.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\API.cs" />
