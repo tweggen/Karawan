@@ -10,9 +10,17 @@ namespace engine.xray
         public void SceneActivate(Engine engine)
         {
             _engine = engine;
-
+#if false
             _ui = engine.CreateUI();
-
+            string strTestUI = @"
+<?xml version=\""1.0\""?>
+<flex>
+    <button id='btnFinish'>Finish</button>
+    <button id='btnAbort'>Abort</button>
+</flex>  
+";
+            var _uiTest = _ui.CreateUI(strTestUI);
+#endif
             _engine.AddScene(10, this);
         }
 
@@ -27,15 +35,7 @@ namespace engine.xray
 
         public void SceneOnPhysicalFrame(float dt)
         {
-            string strTestUI = @"
-<?xml version=\""1.0\""?>
-<flex>
-    <button id='btnFinish'>Finish</button>
-    <button id='btnAbort'>Abort</button>
-</flex>  
-";
-            var uiTest = _ui.Create(strTestUI);
-            _ui.Render(uiTest);
+            // _ui.Render(uiTest);
         }
 
         public RootScene()

@@ -19,7 +19,7 @@ namespace Karawan.platform.cs1
 
         public engine.IUINode CreateUI(string strUISpec)
         {
-
+            return null;
         }
 
         public PlatformUI()
