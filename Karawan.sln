@@ -24,6 +24,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benc
 		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32} = {990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nika", "Nika\Nika.csproj", "{F6921285-CB8B-4646-8FDF-5C69F66FE235}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +52,12 @@ Global
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
