@@ -12,6 +12,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\joyce\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Children.cs" />
@@ -19,6 +20,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\OldParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Parent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\systems\NewParentSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUI.cs" />
@@ -33,11 +35,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\World3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToWorld.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\systems\PropagateTranslationSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\Fragment.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\MetaGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\xray\RootScene.cs" />
   </ItemGroup>
 </Project>
