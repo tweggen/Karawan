@@ -9,13 +9,15 @@ namespace engine.transform
         private systems.PropagateTranslationSystem _propagateTranslationSystem;
         private bool _isDirty;
 
-        public void SetTransforms(DefaultEcs.Entity entity, 
+        public void SetTransforms(
+            DefaultEcs.Entity entity,
             bool isVisible,
+            uint cameraMask,
             in Quaternion rotation,
             in Vector3 position)
         {
             entity.Set<transform.components.Transform3>(
-                new transform.components.Transform3(isVisible, rotation, position));
+                new transform.components.Transform3(isVisible, cameraMask, rotation, position));
 
             /*
              * Write it back to parent transformation
@@ -26,7 +28,7 @@ namespace engine.transform
                 var mTranslate = Matrix4x4.CreateTranslation(position);
                  mToParent = mToParent * mTranslate;
                 entity.Set<transform.components.Transform3ToParent>(
-                    new transform.components.Transform3ToParent(isVisible, mToParent) );
+                    new transform.components.Transform3ToParent(isVisible, cameraMask, mToParent) );
                 _isDirty = true;
             }
         }
@@ -39,7 +41,9 @@ namespace engine.transform
                 return entity.Get<transform.components.Transform3>();
             } else
             {
-                return new transform.components.Transform3();
+                return new transform.components.Transform3(
+                    false, 0xffffffff, new Quaternion(), new Vector3()
+                ); 
             }
         }
 
@@ -49,7 +53,7 @@ namespace engine.transform
             var object3 = GetTransform(entity);
             if (object3.IsVisible != isVisible)
             {
-                SetTransforms(entity, isVisible, object3.Rotation, object3.Position);
+                SetTransforms(entity, isVisible, object3.CameraMask, object3.Rotation, object3.Position);
             }
         }
 
@@ -59,9 +63,10 @@ namespace engine.transform
             var object3 = GetTransform(entity);
             if (object3.Rotation != rotation)
             {
-                SetTransforms(entity, object3.IsVisible, rotation, object3.Position);
+                SetTransforms(entity, object3.IsVisible, object3.CameraMask, rotation, object3.Position);
             }
         }
+
 
         public void AppendRotation(DefaultEcs.Entity entity, in Quaternion rotation)
         {
@@ -69,24 +74,28 @@ namespace engine.transform
 
             SetTransforms(entity, 
                 object3.IsVisible,
+                object3.CameraMask,
                 // rotation, 
                 Quaternion.Concatenate( object3.Rotation, rotation ), 
                 object3.Position);
         }
+
+
         public void SetPosition(DefaultEcs.Entity entity, in Vector3 position)
         {
             var object3 = GetTransform(entity);
             if (object3.Position != position)
             {
-                SetTransforms(entity, object3.IsVisible, object3.Rotation, position);
+                SetTransforms(entity, object3.IsVisible, object3.CameraMask, object3.Rotation, position);
             }
         }
+
 
         public void Update()
         {
             if(_isDirty)
             {
-                 _propagateTranslationSystem.Update(_engine);
+                _propagateTranslationSystem.Update(_engine);
                 _isDirty = false;
             }
         }

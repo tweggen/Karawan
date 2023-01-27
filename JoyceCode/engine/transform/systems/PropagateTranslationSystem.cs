@@ -27,12 +27,14 @@ namespace engine.transform.systems
             var cTransform3 = childEntity.Get<transform.components.Transform3ToParent>();
             // Console.WriteLine("parent transform {0}", cTransform3.Matrix);
 
-
-            cChildTransform3ToWorld.IsTotalVisible = cParentTransform3ToWorld.IsTotalVisible && cTransform3.IsVisible;
+            /*
+             * Child's world camera mask is parent's camera mask and its own combinied with its visibility.
+             */
+            cChildTransform3ToWorld.CameraMask =
+                cParentTransform3ToWorld.CameraMask &
+                    (cTransform3.IsVisible ? cTransform3.CameraMask : 0);
             cChildTransform3ToWorld.Matrix =
-                cTransform3.Matrix
-                *
-                cParentTransform3ToWorld.Matrix;
+                cTransform3.Matrix * cParentTransform3ToWorld.Matrix;
             childEntity.Set<transform.components.Transform3ToWorld>(cChildTransform3ToWorld);
         }
 
@@ -57,7 +59,7 @@ namespace engine.transform.systems
 
         protected override void Update(Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-            var cRootTransform3World = new components.Transform3ToWorld(true, Matrix4x4.Identity);
+            var cRootTransform3World = new components.Transform3ToWorld(0xffffffff, Matrix4x4.Identity);
 
             /**
              * We are iterating through all of the root objects with children

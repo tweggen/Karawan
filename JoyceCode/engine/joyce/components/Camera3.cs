@@ -11,5 +11,6 @@ namespace engine.joyce.components
         public float Angle;
         public float NearFrustrum;
         public float FarFrustrum;
+        public uint CameraMask;
     }
 }

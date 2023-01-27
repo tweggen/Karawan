@@ -28,6 +28,7 @@ namespace Karawan.platform.cs1.splash.systems
         }
     }
 
+
     [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
     [DefaultEcs.System.With(typeof(splash.components.RlMesh))]
     /**
@@ -35,7 +36,7 @@ namespace Karawan.platform.cs1.splash.systems
      * 
      * Groups by material and mesh.
      */
-    sealed class DrawRlMeshesSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
+    sealed class DrawRlMeshesSystem : DefaultEcs.System.AEntitySetSystem<uint>
     {
         private engine.Engine _engine;
         private MaterialManager _materialManager;
@@ -80,12 +81,12 @@ namespace Karawan.platform.cs1.splash.systems
             }
         }
 
-        private void _appendMeshRenderList(in ReadOnlySpan<DefaultEcs.Entity> entities)
+        private void _appendMeshRenderList(in ReadOnlySpan<DefaultEcs.Entity> entities, uint cameraMask)
         {
             foreach (var entity in entities)
             {
                 var transform3ToWorld = entity.Get<engine.transform.components.Transform3ToWorld>();
-                if (transform3ToWorld.IsTotalVisible)
+                if (0 != (transform3ToWorld.CameraMask & cameraMask))
                 {
                     var cMesh = entity.Get<splash.components.RlMesh>();
                     RlMaterialEntry materialEntry;
@@ -135,20 +136,20 @@ namespace Karawan.platform.cs1.splash.systems
         }
 
 
-        protected override void PreUpdate(engine.Engine state)
+        protected override void PreUpdate(uint cameraMask)
         {
             // TXWTODO: Totally inefficient to compute this every time. Or is it?
             _materialBatches = new();
         }
 
-        protected override void PostUpdate(engine.Engine state)
+        protected override void PostUpdate(uint cameraMask)
         {
             _renderBatches();
         }
 
-        protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
+        protected override void Update(uint cameraMask, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-            _appendMeshRenderList(entities);
+            _appendMeshRenderList(entities, cameraMask);
         }
 
         public DrawRlMeshesSystem(

@@ -50,7 +50,7 @@ namespace Karawan.platform.cs1.splash
 
                 Raylib.BeginMode3D(rCamera);
 
-                _drawRlMeshesSystem.Update(_engine);
+                _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
 
                 Raylib.EndMode3D();
             }

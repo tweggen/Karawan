@@ -25,9 +25,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUINode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Camera3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Instance3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Container3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Material.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Mesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\mesh\Tools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Object3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\World3.cs" />

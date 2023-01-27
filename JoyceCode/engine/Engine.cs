@@ -29,13 +29,13 @@ namespace engine
                 _aHierarchy.SetParent(eKid2, eKid1);
                 _aHierarchy.SetParent(eKid2, eParent);
             }
-
         }
 
         public engine.hierarchy.API GetAHierarchy()
         {
             return _aHierarchy;
         }
+
 
         public engine.transform.API GetATransform()
         {
@@ -45,6 +45,11 @@ namespace engine
         public DefaultEcs.World GetEcsWorld()
         {
             return _ecsWorld;
+        }
+
+        public DefaultEcs.Entity CreateEntity()
+        {
+            return _ecsWorld.CreateEntity();
         }
 
 

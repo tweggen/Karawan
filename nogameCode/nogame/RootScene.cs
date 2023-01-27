@@ -27,6 +27,8 @@ namespace nogame
 
         private engine.IScene _xray;
 
+        private engine.joyce.World3 _world3;
+
         public void SceneOnLogicalFrame( float dt )
         {
             /*
@@ -144,6 +146,11 @@ namespace nogame
             _cubeSpinnerSystem = new(_engine);
 
             /*
+             * This is our stage.
+             */
+            _world3 = new engine.joyce.World3(_engine);
+
+            /*
              * Create one parent that rotates.
              */
             _eCubeParent = _ecsWorld.CreateEntity();
@@ -161,6 +168,7 @@ namespace nogame
                 cCamera.Angle = 60.0f;
                 cCamera.NearFrustrum = 1f;
                 cCamera.FarFrustrum = 200f;
+                cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 100f));
             }
