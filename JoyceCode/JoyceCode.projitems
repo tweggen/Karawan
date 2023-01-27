@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUI.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\IUINode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Camera3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Instance3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Material.cs" />

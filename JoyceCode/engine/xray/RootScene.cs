@@ -27,7 +27,15 @@ namespace engine.xray
 
         public void SceneOnPhysicalFrame(float dt)
         {
-            _ui.Render();
+            string strTestUI = @"
+<?xml version=\""1.0\""?>
+<flex>
+    <button id='btnFinish'>Finish</button>
+    <button id='btnAbort'>Abort</button>
+</flex>  
+";
+            var uiTest = _ui.Create(strTestUI);
+            _ui.Render(uiTest);
         }
 
         public RootScene()

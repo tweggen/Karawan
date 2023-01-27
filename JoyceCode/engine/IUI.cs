@@ -8,6 +8,7 @@ namespace engine
 {
     public interface IUI
     {
+        public engine.IUINode CreateUI(string strUISpec);
         public void Render();
     }
 }
