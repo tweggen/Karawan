@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections;
+using Android.Net.Wifi.Aware;
 
 namespace engine.joyce
 {
     public class Mesh
     {
+        public int WriteIndexVertices;
+        public int WriteIndexIndices;
+        public int WriteIndexUVs;
+        public int WriteIndexNormals;
+
         // TXWTODO: Come up with a supersmart concept only storing the mesh source/factory
-        // TXWTODO: Let it use the IList interface
 
         /**
          * Indexable array like of Vector3
@@ -106,6 +111,39 @@ namespace engine.joyce
             }
         }
 
+
+        public void p(in Vector3 p)
+        {
+            Vertices[WriteIndexVertices++] = p;
+        }
+
+
+        public void p(float x, float y, float z)
+        {
+            p(new Vector3(x, y, z));
+        }
+
+
+        public void UV(in Vector2 uv)
+        {
+            UVs[WriteIndexUVs++] = uv;
+        }
+
+
+        public void UV( float u, float v )
+        {
+            UV( new Vector2(u, v));
+        }
+
+
+        public void Idx(int a, int b, int c)
+        {
+            Indices[WriteIndexIndices++] = a;
+            Indices[WriteIndexIndices++] = b;
+            Indices[WriteIndexIndices++] = c;
+        }
+
+
         public Mesh( IList vertices, IList indices, IList uvs )
         {
             Vertices = vertices;
@@ -113,6 +151,7 @@ namespace engine.joyce
             UVs = uvs;
             Normals = null;
         }
+
 
         public static Mesh CreateArrayListInstance()
         {

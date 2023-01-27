@@ -13,6 +13,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Rect.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Children.cs" />
@@ -43,6 +45,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\systems\PropagateTranslationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\Fragment.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\MetaGen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\TerrainKnitter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\xray\RootScene.cs" />
   </ItemGroup>
 </Project>
