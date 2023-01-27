@@ -161,7 +161,6 @@ namespace nogame
             /*
              * Create a camera.
              */
-            // TXWTODO: Not really in a scene, right?
             {
                 _eCamera = _ecsWorld.CreateEntity();
                 var cCamera = new engine.joyce.components.Camera3();
