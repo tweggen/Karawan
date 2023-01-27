@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>818a3cb5-5e55-4b19-ac0f-a61bf73f7276</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>SplashCode</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)platform\cs1\splash\scenes\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\PlatformUI.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\API.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RLights.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMaterialEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMeshEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlShaderEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlTextureEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingFS.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingInstancingVS.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateRlMeshesSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawRlMeshesSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureManager.cs" />
+  </ItemGroup>
+</Project>

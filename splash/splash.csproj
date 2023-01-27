@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -21,8 +21,6 @@
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="platform\cs1\splash\scenes\" />
-  </ItemGroup>
+  <Import Project="..\SplashCode\SplashCode.projitems" Label="Shared" />
 
 </Project>

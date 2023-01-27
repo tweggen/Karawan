@@ -55,8 +55,11 @@ namespace Karawan.platform.cs1.splash.systems
                     var nMatrices = meshItem.Value.Matrices.Count;
 #if true
                     // var arrayMatrices = meshItem.Value.Matrices.ToArray();
+#if NET6_0_OR_GREATER
                     var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
-                    // Span<Matrix4x4> spanMatrices = arrayMatrices;
+#else
+                    Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
+#endif
                     Raylib_CsLo.Raylib.DrawMeshInstanced(
                             meshItem.Key.RlMesh,
                             materialItem.Key.RlMaterial,

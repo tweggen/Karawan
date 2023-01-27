@@ -1,15 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0</TargetFrameworks>
+    <TargetFrameworks>net6.0</TargetFrameworks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Folder Include="engine\joyce\systems\" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="DefaultEcs" Version="0.17.2" />
   </ItemGroup>
+
+  <Import Project="..\JoyceCode\JoyceCode.projitems" Label="Shared" />
 
 </Project>
