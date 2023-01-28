@@ -1,5 +1,4 @@
-﻿using Java.Util.Functions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -7,6 +6,10 @@ namespace engine.world
 {
     public class MetaGen
     {
+        private void trace(string message)
+        {
+            Console.WriteLine(message);
+        }
         private static readonly object _instanceLock = new object();
         private static MetaGen _instance;
 
@@ -25,6 +28,9 @@ namespace engine.world
         public static bool TRACE_LOAD_BYTES = false;
         public static bool TRACE_PLATFORM_MOLECULE_ADDING = false;
 
+
+        private List<engine.world.IWorldOperator> _worldOperators;
+        private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
 
         public void ApplyFragmentOperators(
             in Fragment fragment)
@@ -66,10 +72,46 @@ _fragmentOperatorTree.apply(function(fo) {
 #endif
         }
 
+        /**
+         * Execute all world operators for this metagen.
+         * This can be terrain generatation, cluster generation etc. .
+         */
+        private void _applyWorldOperators()
+        {
+            trace("WorldMetaGen: Calling world operators...");
+            foreach(var o in _worldOperators) {
+                try {
+                    var oppath = o.WorldOperatorGetPath();
+                    trace( $"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
+                    // var t0 = Sys.time();
+                    o.WorldOperatorApply(this);
+                    // var dt = Sys.time() - t0;
+                    // trace( 'WorldMetaGen.applyWorldOperators(): Applying operator "$oppath" took $dt.');
+                } catch(Exception e) {
+                    trace($"WorldMetaGen.applyWorldOperators(): Unknown exception applying world operator: {e}");
+                }
+            }
+            trace("WorldMetaGen: Done calling world operators.");
+        }
+
+
+
+        /**
+         * Call this after you added all of the modules.
+         */
+        public void MetaGenSetupComplete()
+        {
+            /*
+             * One time operations: Apply all world operators.
+             */
+            _applyWorldOperators();
+        }
+
+
 
         private MetaGen()
         {
-
+            _worldOperators = new();
         }
 
         public static MetaGen Instance()
