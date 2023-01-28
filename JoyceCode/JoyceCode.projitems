@@ -21,6 +21,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\LayerAdapter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Rect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Children.cs" />
