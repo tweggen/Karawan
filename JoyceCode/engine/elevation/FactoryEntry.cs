@@ -10,22 +10,15 @@ namespace engine.elevation
 
     internal class FactoryEntry
     {
-
-        public Object context;
-        public string layer;
-        public ElevationEntryFactoryFunction factoryFunction;
-        public IOperator elevationOperator;
+        public string Layer;
+        public IOperator ElevationOperator;
 
         public FactoryEntry (
-            Object context0,
             string layer0, 
-            ElevationEntryFactoryFunction factoryFunction0,
             engine.elevation.IOperator elevationOperator0
         ) {
-            context = context0;
-            layer = layer0;
-            elevationOperator = elevationOperator0;
-            factoryFunction = factoryFunction0;
+            Layer = layer0;
+            ElevationOperator = elevationOperator0;
         }
 
     }
