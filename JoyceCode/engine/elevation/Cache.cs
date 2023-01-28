@@ -55,7 +55,7 @@ namespace engine.elevation
         /**
          * Return the factory below the given layer
          */
-        private FactoryEntry getNextFactoryEntryBelow(
+        private FactoryEntry _getNextFactoryEntryBelow(
             float x0, float z0,
             float x1, float z1,
             in string layer )
@@ -152,7 +152,7 @@ namespace engine.elevation
          * below.
          */
         public void ElevationCacheRegisterElevationOperator(
-            string layer,
+            in string layer,
             in IOperator elevationOperator
             )
         {
@@ -191,9 +191,10 @@ namespace engine.elevation
          */
         private CacheEntry ElevationCacheGetAt(
             int i, int k, 
-            string layer
+            in string layer0
         )
         {
+            string layer = layer0;
 
             // trace('elevation.Cache: Entry requested for layer $layer');
 
@@ -314,37 +315,39 @@ namespace engine.elevation
         }
 
 
-        public function elevationCacheGetBelow(
-            i: Int, k: Int, 
-            layer: String
-        ): CacheEntry {
+        public CacheEntry ElevationCacheGetBelow(
+            int i, int k, 
+            in string layer
+        )
+        {
 
             // TXWTODO: Double code, also in CacheGetAt.
-            var fs = WorldMetaGen.fragmentSize;
-            var x0 = (i * fs) - fs / 2.0;
-            var z0 = (k * fs) - fs / 2.0;
-            var x1 = ((i + 1) * fs) - fs / 2.0;
-            var z1 = ((k + 1) * fs) - fs / 2.0;
+            var fs = world.MetaGen.FragmentSize;
+            float x0 = (float)( (i * fs) - fs / 2.0 );
+            float z0 = (float)( (k * fs) - fs / 2.0 );
+            float x1 = (float)( ((i + 1) * fs) - fs / 2.0 );
+            float z1 = (float)( ((k + 1) * fs) - fs / 2.0 );
 
-            var entry: FactoryEntry = getNextFactoryEntryBelow(
+            FactoryEntry entry = _getNextFactoryEntryBelow(
                 x0, z0, x1, z1, layer);
             if (null == entry)
             {
-                throw 'elevation.Cache: No entry found below "$layer".';
+                throw new InvalidOperationException(
+                    $"elevation.Cache: No entry found below '{layer}'.");
             }
-            return elevationCacheGetAt(i, k, entry.layer);
+            return ElevationCacheGetAt(i, k, entry.Layer);
         }
 
 
         /**
          * Return an elevation rect describing all elevations within the given boundaries.
          */
-        private function elevationCacheGetRectAt(
-            x0: Float, z0: Float,
-            x1: Float, z1: Float,
-            layer: String
-        ) : Rect {
-
+        private Rect _elevationCacheGetRectAt(
+            float x0, float z0,
+            float x1, float z1,
+            string layer
+        )
+        {
             // trace('ElecationCache: Rect requested for layer $layer');
 
             /* 
@@ -363,10 +366,10 @@ namespace engine.elevation
                 z1 = t;
             }
 
-            var elevationRect: Rect = null;
+            Rect elevationRect = null;
 
-            var fs = WorldMetaGen.fragmentSize;
-            var gr = WorldMetaGen.groundResolution;
+            var fs = world.MetaGen.FragmentSize;
+            var gr = world.MetaGen.GroundResolution;
 
             /*
              * The resulting step size, for either dimenstion between two points.
@@ -385,19 +388,19 @@ namespace engine.elevation
              * - ex, ez: Index of the elevation point globally.
              */
 
-            var i0: Int = Math.floor((x0 + fs / 2.) / fs);
-            var k0: Int = Math.floor((z0 + fs / 2.) / fs);
+            int i0 = (int) Math.Floor((x0 + fs / 2f) / fs);
+            int k0 = (int) Math.Floor((z0 + fs / 2f) / fs);
             // var x0Local: Float = x0 - fs*i0;
             // var z0Local: Float = z0 - fs*k0;
-            var ex0: Int = Std.int((x0 + fs / 2.0) / ess);
-            var ez0: Int = Std.int((z0 + fs / 2.0) / ess);
+            int ex0 = (int)((x0 + fs / 2.0) / ess);
+            int ez0 = (int)((z0 + fs / 2.0) / ess);
 
-            var i1: Int = Math.floor((x1 + fs / 2.) / fs);
-            var k1: Int = Math.floor((z1 + fs / 2.) / fs);
+            int i1 = (int) Math.Floor((x1 + fs / 2f) / fs);
+            int k1 = (int) Math.Floor((z1 + fs / 2f) / fs);
             // var x1Local: Float = x1 - fs*i1;
             // var z1Local: Float = z1 - fs*k1;
-            var ex1: Int = Std.int((x1 + fs / 2.0) / ess);
-            var ez1: Int = Std.int((z1 + fs / 2.0) / ess);
+            int ex1 = (int)((x1 + fs / 2.0) / ess);
+            int ez1 = (int)((z1 + fs / 2.0) / ess);
 
             /*
              * Create a new elevation rect containing the indices as
@@ -410,24 +413,24 @@ namespace engine.elevation
              * Create the target rectangle. Note: We need one more per dimenstion.
              */
             elevationRect = new Rect(nHoriz + 1, nVert + 1);
-            elevationRect.x0 = x0;
-            elevationRect.z0 = z0;
-            elevationRect.x1 = x1;
-            elevationRect.z1 = z1;
+            elevationRect.X0 = x0;
+            elevationRect.Z0 = z0;
+            elevationRect.X1 = x1;
+            elevationRect.Z1 = z1;
 
             /* 
              * At this point, ex0,ez0 - ex1,ez1 contain the indices of the
              * source cache entries.
              */
-            for (k in k0... (k1 + 1))
+            for (int k=k0; k<(k1 + 1); ++k)
             {
 
                 /*
                  * Let ezLocal contain the limits of the global 
                  * elevation indices by the local tile.
                  */
-                var ezLocal0: Int = k * gr;
-                var ezLocal1: Int = (k + 1) * gr - 1;
+                int ezLocal0 = k * gr;
+                int ezLocal1 = (k + 1) * gr - 1;
                 var ezOrg0 = ezLocal0;
 
                 if (ezLocal0 < ez0)
@@ -439,12 +442,12 @@ namespace engine.elevation
                     ezLocal1 = ez1;
                 }
 
-                for (i in i0... (i1 + 1))
+                for (int i=i0; i<(i1 + 1); ++i)
                 {
-                    var exLocal0: Int = i * gr;
-                    var exLocal1: Int = (i + 1) * gr - 1;
+                    int exLocal0 = i * gr;
+                    int exLocal1 = (i + 1) * gr - 1;
                     var exOrg0 = exLocal0;
-                    var srcCacheEntry = this.elevationCacheGetAt(i, k, layer);
+                    var srcCacheEntry = this.ElevationCacheGetAt(i, k, layer);
 
                     /*
                      * For each of these required source cache entries
@@ -470,14 +473,14 @@ namespace engine.elevation
                     var srcX = exLocal0 - exOrg0;
                     // trace('Starting destX:=$destX, destZ:=$destZ, srcX:=$srcX, srcZ:=$srcZ');
 
-                    for (ez in ezLocal0... (ezLocal1 + 1))
+                    for (int ez=ezLocal0; ez<(ezLocal1 + 1); ++ez)
                     {
                         destX = exLocal0 - ex0;
                         srcX = exLocal0 - exOrg0;
-                        for (ex in exLocal0... (exLocal1 + 1))
+                        for (int ex=exLocal0; ex<(exLocal1 + 1); ++ex)
                         {
-                            var elevation = srcCacheEntry.elevations[srcZ][srcX];
-                            elevationRect.elevations[destZ][destX] = elevation;
+                            var elevation = srcCacheEntry.elevations[srcZ,srcX];
+                            elevationRect.elevations[destZ,destX] = elevation;
                             // trace('elevation is $elevation');
                             ++destX;
                             ++srcX;
@@ -492,18 +495,19 @@ namespace engine.elevation
         }
 
 
-        public function elevationCacheGetRectBelow(
-            x0: Float, z0: Float,
-            x1: Float, z1: Float,
-            layer: String
-        ) : Rect {
-            var entry: FactoryEntry = getNextFactoryEntryBelow(
+        public Rect ElevationCacheGetRectBelow(
+            float x0, float z0,
+            float x1, float z1,
+            in string layer
+        ) {
+            FactoryEntry entry = _getNextFactoryEntryBelow(
                 x0, z0, x1, z1, layer);
             if (null == entry)
             {
-                throw 'elevation.Cache: No entry found below "$layer".';
+                throw new InvalidOperationException(
+                    $"elevation.Cache: No entry found below '{layer}'." );
             }
-            return elevationCacheGetRectAt(x0, z0, x1, z1, entry.layer);
+            return _elevationCacheGetRectAt(x0, z0, x1, z1, entry.Layer);
         }
 
 
@@ -511,14 +515,13 @@ namespace engine.elevation
          * Create a new elevation array factory.
          * This factory is associated with the given worldMetaGen.
          */
-        public function new(worldMetaGen: WorldMetaGen)
+        public Cache()
         {
-            _mapEntries = new Map<String, CacheEntry>();
-            _keysFactories = new Array<String>();
-            _mapFactories = new Map<String, FactoryEntry>();
-            _mutexMap = new Mutex();
-            _worldMetaGen = worldMetaGen;
-            WorldMetaGen.cat.catAddGlobalEntity('elevation.Cache', this);
+            _mapEntries = new();
+            _keysFactories = new();
+            _mapFactories = new();
+            _mutexMap = new();
+            // WorldMetaGen.cat.catAddGlobalEntity('elevation.Cache', this);
             _maxLayer = "";
         }
     }

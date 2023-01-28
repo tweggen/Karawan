@@ -14,15 +14,12 @@ namespace engine.elevation
         public IOperator ElevationOperator;
 
         public FactoryEntry (
-            string layer0, 
-            engine.elevation.IOperator elevationOperator0
+            in string layer0, 
+            in engine.elevation.IOperator elevationOperator0
         ) {
             Layer = layer0;
             ElevationOperator = elevationOperator0;
         }
 
     }
-
-
-}
 }
