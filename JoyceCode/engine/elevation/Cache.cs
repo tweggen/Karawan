@@ -2,19 +2,23 @@
 using System;
 using System.Threading;
 using System.Collections.Generic;
+using engine.joyce.components;
 
 namespace engine.elevation
 {
-    internal class Cache
+    public class Cache
     {
+        static private object _instanceLock = new object();
+        static private Cache _instance = null;
+
         private void trace(string message)
         {
             Console.WriteLine(message);
         }
 
-        public static string TOP_LAYER = "TOP_LAYER";
+        public const string TOP_LAYER = "TOP_LAYER";
 
-        public static string LAYER_BASE = "/000000";
+        public const string LAYER_BASE = "/000000";
 
         private Mutex _mutexMap;
         private string _maxLayer;
@@ -523,6 +527,18 @@ namespace engine.elevation
             _mutexMap = new();
             // WorldMetaGen.cat.catAddGlobalEntity('elevation.Cache', this);
             _maxLayer = "";
+        }
+
+        static public Cache Instance()
+        {
+            lock (_instanceLock)
+            {
+                if (null == _instance)
+                {
+                    _instance = new Cache();
+                }
+                return _instance;
+            }
         }
     }
 }

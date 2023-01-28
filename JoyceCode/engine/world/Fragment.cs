@@ -727,7 +727,7 @@ namespace engine.world
         /**
          * Add a material factory to this fragment.
          */
-            public void addMaterialFactory( string keyMaterial, Action<engine.joyce.Material> factoryMaterial )
+            public void AddMaterialFactory( string keyMaterial, Action<engine.joyce.Material> factoryMaterial )
             {
                 // world.MetaGen.cat.catGetSingleton( materialKey, factory );
             }
