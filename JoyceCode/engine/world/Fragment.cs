@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text;
 using DefaultEcs;
 
+
 namespace engine.world
 {
     public class Fragment
@@ -186,11 +187,15 @@ namespace engine.world
 
         private void CreateGround()
         {
-            // joyce.Mesh geomAtomTerrain = 
-            //     world.TerrainKnitter.TerrainKnitterBuildMolecule(
-            //         _elevations, 1);
-            // var _molTerrain = new engine.SimpleMolecule([geomAtomTerrain]);
-            // addStaticMolecule(_molTerrain);
+            joyce.Mesh jMeshTerrain = 
+                 world.TerrainKnitter.BuildMolecule(_elevations, 1);
+            DefaultEcs.Entity eGround = engine.CreateEntity();
+            eGround.Set<engine.joyce.components.Instance3>(
+                    new engine.joyce.components.Instance3(jMeshTerrain));
+            engine.AddInstance3(
+                eGround, new DefaultEcs.Entity(), true, 0xffffffff,
+                position,
+                new Quaternion());
         }
 
 
