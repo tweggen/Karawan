@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections;
+using System.Collections.Generic;
 
 
 namespace engine.joyce
@@ -114,7 +115,8 @@ namespace engine.joyce
 
         public void p(in Vector3 p)
         {
-            Vertices[WriteIndexVertices++] = p;
+            Vertices.Insert(WriteIndexVertices++, p);
+            // Vertices[WriteIndexVertices++] = p;
         }
 
 
@@ -126,7 +128,8 @@ namespace engine.joyce
 
         public void UV(in Vector2 uv)
         {
-            UVs[WriteIndexUVs++] = uv;
+            UVs.Insert(WriteIndexUVs++, uv);
+            // UVs[WriteIndexUVs++] = uv;
         }
 
 
@@ -138,9 +141,12 @@ namespace engine.joyce
 
         public void Idx(int a, int b, int c)
         {
-            Indices[WriteIndexIndices++] = a;
-            Indices[WriteIndexIndices++] = b;
-            Indices[WriteIndexIndices++] = c;
+            Indices.Insert(WriteIndexIndices++, a);
+            Indices.Insert(WriteIndexIndices++, b);
+            Indices.Insert(WriteIndexIndices++, c);
+            // Indices[WriteIndexIndices++] = a;
+            // Indices[WriteIndexIndices++] = b;
+            // Indices[WriteIndexIndices++] = c;
         }
 
 
@@ -152,6 +158,11 @@ namespace engine.joyce
             Normals = null;
         }
 
+
+        public static Mesh CreateListInstance()
+        {
+            return new Mesh(new List<Vector3>(), new List<int>(), new List<Vector2>());
+        }
 
         public static Mesh CreateArrayListInstance()
         {

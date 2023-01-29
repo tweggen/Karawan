@@ -193,7 +193,7 @@ namespace engine.world
             eGround.Set<engine.joyce.components.Instance3>(
                     new engine.joyce.components.Instance3(jMeshTerrain));
             engine.AddInstance3(
-                eGround, new DefaultEcs.Entity(), true, 0xffffffff,
+                eGround, true, 0xffffffff,
                 position,
                 new Quaternion());
         }

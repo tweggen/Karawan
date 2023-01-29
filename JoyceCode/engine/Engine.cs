@@ -51,13 +51,11 @@ namespace engine
 
         public void AddInstance3(
             DefaultEcs.Entity eSelf,
-            DefaultEcs.Entity eParent,
             bool isVisible,
             uint cameraMask,
             in Vector3 vPosition,
             in Quaternion qRotation)
         {
-            _aHierarchy.SetParent(eSelf, eParent);
             _aTransform.SetTransforms(
                 eSelf,
                 isVisible,
