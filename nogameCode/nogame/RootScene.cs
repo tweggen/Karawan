@@ -20,8 +20,18 @@ namespace nogame
 
         private Vector3 _vMe;
 
+        private int _tickCounter;
+
         public void SceneOnLogicalFrame( float dt )
         {
+            ++_tickCounter;
+
+            var q = Quaternion.CreateFromAxisAngle(
+                    new Vector3(0f, 1f, 0f),
+                    (float)_tickCounter / 60f * 30f * (float)Math.PI / 180f);
+            // Console.WriteLine($"rot {q}");
+            _aTransform.SetRotation(
+                _eCamera, q);
         }
 
         public void SceneOnPhysicalFrame( float dt )
@@ -72,10 +82,10 @@ namespace nogame
                 var cCamera = new engine.joyce.components.Camera3();
                 cCamera.Angle = 60.0f;
                 cCamera.NearFrustrum = 1f;
-                cCamera.FarFrustrum = 200f;
+                cCamera.FarFrustrum = 1000f;
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 100f));
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 100f, 100f));
             }
 
             _worldLoader.WorldLoaderProvideFragments(_vMe);

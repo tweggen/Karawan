@@ -41,6 +41,7 @@ namespace Karawan.platform.cs1.splash
                 var vUp = new Vector3(mToWorld.M12, mToWorld.M22, mToWorld.M32);
                 var vFront = new Vector3(-mToWorld.M13, -mToWorld.M23, -mToWorld.M33);
                 var vTarget = vPosition + vFront;
+                // Console.WriteLine($"vFront = {vFront}");
 
                 var rCamera = new Raylib_CsLo.Camera3D( vPosition, vTarget, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
