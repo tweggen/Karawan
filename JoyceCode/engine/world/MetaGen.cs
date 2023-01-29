@@ -1,6 +1,7 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
-using System.Text;
+
 
 namespace engine.world
 {
@@ -31,6 +32,9 @@ namespace engine.world
 
         private List<engine.world.IWorldOperator> _worldOperators;
         private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
+        private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList;
+
+        private bool _traceFragmentOperators;
 
         public void ApplyFragmentOperators(
             in Fragment fragment)
@@ -71,6 +75,54 @@ _fragmentOperatorTree.apply(function(fo) {
     if (_traceFragmentOperators) trace('WorldMetaGen: Done calling fragment operators for ${fragment.getId()}...');
 #endif
         }
+
+
+        /**
+         * For every cluster, this fragment operator generator shall be added.
+         * @param fragmentOperatorFactory
+         *     A factory function that will generate the actual fragment operator. It will receive
+         *     the base key for that cluster/generator instance and the actual clusterdesc.
+         *     TXWTODO: Only use the key in the clusterdesc?
+         */
+        public void metaGenAddClusterFragmentOperatorFactory(
+            Func<String, ClusterDesc, world.IFragmentOperator> fragmentOperatorFactory
+        )
+        {
+            _clusterFragmentOperatorFactoryList.Add(fragmentOperatorFactory);
+        }
+
+
+
+        public void MetaGenAddFragmentOperator(world.IFragmentOperator op)
+        {
+            _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
+        }
+
+        public void applyFragmentOperators(world.Fragment fragment)
+        {
+            if( null==fragment ) {
+                throw new ArgumentException( $"WorldMetaGen.applyFragmentOperators(): fragment is null." );
+            }
+            if (_traceFragmentOperators) trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
+            foreach( KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators ) {
+                try
+                {
+                    var t0 = DateTime.Now.Ticks;
+                    kvp.Value.FragmentOperatorApply(fragment);
+                    var dt = DateTime.Now.Ticks - t0;
+                    if (dt > 0.001)
+                    {
+                        var oppath = kvp.Value.FragmentOperatorGetPath();
+                        if (_traceFragmentOperators) trace($"WorldMetaGen.applyFragmentOperators(): Applying operator '{oppath}' took {dt}.");
+                    }
+                }
+                catch (Exception e) {
+                    trace($"WorldMetaGen.applyFragmentOperators(): Unknown exception applying fragment operator '{kvp.Value.FragmentOperatorGetPath()}': {e}')");
+                }
+            }
+            if (_traceFragmentOperators) trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
+        }
+
 
         /**
          * Execute all world operators for this metagen.

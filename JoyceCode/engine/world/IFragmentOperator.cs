@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace JoyceCode.engine.world
+namespace engine.world
 {
     public interface IFragmentOperator
     {
@@ -29,7 +29,7 @@ namespace JoyceCode.engine.world
          * fragment in a given state and a certain configuratino, it shall generate
          * the same output.
          */
-        public void FragmentOperatorApply(worldFragment: world.Fragment);
+        public void FragmentOperatorApply(world.Fragment worldFragment);
 
     }
 }
