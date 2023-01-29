@@ -1,8 +1,4 @@
-﻿using Android.OS;
-using Java.Lang.Annotation;
-using Java.Lang;
-using Java.Util.Functions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 

@@ -2,7 +2,7 @@
 
 namespace engine.elevation
 {
-    internal class CacheEntry
+    public class CacheEntry
     {
 
         public float[,] elevations;

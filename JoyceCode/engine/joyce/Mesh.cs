@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections;
-using Android.Net.Wifi.Aware;
+
 
 namespace engine.joyce
 {
