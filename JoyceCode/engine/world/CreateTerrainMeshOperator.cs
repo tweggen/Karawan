@@ -1,5 +1,5 @@
 ﻿
-using Java.Util.Functions;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -7,7 +7,7 @@ using System.Text;
 
 namespace engine.world
 {
-    internal class CreateTerrainMeshOperator
+    internal class CreateTerrainMeshOperator : IFragmentOperator
     {
         // private var _rnd: engine.RandomSource;
         private string _myKey;
@@ -35,7 +35,7 @@ namespace engine.world
         }
 
 
-        public CreateTerrainMeshOperator( string strKey )
+        public CreateTerrainMeshOperator(string strKey)
         {
             _myKey = strKey;
         }

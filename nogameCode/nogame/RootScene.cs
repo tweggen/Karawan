@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DefaultEcs;
+using System;
 using System.Numerics;
 
 namespace nogame
@@ -12,41 +13,15 @@ namespace nogame
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
-        private systems.CubeSpinnerSystem _cubeSpinnerSystem;
-
-        private int _nCubes;
-        private DefaultEcs.Entity[] _eCubes;
-        private engine.joyce.Mesh _jMeshCube;
-        private Random _rnd;
-
-        private DefaultEcs.Entity _eCubeParent;
-
         private DefaultEcs.Entity _eCamera;
 
-        private int _testCount;
+        private engine.world.Loader _worldLoader;
+        private engine.world.MetaGen _worldMetaGen;
 
-        private engine.IScene _xray;
-
-        private engine.joyce.World3 _world3;
+        private Vector3 _vMe;
 
         public void SceneOnLogicalFrame( float dt )
         {
-            /*
-             * Advance all cubes
-             */
-            _cubeSpinnerSystem.Update(dt);
-
-            /*
-             * Do test rotation of everything. That's what the eCubeParent is for.
-             */
-            ++_testCount;
-            {
-                var qParent = Quaternion.CreateFromAxisAngle(
-                    Vector3.Normalize(new Vector3(2.1f, 0.2f, -1.4f)),
-                    (50f + _testCount / 2) * (float)Math.PI / 180f);
-                _aTransform.SetRotation(_eCubeParent, qParent);
-            }
-
         }
 
         public void SceneOnPhysicalFrame( float dt )
@@ -54,83 +29,22 @@ namespace nogame
             _engine.Render3D();
         }
 
-
         public void SceneDeactivate()
         {
-            _xray.SceneDeactivate();
-            _xray = null;
-
             /*
              * Null out everything we don't need when the scene is unloaded.
              */
             _engine.RemoveScene(this);
-            _rnd = null;
-            _cubeSpinnerSystem = null;
         }
-
-
-        /**
-         * Create 5000 entities with
-         * - cube mesh, instance etc.
-         * - a Scene Specific Spinner to make them turn
-         */
-        private void _createCubes()
-        {
-            _nCubes = 5000;
-            _eCubes = new DefaultEcs.Entity[_nCubes];
-            _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh(1.3f);
-
-            for (int i = 0; i < _nCubes; ++i)
-            {
-                /*
-                 * Create a standard Instance3
-                 */
-                _eCubes[i] = _ecsWorld.CreateEntity();
-                _eCubes[i].Set<engine.joyce.components.Instance3>(
-                    new engine.joyce.components.Instance3(_jMeshCube));
-                _aTransform.SetPosition(_eCubes[i], 
-                    new Vector3(
-                        (float) _rnd.NextDouble()*200-100,
-                        (float) _rnd.NextDouble()*200-100,
-                        (float) _rnd.NextDouble()*200-100));
-                _aTransform.SetRotation(
-                    _eCubes[i],
-                    Quaternion.CreateFromAxisAngle(
-                        Vector3.Normalize(
-                            new Vector3(
-                                (float)_rnd.NextDouble() - 0.5f,
-                                (float)_rnd.NextDouble() - 0.5f,
-                                (float)_rnd.NextDouble() - 0.5f
-                            )
-                        ),
-                        (float)((_rnd.NextDouble() * 100 - 5) * Math.PI / 180)
-                    )
-                );
-                _aTransform.SetVisible(_eCubes[i], true);
-                _aHierarchy.SetParent(_eCubes[i], _eCubeParent);
-
-                /*
-                 * Add our own component
-                 */
-                _eCubes[i].Set<components.CubeSpinner>(
-                    new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
-                        Vector3.Normalize(
-                            new Vector3(
-                                (float)_rnd.NextDouble() - 0.5f,
-                                (float)_rnd.NextDouble() - 0.5f,
-                                (float)_rnd.NextDouble() - 0.5f
-                            )
-                        ),
-                        (float)((_rnd.NextDouble() * 10 - 5) * Math.PI / 180)
-                    ))
-                );
-            }
-        }
-
 
         public void SceneActivate(engine.Engine engine0)
         {
             _engine = engine0;
+
+            _vMe = new Vector3(0f, 0f, 0f);
+            _worldMetaGen = engine.world.MetaGen.Instance();
+            _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
+            _worldLoader.WorldLoaderProvideFragments(_vMe);
 
             /*
              * Some local shortcuts
@@ -142,21 +56,6 @@ namespace nogame
             /*
              * Local state
              */
-            _rnd = new Random();
-            _cubeSpinnerSystem = new(_engine);
-
-            /*
-             * This is our stage.
-             */
-            _world3 = new engine.joyce.World3(_engine);
-
-            /*
-             * Create one parent that rotates.
-             */
-            _eCubeParent = _ecsWorld.CreateEntity();
-            _aTransform.SetPosition(_eCubeParent, new Vector3(0f, 0f, 0f));
-            _aTransform.SetVisible(_eCubeParent, true);
-            _createCubes();
 
             /*
              * Create a camera.
@@ -173,15 +72,10 @@ namespace nogame
             }
 
             _engine.AddScene(0, this);
-
-            _xray = new engine.xray.RootScene();
-            _xray.SceneActivate(_engine);
-
         }
 
         public RootScene()
         {
-            _testCount = 0;
         }
     }
 }

@@ -4,9 +4,8 @@ using System.Text;
 
 namespace engine.world
 {
-    internal class CreateTerrainOperator
+    internal class CreateTerrainOperator : IFragmentOperator
     {
-        // private var _rnd: engine.RandomSource;
         private string _myKey;
 
 

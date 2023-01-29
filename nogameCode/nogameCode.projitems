@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)nogame\components\CubeSpinner.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\CubeScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\RootScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\systems\CubeSpinnerSystem.cs" />
   </ItemGroup>

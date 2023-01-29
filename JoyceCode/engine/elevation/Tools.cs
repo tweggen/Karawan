@@ -2,7 +2,7 @@
 
 namespace engine.elevation
 {
-    internal class Tools
+    public class Tools
     {
         private static float _damping = 0.4f;
 
@@ -26,7 +26,7 @@ namespace engine.elevation
 
         public static void RefineSkeletonElevation(
             int i, int k,
-            float[,] elevationArray,
+            in float[,] elevationArray,
             float minElevation, float maxElevation,
             int x0, int y0, int x1, int y1 )
         {
