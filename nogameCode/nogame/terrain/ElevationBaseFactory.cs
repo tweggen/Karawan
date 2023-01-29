@@ -17,6 +17,11 @@ namespace nogame.terrain
         /// Number of indices vertically (depth) in world.
         float _skeletonHeight;
 
+        private void trace(string message)
+        {
+            Console.WriteLine(message);
+        }
+
 
         private string createSeed(int x, int y) 
         {
@@ -106,10 +111,16 @@ namespace nogame.terrain
             // trace('idxY $idxY idxX $idxX _skeletonHeight $_skeletonHeight');
             // trace(skeletonElevations.length);
             // trace(skeletonElevations[idxY+1].length);
-            localElevations[y0,x0] = skeletonElevations[idxY,idxX];
-            localElevations[y0,x1] = skeletonElevations[idxY,idxX + 1];
-            localElevations[y1,x0] = skeletonElevations[idxY + 1,idxX];
-            localElevations[y1,x1] = skeletonElevations[idxY + 1,idxX + 1];
+            try
+            {
+                localElevations[y0, x0] = skeletonElevations[idxY, idxX];
+                localElevations[y0, x1] = skeletonElevations[idxY, idxX + 1];
+                localElevations[y1, x0] = skeletonElevations[idxY + 1, idxX];
+                localElevations[y1, x1] = skeletonElevations[idxY + 1, idxX + 1];
+            } catch(Exception e)
+            {
+                trace($"Caught exception {e}");
+            }
 
             /*
              * Compute all remaining elevations.
