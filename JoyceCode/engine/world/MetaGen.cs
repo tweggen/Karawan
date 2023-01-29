@@ -29,6 +29,11 @@ namespace engine.world
         public static bool TRACE_LOAD_BYTES = false;
         public static bool TRACE_PLATFORM_MOLECULE_ADDING = false;
 
+        /**
+         * This is our seed. It also will be used for other sub-parts of
+         * the world-
+         */
+        private string _myKey;
 
         private List<engine.world.IWorldOperator> _worldOperators;
         private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
@@ -163,7 +168,21 @@ _fragmentOperatorTree.apply(function(fo) {
 
         private MetaGen()
         {
+            _myKey = "mydear";
+
             _worldOperators = new();
+
+            /*
+             * Create a fragment operator that reads the elevations after 
+             * the elevation pipeline.
+             */
+            MetaGenAddFragmentOperator(new world.CreateTerrainOperator(_myKey));
+
+            /*
+             * Create a fragment operator that creates a ground mesh.
+             */
+            MetaGenAddFragmentOperator(new world.CreateTerrainMeshOperator(_myKey));
+
         }
 
         public static MetaGen Instance()

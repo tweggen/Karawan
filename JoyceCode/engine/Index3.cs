@@ -6,7 +6,7 @@ namespace engine
 {
     public struct Index3
     {
-        int I, J, K;
+        public int I, J, K;
 
         public Index3(int i0, int j0, int k0)
         {
