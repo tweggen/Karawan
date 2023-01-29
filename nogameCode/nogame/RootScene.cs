@@ -44,7 +44,14 @@ namespace nogame
             _vMe = new Vector3(0f, 0f, 0f);
             _worldMetaGen = engine.world.MetaGen.Instance();
             _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
-            _worldLoader.WorldLoaderProvideFragments(_vMe);
+            {
+                var elevationCache = engine.elevation.Cache.Instance();
+                var elevationBaseFactory = new terrain.ElevationBaseFactory();
+                elevationCache.ElevationCacheRegisterElevationOperator(
+                    engine.elevation.Cache.LAYER_BASE + "/000002/fillGrid",
+                    elevationBaseFactory);
+            }
+
 
             /*
              * Some local shortcuts
@@ -70,6 +77,8 @@ namespace nogame
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 100f));
             }
+
+            _worldLoader.WorldLoaderProvideFragments(_vMe);
 
             _engine.AddScene(0, this);
         }

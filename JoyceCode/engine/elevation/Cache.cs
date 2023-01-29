@@ -27,7 +27,7 @@ namespace engine.elevation
         private Dictionary<string, FactoryEntry> _mapFactories;
         private List<string> _keysFactories;
 
-        private bool _traceCache = false;
+        private bool _traceCache = true;
 
         private void _insertElevationFactoryEntry(
             in string id,
@@ -80,7 +80,7 @@ namespace engine.elevation
             _mutexMap.WaitOne();
             int idx = _keysFactories.Count - 1;
 
-            if (factoryId == TOP_LAYER)
+            if (factoryId == TOP_LAYER) // TXWTODO: factory id contains the prefixed layer string, elevataion-factory-TOP_LAYER
             {
                 if (idx >= 0)
                 {
@@ -519,7 +519,7 @@ namespace engine.elevation
          * Create a new elevation array factory.
          * This factory is associated with the given worldMetaGen.
          */
-        public Cache()
+        private Cache()
         {
             _mapEntries = new();
             _keysFactories = new();

@@ -90,7 +90,7 @@ namespace nogame.terrain
          *
          * Immediately after creation, it will compute a ground skeleton.
          */
-        public GroundOperator(in string seed0)
+        private GroundOperator(in string seed0)
         {
             _worldMetaGen = engine.world.MetaGen.Instance();
 
