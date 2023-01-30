@@ -23,7 +23,7 @@ namespace nogame
         private int _tickCounter;
 
         public void SceneOnLogicalFrame( float dt )
-        {
+        { 
             ++_tickCounter;
 
             var q = Quaternion.CreateFromAxisAngle(
