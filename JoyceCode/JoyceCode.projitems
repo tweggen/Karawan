@@ -12,6 +12,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\joyce\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Cache.cs" />

@@ -1,4 +1,5 @@
 ﻿using System;
+using engine;
 using Raylib_CsLo;
 
 namespace Karawan.platform.cs1
@@ -7,12 +8,65 @@ namespace Karawan.platform.cs1
         : engine.IPlatform
     {
         private engine.Engine _engine;
+        private engine.ControllerState _controllerState;
+
         private splash.API _aSplash;
 
         public void SetEngine(engine.Engine engine)
         {
             _engine = engine;
         }
+
+        private void _physFrameUpdateControllerState()
+        {
+            /*
+             * Read input devices.
+             * #1 Key States, filling the controller data structure.
+             */
+            _controllerState.Reset();
+            if(Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)
+                || Raylib.IsKeyDown(KeyboardKey.KEY_RIGHT_SHIFT))
+            {
+                _controllerState.WalkFast = true;
+            }
+            if(Raylib.IsKeyDown(KeyboardKey.KEY_W))
+            {
+                _controllerState.WalkForward = 200;
+            }
+            if(Raylib.IsKeyDown(KeyboardKey.KEY_S))
+            {
+                _controllerState.WalkBackward = 200;
+            }
+            if(Raylib.IsKeyDown(KeyboardKey.KEY_A))
+            {
+                _controllerState.TurnLeft = 200;
+            }
+            if(Raylib.IsKeyDown(KeyboardKey.KEY_D))
+            {
+                _controllerState.TurnRight = 200;
+            }
+        }
+
+        private void _physFrameReadKeyEvents()
+        {
+            /*
+             * Read input devices.
+             * #2 Key events
+             */
+            while (true)
+            {
+                var keyCode = Raylib.GetKeyPressed();
+                if (0 == keyCode)
+                {
+                    break;
+                }
+                if (keyCode == 65)
+                {
+                    // TXWTODO: Forward 
+                }
+            }
+        }
+
 
         public void Execute()
         {
@@ -26,18 +80,6 @@ namespace Karawan.platform.cs1
 
             while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
-                while(true) {
-                    var keyCode = Raylib.GetKeyPressed();
-                    if( 0==keyCode )
-                    {
-                        break;
-                    }
-                    if( keyCode == 65 )
-                    {
-                        // TXWTODO: Forward 
-                    }
-                }
-
                 /*
                  * Call the render operations.
                  */
@@ -53,6 +95,11 @@ namespace Karawan.platform.cs1
         public void Render3D()
         {
             _aSplash.Render();
+        }
+
+        public void GetControllerState(out ControllerState controllerState)
+        {
+            controllerState = _controllerState;
         }
 
         public engine.IUI CreateUI()
