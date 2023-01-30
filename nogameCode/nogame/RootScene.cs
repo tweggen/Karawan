@@ -1,4 +1,5 @@
 ﻿using DefaultEcs;
+using engine.transform.components;
 using System;
 using System.Numerics;
 
@@ -13,34 +14,29 @@ namespace nogame
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
+        private builtin.controllers.WASDController _wasdController;
+
         private DefaultEcs.Entity _eCamera;
 
         private engine.world.Loader _worldLoader;
         private engine.world.MetaGen _worldMetaGen;
 
-        private Vector3 _vMe;
-
-        private int _tickCounter;
-
         public void SceneOnLogicalFrame( float dt )
         { 
-            ++_tickCounter;
-
-            var q = Quaternion.CreateFromAxisAngle(
-                    new Vector3(0f, 1f, 0f),
-                    (float)_tickCounter / 60f * 30f * (float)Math.PI / 180f);
-            // Console.WriteLine($"rot {q}");
-            _aTransform.SetRotation(
-                _eCamera, q);
         }
 
         public void SceneOnPhysicalFrame( float dt )
         {
+            var vMe = _eCamera.Get<Transform3ToWorld>().Matrix.Translation;
+            _worldLoader.WorldLoaderProvideFragments(vMe);
             _engine.Render3D();
         }
 
         public void SceneDeactivate()
         {
+            _wasdController.DeactivateController();
+            _wasdController = null;
+
             /*
              * Null out everything we don't need when the scene is unloaded.
              */
@@ -51,7 +47,6 @@ namespace nogame
         {
             _engine = engine0;
 
-            _vMe = new Vector3(0f, 0f, 0f);
             _worldMetaGen = engine.world.MetaGen.Instance();
             _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
             {
@@ -87,8 +82,8 @@ namespace nogame
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 100f, 100f));
             }
-
-            _worldLoader.WorldLoaderProvideFragments(_vMe);
+            _wasdController = new(_engine, _eCamera);
+            _wasdController.ActivateController();
 
             _engine.AddScene(0, this);
         }

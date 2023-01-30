@@ -50,7 +50,7 @@ namespace engine.transform
 
         public void SetVisible(DefaultEcs.Entity entity, bool isVisible)
         {
-            var object3 = GetTransform(entity);
+            components.Transform3 object3; GetTransform(entity, out object3);
             if (object3.IsVisible != isVisible)
             {
                 SetTransforms(entity, isVisible, object3.CameraMask, object3.Rotation, object3.Position);
@@ -60,7 +60,7 @@ namespace engine.transform
 
         public void SetRotation(DefaultEcs.Entity entity, in Quaternion rotation)
         {
-            var object3 = GetTransform(entity);
+            components.Transform3 object3; GetTransform(entity, out object3);
             if (object3.Rotation != rotation)
             {
                 SetTransforms(entity, object3.IsVisible, object3.CameraMask, rotation, object3.Position);
@@ -70,7 +70,7 @@ namespace engine.transform
 
         public void AppendRotation(DefaultEcs.Entity entity, in Quaternion rotation)
         {
-            var object3 = GetTransform(entity);
+            components.Transform3 object3; GetTransform(entity, out object3);
 
             SetTransforms(entity, 
                 object3.IsVisible,
@@ -83,7 +83,7 @@ namespace engine.transform
 
         public void SetPosition(DefaultEcs.Entity entity, in Vector3 position)
         {
-            var object3 = GetTransform(entity);
+            components.Transform3 object3; GetTransform(entity, out object3);
             if (object3.Position != position)
             {
                 SetTransforms(entity, object3.IsVisible, object3.CameraMask, object3.Rotation, position);

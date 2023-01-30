@@ -80,6 +80,9 @@ namespace Karawan.platform.cs1
 
             while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
+                _physFrameUpdateControllerState();
+                _physFrameReadKeyEvents();
+
                 /*
                  * Call the render operations.
                  */
@@ -131,6 +134,7 @@ namespace Karawan.platform.cs1
 
         public Platform(string[] args)
         {
+            _controllerState = new();
         }
 
         static public engine.Engine EasyCreatePlatform(string[] args, out Karawan.platform.cs1.Platform platform)
