@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace engine
@@ -12,6 +13,11 @@ namespace engine
         private engine.transform.API _aTransform;
 
         private SortedDictionary<float, IScene> _dictScenes;
+
+        public event EventHandler<float> LogicalFrame;
+        public event EventHandler<float> PhysicalFrame;
+        public event EventHandler<uint> KeyEvent;
+
 
         private void _selfTest()
         {
@@ -72,6 +78,8 @@ namespace engine
 
         public void _onLogicalFrame(float dt)
         {
+            LogicalFrame?.Invoke(this, dt);
+
             /*
              * We need a local copy in case anybody adds scenes.
              */
@@ -84,6 +92,8 @@ namespace engine
 
         public void _onPhysicalFrame(float dt)
         {
+            PhysicalFrame?.Invoke(this, dt);
+
             /*
              * We need a local copy in case anybody adds scenes.
              */
@@ -140,6 +150,11 @@ namespace engine
         public void Render3D()
         {
             _platform.Render3D();
+        }
+
+        public void GetControllerState( out ControllerState controllerState)
+        {
+            _platform.GetControllerState( out controllerState );
         }
 
         public IUI CreateUI()

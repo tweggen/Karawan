@@ -34,14 +34,14 @@ namespace engine.transform
         }
 
 
-        public transform.components.Transform3 GetTransform(DefaultEcs.Entity entity)
+        public void GetTransform(DefaultEcs.Entity entity, out transform.components.Transform3 transform3)
         {
             if( entity.Has<transform.components.Transform3>() )
             {
-                return entity.Get<transform.components.Transform3>();
+                transform3 = entity.Get<transform.components.Transform3>();
             } else
             {
-                return new transform.components.Transform3(
+                transform3 = new transform.components.Transform3(
                     false, 0xffffffff, new Quaternion(), new Vector3()
                 ); 
             }

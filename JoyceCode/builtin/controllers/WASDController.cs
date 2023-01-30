@@ -7,28 +7,31 @@ namespace builtin.controllers
     public class WASDController
     {
         private engine.Engine _engine;
-        private DefaultEcs _entity;
+        private DefaultEcs.Entity _entity;
+        private engine.transform.API _aTransform;
 
-
-        private void _onLogicalFrame(float dt)
+        private void _onLogicalFrame(object sender, float dt)
         {
+            engine.ControllerState controllerState;
+            _engine.GetControllerState(out controllerState);
+            engine.transform.components.Transform3 transform3 = _aTransform.GetTransform(_entity);
 
         }
 
         public void DeactivateController()
         {
-            // _engine.RemoveOnLogical(this._onLogicalFrame);
+            _engine.LogicalFrame -= _onLogicalFrame;
         }
 
         public void ActivateController()
         {
-            // _engine.AddOnLogical(this._onLogicalFrame);
+            _engine.LogicalFrame += _onLogicalFrame;
         }
 
         public WASDController(engine.Engine engine, DefaultEcs.Entity entity)
         {
             _engine = engine;
-            // _entity = entity;
+            _entity = entity;
         }
     }
 }
