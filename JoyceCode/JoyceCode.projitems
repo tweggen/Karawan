@@ -46,6 +46,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\World3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Generator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Quarter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterStore.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Stroke.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToParent.cs" />
