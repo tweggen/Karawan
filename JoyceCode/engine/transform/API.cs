@@ -42,7 +42,7 @@ namespace engine.transform
             } else
             {
                 transform3 = new transform.components.Transform3(
-                    false, 0xffffffff, new Quaternion(), new Vector3()
+                    false, 0xffffffff, new Quaternion(new Vector3(), 1f), new Vector3()
                 ); 
             }
         }

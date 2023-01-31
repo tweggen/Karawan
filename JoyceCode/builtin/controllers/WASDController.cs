@@ -33,15 +33,18 @@ namespace builtin.controllers
             var frontMotion = controllerState.WalkForward - controllerState.WalkBackward;
             if (frontMotion != 0f)
             {
-                float meterPerSecond = 100f;
-                cTransform3.Position += vFront * (frontMotion * (meterPerSecond * dt) / 256f);
+                float meterPerSecond = 200f;
+                cTransform3.Position += vFront * (frontMotion / 256f * (meterPerSecond * dt) );
                 haveChange = true;
             }
             var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
             if (turnMotion != 0f)
             {
-                float radiansPerSecond = (float)Math.PI * 2f;
-                cTransform3.Rotation = Quaternion.Concatenate(cTransform3.Rotation, Quaternion.CreateFromAxisAngle(vUp, radiansPerSecond * dt * turnMotion));
+                float radiansPerSecond = (float)Math.PI /2f;
+                cTransform3.Rotation = 
+                    Quaternion.Concatenate(
+                        cTransform3.Rotation, 
+                        Quaternion.CreateFromAxisAngle(vUp, turnMotion / 256f * radiansPerSecond * dt));
                 haveChange = true;
             }
             if (haveChange)

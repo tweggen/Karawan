@@ -203,7 +203,7 @@ return molArrayMap;
          */
         public void WorldLoaderProvideFragments(in Vector3 pos0)
         {
-            if (world.MetaGen.TRACE_WORLD_LOADER) trace($"WorldLoader.worldLoaderProvideFragments(): Called {pos0}.");
+            // if (world.MetaGen.TRACE_WORLD_LOADER) trace($"WorldLoader.worldLoaderProvideFragments(): Called {pos0}.");
             Vector3 pos = pos0;
             pos += new Vector3(
                 world.MetaGen.FragmentSize/2f,
