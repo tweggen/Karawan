@@ -50,6 +50,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Quarter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterStore.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StreetPoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Stroke.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\API.cs" />
