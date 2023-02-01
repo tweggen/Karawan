@@ -24,6 +24,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Rect.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Angles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Line.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Children.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\NewParent.cs" />

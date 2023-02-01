@@ -56,7 +56,7 @@ namespace engine.streets
             pos.x = x;
             pos.y = y;
 #else
-            Pos = new Vector2((int)(x * 10f) / 10f, (int)(y * 10f) / 10f);
+            Pos = new Vector2( (int)(x * 10f) / 10f, (int)(y * 10f) / 10f );
 #endif
             Invalidate();
             if (null != _listStartingStrokes)
@@ -111,8 +111,8 @@ namespace engine.streets
             }
             _angleArray.Sort( (a, b) => {
                 // If any of the strokes is ending here, we meed to invert the angle.
-                var aAngle = geom.Angles.snorm(a.GetAngleSP(this));
-                var bAngle = geom.Angles.snorm(b.GetAngleSP(this));
+                var aAngle = geom.Angles.Snorm(a.GetAngleSP(this));
+                var bAngle = geom.Angles.Snorm(b.GetAngleSP(this));
 
                 var diff = /* geom.Angles.snorm( */ aAngle - bAngle; // );
                 if (diff < 0.0) return -1;
@@ -137,7 +137,7 @@ namespace engine.streets
             trace( "angles:" );
             foreach( var stroke in _angleArray )
             {
-                var angle = geom.Angles.snorm(stroke.GetAngleSP(this));
+                var angle = geom.Angles.Snorm(stroke.GetAngleSP(this));
                 trace( $"getAngleArray(): angle={angle} ({angle * 180.0 / Math.PI})");
             }
         }
@@ -165,7 +165,7 @@ namespace engine.streets
              * to inverse the angle, as we will compute outgoing angles
              * in this function.
              */
-            var myAngle = geom.Angles.snorm(angle + Math.PI);
+            var myAngle = geom.Angles.Snorm(angle + Math.PI);
 
             if (!clockwise)
             {
@@ -179,11 +179,11 @@ namespace engine.streets
             {
                 foreach(var stroke in _listStartingStrokes )
                 {
-                    var currAngle = geom.Angles.snorm(stroke.Angle);
+                    var currAngle = geom.Angles.Snorm(stroke.Angle);
                     /*
                      * Note, that we need to use the unsigned angle.
                      */
-                    var diffAngle = geom.Angles.unorm(currAngle - myAngle);
+                    var diffAngle = geom.Angles.Unorm(currAngle - myAngle);
 
                     bool isStart = (strokeCurrent != null) && (strokeCurrent == stroke);
 
@@ -230,12 +230,12 @@ namespace engine.streets
                     /*
                      * Note the offset.
                      */
-                    float currAngle = geom.Angles.snorm(stroke.angle + (float)Math.PI);
+                    float currAngle = geom.Angles.Snorm(stroke.Angle + (float)Math.PI);
                     /*
                      * Note, that we need to use the unsigned angle for minimizing
                      * angle.
                      */
-                    float diffAngle = geom.Angles.unorm(currAngle - myAngle);
+                    float diffAngle = geom.Angles.Unorm(currAngle - myAngle);
 
                     bool isStart = (strokeCurrent != null) && (strokeCurrent == stroke);
 
