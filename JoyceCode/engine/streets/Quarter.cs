@@ -60,21 +60,21 @@ namespace engine.streets
             _estates.Add(estate);
         }
 
-        public void ForDelims(Action<QuarterDelim, StreetPoint, StreetPoint> action )
+        public void ForDelims(Action<QuarterDelim, StreetPoint, StreetPoint> action)
         {
-            Nullable<QuarterDelim> lastDelim;
+            QuarterDelim? lastDelim = null;
             foreach(var delim in _delims)
             {
-                if (!(lastDelim is null))
+                if (lastDelim != null)                
                 {
-                    action(lastDelim, lastDelim.Value.StreetPoint, delim.StreetPoint);
+                    action(lastDelim, lastDelim.StreetPoint, delim.StreetPoint);
                     lastDelim = delim;
                 }
             }
-            if (!(lastDelim is null))
+            if (lastDelim != null)
             {
                 var delim = _delims[0];
-                action(lastDelim, lastDelim.Value.StreetPoint, delim.StreetPoint);
+                action(lastDelim, lastDelim.StreetPoint, delim.StreetPoint);
             }
         }
 
@@ -88,11 +88,11 @@ namespace engine.streets
             float cy = 0.0f;
             foreach(var delim in _delims)
             {
-                if (null != delim.startPoint)
+                if (null != delim.StartPoint)
                 {
                     ++nPoints;
-                    cx += delim.startPoint.x;
-                    cy += delim.startPoint.y;
+                    cx += delim.StartPoint.X;
+                    cy += delim.StartPoint.Y;
                 }
             }
             if (nPoints > 0)

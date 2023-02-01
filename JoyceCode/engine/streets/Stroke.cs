@@ -138,7 +138,7 @@ namespace engine.streets
             var prevPhi = _angle;
             dx = dx / _length;
             dy = dy / _length;
-            var phi = Math.Atan2(dy, dx);
+            float phi = (float) Math.Atan2(dy, dx);
             if(Math.Abs(prevPhi-phi) > 0.00000001 ) {
                 _angle = phi;
             }
@@ -150,10 +150,10 @@ namespace engine.streets
 
         public void invalidate()
         {
-            _angle = -1000.;
+            _angle = -1000f;
             _unit = new Vector2();
             _normal = new Vector2();
-            _length = 0.;
+            _length = 0f;
             _isValid = false;
         }
 
@@ -220,7 +220,7 @@ namespace engine.streets
             }
             else
             {
-                throw new InvalidOperationException( $"Stroke.getAngleSP(): Invalid stroke #{sid} that does not contain street point {sp.id}";
+                throw new InvalidOperationException( $"Stroke.getAngleSP(): Invalid stroke #{Sid} that does not contain street point {sp.Id}" );
             }
             return Angle + (isEnding ? (float)Math.PI : 0f);
         }
@@ -330,12 +330,12 @@ namespace engine.streets
             }
 
             var crossproduct = abx * acy - aby * acx;
-            if (length < 0.0000001f && length > -0.0000001f)
+            if (Length < 0.0000001f && Length > -0.0000001f)
             {
                 trace("Stroke.distance(): near null division.");
                 return 1000000000f;
             }
-            var dist = Math.Abs(crossproduct) / length;
+            var dist = Math.Abs(crossproduct) / Length;
             // trace( 'dist=$dist');
 
             /*
@@ -346,13 +346,11 @@ namespace engine.streets
             * Compute the distance between A and the projection of C on AB.
             * (pythagoras)
             */
-            var acx = px - A.Pos.X;
-            var acy = py - A.Pos.Y;
-            var ac2 = acx * acx + acy * acy;
-            var ad2 = ac2 - dist * dist;
-            var ad = Math.Sqrt(ad2);
+            float ac2 = acx * acx + acy * acy;
+            float ad2 = ac2 - dist * dist;
+            float ad = (float) Math.Sqrt(ad2);
 
-            if (ad >= length)
+            if (ad >= Length)
             {
                 //trace( 'Skipping point ${sp0.pos.x}, ${sp0.pos.y}, because its beyond stroke.');
                 return 1000000000f;
@@ -376,7 +374,7 @@ namespace engine.streets
          * Howevere, the stroke is not added to the stroke store and therefore
          * also not added to the StreetPoints.
          */
-        public Stroke createUnattachedCopy()
+        public Stroke CreateUnattachedCopy()
         {
             var stroke = new Stroke();
             stroke.A = A;
@@ -390,7 +388,7 @@ namespace engine.streets
          * Create a new stroke from the given street point.
          * Compute the coordinates for the target streetpoint.
          */
-        public static function createByAngleFrom(
+        public static Stroke CreateByAngleFrom(
             in StreetPoint a0,
             in StreetPoint b0,
             float angle0,
@@ -416,8 +414,8 @@ namespace engine.streets
             var stroke = new Stroke();
 
             b0.SetPos(
-                a0.Pos.X + Math.Cos(angle0) * length0,
-                a0.Pos.Y + Math.Sin(angle0) * length0
+                a0.Pos.X + (float) Math.Cos(angle0) * length0,
+                a0.Pos.Y + (float) Math.Sin(angle0) * length0
             );
             stroke.A = a0;
             stroke.B = b0;
@@ -439,7 +437,7 @@ namespace engine.streets
         }
 
 
-        public string toStringSP(in StreetPoint sp)
+        public string ToStringSP(in StreetPoint sp)
         {
             var ax = A.Pos.X;
             var ay = A.Pos.Y;
@@ -458,7 +456,7 @@ namespace engine.streets
             {
                 throw new InvalidOperationException( $"Stroke.toStringSP(): Inconsistent angle, sp not in stroke." );
             }
-            return $"{sid}: ^{relativeAngle} ({a.toString()}-({b.toString()}) ('{creator}')";
+            return $"{Sid}: ^{relativeAngle} ({A.ToString()}-({B.ToString()}) ('{Creator}')";
         }
 
 
@@ -474,8 +472,8 @@ namespace engine.streets
             A = null; //new StreetPoint();
             B = null; //new StreetPoint();
             Store = null;
-            _angle = -1000.;
-            _length = 0.;
+            _angle = -1000f;
+            _length = 0f;
             TraversedAB = false;
             TraversedBA = false;
             _unit = new Vector2();
