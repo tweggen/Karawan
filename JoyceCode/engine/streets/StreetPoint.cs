@@ -56,8 +56,7 @@ namespace engine.streets
             pos.x = x;
             pos.y = y;
 #else
-            Pos.x = (int)(x * 10f) / 10f;
-            Pos.y = (int)(y * 10f) / 10f;
+            Pos = new Vector2((int)(x * 10f) / 10f, (int)(y * 10f) / 10f);
 #endif
             Invalidate();
             if (null != _listStartingStrokes)
@@ -317,289 +316,291 @@ namespace engine.streets
             _listStartingStrokes.Add(s);
         }
 
-#if false
 
-
-public function removeEndingStroke(s: Stroke) {
-    if (this != s.b)
-    {
-        throw 'StreetPoint.removeEndingStroke(): Stroke end is not me.';
-    }
-    if (null == s.a)
-    {
-        throw 'StreetPoint.removeEndingStroke(): Stroke has no start point.';
-    }
-    if (null == _listEndingStrokes)
-    {
-        throw 'StreetPoint: No Ending list yet.';
-    }
-    invalidate();
-    _listEndingStrokes.remove(s);
-}
-
-
-public function addEndingStroke(s: Stroke) {
-    if (null == s.a)
-    {
-        throw 'StreetPoint.addEndingStroke(): Stroke had no start point.';
-    }
-    if (this != s.b)
-    {
-        throw 'StreetPoint.addEndingStroke(): Stroke end is not me.';
-    }
-    if (null == _listEndingStrokes)
-    {
-        _listEndingStrokes = new List<Stroke>();
-    }
-    invalidate();
-    if (!_listEndingStrokes.filter(function(a) { return a == s; }).isEmpty() ) {
-        throw 'StreetPoint.addEndingStroke(): Stroke ${s.toString()} already attached.';
-    }
-    _listEndingStrokes.add(s);
-}
-
-
-public function hasStrokes(): Bool
-{
-    if (
-        (
-            null == _listStartingStrokes || _listStartingStrokes.isEmpty()
-        ) && (
-            null == _listEndingStrokes || _listEndingStrokes.isEmpty()
-        )
-    )
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-
-/**
- * Return an array of of points describing the intersection of each stroke with 
- * the previous one.
- * 
- * @return Array<geom.Point>
- */
-public function getSectionArray(): Array<geom.Point> {
-    if (_sectionArray != null)
-    {
-        return _sectionArray;
-    }
-
-    var myVerbose = false;
-    if (false && 115 == id)
-    {
-        myVerbose = true;
-    }
-    // trace( 'getSectionArray(): Called.' );
-
-    _sectionArray = new Array<Point>();
-    _sectionStrokeMap = new Map<Int, geom.Point>();
-
-    /*
-     * Make sure we have the array of sorted strokes.
-     */
-    getAngleArray();
-
-    /*
-    * A street point with a single street does not have any section array. 
-    */
-    if (_angleArray.length < 2)
-    {
-        return _sectionArray;
-    }
-
-    /*
-     * A street point with two strokes does use the generic intersection, unless
-     * they are perfectly collinear. They do not, however make up a polygon later
-     * on but come next to each others.
-     */
-
-    if (myVerbose)
-    {
-        traceAngles();
-    }
-
-    var idx: Int = _angleArray.length - 1;
-    /*
-     * Iterate through our point array, intersecting the adjacent sides of the
-     * previous and the current stroke. 
-     * 
-     * Note: As we use the infinite lines, the in/out orientation does not matter.
-     */
-    for (curr in _angleArray )
-    {
-        // trace( 'getSectionArray(): curr.angle is ${curr.angle}, ${curr.angle+Math.PI}.' );
-        var prev = _angleArray[idx % _angleArray.length];
-        if (curr != _angleArray[(idx + 1) % _angleArray.length])
+        public void RemoveEndingStroke(in Stroke s) 
         {
-            throw 'StreetPoint.getSectionArray(): Mismatch of angle array.';
-        }
-
-        var sp = null;
-        if (prev.a == this)
-        {
-            sp = new geom.Line(prev.a.pos.clone(), prev.b.pos.clone());
-        }
-        else
-        {
-            sp = new geom.Line(prev.b.pos.clone(), prev.a.pos.clone());
-        }
-        var sc = null;
-        if (curr.a == this)
-        {
-            sc = new geom.Line(curr.a.pos.clone(), curr.b.pos.clone());
-        }
-        else
-        {
-            sc = new geom.Line(curr.b.pos.clone(), curr.a.pos.clone());
-        }
-
-        /*
-         * Normals. Turn them in a way that, well
-         * If I move from outside to this street point, the normal shall point
-         * to the right side. That means, the normal points from the current to
-         * the previous stroke.
-         */
-        var np = sp.normal();
-        // if( prev.b == this ) { np.x = -np.x; np.y = -np.y; }
-        var nc = sc.normal();
-        // if( curr.b == this ) { nc.x = -nc.x; nc.y = -nc.y; }
-
-        /*
-         * Copy paste from generate street operator.
-         */
-        var prevHalfStreetWidth = prev.streetWidth() / 2.0;
-        var currHalfStreetWidth = curr.streetWidth() / 2.0;
-
-        /*
-         * Scale each of the normals to properly move the line.
-         * Compute the offets.
-         */
-        var opx = np.x * (-prevHalfStreetWidth);
-        var opy = np.y * (-prevHalfStreetWidth);
-
-        var ocx = nc.x * (currHalfStreetWidth);
-        var ocy = nc.y * (currHalfStreetWidth);
-
-        sp.move(opx, opy);
-        sc.move(ocx, ocy);
-
-        var i = sp.intersectInfinite(sc);
-
-        var doUseSide = false;
-        if (null == i)
-        {
-            if (myVerbose) trace('no inrtersect');
-            doUseSide = true;
-        }
-        else
-        {
-            /*
-             * If the intersection is too far away from the streetpoint, these are pretty in-line 
-             * streets, so take their common border.
-             */
-            var dx = i.x - pos.x;
-            var dy = i.y - pos.y;
-            var dist2 = dx * dx + dy * dy;
-            if (dist2 > 4000. )
+            if (this != s.B)
             {
-                if (myVerbose) trace('farout intersect');
-                /*
-                 * If this intersection is too far away, we use the point offset by the (angle)
-                 * average of both normals.
-                 */
-                var n = new Point(nc.x - np.x, nc.y - np.y);
-                n.unit();
-                var averW = (prevHalfStreetWidth + currHalfStreetWidth) / 2.0;
-                i = new Point(pos.x + n.x * averW, pos.y + n.y * averW);
-#if 0
-                    var dist = Math.sqrt(dist2);
-                    var prevAngle = prev.getAngleSP(this);
-                    var currAngle = curr.getAngleSP(this);
-                    var junctionAngle = (currAngle - prevAngle)*180./Math.PI;
-                    trace( 'When intersecting prev $sp and curr $sc (normals prev $np curr $nc): Far out intersection $i' );
-                    trace( 'prevHalfStreetWidth is $prevHalfStreetWidth currHalfStreetWidth is $currHalfStreetWidth');
-                    traceAngles();
-                    throw ( 'getSectionArray(): Far out intersection $i {between ${prev.toStringSP(this)} and ${curr.toStringSP(this)}: $dist, $junctionAngle deg' );
-                    // doUseSide = true;   
-# end
-                } else {
-                    if( myVerbose ) trace( 'close intersect' );
-                }
+                throw new InvalidOperationException( $"StreetPoint.removeEndingStroke(): Stroke end is not me." );
+            }
+            if (null == s.A)
+            {
+                throw new InvalidOperationException( $"StreetPoint.removeEndingStroke(): Stroke has no start point." );
+            }
+            if (null == _listEndingStrokes)
+            {
+                throw new InvalidOperationException( $"StreetPoint: No Ending list yet." );
+            }
+            Invalidate();
+            _listEndingStrokes.Remove(s);
+        }
+
+
+        public void AddEndingStroke(Stroke s)
+        {
+            if (null == s.A)
+            {
+                throw new InvalidOperationException( $"StreetPoint.addEndingStroke(): Stroke had no start point." );
+            }
+            if (this != s.B)
+            {
+                throw new InvalidOperationException( $"StreetPoint.addEndingStroke(): Stroke end is not me." );
+            }
+            if (null == _listEndingStrokes)
+            {
+                _listEndingStrokes = new List<Stroke>();
+            }
+            Invalidate();
+            if (0 != _listEndingStrokes.FindAll(a => a == s).Count ) {
+                throw new InvalidOperationException( $"StreetPoint.addEndingStroke(): Stroke {s.ToString()} already attached." );
+            }
+            _listEndingStrokes.Add(s);
+        }
+
+
+        public bool HasStrokes()
+        {
+            if (
+                (
+                    null == _listStartingStrokes || 0==_listStartingStrokes.Count
+                ) && (
+                    null == _listEndingStrokes || 0==_listEndingStrokes.Count
+                )
+            )
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
+        /**
+         * Return an array of of points describing the intersection of each stroke with 
+         * the previous one.
+         * 
+         * @return Array<geom.Point>
+         */
+        public List<Vector2> GetSectionArray()
+        {
+            if (_sectionArray != null)
+            {
+                return _sectionArray;
             }
 
-            if( doUseSide ) {
-                // trace( 'getSectionArray(): no intersection.' );
-                /*
-                 * If the streets are parallel and the sides in line, use the offset
-                 * street point itself as an intersection, using the average street width.
-                 */
-                var averHalfStreetWidth = (prevHalfStreetWidth+currHalfStreetWidth)/2.0;
-                var osx = nc.x * averHalfStreetWidth;
-                var osy = nc.y * averHalfStreetWidth;
-                i = new Point( pos.x+osx, pos.y+osy );
+            var myVerbose = false;
+            if (false && 115 == Id)
+            {
+                myVerbose = true;
             }
+            // trace( 'getSectionArray(): Called.' );
 
-            if( myVerbose ) {
-                trace('Adding point $i');
-            }
-            _sectionArray.push(i);
+            _sectionArray = new List<Vector2>();
+            _sectionStrokeMap = new Dictionary<int, Vector2>();
+
             /*
-             * Now also add this point to the stroke lookup. Obviously, it involves
-             * two strokes, curr and prev, so add both associations.
+             * Make sure we have the array of sorted strokes.
              */
-            var ids: Int = (curr.sid%10000)+10000*(prev.sid%10000);
-            _sectionStrokeMap.set(ids, i);
-            // trace('StreetPoint.getSectionArray(): sp $id Storing stroke $ids ${curr.sid} and ${prev.sid}');
-            ++idx;
-        }
+            GetAngleArray();
 
-        return _sectionArray;
-    }
+            /*
+            * A street point with a single street does not have any section array. 
+            */
+            if (_angleArray.Count < 2)
+            {
+                return _sectionArray;
+            }
 
+            /*
+             * A street point with two strokes does use the generic intersection, unless
+             * they are perfectly collinear. They do not, however make up a polygon later
+             * on but come next to each others.
+             */
 
-    /**
-     * Return the intersection point involving the given stroke.
-     * 
-     * @param stroke 
-     * @return geom.Point
-     */
-    public function getSectionPointByStroke( curr: Stroke, prev: Stroke ): geom.Point
-    {
-        if( null==_sectionArray ) {
-            getSectionArray();
-        }
-        var ids: Int = (curr.sid%10000)+10000*(prev.sid%10000);
-        // trace('StreetPoint.getSectionPointByStroke(): sp $id Obtaining stroke $ids ${curr.sid} and ${prev.sid}');
-        if( !_sectionStrokeMap.exists( ids ) ) {
-            // trace('StreetPoint.getSectionPointByStroke(): Not found.');
-            return null;
-        }
-        // trace('StreetPoint.getSectionPointByStroke(): Returning point.');
-        return _sectionStrokeMap[ids];
-    }
+            if (myVerbose)
+            {
+                traceAngles();
+            }
 
+            int idx = _angleArray.Count - 1;
+            /*
+             * Iterate through our point array, intersecting the adjacent sides of the
+             * previous and the current stroke. 
+             * 
+             * Note: As we use the infinite lines, the in/out orientation does not matter.
+             */
+            foreach(var curr in _angleArray )
+            {
+                // trace( 'getSectionArray(): curr.angle is ${curr.angle}, ${curr.angle+Math.PI}.' );
+                var prev = _angleArray[idx % _angleArray.Count];
+                if (curr != _angleArray[(idx + 1) % _angleArray.Count])
+                {
+                    throw 'StreetPoint.getSectionArray(): Mismatch of angle array.';
+                }
 
-    public function pushCreator(s: String): Void {
-        creator = creator + ":" + s;
-    }
+                geom.Line sp = null;
+                if (prev.A == this)
+                {
+                    sp = new geom.Line(prev.A.Pos.Clone(), prev.B.Pos.Clone());
+                }
+                else
+                {
+                    sp = new geom.Line(prev.B.Pos.Clone(), prev.A.Pos.Clone());
+                }
+                geom.Line sc = null;
+                if (curr.A == this)
+                {
+                    sc = new geom.Line(curr.A.Pos.clone(), curr.B.Pos.clone());
+                }
+                else
+                {
+                    sc = new geom.Line(curr.B.Pos.clone(), curr.A.Pos.clone());
+                }
 
-    public function new () {
-        id = _nextId++;
-        pos = new Point( 0., 0. );
-        inStore = false;
-        _listStartingStrokes = null;
-        _listEndingStrokes = null;
-        _angleArray = null;
-        _sectionArray = null;
-        _sectionStrokeMap = null;
-        creator = "";
-    }
-    }
+                /*
+                 * Normals. Turn them in a way that, well
+                 * If I move from outside to this street point, the normal shall point
+                 * to the right side. That means, the normal points from the current to
+                 * the previous stroke.
+                 */
+                Vector2 np = sp.Normal();
+                // if( prev.b == this ) { np.x = -np.x; np.y = -np.y; }
+                Vector2 nc = sc.Normal();
+                // if( curr.b == this ) { nc.x = -nc.x; nc.y = -nc.y; }
+
+                /*
+                 * Copy paste from generate street operator.
+                 */
+                float prevHalfStreetWidth = prev.StreetWidth() / 2.0f;
+                float currHalfStreetWidth = curr.StreetWidth() / 2.0f;
+
+                /*
+                 * Scale each of the normals to properly move the line.
+                 * Compute the offets.
+                 */
+                float opx = np.X * (-prevHalfStreetWidth);
+                float opy = np.Y * (-prevHalfStreetWidth);
+
+                float ocx = nc.X * (currHalfStreetWidth);
+                float ocy = nc.Y * (currHalfStreetWidth);
+
+                sp.Move(opx, opy);
+                sc.Move(ocx, ocy);
+
+                var i = sp.IntersectInfinite(sc);
+
+                bool doUseSide = false;
+                if (null == i)
+                {
+                    if (myVerbose) trace("no intersect");
+                    doUseSide = true;
+                }
+                else
+                {
+                    /*
+                     * If the intersection is too far away from the streetpoint, these are pretty in-line 
+                     * streets, so take their common border.
+                     */
+                    float dx = i.X - Pos.X;
+                    float dy = i.Y - Pos.Y;
+                    float dist2 = dx * dx + dy * dy;
+                    if (dist2 > 4000f)
+                    {
+                        if (myVerbose) trace("farout intersect");
+                        /*
+                         * If this intersection is too far away, we use the point offset by the (angle)
+                         * average of both normals.
+                         */
+                        var n = new Vector2(nc.X - np.X, nc.Y - np.Y);
+                        n = n / n.Length();
+                        var averW = (prevHalfStreetWidth + currHalfStreetWidth) / 2f;
+                        i = new Vector2(Pos.X + n.X * averW, Pos.Y + n.Y * averW);
+#if false
+                        var dist = Math.sqrt(dist2);
+                        var prevAngle = prev.getAngleSP(this);
+                        var currAngle = curr.getAngleSP(this);
+                        var junctionAngle = (currAngle - prevAngle)*180./Math.PI;
+                        trace( 'When intersecting prev $sp and curr $sc (normals prev $np curr $nc): Far out intersection $i' );
+                        trace( 'prevHalfStreetWidth is $prevHalfStreetWidth currHalfStreetWidth is $currHalfStreetWidth');
+                        traceAngles();
+                        throw ( 'getSectionArray(): Far out intersection $i {between ${prev.toStringSP(this)} and ${curr.toStringSP(this)}: $dist, $junctionAngle deg' );
+                        // doUseSide = true;   
 #endif
+                    } else {
+                        if( myVerbose ) trace( "close intersect" );
+                    }
+                }
+
+                if( doUseSide ) {
+                    // trace( 'getSectionArray(): no intersection.' );
+                    /*
+                        * If the streets are parallel and the sides in line, use the offset
+                        * street point itself as an intersection, using the average street width.
+                        */
+                    float averHalfStreetWidth = (prevHalfStreetWidth+currHalfStreetWidth)/2f;
+                    var osx = nc.X * averHalfStreetWidth;
+                    var osy = nc.Y * averHalfStreetWidth;
+                    i = new Vector2( Pos.X+osx, Pos.Y+osy );
+                }
+
+                if( myVerbose ) {
+                    trace($"Adding point $i");
+                }
+                _sectionArray.Add(i);
+                /*
+                    * Now also add this point to the stroke lookup. Obviously, it involves
+                    * two strokes, curr and prev, so add both associations.
+                    */
+                int ids = (curr.Sid%10000)+10000*(prev.Sid%10000);
+                _sectionStrokeMap.Add(ids, i);
+                // trace('StreetPoint.getSectionArray(): sp $id Storing stroke $ids ${curr.sid} and ${prev.sid}');
+                ++idx;
+            }
+
+            return _sectionArray;
+        }
+
+
+        /**
+         * Return the intersection point involving the given stroke.
+         * 
+         * @param stroke 
+         * @return geom.Point
+         */
+        public Nullable<Vector2> GetSectionPointByStroke( in Stroke curr, in Stroke prev )
+        {
+            if( null==_sectionArray ) {
+                GetSectionArray();
+            }
+            int ids = (curr.Sid%10000)+10000*(prev.Sid%10000);
+            // trace('StreetPoint.getSectionPointByStroke(): sp $id Obtaining stroke $ids ${curr.sid} and ${prev.sid}');
+            if( !_sectionStrokeMap.ContainsKey( ids ) ) {
+                // trace('StreetPoint.getSectionPointByStroke(): Not found.');
+                return null;
+            }
+            // trace('StreetPoint.getSectionPointByStroke(): Returning point.');
+            return _sectionStrokeMap[ids];
+        }
+
+
+        public void pushCreator(in string s)
+        {
+            Creator = Creator + ":" + s;
+        }
+
+        public StreetPoint() 
+        {
+            Id = _nextId++;
+            Pos = new Vector2( 0f, 0f );
+            InStore = false;
+            _listStartingStrokes = null;
+            _listEndingStrokes = null;
+            _angleArray = null;
+            _sectionArray = null;
+            _sectionStrokeMap = null;
+            Creator = "";
+        }
+    }
 }
