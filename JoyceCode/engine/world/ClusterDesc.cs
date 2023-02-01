@@ -1,7 +1,4 @@
-﻿using Android.Systems;
-using Java.Lang;
-using Java.Util.Functions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -10,12 +7,12 @@ namespace engine.world
 {
     public class ClusterDesc
     {
-        public bool merged;
-        public Vector3 pos;
-        public float size = 100;
-        public string name = "Unnamed";
+        public bool Merged;
+        public Vector3 Pos;
+        public float Size = 100;
+        public string Name = "Unnamed";
 
-        public float averageHeight = 0f;
+        public float AverageHeight = 0f;
 
         private ClusterDesc[] _arrCloseCities;
         private int _nClosest;
@@ -45,27 +42,27 @@ namespace engine.world
         private streets.QuarterStore _quarterStore;
 
 
-        public Vector3 getPos() {
-                return pos;
+        public Vector3 GetPos() {
+            return Pos;
         }
 
 
-        public string toString()
+        public string ToString()
         {
-            return $"{{ 'id': {_strKey}; 'name': {name}; 'pos': {pos}; 'size': {size}; }}";
+            return $"{{ 'id': {_strKey}; 'name': {Name}; 'pos': {Pos}; 'size': {Size}; }}";
         }
 
-        public string getKey()
+        public string GetKey()
         {
             return _strKey;
         }
 
 
-        public bool isInside(Vector3 p)
+        public bool IsInside(in Vector3 p)
         {
             if (
-            p.X >= (pos.X - size / 2f) && p.X <= (pos.X + size / 2f)
-                && p.Z >= (pos.Z - size / 2f) && p.z <= (pos.Z + size / 2f)
+            p.X >= (Pos.X - Size / 2f) && p.X <= (Pos.X + Size / 2f)
+                && p.Z >= (Pos.Z - Size / 2f) && p.Z <= (Pos.Z + Size / 2f)
             )
             {
                 return true;
@@ -77,20 +74,20 @@ namespace engine.world
         }
 
 
-        public streets.Quarter guessQuarter(Vector2 p)
+        public streets.Quarter guessQuarter(in Vector2 p)
         {
             /*
              * Fast wrong implementation: Find the closest center point.
              */
             var pc = p;
-            pc.X -= pos.X;
-            pc.Y -= pos.Y;
+            pc.X -= Pos.X;
+            pc.Y -= Pos.Y;
             float minDist = 9999999999f;
             streets.Quarter minQuarter = null;
-            foreach(var quarter in _quarterStore.getQuarters() )
+            foreach(var quarter in _quarterStore.GetQuarters() )
             {
-                var cp = quarter.getCenterPoint();
-                var dist = cp.distTo(pc);
+                var cp = quarter.GetCenterPoint();
+                float dist = Vector2.Distance( cp, pc );
                 if (dist < minDist)
                 {
                     minDist = dist;
@@ -113,13 +110,11 @@ namespace engine.world
         }
 
 
-        public function addClosest(other:ClusterDesc )
-            {
+        public void AddClosest(in ClusterDesc other)
+        {
             if (other == this) return;
 
-            var distance:Float = Math.sqrt(
-                (other.x - this.x) * (other.x - this.x)
-                + (other.z - this.z) * (other.z - this.z));
+            float distance = (float)Vector3.Distance(other.Pos, this.Pos);
 
             // Special case first.
             if (0 == _nClosest)
@@ -133,7 +128,7 @@ namespace engine.world
             var idx:Int = 0;
             while (idx < _nClosest)
             {
-                var cl:ClusterDesc = _arrCloseCities[idx];
+                ClusterDesc cl = _arrCloseCities[idx];
                 // Also ignore this if already known.
                 if (cl == other)
                 {
@@ -141,15 +136,13 @@ namespace engine.world
                     return;
                 }
 
-                var clDist:Float = Math.sqrt(
-                    (cl.x - this.x) * (cl.x - this.x)
-                    + (cl.z - this.z) * (cl.z - this.z));
+                float clDist = (float)Vector3.Distance(cl.Pos, this.Pos);
 
                 if (distance < clDist)
                 {
                     // Smaller distance? Then insert myself here.
-                    var idx2:Int = idx + 1;
-                    var max:Int = _nClosest + 1;
+                    int idx2 = idx + 1;
+                    int max = _nClosest + 1;
                     if (max > _maxClosest) max = _maxClosest;
                     while (idx2 < max)
                     {
@@ -170,7 +163,7 @@ namespace engine.world
          * Using the information about the next cities, create seed points for 
          * the map based on the interconnecting stations.
          */
-        public void _addHighwayTriggers()
+        private void _addHighwayTriggers()
         {
             // TXWTODO: Do it acually
             /*
@@ -210,14 +203,14 @@ namespace engine.world
              * Variant two: n random points
              */
             var nSeeds = (_rnd.get8()>>5)+1;
-            for( i in 0...nSeeds ) {
-                var newA = new StreetPoint();
-                var x = _rnd.get8()*((2.*size)/3.)/256.-size/3.;
-                var y = _rnd.get8()*((2.*size)/3.)/256.-size/3.;
-                newA.setPos( x, y );
-                var dir = _rnd.get8()*Math.PI/128.;
-                var newB = new StreetPoint();
-                var stroke = Stroke.createByAngleFrom( newA, newB, dir, 30., true, 1.5 );
+            for( int i=0; i<nSeeds; ++i ) {
+                engine.streets.StreetPoint newA = new engine.streets.StreetPoint();
+                float x = _rnd.get8()*((2f*size)/3f)/256f-size/3f;
+                float y = _rnd.get8()*((2f*size)/3f)/256f-size/3f;
+                newA.SetPos( x, y );
+                float dir = _rnd.get8()*(float)Math.PI/128f;
+                var newB = new engine.streets.StreetPoint();
+                var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 30f, true, 1.5f );
                 _streetGenerator.addStartingStroke(stroke);
             }
 #if false
@@ -253,7 +246,7 @@ namespace engine.world
         }
 
 
-        private void triggerStreets()
+        private void _triggerStreets()
         {
             if( null==_streetGenerator ) {
                 _strokeStore = new streets.StrokeStore();
@@ -262,47 +255,47 @@ namespace engine.world
                 _quarterGenerator = new streets.QuarterGenerator();
 
                 _streetGenerator.reset( "streets-"+_strKey, _strokeStore );
-                _streetGenerator.setBounds( -size/2f, -size/2f, size/2f, size/2f );
+                _streetGenerator.setBounds( -Size/2f, -Size/2f, Size/2f, Size/2f );
                 _addHighwayTriggers();
                 _streetGenerator.generate();
 
                 /*
                  * Unfortunately, we also need to generate the sections at this point.
                  */
-                 foreach( var sp in _strokeStore.getStreetPoints()) {
-                    sp.getSectionArray();
+                foreach( var sp in _strokeStore.GetStreetPoints()) {
+                    sp.GetSectionArray();
                 }
 
-                _quarterGenerator.reset( "quarters-"+_strKey, _quarterStore, _strokeStore );
-                _quarterGenerator.generate();
+                _quarterGenerator.Reset( "quarters-"+_strKey, _quarterStore, _strokeStore );
+                _quarterGenerator.Generate();
             }
         }
 
 
     public streets.Generator streetGenerator()
     {
-        triggerStreets();
+        _triggerStreets();
         return _streetGenerator;
     }
 
 
     public streets.QuarterGenerator quarterGenerator()
     {
-        triggerStreets();
+        _triggerStreets();
         return _quarterGenerator;
     }
 
 
     public streets.StrokeStore strokeStore() 
     {
-        triggerStreets();
+        _triggerStreets();
         return _strokeStore;
     }
 
 
     public streets.QuarterGenerator quarterStore() 
     {
-        triggerStreets();
+        _triggerStreets();
         return _quarterStore;
     }
 
@@ -313,7 +306,7 @@ namespace engine.world
         _rnd = new engine.RandomSource(_strKey);
         _arrCloseCities = new ClusterDesc[_maxClosest];
         _nClosest = 0;
-        merged = false;
+        Merged = false;
         // Street generator will be initialized on demand.
         _streetGenerator = null;
     }

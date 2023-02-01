@@ -247,7 +247,7 @@ namespace engine.streets
         /**
          * Stolen from https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
          */
-        public StrokeIntersection intersects(in Stroke o)
+        public StrokeIntersection? intersects(in Stroke o)
         {
             if (null == o)
             {
@@ -290,12 +290,13 @@ namespace engine.streets
                 i_x = p0_x + (t * s1_x);
                 i_y = p0_y + (t * s1_y);
 
-                var intersection = new StrokeIntersection();
-                intersection.strokeCand = o;
-                intersection.scaleCand = s;
-                intersection.strokeExists = this;
-                intersection.scaleExists = t;
-                intersection.pos = new Vector2(i_x, i_y);
+                var intersection = new StrokeIntersection(
+                    pos: new Vector2(i_x, i_y),
+                    strokeCand: o,
+                    scaleCand: s,
+                    strokeExists: this,
+                    scaleExists: t
+                );
 
                 return intersection;
             }
