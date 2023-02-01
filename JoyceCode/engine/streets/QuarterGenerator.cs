@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
-using Clipper2Lib;
+using ClipperLib;
 
 namespace engine.streets
 {
@@ -408,6 +408,6 @@ public function reset(
 public function new()
 {
 }
-    }
 #endif
+    }
 }
