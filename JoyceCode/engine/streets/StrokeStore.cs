@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Numerics;
+
 
 namespace engine.streets
 {
@@ -36,10 +37,10 @@ namespace engine.streets
                      * stroke ending at this point.
                      */
                     // TXWTODO: We are just checking the candidate's endpoint, not the ones from the store. Shouldn't we also do them?
-                    if(si.pos.sameAs(cand.A.Pos )
-                        || si.pos.sameAs(cand.B.Pos )
-                        || si.pos.sameAs(stroke.A.Pos )
-                        || si.pos.sameAs(stroke.B.Pos ) 
+                    if(Vector2.Distance( si.Pos, cand.A.Pos ) < 0.005f
+                        || Vector2.Distance( si.Pos, cand.B.Pos ) < 0.005f
+                        || Vector2.Distance( si.Pos, stroke.A.Pos ) < 0.005f
+                        || Vector2.Distance( si.Pos, stroke.B.Pos ) < 0.005f
                     ) {
                         xx = false;
                     } else
@@ -47,8 +48,8 @@ namespace engine.streets
                         /*
                             * This is an intersection with this stroke.
                             */
-                        var dxi = si.pos.x - refSP.Pos.X;
-                        var dyi = si.pos.y - refSP.Pos.Y;
+                        var dxi = si.Pos.X - refSP.Pos.X;
+                        var dyi = si.Pos.Y - refSP.Pos.Y;
                         var dist = dxi * dxi + dyi * dyi;
                         if (dist < closestDist)
                         {
@@ -143,11 +144,12 @@ namespace engine.streets
 
             if (null != closestStroke)
             {
-                var si = new StrokeIntersection();
-                si.Pos = sp.Pos;
-                si.StreetPoint = sp;
-                si.StrokeExists = closestStroke;
-                si.ScaleExists = closestDist;
+                var si = new StrokeIntersection(
+                    pos: sp.Pos,
+                    streetPoint: sp,
+                    strokeExists: closestStroke,
+                    scaleExists: closestDist
+                );
                 if (_traceStrokes) trace( $"Stroke in range for {si.Pos.X}, {si.Pos.Y}, length {closestStroke.Length} distance {closestDist}");
                 return si;
             }
@@ -189,11 +191,12 @@ namespace engine.streets
 
             if (null != closestPoint)
             {
-                var si = new StrokeIntersection();
-                si.Pos = closestPoint.Pos;
-                si.StreetPoint = closestPoint;
-                si.StrokeExists = stroke;
-                si.ScaleExists = closestDist;
+                var si = new StrokeIntersection(
+                    pos: closestPoint.Pos,
+                    streetPoint: closestPoint,
+                    strokeExists: stroke,
+                    scaleExists: closestDist
+                );
                 if (_traceStrokes) trace($"Stroke in range for {si.Pos.X}, ${si.Pos.Y}, length {stroke.Length} distance $closestDist");
                 return si;
             }

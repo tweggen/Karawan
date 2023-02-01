@@ -46,14 +46,14 @@ namespace engine.streets
         public float weightMax { get; set; } = 1.9f;
 
         public float probabilityAngleSlightTurn { get; set; } = 20f;
-        public int angleSlightTurnMax { get; set; } = 6;
+        public int AngleSlightTurnMax { get; set; } = 6;
 
-        public float angleMinStrokes { get; set; } = 30.0f;
+        public float AngleMinStrokes { get; set; } = 30.0f;
 
         /**
          * Return the primary direction at the given point.
          */
-        public Vector2 primaryVector(Vector2 origin)
+        public Vector2 PrimaryVector(Vector2 origin)
         {
             return new Vector2(0f, 1f);
         }
@@ -61,7 +61,7 @@ namespace engine.streets
         /**
          * Return the secondary direction at the given point.
          */
-        public Vector2 secondaryVector(Vector2 origin)
+        public Vector2 SecondaryVector(Vector2 origin)
         {
             return new Vector2(1f, 0f);
         }
@@ -71,13 +71,13 @@ namespace engine.streets
          * Find the first stroke in the list the candidate intersects with
          * and return it.
          */
-        private bool inBounds(Stroke cand)
+        private bool _inBounds(Stroke cand)
         {
             return !(false
-                || cand.a.pos.X < _bl.X
-                || cand.a.pos.Y < _bl.Y
-                || cand.a.pos.X > _tr.X
-                || cand.a.pos.Y > _tr.Y);
+                || cand.A.Pos.X < _bl.X
+                || cand.A.Pos.Y < _bl.Y
+                || cand.A.Pos.X > _tr.X
+                || cand.A.Pos.Y > _tr.Y);
         }
 
 
@@ -120,7 +120,7 @@ namespace engine.streets
                     return;
                 }
 
-                var curr = _popStrokeToDo();
+                Stroke curr = _popStrokeToDo();
                 // trace( 'Generator: Starting new generation.' );
 
                 /*
@@ -130,9 +130,9 @@ namespace engine.streets
                 /*
                  * In bounds of the desired area?
                  */
-                if (!inBounds(curr))
+                if (!_inBounds(curr))
                 {
-                    if (_traceGenerator) trace("Generator: Out of bounds: ${curr.toString()}");
+                    if (_traceGenerator) trace($"Generator: Out of bounds: {curr.ToString()}");
                     /*
                      * Out of range, so discard it.
                      */
@@ -150,8 +150,8 @@ namespace engine.streets
                  * TXWTODO: This actually is the wrong name. The proper would be: Stop to
                  * loop and do not add the current thing.
                  */
-                var continueCheck = true;
-                var doAdd = true;
+                bool continueCheck = true;
+                bool doAdd = true;
 
                 while (continueCheck)
                 {
@@ -159,7 +159,7 @@ namespace engine.streets
                     /*
                      * Is the end of the stroke too close to the beginning of the stroke?
                      */
-                    if (curr.a.pos.distTo(curr.b.pos) < minPointToCandPointDistance)
+                    if (Vector2.Distance(curr.A.Pos, curr.B.Pos) < minPointToCandPointDistance)
                     {
                         if (_traceGenerator)
                         {
@@ -168,7 +168,7 @@ namespace engine.streets
                         /*
                          * Test: If both are in store, we have an invalid entry in the store.
                          */
-                        if (curr.a.inStore && curr.b.inStore)
+                        if (curr.A.InStore && curr.B.InStore)
                         {
                             throw new InvalidOperationException( "Generator: (test too short) Found too close points (curr.a and curr.b) both in store" );
                         }
@@ -181,22 +181,22 @@ namespace engine.streets
                      * Check: Is any of our endpoints too close to an existing endpoint?
                      */
                     {
-                        StretPoint tooClose = _strokeStore.findClosestBelowButNot(
-                            curr.a, minPointToCandPointDistance, curr.b);
+                        StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
+                            curr.A, minPointToCandPointDistance, curr.B);
 
                         if (null != tooClose)
                         {
                             if (_traceGenerator)
                             {
-                                trace($"Generator: StreetPoint ({curr.a}) too close to StreetPoint ({tooClose}) ");
+                                trace($"Generator: StreetPoint ({curr.A}) too close to StreetPoint ({tooClose}) ");
                             }
 
                             /*
                             * If a is too close, it better not be in the store.
                             */
-                            if (curr.a.inStore)
+                            if (curr.A.InStore)
                             {
-                                throw new InvalidOperationException($"Generator: (check new a too close to existing) curr.a is in store ({curr.toString()})");
+                                throw new InvalidOperationException($"Generator: (check new a too close to existing) curr.a is in store ({curr.ToString()})");
                             }
 
                             /*
@@ -216,36 +216,36 @@ namespace engine.streets
                     }
 
                     {
-                        StreetPoint tooClose = _strokeStore.findClosestBelowButNot(
-                            curr.b, minPointToCandPointDistance, curr.a );
+                        StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
+                            curr.B, minPointToCandPointDistance, curr.A );
 
                         if( null != tooClose ) {
                             if( _traceGenerator ) {
-                                trace($"Generator: StreetPoint (${curr.b}) too close to StreetPoint ({tooClose})");
+                                trace($"Generator: StreetPoint (${curr.B}) too close to StreetPoint ({tooClose})");
                             }
 
                             /*
                              * Validate assumptions: tooClose needs to be in store, curr.b needs to be not in the store.
                              */
-                            if( !curr.a.inStore ) {
-                                throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.a is not in store ({curr.toString()})");
+                            if( !curr.A.InStore ) {
+                                throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.a is not in store ({curr.ToString()})");
                             }
-                            if( curr.b.inStore ) {
-                                throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.b is in store ({curr.toString()})");
+                            if( curr.B.InStore ) {
+                                throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.b is in store ({curr.ToString()})");
                             }
 
                             /*
                              * Validate assumption: We must not move a stroke that already is in the store.
                              * However, in the store it already needs to have valid endpoints.
                              */
-                            if( curr.store != null ) {
+                            if( curr.Store != null ) {
                                 throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr already is in store ({curr})");
                             }
 
                             /*
                              * if a is close to another existing point, use that one.
                              */
-                            curr.b = tooClose;
+                            curr.B = tooClose;
 
                             // Leave this loop.
                             // doAdd = false;
@@ -257,8 +257,8 @@ namespace engine.streets
                     /*
                      * Now test whether the given points already are connected?
                      */
-                    if( curr.a.inStore && curr.b.inStore ) {
-                        if( _strokeStore.areConnected(curr.a, curr.b)) {
+                    if( curr.A.InStore && curr.B.InStore ) {
+                        if( _strokeStore.AreConnected(curr.A, curr.B)) {
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -269,9 +269,9 @@ namespace engine.streets
                      * Look, whether the stroke is too close to an existing point
                      */
                     {
-                        var si = _strokeStore.getClosestPoint( curr );
-                        if( si != null && si.scaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.toString()}, too close to point: {si.streetPoint}" );
+                        var si = _strokeStore.GetClosestPoint( curr );
+                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
+                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
                             /*
                              * If there is any point closer the d meters to this stroke,
                              * then [look, which point is closer to the stroke and connect
@@ -287,9 +287,9 @@ namespace engine.streets
                      * Look, whether the new point to is too close to an existing stroke
                      */
                     {
-                        var si = _strokeStore.getClosestStroke( curr.b );
-                        if( si != null && si.scaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.toString()}, point b too close to stroke: {si.strokeExists}" );
+                        var si = _strokeStore.GetClosestStroke( curr.B );
+                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
+                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}" );
 
                             /*
                              * If there is any point closer the d meters to this stroke,
@@ -309,19 +309,19 @@ namespace engine.streets
                         /*
                          * Anything too close in point a?
                          */
-                        var angles = curr.a.getAngleArray();
+                        var angles = curr.A.GetAngleArray();
                         var closestAngle = 9.0;
                         // its an incoming angle wrt a.
-                        var myAngle = curr.angle;
+                        var myAngle = curr.Angle;
                         foreach( var stroke in angles ) {
-                            var candAngle = stroke.getAngleSP(curr.a);
-                            var thisAngle = Math.abs(geom.Angles.snorm( candAngle - myAngle ));
+                            float candAngle = stroke.GetAngleSP(curr.A);
+                            float thisAngle = (float) Math.Abs(geom.Angles.Snorm( candAngle - myAngle ));
                             if( thisAngle < closestAngle ) {
                                 closestAngle = thisAngle;
                             }
                         }
-                        if( closestAngle < (angleMinStrokes*Math.PI/180.) ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.toStringSP(curr.a)}, angle too close {closestAngle}" );
+                        if( closestAngle < (AngleMinStrokes*(float)Math.PI/180f) ) {
+                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToStringSP(curr.A)}, angle too close {closestAngle}" );
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -332,19 +332,19 @@ namespace engine.streets
                         /*
                          * Anything too close in point b?
                          */
-                        var angles = curr.b.getAngleArray();
-                        var closestAngle = 9.0;
+                        var angles = curr.B.GetAngleArray();
+                        float closestAngle = 9.0f;
                         // its an incoming angle wrt b.
-                        var myAngle = curr.angle + Math.PI;
+                        float myAngle = curr.Angle + (float) Math.PI;
                         foreach( var stroke in angles ) {
-                            var candAngle = stroke.getAngleSP(curr.b);
-                            var thisAngle = Math.abs(geom.Angles.snorm( candAngle - myAngle ));
+                            var candAngle = stroke.GetAngleSP(curr.B);
+                            var thisAngle = Math.Abs(geom.Angles.Snorm( candAngle - myAngle ));
                             if( thisAngle < closestAngle ) {
                                 closestAngle = thisAngle;
                             }
                         }
-                        if( closestAngle < (angleMinStrokes*Math.PI/180.) ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.toStringSP(curr.b)}, angle too close {closestAngle}" );
+                        if( closestAngle < (AngleMinStrokes*(float) Math.PI/180f) ) {
+                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -356,7 +356,7 @@ namespace engine.streets
                      * However, this new stroke still could intersect with another 
                      * stroke. Test this.
                      */
-                    var intersection  = _strokeStore.intersectsMayTouchClosest(curr, curr.a);
+                    StrokeIntersection? intersection  = _strokeStore.IntersectsMayTouchClosest(curr, curr.A);
                     if( null != intersection ) {
                         /*
                          * Logical error: We need to remove all of the intersections in some way.
@@ -379,9 +379,9 @@ namespace engine.streets
                          */
 
                         var intersectionStreetPoint = new StreetPoint();
-                        var intersectingStroke = intersection.strokeExists;
-                        intersectionStreetPoint.setPos( intersection.pos.x, intersection.pos.y );
-                        intersectionStreetPoint.pushCreator("intersection");
+                        var intersectingStroke = intersection.StrokeExists;
+                        intersectionStreetPoint.SetPos( intersection.Pos );
+                        intersectionStreetPoint.PushCreator("intersection");
                         if( _traceGenerator ) {
                             trace( $"Generator: Trying intersection point {intersectionStreetPoint}" );
                         }
@@ -390,7 +390,7 @@ namespace engine.streets
                          * Check, if the intersection is too close to either endpoint. It it is, just route it through
                          * the existing end point.
                          */
-                        if( intersectionStreetPoint.pos.distTo(intersectingStroke.a.pos) < minPointToCandIntersectionDistance ) {
+                        if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.A.Pos) < minPointToCandIntersectionDistance ) {
                             /*
                              * The current one intersects very close to the beginning of this stroke.
                              */
@@ -399,7 +399,7 @@ namespace engine.streets
                             continueCheck = false;
                             break;
                         }
-                        if( intersectionStreetPoint.pos.distTo(intersectingStroke.b.pos) < minPointToCandIntersectionDistance ) {
+                        if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.B.Pos) < minPointToCandIntersectionDistance ) {
                             /*
                              * The current one intersects very close to the ending of this stroke.
                              */
@@ -462,49 +462,49 @@ namespace engine.streets
                             }
                         }
 #endif
-                        var oldStrokeExists = intersection.strokeExists;
+                        Stroke oldStrokeExists = intersection.StrokeExists;
 
                         /*
                          * Important: We must not modify the topology of the graph directly.
                          * Therefore we first remove the edge from the graph. Modifying the nodes
                          * and then readding it.
                          */
-                        _strokeStore.remove( intersection.strokeExists );
-                        var newStrokeExists = intersection.strokeExists.createUnattachedCopy();
-                        newStrokeExists.pushCreator( "newStrokeExists" );
+                        _strokeStore.Remove( intersection.StrokeExists );
+                        var newStrokeExists = intersection.StrokeExists.CreateUnattachedCopy();
+                        newStrokeExists.PushCreator( "newStrokeExists" );
 
-                        oldStrokeExists.b = intersectionStreetPoint;
-                        oldStrokeExists.pushCreator( "oldStrokeExists" );
+                        oldStrokeExists.B = intersectionStreetPoint;
+                        oldStrokeExists.PushCreator( "oldStrokeExists" );
 
-                        newStrokeExists.a = intersectionStreetPoint;
+                        newStrokeExists.A = intersectionStreetPoint;
 
                         // newStrokeExists.weight = 0.1;
                         // oldStrokeExists.weight = 6.0;
 
-                        _strokeStore.addStroke(newStrokeExists);
-                        _strokeStore.addStroke(oldStrokeExists);
+                        _strokeStore.AddStroke(newStrokeExists);
+                        _strokeStore.AddStroke(oldStrokeExists);
                         _generationCounter++;
 
                         /*
                          * Add the candidate stroke, truncated to this intersection
                          */
-                        var oldCurrB = curr.b;
-                        if( curr.store != null ) {
+                        var oldCurrB = curr.B;
+                        if( curr.Store != null ) {
                             throw new InvalidOperationException( $"Generator: (intersecting) curr already is in store ({curr})");
                         }
-                        curr.b = intersectionStreetPoint;
+                        curr.B = intersectionStreetPoint;
 
                         /*
                          * And add the continuation, after the intersection.
                          */
-                        var currTail = curr.createUnattachedCopy();
-                        currTail.pushCreator( "newTail" );
-                        currTail.a = intersectionStreetPoint;
-                        currTail.b = oldCurrB;
+                        var currTail = curr.CreateUnattachedCopy();
+                        currTail.PushCreator( "newTail" );
+                        currTail.A = intersectionStreetPoint;
+                        currTail.B = oldCurrB;
 
                         // As this is a stack, first the continuation, then the head.
-                        _listStrokesToDo.add(currTail);
-                        _listStrokesToDo.add(curr);
+                        _listStrokesToDo.Add(currTail);
+                        _listStrokesToDo.Add(curr);
                         _generationCounter++;
 
                         // Leave this loop.
@@ -529,21 +529,21 @@ namespace engine.streets
                  * Add the stroke to the map, creating a continuation and
                  * pronably side streets.
                  */
-                _strokeStore.addStroke(curr);
+                _strokeStore.AddStroke(curr);
                 ++_generationCounter;
 
                 /*
                  * Compute some options.
                  */
                 bool doForward = _rnd.get8() < probabilityNextStrokeForward;
-                bool doRight = _rnd.get8() < (int)(probabilityNextStrokeRightWeightFactor / ((int)(curr.weight)+1) );
-                bool doLeft = _rnd.get8() < (int)(probabilityNextStrokeLeftWeightFactor / ((int)(curr.weight)+1) );
+                bool doRight = _rnd.get8() < (int)(probabilityNextStrokeRightWeightFactor / ((int)(curr.Weight)+1) );
+                bool doLeft = _rnd.get8() < (int)(probabilityNextStrokeLeftWeightFactor / ((int)(curr.Weight)+1) );
                 bool doRandomDirection = _rnd.get8() > (/*Std.int(curr.weight) * */ probabilityNextStrokeRandomNegWeightFactor);
                 bool doIncreaseWeight = _rnd.get8() < probabilityNextStrokeIncreaseWeight;
                 bool doDecreaseWeight = _rnd.get8() < probabilityNextStrokeDecreaseWeight;
 
-                var newWeight = curr.weight;
-                var newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10.)/10.;
+                float newWeight = curr.Weight;
+                float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
                 if( newLength < newLengthMin ) {
                     newLength = newLengthMin;
                 }
@@ -562,12 +562,12 @@ namespace engine.streets
                             newWeight = weightMax;
                         }
                     }
-                    newWeight = (int)((newWeight)*1000.)/1000.;
+                    newWeight = (int)((newWeight)*1000f)/1000f;
                 }
 
-                var newAngle = curr.angle;
+                float newAngle = curr.Angle;
                 if (_rnd.get8() < probabilityAngleSlightTurn ) {
-                    newAngle = newAngle +_rnd.getFloat()*2.*angleSlightTurnMax-angleSlightTurnMax;
+                    newAngle = newAngle +_rnd.getFloat()*2f*AngleSlightTurnMax-AngleSlightTurnMax;
                 }
 
                 if(!doForward && !doRight && !doLeft && !doRandomDirection) {
@@ -575,59 +575,59 @@ namespace engine.streets
                 }
 
                 if( doForward ) {
-                    var newB = new StreetPoint();
-                    var forward = Stroke.createByAngleFrom(
-                        curr.b,
+                    StreetPoint newB = new StreetPoint();
+                    var forward = Stroke.CreateByAngleFrom(
+                        curr.B,
                         newB,
                         newAngle,
                         newLength,
-                        curr.isPrimary,
+                        curr.IsPrimary,
                         newWeight
                     );
-                    forward.pushCreator("forward");
-                    newB.pushCreator("forward");
+                    forward.PushCreator("forward");
+                    newB.PushCreator("forward");
                     _addStrokeToDo(forward);
                 }
                 if( doRight ) {
                     var newB = new StreetPoint();
-                    var right = Stroke.createByAngleFrom(
-                        curr.b,
+                    var right = Stroke.CreateByAngleFrom(
+                        curr.B,
                         newB,
-                        newAngle-Math.PI/2.0,
+                        newAngle-(float)Math.PI/2f,
                         newLength,
-                        !curr.isPrimary,
+                        !curr.IsPrimary,
                         newWeight
                     );
-                    right.pushCreator("right");
-                    newB.pushCreator("right");
+                    right.PushCreator("right");
+                    newB.PushCreator("right");
                     _addStrokeToDo(right);
                 }
                 if( doLeft ) {
                     var newB = new StreetPoint();
-                    var left = Stroke.createByAngleFrom(
-                        curr.b,
+                    var left = Stroke.CreateByAngleFrom(
+                        curr.B,
                         newB,
-                        newAngle+Math.PI/2.0,
+                        newAngle+(float)Math.PI/2f,
                         newLength,
-                        !curr.isPrimary,
+                        !curr.IsPrimary,
                         newWeight
                     );
-                    left.pushCreator("left");
-                    newB.pushCreator("left");
+                    left.PushCreator("left");
+                    newB.PushCreator("left");
                     _addStrokeToDo(left);
                 }
                 if( doRandomDirection ) {
                     var newB = new StreetPoint();
-                    var randStroke = Stroke.createByAngleFrom(
-                        curr.b,
+                    var randStroke = Stroke.CreateByAngleFrom(
+                        curr.B,
                         newB,
-                        _rnd.getFloat()*Math.PI*2.0,
+                        _rnd.getFloat()*(float)Math.PI*2f,
                         newLength,
-                        curr.isPrimary,
+                        curr.IsPrimary,
                         newWeight
                     );
-                    randStroke.pushCreator("randStroke");
-                    newB.pushCreator("randStroke");
+                    randStroke.PushCreator("randStroke");
+                    newB.PushCreator("randStroke");
                     _addStrokeToDo(randStroke);
                 }
             }
@@ -645,12 +645,12 @@ namespace engine.streets
 
         public List<Stroke> getStrokes() 
         {
-            return _strokeStore.getStrokes();
+            return _strokeStore.GetStrokes();
         }
 
 
         public void addStartingStroke(in Stroke stroke0){
-            _listStrokesToDo.add(stroke0);
+            _listStrokesToDo.Add(stroke0);
         }
 
         public void reset(

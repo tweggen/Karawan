@@ -48,6 +48,11 @@ namespace engine.streets
             return $"{{ #{Id}: {Pos.ToString()} ({Creator})}}";
         }
 
+        public void SetPos(in Vector2 pos)
+        {
+            SetPos(pos.X, pos.Y);
+        }
+
         public void SetPos(float x, float y)
         {
 #if false
@@ -590,7 +595,7 @@ namespace engine.streets
         }
 
 
-        public void pushCreator(in string s)
+        public void PushCreator(in string s)
         {
             Creator = Creator + ":" + s;
         }
