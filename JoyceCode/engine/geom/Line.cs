@@ -5,124 +5,132 @@ namespace engine.geom
 {
     public class Line
     {
-        Vector2 a;
-        Vector2 b;
+        static private void trace(string message)
+        {
+            Console.WriteLine(message);
+        }
+
+        public Vector2 A;
+        public Vector2 B;
 
 
         public String ToString()
         {
-            return $"({a}-{b})";
+            return $"({A}-{B})";
         }
 
         public float Length()
         {
-            float abx = b.X - a.X;
-            float aby = b.Y - a.Y;
+            float abx = B.X - A.X;
+            float aby = B.Y - A.Y;
 
-            return Math.Sqrt(abx* abx+aby* aby );
+            return (float)Math.Sqrt(abx*abx+aby*aby);
         }
 
 
-    public function normal(): Point {
-        var abx = b.x - a.x;
-    var aby = b.y - a.y;
-    var l = Math.sqrt(abx * abx + aby * aby);
-        if(l<0.0000001 && l>-0.0000001) {
-            trace('Line.normal(): Near null division');
-            return new Point( 1.0, 0.0 );
-}
-return new Point(aby / l, -(abx / l));
-    }
+        public Vector2 Normal() 
+        {
+            float abx = B.X - A.X;
+            float aby = B.Y - A.Y;
+            float l = (float)Math.Sqrt(abx * abx + aby * aby);
+            if (l<0.0000001f && l>-0.0000001f) {
+                trace( "Line.normal(): Near null division" );
+                return new Vector2( 1.0f, 0.0f );
+            }
+            return new Vector2(aby / l, -(abx / l));
+        }
 
-    public function move(px: Float, py: Float) {
-    a.x += px;
-    a.y += py;
-    b.x += px;
-    b.y += py;
-}
+        public void Move(float px, float py)
+        {
+            A.X += px;
+            A.Y += py;
+            B.X += px;
+            B.Y += py;
+        }
 
 
-/**
- * Compute the intersection of two infinite lines.
- * 
- * @param o 
- *     The line we might intersect to
- * @return 
- *     If the lines intersect, the point of intersection.
- */
-public function intersectInfinite(o: Line ): Point
-{
-    /*
-     * Create homogenous line coordinates.
-     */
-    var g1 = b.y - a.y;
-    var g2 = a.x - b.x;
-    var g3 = a.y * b.x - a.x * b.y;
-
-    var h1 = o.b.y - o.a.y;
-    var h2 = o.a.x - o.b.x;
-    var h3 = o.a.y * o.b.x - o.a.x * o.b.y;
-
-    /*
-     * Intersection by Cramer
-     */
-    var d = g1 * h2 - h1 * g2;
-    if (Math.abs(d) < 0.0000001)
-    {
-        // No close intersection.
-        // trace('Line.intersectInfinite(): near-zero determinant. No intersection.');
-        return null;
-    }
-    var px = (g2 * h3 - g3 * h2) / d;
-    var py = (g3 * h1 - g1 * h3) / d;
-
-    return new Point(px, py);
-}
-
-/**
- * Compute the intersection of this line with another.
- * 
- * @param o 
- *     The line we shall test to intersect with.
- * 
- * @return Point of intersection or null
- */
-public function intersect(o: Line ): Point
-{
-    var p = intersectInfinite(o);
-    if (null == p)
-    {
-        /*
-         * Parallel lines.
+        /**
+         * Compute the intersection of two infinite lines.
+         * 
+         * @param o 
+         *     The line we might intersect to
+         * @return 
+         *     If the lines intersect, the point of intersection.
          */
-        return null;
-    }
+        public Nullable<Vector2> IntersectInfinite(in Line o)
+        {
+            /*
+             * Create homogenous line coordinates.
+             */
+            var g1 = B.Y - A.Y;
+            var g2 = A.X - B.X;
+            var g3 = A.Y * B.X - A.X * B.Y;
 
-    /*
-     * Check, where it is on the infinite line.
-     * Compute dot product of ab * ap. If this is between zero
-     * and ab*ab, p is in the right interval.
-     */
-    var abx = b.x - a.x;
-    var aby = b.y - a.y;
-    var apx = p.x - a.x;
-    var apy = p.y - a.y;
-    var dot = abx * apx + aby * apy;
-    if (dot < 0.0 || dot > (abx * abx + aby * aby))
-    {
-        return null;
-    }
+            var h1 = o.B.Y - o.A.Y;
+            var h2 = o.A.X - o.B.X;
+            var h3 = o.A.Y * o.B.X - o.A.X * o.B.Y;
 
-    /*
-     * This really is an intersection.
-     */
-    return p;
-}
+            /*
+             * Intersection by Cramer
+             */
+            var d = g1 * h2 - h1 * g2;
+            if ((float)Math.Abs(d) < 0.0000001f)
+            {
+                // No close intersection.
+                // trace('Line.intersectInfinite(): near-zero determinant. No intersection.');
+                return null;
+            }
+            var px = (g2 * h3 - g3 * h2) / d;
+            var py = (g3 * h1 - g1 * h3) / d;
 
-public function new(a0: Point, b0: Point)
-{
-    a = a0;
-        b = b0;
+            return new Vector2(px, py);
+        }
+
+        /**
+         * Compute the intersection of this line with another.
+         * 
+         * @param o 
+         *     The line we shall test to intersect with.
+         * 
+         * @return Point of intersection or null
+         */
+        public Nullable<Vector2> Intersect(in Line o)
+        {
+            var p0 = IntersectInfinite(o);
+            if (null == p0)
+            {
+                /*
+                 * Parallel lines.
+                 */
+                return null;
+            }
+            var p = p0.Value;
+
+            /*
+             * Check, where it is on the infinite line.
+             * Compute dot product of ab * ap. If this is between zero
+             * and ab*ab, p is in the right interval.
+             */
+            var abx = B.X - A.X;
+            var aby = B.Y - A.Y;
+            var apx = p.X - A.X;
+            var apy = p.Y - A.Y;
+            var dot = abx * apx + aby * apy;
+            if (dot < 0.0 || dot > (abx * abx + aby * aby))
+            {
+                return null;
+            }
+
+            /*
+             * This really is an intersection.
+             */
+            return p;
+        }
+
+        public Line(Vector2 a0, Vector2 b0)
+        {
+            A = a0;
+            B = b0;
+        }    
     }
-}    }
 }

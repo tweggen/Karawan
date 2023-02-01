@@ -1,6 +1,4 @@
-﻿using Android.Text.Style;
-using Android.Views.Inspectors;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -165,7 +163,7 @@ namespace engine.streets
              * to inverse the angle, as we will compute outgoing angles
              * in this function.
              */
-            var myAngle = geom.Angles.Snorm(angle + Math.PI);
+            var myAngle = geom.Angles.Snorm(angle + (float) Math.PI);
 
             if (!clockwise)
             {
@@ -197,7 +195,7 @@ namespace engine.streets
                         {
                             strStart = "";
                         }
-                        trace($"getNextAngle({pos}, {myAngle}, {stroke.B.Pos.X}): OUT {strStart} {currAngle} diffAngle {diffAngle}");
+                        trace($"getNextAngle({Pos}, {myAngle}, {stroke.B.Pos.X}): OUT {strStart} {currAngle} diffAngle {diffAngle}");
                     }
 
                     if (isStart)
@@ -437,26 +435,26 @@ namespace engine.streets
                 var prev = _angleArray[idx % _angleArray.Count];
                 if (curr != _angleArray[(idx + 1) % _angleArray.Count])
                 {
-                    throw 'StreetPoint.getSectionArray(): Mismatch of angle array.';
+                    throw new InvalidOperationException( $"StreetPoint.getSectionArray(): Mismatch of angle array." );
                 }
 
                 geom.Line sp = null;
                 if (prev.A == this)
                 {
-                    sp = new geom.Line(prev.A.Pos.Clone(), prev.B.Pos.Clone());
+                    sp = new geom.Line(prev.A.Pos, prev.B.Pos);
                 }
                 else
                 {
-                    sp = new geom.Line(prev.B.Pos.Clone(), prev.A.Pos.Clone());
+                    sp = new geom.Line(prev.B.Pos, prev.A.Pos);
                 }
                 geom.Line sc = null;
                 if (curr.A == this)
                 {
-                    sc = new geom.Line(curr.A.Pos.clone(), curr.B.Pos.clone());
+                    sc = new geom.Line(curr.A.Pos, curr.B.Pos);
                 }
                 else
                 {
-                    sc = new geom.Line(curr.B.Pos.clone(), curr.A.Pos.clone());
+                    sc = new geom.Line(curr.B.Pos, curr.A.Pos);
                 }
 
                 /*
@@ -489,16 +487,22 @@ namespace engine.streets
                 sp.Move(opx, opy);
                 sc.Move(ocx, ocy);
 
-                var i = sp.IntersectInfinite(sc);
+                Nullable<Vector2> i0 = sp.IntersectInfinite(sc);
+                Vector2 i;
+                Vector2 newI;
 
                 bool doUseSide = false;
-                if (null == i)
+                if (null == i0)
                 {
                     if (myVerbose) trace("no intersect");
                     doUseSide = true;
+                    // Please the compiler and assign newI a value that later is overridden.
+                    newI.X = newI.Y = 0;
                 }
                 else
                 {
+                    i = i0.Value;
+
                     /*
                      * If the intersection is too far away from the streetpoint, these are pretty in-line 
                      * streets, so take their common border.
@@ -516,7 +520,7 @@ namespace engine.streets
                         var n = new Vector2(nc.X - np.X, nc.Y - np.Y);
                         n = n / n.Length();
                         var averW = (prevHalfStreetWidth + currHalfStreetWidth) / 2f;
-                        i = new Vector2(Pos.X + n.X * averW, Pos.Y + n.Y * averW);
+                        newI = new Vector2(Pos.X + n.X * averW, Pos.Y + n.Y * averW);
 #if false
                         var dist = Math.sqrt(dist2);
                         var prevAngle = prev.getAngleSP(this);
@@ -530,31 +534,32 @@ namespace engine.streets
 #endif
                     } else {
                         if( myVerbose ) trace( "close intersect" );
+                        newI = i;
                     }
                 }
 
                 if( doUseSide ) {
                     // trace( 'getSectionArray(): no intersection.' );
                     /*
-                        * If the streets are parallel and the sides in line, use the offset
-                        * street point itself as an intersection, using the average street width.
-                        */
+                     * If the streets are parallel and the sides in line, use the offset
+                     * street point itself as an intersection, using the average street width.
+                     */
                     float averHalfStreetWidth = (prevHalfStreetWidth+currHalfStreetWidth)/2f;
                     var osx = nc.X * averHalfStreetWidth;
                     var osy = nc.Y * averHalfStreetWidth;
-                    i = new Vector2( Pos.X+osx, Pos.Y+osy );
+                    newI = new Vector2( Pos.X+osx, Pos.Y+osy );
                 }
 
                 if( myVerbose ) {
-                    trace($"Adding point $i");
+                    trace($"Adding point $newI");
                 }
-                _sectionArray.Add(i);
+                _sectionArray.Add(newI);
                 /*
                     * Now also add this point to the stroke lookup. Obviously, it involves
                     * two strokes, curr and prev, so add both associations.
                     */
                 int ids = (curr.Sid%10000)+10000*(prev.Sid%10000);
-                _sectionStrokeMap.Add(ids, i);
+                _sectionStrokeMap.Add(ids, newI);
                 // trace('StreetPoint.getSectionArray(): sp $id Storing stroke $ids ${curr.sid} and ${prev.sid}');
                 ++idx;
             }
