@@ -13,7 +13,7 @@ namespace engine.streets
 
         public int Sid;
 
-        public StrokeStore Store;
+        public StrokeStore? Store;
 
         /**
          * The creator of this stroke.
