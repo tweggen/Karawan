@@ -91,7 +91,7 @@ namespace engine.streets
                      * We derive design decitions from the lengths.
                      */
                 }
-                if (strPoints.Count > 0)
+                if (strPoints.Length > 0)
                 {
                     quarter.AddDebugTag("quarterPoints", strPoints);
                 }
@@ -176,11 +176,12 @@ namespace engine.streets
             _rnd.clear();
             _strokeStore.ClearTraversed();
             var points = _strokeStore.GetStreetPoints();
-            foreach(var spStart in points)            {
+            foreach (var spStart in points)
+            {
 
                 if (_traceGenerate) trace($"QuarterGenerator(): Tracing Point {spStart.Pos}");
                 var angleStrokes = spStart.GetAngleArray();
-                foreach(var stroke in angleStrokes)
+                foreach (var stroke in angleStrokes)
                 {
                     StreetPoint? spDest = null;
                     // Which direction?
@@ -203,19 +204,19 @@ namespace engine.streets
                     }
                     else
                     {
-                        throw new InvalidOperationException( "QuarterGenerator: Invalid stroke encountered." );
+                        throw new InvalidOperationException("QuarterGenerator: Invalid stroke encountered.");
                     }
                     if (spStart == spDest)
                     {
-                        throw new InvalidOperationException( "QuaterGenerator: Invalid stroke: Start and end is the same." );
+                        throw new InvalidOperationException("QuaterGenerator: Invalid stroke: Start and end is the same.");
                     }
 
                     if (isAlreadyTraversed)
                     {
                         continue;
                     }
-                    if (_traceGenerate) trace( "QuarterGenerator():" );
-                    if (_traceGenerate) trace( $"QuarterGenerator(): Starting with stroke from {spStart.Pos} to ${spDest.Pos}");
+                    if (_traceGenerate) trace("QuarterGenerator():");
+                    if (_traceGenerate) trace($"QuarterGenerator(): Starting with stroke from {spStart.Pos} to ${spDest.Pos}");
 
                     /*
                      * We know that we need to start from spStart using "stroke". Follow the loop.
@@ -236,11 +237,11 @@ namespace engine.streets
 
                         if (null == strokeCurrent)
                         {
-                            throw new InvalidOperationException( "QuarterGenerator(): strokeCurrent is null" );
+                            throw new InvalidOperationException("QuarterGenerator(): strokeCurrent is null");
                         }
                         if (null == spCurr)
                         {
-                            throw new InvalidOperationException( "QuarterGenerator(): spCurr is null" );
+                            throw new InvalidOperationException("QuarterGenerator(): spCurr is null");
                         }
 
                         /*
@@ -260,7 +261,7 @@ namespace engine.streets
                         }
                         else
                         {
-                            throw  new InvalidOperationException( "QuarterGenerator: Invalid stroke following quarter." );
+                            throw new InvalidOperationException("QuarterGenerator: Invalid stroke following quarter.");
                         }
 
                         /*
@@ -275,7 +276,7 @@ namespace engine.streets
                         /*
                          * Hint what we are doing.
                          */
-                        if (_traceGenerate) trace( $"QuarterGenerator(): Following angle {followAngle} ({geom.Angles.Snorm(followAngle+(float)Math.PI)}) from {isAB} ${spNext.Pos}");
+                        if (_traceGenerate) trace($"QuarterGenerator(): Following angle {followAngle} ({geom.Angles.Snorm(followAngle + (float)Math.PI)}) from {isAB} ${spNext.Pos}");
 
                         /*
                          * In every iteration: Follow strokeCurrent from spCurr.
@@ -287,33 +288,33 @@ namespace engine.streets
                          */
                         if (isAB)
                         {
-                            if (strokeCurrent.traversedAB)
+                            if (strokeCurrent.TraversedAB)
                             {
-                                throw 'QuarterGenerator(): Attempt to traverseAB twice';
+                                throw new InvalidOperationException($"QuarterGenerator(): Attempt to traverseAB twice");
                             }
-                            strokeCurrent.traversedAB = true;
+                            strokeCurrent.TraversedAB = true;
                         }
                         else /* B to A */
                         {
-                            if (strokeCurrent.traversedBA)
+                            if (strokeCurrent.TraversedBA)
                             {
-                                throw 'QuarterGenerator(): Attempt to traverseBA twice';
+                                throw new InvalidOperationException($"QuarterGenerator(): Attempt to traverseBA twice");
                             }
-                            strokeCurrent.traversedBA = true;
+                            strokeCurrent.TraversedBA = true;
                         }
 
                         var quarterDelim = new QuarterDelim();
-                        quarterDelim.streetPoint = spCurr;
-                        quarterDelim.stroke = strokeCurrent;
+                        quarterDelim.StreetPoint = spCurr;
+                        quarterDelim.Stroke = strokeCurrent;
 
                         /*
                          * Before we add the delimiter, we need the next stroke, because
                          * we need the intersection of this and the next stroke.
                          */
-                        var strokeNext = spNext.getNextAngle(strokeCurrent, followAngle, true);
+                        var strokeNext = spNext.GetNextAngle(strokeCurrent, followAngle, true);
                         if (null == strokeNext || strokeNext == strokeCurrent)
                         {
-                            if (_traceGenerate) trace('QuarterGenerator(): Followed same stroke back because there is no other angle.');
+                            if (_traceGenerate) trace($"QuarterGenerator(): Followed same stroke back because there is no other angle.");
                             /*
                              * So follow myself back in the other direction.
                              * That means, spCurr (regularily) will become spNext.
@@ -321,27 +322,27 @@ namespace engine.streets
                              */
                             strokeNext = strokeCurrent;
                             hasDeadEnd = true;
-                            quarter.addDebugTag("hasDeadEnd", "true");
+                            quarter.AddDebugTag("hasDeadEnd", "true");
                         }
 
                         {
-                            var section = spNext.getSectionPointByStroke(strokeNext, strokeCurrent);
+                            var section = spNext.GetSectionPointByStroke(strokeNext, strokeCurrent);
                             if (null == section)
                             {
                                 hasNullSection = true;
-                                quarter.addDebugTag("hasNullSection", "true");
+                                quarter.AddDebugTag("hasNullSection", "true");
                             }
                             else
                             {
-                                quarterDelim.startPoint = section.clone();
+                                quarterDelim.StartPoint = (Vector2) section;
                             }
                         }
-                        quarter.addQuarterDelim(quarterDelim);
+                        quarter.AddQuarterDelim(quarterDelim);
                         ++nPoints;
 
                         if (spNext == spStart)
                         {
-                            if (_traceGenerate) trace('QuarterGenerator(): Reached start again.');
+                            if (_traceGenerate) trace($"QuarterGenerator(): Reached start again.");
                             break;
                         }
 
@@ -352,69 +353,67 @@ namespace engine.streets
                         spCurr = spNext;
                     }
 
-            if (solestroke)
-            {
-                if (_traceGenerate) trace('QuarterGenerator(): Leaving loop because this is a single stroke.');
+                    if (solestroke)
+                    {
+                        if (_traceGenerate) trace($"QuarterGenerator(): Leaving loop because this is a single stroke.");
+                    }
+                    else
+                    {
+                        // TXWTODO: We do not explicitely detect the "outside". 
+                        // TXWTODO: We can't properly handle dead ends.
+                        /*
+                         * However, most likely, the "outside" does have dead ends, so do not add them as quarters.
+                         */
+                        if (hasNullSection)
+                        {
+                            if (_traceGenerate) trace($"QuarterGenerator.generate(): Has null section.");
+                        }
+                        else
+                        {
+                            /*
+                             * Now create the root estate.
+                             */
+                            var estate = new Estate();
+                            foreach (var delim in quarter.GetDelims())
+                            {
+                                estate.AddPoint(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
+                            }
+
+                            /*
+                             * Create the building(s) on that estate
+                             */
+                            if (true || _rnd.getFloat() > 0.05)
+                            {
+                                quarter.AddDebugTag("shallHaveBuildings", "true");
+                                _createBuildings(quarter, estate);
+                            }
+
+                            quarter.AddEstate(estate);
+                            if (_traceGenerate) trace($"QuarterGenerator.generate(): Adding quarter.");
+                            quarter.Polish();
+                            var cp = quarter.GetCenterPoint();
+                            quarter.AddDebugTag("centerPoint", $"x: {cp.X}, y: {cp.Y}");
+                            _quarterStore.Add(quarter);
+                        }
+
+                    }
+                }
             }
-            else
-            {
-                // TXWTODO: We do not explicitely detect the "outside". 
-                // TXWTODO: We can't properly handle dead ends.
-                /*
-                 * However, most likely, the "outside" does have dead ends, so do not add them as quarters.
-                 */
-                if (hasNullSection)
-                {
-                    if (_traceGenerate) trace('QuarterGenerator.generate(): Has null section.');
-                }
-                else
-                {
-                    /*
-                     * Now create the root estate.
-                     */
-                    var estate = new Estate();
-                    for (delim in quarter.getDelims())
-                    {
-                        estate.addPoint(new geom.Vector3D(delim.startPoint.x, 0, delim.startPoint.y));
-                    }
-
-                    /*
-                     * Create the building(s) on that estate
-                     */
-                    if (true || _rnd.getFloat() > 0.05)
-                    {
-                        quarter.addDebugTag("shallHaveBuildings", "true");
-                        createBuildings(quarter, estate);
-                    }
-
-                    quarter.addEstate(estate);
-                    if (_traceGenerate) trace('QuarterGenerator.generate(): Adding quarter.');
-                    quarter.polish();
-                    var cp = quarter.getCenterPoint();
-                    quarter.addDebugTag("centerPoint", 'x: ${cp.x}, y: ${cp.y}');
-                    _quarterStore.add(quarter);
-                }
-
-}
         }
-    }
 
-}
-            #if false
 
-public function reset(
-    seed0: String,
-        quarterStore: QuarterStore,
-        strokeStore: StrokeStore
-    ) {
-    _rnd = new engine.RandomSource(seed0);
-    _quarterStore = quarterStore;
-    _strokeStore = strokeStore;
-}
+        public void Reset(
+            string seed0,
+            QuarterStore quarterStore,
+            StrokeStore strokeStore) 
+        {
+            _rnd = new engine.RandomSource(seed0);
+            _quarterStore = quarterStore;
+            _strokeStore = strokeStore;
+        }
 
-public function new()
-{
-}
-#endif
+        public QuarterGenerator()
+        {
+        }
     }
 }
