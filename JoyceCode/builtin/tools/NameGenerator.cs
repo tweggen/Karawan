@@ -6,7 +6,7 @@ namespace engine.tools
 {
     public class NameGenerator
     {
-        private static object _lockObject;
+        private static object _lockObject = new();
         private static NameGenerator _instance;
             
         private float _pSylOpen = 0.75f;

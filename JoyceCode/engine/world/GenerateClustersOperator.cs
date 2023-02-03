@@ -72,7 +72,7 @@ namespace engine.world
                 clusterDesc.Pos = new Vector3( -10f * _rnd.getFloat(), 0f, 10f);
                 clusterDesc.Size = 1000f;
                 clusterDesc.Name = nameGenerator.CreateWord(_rnd);
-                acd[nClusters++] = clusterDesc;
+                acd.Add( clusterDesc ); nClusters++;
                 ++idxCluster;
             }
 
@@ -95,7 +95,7 @@ namespace engine.world
                 );
                 // TXWTODO: But why random and not the height in the landscape? Because I generate the landscape city operator only later on in this file.
                 clusterDesc.Name = nameGenerator.CreateWord(_rnd);
-                acd[nClusters++] = clusterDesc;
+                acd.Add(clusterDesc); nClusters++;
             }
 
             /*
@@ -209,7 +209,7 @@ namespace engine.world
 
             //trace( newClusterDesc );
 
-            acd[nClusters++] = newClusterDesc;
+            acd.Add(newClusterDesc); nClusters++;
             nMerges++;
             ++idxTest;
         }
