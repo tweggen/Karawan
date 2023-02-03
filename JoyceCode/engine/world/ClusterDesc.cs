@@ -7,6 +7,7 @@ namespace engine.world
 {
     public class ClusterDesc
     {
+        public string Id;
         public bool Merged;
         public Vector3 Pos;
         public float Size = 100;

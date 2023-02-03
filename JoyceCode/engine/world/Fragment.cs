@@ -5,7 +5,6 @@ using System.Numerics;
 using System.Text;
 using DefaultEcs;
 
-
 namespace engine.world
 {
     public class Fragment
@@ -36,7 +35,8 @@ namespace engine.world
         /**
          * The list of (static) molecules.
          */
-        // private var _molecules: Array<engine.IMolecule>;
+        private List<Entity> _eStaticMolecules;
+        private Entity _eGround;
 
         /**
          * Test, wether the given world coordinate is inside the cluster.
@@ -66,6 +66,12 @@ namespace engine.world
         {
             var localPos = posGlobal - position;
             return IsInsideLocal(localPos);
+        }
+
+        public bool IsInside( in Vector2 pos2Global )
+        {
+            var pos3 = new Vector3(pos2Global.X, 0f, pos2Global.Y);
+            return IsInside(pos3);
         }
 
 
@@ -736,33 +742,33 @@ namespace engine.world
             }
 
 
-#if false
-    /**
-     * Add a geometry atom to this fragment.
-     */
-    public function addStaticMolecule( mol: engine.IMolecule ): Void 
-            {
-                if( null==mol ) {
-                    trace( "Found null molecule" );
-                    throw "Found null molecule";
-                }
-                /*
-                 * The platform dependent engine part cares about the visual molecules,
-                 * the platform independent part cares about the physics.
-                 */
+        /**
+         * Add a geometry atom to this fragment.
+         */
+        public void AddStaticMolecule( in engine.joyce.Mesh jMesh )
+        {
+            /**
+                * We create an entity for this particular mesh.
+                * This entity is child to our fragment's entity.
+                */
+            Entity entity = engine.CreateEntity();
+            entity.Set<engine.joyce.components.Instance3>(
+                new engine.joyce.components.Instance3(jMesh));
+            engine.AddInstance3(
+                entity, true, 0xffffffff,
+                position,
+                new Quaternion());
 
-                /*
-                 * Remember the molecule to be able to remove its contents later again.
-                 */
-                _molecules.push(mol);
+            /*
+                * Remember the molecule to be able to remove its contents later again.
+                */
+            _eStaticMolecules.Add(entity);
 
-                /*
-                 * As soon we show this fragment, we make all the static molecules visible.
-                 * Only then all the actual resources will be created by the engine.
-                 */
-            }
-#endif
-
+            /*
+             * As soon we show this fragment, we make all the static molecules visible.
+             * Only then all the actual resources will be created by the engine.
+             */
+        }
 
         public Fragment(
             in engine.Engine engine0,

@@ -35,6 +35,11 @@ namespace engine.joyce
          */
         public IList Normals;
 
+        public bool IsEmpty()
+        {
+            return Indices.Count == 0;
+        }
+
         /**
          * Generate smoothed normals for this mesh.
          */
