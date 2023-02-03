@@ -1,8 +1,7 @@
-﻿using Android.OS;
-using engine.world;
+﻿using engine.world;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Numerics;
+
 namespace engine.streets
 {
     public class GenerateClusterStreetsOperator : world.IFragmentOperator
@@ -130,53 +129,53 @@ namespace engine.streets
              * We need to compute aleft, aright, bleft and bright, and we use these
              * names from the perspective from a to b.
              */
-            var sw = stroke.streetWidth();
-            var hsw = sw / 2;
-            var n: geom.Point = stroke.normal;
-            var q: geom.Point = stroke.unit;
+            float sw = stroke.StreetWidth();
+            float hsw = sw / 2f;
+            Vector2 n = stroke.Normal;
+            Vector2 q = stroke.Unit;
 
-            var spA = stroke.a;
+            var spA = stroke.A;
 
             /*
              * Before continueing, we check whether point a is inside this fragment.
              * By convention, we only create streets that have their a point inside this
              * fragment.
              */
-            if (!worldFragment.isInsideLocal(spA.pos.x + cx, spA.pos.y + cy))
+            if (!worldFragment.IsInsideLocal(spA.Pos.X + cx, spA.Pos.Y + cy))
             {
                 return false;
             }
 
-            var angArrA = spA.getAngleArray();
+            var angArrA = spA.GetAngleArray();
 
             /*
              * The exterior points of the street area.
              */
-            var alx, aly, arx, ary: Float;
-            var blx, bly, brx, bry: Float;
+            float alx, aly, arx, ary;
+            float blx, bly, brx, bry;
 
             /*
              * The linear logical part of the street.
              */
-            var amx, amy: Float;
-            var bmx, bmy: Float;
+            float amx, amy;
+            float bmx, bmy;
 
-            amx = cx + spA.pos.x;
-            amy = cy + spA.pos.y;
-            if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): am = ($amx; $amy);');
-            if (angArrA.length > 1)
+            amx = cx + spA.Pos.X;
+            amy = cy + spA.Pos.Y;
+            if (_traceStreets) trace( $"GenerateClusterStreetsOperator.generateStreetRun(): am = ({amx}; {amy});");
+            if (angArrA.Count > 1)
             {
-                var idxA = angArrA.indexOf(stroke);
+                var idxA = angArrA.IndexOf(stroke);
                 if (idxA < 0)
                 {
-                    throw 'GenerateClusterStreetsOperator.generateStreetRun(): stroke is not in street point A.';
+                    throw new InvalidOperationException( $"GenerateClusterStreetsOperator.generateStreetRun(): stroke is not in street point A." );
                 }
-                var secArrA = spA.getSectionArray();
-                if (secArrA.length != angArrA.length)
+                var secArrA = spA.GetSectionArray();
+                if (secArrA.Count != angArrA.Count)
                 {
-                    throw 'GenerateClusterStreetsOperator.generateStreetRun(): for point a: Section array and length array differ in size: ${secArrA.length} != ${angArrA.length}.';
+                    throw new InvalidOperationException( $"GenerateClusterStreetsOperator.generateStreetRun(): for point a: Section array and length array differ in size: {secArrA.Count} != {angArrA.Count}." );
                 }
-                var idxNextA = (idxA + 1) % angArrA.length;
+                var idxNextA = (idxA + 1) % angArrA.Count;
 
                 /*
                  * now idxA is the index of this stroke.
@@ -188,10 +187,10 @@ namespace engine.streets
                  * The angle array is sorted in ascending angles with regard to outgoing
                  * strokes, that is stroke.a is the point.
                  */
-                alx = cx + secArrA[idxNextA].x;
-                aly = cy + secArrA[idxNextA].y;
-                arx = cx + secArrA[idxA].x;
-                ary = cy + secArrA[idxA].y;
+                alx = cx + secArrA[idxNextA].X;
+                aly = cy + secArrA[idxNextA].Y;
+                arx = cx + secArrA[idxA].X;
+                ary = cy + secArrA[idxA].Y;
 
             }
             else
@@ -200,32 +199,32 @@ namespace engine.streets
                  * This is the end of the street, we need to manually compute the endpoints
                  * using the street normal.
                  */
-                alx = cx + spA.pos.x - n.x * hsw;
-                aly = cy + spA.pos.y - n.y * hsw;
-                arx = cx + spA.pos.x + n.x * hsw;
-                ary = cy + spA.pos.y + n.y * hsw;
+                alx = cx + spA.Pos.X - n.X * hsw;
+                aly = cy + spA.Pos.Y - n.Y * hsw;
+                arx = cx + spA.Pos.X + n.X * hsw;
+                ary = cy + spA.Pos.Y + n.Y * hsw;
 
             }
 
-            var spB = stroke.b;
-            var angArrB = spB.getAngleArray();
+            var spB = stroke.B;
+            var angArrB = spB.GetAngleArray();
 
-            bmx = cx + spB.pos.x;
-            bmy = cy + spB.pos.y;
-            if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): bm = ($bmx; $bmy);');
+            bmx = cx + spB.Pos.X;
+            bmy = cy + spB.Pos.Y;
+            if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): bm = ({bmx}; {bmy});");
             if (angArrB.length > 1)
             {
                 var idxB = angArrB.indexOf(stroke);
                 if (idxB < 0)
                 {
-                    throw 'GenerateClusterStreetsOperator.generateStreetRun(): stroke is not in street point B.';
+                    throw new InvalidOperationException($"GenerateClusterStreetsOperator.generateStreetRun(): stroke is not in street point B.");
                 }
-                var secArrB = spB.getSectionArray();
-                if (secArrB.length != angArrB.length)
+                var secArrB = spB.GetSectionArray();
+                if (secArrB.Count!= angArrB.Count)
                 {
-                    throw 'GenerateClusterStreetsOperator.generateStreetRun(): for point b: Section array and angle array differ in size: ${secArrB.length} != ${angArrB.length}.';
+                    throw new InvalidOperationException( $"GenerateClusterStreetsOperator.generateStreetRun(): for point b: Section array and angle array differ in size: {secArrB.Count} != {angArrB.Count}." );
                 }
-                var idxNextB = (idxB + 1) % angArrB.length;
+                var idxNextB = (idxB + 1) % angArrB.Count;
 
                 /*
                  * right now there is idxB the index of this stroke in the streetpoint b.
