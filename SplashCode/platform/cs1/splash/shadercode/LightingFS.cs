@@ -65,12 +65,12 @@ void main()
         {
             vec3 light = vec3(0.0);
 
-            if (lights[i].type == LIGHT_DIRECTIONAL)
+            if (true || lights[i].type == LIGHT_DIRECTIONAL)
             {
                 light = -normalize(lights[i].target - lights[i].position);
             }
 
-            if (lights[i].type == LIGHT_POINT)
+            if (false && lights[i].type == LIGHT_POINT)
             {
                 light = normalize(lights[i].position - fragPosition);
             }
@@ -78,11 +78,12 @@ void main()
             float NdotL = max(dot(normal, light), 0.0);
             lightDot += lights[i].color.rgb*NdotL;
 
-            float specCo = 0.0;
-            if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine
-            specular += specCo;
+            // float specCo = 0.0;
+            // if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine
+            // specular += specCo;
         }
     }
+
 
     finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
     finalColor += texelColor*(ambient/10.0)*colDiffuse;

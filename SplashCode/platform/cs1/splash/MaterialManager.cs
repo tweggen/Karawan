@@ -73,7 +73,7 @@ namespace Karawan.platform.cs1.splash
              */
             if ( true ) {
                 int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
-                var colAmbient = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+                var colAmbient = new Vector4(1f, 1f, 1f, 1.0f);
                 Raylib.SetShaderValue(
                     _rlInstanceShaderEntry.RlShader,
                     ambientLoc, colAmbient, 
