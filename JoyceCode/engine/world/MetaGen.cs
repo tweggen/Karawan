@@ -1,7 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
-
+using System.Numerics;
 
 namespace engine.world
 {
@@ -15,6 +15,11 @@ namespace engine.world
         private static MetaGen _instance;
 
         public static float FragmentSize = 400f;
+        public static float MaxWidth = 30000f;
+        public static float MaxHeight = 30000f;
+        public Vector3 MaxPos;
+        public Vector3 MinPos;
+
 
         /**
          * FragmentSize / 20. We should compute this
@@ -41,6 +46,13 @@ namespace engine.world
 
         private bool _traceFragmentOperators = true;
 
+        public List<Func<string,ClusterDesc,world.IFragmentOperator>> 
+            GetClusterFragmentOperatorFactoryList()
+        {
+            return _clusterFragmentOperatorFactoryList;
+        }
+
+
 
         /**
          * For every cluster, this fragment operator generator shall be added.
@@ -49,8 +61,8 @@ namespace engine.world
          *     the base key for that cluster/generator instance and the actual clusterdesc.
          *     TXWTODO: Only use the key in the clusterdesc?
          */
-        public void metaGenAddClusterFragmentOperatorFactory(
-            Func<String, ClusterDesc, world.IFragmentOperator> fragmentOperatorFactory
+        public void AddClusterFragmentOperatorFactory(
+                Func<String, ClusterDesc, world.IFragmentOperator> fragmentOperatorFactory
         )
         {
             _clusterFragmentOperatorFactoryList.Add(fragmentOperatorFactory);
@@ -58,7 +70,7 @@ namespace engine.world
 
 
 
-        public void MetaGenAddFragmentOperator(world.IFragmentOperator op)
+        public void AddFragmentOperator(world.IFragmentOperator op)
         {
             _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
         }
@@ -116,7 +128,7 @@ namespace engine.world
         /**
          * Call this after you added all of the modules.
          */
-        public void MetaGenSetupComplete()
+        public void SetupComplete()
         {
             /*
              * One time operations: Apply all world operators.
@@ -130,6 +142,9 @@ namespace engine.world
         {
             _myKey = "mydear";
 
+            MaxPos = new Vector3(MaxWidth / 2f - 1f, 0f, MaxHeight / 2f - 1f);
+            MinPos = new Vector3(-MaxWidth / 2f + 1f, 0f, -MaxWidth / 2f + 1f);
+
             _worldOperators = new();
             _fragmentOperators = new();
             _clusterFragmentOperatorFactoryList= new();
@@ -138,12 +153,12 @@ namespace engine.world
              * Create a fragment operator that reads the elevations after 
              * the elevation pipeline.
              */
-            MetaGenAddFragmentOperator(new world.CreateTerrainOperator(_myKey));
+            AddFragmentOperator(new world.CreateTerrainOperator(_myKey));
 
             /*
              * Create a fragment operator that creates a ground mesh.
              */
-            MetaGenAddFragmentOperator(new world.CreateTerrainMeshOperator(_myKey));
+            AddFragmentOperator(new world.CreateTerrainMeshOperator(_myKey));
 
         }
 

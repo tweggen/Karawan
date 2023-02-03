@@ -1,6 +1,4 @@
-﻿using Java.Lang;
-using Java.Util.Functions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,27 +10,27 @@ namespace engine.tools
         private static NameGenerator _instance;
             
         private float _pSylOpen = 0.75f;
-        private string[] _arrSylOpen = [
+        private string[] _arrSylOpen = {
             "b", "d", "f", "g", "j", "k", "l", "m", "n", "p", "r", "s", "sh", "t", "v", "y"
-        ];
+        };
         private float _pSylInMod = 0.2f;
-        private string[] _arrSylInMod = [
+        private string[] _arrSylInMod = {
             "l", "r", "s", "v", "y"
-        ];
+        };
         private float _pSylVow = 0.95f;
-        private string[] _arrSylVow = [
+        private string[] _arrSylVow = {
             "a", "e", "i", "o", "u", "ee"
-        ];
-        private float _pSylClose = 0.4;
-        private string[] _arrSylClose = [
+        };
+        private float _pSylClose = 0.4f;
+        private string[] _arrSylClose = {
             "ng", "kh", "f", "k", "l", "m", "p", "r", "s", "t"
-        ];
+        };
 
         private string _createPhoneme(in engine.RandomSource rnd, float prob, string [] arr)
         {
             var r = rnd.getFloat();
             if(r<prob) {
-                int idx = (int)(r* arr.length* (0.999/prob));
+                int idx = (int)(r* arr.Length * (0.999/prob));
                 return arr[idx];
             } else {
                 return "";

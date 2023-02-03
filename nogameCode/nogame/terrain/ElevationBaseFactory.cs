@@ -163,8 +163,8 @@ namespace nogame.terrain
 
         public ElevationBaseFactory()
         {
-            _maxWidth = GroundOperator.MaxWidth;
-            _maxHeight = GroundOperator.MaxHeight;
+            _maxWidth = engine.world.MetaGen.MaxWidth;
+            _maxHeight = engine.world.MetaGen.MaxHeight;
 
             var fragmentSize = engine.world.MetaGen.FragmentSize;
 

@@ -68,6 +68,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToWorld.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\systems\PropagateTranslationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterDesc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterList.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\CreateTerrainMeshOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\CreateTerrainOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\Fragment.cs" />

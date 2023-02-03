@@ -31,10 +31,6 @@ namespace nogame.terrain
 
         public const float MinElevation = 100f;
         public const float MaxElevation = -10f;
-        public const float MaxWidth = 30000f;
-        public const float MaxHeight = 30000f;
-        public Vector3 MaxPos;
-        public Vector3 MinPos;
 
         private int _skeletonWidth;
         private int _skeletonHeight;
@@ -92,13 +88,12 @@ namespace nogame.terrain
         {
             _worldMetaGen = engine.world.MetaGen.Instance();
 
-            MaxPos = new Vector3(MaxWidth / 2f - 1f, 0f, MaxHeight / 2f - 1f);
-            MinPos = new Vector3(-MaxWidth / 2f + 1f, 0f, -MaxWidth / 2f + 1f);
-
             var fragmentSize = engine.world.MetaGen.FragmentSize;
+            var maxWidth = engine.world.MetaGen.MaxWidth;
+            var maxHeight = engine.world.MetaGen.MaxHeight;
 
-            _skeletonWidth = (int) ((MaxWidth+fragmentSize-1)/fragmentSize ) + 1;
-            _skeletonHeight = (int) ((MaxHeight+fragmentSize-1)/fragmentSize ) + 1;
+            _skeletonWidth = (int) ((maxWidth+fragmentSize-1)/fragmentSize ) + 1;
+            _skeletonHeight = (int) ((maxHeight+fragmentSize-1)/fragmentSize ) + 1;
 
             _rnd = new engine.RandomSource(seed0);
  
