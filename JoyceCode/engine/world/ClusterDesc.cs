@@ -47,7 +47,7 @@ namespace engine.world
         }
 
 
-        public string ToString()
+        public override string ToString()
         {
             return $"{{ 'id': {_strKey}; 'name': {Name}; 'pos': {Pos}; 'size': {Size}; }}";
         }

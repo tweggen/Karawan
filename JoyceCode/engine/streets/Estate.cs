@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using ClipperLib;
 
 namespace engine.streets
 {
@@ -15,7 +16,7 @@ namespace engine.streets
         private Vector3 _max;
         private Vector3 _extent;
         private bool _isCW;
-        private List<Vector2>? _poly;
+        private List<IntPoint>? _poly;
 
         public List<Vector3> GetPoints()
         {
@@ -47,19 +48,19 @@ namespace engine.streets
         /**
          * Return a projection of this polygon on the z plane.
          */
-        public List<Vector2> GetPoly()
+        public List<IntPoint> GetIntPoly()
         {
             if (null != _poly)
             {
                 return _poly;
             }
-            _poly = new List<Vector2>();
+            _poly = new List<IntPoint>();
             foreach(var point in _points)
             {
-                _poly.Add(new Vector2(point.X, point.Z));
+                _poly.Add(new IntPoint(point.X*10, point.Z*10));
             }
-            _isCW = geom.PolyTools.isCW(_poly);
-            _area = geom.PolyTools.getArea(_poly) * (_isCW ? 1f: -1f);
+            _isCW = !Clipper.Orientation(_poly);
+            _area = (float) Clipper.Area(_poly) * (_isCW ? 1f: -1f) / 100f;
             return _poly;
         }
 
@@ -137,16 +138,22 @@ namespace engine.streets
         {
             if (null == _poly)
             {
-                GetPoly();
+                GetIntPoly();
             }
             return _area;
         }
 
 
-        public bool IsInside(Vector3 p)
+        public bool IsInside(in Vector3 p)
         {
-            var poly = GetPoly();
-            return geom.PolyTools.isInside(poly, new geom.Point(p.x, p.z));
+            var poly = GetIntPoly();
+            return Clipper.PointInPolygon(
+                new IntPoint(
+                    (int)(p.X * 10.0 + 0.5),
+                    (int)(p.Z * 10.0 + 0.5)
+                ),
+                (List<IntPoint>) _poly
+            ) != 0;
         }
 
 

@@ -43,7 +43,7 @@ namespace engine.streets
             _sectionArray = null;
         }
 
-        public string ToString()
+        public override string ToString()
         {
             return $"{{ #{Id}: {Pos.ToString()} ({Creator})}}";
         }

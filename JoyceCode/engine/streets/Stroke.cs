@@ -428,7 +428,7 @@ namespace engine.streets
         }
 
 
-        public string ToString()
+        public override string ToString()
         {
             var ax = A.Pos.X;
             var ay = A.Pos.Y;

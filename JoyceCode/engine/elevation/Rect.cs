@@ -58,7 +58,7 @@ namespace engine.elevation
             Z1 = 0f;
             nHoriz = nHoriz0;
             nVert = nVert0;
-            elevations = new float[nVert, nHoriz];
+            Elevations = new float[nVert, nHoriz];
         }
     }
 }

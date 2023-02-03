@@ -290,7 +290,7 @@ namespace engine.elevation
                  * Simply use the elevations from the rect. Nobody will use
                  * the rect after this function.
                  */
-                newEntry.elevations = elevationRect.elevations;
+                newEntry.elevations = elevationRect.Elevations;
 
             } else
             {
@@ -484,7 +484,7 @@ namespace engine.elevation
                         for (int ex=exLocal0; ex<(exLocal1 + 1); ++ex)
                         {
                             var elevation = srcCacheEntry.elevations[srcZ,srcX];
-                            elevationRect.elevations[destZ,destX] = elevation;
+                            elevationRect.Elevations[destZ,destX] = elevation;
                             // trace('elevation is $elevation');
                             ++destX;
                             ++srcX;

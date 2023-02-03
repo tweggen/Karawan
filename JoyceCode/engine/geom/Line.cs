@@ -14,7 +14,7 @@ namespace engine.geom
         public Vector2 B;
 
 
-        public String ToString()
+        public override String ToString()
         {
             return $"({A}-{B})";
         }

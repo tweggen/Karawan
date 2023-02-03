@@ -33,8 +33,6 @@ namespace engine.world
         private int _groundResolution;
         private int _groundNElevations;
 
-        private Entity _eTerrain;
-
         /**
          * The list of (static) molecules.
          */

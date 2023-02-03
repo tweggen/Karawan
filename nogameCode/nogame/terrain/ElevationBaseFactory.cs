@@ -45,7 +45,7 @@ namespace nogame.terrain
              * it also includes the individual borders.
              */
             var nElevations = engine.world.MetaGen.GroundResolution + 1;
-            float[,] localElevations = elevationRect.elevations;
+            float[,] localElevations = elevationRect.Elevations;
 
             /*
              * First setup the corners from the skeleton information.
