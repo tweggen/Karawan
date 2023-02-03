@@ -47,7 +47,7 @@ namespace engine.world
                     x0, z0, x1, z1, elevation.Cache.TOP_LAYER
                 );
                 worldFragment.WorldFragmentSetGroundArray(
-                    elevationRect.elevations,
+                    elevationRect.Elevations,
                     world.MetaGen.GroundResolution,
                     0, 0, world.MetaGen.GroundResolution, world.MetaGen.GroundResolution,
                     0, 0);

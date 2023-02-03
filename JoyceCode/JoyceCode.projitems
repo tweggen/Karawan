@@ -17,6 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Cache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\CacheEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\ClusterBaseElevationOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\FactoryEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IElevationProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IOperator.cs" />

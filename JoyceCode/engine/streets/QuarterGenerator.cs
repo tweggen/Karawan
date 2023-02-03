@@ -170,7 +170,7 @@ namespace engine.streets
          *   to create a quarter, unless it already has been traversed. Mark it
          *   traversed afterwards.
          */
-        public void generate()
+        public void Generate()
         {
 
             _rnd.clear();

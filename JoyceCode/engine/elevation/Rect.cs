@@ -13,7 +13,7 @@ namespace engine.elevation
     public class Rect
     {
 
-        public float[,] elevations { get; }
+        public float[,] Elevations { get; }
 
         /**
             * The minimal x position of this elevation rectangle.

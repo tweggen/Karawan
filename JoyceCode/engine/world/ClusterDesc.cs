@@ -293,7 +293,7 @@ namespace engine.world
     }
 
 
-    public streets.QuarterGenerator quarterStore() 
+    public streets.QuarterStore quarterStore() 
     {
         _triggerStreets();
         return _quarterStore;

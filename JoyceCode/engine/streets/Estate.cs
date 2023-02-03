@@ -59,7 +59,7 @@ namespace engine.streets
                 _poly.Add(new Vector2(point.X, point.Z));
             }
             _isCW = geom.PolyTools.isCW(_poly);
-            _area = geom.PolyTools.getArea(_poly) * (_isCW ? 1.: -1);
+            _area = geom.PolyTools.getArea(_poly) * (_isCW ? 1f: -1f);
             return _poly;
         }
 
