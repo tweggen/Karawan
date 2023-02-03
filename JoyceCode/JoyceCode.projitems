@@ -54,6 +54,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Estate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterQuartersOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterStreetsOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Generator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Quarter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\QuarterDelim.cs" />

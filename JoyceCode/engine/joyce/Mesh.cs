@@ -118,6 +118,11 @@ namespace engine.joyce
         }
 
 
+        public int GetNextVertexIndex()
+        {
+            return Vertices.Count;
+        }
+
         public void p(in Vector3 p)
         {
             Vertices.Insert(WriteIndexVertices++, p);

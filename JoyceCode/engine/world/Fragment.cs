@@ -68,6 +68,12 @@ namespace engine.world
             return IsInsideLocal(localPos);
         }
 
+
+        public bool IsInsideLocal( float x, float y )
+        {
+            return IsInsideLocal(new Vector3(x, 0f, y));
+        }
+
         public bool IsInside( in Vector2 pos2Global )
         {
             var pos3 = new Vector3(pos2Global.X, 0f, pos2Global.Y);
