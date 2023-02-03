@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Android.Renderscripts;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -20,7 +21,7 @@ namespace engine.streets
         }
 
 
-        private void _generateQuarterFloor(
+        private bool _generateQuarterFloor(
             world.Fragment worldFragment,
             streets.Quarter quarter,
             float cx,
@@ -29,66 +30,36 @@ namespace engine.streets
         )
         {
             // trace('GenerateClusterQuartersOperator.generateQuarterFloor(): ${worldFragment.getId()}');
-#if false
-            var triPoints: Array<org.poly2tri.Point> = null;
-            try {
-                /*
-                * Now generate the polygon array for triangulation.
-                */
-                var delimList = quarter.getDelims();
-        triPoints = new Array<org.poly2tri.Point>();
-                var n = 0;
-                for(delim in delimList ) {
-                    ++n;
-                    triPoints.push( new org.poly2tri.Point(cx+delim.startPoint.x, cy+delim.startPoint.y ) );
-                }
-if (n < 3)
-{
-    trace('No delims found');
-    return false;
-}
-        } catch (unknown: Dynamic ) {
-    trace("Unknown exception: " + Std.string(unknown) + "\n"
-        + haxe.CallStack.toString(haxe.CallStack.callStack())
-        + haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
-}
+            List<Vector2> vpoly = new();
+            var delimList = quarter.GetDelims();
+            int n = 0;
+            foreach(var delim in delimList)
+            {
+                ++n;
+                vpoly.Add(new Vector2(cx + delim.StartPoint.X, cy + delim.StartPoint.Y));
+            }
+            if(n<3)
+            {
+                trace("No delims found");
+                return false;
+            }
+            engine.joyce.Mesh j2Mesh = engine.joyce.Mesh.CreateListInstance();
+            builtin.tools.Triangulate.ToMesh(vpoly, j2Mesh);
+            /*
+             * Here we have an XY mesh of the triangles in the mesh.
+             */
+            float h = _clusterDesc.AverageHeight + 2.15f;
+            foreach(Vector3 v in j2Mesh.Vertices)
+            {
+                g.p(new Vector3(v.X, h, v.Y));
+                g.UV(0f, 0f);
+            }
+            for (int k = 0; k < j2Mesh.Indices.Count; k += 3)
+            {
+                g.Idx((int)j2Mesh.Indices[k], (int)j2Mesh.Indices[k+1], (int)j2Mesh.Indices[k+2]);
+            }
 
-try
-{
-    var vp = new org.poly2tri.VisiblePolygon();
-    if (null == vp) trace('vp is null');
-    if (null == triPoints) trace('triPoints is null');
-    vp.addPolyline(triPoints);
-    vp.performTriangulationOnce();
-
-    /*
-    * Now generate the actual triangles.
-    */
-    var i0: Int = g.getNextVertexIndex();
-    var vt = vp.getVerticesAndTriangles();
-    if (null == vt) trace('vt is null');
-    if (_traceStreets) trace(vt);
-    var h = _clusterDesc.averageHeight + 2.15;
-    if (vt.vertices == null) trace('vt.vertices is null');
-    for (i in 0...Std.int(vt.vertices.length / 3) )
-    {
-        g.p(vt.vertices[i * 3 + 0], h, vt.vertices[i * 3 + 1]);
-        g.uv(0., 0. );
-    }
-    for (i in 0...Std.int(vt.triangles.length / 3) )
-    {
-        g.idx(i0 + vt.triangles[i * 3 + 1], i0 + vt.triangles[i * 3 + 0], i0 + vt.triangles[i * 3 + 2]);
-    }
-}
-catch (unknown: Dynamic ) {
-    trace("Unknown exception: " + Std.string(unknown) + "\n"
-        + haxe.CallStack.toString(haxe.CallStack.callStack())
-        + haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
-    trace(triPoints);
-    trace(triPoints.length);
-}
-#endif
-            return;
+            return true;
         }
 
 
