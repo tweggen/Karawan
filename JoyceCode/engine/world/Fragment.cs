@@ -20,7 +20,7 @@ namespace engine.world
 
         private engine.RandomSource _rnd;
 
-        public Vector3 position { get; }
+        public Vector3 Position { get; }
 
         public Index3 idxFragment;
 
@@ -64,7 +64,7 @@ namespace engine.world
 
         public bool IsInside( in Vector3 posGlobal )
         {
-            var localPos = posGlobal - position;
+            var localPos = posGlobal - Position;
             return IsInsideLocal(localPos);
         }
 
@@ -204,7 +204,7 @@ namespace engine.world
                     new engine.joyce.components.Instance3(jMeshTerrain));
             engine.AddInstance3(
                 eGround, true, 0xffffffff,
-                position,
+                Position,
                 new Quaternion());
         }
 

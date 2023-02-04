@@ -6,7 +6,9 @@ namespace engine.streets
 {
     public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
-        private static void trace( string message ) {
+        private static void trace(string message) {
+            Console.WriteLine(message);
+        }
            
 
         private static bool _useRepeatTexture = false;
@@ -17,7 +19,7 @@ namespace engine.streets
         private bool _traceStreets;
 
 
-        public string fragmentOperatorGetPath()
+        public string FragmentOperatorGetPath()
         {
             return $"5001/GenerateClusterStreetsOperator/{_myKey}/";
         }
@@ -326,17 +328,17 @@ namespace engine.streets
                      * Note that we start from the beginning in the texture.
                      */
                     int i0 = g.GetNextVertexIndex();
-                    var cm = new Vector3(q.x, 0., q.y); cm.scale(dar); cm.add(vam);
-                    var clx = cm.X - hsw * n.x;
-                    var cly = cm.Z - hsw * n.y;
-                    var uval = uvp.getUVOfs(new Vector3D(alx, h, aly), 0., vStart);
-                    var uvcl = uvp.getUVOfs(new Vector3D(clx, h, cly), 0., vStart);
-                    var uvar = uvp.getUVOfs(new Vector3D(arx, h, ary), 0., vStart);
-                    var vofs = 1.0 - uvar.y;
-                    g.p(alx, h, aly); g.uv(0.5 + uval.x, uval.Y + vofs);
-                    g.p(clx, h, cly); g.uv(0.5 + uvcl.x, uvcl.Y + vofs);
-                    g.p(arx, h, ary); g.uv(0.5 + uvar.x, uvar.Y + vofs);
-                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                    var cm = new Vector3(q.X, 0f, q.Y); cm *= dar; cm = cm +vam;
+                    var clx = cm.X - hsw * n.X;
+                    var cly = cm.Z - hsw * n.Y;
+                    var uval = uvp.getUVOfs(new Vector3(alx, h, aly), 0f, vStart);
+                    var uvcl = uvp.getUVOfs(new Vector3(clx, h, cly), 0f, vStart);
+                    var uvar = uvp.getUVOfs(new Vector3(arx, h, ary), 0f, vStart);
+                    float vofs = 1.0f - uvar.Y;
+                    g.p(alx, h, aly); g.UV(0.5f + uval.X, uval.Y + vofs);
+                    g.p(clx, h, cly); g.UV(0.5f + uvcl.X, uvcl.Y + vofs);
+                    g.p(arx, h, ary); g.UV(0.5f + uvar.X, uvar.Y + vofs);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 }
 
             }
@@ -348,15 +350,15 @@ namespace engine.streets
                 /*
                  * Look, what iteration of texture we start with to offset the v values.
                  */
-                while ((damin - dStart) < 0. )
+                while ((damin - dStart) < 0f)
                 {
                     dStart -= texlen;
-                    vStart -= 1.;
+                    vStart -= 1f;
                 }
                 while ((damin - dStart) > texlen)
                 {
                     dStart += texlen;
-                    vStart += 1.;
+                    vStart += 1f;
                 }
 
                 {
@@ -366,22 +368,22 @@ namespace engine.streets
                      * 
                      * Note, that we start from the beginning in the texture
                      */
-                    var i0: Int = g.getNextVertexIndex();
-                    var cm = new Vector3D(q.x, 0., q.y); cm.scale(dal); cm.add(vam);
-                    var crx = cm.X + hsw * n.x;
-                    var cry = cm.Z + hsw * n.y;
-                    var uvar = uvp.getUVOfs(new Vector3D(arx, h, ary), 0., vStart);
-                    var uval = uvp.getUVOfs(new Vector3D(alx, h, aly), 0., vStart);
-                    var uvcr = uvp.getUVOfs(new Vector3D(crx, h, cry), 0., vStart);
-                    var vofs = 1.0 - uval.y;
-                    g.p(arx, h, ary); g.uv(0.5 + uvar.x, uvar.Y + vofs);
-                    g.p(alx, h, aly); g.uv(0.5 + uval.x, uval.Y + vofs);
-                    g.p(crx, h, cry); g.uv(0.5 + uvcr.x, uvcr.Y + vofs);
-                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                    int i0 = g.GetNextVertexIndex();
+                    var cm = new Vector3(q.X, 0f, q.Y); cm *= dal; cm += vam;
+                    var crx = cm.X + hsw * n.X;
+                    var cry = cm.Z + hsw * n.Y;
+                    var uvar = uvp.getUVOfs(new Vector3(arx, h, ary), 0f, vStart);
+                    var uval = uvp.getUVOfs(new Vector3(alx, h, aly), 0f, vStart);
+                    var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
+                    float vofs = 1.0f - uval.Y;
+                    g.p(arx, h, ary); g.UV(0.5f + uvar.X, uvar.Y + vofs);
+                    g.p(alx, h, aly); g.UV(0.5f + uval.X, uval.Y + vofs);
+                    g.p(crx, h, cry); g.UV(0.5f + uvcr.X, uvcr.Y + vofs);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 }
             }
 
-            var dbmin, dbmax: Float;
+            float dbmin, dbmax;
             if (dbl < dbr)
             {
                 dbmin = dbl;
@@ -390,15 +392,15 @@ namespace engine.streets
                 /*
                  * Look, what iteration of texture we start with to offset the v values.
                  */
-                while ((dbmin - dStart) < 0. )
+                while ((dbmin - dStart) < 0f)
                 {
                     dStart -= texlen;
-                    vStart -= 1.;
+                    vStart -= 1f;
                 }
                 while ((dbmin - dStart) > texlen)
                 {
                     dStart += texlen;
-                    vStart += 1.;
+                    vStart += 1f;
                 }
 
                 {
@@ -408,18 +410,18 @@ namespace engine.streets
                      * 
                      * Note, that we start from the beginning in the texture
                      */
-                    var i0: Int = g.getNextVertexIndex();
-                    var cm = new Vector3D(q.x, 0., q.y); cm.scale(dbl); cm.add(vam);
-                    var crx = cm.X + hsw * n.x;
-                    var cry = cm.Z + hsw * n.y;
-                    var uvbl = uvp.getUVOfs(new Vector3D(blx, h, bly), 0., vStart);
-                    var uvbr = uvp.getUVOfs(new Vector3D(brx, h, bry), 0., vStart);
-                    var uvcr = uvp.getUVOfs(new Vector3D(crx, h, cry), 0., vStart);
-                    var vofs = -uvbl.y;
-                    g.p(blx, h, bly); g.uv(0.5 + uvbl.x, uvbl.Y + vofs);
-                    g.p(brx, h, bry); g.uv(0.5 + uvbr.x, uvbr.Y + vofs);
-                    g.p(crx, h, cry); g.uv(0.5 + uvcr.x, uvcr.Y + vofs);
-                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                    int i0 = g.GetNextVertexIndex();
+                    var cm = new Vector3(q.X, 0f, q.Y); cm *= dbl; cm += vam;
+                    var crx = cm.X + hsw * n.X;
+                    var cry = cm.Z + hsw * n.Y;
+                    var uvbl = uvp.getUVOfs(new Vector3(blx, h, bly), 0f, vStart);
+                    var uvbr = uvp.getUVOfs(new Vector3(brx, h, bry), 0f, vStart);
+                    var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
+                    var vofs = -uvbl.Y;
+                    g.p(blx, h, bly); g.UV(0.5f + uvbl.X, uvbl.Y + vofs);
+                    g.p(brx, h, bry); g.UV(0.5f + uvbr.X, uvbr.Y + vofs);
+                    g.p(crx, h, cry); g.UV(0.5f + uvcr.X, uvcr.Y + vofs);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 }
             }
             else
@@ -430,15 +432,15 @@ namespace engine.streets
                 /*
                  * Look, what iteration of texture we start with to offset the v values.
                  */
-                while ((dbmin - dStart) < 0. )
+                while ((dbmin - dStart) < 0f)
                 {
                     dStart -= texlen;
-                    vStart -= 1.;
+                    vStart -= 1f;
                 }
                 while ((dbmin - dStart) > texlen)
                 {
                     dStart += texlen;
-                    vStart += 1.;
+                    vStart += 1f;
                 }
 
                 {
@@ -448,29 +450,29 @@ namespace engine.streets
                      * 
                      * Note, that we start from the beginning in the texture
                      */
-                    var i0: Int = g.getNextVertexIndex();
-                    var cm = new Vector3D(q.x, 0., q.y); cm.scale(dbr); cm.add(vam);
-                    var clx = cm.X - hsw * n.x;
-                    var cly = cm.Z - hsw * n.y;
-                    var uvcl = uvp.getUVOfs(new Vector3D(clx, h, cly), 0., vStart);
-                    var uvbl = uvp.getUVOfs(new Vector3D(blx, h, bly), 0., vStart);
-                    var uvbr = uvp.getUVOfs(new Vector3D(brx, h, bry), 0., vStart);
-                    var vofs = -uvbr.y;
-                    g.p(clx, h, cly); g.uv(0.5 + uvcl.x, uvcl.Y + vofs);
-                    g.p(blx, h, bly); g.uv(0.5 + uvbl.x, uvbl.Y + vofs);
-                    g.p(brx, h, bry); g.uv(0.5 + uvbr.x, uvbr.Y + vofs);
-                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                    int i0 = g.GetNextVertexIndex();
+                    var cm = new Vector3(q.X, 0f, q.Y); cm *= dbr; cm += vam;
+                    var clx = cm.X - hsw * n.X;
+                    var cly = cm.Z - hsw * n.Y;
+                    var uvcl = uvp.getUVOfs(new Vector3(clx, h, cly), 0f, vStart);
+                    var uvbl = uvp.getUVOfs(new Vector3(blx, h, bly), 0f, vStart);
+                    var uvbr = uvp.getUVOfs(new Vector3(brx, h, bry), 0f, vStart);
+                    var vofs = -uvbr.Y;
+                    g.p(clx, h, cly); g.UV(0.5f + uvcl.X, uvcl.Y + vofs);
+                    g.p(blx, h, bly); g.UV(0.5f + uvbl.X, uvbl.Y + vofs);
+                    g.p(brx, h, bry); g.UV(0.5f + uvbr.X, uvbr.Y + vofs);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 }
             }
 
-            if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): d[ab][min/max]: $damin; $damax; $dbmin; $dbmax;');
+            if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
 
             /*
              * Handle special case of a and b ends overlapping
              */
             if (damax > dbmin)
             {
-                if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): Overlapping ends, no street run.');
+                if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): Overlapping ends, no street run.");
                 // TXWTODO: Write me.
                 return true;
             }
@@ -480,14 +482,14 @@ namespace engine.streets
              * Emit vertex rows until we are at dbmin.
              */
             {
-                var i0: Int = g.getNextVertexIndex();
+                int i0 = g.GetNextVertexIndex();
 
                 /*
                  * Count the number of rows to add tris.
                  */
-                var nVertexRows: Int = 0;
+                int nVertexRows = 0;
 
-                if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): New rect list.');
+                if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): New rect list.");
 
                 /*
                  * We start at damax.
@@ -495,20 +497,20 @@ namespace engine.streets
                 var currD = damax;
                 var finalD = dbmin;
 
-                dStart = 0.;
-                vStart = 0.;
+                dStart = 0f;
+                vStart = 0f;
                 /*
                  * Or the other way round?
                  */
-                while ((currD - dStart) < 0. )
+                while ((currD - dStart) < 0f)
                 {
                     dStart -= texlen;
-                    vStart -= 1.;
+                    vStart -= 1f;
                 }
                 while ((currD - vStart) > texlen)
                 {
                     dStart += texlen;
-                    vStart += 1.;
+                    vStart += 1f;
                 }
                 while (true)
                 {
@@ -516,21 +518,21 @@ namespace engine.streets
                     /*
                      * Emit current row.
                      */
-                    var em = new Vector3D(q.x, 0., q.y); em.scale(currD); em.add(vam);
-                    var elx = em.X - hsw * n.x;
-                    var ely = em.Z - hsw * n.y;
-                    var erx = em.X + hsw * n.x;
-                    var ery = em.Z + hsw * n.y;
-                    var uv0 = uvp.getUVOfs(new Vector3D(elx, h, ely), 0., vStart);
-                    var uv1 = uvp.getUVOfs(new Vector3D(erx, h, ery), 0., vStart);
-                    if (_traceStreets) trace('GenerateClusterStreetsOperator(): #$nVertexRows: el = ($elx; $ely); uv = (${uv0.x}; ${uv0.y}); er = ($erx; $ery); uv = (${uv1.x}; ${uv1.y})');
+                    var em = new Vector3(q.X, 0f, q.Y); em *= currD; em += vam;
+                    var elx = em.X - hsw * n.X;
+                    var ely = em.Z - hsw * n.Y;
+                    var erx = em.X + hsw * n.X;
+                    var ery = em.Z + hsw * n.Y;
+                    var uv0 = uvp.getUVOfs(new Vector3(elx, h, ely), 0f, vStart);
+                    var uv1 = uvp.getUVOfs(new Vector3(erx, h, ery), 0f, vStart);
+                    if (_traceStreets) trace( $"GenerateClusterStreetsOperator(): #$nVertexRows: el = ({elx}; {ely}); uv = ({uv0.X}; {uv0.Y}); er = ($erx; $ery); uv = ({uv1.X}; {uv1.Y})");
 
-                    if (Math.abs(uv0.Y - 1.0) < 0.00000001)
+                    if (Math.Abs(uv0.Y - 1.0) < 0.00000001)
                     {
-                        if (_traceStreets) trace('Too close');
+                        if (_traceStreets) trace("Too close");
                     }
-                    g.p(elx, h, ely); g.uv(0.5 + uv0.x, uv0.y);
-                    g.p(erx, h, ery); g.uv(0.5 + uv1.x, uv1.y);
+                    g.p(elx, h, ely); g.UV(0.5f + uv0.X, uv0.Y);
+                    g.p(erx, h, ery); g.UV(0.5f + uv1.X, uv1.Y);
 
                     /* 
                      * Emit next row (we need it twice in the end)
@@ -542,27 +544,27 @@ namespace engine.streets
                      *  - the next multiple of texlen
                      *  - finalD
                      */
-                    var nextD: Float;
+                    float nextD;
                     {
-                        var nextWholeD = Math.fceil(currD / texlen) * texlen;
-                        if ((nextWholeD - currD) < 0.001)
+                        float nextWholeD = (float) Math.Ceiling(currD / texlen) * texlen;
+                        if ((nextWholeD - currD) < 0.001f)
                         {
                             nextWholeD = nextWholeD + texlen;
                         }
-                        nextD = Math.min(nextWholeD, finalD);
+                        nextD = Math.Min(nextWholeD, finalD);
                     }
 
-                    var fm = new Vector3D(q.x, 0., q.y); fm.scale(nextD); fm.add(vam);
-                    var flx = fm.X - hsw * n.x;
-                    var fly = fm.Z - hsw * n.y;
-                    var frx = fm.X + hsw * n.x;
-                    var fry = fm.Z + hsw * n.y;
-                    var uv2 = uvp.getUVOfs(new Vector3D(flx, h, fly), 0., vStart);
-                    var uv3 = uvp.getUVOfs(new Vector3D(frx, h, fry), 0., vStart);
-                    if (_traceStreets) trace('GenerateClusterStreetsOperator(): #$nVertexRows: fl = ($flx; $fly); uv = (${uv2.x}; ${uv2.y}); fr = ($frx; $fry); uv = (${uv3.x}; ${uv3.y})');
+                    var fm = new Vector3(q.X, 0f, q.Y); fm *= nextD; fm += vam;
+                    var flx = fm.X - hsw * n.X;
+                    var fly = fm.Z - hsw * n.Y;
+                    var frx = fm.X + hsw * n.X;
+                    var fry = fm.Z + hsw * n.Y;
+                    var uv2 = uvp.getUVOfs(new Vector3(flx, h, fly), 0f, vStart);
+                    var uv3 = uvp.getUVOfs(new Vector3(frx, h, fry), 0f, vStart);
+                    if (_traceStreets) trace($"GenerateClusterStreetsOperator(): #{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
 
-                    g.p(flx, h, fly); g.uv(0.5 + uv2.x, uv2.y);
-                    g.p(frx, h, fry); g.uv(0.5 + uv3.x, uv3.y);
+                    g.p(flx, h, fly); g.UV(0.5f + uv2.X, uv2.Y);
+                    g.p(frx, h, fry); g.UV(0.5f + uv3.X, uv3.Y);
 
                     ++nVertexRows;
                     vStart += 1;
@@ -584,10 +586,10 @@ namespace engine.streets
                 /*
                  * Now emit the triangles.
                  */
-                for (row in 0...nVertexRows )
+                for (int row=0; row<nVertexRows; ++row )
                 {
-                    g.idx(i0 + row * 4 + 1, i0 + row * 4 + 0, i0 + row * 4 + 2);
-                    g.idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);
+                    g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 0, i0 + row * 4 + 2);
+                    g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);
                 }
             }
             return true;
@@ -597,15 +599,13 @@ namespace engine.streets
         /**
          * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
          */
-        public function fragmentOperatorApply(
-            allEnv: AllEnv,
-                worldFragment: WorldFragment
-            ) : Void
+        public void FragmentOperatorApply(
+            in world.Fragment worldFragment)
         {
             // Perform clipping until we have bounding boxes
 
-            var cx:Float = _clusterDesc.X - worldFragment.x;
-            var cz:Float = _clusterDesc.Z - worldFragment.z;
+            float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
+            float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
             /*
              * We don't apply the operator if the fragment completely is
@@ -613,8 +613,8 @@ namespace engine.streets
              */
             {
                 {
-                    var csh: Float = _clusterDesc.size / 2.0;
-                    var fsh: Float = WorldMetaGen.fragmentSize / 2.0;
+                    float csh = _clusterDesc.Size / 2.0f;
+                    float fsh = world.MetaGen.FragmentSize / 2.0f;
                     if (
                         (cx - csh) > (fsh)
                         || (cx + csh) < (-fsh)
@@ -622,20 +622,20 @@ namespace engine.streets
                         || (cz + csh) < (-fsh)
                     )
                     {
-                        if (_traceStreets) trace("Too far away: x=" + _clusterDesc.X + ", z=" + _clusterDesc.z);
+                        if (_traceStreets) trace("Too far away: x=" + _clusterDesc.Pos.X + ", z=" + _clusterDesc.Pos.Z);
                         return;
                     }
                 }
             }
 
-            trace('GenerateClusterStreetsOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
-            if (_traceStreets) trace('GenerateClusterStreetsOperator(): Obtaining streets.');
+            trace($"GenerateClusterStreetsOperator(): cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+            if (_traceStreets) trace("GenerateClusterStreetsOperator(): Obtaining streets.");
             var strokeStore = _clusterDesc.strokeStore();
-            if (_traceStreets) trace('GenerateClusterStreetsOperator(): Have streets.');
+            if (_traceStreets) trace("GenerateClusterStreetsOperator(): Have streets.");
 
-            if (_traceStreets) trace('GenerateClusterStreetsOperator(): In terrain "${worldFragment.getId()}" operator. '
-                + 'Fragment @${worldFragment.x}, ${worldFragment.z}. '
-                + 'Cluster "${_clusterDesc.id}" @$cx, $cz, R:${_clusterDesc.size}.');
+            if (_traceStreets) trace($"GenerateClusterStreetsOperator(): In terrain '{worldFragment.GetId()}' operator. "
+                + $"Fragment @{worldFragment.Position}. "
+                + $"Cluster '{_clusterDesc.Id}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
 
             /*
              * We need the coordinates of the cluster relative to the fragment to translate 
@@ -645,7 +645,8 @@ namespace engine.streets
             var nGeneratedStreets = 0;
             var nIgnoredStrokes = 0;
 
-            worldFragment.addMaterialFactory(
+#if false
+            worldFragment.AddMaterialFactory(
                 "GenerateClusterStreetsOperator._matStreet", function() {
                 var mat = new engine.Material("");
                 mat.diffuseTexturePath = "street/streets1to4.png";
@@ -658,16 +659,15 @@ namespace engine.streets
                 return mat;
             }
                 );
+#endif
 
-            var g = new engine.PlainGeomAtom(null, null, null,
-                "GenerateClusterStreetsOperator._matStreet");
-
+            var g = engine.joyce.Mesh.CreateListInstance();
             /*
              * Create the roads between the junctions.
              */
-            for (stroke in strokeStore.getStrokes())
+            foreach(var stroke in strokeStore.GetStrokes())
             {
-                var didCreateStreetRun = generateStreetRun(
+                var didCreateStreetRun = _generateStreetRun(
                     worldFragment, cx, cz, stroke,
                     g);
                 if (didCreateStreetRun)
@@ -685,37 +685,36 @@ namespace engine.streets
              */
             if (true)
             {
-                for (streetPoint in strokeStore.getStreetPoints() )
+                foreach(var streetPoint in strokeStore.GetStreetPoints() )
                 {
-                    generateJunction(
+                    _generateJunction(
                         worldFragment, cx, cz, streetPoint, g
                     );
                 }
             }
 
-            trace('GenerateClusterStreetsOperator(): Created $nGeneratedStreets strokes, discarded $nIgnoredStrokes.');
+            trace($"GenerateClusterStreetsOperator(): Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
 
-            if (g.isEmpty())
+            if (g.IsEmpty())
             {
-                if (_traceStreets) trace('GenerateClusterStreetsOperator(): Nothing to add at all.');
+                if (_traceStreets) trace($"GenerateClusterStreetsOperator(): Nothing to add at all.");
                 return;
             }
 
-            var mol = new engine.SimpleMolecule( [g] );
-            worldFragment.addStaticMolecule(mol);
+            // var mol = new engine.SimpleMolecule( [g] );
+            worldFragment.AddStaticMolecule(g);
 
         }
 
 
-public function new(
-    clusterDesc: ClusterDesc,
-    strKey: String
-)
-{
-    _clusterDesc = clusterDesc;
-        _myKey = strKey;
-        _rnd = new engine.RandomSource(strKey);
-    }
-}
+        public GenerateClusterStreetsOperator(
+            in ClusterDesc clusterDesc,
+            in string strKey
+        )
+        {
+            _clusterDesc = clusterDesc;
+            _myKey = strKey;
+            _rnd = new engine.RandomSource(strKey);
+        }
     }
 }

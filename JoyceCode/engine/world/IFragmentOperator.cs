@@ -29,7 +29,7 @@ namespace engine.world
          * fragment in a given state and a certain configuratino, it shall generate
          * the same output.
          */
-        public void FragmentOperatorApply(world.Fragment worldFragment);
+        public void FragmentOperatorApply(in world.Fragment worldFragment);
 
     }
 }
