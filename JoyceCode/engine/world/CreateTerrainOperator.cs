@@ -21,7 +21,7 @@ namespace engine.world
          * apply it to the world fragment.
          */
         public void FragmentOperatorApply(
-            world.Fragment worldFragment
+            in world.Fragment worldFragment
         )
         {
             /*
@@ -31,8 +31,8 @@ namespace engine.world
              */
             {
                 var elevationCache = elevation.Cache.Instance();
-                var i = worldFragment.idxFragment.I;
-                var k = worldFragment.idxFragment.K;
+                var i = worldFragment.IdxFragment.I;
+                var k = worldFragment.IdxFragment.K;
 
                 /*
                  * This would be the right way, however, it's more expensive.

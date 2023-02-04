@@ -9,11 +9,11 @@ namespace engine.world
 {
     public class Fragment
     {
-        public engine.Engine engine { get; }
+        public engine.Engine Engine { get; }
 
         private string _myKey;
 
-        public int lastIteration { get; set; }
+        public int LastIteration { get; set; }
 
         // private List<DefaultEcs.Entity> _listCharacters;
         // private _listStaticMolecules: List<engine.IMolecule>;
@@ -22,7 +22,7 @@ namespace engine.world
 
         public Vector3 Position { get; }
 
-        public Index3 idxFragment;
+        public Index3 IdxFragment;
 
         /**
          * Our array of elevations.
@@ -195,14 +195,14 @@ namespace engine.world
         }
 
 
-        private void CreateGround()
+        private void _createGround()
         {
             joyce.Mesh jMeshTerrain = 
                  world.TerrainKnitter.BuildMolecule(_elevations, 1);
-            DefaultEcs.Entity eGround = engine.CreateEntity();
+            DefaultEcs.Entity eGround = Engine.CreateEntity();
             eGround.Set<engine.joyce.components.Instance3>(
                     new engine.joyce.components.Instance3(jMeshTerrain));
-            engine.AddInstance3(
+            Engine.AddInstance3(
                 eGround, true, 0xffffffff,
                 Position,
                 new Quaternion());
@@ -250,7 +250,7 @@ namespace engine.world
 
             _platformFragment = _allEnv.pfGame.platformCreateFragment(this);
 #endif
-            CreateGround();
+            _createGround();
 
             return 0;
         }
@@ -757,12 +757,12 @@ namespace engine.world
                 * We create an entity for this particular mesh.
                 * This entity is child to our fragment's entity.
                 */
-            Entity entity = engine.CreateEntity();
+            Entity entity = Engine.CreateEntity();
             entity.Set<engine.joyce.components.Instance3>(
                 new engine.joyce.components.Instance3(jMesh));
-            engine.AddInstance3(
+            Engine.AddInstance3(
                 entity, true, 0xffffffff,
-                position,
+                Position,
                 new Quaternion());
 
             /*
@@ -782,14 +782,14 @@ namespace engine.world
             in Index3 idxFragment0,
             in Vector3 position0)
         {
-            engine = engine0;
+            Engine = engine0;
             // _listCharacters = null;
             _groundResolution = world.MetaGen.GroundResolution;
             _groundNElevations = _groundResolution + 1;
             _myKey = strKey;
             _rnd = new engine.RandomSource(_myKey);
-            position = position0;
-            idxFragment = idxFragment0;
+            Position = position0;
+            IdxFragment = idxFragment0;
 
             // Create an initial elevation array that still is zeroed.
             _createElevationArray();

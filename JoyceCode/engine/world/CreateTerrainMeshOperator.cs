@@ -24,7 +24,7 @@ namespace engine.world
          * apply it to the world fragment.
          */
         public void FragmentOperatorApply(
-           world.Fragment worldFragment )
+           in world.Fragment worldFragment )
         {
             /*
              * Create geometry from the elevations stored in the fragment.

@@ -257,7 +257,7 @@ return molArrayMap;
                     {
                         // Mark as used.
                         // trace( "Using "+strKey );
-                        fragment.lastIteration = _lastLoadedIteration;
+                        fragment.LastIteration = _lastLoadedIteration;
                     }
                     else
                     {
@@ -279,7 +279,7 @@ return molArrayMap;
                                 world.MetaGen.FragmentSize * j1,
                                 world.MetaGen.FragmentSize * k1)
                             );
-                        fragment.lastIteration = _lastLoadedIteration;
+                        fragment.LastIteration = _lastLoadedIteration;
 
 
                         /*
@@ -330,7 +330,7 @@ return molArrayMap;
             foreach (KeyValuePair<string,Fragment> kvp in _mapFrags )
             {
                 var frag = kvp.Value;
-                if (frag.lastIteration < _lastLoadedIteration)
+                if (frag.LastIteration < _lastLoadedIteration)
                 {
                     eraseList.Add(kvp.Key);
                 }

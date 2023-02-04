@@ -74,7 +74,7 @@ namespace engine.streets
              * cx/cz is the position of the cluster relative to the fragment.
              * The geometry is generated relative to the fragment.
              */
-            Vector3 c = _clusterDesc.Pos - worldFragment.position;
+            Vector3 c = _clusterDesc.Pos - worldFragment.Position;
             float cx = c.X;
             float cz = c.Z;
 
