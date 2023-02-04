@@ -197,11 +197,17 @@ namespace engine.world
 
         private void _createGround()
         {
-            joyce.Mesh jMeshTerrain = 
-                 world.TerrainKnitter.BuildMolecule(_elevations, 1);
+            joyce.Mesh jMeshTerrain = world.TerrainKnitter.BuildMolecule(_elevations, 1);
+            joyce.Texture jGroundTexture = new joyce.Texture("assets\\gridlines1.png");
+            joyce.Material jGroundMaterial = new joyce.Material(jGroundTexture);
+            engine.joyce.InstanceDesc jInstanceDesc = new();
+            jInstanceDesc.Meshes.Add(jMeshTerrain);
+            jInstanceDesc.MeshMaterials.Add(0);
+            jInstanceDesc.Materials.Add(jGroundMaterial);
+
             _eGround = Engine.CreateEntity();
             _eGround.Set<engine.joyce.components.Instance3>(
-                    new engine.joyce.components.Instance3(jMeshTerrain));
+                    new engine.joyce.components.Instance3(jInstanceDesc));
             Engine.AddInstance3(
                 _eGround, true, 0xffffffff,
                 Position,

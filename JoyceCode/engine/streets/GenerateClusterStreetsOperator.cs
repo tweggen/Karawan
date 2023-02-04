@@ -16,7 +16,7 @@ namespace engine.streets
         private ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;
-        private bool _traceStreets = true;
+        private bool _traceStreets = false;
 
 
         public string FragmentOperatorGetPath()

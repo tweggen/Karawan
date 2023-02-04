@@ -12,7 +12,7 @@ namespace engine.streets
         }
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
-        private bool _traceGenerator = true;
+        private bool _traceGenerator = false;
 
         private int _generationCounter;
         private engine.RandomSource _rnd;
