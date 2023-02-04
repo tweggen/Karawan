@@ -12,7 +12,7 @@ namespace engine.streets
         }
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
-        private bool _traceGenerator = false;
+        private bool _traceGenerator = true;
 
         private int _generationCounter;
         private engine.RandomSource _rnd;
@@ -114,7 +114,7 @@ namespace engine.streets
                     return;
                 }
 
-                if (_haveStrokesToDo())
+                if (!_haveStrokesToDo())
                 {
                     if (_traceGenerator) trace("Generator: Returning: no more streets to do.");
                     return;

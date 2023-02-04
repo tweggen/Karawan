@@ -4,13 +4,13 @@ using System.Numerics;
 
 namespace engine.streets
 {
-    public class GenerateClusterQuartersOperator
+    public class GenerateClusterQuartersOperator : world.IFragmentOperator
     {
         private static void trace(string message) { Console.WriteLine(message);  }
         private world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;
-        private bool _traceStreets = false;
+        private bool _traceStreets = true;
 
 
         public string FragmentOperatorGetPath()
@@ -64,8 +64,7 @@ namespace engine.streets
         /**
          * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
          */
-        public void fragmentOperatorApply(
-            in All all,
+        public void FragmentOperatorApply(
             in world.Fragment worldFragment)
         {
             // Perform clipping until we have bounding boxes

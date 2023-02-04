@@ -199,11 +199,11 @@ namespace engine.world
         {
             joyce.Mesh jMeshTerrain = 
                  world.TerrainKnitter.BuildMolecule(_elevations, 1);
-            DefaultEcs.Entity eGround = Engine.CreateEntity();
-            eGround.Set<engine.joyce.components.Instance3>(
+            _eGround = Engine.CreateEntity();
+            _eGround.Set<engine.joyce.components.Instance3>(
                     new engine.joyce.components.Instance3(jMeshTerrain));
             Engine.AddInstance3(
-                eGround, true, 0xffffffff,
+                _eGround, true, 0xffffffff,
                 Position,
                 new Quaternion());
         }
@@ -786,6 +786,7 @@ namespace engine.world
             // _listCharacters = null;
             _groundResolution = world.MetaGen.GroundResolution;
             _groundNElevations = _groundResolution + 1;
+            _eStaticMolecules = new();
             _myKey = strKey;
             _rnd = new engine.RandomSource(_myKey);
             Position = position0;
