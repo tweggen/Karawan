@@ -6,6 +6,7 @@
 using System;
 using Raylib_CsLo;
 using System.Numerics;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Karawan.platform.cs1.splash
@@ -14,6 +15,13 @@ namespace Karawan.platform.cs1.splash
     {
 
         private bool _haveDefaults;
+        private TextureManager _textureManager;
+
+        /**
+         * Lock object for me.
+         */
+        private object _lo = new();
+
         /**
          * The global placeholder texture.
          */
@@ -23,11 +31,11 @@ namespace Karawan.platform.cs1.splash
 
         private RLights _rlights;
 
+        private Dictionary<string, splash.RlMaterialEntry> _dictMaterials = new();
 
-        private unsafe void _createDefaultMaterial()
+
+        private unsafe void _createDefaultShader()
         {
-            var loadingMaterial = new RlMaterialEntry();
-
             _rlInstanceShaderEntry = new RlShaderEntry();
 
             {
@@ -62,7 +70,7 @@ namespace Karawan.platform.cs1.splash
 
             // Set default shader locations: uniform locations
             // _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
-                // Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
+            // Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_COLOR_DIFFUSE] =
                 Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "colDiffuse");
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_ALBEDO] =
@@ -71,14 +79,21 @@ namespace Karawan.platform.cs1.splash
             /* 
              * Test code: Set some ambient lighting:
              */
-            if ( true ) {
+            if (true)
+            {
                 int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
                 var colAmbient = new Vector4(1f, 1f, 1f, 1.0f);
                 Raylib.SetShaderValue(
                     _rlInstanceShaderEntry.RlShader,
-                    ambientLoc, colAmbient, 
+                    ambientLoc, colAmbient,
                     ShaderUniformDataType.SHADER_UNIFORM_VEC4);
             }
+        }
+
+        private unsafe void _createDefaultMaterial()
+        {
+            var loadingMaterial = new RlMaterialEntry();
+
             Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
             var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
             Raylib.UnloadImage(checkedImage);
@@ -86,12 +101,10 @@ namespace Karawan.platform.cs1.splash
             /*
              * Test code: Create one light.
              */
-            if( true ) {
-                var vecLight = new Vector3(50f, 50f, 0f);
-                var vecZero = new Vector3(0, 0, 0);
-                _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
-                    Raylib.WHITE, ref _rlInstanceShaderEntry.RlShader); 
-            }
+            var vecLight = new Vector3(50f, 50f, 0f);
+            var vecZero = new Vector3(0, 0, 0);
+            _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
+                Raylib.WHITE, ref _rlInstanceShaderEntry.RlShader); 
 
             loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
             loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
@@ -100,13 +113,76 @@ namespace Karawan.platform.cs1.splash
 
             _loadingMaterial = loadingMaterial;
 
-            //_rlShaderEntry = rlShaderEntry;
+        }
+
+        private string _materialKey(in engine.joyce.Material jMaterial)
+        {
+            string key = "mat-";
+            string texName;
+            if( jMaterial.Texture==null )
+            {
+                texName = "(null)";
+            } else
+            {
+                texName = jMaterial.Texture.Source;
+            }
+            key += texName;
+            return key;
+        }
+
+        private unsafe RlMaterialEntry _createRlMaterialEntry(in engine.joyce.Material jMaterial)
+        {
+            RlMaterialEntry rlMaterialEntry = new RlMaterialEntry();
+
+            RlTextureEntry rlTextureEntry = _textureManager.FindRlTexture(jMaterial.Texture);
+            // TXWTODO: Add reference of this texture.
+
+            /*
+             * Test code: Create one light.
+             */
+            var vecLight = new Vector3(50f, 50f, 0f);
+            var vecZero = new Vector3(0, 0, 0);
+            _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero,
+                Raylib.WHITE, ref _rlInstanceShaderEntry.RlShader);
+
+            rlMaterialEntry.RlMaterial = Raylib.LoadMaterialDefault();
+            rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
+            rlMaterialEntry.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = rlTextureEntry.RlTexture;
+            // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
+
+            return rlMaterialEntry;
         }
 
 
-        public RlMaterialEntry FindRlMaterial(engine.joyce.Material jMaterial)
+        /**
+         * Return a material entry for the given material.
+         * This references all the textures used within.
+         */
+        public RlMaterialEntry FindRlMaterial(in engine.joyce.Material jMaterial)
         {
-            return _loadingMaterial;
+            if( null==jMaterial )
+            {
+                return null;
+            }
+            RlMaterialEntry rme;
+            string matKey = _materialKey(jMaterial);
+            // TXWTODO add reference
+            lock(_lo)
+            {
+                if( !_dictMaterials.ContainsKey(matKey))
+                {
+                    /*
+                     * Create new material.
+                     */
+                    rme = _createRlMaterialEntry(jMaterial);
+                    // TXWTODO: create a "creating material" state to keep that mutex open for a while.
+                    _dictMaterials.Add(matKey, rme);
+                } else
+                {
+                    rme = _dictMaterials[matKey];
+                }
+            }
+            return rme;
         }
 
 
@@ -124,13 +200,15 @@ namespace Karawan.platform.cs1.splash
                 ShaderUniformDataType.SHADER_UNIFORM_VEC3);
         }
 
-        public MaterialManager()
+        public MaterialManager(TextureManager textureManager)
         {
             _haveDefaults = false;
+            _textureManager = textureManager;
             if (!_haveDefaults)
             {
                 _haveDefaults = true;
                 _rlights = new();
+                _createDefaultShader();
                 _createDefaultMaterial();
             }
         }

@@ -54,7 +54,8 @@ namespace Karawan.platform.cs1.splash.systems
                     var rlMeshEntry =_meshManager.FindRlMesh(jMesh);
                     var rlMaterialEntry = _materialManager.FindRlMaterial(jMaterial);
 
-                    entity.Set<splash.components.RlMesh>( new splash.components.RlMesh(rlMeshEntry, null));
+                    entity.Set<splash.components.RlMesh>(
+                        new splash.components.RlMesh(rlMeshEntry, rlMaterialEntry));
                 }
             }
         }

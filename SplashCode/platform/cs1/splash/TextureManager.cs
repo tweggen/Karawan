@@ -11,7 +11,7 @@ namespace Karawan.platform.cs1.splash
 
         private Dictionary<engine.joyce.Texture, splash.RlTextureEntry> _dictTextures;
 
-        public unsafe splash.RlTextureEntry FindRlTexture(engine.joyce.Texture jTexture)
+        public unsafe splash.RlTextureEntry FindRlTexture(in engine.joyce.Texture jTexture)        
         {
             splash.RlTextureEntry rlTextureEntry;
             if (_dictTextures.TryGetValue(jTexture, out rlTextureEntry))
@@ -25,7 +25,7 @@ namespace Karawan.platform.cs1.splash
             return rlTextureEntry;
         }
 
-        private void _purgeLoadTexture(engine.joyce.Texture jTexture, bool doDownload)
+        private void _purgeLoadTexture(in engine.joyce.Texture jTexture, bool doDownload)
         {
             splash.RlTextureEntry rlTextureEntry;
             if (_dictTextures.TryGetValue(jTexture, out rlTextureEntry))
@@ -45,13 +45,13 @@ namespace Karawan.platform.cs1.splash
         }
 
 
-        public void LoadBackTexture(engine.joyce.Texture jTexture)
+        public void LoadBackTexture(in engine.joyce.Texture jTexture)
         {
             _purgeLoadTexture(jTexture, true);
         }
 
 
-        public void PurgeTexture(engine.joyce.Texture jTexture)
+        public void PurgeTexture(in engine.joyce.Texture jTexture)
         {
             _purgeLoadTexture(jTexture, false);
         }

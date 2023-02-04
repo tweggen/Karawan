@@ -9,7 +9,6 @@ namespace engine.joyce
     public class Texture
     {
         public string Source;
-        // Factory function
 
         public Texture( string source )
         {

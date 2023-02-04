@@ -8,7 +8,7 @@ namespace Karawan.platform.cs1.splash
         private Image _img64MB;
         private Image _imgChessboard;
 
-        public void CreateRaylibTexture(engine.joyce.Texture jTexture, out RlTextureEntry rlTextureEntry)
+        public void CreateRaylibTexture(in engine.joyce.Texture jTexture, out RlTextureEntry rlTextureEntry)
         {
             bool canFreeImage = true;
             rlTextureEntry = new();

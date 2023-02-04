@@ -8,5 +8,11 @@ namespace engine.joyce
 {
     public class Material
     {
+        public Texture Texture { get; set; }
+
+        public Material(in Texture texture) 
+        { 
+            Texture = texture;
+        }
     }
 }

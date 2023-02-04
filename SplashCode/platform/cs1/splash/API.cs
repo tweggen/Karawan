@@ -14,6 +14,7 @@ namespace Karawan.platform.cs1.splash
         private systems.DrawRlMeshesSystem _drawRlMeshesSystem;
 
         private MaterialManager _materialManager;
+        private TextureManager _textureManager;
         private MeshManager _meshManager;
 
         /**
@@ -64,7 +65,8 @@ namespace Karawan.platform.cs1.splash
         public API(engine.Engine engine)
         {
             _engine = engine;
-            _materialManager = new();
+            _textureManager = new();
+            _materialManager = new(_textureManager);
             _meshManager = new();
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
             _drawRlMeshesSystem = new(_engine, _materialManager);
