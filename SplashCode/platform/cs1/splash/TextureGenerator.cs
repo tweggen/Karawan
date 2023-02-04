@@ -3,16 +3,20 @@ using Raylib_CsLo;
 
 namespace Karawan.platform.cs1.splash
 {
-    class TextureGenerator
+    public class TextureGenerator
     {
         private Image _img64MB;
         private Image _imgChessboard;
+        private engine.Engine _engine;
 
         public void CreateRaylibTexture(in engine.joyce.Texture jTexture, out RlTextureEntry rlTextureEntry)
         {
+            string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
+
             bool canFreeImage = true;
             rlTextureEntry = new();
-            Image imgNew;
+            Image imgNew = new Image();
+            imgNew.width = 0;
             if (jTexture.Source.Length==0 || jTexture.Source == "joyce://chessboard")
             {
                 if( _imgChessboard.width == 0 )
@@ -32,15 +36,24 @@ namespace Karawan.platform.cs1.splash
 
             } else
             {
-                Console.WriteLine("Problem.");
-                return;
+                string path = resourcePath + jTexture.Source;
+                rlTextureEntry.RlTexture = Raylib.LoadTexture(path);
+                canFreeImage = false;
             }
 
-            rlTextureEntry.RlTexture = Raylib.LoadTextureFromImage(imgNew);
+            if (imgNew.width > 0)
+            {
+                rlTextureEntry.RlTexture = Raylib.LoadTextureFromImage(imgNew);
+            }
             if (canFreeImage)
             {
                 Raylib.UnloadImage(imgNew);
             }
+        }
+
+        public TextureGenerator(engine.Engine engine)
+        {
+            _engine = engine;
         }
     }
 }

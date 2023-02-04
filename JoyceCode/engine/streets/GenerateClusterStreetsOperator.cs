@@ -702,7 +702,12 @@ namespace engine.streets
             }
 
             // var mol = new engine.SimpleMolecule( [g] );
-            worldFragment.AddStaticMolecule(g);
+            // TXWTODO: This is too inefficient. We should also use a factory here.
+            engine.joyce.InstanceDesc instanceDesc = new();
+            instanceDesc.Meshes.Add(g);
+            instanceDesc.MeshMaterials.Add(0);
+            instanceDesc.Materials.Add(null);
+            worldFragment.AddStaticMolecule(instanceDesc);
 
         }
 

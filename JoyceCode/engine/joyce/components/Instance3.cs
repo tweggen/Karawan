@@ -22,5 +22,16 @@ namespace engine.joyce.components
             MeshMaterials[0] = 0;
             Materials[0] = null;
         }
+
+        /**
+         * Construct a new instance3.
+         * Caution: This uses the lists from the description.
+         */
+        public Instance3(in engine.joyce.InstanceDesc instanceDesc)
+        {
+            Meshes = instanceDesc.Meshes;
+            MeshMaterials = instanceDesc.MeshMaterials;
+            Materials = instanceDesc.Materials;
+        }
     }
 }

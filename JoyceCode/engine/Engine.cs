@@ -6,6 +6,8 @@ namespace engine
 {
     public class Engine
     {
+        private object _lo = new();
+
         private DefaultEcs.World _ecsWorld;
         private engine.IPlatform _platform;
 
@@ -14,10 +16,11 @@ namespace engine
 
         private SortedDictionary<float, IScene> _dictScenes;
 
+        private Dictionary<string, string> _dictConfigParams = new();
+
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
-
 
         private void _selfTest()
         {
@@ -183,6 +186,29 @@ namespace engine
             _selfTest();
         }
 
+
+        public void SetConfigParam(in string key, in string value)
+        {
+            lock(_lo)
+            {
+                _dictConfigParams[key] = value;
+            }
+        }
+
+
+        public string GetConfigParam(in string key)
+        {
+            lock(_lo)
+            {
+                if( _dictConfigParams.ContainsKey(key))
+                {
+                    return _dictConfigParams[key];
+                } else
+                {
+                    return "";
+                }
+            }
+        }
 
         public Engine( engine.IPlatform platform )
         {

@@ -6,9 +6,7 @@ namespace Karawan.platform.cs1.splash
 {
     public class TextureManager
     {
-        TextureGenerator _textureGenerator;
-
-
+        private TextureGenerator _textureGenerator;
         private Dictionary<engine.joyce.Texture, splash.RlTextureEntry> _dictTextures;
 
         public unsafe splash.RlTextureEntry FindRlTexture(in engine.joyce.Texture jTexture)        
@@ -56,10 +54,10 @@ namespace Karawan.platform.cs1.splash
             _purgeLoadTexture(jTexture, false);
         }
 
-        public TextureManager()
+        public TextureManager(in TextureGenerator textureGenerator)
         {
             _dictTextures = new();
-            _textureGenerator = new();
+            _textureGenerator = textureGenerator;
         }
     }
 }

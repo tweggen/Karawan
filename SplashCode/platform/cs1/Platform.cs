@@ -112,6 +112,9 @@ namespace Karawan.platform.cs1
 
         public void SetupDone()
         {
+            string baseDirectory = System.AppContext.BaseDirectory;
+            System.Console.WriteLine($"Running in directory {baseDirectory}" );
+
             var display = Raylib.GetCurrentMonitor();
 #if DEBUG
             var width = 1280;

@@ -751,7 +751,7 @@ namespace engine.world
         /**
          * Add a geometry atom to this fragment.
          */
-        public void AddStaticMolecule( in engine.joyce.Mesh jMesh )
+        public void AddStaticMolecule( in engine.joyce.InstanceDesc jInstanceDesc)
         {
             /**
                 * We create an entity for this particular mesh.
@@ -759,7 +759,7 @@ namespace engine.world
                 */
             Entity entity = Engine.CreateEntity();
             entity.Set<engine.joyce.components.Instance3>(
-                new engine.joyce.components.Instance3(jMesh));
+                new engine.joyce.components.Instance3(jInstanceDesc));
             Engine.AddInstance3(
                 entity, true, 0xffffffff,
                 Position,
