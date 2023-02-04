@@ -62,8 +62,8 @@ namespace engine.streets
             float ay = 0f;
             foreach(var p in secArray)
             {
-                ax += p.x;
-                ay += p.y;
+                ax += p.X;
+                ay += p.Y;
             }
             ax /= l;
             ay /= l;
@@ -77,27 +77,29 @@ namespace engine.streets
             float facv = (1f/ 200f);
             float ofsv = (0.5f);
 
-            int i0 = g.GetNextVertexIndex();
-            g.p(ax + cx, h, ay + cy);
-            g.UV(ax * facu + ofsu, ay * facv + ofsv);
-            foreach(var b in secArray)
             {
-                g.p(b.x + cx, h, b.y + cy);
-                g.UV(b.x * facu + ofsu, b.y * facv + ofsv);
+                int i0 = g.GetNextVertexIndex();
+                g.p(ax + cx, h, ay + cy);
+                g.UV(ax * facu + ofsu, ay * facv + ofsv);
+                foreach (var b in secArray)
+                {
+                    g.p(b.X + cx, h, b.Y + cy);
+                    g.UV(b.X * facu + ofsu, b.Y * facv + ofsv);
+                }
+
+                /*
+                 * Now create the vertex indices for the triangles.
+                 */
+                for (int k = 0; k < l; ++k)
+                {
+                    var knext = (k + 1) % l;
+                    g.Idx(i0 + 0, i0 + 1 + knext, i0 + 1 + k);
+                }
             }
 
             /*
-             * Now create the vertex indices for the triangles.
-             */
-            for(int k=0; k<l; ++k )
-            {
-                var knext = (k + 1) % l;
-                g.Idx(i0 + 0, i0 + 1 + knext, i0 + 1 + k);
-            }
-
-            /*
-             * That's it!
-             */
+                * That's it!
+                */
             return true;
         }
 
@@ -212,9 +214,9 @@ namespace engine.streets
             bmx = cx + spB.Pos.X;
             bmy = cy + spB.Pos.Y;
             if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): bm = ({bmx}; {bmy});");
-            if (angArrB.length > 1)
+            if (angArrB.Count> 1)
             {
-                var idxB = angArrB.indexOf(stroke);
+                var idxB = angArrB.IndexOf(stroke);
                 if (idxB < 0)
                 {
                     throw new InvalidOperationException($"GenerateClusterStreetsOperator.generateStreetRun(): stroke is not in street point B.");
@@ -233,10 +235,10 @@ namespace engine.streets
                  * So this is the end on the street on the "other" side, left and right are
                  * from a's point of view. So we have:
                  */
-                blx = cx + secArrB[idxB].x;
-                bly = cy + secArrB[idxB].y;
-                brx = cx + secArrB[idxNextB].x;
-                bry = cy + secArrB[idxNextB].y;
+                blx = cx + secArrB[idxB].X;
+                bly = cy + secArrB[idxB].Y;
+                brx = cx + secArrB[idxNextB].X;
+                bry = cy + secArrB[idxNextB].Y;
 
             }
             else
@@ -244,13 +246,13 @@ namespace engine.streets
                 /*
                  * Create a street end from the normals.
                  */
-                blx = cx + spB.pos.x - n.x * hsw;
-                bly = cy + spB.pos.y - n.y * hsw;
-                brx = cx + spB.pos.x + n.x * hsw;
-                bry = cy + spB.pos.y + n.y * hsw;
+                blx = cx + spB.Pos.X - n.X * hsw;
+                bly = cy + spB.Pos.Y - n.Y * hsw;
+                brx = cx + spB.Pos.X + n.X * hsw;
+                bry = cy + spB.Pos.Y + n.Y * hsw;
             }
 
-            var h = _clusterDesc.averageHeight + WorldMetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+            var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
 
             // TXWTODO: Factor out the code to triangulate and texture the street part.
 
@@ -263,8 +265,8 @@ namespace engine.streets
              * - the outer parts can be built of two triangles.
              *      which (TXWTODO) we force to fit into one texture.
              */
-            var vam = new Vector3D(amx, h, amy);
-            var vambm = new Vector3D(bmx - amx, 0., bmy - amy);
+            var vam = new Vector3(amx, h, amy);
+            var vambm = new Vector3(bmx - amx, 0f, bmy - amy);
 
             /*
              * Emit tris for am-bm.
@@ -273,68 +275,69 @@ namespace engine.streets
              * The texture width is applied to the whole street width.
              * Therefore, the street texture lasts 4 times its width.
              */
-            var texlen = stroke.streetWidth() * 4.;
+            var texlen = stroke.StreetWidth() * 4f;
 
             /*
              * So we initialize our uv projector with uv origin at am - half street width.
              * (left side of street at am).
              */
-            var uvp = new geom.UVProjector(
-                new Vector3D(vam.x - n.x * hsw, h, vam.z - n.y * hsw),
-                new Vector3D(n.x * sw * 4., 0., n.y * sw * 4. ), // That is the logical size of the u [0..1[ interval.
-                new Vector3D(q.x * texlen, 0., q.y * texlen));
+            var uvp = new builtin.tools.UVProjector(
+                new Vector3(vam.X - n.X * hsw, h, vam.Z - n.Y * hsw),
+                new Vector3(n.X * sw * 4f, 0f, n.Y * sw * 4f), // That is the logical size of the u [0..1[ interval.
+                new Vector3(q.X * texlen, 0f, q.Y * texlen));
 
 
             /*
              * These are the 4 edge points of the street, projected to street,
              * unit is meters.
              */
-            var dal = new Vector3D(alx - amx, 0, aly - amy).project(vambm);
-            var dar = new Vector3D(arx - amx, 0, ary - amy).project(vambm);
-            var dbl = new Vector3D(blx - amx, 0, bly - amy).project(vambm);
-            var dbr = new Vector3D(brx - amx, 0, bry - amy).project(vambm);
+            float dal = Vector3.Dot(new Vector3(alx - amx, 0f, aly - amy), vambm) / vambm.Length();
+            float dar = Vector3.Dot(new Vector3(arx - amx, 0f, ary - amy), vambm) / vambm.Length();
+            float dbl = Vector3.Dot(new Vector3(blx - amx, 0f, bly - amy), vambm) / vambm.Length();
+            float dbr = Vector3.Dot(new Vector3(brx - amx, 0f, bry - amy), vambm) / vambm.Length();
 
-            var damax, damin: Float;
-            var dStart = 0.;
-            var vStart = 0.;
+            float damax, damin;
+            float dStart = 0f;
+            float vStart = 0f;
             if (dal < dar)
             {
                 damax = dar;
                 damin = dal;
 
-
                 /*
                  * Look, what iteration of texture we start with to offset the v values.
                  */
-                while ((damin - dStart) < 0. )
+                while ((damin - dStart) < 0f)
                 {
                     dStart -= texlen;
-                    vStart -= 1.;
+                    vStart -= 1f;
                 }
                 while ((damin - dStart) > texlen)
                 {
                     dStart += texlen;
-                    vStart += 1.;
+                    vStart += 1f;
                 }
 
-                /*
-                 * Emit triangle at a, run will start at height of dar.
-                 * Tri: al, al @ height of dar (cl), ar
-                 * 
-                 * Note that we start from the beginning in the texture.
-                 */
-                var i0: Int = g.getNextVertexIndex();
-                var cm = new Vector3D(q.x, 0., q.y); cm.scale(dar); cm.add(vam);
-                var clx = cm.x - hsw * n.x;
-                var cly = cm.z - hsw * n.y;
-                var uval = uvp.getUVOfs(new Vector3D(alx, h, aly), 0., vStart);
-                var uvcl = uvp.getUVOfs(new Vector3D(clx, h, cly), 0., vStart);
-                var uvar = uvp.getUVOfs(new Vector3D(arx, h, ary), 0., vStart);
-                var vofs = 1.0 - uvar.y;
-                g.p(alx, h, aly); g.uv(0.5 + uval.x, uval.y + vofs);
-                g.p(clx, h, cly); g.uv(0.5 + uvcl.x, uvcl.y + vofs);
-                g.p(arx, h, ary); g.uv(0.5 + uvar.x, uvar.y + vofs);
-                g.idx(i0 + 0, i0 + 1, i0 + 2);
+                {
+                    /*
+                     * Emit triangle at a, run will start at height of dar.
+                     * Tri: al, al @ height of dar (cl), ar
+                     * 
+                     * Note that we start from the beginning in the texture.
+                     */
+                    int i0 = g.GetNextVertexIndex();
+                    var cm = new Vector3(q.x, 0., q.y); cm.scale(dar); cm.add(vam);
+                    var clx = cm.X - hsw * n.x;
+                    var cly = cm.Z - hsw * n.y;
+                    var uval = uvp.getUVOfs(new Vector3D(alx, h, aly), 0., vStart);
+                    var uvcl = uvp.getUVOfs(new Vector3D(clx, h, cly), 0., vStart);
+                    var uvar = uvp.getUVOfs(new Vector3D(arx, h, ary), 0., vStart);
+                    var vofs = 1.0 - uvar.y;
+                    g.p(alx, h, aly); g.uv(0.5 + uval.x, uval.Y + vofs);
+                    g.p(clx, h, cly); g.uv(0.5 + uvcl.x, uvcl.Y + vofs);
+                    g.p(arx, h, ary); g.uv(0.5 + uvar.x, uvar.Y + vofs);
+                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                }
 
             }
             else
@@ -356,24 +359,26 @@ namespace engine.streets
                     vStart += 1.;
                 }
 
-                /*
-                 * Emit triangle at a, run wil start at height dal
-                 * Tri: ar, al, ar @ height of dal (cr) .
-                 * 
-                 * Note, that we start from the beginning in the texture
-                 */
-                var i0: Int = g.getNextVertexIndex();
-                var cm = new Vector3D(q.x, 0., q.y); cm.scale(dal); cm.add(vam);
-                var crx = cm.x + hsw * n.x;
-                var cry = cm.z + hsw * n.y;
-                var uvar = uvp.getUVOfs(new Vector3D(arx, h, ary), 0., vStart);
-                var uval = uvp.getUVOfs(new Vector3D(alx, h, aly), 0., vStart);
-                var uvcr = uvp.getUVOfs(new Vector3D(crx, h, cry), 0., vStart);
-                var vofs = 1.0 - uval.y;
-                g.p(arx, h, ary); g.uv(0.5 + uvar.x, uvar.y + vofs);
-                g.p(alx, h, aly); g.uv(0.5 + uval.x, uval.y + vofs);
-                g.p(crx, h, cry); g.uv(0.5 + uvcr.x, uvcr.y + vofs);
-                g.idx(i0 + 0, i0 + 1, i0 + 2);
+                {
+                    /*
+                     * Emit triangle at a, run wil start at height dal
+                     * Tri: ar, al, ar @ height of dal (cr) .
+                     * 
+                     * Note, that we start from the beginning in the texture
+                     */
+                    var i0: Int = g.getNextVertexIndex();
+                    var cm = new Vector3D(q.x, 0., q.y); cm.scale(dal); cm.add(vam);
+                    var crx = cm.X + hsw * n.x;
+                    var cry = cm.Z + hsw * n.y;
+                    var uvar = uvp.getUVOfs(new Vector3D(arx, h, ary), 0., vStart);
+                    var uval = uvp.getUVOfs(new Vector3D(alx, h, aly), 0., vStart);
+                    var uvcr = uvp.getUVOfs(new Vector3D(crx, h, cry), 0., vStart);
+                    var vofs = 1.0 - uval.y;
+                    g.p(arx, h, ary); g.uv(0.5 + uvar.x, uvar.Y + vofs);
+                    g.p(alx, h, aly); g.uv(0.5 + uval.x, uval.Y + vofs);
+                    g.p(crx, h, cry); g.uv(0.5 + uvcr.x, uvcr.Y + vofs);
+                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                }
             }
 
             var dbmin, dbmax: Float;
@@ -396,24 +401,26 @@ namespace engine.streets
                     vStart += 1.;
                 }
 
-                /*
-                 * Emit tri at b. It will be on line of dbmin, reaching out to br.
-                 * bl, br, br@dbl
-                 * 
-                 * Note, that we start from the beginning in the texture
-                 */
-                var i0: Int = g.getNextVertexIndex();
-                var cm = new Vector3D(q.x, 0., q.y); cm.scale(dbl); cm.add(vam);
-                var crx = cm.x + hsw * n.x;
-                var cry = cm.z + hsw * n.y;
-                var uvbl = uvp.getUVOfs(new Vector3D(blx, h, bly), 0., vStart);
-                var uvbr = uvp.getUVOfs(new Vector3D(brx, h, bry), 0., vStart);
-                var uvcr = uvp.getUVOfs(new Vector3D(crx, h, cry), 0., vStart);
-                var vofs = -uvbl.y;
-                g.p(blx, h, bly); g.uv(0.5 + uvbl.x, uvbl.y + vofs);
-                g.p(brx, h, bry); g.uv(0.5 + uvbr.x, uvbr.y + vofs);
-                g.p(crx, h, cry); g.uv(0.5 + uvcr.x, uvcr.y + vofs);
-                g.idx(i0 + 0, i0 + 1, i0 + 2);
+                {
+                    /*
+                     * Emit tri at b. It will be on line of dbmin, reaching out to br.
+                     * bl, br, br@dbl
+                     * 
+                     * Note, that we start from the beginning in the texture
+                     */
+                    var i0: Int = g.getNextVertexIndex();
+                    var cm = new Vector3D(q.x, 0., q.y); cm.scale(dbl); cm.add(vam);
+                    var crx = cm.X + hsw * n.x;
+                    var cry = cm.Z + hsw * n.y;
+                    var uvbl = uvp.getUVOfs(new Vector3D(blx, h, bly), 0., vStart);
+                    var uvbr = uvp.getUVOfs(new Vector3D(brx, h, bry), 0., vStart);
+                    var uvcr = uvp.getUVOfs(new Vector3D(crx, h, cry), 0., vStart);
+                    var vofs = -uvbl.y;
+                    g.p(blx, h, bly); g.uv(0.5 + uvbl.x, uvbl.Y + vofs);
+                    g.p(brx, h, bry); g.uv(0.5 + uvbr.x, uvbr.Y + vofs);
+                    g.p(crx, h, cry); g.uv(0.5 + uvcr.x, uvcr.Y + vofs);
+                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                }
             }
             else
             {
@@ -434,24 +441,26 @@ namespace engine.streets
                     vStart += 1.;
                 }
 
-                /*
-                 * Emit tri at b. It will be on line of dbmin, reaching out to bl.
-                 * bl@dbr, bl,br
-                 * 
-                 * Note, that we start from the beginning in the texture
-                 */
-                var i0: Int = g.getNextVertexIndex();
-                var cm = new Vector3D(q.x, 0., q.y); cm.scale(dbr); cm.add(vam);
-                var clx = cm.x - hsw * n.x;
-                var cly = cm.z - hsw * n.y;
-                var uvcl = uvp.getUVOfs(new Vector3D(clx, h, cly), 0., vStart);
-                var uvbl = uvp.getUVOfs(new Vector3D(blx, h, bly), 0., vStart);
-                var uvbr = uvp.getUVOfs(new Vector3D(brx, h, bry), 0., vStart);
-                var vofs = -uvbr.y;
-                g.p(clx, h, cly); g.uv(0.5 + uvcl.x, uvcl.y + vofs);
-                g.p(blx, h, bly); g.uv(0.5 + uvbl.x, uvbl.y + vofs);
-                g.p(brx, h, bry); g.uv(0.5 + uvbr.x, uvbr.y + vofs);
-                g.idx(i0 + 0, i0 + 1, i0 + 2);
+                {
+                    /*
+                     * Emit tri at b. It will be on line of dbmin, reaching out to bl.
+                     * bl@dbr, bl,br
+                     * 
+                     * Note, that we start from the beginning in the texture
+                     */
+                    var i0: Int = g.getNextVertexIndex();
+                    var cm = new Vector3D(q.x, 0., q.y); cm.scale(dbr); cm.add(vam);
+                    var clx = cm.X - hsw * n.x;
+                    var cly = cm.Z - hsw * n.y;
+                    var uvcl = uvp.getUVOfs(new Vector3D(clx, h, cly), 0., vStart);
+                    var uvbl = uvp.getUVOfs(new Vector3D(blx, h, bly), 0., vStart);
+                    var uvbr = uvp.getUVOfs(new Vector3D(brx, h, bry), 0., vStart);
+                    var vofs = -uvbr.y;
+                    g.p(clx, h, cly); g.uv(0.5 + uvcl.x, uvcl.Y + vofs);
+                    g.p(blx, h, bly); g.uv(0.5 + uvbl.x, uvbl.Y + vofs);
+                    g.p(brx, h, bry); g.uv(0.5 + uvbr.x, uvbr.Y + vofs);
+                    g.idx(i0 + 0, i0 + 1, i0 + 2);
+                }
             }
 
             if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): d[ab][min/max]: $damin; $damax; $dbmin; $dbmax;');
@@ -470,117 +479,117 @@ namespace engine.streets
              * Starting from am, we layout the street in rows.
              * Emit vertex rows until we are at dbmin.
              */
-
-            var i0: Int = g.getNextVertexIndex();
-
-            /*
-             * Count the number of rows to add tris.
-             */
-            var nVertexRows: Int = 0;
-
-            if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): New rect list.');
-
-            /*
-             * We start at damax.
-             */
-            var currD = damax;
-            var finalD = dbmin;
-
-            dStart = 0.;
-            vStart = 0.;
-            /*
-             * Or the other way round?
-             */
-            while ((currD - dStart) < 0. )
             {
-                dStart -= texlen;
-                vStart -= 1.;
-            }
-            while ((currD - vStart) > texlen)
-            {
-                dStart += texlen;
-                vStart += 1.;
-            }
-            while (true)
-            {
+                var i0: Int = g.getNextVertexIndex();
 
                 /*
-                 * Emit current row.
+                 * Count the number of rows to add tris.
                  */
-                var em = new Vector3D(q.x, 0., q.y); em.scale(currD); em.add(vam);
-                var elx = em.x - hsw * n.x;
-                var ely = em.z - hsw * n.y;
-                var erx = em.x + hsw * n.x;
-                var ery = em.z + hsw * n.y;
-                var uv0 = uvp.getUVOfs(new Vector3D(elx, h, ely), 0., vStart);
-                var uv1 = uvp.getUVOfs(new Vector3D(erx, h, ery), 0., vStart);
-                if (_traceStreets) trace('GenerateClusterStreetsOperator(): #$nVertexRows: el = ($elx; $ely); uv = (${uv0.x}; ${uv0.y}); er = ($erx; $ery); uv = (${uv1.x}; ${uv1.y})');
+                var nVertexRows: Int = 0;
 
-                if (Math.abs(uv0.y - 1.0) < 0.00000001)
+                if (_traceStreets) trace('GenerateClusterStreetsOperator.generateStreetRun(): New rect list.');
+
+                /*
+                 * We start at damax.
+                 */
+                var currD = damax;
+                var finalD = dbmin;
+
+                dStart = 0.;
+                vStart = 0.;
+                /*
+                 * Or the other way round?
+                 */
+                while ((currD - dStart) < 0. )
                 {
-                    if (_traceStreets) trace('Too close');
+                    dStart -= texlen;
+                    vStart -= 1.;
                 }
-                g.p(elx, h, ely); g.uv(0.5 + uv0.x, uv0.y);
-                g.p(erx, h, ery); g.uv(0.5 + uv1.x, uv1.y);
-
-                /* 
-                 * Emit next row (we need it twice in the end)
-                 */
-                /*
-                 * Compute nextD.
-                 * 
-                 * nextD is the minimum of
-                 *  - the next multiple of texlen
-                 *  - finalD
-                 */
-                var nextD: Float;
+                while ((currD - vStart) > texlen)
                 {
-                    var nextWholeD = Math.fceil(currD / texlen) * texlen;
-                    if ((nextWholeD - currD) < 0.001)
+                    dStart += texlen;
+                    vStart += 1.;
+                }
+                while (true)
+                {
+
+                    /*
+                     * Emit current row.
+                     */
+                    var em = new Vector3D(q.x, 0., q.y); em.scale(currD); em.add(vam);
+                    var elx = em.X - hsw * n.x;
+                    var ely = em.Z - hsw * n.y;
+                    var erx = em.X + hsw * n.x;
+                    var ery = em.Z + hsw * n.y;
+                    var uv0 = uvp.getUVOfs(new Vector3D(elx, h, ely), 0., vStart);
+                    var uv1 = uvp.getUVOfs(new Vector3D(erx, h, ery), 0., vStart);
+                    if (_traceStreets) trace('GenerateClusterStreetsOperator(): #$nVertexRows: el = ($elx; $ely); uv = (${uv0.x}; ${uv0.y}); er = ($erx; $ery); uv = (${uv1.x}; ${uv1.y})');
+
+                    if (Math.abs(uv0.Y - 1.0) < 0.00000001)
                     {
-                        nextWholeD = nextWholeD + texlen;
+                        if (_traceStreets) trace('Too close');
                     }
-                    nextD = Math.min(nextWholeD, finalD);
+                    g.p(elx, h, ely); g.uv(0.5 + uv0.x, uv0.y);
+                    g.p(erx, h, ery); g.uv(0.5 + uv1.x, uv1.y);
+
+                    /* 
+                     * Emit next row (we need it twice in the end)
+                     */
+                    /*
+                     * Compute nextD.
+                     * 
+                     * nextD is the minimum of
+                     *  - the next multiple of texlen
+                     *  - finalD
+                     */
+                    var nextD: Float;
+                    {
+                        var nextWholeD = Math.fceil(currD / texlen) * texlen;
+                        if ((nextWholeD - currD) < 0.001)
+                        {
+                            nextWholeD = nextWholeD + texlen;
+                        }
+                        nextD = Math.min(nextWholeD, finalD);
+                    }
+
+                    var fm = new Vector3D(q.x, 0., q.y); fm.scale(nextD); fm.add(vam);
+                    var flx = fm.X - hsw * n.x;
+                    var fly = fm.Z - hsw * n.y;
+                    var frx = fm.X + hsw * n.x;
+                    var fry = fm.Z + hsw * n.y;
+                    var uv2 = uvp.getUVOfs(new Vector3D(flx, h, fly), 0., vStart);
+                    var uv3 = uvp.getUVOfs(new Vector3D(frx, h, fry), 0., vStart);
+                    if (_traceStreets) trace('GenerateClusterStreetsOperator(): #$nVertexRows: fl = ($flx; $fly); uv = (${uv2.x}; ${uv2.y}); fr = ($frx; $fry); uv = (${uv3.x}; ${uv3.y})');
+
+                    g.p(flx, h, fly); g.uv(0.5 + uv2.x, uv2.y);
+                    g.p(frx, h, fry); g.uv(0.5 + uv3.x, uv3.y);
+
+                    ++nVertexRows;
+                    vStart += 1;
+
+                    /*
+                     * Finish, if we already reached finalD.
+                     */
+                    if (nextD == finalD)
+                    {
+                        break;
+                    }
+
+
+                    // TODO: Small adjustment: If nextD is too close to finalD but not equal, set it to finalD.
+
+                    currD = nextD;
                 }
-
-                var fm = new Vector3D(q.x, 0., q.y); fm.scale(nextD); fm.add(vam);
-                var flx = fm.x - hsw * n.x;
-                var fly = fm.z - hsw * n.y;
-                var frx = fm.x + hsw * n.x;
-                var fry = fm.z + hsw * n.y;
-                var uv2 = uvp.getUVOfs(new Vector3D(flx, h, fly), 0., vStart);
-                var uv3 = uvp.getUVOfs(new Vector3D(frx, h, fry), 0., vStart);
-                if (_traceStreets) trace('GenerateClusterStreetsOperator(): #$nVertexRows: fl = ($flx; $fly); uv = (${uv2.x}; ${uv2.y}); fr = ($frx; $fry); uv = (${uv3.x}; ${uv3.y})');
-
-                g.p(flx, h, fly); g.uv(0.5 + uv2.x, uv2.y);
-                g.p(frx, h, fry); g.uv(0.5 + uv3.x, uv3.y);
-
-                ++nVertexRows;
-                vStart += 1;
 
                 /*
-                 * Finish, if we already reached finalD.
+                 * Now emit the triangles.
                  */
-                if (nextD == finalD)
+                for (row in 0...nVertexRows )
                 {
-                    break;
+                    g.idx(i0 + row * 4 + 1, i0 + row * 4 + 0, i0 + row * 4 + 2);
+                    g.idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);
                 }
-
-
-                // TODO: Small adjustment: If nextD is too close to finalD but not equal, set it to finalD.
-
-                currD = nextD;
             }
-
-            /*
-             * Now emit the triangles.
-             */
-            for (row in 0...nVertexRows )
-            {
-                g.idx(i0 + row * 4 + 1, i0 + row * 4 + 0, i0 + row * 4 + 2);
-                g.idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);
-            }
-
             return true;
         }
 
@@ -595,8 +604,8 @@ namespace engine.streets
         {
             // Perform clipping until we have bounding boxes
 
-            var cx:Float = _clusterDesc.x - worldFragment.x;
-            var cz:Float = _clusterDesc.z - worldFragment.z;
+            var cx:Float = _clusterDesc.X - worldFragment.x;
+            var cz:Float = _clusterDesc.Z - worldFragment.z;
 
             /*
              * We don't apply the operator if the fragment completely is
@@ -613,7 +622,7 @@ namespace engine.streets
                         || (cz + csh) < (-fsh)
                     )
                     {
-                        if (_traceStreets) trace("Too far away: x=" + _clusterDesc.x + ", z=" + _clusterDesc.z);
+                        if (_traceStreets) trace("Too far away: x=" + _clusterDesc.X + ", z=" + _clusterDesc.z);
                         return;
                     }
                 }
