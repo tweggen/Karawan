@@ -69,7 +69,9 @@ namespace Karawan.platform.cs1.splash
             _textureGenerator = new TextureGenerator(engine);
             _textureManager = new(_textureGenerator);
             _materialManager = new(_textureManager);
+            _materialManager.Manage(engine.GetEcsWorld());
             _meshManager = new();
+            _meshManager.Manage(engine.GetEcsWorld());
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
             _drawRlMeshesSystem = new(_engine, _materialManager);
         }

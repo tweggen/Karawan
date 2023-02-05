@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Numerics;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -31,6 +30,7 @@ namespace Karawan.platform.cs1.splash.systems
 
     [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
     [DefaultEcs.System.With(typeof(splash.components.RlMesh))]
+    [DefaultEcs.System.With(typeof(splash.components.RlMaterial))]
     /**
      * Render the raylib meshes.
      * 
@@ -88,19 +88,16 @@ namespace Karawan.platform.cs1.splash.systems
                 var transform3ToWorld = entity.Get<engine.transform.components.Transform3ToWorld>();
                 if (0 != (transform3ToWorld.CameraMask & cameraMask))
                 {
-                    var cMesh = entity.Get<splash.components.RlMesh>();
-                    RlMaterialEntry materialEntry;
+                    var rlMeshEntry = entity.Get<splash.components.RlMesh>().MeshEntry;
+                    var rlMaterialEntry = entity.Get<splash.components.RlMaterial>().MaterialEntry;
 
                     // Skip things that incompletely are loaded.
-                    if( null==cMesh.MeshEntry ) {
+                    if( null==rlMeshEntry) {
                         continue;
                     }
-                    if( null==cMesh.MaterialEntry )
+                    if( null==rlMaterialEntry )
                     {
-                        materialEntry = _materialManager.GetUnloadedMaterial();
-                    } else
-                    {
-                        materialEntry = cMesh.MaterialEntry;
+                        rlMaterialEntry = _materialManager.GetUnloadedMaterial();
                     }
 
                     var rMatrix = Matrix4x4.Transpose(transform3ToWorld.Matrix);
@@ -109,22 +106,22 @@ namespace Karawan.platform.cs1.splash.systems
                      * Do we have an entry for the material?
                      */
                     MaterialBatch materialBatch;
-                    _materialBatches.TryGetValue( materialEntry, out materialBatch );
+                    _materialBatches.TryGetValue( rlMaterialEntry, out materialBatch );
                     if (null == materialBatch)
                     {
                         materialBatch = new MaterialBatch();
-                        _materialBatches[materialEntry] = materialBatch;
+                        _materialBatches[rlMaterialEntry] = materialBatch;
                     }
 
                     /*
                      * And do we have an entry for the mesh in the material?
                      */
                     MeshBatch meshBatch;
-                    materialBatch.MeshBatches.TryGetValue( cMesh.MeshEntry, out meshBatch );
+                    materialBatch.MeshBatches.TryGetValue( rlMeshEntry, out meshBatch );
                     if (null == meshBatch)
                     {
                         meshBatch = new MeshBatch();
-                        materialBatch.MeshBatches[cMesh.MeshEntry] = meshBatch;
+                        materialBatch.MeshBatches[rlMeshEntry] = meshBatch;
                     }
 
                     /*
@@ -138,13 +135,15 @@ namespace Karawan.platform.cs1.splash.systems
 
         protected override void PreUpdate(uint cameraMask)
         {
-            // TXWTODO: Totally inefficient to compute this every time. Or is it?
-            _materialBatches = new();
         }
 
         protected override void PostUpdate(uint cameraMask)
         {
             _renderBatches();
+            /*
+             * Null out the references after rendering.
+             */
+            _materialBatches = new();
         }
 
         protected override void Update(uint cameraMask, ReadOnlySpan<DefaultEcs.Entity> entities)
@@ -160,6 +159,7 @@ namespace Karawan.platform.cs1.splash.systems
         {
             _engine = engine;
             _materialManager = materialManager;
+            _materialBatches = new();
         }
     }
 }

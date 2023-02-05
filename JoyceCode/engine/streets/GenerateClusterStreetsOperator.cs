@@ -706,7 +706,7 @@ namespace engine.streets
             engine.joyce.InstanceDesc instanceDesc = new();
             instanceDesc.Meshes.Add(g);
             instanceDesc.MeshMaterials.Add(0);
-            instanceDesc.Materials.Add(null);
+            instanceDesc.Materials.Add(new engine.joyce.Material());
             worldFragment.AddStaticMolecule(instanceDesc);
 
         }

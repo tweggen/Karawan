@@ -7,6 +7,7 @@ namespace Benchmark
     public class Benchmark : engine.IScene
     {
         private List<String> _listSummary;
+        engine.Engine _engine;
 
         private double _getTime()
         {
@@ -22,7 +23,8 @@ namespace Benchmark
             _listSummary.Add(String.Format("#1 Performing {0} repititions of uploading {1} times an RGBA32 4k * 4k texture.",
                 nRepeats, nIterations));
 
-            Karawan.platform.cs1.splash.TextureManager textureManager = new();
+            Karawan.platform.cs1.splash.TextureGenerator textureGenerator = new(_engine);
+            Karawan.platform.cs1.splash.TextureManager textureManager = new(textureGenerator);
 
             double minTime = 100000000;
             double maxTime = 0;
@@ -61,6 +63,7 @@ namespace Benchmark
 
         public void SceneActivate(engine.Engine engine)
         {
+            _engine = engine;
             _transferTexture(false);
             _transferTexture(true);
         }

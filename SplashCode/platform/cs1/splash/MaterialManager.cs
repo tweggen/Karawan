@@ -8,10 +8,12 @@ using Raylib_CsLo;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
+using DefaultEcs;
+using DefaultEcs.Resource;
 
 namespace Karawan.platform.cs1.splash
 {
-    public class MaterialManager
+    public class MaterialManager : AResourceManager<engine.joyce.Material, RlMaterialEntry>
     {
 
         private bool _haveDefaults;
@@ -31,7 +33,7 @@ namespace Karawan.platform.cs1.splash
 
         private RLights _rlights;
 
-        private Dictionary<string, splash.RlMaterialEntry> _dictMaterials = new();
+        // private Dictionary<string, splash.RlMaterialEntry> _dictMaterials = new();
 
 
         private unsafe void _createDefaultShader()
@@ -153,7 +155,22 @@ namespace Karawan.platform.cs1.splash
             return rlMaterialEntry;
         }
 
+        protected override unsafe RlMaterialEntry Load(engine.joyce.Material jMaterial)
+        {
+            RlMaterialEntry rlMaterialEntry;
+            rlMaterialEntry = _createRlMaterialEntry(jMaterial);
+            return rlMaterialEntry;
+        }
 
+        protected override void OnResourceLoaded(
+            in Entity entity, 
+            engine.joyce.Material jMaterial, 
+            RlMaterialEntry rlMaterialEntry)
+        {
+            // entity.Get<components.RlMaterial>().MaterialEntry = rlMaterialEntry;
+        }
+
+#if false
         /**
          * Return a material entry for the given material.
          * This references all the textures used within.
@@ -184,6 +201,7 @@ namespace Karawan.platform.cs1.splash
             }
             return rme;
         }
+#endif
 
 
         public RlMaterialEntry GetUnloadedMaterial()

@@ -1,4 +1,5 @@
 ﻿
+using DefaultEcs.Resource;
 using System;
 
 
@@ -51,11 +52,15 @@ namespace Karawan.platform.cs1.splash.systems
                     var materialIndex = (int) cInstance3.MeshMaterials[i];
                     var jMaterial = (engine.joyce.Material) cInstance3.Materials[materialIndex];
 
-                    var rlMeshEntry =_meshManager.FindRlMesh(jMesh);
+                    entity.Set(new ManagedResource<engine.joyce.Mesh, RlMeshEntry>(jMesh));
+                    entity.Set(new ManagedResource<engine.joyce.Material, RlMaterialEntry>(jMaterial));
+#if false
+                   var rlMeshEntry =_meshManager.FindRlMesh(jMesh);
                     var rlMaterialEntry = _materialManager.FindRlMaterial(jMaterial);
 
                     entity.Set<splash.components.RlMesh>(
                         new splash.components.RlMesh(rlMeshEntry, rlMaterialEntry));
+#endif
                 }
             }
         }

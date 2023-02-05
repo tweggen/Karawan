@@ -14,5 +14,10 @@ namespace engine.joyce
         { 
             Texture = texture;
         }
+
+        public Material()
+        {
+            Texture = null;
+        }
     }
 }

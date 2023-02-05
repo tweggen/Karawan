@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\PlatformUI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\API.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMaterial.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshGenerator.cs" />

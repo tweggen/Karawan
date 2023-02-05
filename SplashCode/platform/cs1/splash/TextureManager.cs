@@ -6,19 +6,38 @@ namespace Karawan.platform.cs1.splash
 {
     public class TextureManager
     {
+        private object _lock = new ();
         private TextureGenerator _textureGenerator;
-        private Dictionary<engine.joyce.Texture, splash.RlTextureEntry> _dictTextures;
+        private Dictionary<string, splash.RlTextureEntry> _dictTextures;
+
+
+        private string _textureKey(in engine.joyce.Texture jTexture)
+        {
+            if( jTexture.Source == null)
+            {
+                return "(null)";
+            }
+            else
+            {
+                return jTexture.Source;
+            }
+        } 
 
         public unsafe splash.RlTextureEntry FindRlTexture(in engine.joyce.Texture jTexture)        
         {
             splash.RlTextureEntry rlTextureEntry;
-            if (_dictTextures.TryGetValue(jTexture, out rlTextureEntry))
+            string textureKey = _textureKey(jTexture);
+            lock (_lock)
             {
-            }
-            else
-            {
-                _textureGenerator.CreateRaylibTexture(jTexture, out rlTextureEntry);
-                _dictTextures.Add(jTexture, rlTextureEntry);
+                if (_dictTextures.TryGetValue(textureKey, out rlTextureEntry))
+                {
+                    return rlTextureEntry;
+                } else
+                {
+                    // TXWTODO: Should be async and not with proxy held.
+                    _textureGenerator.CreateRaylibTexture(jTexture, out rlTextureEntry);
+                    _dictTextures.Add(textureKey, rlTextureEntry);
+                }
             }
             return rlTextureEntry;
         }
@@ -26,19 +45,23 @@ namespace Karawan.platform.cs1.splash
         private void _purgeLoadTexture(in engine.joyce.Texture jTexture, bool doDownload)
         {
             splash.RlTextureEntry rlTextureEntry;
-            if (_dictTextures.TryGetValue(jTexture, out rlTextureEntry))
+            string textureKey = _textureKey(jTexture);
+            lock (_lock)
             {
-                if (doDownload)
+                if (_dictTextures.TryGetValue(textureKey, out rlTextureEntry))
                 {
-                    Image image = Raylib.LoadImageFromTexture(rlTextureEntry.RlTexture);
+                    if (doDownload)
+                    {
+                        Image image = Raylib.LoadImageFromTexture(rlTextureEntry.RlTexture);
+                    }
+                    Raylib.UnloadTexture(rlTextureEntry.RlTexture);
+                    _dictTextures.Remove(textureKey);
+                    rlTextureEntry.RlTexture = new();
                 }
-                Raylib.UnloadTexture(rlTextureEntry.RlTexture);
-                _dictTextures.Remove(jTexture);
-                rlTextureEntry.RlTexture = new();
-            }
-            else
-            {
-                Console.WriteLine("problem");
+                else
+                {
+                    Console.WriteLine("problem");
+                }
             }
         }
 

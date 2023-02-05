@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Numerics;
+﻿using System;
+using System.Collections;
 
 namespace engine.joyce.components
 {
@@ -20,7 +20,7 @@ namespace engine.joyce.components
 
             Meshes[0] = mesh;
             MeshMaterials[0] = 0;
-            Materials[0] = null;
+            Materials[0] = new Material();
         }
 
         /**
@@ -32,6 +32,15 @@ namespace engine.joyce.components
             Meshes = instanceDesc.Meshes;
             MeshMaterials = instanceDesc.MeshMaterials;
             Materials = instanceDesc.Materials;
+#if DEBUG
+            for(int i=0; i<Materials.Count; ++i)
+            {
+                if(null == Materials[i])
+                {
+                    throw new ArgumentNullException($"Instance3: Material[{i}] is null.");
+                }
+            }
+#endif
         }
     }
 }
