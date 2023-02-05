@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="clipper.NetStandard2" Version="6.4.2" />
     <PackageReference Include="DefaultEcs" Version="0.17.2" />
+    <PackageReference Include="LibTessDotNet" Version="1.1.15" />
     <PackageReference Include="Poly2Tri.NetStandard2" Version="1.0.0" />
   </ItemGroup>
 
