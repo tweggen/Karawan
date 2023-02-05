@@ -27,8 +27,8 @@ namespace builtin.tools
             }
             foreach(var dtriangle in poly.Triangles)
             {
-                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[0]));
                 mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[1]));
+                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[0]));
                 mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[2]));
             }
         }

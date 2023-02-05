@@ -9,6 +9,7 @@ namespace engine.joyce
     public class Material
     {
         public Texture Texture { get; set; }
+        public uint AlbedoColor;
 
         public Material(in Texture texture) 
         { 
@@ -17,6 +18,7 @@ namespace engine.joyce
 
         public Material()
         {
+            AlbedoColor = 0xffffff;
             Texture = null;
         }
     }

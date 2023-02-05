@@ -156,6 +156,15 @@ namespace Karawan.platform.cs1.splash
             if (null != rlTextureEntry)
             {
                 rlMaterialEntry.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = rlTextureEntry.RlTexture;
+            } else
+            {
+                rlMaterialEntry.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color =
+                    new Color(
+                        (byte) (jMaterial.AlbedoColor >> 16) & 0xff,
+                        (byte) (jMaterial.AlbedoColor >> 8) & 0xff,
+                        (byte) (jMaterial.AlbedoColor) & 0xff,
+                        (byte) (jMaterial.AlbedoColor >> 24) & 0xff);
+                    
             }
             // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using engine.joyce;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -6,6 +7,22 @@ namespace engine.streets
 {
     public class GenerateClusterQuartersOperator : world.IFragmentOperator
     {
+        static private object _lock = new();
+        static private Material _jMaterialQuarter = null;
+
+        static private Material _getQuarterMaterial()
+        {
+            lock(_lock)
+            {
+                if(_jMaterialQuarter == null)
+                {
+                    _jMaterialQuarter = new Material();
+                    _jMaterialQuarter.AlbedoColor = 0xff441144;
+                }
+                return _jMaterialQuarter;
+            }
+        }
+
         private static void trace(string message) { Console.WriteLine(message);  }
         private world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
@@ -47,6 +64,7 @@ namespace engine.streets
              * Here we have an XY mesh of the triangles in the mesh.
              */
             float h = _clusterDesc.AverageHeight + 2.15f;
+            int i0 = g.GetNextVertexIndex();
             foreach(Vector3 v in j2Mesh.Vertices)
             {
                 g.p(new Vector3(v.X, h, v.Y));
@@ -54,7 +72,7 @@ namespace engine.streets
             }
             for (int k = 0; k < j2Mesh.Indices.Count; k += 3)
             {
-                g.Idx((int)j2Mesh.Indices[k], (int)j2Mesh.Indices[k+1], (int)j2Mesh.Indices[k+2]);
+                g.Idx(i0+(int)j2Mesh.Indices[k], i0+(int)j2Mesh.Indices[k+1], i0+(int)j2Mesh.Indices[k+2]);
             }
 
             return true;
@@ -162,7 +180,7 @@ namespace engine.streets
                 engine.joyce.InstanceDesc instanceDesc = new();
                 instanceDesc.Meshes.Add(g);
                 instanceDesc.MeshMaterials.Add(0);
-                instanceDesc.Materials.Add(new engine.joyce.Material());
+                instanceDesc.Materials.Add(_getQuarterMaterial());
                 worldFragment.AddStaticMolecule(instanceDesc);
             }
             catch (Exception e) {

@@ -165,7 +165,7 @@ namespace engine.world
             AddFragmentOperator(new world.CreateTerrainMeshOperator(_myKey));
 
             AddClusterFragmentOperatorFactory(
-                (string newKey, ClusterDesc clusterDesc)=>
+                 (string newKey, ClusterDesc clusterDesc)=>
                     new engine.streets.GenerateClusterStreetsOperator(clusterDesc, newKey)
             );
             AddClusterFragmentOperatorFactory(
