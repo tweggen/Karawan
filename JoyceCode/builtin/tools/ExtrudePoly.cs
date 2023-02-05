@@ -213,6 +213,8 @@ namespace builtin.tools
                     Vector3 tp = op + vh;
                     topPlane.Add(tp);
                 }
+                // Why? IDK, was wrong.
+                topPlane.Reverse();
                 builtin.tools.Triangulate.ToMesh(topPlane, g);
 #else
                 for (int j=0; j<p.Count; j++)

@@ -9,7 +9,23 @@ namespace engine.streets
         private static void trace(string message) {
             Console.WriteLine(message);
         }
-           
+
+        static private object _lock = new();
+        static private engine.joyce.Material _jMaterialStreet= null;
+
+        static private engine.joyce.Material _getStreetMaterial()
+        {
+            lock (_lock)
+            {
+                if (_jMaterialStreet == null)
+                {
+                    _jMaterialStreet = new engine.joyce.Material();
+                    // _jMaterialHouse.AlbedoColor = 0xff444444;
+                    _jMaterialStreet.Texture = new engine.joyce.Texture("assets\\streets1to4.png");
+                }
+                return _jMaterialStreet;
+            }
+        }
 
         private static bool _useRepeatTexture = false;
 
@@ -706,7 +722,7 @@ namespace engine.streets
             engine.joyce.InstanceDesc instanceDesc = new();
             instanceDesc.Meshes.Add(g);
             instanceDesc.MeshMaterials.Add(0);
-            instanceDesc.Materials.Add(new engine.joyce.Material());
+            instanceDesc.Materials.Add(_getStreetMaterial());
             worldFragment.AddStaticMolecule(instanceDesc);
 
         }

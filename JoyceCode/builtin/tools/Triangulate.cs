@@ -63,7 +63,8 @@ namespace builtin.tools
                 if (i0 > maxIndex) maxIndex = i0;
                 if (i1 > maxIndex) maxIndex = i1;
                 if (i2 > maxIndex) maxIndex = i2;
-                mesh.Idx(ia+i0, ia+i1, ia+i2);
+                // Add reversed to make them CCW.
+                mesh.Idx(ia+i2, ia+i1, ia+i0);
             }
             for( int i=0; i<=maxIndex; i++)
             {

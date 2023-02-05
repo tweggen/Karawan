@@ -84,7 +84,7 @@ namespace Karawan.platform.cs1.splash
             if (true)
             {
                 int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
-                var colAmbient = new Vector4(1f, 1f, 1f, 1.0f);
+                var colAmbient = new Vector4(0.1f, 0.2f, 0.3f, 0.0f);
                 Raylib.SetShaderValue(
                     _rlInstanceShaderEntry.RlShader,
                     ambientLoc, colAmbient,
@@ -106,7 +106,7 @@ namespace Karawan.platform.cs1.splash
             var vecLight = new Vector3(50f, 50f, 0f);
             var vecZero = new Vector3(0, 0, 0);
             _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
-                Raylib.WHITE, ref _rlInstanceShaderEntry.RlShader); 
+                new Color(0,0,0,0), ref _rlInstanceShaderEntry.RlShader); 
 
             loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
             loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;

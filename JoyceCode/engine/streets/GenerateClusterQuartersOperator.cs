@@ -61,7 +61,7 @@ namespace engine.streets
             /*
              * Need to reverse the quarters, they are 
              */
-            vpoly.Reverse();
+            // vpoly.Reverse();
             engine.joyce.Mesh j2Mesh = engine.joyce.Mesh.CreateListInstance();
             builtin.tools.Triangulate.ToMesh(vpoly, j2Mesh);
             /*
