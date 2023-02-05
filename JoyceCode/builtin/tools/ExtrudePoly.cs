@@ -152,7 +152,7 @@ namespace builtin.tools
                  * Ceiling.
                  */
                 vc += lrh;
-                g.p(vc); g.UV(ot+it*currU/du, ot*it*(1f-lastRowHeight/_mpt));
+                g.p(vc); g.UV(ot+it*currU/du, ot+it*(1f-lastRowHeight/_mpt));
                 // g.p1(vc); g.uv(currU/du, 1. );
 
                 /*

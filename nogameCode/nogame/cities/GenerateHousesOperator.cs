@@ -23,7 +23,8 @@ namespace nogame.cities
                 if (_jMaterialHouse == null)
                 {
                     _jMaterialHouse = new engine.joyce.Material();
-                    _jMaterialHouse.AlbedoColor = 0xff444444;
+                    // _jMaterialHouse.AlbedoColor = 0xff444444;
+                    _jMaterialHouse.Texture = new engine.joyce.Texture("assets\\buildingdiffuse.png");
                 }
                 return _jMaterialHouse;
             }
