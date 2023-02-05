@@ -15,6 +15,7 @@ namespace nogame.cities
 
         static private object _lock = new();
         static private engine.joyce.Material _jMaterialHouse = null;
+        static private engine.joyce.Material _jMaterialNeon = null;
 
         static private engine.joyce.Material _getHouseMaterial()
         {
@@ -27,6 +28,20 @@ namespace nogame.cities
                     _jMaterialHouse.Texture = new engine.joyce.Texture("assets\\buildingdiffuse.png");
                 }
                 return _jMaterialHouse;
+            }
+        }
+
+        static private engine.joyce.Material _getNeonMaterial()
+        {
+            lock (_lock)
+            {
+                if (_jMaterialNeon == null)
+                {
+                    _jMaterialNeon = new engine.joyce.Material();
+                    // _jMaterialHouse.AlbedoColor = 0xff444444;
+                    _jMaterialNeon.Texture = new engine.joyce.Texture("assets\\lorem.png");
+                }
+                return _jMaterialNeon;
             }
         }
 
@@ -121,93 +136,85 @@ namespace nogame.cities
             return inFragmentY;
         }
 
-#if false
-        private function createNeonSignSubGeo(
-    allEnv: AllEnv,
-        worldFragment: WorldFragment,
-        p0: geom.Vector3D, pe: geom.Vector3D,
-        h: Float,
-        neonMol: engine.SimpleMolecule,
-        neonG: engine.PlainGeomAtom
-    ) : Void
-{
-    /*
-     * Number of letters.
-     */
-    var nLetters = 2 + Std.int(_rnd.getFloat() * 8.0);
 
-    var letterHeight = 1.5;
+        private void _createNeonSignSubGeo(
+            in engine.world.Fragment worldFragment,
+            in Vector3 p0, in Vector3 pe,
+            float h,
+            in engine.joyce.Mesh neonG)
+        {
+            /*
+             * Number of letters.
+             */
+            int nLetters = 2 + (int)(_rnd.getFloat() * 8.0);
 
-    /*
-     * height of first letter.
-     */
-    var h0 = _rnd.getFloat() * (h - nLetters * letterHeight - 3.0);
-    var h1 = h0 + nLetters * letterHeight;
+            float letterHeight = 1.5f;
 
-    /*
-     * Trivial implementation: Add a part of the texture, which is 8x8
-     */
-    var i0: Int = neonG.getNextVertexIndex();
+            /*
+             * height of first letter.
+             */
+            float h0 = _rnd.getFloat() * (h - nLetters * letterHeight - 3.0f);
+            float h1 = h0 + nLetters * letterHeight;
 
-    neonG.p(p0.x, p0.y + h0, p0.z);
-    neonG.uv(0.0, 1.0 - 0.0);
-    neonG.p(p0.x, p0.y + h1, p0.z);
-    neonG.uv(0.0, 1.0 - 0.125 * nLetters);
-    neonG.p(p0.x + pe.x, p0.y + h1 + pe.y, p0.z + pe.z);
-    neonG.uv(0.125, 1.0 - 0.125 * nLetters);
-    neonG.p(p0.x + pe.x, p0.y + h0 + pe.y, p0.z + pe.z);
-    neonG.uv(0.125, 1.0 - 0.0);
+            /*
+             * Trivial implementation: Add a part of the texture, which is 8x8
+             */
+            int i0 = neonG.GetNextVertexIndex();
 
-    neonG.idx(i0 + 0, i0 + 1, i0 + 3);
-    neonG.idx(i0 + 1, i0 + 2, i0 + 3);
-}
+            neonG.p(p0.X, p0.Y + h0, p0.Z);
+            neonG.UV(0.0f, 1.0f - 0.0f);
+            neonG.p(p0.X, p0.Y + h1, p0.Z);
+            neonG.UV(0.0f, 1.0f - 0.125f * nLetters);
+            neonG.p(p0.X + pe.X, p0.Y + h1 + pe.Y, p0.Z + pe.Z);
+            neonG.UV(0.125f, 1.0f - 0.125f * nLetters);
+            neonG.p(p0.X + pe.X, p0.Y + h0 + pe.Y, p0.Z + pe.Z);
+            neonG.UV(0.125f, 1.0f - 0.0f);
+
+            neonG.Idx(i0 + 0, i0 + 1, i0 + 3);
+            neonG.Idx(i0 + 1, i0 + 2, i0 + 3);
+        }
 
 
 /**
  * Create large-scale neon-lights for the given house geometry.
  */
-private function createNeonSignsSubGeo(
-    allEnv: AllEnv,
-        worldFragment: WorldFragment,
-        p: Array<geom.Vector3D>,
-        h: Float,
-        neonMol: engine.SimpleMolecule,
-        neonG: engine.PlainGeomAtom
-    ) : Void
+private void _createNeonSignsSubGeo(
+        in engine.world.Fragment worldFragment,
+        in IList<Vector3> p,
+        float h,
+        engine.joyce.Mesh neonG)
 {
     /*
      * For the neon sign, we each of the corner points, using 1 meter in wall direction to
      * outside to place the rectangle.
      */
 
-    var letterWidth = 1.5;
+    float letterWidth = 1.5f;
 
-    var l = p.length;
-    for (i in 0...l )
+    var l = p.Count;
+    for (int i=0; i<l; i++ )
     {
         /*
          * Start point of sign
          */
-        var p0 = p[i].clone();
+        Vector3 p0 = p[i];
         /*
          * Extent of sign.
          */
-        var pe = p[(i + 1) % l].clone();
+        Vector3 pe = p[(i + 1) % l];
 
-        pe.subtract(p0);
-        pe.normalize();
-        pe.scale(-letterWidth);
+        pe -= p0;
+        pe = Vector3.Normalize(pe);
+        pe *= -letterWidth;
 
-        createNeonSignSubGeo(
-            allEnv,
+        _createNeonSignSubGeo(
             worldFragment,
             p0, pe,
             h,
-            neonMol,
             neonG);
     }
 }
-#endif
+
 
 
         public void FragmentOperatorApply(
@@ -238,49 +245,8 @@ private function createNeonSignsSubGeo(
             // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
             _rnd.clear();
 
-#if false
-            worldFragment.addMaterialFactory(
-                "GenerateHousesOperator._matHouse", function() {
-                var mat = new engine.Material("");
-                // mat.diffuseTexturePath = "building/stealtiles1.jpg";
-                // mat.ambientTexturePath = "building/cyanwindow.jpg";
-                // mat.diffuseTexturePath = "building/yellowwindows.png";
-                mat.diffuseTexturePath = "building/buildingdiffuse.png";
-                mat.ambientTexturePath = "building/buildingambient.png";
-                mat.textureRepeat = true;
-                mat.textureSmooth = false;
-                // mat.ambientColor = 0x00ff00;
-                mat.ambient = 1.0;
-                mat.specular = 0.0;
-                return mat;
-            }
-                );
-
-            var g = new engine.PlainGeomAtom(null, null, null,
-                "GenerateHousesOperator._matHouse");
-            var mol = new engine.SimpleMolecule( [g] );
-
-            worldFragment.addMaterialFactory(
-                "GenerateHousesOperator._matHanyuLorem", function() {
-                var mat = new engine.Material("");
-                mat.ambientTexturePath = "building/lorem.png";
-                mat.diffuseTexturePath = "building/lorem.png";
-                mat.textureRepeat = true;
-                mat.textureSmooth = false;
-                mat.ambient = 10.0;
-                mat.specular = 0.0;
-                mat.isLight = true;
-                mat.isBothSides = true;
-                return mat;
-            }
-                );
-
-            var neonG = new engine.PlainGeomAtom(null, null, null,
-                "GenerateHousesOperator._matHanyuLorem");
-            var neonMol = new engine.SimpleMolecule( [neonG]);
-#endif
-
             engine.joyce.Mesh g = engine.joyce.Mesh.CreateListInstance();
+            engine.joyce.Mesh neonG = engine.joyce.Mesh.CreateListInstance();
 
             /*
              * Iterate through all quarters in the clusters and generate lots and houses.
@@ -368,17 +334,14 @@ private function createNeonSignsSubGeo(
                         catch (Exception e) {
                             trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
-#if false
                         try
                         {
-                            createNeonSignsSubGeo(allEnv, worldFragment, fragPoints, height, neonMol, neonG);
+                            _createNeonSignsSubGeo(worldFragment, fragPoints, height, neonG);
                         }
-                        catch (unknown: Dynamic ) {
-                            trace('GenerateHousesOperator.fragmentOperatorApply(): createNeonSignsSubGeo(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
-                                + Std.string(unknown) + "\n"
-                                + haxe.CallStack.toString(haxe.CallStack.callStack()));
+                        catch (Exception e) {
+                            trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
-#endif
+
                         haveHouse = true;
                     }
 
@@ -391,15 +354,26 @@ private function createNeonSignsSubGeo(
                 return;
             }
 
+            // TXWTODO: We currently split this into two different molecules (because there's just one RlMeshEntry per entity). I'd like this to be the same.
+
             try
             {
                 // var mol = new engine.SimpleMolecule( [g] );
                 // TXWTODO: This is too inefficient. We should also use a factory here.
-                engine.joyce.InstanceDesc instanceDesc = new();
-                instanceDesc.Meshes.Add(g);
-                instanceDesc.MeshMaterials.Add(0);
-                instanceDesc.Materials.Add(_getHouseMaterial());
-                worldFragment.AddStaticMolecule(instanceDesc);
+                {
+                    engine.joyce.InstanceDesc instanceDesc = new();
+                    instanceDesc.Meshes.Add(g);
+                    instanceDesc.MeshMaterials.Add(0);
+                    instanceDesc.Materials.Add(_getHouseMaterial());
+                    worldFragment.AddStaticMolecule(instanceDesc);
+                }
+                {
+                    engine.joyce.InstanceDesc instanceDesc = new();
+                    instanceDesc.Meshes.Add(neonG);
+                    instanceDesc.MeshMaterials.Add(0);
+                    instanceDesc.Materials.Add(_getNeonMaterial());
+                    worldFragment.AddStaticMolecule(instanceDesc);
+                }
             }
             catch (Exception e)
             {
