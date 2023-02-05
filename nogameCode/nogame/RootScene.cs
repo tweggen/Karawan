@@ -48,6 +48,11 @@ namespace nogame
             _engine = engine0;
 
             _worldMetaGen = engine.world.MetaGen.Instance();
+            _worldMetaGen.AddClusterFragmentOperatorFactory(
+                (string newKey, engine.world.ClusterDesc clusterDesc) =>
+                    new nogame.cities.GenerateHousesOperator(clusterDesc, newKey)
+            );
+
             _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
             {
                 var elevationCache = engine.elevation.Cache.Instance();

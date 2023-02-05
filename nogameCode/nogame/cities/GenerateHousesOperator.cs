@@ -1,11 +1,12 @@
-﻿using System;
+﻿using DefaultEcs;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
 
 namespace nogame.cities
 {
-    public class GenerateHousesOperator
+    public class GenerateHousesOperator : engine.world.IFragmentOperator
     {
         private void trace(string message)
         {
@@ -209,7 +210,7 @@ private function createNeonSignsSubGeo(
 
 
         public void FragmentOperatorApply(
-            engine.world.Fragment worldFragment)
+            in engine.world.Fragment worldFragment)
         {
             float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
             float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
