@@ -136,8 +136,12 @@ namespace Karawan.platform.cs1.splash
         {
             RlMaterialEntry rlMaterialEntry = new RlMaterialEntry();
 
-            RlTextureEntry rlTextureEntry = _textureManager.FindRlTexture(jMaterial.Texture);
-            // TXWTODO: Add reference of this texture.
+            RlTextureEntry rlTextureEntry = null;
+            if (jMaterial.Texture != null)
+            {
+                rlTextureEntry = _textureManager.FindRlTexture(jMaterial.Texture);
+                // TXWTODO: Add reference of this texture.
+            }
 
             /*
              * Test code: Create one light.
@@ -149,7 +153,10 @@ namespace Karawan.platform.cs1.splash
 
             rlMaterialEntry.RlMaterial = Raylib.LoadMaterialDefault();
             rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
-            rlMaterialEntry.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = rlTextureEntry.RlTexture;
+            if (null != rlTextureEntry)
+            {
+                rlMaterialEntry.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = rlTextureEntry.RlTexture;
+            }
             // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
 
             return rlMaterialEntry;
@@ -167,7 +174,7 @@ namespace Karawan.platform.cs1.splash
             engine.joyce.Material jMaterial, 
             RlMaterialEntry rlMaterialEntry)
         {
-            // entity.Get<components.RlMaterial>().MaterialEntry = rlMaterialEntry;
+            entity.Set<components.RlMaterial>(new components.RlMaterial(rlMaterialEntry));
         }
 
 #if false

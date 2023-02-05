@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 
 
@@ -21,15 +20,16 @@ namespace builtin.tools
             Poly2Tri.Polygon poly = new(polyPoints);
             // poly.AddPoints(polyPoints);
             Poly2Tri.P2T.Triangulate(poly);
+            var trianglePoints = poly.Points;
             foreach(var dpoint in poly.Points)
             {
                 mesh.Vertices.Add(new Vector3((float)dpoint.X, (float)dpoint.Y, 0f));
             }
             foreach(var dtriangle in poly.Triangles)
             {
-                mesh.Indices.Add(dtriangle.Points[0]);
-                mesh.Indices.Add(dtriangle.Points[1]);
-                mesh.Indices.Add(dtriangle.Points[2]);
+                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[0]));
+                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[1]));
+                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[2]));
             }
         }
     }

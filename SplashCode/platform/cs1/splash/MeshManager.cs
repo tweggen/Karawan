@@ -25,7 +25,7 @@ namespace Karawan.platform.cs1.splash
 
         protected override void OnResourceLoaded(in Entity entity, engine.joyce.Mesh info, RlMeshEntry rlMeshEntry)
         {
-            // entity.Get<components.RlMesh>().MeshEntry = rlMeshEntry;
+            entity.Set<components.RlMesh>(new components.RlMesh(rlMeshEntry));
         }
 
         protected override unsafe void Unload(engine.joyce.Mesh jMesh, RlMeshEntry rlMeshEntry)
