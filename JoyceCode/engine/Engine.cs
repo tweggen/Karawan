@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using BepuPhysics;
+using BepuUtilities;
+using BepuUtilities.Memory;
 
 namespace engine
 {
@@ -21,6 +24,9 @@ namespace engine
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
+
+        public Simulation Simulation { get; protected set; }
+        public BufferPool BufferPool { get; private set; }
 
         private void _selfTest()
         {
@@ -82,6 +88,8 @@ namespace engine
         public void _onLogicalFrame(float dt)
         {
             LogicalFrame?.Invoke(this, dt);
+
+            Simulation.Timestep(dt);
 
             /*
              * We need a local copy in case anybody adds scenes.
@@ -176,6 +184,13 @@ namespace engine
          */
         public void SetupDone()
         {
+            BufferPool = new BufferPool();
+            Simulation = Simulation.Create(
+                BufferPool, 
+                new physics.NarrowPhaseCallbacks() /* { Properties = properties } */,
+                new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
+                new PositionLastTimestepper()
+            );
             _aHierarchy = new engine.hierarchy.API(this);
             _aTransform = new engine.transform.API(this);
         }

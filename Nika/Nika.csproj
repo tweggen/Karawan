@@ -110,6 +110,12 @@
     <Folder Include="Resources\drawable\" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BepuPhysics">
+      <Version>2.3.3</Version>
+    </PackageReference>
+    <PackageReference Include="BepuUtilities">
+      <Version>2.3.3</Version>
+    </PackageReference>
     <PackageReference Include="clipper.NetStandard2">
       <Version>6.4.2</Version>
     </PackageReference>

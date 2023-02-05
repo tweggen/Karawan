@@ -53,6 +53,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\World3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\NarrowPhaseCallbacks.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\PoseIntegratorCallbacks.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Estate.cs" />

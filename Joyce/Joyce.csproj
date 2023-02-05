@@ -3,9 +3,11 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0</TargetFrameworks>
     <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BepuPhysics" Version="2.3.4" />
     <PackageReference Include="clipper.NetStandard2" Version="6.4.2" />
     <PackageReference Include="DefaultEcs" Version="0.17.2" />
     <PackageReference Include="LibTessDotNet" Version="1.1.15" />
