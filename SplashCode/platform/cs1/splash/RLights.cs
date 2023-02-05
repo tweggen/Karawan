@@ -6,6 +6,7 @@
 // [!!] The code and 100+ examples are here! https://github.com/NotNotTech/Raylib-CsLo 
 // [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!]  [!!] [!!] [!!] [!!]
 
+using System;
 using System.Numerics;
 using Raylib_CsLo;
 
@@ -53,6 +54,7 @@ namespace Karawan.platform.cs1.splash
 		//----------------------------------------------------------------------------------
 		public const int MAX_LIGHTS = 4;         // Max dynamic lights supported by shader
 
+
 		//----------------------------------------------------------------------------------
 		// Types and Structures Definition
 		//----------------------------------------------------------------------------------
@@ -81,6 +83,8 @@ namespace Karawan.platform.cs1.splash
 			LIGHT_DIRECTIONAL = 0,
 			LIGHT_POINT
 		}
+
+		private Light[] _lights;
 
 
 
@@ -150,17 +154,33 @@ namespace Karawan.platform.cs1.splash
 				light.targetLoc = Raylib.GetShaderLocation(shader, targetName);
 				light.colorLoc = Raylib.GetShaderLocation(shader, colorName);
 
-				UpdateLightValues(ref shader, light);
+				_lights[lightsCount] = light;
 
 				lightsCount++;
-			}
+                _updateAllLightsValues(ref shader);
+            }
 
-			return light;
+            return light;
+		}
+
+		private void _updateAllLightsValues( ref Shader shader )
+		{
+			foreach(var light in _lights)
+			{
+				if( light.enabled )
+				{
+					Console.WriteLine($"Light is enabled.");
+				} else
+				{
+                    Console.WriteLine($"Light is disabled.");
+                }
+                _updateLightValues(ref shader, light); 
+			}
 		}
 
 		// Send light properties to shader
 		// NOTE: Light shader locations should be available 
-		public void UpdateLightValues(ref Shader shader, Light light)
+		private void _updateLightValues(ref Shader shader, Light light)
 		{
 			// Send to shader light enabled state and type
 			Raylib.SetShaderValue(shader, light.enabledLoc, &light.enabled, ShaderUniformDataType.SHADER_UNIFORM_INT);
@@ -180,5 +200,9 @@ namespace Karawan.platform.cs1.splash
 			Raylib.SetShaderValue(shader, light.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
 		}
 
+		public RLights()
+		{
+			_lights = new Light[4];
+		}
 	}
 }

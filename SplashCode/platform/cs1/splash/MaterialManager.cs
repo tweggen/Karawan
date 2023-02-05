@@ -106,7 +106,7 @@ namespace Karawan.platform.cs1.splash
             var vecLight = new Vector3(50f, 50f, 0f);
             var vecZero = new Vector3(0, 0, 0);
             _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
-                new Color(0,0,0,0), ref _rlInstanceShaderEntry.RlShader); 
+                new Color(255,255,255,0), ref _rlInstanceShaderEntry.RlShader); 
 
             loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
             loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
@@ -143,6 +143,7 @@ namespace Karawan.platform.cs1.splash
                 // TXWTODO: Add reference of this texture.
             }
 
+#if false
             /*
              * Test code: Create one light.
              */
@@ -150,7 +151,7 @@ namespace Karawan.platform.cs1.splash
             var vecZero = new Vector3(0, 0, 0);
             _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero,
                 Raylib.WHITE, ref _rlInstanceShaderEntry.RlShader);
-
+#endif
             rlMaterialEntry.RlMaterial = Raylib.LoadMaterialDefault();
             rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
             if (null != rlTextureEntry)
