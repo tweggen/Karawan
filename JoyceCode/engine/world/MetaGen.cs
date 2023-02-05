@@ -190,7 +190,6 @@ namespace engine.world
                 if( null == _instance )
                 {
                     _instance = new MetaGen();
-                    _instance.SetupComplete();
                 }
                 return _instance;
             }

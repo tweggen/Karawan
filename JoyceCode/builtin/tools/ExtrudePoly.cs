@@ -28,15 +28,6 @@ namespace builtin.tools
             var vh = _path[0];
             var p = _poly;
 
-#if false
-            /*
-             * Local uv, including inversion
-             */
-            Action<float, float> luv = (float u, float v) => {
-                if (_inverseTexture) g.UV(1f-u, 1f-v); else g.UV(u, v);
-                }
-            };
-#endif
             float it;
             float ot;
             if( _inverseTexture )
@@ -126,7 +117,7 @@ namespace builtin.tools
              * for p.length+1 columns.
              */
             float currU = 0f;
-            for (int j=0; j<p.Count; j++ )
+            for (int j=0; j<p.Count+1; j++ )
             {
                 int i = j % p.Count;
                 Vector3 vc = p[i];
@@ -143,7 +134,7 @@ namespace builtin.tools
                 /*
                 * This is the current position along the path.
                 */
-                for (int row=0; i<nCompleteRows; row++)
+                for (int row=0; row<nCompleteRows; row++)
                 {
                     vc += vrh;
 
@@ -189,7 +180,7 @@ namespace builtin.tools
                 var rows = nCompleteRows + 1;
                 int nx = columnHeight;  // Offset to the next vertex in the ring on the same level
                 int ny = 1; // Offset to the vertex in the same column on the next higher level.
-                for (int row=0; row<rows; ++rows )
+                for (int row=0; row<rows; ++row )
                 {
                     g.Idx(i + 0, i + nx, i + ny);
                     g.Idx(i + ny, i + nx, i + nx + ny);
@@ -214,9 +205,15 @@ namespace builtin.tools
                  * First, push the vertices.
                  * Then we create triangulation indices and add them.
                  */
-                i0 = g.GetNextVertexIndex();
+                //i0 = g.GetNextVertexIndex();
 #if true
-                builtin.tools.Triangulate.ToMesh(p, g);
+                List<Vector3> topPlane = new();
+                foreach(var op in p)
+                {
+                    Vector3 tp = op + vh;
+                    topPlane.Add(tp);
+                }
+                builtin.tools.Triangulate.ToMesh(topPlane, g);
 #else
                 for (int j=0; j<p.Count; j++)
                 {

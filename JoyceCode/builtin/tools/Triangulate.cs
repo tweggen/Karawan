@@ -57,9 +57,9 @@ namespace builtin.tools
             int ia = mesh.GetNextVertexIndex();
             for( int i=0; i<outTriangles; i++ )
             {
-                int i2 = tess.Elements[i * 3 + 0];
+                int i0 = tess.Elements[i * 3 + 0];
                 int i1 = tess.Elements[i * 3 + 1];
-                int i0 = tess.Elements[i * 3 + 2];
+                int i2 = tess.Elements[i * 3 + 2];
                 if (i0 > maxIndex) maxIndex = i0;
                 if (i1 > maxIndex) maxIndex = i1;
                 if (i2 > maxIndex) maxIndex = i2;

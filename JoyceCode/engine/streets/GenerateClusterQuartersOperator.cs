@@ -58,6 +58,10 @@ namespace engine.streets
                 trace("No delims found");
                 return false;
             }
+            /*
+             * Need to reverse the quarters, they are 
+             */
+            vpoly.Reverse();
             engine.joyce.Mesh j2Mesh = engine.joyce.Mesh.CreateListInstance();
             builtin.tools.Triangulate.ToMesh(vpoly, j2Mesh);
             /*
