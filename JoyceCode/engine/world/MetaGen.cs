@@ -34,7 +34,10 @@ namespace engine.world
         public static bool TRACE_LOAD_BYTES = false;
         public static bool TRACE_PLATFORM_MOLECULE_ADDING = true;
 
-        public static float  CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0f;
+        public static float CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0f;
+
+        private Loader _loader = null;
+        public Loader Loader {get => _loader;} 
 
         /**
          * This is our seed. It also will be used for other sub-parts of
@@ -172,6 +175,12 @@ namespace engine.world
                 (string newKey, ClusterDesc clusterDesc) =>
                     new engine.streets.GenerateClusterQuartersOperator(clusterDesc, newKey)
             );
+        }
+
+
+        public void SetLoader(in world.Loader loader)
+        {
+            _loader = loader;
         }
 
         public static MetaGen Instance()

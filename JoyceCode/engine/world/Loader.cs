@@ -30,7 +30,6 @@ namespace engine.world
     public class Loader
     {
         private Engine _engine;
-        private Mutex _mutex;
         private void trace(in string message)
         {
             Console.WriteLine(message);
@@ -272,6 +271,7 @@ return molArrayMap;
                          */
                         fragment = new Fragment(
                             _engine,
+                            this,
                             strKey,
                             new Index3(i1, j1, k1),
                             new Vector3(
@@ -354,7 +354,7 @@ return molArrayMap;
          * TXWTODO: This does not require the entire worldLoader 
          * but only the elevation.
          */
-        public float WorldLoaderGetHeightAt(
+        public float GetHeightAt(
             float x0,
             float z0,
             string layer = engine.elevation.Cache.TOP_LAYER
@@ -469,7 +469,6 @@ return molArrayMap;
             world.MetaGen worldMetaGen
         )
         {
-            _mutex = new();
             _engine = engine;
 #if false
             /*
@@ -481,6 +480,7 @@ return molArrayMap;
             }
 #endif
             _worldMetaGen = worldMetaGen;
+            _worldMetaGen.SetLoader(this);
             _init();
         }
     }

@@ -10,6 +10,7 @@ namespace engine.world
     public class Fragment
     {
         public engine.Engine Engine { get; }
+        public world.Loader Loader { get; }
 
         private string _myKey;
 
@@ -784,11 +785,13 @@ namespace engine.world
 
         public Fragment(
             in engine.Engine engine0,
+            in world.Loader loader,
             in string strKey,
             in Index3 idxFragment0,
             in Vector3 position0)
         {
             Engine = engine0;
+            Loader = loader;
             // _listCharacters = null;
             _groundResolution = world.MetaGen.GroundResolution;
             _groundNElevations = _groundResolution + 1;

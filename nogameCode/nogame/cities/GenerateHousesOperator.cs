@@ -2,11 +2,32 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-#if false
+
 namespace nogame.cities
 {
     public class GenerateHousesOperator
     {
+        private void trace(string message)
+        {
+            Console.WriteLine(message);
+        }
+
+        static private object _lock = new();
+        static private engine.joyce.Material _jMaterialHouse = null;
+
+        static private engine.joyce.Material _getHouseMaterial()
+        {
+            lock (_lock)
+            {
+                if (_jMaterialHouse == null)
+                {
+                    _jMaterialHouse = new engine.joyce.Material();
+                    _jMaterialHouse.AlbedoColor = 0xff444444;
+                }
+                return _jMaterialHouse;
+            }
+        }
+
         private engine.world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;
@@ -35,10 +56,10 @@ namespace nogame.cities
          *     The number of meters per texture.
          */
         private void _createHouseSubGeo(
-            engine.world.Fragment worldFragment,
+            in engine.world.Fragment worldFragment,
             in IList<Vector3> p,
             float h0, float mpt,
-            engine.joyce.Mesh g
+            in engine.joyce.Mesh g
         )
         {
 
@@ -58,50 +79,48 @@ namespace nogame.cities
             /*
              * 27 is the magical number we currently use to identify buildings in collisions.
              */
-            var opExtrudePoly = new ops.geom.ExtrudePoly(p, path, 27, _metersPerTexture, false, false, true);
+            var opExtrudePoly = new builtin.tools.ExtrudePoly(p, path, 27, _metersPerTexture, false, false, true);
             try {
-                opExtrudePoly.buildGeom(worldFragment, g);
-            } catch (unknown: Dynamic ) {
-                trace('GenerateHousesOperator.createHouseSubGeo(): buildGeom(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
+                opExtrudePoly.BuildGeom(worldFragment, g);
+            } catch (Exception e) {
+                trace( $"GenerateHousesOperator.createHouseSubGeo(): buildGeom(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            }
+#if false
+            try
+            {
+                opExtrudePoly.buildPhys(worldFragment, mol);
+            }
+            catch (unknown: Dynamic ) {
+                trace('GenerateHousesOperator.createHouseSubGeo(): buildPhys(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
                     + Std.string(unknown) + "\n"
                     + haxe.CallStack.toString(haxe.CallStack.callStack()));
-}
-try
-{
-    opExtrudePoly.buildPhys(worldFragment, mol);
-}
-catch (unknown: Dynamic ) {
-    trace('GenerateHousesOperator.createHouseSubGeo(): buildPhys(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
-        + Std.string(unknown) + "\n"
-        + haxe.CallStack.toString(haxe.CallStack.callStack()));
-}
+            }
+#endif
 
-}
-
-
-private function getBaseHeight(
-    allEnv: AllEnv,
-        worldFragment: WorldFragment,
-        p: Array<Vector3D>
-    ): Float
-    {
-    var xo = worldFragment.x;
-    var zo = worldFragment.z;
-    var inFragmentY = 10000.;
-    for (p0 in p)
-    {
-        try
-        {
-            var f = allEnv.worldLoader.worldLoaderGetHeightAt(xo + p0.x, zo + p0.z);
-            if (f < inFragmentY) inFragmentY = f;
         }
-        catch (exc: Dynamic) { }
-}
-return inFragmentY;
-}
 
 
-private function createNeonSignSubGeo(
+        private float GetBaseHeight(
+            in engine.world.Fragment worldFragment,
+            IList<Vector3> p)
+        {
+            float xo = worldFragment.Position.X;
+            float zo = worldFragment.Position.Z;
+            var inFragmentY = 10000f;
+            foreach(var p0 in p)
+            {
+                try
+                {
+                    var f = worldFragment.Loader.GetHeightAt(xo + p0.X, zo + p0.Z);
+                    if (f < inFragmentY) inFragmentY = f;
+                }
+                catch (Exception e) { }
+            }
+            return inFragmentY;
+        }
+
+#if false
+        private function createNeonSignSubGeo(
     allEnv: AllEnv,
         worldFragment: WorldFragment,
         p0: geom.Vector3D, pe: geom.Vector3D,
@@ -186,210 +205,215 @@ private function createNeonSignsSubGeo(
             neonG);
     }
 }
+#endif
 
 
-public function fragmentOperatorApply(
-    allEnv: AllEnv,
-        worldFragment: WorldFragment
-    ) : Void
-{
-    var cx:Float = _clusterDesc.x - worldFragment.x;
-    var cz:Float = _clusterDesc.z - worldFragment.z;
-
-    var fsh: Float = WorldMetaGen.fragmentSize / 2.0;
-
-    /*
-     * We don't apply the operator if the fragment completely is
-     * outside our boundary box (the cluster)
-     */
-    {
-        var csh: Float = _clusterDesc.size / 2.0;
-        if (
-            (cx - csh) > (fsh)
-            || (cx + csh) < (-fsh)
-            || (cz - csh) > (fsh)
-            || (cz + csh) < (-fsh)
-        )
+        public void FragmentOperatorApply(
+            engine.world.Fragment worldFragment)
         {
-            return;
-        }
-    }
+            float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
+            float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
-    // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
-    _rnd.clear();
-
-    worldFragment.addMaterialFactory(
-        "GenerateHousesOperator._matHouse", function() {
-        var mat = new engine.Material("");
-        // mat.diffuseTexturePath = "building/stealtiles1.jpg";
-        // mat.ambientTexturePath = "building/cyanwindow.jpg";
-        // mat.diffuseTexturePath = "building/yellowwindows.png";
-        mat.diffuseTexturePath = "building/buildingdiffuse.png";
-        mat.ambientTexturePath = "building/buildingambient.png";
-        mat.textureRepeat = true;
-        mat.textureSmooth = false;
-        // mat.ambientColor = 0x00ff00;
-        mat.ambient = 1.0;
-        mat.specular = 0.0;
-        return mat;
-    }
-        );
-
-    var g = new engine.PlainGeomAtom(null, null, null,
-        "GenerateHousesOperator._matHouse");
-    var mol = new engine.SimpleMolecule( [g] );
-
-    worldFragment.addMaterialFactory(
-        "GenerateHousesOperator._matHanyuLorem", function() {
-        var mat = new engine.Material("");
-        mat.ambientTexturePath = "building/lorem.png";
-        mat.diffuseTexturePath = "building/lorem.png";
-        mat.textureRepeat = true;
-        mat.textureSmooth = false;
-        mat.ambient = 10.0;
-        mat.specular = 0.0;
-        mat.isLight = true;
-        mat.isBothSides = true;
-        return mat;
-    }
-        );
-
-    var neonG = new engine.PlainGeomAtom(null, null, null,
-        "GenerateHousesOperator._matHanyuLorem");
-    var neonMol = new engine.SimpleMolecule( [neonG]);
-
-    /*
-     * Iterate through all quarters in the clusters and generate lots and houses.
-     */
-    var quarterStore = _clusterDesc.quarterStore();
-
-    for (quarter in quarterStore.getQuarters() )
-    {
-        if (quarter.isInvalid())
-        {
-            trace('GenerateHousesOperator.fragmentOperatorApply(): Skipping invalid quarter.');
-            continue;
-        }
-        /*
-         * Place on house in each quarter in the middle.    
-         */
-        var xmiddle = 0.0;
-        var ymiddle = 0.0;
-        var n = 0;
-        var delims = quarter.getDelims();
-        for (delim in delims )
-        {
-            xmiddle += delim.streetPoint.pos.x;
-            ymiddle += delim.streetPoint.pos.y;
-            ++n;
-        }
-        // trace( 'middle: $xmiddle, $ymiddle');
-        if (3 > n)
-        {
-            continue;
-        }
-        xmiddle /= n;
-        ymiddle /= n;
-
-        var haveHouse = false;
-
-
-        /*
-         * Compute some properties of this quarter.
-         * - is it convex?
-         * - what is it extend?
-         * - what is the largest side?
-         */
-        for (estate in quarter.getEstates() )
-        {
+            float fsh = engine.world.MetaGen.FragmentSize / 2.0f;
 
             /*
-             * Now create a house subgeometry for each of the buildings on the
-             * estate.
+             * We don't apply the operator if the fragment completely is
+             * outside our boundary box (the cluster)
              */
-            for (building in estate.getBuildings() )
             {
-                var orgCenter = building.getCenter();
-                var center = orgCenter.clone();
-                center.x += cx;
-                center.z += cz;
-                if (!worldFragment.isInsideLocal(center.x, center.z))
+                float csh = _clusterDesc.Size / 2.0f;
+                if (
+                    (cx - csh) > (fsh)
+                    || (cx + csh) < (-fsh)
+                    || (cz - csh) > (fsh)
+                    || (cz + csh) < (-fsh)
+                )
                 {
-                    // trace( 'No building ${orgCenter.x}, ${orgCenter.z} (abs ${center.x}, ${center.z})' );
+                    return;
+                }
+            }
+
+            // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
+            _rnd.clear();
+
+#if false
+            worldFragment.addMaterialFactory(
+                "GenerateHousesOperator._matHouse", function() {
+                var mat = new engine.Material("");
+                // mat.diffuseTexturePath = "building/stealtiles1.jpg";
+                // mat.ambientTexturePath = "building/cyanwindow.jpg";
+                // mat.diffuseTexturePath = "building/yellowwindows.png";
+                mat.diffuseTexturePath = "building/buildingdiffuse.png";
+                mat.ambientTexturePath = "building/buildingambient.png";
+                mat.textureRepeat = true;
+                mat.textureSmooth = false;
+                // mat.ambientColor = 0x00ff00;
+                mat.ambient = 1.0;
+                mat.specular = 0.0;
+                return mat;
+            }
+                );
+
+            var g = new engine.PlainGeomAtom(null, null, null,
+                "GenerateHousesOperator._matHouse");
+            var mol = new engine.SimpleMolecule( [g] );
+
+            worldFragment.addMaterialFactory(
+                "GenerateHousesOperator._matHanyuLorem", function() {
+                var mat = new engine.Material("");
+                mat.ambientTexturePath = "building/lorem.png";
+                mat.diffuseTexturePath = "building/lorem.png";
+                mat.textureRepeat = true;
+                mat.textureSmooth = false;
+                mat.ambient = 10.0;
+                mat.specular = 0.0;
+                mat.isLight = true;
+                mat.isBothSides = true;
+                return mat;
+            }
+                );
+
+            var neonG = new engine.PlainGeomAtom(null, null, null,
+                "GenerateHousesOperator._matHanyuLorem");
+            var neonMol = new engine.SimpleMolecule( [neonG]);
+#endif
+
+            engine.joyce.Mesh g = engine.joyce.Mesh.CreateListInstance();
+
+            /*
+             * Iterate through all quarters in the clusters and generate lots and houses.
+             */
+            var quarterStore = _clusterDesc.quarterStore();
+
+            foreach (var quarter in quarterStore.GetQuarters() )
+            {
+                if (quarter.IsInvalid())
+                {
+                    trace( $"GenerateHousesOperator.fragmentOperatorApply(): Skipping invalid quarter.");
                     continue;
                 }
-                else
-                {
-                    // trace( 'Building at ${orgCenter.x}, ${orgCenter.z} (abs ${center.x}, ${center.z})' );
-                }
-
-                var orgPoints = building.getPoints();
-                var fragPoints = new Array<geom.Vector3D>();
-                for (p in orgPoints )
-                {
-                    fragPoints.push(
-                        new geom.Vector3D(
-                            p.x + cx,
-                            0.,
-                            p.z + cz
-                        )
-                    );
-                }
-                // var inFragmentY = getBaseHeight( allEnv, worldFragment, fragPoints );
                 /*
-                 * TXWTODO: The 2.15 is copy/paste from GenerateClusterQuarters..
+                 * Place on house in each quarter in the middle.    
                  */
-                var inFragmentY = _clusterDesc.averageHeight + 2.15;
-                for (p in fragPoints )
+                float xmiddle = 0.0f;
+                float ymiddle = 0.0f;
+                int n = 0;
+                var delims = quarter.GetDelims();
+                foreach (var delim in delims )
                 {
-                    p.y = inFragmentY;
+                    xmiddle += delim.StreetPoint.Pos.X;
+                    ymiddle += delim.StreetPoint.Pos.Y;
+                    ++n;
+                }
+                // trace( 'middle: $xmiddle, $ymiddle');
+                if (3 > n)
+                {
+                    continue;
+                }
+                xmiddle /= n;
+                ymiddle /= n;
+
+                bool haveHouse = false;
+
+
+                /*
+                 * Compute some properties of this quarter.
+                 * - is it convex?
+                 * - what is it extend?
+                 * - what is the largest side?
+                 */
+                foreach (var estate in quarter.GetEstates() )
+                {
+
+                    /*
+                     * Now create a house subgeometry for each of the buildings on the
+                     * estate.
+                     */
+                    foreach (var building in estate.GetBuildings() )
+                    {
+                        var orgCenter = building.getCenter();
+                        var center = orgCenter;
+                        center.X += cx;
+                        center.Z += cz;
+                        if (!worldFragment.IsInsideLocal(center.X, center.Z))
+                        {
+                            // trace( 'No building ${orgCenter.x}, ${orgCenter.z} (abs ${center.x}, ${center.z})' );
+                            continue;
+                        }
+                        else
+                        {
+                            // trace( 'Building at ${orgCenter.x}, ${orgCenter.z} (abs ${center.x}, ${center.z})' );
+                        }
+
+                        var orgPoints = building.GetPoints();
+                        var fragPoints = new List<Vector3>();
+                        foreach (var p in orgPoints )
+                        {
+                            fragPoints.Add(
+                                new Vector3(
+                                    p.X + cx,
+                                    _clusterDesc.AverageHeight + 2.15f,
+                                    p.Z + cz
+                                )
+                            );
+                        }
+                        var height = building.GetHeight();
+                        try
+                        {
+                            _createHouseSubGeo(
+                                worldFragment, fragPoints, height, _metersPerTexture, g);
+                        }
+                        catch (Exception e) {
+                            trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                        }
+#if false
+                        try
+                        {
+                            createNeonSignsSubGeo(allEnv, worldFragment, fragPoints, height, neonMol, neonG);
+                        }
+                        catch (unknown: Dynamic ) {
+                            trace('GenerateHousesOperator.fragmentOperatorApply(): createNeonSignsSubGeo(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
+                                + Std.string(unknown) + "\n"
+                                + haxe.CallStack.toString(haxe.CallStack.callStack()));
+                        }
+#endif
+                        haveHouse = true;
+                    }
+
                 }
 
-                var height = building.getHeight();
-                try
-                {
-                    createHouseSubGeo(worldFragment, fragPoints, height, _metersPerTexture, mol, g);
-                }
-                catch (unknown: Dynamic ) {
-        trace('GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
-            + Std.string(unknown) + "\n"
-            + haxe.CallStack.toString(haxe.CallStack.callStack()));
-    }
-    try
-    {
-        createNeonSignsSubGeo(allEnv, worldFragment, fragPoints, height, neonMol, neonG);
-    }
-    catch (unknown: Dynamic ) {
-        trace('GenerateHousesOperator.fragmentOperatorApply(): createNeonSignsSubGeo(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
-            + Std.string(unknown) + "\n"
-            + haxe.CallStack.toString(haxe.CallStack.callStack()));
-    }
-    haveHouse = true;
-    }
+            }
 
-}
+            if (g.IsEmpty())
+            {
+                return;
+            }
 
+            try
+            {
+                // var mol = new engine.SimpleMolecule( [g] );
+                // TXWTODO: This is too inefficient. We should also use a factory here.
+                engine.joyce.InstanceDesc instanceDesc = new();
+                instanceDesc.Meshes.Add(g);
+                instanceDesc.MeshMaterials.Add(0);
+                instanceDesc.Materials.Add(_getHouseMaterial());
+                worldFragment.AddStaticMolecule(instanceDesc);
+            }
+            catch (Exception e)
+            {
+                trace($"Unknown exception: {e}");
+            }
+            // worldFragment.AddStaticMolecule(neonMol);
         }
-
-        if (g.isEmpty())
-{
-    return;
-}
-
-worldFragment.addStaticMolecule(mol);
-worldFragment.addStaticMolecule(neonMol);
-    }
     
 
-    public function new(
-        clusterDesc: ClusterDesc,
-        strKey: String
-    )
-    {
-        _clusterDesc = clusterDesc;
-        _myKey = strKey;
-        _rnd = new engine.RandomSource(strKey);
-    }
+        public GenerateHousesOperator(
+            engine.world.ClusterDesc clusterDesc,
+            string strKey)
+        {
+            _clusterDesc = clusterDesc;
+            _myKey = strKey;
+            _rnd = new engine.RandomSource(strKey);
+        }
     }
 }
-#endif
