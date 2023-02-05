@@ -18,6 +18,8 @@ namespace nogame
 
         private DefaultEcs.Entity _eCamera;
 
+        private DefaultEcs.Entity _eShip;
+
         private engine.world.Loader _worldLoader;
         private engine.world.MetaGen _worldMetaGen;
 
@@ -88,6 +90,28 @@ namespace nogame
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 40f, 100f));
             }
+
+            /*
+             * Create a ship
+             */
+            {
+                _eShip = _ecsWorld.CreateEntity();
+                var jShipMesh = engine.joyce.mesh.Tools.CreateCubeMesh(2f);
+                _aTransform.SetPosition(_eShip, new Vector3(0f, 29f, 0f));
+                _aTransform.SetVisible(_eShip, true);
+                var jShipMaterial = new engine.joyce.Material();
+                jShipMaterial.AlbedoColor = 0xff00bbee;
+                engine.joyce.InstanceDesc jInstanceDesc = new();
+                jInstanceDesc.Meshes.Add(jShipMesh);
+                jInstanceDesc.MeshMaterials.Add(0);
+                jInstanceDesc.Materials.Add(jShipMaterial);
+                _eShip.Set<engine.joyce.components.Instance3>(
+                    new engine.joyce.components.Instance3(jInstanceDesc));
+            }
+
+            /*
+             * Create a camera controller that directly controls the camera with wasd
+             */
             _wasdController = new(_engine, _eCamera);
             _wasdController.ActivateController();
 
