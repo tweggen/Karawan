@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-#if false
+
 namespace builtin.tools
 {
     public class ExtrudePoly
@@ -28,16 +28,26 @@ namespace builtin.tools
             var vh = _path[0];
             var p = _poly;
 
+#if false
             /*
              * Local uv, including inversion
              */
             Action<float, float> luv = (float u, float v) => {
-                if (_inverseTexture) {
-                    g.UV(1f-u, 1f-v);
-                } else {
-                    g.UV(u, v);
+                if (_inverseTexture) g.UV(1f-u, 1f-v); else g.UV(u, v);
                 }
             };
+#endif
+            float it;
+            float ot;
+            if( _inverseTexture )
+            {
+                it = -1f;
+                ot = 1f;
+            } else
+            {
+                it = 1f;
+                ot = 0f;
+            }
 
             var q = _inverseTexture;
 
@@ -124,7 +134,7 @@ namespace builtin.tools
                 /*
                  * Bottom ring
                  */
-                g.p(vc); luv(currU / du, 1f);
+                g.p(vc); g.UV(ot+it*currU/du, ot+it*1f);
 
                 /*
                  * Complete rings
@@ -133,7 +143,7 @@ namespace builtin.tools
                 /*
                 * This is the current position along the path.
                 */
-                for (int i=0; i<nCompleteRows; i++)
+                for (int row=0; i<nCompleteRows; row++)
                 {
                     vc += vrh;
 
@@ -143,24 +153,24 @@ namespace builtin.tools
                      * 
                      * TXWTODO: Replace 0.;1. with the corresponding segment of the texture.
                      */
-                    g.p(vc); luv(currU / du, 0f);
-                    g.p(vc); luv(currU / du, 1f);
+                    g.p(vc); g.UV(ot+it*currU/du, ot+it*0f);
+                    g.p(vc); g.UV(ot+it*currU/du, ot+it*1f);
                 }
 
                 /*
                  * Ceiling.
                  */
                 vc += lrh;
-                g.p(vc); luv(currU / du, 1f-lastRowHeight / _mpt);
+                g.p(vc); g.UV(ot+it*currU/du, ot*it*(1f-lastRowHeight/_mpt));
                 // g.p1(vc); g.uv(currU/du, 1. );
 
                 /*
                  * Compute the "width" of this facade to get the 
                  * texture right.
                  */
-                var uDiff = p[(i + 1) % p.Count].clone();
-                uDiff.subtract(p[i]);
-                var l = uDiff.length();
+                var uDiff = p[(i + 1) % p.Count];
+                uDiff -=  p[i];
+                var l = uDiff.Length();
                 currU += l;
             }
 
@@ -205,6 +215,9 @@ namespace builtin.tools
                  * Then we create triangulation indices and add them.
                  */
                 i0 = g.GetNextVertexIndex();
+#if true
+                builtin.tools.Triangulate.ToMesh(p, g);
+#else
                 for (int j=0; j<p.Count; j++)
                 {
                     /*
@@ -212,8 +225,10 @@ namespace builtin.tools
                      */
                     Vector3 vc = p[j];
                     vc += vh;
-                    g.p(vc); luv(0, 0);
+                    g.p(vc); g.UV(ot+it*0f, ot+it*0f);
                 }
+
+
                 var indices = builtin.tools.triangulateConcave(p);
                 var k = 0;
                 while (k < indices.Count)
@@ -222,12 +237,14 @@ namespace builtin.tools
                     g.Idx(i0 + indices[k + 2], i0 + indices[k + 1], i0 + indices[k]);
                     k += 3;
                 }
+#endif
             }
         }
 
 
-        public function buildPhys(
-            worldFragment: WorldFragment,
+#if false
+        public void BuildPhys(
+            world.Fragment worldFragment,
             mol: engine.SimpleMolecule
         ): Void
     {
@@ -309,33 +326,32 @@ namespace builtin.tools
     mol.moleculeAddPhysAtom(physAtom);
     }
     }
-
-
-    /**
-     * @param poly
-     *     The polygon to be used for extrusion. The polygon needs to be counterclockwise.
-     */
-    public function new(
-        poly: Array<Vector3D>,
-        path: Array<Vector3D>,
-        physIndex: Int,
-        metersPerTexture: Float,
-        inverseTexture: Bool,
-        addFloor: Bool,
-        addCeiling: Bool
-    ) {
-        if( null==poly ) {
-            trace( 'ExtrudePoly(): Got a null polygon.' );
-            throw 'ExtrudePoly(): Got a null polygon.';
-        }
-       _poly = poly;
-        _path = path;
-        _physIndex = physIndex;
-        _mpt = metersPerTexture;
-        _inverseTexture = inverseTexture;
-        _addFloor = addFloor;
-        _addCeiling = addCeiling;
-    }
-}    }
-}
 #endif
+
+        /**
+         * @param poly
+         *     The polygon to be used for extrusion. The polygon needs to be counterclockwise.
+         */
+        public ExtrudePoly(
+            IList<Vector3> poly,
+            IList<Vector3> path,
+            int physIndex,
+            float metersPerTexture,
+            bool inverseTexture,
+            bool addFloor,
+            bool addCeiling
+        ) {
+            if( null==poly ) {
+                trace( "ExtrudePoly(): Got a null polygon." );
+                throw new ArgumentNullException( "ExtrudePoly(): Got a null polygon." );
+            }
+            _poly = new List<Vector3>( poly );
+            _path = new List<Vector3>( path );
+            _physIndex = physIndex;
+            _mpt = metersPerTexture;
+            _inverseTexture = inverseTexture;
+            _addFloor = addFloor;
+            _addCeiling = addCeiling;
+        }
+    }
+}
