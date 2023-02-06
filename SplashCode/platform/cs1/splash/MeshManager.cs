@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using DefaultEcs.Resource;
 using Raylib_CsLo;
+using System;
 using System.Collections.Generic;
 
 
@@ -30,6 +31,7 @@ namespace Karawan.platform.cs1.splash
 
         protected override unsafe void Unload(engine.joyce.Mesh jMesh, RlMeshEntry rlMeshEntry)
         {
+            Console.WriteLine($"MeshManager: Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
             Raylib.UnloadMesh(rlMeshEntry.RlMesh);
             base.Unload(jMesh, rlMeshEntry);
         }

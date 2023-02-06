@@ -9,6 +9,21 @@ namespace engine.world
 {
     public class Fragment
     {
+        static private object _lock = new();
+        static private engine.joyce.Material _jMaterialGround = null;
+
+        static private engine.joyce.Material _getGroundMaterial()
+        {
+            lock(_lock) {
+                if( _jMaterialGround==null )
+                {
+                    joyce.Texture jGroundTexture = new joyce.Texture("assets\\gridlines1.png");
+                    _jMaterialGround = new joyce.Material(jGroundTexture);
+                }
+                return _jMaterialGround;
+            }
+        }
+
         public engine.Engine Engine { get; }
         public world.Loader Loader { get; }
 
@@ -37,7 +52,7 @@ namespace engine.world
          * The list of (static) molecules.
          */
         private List<Entity> _eStaticMolecules;
-        private Entity _eGround;
+        private Nullable<Entity> _eGround;
 
         /**
          * Test, wether the given world coordinate is inside the cluster.
@@ -199,18 +214,16 @@ namespace engine.world
         private void _createGround()
         {
             joyce.Mesh jMeshTerrain = world.TerrainKnitter.BuildMolecule(_elevations, 1);
-            joyce.Texture jGroundTexture = new joyce.Texture("assets\\gridlines1.png");
-            joyce.Material jGroundMaterial = new joyce.Material(jGroundTexture);
             engine.joyce.InstanceDesc jInstanceDesc = new();
             jInstanceDesc.Meshes.Add(jMeshTerrain);
             jInstanceDesc.MeshMaterials.Add(0);
-            jInstanceDesc.Materials.Add(jGroundMaterial);
+            jInstanceDesc.Materials.Add(_getGroundMaterial());
 
             _eGround = Engine.CreateEntity();
-            _eGround.Set<engine.joyce.components.Instance3>(
+            _eGround.Value.Set<engine.joyce.components.Instance3>(
                     new engine.joyce.components.Instance3(jInstanceDesc));
             Engine.AddInstance3(
-                _eGround, true, 0xffffffff,
+                _eGround.Value, true, 0xffffffff,
                 Position,
                 new Quaternion());
         }
@@ -240,23 +253,6 @@ namespace engine.world
         {
             // Re-seed to what we are.
             _rnd.clear();
-#if false
-            addMaterialFactory(
-                "WorldFragment._matGround", function() {
-                var mat = new engine.Material("");
-                mat.diffuseTexturePath = "terrain/gridlines.png";
-                mat.tilemapTexturePath = "terrain/tilemap.png";
-                mat.tilemapAtlasSize = new geom.Point(4, 4);
-                mat.textureRepeat = true;
-                mat.textureSmooth = false;
-                mat.ambientColor = 0xffffff;
-                mat.ambient = 1.0;
-                mat.specular = 0.2;
-                return mat;
-            });
-
-            _platformFragment = _allEnv.pfGame.platformCreateFragment(this);
-#endif
             _createGround();
 
             return 0;
@@ -275,6 +271,23 @@ namespace engine.world
 
         public void WorldFragmentRemove()
         {
+            {
+                DefaultEcs.Entity eGround;
+                List<DefaultEcs.Entity> eStaticMolecules;
+                lock (_lock)
+                {
+                    eGround = _eGround.Value;
+                    _eGround = null;
+                    eStaticMolecules = new List<DefaultEcs.Entity>(_eStaticMolecules);
+                    _eStaticMolecules.Clear();
+                }
+                eGround.Dispose();
+                foreach (var eStatic in eStaticMolecules)
+                {
+                    eStatic.Dispose();
+                }
+                eStaticMolecules.Clear();
+            }
 #if false
             /*
              * Remove characters
@@ -773,14 +786,15 @@ namespace engine.world
                 new Quaternion());
 
             /*
-                * Remember the molecule to be able to remove its contents later again.
-                */
+             * Remember the molecule to be able to remove its contents later again.
+             */
             _eStaticMolecules.Add(entity);
 
             /*
              * As soon we show this fragment, we make all the static molecules visible.
              * Only then all the actual resources will be created by the engine.
              */
+
         }
 
         public Fragment(

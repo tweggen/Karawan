@@ -33,6 +33,7 @@ namespace engine.world
         public static bool TRACE_LOAD_FONT = false;
         public static bool TRACE_LOAD_BYTES = false;
         public static bool TRACE_PLATFORM_MOLECULE_ADDING = true;
+        public static bool TRACE_FRAGMENT_OPEARTORS = false;
 
         public static float CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0f;
 
@@ -48,8 +49,6 @@ namespace engine.world
         private List<engine.world.IWorldOperator> _worldOperators;
         private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
         private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList;
-
-        private bool _traceFragmentOperators = true;
 
         public List<Func<string,ClusterDesc,world.IFragmentOperator>> 
             GetClusterFragmentOperatorFactoryList()
@@ -85,7 +84,7 @@ namespace engine.world
             if( null==fragment ) {
                 throw new ArgumentException( $"WorldMetaGen.applyFragmentOperators(): fragment is null." );
             }
-            if (_traceFragmentOperators) trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
+            if (TRACE_FRAGMENT_OPEARTORS) trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
             foreach( KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators ) {
                 try
                 {
@@ -95,14 +94,14 @@ namespace engine.world
                     if (dt > 0.001)
                     {
                         var oppath = kvp.Value.FragmentOperatorGetPath();
-                        if (_traceFragmentOperators) trace($"WorldMetaGen.applyFragmentOperators(): Applying operator '{oppath}' took {dt}.");
+                        if (TRACE_FRAGMENT_OPEARTORS) trace($"WorldMetaGen.applyFragmentOperators(): Applying operator '{oppath}' took {dt}.");
                     }
                 }
                 catch (Exception e) {
                     trace($"WorldMetaGen.applyFragmentOperators(): Unknown exception applying fragment operator '{kvp.Value.FragmentOperatorGetPath()}': {e}')");
                 }
             }
-            if (_traceFragmentOperators) trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
+            if (TRACE_FRAGMENT_OPEARTORS) trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
         }
 
 

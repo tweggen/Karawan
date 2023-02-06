@@ -43,6 +43,8 @@ namespace engine.world
         private int _lastLoadedIteration = 0;
         private Dictionary<string,world.Fragment> _mapFrags;
 
+        private static int WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS = 2;
+
         // private var _physics: engine.Physics = null;
 
 #if false
@@ -178,6 +180,7 @@ return molArrayMap;
 
         private void _releaseFragmentList(IList<string> eraseList )
         {
+            // TXWTODO: MOtex
             foreach (var strKey in eraseList )
             {
                 var frag = _mapFrags[strKey];
@@ -236,9 +239,9 @@ return molArrayMap;
             ++_lastLoadedIteration;
 
             if (world.MetaGen.TRACE_WORLD_LOADER) trace("WorldMetaGen.worldLoaderProvideFragments(): Entered new terrain " + strCurr + ", loading.");
-            for (int dz=-2; dz<3; ++dz )
+            for (int dz=-WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; dz<= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; ++dz )
             {
-                for (int dx=-2; dx<3; ++dx )
+                for (int dx=-WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; dx<= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; ++dx )
                 {
                     int i1 = i + dx;
                     int j1 = j;
@@ -337,8 +340,8 @@ return molArrayMap;
             }
 
             /*
-                * Actually do release the list of fragments we do not need anymore.
-                */
+             * Actually do release the list of fragments we do not need anymore.
+             */
             _releaseFragmentList(eraseList);
 
         }
