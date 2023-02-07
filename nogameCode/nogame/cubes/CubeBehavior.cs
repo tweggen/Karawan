@@ -12,7 +12,7 @@ namespace nogame.cubes
         engine.streets.StreetPoint _streetPoint;
         StreetNavigationController _snc;
 
-        public void OnBehave(in DefaultEcs.Entity entity, float dt)
+        public void Behave(in DefaultEcs.Entity entity, float dt)
         {
             _snc.NavigatorBehave(dt);
             _engine.GetATransform().SetTransforms(

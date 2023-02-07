@@ -17,6 +17,8 @@ namespace engine
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
+        private engine.behave.systems.BehaviorSystem _systemBehave;
+
         private SortedDictionary<float, IScene> _dictScenes;
 
         private Dictionary<string, string> _dictConfigParams = new();
@@ -87,6 +89,7 @@ namespace engine
 
         public void _onLogicalFrame(float dt)
         {
+            _systemBehave.Update(dt);
             LogicalFrame?.Invoke(this, dt);
 
             Simulation.Timestep(dt);
@@ -193,6 +196,7 @@ namespace engine
             );
             _aHierarchy = new engine.hierarchy.API(this);
             _aTransform = new engine.transform.API(this);
+            _systemBehave = new(this);
         }
 
 
