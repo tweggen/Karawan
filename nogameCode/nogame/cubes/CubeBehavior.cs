@@ -29,6 +29,7 @@ namespace nogame.cubes
             in engine.streets.StreetPoint streetPoint0
             )
         {
+            _engine = engine0;
             _clusterDesc = clusterDesc0;
             _streetPoint = streetPoint0;
             _snc = new StreetNavigationController(_clusterDesc, _streetPoint);

@@ -49,7 +49,7 @@ namespace nogame.cubes
         private engine.RandomSource _rnd;
         private string _myKey;
 
-        private bool _trace = false;
+        private bool _trace = true;
 
         private int _characterIndex = 0;
 

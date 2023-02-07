@@ -81,7 +81,7 @@ namespace nogame.cities
                 else
                 {
                     _isAB = false;
-                    _targetPoint = _currentStroke.B;
+                    _targetPoint = _currentStroke.A;
                 }
 
             /*
