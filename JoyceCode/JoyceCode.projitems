@@ -9,6 +9,7 @@
     <Import_RootNamespace>JoyceCode</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)engine\behave\systems\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\joyce\systems\" />
   </ItemGroup>
   <ItemGroup>
@@ -17,6 +18,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Cache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\CacheEntry.cs" />
@@ -36,6 +38,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\OldParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Parent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\systems\NewParentSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\IBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />

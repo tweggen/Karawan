@@ -252,7 +252,7 @@ namespace nogame.cities
     }
 
 
-    public Quaternion navigatorGetAngularVelocity()
+    public Quaternion NavigatorGetAngularVelocity()
         {
         return new Quaternion( 0f, 0f, 0f, 1f );
     }

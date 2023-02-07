@@ -65,7 +65,6 @@ namespace nogame.playerhover
                     new engine.joyce.components.Instance3(jInstanceDesc));
             }
 
-
         }
 
         public Part() { }
