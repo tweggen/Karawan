@@ -42,14 +42,12 @@ namespace Karawan.platform.cs1.splash.systems
         private MaterialManager _materialManager;
 
         private Dictionary<RlMaterialEntry, MaterialBatch> _materialBatches;
+        private Dictionary<RlMaterialEntry, MaterialBatch> _transparentMaterialBatches;
 
-        private void _renderBatches()
+
+        private void _renderMaterialBatches(in Dictionary<RlMaterialEntry, MaterialBatch> mb)
         {
-            if( null==_materialBatches )
-            {
-                return;
-            }
-            foreach( var materialItem in _materialBatches )
+            foreach (var materialItem in mb)
             {
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
@@ -59,7 +57,7 @@ namespace Karawan.platform.cs1.splash.systems
 #if NET6_0_OR_GREATER
                     var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
 #else
-                    Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
+                        Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
                     Raylib_CsLo.Raylib.DrawMeshInstanced(
                             meshItem.Key.RlMesh,
@@ -68,16 +66,28 @@ namespace Karawan.platform.cs1.splash.systems
                             nMatrices
                     );
 #else
-                    for ( int i=0; i< nMatrices; ++i )
-                    {
-                        Raylib_CsLo.Raylib.DrawMesh(
-                            meshItem.Key.RlMesh,
-                            materialItem.Key.RlMaterial,
-                            (Matrix4x4) meshItem.Value.Matrices[i]
-                        );
-                    }
+                        for ( int i=0; i< nMatrices; ++i )
+                        {
+                            Raylib_CsLo.Raylib.DrawMesh(
+                                meshItem.Key.RlMesh,
+                                materialItem.Key.RlMaterial,
+                                (Matrix4x4) meshItem.Value.Matrices[i]
+                            );
+                        }
 #endif
                 }
+            }
+        }
+
+        private void _renderBatches()
+        {
+            if (null != _materialBatches)
+            {
+                _renderMaterialBatches(_materialBatches);
+            }
+            if (null != _transparentMaterialBatches)
+            {
+                _renderMaterialBatches(_transparentMaterialBatches);
             }
         }
 
@@ -105,12 +115,20 @@ namespace Karawan.platform.cs1.splash.systems
                     /*
                      * Do we have an entry for the material?
                      */
+                    Dictionary<RlMaterialEntry, MaterialBatch> mbs;
+                    if (!rlMaterialEntry.HasTransparency)
+                    {
+                        mbs = _materialBatches;
+                    } else
+                    {
+                        mbs = _transparentMaterialBatches;
+                    }
                     MaterialBatch materialBatch;
-                    _materialBatches.TryGetValue( rlMaterialEntry, out materialBatch );
+                    mbs.TryGetValue( rlMaterialEntry, out materialBatch );
                     if (null == materialBatch)
                     {
                         materialBatch = new MaterialBatch();
-                        _materialBatches[rlMaterialEntry] = materialBatch;
+                        mbs[rlMaterialEntry] = materialBatch;
                     }
 
                     /*
@@ -144,6 +162,7 @@ namespace Karawan.platform.cs1.splash.systems
              * Null out the references after rendering.
              */
             _materialBatches = new();
+            _transparentMaterialBatches = new();
         }
 
         protected override void Update(uint cameraMask, ReadOnlySpan<DefaultEcs.Entity> entities)
@@ -160,6 +179,7 @@ namespace Karawan.platform.cs1.splash.systems
             _engine = engine;
             _materialManager = materialManager;
             _materialBatches = new();
+            _transparentMaterialBatches = new();
         }
     }
 }

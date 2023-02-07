@@ -84,7 +84,7 @@ namespace Karawan.platform.cs1.splash
             if (true)
             {
                 int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
-                var colAmbient = new Vector4(0.1f, 0.2f, 0.3f, 0.0f);
+                var colAmbient = new Vector4(0.9f, 0.6f, 0.9f, 1.0f);
                 Raylib.SetShaderValue(
                     _rlInstanceShaderEntry.RlShader,
                     ambientLoc, colAmbient,
@@ -106,7 +106,7 @@ namespace Karawan.platform.cs1.splash
             var vecLight = new Vector3(50f, 50f, 0f);
             var vecZero = new Vector3(0, 0, 0);
             _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
-                new Color(255,255,255,0), ref _rlInstanceShaderEntry.RlShader); 
+                new Color(255,255,255,255), ref _rlInstanceShaderEntry.RlShader); 
 
             loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
             loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
@@ -169,6 +169,9 @@ namespace Karawan.platform.cs1.splash
             }
             // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
 
+            if(jMaterial.HasTransparency) { 
+                rlMaterialEntry.HasTransparency = true;
+            }
             return rlMaterialEntry;
         }
 
