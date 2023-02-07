@@ -6,7 +6,7 @@ using engine;
 using engine.world;
 using engine.streets;
 
-namespace nogameCode.nogame.cubes
+namespace nogame.cubes
 {
     internal class GenerateCubeCharacterOperator : engine.world.IFragmentOperator
     {
@@ -140,15 +140,14 @@ namespace nogameCode.nogame.cubes
                         DefaultEcs.Entity eCube;
                         eCube = worldFragment.Engine.GetEcsWorld().CreateEntity();
 
-                        worldFragment.Engine.GetATransform().SetPosition(eCube, new Vector3(0f, 29f, 0f));
-                        worldFragment.Engine.GetATransform().SetVisible(eCube, true);
-
                         engine.joyce.InstanceDesc jInstanceDesc = new();
                         jInstanceDesc.Meshes.Add(_getCubeMesh());
                         jInstanceDesc.MeshMaterials.Add(0);
                         jInstanceDesc.Materials.Add(_getCubeMaterial());
-                        eCube.Set<engine.joyce.components.Instance3>(
-                            new engine.joyce.components.Instance3(jInstanceDesc));
+                        eCube.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+
+                        eCube.Set(new engine.behave.components.Behavior(
+                            new CubeBehavior(worldFragment.Engine, _clusterDesc, chosenStreetPoint) ) );
 
                     }
                 }

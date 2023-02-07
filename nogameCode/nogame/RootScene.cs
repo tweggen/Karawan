@@ -52,6 +52,8 @@ namespace nogame
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
                     new nogame.cities.GenerateHousesOperator(clusterDesc, newKey)
             );
+            _worldMetaGen.AddClusterFragmentOperatorFactory(
+                )
             _worldMetaGen.SetupComplete();
 
             _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);

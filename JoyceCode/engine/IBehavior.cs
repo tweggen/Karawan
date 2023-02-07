@@ -6,6 +6,6 @@ namespace engine
 {
     public interface IBehavior
     {
-        public void OnBehave(float dt);
+        public void OnBehave(in DefaultEcs.Entity entity, float dt);
     }
 }

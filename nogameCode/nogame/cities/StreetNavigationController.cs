@@ -121,12 +121,8 @@ namespace nogame.cities
     }
 
 
-    public void NavigatorBehave()
+    public void NavigatorBehave(float difftime)
     {
-        /*
-            * We shall behave for one logical frame.
-            */
-        float difftime = 1.0f/MetaGen.nFrames;
 
         /*
             * The meters to go.
@@ -304,7 +300,7 @@ namespace nogame.cities
 
         _loadStartPoint();
 
-        NavigatorBehave();
+        NavigatorBehave(1f/60f);
     }    }
 }
 
