@@ -45,6 +45,8 @@ namespace engine.world
 
         private static int WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS = 2;
 
+        private engine.behave.systems.WiperSystem _wiperSystem;
+
         // private var _physics: engine.Physics = null;
 
 #if false
@@ -325,24 +327,48 @@ return molArrayMap;
             }
             _fragCurrent = _mapFrags[strCurr];
 
-            var eraseList = new List<string>();
-
-            /*
-             * Find out the list of fragments we do not need any more.
-             */
-            foreach (KeyValuePair<string,Fragment> kvp in _mapFrags )
             {
-                var frag = kvp.Value;
-                if (frag.LastIteration < _lastLoadedIteration)
+                var eraseList = new List<string>();
+
+                /*
+                 * Find out the list of fragments we do not need any more.
+                 */
+                foreach (KeyValuePair<string, Fragment> kvp in _mapFrags)
                 {
-                    eraseList.Add(kvp.Key);
+                    var frag = kvp.Value;
+                    if (frag.LastIteration < _lastLoadedIteration)
+                    {
+                        eraseList.Add(kvp.Key);
+                    }
+                }
+
+
+                if (eraseList.Count > 0)
+                {
+                    /*
+                     * Remove behaviors outside aabb.
+                     */
+                    Vector3 vAA = new(
+                        _fragCurrent.Position.X - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize,
+                        _fragCurrent.Position.Y - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize,
+                        _fragCurrent.Position.Z - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize
+                        );
+                    Vector3 vBB = new(
+                        _fragCurrent.Position.X + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize,
+                        _fragCurrent.Position.Y + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize,
+                        _fragCurrent.Position.Z + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize
+                        );
+                    List<Vector3> aabb = new();
+                    aabb.Add(vAA); 
+                    aabb.Add(vBB);
+                    _wiperSystem.Update(aabb);
+
+                    /*
+                     * Actually do release the list of fragments we do not need anymore.
+                     */
+                    _releaseFragmentList(eraseList);
                 }
             }
-
-            /*
-             * Actually do release the list of fragments we do not need anymore.
-             */
-            _releaseFragmentList(eraseList);
 
         }
 
@@ -482,6 +508,7 @@ return molArrayMap;
                 unit.run();
             }
 #endif
+            _wiperSystem = new(engine);
             _worldMetaGen = worldMetaGen;
             _worldMetaGen.SetLoader(this);
             _init();

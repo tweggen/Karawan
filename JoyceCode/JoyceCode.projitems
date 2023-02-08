@@ -19,6 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\BehaviorSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\WiperSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Cache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\CacheEntry.cs" />

@@ -9,7 +9,6 @@ namespace engine.behave.systems
     {
         private engine.Engine _engine;
 
-
         protected override void Update(
             float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
@@ -30,7 +29,7 @@ namespace engine.behave.systems
 
         }
 
-        public BehaviorSystem( engine.Engine engine )
+        public BehaviorSystem(in engine.Engine engine )
                 : base (engine.GetEcsWorld())
         {
             _engine = engine;
