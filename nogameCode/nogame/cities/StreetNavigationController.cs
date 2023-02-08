@@ -226,7 +226,7 @@ namespace nogame.cities
             /*
              * We are on streets, not on terrain, so we use the cluster's average height.
              */
-            _pos.Y = _clusterDesc.AverageHeight+5f;
+            _pos.Y = _clusterDesc.AverageHeight;
     }
 
 

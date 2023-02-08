@@ -1,7 +1,5 @@
 ﻿using nogame.cities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Numerics;
 
 namespace nogame.cubes
 {
@@ -12,6 +10,8 @@ namespace nogame.cubes
         engine.streets.StreetPoint _streetPoint;
         StreetNavigationController _snc;
 
+        private static Vector3 _cubeHeight = new Vector3(0f, 4f, 0f);
+
         public void Behave(in DefaultEcs.Entity entity, float dt)
         {
             _snc.NavigatorBehave(dt);
@@ -19,7 +19,7 @@ namespace nogame.cubes
                 entity,
                 true, 0xffffffff,
                 _snc.NavigatorGetOrientation(),
-                _snc.NavigatorGetWorldPos()
+                _cubeHeight + _snc.NavigatorGetWorldPos()
             );
         }
 
