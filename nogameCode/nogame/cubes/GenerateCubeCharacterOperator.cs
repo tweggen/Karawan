@@ -43,8 +43,6 @@ namespace nogame.cubes
         }
 
 
-
-
         private ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;

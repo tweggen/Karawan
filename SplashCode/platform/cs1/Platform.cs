@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using engine;
 using Raylib_CsLo;
 
@@ -7,14 +8,19 @@ namespace Karawan.platform.cs1
     public class Platform 
         : engine.IPlatform
     {
+        private object _lock = new object();
         private engine.Engine _engine;
         private engine.ControllerState _controllerState;
+        private Vector2 _vMouseMove;
 
         private splash.API _aSplash;
 
         public void SetEngine(engine.Engine engine)
         {
-            _engine = engine;
+            lock (_lock)
+            {
+                _engine = engine;
+            }
         }
 
         private void _physFrameUpdateControllerState()
@@ -67,6 +73,16 @@ namespace Karawan.platform.cs1
             }
         }
 
+        
+        private void _physFrameReadMouseMove()
+        {
+            Vector2 vnew = Raylib.GetMouseDelta();
+            lock (_lock)
+            {
+                _vMouseMove += vnew;
+            }
+        }
+
 
         public void Execute()
         {
@@ -82,6 +98,7 @@ namespace Karawan.platform.cs1
             {
                 _physFrameUpdateControllerState();
                 _physFrameReadKeyEvents();
+                _physFrameReadMouseMove();
 
                 /*
                  * Call the render operations.
@@ -100,9 +117,22 @@ namespace Karawan.platform.cs1
             _aSplash.Render();
         }
 
+
+        public void GetMouseMove(out Vector2 vMouseMove)
+        {
+            lock (_lock)
+            {
+                vMouseMove = _vMouseMove;
+                _vMouseMove = new Vector2(0f, 0f);
+            }
+        }
+
         public void GetControllerState(out ControllerState controllerState)
         {
-            controllerState = _controllerState;
+            lock (_lock)
+            {
+                controllerState = _controllerState;
+            }
         }
 
         public engine.IUI CreateUI()
@@ -130,6 +160,7 @@ namespace Karawan.platform.cs1
             {
                 Raylib.ToggleFullscreen();
             }
+            Raylib.DisableCursor();
             Raylib.SetTargetFPS(60);
 
             _aSplash = new splash.API(_engine);
@@ -138,6 +169,7 @@ namespace Karawan.platform.cs1
         public Platform(string[] args)
         {
             _controllerState = new();
+            _vMouseMove = new Vector2(0f, 0f);
         }
 
         static public engine.Engine EasyCreatePlatform(string[] args, out Karawan.platform.cs1.Platform platform)

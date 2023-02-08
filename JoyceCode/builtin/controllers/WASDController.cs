@@ -15,6 +15,9 @@ namespace builtin.controllers
         {
             engine.ControllerState controllerState;
             _engine.GetControllerState(out controllerState);
+            Vector2 vMouseMove;
+            _engine.GetMouseMove(out vMouseMove);
+
             var cTransform3 = _entity.Get<engine.transform.components.Transform3>();
             var cToParent = _entity.Get<engine.transform.components.Transform3ToParent>();
 
@@ -33,20 +36,33 @@ namespace builtin.controllers
             var frontMotion = controllerState.WalkForward - controllerState.WalkBackward;
             if (frontMotion != 0f)
             {
-                float meterPerSecond = 200f;
+                float meterPerSecond = 50f;
                 cTransform3.Position += vFront * (frontMotion / 256f * (meterPerSecond * dt) );
                 haveChange = true;
             }
+#if false
             var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
             if (turnMotion != 0f)
             {
-                float radiansPerSecond = (float)Math.PI /2f;
-                cTransform3.Rotation = 
+                float radiansPerSecond = (float)Math.PI / 2f;
+                cTransform3.Rotation =
                     Quaternion.Concatenate(
-                        cTransform3.Rotation, 
+                        cTransform3.Rotation,
                         Quaternion.CreateFromAxisAngle(vUp, turnMotion / 256f * radiansPerSecond * dt));
                 haveChange = true;
             }
+#endif
+#if true
+            var turnMotion = (float)vMouseMove.X * 0.1f / 180.0f * (float)Math.PI;
+            if (turnMotion != 0f)
+            {
+                cTransform3.Rotation =
+                    Quaternion.Concatenate(
+                        cTransform3.Rotation,
+                        Quaternion.CreateFromAxisAngle(vUp, turnMotion));
+                haveChange = true;
+            }
+#endif
             if (haveChange)
             {
                 _aTransform.SetTransforms(_entity, cTransform3.IsVisible, cTransform3.CameraMask, cTransform3.Rotation, cTransform3.Position);

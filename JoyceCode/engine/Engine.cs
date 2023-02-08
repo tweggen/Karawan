@@ -171,6 +171,12 @@ namespace engine
             _platform.GetControllerState( out controllerState );
         }
 
+        public void GetMouseMove( out Vector2 vMouseMove )
+        {
+            _platform.GetMouseMove(out vMouseMove);
+        }
+
+
         public IUI CreateUI()
         {
             return _platform.CreateUI();

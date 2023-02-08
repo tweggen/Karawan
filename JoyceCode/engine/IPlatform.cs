@@ -1,4 +1,7 @@
 ﻿
+using System.Numerics;
+
+
 namespace engine
 {
     public interface IPlatform
@@ -9,5 +12,7 @@ namespace engine
         public void Render3D();
 
         public void GetControllerState(out ControllerState controllerState);
+
+        public void GetMouseMove(out Vector2 vMouseMove);
     }
 }
