@@ -5,7 +5,7 @@ using System.Text;
 
 namespace nogame.playerhover
 {
-    internal class Part // : engine.IPart
+    internal class Part : engine.IPart
     {
         private object _lock = new object();
 
@@ -27,6 +27,7 @@ namespace nogame.playerhover
 
         public void PartDeactivate()
         {
+            _engine.RemovePart(this);
             lock (_lock)
             {
                 _engine = null;
@@ -52,11 +53,11 @@ namespace nogame.playerhover
              */
             {
                 _eShip = _ecsWorld.CreateEntity();
-                var jShipMesh = engine.joyce.mesh.Tools.CreateCubeMesh(2f);
-                _aTransform.SetPosition(_eShip, new Vector3(0f, 29f, 0f));
+                var jShipMesh = engine.joyce.mesh.Tools.CreateCubeMesh(5f);
+                _aTransform.SetPosition(_eShip, new Vector3(0f, 35f, 0f));
                 _aTransform.SetVisible(_eShip, true);
                 var jShipMaterial = new engine.joyce.Material();
-                jShipMaterial.AlbedoColor = 0xff00bbee;
+                jShipMaterial.AlbedoColor = 0xffeedd00;
                 engine.joyce.InstanceDesc jInstanceDesc = new();
                 jInstanceDesc.Meshes.Add(jShipMesh);
                 jInstanceDesc.MeshMaterials.Add(0);
@@ -65,6 +66,7 @@ namespace nogame.playerhover
                     new engine.joyce.components.Instance3(jInstanceDesc));
             }
 
+            _engine.AddPart(0, scene0, this);
         }
 
         public Part() { }

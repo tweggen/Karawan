@@ -153,7 +153,7 @@ namespace Karawan.platform.cs1
 #else
             var width = Raylib.GetMonitorWidth(display);
             var height = Raylib.GetMonitorHeight(display);
-            bool isFullscreen = true;
+            bool isFullscreen = false;
 #endif
             Raylib.InitWindow(width, height, "codename Karawan");
             if (isFullscreen)

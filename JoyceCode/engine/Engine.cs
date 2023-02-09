@@ -20,6 +20,7 @@ namespace engine
         private engine.behave.systems.BehaviorSystem _systemBehave;
 
         private SortedDictionary<float, IScene> _dictScenes;
+        private SortedDictionary<float, IPart> _dictParts;
 
         private Dictionary<string, string> _dictConfigParams = new();
 
@@ -143,19 +144,36 @@ namespace engine
         /**
          * Add another scene.
          */
-        public void AddScene(float zOrder, IScene scene)
+        public void AddScene(float zOrder, in IScene scene)
         {
             _dictScenes.Add(zOrder, scene);
         }
 
 
-        public void RemoveScene(IScene scene)
+        public void RemoveScene(in IScene scene)
         {
             foreach( KeyValuePair<float, IScene> kvp in _dictScenes )
             {
                 if( kvp.Value == scene )
                 {
                     _dictScenes.Remove(kvp.Key);
+                    return;
+                }
+            }
+        }
+
+        public void AddPart(float zOrder, in IScene scene0, in IPart part0)
+        {
+            _dictParts.Add(zOrder, part0);
+        }
+
+        public void RemovePart(in IPart part)
+        {
+            foreach (KeyValuePair<float, IPart> kvp in _dictParts)
+            {
+                if (kvp.Value == part)
+                {
+                    _dictParts.Remove(kvp.Key);
                     return;
                 }
             }
@@ -240,6 +258,7 @@ namespace engine
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();
             _dictScenes = new();
+            _dictParts = new();
         }
     }
 }

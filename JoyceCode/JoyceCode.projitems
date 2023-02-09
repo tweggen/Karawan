@@ -41,6 +41,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\systems\NewParentSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\IPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUI.cs" />

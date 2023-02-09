@@ -21,6 +21,8 @@ namespace nogame
         private engine.world.Loader _worldLoader;
         private engine.world.MetaGen _worldMetaGen;
 
+        private playerhover.Part _partPlayerhover;
+
         public void SceneOnLogicalFrame( float dt )
         { 
         }
@@ -34,13 +36,15 @@ namespace nogame
 
         public void SceneDeactivate()
         {
-            _wasdController.DeactivateController();
-            _wasdController = null;
+            _partPlayerhover.PartDeactivate();
 
             /*
              * Null out everything we don't need when the scene is unloaded.
              */
             _engine.RemoveScene(this);
+
+            _wasdController.DeactivateController();
+            _wasdController = null;
         }
 
         public void SceneActivate(engine.Engine engine0)
@@ -99,7 +103,10 @@ namespace nogame
             _wasdController = new(_engine, _eCamera);
             _wasdController.ActivateController();
 
+            _partPlayerhover = new();
+
             _engine.AddScene(0, this);
+            _partPlayerhover.PartActivate(_engine, this);
         }
 
         public RootScene()
