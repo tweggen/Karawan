@@ -96,6 +96,14 @@ namespace engine
             Simulation.Timestep(dt);
 
             /*
+             * Iterate over all of the parts, using a local copy
+             */
+            var dictParts = new SortedDictionary<float, IPart>(_dictParts);
+            foreach( KeyValuePair<float, IPart> kvp in dictParts )
+            {
+                kvp.Value.PartOnLogicalFrame(dt);
+            }
+            /*
              * We need a local copy in case anybody adds scenes.
              */
             var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);

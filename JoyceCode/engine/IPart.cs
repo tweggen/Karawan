@@ -6,6 +6,8 @@ namespace engine
 {
     public interface IPart
     {
+        public void PartOnLogicalFrame(float dt);
+
         public void PartDeactivate();
         public void PartActivate(
             in engine.Engine engine0,
