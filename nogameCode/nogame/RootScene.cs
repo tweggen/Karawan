@@ -94,7 +94,7 @@ namespace nogame
                 cCamera.FarFrustrum = 1000f;
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 100f));
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
             }
 
             /*

@@ -50,7 +50,6 @@ namespace nogame.playerhover
                 float fireRate = deltaVelocity;
                 impulse = new Vector3(0f, 9.81f + fireRate, 0f);
                 _prefTarget.ApplyImpulse(impulse * dt * _massShip, new Vector3(0f, 0f, 0f));
-                Console.WriteLine($"deltaY = {deltaY}, vel={vTargetVelocity.Y} impulse=${impulse}");
             }
         }
 
