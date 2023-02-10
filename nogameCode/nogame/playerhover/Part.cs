@@ -24,9 +24,12 @@ namespace nogame.playerhover
 
         public void PartOnLogicalFrame(float dt)
         {
+
             var position = _prefShip.Pose.Position;
             var orientation = _prefShip.Pose.Orientation;
             _aTransform.SetTransforms(_eShip, true, 0xffffffff, orientation, position);
+
+            _prefShip.ApplyImpulse(new Vector3(1f, 0f, 0f)*dt, new Vector3(0f, 0f, 0f));
         }
 
 

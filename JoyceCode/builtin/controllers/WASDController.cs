@@ -28,6 +28,7 @@ namespace builtin.controllers
              */
             var vFront = new Vector3( -cToParent.Matrix.M13, -cToParent.Matrix.M23, -cToParent.Matrix.M33);
             var vUp = new Vector3(cToParent.Matrix.M12, cToParent.Matrix.M22, cToParent.Matrix.M32);
+            var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M21, cToParent.Matrix.M31);
             bool haveChange = false;
             /*
              * If we are moving to front/back with the controller, just change the translation.
@@ -49,6 +50,14 @@ namespace builtin.controllers
                     Quaternion.Concatenate(
                         cTransform3.Rotation,
                         Quaternion.CreateFromAxisAngle(vUp, turnMotion / 256f * radiansPerSecond * dt));
+                haveChange = true;
+            }
+#else
+            var sideMotion = controllerState.TurnRight - controllerState.TurnLeft;
+            if( sideMotion != 0f)
+            {
+                float meterPerSecond = 50f;
+                cTransform3.Position += vRight * (sideMotion / 256f * (meterPerSecond * dt));
                 haveChange = true;
             }
 #endif

@@ -225,7 +225,7 @@ namespace engine
             Simulation = Simulation.Create(
                 BufferPool, 
                 new physics.NarrowPhaseCallbacks() /* { Properties = properties } */,
-                new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
+                new physics.PoseIntegratorCallbacks(new Vector3(0, 0f, 0)),
                 new PositionLastTimestepper()
             );
             _aHierarchy = new engine.hierarchy.API(this);
