@@ -18,12 +18,38 @@ namespace nogame.playerhover
         private BepuPhysics.BodyHandle _phandleTarget;
         private BepuPhysics.BodyReference _prefTarget;
 
+        private float _massShip;
+
         private void _onLogicalFrame(object sender, float dt)
         {
             engine.ControllerState controllerState;
             _engine.GetControllerState(out controllerState);
 
-            _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f, 0f), new Vector3(0f, 0f, 0f));   
+            /*
+             * Balance height before clipping hard.
+             */
+            Vector3 vTargetPos = _prefTarget.Pose.Position;
+            var heightAtTarget = engine.world.MetaGen.Instance().Loader.GetHeightAt(vTargetPos.X, vTargetPos.Z);
+            {
+                var properDeltaY = 3.5f;
+                var deltaY = vTargetPos.Y - (heightAtTarget+properDeltaY);
+                const float threshDiff = 0.5f;
+
+                if( deltaY < -threshDiff )
+                {
+                    /*
+                     * We need to move up. Accelerate with a bit more than g.
+                     */
+                    _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f+2f, 0f) * _massShip * dt, new Vector3(0f, 0f, 0f));
+                }
+                else if( deltaY > threshDiff )
+                {
+                    /*
+                     * We need to move down. Accelerate with a bit less than g.
+                     */
+                    // _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f - 5f, 0f) * _massShip * dt, new Vector3(0f, 0f, 0f));
+                }
+            }
         }
 
 
@@ -42,12 +68,15 @@ namespace nogame.playerhover
         }
 
 
-        public WASDPhysics(in engine.Engine engine, in DefaultEcs.Entity eTarget)
+        public WASDPhysics(
+            in engine.Engine engine, 
+            in DefaultEcs.Entity eTarget,
+            in float massShip)
         {
             _engine = engine;
             _eTarget = eTarget;
             _aTransform = _engine.GetATransform();
-
+            _massShip = massShip;
         }
     }
 }

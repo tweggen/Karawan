@@ -22,19 +22,24 @@ namespace nogame.playerhover
         private BepuPhysics.BodyHandle _phandleShip;
         private BepuPhysics.BodyReference _prefShip;
 
+        private WASDPhysics _controllerWASDPhysics;
+
+        private const float _massShip = 1f;
+
         public void PartOnLogicalFrame(float dt)
         {
-
-            var position = _prefShip.Pose.Position;
-            var orientation = _prefShip.Pose.Orientation;
-            _aTransform.SetTransforms(_eShip, true, 0xffffffff, orientation, position);
-
-            _prefShip.ApplyImpulse(new Vector3(1f, 0f, 0f)*dt, new Vector3(0f, 0f, 0f));
+            // TXWTODO: Let this generically be done by a system.
+            {
+                var position = _prefShip.Pose.Position;
+                var orientation = _prefShip.Pose.Orientation;
+                _aTransform.SetTransforms(_eShip, true, 0xffffffff, orientation, position);
+            }
         }
 
 
         public void PartDeactivate()
         {
+            _controllerWASDPhysics.DeactivateController();
             _engine.RemovePart(this);
             lock (_lock)
             {
@@ -76,7 +81,7 @@ namespace nogame.playerhover
 
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(1.4f);
 
-                pbodySphere.ComputeInertia(10, out var pinertiaSphere);
+                pbodySphere.ComputeInertia(_massShip, out var pinertiaSphere);
                 _phandleShip = _engine.Simulation.Bodies.Add(
                     BodyDescription.CreateDynamic(
                         posShip,
@@ -88,8 +93,15 @@ namespace nogame.playerhover
                         new BodyActivityDescription(0.01f)
                     )
                 );
+                _eShip.Set(new engine.physics.components.Body(_phandleShip));
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
             }
+
+            /*
+             * And the ship's controller
+             */
+            _controllerWASDPhysics = new WASDPhysics(_engine, _eShip, _massShip);
+            _controllerWASDPhysics.ActivateController();
 
             _engine.AddPart(0, scene0, this);
         }
