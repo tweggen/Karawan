@@ -29,28 +29,28 @@ namespace nogame.playerhover
              * Balance height before clipping hard.
              */
             Vector3 vTargetPos = _prefTarget.Pose.Position;
+            Vector3 vTargetVelocity = _prefTarget.Velocity.Linear;
             var heightAtTarget = engine.world.MetaGen.Instance().Loader.GetHeightAt(vTargetPos.X, vTargetPos.Z);
             {
                 var properDeltaY = 3.5f;
                 var deltaY = vTargetPos.Y - (heightAtTarget+properDeltaY);
                 const float threshDiff = 0.01f;
 
-                if( deltaY < -threshDiff )
+                Vector3 impulse = new Vector3(0f,9.81f,0f);
+                float properVelocity = 0f;
+                if ( deltaY < -threshDiff )
                 {
-                    float fireRate = Math.Max(-deltaY, 1);
-                    /*
-                     * We need to move up. Accelerate with a bit more than g.
-                     */
-                    _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f + fireRate*20f, 0f) * dt * _massShip, new Vector3(0f, 0f, 0f));
+                    properVelocity = 2f; // 1ms-1 up.
                 }
                 else if( deltaY > threshDiff )
                 {
-                    float fireRate = Math.Max(deltaY, 1);
-                    /*
-                     * We need to move down. Accelerate with a bit less than g.
-                     */
-                    _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f - fireRate*0.5f, 0f) * dt * _massShip, new Vector3(0f, 0f, 0f));
+                    properVelocity = -2f; // 1ms-1 down.
                 }
+                float deltaVelocity = properVelocity - vTargetVelocity.Y;
+                float fireRate = deltaVelocity;
+                impulse = new Vector3(0f, 9.81f + fireRate, 0f);
+                _prefTarget.ApplyImpulse(impulse * dt * _massShip, new Vector3(0f, 0f, 0f));
+                Console.WriteLine($"deltaY = {deltaY}, vel={vTargetVelocity.Y} impulse=${impulse}");
             }
         }
 
