@@ -37,14 +37,14 @@ namespace nogame
         public void SceneDeactivate()
         {
             _partPlayerhover.PartDeactivate();
+            // _wasdController.DeactivateController();
+            _wasdController = null;
 
             /*
              * Null out everything we don't need when the scene is unloaded.
              */
             _engine.RemoveScene(this);
 
-            _wasdController.DeactivateController();
-            _wasdController = null;
         }
 
         public void SceneActivate(engine.Engine engine0)
@@ -101,7 +101,7 @@ namespace nogame
              * Create a camera controller that directly controls the camera with wasd
              */
             _wasdController = new(_engine, _eCamera);
-            _wasdController.ActivateController();
+            // _wasdController.ActivateController();
 
             _partPlayerhover = new();
 

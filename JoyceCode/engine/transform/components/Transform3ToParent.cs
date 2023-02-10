@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace engine.transform.components
 {
-    struct Transform3ToParent
+    public struct Transform3ToParent
     {
         public bool IsVisible;
         public uint CameraMask;
