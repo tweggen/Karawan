@@ -31,6 +31,8 @@ namespace engine
         public Simulation Simulation { get; protected set; }
         public BufferPool BufferPool { get; private set; }
 
+        private physics.Manager _managerPhysics;
+
         private void _selfTest()
         {
             /*
@@ -229,6 +231,8 @@ namespace engine
             _aHierarchy = new engine.hierarchy.API(this);
             _aTransform = new engine.transform.API(this);
             _systemBehave = new(this);
+            _managerPhysics = new physics.Manager();
+            _managerPhysics.Manage(this);
         }
 
 

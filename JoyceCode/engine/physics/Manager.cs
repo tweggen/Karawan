@@ -1,5 +1,4 @@
 ﻿using DefaultEcs;
-using DefaultEcs.Resource;
 using System;
 using System.Collections.Generic;
 
@@ -29,7 +28,7 @@ namespace engine.physics
             _engine = null;
         }
 
-        public IDisposable Manage(in engine.Engine engine)
+        public void Manage(in engine.Engine engine)
         {
             _engine = engine;
 
@@ -41,10 +40,10 @@ namespace engine.physics
             }
             DefaultEcs.World world = _engine.GetEcsWorld();
 
-            return GetSubscriptions(world).Merge();
+            GetSubscriptions(world);
         }
 
-        public Manager(in engine.Engine engine)
+        public Manager()
         {
         }
 
