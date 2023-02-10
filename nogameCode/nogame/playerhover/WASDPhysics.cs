@@ -33,21 +33,23 @@ namespace nogame.playerhover
             {
                 var properDeltaY = 3.5f;
                 var deltaY = vTargetPos.Y - (heightAtTarget+properDeltaY);
-                const float threshDiff = 0.5f;
+                const float threshDiff = 0.01f;
 
                 if( deltaY < -threshDiff )
                 {
+                    float fireRate = Math.Max(-deltaY, 1);
                     /*
                      * We need to move up. Accelerate with a bit more than g.
                      */
-                    _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f+2f, 0f) * _massShip * dt, new Vector3(0f, 0f, 0f));
+                    _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f + fireRate*20f, 0f) * dt * _massShip, new Vector3(0f, 0f, 0f));
                 }
                 else if( deltaY > threshDiff )
                 {
+                    float fireRate = Math.Max(deltaY, 1);
                     /*
                      * We need to move down. Accelerate with a bit less than g.
                      */
-                    // _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f - 5f, 0f) * _massShip * dt, new Vector3(0f, 0f, 0f));
+                    _prefTarget.ApplyImpulse(new Vector3(0f, 9.81f - fireRate*0.5f, 0f) * dt * _massShip, new Vector3(0f, 0f, 0f));
                 }
             }
         }

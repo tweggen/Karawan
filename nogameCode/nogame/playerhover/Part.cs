@@ -24,7 +24,7 @@ namespace nogame.playerhover
 
         private WASDPhysics _controllerWASDPhysics;
 
-        private const float _massShip = 1f;
+        private const float _massShip = 10f;
 
         public void PartOnLogicalFrame(float dt)
         {
