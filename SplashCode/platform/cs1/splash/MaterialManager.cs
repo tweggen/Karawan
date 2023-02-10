@@ -103,7 +103,7 @@ namespace Karawan.platform.cs1.splash
             /*
              * Test code: Create one light.
              */
-            var vecLight = new Vector3(50f, 50f, 0f);
+            var vecLight = new Vector3(50f, 50f, 20f);
             var vecZero = new Vector3(0, 0, 0);
             _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
                 new Color(255,255,255,255), ref _rlInstanceShaderEntry.RlShader); 
