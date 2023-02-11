@@ -83,47 +83,38 @@ namespace builtin.tools
             ToMesh(inPolyPoints, mesh);
         }
 
-        static public void ToConvexArrays(in IList<Vector2> inPolyPoints, out IList<IList<Vector2>> outPolygons)
+        static public void ToConvexArrays(in IList<Vector3> inPolyPoints, out IList<IList<Vector3>> outPolygons)
         {
             LibTessDotNet.Tess tess = new LibTessDotNet.Tess();
 
             var nPoints = inPolyPoints.Count;
-            var inputData = new float[nPoints * 2];
+            /* var inputData = new float[nPoints * 2];
             for (int i = 0; i < nPoints; i++)
             {
                 inputData[i * 2] = inPolyPoints[i].X;
                 inputData[i * 2 + 1] = inPolyPoints[i].Y;
-            }
+            }*/
             var contour = new LibTessDotNet.ContourVertex[nPoints];
             for (int i = 0; i < nPoints; i++)
             {
-                contour[i].Position = new LibTessDotNet.Vec3(inPolyPoints[i].X, inPolyPoints[i].Y, 0);
+                contour[i].Position = new LibTessDotNet.Vec3(inPolyPoints[i].X, inPolyPoints[i].Y, inPolyPoints[i].Z);
             }
             const int polySize = 20;
             tess.AddContour(contour, LibTessDotNet.ContourOrientation.Clockwise);
             tess.Tessellate(LibTessDotNet.WindingRule.EvenOdd, LibTessDotNet.ElementType.Polygons, polySize, null);
-            int outTriangles = tess.ElementCount;
-            int maxIndex = 0;
-            for (int i = 0; i < outTriangles; i++)
+            int outPolys = tess.ElementCount;
+            outPolygons = new List<IList<Vector3>>();
+            for (int i = 0; i < outPolys; i++)
             {
-                int i2 = tess.Elements[i * 3 + 0];
-                int i1 = tess.Elements[i * 3 + 1];
-                int i0 = tess.Elements[i * 3 + 2];
-                if (i0 > maxIndex) maxIndex = i0;
-                if (i1 > maxIndex) maxIndex = i1;
-                if (i2 > maxIndex) maxIndex = i2;
-            }
-            outPolygons = new List<IList<Vector2>>();
-            for (int i = 0; i <= maxIndex; i++)
-            {
-                var poly = new List<Vector2>();
+                var poly = new List<Vector3>();
                 // Backwards due to orientation.
                 for(int j=polySize-1; j>=0; j--) {
                     int k = tess.Elements[i * polySize + j];
                     if (k == Tess.Undef) continue;
                     var pos = tess.Vertices[k].Position;
-                    poly.Add(new Vector2(pos.X, pos.Y));
+                    poly.Add(new Vector3(pos.X, pos.Y, pos.Z));
                 }
+                outPolygons.Add(poly);
             }
         }
     }

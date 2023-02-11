@@ -102,17 +102,12 @@ namespace nogame.cities
             } catch (Exception e) {
                 trace( $"GenerateHousesOperator.createHouseSubGeo(): buildGeom(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
-#if false
             try
             {
-                opExtrudePoly.buildPhys(worldFragment, mol);
+                opExtrudePoly.BuildPhys(worldFragment);
+            } catch (Exception e) {
+                trace( $"GenerateHousesOperator.createHouseSubGeo(): buildPhys(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
-            catch (unknown: Dynamic ) {
-                trace('GenerateHousesOperator.createHouseSubGeo(): buildPhys(): Unknown exception applying fragment operator "${fragmentOperatorGetPath()}": '
-                    + Std.string(unknown) + "\n"
-                    + haxe.CallStack.toString(haxe.CallStack.callStack()));
-            }
-#endif
 
         }
 

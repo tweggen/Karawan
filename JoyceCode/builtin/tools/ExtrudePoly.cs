@@ -1,4 +1,6 @@
 ﻿
+using BepuPhysics.Collidables;
+using BepuPhysics;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -240,91 +242,62 @@ namespace builtin.tools
             }
         }
 
-
-#if false
+#if true
         public void BuildPhys(
-            world.Fragment worldFragment,
-            mol: engine.SimpleMolecule
-        ): Void
-    {
-        var vh = _path[0];
-        var p = _poly;
-        if (null == p)
+            in engine.world.Fragment worldFragment
+        )
         {
-            trace('ExtrudePoly.buildPhys(): Got a null polygon.');
-            throw 'ExtrudePoly.buildPhys(): Got a null polygon.';
-        }
+            var vh = _path[0];
+            if (null == _poly)
+            {
+                trace($"ExtrudePoly.buildPhys(): Got a null polygon.");
+                throw new InvalidOperationException( $"ExtrudePoly.buildPhys(): Got a null polygon." );
+            }
 
-        /*
-         * Create a list of convex polygons from the possibly concave poly we have 
-         * right now.
-         */
-        var pp: Array < Array < geom.Vector3D >> = null;
 
-        try
-        {
-            pp = geom.Tools.concaveToConvex(p);
-        }
-        catch (unknown: Dynamic ) {
-            trace('ExtrudePoly.buildPhys(): concaveToConvex(): Unknown exception: '
-                + Std.string(unknown) + "\n"
-                + haxe.CallStack.toString(haxe.CallStack.callStack()));
-        }
+            var bufferPool = worldFragment.Engine.BufferPool;
+            var simulation = worldFragment.Engine.Simulation;
 
-        if (null == pp)
-        {
-            return;
-        }
+            IList<IList<Vector3>> listConvexPolys;
+            builtin.tools.Triangulate.ToConvexArrays(_poly, out listConvexPolys);
+            BepuPhysics.Collidables.CompoundBuilder builder = new BepuPhysics.Collidables.CompoundBuilder(
+                bufferPool, worldFragment.Engine.Simulation.Shapes, 4);
+            var identityPose = new BepuPhysics.RigidPose { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
 
-        /*
-     * For each of the convex polygons, we now add a convex hull.
-     */
-    for (convexPoly in pp )
-    {
-        var wx = worldFragment.x;
-        var wy = worldFragment.y;
-        var wz = worldFragment.z;
-        var physics: engine.Physics = null;
-        try
-        {
-            physics = worldFragment.allEnv.worldLoader.getPhysics();
-        }
-        catch (unknown: Dynamic ) {
-        trace('ExtrudePoly.buildPhys(): getPhysics(): Unknown exception: '
-            + Std.string(unknown) + "\n"
-            + haxe.CallStack.toString(haxe.CallStack.callStack()));
-        return;
-    }
-    var allPoints = new Array<Vector3D>();
-    for (i in 0... convexPoly.length )
-    {
-        allPoints.push(new geom.Vector3D(wx + convexPoly[i].x, wy + convexPoly[i].y, wz + convexPoly[i].z));
-        allPoints.push(new geom.Vector3D(wx + convexPoly[i].x + vh.x, wy + convexPoly[i].y + vh.y, wz + convexPoly[i].z + vh.z));
-    }
-    var physHull: haxebullet.Bullet.BtCollisionShapePointer = null;
-    try
-    {
-        physHull = physics.createConvexHull(allPoints);
-    }
-    catch (unknown: Dynamic ) {
-        trace('ExtrudePoly.buildPhys(): createConvexHull(): Unknown exception: '
-        + Std.string(unknown) + "\n"
-            + haxe.CallStack.toString(haxe.CallStack.callStack()));
-    }
-    var physAtom: engine.IPhysAtom = null;
-    try
-    {
-        physAtom = physics.createRigidBody(0., 0.5, _physIndex, physHull);
-    }
-    catch (unknown: Dynamic ) {
-        trace('ExtrudePoly.buildPhys(): createRigidBody(): Unknown exception: '
-            + Std.string(unknown) + "\n"
-            + haxe.CallStack.toString(haxe.CallStack.callStack()));
-    }
+            /*
+             * for each of the convex polys, build a convex hull from it.
+             */
+            foreach( var convexPoly in listConvexPolys )
+            {
+                Vector3[] pointsConvexHull = new Vector3[2*convexPoly.Count];
+                int idx = 0;
+                foreach (var p3 in convexPoly)
+                {
+                    pointsConvexHull[idx++] = worldFragment.Position + p3;
+                    pointsConvexHull[idx++] = worldFragment.Position + p3 + vh;
+                }
+                var spanConvexPoly = new Span<Vector3>(pointsConvexHull);
+                Vector3 vCenter;
+                var pshapeConvexHull = new BepuPhysics.Collidables.ConvexHull(
+                    spanConvexPoly, worldFragment.Engine.BufferPool, out vCenter);
+                builder.Add(pshapeConvexHull, identityPose, 1);
+            }
+            // TXWTODO: This is totally wrong
+            builder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
+            simulation.Bodies.Add(
+                BodyDescription.CreateKinematic(
+                    compoundCenter, 
+                    //compoundInertia, 
+                    new BepuPhysics.Collidables.CollidableDescription(
+                        simulation.Shapes.Add(new Compound(compoundChildren)),
+                        0.1f
+                    ),
+                    new BodyActivityDescription(0.01f)
+                )
+            );
 
-    mol.moleculeAddPhysAtom(physAtom);
-    }
-    }
+        }
+    
 #endif
 
         /**
