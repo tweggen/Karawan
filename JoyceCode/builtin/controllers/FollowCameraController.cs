@@ -27,7 +27,8 @@ namespace builtin.controllers
                 return;
             }
             var cToParent = _eCarrot.Get<engine.transform.components.Transform3ToParent>();
-            var cTransform3 = _eCarrot.Get<engine.transform.components.Transform3>();
+            var cCarrotTransform3 = _eCarrot.Get<engine.transform.components.Transform3>();
+            var cTargetTransform3 = _eTarget.Get<engine.transform.components.Transform3>();
 
             /*
              * We cheat a bit, reading the matrix for the direction matrix,
@@ -42,7 +43,9 @@ namespace builtin.controllers
 
             // TXWTODO: This is hard coded and static, make it softer.
             var vCameraPos = vCarrotPos - 8f * vFront + 2f * vUp;
-            _aTransform.SetTransform(_eTarget, cTransform3.Rotation, vCameraPos );
+            var vTargetRotation = cCarrotTransform3.Rotation;
+            var vRotation = Quaternion.Slerp(cTargetTransform3.Rotation, cCarrotTransform3.Rotation, 0.1f);
+            _aTransform.SetTransform(_eTarget, vRotation, vCameraPos );
             
         }
 
