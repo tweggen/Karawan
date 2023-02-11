@@ -32,6 +32,7 @@ namespace nogame.playerhover
              */
             Vector3 vTargetPos = _prefTarget.Pose.Position;
             Vector3 vTargetVelocity = _prefTarget.Velocity.Linear;
+            Vector3 vTargetAngularVelocity = _prefTarget.Velocity.Angular;
             var heightAtTarget = engine.world.MetaGen.Instance().Loader.GetHeightAt(vTargetPos.X, vTargetPos.Z);
             {
                 var properDeltaY = 3.5f;
@@ -90,9 +91,11 @@ namespace nogame.playerhover
             }
 
             /*
-             * Now apply a damping on velocity.
+             * Now apply a damping on velocity, i.e. computing linear and angular impulses
+             * proportional to the velocity
              */
-            // TXWTODO: Write me.
+            vTotalImpulse += vTargetVelocity * -0.8f;
+            vTotalAngular += vTargetAngularVelocity * -0.8f;
 
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
