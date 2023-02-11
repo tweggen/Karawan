@@ -16,8 +16,7 @@ namespace engine.transform
             in Quaternion rotation,
             in Vector3 position)
         {
-            entity.Set<transform.components.Transform3>(
-                new transform.components.Transform3(isVisible, cameraMask, rotation, position));
+            entity.Set(new transform.components.Transform3(isVisible, cameraMask, rotation, position));
 
             /*
              * Write it back to parent transformation
@@ -27,8 +26,23 @@ namespace engine.transform
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
                  mToParent = mToParent * mTranslate;
-                entity.Set<transform.components.Transform3ToParent>(
-                    new transform.components.Transform3ToParent(isVisible, cameraMask, mToParent) );
+                entity.Set(new transform.components.Transform3ToParent(isVisible, cameraMask, mToParent) );
+                _isDirty = true;
+            }
+        }
+
+        public void SetTransform(
+            DefaultEcs.Entity entity,
+            in Quaternion rotation,
+            in Vector3 position)
+        {
+            components.Transform3 transform3;
+            GetTransform(entity, out transform3);
+            {
+                var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
+                var mTranslate = Matrix4x4.CreateTranslation(position);
+                mToParent = mToParent * mTranslate;
+                entity.Set(new transform.components.Transform3ToParent(transform3.IsVisible, transform3.CameraMask, mToParent));
                 _isDirty = true;
             }
         }
@@ -93,7 +107,7 @@ namespace engine.transform
 
         public void Update()
         {
-            if(_isDirty)
+            // if(_isDirty)
             {
                 _propagateTranslationSystem.Update(_engine);
                 _isDirty = false;

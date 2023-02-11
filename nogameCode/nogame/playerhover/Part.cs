@@ -26,17 +26,6 @@ namespace nogame.playerhover
 
         private const float _massShip = 10f;
 
-        public void PartOnLogicalFrame(float dt)
-        {
-            // TXWTODO: Let this generically be done by a system.
-            {
-                var position = _prefShip.Pose.Position;
-                var orientation = _prefShip.Pose.Orientation;
-                _aTransform.SetTransforms(_eShip, true, 0xffffffff, orientation, position);
-            }
-        }
-
-
         public void PartDeactivate()
         {
             _controllerWASDPhysics.DeactivateController();
@@ -93,8 +82,8 @@ namespace nogame.playerhover
                         new BodyActivityDescription(0.01f)
                     )
                 );
-                _eShip.Set(new engine.physics.components.Body(_phandleShip));
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
+                _eShip.Set(new engine.physics.components.Body(_prefShip));
             }
 
             /*

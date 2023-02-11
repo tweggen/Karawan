@@ -18,6 +18,7 @@ namespace engine
         private engine.transform.API _aTransform;
 
         private engine.behave.systems.BehaviorSystem _systemBehave;
+        private engine.physics.systems.ApplyPosesSystem _systemApplyPoses;
 
         private SortedDictionary<float, IScene> _dictScenes;
         private SortedDictionary<float, IPart> _dictParts;
@@ -98,14 +99,6 @@ namespace engine
             Simulation.Timestep(dt);
 
             /*
-             * Iterate over all of the parts, using a local copy
-             */
-            var dictParts = new SortedDictionary<float, IPart>(_dictParts);
-            foreach( KeyValuePair<float, IPart> kvp in dictParts )
-            {
-                kvp.Value.PartOnLogicalFrame(dt);
-            }
-            /*
              * We need a local copy in case anybody adds scenes.
              */
             var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
@@ -145,6 +138,7 @@ namespace engine
                 _onLogicalFrame((float)(1/(double)_fpsLogical));
 
                 _aHierarchy.Update();
+                _systemApplyPoses.Update(dt);
                 _aTransform.Update();
             } while (_timeLeft > 0);
 
@@ -231,6 +225,7 @@ namespace engine
             _aHierarchy = new engine.hierarchy.API(this);
             _aTransform = new engine.transform.API(this);
             _systemBehave = new(this);
+            _systemApplyPoses = new(this);
             _managerPhysics = new physics.Manager();
             _managerPhysics.Manage(this);
         }

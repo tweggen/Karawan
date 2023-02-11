@@ -7,11 +7,11 @@ namespace engine.physics.components
 {
     public struct Body
     {
-        public BepuPhysics.BodyHandle Handle;
+        public BepuPhysics.BodyReference Reference;
 
-        public Body(in BodyHandle handle)
+        public Body(in BodyReference reference)
         {
-            Handle = handle;
+            Reference = reference;
         }
     }
 }

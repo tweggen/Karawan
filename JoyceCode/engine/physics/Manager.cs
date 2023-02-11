@@ -16,11 +16,11 @@ namespace engine.physics
         private void OnComponentChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
         {
             // We need to assume the user added the new entity.
-            _engine.Simulation.Bodies.Remove(cOldBody.Handle);
+            _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
         }
         private void OnComponentRemoved(in Entity entity, in components.Body cBody)
         {
-            _engine.Simulation.Bodies.Remove(cBody.Handle);
+            _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
         }
 
         public void Dispose()

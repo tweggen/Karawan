@@ -15,7 +15,6 @@ namespace nogame.playerhover
         private DefaultEcs.Entity _eTarget;
         private engine.transform.API _aTransform;
 
-        private BepuPhysics.BodyHandle _phandleTarget;
         private BepuPhysics.BodyReference _prefTarget;
 
         private float _massShip;
@@ -101,8 +100,7 @@ namespace nogame.playerhover
 
         public void ActivateController()
         {
-            _phandleTarget = _eTarget.Get<engine.physics.components.Body>().Handle;
-            _prefTarget = _engine.Simulation.Bodies.GetBodyReference(_phandleTarget);
+            _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             
             _engine.LogicalFrame += _onLogicalFrame;
         }
