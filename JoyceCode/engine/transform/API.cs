@@ -38,6 +38,7 @@ namespace engine.transform
         {
             components.Transform3 transform3;
             GetTransform(entity, out transform3);
+            entity.Set(new transform.components.Transform3(transform3.IsVisible, transform3.CameraMask, rotation, position));
             {
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
