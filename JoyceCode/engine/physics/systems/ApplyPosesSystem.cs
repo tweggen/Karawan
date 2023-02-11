@@ -1,5 +1,6 @@
 ﻿using BepuPhysics;
 using System;
+using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
 
@@ -18,6 +19,7 @@ namespace engine.physics.systems
                 {
                     BodyReference pref = entity.Get<components.Body>().Reference;
                     var position = pref.Pose.Position;
+                    //var orientation = Quaternion.Inverse(pref.Pose.Orientation);
                     var orientation = pref.Pose.Orientation;
                     _aTransform.SetTransform(entity, orientation, position);
                 }

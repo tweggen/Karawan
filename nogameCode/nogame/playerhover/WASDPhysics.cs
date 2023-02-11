@@ -65,10 +65,17 @@ namespace nogame.playerhover
              * applying the position change to the transform parameters,
              * applying rotation directly to the transform parameters.
              */
+#if true
+            var vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
+            var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
+            var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
+#else
             var vFront = new Vector3(-cToParent.Matrix.M13, -cToParent.Matrix.M23, -cToParent.Matrix.M33);
             var vUp = new Vector3(cToParent.Matrix.M12, cToParent.Matrix.M22, cToParent.Matrix.M32);
             var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M21, cToParent.Matrix.M31);
+#endif
             var frontMotion = controllerState.WalkForward - controllerState.WalkBackward;
+
             if (frontMotion != 0f)
             {
                 float power = 20f;
