@@ -40,8 +40,8 @@ namespace Karawan.platform.cs1.splash
                 var mToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>().Matrix;
 
                 var vPosition = mToWorld.Translation;
-                var vUp = new Vector3(mToWorld.M12, mToWorld.M22, mToWorld.M32);
-                var vFront = new Vector3(-mToWorld.M13, -mToWorld.M23, -mToWorld.M33);
+                var vUp = new Vector3(mToWorld.M21, mToWorld.M22, mToWorld.M23);
+                var vFront = new Vector3(-mToWorld.M31, -mToWorld.M32, -mToWorld.M33);
                 var vTarget = vPosition + vFront;
                 // Console.WriteLine($"vFront = {vFront}");
 
