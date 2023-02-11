@@ -12,6 +12,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\joyce\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />

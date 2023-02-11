@@ -38,6 +38,12 @@ namespace nogame.playerhover
         }
 
 
+        public DefaultEcs.Entity GetShipEntity()
+        {
+            return _eShip;
+        }
+
+
         public void PartActivate(
             in engine.Engine engine0,
             in engine.IScene scene0)

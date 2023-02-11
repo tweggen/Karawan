@@ -14,7 +14,7 @@ namespace nogame
         private engine.hierarchy.API _aHierarchy;
         private engine.transform.API _aTransform;
 
-        private builtin.controllers.WASDController _wasdController;
+        private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
         private DefaultEcs.Entity _eCamera;
 
@@ -37,8 +37,8 @@ namespace nogame
         public void SceneDeactivate()
         {
             _partPlayerhover.PartDeactivate();
-            // _wasdController.DeactivateController();
-            _wasdController = null;
+            _ctrlFollowCamera .DeactivateController();
+            _ctrlFollowCamera = null;
 
             /*
              * Null out everything we don't need when the scene is unloaded.
@@ -97,16 +97,19 @@ namespace nogame
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
             }
 
-            /*
-             * Create a camera controller that directly controls the camera with wasd
-             */
-            _wasdController = new(_engine, _eCamera);
-            // _wasdController.ActivateController();
-
             _partPlayerhover = new();
 
             _engine.AddScene(0, this);
+
             _partPlayerhover.PartActivate(_engine, this);
+
+            // TXWTODO: Clean up dependencies..
+            /*
+             * Create a camera controller that directly controls the camera with wasd
+             */
+            _ctrlFollowCamera = new(_engine, _eCamera, _partPlayerhover.GetShipEntity());
+            _ctrlFollowCamera.ActivateController();
+
         }
 
         public RootScene()
