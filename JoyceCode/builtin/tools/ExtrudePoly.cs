@@ -271,18 +271,18 @@ namespace builtin.tools
             {
                 int nPoints = 2 * convexPoly.Count;
                 QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
-                Console.WriteLine("New hull:");
+                //Console.WriteLine("New hull:");
                 foreach (var p3 in convexPoly)
                 {
                     var pBottom = worldFragment.Position + p3;
                     var pTop = worldFragment.Position + p3 + vh;
                     pointsConvexHull.AllocateUnsafely() = pBottom;
                     pointsConvexHull.AllocateUnsafely() = pTop;
-                    Console.WriteLine($"Added {pBottom} {pTop}");
+                    //Console.WriteLine($"Added {pBottom} {pTop}");
                 }
                 var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
                 ConvexHullHelper.CreateShape(pointsBuffer, bufferPool, out var vCenter, out var pshapeConvexHull);
-                Console.WriteLine($"Center is {vCenter}");
+                //Console.WriteLine($"Center is {vCenter}");
                 simulation.Statics.Add(new StaticDescription(
                         vCenter, 
                         new CollidableDescription(

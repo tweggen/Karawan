@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime;
 using System.Text;
+using System.Threading;
 
 namespace nogame.playerhover
 {
@@ -125,7 +126,7 @@ namespace nogame.playerhover
             if( vTargetPos.Y < (heightAtTarget+1.0f) )
             {
                 vTargetPos.Y = heightAtTarget + 1.0f;
-                _prefTarget.Pose.Position = vTargetPos;
+                vTotalImpulse += new Vector3(0f, 10f, 0f);
             }
 
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
