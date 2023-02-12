@@ -119,6 +119,7 @@ namespace nogame.playerhover
             if( vTargetPos.Y < (heightAtTarget+1.0f) )
             {
                 vTargetPos.Y = heightAtTarget + 1.0f;
+                _prefTarget.Pose.Position = vTargetPos;
                 vTotalImpulse += new Vector3(0f, 10f, 0f);
             }
 
