@@ -43,7 +43,7 @@ namespace nogame.playerhover
                 float properVelocity = 0f;
                 if ( deltaY < -threshDiff )
                 {
-                    properVelocity = 2f; // 1ms-1 up.
+                    properVelocity = 4f; // 1ms-1 up.
                 }
                 else if( deltaY > threshDiff )
                 {
@@ -90,6 +90,43 @@ namespace nogame.playerhover
              */
             vTotalImpulse += vTargetVelocity * -0.8f;
             vTotalAngular += vTargetAngularVelocity * -0.8f;
+
+            /*
+             * Also, try to rotate me back to horizontal plane.
+             * That is, project the velocity on the xz plane, normalize it (unless it isn't null) and create a quaternion from it.
+             * If it is too small, create a unit quaternion.
+             * 
+             * Slerp to that quaternion. (By applying what impulse?)
+             * 
+             * TXWTODO: Slerp only if we're offset long enough.
+             */
+            if(false) {
+                Vector3 vIdealFront = new Vector3(vTargetVelocity.X, 0f, vTargetVelocity.Z);
+                if (vIdealFront.Length() < 0.01f)
+                {
+                    vIdealFront = new Vector3(0f, 0f, -1f);
+                }
+                else
+                {
+                    vIdealFront /= vIdealFront.Length();
+                }
+                Matrix4x4 mIdeal = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vIdealFront, new Vector3(0f, 1f, 0f));
+                Quaternion qIdeal = Quaternion.CreateFromRotationMatrix(mIdeal);
+
+                if (vTargetVelocity.Length() < 0.2 )
+                {
+                    _prefTarget.Pose.Orientation = Quaternion.Slerp(_prefTarget.Pose.Orientation, qIdeal, 0.1f);
+                }
+            }
+
+            /*
+             * Finally, clip the height with the ground.
+             */
+            if( vTargetPos.Y < (heightAtTarget+1.0f) )
+            {
+                vTargetPos.Y = heightAtTarget + 1.0f;
+                _prefTarget.Pose.Position = vTargetPos;
+            }
 
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
