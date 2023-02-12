@@ -259,10 +259,10 @@ namespace builtin.tools
 
             IList<IList<Vector3>> listConvexPolys;
             builtin.tools.Triangulate.ToConvexArrays(_poly, out listConvexPolys);
-            BepuPhysics.Collidables.CompoundBuilder builder = new BepuPhysics.Collidables.CompoundBuilder(
-                bufferPool, worldFragment.Engine.Simulation.Shapes, 20);
-            var identityPose = new BepuPhysics.RigidPose { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
-            var fragmentPose = new BepuPhysics.RigidPose { Position = worldFragment.Position, Orientation = Quaternion.Identity };
+            // BepuPhysics.Collidables.CompoundBuilder builder = new BepuPhysics.Collidables.CompoundBuilder(
+            //    bufferPool, worldFragment.Engine.Simulation.Shapes, 20);
+            //var identityPose = new BepuPhysics.RigidPose { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
+            //var fragmentPose = new BepuPhysics.RigidPose { Position = worldFragment.Position, Orientation = Quaternion.Identity };
 
             /*
              * for each of the convex polys, build a convex hull from it.
@@ -270,35 +270,28 @@ namespace builtin.tools
             foreach( var convexPoly in listConvexPolys )
             {
                 int nPoints = 2 * convexPoly.Count;
-                //bufferPool.Take<Vector3>(nPoints, out var pointsConvexHull);
                 QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
-                // Console.WriteLine("New hull:");
+                Console.WriteLine("New hull:");
                 foreach (var p3 in convexPoly)
                 {
-                    var pBottom = p3;
-                    var pTop = p3 + vh;
+                    var pBottom = worldFragment.Position + p3;
+                    var pTop = worldFragment.Position + p3 + vh;
                     pointsConvexHull.AllocateUnsafely() = pBottom;
                     pointsConvexHull.AllocateUnsafely() = pTop;
-                    // Console.WriteLine($"Added {pBottom} {pTop}");
+                    Console.WriteLine($"Added {pBottom} {pTop}");
                 }
-                var pshapeConvexHull = new BepuPhysics.Collidables.ConvexHull(
-                    pointsConvexHull, worldFragment.Engine.BufferPool, out var vCenter);
-                builder.AddForKinematic(pshapeConvexHull, identityPose, 1);
+                var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
+                ConvexHullHelper.CreateShape(pointsBuffer, bufferPool, out var vCenter, out var pshapeConvexHull);
+                Console.WriteLine($"Center is {vCenter}");
+                simulation.Statics.Add(new StaticDescription(
+                        vCenter, 
+                        new CollidableDescription(
+                            simulation.Shapes.Add(pshapeConvexHull),
+                            0.1f
+                        )
+                    )
+                );
             }
-            // TXWTODO: This is totally wrong
-            builder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
-            builder.Reset();
-            simulation.Bodies.Add(
-                BodyDescription.CreateKinematic(
-                    fragmentPose, 
-                    new BepuPhysics.Collidables.CollidableDescription(
-                        simulation.Shapes.Add(new Compound(compoundChildren)),
-                        0.1f
-                    ),
-                    new BodyActivityDescription(0.01f)
-                )
-            );
-
         }
     
 #endif
