@@ -6,6 +6,22 @@ namespace engine
 {
     public class ControllerState
     {
+        public int FrontMotion { get {
+                int frontMotion = WalkForward - WalkBackward;
+                if (WalkFast)
+                {
+                    if (frontMotion > 0)
+                    {
+                        frontMotion = 255;
+                    } else if(frontMotion<0)
+                    {
+                        frontMotion = -255;
+                    }
+
+                }
+                return frontMotion; 
+            }
+        }
         public bool WalkFast;
         public int WalkForward;
         public int WalkBackward;

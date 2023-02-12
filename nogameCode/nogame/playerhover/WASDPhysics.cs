@@ -70,7 +70,7 @@ namespace nogame.playerhover
             var vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
             var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
             var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
-            var frontMotion = controllerState.WalkForward - controllerState.WalkBackward;
+            var frontMotion = controllerState.FrontMotion;
 
             if (frontMotion != 0f)
             {
@@ -94,31 +94,24 @@ namespace nogame.playerhover
 
             /*
              * Also, try to rotate me back to horizontal plane.
-             * That is, project the velocity on the xz plane, normalize it (unless it isn't null) and create a quaternion from it.
-             * If it is too small, create a unit quaternion.
-             * 
-             * Slerp to that quaternion. (By applying what impulse?)
-             * 
-             * TXWTODO: Slerp only if we're offset long enough.
+             * Look, where my local up vector points and find the shortes rotation to get it back up.
+             * Do that by adding some angular impulse, making it swing in the end.
              */
-            if(false) {
-                Vector3 vIdealFront = new Vector3(vTargetVelocity.X, 0f, vTargetVelocity.Z);
-                if (vIdealFront.Length() < 0.01f)
-                {
-                    vIdealFront = new Vector3(0f, 0f, -1f);
-                }
-                else
-                {
-                    vIdealFront /= vIdealFront.Length();
-                }
-                Matrix4x4 mIdeal = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vIdealFront, new Vector3(0f, 1f, 0f));
-                Quaternion qIdeal = Quaternion.CreateFromRotationMatrix(mIdeal);
 
-                if (vTargetVelocity.Length() < 0.2 )
-                {
-                    _prefTarget.Pose.Orientation = Quaternion.Slerp(_prefTarget.Pose.Orientation, qIdeal, 0.1f);
-                }
+            /*
+             * We have two vectors, the perfect up vector and the real up vector.
+             * If the real up vector only differs in minimal fractions from the perfect 
+             * one, we ignore the difference.
+             * 
+             * If there is a larger deviation, we apply an angular impulse. The axis for 
+             * this impulse is the cross product of both of the up vectors.
+             */
+            Vector3 vSpinTopAxis = Vector3.Cross(vUp, new Vector3(0f, 1f, 0f));
+            if (vSpinTopAxis.Length() > 0.01f)
+            {
+                vTotalAngular += vSpinTopAxis*0.9f;
             }
+
 
             /*
              * Finally, clip the height with the ground.

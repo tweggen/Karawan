@@ -208,8 +208,6 @@ namespace builtin.tools
                  * First, push the vertices.
                  * Then we create triangulation indices and add them.
                  */
-                //i0 = g.GetNextVertexIndex();
-#if true
                 List<Vector3> topPlane = new();
                 foreach(var op in p)
                 {
@@ -219,31 +217,10 @@ namespace builtin.tools
                 // Why? IDK, was wrong.
                 topPlane.Reverse();
                 builtin.tools.Triangulate.ToMesh(topPlane, g);
-#else
-                for (int j=0; j<p.Count; j++)
-                {
-                    /*
-                     * Take the original point, add the total height.
-                     */
-                    Vector3 vc = p[j];
-                    vc += vh;
-                    g.p(vc); g.UV(ot+it*0f, ot+it*0f);
-                }
-
-
-                var indices = builtin.tools.triangulateConcave(p);
-                var k = 0;
-                while (k < indices.Count)
-                {
-                    // trace( 'ExtrudePoly.buildGeom(): Adding ceiling ${indices[k+2]}, ${indices[k+1]}, ${indices[k]}');
-                    g.Idx(i0 + indices[k + 2], i0 + indices[k + 1], i0 + indices[k]);
-                    k += 3;
-                }
-#endif
             }
         }
 
-#if true
+
         public void BuildPhys( in engine.world.Fragment worldFragment )
         {
             var vh = _path[0];
@@ -259,10 +236,9 @@ namespace builtin.tools
 
             IList<IList<Vector3>> listConvexPolys;
             builtin.tools.Triangulate.ToConvexArrays(_poly, out listConvexPolys);
-            // BepuPhysics.Collidables.CompoundBuilder builder = new BepuPhysics.Collidables.CompoundBuilder(
-            //    bufferPool, worldFragment.Engine.Simulation.Shapes, 20);
-            //var identityPose = new BepuPhysics.RigidPose { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
-            //var fragmentPose = new BepuPhysics.RigidPose { Position = worldFragment.Position, Orientation = Quaternion.Identity };
+            BepuPhysics.Collidables.CompoundBuilder builder = new BepuPhysics.Collidables.CompoundBuilder(
+                bufferPool, worldFragment.Engine.Simulation.Shapes, 8);
+            var identityPose = new BepuPhysics.RigidPose { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
 
             /*
              * for each of the convex polys, build a convex hull from it.
@@ -282,19 +258,22 @@ namespace builtin.tools
                 }
                 var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
                 ConvexHullHelper.CreateShape(pointsBuffer, bufferPool, out var vCenter, out var pshapeConvexHull);
+                builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose {  Position = vCenter, Orientation = Quaternion.Identity }, 1f);
                 //Console.WriteLine($"Center is {vCenter}");
-                simulation.Statics.Add(new StaticDescription(
-                        vCenter, 
-                        new CollidableDescription(
-                            simulation.Shapes.Add(pshapeConvexHull),
-                            0.1f
-                        )
-                    )
-                );
             }
+            builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
+            builder.Reset();
+            var pshapeCompound = new Compound(compoundChildren);
+            simulation.Statics.Add(new StaticDescription(
+                    vCompoundCenter,
+                    new CollidableDescription(
+                        simulation.Shapes.Add(pshapeCompound),
+                        0.1f
+                    )
+                )
+            );
         }
-    
-#endif
+
 
         /**
          * @param poly
