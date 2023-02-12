@@ -221,7 +221,7 @@ namespace engine
                 BufferPool, 
                 new physics.NarrowPhaseCallbacks() /* { Properties = properties } */,
                 new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
-                new SolveDescription(8, 1)
+                new PositionLastTimestepper()
             );
             _aHierarchy = new engine.hierarchy.API(this);
             _aTransform = new engine.transform.API(this);

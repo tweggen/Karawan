@@ -79,7 +79,7 @@ namespace engine.physics
         /// <param name="pairMaterial">Material properties of the manifold.</param>
         /// <returns>True if a constraint should be created for the manifold, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : struct, IContactManifold<TManifold>;
+        public unsafe bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : struct, IContactManifold<TManifold>
         {
             //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
             //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
