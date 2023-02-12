@@ -1,5 +1,6 @@
 ﻿
 using BepuPhysics.Collidables;
+using BepuUtilities.Collections;
 using BepuPhysics;
 using System;
 using System.Collections.Generic;
@@ -269,15 +270,15 @@ namespace builtin.tools
             foreach( var convexPoly in listConvexPolys )
             {
                 int nPoints = 2 * convexPoly.Count;
-                bufferPool.Take<Vector3>(nPoints, out var pointsConvexHull);
-                int idx = 0;
+                //bufferPool.Take<Vector3>(nPoints, out var pointsConvexHull);
+                QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
                 // Console.WriteLine("New hull:");
                 foreach (var p3 in convexPoly)
                 {
                     var pBottom = p3;
                     var pTop = p3 + vh;
-                    pointsConvexHull[idx++] = pBottom;
-                    pointsConvexHull[idx++] = pTop;
+                    pointsConvexHull.AllocateUnsafely() = pBottom;
+                    pointsConvexHull.AllocateUnsafely() = pTop;
                     // Console.WriteLine($"Added {pBottom} {pTop}");
                 }
                 var pshapeConvexHull = new BepuPhysics.Collidables.ConvexHull(
