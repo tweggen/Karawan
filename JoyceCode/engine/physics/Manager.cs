@@ -4,24 +4,46 @@ using System.Collections.Generic;
 
 namespace engine.physics
 {
-    internal class Manager : IDisposable
+    internal class Manager
     {
         private engine.Engine _engine;
 
-        private void OnComponentAdded(in Entity entity, in components.Body cBody)
+
+        private void _removeStatics(in components.Statics statics)
         {
-            // We need to assume the user added the new entity.
+            if( statics.Handles != null )
+            {
+                foreach( var handle in statics.Handles )
+                {
+                    _engine.Simulation.Statics.Remove(handle);
+                }
+                foreach( var shape in statics.Shapes )
+                {
+                    _engine.Simulation.Shapes.RemoveAndDispose(shape, _engine.BufferPool);
+                }
+            }
         }
 
-        private void OnComponentChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
+        private void OnBodyChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
         {
             // We need to assume the user added the new entity.
             _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
         }
-        private void OnComponentRemoved(in Entity entity, in components.Body cBody)
+        private void OnBodyRemoved(in Entity entity, in components.Body cBody)
         {
             _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
         }
+
+        private void OnStaticsChanged(in Entity entity, in components.Statics cOldStatics, in components.Statics cNewStatics)
+        {
+            // We need to assume the user added the new entity.
+            _removeStatics(cOldStatics);
+        }
+        private void OnStaticsRemoved(in Entity entity, in components.Statics cStatics)
+        {
+            _removeStatics(cStatics);
+        }
+
 
         public void Dispose()
         {
@@ -34,9 +56,11 @@ namespace engine.physics
 
             IEnumerable<IDisposable> GetSubscriptions(World w)
             {
-                yield return w.SubscribeComponentAdded<components.Body>(OnComponentAdded);
-                yield return w.SubscribeComponentChanged<components.Body>(OnComponentChanged);
-                yield return w.SubscribeComponentRemoved<components.Body>(OnComponentRemoved);
+                // yield return w.SubscribeComponentAdded<components.Body>(OnComponentAdded);
+                yield return w.SubscribeComponentChanged<components.Body>(OnBodyChanged);
+                yield return w.SubscribeComponentRemoved<components.Body>(OnBodyRemoved);
+                yield return w.SubscribeComponentChanged<components.Statics>(OnStaticsChanged);
+                yield return w.SubscribeComponentRemoved<components.Statics>(OnStaticsRemoved);
             }
             DefaultEcs.World world = _engine.GetEcsWorld();
 

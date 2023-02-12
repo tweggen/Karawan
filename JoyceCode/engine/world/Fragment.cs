@@ -771,7 +771,16 @@ namespace engine.world
         /**
          * Add a geometry atom to this fragment.
          */
-        public void AddStaticMolecule( in engine.joyce.InstanceDesc jInstanceDesc)
+        public void AddStaticMolecule(in engine.joyce.InstanceDesc jInstanceDesc)
+        {
+            AddStaticMolecule(jInstanceDesc, null, null);
+        }
+
+
+        public void AddStaticMolecule(
+            in engine.joyce.InstanceDesc jInstanceDesc,
+            in IList<BepuPhysics.StaticDescription> listStaticDescriptions,
+            in IList<BepuPhysics.Collidables.TypedIndex> listShapes)
         {
             /**
                 * We create an entity for this particular mesh.
@@ -784,6 +793,22 @@ namespace engine.world
                 entity, true, 0xffffffff,
                 Position,
                 new Quaternion());
+            if( listStaticDescriptions!=null 
+                || listShapes !=null)
+            {
+                List<BepuPhysics.StaticHandle> handles = null;
+                List<BepuPhysics.Collidables.TypedIndex> shapes = null;
+                // TXWTODO: We assume that the shapes already are added to the engine at this point.
+                if (listStaticDescriptions != null)
+                {
+                    handles = new();
+                    foreach (var staticDescription in listStaticDescriptions)
+                    {
+                        handles.Add(Engine.Simulation.Statics.Add(staticDescription));
+                    }
+                }
+                entity.Set(new engine.physics.components.Statics(handles, shapes));
+            }
 
             /*
              * Remember the molecule to be able to remove its contents later again.
@@ -794,7 +819,6 @@ namespace engine.world
              * As soon we show this fragment, we make all the static molecules visible.
              * Only then all the actual resources will be created by the engine.
              */
-
         }
 
         public Fragment(

@@ -1,4 +1,6 @@
-﻿using DefaultEcs;
+﻿using BepuPhysics;
+using BepuPhysics.Collidables;
+using DefaultEcs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -76,7 +78,9 @@ namespace nogame.cities
             in engine.world.Fragment worldFragment,
             in IList<Vector3> p,
             float h0, float mpt,
-            in engine.joyce.Mesh g
+            in engine.joyce.Mesh g,
+            in IList<StaticDescription> listStaticDescriptions,
+            in IList<TypedIndex> listShapes
         )
         {
 
@@ -102,9 +106,10 @@ namespace nogame.cities
             } catch (Exception e) {
                 trace( $"GenerateHousesOperator.createHouseSubGeo(): buildGeom(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
+            StaticDescription staticDescription;
             try
             {
-                opExtrudePoly.BuildPhys(worldFragment);
+                opExtrudePoly.BuildPhys(worldFragment, listStaticDescriptions, listShapes);
             } catch (Exception e) {
                 trace( $"GenerateHousesOperator.createHouseSubGeo(): buildPhys(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
@@ -170,45 +175,45 @@ namespace nogame.cities
         }
 
 
-/**
- * Create large-scale neon-lights for the given house geometry.
- */
-private void _createNeonSignsSubGeo(
-        in engine.world.Fragment worldFragment,
-        in IList<Vector3> p,
-        float h,
-        engine.joyce.Mesh neonG)
-{
-    /*
-     * For the neon sign, we each of the corner points, using 1 meter in wall direction to
-     * outside to place the rectangle.
-     */
-
-    float letterWidth = 1.5f;
-
-    var l = p.Count;
-    for (int i=0; i<l; i++ )
-    {
-        /*
-         * Start point of sign
+        /**
+         * Create large-scale neon-lights for the given house geometry.
          */
-        Vector3 p0 = p[i];
-        /*
-         * Extent of sign.
-         */
-        Vector3 pe = p[(i + 1) % l];
+        private void _createNeonSignsSubGeo(
+                in engine.world.Fragment worldFragment,
+                in IList<Vector3> p,
+                float h,
+                engine.joyce.Mesh neonG)
+        {
+            /*
+             * For the neon sign, we each of the corner points, using 1 meter in wall direction to
+             * outside to place the rectangle.
+             */
 
-        pe -= p0;
-        pe = Vector3.Normalize(pe);
-        pe *= -letterWidth;
+            float letterWidth = 1.5f;
 
-        _createNeonSignSubGeo(
-            worldFragment,
-            p0, pe,
-            h,
-            neonG);
-    }
-}
+            var l = p.Count;
+            for (int i=0; i<l; i++ )
+            {
+                /*
+                 * Start point of sign
+                 */
+                Vector3 p0 = p[i];
+                /*
+                 * Extent of sign.
+                 */
+                Vector3 pe = p[(i + 1) % l];
+
+                pe -= p0;
+                pe = Vector3.Normalize(pe);
+                pe *= -letterWidth;
+
+                _createNeonSignSubGeo(
+                    worldFragment,
+                    p0, pe,
+                    h,
+                    neonG);
+            }
+        }
 
 
 
@@ -242,6 +247,8 @@ private void _createNeonSignsSubGeo(
 
             engine.joyce.Mesh g = engine.joyce.Mesh.CreateListInstance();
             engine.joyce.Mesh neonG = engine.joyce.Mesh.CreateListInstance();
+            List<StaticDescription> listStaticDescriptions = new();
+            List<TypedIndex> listShapes = new();
 
             /*
              * Iterate through all quarters in the clusters and generate lots and houses.
@@ -324,7 +331,8 @@ private void _createNeonSignsSubGeo(
                         try
                         {
                             _createHouseSubGeo(
-                                worldFragment, fragPoints, height, _metersPerTexture, g);
+                                worldFragment, fragPoints, height, _metersPerTexture,
+                                g, listStaticDescriptions, listShapes);
                         }
                         catch (Exception e) {
                             trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
@@ -360,7 +368,7 @@ private void _createNeonSignsSubGeo(
                     instanceDesc.Meshes.Add(g);
                     instanceDesc.MeshMaterials.Add(0);
                     instanceDesc.Materials.Add(_getHouseMaterial());
-                    worldFragment.AddStaticMolecule(instanceDesc);
+                    worldFragment.AddStaticMolecule(instanceDesc, listStaticDescriptions, listShapes);
                 }
                 {
                     engine.joyce.InstanceDesc instanceDesc = new();

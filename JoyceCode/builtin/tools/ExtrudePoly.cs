@@ -221,7 +221,10 @@ namespace builtin.tools
         }
 
 
-        public void BuildPhys( in engine.world.Fragment worldFragment )
+        public void BuildPhys(
+            in engine.world.Fragment worldFragment, 
+            in IList<StaticDescription> staticDescriptions,
+            in IList<TypedIndex> listShapes)
         {
             var vh = _path[0];
             if (null == _poly)
@@ -264,7 +267,8 @@ namespace builtin.tools
             builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
             builder.Reset();
             var pshapeCompound = new Compound(compoundChildren);
-            simulation.Statics.Add(new StaticDescription(
+            staticDescriptions.Add(
+                    new StaticDescription(
                     vCompoundCenter,
                     new CollidableDescription(
                         simulation.Shapes.Add(pshapeCompound),
