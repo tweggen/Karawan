@@ -26,6 +26,11 @@ namespace nogame.playerhover
 
         private const float _massShip = 10f;
 
+        private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
+        {
+            Console.WriteLine( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
+        }
+
         public void PartDeactivate()
         {
             _controllerWASDPhysics.DeactivateController();
@@ -102,6 +107,7 @@ namespace nogame.playerhover
             _controllerWASDPhysics = new WASDPhysics(_engine, _eShip, _massShip);
             _controllerWASDPhysics.ActivateController();
 
+            _engine.OnContactInfo += _onContactInfo;
             _engine.AddPart(0, scene0, this);
         }
 

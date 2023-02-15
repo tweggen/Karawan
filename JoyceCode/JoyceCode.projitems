@@ -62,6 +62,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Body.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Statics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactEvents.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\NarrowPhaseCallbacks.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\PoseIntegratorCallbacks.cs" />

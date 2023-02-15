@@ -32,32 +32,19 @@ namespace engine
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
+        public event EventHandler<physics.ContactInfo> OnContactInfo;
 
-        struct EnginePhysicsEventHandler : physics.IContactEventHandler
+        class EnginePhysicsEventHandler : physics.IContactEventHandler
         {
             public Simulation Simulation;
+            public Engine Engine;
 
             public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
                 in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
             {
-                Console.WriteLine($"OnContactAdded({eventSource}, {pair}, {contactOffset}, {contactNormal}, {depth}, {contactIndex}, {workerIndex}");
-#if false
-                //var other = pair.A.Packed == eventSource.Packed ? pair.B : pair.A;
-                //Console.WriteLine($"Added contact: ({eventSource}, {other}): {featureId}");
-                //Simply ignore any particles beyond the allocated space.
-                var index = Interlocked.Increment(ref Particles.Count) - 1;
-                if (index < Particles.Span.Length)
-                {
-                    ref var particle = ref Particles[index];
-
-                    //Contact data is calibrated according to the order of the pair, so using A's position is important.
-                    particle.Position = contactOffset + (pair.A.Mobility == CollidableMobility.Static ?
-                        new StaticReference(pair.A.StaticHandle, Simulation.Statics).Pose.Position :
-                        new BodyReference(pair.A.BodyHandle, Simulation.Bodies).Pose.Position);
-                    particle.Age = 0;
-                    particle.Normal = contactNormal;
-                }
-#endif
+                physics.ContactInfo contactInfo = new(
+                    eventSource, pair, contactOffset, contactNormal, depth);
+                Engine.OnContactInfo?.Invoke(Engine,contactInfo);
             }
         }
 
@@ -268,12 +255,14 @@ namespace engine
         public void SetupDone()
         {
             BufferPool = new BufferPool();
+            _physicsThreadDispatcher = new(4);
             EnginePhysicsEventHandler enginePhysicsEventHandler = new();
             _contactEvents = new physics.ContactEvents<EnginePhysicsEventHandler>(
                 enginePhysicsEventHandler,
                 BufferPool,
                 _physicsThreadDispatcher
                 );
+            enginePhysicsEventHandler.Engine = this;
             Simulation = Simulation.Create(
                 BufferPool, 
                 new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(_contactEvents) /* { Properties = properties } */,
