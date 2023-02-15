@@ -33,7 +33,7 @@ namespace engine
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
 
-        struct EventHandler : physics.IContactEventHandler
+        struct EnginePhysicsEventHandler : physics.IContactEventHandler
         {
             public Simulation Simulation;
 
@@ -64,7 +64,8 @@ namespace engine
 
         public Simulation Simulation { get; protected set; }
         public BufferPool BufferPool { get; private set; }
-        private physics.ContactEvents<EventHandler> _events;
+        private physics.ContactEvents<EnginePhysicsEventHandler> _contactEvents;
+        private physics.SimpleThreadDispatcher _physicsThreadDispatcher;
 
         private physics.Manager _managerPhysics;
 
@@ -251,9 +252,15 @@ namespace engine
         public void SetupDone()
         {
             BufferPool = new BufferPool();
+            EnginePhysicsEventHandler enginePhysicsEventHandler = new();
+            _contactEvents = new physics.ContactEvents<EnginePhysicsEventHandler>(
+                enginePhysicsEventHandler,
+                BufferPool,
+                _physicsThreadDispatcher
+                );
             Simulation = Simulation.Create(
                 BufferPool, 
-                new physics.NarrowPhaseCallbacks<EventHandler>() /* { Properties = properties } */,
+                new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(_contactEvents) /* { Properties = properties } */,
                 new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
                 new PositionLastTimestepper()
             );

@@ -65,6 +65,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\NarrowPhaseCallbacks.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\PoseIntegratorCallbacks.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\SimpleThreadDispatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\ApplyPosesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
