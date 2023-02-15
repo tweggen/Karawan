@@ -22,8 +22,14 @@ namespace engine.physics.systems
             foreach (var entity in entities)
             {
                 {
-                    entity.Get<physics.components.Kinetic>().Reference.Pose.Position =
-                        entity.Get<transform.components.Transform3ToWorld>().Matrix.Translation;
+                    var bodyReference = entity.Get<physics.components.Kinetic>().Reference;
+                    var oldPos = bodyReference.Pose.Position;
+                    var newPos = entity.Get<transform.components.Transform3ToWorld>().Matrix.Translation;
+                    if (oldPos != newPos)
+                    {
+                        bodyReference.Pose.Position = newPos;
+                        bodyReference.Awake = true;
+                    }
                 }
             }
         }
