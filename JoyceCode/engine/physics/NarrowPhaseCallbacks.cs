@@ -6,16 +6,30 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Numerics;
 
 namespace engine.physics
 {
+    public interface IContactEventHandler
+    {
+        void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
+            in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>;
+    }
+
     //The simulation has a variety of extension points that must be defined. 
     //The demos tend to reuse a few types like the DemoNarrowPhaseCallbacks, but this demo will provide its own (super simple) versions.
     //If you're wondering why the callbacks are interface implementing structs rather than classes or events, it's because 
     //the compiler can specialize the implementation using the compile time type information. That avoids dispatch overhead associated
     //with delegates or virtual dispatch and allows inlining, which is valuable for extremely high frequency logic like contact callbacks.
-    internal unsafe struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
+    internal unsafe struct NarrowPhaseCallbacks<TEventHandler> : INarrowPhaseCallbacks where TEventHandler : IContactEventHandler
     {
+        private ContactEvents<TEventHandler> _events;
+
+        public NarrowPhaseCallbacks(ContactEvents<TEventHandler> events)
+        {
+            this._events = events;
+        }
+
         /// <summary>
         /// Performs any required initialization logic after the Simulation instance has been constructed.
         /// </summary>
@@ -24,6 +38,7 @@ namespace engine.physics
         {
             //Often, the callbacks type is created before the simulation instance is fully constructed, so the simulation will call this function when it's ready.
             //Any logic which depends on the simulation existing can be put here.
+            _events.Initialize(simulation.Bodies);
         }
 
         /// <summary>
