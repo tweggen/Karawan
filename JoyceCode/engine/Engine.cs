@@ -120,6 +120,22 @@ namespace engine
                 vPosition);
         }
 
+        public void AddContactListener(DefaultEcs.Entity entity)
+        {
+            _contactEvents.RegisterListener(
+                new CollidableReference(
+                    CollidableMobility.Dynamic, 
+                    entity.Get<physics.components.Body>().Reference.Handle));
+        }
+
+        public void RemoveContactListener(DefaultEcs.Entity entity)
+        {
+            _contactEvents.UnregisterListener(
+                new CollidableReference(
+                    CollidableMobility.Dynamic,
+                    entity.Get<physics.components.Body>().Reference.Handle));
+        }
+
         public DefaultEcs.Entity CreateEntity()
         {
             return _ecsWorld.CreateEntity();
@@ -264,6 +280,7 @@ namespace engine
                 new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
                 new PositionLastTimestepper()
             );
+            enginePhysicsEventHandler.Simulation = Simulation;
             _aHierarchy = new engine.hierarchy.API(this);
             _aTransform = new engine.transform.API(this);
             _systemBehave = new(this);

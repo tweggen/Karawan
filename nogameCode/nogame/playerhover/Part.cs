@@ -90,6 +90,10 @@ namespace nogame.playerhover
                 );
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
                 _eShip.Set(new engine.physics.components.Body(_prefShip));
+                /*
+                 * Activate collision detection for ship.
+                 */
+                _engine.AddContactListener(_eShip);
             }
 
             /*
