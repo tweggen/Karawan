@@ -80,7 +80,6 @@ namespace nogame.playerhover
                     new engine.joyce.components.Instance3(jInstanceDesc));
 
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(1.4f);
-
                 pbodySphere.ComputeInertia(_massShip, out var pinertiaSphere);
                 _phandleShip = _engine.Simulation.Bodies.Add(
                     BodyDescription.CreateDynamic(

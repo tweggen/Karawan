@@ -60,6 +60,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\World3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Body.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Kinetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Statics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactInfo.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\PoseIntegratorCallbacks.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\SimpleThreadDispatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\ApplyPosesSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\MoveKineticsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Estate.cs" />

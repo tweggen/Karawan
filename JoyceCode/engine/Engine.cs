@@ -23,6 +23,7 @@ namespace engine
 
         private engine.behave.systems.BehaviorSystem _systemBehave;
         private engine.physics.systems.ApplyPosesSystem _systemApplyPoses;
+        private engine.physics.systems.MoveKineticsSystem _systemMoveKinetics;
 
         private SortedDictionary<float, IScene> _dictScenes;
         private SortedDictionary<float, IPart> _dictParts;
@@ -179,6 +180,7 @@ namespace engine
                 _aHierarchy.Update();
                 _systemApplyPoses.Update(dt);
                 _aTransform.Update();
+                _systemMoveKinetics.Update(dt);
             } while (_timeLeft > 0);
 
             _onPhysicalFrame(dt);
@@ -274,6 +276,7 @@ namespace engine
             _aTransform = new engine.transform.API(this);
             _systemBehave = new(this);
             _systemApplyPoses = new(this);
+            _systemMoveKinetics = new(this);
             _managerPhysics = new physics.Manager();
             _managerPhysics.Manage(this);
         }

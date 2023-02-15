@@ -6,7 +6,7 @@ using BepuPhysics.Collidables;
 
 namespace engine.physics.components
 {
-    internal class Statics
+    internal struct Statics
     {
         public IList<StaticHandle> Handles;
         public IList<TypedIndex> Shapes;

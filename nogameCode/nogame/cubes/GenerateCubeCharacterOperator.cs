@@ -1,4 +1,4 @@
-﻿using DefaultEcs;
+﻿using BepuPhysics;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -39,6 +39,21 @@ namespace nogame.cubes
                     _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh(1f);
                 }
                 return _jMeshCube;
+            }
+        }
+
+        private static BepuPhysics.Collidables.TypedIndex _pshapeSphere;
+        private static BepuPhysics.Collidables.Sphere _pbodySphere;
+        private static BepuPhysics.Collidables.TypedIndex _getSphereShape(in Engine engine)
+        {
+            lock(_classLock)
+            {
+                if( !_pshapeSphere.Exists )
+                {
+                    _pbodySphere = new(0.5f);
+                    _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
+                }
+                return _pshapeSphere;
             }
         }
 
@@ -143,7 +158,20 @@ namespace nogame.cubes
                         jInstanceDesc.MeshMaterials.Add(0);
                         jInstanceDesc.Materials.Add(_getCubeMaterial());
                         eCube.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-
+                        {
+                            // pbodySphere.ComputeInertia
+                            BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(
+                                BodyDescription.CreateKinematic(
+                                    new Vector3(0f, 0f, 0f),
+                                    new BepuPhysics.Collidables.CollidableDescription(
+                                        _getSphereShape(worldFragment.Engine),
+                                        0.1f),
+                                    new BodyActivityDescription(0.01f)
+                                )
+                            );
+                            BodyReference prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                            eCube.Set(new engine.physics.components.Kinetic(prefSphere));
+                        }
                         eCube.Set(new engine.behave.components.Behavior(
                             new CubeBehavior(worldFragment.Engine, _clusterDesc, chosenStreetPoint) ) );
 
