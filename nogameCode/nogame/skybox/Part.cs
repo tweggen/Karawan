@@ -41,10 +41,10 @@ namespace nogame.skybox
             {
                 _eSkybox = _ecsWorld.CreateEntity();
                 var jMeshSkybox = engine.joyce.mesh.Tools.CreateSkyboxMesh(
-                    500f, new Vector2(0f, 0f), new Vector2( 1f, 1f ));
+                    250f, new Vector2(0f, 0f), new Vector2( 1f, 1f ));
                 _eSkybox.Set(new engine.joyce.components.Skybox(250f, 0xffffffff));
                 var jMaterialSkybox = new engine.joyce.Material();
-                jMaterialSkybox.AlbedoColor = 0x221144;
+                jMaterialSkybox.AlbedoColor = 0xff221144;
                 engine.joyce.InstanceDesc jInstanceDesc = new();
                 jInstanceDesc.Meshes.Add(jMeshSkybox);
                 jInstanceDesc.MeshMaterials.Add(0);

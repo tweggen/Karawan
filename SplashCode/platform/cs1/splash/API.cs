@@ -20,7 +20,7 @@ namespace Karawan.platform.cs1.splash
         private MeshManager _meshManager;
 
 
-        private void _drawSkyboxes(uint cameraMasks)
+        private void _drawSkyboxes(in Vector3 vCameraPosition, in uint cameraMasks)
         {
             var skyboxes = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Skybox>().AsEnumerable();
@@ -36,7 +36,7 @@ namespace Karawan.platform.cs1.splash
                 }
                 var rlMeshEntry = eSkybox.Get<splash.components.RlMesh>().MeshEntry;
                 var rlMaterialEntry = eSkybox.Get<splash.components.RlMaterial>().MaterialEntry;
-                var matIdentity = Matrix4x4.Identity;
+                var matIdentity = Matrix4x4.CreateTranslation(-vCameraPosition);
 
                 Raylib_CsLo.Raylib.DrawMesh(
                     rlMeshEntry.RlMesh,
@@ -90,7 +90,7 @@ namespace Karawan.platform.cs1.splash
                 /*
                  * Then draw standard world
                  */
-                _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
+                // _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
 
                 /*
                  * Then draw terrain
@@ -100,7 +100,7 @@ namespace Karawan.platform.cs1.splash
                 /*
                  * Then draw skybox
                  */
-                _drawSkyboxes(cCameraParams.CameraMask);
+                _drawSkyboxes(vPosition, cCameraParams.CameraMask);
 
                 Raylib.EndMode3D();
             }
