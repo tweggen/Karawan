@@ -48,7 +48,7 @@ namespace nogame.skybox
                 engine.joyce.InstanceDesc jInstanceDesc = new();
                 jInstanceDesc.Meshes.Add(jMeshSkybox);
                 jInstanceDesc.MeshMaterials.Add(0);
-                jInstanceDesc.Materials.Add(jMeshSkybox);
+                jInstanceDesc.Materials.Add(jMaterialSkybox);
                 _eSkybox.Set<engine.joyce.components.Instance3>(
                     new engine.joyce.components.Instance3(jInstanceDesc));
             }

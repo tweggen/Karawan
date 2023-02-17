@@ -6,7 +6,10 @@ using System;
 namespace Karawan.platform.cs1.splash.systems
 {
     [DefaultEcs.System.With(typeof(engine.joyce.components.Instance3))]
-    [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
+    [DefaultEcs.System.WithEither(new Type[] {
+        typeof(engine.transform.components.Transform3ToWorld),
+        typeof(engine.joyce.components.Skybox)
+    })]
     [DefaultEcs.System.Without(typeof(splash.components.RlMesh))]
 
     /**
