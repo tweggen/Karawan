@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JoyceCode.engine.transform.components
+namespace engine.joyce.components
 {
     /**
      * Transformation and anchor for skyboxes.
@@ -12,10 +12,12 @@ namespace JoyceCode.engine.transform.components
     public struct Skybox
     {
         public float Distance;
+        public uint CameraMask;
 
-        public Skybox(float distance)
+        public Skybox(float distance, uint cameraMask)
         {
             Distance = distance;
+            CameraMask = cameraMask;
         }
     }
 }

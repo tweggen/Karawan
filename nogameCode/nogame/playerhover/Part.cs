@@ -11,7 +11,6 @@ namespace nogame.playerhover
     {
         private object _lock = new object();
 
-
         private engine.Engine _engine;
         private engine.IScene _scene;
 

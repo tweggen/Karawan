@@ -85,7 +85,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeIntersection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\API.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Skybox.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Skybox.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToWorld.cs" />

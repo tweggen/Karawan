@@ -18,6 +18,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\playerhover\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\playerhover\WASDPhysics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\RootScene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\skybox\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\systems\CubeSpinnerSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\ElevationBaseFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\GroundOperator.cs" />

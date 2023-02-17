@@ -22,6 +22,7 @@ namespace nogame
         private engine.world.MetaGen _worldMetaGen;
 
         private playerhover.Part _partPlayerhover;
+        private skybox.Part _partSkybox;
 
         public void SceneOnLogicalFrame( float dt )
         { 
@@ -37,6 +38,7 @@ namespace nogame
         public void SceneDeactivate()
         {
             _partPlayerhover.PartDeactivate();
+            _partSkybox.PartDeactivate(); 
             _ctrlFollowCamera .DeactivateController();
             _ctrlFollowCamera = null;
 
@@ -98,10 +100,12 @@ namespace nogame
             }
 
             _partPlayerhover = new();
+            _partSkybox = new();
 
             _engine.AddScene(0, this);
 
             _partPlayerhover.PartActivate(_engine, this);
+            _partSkybox.PartActivate(_engine, this);
 
             // TXWTODO: Clean up dependencies..
             /*

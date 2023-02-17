@@ -3,6 +3,7 @@ using System.Numerics;
 using Raylib_CsLo;
 
 using System.Threading.Tasks;
+using DefaultEcs;
 
 namespace Karawan.platform.cs1.splash
 {
@@ -17,6 +18,34 @@ namespace Karawan.platform.cs1.splash
         private TextureGenerator _textureGenerator;
         private TextureManager _textureManager;
         private MeshManager _meshManager;
+
+
+        private void _drawSkyboxes(uint cameraMasks)
+        {
+            var skyboxes = _engine.GetEcsWorld().GetEntities()
+                .With<engine.joyce.components.Skybox>().AsEnumerable();
+            // TXWTODO: Sort it by distance.
+            // TXWTODO: We certainly allow transparency in the skyboxes, so start with the one far away.
+            foreach(var eSkybox in skyboxes)
+            {
+                // No transformation applied, just the camera.
+                var cSkybox = eSkybox.Get<engine.joyce.components.Skybox>();
+                if( 0 == (cameraMasks & cSkybox.CameraMask))
+                {
+                    continue;
+                }
+                var rlMeshEntry = eSkybox.Get<splash.components.RlMesh>().MeshEntry;
+                var rlMaterialEntry = eSkybox.Get<splash.components.RlMaterial>().MaterialEntry;
+                var matIdentity = Matrix4x4.Identity;
+
+                Raylib_CsLo.Raylib.DrawMesh(
+                    rlMeshEntry.RlMesh,
+                    rlMaterialEntry.RlMaterial,
+                    matIdentity
+                );
+
+            }
+        }
 
         /**
          * Render all camera objects.
@@ -53,7 +82,25 @@ namespace Karawan.platform.cs1.splash
 
                 Raylib.BeginMode3D(rCamera);
 
+                /*
+                 * First draw player related stuff
+                 */
+                // TXWTODO: Nothing here
+
+                /*
+                 * Then draw standard world
+                 */
                 _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
+
+                /*
+                 * Then draw terrain
+                 */
+                // TXWTODO: Remove terrain from standard mesh drawing
+
+                /*
+                 * Then draw skybox
+                 */
+                _drawSkyboxes(cCameraParams.CameraMask);
 
                 Raylib.EndMode3D();
             }
