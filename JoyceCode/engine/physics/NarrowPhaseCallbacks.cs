@@ -107,7 +107,12 @@ namespace engine.physics
             pairMaterial.MaximumRecoveryVelocity = 2f;
             pairMaterial.SpringSettings = new SpringSettings(30, 1);
             _events.HandleManifold(workerIndex, pair, ref manifold);
-            //For the purposes of the demo, contact constraints are always generated.
+
+            // TXWTODO: Test: If one of them is a kinetic, no constraint is generated. i.e. fly through cubes
+            if (pair.A.Mobility == CollidableMobility.Kinematic || pair.B.Mobility == CollidableMobility.Kinematic)
+            {
+                return false;
+            }
             return true;
         }
 

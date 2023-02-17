@@ -43,18 +43,50 @@ namespace engine.joyce.mesh
 
             var m = joyce.Mesh.CreateArrayListInstance();
 
-            // Back
+            // Back (-Z)
             _addQuadXY( m, new Vector3(h, -h, -h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f) );
-            // Front
+            // Front (positive Z)
             _addQuadXY( m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f) );
-            // Top
+            // Top (positive Y)
             _addQuadXY(m, new Vector3(-h, h, h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, -size) );
-            // Bottom
+            // Bottom (-Y)
             _addQuadXY(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, size));
-            // Right
+            // Right (positive X)
             _addQuadXY(m, new Vector3(h, -h, h), new Vector3(0f, 0f, -size), new Vector3(0f, size, 0f));
-            // Left
+            // Left (-X)
             _addQuadXY(m, new Vector3(-h, -h, -h), new Vector3(0f, 0f, size), new Vector3(0f, size, 0f));
+
+            return m;
+        }
+
+        /**
+         * Create a skybox texture cube with inside-faced rectangles.
+         * Texture is assumed to be cross shaped, the middle row being the horizon on the xz plane,
+         * attached at the second of 4 rectangles are the sky the hell, the sky being "above" the x -z view,
+         * the hell right below it.
+         */
+        public static joyce.Mesh CreateSkyboxMesh(float size,
+            in Vector2 vUVOrigin, in Vector2 vUVTotal )
+        {
+            float h /* half */ = size / 2;
+
+            var m = joyce.Mesh.CreateArrayListInstance();
+
+            /*
+             *  Note that the direction of the surfaces is mirrored due to the inbound direction of the normals.
+             */
+            // -Z plane (in front of us)
+            _addQuadXY(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f));
+            // +Z plane (behind us)
+            _addQuadXY(m, new Vector3(h, -h, h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f));
+            // +Y plane (above us)
+            _addQuadXY(m, new Vector3(-h, h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, size));
+            // Bottom
+            _addQuadXY(m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, -size));
+            // Right
+            _addQuadXY(m, new Vector3(h, -h, -h), new Vector3(0f, 0f, size), new Vector3(0f, size, 0f));
+            // Left
+            _addQuadXY(m, new Vector3(-h, -h, h), new Vector3(0f, 0f, -size), new Vector3(0f, size, 0f));
 
             return m;
         }
