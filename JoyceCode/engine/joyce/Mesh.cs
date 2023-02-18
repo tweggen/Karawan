@@ -109,9 +109,7 @@ namespace engine.joyce
                     if( nNormals>0 )
                     {
                         var vn = (Vector3) Normals[n];
-                        // TXWTODO: Do we really need this we normalize anyway.
-                        Normals[n] = vn / nNormals;
-                        vn = Vector3.Normalize(vn);
+                        Normals[n] = Vector3.Normalize(vn);
                     }
                 }
             }

@@ -45,8 +45,6 @@ namespace engine.joyce.mesh
 
             // Back (-Z)
             _addQuadXY( m, new Vector3(h, -h, -h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f) );
-            // Repeated in wrong direction
-            // _addQuadXY(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f));
             // Front (positive Z)
             _addQuadXY( m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f) );
             // Top (positive Y)

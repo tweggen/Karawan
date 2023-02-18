@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace Karawan.platform.cs1.splash.components
 {
-
     struct RlMesh
     {
         public RlMeshEntry MeshEntry;

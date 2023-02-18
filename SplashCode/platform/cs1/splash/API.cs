@@ -36,12 +36,12 @@ namespace Karawan.platform.cs1.splash
                 }
                 var rlMeshEntry = eSkybox.Get<splash.components.RlMesh>().MeshEntry;
                 var rlMaterialEntry = eSkybox.Get<splash.components.RlMaterial>().MaterialEntry;
-                var matIdentity = Matrix4x4.CreateTranslation(-vCameraPosition);
+                var matrixSkybox = Matrix4x4.Transpose(Matrix4x4.CreateTranslation(vCameraPosition));
 
                 Raylib_CsLo.Raylib.DrawMesh(
                     rlMeshEntry.RlMesh,
                     rlMaterialEntry.RlMaterial,
-                    matIdentity
+                    matrixSkybox
                 );
 
             }
