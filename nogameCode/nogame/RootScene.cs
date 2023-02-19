@@ -30,6 +30,10 @@ namespace nogame
 
         public void SceneOnPhysicalFrame( float dt )
         {
+            if( !_eCamera.Has<Transform3ToWorld>() ) 
+            {
+                return;
+            }
             var vMe = _eCamera.Get<Transform3ToWorld>().Matrix.Translation;
             _worldLoader.WorldLoaderProvideFragments(vMe);
             _engine.Render3D();
@@ -96,7 +100,7 @@ namespace nogame
                 cCamera.FarFrustrum = 1000f;
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 50f));
             }
 
             _partPlayerhover = new();

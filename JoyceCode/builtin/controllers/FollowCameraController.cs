@@ -22,7 +22,8 @@ namespace builtin.controllers
             _engine.GetMouseMove(out vMouseMove);
 
             if( !_eCarrot.Has<engine.transform.components.Transform3ToParent>()
-                |!_eCarrot.Has<engine.transform.components.Transform3>() )
+                || !_eCarrot.Has<engine.transform.components.Transform3>()
+                || !_eTarget.Has<engine.transform.components.Transform3>())
             {
                 return;
             }

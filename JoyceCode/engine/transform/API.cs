@@ -57,7 +57,7 @@ namespace engine.transform
             } else
             {
                 transform3 = new transform.components.Transform3(
-                    false, 0xffffffff, new Quaternion(new Vector3(), 1f), new Vector3()
+                    false, 0, new Quaternion(new Vector3(5f,4f,3f), 10f), new Vector3(99999f,99999f,99999f)
                 ); 
             }
         }
