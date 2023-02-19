@@ -9,8 +9,8 @@ namespace engine.joyce.components
     public struct Camera3
     {
         public float Angle;
-        public float NearFrustrum;
-        public float FarFrustrum;
+        public float NearFrustum;
+        public float FarFrustum;
         public uint CameraMask;
     }
 }

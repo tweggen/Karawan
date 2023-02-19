@@ -57,7 +57,7 @@ namespace engine.transform
             } else
             {
                 transform3 = new transform.components.Transform3(
-                    false, 0, new Quaternion(new Vector3(5f,4f,3f), 10f), new Vector3(99999f,99999f,99999f)
+                    false, 0, new Quaternion(new Vector3(), 1f), new Vector3(99999f,99999f,99999f)
                 ); 
             }
         }
@@ -69,6 +69,15 @@ namespace engine.transform
             if (object3.IsVisible != isVisible)
             {
                 SetTransforms(entity, isVisible, object3.CameraMask, object3.Rotation, object3.Position);
+            }
+        }
+
+        public void SetCameraMask(DefaultEcs.Entity entity, uint cameraMask) 
+        {
+            components.Transform3 object3; GetTransform(entity, out object3);
+            if (object3.CameraMask != cameraMask)
+            {
+                SetTransforms(entity, object3.IsVisible, cameraMask, object3.Rotation, object3.Position);
             }
         }
 

@@ -69,14 +69,14 @@ namespace nogame.playerhover
                 var jShipMesh = engine.joyce.mesh.Tools.CreateCubeMesh(2f);
                 _aTransform.SetPosition(_eShip, posShip);
                 _aTransform.SetVisible(_eShip, true);
+                _aTransform.SetCameraMask(_eShip, 0xffffffff);
                 var jShipMaterial = new engine.joyce.Material();
                 jShipMaterial.AlbedoColor = 0xffeedd00;
                 engine.joyce.InstanceDesc jInstanceDesc = new();
                 jInstanceDesc.Meshes.Add(jShipMesh);
                 jInstanceDesc.MeshMaterials.Add(0);
                 jInstanceDesc.Materials.Add(jShipMaterial);
-                _eShip.Set<engine.joyce.components.Instance3>(
-                    new engine.joyce.components.Instance3(jInstanceDesc));
+                _eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));
 
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(1.4f);
                 pbodySphere.ComputeInertia(_massShip, out var pinertiaSphere);

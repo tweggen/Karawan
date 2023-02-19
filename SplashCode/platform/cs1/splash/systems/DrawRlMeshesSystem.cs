@@ -52,7 +52,9 @@ namespace Karawan.platform.cs1.splash.systems
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
                     var nMatrices = meshItem.Value.Matrices.Count;
-#if true
+                    /*
+                     * I must draw using the instanced call because I only use an instanced shader.
+                     */
                     // var arrayMatrices = meshItem.Value.Matrices.ToArray();
 #if NET6_0_OR_GREATER
                     var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
@@ -65,16 +67,6 @@ namespace Karawan.platform.cs1.splash.systems
                             spanMatrices,
                             nMatrices
                     );
-#else
-                        for ( int i=0; i< nMatrices; ++i )
-                        {
-                            Raylib_CsLo.Raylib.DrawMesh(
-                                meshItem.Key.RlMesh,
-                                materialItem.Key.RlMaterial,
-                                (Matrix4x4) meshItem.Value.Matrices[i]
-                            );
-                        }
-#endif
                 }
             }
         }

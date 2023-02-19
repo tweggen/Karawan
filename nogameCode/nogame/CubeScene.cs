@@ -167,8 +167,8 @@ namespace nogame
                 _eCamera = _ecsWorld.CreateEntity();
                 var cCamera = new engine.joyce.components.Camera3();
                 cCamera.Angle = 60.0f;
-                cCamera.NearFrustrum = 1f;
-                cCamera.FarFrustrum = 200f;
+                cCamera.NearFrustum = 1f;
+                cCamera.FarFrustum = 200f;
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 100f));

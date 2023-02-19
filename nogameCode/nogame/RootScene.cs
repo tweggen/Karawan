@@ -43,7 +43,7 @@ namespace nogame
         {
             _partPlayerhover.PartDeactivate();
             _partSkybox.PartDeactivate(); 
-            _ctrlFollowCamera .DeactivateController();
+            _ctrlFollowCamera.DeactivateController();
             _ctrlFollowCamera = null;
 
             /*
@@ -96,11 +96,11 @@ namespace nogame
                 _eCamera = _ecsWorld.CreateEntity();
                 var cCamera = new engine.joyce.components.Camera3();
                 cCamera.Angle = 60.0f;
-                cCamera.NearFrustrum = 1f;
-                cCamera.FarFrustrum = 1000f;
+                cCamera.NearFrustum = 1f;
+                cCamera.FarFrustum = 1500f;
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 50f));
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
             }
 
             _partPlayerhover = new();

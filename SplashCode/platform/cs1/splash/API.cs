@@ -4,6 +4,8 @@ using Raylib_CsLo;
 
 using System.Threading.Tasks;
 using DefaultEcs;
+using static IronPython.Modules._ast;
+using BepuUtilities;
 
 namespace Karawan.platform.cs1.splash
 {
@@ -36,12 +38,19 @@ namespace Karawan.platform.cs1.splash
                 }
                 var rlMeshEntry = eSkybox.Get<splash.components.RlMesh>().MeshEntry;
                 var rlMaterialEntry = eSkybox.Get<splash.components.RlMaterial>().MaterialEntry;
-                var matrixSkybox = Matrix4x4.Transpose(Matrix4x4.CreateTranslation(vCameraPosition));
+                var matrixSkybox = Matrix4x4.Transpose(
+                    Matrix4x4.CreateTranslation(vCameraPosition));
 
-                Raylib_CsLo.Raylib.DrawMesh(
-                    rlMeshEntry.RlMesh,
-                    rlMaterialEntry.RlMaterial,
-                    matrixSkybox
+                Matrix4x4[] arrMatrix = { matrixSkybox };
+                Span<Matrix4x4> spanMatrix = arrMatrix;
+                /*
+                 * I must draw using the instanced call because I only use an instanced shader.
+                 */
+                Raylib_CsLo.Raylib.DrawMeshInstanced(
+                        rlMeshEntry.RlMesh,
+                        rlMaterialEntry.RlMaterial,
+                        spanMatrix,
+                        1
                 );
 
             }
@@ -69,9 +78,11 @@ namespace Karawan.platform.cs1.splash
                 var mToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>().Matrix;
 
                 var vPosition = mToWorld.Translation;
-                var vUp = new Vector3(mToWorld.M21, mToWorld.M22, mToWorld.M23);
-                var vFront = new Vector3(-mToWorld.M31, -mToWorld.M32, -mToWorld.M33);
-                var vTarget = vPosition + vFront;
+                Vector3 vY;
+                Vector3 vUp = vY = new Vector3(mToWorld.M21, mToWorld.M22, mToWorld.M23);
+                Vector3 vZ = new Vector3(-mToWorld.M31, -mToWorld.M32, -mToWorld.M33);
+                Vector3 vFront = -vZ;
+                Vector3 vTarget = vPosition + vFront;
                 // Console.WriteLine($"vFront = {vFront}");
 
                 var rCamera = new Raylib_CsLo.Camera3D( vPosition, vTarget, vUp, 
@@ -80,7 +91,36 @@ namespace Karawan.platform.cs1.splash
                 // TXWTODO: Hack the camera position into the main shader.
                 _materialManager.HackSetCameraPos(vPosition);
 
-                Raylib.BeginMode3D(rCamera);
+                // Raylib.BeginMode3D(rCamera);
+                /*
+                 * We need to reimplement BeginMode3d to freely set frustrums
+                 */
+                {
+                    RlGl.rlDrawRenderBatchActive();      // Update and draw internal render batch
+
+                    RlGl.rlMatrixMode(RlGl.RL_PROJECTION);    // Switch to projection matrix
+                    RlGl.rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
+                    RlGl.rlLoadIdentity();               // Reset current matrix (projection)
+
+                    // Setup perspective projection
+                    float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
+                    float aspect = 16f / 9f;
+                    float right = top * aspect;
+                    RlGl.rlFrustum(-right, right, -top, top, cCameraParams.NearFrustum, cCameraParams.FarFrustum);
+
+                    RlGl.rlMatrixMode(RlGl.RL_MODELVIEW);     // Switch back to modelview matrix
+                    RlGl.rlLoadIdentity();               // Reset current matrix (modelview)
+
+                    // Setup Camera view
+                    Matrix4x4 matView;
+                    matView = Matrix4x4.CreateLookAt(vPosition, vPosition+vZ , vUp);
+                    // matView = Matrix4x4.Transpose(matView);
+                    // Multiply modelview matrix by view matrix (camera)
+                    RlGl.rlMultMatrixf((matView));
+
+                    RlGl.rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
+                }
+
 
                 /*
                  * First draw player related stuff
@@ -90,7 +130,7 @@ namespace Karawan.platform.cs1.splash
                 /*
                  * Then draw standard world
                  */
-                // _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
+                _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
 
                 /*
                  * Then draw terrain
