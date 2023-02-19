@@ -66,7 +66,7 @@ namespace engine.joyce.mesh
          * the hell right below it.
          */
         public static joyce.Mesh CreateSkyboxMesh(float size,
-            in Vector2 vUVOrigin, in Vector2 vUVTotal )
+            in Vector2 vUVOrigin, in Vector2 vUVSize )
         {
             float h /* half */ = size / 2f;
 
@@ -76,17 +76,35 @@ namespace engine.joyce.mesh
              *  Note that the direction of the surfaces is mirrored due to the inbound direction of the normals.
              */
             // -Z plane (in front of us)
-            _addQuadXY(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f));
+            _addQuadXYUV(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f),
+                vUVOrigin + new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0.5f), 
+                new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
+                new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // +Z plane (behind us)
-            _addQuadXY(m, new Vector3(h, -h, h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f));
+            _addQuadXYUV(m, new Vector3(h, -h, h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f),
+                vUVOrigin + new Vector2(vUVSize.X * 0.75f, vUVSize.Y * 0.5f),
+                new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
+                new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // +Y plane (above us)
-            _addQuadXY(m, new Vector3(-h, h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, size));
+            _addQuadXYUV(m, new Vector3(-h, h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, size),
+                vUVOrigin + new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0.25f),
+                    new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
+                    new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // Bottom
-            _addQuadXY(m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, -size));
+            _addQuadXYUV(m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, -size),
+                vUVOrigin + new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0.75f),
+                        new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
+                        new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // Right
-            _addQuadXY(m, new Vector3(h, -h, -h), new Vector3(0f, 0f, size), new Vector3(0f, size, 0f));
+            _addQuadXYUV(m, new Vector3(h, -h, -h), new Vector3(0f, 0f, size), new Vector3(0f, size, 0f),
+                vUVOrigin + new Vector2(vUVSize.X * 0.5f, vUVSize.Y * 0.5f),
+                        new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
+                        new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // Left
-            _addQuadXY(m, new Vector3(-h, -h, h), new Vector3(0f, 0f, -size), new Vector3(0f, size, 0f));
+            _addQuadXYUV(m, new Vector3(-h, -h, h), new Vector3(0f, 0f, -size), new Vector3(0f, size, 0f),
+                vUVOrigin + new Vector2(vUVSize.X * 0.0f, vUVSize.Y * 0.5f),
+                            new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
+                            new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
 
             return m;
         }

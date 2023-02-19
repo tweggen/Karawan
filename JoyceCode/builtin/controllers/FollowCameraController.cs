@@ -46,6 +46,13 @@ namespace builtin.controllers
             var vCameraPos = vCarrotPos - 8f * vFront + 2f * vUp;
             var vTargetRotation = cCarrotTransform3.Rotation;
             var vRotation = Quaternion.Slerp(cTargetTransform3.Rotation, cCarrotTransform3.Rotation, 0.1f);
+            /*
+             * This isn't the best offsetting for a cam, but for now just add the relative movement.
+             */
+            var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), vMouseMove.Y * 0.1f * (float)Math.PI / 180f);
+            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), vMouseMove.X * 0.1f * (float)Math.PI / 180f);
+            vRotation *= rotUp;
+            vRotation *= rotRight;
             _aTransform.SetTransform(_eTarget, vRotation, vCameraPos );
             
         }
