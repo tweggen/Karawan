@@ -28,7 +28,7 @@ namespace nogame.skybox
 
 
         public void PartActivate(
-            in engine.Engine engine0,
+            in engine.Engine engine0, 
             in engine.IScene scene0)
         {
             lock (_lock)
