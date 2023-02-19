@@ -13,11 +13,13 @@ namespace Karawan.platform.cs1.splash.shadercode
 // Input vertex attributes (from vertex shader)
 in vec3 fragPosition;
 in vec2 fragTexCoord;
+in vec2 fragTexCoord2;
 in vec4 fragColor;
 in vec3 fragNormal;
 
 // Input uniform values
 uniform sampler2D texture0;
+uniform sampler2D texture2;
 uniform vec4 colDiffuse;
 
 // Output fragment color
@@ -53,6 +55,7 @@ void main()
 {
     // Texel color fetching from texture sampler
     vec4 texelColor = texture(texture0, fragTexCoord);
+    vec4 emissiveColor = texture(texture2, fragTexCoord2);
     vec3 lightDot = vec3(0.0);
     vec3 normal = normalize(fragNormal);
     vec3 viewD = normalize(viewPos - fragPosition);
@@ -89,7 +92,10 @@ void main()
     // finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
     // finalColor += texelColor*(ambient)*colDiffuse;
     // finalColor = texelColor+colDiffuse;
-    finalColor = (texelColor*colDiffuse) * vec4(lightDot,1.0) + vec4(0.13,0.15,0.18,0.0);
+    finalColor = 
+        (texelColor*colDiffuse) * vec4(lightDot,1.0)
+        + emissiveColor
+        + vec4(0.13,0.15,0.18,0.0);
     
 
     // Gamma correction

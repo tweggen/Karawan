@@ -1,10 +1,10 @@
-﻿using System;
-using Raylib_CsLo;
+﻿using Raylib_CsLo;
 
 namespace Karawan.platform.cs1.splash
 {
     public class TextureGenerator
     {
+        private Image _imgBlack;
         private Image _img64MB;
         private Image _imgChessboard;
         private engine.Engine _engine;
@@ -34,7 +34,16 @@ namespace Karawan.platform.cs1.splash
                 imgNew = _img64MB;
                 canFreeImage = false;
 
-            } else
+            } else if(jTexture.Source=="joyce://col00000000" )
+            {
+                if (_imgBlack.width == 0)
+                {
+                    _imgBlack = Raylib.GenImageColor(1, 1, new Color(0, 0, 0, 0));
+                }
+                imgNew = _imgBlack;
+                canFreeImage = false;
+
+            }
             {
                 string path = resourcePath + jTexture.Source;
                 rlTextureEntry.RlTexture = Raylib.LoadTexture(path);

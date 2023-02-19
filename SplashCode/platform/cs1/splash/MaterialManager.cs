@@ -77,6 +77,8 @@ namespace Karawan.platform.cs1.splash
                 Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "colDiffuse");
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_ALBEDO] =
                 Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture0");
+            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_NORMAL] =
+                Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture2");
 #endif
             /* 
              * Test code: Set some ambient lighting:
@@ -142,6 +144,14 @@ namespace Karawan.platform.cs1.splash
                 rlTextureEntry = _textureManager.FindRlTexture(jMaterial.Texture);
                 // TXWTODO: Add reference of this texture.
             }
+            RlTextureEntry rlEmissiveTextureEntry = null;
+            if (jMaterial.EmissiveTexture != null)
+            {
+                rlEmissiveTextureEntry = _textureManager.FindRlTexture(jMaterial.EmissiveTexture);
+            } else
+            {
+                rlEmissiveTextureEntry = _textureManager.FindRlTexture(new engine.joyce.Texture("joyce://col00000000"));
+            }
 
 #if false
             /*
@@ -156,10 +166,12 @@ namespace Karawan.platform.cs1.splash
             rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
             if (null != rlTextureEntry)
             {
-                rlMaterialEntry.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = rlTextureEntry.RlTexture;
+                rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].texture =
+                    rlTextureEntry.RlTexture;
             } else
             {
-                rlMaterialEntry.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color =
+                // This becomes the default color in the shader.
+                rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].color =
                     new Color(
                         (byte) (jMaterial.AlbedoColor >> 16) & 0xff,
                         (byte) (jMaterial.AlbedoColor >> 8) & 0xff,
@@ -167,6 +179,11 @@ namespace Karawan.platform.cs1.splash
                         (byte) (jMaterial.AlbedoColor >> 24) & 0xff);
                     
             }
+
+            {
+                rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_NORMAL].texture =
+                    rlEmissiveTextureEntry.RlTexture;
+            }    
             // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
 
             if(jMaterial.HasTransparency) { 
