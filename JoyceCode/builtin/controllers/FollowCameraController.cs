@@ -13,6 +13,10 @@ namespace builtin.controllers
         DefaultEcs.Entity _eCarrot;
         engine.transform.API _aTransform;
 
+        Quaternion _qCameraRotation;
+        Vector2 _vMouseOffset;
+        float _lastMouseMove = 0f;
+
         private void _onLogicalFrame(object sender, float dt)
         {
             /*
@@ -29,7 +33,7 @@ namespace builtin.controllers
             }
             var cToParent = _eCarrot.Get<engine.transform.components.Transform3ToParent>();
             var cCarrotTransform3 = _eCarrot.Get<engine.transform.components.Transform3>();
-            var cTargetTransform3 = _eTarget.Get<engine.transform.components.Transform3>();
+            // var cTargetTransform3 = _eTarget.Get<engine.transform.components.Transform3>();
 
             /*
              * We cheat a bit, reading the matrix for the direction matrix,
@@ -44,16 +48,40 @@ namespace builtin.controllers
 
             // TXWTODO: This is hard coded and static, make it softer.
             var vCameraPos = vCarrotPos - 8f * vFront + 2f * vUp;
-            var vTargetRotation = cCarrotTransform3.Rotation;
-            var vRotation = Quaternion.Slerp(cTargetTransform3.Rotation, cCarrotTransform3.Rotation, 0.1f);
+
+            // var vCarrotRotation = cCarrotTransform3.Rotation;
+            var qRotation = Quaternion.Slerp(_qCameraRotation, cCarrotTransform3.Rotation, 0.1f);
+            _qCameraRotation = qRotation;
+
             /*
-             * This isn't the best offsetting for a cam, but for now just add the relative movement.
+             * Some up the relative mouse movement.
              */
-            var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), vMouseMove.Y * 0.1f * (float)Math.PI / 180f);
-            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), vMouseMove.X * 0.1f * (float)Math.PI / 180f);
-            vRotation *= rotUp;
-            vRotation *= rotRight;
-            _aTransform.SetTransform(_eTarget, vRotation, vCameraPos );
+            _vMouseOffset += vMouseMove * 0.05f;
+            if( vMouseMove.X == 0f && vMouseMove.Y == 0f )
+            {
+                _lastMouseMove += dt;
+            }
+            else
+            {
+                _lastMouseMove = 0f;
+            }
+
+            /*
+             * Apply relative mouse movement
+             */
+            var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), _vMouseOffset.Y * (float)Math.PI / 180f);
+            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), -_vMouseOffset.X * (float)Math.PI / 180f);
+            qRotation *= rotRight;
+            qRotation *= rotUp;
+            _aTransform.SetTransform(_eTarget, qRotation, vCameraPos );
+
+            /*
+             * ramp down mouse offset after 1.5s of inactivity.
+             */
+            if( _lastMouseMove > 1.5f )
+            {
+                _vMouseOffset *= 0.98f;
+            }
             
         }
 
