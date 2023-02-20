@@ -97,7 +97,10 @@ namespace nogame
                 var cCamera = new engine.joyce.components.Camera3();
                 cCamera.Angle = 60.0f;
                 cCamera.NearFrustum = 1f;
-                cCamera.FarFrustum = 1500f;
+                /*
+                 * We need to be as far away as the skycube is. Plus a bonus.
+                 */
+                cCamera.FarFrustum = (float)Math.Sqrt(3) * 1000f + 100f;
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));

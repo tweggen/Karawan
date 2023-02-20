@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\PlatformUI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\API.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\BatchRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMaterial.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialManager.cs" />
@@ -29,6 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingInstancingVS.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateRlMeshesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawRlMeshesSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawSkyboxesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureManager.cs" />
   </ItemGroup>

@@ -42,6 +42,7 @@ namespace nogame.cities
                     _jMaterialNeon = new engine.joyce.Material();
                     // _jMaterialHouse.AlbedoColor = 0xff444444;
                     _jMaterialNeon.Texture = new engine.joyce.Texture("assets\\lorem.png");
+                    _jMaterialNeon.HasTransparency = true;
                 }
                 return _jMaterialNeon;
             }

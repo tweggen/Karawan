@@ -15,46 +15,13 @@ namespace Karawan.platform.cs1.splash
 
         private systems.CreateRlMeshesSystem _createRlMeshesSystem;
         private systems.DrawRlMeshesSystem _drawRlMeshesSystem;
+        private systems.DrawSkyboxesSystem _drawSkyboxesSystem;
 
         private MaterialManager _materialManager;
         private TextureGenerator _textureGenerator;
         private TextureManager _textureManager;
         private MeshManager _meshManager;
 
-
-        private void _drawSkyboxes(in Vector3 vCameraPosition, in uint cameraMasks)
-        {
-            var skyboxes = _engine.GetEcsWorld().GetEntities()
-                .With<engine.joyce.components.Skybox>().AsEnumerable();
-            // TXWTODO: Sort it by distance.
-            // TXWTODO: We certainly allow transparency in the skyboxes, so start with the one far away.
-            foreach(var eSkybox in skyboxes)
-            {
-                // No transformation applied, just the camera.
-                var cSkybox = eSkybox.Get<engine.joyce.components.Skybox>();
-                if( 0 == (cameraMasks & cSkybox.CameraMask))
-                {
-                    continue;
-                }
-                var rlMeshEntry = eSkybox.Get<splash.components.RlMesh>().MeshEntry;
-                var rlMaterialEntry = eSkybox.Get<splash.components.RlMaterial>().MaterialEntry;
-                var matrixSkybox = Matrix4x4.Transpose(
-                    Matrix4x4.CreateTranslation(vCameraPosition));
-
-                Matrix4x4[] arrMatrix = { matrixSkybox };
-                Span<Matrix4x4> spanMatrix = arrMatrix;
-                /*
-                 * I must draw using the instanced call because I only use an instanced shader.
-                 */
-                Raylib_CsLo.Raylib.DrawMeshInstanced(
-                        rlMeshEntry.RlMesh,
-                        rlMaterialEntry.RlMaterial,
-                        spanMatrix,
-                        1
-                );
-
-            }
-        }
 
         /**
          * Render all camera objects.
@@ -77,19 +44,19 @@ namespace Karawan.platform.cs1.splash
                 var cCameraParams = eCamera.Get<engine.joyce.components.Camera3>();
                 var mToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>().Matrix;
 
-                var vPosition = mToWorld.Translation;
+                var vCameraPosition = mToWorld.Translation;
                 Vector3 vY;
                 Vector3 vUp = vY = new Vector3(mToWorld.M21, mToWorld.M22, mToWorld.M23);
                 Vector3 vZ = new Vector3(-mToWorld.M31, -mToWorld.M32, -mToWorld.M33);
                 Vector3 vFront = -vZ;
-                Vector3 vTarget = vPosition + vFront;
+                Vector3 vTarget = vCameraPosition + vFront;
                 // Console.WriteLine($"vFront = {vFront}");
 
-                var rCamera = new Raylib_CsLo.Camera3D( vPosition, vTarget, vUp, 
+                var rCamera = new Raylib_CsLo.Camera3D( vCameraPosition, vTarget, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
                 // TXWTODO: Hack the camera position into the main shader.
-                _materialManager.HackSetCameraPos(vPosition);
+                _materialManager.HackSetCameraPos(vCameraPosition);
 
                 // Raylib.BeginMode3D(rCamera);
                 /*
@@ -113,7 +80,7 @@ namespace Karawan.platform.cs1.splash
 
                     // Setup Camera view
                     Matrix4x4 matView;
-                    matView = Matrix4x4.CreateLookAt(vPosition, vPosition+vZ , vUp);
+                    matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
                     // matView = Matrix4x4.Transpose(matView);
                     // Multiply modelview matrix by view matrix (camera)
                     RlGl.rlMultMatrixf((matView));
@@ -123,6 +90,11 @@ namespace Karawan.platform.cs1.splash
 
 
                 /*
+                 * Collect all standard meshes.
+                 */
+                _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
+
+                /*
                  * First draw player related stuff
                  */
                 // TXWTODO: Nothing here
@@ -130,7 +102,7 @@ namespace Karawan.platform.cs1.splash
                 /*
                  * Then draw standard world
                  */
-                _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
+                _drawRlMeshesSystem.RenderStandard();
 
                 /*
                  * Then draw terrain
@@ -140,14 +112,20 @@ namespace Karawan.platform.cs1.splash
                 /*
                  * Then draw skybox
                  */
-                _drawSkyboxes(vPosition, cCameraParams.CameraMask);
+                _drawSkyboxesSystem.CameraPosition = vCameraPosition;
+                _drawSkyboxesSystem.Update(cCameraParams.CameraMask);
+
+                /*
+                 * Then render transparent
+                 */
+                _drawRlMeshesSystem.RenderTransparent();
 
                 Raylib.EndMode3D();
             }
 
-            Raylib.DrawFPS(20, 40);
+            Raylib.DrawFPS(20, 100);
             Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
-
+            Raylib.DrawText("Debug info:\n" + _drawRlMeshesSystem.GetDebugInfo(), 20, 30, 10, Raylib.GREEN);
         }
 
         public API(engine.Engine engine)
@@ -161,6 +139,7 @@ namespace Karawan.platform.cs1.splash
             _meshManager.Manage(engine.GetEcsWorld());
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
             _drawRlMeshesSystem = new(_engine, _materialManager);
+            _drawSkyboxesSystem = new(_engine, _materialManager);
         }
     }
 }

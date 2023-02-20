@@ -44,6 +44,9 @@ namespace Karawan.platform.cs1.splash.systems
         private Dictionary<RlMaterialEntry, MaterialBatch> _materialBatches;
         private Dictionary<RlMaterialEntry, MaterialBatch> _transparentMaterialBatches;
 
+        private int _nEntities;
+        private int _nMeshes;
+        private int _nMaterials;
 
         private void _renderMaterialBatches(in Dictionary<RlMaterialEntry, MaterialBatch> mb)
         {
@@ -71,18 +74,6 @@ namespace Karawan.platform.cs1.splash.systems
             }
         }
 
-        private void _renderBatches()
-        {
-            if (null != _materialBatches)
-            {
-                _renderMaterialBatches(_materialBatches);
-            }
-            if (null != _transparentMaterialBatches)
-            {
-                _renderMaterialBatches(_transparentMaterialBatches);
-            }
-        }
-
         private void _appendMeshRenderList(in ReadOnlySpan<DefaultEcs.Entity> entities, uint cameraMask)
         {
             foreach (var entity in entities)
@@ -101,6 +92,7 @@ namespace Karawan.platform.cs1.splash.systems
                     {
                         rlMaterialEntry = _materialManager.GetUnloadedMaterial();
                     }
+                    _nEntities++;
 
                     var rMatrix = Matrix4x4.Transpose(transform3ToWorld.Matrix);
 
@@ -121,6 +113,7 @@ namespace Karawan.platform.cs1.splash.systems
                     {
                         materialBatch = new MaterialBatch();
                         mbs[rlMaterialEntry] = materialBatch;
+                        _nMaterials++;
                     }
 
                     /*
@@ -132,6 +125,7 @@ namespace Karawan.platform.cs1.splash.systems
                     {
                         meshBatch = new MeshBatch();
                         materialBatch.MeshBatches[rlMeshEntry] = meshBatch;
+                        _nMeshes++;
                     }
 
                     /*
@@ -145,21 +139,41 @@ namespace Karawan.platform.cs1.splash.systems
 
         protected override void PreUpdate(uint cameraMask)
         {
+            _nEntities = 0;
+            _nMaterials = 0;
+            _nMeshes = 0;
         }
 
         protected override void PostUpdate(uint cameraMask)
         {
-            _renderBatches();
-            /*
-             * Null out the references after rendering.
-             */
-            _materialBatches = new();
+        }
+
+        public void RenderStandard()
+        {
+            if (null != _materialBatches)
+            {
+                _renderMaterialBatches(_materialBatches);
+                _materialBatches = new();
+            }
+        }
+
+        public void RenderTransparent()
+        {
+            if (null != _transparentMaterialBatches)
+            {
+                _renderMaterialBatches(_transparentMaterialBatches);
+            }
             _transparentMaterialBatches = new();
         }
 
         protected override void Update(uint cameraMask, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
             _appendMeshRenderList(entities, cameraMask);
+        }
+
+        public string GetDebugInfo()
+        {
+            return $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, 1 shaders.";
         }
 
         public DrawRlMeshesSystem(
