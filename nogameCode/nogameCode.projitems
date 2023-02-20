@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\CubeScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cubes\CubeBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cubes\GenerateCubeCharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\LogosScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\playerhover\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\playerhover\WASDPhysics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\RootScene.cs" />
