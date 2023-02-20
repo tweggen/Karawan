@@ -11,12 +11,10 @@ namespace Karawan
             var engine = Karawan.platform.cs1.Platform.EasyCreate(args);
             engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
 
-            var scnNogameRoot = new nogame.RootScene();
-            scnNogameRoot.SceneActivate(engine);
+            engine.AddSceneFactory("root", () => new nogame.RootScene());
 
+            engine.SetMainScene("root");
             engine.Execute();
-
-            scnNogameRoot.SceneDeactivate();
         }
     }
 }

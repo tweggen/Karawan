@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using BepuPhysics;
 using BepuPhysics.Collidables;
@@ -8,6 +9,7 @@ using BepuPhysics.CollisionDetection;
 using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
+using IronPython.Compiler;
 
 namespace engine
 {
@@ -34,6 +36,8 @@ namespace engine
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
         public event EventHandler<physics.ContactInfo> OnContactInfo;
+
+        private SortedDictionary<string, Func<IScene>> _dictSceneFactories;
 
         class EnginePhysicsEventHandler : physics.IContactEventHandler
         {
@@ -92,6 +96,48 @@ namespace engine
             return _ecsWorld;
         }
 
+        public void AddSceneFactory(in string name, in Func<IScene> factoryFunction)
+        {
+            lock(_lo)
+            {
+                _dictSceneFactories.Add(name, factoryFunction);
+            }
+        }
+
+        private IScene _mainScene = null;
+        public void SetMainScene(in IScene scene)
+        {
+            IScene oldScene = null;
+            lock(_lo)
+            {
+                oldScene = _mainScene;
+                _mainScene = null;
+            }
+            if (oldScene != null)
+            {
+                oldScene.SceneDeactivate();
+            }
+            // TXWTODO: Wait for old scene to be done? No? Fadeouts??
+            lock(_lo)
+            {
+                _mainScene = scene;
+            }
+            if (scene != null)
+            {
+                scene.SceneActivate(this);
+            }
+        }
+
+        public void SetMainScene(in string name)
+        {
+            Func<IScene> factoryFunction = null;
+            lock(_lo)
+            {
+                factoryFunction = _dictSceneFactories[name];
+            }
+            IScene scene = factoryFunction();
+            SetMainScene(scene);
+        }
 
         public void AddInstance3(
             DefaultEcs.Entity eSelf,
@@ -317,6 +363,7 @@ namespace engine
             _ecsWorld = new DefaultEcs.World();
             _dictScenes = new();
             _dictParts = new();
+            _dictSceneFactories = new();
         }
     }
 }
