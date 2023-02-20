@@ -42,7 +42,9 @@ namespace nogame
         public void SceneDeactivate()
         {
             _partPlayerhover.PartDeactivate();
-            _partSkybox.PartDeactivate(); 
+            _partPlayerhover = null;
+            _partSkybox.PartDeactivate();
+            _partSkybox = null;
             _ctrlFollowCamera.DeactivateController();
             _ctrlFollowCamera = null;
 
