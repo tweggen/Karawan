@@ -61,7 +61,6 @@ namespace nogame
             }
             if( null != engine )
             {
-                _engine.Render3D();
             }
 
         }

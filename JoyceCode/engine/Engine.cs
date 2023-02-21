@@ -299,6 +299,7 @@ namespace engine
             } while (_timeLeft > 0);
 
             _onPhysicalFrame(dt);
+            Render3D();
         }
 
         /**
@@ -400,6 +401,12 @@ namespace engine
         public void PlatformSetupDone()
         {
             _selfTest();
+            {
+                /*
+                 * Zero out initial accumulated mouse move.
+                 */
+                GetMouseMove(out _);
+            }
         }
 
 

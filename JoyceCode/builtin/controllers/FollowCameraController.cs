@@ -25,15 +25,13 @@ namespace builtin.controllers
             Vector2 vMouseMove;
             _engine.GetMouseMove(out vMouseMove);
 
-            if( !_eCarrot.Has<engine.transform.components.Transform3ToParent>()
-                || !_eCarrot.Has<engine.transform.components.Transform3>()
-                || !_eTarget.Has<engine.transform.components.Transform3>())
+            if( !_eCarrot.Has<engine.transform.components.Transform3ToWorld>()
+                || !_eCarrot.Has<engine.transform.components.Transform3>())
             {
                 return;
             }
-            var cToParent = _eCarrot.Get<engine.transform.components.Transform3ToParent>();
+            var cToParent = _eCarrot.Get<engine.transform.components.Transform3ToWorld>();
             var cCarrotTransform3 = _eCarrot.Get<engine.transform.components.Transform3>();
-            // var cTargetTransform3 = _eTarget.Get<engine.transform.components.Transform3>();
 
             /*
              * We cheat a bit, reading the matrix for the direction matrix,

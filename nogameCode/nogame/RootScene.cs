@@ -36,7 +36,6 @@ namespace nogame
             }
             var vMe = _eCamera.Get<Transform3ToWorld>().Matrix.Translation;
             _worldLoader.WorldLoaderProvideFragments(vMe);
-            _engine.Render3D();
         }
 
         public void SceneDeactivate()
