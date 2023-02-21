@@ -30,7 +30,7 @@ namespace nogame
             }
             if (_isCleared)
             {
-                if (t > 1.5f)
+                if (t > 1.2f)
                 {
                     _engine.SetMainScene("root");
                     return;

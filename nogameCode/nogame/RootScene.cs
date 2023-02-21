@@ -138,7 +138,8 @@ namespace nogame
                 cCamera.FarFrustum = (float)Math.Sqrt(3) * 1000f + 100f;
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
+                // No set position
+                // _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
             }
 
             /*
