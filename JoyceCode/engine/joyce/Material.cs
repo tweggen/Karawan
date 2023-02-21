@@ -20,7 +20,7 @@ namespace engine.joyce
 
         public Material()
         {
-            Texture = null;
+            Texture = null; ;
             EmissiveTexture = null;
             AlbedoColor = 0x00000000;
             HasTransparency = false;

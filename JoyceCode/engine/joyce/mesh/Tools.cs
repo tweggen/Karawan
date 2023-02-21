@@ -37,6 +37,18 @@ namespace engine.joyce.mesh
             _addQuadXYUV( m, v0, vx, vy, new Vector2( 0f, 0f ), new Vector2( 1f, 0f ), new Vector2( 0f, 1f ) );
         }
 
+        public static joyce.Mesh CreatePlaneMesh(in Vector2 vSize,
+            in Vector2 vUV0, in Vector2 vUVX, in Vector2 vUVY )
+        {
+            var m = joyce.Mesh.CreateArrayListInstance();
+
+            _addQuadXYUV(m, new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
+                new Vector3(vSize.X, 0f, 0f), new Vector3(0f, vSize.Y, 0f),
+                new Vector2(0f, 1f), new Vector2(1f, 0f), new Vector2(0f, -1f));
+
+            return m;
+        }
+
         public static joyce.Mesh CreateCubeMesh(float size)
         {
             float h /* half */ = size / 2;

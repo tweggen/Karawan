@@ -53,6 +53,15 @@ namespace nogame
              */
             _engine.RemoveScene(this);
 
+            /*
+             * Null out everything we don't need when the scene is unloaded.
+             */
+            _engine.RemoveScene(this);
+            _ecsWorld = null;
+            _aHierarchy = null;
+            _aTransform = null;
+            _engine = null;
+
         }
 
         public void SceneActivate(engine.Engine engine0)

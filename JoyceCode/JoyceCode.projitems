@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)engine\joyce\systems\" />
+    <Folder Include="$(MSBuildThisFileDirectory)engine\lights\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
@@ -47,7 +48,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUINode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\AmbientLight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Camera3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\DirectionalLight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Instance3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Container3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstanceDesc.cs" />
@@ -56,7 +59,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\mesh\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Object3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\World3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Body.cs" />

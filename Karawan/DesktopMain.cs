@@ -12,8 +12,9 @@ namespace Karawan
             engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
 
             engine.AddSceneFactory("root", () => new nogame.RootScene());
+            engine.AddSceneFactory("logos", () => new nogame.LogosScene());
 
-            engine.SetMainScene("root");
+            engine.SetMainScene("logos");
             engine.Execute();
         }
     }

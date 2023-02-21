@@ -22,5 +22,16 @@ namespace engine.joyce
             MeshMaterials = new List<int>();
             Materials = new List<Material>();
         }
+
+        public InstanceDesc(
+            in IList meshes,
+            in IList meshMaterials,
+            in IList materials
+        )
+        {
+            Meshes = meshes;
+            MeshMaterials = meshMaterials;
+            Materials = materials;
+        }
     }
 }

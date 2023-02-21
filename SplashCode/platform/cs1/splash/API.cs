@@ -33,7 +33,7 @@ namespace Karawan.platform.cs1.splash
              */
             _createRlMeshesSystem.Update(_engine); 
 
-            Raylib.ClearBackground(Raylib.BLUE);
+            Raylib.ClearBackground(Raylib.BLACK);
 
             var listCameras = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Camera3>()
