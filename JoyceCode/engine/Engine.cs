@@ -61,25 +61,6 @@ namespace engine
 
         private physics.Manager _managerPhysics;
 
-        private void _selfTest()
-        {
-            /*
-             * Create a simple hierarchy test case
-             */
-            {
-                var eParent = _ecsWorld.CreateEntity();
-                var eKid1 = _ecsWorld.CreateEntity();
-                var eKid2 = _ecsWorld.CreateEntity();
-
-                _aHierarchy.SetParent(eKid1, eParent);
-                _aHierarchy.SetParent(eKid2, eParent);
-                _aHierarchy.Update();
-                _aHierarchy.SetParent(eKid1, null);
-                _aHierarchy.SetParent(eKid2, eKid1);
-                _aHierarchy.SetParent(eKid2, eParent);
-            }
-        }
-
         public engine.hierarchy.API GetAHierarchy()
         {
             return _aHierarchy;
@@ -400,7 +381,6 @@ namespace engine
 
         public void PlatformSetupDone()
         {
-            _selfTest();
             {
                 /*
                  * Zero out initial accumulated mouse move.

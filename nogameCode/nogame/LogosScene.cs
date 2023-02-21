@@ -30,7 +30,7 @@ namespace nogame
             }
             if (_isCleared)
             {
-                if (t > 1.0f)
+                if (t > 1.5f)
                 {
                     _engine.SetMainScene("root");
                     return;
@@ -38,7 +38,7 @@ namespace nogame
             }
             else
             {
-                if (t < 0.5f)
+                if (t < 1.0f)
                 {
                     _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f + _t));
                     _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));

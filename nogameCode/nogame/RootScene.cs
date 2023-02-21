@@ -24,18 +24,27 @@ namespace nogame
         private playerhover.Part _partPlayerhover;
         private skybox.Part _partSkybox;
 
+        private void _triggerLoadWorld()
+        {
+            Vector3 vMe;
+            if (!_eCamera.Has<Transform3ToWorld>())
+            {
+                vMe = new Vector3(0f, 0f, 0f);
+            }
+            else
+            {
+                vMe = _eCamera.Get<Transform3ToWorld>().Matrix.Translation;
+            }
+            _worldLoader.WorldLoaderProvideFragments(vMe);
+        }
+
         public void SceneOnLogicalFrame( float dt )
-        { 
+        {
+            _triggerLoadWorld();
         }
 
         public void SceneOnPhysicalFrame( float dt )
         {
-            if( !_eCamera.Has<Transform3ToWorld>() ) 
-            {
-                return;
-            }
-            var vMe = _eCamera.Get<Transform3ToWorld>().Matrix.Translation;
-            _worldLoader.WorldLoaderProvideFragments(vMe);
         }
 
         public void SceneDeactivate()
@@ -86,6 +95,10 @@ namespace nogame
                     engine.elevation.Cache.LAYER_BASE + "/000002/fillGrid",
                     elevationBaseFactory);
             }
+            /*
+             * trigger generating the world at the starting point.
+             */
+            _triggerLoadWorld();
 
 
             /*
@@ -99,6 +112,17 @@ namespace nogame
              * Local state
              */
 
+            _partPlayerhover = new();
+            _partSkybox = new();
+
+            _engine.AddScene(0, this);
+
+            _partPlayerhover.PartActivate(_engine, this);
+            _partSkybox.PartActivate(_engine, this);
+
+            /*
+             * Finally, create the camera.
+             */
             /*
              * Create a camera.
              */
@@ -117,15 +141,6 @@ namespace nogame
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
             }
 
-            _partPlayerhover = new();
-            _partSkybox = new();
-
-            _engine.AddScene(0, this);
-
-            _partPlayerhover.PartActivate(_engine, this);
-            _partSkybox.PartActivate(_engine, this);
-
-            // TXWTODO: Clean up dependencies..
             /*
              * Create a camera controller that directly controls the camera with wasd
              */
