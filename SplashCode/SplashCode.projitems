@@ -18,6 +18,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\BatchRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMaterial.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\LightManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshManager.cs" />

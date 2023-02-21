@@ -16,11 +16,10 @@ namespace nogame
         private engine.transform.API _aTransform;
 
         private DefaultEcs.Entity _eCamera;
-
         private DefaultEcs.Entity _eLogo;
+        private bool _isCleared = false;
 
         private float _t;
-
         public void SceneOnLogicalFrame(float dt)
         {
             float t;
@@ -29,8 +28,27 @@ namespace nogame
                 _t += dt;
                 t = _t;
             }
-            _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f+_t));
-            _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
+            if (_isCleared)
+            {
+                if (t > 1.0f)
+                {
+                    _engine.SetMainScene("root");
+                    return;
+                }
+            }
+            else
+            {
+                if (t < 0.5f)
+                {
+                    _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f + _t));
+                    _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
+                } else
+                { 
+                     _eLogo.Dispose();
+                    _eCamera.Dispose();
+                    _isCleared = true;
+                }
+            }
         }
 
         public void SceneOnPhysicalFrame(float dt)

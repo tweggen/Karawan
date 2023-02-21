@@ -35,6 +35,19 @@ namespace Karawan.platform.cs1.splash
 
         // private Dictionary<string, splash.RlMaterialEntry> _dictMaterials = new();
 
+        public RlShaderEntry GetInstanceShaderEntry()
+        {
+            return _rlInstanceShaderEntry;
+        }
+
+        public void SetAmbientLight(in Vector4 colAmbient)
+        {
+            int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
+            Raylib.SetShaderValue(
+                _rlInstanceShaderEntry.RlShader,
+                ambientLoc, colAmbient,
+                ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        }
 
         private unsafe void _createDefaultShader()
         {
@@ -83,15 +96,8 @@ namespace Karawan.platform.cs1.splash
             /* 
              * Test code: Set some ambient lighting:
              */
-            if (true)
-            {
-                int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
-                var colAmbient = new Vector4(0.9f, 0.6f, 0.9f, 1.0f);
-                Raylib.SetShaderValue(
-                    _rlInstanceShaderEntry.RlShader,
-                    ambientLoc, colAmbient,
-                    ShaderUniformDataType.SHADER_UNIFORM_VEC4);
-            }
+            SetAmbientLight(new Vector4(0.9f, 0.6f, 0.9f, 1.0f));
+            
         }
 
         private unsafe void _createDefaultMaterial()

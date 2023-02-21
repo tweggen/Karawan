@@ -175,22 +175,96 @@ namespace engine
             return _ecsWorld.CreateEntity();
         }
 
+        private bool _firstTime = true;
 
         public void _onLogicalFrame(float dt)
         {
+            /*
+             * Before rendering the first time and calling user handlers the first time,
+             * we need to read physics to transforms, update hierarchy and transforms.
+             * That way user handlers have the transform2world available.
+             */
+            if( _firstTime )
+            {
+                _firstTime = false;
+
+                /*
+                 * Apply poses needs input from simulation
+                 */
+                _systemApplyPoses.Update(dt);
+
+                /*
+                 * hierarchy needs
+                 * - input from user handlers
+                 */
+                _aHierarchy.Update();
+
+                /*
+                 * transform system needs
+                 * - updated hierarchy system
+                 * - input from user handlers
+                 * - input from physics
+                 */
+                _aTransform.Update();
+
+                /*
+                 * Move kinetics requires 
+                 * - input from user, already processed by Transform System
+                 */
+                _systemMoveKinetics.Update(dt);
+            }
+
+            /*
+             * Goal: shortest latency from user input to screen.
+             */
+
+            /*
+             * Call the various ways of user behavior and/or controllers.
+             * They will read world position and modify physics and or positions
+             * 
+             * Require: Previously computed world transforms.
+             */
             _systemBehave.Update(dt);
             LogicalFrame?.Invoke(this, dt);
+            {
+                var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
+                foreach (KeyValuePair<float, IScene> kvp in dictScenes)
+                {
+                    kvp.Value.SceneOnLogicalFrame(dt);
+                }
+            }
 
+
+            /*
+             * Advance physics, based on new user input and/or gravitation.
+             */
             Simulation.Timestep(dt);
 
             /*
-             * We need a local copy in case anybody adds scenes.
+             * Apply poses needs input from simulation
              */
-            var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
-            foreach( KeyValuePair<float, IScene> kvp in dictScenes )
-            {
-                kvp.Value.SceneOnLogicalFrame(dt);
-            }
+            _systemApplyPoses.Update(dt);
+
+            /*
+             * hierarchy needs
+             * - input from user handlers
+             */
+            _aHierarchy.Update();
+
+            /*
+             * transform system needs
+             * - updated hierarchy system
+             * - input from user handlers
+             * - input from physics
+             */
+            _aTransform.Update();
+
+            /*
+             * Move kinetics requires 
+             * - input from user, already processed by Transform System
+             */
+            _systemMoveKinetics.Update(dt);
+
         }
 
 
@@ -222,11 +296,6 @@ namespace engine
                  * First, let the scenes update themselves.
                  */
                 _onLogicalFrame((float)(1/(double)_fpsLogical));
-
-                _aHierarchy.Update();
-                _systemApplyPoses.Update(dt);
-                _aTransform.Update();
-                _systemMoveKinetics.Update(dt);
             } while (_timeLeft > 0);
 
             _onPhysicalFrame(dt);
