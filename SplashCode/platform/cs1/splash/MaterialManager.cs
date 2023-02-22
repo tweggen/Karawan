@@ -40,6 +40,7 @@ namespace Karawan.platform.cs1.splash
             return _rlInstanceShaderEntry;
         }
 
+#if false
         public void SetAmbientLight(in Vector4 colAmbient)
         {
             int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
@@ -48,6 +49,7 @@ namespace Karawan.platform.cs1.splash
                 ambientLoc, colAmbient,
                 ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         }
+#endif
 
         private unsafe void _createDefaultShader()
         {

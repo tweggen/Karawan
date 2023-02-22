@@ -1,4 +1,5 @@
-﻿
+﻿#if false
+
 // [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] [!!] 
 // [!!] Copyright ©️ Raylib-CsLo and Contributors. 
 // [!!] This file is licensed to you under the MPL-2.0.
@@ -207,3 +208,5 @@ namespace Karawan.platform.cs1.splash
 		}
 	}
 }
+
+#endif

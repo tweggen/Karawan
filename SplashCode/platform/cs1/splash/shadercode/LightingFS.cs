@@ -95,7 +95,9 @@ void main()
     finalColor = 
         (texelColor*colDiffuse) * vec4(lightDot,1.0)
         + emissiveColor
-        + vec4(0.13,0.15,0.18,0.0);
+        //+ vec4(0.13,0.15,0.18,0.0)
+        + ambient
+        ;
     
 
     // Gamma correction
