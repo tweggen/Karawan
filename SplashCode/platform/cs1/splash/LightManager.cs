@@ -169,7 +169,7 @@ namespace Karawan.platform.cs1.splash
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.DirectionalLight>();
                 _addLight(LightType.LIGHT_DIRECTIONAL,
-                    matTransform.Translation, vRight, cLight.Color, ref rlShaderEntry.RlShader);
+                    matTransform.Translation, vRight + matTransform.Translation, cLight.Color, ref rlShaderEntry.RlShader);
             }
         }
 
@@ -189,7 +189,7 @@ namespace Karawan.platform.cs1.splash
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.PointLight>();
                 _addLight(LightType.LIGHT_POINT,
-                    matTransform.Translation, vRight, cLight.Color, ref rlShaderEntry.RlShader);
+                    matTransform.Translation, vRight+matTransform.Translation, cLight.Color, ref rlShaderEntry.RlShader);
             }
         }
 
