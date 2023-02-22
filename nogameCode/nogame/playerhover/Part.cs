@@ -77,6 +77,7 @@ namespace nogame.playerhover
                 jInstanceDesc.MeshMaterials.Add(0);
                 jInstanceDesc.Materials.Add(jShipMaterial);
                 _eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                //_eShip.Set(new engine.joyce.components.PointLight(new Vector4(1.0f, 0.95f, 0.9f, 1f)/3f));
 
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(1.4f);
                 pbodySphere.ComputeInertia(_massShip, out var pinertiaSphere);

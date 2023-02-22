@@ -17,6 +17,8 @@ namespace nogame
         private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
         private DefaultEcs.Entity _eCamera;
+        private DefaultEcs.Entity _eLight;
+        private DefaultEcs.Entity _eAmbientLight;
 
         private engine.world.Loader _worldLoader;
         private engine.world.MetaGen _worldMetaGen;
@@ -119,6 +121,22 @@ namespace nogame
 
             _partPlayerhover.PartActivate(_engine, this);
             _partSkybox.PartActivate(_engine, this);
+
+            /*
+             * Directional light
+             */
+            {
+                _eLight = _ecsWorld.CreateEntity();
+                _eLight.Set(new engine.joyce.components.DirectionalLight(new Vector4(1f, 1f, 1f, 1.0f)));
+                _aTransform.SetRotation(_eLight, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
+            }
+            /*
+             * Ambient light
+             */
+            {
+                _eAmbientLight = _ecsWorld.CreateEntity();
+                _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.1f, 0.1f, 0.1f, 1.0f)));
+            }
 
             /*
              * Finally, create the camera.

@@ -17,9 +17,12 @@ namespace nogame
 
         private DefaultEcs.Entity _eCamera;
         private DefaultEcs.Entity _eLogo;
+        private DefaultEcs.Entity _eLight;
+
         private bool _isCleared = false;
 
         private float _t;
+
         public void SceneOnLogicalFrame(float dt)
         {
             float t;
@@ -30,7 +33,7 @@ namespace nogame
             }
             if (_isCleared)
             {
-                if (t > 1.2f)
+                if (t > 1.1f)
                 {
                     _engine.SetMainScene("root");
                     return;
@@ -38,14 +41,19 @@ namespace nogame
             }
             else
             {
-                if (t < 1.0f)
+                if (t < 0.9f)
                 {
                     _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f + _t));
                     _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
-                } else
+                    _aTransform.SetPosition(_eLight, new Vector3(-10f + 30f * t, 0f, 15f));
+                        
+
+                }
+                else
                 { 
-                     _eLogo.Dispose();
+                    _eLogo.Dispose();
                     _eCamera.Dispose();
+                    _eLight.Dispose();
                     _isCleared = true;
                 }
             }
@@ -123,6 +131,21 @@ namespace nogame
             }
 
             /*
+             * Joyce engine logo
+             */
+            {
+                _eLogo = _createLogoBoard();
+            }
+            /*
+             * Moving light
+             */
+            {
+                _eLight = _ecsWorld.CreateEntity();
+                _eLight.Set(new engine.joyce.components.PointLight(
+                    new Vector4(1f, 0.95f, 0.9f, 1.0f)));
+            }
+
+            /*
              * Create a camera.
              */
             {
@@ -138,9 +161,6 @@ namespace nogame
                 cCamera.CameraMask = 0x00000001;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
-            }
-            {
-                _eLogo = _createLogoBoard();
             }
 
 

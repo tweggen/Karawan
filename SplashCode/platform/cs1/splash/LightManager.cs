@@ -152,6 +152,7 @@ namespace Karawan.platform.cs1.splash
                 ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         }
 
+
         private void _collectDirectionalLights(in RlShaderEntry rlShaderEntry)
         {
             /*
@@ -172,6 +173,27 @@ namespace Karawan.platform.cs1.splash
             }
         }
 
+        private void _collectPointLights(in RlShaderEntry rlShaderEntry)
+        {
+            /*
+             * Collect all lights.
+             * // TXWTODO: This assumes we are only a littly amount of directional lights.
+             */
+            var listPointLights = _engine.GetEcsWorld().GetEntities()
+                .With<engine.joyce.components.PointLight>()
+                .With<engine.transform.components.Transform3ToWorld>()
+                .AsEnumerable();
+            foreach (var eLight in listPointLights)
+            {
+                var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
+                var cLight = eLight.Get<engine.joyce.components.PointLight>();
+                _addLight(LightType.LIGHT_POINT,
+                    matTransform.Translation, vRight, cLight.Color, ref rlShaderEntry.RlShader);
+            }
+        }
+
+
         /**
          * Find all appropriate light entities and collect the most important.
          */
@@ -181,7 +203,9 @@ namespace Karawan.platform.cs1.splash
             {
                 _lights[i].enabled = false;
             }
+            _lightsCount = 0;
             _collectDirectionalLights(rlShaderEntry);
+            _collectPointLights(rlShaderEntry);
             _collectAmbientLights(rlShaderEntry);
             _updateAllLights(ref rlShaderEntry.RlShader);
         }
