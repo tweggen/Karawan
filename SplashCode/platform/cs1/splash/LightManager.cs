@@ -1,4 +1,5 @@
-﻿using Raylib_CsLo;
+﻿using engine.joyce.components;
+using Raylib_CsLo;
 using System;
 using System.Numerics;
 
@@ -123,6 +124,7 @@ namespace Karawan.platform.cs1.splash
             }
         }
 
+
         private void _updateAllLights(ref Shader shader)
         {
             foreach (var light in _lights)
@@ -132,18 +134,62 @@ namespace Karawan.platform.cs1.splash
         }
 
 
+        private void _collectAmbientLights(in RlShaderEntry rlShaderEntry)
+        {
+            var listAmbientLights = _engine.GetEcsWorld().GetEntities()
+                .With<engine.joyce.components.AmbientLight>()
+                .AsEnumerable();
+            Vector4 colAmbient = new Vector4(0, 0, 0, 0);
+            foreach(var eLight in listAmbientLights)
+            {
+                colAmbient += eLight.Get<engine.joyce.components.AmbientLight>().Color;
+            }
+
+            int ambientLoc = Raylib.GetShaderLocation(rlShaderEntry.RlShader, "ambient");
+            Raylib.SetShaderValue(
+                rlShaderEntry.RlShader,
+                ambientLoc, colAmbient,
+                ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        }
+
+        private void _collectDirectionalLights(in RlShaderEntry rlShaderEntry)
+        {
+            /*
+             * Collect all lights.
+             * // TXWTODO: This assumes we are only a littly amount of directional lights.
+             */
+            var listDirectionalLights = _engine.GetEcsWorld().GetEntities()
+                .With<engine.joyce.components.DirectionalLight>()
+                .With<engine.transform.components.Transform3ToWorld>()
+                .AsEnumerable();
+            foreach (var eLight in listDirectionalLights)
+            {
+                var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
+                var cLight = eLight.Get<engine.joyce.components.DirectionalLight>();
+                _addLight(LightType.LIGHT_DIRECTIONAL,
+                    matTransform.Translation, vRight, cLight.Color, ref rlShaderEntry.RlShader);
+            }
+        }
+
         /**
          * Find all appropriate light entities and collect the most important.
          */
         public void CollectLights(in RlShaderEntry rlShaderEntry)
         {
-            // TXWTODO: Collect lights
+            for(int i=0; i<_lightsCount; i++)
+            {
+                _lights[i].enabled = false;
+            }
+            _collectDirectionalLights(rlShaderEntry);
+            _collectAmbientLights(rlShaderEntry);
             _updateAllLights(ref rlShaderEntry.RlShader);
         }
 
         public LightManager(engine.Engine engine) 
         {
             _engine = engine;
+            _lights = new Light[4];
         }
     }
 }

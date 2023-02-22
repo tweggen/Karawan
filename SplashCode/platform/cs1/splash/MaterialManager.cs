@@ -31,7 +31,7 @@ namespace Karawan.platform.cs1.splash
         private RlMaterialEntry _loadingMaterial;
         private RlShaderEntry _rlInstanceShaderEntry;
 
-        private RLights _rlights;
+        // private RLights _rlights;
 
         // private Dictionary<string, splash.RlMaterialEntry> _dictMaterials = new();
 
@@ -96,7 +96,7 @@ namespace Karawan.platform.cs1.splash
             /* 
              * Test code: Set some ambient lighting:
              */
-            SetAmbientLight(new Vector4(0.9f, 0.6f, 0.9f, 1.0f));
+            // SetAmbientLight(new Vector4(0.9f, 0.6f, 0.9f, 1.0f));
             
         }
 
@@ -107,7 +107,7 @@ namespace Karawan.platform.cs1.splash
             Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
             var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
             Raylib.UnloadImage(checkedImage);
-
+#if false
             /*
              * Test code: Create one light.
              */
@@ -115,7 +115,7 @@ namespace Karawan.platform.cs1.splash
             var vecZero = new Vector3(0, 0, 0);
             _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
                 new Color(255,255,255,255), ref _rlInstanceShaderEntry.RlShader); 
-
+#endif
             loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
             loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
             loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
@@ -268,7 +268,7 @@ namespace Karawan.platform.cs1.splash
             if (!_haveDefaults)
             {
                 _haveDefaults = true;
-                _rlights = new();
+                // _rlights = new();
                 _createDefaultShader();
                 _createDefaultMaterial();
             }

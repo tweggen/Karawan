@@ -21,6 +21,7 @@ in vec3 fragNormal;
 uniform sampler2D texture0;
 uniform sampler2D texture2;
 uniform vec4 colDiffuse;
+uniform vec4 ambient;
 
 // Output fragment color
 out vec4 finalColor;
@@ -47,7 +48,6 @@ struct Light {
 
 // Input lighting values
 uniform Light lights[MAX_LIGHTS];
-uniform vec4 ambient;
 
 uniform vec3 viewPos;
 

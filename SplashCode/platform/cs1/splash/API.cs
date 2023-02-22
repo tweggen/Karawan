@@ -21,6 +21,7 @@ namespace Karawan.platform.cs1.splash
         private TextureGenerator _textureGenerator;
         private TextureManager _textureManager;
         private MeshManager _meshManager;
+        private LightManager _lightManager;
 
 
         /**
@@ -31,7 +32,8 @@ namespace Karawan.platform.cs1.splash
             /*
              * Create/upload all ressources that haven't been uploaded.
              */
-            _createRlMeshesSystem.Update(_engine); 
+            _createRlMeshesSystem.Update(_engine);
+            _lightManager.CollectLights(_materialManager.GetInstanceShaderEntry());
 
             Raylib.ClearBackground(Raylib.BLACK);
 
@@ -39,6 +41,7 @@ namespace Karawan.platform.cs1.splash
                 .With<engine.joyce.components.Camera3>()
                 .With<engine.transform.components.Transform3ToWorld>()
                 .AsEnumerable();
+
             foreach(var eCamera in listCameras)
             {
                 var cCameraParams = eCamera.Get<engine.joyce.components.Camera3>();
@@ -140,6 +143,7 @@ namespace Karawan.platform.cs1.splash
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
             _drawRlMeshesSystem = new(_engine, _materialManager);
             _drawSkyboxesSystem = new(_engine, _materialManager);
+            _lightManager = new(_engine);
         }
     }
 }
