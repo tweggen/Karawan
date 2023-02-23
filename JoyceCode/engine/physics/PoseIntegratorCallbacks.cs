@@ -1,4 +1,5 @@
 ﻿using BepuPhysics;
+using BepuUtilities;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -11,7 +12,9 @@ namespace engine.physics
     public struct PoseIntegratorCallbacks : IPoseIntegratorCallbacks
     {
         public Vector3 Gravity;
-        Vector3 gravityDt;
+        Vector3Wide gravityWideDt;
+        public readonly bool AllowSubstepsForUnconstrainedBodies => false;
+        public readonly bool IntegrateVelocityForKinematics => false;
 
         /// <summary>
         /// Performs any required initialization logic after the Simulation instance has been constructed.
@@ -40,7 +43,7 @@ namespace engine.physics
         public void PrepareForIntegration(float dt)
         {
             //No reason to recalculate gravity * dt for every body; just cache it ahead of time.
-            gravityDt = Gravity * dt;
+            gravityWideDt = Vector3Wide.Broadcast(Gravity * dt);
         }
 
         /// <summary>
@@ -52,13 +55,9 @@ namespace engine.physics
         /// <param name="workerIndex">Index of the worker thread processing this body.</param>
         /// <param name="velocity">Reference to the body's current velocity to integrate.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void IntegrateVelocity(int bodyIndex, in RigidPose pose, in BodyInertia localInertia, int workerIndex, ref BodyVelocity velocity)
+        public void IntegrateVelocity(Vector<int> bodyIndices, Vector3Wide position, QuaternionWide orientation, BodyInertiaWide localInertia, Vector<int> integrationMask, int workerIndex, Vector<float> dt, ref BodyVelocityWide velocity)
         {
-            //Note that we avoid accelerating kinematics. Kinematics are any body with an inverse mass of zero (so a mass of ~infinity). No force can move them.
-            if (localInertia.InverseMass > 0)
-            {
-                velocity.Linear = velocity.Linear + gravityDt;
-            }
+            velocity.Linear += gravityWideDt;
         }
 
     }

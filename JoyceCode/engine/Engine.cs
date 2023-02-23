@@ -57,7 +57,7 @@ namespace engine
         public Simulation Simulation { get; protected set; }
         public BufferPool BufferPool { get; private set; }
         private physics.ContactEvents<EnginePhysicsEventHandler> _contactEvents;
-        private physics.SimpleThreadDispatcher _physicsThreadDispatcher;
+        private ThreadDispatcher  _physicsThreadDispatcher;
 
         private physics.Manager _managerPhysics;
 
@@ -366,7 +366,7 @@ namespace engine
                 BufferPool, 
                 new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(_contactEvents) /* { Properties = properties } */,
                 new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
-                new PositionLastTimestepper()
+                new SolveDescription(8, 1)
             );
             enginePhysicsEventHandler.Simulation = Simulation;
             _aHierarchy = new engine.hierarchy.API(this);

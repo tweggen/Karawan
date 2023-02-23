@@ -51,7 +51,7 @@ namespace engine.physics
         /// The value was already initialized by the narrowphase by examining the speculative margins of the involved collidables, but it can be modified.</param>
         /// <returns>True if collision detection should proceed, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool AllowContactGeneration(int workerIndex, CollidableReference a, CollidableReference b)
+        public bool AllowContactGeneration(int workerIndex, CollidableReference a, CollidableReference b, ref float speculativeMargin)
         {
             //Before creating a narrow phase pair, the broad phase asks this callback whether to bother with a given pair of objects.
             //This can be used to implement arbitrary forms of collision filtering. See the RagdollDemo or NewtDemo for examples.
@@ -94,7 +94,7 @@ namespace engine.physics
         /// <param name="pairMaterial">Material properties of the manifold.</param>
         /// <returns>True if a constraint should be created for the manifold, false otherwise.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : struct, IContactManifold<TManifold>
+        public unsafe bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
         {
             //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
             //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).

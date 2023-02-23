@@ -5,6 +5,7 @@ using System.Threading;
 using BepuUtilities.Memory;
 using BepuUtilities;
 
+#if false
 namespace engine.physics
 {
     public class SimpleThreadDispatcher : IThreadDispatcher, IDisposable
@@ -114,3 +115,4 @@ namespace engine.physics
     }
 
 }
+#endif

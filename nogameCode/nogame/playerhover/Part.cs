@@ -80,7 +80,7 @@ namespace nogame.playerhover
                 //_eShip.Set(new engine.joyce.components.PointLight(new Vector4(1.0f, 0.95f, 0.9f, 1f)/3f));
 
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(1.4f);
-                pbodySphere.ComputeInertia(_massShip, out var pinertiaSphere);
+                var pinertiaSphere = pbodySphere.ComputeInertia(_massShip);
                 _phandleShip = _engine.Simulation.Bodies.Add(
                     BodyDescription.CreateDynamic(
                         posShip,

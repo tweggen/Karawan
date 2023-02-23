@@ -268,12 +268,9 @@ namespace builtin.tools
             builder.Reset();
             var pshapeCompound = new Compound(compoundChildren);
             staticDescriptions.Add(
-                    new StaticDescription(
+                new StaticDescription(
                     vCompoundCenter,
-                    new CollidableDescription(
-                        simulation.Shapes.Add(pshapeCompound),
-                        0.1f
-                    )
+                    simulation.Shapes.Add(pshapeCompound)
                 )
             );
         }
