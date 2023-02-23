@@ -32,32 +32,66 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SplashCode", "SplashCode\Sp
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "nogameCode", "nogameCode\nogameCode.shproj", "{65A59DBA-280F-406D-B941-DF4C68797BA5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\..\github\BepuPhysics2\BepuPhysics\BepuPhysics.csproj", "{4AA96410-22F7-4473-B187-CE50FD1C6773}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj", "{04406E59-DC40-498A-8969-08876ED3AD96}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuPhysicsCode", "SharedBepuPhysics\BepuPhysicsCode.shproj", "{DC686802-1609-4B0F-8A73-6EE1C80AE6DF}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuUtilitiesCode", "SharedBepuUtilities\BepuUtilitiesCode.shproj", "{B92AFCA4-66E7-4919-A653-87B96652115D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+		ReleaseNoProfiling|Any CPU = ReleaseNoProfiling|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{C8C8DD14-DF84-4FB6-9941-576215389694}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C8C8DD14-DF84-4FB6-9941-576215389694}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8C8DD14-DF84-4FB6-9941-576215389694}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8C8DD14-DF84-4FB6-9941-576215389694}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8C8DD14-DF84-4FB6-9941-576215389694}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{C8C8DD14-DF84-4FB6-9941-576215389694}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 		{4F362D4B-F5A4-4B0D-9BDF-3B5A808F15DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4F362D4B-F5A4-4B0D-9BDF-3B5A808F15DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F362D4B-F5A4-4B0D-9BDF-3B5A808F15DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F362D4B-F5A4-4B0D-9BDF-3B5A808F15DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F362D4B-F5A4-4B0D-9BDF-3B5A808F15DE}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{4F362D4B-F5A4-4B0D-9BDF-3B5A808F15DE}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.ReleaseNoProfiling|Any CPU.Deploy.0 = Release|Any CPU
+		{4AA96410-22F7-4473-B187-CE50FD1C6773}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AA96410-22F7-4473-B187-CE50FD1C6773}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AA96410-22F7-4473-B187-CE50FD1C6773}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AA96410-22F7-4473-B187-CE50FD1C6773}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AA96410-22F7-4473-B187-CE50FD1C6773}.ReleaseNoProfiling|Any CPU.ActiveCfg = ReleaseNoProfiling|Any CPU
+		{4AA96410-22F7-4473-B187-CE50FD1C6773}.ReleaseNoProfiling|Any CPU.Build.0 = ReleaseNoProfiling|Any CPU
+		{04406E59-DC40-498A-8969-08876ED3AD96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04406E59-DC40-498A-8969-08876ED3AD96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04406E59-DC40-498A-8969-08876ED3AD96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04406E59-DC40-498A-8969-08876ED3AD96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04406E59-DC40-498A-8969-08876ED3AD96}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{04406E59-DC40-498A-8969-08876ED3AD96}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +106,8 @@ Global
 		JoyceCode\JoyceCode.projitems*{77780cb7-fbc2-4301-9187-2428ef25dc3d}*SharedItemsImports = 13
 		SplashCode\SplashCode.projitems*{818a3cb5-5e55-4b19-ac0f-a61bf73f7276}*SharedItemsImports = 13
 		SplashCode\SplashCode.projitems*{990b4c3d-1e5e-4d39-a76a-0c191c5f4a32}*SharedItemsImports = 5
+		SharedBepuUtilities\SharedBepuUtilities.projitems*{b92afca4-66e7-4919-a653-87b96652115d}*SharedItemsImports = 13
+		SharedBepuPhysics\SharedBepuPhysics.projitems*{dc686802-1609-4b0f-8a73-6ee1c80ae6df}*SharedItemsImports = 13
 		JoyceCode\JoyceCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 		nogameCode\nogameCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 		SplashCode\SplashCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
