@@ -36,9 +36,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\..\github
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj", "{04406E59-DC40-498A-8969-08876ED3AD96}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuPhysicsCode", "SharedBepuPhysics\BepuPhysicsCode.shproj", "{DC686802-1609-4B0F-8A73-6EE1C80AE6DF}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuUtilitiesCode", "BepuUtilitiesCode\BepuUtilitiesCode.shproj", "{31C1E896-4CD8-4170-8AA3-76802FA40815}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuUtilitiesCode", "SharedBepuUtilities\BepuUtilitiesCode.shproj", "{B92AFCA4-66E7-4919-A653-87B96652115D}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuPhysicsCode", "BepuPhysicsCode\BepuPhysicsCode.shproj", "{F02A577A-D222-4389-AAC5-DA480C1A68FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,18 +100,18 @@ Global
 		SolutionGuid = {2C4A52FC-73DE-4876-8426-824572D9365E}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		BepuUtilitiesCode\BepuUtilitiesCode.projitems*{31c1e896-4cd8-4170-8aa3-76802fa40815}*SharedItemsImports = 13
 		JoyceCode\JoyceCode.projitems*{4c6243f1-1b4f-4ecf-ace7-3e8e75b3b917}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{4f362d4b-f5a4-4b0d-9bdf-3b5a808f15de}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{65a59dba-280f-406d-b941-df4c68797ba5}*SharedItemsImports = 13
 		JoyceCode\JoyceCode.projitems*{77780cb7-fbc2-4301-9187-2428ef25dc3d}*SharedItemsImports = 13
 		SplashCode\SplashCode.projitems*{818a3cb5-5e55-4b19-ac0f-a61bf73f7276}*SharedItemsImports = 13
 		SplashCode\SplashCode.projitems*{990b4c3d-1e5e-4d39-a76a-0c191c5f4a32}*SharedItemsImports = 5
-		SharedBepuUtilities\SharedBepuUtilities.projitems*{b92afca4-66e7-4919-a653-87b96652115d}*SharedItemsImports = 13
-		SharedBepuPhysics\SharedBepuPhysics.projitems*{dc686802-1609-4b0f-8a73-6ee1c80ae6df}*SharedItemsImports = 13
+		BepuPhysicsCode\BepuPhysicsCode.projitems*{f02a577a-d222-4389-aac5-da480c1a68fe}*SharedItemsImports = 13
+		BepuPhysicsCode\BepuPhysicsCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
+		BepuUtilitiesCode\BepuUtilitiesCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 		JoyceCode\JoyceCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 		nogameCode\nogameCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
-		SharedBepuPhysics\SharedBepuPhysics.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
-		SharedBepuUtilities\SharedBepuUtilities.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 		SplashCode\SplashCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

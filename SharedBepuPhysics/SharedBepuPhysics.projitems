@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Bodies.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Bodies_GatherScatter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BodyDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BodyLayoutOptimizer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BodyProperties.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BodyReference.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BodySet.cs" />
@@ -27,6 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Collidables\CollidableReference.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Collidables\Compound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Collidables\CompoundBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\CompoundHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Collidables\ConvexHull.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Collidables\ConvexHullHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Collidables\Cylinder.cs" />
@@ -81,6 +83,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\TriangleCylinderTester.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\TrianglePairTester.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CompoundMeshReduction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ConstraintCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ConstraintRemover.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ContactConstraintAccessor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ContactManifold.cs" />
@@ -103,6 +106,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NarrowPhasePreflush.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NonconvexReduction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\PairCache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\PairCacheIndex.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\PairCache_Activity.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\RayBatchers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTaskRegistry.cs" />
@@ -127,6 +131,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\WideRayTester.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\WorkerPairCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConstraintBatch.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ConstraintGraphRemovalEnumerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ConstraintLayoutOptimizer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConstraintLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConstraintReference.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConstraintSet.cs" />
@@ -198,6 +204,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Constraints\Weld.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DefaultTimestepper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DefaultTypes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FallbackBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Handles.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)HandyEnumerators.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers.cs" />
@@ -208,6 +215,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)ITimestepper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LocalSpinWait.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PoseIntegrator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PositionFirstTimestepper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PositionLastTimestepper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SequentialFallbackBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Simulation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SimulationAllocationSizes.cs" />
@@ -215,10 +224,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)Simulation_Queries.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SolveDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Solver.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Solver_IncrementalContactUpdate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Solver_Intermediate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Solver_Naive.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Solver_Solve.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)StaticDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)StaticReference.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Statics.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SubsteppingTimestepper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Trees\Leaf.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Trees\Node.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Trees\RayBatcher.cs" />
