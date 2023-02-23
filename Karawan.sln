@@ -110,6 +110,8 @@ Global
 		SharedBepuPhysics\SharedBepuPhysics.projitems*{dc686802-1609-4b0f-8a73-6ee1c80ae6df}*SharedItemsImports = 13
 		JoyceCode\JoyceCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 		nogameCode\nogameCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
+		SharedBepuPhysics\SharedBepuPhysics.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
+		SharedBepuUtilities\SharedBepuUtilities.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 		SplashCode\SplashCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal
