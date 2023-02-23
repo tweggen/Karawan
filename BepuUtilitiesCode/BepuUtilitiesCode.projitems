@@ -8,4 +8,62 @@
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>BepuUtilitiesCode</Import_RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AffineTransform.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BoundingBox.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BoundingSphere.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BundleIndexing.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\ArrayEnumerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\IComparerRef.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\IEqualityComparerRef.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\IndexSet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\InsertionSort.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\IPredicate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\LSBRadixSort.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\MSBRadixSort.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\PrimitiveComparer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\QuickDictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\QuickList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\QuickQueue.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\QuickSet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\Quicksort.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\ReferenceComparer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\WrapperEqualityComparer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collections\WrapperPredicate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ContainmentType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GatherScatter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IForEachRef.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Int2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Int3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IThreadDispatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MathChecker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MathHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Matrix.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Matrix2x2Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Matrix2x3Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Matrix3x3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Matrix3x3Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\Allocator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\ArenaPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\Buffer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\BufferPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\IdPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\IUnmanagedMemoryPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\ManagedIdPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\Pool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\SpanHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Memory\WorkerBufferPools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)QuaternionEx.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)QuaternionWide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Symmetric2x2Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Symmetric3x3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Symmetric3x3Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Symmetric4x4Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Symmetric5x5Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Symmetric6x6Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ThreadDispatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Vector2Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Vector3Wide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Vector4Wide.cs" />
+  </ItemGroup>
 </Project>

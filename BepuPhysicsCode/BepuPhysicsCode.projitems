@@ -8,4 +8,252 @@
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>BepuPhysicsCode</Import_RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)BatchCompressor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bodies.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Bodies_GatherScatter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BodyDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BodyProperties.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BodyReference.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BodySet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BoundingBoxHelpers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollidableProperty.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\BigCompound.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\BoundingBoxBatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Box.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Capsule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Collidable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\CollidableDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\CollidableReference.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Compound.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\CompoundBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\ConvexHull.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\ConvexHullHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Cylinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\IShape.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Mesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\MeshInertiaHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Shapes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Sphere.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\Triangle.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Collidables\TypedIndex.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\BroadPhase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\BroadPhase_Queries.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollidableOverlapFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionBatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionBatcherContinuations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTaskRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\BoxConvexHullTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\BoxCylinderTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\BoxPairTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\BoxTriangleTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CapsuleBoxTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CapsuleConvexHullTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CapsuleCylinderTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CapsulePairTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CapsuleTriangleTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CompoundMeshContinuations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CompoundPairCollisionTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CompoundPairContinuations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CompoundPairOverlapFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CompoundPairOverlaps.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexCollisionTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexCompoundCollisionTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexCompoundContinuations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexCompoundOverlapFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexCompoundTaskOverlaps.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexHullPairTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexHullTestHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ConvexMeshContinuations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CylinderConvexHullTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\CylinderPairTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\ManifoldCandidateHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\MeshPairContinuations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\MeshPairOverlapFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\PairTypes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\SphereBoxTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\SphereCapsuleTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\SphereConvexHullTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\SphereCylinderTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\SpherePairTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\SphereTriangleTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\TriangleConvexHullTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\TriangleCylinderTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CollisionTasks\TrianglePairTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\CompoundMeshReduction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ConstraintRemover.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ContactConstraintAccessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ContactManifold.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ContinuationIndex.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ConvexContactManifoldWide.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\DepthRefiner.cs">
+      <DependentUpon>DepthRefiner.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\FreshnessChecker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\InactiveSetBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\INarrowPhaseCallbacks.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\ISupportFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\MeshReduction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NarrowPhase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NarrowPhaseCCDContinuations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NarrowPhaseConstraintUpdate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NarrowPhasePendingConstraintAdds.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NarrowPhasePreflush.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\NonconvexReduction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\PairCache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\PairCache_Activity.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\RayBatchers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTaskRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\CapsuleBoxDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\CapsuleCylinderDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\CapsulePairDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\CompoundHomogeneousCompoundSweepTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\CompoundPairSweepOverlapFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\CompoundPairSweepOverlaps.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\CompoundPairSweepTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\ConvexCompoundSweepOverlapFinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\ConvexCompoundSweepTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\ConvexHomogeneousCompoundSweepTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\ConvexSweepTaskCommon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\GJKDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\SphereBoxDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\SphereCapsuleDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\SphereCylinderDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\SpherePairDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\SweepTasks\SphereTriangleDistanceTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\UntypedList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\WideRayTester.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CollisionDetection\WorkerPairCache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ConstraintBatch.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ConstraintLocation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ConstraintReference.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ConstraintSet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\AngularAxisGearMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\AngularAxisMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\AngularHinge.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\AngularMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\AngularServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\AngularSwivelHinge.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\AreaConstraint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\BallSocket.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\BallSocketMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\BallSocketServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\BallSocketShared.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\CenterDistanceConstraint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\CenterDistanceLimit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\ConstraintChecker.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\ContactConvexCommon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\ContactConvexTypes.cs">
+      <DependentUpon>ContactConvexTypes.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\ContactNonconvexCommon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\ContactNonconvexTypes.cs">
+      <DependentUpon>ContactNonconvexTypes.tt</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\IContactConstraintDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\ISolverContactDataExtractor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\PenetrationLimit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\PenetrationLimitOneBody.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\TangentFriction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\TangentFrictionOneBody.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\TwistFriction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Contact\TwistFrictionOneBody.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\DistanceLimit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\DistanceServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\FourBodyTypeProcessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Hinge.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\IBatchIntegrationMode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\IBodyAccessFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\IConstraintDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Inequality1DOF.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\InequalityHelpers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\LinearAxisLimit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\LinearAxisMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\LinearAxisServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\MotorSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\OneBodyAngularMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\OneBodyAngularServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\OneBodyLinearMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\OneBodyLinearServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\OneBodyTypeProcessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\PointOnLineServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\ServoSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\SpringSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\SwingLimit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\SwivelHinge.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\ThreeBodyTypeProcessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\TwistLimit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\TwistMotor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\TwistServo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\TwoBodyTypeProcessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\TypeBatch.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\TypeProcessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\VolumeConstraint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Constraints\Weld.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DefaultTimestepper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DefaultTypes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Handles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HandyEnumerators.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)InvasiveHashDiagnostics.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IslandAwakener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IslandScaffold.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IslandSleeper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ITimestepper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LocalSpinWait.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PoseIntegrator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SequentialFallbackBatch.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Simulation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SimulationAllocationSizes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SimulationProfiler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Simulation_Queries.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SolveDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Solver.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Solver_Solve.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StaticDescription.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StaticReference.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Statics.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Leaf.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Node.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\RayBatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_Add.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_BinnedRefine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_CacheOptimizer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_CollectSubtreesDirect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_Diagnostics.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_IntertreeQueries.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_IntertreeQueriesMT.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_MultithreadedRefitRefine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_RayCast.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_RefineCommon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_RefinementScheduling.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_Refit.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_Remove.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_SelfQueries.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_SelfQueriesMT.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_Sweep.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_SweepBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Trees\Tree_VolumeQuery.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)CollisionDetection\DepthRefiner.tt">
+      <LastGenOutput>DepthRefiner.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Constraints\Contact\ContactConvexTypes.tt">
+      <LastGenOutput>ContactConvexTypes.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Constraints\Contact\ContactNonconvexTypes.tt">
+      <LastGenOutput>ContactNonconvexTypes.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+  </ItemGroup>
 </Project>

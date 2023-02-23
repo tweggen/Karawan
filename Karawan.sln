@@ -24,10 +24,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benc
 		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32} = {990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nika", "Nika\Nika.csproj", "{F6921285-CB8B-4646-8FDF-5C69F66FE235}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "JoyceCode", "JoyceCode\JoyceCode.shproj", "{77780CB7-FBC2-4301-9187-2428EF25DC3D}"
-EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SplashCode", "SplashCode\SplashCode.shproj", "{818A3CB5-5E55-4B19-AC0F-A61BF73F7276}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "nogameCode", "nogameCode\nogameCode.shproj", "{65A59DBA-280F-406D-B941-DF4C68797BA5}"
@@ -36,9 +32,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\..\github
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj", "{04406E59-DC40-498A-8969-08876ED3AD96}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuUtilitiesCode", "BepuUtilitiesCode\BepuUtilitiesCode.shproj", "{31C1E896-4CD8-4170-8AA3-76802FA40815}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wuka", "Wuka\Wuka.csproj", "{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BepuPhysicsCode", "BepuPhysicsCode\BepuPhysicsCode.shproj", "{F02A577A-D222-4389-AAC5-DA480C1A68FE}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "JoyceCode", "JoyceCode\JoyceCode.shproj", "{77780CB7-FBC2-4301-9187-2428EF25DC3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,11 +71,6 @@ Global
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
 		{94754F04-F5BF-4430-BA09-53CFB4B87C9F}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
-		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
-		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
-		{F6921285-CB8B-4646-8FDF-5C69F66FE235}.ReleaseNoProfiling|Any CPU.Deploy.0 = Release|Any CPU
 		{4AA96410-22F7-4473-B187-CE50FD1C6773}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4AA96410-22F7-4473-B187-CE50FD1C6773}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AA96410-22F7-4473-B187-CE50FD1C6773}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -92,6 +83,15 @@ Global
 		{04406E59-DC40-498A-8969-08876ED3AD96}.Release|Any CPU.Build.0 = Release|Any CPU
 		{04406E59-DC40-498A-8969-08876ED3AD96}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
 		{04406E59-DC40-498A-8969-08876ED3AD96}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -100,18 +100,11 @@ Global
 		SolutionGuid = {2C4A52FC-73DE-4876-8426-824572D9365E}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		BepuUtilitiesCode\BepuUtilitiesCode.projitems*{31c1e896-4cd8-4170-8aa3-76802fa40815}*SharedItemsImports = 13
 		JoyceCode\JoyceCode.projitems*{4c6243f1-1b4f-4ecf-ace7-3e8e75b3b917}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{4f362d4b-f5a4-4b0d-9bdf-3b5a808f15de}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{65a59dba-280f-406d-b941-df4c68797ba5}*SharedItemsImports = 13
 		JoyceCode\JoyceCode.projitems*{77780cb7-fbc2-4301-9187-2428ef25dc3d}*SharedItemsImports = 13
 		SplashCode\SplashCode.projitems*{818a3cb5-5e55-4b19-ac0f-a61bf73f7276}*SharedItemsImports = 13
 		SplashCode\SplashCode.projitems*{990b4c3d-1e5e-4d39-a76a-0c191c5f4a32}*SharedItemsImports = 5
-		BepuPhysicsCode\BepuPhysicsCode.projitems*{f02a577a-d222-4389-aac5-da480c1a68fe}*SharedItemsImports = 13
-		BepuPhysicsCode\BepuPhysicsCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
-		BepuUtilitiesCode\BepuUtilitiesCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
-		JoyceCode\JoyceCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
-		nogameCode\nogameCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
-		SplashCode\SplashCode.projitems*{f6921285-cb8b-4646-8fdf-5c69f66fe235}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal
