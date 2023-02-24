@@ -62,6 +62,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\World3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Body.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Kinetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Statics.cs" />

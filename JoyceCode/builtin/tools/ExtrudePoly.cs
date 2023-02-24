@@ -1,4 +1,4 @@
-﻿
+﻿using static engine.Logger;
 using BepuPhysics.Collidables;
 using BepuUtilities.Collections;
 using BepuPhysics;
@@ -75,8 +75,7 @@ namespace builtin.tools
 
             if (lastRowHeight < 0f)
             {
-                trace("ExtrudePoly.buildGeom(): lastRowHeight is < 0.");
-                throw new InvalidOperationException( "ExtrudePoly.buildGeom(): lastRowHeight is < 0." );
+                ErrorThrow("lastRowHeight is < 0.", le => new InvalidOperationException( le ));
             }
 
             /* 
@@ -229,8 +228,7 @@ namespace builtin.tools
             var vh = _path[0];
             if (null == _poly)
             {
-                trace($"ExtrudePoly.buildPhys(): Got a null polygon.");
-                throw new InvalidOperationException( $"ExtrudePoly.buildPhys(): Got a null polygon." );
+                ErrorThrow( "Got a null polygon.", le => new ArgumentNullException(le) );
             }
 
 
@@ -290,8 +288,7 @@ namespace builtin.tools
             bool addCeiling
         ) {
             if( null==poly ) {
-                trace( "ExtrudePoly(): Got a null polygon." );
-                throw new ArgumentNullException( "ExtrudePoly(): Got a null polygon." );
+                ErrorThrow("Got a null polygon.", le => new ArgumentNullException(le));
             }
             _poly = new List<Vector3>( poly );
             _path = new List<Vector3>( path );
