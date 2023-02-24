@@ -15,11 +15,13 @@ namespace Karawan.platform.cs1.splash
         private systems.CreateRlMeshesSystem _createRlMeshesSystem;
         private systems.DrawRlMeshesSystem _drawRlMeshesSystem;
         private systems.DrawSkyboxesSystem _drawSkyboxesSystem;
+        private systems.CreateRlMusicSystem _createRlMusicSystem;
 
         private MaterialManager _materialManager;
         private TextureGenerator _textureGenerator;
         private TextureManager _textureManager;
         private MeshManager _meshManager;
+        private MusicManager _musicManager;
         private LightManager _lightManager;
 
 
@@ -32,6 +34,8 @@ namespace Karawan.platform.cs1.splash
              * Create/upload all ressources that haven't been uploaded.
              */
             _createRlMeshesSystem.Update(_engine);
+            // TXWTODO: Inefficient, callback driven?
+            _createRlMusicSystem.Update(_engine);
             _lightManager.CollectLights(_materialManager.GetInstanceShaderEntry());
 
             Raylib.ClearBackground(Raylib.BLACK);
@@ -139,7 +143,10 @@ namespace Karawan.platform.cs1.splash
             _materialManager.Manage(engine.GetEcsWorld());
             _meshManager = new();
             _meshManager.Manage(engine.GetEcsWorld());
+            _musicManager = new(engine);
+            _musicManager.Manage(engine.GetEcsWorld());
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
+            _createRlMusicSystem = new(_engine);
             _drawRlMeshesSystem = new(_engine, _materialManager);
             _drawSkyboxesSystem = new(_engine, _materialManager);
             _lightManager = new(_engine);

@@ -10,9 +10,6 @@ namespace Karawan.platform.cs1.splash
     class MeshManager : AResourceManager<engine.joyce.Mesh, RlMeshEntry>
     {
 
-//        private Dictionary<engine.joyce.Mesh, splash.RlMeshEntry> _dictMeshes;
-
-
         protected unsafe override RlMeshEntry Load(engine.joyce.Mesh jMesh)
         {
             RlMeshEntry rlMeshEntry;
@@ -36,29 +33,9 @@ namespace Karawan.platform.cs1.splash
             base.Unload(jMesh, rlMeshEntry);
         }
 
-#if false
-        public unsafe splash.RlMeshEntry FindRlMesh(engine.joyce.Mesh jMesh)
-        {
-            splash.RlMeshEntry rlMeshEntry;
-            if (_dictMeshes.TryGetValue(jMesh, out rlMeshEntry))
-            {
-            }
-            else
-            {
-                MeshGenerator.CreateRaylibMesh(jMesh, out rlMeshEntry);
-                fixed (Raylib_CsLo.Mesh* pRlMeshEntry = &rlMeshEntry.RlMesh)
-                {
-                    Raylib.UploadMesh(pRlMeshEntry, false);
-                }
-                _dictMeshes.Add(jMesh, rlMeshEntry);
-            }
-            return rlMeshEntry;
-        }
-#endif
 
         public MeshManager()
         {
-//            _dictMeshes = new();
         }
     }
 }

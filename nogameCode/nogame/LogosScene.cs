@@ -129,6 +129,10 @@ namespace nogame
                 _aTransform = _engine.GetATransform();
 
             }
+            {
+                DefaultEcs.Entity eMusic = _ecsWorld.CreateEntity();
+                eMusic.Set(new engine.audio.components.Music("assets\\shaklengokhsi.ogg"));
+            }
 
             /*
              * Joyce engine logo
