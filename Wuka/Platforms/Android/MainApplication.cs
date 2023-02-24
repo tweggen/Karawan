@@ -1,11 +1,14 @@
 ﻿using Android.App;
 using Android.Runtime;
+using System.Runtime.InteropServices;
+
 
 namespace Wuka
 {
     [Application]
     public class MainApplication : MauiApplication
     {
+        
         public MainApplication(IntPtr handle, JniHandleOwnership ownership)
             : base(handle, ownership)
         {
