@@ -1,15 +1,12 @@
 ﻿using engine.world;
 using System;
 using System.Numerics;
+using static engine.Logger;
 
 namespace engine.streets
 {
     public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
-        private static void trace(string message) {
-            Console.WriteLine(message);
-        }
-
         static private object _lock = new();
         static private engine.joyce.Material _jMaterialStreet= null;
 
@@ -182,18 +179,19 @@ namespace engine.streets
 
             amx = cx + spA.Pos.X;
             amy = cy + spA.Pos.Y;
-            if (_traceStreets) trace( $"GenerateClusterStreetsOperator.generateStreetRun(): am = ({amx}; {amy});");
+            if (_traceStreets) Trace( $"am = ({amx}; {amy});" );
             if (angArrA.Count > 1)
             {
                 var idxA = angArrA.IndexOf(stroke);
                 if (idxA < 0)
                 {
-                    throw new InvalidOperationException( $"GenerateClusterStreetsOperator.generateStreetRun(): stroke is not in street point A." );
+                    ErrorThrow($"stroke is not in street point A.", le => new InvalidOperationException(le) );
                 }
                 var secArrA = spA.GetSectionArray();
                 if (secArrA.Count != angArrA.Count)
                 {
-                    throw new InvalidOperationException( $"GenerateClusterStreetsOperator.generateStreetRun(): for point a: Section array and length array differ in size: {secArrA.Count} != {angArrA.Count}." );
+                    ErrorThrow($"for point a: Section array and length array differ in size: {secArrA.Count} != {angArrA.Count}.",
+                        le => new InvalidOperationException());
                 }
                 var idxNextA = (idxA + 1) % angArrA.Count;
 
@@ -231,18 +229,19 @@ namespace engine.streets
 
             bmx = cx + spB.Pos.X;
             bmy = cy + spB.Pos.Y;
-            if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): bm = ({bmx}; {bmy});");
+            if (_traceStreets) Trace($"bm = ({bmx}; {bmy});");
             if (angArrB.Count> 1)
             {
                 var idxB = angArrB.IndexOf(stroke);
                 if (idxB < 0)
                 {
-                    throw new InvalidOperationException($"GenerateClusterStreetsOperator.generateStreetRun(): stroke is not in street point B.");
+                    ErrorThrow($"stroke is not in street point B.", le => new InvalidOperationException(le));
                 }
                 var secArrB = spB.GetSectionArray();
                 if (secArrB.Count!= angArrB.Count)
                 {
-                    throw new InvalidOperationException( $"GenerateClusterStreetsOperator.generateStreetRun(): for point b: Section array and angle array differ in size: {secArrB.Count} != {angArrB.Count}." );
+                    ErrorThrow($"for point b: Section array and angle array differ in size: {secArrB.Count} != {angArrB.Count}.",
+                        le => new InvalidOperationException(le) );
                 }
                 var idxNextB = (idxB + 1) % angArrB.Count;
 
@@ -481,14 +480,14 @@ namespace engine.streets
                 }
             }
 
-            if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
+            if (_traceStreets) Trace($"d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
 
             /*
              * Handle special case of a and b ends overlapping
              */
             if (damax > dbmin)
             {
-                if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): Overlapping ends, no street run.");
+                if (_traceStreets) Trace($"Overlapping ends, no street run.");
                 // TXWTODO: Write me.
                 return true;
             }
@@ -505,7 +504,7 @@ namespace engine.streets
                  */
                 int nVertexRows = 0;
 
-                if (_traceStreets) trace($"GenerateClusterStreetsOperator.generateStreetRun(): New rect list.");
+                if (_traceStreets) Trace($"New rect list.");
 
                 /*
                  * We start at damax.
@@ -541,11 +540,11 @@ namespace engine.streets
                     var ery = em.Z + hsw * n.Y;
                     var uv0 = uvp.getUVOfs(new Vector3(elx, h, ely), 0f, vStart);
                     var uv1 = uvp.getUVOfs(new Vector3(erx, h, ery), 0f, vStart);
-                    if (_traceStreets) trace( $"GenerateClusterStreetsOperator(): #$nVertexRows: el = ({elx}; {ely}); uv = ({uv0.X}; {uv0.Y}); er = ($erx; $ery); uv = ({uv1.X}; {uv1.Y})");
+                    if (_traceStreets) Trace( $"#$nVertexRows: el = ({elx}; {ely}); uv = ({uv0.X}; {uv0.Y}); er = ($erx; $ery); uv = ({uv1.X}; {uv1.Y})");
 
                     if (Math.Abs(uv0.Y - 1.0) < 0.00000001)
                     {
-                        if (_traceStreets) trace("Too close");
+                        if (_traceStreets) Trace("Too close");
                     }
                     g.p(elx, h, ely); g.UV(0.5f + uv0.X, uv0.Y);
                     g.p(erx, h, ery); g.UV(0.5f + uv1.X, uv1.Y);
@@ -577,7 +576,7 @@ namespace engine.streets
                     var fry = fm.Z + hsw * n.Y;
                     var uv2 = uvp.getUVOfs(new Vector3(flx, h, fly), 0f, vStart);
                     var uv3 = uvp.getUVOfs(new Vector3(frx, h, fry), 0f, vStart);
-                    if (_traceStreets) trace($"GenerateClusterStreetsOperator(): #{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
+                    if (_traceStreets) Trace($"#{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
 
                     g.p(flx, h, fly); g.UV(0.5f + uv2.X, uv2.Y);
                     g.p(frx, h, fry); g.UV(0.5f + uv3.X, uv3.Y);
@@ -638,18 +637,18 @@ namespace engine.streets
                         || (cz + csh) < (-fsh)
                     )
                     {
-                        if (_traceStreets) trace("Too far away: x=" + _clusterDesc.Pos.X + ", z=" + _clusterDesc.Pos.Z);
+                        if (_traceStreets) Trace("Too far away: x=" + _clusterDesc.Pos.X + ", z=" + _clusterDesc.Pos.Z);
                         return;
                     }
                 }
             }
 
-            trace($"GenerateClusterStreetsOperator(): cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
-            if (_traceStreets) trace("GenerateClusterStreetsOperator(): Obtaining streets.");
+            Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+            if (_traceStreets) Trace("Obtaining streets.");
             var strokeStore = _clusterDesc.strokeStore();
-            if (_traceStreets) trace("GenerateClusterStreetsOperator(): Have streets.");
+            if (_traceStreets) Trace("Have streets.");
 
-            if (_traceStreets) trace($"GenerateClusterStreetsOperator(): In terrain '{worldFragment.GetId()}' operator. "
+            if (_traceStreets) Trace($"In terrain '{worldFragment.GetId()}' operator. "
                 + $"Fragment @{worldFragment.Position}. "
                 + $"Cluster '{_clusterDesc.Id}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
 
@@ -709,11 +708,11 @@ namespace engine.streets
                 }
             }
 
-            trace($"GenerateClusterStreetsOperator(): Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
+            Trace($"Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
 
             if (g.IsEmpty())
             {
-                if (_traceStreets) trace($"GenerateClusterStreetsOperator(): Nothing to add at all.");
+                if (_traceStreets) Trace($"Nothing to add at all.");
                 return;
             }
 

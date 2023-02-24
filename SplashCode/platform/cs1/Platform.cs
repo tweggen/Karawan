@@ -2,6 +2,7 @@
 using System.Numerics;
 using engine;
 using Raylib_CsLo;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Karawan.platform.cs1
 {
@@ -155,7 +156,11 @@ namespace Karawan.platform.cs1
             var height = Raylib.GetMonitorHeight(display);
             bool isFullscreen = false;
 #endif
+#if PLATFORM_ANDROID
+            Raylib.InitWindow(0, 0, "codename Karawan"); //Make app window 1:1 to screen size https://github.com/raysan5/raylib/issues/1731
+#else
             Raylib.InitWindow(width, height, "codename Karawan");
+#endif
             if (isFullscreen)
             {
                 Raylib.ToggleFullscreen();
@@ -170,6 +175,7 @@ namespace Karawan.platform.cs1
         {
             _controllerState = new();
             _vMouseMove = new Vector2(0f, 0f);
+
         }
 
         static public engine.Engine EasyCreatePlatform(string[] args, out Karawan.platform.cs1.Platform platform)

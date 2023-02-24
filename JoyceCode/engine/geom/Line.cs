@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Numerics;
+using static engine.Logger;
 
 namespace engine.geom
 {
     public class Line
     {
-        static private void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
 
         public Vector2 A;
         public Vector2 B;
@@ -34,7 +31,7 @@ namespace engine.geom
             float aby = B.Y - A.Y;
             float l = (float)Math.Sqrt(abx * abx + aby * aby);
             if (l<0.0000001f && l>-0.0000001f) {
-                trace( "Line.normal(): Near null division" );
+                Warning( "Near null division" );
                 return new Vector2( 1.0f, 0.0f );
             }
             return new Vector2(aby / l, -(abx / l));

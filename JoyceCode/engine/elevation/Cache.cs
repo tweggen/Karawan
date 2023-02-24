@@ -1,8 +1,7 @@
-﻿using engine.elevation;
-using System;
+﻿using System;
 using System.Threading;
 using System.Collections.Generic;
-using engine.joyce.components;
+using static engine.Logger;
 
 namespace engine.elevation
 {
@@ -10,11 +9,6 @@ namespace engine.elevation
     {
         static private object _instanceLock = new object();
         static private Cache _instance = null;
-
-        private void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
 
         public const string TOP_LAYER = "TOP_LAYER";
 
@@ -34,7 +28,7 @@ namespace engine.elevation
             in FactoryEntry elevationFactoryEntry
         )
         {
-            if(_traceCache ) trace($"engine.elevation.Cache: Now inserted {id}.");
+            if(_traceCache ) Trace($"Now inserted {id}.");
             _mapFactories.Add(id, elevationFactoryEntry);
             _keysFactories.Add(id);
             _keysFactories.Sort();
@@ -106,7 +100,7 @@ namespace engine.elevation
             if (null == elevationFactoryEntry)
             {
                 _mutexMap.ReleaseMutex();
-                trace("engine.elevation.Cache: returning null (1).");
+                Trace("Returning null (1).");
                 return null;
             }
 
@@ -137,7 +131,7 @@ namespace engine.elevation
             if (null == elevationFactoryEntry)
             {
                 _mutexMap.ReleaseMutex();
-                trace("engine.elevation.Cache: returning null (2).");
+                Trace("Returning null (2).");
                 return null;
             }
 
@@ -200,7 +194,7 @@ namespace engine.elevation
         {
             string layer = layer0;
 
-            // trace('elevation.Cache: Entry requested for layer $layer');
+            Trace($"Entry requested for layer {layer}");
 
             var elevationAdapter = new LayerAdapter(this, layer);
 
@@ -218,10 +212,9 @@ namespace engine.elevation
             {
                 var entry = _mapEntries[id];
                 _mutexMap.ReleaseMutex();
-                //trace('elevation.Cache: Cache hit for $i, $k.');
                 return entry;
             }
-            if (_traceCache) trace($"engine.elevation.Cache: Cache MISS for {i}, {k}.");
+            if (_traceCache) Trace($"Cache MISS for {i}, {k}.");
 
             /*
              * We do not have the entry. So look up the factory function and
@@ -232,8 +225,7 @@ namespace engine.elevation
             if (!_mapFactories.ContainsKey(factoryId))
             {
                 _mutexMap.ReleaseMutex();
-                throw new InvalidOperationException(
-                    $"elevation.Cache: No factory registered for layer {layer}");
+                ErrorThrow($"No factory registered for layer {layer}", le => new InvalidOperationException(le));
             }
             elevationFactoryEntry = _mapFactories[factoryId];
             _mutexMap.ReleaseMutex();
@@ -281,7 +273,7 @@ namespace engine.elevation
                      *
                      * ... it already is nulled out.
                      */
-                    trace($"elevation.Cache: Warning: Exception in operator: {e}");
+                    Warning($"Exception in operator: {e}");
                 }
 
                 newEntry = new CacheEntry();
@@ -352,8 +344,6 @@ namespace engine.elevation
             string layer
         )
         {
-            // trace('ElecationCache: Rect requested for layer $layer');
-
             /* 
              * Sort the arguments. I feel like this is a bit too defensive.
              */

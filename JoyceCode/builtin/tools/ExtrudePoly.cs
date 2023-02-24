@@ -11,11 +11,6 @@ namespace builtin.tools
 {
     public class ExtrudePoly
     {
-        private static void trace( string message )
-        {
-            Console.WriteLine( message );
-        }
-
         private List<Vector3> _poly;
         private List<Vector3> _path;
         private int _physIndex;
@@ -248,7 +243,6 @@ namespace builtin.tools
             {
                 int nPoints = 2 * convexPoly.Count;
                 QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
-                //Console.WriteLine("New hull:");
                 foreach (var p3 in convexPoly)
                 {
                     var pBottom = worldFragment.Position + p3;
@@ -260,7 +254,6 @@ namespace builtin.tools
                 var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
                 ConvexHullHelper.CreateShape(pointsBuffer, bufferPool, out var vCenter, out var pshapeConvexHull);
                 builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose {  Position = vCenter, Orientation = Quaternion.Identity }, 1f);
-                //Console.WriteLine($"Center is {vCenter}");
             }
             builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
             builder.Reset();

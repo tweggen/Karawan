@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using static engine.Logger;
 
 namespace engine.streets
 {
@@ -23,7 +24,6 @@ namespace engine.streets
             }
         }
 
-        private static void trace(string message) { Console.WriteLine(message);  }
         private world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;
@@ -44,7 +44,7 @@ namespace engine.streets
             engine.joyce.Mesh g
         )
         {
-            // trace('GenerateClusterQuartersOperator.generateQuarterFloor(): ${worldFragment.getId()}');
+            // Trace("{worldFragment.getId()}");
             List<Vector2> vpoly = new();
             var delimList = quarter.GetDelims();
             int n = 0;
@@ -55,7 +55,7 @@ namespace engine.streets
             }
             if(n<3)
             {
-                trace("No delims found");
+                Trace("No delims found");
                 return false;
             }
             /*
@@ -120,7 +120,7 @@ namespace engine.streets
                 }
             }
 
-            trace( $"GenerateClusterQuartersOperator(): cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+            Trace( $"Cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
 #if false
                 try
             {
@@ -165,14 +165,14 @@ namespace engine.streets
                     }
                 }
                 catch (Exception e) {
-                trace($"Unknown exception: {e}");
-            }
-            _generateQuarterFloor(worldFragment, quarter, cx, cz, g);
+                    Warning($"Unknown exception: {e}");
+                }
+                _generateQuarterFloor(worldFragment, quarter, cx, cz, g);
             }
 
             if (g.IsEmpty())
             {
-                if (_traceStreets) trace($"GenerateClusterStreetsOperator(): Nothing to add at all.");
+                if (_traceStreets) Trace($"Nothing to add at all.");
                 return;
             }
 
@@ -188,7 +188,7 @@ namespace engine.streets
                 worldFragment.AddStaticMolecule(instanceDesc);
             }
             catch (Exception e) {
-                trace($"Unknown exception: {e}");
+                Warning($"Unknown exception: {e}");
             }
 
         }
