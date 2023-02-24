@@ -63,4 +63,9 @@
 	  <ProjectReference Include="..\splash\splash.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<AndroidNativeLibrary Include="Platforms\Android\Resources\libraylib.4.0.0.so">
+			<Abi>armeabi</Abi>
+		</AndroidNativeLibrary>
+	</ItemGroup>
 </Project>
