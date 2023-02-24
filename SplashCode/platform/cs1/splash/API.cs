@@ -4,7 +4,6 @@ using Raylib_CsLo;
 
 using System.Threading.Tasks;
 using DefaultEcs;
-using static IronPython.Modules._ast;
 using BepuUtilities;
 
 namespace Karawan.platform.cs1.splash

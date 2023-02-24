@@ -9,7 +9,6 @@ using BepuPhysics.CollisionDetection;
 using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
-using IronPython.Compiler;
 
 namespace engine
 {

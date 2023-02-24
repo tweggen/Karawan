@@ -9,8 +9,6 @@
   <ItemGroup>
     <PackageReference Include="clipper.NetStandard2" Version="6.4.2" />
     <PackageReference Include="DefaultEcs" Version="0.17.2" />
-    <PackageReference Include="IronPython" Version="3.4.0" />
-    <PackageReference Include="IronPython.StdLib" Version="3.4.0" />
     <PackageReference Include="LibTessDotNet" Version="1.1.15" />
     <PackageReference Include="LiteDB" Version="5.0.15" />
   </ItemGroup>
