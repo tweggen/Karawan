@@ -19,6 +19,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\Music.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\audio\Music.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\BehaviorSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\WiperSystem.cs" />
