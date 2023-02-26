@@ -91,7 +91,7 @@ namespace engine
             return _ecsWorld;
         }
 
-        public DefaultEcs.Command.WorldRecord GetEcsWorldRecord(int size=128)
+        public DefaultEcs.Command.WorldRecord GetEcsWorldRecord()
         {
             return _entityCommandRecorder.Record(_ecsWorld);
         }
@@ -231,7 +231,7 @@ namespace engine
                 _aTransform.Update();
 
                 /*
-                 * Move kinetics requires 
+                 * Move kinetics re quires 
                  * - input from user, already processed by Transform System
                  */
                 _systemMoveKinetics.Update(dt);
@@ -462,10 +462,11 @@ namespace engine
             _nextId = 0;
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();
-            _entityCommandRecorder = new();
+            _entityCommandRecorder = new(4096, 1024*1024);
             _dictScenes = new();
             _dictParts = new();
             _dictSceneFactories = new();
         }
     }
 }
+ 

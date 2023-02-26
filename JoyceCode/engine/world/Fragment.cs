@@ -315,10 +315,12 @@ namespace engine.world
              */
             var entity = worldRecord.CreateEntity();
             entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-            entity.Set(new engine.transform.components.Transform3(
-                true, 0xffffffff, new Quaternion(), Position));
-            if( listStaticDescriptions!=null 
-                || listShapes !=null)
+            engine.transform.components.Transform3 cTransform3 = new(
+                true, 0xffffffff, new Quaternion(), Position);
+            entity.Set(cTransform3);
+            engine.transform.API.CreateTransform3ToParent(cTransform3, out var mat);
+            entity.Set(new engine.transform.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
+            if( listStaticDescriptions!=null || listShapes !=null)
             {
                 List<BepuPhysics.StaticHandle> handles = null;
                 List<BepuPhysics.Collidables.TypedIndex> shapes = null;

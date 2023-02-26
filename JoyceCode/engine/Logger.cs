@@ -5,7 +5,7 @@ using System.Text;
 
 namespace engine
 {
-    static class Logger
+    static public class Logger
     {
         public enum Level
         {

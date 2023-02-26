@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DefaultEcs;
+using engine.transform.components;
+using System;
 using System.Numerics;
 
 namespace engine.transform
@@ -8,6 +10,14 @@ namespace engine.transform
         private engine.Engine _engine;
         private systems.PropagateTranslationSystem _propagateTranslationSystem;
         private bool _isDirty;
+
+
+        static public void CreateTransform3ToParent(in Transform3 cTransform3, out Matrix4x4 mat)
+        {
+            mat = Matrix4x4.CreateFromQuaternion(cTransform3.Rotation);
+            var mTranslate = Matrix4x4.CreateTranslation(cTransform3.Position);
+            mat = mat * mTranslate;
+        }
 
         public void SetTransforms(
             DefaultEcs.Entity entity,

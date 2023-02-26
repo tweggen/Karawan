@@ -1,6 +1,7 @@
 ﻿
 using DefaultEcs.Resource;
 using System;
+using static engine.Logger;
 
 
 namespace Karawan.platform.cs1.splash.systems
@@ -23,8 +24,11 @@ namespace Karawan.platform.cs1.splash.systems
         private MeshManager _meshManager;
         private MaterialManager _materialManager;
 
+        private int _runNumber = 0;
+
         protected override void PreUpdate(engine.Engine state)
         {
+            ++_runNumber;
         }
 
         protected override void PostUpdate(engine.Engine state)
@@ -44,7 +48,7 @@ namespace Karawan.platform.cs1.splash.systems
                 
                 if( nMeshes!=nMeshMaterials)
                 {
-                    Console.WriteLine("We have a problem.");
+                    Warning("We have a problem.");
                     return;
                 }
                 var nMaterials = cInstance3.Materials.Count;
@@ -52,18 +56,12 @@ namespace Karawan.platform.cs1.splash.systems
                 for(var i=0; i<nMeshes; ++i)
                 {
                     var jMesh = (engine.joyce.Mesh) cInstance3.Meshes[i];
+                    Trace($"run {_runNumber}: Creating platform mesh from jMesh with {jMesh.Vertices.Count} vertices.");
                     var materialIndex = (int) cInstance3.MeshMaterials[i];
                     var jMaterial = (engine.joyce.Material) cInstance3.Materials[materialIndex];
 
                     entity.Set(new ManagedResource<engine.joyce.Mesh, RlMeshEntry>(jMesh));
                     entity.Set(new ManagedResource<engine.joyce.Material, RlMaterialEntry>(jMaterial));
-#if false
-                   var rlMeshEntry =_meshManager.FindRlMesh(jMesh);
-                    var rlMaterialEntry = _materialManager.FindRlMaterial(jMaterial);
-
-                    entity.Set<splash.components.RlMesh>(
-                        new splash.components.RlMesh(rlMeshEntry, rlMaterialEntry));
-#endif
                 }
             }
         }
