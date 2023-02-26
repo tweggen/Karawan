@@ -27,8 +27,7 @@ namespace Karawan.platform.cs1.splash
         private MusicManager _musicManager;
         private LightManager _lightManager;
 
-        private System.Threading.Thread _renderThread;
-        private Queue<RenderFrame> _renderQueue;
+        private Queue<RenderFrame> _renderQueue = new();
 
         /**
          * Collect the output of the cameras for later rendering.
@@ -69,13 +68,12 @@ namespace Karawan.platform.cs1.splash
             _createRlMeshesSystem.Update(_engine);
             _createRlMusicSystem.Update(_engine);
 
-            bool collectFrame = false;
-
             RenderFrame renderFrame = null;
             /*
              * If we currently are not rendering, collect the data for the next 
              * rendering job. The entity system can only be read from this thread.
              */
+            lock(_lo)
             {
                 /*
                  * Append a new render job if there is nothing to render.
@@ -83,7 +81,6 @@ namespace Karawan.platform.cs1.splash
                 if (_renderQueue.Count == 0)
                 {
                     renderFrame = new();
-                    _renderQueue.Enqueue(renderFrame);
                 }
             }
 
@@ -97,6 +94,10 @@ namespace Karawan.platform.cs1.splash
                     _lightManager.CollectLights(renderFrame);
                 }
                 _logicalRenderFrame(renderFrame);
+                lock(_lo)
+                {
+                    _renderQueue.Enqueue(renderFrame);
+                }
             }
         }
 
@@ -199,15 +200,15 @@ namespace Karawan.platform.cs1.splash
                 {
                     renderFrame = _renderQueue.Dequeue();
                 }
+            }
+            if (renderFrame != null)
+            {
                 _renderParts(renderFrame.RenderParts);
+            } else
+            {
+                System.Threading.Thread.Sleep(15);
             }
         }
-
-        private void _renderThreadFunction()
-        {
-
-        }
-
 
         public API(engine.Engine engine)
         {
@@ -225,8 +226,6 @@ namespace Karawan.platform.cs1.splash
             _drawRlMeshesSystem = new(_engine);
             _drawSkyboxesSystem = new(_engine);
             _lightManager = new(_engine);
-
-            _renderThread = new System.Threading.Thread(_renderThreadFunction);
         }
     }
 }
