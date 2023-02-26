@@ -27,47 +27,16 @@ namespace Karawan.platform.cs1.splash
         private MusicManager _musicManager;
         private LightManager _lightManager;
 
-        /**
-         * Called from the logical thread context every logical frame.
-         * If behavior doesn't mess up.
-         */
-        public void OnLogicalFrame()
-        {
-            _createRlMeshesSystem.Update(_engine);
-            _createRlMusicSystem.Update(_engine);
-
-            /*
-             * If we currently are not rendering, collect the data for the next 
-             * rendering job. The entity system can only be read from this thread.
-             */
-            if(!_isRendering)
-            {
-                /*
-                 * Create/upload all ressources that haven't been uploaded.
-                 */
-                _lightManager.CollectLights(_materialManager.GetInstanceShaderEntry());
-
-                _logicalRender();
-
-            }
-        }
-
-        public class RenderJob
-        {
-            // Camera parameters
-            public engine.transform.components.Transform3ToWorld Transform3ToWorld;
-            public engine.joyce.components.Camera3 Camera3;
-            public CameraOutput CameraOutput;
-        }
-
+        private System.Threading.Thread _renderThread;
+        private Queue<RenderFrame> _renderQueue;
 
         /**
          * Collect the output of the cameras for later rendering.
          */
-        private List<RenderJob> _logicalRenderFrame()
+        private void _logicalRenderFrame(RenderFrame renderFrame)
         {
-            List<RenderJob> renderJobs = new();
-            
+            _lightManager.ApplyLights(renderFrame, _materialManager.GetInstanceShaderEntry());
+
             var listCameras = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Camera3>()
                 .With<engine.transform.components.Transform3ToWorld>()
@@ -75,21 +44,60 @@ namespace Karawan.platform.cs1.splash
 
             foreach (var eCamera in listCameras)
             {
-                RenderJob renderJob = new();
-                renderJob.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
-                renderJob.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
-                CameraOutput cameraOutput = new(renderJob.Camera3.CameraMask);
-
+                RenderPart RenderPart = new();
+                RenderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
+                RenderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
+                CameraOutput cameraOutput = new(RenderPart.Camera3.CameraMask);
 
                 _drawRlMeshesSystem.Update(cameraOutput);
 
-                var vCameraPosition = renderJob.Transform3ToWorld.Matrix.Translation;
+                var vCameraPosition = RenderPart.Transform3ToWorld.Matrix.Translation;
                 _drawSkyboxesSystem.CameraPosition = vCameraPosition;
                 _drawSkyboxesSystem.Update(cameraOutput);
 
-                renderJobs.Add(renderJob);
+                renderFrame.RenderParts.Add(RenderPart);
             }
-            return renderJobs;
+        }
+
+
+        /**
+         * Called from the logical thread context every logical frame.
+         * If behavior doesn't mess up.
+         */
+        public void CollectRenderData()
+        {
+            _createRlMeshesSystem.Update(_engine);
+            _createRlMusicSystem.Update(_engine);
+
+            bool collectFrame = false;
+
+            RenderFrame renderFrame = null;
+            /*
+             * If we currently are not rendering, collect the data for the next 
+             * rendering job. The entity system can only be read from this thread.
+             */
+            {
+                /*
+                 * Append a new render job if there is nothing to render.
+                 */
+                if (_renderQueue.Count == 0)
+                {
+                    renderFrame = new();
+                    _renderQueue.Enqueue(renderFrame);
+                }
+            }
+
+            if(null != renderFrame)
+            {
+                /*
+                 * Create/upload all ressources that haven't been uploaded.
+                 */
+                lock (_lightManager)
+                {
+                    _lightManager.CollectLights(renderFrame);
+                }
+                _logicalRenderFrame(renderFrame);
+            }
         }
 
 
@@ -98,16 +106,16 @@ namespace Karawan.platform.cs1.splash
          * This function is called from a dedicated rendering thread as executed
          * inside the platform API. It must not access ECS data.
          */
-        public void Render(in IList<RenderJob> renderJobs)
+        private void Render(in IList<RenderPart> RenderParts)
         {
 
             Raylib.ClearBackground(Raylib.BLACK);
             int y0Stats = 30;
 
-            foreach(var renderJob in renderJobs)
+            foreach(var RenderPart in RenderParts)
             {
-                var cCameraParams = renderJob.Camera3;
-                var mToWorld = renderJob.Transform3ToWorld.Matrix;
+                var cCameraParams = RenderPart.Camera3;
+                var mToWorld = RenderPart.Transform3ToWorld.Matrix;
 
                 var vCameraPosition = mToWorld.Translation;
                 Vector3 vY;
@@ -162,22 +170,28 @@ namespace Karawan.platform.cs1.splash
                 /*
                  * Then draw standard world
                  */
-                renderJob.CameraOutput.RenderStandard();
+                RenderPart.CameraOutput.RenderStandard();
 
 
                 /*
                  * Then render transparent
                  */
-                renderJob.CameraOutput.RenderTransparent();
+                RenderPart.CameraOutput.RenderTransparent();
 
                 Raylib.EndMode3D();
 
-                Raylib.DrawText("Debug info:\n" + renderJob.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib.GREEN);
+                Raylib.DrawText("Debug info:\n" + RenderPart.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib.GREEN);
                 y0Stats += 20;
             }
 
             Raylib.DrawFPS(20, 100);
             Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
+        }
+
+
+        private void _renderThreadFunction()
+        {
+
         }
 
 
@@ -197,6 +211,8 @@ namespace Karawan.platform.cs1.splash
             _drawRlMeshesSystem = new(_engine);
             _drawSkyboxesSystem = new(_engine);
             _lightManager = new(_engine);
+
+            _renderThread = new System.Threading.Thread(_renderThreadFunction);
         }
     }
 }

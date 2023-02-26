@@ -8,9 +8,7 @@ namespace engine
     public interface IScene
     {
         public void SceneOnLogicalFrame(float dt);
-        public void SceneOnPhysicalFrame(float dt);
-
-
+        
         /**
          * Trigger removing this scene from the engine
          */

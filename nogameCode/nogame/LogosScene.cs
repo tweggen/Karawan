@@ -59,19 +59,6 @@ namespace nogame
             }
         }
 
-        public void SceneOnPhysicalFrame(float dt)
-        {
-            engine.Engine engine = null;
-            float t;
-            lock(_lo)
-            {
-                engine = _engine;
-            }
-            if( null != engine )
-            {
-            }
-
-        }
 
         private DefaultEcs.Entity _createLogoBoard()
         {

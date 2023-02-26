@@ -200,7 +200,7 @@ namespace engine
 
         private bool _firstTime = true;
 
-        public void _onLogicalFrame(float dt)
+        private void _onLogicalFrame(float dt)
         {
             /*
              * Before rendering the first time and calling user handlers the first time,
@@ -289,6 +289,9 @@ namespace engine
             _systemMoveKinetics.Update(dt);
 
             _commitWorldRecord();
+
+            _platform.CollectRenderData();
+
             _executeDoomedEntities();
         }
 
@@ -307,8 +310,10 @@ namespace engine
             }
         }
 
+
         private double _timeLeft;
         private int _fpsLogical = 60;
+
 
         public void OnPhysicalFrame(float dt)
         {

@@ -45,9 +45,6 @@ namespace nogame
             _triggerLoadWorld();
         }
 
-        public void SceneOnPhysicalFrame( float dt )
-        {
-        }
 
         public void SceneDeactivate()
         {

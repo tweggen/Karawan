@@ -33,11 +33,6 @@ namespace engine.xray
         {
         }
 
-        public void SceneOnPhysicalFrame(float dt)
-        {
-            // _ui.Render(uiTest);
-        }
-
         public RootScene()
         {
         }

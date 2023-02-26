@@ -46,11 +46,9 @@ namespace Karawan.platform.cs1.splash
         private int _lightsCount;
 
 
-        // Create a light and get shader locations
-        private Light _addLight(
-            in LightType type, 
-            in Vector3 position, in Vector3 target, 
-            in Vector4 color, ref Shader shader)
+        private void _addLightEntry(in LightType type,
+            in Vector3 position, in Vector3 target,
+            in Vector4 color)
         {
             Light light = new();
 
@@ -60,42 +58,42 @@ namespace Karawan.platform.cs1.splash
                 light.type = type;
                 light.position = position;
                 light.target = target;
-                light.color = new Color( 
-                    (byte)(255f*color.X),
-                    (byte)(255f*color.Y),
-                    (byte)(255f*color.Z),
-                    (byte)(255f*color.W)
+                light.color = new Color(
+                    (byte)(255f * color.X),
+                    (byte)(255f * color.Y),
+                    (byte)(255f * color.Z),
+                    (byte)(255f * color.W)
                 );
-
-                // TODO: Below code doesn't look good to me, 
-                // it assumes a specific shader naming and structure
-                // Probably this implementation could be improved
-                string enabledName = $"lights[{_lightsCount}].enabled";
-                string typeName = $"lights[{_lightsCount}].type";
-                string posName = $"lights[{_lightsCount}].position";
-                string targetName = $"lights[{_lightsCount}].target";
-                string colorName = $"lights[{_lightsCount}].color";
-
-                // Set location name [x] depending on lights count
-                //enabledName[7] = '0' + lightsCount;
-                //typeName[7] = '0' + lightsCount;
-                //posName[7] = '0' + lightsCount;
-                //targetName[7] = '0' + lightsCount;
-                //colorName[7] = '0' + lightsCount;
-
-                light.enabledLoc = Raylib.GetShaderLocation(shader, enabledName);
-                light.typeLoc = Raylib.GetShaderLocation(shader, typeName);
-                light.posLoc = Raylib.GetShaderLocation(shader, posName);
-                light.targetLoc = Raylib.GetShaderLocation(shader, targetName);
-                light.colorLoc = Raylib.GetShaderLocation(shader, colorName);
-
-                _lights[_lightsCount] = light;
-
-                _lightsCount++;
-                // updateAllLightsValues(ref shader);
             }
+        }
 
-            return light;
+
+        // Create a light and get shader locations
+        private void _compileLight(ref Light light, ref Shader shader)
+        {
+
+            // TODO: Below code doesn't look good to me, 
+            // it assumes a specific shader naming and structure
+            // Probably this implementation could be improved
+            string enabledName = $"lights[{_lightsCount}].enabled";
+            string typeName = $"lights[{_lightsCount}].type";
+            string posName = $"lights[{_lightsCount}].position";
+            string targetName = $"lights[{_lightsCount}].target";
+            string colorName = $"lights[{_lightsCount}].color";
+
+            // Set location name [x] depending on lights count
+            //enabledName[7] = '0' + lightsCount;
+            //typeName[7] = '0' + lightsCount;
+            //posName[7] = '0' + lightsCount;
+            //targetName[7] = '0' + lightsCount;
+            //colorName[7] = '0' + lightsCount;
+
+            light.enabledLoc = Raylib.GetShaderLocation(shader, enabledName);
+            light.typeLoc = Raylib.GetShaderLocation(shader, typeName);
+            light.posLoc = Raylib.GetShaderLocation(shader, posName);
+            light.targetLoc = Raylib.GetShaderLocation(shader, targetName);
+            light.colorLoc = Raylib.GetShaderLocation(shader, colorName);
+
         }
     
         /**
@@ -134,26 +132,21 @@ namespace Karawan.platform.cs1.splash
         }
 
 
-        private void _collectAmbientLights(in RlShaderEntry rlShaderEntry)
+        private void _collectAmbientLights(in RenderFrame renderFrame)
         {
             var listAmbientLights = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.AmbientLight>()
                 .AsEnumerable();
             Vector4 colAmbient = new Vector4(0, 0, 0, 0);
-            foreach(var eLight in listAmbientLights)
+            foreach (var eLight in listAmbientLights)
             {
                 colAmbient += eLight.Get<engine.joyce.components.AmbientLight>().Color;
             }
-
-            int ambientLoc = Raylib.GetShaderLocation(rlShaderEntry.RlShader, "ambient");
-            Raylib.SetShaderValue(
-                rlShaderEntry.RlShader,
-                ambientLoc, colAmbient,
-                ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+            renderFrame.ColAmbient = colAmbient;
         }
 
 
-        private void _collectDirectionalLights(in RlShaderEntry rlShaderEntry)
+        private void _collectDirectionalLights(in RenderFrame renderFrame)
         {
             /*
              * Collect all lights.
@@ -165,15 +158,20 @@ namespace Karawan.platform.cs1.splash
                 .AsEnumerable();
             foreach (var eLight in listDirectionalLights)
             {
-                var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                if (_lightsCount==MAX_LIGHTS)
+                {
+                    break;
+                }
+
+                    var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.DirectionalLight>();
-                _addLight(LightType.LIGHT_DIRECTIONAL,
-                    matTransform.Translation, vRight + matTransform.Translation, cLight.Color, ref rlShaderEntry.RlShader);
+                _addLightEntry(LightType.LIGHT_DIRECTIONAL,
+                    matTransform.Translation, vRight + matTransform.Translation, cLight.Color);
             }
         }
 
-        private void _collectPointLights(in RlShaderEntry rlShaderEntry)
+        private void _collectPointLights(in RenderFrame renderFrame)
         {
             /*
              * Collect all lights.
@@ -185,35 +183,64 @@ namespace Karawan.platform.cs1.splash
                 .AsEnumerable();
             foreach (var eLight in listPointLights)
             {
+                if (_lightsCount == MAX_LIGHTS)
+                {
+                    break;
+                }
+
                 var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.PointLight>();
-                _addLight(LightType.LIGHT_POINT,
-                    matTransform.Translation, vRight+matTransform.Translation, cLight.Color, ref rlShaderEntry.RlShader);
+                _addLightEntry(LightType.LIGHT_POINT,
+                    matTransform.Translation, vRight + matTransform.Translation, cLight.Color);
             }
+        }
+
+
+        private void _applyAmbientLights(in RenderFrame renderFrame, in RlShaderEntry rlShaderEntry)
+        {
+            int ambientLoc = Raylib.GetShaderLocation(rlShaderEntry.RlShader, "ambient");
+            Raylib.SetShaderValue(
+                rlShaderEntry.RlShader,
+                ambientLoc, renderFrame.ColAmbient,
+                ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         }
 
 
         /**
          * Find all appropriate light entities and collect the most important.
          */
-        public void CollectLights(in RlShaderEntry rlShaderEntry)
+        public void CollectLights(in RenderFrame renderFrame)
         {
             for(int i=0; i<_lightsCount; i++)
             {
                 _lights[i].enabled = false;
             }
             _lightsCount = 0;
-            _collectDirectionalLights(rlShaderEntry);
-            _collectPointLights(rlShaderEntry);
-            _collectAmbientLights(rlShaderEntry);
+            _collectDirectionalLights(renderFrame);
+            _collectPointLights(renderFrame);
+            _collectAmbientLights(renderFrame);
+        }
+
+
+        /**
+         * Find all appropriate light entities and collect the most important.
+         */
+        public void ApplyLights(in RenderFrame renderFrame, in RlShaderEntry rlShaderEntry)
+        {
+            _applyAmbientLights(renderFrame, rlShaderEntry);
+            for (int i = 0; i < _lightsCount; i++)
+            {
+                _compileLight(ref _lights[i], ref rlShaderEntry.RlShader);
+            }
             _updateAllLights(ref rlShaderEntry.RlShader);
         }
+
 
         public LightManager(engine.Engine engine) 
         {
             _engine = engine;
-            _lights = new Light[4];
+            _lights = new Light[MAX_LIGHTS];
         }
     }
 }

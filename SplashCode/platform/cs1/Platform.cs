@@ -6,8 +6,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Karawan.platform.cs1
 {
-    public class Platform 
-        : engine.IPlatform
+    public class Platform : engine.IPlatform
     {
         private object _lock = new object();
         private engine.Engine _engine;
@@ -111,11 +110,6 @@ namespace Karawan.platform.cs1
                 lastFrame = thisFrame;
             }
             Raylib.CloseWindow();
-        }
-
-        public void Render3D()
-        {
-            _aSplash.Render();
         }
 
 
