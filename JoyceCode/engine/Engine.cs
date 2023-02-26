@@ -9,6 +9,7 @@ using BepuPhysics.CollisionDetection;
 using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
+using DefaultEcs;
 
 namespace engine
 {
@@ -16,7 +17,12 @@ namespace engine
     {
         private object _lo = new();
 
+        private int _nextId = 0;
+
         private DefaultEcs.World _ecsWorld;
+        private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
+        private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists;
+
         private engine.IPlatform _platform;
 
         private engine.hierarchy.API _aHierarchy;
@@ -60,6 +66,15 @@ namespace engine
 
         private physics.Manager _managerPhysics;
 
+
+        public int GetNextId()
+        {
+            lock(_lo)
+            {
+                return ++_nextId;
+            }
+        }
+
         public engine.hierarchy.API GetAHierarchy()
         {
             return _aHierarchy;
@@ -76,10 +91,9 @@ namespace engine
             return _ecsWorld;
         }
 
-        public DefaultEcs.Command.WorldRecord GetEcsWorldRecord(int size=32)
+        public DefaultEcs.Command.WorldRecord GetEcsWorldRecord(int size=128)
         {
-            var recorder = new DefaultEcs.Command.EntityCommandRecorder(size);
-            return recorder.Record(_ecsWorld);
+            return _entityCommandRecorder.Record(_ecsWorld);
         }
 
         public void ApplyEcsRecorder(in DefaultEcs.Command.EntityCommandRecorder recorder)
@@ -119,6 +133,43 @@ namespace engine
             }
         }
 
+
+        public void CommitWorldRecord(in DefaultEcs.Command.WorldRecord worldRecord)
+        {
+
+        }
+
+        private void _executeDoomedEntities()
+        {
+            List<IList<DefaultEcs.Entity>> listList;
+            lock(_lo)
+            {
+                listList = _listDoomedEntityLists;
+                _listDoomedEntityLists = null;
+            }
+            if( null==listList )
+            {
+                return;
+            }
+            foreach(var list in listList)
+            {
+                foreach(var entity in list)
+                {
+                    entity.Dispose();
+                }
+            }
+        }
+
+
+        public void AddDoomedEntities(in IList<DefaultEcs.Entity> listDoomedEntities)
+        {
+            lock (_lo)
+            {
+                _listDoomedEntityLists.Add(listDoomedEntities);
+            }
+        }
+
+
         public void SetMainScene(in string name)
         {
             Func<IScene> factoryFunction = null;
@@ -130,20 +181,6 @@ namespace engine
             SetMainScene(scene);
         }
 
-        public void AddInstance3(
-            DefaultEcs.Entity eSelf,
-            bool isVisible,
-            uint cameraMask,
-            in Vector3 vPosition,
-            in Quaternion qRotation)
-        {
-            _aTransform.SetTransforms(
-                eSelf,
-                isVisible,
-                cameraMask,
-                qRotation,
-                vPosition);
-        }
 
         public void AddContactListener(DefaultEcs.Entity entity)
         {
@@ -250,6 +287,8 @@ namespace engine
              * - input from user, already processed by Transform System
              */
             _systemMoveKinetics.Update(dt);
+
+            _executeDoomedEntities();
 
         }
 
@@ -420,8 +459,10 @@ namespace engine
 
         public Engine( engine.IPlatform platform )
         {
+            _nextId = 0;
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();
+            _entityCommandRecorder = new();
             _dictScenes = new();
             _dictParts = new();
             _dictSceneFactories = new();

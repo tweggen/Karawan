@@ -164,21 +164,6 @@ return molArrayMap;
     }
 #endif
 
-        public void WorldLoaderBehave()
-        {
-            foreach (KeyValuePair<string, world.Fragment> kvp in _mapFrags )
-            {
-                try
-                {
-                    kvp.Value.WorldFragmentBehave();
-                }
-                catch (Exception e)
-                {
-                    trace($"Unknown exception: {e}");
-                }
-            }
-        }
-
 
         private void _releaseFragmentList(IList<string> eraseList )
         {
@@ -293,17 +278,6 @@ return molArrayMap;
                         _mapFrags.Add(strKey, fragment);
 
                         /*
-                         * Before we apply any operators, load static structures.
-                         */
-                        try
-                        {
-                            fragment.WorldFragmentLoadStatic();
-                        }
-                        catch (Exception e) {
-                            trace($"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling worldFragmentLoadStatic(): {e}");
-                        }
-
-                        /*
                          * Apply all fragment operators.
                          */
                         try
@@ -412,51 +386,6 @@ return molArrayMap;
             return height;
         }
 
-#if false
-        /**
-         * Given a character, assign it to the proper fragment.
-         * A character can live only it its fragment is locked to cache.
-         */
-        public function worldLoaderSortinCharacter(
-    character: ICharacter,
-        localCharacter: FragmentCharacterData
-    ): Void
-{
-    if (WorldMetaGen.TRACE_CHARACTER_MIGRATION) trace('WorldLoader.worldLoaderSortinCharacter(): Called for for ${character.id}.');
-    var pos = character.characterGetWorldPos();
-    pos.x += WorldMetaGen.fragmentSize / 2;
-    pos.z += WorldMetaGen.fragmentSize / 2;
-    pos.x /= WorldMetaGen.fragmentSize;
-    pos.z /= WorldMetaGen.fragmentSize;
-
-    var i:Int = Math.floor(pos.x);
-    var j:Int = Math.floor(0. );
-    var k:Int = Math.floor(pos.z);
-
-    // If this fragment is in the fragment cache add the character to that fragment.
-    var strCurr = "fragxy-" + i + "_" + j + "_" + k;
-
-    var fragment: WorldFragment = _mapFrags.get(strCurr);
-    if (null != fragment)
-    {
-        if (null == localCharacter)
-        {
-            if (WorldMetaGen.TRACE_CHARACTER_MIGRATION) trace('WorldLoader.worldLoaderSortinCharacter(): Need to create new localCharacter for ${character.id}.');
-            localCharacter = new FragmentCharacterData();
-        }
-        fragment.worldFragmentAddCharacter(character, localCharacter);
-    }
-    else
-    {
-        if (null != localCharacter)
-        {
-            localCharacter.dismiss();
-        }
-        if (WorldMetaGen.TRACE_CHARACTER_MIGRATION) trace('WorldLoader.worldLoaderSortinCharaceter(): Character ${character.id} is lost, no fragment present for $strCurr.');
-    }
-
-}
-#endif
 
         /**
          * Global initialise function
