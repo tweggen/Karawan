@@ -134,9 +134,9 @@ namespace engine
         }
 
 
-        public void CommitWorldRecord(in DefaultEcs.Command.WorldRecord worldRecord)
+        private void _commitWorldRecord()
         {
-
+            _entityCommandRecorder.Execute();
         }
 
         private void _executeDoomedEntities()
@@ -288,8 +288,8 @@ namespace engine
              */
             _systemMoveKinetics.Update(dt);
 
+            _commitWorldRecord();
             _executeDoomedEntities();
-
         }
 
 
