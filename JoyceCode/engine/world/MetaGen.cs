@@ -2,15 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using static engine.Logger;
+using System.Threading.Tasks;
 
 namespace engine.world
 {
     public class MetaGen
     {
-        private void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
         private static readonly object _instanceLock = new object();
         private static MetaGen _instance;
 
@@ -81,29 +79,43 @@ namespace engine.world
             _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
         }
 
-        public void ApplyFragmentOperators(world.Fragment fragment)
+        public async void ApplyFragmentOperators(world.Fragment fragment)
         {
             if( null==fragment ) {
                 throw new ArgumentException( $"WorldMetaGen.applyFragmentOperators(): fragment is null." );
             }
-            if (TRACE_FRAGMENT_OPEARTORS) trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
+            if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
+            List<Task> listFragmentOperatorTasks = new();
             foreach( KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators ) {
-                try
+                Task taskFragmentOperator = new Task(() =>
                 {
-                    var t0 = DateTime.Now.Ticks;
-                    kvp.Value.FragmentOperatorApply(fragment);
-                    var dt = DateTime.Now.Ticks - t0;
-                    if (dt > 0.001)
+                    try
                     {
-                        var oppath = kvp.Value.FragmentOperatorGetPath();
-                        if (TRACE_FRAGMENT_OPEARTORS) trace($"WorldMetaGen.applyFragmentOperators(): Applying operator '{oppath}' took {dt}.");
+                        var t0 = DateTime.Now.Ticks;
+                        kvp.Value.FragmentOperatorApply(fragment);
+                        var dt = DateTime.Now.Ticks - t0;
+                        if (dt > 0.001)
+                        {
+                            var oppath = kvp.Value.FragmentOperatorGetPath();
+                            if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen.applyFragmentOperators(): Applying operator '{oppath}' took {dt}.");
+                        }
                     }
-                }
-                catch (Exception e) {
-                    trace($"WorldMetaGen.applyFragmentOperators(): Unknown exception applying fragment operator '{kvp.Value.FragmentOperatorGetPath()}': {e}')");
-                }
+                    catch (Exception e)
+                    {
+                        Trace($"WorldMetaGen.applyFragmentOperators(): Unknown exception applying fragment operator '{kvp.Value.FragmentOperatorGetPath()}': {e}')");
+                    }
+                });
+                listFragmentOperatorTasks.Add(taskFragmentOperator);
             }
-            if (TRACE_FRAGMENT_OPEARTORS) trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
+            var taskAllFragmentOperators = new Task(async () =>
+            {
+                foreach(var task in listFragmentOperatorTasks) {
+                    task.Start();
+                    await task;
+                }
+                if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
+            });
+            taskAllFragmentOperators.RunSynchronously();
         }
 
 
@@ -113,20 +125,20 @@ namespace engine.world
          */
         private void _applyWorldOperators()
         {
-            trace("WorldMetaGen: Calling world operators...");
+            Trace("WorldMetaGen: Calling world operators...");
             foreach(var o in _worldOperators) {
                 try {
                     var oppath = o.WorldOperatorGetPath();
-                    trace( $"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
+                    Trace( $"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
                     // var t0 = Sys.time();
                     o.WorldOperatorApply(this);
                     // var dt = Sys.time() - t0;
                     // trace( 'WorldMetaGen.applyWorldOperators(): Applying operator "$oppath" took $dt.');
                 } catch(Exception e) {
-                    trace($"WorldMetaGen.applyWorldOperators(): Unknown exception applying world operator: {e}");
+                    Warning($"WorldMetaGen.applyWorldOperators(): Unknown exception applying world operator: {e}");
                 }
             }
-            trace("WorldMetaGen: Done calling world operators.");
+            Trace("WorldMetaGen: Done calling world operators.");
         }
 
 
