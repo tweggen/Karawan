@@ -392,6 +392,18 @@ namespace engine
         }
 
 
+        private void _logicalThread()
+        {
+
+        }
+
+
+        private void _videoThread()
+        {
+
+        }
+
+
         /**
          * Call after all dependencies are set.
          */
@@ -420,7 +432,7 @@ namespace engine
             _systemMoveKinetics = new(this);
             _managerPhysics = new physics.Manager();
             _managerPhysics.Manage(this);
-        }
+       }
 
 
         public void PlatformSetupDone()

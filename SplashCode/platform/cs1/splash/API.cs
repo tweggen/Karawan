@@ -5,11 +5,14 @@ using Raylib_CsLo;
 using System.Threading.Tasks;
 using DefaultEcs;
 using BepuUtilities;
+using System.Collections.Generic;
 
 namespace Karawan.platform.cs1.splash
 {
     class API
     {
+        private object _lo = new();
+
         private engine.Engine _engine;
 
         private systems.CreateRlMeshesSystem _createRlMeshesSystem;
@@ -24,31 +27,87 @@ namespace Karawan.platform.cs1.splash
         private MusicManager _musicManager;
         private LightManager _lightManager;
 
+        /**
+         * Called from the logical thread context every logical frame.
+         * If behavior doesn't mess up.
+         */
+        public void OnLogicalFrame()
+        {
+            _createRlMeshesSystem.Update(_engine);
+            _createRlMusicSystem.Update(_engine);
+
+            /*
+             * If we currently are not rendering, collect the data for the next 
+             * rendering job. The entity system can only be read from this thread.
+             */
+            if(!_isRendering)
+            {
+                /*
+                 * Create/upload all ressources that haven't been uploaded.
+                 */
+                _lightManager.CollectLights(_materialManager.GetInstanceShaderEntry());
+
+                _logicalRender();
+
+            }
+        }
+
+        public class RenderJob
+        {
+            // Camera parameters
+            public engine.transform.components.Transform3ToWorld Transform3ToWorld;
+            public engine.joyce.components.Camera3 Camera3;
+            public CameraOutput CameraOutput;
+        }
+
 
         /**
-         * Render all camera objects.
+         * Collect the output of the cameras for later rendering.
          */
-        public void Render()
+        private List<RenderJob> _logicalRenderFrame()
         {
-            /*
-             * Create/upload all ressources that haven't been uploaded.
-             */
-            _createRlMeshesSystem.Update(_engine);
-            // TXWTODO: Inefficient, callback driven?
-            _createRlMusicSystem.Update(_engine);
-            _lightManager.CollectLights(_materialManager.GetInstanceShaderEntry());
-
-            Raylib.ClearBackground(Raylib.BLACK);
-
+            List<RenderJob> renderJobs = new();
+            
             var listCameras = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Camera3>()
                 .With<engine.transform.components.Transform3ToWorld>()
                 .AsEnumerable();
 
-            foreach(var eCamera in listCameras)
+            foreach (var eCamera in listCameras)
             {
-                var cCameraParams = eCamera.Get<engine.joyce.components.Camera3>();
-                var mToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                RenderJob renderJob = new();
+                renderJob.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
+                renderJob.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
+                CameraOutput cameraOutput = new(renderJob.Camera3.CameraMask);
+
+
+                _drawRlMeshesSystem.Update(cameraOutput);
+
+                var vCameraPosition = renderJob.Transform3ToWorld.Matrix.Translation;
+                _drawSkyboxesSystem.CameraPosition = vCameraPosition;
+                _drawSkyboxesSystem.Update(cameraOutput);
+
+                renderJobs.Add(renderJob);
+            }
+            return renderJobs;
+        }
+
+
+        /**
+         * Render all camera objects.
+         * This function is called from a dedicated rendering thread as executed
+         * inside the platform API. It must not access ECS data.
+         */
+        public void Render(in IList<RenderJob> renderJobs)
+        {
+
+            Raylib.ClearBackground(Raylib.BLACK);
+            int y0Stats = 30;
+
+            foreach(var renderJob in renderJobs)
+            {
+                var cCameraParams = renderJob.Camera3;
+                var mToWorld = renderJob.Transform3ToWorld.Matrix;
 
                 var vCameraPosition = mToWorld.Translation;
                 Vector3 vY;
@@ -56,7 +115,6 @@ namespace Karawan.platform.cs1.splash
                 Vector3 vZ = new Vector3(-mToWorld.M31, -mToWorld.M32, -mToWorld.M33);
                 Vector3 vFront = -vZ;
                 Vector3 vTarget = vCameraPosition + vFront;
-                // Console.WriteLine($"vFront = {vFront}");
 
                 var rCamera = new Raylib_CsLo.Camera3D( vCameraPosition, vTarget, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
@@ -64,9 +122,10 @@ namespace Karawan.platform.cs1.splash
                 // TXWTODO: Hack the camera position into the main shader.
                 _materialManager.HackSetCameraPos(vCameraPosition);
 
-                // Raylib.BeginMode3D(rCamera);
                 /*
                  * We need to reimplement BeginMode3d to freely set frustrums
+                 * 
+                 * The following code is the explicit wording of BeginMode3d
                  */
                 {
                     RlGl.rlDrawRenderBatchActive();      // Update and draw internal render batch
@@ -96,11 +155,6 @@ namespace Karawan.platform.cs1.splash
 
 
                 /*
-                 * Collect all standard meshes.
-                 */
-                _drawRlMeshesSystem.Update(cCameraParams.CameraMask);
-
-                /*
                  * First draw player related stuff
                  */
                 // TXWTODO: Nothing here
@@ -108,31 +162,24 @@ namespace Karawan.platform.cs1.splash
                 /*
                  * Then draw standard world
                  */
-                _drawRlMeshesSystem.RenderStandard();
+                renderJob.CameraOutput.RenderStandard();
 
-                /*
-                 * Then draw terrain
-                 */
-                // TXWTODO: Remove terrain from standard mesh drawing
-
-                /*
-                 * Then draw skybox
-                 */
-                _drawSkyboxesSystem.CameraPosition = vCameraPosition;
-                _drawSkyboxesSystem.Update(cCameraParams.CameraMask);
 
                 /*
                  * Then render transparent
                  */
-                _drawRlMeshesSystem.RenderTransparent();
+                renderJob.CameraOutput.RenderTransparent();
 
                 Raylib.EndMode3D();
+
+                Raylib.DrawText("Debug info:\n" + renderJob.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib.GREEN);
+                y0Stats += 20;
             }
 
             Raylib.DrawFPS(20, 100);
             Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
-            Raylib.DrawText("Debug info:\n" + _drawRlMeshesSystem.GetDebugInfo(), 20, 30, 10, Raylib.GREEN);
         }
+
 
         public API(engine.Engine engine)
         {
@@ -147,8 +194,8 @@ namespace Karawan.platform.cs1.splash
             _musicManager.Manage(engine.GetEcsWorld());
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
             _createRlMusicSystem = new(_engine);
-            _drawRlMeshesSystem = new(_engine, _materialManager);
-            _drawSkyboxesSystem = new(_engine, _materialManager);
+            _drawRlMeshesSystem = new(_engine);
+            _drawSkyboxesSystem = new(_engine);
             _lightManager = new(_engine);
         }
     }

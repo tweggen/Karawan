@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using DefaultEcs.Resource;
 using engine;
+using Karawan.platform.cs1.splash.components;
 using Raylib_CsLo;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,26 @@ namespace Karawan.platform.cs1.splash
 {
     internal class MusicManager : AResourceManager<engine.audio.Music, RlMusicEntry>
     {
-        engine.Engine _engine;
+        private object _lo = new object();
+        private engine.Engine _engine;
+        private System.Threading.Timer _audioThreadTimer;
+
+        private List<RlMusicEntry> _rlMusicEntries = new();
+
+        private void _audioFunction(object state)
+        {
+            List<RlMusicEntry> rlMusicEntries;
+            lock(_lo)
+            {
+                rlMusicEntries = _rlMusicEntries;
+            }
+            foreach(var rlMusicEntry in rlMusicEntries)
+            {
+                Raylib_CsLo.Raylib.UpdateMusicStream(rlMusicEntry.RlMusic);
+            }
+        }
+
+
         protected override unsafe RlMusicEntry Load(engine.audio.Music jMusic)
         {
             string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
@@ -23,10 +43,18 @@ namespace Karawan.platform.cs1.splash
         {
             entity.Set(new components.RlMusic(rlMusicEntry));
             Raylib_CsLo.Raylib.PlayMusicStream(rlMusicEntry.RlMusic);
+            lock (_lo)
+            {
+                _rlMusicEntries.Add(rlMusicEntry);
+            }
         }
 
         protected override unsafe void Unload(engine.audio.Music jMusic, RlMusicEntry rlMusicEntry)
         {
+            lock (_lo)
+            {
+                _rlMusicEntries.Remove(rlMusicEntry);
+            }
             Console.WriteLine($"MusicManager: Unloading Music");
             Raylib.UnloadMusicStream(rlMusicEntry.RlMusic);
             base.Unload(jMusic, rlMusicEntry);
@@ -35,6 +63,7 @@ namespace Karawan.platform.cs1.splash
         public MusicManager(engine.Engine engine)
         {
             _engine = engine;
+            _audioThreadTimer = new(_audioFunction, null, 100, 20);
         }
     }
 }

@@ -1,32 +1,10 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using BepuUtilities;
 
 namespace Karawan.platform.cs1.splash.systems
 {
-    class MeshBatch
-    {
-        // public Raylib_CsLo.Mesh Mesh;
-        public List<Matrix4x4> Matrices;
-
-        public MeshBatch()
-        {
-            Matrices = new();
-        }
-    }
-
-    class MaterialBatch
-    {
-        // public Raylib_CsLo.Material Material;
-        public Dictionary<RlMeshEntry, MeshBatch> MeshBatches;
-
-        public MaterialBatch()
-        {
-            MeshBatches = new();
-        }
-    }
-
 
     [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
     [DefaultEcs.System.With(typeof(splash.components.RlMesh))]
@@ -36,45 +14,19 @@ namespace Karawan.platform.cs1.splash.systems
      * 
      * Groups by material and mesh.
      */
-    sealed class DrawRlMeshesSystem : DefaultEcs.System.AEntitySetSystem<uint>
+    sealed class DrawRlMeshesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutput>
     {
+        private object _lo = new();
         private engine.Engine _engine;
         private MaterialManager _materialManager;
 
-        private Dictionary<RlMaterialEntry, MaterialBatch> _materialBatches;
-        private Dictionary<RlMaterialEntry, MaterialBatch> _transparentMaterialBatches;
+        private CameraOutput _cameraOutput = null;
 
-        private int _nEntities;
-        private int _nMeshes;
-        private int _nMaterials;
 
-        private void _renderMaterialBatches(in Dictionary<RlMaterialEntry, MaterialBatch> mb)
-        {
-            foreach (var materialItem in mb)
-            {
-                foreach (var meshItem in materialItem.Value.MeshBatches)
-                {
-                    var nMatrices = meshItem.Value.Matrices.Count;
-                    /*
-                     * I must draw using the instanced call because I only use an instanced shader.
-                     */
-                    // var arrayMatrices = meshItem.Value.Matrices.ToArray();
-#if NET6_0_OR_GREATER
-                    var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
-#else
-                        Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
-#endif
-                    Raylib_CsLo.Raylib.DrawMeshInstanced(
-                            meshItem.Key.RlMesh,
-                            materialItem.Key.RlMaterial,
-                            spanMatrices,
-                            nMatrices
-                    );
-                }
-            }
-        }
-
-        private void _appendMeshRenderList(in ReadOnlySpan<DefaultEcs.Entity> entities, uint cameraMask)
+        private void _appendMeshRenderList(
+            in CameraOutput cameraOutput,
+            in ReadOnlySpan<DefaultEcs.Entity> entities, uint cameraMask
+        )
         {
             foreach (var entity in entities)
             {
@@ -84,6 +36,7 @@ namespace Karawan.platform.cs1.splash.systems
                     var rlMeshEntry = entity.Get<splash.components.RlMesh>().MeshEntry;
                     var rlMaterialEntry = entity.Get<splash.components.RlMaterial>().MaterialEntry;
 
+
                     // Skip things that incompletely are loaded.
                     if( null==rlMeshEntry) {
                         continue;
@@ -92,100 +45,39 @@ namespace Karawan.platform.cs1.splash.systems
                     {
                         rlMaterialEntry = _materialManager.GetUnloadedMaterial();
                     }
-                    _nEntities++;
+                    cameraOutput.NEntities++;
 
-                    var rMatrix = Matrix4x4.Transpose(transform3ToWorld.Matrix);
+                    var rMatrix = transform3ToWorld.Matrix;
 
-                    /*
-                     * Do we have an entry for the material?
-                     */
-                    Dictionary<RlMaterialEntry, MaterialBatch> mbs;
-                    if (!rlMaterialEntry.HasTransparency)
-                    {
-                        mbs = _materialBatches;
-                    } else
-                    {
-                        mbs = _transparentMaterialBatches;
-                    }
-                    MaterialBatch materialBatch;
-                    mbs.TryGetValue( rlMaterialEntry, out materialBatch );
-                    if (null == materialBatch)
-                    {
-                        materialBatch = new MaterialBatch();
-                        mbs[rlMaterialEntry] = materialBatch;
-                        _nMaterials++;
-                    }
+                    cameraOutput.AppendInstance(rlMeshEntry, rlMaterialEntry, rMatrix);
 
-                    /*
-                     * And do we have an entry for the mesh in the material?
-                     */
-                    MeshBatch meshBatch;
-                    materialBatch.MeshBatches.TryGetValue( rlMeshEntry, out meshBatch );
-                    if (null == meshBatch)
-                    {
-                        meshBatch = new MeshBatch();
-                        materialBatch.MeshBatches[rlMeshEntry] = meshBatch;
-                        _nMeshes++;
-                    }
-
-                    /*
-                     * Now we can add our matrix to the list of matrices.
-                     */
-                    meshBatch.Matrices.Add(rMatrix);
                 }
             }
         }
 
 
-        protected override void PreUpdate(uint cameraMask)
-        {
-            _nEntities = 0;
-            _nMaterials = 0;
-            _nMeshes = 0;
-        }
-
-        protected override void PostUpdate(uint cameraMask)
+        protected override void PreUpdate(CameraOutput cameraOutput)
         {
         }
 
-        public void RenderStandard()
+        protected override void PostUpdate(CameraOutput cameraOutput)
         {
-            if (null != _materialBatches)
-            {
-                _renderMaterialBatches(_materialBatches);
-                _materialBatches = new();
-            }
         }
 
-        public void RenderTransparent()
+
+        protected override void Update(CameraOutput cameraOutput, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-            if (null != _transparentMaterialBatches)
-            {
-                _renderMaterialBatches(_transparentMaterialBatches);
-            }
-            _transparentMaterialBatches = new();
+            _appendMeshRenderList(cameraOutput, entities, cameraOutput.CameraMask);
         }
 
-        protected override void Update(uint cameraMask, ReadOnlySpan<DefaultEcs.Entity> entities)
-        {
-            _appendMeshRenderList(entities, cameraMask);
-        }
-
-        public string GetDebugInfo()
-        {
-            return $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, 1 shaders.";
-        }
 
         public DrawRlMeshesSystem(
-            engine.Engine engine,
-            MaterialManager materialManager
+            engine.Engine engine
         )
             : base(engine.GetEcsWorld())
         {
             _engine = engine;
-            _materialManager = materialManager;
-            _materialBatches = new();
-            _transparentMaterialBatches = new();
+            _cameraOutput = null;
         }
     }
 }

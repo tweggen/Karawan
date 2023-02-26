@@ -12,6 +12,9 @@
     <Folder Include="$(MSBuildThisFileDirectory)platform\cs1\splash\scenes\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\CameraOutput.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\MaterialBatch.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\MeshBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\PlatformUI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\API.cs" />

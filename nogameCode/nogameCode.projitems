@@ -12,7 +12,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHousesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\components\CubeSpinner.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\CubeScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cubes\CubeBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cubes\GenerateCubeCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\LogosScene.cs" />

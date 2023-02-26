@@ -153,8 +153,8 @@ namespace nogame.cubes
 
                     ++_characterIndex;
                     {
-                        DefaultEcs.Entity eCube;
-                        eCube = worldFragment.Engine.GetEcsWorld().CreateEntity();
+                        var worldRecord = worldFragment.Engine.GetEcsWorldRecord();
+                        var eCube = worldRecord.CreateEntity();
 
                         engine.joyce.InstanceDesc jInstanceDesc = new();
                         jInstanceDesc.Meshes.Add(_getCubeMesh());

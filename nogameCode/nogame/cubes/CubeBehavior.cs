@@ -15,6 +15,7 @@ namespace nogame.cubes
         public void Behave(in DefaultEcs.Entity entity, float dt)
         {
             _snc.NavigatorBehave(dt);
+
             _engine.GetATransform().SetTransforms(
                 entity,
                 true, 0xffffffff,
