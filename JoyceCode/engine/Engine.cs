@@ -296,41 +296,9 @@ namespace engine
         }
 
 
-        public void _onPhysicalFrame(float dt)
-        {
-            PhysicalFrame?.Invoke(this, dt);
-
-            /*
-             * We need a local copy in case anybody adds scenes.
-             */
-            var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
-            foreach (KeyValuePair<float, IScene> kvp in dictScenes)
-            {
-                kvp.Value.SceneOnPhysicalFrame(dt);
-            }
-        }
-
-
         private double _timeLeft;
         private int _fpsLogical = 60;
 
-
-        public void OnPhysicalFrame(float dt)
-        {
-            _timeLeft += dt;
-            do
-            {
-                _timeLeft -= 1 / (double)_fpsLogical;
-
-                /*
-                 * First, let the scenes update themselves.
-                 */
-                _onLogicalFrame((float)(1/(double)_fpsLogical));
-            } while (_timeLeft > 0);
-
-            _onPhysicalFrame(dt);
-            Render3D();
-        }
 
         /**
          * Add another scene.
@@ -370,10 +338,6 @@ namespace engine
             }
         }
 
-        public void Render3D()
-        {
-            _platform.Render3D();
-        }
 
         public void GetControllerState( out ControllerState controllerState)
         {

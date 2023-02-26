@@ -106,8 +106,9 @@ namespace Karawan.platform.cs1.splash
          * This function is called from a dedicated rendering thread as executed
          * inside the platform API. It must not access ECS data.
          */
-        private void Render(in IList<RenderPart> RenderParts)
+        private void _renderParts(in IList<RenderPart> RenderParts)
         {
+            Raylib.BeginDrawing();
 
             Raylib.ClearBackground(Raylib.BLACK);
             int y0Stats = 30;
@@ -186,8 +187,21 @@ namespace Karawan.platform.cs1.splash
 
             Raylib.DrawFPS(20, 100);
             Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
+            Raylib.EndDrawing();
         }
 
+        public void RenderFrame()
+        {
+            RenderFrame renderFrame = null;
+            lock(_lo)
+            {
+                if (_renderQueue.Count > 0)
+                {
+                    renderFrame = _renderQueue.Dequeue();
+                }
+                _renderParts(renderFrame.RenderParts);
+            }
+        }
 
         private void _renderThreadFunction()
         {

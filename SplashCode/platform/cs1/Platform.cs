@@ -90,9 +90,6 @@ namespace Karawan.platform.cs1
 
             // Main game loop
             lastFrame = Raylib.GetTime();
-            Raylib.BeginDrawing();
-            _engine.OnPhysicalFrame(1/60);
-            Raylib.EndDrawing();
 
             while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
@@ -103,10 +100,8 @@ namespace Karawan.platform.cs1
                 /*
                  * Call the render operations.
                  */
+                _aSplash.RenderFrame();
                 thisFrame = Raylib.GetTime();
-                Raylib.BeginDrawing();
-                _engine.OnPhysicalFrame( (float)(thisFrame-lastFrame) );
-                Raylib.EndDrawing();
                 lastFrame = thisFrame;
             }
             Raylib.CloseWindow();
@@ -133,6 +128,12 @@ namespace Karawan.platform.cs1
         public engine.IUI CreateUI()
         {
             return new PlatformUI();
+        }
+
+
+        public void CollectRenderData()
+        {
+            _aSplash.CollectRenderData();
         }
 
         public void SetupDone()
