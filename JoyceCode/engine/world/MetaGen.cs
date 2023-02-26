@@ -79,7 +79,7 @@ namespace engine.world
             _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
         }
 
-        public async void ApplyFragmentOperators(world.Fragment fragment)
+        public void ApplyFragmentOperators(world.Fragment fragment)
         {
             if( null==fragment ) {
                 throw new ArgumentException( $"WorldMetaGen.applyFragmentOperators(): fragment is null." );
@@ -107,15 +107,16 @@ namespace engine.world
                 });
                 listFragmentOperatorTasks.Add(taskFragmentOperator);
             }
-            var taskAllFragmentOperators = new Task(async () =>
+            var taskAllFragmentOperators = new Task(() =>
             {
                 foreach(var task in listFragmentOperatorTasks) {
                     task.Start();
-                    await task;
+                    task.Wait();
                 }
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });
-            taskAllFragmentOperators.RunSynchronously();
+            taskAllFragmentOperators.Start();
+            taskAllFragmentOperators.Wait();
         }
 
 
