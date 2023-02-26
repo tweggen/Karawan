@@ -52,7 +52,6 @@ namespace engine.world
          * The list of (static) molecules.
          */
         private List<Entity> _eStaticMolecules;
-        private Nullable<Entity> _eGround;
 
         /**
          * Test, wether the given world coordinate is inside the cluster.
@@ -218,14 +217,7 @@ namespace engine.world
             jInstanceDesc.Meshes.Add(jMeshTerrain);
             jInstanceDesc.MeshMaterials.Add(0);
             jInstanceDesc.Materials.Add(_getGroundMaterial());
-
-            _eGround = Engine.CreateEntity();
-            _eGround.Value.Set<engine.joyce.components.Instance3>(
-                    new engine.joyce.components.Instance3(jInstanceDesc));
-            Engine.AddInstance3(
-                _eGround.Value, true, 0xffffffff,
-                Position,
-                new Quaternion());
+            AddStaticMolecule(jInstanceDesc);
         }
 
 
@@ -783,10 +775,10 @@ namespace engine.world
             in IList<BepuPhysics.Collidables.TypedIndex> listShapes)
         {
             /**
-                * We create an entity for this particular mesh.
-                * This entity is child to our fragment's entity.
-                */
-            Entity entity = Engine.CreateEntity();
+             * We create an entity for this particular mesh.
+             * This entity is child to our fragment's entity.
+             */
+            Entity entity = Engine.GetEcsWorld().CreateEntity();
             entity.Set<engine.joyce.components.Instance3>(
                 new engine.joyce.components.Instance3(jInstanceDesc));
             Engine.AddInstance3(

@@ -161,11 +161,6 @@ namespace engine
                     entity.Get<physics.components.Body>().Reference.Handle));
         }
 
-        public DefaultEcs.Entity CreateEntity()
-        {
-            return _ecsWorld.CreateEntity();
-        }
-
         private bool _firstTime = true;
 
         public void _onLogicalFrame(float dt)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if false
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -27,9 +28,10 @@ namespace engine.joyce
          */
         public Object3(World3 world)
         {
-            _entity = world.GetEngine().CreateEntity();
+            _entity = world.GetEngine().GetEcsWorld().CreateEntity();
             _initEntity();
         }
 
     }
 }
+#endif
