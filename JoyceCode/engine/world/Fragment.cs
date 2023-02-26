@@ -802,9 +802,12 @@ namespace engine.world
                 if (listStaticDescriptions != null)
                 {
                     handles = new();
-                    foreach (var staticDescription in listStaticDescriptions)
+                    lock (Engine.Simulation)
                     {
-                        handles.Add(Engine.Simulation.Statics.Add(staticDescription));
+                        foreach (var staticDescription in listStaticDescriptions)
+                        {
+                            handles.Add(Engine.Simulation.Statics.Add(staticDescription));
+                        }
                     }
                 }
                 entity.Set(new engine.physics.components.Statics(handles, shapes));

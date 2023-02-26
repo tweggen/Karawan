@@ -76,6 +76,17 @@ namespace engine
             return _ecsWorld;
         }
 
+        public DefaultEcs.Command.WorldRecord GetEcsWorldRecord(int size=32)
+        {
+            var recorder = new DefaultEcs.Command.EntityCommandRecorder(size);
+            return recorder.Record(_ecsWorld);
+        }
+
+        public void ApplyEcsRecorder(in DefaultEcs.Command.EntityCommandRecorder recorder)
+        {
+            recorder.Execute();
+        }
+
         public void AddSceneFactory(in string name, in Func<IScene> factoryFunction)
         {
             lock(_lo)

@@ -11,15 +11,18 @@ namespace engine.physics
 
         private void _removeStatics(in components.Statics statics)
         {
-            if( statics.Handles != null )
+            lock (_engine.Simulation)
             {
-                foreach( var handle in statics.Handles )
+                if (statics.Handles != null)
                 {
-                    _engine.Simulation.Statics.Remove(handle);
-                }
-                foreach( var shape in statics.Shapes )
-                {
-                    _engine.Simulation.Shapes.RemoveAndDispose(shape, _engine.BufferPool);
+                    foreach (var handle in statics.Handles)
+                    {
+                        _engine.Simulation.Statics.Remove(handle);
+                    }
+                    foreach (var shape in statics.Shapes)
+                    {
+                        _engine.Simulation.Shapes.RemoveAndDispose(shape, _engine.BufferPool);
+                    }
                 }
             }
         }
@@ -27,11 +30,17 @@ namespace engine.physics
         private void OnBodyChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
         {
             // We need to assume the user added the new entity.
-            _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
+            lock (_engine.Simulation)
+            {
+                _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
+            }
         }
         private void OnBodyRemoved(in Entity entity, in components.Body cBody)
         {
-            _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
+            lock (_engine.Simulation)
+            {
+                _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
+            }
         }
 
         private void OnStaticsChanged(in Entity entity, in components.Statics cOldStatics, in components.Statics cNewStatics)

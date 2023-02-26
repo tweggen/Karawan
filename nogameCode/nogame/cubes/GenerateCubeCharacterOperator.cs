@@ -51,7 +51,10 @@ namespace nogame.cubes
                 if( !_pshapeSphere.Exists )
                 {
                     _pbodySphere = new(0.5f);
-                    _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
+                    lock (engine.Simulation)
+                    {
+                        _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
+                    }
                 }
                 return _pshapeSphere;
             }
@@ -158,6 +161,7 @@ namespace nogame.cubes
                         jInstanceDesc.MeshMaterials.Add(0);
                         jInstanceDesc.Materials.Add(_getCubeMaterial());
                         eCube.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                        lock(worldFragment.Engine.Simulation)
                         {
                             // pbodySphere.ComputeInertia
                             BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(

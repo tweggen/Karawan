@@ -7,6 +7,11 @@ namespace engine.world
 {
     public class ClusterDesc
     {
+        /**
+         * To protect me, especially generating streets
+         */
+        private object _lo = new();
+
         public string Id;
         public bool Merged;
         public Vector3 Pos;
@@ -62,7 +67,7 @@ namespace engine.world
         public bool IsInside(in Vector3 p)
         {
             if (
-            p.X >= (Pos.X - Size / 2f) && p.X <= (Pos.X + Size / 2f)
+                p.X >= (Pos.X - Size / 2f) && p.X <= (Pos.X + Size / 2f)
                 && p.Z >= (Pos.Z - Size / 2f) && p.Z <= (Pos.Z + Size / 2f)
             )
             {
@@ -77,6 +82,7 @@ namespace engine.world
 
         public streets.Quarter guessQuarter(in Vector2 p)
         {
+            _triggerStreets();
             /*
              * Fast wrong implementation: Find the closest center point.
              */
@@ -113,49 +119,52 @@ namespace engine.world
 
         public void AddClosest(in ClusterDesc other)
         {
-            if (other == this) return;
+            lock(_lo)
+            { 
+                if (other == this) return;
 
-            float distance = (float)Vector3.Distance(other.Pos, this.Pos);
+                float distance = (float)Vector3.Distance(other.Pos, this.Pos);
 
-            // Special case first.
-            if (0 == _nClosest)
-            {
-                _arrCloseCities[0] = other;
-                _nClosest = 1;
-                return;
-            }
-
-            // Now insert, whereever required
-            int idx = 0;
-            while (idx < _nClosest)
-            {
-                ClusterDesc cl = _arrCloseCities[idx];
-                // Also ignore this if already known.
-                if (cl == other)
+                // Special case first.
+                if (0 == _nClosest)
                 {
-                    idx++;
+                    _arrCloseCities[0] = other;
+                    _nClosest = 1;
                     return;
                 }
 
-                float clDist = (float)Vector3.Distance(cl.Pos, this.Pos);
-
-                if (distance < clDist)
+                // Now insert, whereever required
+                int idx = 0;
+                while (idx < _nClosest)
                 {
-                    // Smaller distance? Then insert myself here.
-                    int idx2 = idx + 1;
-                    int max = _nClosest + 1;
-                    if (max > _maxClosest) max = _maxClosest;
-                    while (idx2 < max)
+                    ClusterDesc cl = _arrCloseCities[idx];
+                    // Also ignore this if already known.
+                    if (cl == other)
                     {
-                        _arrCloseCities[idx2] = _arrCloseCities[idx2 - 1];
-                        ++idx2;
+                        idx++;
+                        return;
                     }
-                    _arrCloseCities[idx] = other;
-                    _nClosest = max;
-                    // Inserted.
-                    return;
+
+                    float clDist = (float)Vector3.Distance(cl.Pos, this.Pos);
+
+                    if (distance < clDist)
+                    {
+                        // Smaller distance? Then insert myself here.
+                        int idx2 = idx + 1;
+                        int max = _nClosest + 1;
+                        if (max > _maxClosest) max = _maxClosest;
+                        while (idx2 < max)
+                        {
+                            _arrCloseCities[idx2] = _arrCloseCities[idx2 - 1];
+                            ++idx2;
+                        }
+                        _arrCloseCities[idx] = other;
+                        _nClosest = max;
+                        // Inserted.
+                        return;
+                    }
+                    idx++;
                 }
-                idx++;
             }
         }
 
@@ -249,26 +258,31 @@ namespace engine.world
 
         private void _triggerStreets()
         {
-            if( null==_streetGenerator ) {
-                _strokeStore = new streets.StrokeStore();
-                _streetGenerator = new streets.Generator();
-                _quarterStore = new streets.QuarterStore();
-                _quarterGenerator = new streets.QuarterGenerator();
+            lock (_lo)
+            {
+                if (null == _streetGenerator)
+                {
+                    _strokeStore = new streets.StrokeStore();
+                    _streetGenerator = new streets.Generator();
+                    _quarterStore = new streets.QuarterStore();
+                    _quarterGenerator = new streets.QuarterGenerator();
 
-                _streetGenerator.reset( "streets-"+_strKey, _strokeStore );
-                _streetGenerator.setBounds( -Size/2f, -Size/2f, Size/2f, Size/2f );
-                _addHighwayTriggers();
-                _streetGenerator.generate();
+                    _streetGenerator.reset("streets-" + _strKey, _strokeStore);
+                    _streetGenerator.setBounds(-Size / 2f, -Size / 2f, Size / 2f, Size / 2f);
+                    _addHighwayTriggers();
+                    _streetGenerator.generate();
 
-                /*
-                 * Unfortunately, we also need to generate the sections at this point.
-                 */
-                foreach( var sp in _strokeStore.GetStreetPoints()) {
-                    sp.GetSectionArray();
+                    /*
+                     * Unfortunately, we also need to generate the sections at this point.
+                     */
+                    foreach (var sp in _strokeStore.GetStreetPoints())
+                    {
+                        sp.GetSectionArray();
+                    }
+
+                    _quarterGenerator.Reset("quarters-" + _strKey, _quarterStore, _strokeStore);
+                    _quarterGenerator.Generate();
                 }
-
-                _quarterGenerator.Reset( "quarters-"+_strKey, _quarterStore, _strokeStore );
-                _quarterGenerator.Generate();
             }
         }
 

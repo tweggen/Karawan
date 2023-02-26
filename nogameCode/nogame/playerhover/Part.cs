@@ -81,18 +81,22 @@ namespace nogame.playerhover
 
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(1.4f);
                 var pinertiaSphere = pbodySphere.ComputeInertia(_massShip);
-                _phandleShip = _engine.Simulation.Bodies.Add(
-                    BodyDescription.CreateDynamic(
-                        posShip,
-                        pinertiaSphere,
-                        new BepuPhysics.Collidables.CollidableDescription(
-                            _engine.Simulation.Shapes.Add(pbodySphere),
-                            0.1f
-                        ),
-                        new BodyActivityDescription(0.01f)
-                    )
-                );
-                _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
+
+                lock (_engine.Simulation)
+                {
+                    _phandleShip = _engine.Simulation.Bodies.Add(
+                        BodyDescription.CreateDynamic(
+                            posShip,
+                            pinertiaSphere,
+                            new BepuPhysics.Collidables.CollidableDescription(
+                                _engine.Simulation.Shapes.Add(pbodySphere),
+                                0.1f
+                            ),
+                            new BodyActivityDescription(0.01f)
+                        )
+                    );
+                    _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
+                }
                 _eShip.Set(new engine.physics.components.Body(_prefShip));
                 /*
                  * Activate collision detection for ship.
