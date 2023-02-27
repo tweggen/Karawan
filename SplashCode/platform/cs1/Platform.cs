@@ -14,6 +14,7 @@ namespace Karawan.platform.cs1
         private Vector2 _vMouseMove;
 
         private splash.API _aSplash;
+        private bool _isRunning = true;
 
         public void SetEngine(engine.Engine engine)
         {
@@ -104,6 +105,7 @@ namespace Karawan.platform.cs1
                 thisFrame = Raylib.GetTime();
                 lastFrame = thisFrame;
             }
+            _isRunning = false;
             Raylib.CloseWindow();
         }
 
@@ -165,6 +167,19 @@ namespace Karawan.platform.cs1
             Raylib.InitAudioDevice();
 
             _aSplash = new splash.API(_engine);
+        }
+
+        public void Sleep(double dt)
+        {
+            Raylib_CsLo.Raylib.WaitTime(dt);
+        }
+
+        public bool IsRunning()
+        {
+            lock(_lock)
+            {
+                return _isRunning;
+            }
         }
 
         public Platform(string[] args)

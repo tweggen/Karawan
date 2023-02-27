@@ -15,5 +15,8 @@ namespace engine
         public void GetControllerState(out ControllerState controllerState);
 
         public void GetMouseMove(out Vector2 vMouseMove);
+        public void Sleep(double dt);
+
+        public bool IsRunning();
     }
 }

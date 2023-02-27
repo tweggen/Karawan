@@ -405,17 +405,20 @@ namespace engine
             int microToWait = microFrameDuration;
             int totalPassedMicros = 0;
             int totalProcessingMicros = 0;
-            while (true)
+            
+            while (_platform.IsRunning())
             {
                 while(microToWait>999)
                 {
+                    // _platform.Sleep((int)microsToWait/1000000f);
+
                     int millisToWait = microToWait / 1000;
+                    stopWatchSleep.Reset();
                     if (millisToWait > 0)
                     {
                         Trace($"Logical thread sleeping {millisToWait}ms.");
-                        stopWatchSleep.Reset();
                         stopWatchSleep.Start();
-                        System.Threading.Thread.Sleep(4);
+                        System.Threading.Thread.Sleep(millisToWait);
                         stopWatchSleep.Stop();
                     }
 
