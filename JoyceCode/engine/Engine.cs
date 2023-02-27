@@ -368,44 +368,45 @@ namespace engine
 
         private void _logicalThreadFunction()
         {
-            Stopwatch stopWatch = new Stopwatch();
-            int skippedLogical = 0;
-            const int microWaitDuration = 1000000 / 60;
-            int microToWait = microWaitDuration;
+            Stopwatch stopWatchSleep = new Stopwatch();
+            Stopwatch stopWatchProcessing = new Stopwatch();
+            const int microFrameDuration = 1000000 / 60;
+            int microToWait = microFrameDuration;
             int totalPassedMicros = 0;
-            stopWatch.Start();
+            int totalProcessingMicros = 0;
             while (true)
             {
                 while(microToWait>999)
                 {
-                    stopWatch.Stop();
-                    int passedMicros = (int)stopWatch.Elapsed.TotalMicroseconds;
-                    stopWatch.Start();
-                    totalPassedMicros += passedMicros;
-
-                    if (passedMicros > microToWait)
+                    int millisToWait = microToWait / 1000;
+                    if (millisToWait > 0)
                     {
-                        Warning("Logical thread took {passedMicros}us, that is longer than {microToWait}us");
-                        ++skippedLogical;
-                        microToWait = 0;
-                    } else
-                    {
-                        microToWait -= passedMicros;
-
-                        /*
-                         * Look, if we still need to wait.
-                         */
-
-                        int millisToWait = microToWait / 1000;
-                        if (millisToWait > 0)
-                        {
-                            System.Threading.Thread.Sleep(millisToWait);
-                        }
+                        Trace($"Logical thread sleeping {millisToWait}ms.");
+                        stopWatchSleep.Reset();
+                        stopWatchSleep.Start();
+                        System.Threading.Thread.Sleep(4);
+                        stopWatchSleep.Stop();
                     }
+
+                    int sleepedMicros = (int)stopWatchSleep.Elapsed.TotalMicroseconds;
+                    totalPassedMicros += sleepedMicros;
+                    microToWait -= sleepedMicros;
                 }
-                _onLogicalFrame((float)totalPassedMicros / 1000f);
-                totalPassedMicros = 0;
-                microToWait += microWaitDuration;
+                stopWatchProcessing.Reset();
+                stopWatchProcessing.Start();
+                float df = (float)totalPassedMicros / 1000f;
+                Trace($"Calling _onLogicalFrame({df}ms).");
+                _onLogicalFrame(df);
+                stopWatchProcessing.Stop();
+                totalProcessingMicros = (int)stopWatchProcessing.Elapsed.TotalMicroseconds;
+                if( totalProcessingMicros>microFrameDuration )
+                {
+                    Warning($"Processing of logical frame took {totalProcessingMicros}us, longer than one logical frame({microFrameDuration}us).");
+                } else
+                {
+                    microToWait += microFrameDuration - totalProcessingMicros;
+                }
+                totalPassedMicros = totalProcessingMicros;
             }
         }
 

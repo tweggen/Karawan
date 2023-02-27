@@ -56,7 +56,7 @@ namespace Karawan.platform.cs1.splash.systems
                 for(var i=0; i<nMeshes; ++i)
                 {
                     var jMesh = (engine.joyce.Mesh) cInstance3.Meshes[i];
-                    Trace($"run {_runNumber}: Creating platform mesh from jMesh with {jMesh.Vertices.Count} vertices.");
+                    // Trace($"run {_runNumber}: Creating platform mesh from jMesh with {jMesh.Vertices.Count} vertices.");
                     var materialIndex = (int) cInstance3.MeshMaterials[i];
                     var jMaterial = (engine.joyce.Material) cInstance3.Materials[materialIndex];
 
