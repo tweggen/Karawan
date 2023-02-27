@@ -2,7 +2,7 @@
 using System.Numerics;
 using engine;
 using Raylib_CsLo;
-using static System.Net.Mime.MediaTypeNames;
+using static engine.Logger;
 
 namespace Karawan.platform.cs1
 {
@@ -156,6 +156,7 @@ namespace Karawan.platform.cs1
 #if PLATFORM_ANDROID
             Raylib.InitWindow(0, 0, "codename Karawan"); //Make app window 1:1 to screen size https://github.com/raysan5/raylib/issues/1731
 #else
+            Trace("Calling InitWindow.");
             Raylib.InitWindow(width, height, "codename Karawan");
 #endif
             if (isFullscreen)
