@@ -11,5 +11,9 @@ namespace Karawan.platform.cs1.splash
         public engine.transform.components.Transform3ToWorld Transform3ToWorld;
         public engine.joyce.components.Camera3 Camera3;
         public CameraOutput CameraOutput;
+
+        public RenderPart()
+        {
+        }
     }
 }

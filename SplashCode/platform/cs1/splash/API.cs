@@ -43,18 +43,19 @@ namespace Karawan.platform.cs1.splash
 
             foreach (var eCamera in listCameras)
             {
-                RenderPart RenderPart = new();
-                RenderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
-                RenderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
-                CameraOutput cameraOutput = new(RenderPart.Camera3.CameraMask);
+                RenderPart renderPart = new();
+                renderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
+                renderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
+                CameraOutput cameraOutput = new(renderPart.Camera3.CameraMask);
+                renderPart.CameraOutput = cameraOutput;
 
                 _drawRlMeshesSystem.Update(cameraOutput);
 
-                var vCameraPosition = RenderPart.Transform3ToWorld.Matrix.Translation;
+                var vCameraPosition = renderPart.Transform3ToWorld.Matrix.Translation;
                 _drawSkyboxesSystem.CameraPosition = vCameraPosition;
                 _drawSkyboxesSystem.Update(cameraOutput);
 
-                renderFrame.RenderParts.Add(RenderPart);
+                renderFrame.RenderParts.Add(renderPart);
             }
         }
 
@@ -191,6 +192,9 @@ namespace Karawan.platform.cs1.splash
             Raylib.EndDrawing();
         }
 
+        /**
+         * Called from Platform
+         */
         public void RenderFrame()
         {
             RenderFrame renderFrame = null;

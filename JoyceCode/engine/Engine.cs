@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -10,6 +11,7 @@ using BepuUtilities;
 using BepuUtilities.Collections;
 using BepuUtilities.Memory;
 using DefaultEcs;
+using static engine.Logger;
 
 namespace engine
 {
@@ -34,15 +36,18 @@ namespace engine
 
         private SortedDictionary<float, IScene> _dictScenes;
         private SortedDictionary<float, IPart> _dictParts;
+        private SortedDictionary<string, Func<IScene>> _dictSceneFactories;
 
         private Dictionary<string, string> _dictConfigParams = new();
+
+        private Thread _logicalThread;
 
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
         public event EventHandler<physics.ContactInfo> OnContactInfo;
 
-        private SortedDictionary<string, Func<IScene>> _dictSceneFactories;
+
 
         class EnginePhysicsEventHandler : physics.IContactEventHandler
         {
@@ -361,17 +366,48 @@ namespace engine
         }
 
 
-        private void _logicalThread()
+        private void _logicalThreadFunction()
         {
+            Stopwatch stopWatch = new Stopwatch();
+            int skippedLogical = 0;
+            const int microWaitDuration = 1000000 / 60;
+            int microToWait = microWaitDuration;
+            int totalPassedMicros = 0;
+            stopWatch.Start();
+            while (true)
+            {
+                while(microToWait>999)
+                {
+                    stopWatch.Stop();
+                    int passedMicros = (int)stopWatch.Elapsed.TotalMicroseconds;
+                    stopWatch.Start();
+                    totalPassedMicros += passedMicros;
 
+                    if (passedMicros > microToWait)
+                    {
+                        Warning("Logical thread took {passedMicros}us, that is longer than {microToWait}us");
+                        ++skippedLogical;
+                        microToWait = 0;
+                    } else
+                    {
+                        microToWait -= passedMicros;
+
+                        /*
+                         * Look, if we still need to wait.
+                         */
+
+                        int millisToWait = microToWait / 1000;
+                        if (millisToWait > 0)
+                        {
+                            System.Threading.Thread.Sleep(millisToWait);
+                        }
+                    }
+                }
+                _onLogicalFrame((float)totalPassedMicros / 1000f);
+                totalPassedMicros = 0;
+                microToWait += microWaitDuration;
+            }
         }
-
-
-        private void _videoThread()
-        {
-
-        }
-
 
         /**
          * Call after all dependencies are set.
@@ -401,6 +437,8 @@ namespace engine
             _systemMoveKinetics = new(this);
             _managerPhysics = new physics.Manager();
             _managerPhysics.Manage(this);
+
+            _logicalThread = new Thread(_logicalThreadFunction);
        }
 
 
@@ -412,6 +450,11 @@ namespace engine
                  */
                 GetMouseMove(out _);
             }
+
+            /*
+             * Start the reality as soon the platform also is set up.
+             */
+            _logicalThread.Start();
         }
 
 

@@ -19,6 +19,8 @@ namespace Karawan.platform.cs1.splash
             ListAmbientLights = new List<engine.joyce.components.AmbientLight>();
             ListDirectionalLights = new List<engine.joyce.components.DirectionalLight>();
             ListPointLights = new List<engine.joyce.components.PointLight>();
+
+            RenderParts = new List<RenderPart>();
         }
     }
 }
