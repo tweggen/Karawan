@@ -190,6 +190,7 @@ namespace Karawan.platform.cs1.splash
             Raylib.EndDrawing();
         }
 
+
         private void _renderFrame(in RenderFrame renderFrame)
         {
             _lightManager.ApplyLights(renderFrame, _materialManager.GetInstanceShaderEntry());
