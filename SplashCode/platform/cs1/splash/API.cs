@@ -34,8 +34,6 @@ namespace Karawan.platform.cs1.splash
          */
         private void _logicalRenderFrame(RenderFrame renderFrame)
         {
-            _lightManager.ApplyLights(renderFrame, _materialManager.GetInstanceShaderEntry());
-
             var listCameras = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Camera3>()
                 .With<engine.transform.components.Transform3ToWorld>()
@@ -192,6 +190,14 @@ namespace Karawan.platform.cs1.splash
             Raylib.EndDrawing();
         }
 
+        private void _renderFrame(in RenderFrame renderFrame)
+        {
+            _lightManager.ApplyLights(renderFrame, _materialManager.GetInstanceShaderEntry());
+            _renderParts(renderFrame.RenderParts);
+        }
+
+
+
         /**
          * Called from Platform
          */
@@ -207,7 +213,7 @@ namespace Karawan.platform.cs1.splash
             }
             if (renderFrame != null)
             {
-                _renderParts(renderFrame.RenderParts);
+                _renderFrame(renderFrame);
             } else
             {
                 System.Threading.Thread.Sleep(15);
