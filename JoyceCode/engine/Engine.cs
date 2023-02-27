@@ -37,6 +37,7 @@ namespace engine
         private SortedDictionary<float, IScene> _dictScenes;
         private SortedDictionary<float, IPart> _dictParts;
         private SortedDictionary<string, Func<IScene>> _dictSceneFactories;
+        private IScene _sceneNewMain = null;
 
         private Dictionary<string, string> _dictConfigParams = new();
 
@@ -117,9 +118,24 @@ namespace engine
         private IScene _mainScene = null;
         public void SetMainScene(in IScene scene)
         {
-            IScene oldScene = null;
             lock(_lo)
             {
+                _sceneNewMain = scene;
+            }
+        }
+
+        private void _loadNewMainScene()
+        {
+            IScene scene = null;
+            IScene oldScene = null;
+            lock (_lo)
+            {
+                scene = _sceneNewMain;
+                _sceneNewMain = null;
+                if (null == scene)
+                {
+                    return;
+                }
                 oldScene = _mainScene;
                 _mainScene = null;
             }
@@ -128,7 +144,7 @@ namespace engine
                 oldScene.SceneDeactivate();
             }
             // TXWTODO: Wait for old scene to be done? No? Fadeouts??
-            lock(_lo)
+            lock (_lo)
             {
                 _mainScene = scene;
             }
@@ -293,11 +309,26 @@ namespace engine
              */
             _systemMoveKinetics.Update(dt);
 
+            /*
+             * Write back all entity modifications to the objects.
+             */
             _commitWorldRecord();
 
+            /*
+             * If no new frame has been created, read all geom entities for rendering
+             * into data structures.
+             */
             _platform.CollectRenderData();
 
+            /*
+             * Async delete any entities that shall be deleted 
+             */
             _executeDoomedEntities();
+
+            /*
+             * Execute loading of potential new main scene.
+             */
+            _loadNewMainScene();
         }
 
 
@@ -394,7 +425,7 @@ namespace engine
                 }
                 stopWatchProcessing.Reset();
                 stopWatchProcessing.Start();
-                float df = (float)totalPassedMicros / 1000f;
+                float df = (float)totalPassedMicros / 1000000f;
                 Trace($"Calling _onLogicalFrame({df}ms).");
                 _onLogicalFrame(df);
                 stopWatchProcessing.Stop();
