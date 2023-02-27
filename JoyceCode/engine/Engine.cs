@@ -38,6 +38,8 @@ namespace engine
         private SortedDictionary<float, IPart> _dictParts;
         private SortedDictionary<string, Func<IScene>> _dictSceneFactories;
         private IScene _sceneNewMain = null;
+        private IScene _mainScene = null;
+
 
         private Dictionary<string, string> _dictConfigParams = new();
 
@@ -115,7 +117,6 @@ namespace engine
             }
         }
 
-        private IScene _mainScene = null;
         public void SetMainScene(in IScene scene)
         {
             lock(_lo)
