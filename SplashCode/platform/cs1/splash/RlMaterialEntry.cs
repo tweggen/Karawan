@@ -9,6 +9,7 @@ namespace Karawan.platform.cs1.splash
     public class RlMaterialEntry
     {
         public Raylib_CsLo.Material RlMaterial;
+        public engine.joyce.Material jMaterial;
         public bool HasTransparency;
     }
 }

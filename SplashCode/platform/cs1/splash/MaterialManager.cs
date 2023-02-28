@@ -40,16 +40,6 @@ namespace Karawan.platform.cs1.splash
             return _rlInstanceShaderEntry;
         }
 
-#if false
-        public void SetAmbientLight(in Vector4 colAmbient)
-        {
-            int ambientLoc = Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "ambient");
-            Raylib.SetShaderValue(
-                _rlInstanceShaderEntry.RlShader,
-                ambientLoc, colAmbient,
-                ShaderUniformDataType.SHADER_UNIFORM_VEC4);
-        }
-#endif
 
         private unsafe void _createDefaultShader()
         {
@@ -76,7 +66,7 @@ namespace Karawan.platform.cs1.splash
                 Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "instanceTransform");
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_NORMAL] =
                 Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "matNormal");
-#if true
+
             // Set default shader locations: attributes locations
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_POSITION] =
                 Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexPosition");
@@ -94,7 +84,7 @@ namespace Karawan.platform.cs1.splash
                 Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture0");
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_NORMAL] =
                 Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture2");
-#endif
+
             /* 
              * Test code: Set some ambient lighting:
              */
@@ -109,15 +99,7 @@ namespace Karawan.platform.cs1.splash
             Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
             var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
             Raylib.UnloadImage(checkedImage);
-#if false
-            /*
-             * Test code: Create one light.
-             */
-            var vecLight = new Vector3(50f, 50f, 20f);
-            var vecZero = new Vector3(0, 0, 0);
-            _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero, 
-                new Color(255,255,255,255), ref _rlInstanceShaderEntry.RlShader); 
-#endif
+
             loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
             loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
             loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
@@ -142,11 +124,11 @@ namespace Karawan.platform.cs1.splash
             return key;
         }
 
-        private unsafe RlMaterialEntry _createRlMaterialEntry(in engine.joyce.Material jMaterial)
+        public unsafe void FillRlMaterialEntry(in RlMaterialEntry rlMaterialEntry)
         {
-            RlMaterialEntry rlMaterialEntry = new RlMaterialEntry();
-
+            engine.joyce.Material jMaterial = rlMaterialEntry.JMaterial;
             RlTextureEntry rlTextureEntry = null;
+
             if (jMaterial.Texture != null)
             {
                 rlTextureEntry = _textureManager.FindRlTexture(jMaterial.Texture);
@@ -156,47 +138,46 @@ namespace Karawan.platform.cs1.splash
             if (jMaterial.EmissiveTexture != null)
             {
                 rlEmissiveTextureEntry = _textureManager.FindRlTexture(jMaterial.EmissiveTexture);
-            } else
+            }
+            else
             {
                 rlEmissiveTextureEntry = _textureManager.FindRlTexture(new engine.joyce.Texture("joyce://col00000000"));
             }
 
-#if false
-            /*
-             * Test code: Create one light.
-             */
-            var vecLight = new Vector3(50f, 50f, 0f);
-            var vecZero = new Vector3(0, 0, 0);
-            _rlights.CreateLight(RLights.LightType.LIGHT_DIRECTIONAL, vecLight, vecZero,
-                Raylib.WHITE, ref _rlInstanceShaderEntry.RlShader);
-#endif
             rlMaterialEntry.RlMaterial = Raylib.LoadMaterialDefault();
             rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
             if (null != rlTextureEntry)
             {
                 rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].texture =
                     rlTextureEntry.RlTexture;
-            } else
+            }
+            else
             {
                 // This becomes the default color in the shader.
                 rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].color =
                     new Color(
-                        (byte) (jMaterial.AlbedoColor >> 16) & 0xff,
-                        (byte) (jMaterial.AlbedoColor >> 8) & 0xff,
-                        (byte) (jMaterial.AlbedoColor) & 0xff,
-                        (byte) (jMaterial.AlbedoColor >> 24) & 0xff);
-                    
+                        (byte)(jMaterial.AlbedoColor >> 16) & 0xff,
+                        (byte)(jMaterial.AlbedoColor >> 8) & 0xff,
+                        (byte)(jMaterial.AlbedoColor) & 0xff,
+                        (byte)(jMaterial.AlbedoColor >> 24) & 0xff);
+
             }
 
             {
                 rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_NORMAL].texture =
                     rlEmissiveTextureEntry.RlTexture;
-            }    
-            // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
+            }
+        }
 
-            if(jMaterial.HasTransparency) { 
+
+        private unsafe RlMaterialEntry _createRlMaterialEntry(in engine.joyce.Material jMaterial)
+        {
+            RlMaterialEntry rlMaterialEntry = new RlMaterialEntry();
+            if (jMaterial.HasTransparency)
+            {
                 rlMaterialEntry.HasTransparency = true;
             }
+
             return rlMaterialEntry;
         }
 
