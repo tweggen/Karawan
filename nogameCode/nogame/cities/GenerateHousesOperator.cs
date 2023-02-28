@@ -107,7 +107,7 @@ namespace nogame.cities
             } catch (Exception e) {
                 trace( $"GenerateHousesOperator.createHouseSubGeo(): buildGeom(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
-            StaticDescription staticDescription;
+            
             try
             {
                 opExtrudePoly.BuildPhys(worldFragment, listStaticDescriptions, listShapes);

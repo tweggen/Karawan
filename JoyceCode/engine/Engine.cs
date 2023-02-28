@@ -40,6 +40,7 @@ namespace engine
         private IScene _sceneNewMain = null;
         private IScene _mainScene = null;
 
+        private Queue<Action<DefaultEcs.Entity>> _queueEntitySetupActions = new();
 
         private Dictionary<string, string> _dictConfigParams = new();
 
@@ -192,6 +193,41 @@ namespace engine
         }
 
 
+        private void _executeEntitySetupActions()
+        {
+            while(true)
+            {
+                Action<DefaultEcs.Entity> action;
+                lock (_lo)
+                {
+                    if( _queueEntitySetupActions.Count==0)
+                    {
+                        return;
+                    }
+                    action = _queueEntitySetupActions.Dequeue();
+                }
+
+                DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
+                try {                    
+                    action(entity);
+                } catch( Exception e )
+                {
+                    Warning($"Error executing entity setup action: {e}.");
+                    entity.Dispose();
+                }
+            }
+        }
+
+
+        public void QueueEntitySetupAction(Action<DefaultEcs.Entity> action)
+        {
+            lock (_lo)
+            {
+                _queueEntitySetupActions.Enqueue(action); 
+            }
+        }
+
+
         public void SetMainScene(in string name)
         {
             Func<IScene> factoryFunction = null;
@@ -330,6 +366,11 @@ namespace engine
              * Execute loading of potential new main scene.
              */
             _loadNewMainScene();
+
+            /*
+             * Async create / setup new entities.
+             */
+            _executeEntitySetupActions();
         }
 
 
@@ -363,6 +404,7 @@ namespace engine
             _dictParts.Add(zOrder, part0);
         }
 
+
         public void RemovePart(in IPart part)
         {
             foreach (KeyValuePair<float, IPart> kvp in _dictParts)
@@ -376,10 +418,11 @@ namespace engine
         }
 
 
-        public void GetControllerState( out ControllerState controllerState)
+        public void GetControllerState(out ControllerState controllerState)
         {
-            _platform.GetControllerState( out controllerState );
+            _platform.GetControllerState(out controllerState);
         }
+        
 
         public void GetMouseMove( out Vector2 vMouseMove )
         {

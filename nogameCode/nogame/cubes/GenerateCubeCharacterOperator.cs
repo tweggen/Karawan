@@ -5,6 +5,7 @@ using System.Numerics;
 using engine;
 using engine.world;
 using engine.streets;
+using System.Threading.Tasks;
 
 namespace nogame.cubes
 {
@@ -153,31 +154,35 @@ namespace nogame.cubes
 
                     ++_characterIndex;
                     {
-                        var worldRecord = worldFragment.Engine.GetEcsWorldRecord();
-                        var eCube = worldRecord.CreateEntity();
-
                         engine.joyce.InstanceDesc jInstanceDesc = new();
                         jInstanceDesc.Meshes.Add(_getCubeMesh());
                         jInstanceDesc.MeshMaterials.Add(0);
                         jInstanceDesc.Materials.Add(_getCubeMaterial());
-                        eCube.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-                        lock(worldFragment.Engine.Simulation)
+
+                        var wf = worldFragment;
+
+
+                        var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                         {
-                            // pbodySphere.ComputeInertia
-                            BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(
+                            eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                            eTarget.Set(new engine.behave.components.Behavior(
+                                new CubeBehavior(wf.Engine, _clusterDesc, chosenStreetPoint)));
+
+                            BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                                 BodyDescription.CreateKinematic(
-                                    new Vector3(0f, 0f, 0f),
+                                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                                     new BepuPhysics.Collidables.CollidableDescription(
-                                        _getSphereShape(worldFragment.Engine),
+                                        _getSphereShape(wf.Engine),
                                         0.1f),
                                     new BodyActivityDescription(0.01f)
                                 )
                             );
-                            BodyReference prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                            eCube.Set(new engine.physics.components.Kinetic(prefSphere));
-                        }
-                        eCube.Set(new engine.behave.components.Behavior(
-                            new CubeBehavior(worldFragment.Engine, _clusterDesc, chosenStreetPoint) ) );
+                            BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                            eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
+                        });
+
+                        wf.Engine.QueueEntitySetupAction(tSetupEntity);
+
 
                     }
                 }

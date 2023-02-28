@@ -32,9 +32,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\..\github
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj", "{04406E59-DC40-498A-8969-08876ED3AD96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wuka", "Wuka\Wuka.csproj", "{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wuka", "Wuka\Wuka.csproj", "{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "JoyceCode", "JoyceCode\JoyceCode.shproj", "{77780CB7-FBC2-4301-9187-2428EF25DC3D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wire", "Wire\Wire.csproj", "{B2F5B6C0-758E-4CDA-B069-C01E3FBB170F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -92,6 +94,11 @@ Global
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.Deploy.0 = Release|Any CPU
+		{B2F5B6C0-758E-4CDA-B069-C01E3FBB170F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2F5B6C0-758E-4CDA-B069-C01E3FBB170F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2F5B6C0-758E-4CDA-B069-C01E3FBB170F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2F5B6C0-758E-4CDA-B069-C01E3FBB170F}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{B2F5B6C0-758E-4CDA-B069-C01E3FBB170F}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
