@@ -132,7 +132,7 @@ namespace nogame
              */
             {
                 _eAmbientLight = _ecsWorld.CreateEntity();
-                _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.1f, 0.1f, 0.1f, 1.0f)));
+                _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.1f, 0.1f, 0.1f, 0.0f)));
             }
 
             /*
