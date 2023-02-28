@@ -5,7 +5,8 @@ using BepuPhysics;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-
+using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace builtin.tools
 {
@@ -214,11 +215,10 @@ namespace builtin.tools
             }
         }
 
-
-        public void BuildPhys(
-            in engine.world.Fragment worldFragment, 
-            in IList<StaticDescription> staticDescriptions,
-            in IList<TypedIndex> listShapes)
+        /**
+         * Return a StaticDescription and a dtor for the shapes used within.
+         */
+        public Func<IList<StaticHandle>, Action> BuildStaticPhys(engine.world.Fragment worldFragment)
         {
             var vh = _path[0];
             if (null == _poly)
@@ -230,40 +230,64 @@ namespace builtin.tools
             var bufferPool = worldFragment.Engine.BufferPool;
             var simulation = worldFragment.Engine.Simulation;
 
-            IList<IList<Vector3>> listConvexPolys;
-            builtin.tools.Triangulate.ToConvexArrays(_poly, out listConvexPolys);
-            BepuPhysics.Collidables.CompoundBuilder builder = new BepuPhysics.Collidables.CompoundBuilder(
-                bufferPool, worldFragment.Engine.Simulation.Shapes, 8);
-            var identityPose = new BepuPhysics.RigidPose { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
-
-            /*
-             * for each of the convex polys, build a convex hull from it.
-             */
-            foreach( var convexPoly in listConvexPolys )
+            Func<IList<StaticHandle>, Action> fCreatePhys = new((IList<StaticHandle> staticHandles) =>
             {
-                int nPoints = 2 * convexPoly.Count;
-                QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
-                foreach (var p3 in convexPoly)
+                List<ConvexHull> convexHullsToRelease = new();
+                List<StaticHandle> handlesToRelease = new();
+                List<TypedIndex> shapesToRelease = new();
+
+                IList<IList<Vector3>> listConvexPolys;
+                builtin.tools.Triangulate.ToConvexArrays(_poly, out listConvexPolys);
+                BepuPhysics.Collidables.CompoundBuilder builder = new BepuPhysics.Collidables.CompoundBuilder(
+                    bufferPool, worldFragment.Engine.Simulation.Shapes, 8);
+                var identityPose = new BepuPhysics.RigidPose { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
+
+                /*
+                 * for each of the convex polys, build a convex hull from it.
+                 */
+                foreach (var convexPoly in listConvexPolys)
                 {
-                    var pBottom = worldFragment.Position + p3;
-                    var pTop = worldFragment.Position + p3 + vh;
-                    pointsConvexHull.AllocateUnsafely() = pBottom;
-                    pointsConvexHull.AllocateUnsafely() = pTop;
-                    //Console.WriteLine($"Added {pBottom} {pTop}");
+                    int nPoints = 2 * convexPoly.Count;
+                    QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
+                    foreach (var p3 in convexPoly)
+                    {
+                        var pBottom = worldFragment.Position + p3;
+                        var pTop = worldFragment.Position + p3 + vh;
+                        pointsConvexHull.AllocateUnsafely() = pBottom;
+                        pointsConvexHull.AllocateUnsafely() = pTop;
+                    }
+                    var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
+                    ConvexHullHelper.CreateShape(pointsBuffer, bufferPool, out var vCenter, out var pshapeConvexHull);
+                    convexHullsToRelease.Add(pshapeConvexHull);
+                    builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
                 }
-                var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
-                ConvexHullHelper.CreateShape(pointsBuffer, bufferPool, out var vCenter, out var pshapeConvexHull);
-                builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose {  Position = vCenter, Orientation = Quaternion.Identity }, 1f);
-            }
-            builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
-            builder.Reset();
-            var pshapeCompound = new Compound(compoundChildren);
-            staticDescriptions.Add(
-                new StaticDescription(
-                    vCompoundCenter,
-                    simulation.Shapes.Add(pshapeCompound)
-                )
-            );
+                builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
+                builder.Reset();
+                var pshapeCompound = new Compound(compoundChildren);
+                var shapeIndex = simulation.Shapes.Add(pshapeCompound);
+                var staticDescription = new StaticDescription(vCompoundCenter, shapeIndex);
+
+                staticHandles.Add(simulation.Statics.Add(staticDescription));
+
+                // Return release shapes function.
+                return new Action(() =>
+                {
+                    /*
+                     * First, release the compound structure.
+                     */
+                    pshapeCompound.Dispose(bufferPool);
+
+                    /*
+                     * After that, release the convex shapes contained within.
+                     */
+                    foreach(var convexHull in convexHullsToRelease)
+                    {
+                        convexHull.Dispose(bufferPool);
+                    }
+                });
+            });
+
+            return fCreatePhys;
         }
 
 

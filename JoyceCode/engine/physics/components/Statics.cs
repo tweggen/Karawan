@@ -8,10 +8,18 @@ namespace engine.physics.components
 {
     internal struct Statics
     {
+        /**
+         * Static handles associated with this component
+         */
         public IList<StaticHandle> Handles;
-        public IList<TypedIndex> Shapes;
 
-        public Statics(IList<StaticHandle> listHandles, IList<TypedIndex> listShapes)
+        /**
+         * Release function to free any additional data beyond the handles,
+         * like shapes, data structures carrying shapes.
+         */
+        public IList<Action> ReleaseActions;
+
+        public Statics(IList<StaticHandle> listHandles, IList<Action> releaseActions)
         {
             if( null != listHandles)
             {
@@ -22,14 +30,13 @@ namespace engine.physics.components
             {
                 Handles = null;
             }
-            if( null != listShapes )
+            if( null != releaseActions )
             {
-                TypedIndex[] shapes = listShapes.ToArray();
-                Shapes = shapes;
+                ReleaseActions = releaseActions;
             }
             else
             {
-                Shapes = null;
+                ReleaseActions = null;
             }
         }
     }

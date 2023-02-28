@@ -5,6 +5,8 @@ using System.Numerics;
 using System.Text;
 using DefaultEcs;
 using System.Linq;
+using BepuPhysics;
+using BepuPhysics.Collidables;
 
 namespace engine.world
 {
@@ -298,51 +300,47 @@ namespace engine.world
          */
         public void AddStaticMolecule(in engine.joyce.InstanceDesc jInstanceDesc)
         {
-            AddStaticMolecule(jInstanceDesc, null, null);
+            AddStaticMolecule(jInstanceDesc, null);
         }
 
 
         public void AddStaticMolecule(
-            in engine.joyce.InstanceDesc jInstanceDesc,
-            in IList<BepuPhysics.StaticDescription> listStaticDescriptions,
-            in IList<BepuPhysics.Collidables.TypedIndex> listShapes)
+            engine.joyce.InstanceDesc jInstanceDesc,
+            IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
         {
             var worldRecord = Engine.GetEcsWorldRecord();
 
             /**
-             * We create an entity for this particular mesh.
-             * This entity is child to our fragment's entity.
+             * Schedule execution of entity setup in the logical thread.
              */
-            var entity = worldRecord.CreateEntity();
-            entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-            engine.transform.components.Transform3 cTransform3 = new(
-                true, 0xffffffff, new Quaternion(), Position);
-            entity.Set(cTransform3);
-            engine.transform.API.CreateTransform3ToParent(cTransform3, out var mat);
-            entity.Set(new engine.transform.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
-            if( listStaticDescriptions!=null || listShapes !=null)
+            Engine.QueueEntitySetupAction((DefaultEcs.Entity entity) =>
             {
-                List<BepuPhysics.StaticHandle> handles = null;
-                List<BepuPhysics.Collidables.TypedIndex> shapes = null;
-                // TXWTODO: We assume that the shapes already are added to the engine at this point.
-                if (listStaticDescriptions != null)
-                {
-                    handles = new();
-                    lock (Engine.Simulation)
-                    {
-                        foreach (var staticDescription in listStaticDescriptions)
-                        {
-                            handles.Add(Engine.Simulation.Statics.Add(staticDescription));
-                        }
-                    }
-                }
-                entity.Set(new engine.physics.components.Statics(handles, shapes));
-            }
+                entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                engine.transform.components.Transform3 cTransform3 = new(
+                    true, 0xffffffff, new Quaternion(), Position);
+                entity.Set(cTransform3);
+                engine.transform.API.CreateTransform3ToParent(cTransform3, out var mat);
+                entity.Set(new engine.transform.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
 
-            /*
-             * Remember the molecule to be able to remove its contents later again.
-             */
-            entity.Set(new engine.world.components.FragmentId(_id));
+                if (listCreatePhysics != null)
+                {
+                    List<BepuPhysics.StaticHandle> listHandles = new();
+                    List<Action> listReleaseActions = new();
+
+                    foreach (var fCreatePhysics in listCreatePhysics)
+                    {
+                        Action action = fCreatePhysics(listHandles);
+                        listReleaseActions.Add(action);
+                    }
+                    entity.Set(new engine.physics.components.Statics(listHandles, listReleaseActions));
+                }
+
+                /*
+                 * Finally, remember the molecule to be able to remove its contents later again.
+                 */
+                entity.Set(new engine.world.components.FragmentId(_id));
+            });
+
         }
 
 

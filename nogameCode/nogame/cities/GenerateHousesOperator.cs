@@ -80,8 +80,7 @@ namespace nogame.cities
             in IList<Vector3> p,
             float h0, float mpt,
             in engine.joyce.Mesh g,
-            in IList<StaticDescription> listStaticDescriptions,
-            in IList<TypedIndex> listShapes
+            in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
         )
         {
 
@@ -110,7 +109,8 @@ namespace nogame.cities
             
             try
             {
-                opExtrudePoly.BuildPhys(worldFragment, listStaticDescriptions, listShapes);
+                var fCreatePhysics = opExtrudePoly.BuildStaticPhys(worldFragment);
+                listCreatePhysics.Add(fCreatePhysics);
             } catch (Exception e) {
                 trace( $"GenerateHousesOperator.createHouseSubGeo(): buildPhys(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
@@ -248,8 +248,7 @@ namespace nogame.cities
 
             engine.joyce.Mesh g = engine.joyce.Mesh.CreateListInstance();
             engine.joyce.Mesh neonG = engine.joyce.Mesh.CreateListInstance();
-            List<StaticDescription> listStaticDescriptions = new();
-            List<TypedIndex> listShapes = new();
+            List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
 
             /*
              * Iterate through all quarters in the clusters and generate lots and houses.
@@ -333,7 +332,7 @@ namespace nogame.cities
                         {
                             _createHouseSubGeo(
                                 worldFragment, fragPoints, height, _metersPerTexture,
-                                g, listStaticDescriptions, listShapes);
+                                g, listCreatePhysics);
                         }
                         catch (Exception e) {
                             trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
@@ -369,7 +368,7 @@ namespace nogame.cities
                     instanceDesc.Meshes.Add(g);
                     instanceDesc.MeshMaterials.Add(0);
                     instanceDesc.Materials.Add(_getHouseMaterial());
-                    worldFragment.AddStaticMolecule(instanceDesc, listStaticDescriptions, listShapes);
+                    worldFragment.AddStaticMolecule(instanceDesc, listCreatePhysics);
                 }
                 {
                     engine.joyce.InstanceDesc instanceDesc = new();
@@ -383,7 +382,6 @@ namespace nogame.cities
             {
                 trace($"Unknown exception: {e}");
             }
-            // worldFragment.AddStaticMolecule(neonMol);
         }
     
 

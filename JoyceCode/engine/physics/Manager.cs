@@ -11,21 +11,32 @@ namespace engine.physics
 
         private void _removeStatics(in components.Statics statics)
         {
-            lock (_engine.Simulation)
+            if (statics.Handles != null)
             {
-                if (statics.Handles != null)
+                foreach (var handle in statics.Handles)
                 {
-                    foreach (var handle in statics.Handles)
-                    {
-                        _engine.Simulation.Statics.Remove(handle);
-                    }
-                    foreach (var shape in statics.Shapes)
-                    {
-                        _engine.Simulation.Shapes.RemoveAndDispose(shape, _engine.BufferPool);
-                    }
+                    _engine.Simulation.Statics.Remove(handle);
+                }
+            }
+            if (statics.ReleaseActions != null)
+            {
+                foreach (var releaseAction in statics.ReleaseActions)
+                {
+                    releaseAction();
                 }
             }
         }
+
+        private void OnStaticsChanged(in Entity entity, in components.Statics cOldStatics, in components.Statics cNewStatics)
+        {
+            // We need to assume the user added the new entity.
+            _removeStatics(cOldStatics);
+        }
+        private void OnStaticsRemoved(in Entity entity, in components.Statics cStatics)
+        {
+            _removeStatics(cStatics);
+        }
+
 
         private void OnBodyChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
         {
@@ -42,17 +53,6 @@ namespace engine.physics
                 _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
             }
         }
-
-        private void OnStaticsChanged(in Entity entity, in components.Statics cOldStatics, in components.Statics cNewStatics)
-        {
-            // We need to assume the user added the new entity.
-            _removeStatics(cOldStatics);
-        }
-        private void OnStaticsRemoved(in Entity entity, in components.Statics cStatics)
-        {
-            _removeStatics(cStatics);
-        }
-
 
         public void Dispose()
         {
