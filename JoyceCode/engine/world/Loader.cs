@@ -245,7 +245,7 @@ return molArrayMap;
                     if (null != fragment)
                     {
                         // Mark as used.
-                        // trace( "Using "+strKey );
+                        Trace( "Using "+strKey );
                         fragment.LastIteration = _lastLoadedIteration;
                     }
                     else

@@ -14,6 +14,11 @@ namespace Karawan
 
 
             var engine = Karawan.platform.cs1.Platform.EasyCreate(args);
+
+            {
+                engine.ConsoleLogger logger = new(engine);
+            }
+
             engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
 
             // Add the engine web service to the host.

@@ -7,6 +7,15 @@ namespace engine
 {
     static public class Logger
     {
+        private static object _lo = new();
+
+        private static ILogTarget _logTarget = null;
+
+        static void addLogEntry(in string logEntry)
+        {
+
+        }
+
         public enum Level
         {
             Fatal = 0,
@@ -55,7 +64,18 @@ namespace engine
 
         public static void Log(in Level level, in string logEntry)
         {
-            Console.WriteLine(logEntry);
+            ILogTarget logTarget = null;
+            lock (_lo) {
+                logTarget = _logTarget;
+            }
+            if (null != logTarget)
+            {
+                logTarget.AddLogEntry(level, logEntry);
+            }
+            else
+            {
+                Console.WriteLine(logEntry);
+            }
         }
 
         public static void Trace(in string msg)
@@ -90,6 +110,14 @@ namespace engine
             var logEntry = _createLogEntry(Level.Error, msg);
             Log(Level.Fatal, msg);
             throw new InvalidOperationException(logEntry);
+        }
+
+        public static void SetLogTarget( ILogTarget logTarget )
+        {
+            lock(_lo)
+            {
+                _logTarget = logTarget;
+            }
         }
     }
 }
