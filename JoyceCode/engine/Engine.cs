@@ -165,10 +165,14 @@ namespace engine
         private void _executeDoomedEntities()
         {
             List<IList<DefaultEcs.Entity>> listList;
-            lock(_lo)
+            lock (_lo)
             {
+                if (_listDoomedEntityLists.Count == 0) 
+                { 
+                    return;
+                }
                 listList = _listDoomedEntityLists;
-                _listDoomedEntityLists = null;
+                _listDoomedEntityLists = new();
             }
             if( null==listList )
             {
@@ -519,8 +523,13 @@ namespace engine
             _managerPhysics.Manage(this);
 
             _logicalThread = new Thread(_logicalThreadFunction);
-       }
+        }
 
+
+        public bool IsRunning()
+        {
+            return _platform.IsRunning();
+        }
 
         public void PlatformSetupDone()
         {

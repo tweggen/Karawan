@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Threading;
+using static engine.Logger;
 
 namespace engine.world
 {
@@ -171,7 +171,7 @@ return molArrayMap;
             foreach (var strKey in eraseList )
             {
                 var frag = _mapFrags[strKey];
-                if (world.MetaGen.TRACE_WORLD_LOADER) trace($"WorldLoader.releaseFragmentList(): Discarding fragment {strKey}");
+                if (world.MetaGen.TRACE_WORLD_LOADER) Trace($"WorldLoader.releaseFragmentList(): Discarding fragment {strKey}");
                 frag.WorldFragmentRemove();
                 frag.WorldFragmentUnload();
                 _mapFrags.Remove(strKey);

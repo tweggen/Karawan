@@ -20,7 +20,7 @@ namespace Karawan.platform.cs1.splash
 
         private void _audioFunction()
         {
-            while (true)
+            while (_engine.IsRunning())
             {
                 List<RlMusicEntry> rlMusicEntries;
                 lock (_lo)
