@@ -2,6 +2,7 @@
 using Raylib_CsLo;
 using System;
 using System.Numerics;
+using static Karawan.platform.cs1.splash.LightManager;
 
 namespace Karawan.platform.cs1.splash
 {
@@ -64,6 +65,7 @@ namespace Karawan.platform.cs1.splash
                     (byte)(255f * color.Z),
                     (byte)(255f * color.W)
                 );
+                _lights[_lightsCount] = light;
                 _lightsCount++;
             }
         }
@@ -126,9 +128,9 @@ namespace Karawan.platform.cs1.splash
 
         private void _updateAllLights(ref Shader shader)
         {
-            foreach (var light in _lights)
+            for (int i = 0; i < _lightsCount; i++)
             {
-                _updateLightValues(ref shader, light);
+                _updateLightValues(ref shader, _lights[i]);                
             }
         }
 
@@ -164,7 +166,7 @@ namespace Karawan.platform.cs1.splash
                     break;
                 }
 
-                    var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.DirectionalLight>();
                 _addLightEntry(LightType.LIGHT_DIRECTIONAL,
@@ -201,7 +203,7 @@ namespace Karawan.platform.cs1.splash
         private void _applyAmbientLights(in RenderFrame renderFrame, in RlShaderEntry rlShaderEntry)
         {
             int ambientLoc = Raylib.GetShaderLocation(rlShaderEntry.RlShader, "ambient");
-            renderFrame.ColAmbient = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+            //renderFrame.ColAmbient = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
             Raylib.SetShaderValue(
                 rlShaderEntry.RlShader,
                 ambientLoc, renderFrame.ColAmbient,
