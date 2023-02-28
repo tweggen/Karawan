@@ -267,8 +267,15 @@ namespace engine.world
             var enumDoomedEntities = Engine.GetEcsWorld().GetEntities()
                 .With<engine.world.components.FragmentId>()
                 .AsEnumerable();
-            DefaultEcs.Entity[] arrDoomedEntities = enumDoomedEntities.ToArray();
-            Engine.AddDoomedEntities(arrDoomedEntities);
+            List<DefaultEcs.Entity> listDoomedEntities = new();
+            foreach(var entity in enumDoomedEntities)
+            {
+                if (entity.Get<engine.world.components.FragmentId>().Id == _id)
+                {
+                    listDoomedEntities.Add(entity);
+                }
+            }
+            Engine.AddDoomedEntities(listDoomedEntities);
         }
 
 
