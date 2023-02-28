@@ -51,10 +51,10 @@ namespace nogame
                 else
                 {
                     _t = 0f;
-                    // _eLogo.Dispose();
-                    //_eCamera.Dispose();
-                    //_eLight.Dispose();
-                    //_isCleared = true;
+                    _eLogo.Dispose();
+                    _eCamera.Dispose();
+                    _eLight.Dispose();
+                    _isCleared = true;
                 }
             }
         }
