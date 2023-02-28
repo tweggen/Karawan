@@ -1,4 +1,5 @@
-﻿using DefaultEcs;
+﻿using BepuPhysics;
+using DefaultEcs;
 using DefaultEcs.Resource;
 using engine;
 using Karawan.platform.cs1.splash.components;
@@ -13,20 +14,24 @@ namespace Karawan.platform.cs1.splash
     {
         private object _lo = new object();
         private engine.Engine _engine;
-        private System.Threading.Timer _audioThreadTimer;
+        private System.Threading.Thread _audioThread;
 
         private List<RlMusicEntry> _rlMusicEntries = new();
 
-        private void _audioFunction(object state)
+        private void _audioFunction()
         {
-            List<RlMusicEntry> rlMusicEntries;
-            lock(_lo)
+            while (true)
             {
-                rlMusicEntries = _rlMusicEntries;
-            }
-            foreach(var rlMusicEntry in rlMusicEntries)
-            {
-                Raylib_CsLo.Raylib.UpdateMusicStream(rlMusicEntry.RlMusic);
+                List<RlMusicEntry> rlMusicEntries;
+                lock (_lo)
+                {
+                    rlMusicEntries = _rlMusicEntries;
+                }
+                foreach (var rlMusicEntry in rlMusicEntries)
+                {
+                    Raylib_CsLo.Raylib.UpdateMusicStream(rlMusicEntry.RlMusic);
+                }
+                 System.Threading.Thread.Sleep(15);
             }
         }
 
@@ -63,7 +68,8 @@ namespace Karawan.platform.cs1.splash
         public MusicManager(engine.Engine engine)
         {
             _engine = engine;
-            _audioThreadTimer = new(_audioFunction, null, 100, 20);
+            _audioThread = new(_audioFunction);
+            _audioThread.Start();
         }
     }
 }

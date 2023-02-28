@@ -23,7 +23,7 @@ namespace engine
 
         private DefaultEcs.World _ecsWorld;
         private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
-        private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists;
+        private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
 
         private engine.IPlatform _platform;
 
