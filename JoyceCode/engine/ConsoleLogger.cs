@@ -16,6 +16,12 @@ namespace engine
 
         public void AddLogEntry(in engine.Logger.Level level, in string logEntry)
         {
+#if !DEBUG
+            if( level > engine.Logger.Level.Warning )
+            {
+                return;
+            }
+#endif
             lock(_lo)
             {
                 _listBuffer.Add(logEntry);
