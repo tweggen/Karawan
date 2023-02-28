@@ -27,7 +27,7 @@ namespace Karawan.platform.cs1.splash
             {
                 mesh.GenerateCCWNormals();
             }
-            rlMeshEntry = new();
+            rlMeshEntry = new(mesh);
 
             var nVertices = mesh.Vertices.Count;
             var nIndices = mesh.Indices.Count;
@@ -37,7 +37,7 @@ namespace Karawan.platform.cs1.splash
                 {
                     // TXWTODO: Throw an exception
                     System.Console.WriteLine("Problem");
-                    rlMeshEntry = new();
+                    rlMeshEntry = new(mesh);
                     return;
                 }
             }

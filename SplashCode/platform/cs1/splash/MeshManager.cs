@@ -7,17 +7,20 @@ using System.Collections.Generic;
 
 namespace Karawan.platform.cs1.splash
 {
-    class MeshManager : AResourceManager<engine.joyce.Mesh, RlMeshEntry>
+    public class MeshManager : AResourceManager<engine.joyce.Mesh, RlMeshEntry>
     {
-
-        protected unsafe override RlMeshEntry Load(engine.joyce.Mesh jMesh)
+        public unsafe void FillRlMeshEntry(in RlMeshEntry rlMeshEntry)
         {
-            RlMeshEntry rlMeshEntry;
-            MeshGenerator.CreateRaylibMesh(jMesh, out rlMeshEntry);
             fixed (Raylib_CsLo.Mesh* pRlMeshEntry = &rlMeshEntry.RlMesh)
             {
                 Raylib.UploadMesh(pRlMeshEntry, false);
             }
+        }
+
+        protected override RlMeshEntry Load(engine.joyce.Mesh jMesh)
+        {
+            RlMeshEntry rlMeshEntry;
+            MeshGenerator.CreateRaylibMesh(jMesh, out rlMeshEntry);
             return rlMeshEntry;
         }
 

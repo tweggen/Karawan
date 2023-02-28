@@ -7,31 +7,47 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using BepuUtilities;
 
-namespace Karawan.platform.cs1
+namespace Karawan.platform.cs1.splash
 {
-
     public class CameraOutput
     {
-        public uint CameraMask = 0;
+        private uint _cameraMask = 0;
+        public uint CameraMask { get => _cameraMask; }
 
-        public int NEntities = 0;
-        public int NMeshes = 0;
-        public int NMaterials = 0;
+        private int _nEntities = 0;
+        private int _nMeshes = 0;
+        private int _nMaterials = 0;
 
-        public Dictionary<RlMaterialEntry, MaterialBatch> MaterialBatches;
-        public Dictionary<RlMaterialEntry, MaterialBatch> TransparentMaterialBatches;
+        private Dictionary<RlMaterialEntry, MaterialBatch> MaterialBatches = new();
+        private Dictionary<RlMaterialEntry, MaterialBatch> TransparentMaterialBatches = new();
 
+        private MaterialManager _materialManager;
+        private MeshManager _meshManager;
+
+        /**
+         * The actual rendering method. Must be called from the context of
+         * the render thread class.
+         * 
+         * Uploaders meshes/textures if required.
+         */
         private void _renderMaterialBatches(in Dictionary<RlMaterialEntry, MaterialBatch> mb)
         {
             foreach (var materialItem in mb)
             {
+                if (!materialItem.Value.RlMaterialEntry.HasRlMaterial())
+                {
+                    _materialManager.FillRlMaterialEntry(materialItem.Value.RlMaterialEntry);
+                }
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
+                    if (!meshItem.Value.RlMeshEntry.IsMeshUploaded())
+                    {
+                        _meshManager.FillRlMeshEntry(meshItem.Value.RlMeshEntry);
+                    }
                     var nMatrices = meshItem.Value.Matrices.Count;
                     /*
                      * I must draw using the instanced call because I only use an instanced shader.
                      */
-                    // var arrayMatrices = meshItem.Value.Matrices.ToArray();
 #if NET6_0_OR_GREATER
                     var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
 #else
@@ -52,13 +68,13 @@ namespace Karawan.platform.cs1
             in RlMaterialEntry rlMaterialEntry,
             in Matrix4x4 matrix)
         {
-            NEntities++;
+            _nEntities++;
 
             /*
              * Do we have an entry for the material?
              */
             Dictionary<RlMaterialEntry, MaterialBatch> mbs;
-            if (!rlMaterialEntry.HasTransparency)
+            if (!rlMaterialEntry.HasTransparency())
             {
                 mbs = MaterialBatches;
             }
@@ -70,9 +86,9 @@ namespace Karawan.platform.cs1
             mbs.TryGetValue(rlMaterialEntry, out materialBatch);
             if (null == materialBatch)
             {
-                materialBatch = new MaterialBatch();
+                materialBatch = new MaterialBatch(rlMaterialEntry);
                 mbs[rlMaterialEntry] = materialBatch;
-                NMaterials++;
+                _nMaterials++;
             }
 
             /*
@@ -82,9 +98,9 @@ namespace Karawan.platform.cs1
             materialBatch.MeshBatches.TryGetValue(rlMeshEntry, out meshBatch);
             if (null == meshBatch)
             {
-                meshBatch = new MeshBatch();
+                meshBatch = new MeshBatch(rlMeshEntry);
                 materialBatch.MeshBatches[rlMeshEntry] = meshBatch;
-                NMeshes++;
+                _nMeshes++;
             }
 
             /*
@@ -96,33 +112,30 @@ namespace Karawan.platform.cs1
 
         public void RenderStandard()
         {
-            if (null != MaterialBatches)
-            {
-                _renderMaterialBatches(MaterialBatches);
-            }
+            _renderMaterialBatches(MaterialBatches);
         }
 
 
         public void RenderTransparent()
         {
-            if (null != TransparentMaterialBatches)
-            {
-                _renderMaterialBatches(TransparentMaterialBatches);
-            }
+            _renderMaterialBatches(TransparentMaterialBatches);
         }
 
 
         public string GetDebugInfo()
         {
-            return $"BatchCollector: {NEntities} entities, {NMaterials} materials, {NMeshes} meshes, 1 shaders.";
+            return $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, 1 shaders.";
         }
 
 
-        public CameraOutput(in uint cameraMask)
+        public CameraOutput(
+            in MaterialManager materialManager, 
+            in MeshManager meshManager,
+            in uint cameraMask)
         {
-            CameraMask = cameraMask;
-            MaterialBatches = new();
-            TransparentMaterialBatches = new();
+            _cameraMask = cameraMask;
+            _materialManager = materialManager;
+            _meshManager = meshManager;
         }
     }
 

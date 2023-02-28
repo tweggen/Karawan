@@ -44,7 +44,7 @@ namespace Karawan.platform.cs1.splash
                 RenderPart renderPart = new();
                 renderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
                 renderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
-                CameraOutput cameraOutput = new(renderPart.Camera3.CameraMask);
+                CameraOutput cameraOutput = new(_materialManager, _meshManager, renderPart.Camera3.CameraMask);
                 renderPart.CameraOutput = cameraOutput;
 
                 _drawRlMeshesSystem.Update(cameraOutput);

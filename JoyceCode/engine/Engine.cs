@@ -430,11 +430,12 @@ namespace engine
                 stopWatchProcessing.Reset();
                 stopWatchProcessing.Start();
                 float df = (float)totalPassedMicros / 1000000f;
-                Trace($"Calling _onLogicalFrame({df}ms).");
+                Trace($"Calling _onLogicalFrame({df}s).");
                 _onLogicalFrame(df);
                 stopWatchProcessing.Stop();
                 totalProcessingMicros = (int)stopWatchProcessing.Elapsed.TotalMicroseconds;
-                if( totalProcessingMicros>microFrameDuration )
+                // Warning($"Processing of logical frame took {totalProcessingMicros}us.");
+                if ( totalProcessingMicros>microFrameDuration )
                 {
                     Warning($"Processing of logical frame took {totalProcessingMicros}us, longer than one logical frame({microFrameDuration}us).");
                 } else

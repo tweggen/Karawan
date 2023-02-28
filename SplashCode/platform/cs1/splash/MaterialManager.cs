@@ -94,7 +94,7 @@ namespace Karawan.platform.cs1.splash
 
         private unsafe void _createDefaultMaterial()
         {
-            var loadingMaterial = new RlMaterialEntry();
+            var loadingMaterial = new RlMaterialEntry(new engine.joyce.Material());
 
             Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
             var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
@@ -172,11 +172,7 @@ namespace Karawan.platform.cs1.splash
 
         private unsafe RlMaterialEntry _createRlMaterialEntry(in engine.joyce.Material jMaterial)
         {
-            RlMaterialEntry rlMaterialEntry = new RlMaterialEntry();
-            if (jMaterial.HasTransparency)
-            {
-                rlMaterialEntry.HasTransparency = true;
-            }
+            RlMaterialEntry rlMaterialEntry = new RlMaterialEntry(jMaterial);
 
             return rlMaterialEntry;
         }
@@ -195,40 +191,6 @@ namespace Karawan.platform.cs1.splash
         {
             entity.Set<components.RlMaterial>(new components.RlMaterial(rlMaterialEntry));
         }
-
-#if false
-        /**
-         * Return a material entry for the given material.
-         * This references all the textures used within.
-         */
-        public RlMaterialEntry FindRlMaterial(in engine.joyce.Material jMaterial)
-        {
-            if( null==jMaterial )
-            {
-                return null;
-            }
-            RlMaterialEntry rme;
-            string matKey = _materialKey(jMaterial);
-            // TXWTODO add reference
-            lock(_lo)
-            {
-                if( !_dictMaterials.ContainsKey(matKey))
-                {
-                    /*
-                     * Create new material.
-                     */
-                    rme = _createRlMaterialEntry(jMaterial);
-                    // TXWTODO: create a "creating material" state to keep that mutex open for a while.
-                    _dictMaterials.Add(matKey, rme);
-                } else
-                {
-                    rme = _dictMaterials[matKey];
-                }
-            }
-            return rme;
-        }
-#endif
-
 
         public RlMaterialEntry GetUnloadedMaterial()
         {

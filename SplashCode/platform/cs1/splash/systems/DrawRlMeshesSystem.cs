@@ -25,13 +25,13 @@ namespace Karawan.platform.cs1.splash.systems
 
         private void _appendMeshRenderList(
             in CameraOutput cameraOutput,
-            in ReadOnlySpan<DefaultEcs.Entity> entities, uint cameraMask
+            in ReadOnlySpan<DefaultEcs.Entity> entities
         )
         {
             foreach (var entity in entities)
             {
                 var transform3ToWorld = entity.Get<engine.transform.components.Transform3ToWorld>();
-                if (0 != (transform3ToWorld.CameraMask & cameraMask))
+                if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
                 {
                     var rlMeshEntry = entity.Get<splash.components.RlMesh>().MeshEntry;
                     var rlMaterialEntry = entity.Get<splash.components.RlMaterial>().MaterialEntry;
@@ -45,7 +45,6 @@ namespace Karawan.platform.cs1.splash.systems
                     {
                         rlMaterialEntry = _materialManager.GetUnloadedMaterial();
                     }
-                    cameraOutput.NEntities++;
 
                     var rMatrix = transform3ToWorld.Matrix;
 
@@ -67,7 +66,7 @@ namespace Karawan.platform.cs1.splash.systems
 
         protected override void Update(CameraOutput cameraOutput, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
-            _appendMeshRenderList(cameraOutput, entities, cameraOutput.CameraMask);
+            _appendMeshRenderList(cameraOutput, entities);
         }
 
 
