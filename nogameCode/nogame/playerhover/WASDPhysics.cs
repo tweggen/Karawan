@@ -74,7 +74,7 @@ namespace nogame.playerhover
 
             if (frontMotion != 0f)
             {
-                float power = 20f;
+                float power = 50f;
                 // The acceleration looks wrong when combined with rotation.
                 vTotalImpulse += power * vFront * frontMotion / 256f;
             }

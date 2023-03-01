@@ -41,17 +41,11 @@ namespace engine.physics
         private void OnBodyChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
         {
             // We need to assume the user added the new entity.
-            lock (_engine.Simulation)
-            {
-                _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
-            }
+            _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
         }
         private void OnBodyRemoved(in Entity entity, in components.Body cBody)
         {
-            lock (_engine.Simulation)
-            {
-                _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
-            }
+            _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
         }
 
         public void Dispose()
