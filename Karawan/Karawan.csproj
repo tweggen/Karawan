@@ -24,10 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DefaultEcs" Version="0.17.2" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
     <ProjectReference Include="..\nogame\nogame.csproj" />
     <ProjectReference Include="..\splash\splash.csproj" />

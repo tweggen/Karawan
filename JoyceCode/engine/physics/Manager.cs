@@ -57,13 +57,13 @@ namespace engine.physics
         {
             _engine = engine;
 
-            IEnumerable<IDisposable> GetSubscriptions(World w)
+            /* IEnumerable<IDisposable>*/ void GetSubscriptions(World w)
             {
                 // yield return w.SubscribeComponentAdded<components.Body>(OnComponentAdded);
-                yield return w.SubscribeComponentChanged<components.Body>(OnBodyChanged);
-                yield return w.SubscribeComponentRemoved<components.Body>(OnBodyRemoved);
-                yield return w.SubscribeComponentChanged<components.Statics>(OnStaticsChanged);
-                yield return w.SubscribeComponentRemoved<components.Statics>(OnStaticsRemoved);
+                /* yield return */ w.SubscribeComponentChanged<components.Body>(OnBodyChanged);
+                /* yield return */ w.SubscribeComponentRemoved<components.Body>(OnBodyRemoved);
+                /* yield return */ w.SubscribeComponentChanged<components.Statics>(OnStaticsChanged);
+                /* yield return */ w.SubscribeComponentRemoved<components.Statics>(OnStaticsRemoved);
             }
             DefaultEcs.World world = _engine.GetEcsWorld();
 

@@ -142,6 +142,8 @@ namespace Karawan.platform.cs1
         {
             string baseDirectory = System.AppContext.BaseDirectory;
             System.Console.WriteLine($"Running in directory {baseDirectory}" );
+            Raylib.SetTraceLogLevel(4 /* LOG_WARNING */);
+            //Raylib.SetTraceLogCallback(_raylibTraceLog);
 
             var display = Raylib.GetCurrentMonitor();
 #if DEBUG
@@ -166,6 +168,7 @@ namespace Karawan.platform.cs1
             Raylib.DisableCursor();
             Raylib.SetTargetFPS(60);
             Raylib.InitAudioDevice();
+            Raylib.SetMasterVolume(0.1f);
 
             _aSplash = new splash.API(_engine);
         }

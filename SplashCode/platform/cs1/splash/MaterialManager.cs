@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Text;
 using DefaultEcs;
 using DefaultEcs.Resource;
+using Material = engine.joyce.Material;
 
 namespace Karawan.platform.cs1.splash
 {
@@ -177,10 +178,15 @@ namespace Karawan.platform.cs1.splash
             return rlMaterialEntry;
         }
 
+
+        private unsafe void _purgeMaterial(Material jMaterial, RlMaterialEntry resource)
+        {
+            
+        }
+
         protected override unsafe RlMaterialEntry Load(engine.joyce.Material jMaterial)
         {
-            RlMaterialEntry rlMaterialEntry;
-            rlMaterialEntry = _createRlMaterialEntry(jMaterial);
+            RlMaterialEntry rlMaterialEntry = _createRlMaterialEntry(jMaterial);
             return rlMaterialEntry;
         }
 
@@ -190,6 +196,13 @@ namespace Karawan.platform.cs1.splash
             RlMaterialEntry rlMaterialEntry)
         {
             entity.Set<components.RlMaterial>(new components.RlMaterial(rlMaterialEntry));
+        }
+
+        protected override void Unload(Material jMaterial, RlMaterialEntry resource)
+        {
+            base.Unload(jMaterial, resource);
+            // TXWTODO: Purge Material
+            _purgeMaterial(jMaterial, resource);
         }
 
         public RlMaterialEntry GetUnloadedMaterial()

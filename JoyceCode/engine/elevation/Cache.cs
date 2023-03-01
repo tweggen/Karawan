@@ -194,7 +194,7 @@ namespace engine.elevation
         {
             string layer = layer0;
 
-            Trace($"Entry requested for layer {layer}");
+            // Trace($"Entry requested for layer {layer}");
 
             var elevationAdapter = new LayerAdapter(this, layer);
 
