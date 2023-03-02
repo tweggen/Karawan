@@ -17,6 +17,7 @@ namespace Karawan.platform.cs1.splash
         private int _nEntities = 0;
         private int _nMeshes = 0;
         private int _nMaterials = 0;
+        private int _nInstances = 0;
 
         private Dictionary<RlMaterialEntry, MaterialBatch> MaterialBatches = new();
         private Dictionary<RlMaterialEntry, MaterialBatch> TransparentMaterialBatches = new();
@@ -107,6 +108,7 @@ namespace Karawan.platform.cs1.splash
              * Now we can add our matrix to the list of matrices.
              */
             meshBatch.Matrices.Add(Matrix4x4.Transpose(matrix));
+            _nInstances++;
         }
 
 
@@ -124,7 +126,7 @@ namespace Karawan.platform.cs1.splash
 
         public string GetDebugInfo()
         {
-            return $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, 1 shaders.";
+            return $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, {_nInstances} instances, 1 shaders.";
         }
 
 

@@ -12,13 +12,13 @@ namespace builtin.tools
 {
     public class ExtrudePoly
     {
-        private List<Vector3> _poly;
-        private List<Vector3> _path;
-        private int _physIndex;
-        private float _mpt;
-        private bool _inverseTexture;
-        private bool _addFloor;
-        private bool _addCeiling;
+        private readonly List<Vector3> _poly;
+        private readonly List<Vector3> _path;
+        private readonly int _physIndex;
+        private readonly float _mpt;
+        private readonly bool _inverseTexture;
+        private readonly bool _addFloor;
+        private readonly bool _addCeiling;
     
         public void BuildGeom(
             in engine.world.Fragment worldFragment,
@@ -304,8 +304,14 @@ namespace builtin.tools
             bool addFloor,
             bool addCeiling
         ) {
-            if( null==poly ) {
+            if (null==poly) 
+            {
                 ErrorThrow("Got a null polygon.", le => new ArgumentNullException(le));
+            }
+
+            if (null==path)
+            {
+                ErrorThrow("Got a null path", le => new ArgumentNullException(le));
             }
             _poly = new List<Vector3>( poly );
             _path = new List<Vector3>( path );

@@ -7,9 +7,8 @@ namespace Karawan.platform.cs1.splash
 {
     public class MeshBatch
     {
-        // public Raylib_CsLo.Mesh Mesh;
-        public RlMeshEntry RlMeshEntry;
-        public List<Matrix4x4> Matrices;
+        public readonly RlMeshEntry RlMeshEntry;
+        public readonly List<Matrix4x4> Matrices;
 
         public MeshBatch(RlMeshEntry rlMeshEntry)
         {
