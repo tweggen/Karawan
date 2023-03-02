@@ -29,6 +29,12 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<AndroidNativeLibrary Include="Platforms\Android\Resources\lib\libraylib.4.0.0.so">
+			<Abi>armeabi</Abi>
+		</AndroidNativeLibrary>
+	</ItemGroup>
+	
 	<PropertyGroup>
 	  <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net7.0-windows10.0.19041.0</TargetFrameworks>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -63,9 +69,4 @@
 	  <ProjectReference Include="..\splash\splash.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<AndroidNativeLibrary Include="Platforms\Android\Resources\libraylib.4.0.0.so">
-			<Abi>armeabi</Abi>
-		</AndroidNativeLibrary>
-	</ItemGroup>
 </Project>

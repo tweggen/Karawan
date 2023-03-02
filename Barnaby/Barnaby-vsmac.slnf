@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "Barnaby.sln",
+    "projects": [
+		"Barnaby\\Barnaby.csproj",
+
+		"Barnaby.Mobile\\Barnaby.Mobile.csproj",
+
+		"Barnaby.Wasm\\Barnaby.Wasm.csproj",
+
+		"Barnaby.Skia.Gtk\\Barnaby.Skia.Gtk.csproj",
+
+		"Barnaby.Skia.Gtk\\Barnaby.Skia.Gtk.csproj",
+    ]
+  }
+}

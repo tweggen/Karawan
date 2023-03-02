@@ -1,6 +1,8 @@
 ﻿using Android.App;
 using Android.Runtime;
+using Java.Lang;
 using System.Runtime.InteropServices;
+using static AndroidX.Navigation.Navigator;
 
 
 namespace Wuka
@@ -13,7 +15,9 @@ namespace Wuka
             : base(handle, ownership)
         {
             {
-
+                //string raylibname = JavaSystem.MapLibraryName("raylib");
+                //Console.WriteLine($"Native name would be {raylibname}");
+                //JavaSystem.LoadLibrary("raylib"); 
                 var engine = Karawan.platform.cs1.Platform.EasyCreate(new string[] {});
                 engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
 
