@@ -41,10 +41,12 @@ namespace engine
         private IScene _mainScene = null;
 
         private Queue<Action<DefaultEcs.Entity>> _queueEntitySetupActions = new();
+        private Queue<Action> _queueCleanupActions = new();
 
         private Dictionary<string, string> _dictConfigParams = new();
 
         private Thread _logicalThread;
+        private Stopwatch _queueStopwatch = new();
 
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
@@ -197,16 +199,18 @@ namespace engine
         }
 
 
-        private void _executeEntitySetupActions()
+        private void _executeEntitySetupActions(float matTime)
         {
-            while(true)
+            _queueStopwatch.Reset();
+            _queueStopwatch.Start();
+            while(_queueStopwatch.Elapsed.TotalMilliseconds < matTime*1000f)
             {
                 Action<DefaultEcs.Entity> action;
                 lock (_lo)
                 {
                     if( _queueEntitySetupActions.Count==0)
                     {
-                        return;
+                        break;
                     }
                     action = _queueEntitySetupActions.Dequeue();
                 }
@@ -220,6 +224,7 @@ namespace engine
                     entity.Dispose();
                 }
             }
+            _queueStopwatch.Stop();
         }
 
 
@@ -228,6 +233,43 @@ namespace engine
             lock (_lo)
             {
                 _queueEntitySetupActions.Enqueue(action); 
+            }
+        }
+        
+        
+        private void _executeCleanupActions(float maxTime)
+        {
+            _queueStopwatch.Reset();
+            _queueStopwatch.Start();
+            while(_queueStopwatch.Elapsed.TotalMilliseconds < maxTime*1000f)
+            {
+                Action action;
+                lock (_lo)
+                {
+                    if( _queueCleanupActions.Count==0)
+                    {
+                        break;
+                    }
+                    action = _queueCleanupActions.Dequeue();
+                }
+
+                try {                    
+                    action();
+                } catch( Exception e )
+                {
+                    Warning($"Error executing cleanup action: {e}.");
+                }
+            }
+
+            _queueStopwatch.Stop();
+        }
+        
+
+        public void QueueCleanupAction(Action action)
+        {
+            lock (_lo)
+            {
+                _queueCleanupActions.Enqueue(action);
             }
         }
 
@@ -361,6 +403,7 @@ namespace engine
              */
             _platform.CollectRenderData();
 
+            // TXWTODO: Measure the time of all actions.
             /*
              * Async delete any entities that shall be deleted 
              */
@@ -374,7 +417,8 @@ namespace engine
             /*
              * Async create / setup new entities.
              */
-            _executeEntitySetupActions();
+            _executeEntitySetupActions(0.005f);
+            _executeCleanupActions(0.005f);
         }
 
 

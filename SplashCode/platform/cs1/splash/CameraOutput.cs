@@ -2,7 +2,7 @@
 using Karawan.platform.cs1.splash;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BepuUtilities;
@@ -19,11 +19,11 @@ namespace Karawan.platform.cs1.splash
         private int _nMaterials = 0;
         private int _nInstances = 0;
 
-        private Dictionary<RlMaterialEntry, MaterialBatch> MaterialBatches = new();
-        private Dictionary<RlMaterialEntry, MaterialBatch> TransparentMaterialBatches = new();
+        private readonly Dictionary<RlMaterialEntry, MaterialBatch> _materialBatches = new();
+        private readonly Dictionary<RlMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
 
-        private MaterialManager _materialManager;
-        private MeshManager _meshManager;
+        private readonly MaterialManager _materialManager;
+        private readonly MeshManager _meshManager;
 
         /**
          * The actual rendering method. Must be called from the context of
@@ -33,17 +33,36 @@ namespace Karawan.platform.cs1.splash
          */
         private void _renderMaterialBatches(in Dictionary<RlMaterialEntry, MaterialBatch> mb)
         {
+            Stopwatch swUpload = new();
             foreach (var materialItem in mb)
             {
-                if (!materialItem.Value.RlMaterialEntry.HasRlMaterial())
+                bool haveMaterial = materialItem.Value.RlMaterialEntry.HasRlMaterial();
+                if (!haveMaterial && swUpload.Elapsed.TotalMilliseconds < 5f)
                 {
+                    swUpload.Start();
                     _materialManager.FillRlMaterialEntry(materialItem.Value.RlMaterialEntry);
+                    haveMaterial = true;
+                    swUpload.Stop();
+                }
+
+                if (!haveMaterial)
+                {
+                    continue;
                 }
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
-                    if (!meshItem.Value.RlMeshEntry.IsMeshUploaded())
+                    bool haveMesh = meshItem.Value.RlMeshEntry.IsMeshUploaded(); 
+                    if (!haveMesh && swUpload.Elapsed.TotalMilliseconds < 5f)
                     {
+                        swUpload.Start();
                         _meshManager.FillRlMeshEntry(meshItem.Value.RlMeshEntry);
+                        haveMesh = true;
+                        swUpload.Stop();
+                    }
+
+                    if (!haveMesh)
+                    {
+                        continue;
                     }
                     var nMatrices = meshItem.Value.Matrices.Count;
                     /*
@@ -77,11 +96,11 @@ namespace Karawan.platform.cs1.splash
             Dictionary<RlMaterialEntry, MaterialBatch> mbs;
             if (!rlMaterialEntry.HasTransparency())
             {
-                mbs = MaterialBatches;
+                mbs = _materialBatches;
             }
             else
             {
-                mbs = TransparentMaterialBatches;
+                mbs = _transparentMaterialBatches;
             }
             MaterialBatch materialBatch;
             mbs.TryGetValue(rlMaterialEntry, out materialBatch);
@@ -114,13 +133,13 @@ namespace Karawan.platform.cs1.splash
 
         public void RenderStandard()
         {
-            _renderMaterialBatches(MaterialBatches);
+            _renderMaterialBatches(_materialBatches);
         }
 
 
         public void RenderTransparent()
         {
-            _renderMaterialBatches(TransparentMaterialBatches);
+            _renderMaterialBatches(_transparentMaterialBatches);
         }
 
 

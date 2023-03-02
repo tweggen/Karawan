@@ -7,14 +7,18 @@ using System.Collections.Generic;
 
 namespace Karawan.platform.cs1.splash
 {
+    
     public class MeshManager : AResourceManager<engine.joyce.Mesh, RlMeshEntry>
     {
+        private readonly engine.Engine _engine;
+
         public unsafe void FillRlMeshEntry(in RlMeshEntry rlMeshEntry)
         {
             fixed (Raylib_CsLo.Mesh* pRlMeshEntry = &rlMeshEntry.RlMesh)
             {
                 Raylib.UploadMesh(pRlMeshEntry, false);
             }
+            Console.WriteLine($"MeshManager: Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
         }
 
         protected override RlMeshEntry Load(engine.joyce.Mesh jMesh)
@@ -31,14 +35,18 @@ namespace Karawan.platform.cs1.splash
 
         protected override unsafe void Unload(engine.joyce.Mesh jMesh, RlMeshEntry rlMeshEntry)
         {
-            Console.WriteLine($"MeshManager: Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
-            Raylib.UnloadMesh(rlMeshEntry.RlMesh);
+            _engine.QueueCleanupAction(() =>
+            {
+                Console.WriteLine($"MeshManager: Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
+                Raylib.UnloadMesh(rlMeshEntry.RlMesh);
+            });
             base.Unload(jMesh, rlMeshEntry);
         }
 
 
-        public MeshManager()
+        public MeshManager(in engine.Engine engine)
         {
+            _engine = engine;
         }
     }
 }

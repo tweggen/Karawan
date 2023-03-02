@@ -228,7 +228,7 @@ namespace Karawan.platform.cs1.splash
             _textureManager = new(_textureGenerator);
             _materialManager = new(_textureManager);
             _materialManager.Manage(engine.GetEcsWorld());
-            _meshManager = new();
+            _meshManager = new(engine);
             _meshManager.Manage(engine.GetEcsWorld());
             _musicManager = new(engine);
             _musicManager.Manage(engine.GetEcsWorld());
