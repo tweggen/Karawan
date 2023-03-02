@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using DefaultEcs;
 using BepuUtilities;
 using System.Collections.Generic;
+using System.ComponentModel;
+using static engine.Logger;
 
 namespace Karawan.platform.cs1.splash
 {
@@ -217,6 +219,7 @@ namespace Karawan.platform.cs1.splash
                 _renderFrame(renderFrame);
             } else
             {
+                Warning("No new frame found.");
                 System.Threading.Thread.Sleep(15);
             }
         }

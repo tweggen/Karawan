@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using static engine.Logger;
 using BepuUtilities;
 
 namespace Karawan.platform.cs1.splash
@@ -34,36 +35,43 @@ namespace Karawan.platform.cs1.splash
         private void _renderMaterialBatches(in Dictionary<RlMaterialEntry, MaterialBatch> mb)
         {
             Stopwatch swUpload = new();
+            int nSkippedMaterials = 0;
+            int nSkippedMeshes = 0;
             foreach (var materialItem in mb)
             {
                 bool haveMaterial = materialItem.Value.RlMaterialEntry.HasRlMaterial();
-                if (!haveMaterial && swUpload.Elapsed.TotalMilliseconds < 5f)
-                {
-                    swUpload.Start();
-                    _materialManager.FillRlMaterialEntry(materialItem.Value.RlMaterialEntry);
-                    haveMaterial = true;
-                    swUpload.Stop();
-                }
-
                 if (!haveMaterial)
                 {
-                    continue;
-                }
-                foreach (var meshItem in materialItem.Value.MeshBatches)
-                {
-                    bool haveMesh = meshItem.Value.RlMeshEntry.IsMeshUploaded(); 
-                    if (!haveMesh && swUpload.Elapsed.TotalMilliseconds < 5f)
-                    {
+                    if (swUpload.Elapsed.TotalMilliseconds < 1f) {
                         swUpload.Start();
-                        _meshManager.FillRlMeshEntry(meshItem.Value.RlMeshEntry);
-                        haveMesh = true;
+                        _materialManager.FillRlMaterialEntry(materialItem.Value.RlMaterialEntry);
                         swUpload.Stop();
                     }
-
+                    else
+                    {
+                        ++nSkippedMaterials;
+                        continue;
+                    } 
+                }
+                
+                foreach (var meshItem in materialItem.Value.MeshBatches)
+                {
+                    bool haveMesh = meshItem.Value.RlMeshEntry.IsMeshUploaded();
                     if (!haveMesh)
                     {
-                        continue;
+                        if (swUpload.Elapsed.TotalMilliseconds < 1f)
+                        {
+                            swUpload.Start();
+                            _meshManager.FillRlMeshEntry(meshItem.Value.RlMeshEntry);
+                            swUpload.Stop();
+                        }
+                        else
+                        {
+                            ++nSkippedMeshes;
+                            continue;
+                        }
                     }
+
                     var nMatrices = meshItem.Value.Matrices.Count;
                     /*
                      * I must draw using the instanced call because I only use an instanced shader.
@@ -80,6 +88,11 @@ namespace Karawan.platform.cs1.splash
                             nMatrices
                     );
                 }
+            }
+
+            if (0 < nSkippedMaterials || 0 < nSkippedMeshes)
+            {
+                Trace($"Needed to skip material uploads: {nSkippedMaterials}, skpped mesh uploads: {nSkippedMeshes}");
             }
         }
 

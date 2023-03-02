@@ -225,6 +225,18 @@ namespace engine
                 }
             }
             _queueStopwatch.Stop();
+
+            int queueLeft;
+            lock (_lo)
+            {
+                queueLeft = _queueEntitySetupActions.Count;
+            }
+
+            if (0 < queueLeft)
+            {
+                Trace( $"Left {queueLeft} items in setup actions queue.");
+            }
+
         }
 
 
@@ -260,8 +272,19 @@ namespace engine
                     Warning($"Error executing cleanup action: {e}.");
                 }
             }
-
             _queueStopwatch.Stop();
+
+            int queueLeft;
+            lock (_lo)
+            {
+                queueLeft = _queueCleanupActions.Count;
+            }
+
+            if (0 < queueLeft)
+            {
+                Trace( $"Left {queueLeft} items in cleanup queue.");
+            }
+
         }
         
 
@@ -417,8 +440,8 @@ namespace engine
             /*
              * Async create / setup new entities.
              */
-            _executeEntitySetupActions(0.005f);
-            _executeCleanupActions(0.005f);
+            _executeEntitySetupActions(0.001f);
+            _executeCleanupActions(0.001f);
         }
 
 
