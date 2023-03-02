@@ -464,7 +464,7 @@ namespace engine
                     stopWatchSleep.Reset();
                     if (millisToWait > 0)
                     {
-                        Trace($"Logical thread sleeping {millisToWait}ms.");
+                        // Trace($"Logical thread sleeping {millisToWait}ms.");
                         stopWatchSleep.Start();
                         System.Threading.Thread.Sleep(millisToWait);
                         stopWatchSleep.Stop();
@@ -477,7 +477,7 @@ namespace engine
                 stopWatchProcessing.Reset();
                 stopWatchProcessing.Start();
                 float df = (float)totalPassedMicros / 1000000f;
-                Trace($"Calling _onLogicalFrame({df}s).");
+                // Trace($"Calling _onLogicalFrame({df}s).");
                 _onLogicalFrame(df);
                 stopWatchProcessing.Stop();
                 totalProcessingMicros = (int)stopWatchProcessing.Elapsed.TotalMicroseconds;
