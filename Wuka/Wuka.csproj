@@ -29,18 +29,31 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<AndroidNativeLibrary Include="Platforms\Android\Resources\arm\lib\libraylib-android-arm.4.2.0.so">
+  <ItemGroup>
+		<AndroidNativeLibrary Include="Platforms\Android\Resources\arm\lib\libraylib.so">
 			<Abi>armeabi</Abi>
 		</AndroidNativeLibrary>
-		<AndroidNativeLibrary Include="Platforms\Android\Resources\x64\lib\libraylib-android-x86_64.4.2.0.so">
+    <AndroidNativeLibrary Include="Platforms\Android\Resources\arm64\lib\libraylib.so">
+	    <Abi>arm64-v8a</Abi>
+		</AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="Platforms\Android\Resources\x64\lib\libraylib.so">
 			<Abi>x86_64</Abi>
 		</AndroidNativeLibrary>
 	</ItemGroup>
 	
 	<PropertyGroup>
-	  <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net7.0-windows10.0.19041.0</TargetFrameworks>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android33.0|AnyCPU'">
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <DebugSymbols>True</DebugSymbols>
+	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <RunAOTCompilation>True</RunAOTCompilation>
 	</PropertyGroup>
 
 	<ItemGroup>
