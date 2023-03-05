@@ -34,6 +34,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Barnaby.Windows", "Barnaby\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Barnaby", "Barnaby\Barnaby\Barnaby.csproj", "{EB5B0A29-6457-4336-A442-6D3704F50154}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Wire.Shared", "Wire.Shared\Wire.Shared.shproj", "{1842530A-8EDB-4A38-8D3F-06E33E1EEFF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -195,8 +197,6 @@ Global
 		{04406E59-DC40-498A-8969-08876ED3AD96}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
 		{04406E59-DC40-498A-8969-08876ED3AD96}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|arm64.ActiveCfg = Debug|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|arm64.Build.0 = Debug|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Debug|arm64.Deploy.0 = Debug|Any CPU
@@ -231,8 +231,6 @@ Global
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|x86.Deploy.0 = Release|Any CPU
 		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.Debug|Any CPU.Build.0 = Debug|x64
-		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.Debug|Any CPU.Deploy.0 = Debug|x64
 		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.Debug|arm64.ActiveCfg = Debug|arm64
 		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.Debug|arm64.Build.0 = Debug|arm64
 		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.Debug|arm64.Deploy.0 = Debug|arm64
@@ -265,7 +263,6 @@ Global
 		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.ReleaseNoProfiling|x86.Build.0 = Release|x86
 		{BD5EFEBB-1113-496B-BAA2-C97978E4B02E}.ReleaseNoProfiling|x86.Deploy.0 = Release|x86
 		{EB5B0A29-6457-4336-A442-6D3704F50154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EB5B0A29-6457-4336-A442-6D3704F50154}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB5B0A29-6457-4336-A442-6D3704F50154}.Debug|arm64.ActiveCfg = Debug|Any CPU
 		{EB5B0A29-6457-4336-A442-6D3704F50154}.Debug|arm64.Build.0 = Debug|Any CPU
 		{EB5B0A29-6457-4336-A442-6D3704F50154}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -295,6 +292,7 @@ Global
 		SolutionGuid = {2C4A52FC-73DE-4876-8426-824572D9365E}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Wire.Shared\Wire.Shared.projitems*{1842530a-8edb-4a38-8d3f-06e33e1eeff6}*SharedItemsImports = 13
 		JoyceCode\JoyceCode.projitems*{4c6243f1-1b4f-4ecf-ace7-3e8e75b3b917}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{4f362d4b-f5a4-4b0d-9bdf-3b5a808f15de}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{65a59dba-280f-406d-b941-df4c68797ba5}*SharedItemsImports = 13

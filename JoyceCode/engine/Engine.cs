@@ -70,7 +70,7 @@ namespace engine
         }
 
 
-        public Simulation Simulation { get; protected set; }
+        public Simulation Simulation { get; private set;  }
         public BufferPool BufferPool { get; private set; }
         private physics.ContactEvents<EnginePhysicsEventHandler> _contactEvents;
         private ThreadDispatcher  _physicsThreadDispatcher;

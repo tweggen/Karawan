@@ -24,11 +24,19 @@ namespace Karawan.platform.cs1.splash.systems
 
         protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
+            Span<DefaultEcs.Entity> copiedEntites = stackalloc DefaultEcs.Entity[entities.Length];
+            entities.CopyTo(copiedEntites);
             foreach (var entity in entities)
             {
-                var cMusic = entity.Get<engine.audio.components.Music>();
-                var jMusic = new engine.audio.Music(cMusic.Url);
-                entity.Set(new ManagedResource<engine.audio.Music, RlMusicEntry>(jMusic));
+                /*
+                 * We allocate music entries only as soon we find them,
+                 */
+                if (entity.Has<engine.audio.components.Music>())
+                {
+                    var cMusic = entity.Get<engine.audio.components.Music>();
+                    var jMusic = new engine.audio.Music(cMusic.Url);
+                    entity.Set(new ManagedResource<engine.audio.Music, RlMusicEntry>(jMusic));
+                }
             }
         }
 
