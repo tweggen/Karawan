@@ -28,18 +28,6 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
-
-  <ItemGroup>
-		<AndroidNativeLibrary Include="Platforms\Android\Resources\arm\lib\libraylib.so">
-			<Abi>armeabi</Abi>
-		</AndroidNativeLibrary>
-    <AndroidNativeLibrary Include="Platforms\Android\Resources\arm64\lib\libraylib.so">
-	    <Abi>arm64-v8a</Abi>
-		</AndroidNativeLibrary>
-    <AndroidNativeLibrary Include="Platforms\Android\Resources\x64\lib\libraylib.so">
-			<Abi>x86_64</Abi>
-		</AndroidNativeLibrary>
-	</ItemGroup>
 	
 	<PropertyGroup>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -83,11 +71,6 @@
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
 	  <ProjectReference Include="..\splash\splash.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Platforms\Android\Resources\arm\lib\" />
-	  <Folder Include="Platforms\Android\Resources\x64\lib\" />
 	</ItemGroup>
 
 </Project>
