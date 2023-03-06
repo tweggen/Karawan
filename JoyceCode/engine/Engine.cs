@@ -33,6 +33,7 @@ namespace engine
         private engine.behave.systems.BehaviorSystem _systemBehave;
         private engine.physics.systems.ApplyPosesSystem _systemApplyPoses;
         private engine.physics.systems.MoveKineticsSystem _systemMoveKinetics;
+        private engine.audio.systems.MovingSoundsSystem _systemMovingSounds;
 
         private SortedDictionary<float, IScene> _dictScenes;
         private SortedDictionary<float, IPart> _dictParts;
@@ -384,6 +385,11 @@ namespace engine
                 }
             }
 
+            /*
+             * We can update moving sounds only after the behaviour has defined
+             * the velocities.
+             */
+            _systemMovingSounds.Update(dt);
 
             /*
              * Advance physics, based on new user input and/or gravitation.
@@ -586,6 +592,7 @@ namespace engine
             _systemBehave = new(this);
             _systemApplyPoses = new(this);
             _systemMoveKinetics = new(this);
+            _systemMovingSounds = new(this);
             _managerPhysics = new physics.Manager();
             _managerPhysics.Manage(this);
 

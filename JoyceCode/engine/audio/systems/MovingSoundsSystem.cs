@@ -42,23 +42,54 @@ namespace engine.audio.systems
                 Vector3 vEntityPos = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix.Translation;
                 Vector3 vRelativePos = vEntityPos - _listenerPosition;
 
-                float dist2 = vRelativePos.Length();
-                if (dist2 < 1f) dist2 = 1f;
-                float volumeAdjust = 1f / dist2;
+                float distance = vRelativePos.Length();
+                if (distance < 1f) distance = 1f;
+                float volumeAdjust = 1f / distance;
 
                 Vector3 vListenerVelocity = (_listenerPosition - _previousListenerPosition) / dt;
-                Vector3 vTargetVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
+                Vector3 vSourceVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
+                Vector3 vSoundDirection = vSourceVelocity - vListenerVelocity;
+                float lengthSoundDirection = vSoundDirection.Length();
+                float projectedListenerVelocity, projectedSourceVelocity;
+                if (Math.Abs(lengthSoundDirection) > 0.001)
+                {
+                    projectedListenerVelocity =
+                        Vector3.Dot(vListenerVelocity, vSoundDirection) / lengthSoundDirection;
+                    projectedSourceVelocity =
+                        Vector3.Dot(vSourceVelocity, vSoundDirection) / lengthSoundDirection;
+                }
+                else
+                {
+                    projectedListenerVelocity = vListenerVelocity.Length();
+                    projectedSourceVelocity = vSourceVelocity.Length();
+                }
 
-                float listenerVelocity = vListenerVelocity.Length();
-                float targetVelocity = vTargetVelocity.Length();
-                Vector3 vRelativeVelocity = vTargetVelocity - vListenerVelocity;
-                float relativeVelocity = vRelativeVelocity.Length();
-                float scalar = Vector3.Dot(vListenerVelocity, vTargetVelocity);
-                float cosTarget;
-                    if( Math.Abs(relativeVec) < 0.001 || Math.Abs()
-                    = scalar / listenerVelocity / targetVelocity; 
-                
+                float freqFactor;
+                if (Math.Abs(343f + projectedSourceVelocity) < 0.001)
+                {
+                    /*
+                     * supersonic boom.
+                     */
+                    freqFactor = 0f;
+                }
+                else
+                {
+                    freqFactor = (343f + projectedListenerVelocity) / (343f + projectedSourceVelocity);
+                }
 
+                var cMovingSound = entity.Get<engine.audio.components.MovingSound>();
+
+                if (distance > cMovingSound.MaxDistance)
+                {
+                    cMovingSound.MotionVolume = 0f;
+                }
+                else
+                {
+                    cMovingSound.MotionVolume = volumeAdjust;
+                    cMovingSound.MotionPitch = freqFactor;
+                }
+
+                entity.Set( cMovingSound );
             }
         }
 
