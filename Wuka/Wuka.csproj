@@ -37,11 +37,14 @@
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
 	  <DebugSymbols>True</DebugSymbols>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
 	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -71,6 +74,24 @@
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
 	  <ProjectReference Include="..\splash\splash.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Platforms\Android\Resources\lib\arm64-v8a\libraylib.so">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Platforms\Android\Resources\lib\armeabi-v7a\libraylib.so">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Platforms\Android\Resources\lib\x86_64\libraylib.so">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedNativeLibrary Include="Platforms\Android\Resources\lib\arm64-v8a\libraylib.so"/>
+		<EmbeddedNativeLibrary Include="Platforms\Android\Resources\lib\armeabi-v7a\libraylib.so"/>
+		<EmbeddedNativeLibrary Include="Platforms\Android\Resources\lib\x86_64\libraylib.so"/>
 	</ItemGroup>
 
 </Project>
