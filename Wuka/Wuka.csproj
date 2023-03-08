@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net7.0-maccatalyst;net7.0-android33.0</TargetFrameworks>
+		<TargetFrameworks>net7.0-android33.0</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
+		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-maccatalyst</TargetFrameworks> -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
 		<OutputType>Exe</OutputType>
 		<RootNamespace>Wuka</RootNamespace>
@@ -31,6 +32,7 @@
 	
 	<PropertyGroup>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  <EnableNETAnalyzers>False</EnableNETAnalyzers>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android33.0|AnyCPU'">
@@ -38,6 +40,8 @@
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
 	  <DebugSymbols>True</DebugSymbols>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
+	  <Debugger>Xamarin</Debugger>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
@@ -45,6 +49,8 @@
 	  <RunAOTCompilation>True</RunAOTCompilation>
 	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
+	  <Debugger>Xamarin</Debugger>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -72,26 +78,10 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
+	  <ProjectReference Include="..\Native.Raylib.Android\Native.Raylib.Android.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
 	  <ProjectReference Include="..\splash\splash.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <None Update="Platforms\Android\Resources\lib\arm64-v8a\libraylib.so">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Platforms\Android\Resources\lib\armeabi-v7a\libraylib.so">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Platforms\Android\Resources\lib\x86_64\libraylib.so">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedNativeLibrary Include="Platforms\Android\Resources\lib\arm64-v8a\libraylib.so"/>
-		<EmbeddedNativeLibrary Include="Platforms\Android\Resources\lib\armeabi-v7a\libraylib.so"/>
-		<EmbeddedNativeLibrary Include="Platforms\Android\Resources\lib\x86_64\libraylib.so"/>
-	</ItemGroup>
 
 </Project>

@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Barnaby", "Barnaby\Barnaby\
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Wire.Shared", "Wire.Shared\Wire.Shared.shproj", "{1842530A-8EDB-4A38-8D3F-06E33E1EEFF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Native.Raylib.Android", "Native.Raylib.Android\Native.Raylib.Android.csproj", "{1F537D1E-007F-4CF2-9269-91997308670D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -286,6 +288,30 @@ Global
 		{EB5B0A29-6457-4336-A442-6D3704F50154}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
 		{EB5B0A29-6457-4336-A442-6D3704F50154}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
 		{EB5B0A29-6457-4336-A442-6D3704F50154}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|arm64.Build.0 = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|x64.Build.0 = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Debug|x86.Build.0 = Debug|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|arm64.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|arm64.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|x64.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|x64.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|x86.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.Release|x86.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|arm64.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|arm64.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|x64.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
+		{1F537D1E-007F-4CF2-9269-91997308670D}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
