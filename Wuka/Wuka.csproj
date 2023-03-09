@@ -33,6 +33,8 @@
 	<PropertyGroup>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	  <EnableNETAnalyzers>False</EnableNETAnalyzers>
+	  <Nullable>disable</Nullable>
+	  <Title>Silicon Desert 2</Title>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android33.0|AnyCPU'">
@@ -42,26 +44,34 @@
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
 	  <Debugger>Xamarin</Debugger>
+	  <ApplicationTitle>Silicon Desert 2</ApplicationTitle>
+	  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
+	  <RunAOTCompilation>False</RunAOTCompilation>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
-	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <RunAOTCompilation>False</RunAOTCompilation>
 	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
 	  <Debugger>Xamarin</Debugger>
+	  <ApplicationTitle>Silicon Desert 2</ApplicationTitle>
+	  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<!-- MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" / -->
+		<MauiIcon Include="Resources\mipmap\appicon.png" Color="#080800" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
+		<MauiImage Include="Resources\Images\dotnet_bot.svg" />
+		<MauiImage Include="Resources\mipmap\appicon.png" />
 		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
 
 		<!-- Custom Fonts -->
@@ -69,6 +79,15 @@
 
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="Platforms\Android\mipmap\appicon.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AndroidResource Include="Platforms\Android\mipmap\appicon.png" />
+	  <AndroidResource Include="Resources\mipmap\appicon.png" />
 	</ItemGroup>
 
 	<ItemGroup>
