@@ -5,17 +5,12 @@ using System.Numerics;
 using engine;
 using engine.world;
 using engine.streets;
-using System.Threading.Tasks;
+using static engine.Logger;   
 
 namespace nogame.cubes
 {
     internal class GenerateCubeCharacterOperator : engine.world.IFragmentOperator
     {
-        private static void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
-
         private static object _classLock = new();
         private static engine.joyce.Material _jMaterialCube;
         private static engine.joyce.Material _getCubeMaterial()
@@ -30,6 +25,24 @@ namespace nogame.cubes
                 return _jMaterialCube;
             }
         }
+
+        private static engine.audio.Sound _jCubeSound;
+
+        private static engine.audio.Sound _getCubeSound()
+        {
+            lock (_classLock)
+            {
+                if (_jCubeSound == null)
+                {
+                    _jCubeSound = new engine.audio.Sound(
+                        "assets\\cubeloopmono.ogg", true, 0.3f, 1.0f);
+                }
+
+                return _jCubeSound;
+            }
+        }
+        
+        
         private static engine.joyce.Mesh _jMeshCube;
         private static engine.joyce.Mesh _getCubeMesh()
         {
@@ -74,15 +87,16 @@ namespace nogame.cubes
         {
             return $"7001/GenerateCubeCharacterOperatar/{_myKey}/";
         }
+        
         public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
         {
             float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
             float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
             /*
-                * We don't apply the operator if the fragment completely is
-                * outside our boundary box (the cluster)
-                */
+             * We don't apply the operator if the fragment completely is
+             * outside our boundary box (the cluster)
+             */
             {
                 {
                     float csh = _clusterDesc.Size / 2.0f;
@@ -100,18 +114,22 @@ namespace nogame.cubes
                 }
             }
 
-            if (_trace) trace( $"GenerateCubeCharacterOperator(): cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+            if (_trace) Trace( $"GenerateCubeCharacterOperator(): cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
             _rnd.clear();
 
             /*
-                * Now, that we have read the cluster description that is associated, we
-                * can place the characters randomly on the streetpoints.
-                *
-                * TXWTODO: We would be more intersint to place them on the streets.
-                */
+             * Now, that we have read the cluster description that is associated, we
+             * can place the characters randomly on the streetpoints.
+             *
+             * TXWTODO: We would be more intersint to place them on the streets.
+             */
 
             var strokeStore = _clusterDesc.strokeStore();
             IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
+            if (streetPoints.Count == 0)
+            {
+                return;
+            }
             int l = streetPoints.Count;
             int nCharacters = (int)((float)l * 7f / 5f);
 
@@ -136,10 +154,10 @@ namespace nogame.cubes
                 }
 
                 /*
-                    * Check, wether the given street point really is inside our fragment.
-                    * That way, every fragment owns only the characters spawn on their
-                    * territory.
-                    */
+                 * Check, wether the given street point really is inside our fragment.
+                 * That way, every fragment owns only the characters spawn on their
+                 * territory.
+                 */
                 {
                     float px = chosenStreetPoint.Pos.X + _clusterDesc.Pos.X;
                     float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
@@ -150,7 +168,7 @@ namespace nogame.cubes
                 }
                 if (null != chosenStreetPoint)
                 {
-                    if (_trace) trace($"GenerateCubeCharacterOperator(): Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
+                    if (_trace) Trace($"GenerateCubeCharacterOperator(): Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
                     ++_characterIndex;
                     {
@@ -178,6 +196,8 @@ namespace nogame.cubes
                                 )
                             );
                             BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                            eTarget.Set(new engine.audio.components.MovingSound(
+                                _getCubeSound(), 150f, 0f, 0f));
                             eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
                         });
 
@@ -188,7 +208,7 @@ namespace nogame.cubes
                 }
                 else
                 {
-                    if (_trace) trace("GenerateCubeCharacterOperator(): No streetpoint found.");
+                    if (_trace) Trace("GenerateCubeCharacterOperator(): No streetpoint found.");
                 }
             }
         }

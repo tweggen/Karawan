@@ -1,6 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 using Java.Lang;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using static AndroidX.Navigation.Navigator;
 
@@ -10,10 +11,25 @@ namespace Wuka
     [Application]
     public class MainApplication : MauiApplication
     {
-        
+
+        private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+        {
+            Console.Write($"DllImportResolver: Library name is {libraryName}.");
+            if (libraryName == "raylib")
+            {
+                return NativeLibrary.Load("raylib", assembly, searchPath);
+            }
+
+            // Otherwise, fallback to default import resolver.
+            return IntPtr.Zero;
+        }
+
+
         public MainApplication(IntPtr handle, JniHandleOwnership ownership)
             : base(handle, ownership)
         {
+            NativeLibrary.SetDllImportResolver(Assembly.GetExecutingAssembly(), DllImportResolver);
+
             {
                 //string raylibname = JavaSystem.MapLibraryName("raylib");
                 //Console.WriteLine($"Native name would be {raylibname}");

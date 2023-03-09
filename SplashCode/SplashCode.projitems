@@ -41,6 +41,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateRlMusicSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawRlMeshesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawSkyboxesSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\UpdateRlMovingSoundSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureManager.cs" />
   </ItemGroup>
