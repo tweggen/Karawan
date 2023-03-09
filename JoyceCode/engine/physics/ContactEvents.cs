@@ -151,7 +151,7 @@ namespace engine.physics
                     //There was no collision previously.
                     ref var addsforWorker = ref pendingWorkerAdds[workerIndex];
                     //EnsureCapacity will create the list if it doesn't already exist.
-                    addsforWorker.EnsureCapacity(Math.Max(addsforWorker.Count + 1, 64), threadDispatcher != null ? threadDispatcher.GetThreadMemoryPool(workerIndex) : pool);
+                    addsforWorker.EnsureCapacity(Math.Max(addsforWorker.Count + 1, 64), threadDispatcher != null ? threadDispatcher.WorkerPools[workerIndex] : pool);
                     ref var pendingAdd = ref addsforWorker.AllocateUnsafely();
                     pendingAdd.ListenerIndex = listenerIndex;
                     pendingAdd.Collision.Collidable = other;
@@ -223,7 +223,7 @@ namespace engine.physics
                     collisions.AllocateUnsafely() = pendingAdds[j].Collision;
                 }
                 if (pendingAdds.Span.Allocated)
-                    pendingAdds.Dispose(threadDispatcher == null ? pool : threadDispatcher.GetThreadMemoryPool(i));
+                    pendingAdds.Dispose(threadDispatcher == null ? pool : threadDispatcher.WorkerPools[i]);
                 //We rely on zeroing out the count for lazy initialization.
                 pendingAdds = default;
             }
