@@ -15,7 +15,7 @@ namespace Karawan.platform.cs1.splash
         /**
          * Obtain a particular wave, passing it to the action.
          */
-        public void FindWave(Action<RlWaveEntry> actWave, in string url)
+        public void FindWave(in string url, Action<RlWaveEntry> actWave)
         {
             RlWaveEntry rlWaveEntry;
             

@@ -31,7 +31,7 @@ namespace Karawan.platform.cs1.splash
                 {
                     Raylib_CsLo.Raylib.UpdateMusicStream(rlMusicEntry.RlMusic);
                 }
-                 System.Threading.Thread.Sleep(15);
+                System.Threading.Thread.Sleep(15);
             }
         }
 

@@ -2,7 +2,6 @@
 
 namespace engine.audio.components
 {
-
     public struct MovingSound
     {
         public engine.audio.Sound Sound;
@@ -11,6 +10,7 @@ namespace engine.audio.components
         public short MotionPan;
         public float MotionPitch;
 
+        
         public MovingSound(in engine.audio.Sound sound, in float maxDistance, 
             in ushort motionVolume, in short motionPan, in float motionPitch)
         {
@@ -20,6 +20,7 @@ namespace engine.audio.components
             MotionPan = motionPan;
             MotionPitch = motionPitch;
         }
+        
         
         public MovingSound(in engine.audio.Sound sound, in float maxDistance, 
             in float motionVolume, in float motionPan, in float motionPitch)
@@ -31,10 +32,10 @@ namespace engine.audio.components
             MotionPitch = motionPitch;
         }
 
+        
         public MovingSound(in engine.audio.Sound sound, in float maxDistance)
         {
             MaxDistance = maxDistance;
         }
-
     }
 }
