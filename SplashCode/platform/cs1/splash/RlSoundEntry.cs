@@ -8,5 +8,9 @@ namespace Karawan.platform.cs1.splash {
     public class RlSoundEntry
     {
         public Raylib_CsLo.Sound RlSound;
+        public bool IsEmpty()
+        {
+            return RlSound.frameCount == 0;
+        }
     }
 }
