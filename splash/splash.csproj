@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="DefaultEcs" Version="0.17.2" />
-    <PackageReference Include="Raylib-CsLo" Version="4.2.0.5" />
+    <PackageReference Include="Raylib-CsLo" Version="4.2.0.9" />
   </ItemGroup>
 
   <ItemGroup>
