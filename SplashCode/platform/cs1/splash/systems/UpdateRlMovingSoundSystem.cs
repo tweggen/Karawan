@@ -1,5 +1,5 @@
 
-using DefaultEcs.Resource;
+using System.Collections.Generic;
 using System;
 
 namespace Karawan.platform.cs1.splash.systems
@@ -8,7 +8,10 @@ namespace Karawan.platform.cs1.splash.systems
     sealed public class UpdateRlMovingSoundSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
+        private object _lo = new();
 
+        private Queue<RlSoundEntry> _queueUnloadEntries;
+        
         
         /**
          * Schedule a sound entry for later deletion in the engine.
@@ -16,6 +19,10 @@ namespace Karawan.platform.cs1.splash.systems
          */
         private void _queueUnloadSoundEntry(in RlSoundEntry rlSoundEntry)
         {
+            lock (_lo)
+            {
+                _queueUnloadEntries.Enqueue(rlSoundEntry);
+            }
         }
 
         /**

@@ -48,5 +48,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\UpdateRlMovingSoundSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\WaveManager.cs" />
   </ItemGroup>
 </Project>
