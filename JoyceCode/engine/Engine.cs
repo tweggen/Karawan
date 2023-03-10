@@ -328,6 +328,13 @@ namespace engine
 
         private bool _firstTime = true;
 
+        /**
+         * Control, which camera is the source for audio information.
+         * This takes the position and direction of the first camera
+         * that is found to be active.
+         */
+        private uint _audioCameraMask = 0xffffffff;
+
         private void _onLogicalFrame(float dt)
         {
             /*
@@ -383,6 +390,30 @@ namespace engine
                 {
                     kvp.Value.SceneOnLogicalFrame(dt);
                 }
+            }
+
+            /*
+             * After everything has behaved, read the camera(s) to get
+             * the camera positions for further processing.
+             */
+            var vCameraPosition = new Vector3(0f, 0f, 0f);
+            var vCameraRight = new Vector3(1f, 1f, 0f);
+            var listCameras = GetEcsWorld().GetEntities()
+                .With<engine.joyce.components.Camera3>()
+                .With<engine.transform.components.Transform3ToWorld>()
+                .AsEnumerable();
+            foreach (var eCamera in listCameras)
+            {
+                var cCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
+                var cTransform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
+                var mToWorld = cTransform3ToWorld.Matrix;
+                
+                vCameraPosition = cTransform3ToWorld.Matrix.Translation;
+                vCameraRight = new Vector3(mToWorld.M11, mToWorld.M12, mToWorld.M13);
+
+                _systemMovingSounds.SetListenerPosRight(vCameraPosition, vCameraRight);
+                
+                break;
             }
 
             /*

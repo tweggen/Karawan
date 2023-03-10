@@ -196,8 +196,7 @@ namespace nogame.cubes
                                 )
                             );
                             BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                            eTarget.Set(new engine.audio.components.MovingSound(
-                                _getCubeSound(), 150f, 0f, 0f));
+                            eTarget.Set(new engine.audio.components.MovingSound(_getCubeSound(), 150f));
                             eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
                         });
 

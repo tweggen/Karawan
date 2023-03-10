@@ -13,6 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\CameraOutput.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
@@ -34,9 +35,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMeshEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMusicEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlShaderEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlSoundEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlWaveEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlTextureEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingFS.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingInstancingVS.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\SoundManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateRlMeshesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateRlMusicSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawRlMeshesSystem.cs" />

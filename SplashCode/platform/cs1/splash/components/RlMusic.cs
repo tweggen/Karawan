@@ -8,8 +8,7 @@ namespace Karawan.platform.cs1.splash.components
     {
         public RlMusicEntry MusicEntry;
 
-        public RlMusic(
-            RlMusicEntry musicEntry )
+        public RlMusic(RlMusicEntry musicEntry )
         {
             MusicEntry = musicEntry;
         }

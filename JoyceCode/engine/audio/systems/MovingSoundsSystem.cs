@@ -13,8 +13,10 @@ namespace engine.audio.systems
     {
         private object _lo = new();
 
-        private Vector3 _previousListenerPosition;
-        private Vector3 _listenerPosition;
+        private Vector3 _vPreviousListenerPosition;
+        private Vector3 _vListenerPosition;
+        private Vector3 _vListenerRight;
+
         private engine.Engine _engine;
 
         protected override void PreUpdate(float dt)
@@ -40,13 +42,13 @@ namespace engine.audio.systems
                  * from the distance.
                  */
                 Vector3 vEntityPos = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix.Translation;
-                Vector3 vRelativePos = vEntityPos - _listenerPosition;
-
+                Vector3 vRelativePos = vEntityPos - _vListenerPosition;
+                
                 float distance = vRelativePos.Length();
                 if (distance < 1f) distance = 1f;
                 float volumeAdjust = 1f / distance;
 
-                Vector3 vListenerVelocity = (_listenerPosition - _previousListenerPosition) / dt;
+                Vector3 vListenerVelocity = (_vListenerPosition - _vPreviousListenerPosition) / dt;
                 Vector3 vSourceVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
                 Vector3 vSoundDirection = vSourceVelocity - vListenerVelocity;
                 float lengthSoundDirection = vSoundDirection.Length();
@@ -81,26 +83,40 @@ namespace engine.audio.systems
 
                 if (distance > cMovingSound.MaxDistance)
                 {
-                    cMovingSound.MotionVolume = 0f;
+                    cMovingSound.MotionVolume = 0;
                 }
                 else
                 {
-                    cMovingSound.MotionVolume = volumeAdjust;
+                    cMovingSound.MotionVolume = (ushort)(volumeAdjust/65535f);
                     cMovingSound.MotionPitch = freqFactor;
+                    float pan;
+                    if (distance < 0.1f)
+                    {
+                        pan = 0f;
+                    }
+                    else
+                    {
+                        pan = Vector3.Dot(_vListenerRight, vRelativePos) / distance;
+                    }
+
+                    pan = (float)Math.Max(1.0, Math.Min(-1.0, pan));
+                    cMovingSound.MotionPan = (short)(pan * 32767f);
                 }
 
                 entity.Set( cMovingSound );
             }
         }
 
-        public void SetListenerPosition(in Vector3 listenerPosition)
+        public void SetListenerPosRight(in Vector3 vListenerPosition, in Vector3 vListenerRight)
         {
             lock (_lo)
             {
-                _previousListenerPosition = _listenerPosition;
-                _listenerPosition = listenerPosition;
+                _vPreviousListenerPosition = _vListenerPosition;
+                _vListenerPosition = vListenerPosition;
+                _vListenerRight = vListenerRight;
             }
         }
+        
         
         public MovingSoundsSystem(engine.Engine engine)
             : base(engine.GetEcsWorld())
