@@ -31,6 +31,8 @@ namespace Wuka
             NativeLibrary.SetDllImportResolver(Assembly.GetExecutingAssembly(), DllImportResolver);
 
             {
+                var runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier;
+                Console.WriteLine($"Starting on platform {runtime}");
                 //string raylibname = JavaSystem.MapLibraryName("raylib");
                 //Console.WriteLine($"Native name would be {raylibname}");
                 //JavaSystem.LoadLibrary("raylib"); 
