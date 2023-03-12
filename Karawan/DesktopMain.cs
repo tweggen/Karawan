@@ -22,6 +22,8 @@ namespace Karawan
 
             engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
 
+            Boom.API boom = new(engine);
+
             // Add the engine web service to the host.
             // app.MapGrpcService<GreeterService>();
             // app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client.
@@ -31,6 +33,7 @@ namespace Karawan
             engine.AddSceneFactory("root", () => new nogame.RootScene());
             engine.AddSceneFactory("logos", () => new nogame.LogosScene());
             engine.SetMainScene("logos");
+            boom.SetupDone(_engine);
             engine.Execute();
             
             Boom.AudioPlaybackEngine.Instance.Dispose();
