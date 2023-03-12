@@ -1,3 +1,4 @@
+#if SPLASH_AUDIO
 namespace Karawan.platform.cs1.splash {
 
     /**
@@ -14,3 +15,4 @@ namespace Karawan.platform.cs1.splash {
         }
     }
 }
+#endif

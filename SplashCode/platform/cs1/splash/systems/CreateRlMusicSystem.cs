@@ -1,4 +1,4 @@
-﻿
+﻿#if SPLASH_AUDIO
 using DefaultEcs.Resource;
 using System;
 
@@ -50,3 +50,4 @@ namespace Karawan.platform.cs1.splash.systems
         }
     }
 }
+#endif

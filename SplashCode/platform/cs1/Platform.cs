@@ -167,8 +167,10 @@ namespace Karawan.platform.cs1
             }
             Raylib.DisableCursor();
             Raylib.SetTargetFPS(60);
+#if SPLASH_AUDIO
             Raylib.InitAudioDevice();
             Raylib.SetMasterVolume(0.1f);
+#endif
 
             _aSplash = new splash.API(_engine);
         }

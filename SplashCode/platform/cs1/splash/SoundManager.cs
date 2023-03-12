@@ -4,6 +4,9 @@ using System;
 namespace Karawan.platform.cs1.splash
 {
 
+    /**
+     * We implement an audio stream for every sample.
+     */
     public class SoundManager
     {
         private object _lo = new();
@@ -26,6 +29,7 @@ namespace Karawan.platform.cs1.splash
 
         public void StartSound(RlSoundEntry rlSoundEntry)
         {
+            Raylib_CsLo.AudioStream rlAudioStream;
             Raylib_CsLo.Raylib.PlaySoundMulti(rlSoundEntry.RlSound);
             lock(_lo)
             {

@@ -1,4 +1,4 @@
-﻿using BepuPhysics;
+﻿#if SPLASH_AUDIO
 using DefaultEcs;
 using DefaultEcs.Resource;
 using engine;
@@ -73,3 +73,4 @@ namespace Karawan.platform.cs1.splash
         }
     }
 }
+#endif

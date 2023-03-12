@@ -26,7 +26,9 @@ namespace Karawan.platform.cs1.splash
         private TextureGenerator _textureGenerator;
         private TextureManager _textureManager;
         private MeshManager _meshManager;
+#if SPLASH_AUDIO
         private MusicManager _musicManager;
+#endif
         private LightManager _lightManager;
 
         private Queue<RenderFrame> _renderQueue = new();
@@ -233,8 +235,10 @@ namespace Karawan.platform.cs1.splash
             _materialManager.Manage(engine.GetEcsWorld());
             _meshManager = new(engine);
             _meshManager.Manage(engine.GetEcsWorld());
+#if SPLASH_AUDIO
             _musicManager = new(engine);
             _musicManager.Manage(engine.GetEcsWorld());
+#endif
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
             _createRlMusicSystem = new(_engine);
             _drawRlMeshesSystem = new(_engine);

@@ -1,3 +1,4 @@
+#if SPLASH_AUDIO
 using System.Collections.Generic;
 using System;
 using Raylib_CsLo;
@@ -48,3 +49,4 @@ namespace Karawan.platform.cs1.splash
         }
     }
 }
+#endif

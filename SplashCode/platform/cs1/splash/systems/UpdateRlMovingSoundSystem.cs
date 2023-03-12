@@ -1,4 +1,4 @@
-
+#if SPLASH_AUDIO
 using System.Collections.Generic;
 using System;
 
@@ -127,3 +127,4 @@ namespace Karawan.platform.cs1.splash.systems
         }
     }
 }
+#endif

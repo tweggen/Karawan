@@ -9,9 +9,6 @@
     <Import_RootNamespace>SplashCode</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)platform\cs1\splash\scenes\" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\CameraOutput.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialBatch.cs" />
