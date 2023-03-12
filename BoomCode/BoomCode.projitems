@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)components\" />
-    <Folder Include="$(MSBuildThisFileDirectory)systems\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)API.cs" />
@@ -18,5 +17,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)AutoDisposeFileReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CachedSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CachedSoundSampleProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)systems\CreateMusicSystem.cs" />
   </ItemGroup>
 </Project>
