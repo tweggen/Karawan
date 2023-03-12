@@ -20,7 +20,9 @@ namespace Karawan.platform.cs1.splash
         private systems.CreateRlMeshesSystem _createRlMeshesSystem;
         private systems.DrawRlMeshesSystem _drawRlMeshesSystem;
         private systems.DrawSkyboxesSystem _drawSkyboxesSystem;
+#if SPLASH_AUDIO
         private systems.CreateRlMusicSystem _createRlMusicSystem;
+#endif
 
         private MaterialManager _materialManager;
         private TextureGenerator _textureGenerator;
@@ -69,7 +71,9 @@ namespace Karawan.platform.cs1.splash
         public void CollectRenderData()
         {
             _createRlMeshesSystem.Update(_engine);
+#if SPLASH_AUDIO
             _createRlMusicSystem.Update(_engine);
+#endif
 
             RenderFrame renderFrame = null;
             /*
@@ -240,7 +244,9 @@ namespace Karawan.platform.cs1.splash
             _musicManager.Manage(engine.GetEcsWorld());
 #endif
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
+#if SPLASH_AUDIO
             _createRlMusicSystem = new(_engine);
+#endif
             _drawRlMeshesSystem = new(_engine);
             _drawSkyboxesSystem = new(_engine);
             _lightManager = new(_engine);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if false
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -14,3 +15,4 @@ namespace Karawan.platform.cs1.splash.components
         }
     }
 }
+#endif
