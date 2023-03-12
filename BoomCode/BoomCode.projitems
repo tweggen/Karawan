@@ -15,5 +15,8 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AudioPlaybackEngine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AutoDisposeFileReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CachedSound.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CachedSoundSampleProvider.cs" />
   </ItemGroup>
 </Project>

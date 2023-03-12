@@ -1,6 +1,9 @@
 ﻿
-#if false
+
 using System;
+using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
+
 
 class AudioPlaybackEngine : IDisposable
 {
@@ -52,4 +55,3 @@ class AudioPlaybackEngine : IDisposable
 
     public static readonly AudioPlaybackEngine Instance = new AudioPlaybackEngine(44100, 2);
 }
-#endif
