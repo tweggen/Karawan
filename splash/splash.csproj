@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\coding\github\Raylib-CsLo\Raylib-CsLo\Raylib-CsLo.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 

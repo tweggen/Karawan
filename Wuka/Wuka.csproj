@@ -95,7 +95,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\..\..\coding\github\Raylib-CsLo\Raylib-CsLo\Raylib-CsLo.csproj" />
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
+	  <ProjectReference Include="..\Native.Raylib.Android\Native.Raylib.Android.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
 	  <ProjectReference Include="..\splash\splash.csproj" />
 	</ItemGroup>
