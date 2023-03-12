@@ -1,23 +1,29 @@
 ﻿using NAudio.Wave;
 
-class CachedSoundSampleProvider : ISampleProvider
+namespace Boom
 {
-    private readonly CachedSound cachedSound;
-    private long position;
-
-    public CachedSoundSampleProvider(CachedSound cachedSound)
+    class CachedSoundSampleProvider : ISampleProvider
     {
-        this.cachedSound = cachedSound;
-    }
+        private readonly CachedSound cachedSound;
+        private long position;
 
-    public int Read(float[] buffer, int offset, int count)
-    {
-        var availableSamples = cachedSound.AudioData.Length - position;
-        var samplesToCopy = Math.Min(availableSamples, count);
-        Array.Copy(cachedSound.AudioData, position, buffer, offset, samplesToCopy);
-        position += samplesToCopy;
-        return (int)samplesToCopy;
-    }
+        public CachedSoundSampleProvider(CachedSound cachedSound)
+        {
+            this.cachedSound = cachedSound;
+        }
 
-    public WaveFormat WaveFormat { get { return cachedSound.WaveFormat; } }
+        public int Read(float[] buffer, int offset, int count)
+        {
+            var availableSamples = cachedSound.AudioData.Length - position;
+            var samplesToCopy = Math.Min(availableSamples, count);
+            Array.Copy(cachedSound.AudioData, position, buffer, offset, samplesToCopy);
+            position += samplesToCopy;
+            return (int)samplesToCopy;
+        }
+
+        public WaveFormat WaveFormat
+        {
+            get { return cachedSound.WaveFormat; }
+        }
+    }
 }

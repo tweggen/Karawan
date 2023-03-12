@@ -1,5 +1,6 @@
 ﻿using System;
 using Raylib_CsLo;
+
 // using Microsoft.AspNetCore.Builder;
 
 namespace Karawan
@@ -31,6 +32,8 @@ namespace Karawan
             engine.AddSceneFactory("logos", () => new nogame.LogosScene());
             engine.SetMainScene("logos");
             engine.Execute();
+            
+            Boom.AudioPlaybackEngine.Instance.Dispose();
         }
     }
 }

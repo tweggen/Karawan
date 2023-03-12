@@ -1,27 +1,32 @@
 ﻿using NAudio.Wave;
 
-class AutoDisposeFileReader : ISampleProvider
+namespace Boom
 {
-    private readonly AudioFileReader reader;
-    private bool isDisposed;
-    public AutoDisposeFileReader(AudioFileReader reader)
+    class AutoDisposeFileReader : ISampleProvider
     {
-        this.reader = reader;
-        this.WaveFormat = reader.WaveFormat;
-    }
+        private readonly AudioFileReader reader;
+        private bool isDisposed;
 
-    public int Read(float[] buffer, int offset, int count)
-    {
-        if (isDisposed)
-            return 0;
-        int read = reader.Read(buffer, offset, count);
-        if (read == 0)
+        public AutoDisposeFileReader(AudioFileReader reader)
         {
-            reader.Dispose();
-            isDisposed = true;
+            this.reader = reader;
+            this.WaveFormat = reader.WaveFormat;
         }
-        return read;
-    }
 
-    public WaveFormat WaveFormat { get; private set; }
+        public int Read(float[] buffer, int offset, int count)
+        {
+            if (isDisposed)
+                return 0;
+            int read = reader.Read(buffer, offset, count);
+            if (read == 0)
+            {
+                reader.Dispose();
+                isDisposed = true;
+            }
+
+            return read;
+        }
+
+        public WaveFormat WaveFormat { get; private set; }
+    }
 }

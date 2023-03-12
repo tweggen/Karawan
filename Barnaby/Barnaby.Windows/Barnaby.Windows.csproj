@@ -37,8 +37,5 @@
     <FrameworkReference Update="Microsoft.Windows.SDK.NET.Ref" RuntimeFrameworkVersion="10.0.22000.27" />
     <FrameworkReference Update="Microsoft.Windows.SDK.NET.Ref" TargetingPackVersion="10.0.22000.27" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Barnaby\Barnaby.csproj" />
-  </ItemGroup>
   <Import Project="..\Barnaby.Base\base.props" />
 </Project>

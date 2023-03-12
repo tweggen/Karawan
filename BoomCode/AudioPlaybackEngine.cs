@@ -4,54 +4,58 @@ using System;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-
-class AudioPlaybackEngine : IDisposable
+namespace Boom
 {
-    private readonly IWavePlayer outputDevice;
-    private readonly MixingSampleProvider mixer;
-
-    public AudioPlaybackEngine(int sampleRate = 44100, int channelCount = 2)
+    public class AudioPlaybackEngine : IDisposable
     {
-        outputDevice = new WaveOutEvent();
-        mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channelCount));
-        mixer.ReadFully = true;
-        outputDevice.Init(mixer);
-        outputDevice.Play();
-    }
+        private readonly IWavePlayer outputDevice;
+        private readonly MixingSampleProvider mixer;
 
-    public void PlaySound(string fileName)
-    {
-        var input = new AudioFileReader(fileName);
-        AddMixerInput(new AutoDisposeFileReader(input));
-    }
-
-    private ISampleProvider ConvertToRightChannelCount(ISampleProvider input)
-    {
-        if (input.WaveFormat.Channels == mixer.WaveFormat.Channels)
+        public AudioPlaybackEngine(int sampleRate = 44100, int channelCount = 2)
         {
-            return input;
+            outputDevice = new WaveOutEvent();
+            mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channelCount));
+            mixer.ReadFully = true;
+            outputDevice.Init(mixer);
+            outputDevice.Play();
         }
-        if (input.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
+
+        public void PlaySound(string fileName)
         {
-            return new MonoToStereoSampleProvider(input);
+            var input = new AudioFileReader(fileName);
+            AddMixerInput(new AutoDisposeFileReader(input));
         }
-        throw new NotImplementedException("Not yet implemented this channel count conversion");
-    }
 
-    public void PlaySound(CachedSound sound)
-    {
-        AddMixerInput(new CachedSoundSampleProvider(sound));
-    }
+        private ISampleProvider ConvertToRightChannelCount(ISampleProvider input)
+        {
+            if (input.WaveFormat.Channels == mixer.WaveFormat.Channels)
+            {
+                return input;
+            }
 
-    private void AddMixerInput(ISampleProvider input)
-    {
-        mixer.AddMixerInput(ConvertToRightChannelCount(input));
-    }
+            if (input.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
+            {
+                return new MonoToStereoSampleProvider(input);
+            }
 
-    public void Dispose()
-    {
-        outputDevice.Dispose();
-    }
+            throw new NotImplementedException("Not yet implemented this channel count conversion");
+        }
 
-    public static readonly AudioPlaybackEngine Instance = new AudioPlaybackEngine(44100, 2);
+        public void PlaySound(CachedSound sound)
+        {
+            AddMixerInput(new CachedSoundSampleProvider(sound));
+        }
+
+        private void AddMixerInput(ISampleProvider input)
+        {
+            mixer.AddMixerInput(ConvertToRightChannelCount(input));
+        }
+
+        public void Dispose()
+        {
+            outputDevice.Dispose();
+        }
+
+        public static readonly AudioPlaybackEngine Instance = new AudioPlaybackEngine(44100, 2);
+    }
 }
