@@ -2,15 +2,30 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 
 namespace engine
 {
+    class LogEntry
+    {
+        public engine.Logger.Level Level;
+        public string Message;
+
+        public LogEntry(in engine.Logger.Level level, in string message)
+        {
+            Level = level;
+            Message = message;
+        }
+    };
+    
     public class ConsoleLogger : ILogTarget
     {
         private object _lo = new();
         private System.Threading.Thread _loggingThread;
-        private List<string> _listBuffer = new();
+        private List<LogEntry> _listBuffer = new();
         private engine.Engine _engine;
+        public ILogger Logger { get; private set; }
 
         private const int DEBUG_CHUNK_LINES = 30;
 
@@ -24,14 +39,14 @@ namespace engine
 #endif
             lock(_lo)
             {
-                _listBuffer.Add(logEntry);
+                _listBuffer.Add(new LogEntry(level, logEntry));
             }
         }
 
         private void _dumpWhatWeHave()
         {
             int startIndex = 0;
-            List<string> outlist;
+            List<LogEntry> outlist;
             lock (_lo)
             {
                 int rightNow = DEBUG_CHUNK_LINES;
@@ -58,9 +73,34 @@ namespace engine
                     _listBuffer = new();
                 }
 
-                foreach (var line in outlist)
+                foreach (var logEntry in outlist)
                 {
-                    Console.WriteLine(line);
+                    string message = logEntry.Message;
+                    switch (logEntry.Level)
+                    {
+                        default:
+                        case engine.Logger.Level.All:
+                            Logger.LogInformation(message);
+                            break;
+                        case engine.Logger.Level.Detail:
+                            Logger.LogDebug(message);
+                            break;
+                        case engine.Logger.Level.Error:
+                            Logger.LogError(message);
+                            break;
+                        case engine.Logger.Level.Fatal:
+                            Logger.LogCritical(message);
+                            break;
+                        case engine.Logger.Level.Trace:
+                            Logger.LogTrace(message);
+                            break;
+                        case engine.Logger.Level.Warning:
+                            Logger.LogWarning(message);
+                            break;
+                        case engine.Logger.Level.Wonder:
+                            Logger.LogInformation(message);
+                            break;
+                    }
                 }
             }
         }
@@ -77,6 +117,16 @@ namespace engine
         public ConsoleLogger(engine.Engine engine) 
         {
             _engine = engine;
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    //options.AddConsoleExporter();
+
+                });
+            });
+            Logger = loggerFactory.CreateLogger<ConsoleLogger>();
+
             _loggingThread = new(_loggingThreadFunction);
             _loggingThread.Priority = System.Threading.ThreadPriority.Lowest;
             _loggingThread.Start();

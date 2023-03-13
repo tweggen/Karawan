@@ -3,6 +3,8 @@ using DefaultEcs.Resource;
 using Raylib_CsLo;
 using System;
 using System.Collections.Generic;
+using engine;
+using static engine.Logger;
 
 
 namespace Karawan.platform.cs1.splash
@@ -18,7 +20,7 @@ namespace Karawan.platform.cs1.splash
             {
                 Raylib.UploadMesh(pRlMeshEntry, false);
             }
-            Console.WriteLine($"MeshManager: Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
+            Logger.Trace($"Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
         }
 
         protected override RlMeshEntry Load(engine.joyce.Mesh jMesh)
@@ -37,7 +39,7 @@ namespace Karawan.platform.cs1.splash
         {
             _engine.QueueCleanupAction(() =>
             {
-                Console.WriteLine($"MeshManager: Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
+                Logger.Trace($"Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
                 Raylib.UnloadMesh(rlMeshEntry.RlMesh);
             });
             base.Unload(jMesh, rlMeshEntry);
