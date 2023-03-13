@@ -75,6 +75,7 @@ namespace engine
 
                 foreach (var logEntry in outlist)
                 {
+                    continue;
                     string message = logEntry.Message;
                     switch (logEntry.Level)
                     {
@@ -121,7 +122,7 @@ namespace engine
             {
                 builder.AddOpenTelemetry(options =>
                 {
-                    //options.AddConsoleExporter();
+                    options.AddConsoleExporter();
 
                 });
             });

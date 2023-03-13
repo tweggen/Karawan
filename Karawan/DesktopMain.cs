@@ -1,7 +1,7 @@
 ﻿using System;
+using Microsoft.AspNetCore.Builder;
 using Raylib_CsLo;
 
-// using Microsoft.AspNetCore.Builder;
 
 namespace Karawan
 {
@@ -9,10 +9,9 @@ namespace Karawan
     {
         public static void Main(string[] args)
         {
-            // var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(args);
             //builder.Services.AddGrpc();
-            // var app = builder.Build();
-
+            var app = builder.Build();
 
             var engine = Karawan.platform.cs1.Platform.EasyCreate(args);
 
