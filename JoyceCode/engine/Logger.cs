@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Collections.Generic;
-using System.Text;
 
 namespace engine
 {
@@ -11,10 +9,6 @@ namespace engine
 
         private static ILogTarget _logTarget = null;
 
-        static void addLogEntry(in string logEntry)
-        {
-
-        }
 
         public enum Level
         {

@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="NAudio.Vorbis" Version="1.5.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -75,7 +75,6 @@ namespace engine
 
                 foreach (var logEntry in outlist)
                 {
-                    continue;
                     string message = logEntry.Message;
                     switch (logEntry.Level)
                     {
@@ -115,9 +114,10 @@ namespace engine
             }
         }
 
-        public ConsoleLogger(engine.Engine engine) 
+        public ConsoleLogger(in engine.Engine engine, in ILogger logger) 
         {
             _engine = engine;
+#if false
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -127,7 +127,9 @@ namespace engine
                 });
             });
             Logger = loggerFactory.CreateLogger<ConsoleLogger>();
-
+#else
+            Logger = logger;
+#endif
             _loggingThread = new(_loggingThreadFunction);
             _loggingThread.Priority = System.Threading.ThreadPriority.Lowest;
             _loggingThread.Start();
