@@ -9,6 +9,20 @@ namespace Boom
 
         public CachedSound(string audioFileName)
         {
+            using (var vorbisReader = new NVorbis.VorbisReader(audioFileName))
+            {
+                var readBuffer = new float[vorbisReader.SampleRate * vorbisReader.Channels];
+                var wholeFile = new List<float>((int)(vorbisReader.TotalSamples));
+                int samplesRead;
+                while ((samplesRead = vorbisReader.ReadSamples(readBuffer, 0, readBuffer.Length)) > 0)
+                {
+                    wholeFile.AddRange(readBuffer.Take(samplesRead));
+                }
+
+                WaveFormat = new WaveFormat(vorbisReader.SampleRate, 16, vorbisReader.Channels);
+                AudioData = wholeFile.ToArray();
+            }
+#if false
             using (var audioFileReader = new AudioFileReader(audioFileName))
             {
                 // TODO: could add resampling in here if required
@@ -23,6 +37,7 @@ namespace Boom
 
                 AudioData = wholeFile.ToArray();
             }
+#endif
         }
     }
 }

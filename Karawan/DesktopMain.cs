@@ -26,6 +26,7 @@ namespace Karawan
                 opts.IncludeFormattedMessage = true;
                 opts.IncludeScopes = true;
                 opts.ParseStateValues = true;
+#if false                
                 opts.AddOtlpExporter(optsExporter =>
                 {
                     optsExporter.Endpoint = new Uri("https://otlp-gateway-prod-ap-southeast-0.grafana.net/otlp");
@@ -39,6 +40,7 @@ namespace Karawan
                     // optsExporter.Headers = "Authorization=Bearer an_apm_secret_token";
                     // api key stack-559779-easystart-prom-publisher
                 });
+#endif
                 //opts.AddConsoleExporter();
             });
             

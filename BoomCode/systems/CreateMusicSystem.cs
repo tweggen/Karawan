@@ -30,14 +30,9 @@ namespace BoomCode.systems
                  */
                 var cMusic = entity.Get<engine.audio.components.Music>();
                 if (cMusic.IsPlaying) continue;
-#if false
                 string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
-                using (var vorbis = new NVorbis.VorbisReader(resourcePath + cMusic.Url))
-                {
-                    var sound = vorbis.Wave.WaveOut();
-                    AudioPlaybackEngine.Instance.PlaySound(sound);
-                }
-#endif
+                CachedSound sound = new(resourcePath + cMusic.Url);
+                AudioPlaybackEngine.Instance.PlaySound(sound);
                 cMusic.IsPlaying = true;
                 entity.Set(cMusic);
             }
