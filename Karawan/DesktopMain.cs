@@ -9,6 +9,7 @@ using System.Diagnostics.Metrics;
 using System.Diagnostics;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Logs;
 
 namespace Karawan
 {
@@ -24,8 +25,12 @@ namespace Karawan
                 builder.IncludeFormattedMessage = true;
                 builder.IncludeScopes = true;
                 builder.ParseStateValues = true;
-                //uilder.AddOtlpExporter(options => options.Endpoint = new Uri("http://localhost:4317"));
+                //builder.AddOtlpExporter();
                 builder.AddConsoleExporter();
+            });
+            builder.AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:4317"); // Signoz Endpoint
             });
 
             builder.Logging.AddEventLog();
