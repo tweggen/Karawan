@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
-using Raylib_CsLo;
 
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 using System.Diagnostics.Metrics;
 using System.Diagnostics;
+using System.Threading;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Logs;
@@ -20,18 +21,27 @@ namespace Karawan
             var builder = WebApplication.CreateBuilder(args);
             //builder.Services.AddGrpc();
 
-            builder.Logging.AddOpenTelemetry(builder =>
+            builder.Logging.AddOpenTelemetry(opts =>
             {
-                builder.IncludeFormattedMessage = true;
-                builder.IncludeScopes = true;
-                builder.ParseStateValues = true;
-                //builder.AddOtlpExporter();
-                builder.AddConsoleExporter();
+                opts.IncludeFormattedMessage = true;
+                opts.IncludeScopes = true;
+                opts.ParseStateValues = true;
+                opts.AddOtlpExporter(optsExporter =>
+                {
+                    optsExporter.Endpoint = new Uri("https://otlp-gateway-prod-ap-southeast-0.grafana.net/otlp");
+                    optsExporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    string user = "409403";
+                    string password =
+                        "eyJrIjoiODUzZGRmNWRiMTk0NzcxNjZiZDZkZThiZjc4YzdjN2M3OWJiNzBkMCIsIm4iOiJzaWxpY29uX2Rlc2VydDIgTWV0cmljcyIsImlkIjo4MTQwNjJ9";
+                    var authStringUtf8 = System.Text.Encoding.UTF8.GetBytes($"{user}:{password}");
+                    var autoStringBase64 = System.Convert.ToBase64String(authStringUtf8);
+                    optsExporter.Headers = $"Authorization=Basic {autoStringBase64}";
+                    // optsExporter.Headers = "Authorization=Bearer an_apm_secret_token";
+                    // api key stack-559779-easystart-prom-publisher
+                });
+                //opts.AddConsoleExporter();
             });
-            builder.AddOtlpExporter(options =>
-            {
-                options.Endpoint = new Uri("http://localhost:4317"); // Signoz Endpoint
-            });
+            
 
             builder.Logging.AddEventLog();
             builder.Logging.AddConsole();
@@ -53,7 +63,9 @@ namespace Karawan
             // app.MapGrpcService<GreeterService>();
             // app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client.
             // To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-            // app.Run();
+            
+            var threadApp = new Thread( () => app.Run());
+            threadApp.Start();
 
             e.AddSceneFactory("root", () => new nogame.RootScene());
             e.AddSceneFactory("logos", () => new nogame.LogosScene());
