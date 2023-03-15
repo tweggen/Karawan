@@ -50,7 +50,7 @@ namespace Karawan
                     optsExporter.Protocol = OtlpExportProtocol.HttpProtobuf;
                     //string apiKey = "RDlHeDRJWUJYTWZWaU5hMDZSaDk6SmgzWHFDblVSa2FTSWZTSlpMNDJpQQ==";
                     string secretToken = "HVCjmPWUTg0xJH689C";
-                    optsExporter.Headers = $"Authentication=\"Bearer {secretToken}\"";
+                    optsExporter.Headers = $"Authentication=Bearer%20{secretToken}";
 #endif
                 });
 #endif
