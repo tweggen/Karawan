@@ -26,9 +26,10 @@ namespace Karawan
                 opts.IncludeFormattedMessage = true;
                 opts.IncludeScopes = true;
                 opts.ParseStateValues = true;
-#if false                
+#if true                
                 opts.AddOtlpExporter(optsExporter =>
                 {
+#if false                    
                     optsExporter.Endpoint = new Uri("https://otlp-gateway-prod-ap-southeast-0.grafana.net/otlp");
                     optsExporter.Protocol = OtlpExportProtocol.HttpProtobuf;
                     string user = "409403";
@@ -39,6 +40,18 @@ namespace Karawan
                     optsExporter.Headers = $"Authorization=Basic {autoStringBase64}";
                     // optsExporter.Headers = "Authorization=Bearer an_apm_secret_token";
                     // api key stack-559779-easystart-prom-publisher
+#endif
+#if true
+                    //string endpoint = "https://silicon-desert.apm.europe-west3.gcp.cloud.es.io:8200";
+                    //string endpoint = "https://f3fddad667a54b6bb8c3c14b494ead51.apm.europe-west3.gcp.cloud.es.io:8200";
+                    string endpoint = "https://f3fddad667a54b6bb8c3c14b494ead51.apm.europe-west3.gcp.cloud.es.io:443";
+                
+                    optsExporter.Endpoint = new Uri(endpoint);
+                    optsExporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    //string apiKey = "RDlHeDRJWUJYTWZWaU5hMDZSaDk6SmgzWHFDblVSa2FTSWZTSlpMNDJpQQ==";
+                    string secretToken = "HVCjmPWUTg0xJH689C";
+                    optsExporter.Headers = $"Authentication=\"Bearer {secretToken}\"";
+#endif
                 });
 #endif
                 //opts.AddConsoleExporter();
