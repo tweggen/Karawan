@@ -144,6 +144,8 @@ namespace Karawan
                 
                     optsExporter.Endpoint = new Uri(endpoint);
                     optsExporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    optsExporter.TimeoutMilliseconds = 1000;
+                    // var headers = optsExporter.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
                     //string apiKey = "RDlHeDRJWUJYTWZWaU5hMDZSaDk6SmgzWHFDblVSa2FTSWZTSlpMNDJpQQ==";
                     string secretToken = "HVCjmPWUTg0xJH689C";
                     optsExporter.Headers = $"Authentication=Bearer%20{secretToken}";
