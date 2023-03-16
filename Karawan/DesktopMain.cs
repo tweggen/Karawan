@@ -18,43 +18,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation;
-using OpenTelemetry.Instrumentation.GrpcNetClient;
 using System.Runtime.CompilerServices;
 
-
-namespace OpenTelemetry.Instrumentation
-{
-
-    public class MyListenerHandler : ListenerHandler
-    {
-        public MyListenerHandler(string sourceName) : base(sourceName)
-        {
-        }
-
-        public override void OnStartActivity(Activity activity, object payload)
-        {
-            Console.WriteLine($"Started activity {activity.DisplayName}");
-        }
-
-        public override void OnStopActivity(Activity activity, object payload)
-        {
-            Console.WriteLine($"Stopped activity {activity.DisplayName}");
-        }
-    }
-
-
-    public static class MyAdapterExtensions
-    {
-        public static TracerBuilder AddMyAdapter(this TracerBuilder builder)
-        {
-            return builder.AddProcessorPipeline(b =>
-            {
-                var adapter = new MyAdapter();
-                b.AddProcessor(new MyProcessor(adapter));
-            });
-        }
-    }
-}
 
 namespace Karawan
 {
