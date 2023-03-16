@@ -17,6 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)AutoDisposeFileReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CachedSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CachedSoundSampleProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LoopWave.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)systems\CreateMusicSystem.cs" />
   </ItemGroup>
 </Project>
