@@ -23,6 +23,10 @@ namespace Boom
         public void PlaySound(string fileName)
         {
             var input = new AudioFileReader(fileName);
+            /*
+             * Add this input. As soon the stream has finished, it is
+             * removed from the mixer.
+             */
             AddMixerInput(new AutoDisposeFileReader(input));
         }
 
