@@ -11,9 +11,55 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Internal;
+using System.Diagnostics;
+using System.Reflection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
+using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation;
+using OpenTelemetry.Instrumentation.GrpcNetClient;
+using System.Runtime.CompilerServices;
+
+
+namespace OpenTelemetry.Instrumentation
+{
+
+    public class MyListenerHandler : ListenerHandler
+    {
+        public MyListenerHandler(string sourceName) : base(sourceName)
+        {
+        }
+
+        public override void OnStartActivity(Activity activity, object payload)
+        {
+            Console.WriteLine($"Started activity {activity.DisplayName}");
+        }
+
+        public override void OnStopActivity(Activity activity, object payload)
+        {
+            Console.WriteLine($"Stopped activity {activity.DisplayName}");
+        }
+    }
+
+
+    public static class MyAdapterExtensions
+    {
+        public static TracerBuilder AddMyAdapter(this TracerBuilder builder)
+        {
+            return builder.AddProcessorPipeline(b =>
+            {
+                var adapter = new MyAdapter();
+                b.AddProcessor(new MyProcessor(adapter));
+            });
+        }
+    }
+}
 
 namespace Karawan
 {
+    
+    
     public class DesktopMain
     {
         public static void Main(string[] args)
@@ -21,6 +67,26 @@ namespace Karawan
             var builder = WebApplication.CreateBuilder(args);
             //builder.Services.AddGrpc();
 
+            var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddHttpClientInstrumentation((options) =>
+            {
+                // Note: Only called on .NET & .NET Core runtimes.
+                options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                {
+                    activity.SetTag("requestVersion", httpRequestMessage.Version);
+                };
+                // Note: Only called on .NET & .NET Core runtimes.
+                options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+                {
+                    activity.SetTag("responseVersion", httpResponseMessage.Version);
+                };
+                // Note: Called for all runtimes.
+                options.EnrichWithException = (activity, exception) =>
+                {
+                    activity.SetTag("stackTrace", exception.StackTrace);
+                };
+            })
+            .Build();
             builder.Logging.AddOpenTelemetry(opts =>
             {
                 opts.IncludeFormattedMessage = true;
@@ -57,7 +123,6 @@ namespace Karawan
                 //opts.AddConsoleExporter();
             });
             
-
             builder.Logging.AddEventLog();
             builder.Logging.AddConsole();
 
