@@ -33,25 +33,26 @@ namespace Karawan
             //builder.Services.AddGrpc();
 
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddHttpClientInstrumentation((options) =>
-            {
-                // Note: Only called on .NET & .NET Core runtimes.
-                options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                .AddHttpClientInstrumentation((options) =>
                 {
-                    activity.SetTag("requestVersion", httpRequestMessage.Version);
-                };
-                // Note: Only called on .NET & .NET Core runtimes.
-                options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
-                {
-                    activity.SetTag("responseVersion", httpResponseMessage.Version);
-                };
-                // Note: Called for all runtimes.
-                options.EnrichWithException = (activity, exception) =>
-                {
-                    activity.SetTag("stackTrace", exception.StackTrace);
-                };
-            })
-            .Build();
+                    // Note: Only called on .NET & .NET Core runtimes.
+                    options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
+                    {
+                        activity.SetTag("requestVersion", httpRequestMessage.Version);
+                    };
+                    // Note: Only called on .NET & .NET Core runtimes.
+                    options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
+                    {
+                        activity.SetTag("responseVersion", httpResponseMessage.Version);
+                    };
+                    // Note: Called for all runtimes.
+                    options.EnrichWithException = (activity, exception) =>
+                    {
+                        activity.SetTag("stackTrace", exception.StackTrace);
+                    };
+                })
+                .AddConsoleExporter()
+                .Build();
             builder.Logging.AddOpenTelemetry(opts =>
             {
                 opts.IncludeFormattedMessage = true;
