@@ -10,50 +10,115 @@ using System.Threading;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Logs;
+
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
-using System.Diagnostics;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation;
+using OpenTelemetry.Resources;
 using System.Runtime.CompilerServices;
+using System.Net.Http;
+using System.Reflection.PortableExecutable;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 
 namespace Karawan
 {
-    
-    
+
+    public class Instrumentation : IDisposable
+    {
+        internal const string ActivitySourceName = "Examples.AspNetCore";
+        internal const string MeterName = "Examples.AspNetCore";
+        private readonly Meter meter;
+
+        public Instrumentation()
+        {
+            string? version = typeof(Instrumentation).Assembly.GetName().Version?.ToString();
+            this.ActivitySource = new ActivitySource(ActivitySourceName, version);
+            this.meter = new Meter(MeterName, version);
+            this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", "The number of days where the temperature is below freezing");
+        }
+
+        public ActivitySource ActivitySource { get; }
+
+        public Counter<long> FreezingDaysCounter { get; }
+
+        public void Dispose()
+        {
+            this.ActivitySource.Dispose();
+            this.meter.Dispose();
+        }
+    }
+
     public class DesktopMain
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
-            //builder.Services.AddGrpc();
+            var appBuilder = WebApplication.CreateBuilder(args);
 
+            // Build a resource configuration action to set service information.
+            Action<ResourceBuilder> configureResource = r => r.AddService(
+                serviceName: "silicon_desert2",
+                serviceVersion: typeof(DesktopMain).Assembly.GetName().Version?.ToString() ?? "unknown",
+                serviceInstanceId: Environment.MachineName);
+
+            // Create a service to expose ActivitySource, and Metric Instruments
+            // for manual instrumentation
+            appBuilder.Services.AddSingleton<Instrumentation>();
+
+#if false
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation((options) =>
             {
                 // Note: Only called on .NET & .NET Core runtimes.
                 options.EnrichWithHttpRequestMessage = (activity, httpRequestMessage) =>
                 {
+                    Console.WriteLine($"httpRequest: {httpRequestMessage}");
                     activity.SetTag("requestVersion", httpRequestMessage.Version);
                 };
                 // Note: Only called on .NET & .NET Core runtimes.
                 options.EnrichWithHttpResponseMessage = (activity, httpResponseMessage) =>
                 {
+                    Console.WriteLine($"httpResponse: {httpResponseMessage}");
                     activity.SetTag("responseVersion", httpResponseMessage.Version);
                 };
                 // Note: Called for all runtimes.
                 options.EnrichWithException = (activity, exception) =>
                 {
+                    Console.WriteLine($"httpException: {exception}");
                     activity.SetTag("stackTrace", exception.StackTrace);
                 };
             })
+            .AddConsoleExporter()
             .Build();
-            builder.Logging.AddOpenTelemetry(opts =>
+#endif
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddHttpClientInstrumentation(
+                    // Note: Only called on .NET & .NET Core runtimes.
+                    (options) => options.FilterHttpRequestMessage =
+                        (httpRequestMessage) =>
+                        {
+                            Console.WriteLine($"httpRequestMessage: {httpRequestMessage}");
+                            return true;
+                        })
+                .AddConsoleExporter()
+                .Build();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddHttpClientInstrumentation()
+                .AddAspNetCoreInstrumentation()
+                .AddConsoleExporter()
+                .Build();
+            appBuilder.Logging.ClearProviders();
+            appBuilder.Logging.AddOpenTelemetry(opts =>
             {
+                var resourceBuilder = ResourceBuilder.CreateDefault();
+                configureResource(resourceBuilder);
+                opts.SetResourceBuilder(resourceBuilder);
                 opts.IncludeFormattedMessage = true;
                 opts.IncludeScopes = true;
                 opts.ParseStateValues = true;
@@ -87,11 +152,11 @@ namespace Karawan
 #endif
                 //opts.AddConsoleExporter();
             });
-            
-            builder.Logging.AddEventLog();
-            builder.Logging.AddConsole();
 
-            var app = builder.Build();
+            appBuilder.Logging.AddEventLog();
+            appBuilder.Logging.AddConsole();
+
+            var app = appBuilder.Build();
 
             var e = Karawan.platform.cs1.Platform.EasyCreate(args);
 
