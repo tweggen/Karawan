@@ -87,7 +87,7 @@ namespace engine.audio.systems
                 }
                 else
                 {
-                    cMovingSound.MotionVolume = (ushort)(volumeAdjust/65535f);
+                    cMovingSound.MotionVolume = (ushort)(volumeAdjust*65535f);
                     cMovingSound.MotionPitch = freqFactor;
                     float pan;
                     if (distance < 0.1f)
@@ -99,7 +99,7 @@ namespace engine.audio.systems
                         pan = Vector3.Dot(_vListenerRight, vRelativePos) / distance;
                     }
 
-                    pan = (float)Math.Max(1.0, Math.Min(-1.0, pan));
+                    pan = (float)Math.Min(1.0, Math.Max(-1.0, pan));
                     cMovingSound.MotionPan = (short)(pan * 32767f);
                 }
 

@@ -35,6 +35,7 @@ namespace engine.audio.components
         
         public MovingSound(in engine.audio.Sound sound, in float maxDistance)
         {
+            Sound = sound;
             MaxDistance = maxDistance;
         }
     }

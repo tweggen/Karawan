@@ -75,6 +75,9 @@ namespace engine
 
                 foreach (var logEntry in outlist)
                 {
+#if true
+                    Console.WriteLine($"{logEntry.Level}: {logEntry.Message}");
+#else
                     string message = logEntry.Message;
                     switch (logEntry.Level)
                     {
@@ -101,6 +104,7 @@ namespace engine
                             Logger.LogInformation(message);
                             break;
                     }
+#endif
                 }
             }
         }

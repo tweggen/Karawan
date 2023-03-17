@@ -158,20 +158,22 @@ namespace Boom
             }
             else
             {
+                int outFrames = outAvailable / WaveFormat.Channels;
+
                 /*
                  * This is mono to stereo, apply volume and pan while copying.
                  */
                 /*
                  * This is stereo, apply pan and volume in-place.
                  */
-                for (int n = 0; n < outAvailable; ++n)
+                for (int n = 0; n < outFrames; ++n)
                 {
                     float sourceValue = resampleOutBuffer[n];
                     buffer[n * 2 + 0] = left * sourceValue;
                     buffer[n * 2 + 1] = right * sourceValue;
                 }
             }
-            return outAvailable * WaveFormat.Channels;
+            return outAvailable;
         }
 
 

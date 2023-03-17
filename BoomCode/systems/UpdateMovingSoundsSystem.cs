@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System;
+using static engine.Logger;
 
 namespace Boom.systems
 {
@@ -32,7 +33,8 @@ namespace Boom.systems
         {
             _engine.QueueCleanupAction(() =>
             {
-                Boom.Sound bSound = new Sound(new Boom.CachedSound(cMovingSound.Sound.Url));
+                string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
+                Boom.Sound bSound = new Sound(new Boom.CachedSound(resourcePath + cMovingSound.Sound.Url));
                 bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
                 bSound.Pan = cMovingSound.MotionPan;
                 bSound.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
@@ -76,11 +78,11 @@ namespace Boom.systems
                  * We need to iterate through all moving sounds, finally creating
                  * or updating the sounds depending on distance.
                  */
-                bool hasRlSound = entity.Has<components.BoomSound>();
+                bool hasBoomSound = entity.Has<components.BoomSound>();
                 var cMovingSound = entity.Get<engine.audio.components.MovingSound>();
                 components.BoomSound cBoomSound;
 
-               if (hasRlSound)
+                if (hasBoomSound)
                 {
                     cBoomSound = entity.Get<components.BoomSound>();
                     Boom.Sound bSound = cBoomSound.Sound;
@@ -118,8 +120,7 @@ namespace Boom.systems
                         float resultingVolume = cMovingSound.Sound.Volume * (float)cMovingSound.MotionVolume / 65535f;
                         float resultingPitch = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
                         float resultingPan = (float) cMovingSound.MotionPan / 32767f;
-
-                        bSound.Volume = resultingVolume;
+                        bSound.Volume = 0.5f; //resultingVolume;
                         bSound.Pan = resultingPan;
                         bSound.Speed = resultingPitch;
                     }

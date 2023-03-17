@@ -64,6 +64,8 @@ namespace Boom
 
                 totalBytesRead += bytesRead;
             }
+            
+            Console.WriteLine($"Returning {totalBytesRead} bytes.");
 
             return totalBytesRead;
         }
