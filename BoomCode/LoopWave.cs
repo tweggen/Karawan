@@ -9,8 +9,8 @@ namespace Boom
     public class LoopSampleProvider : ISampleProvider
     {
         private ISampleProvider _sourceSampleProvider;
-        private int _sourcePosition;
-        private int _loopLength;
+        private int _sourcePosition = 0;
+        private int _loopLength = 0;
 
         /// <summary>
         /// Creates a new Loop stream
@@ -43,7 +43,10 @@ namespace Boom
 
             while (totalBytesRead < count)
             {
-                _sourcePosition = (offset+totalBytesRead) % _loopLength;
+                if (_loopLength != 0)
+                {
+                    _sourcePosition = (offset + totalBytesRead) % _loopLength;
+                }
 
                 int bytesRead = _sourceSampleProvider.Read(buffer, _sourcePosition, count - totalBytesRead);
                 if (bytesRead == 0)
@@ -52,6 +55,10 @@ namespace Boom
                     {
                         // something wrong with the source stream
                         break;
+                    }
+                    else
+                    {
+                        _sourcePosition = 0;
                     }
                 }
 

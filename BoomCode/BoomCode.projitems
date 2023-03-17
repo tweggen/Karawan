@@ -14,10 +14,15 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AudioPlaybackEngine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ChannelStripProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AutoDisposeFileReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CachedSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CachedSoundSampleProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)components\BoomSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LoopWave.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Sound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)systems\CreateMusicSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)systems\UpdateMovingSoundsSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)WdlResampler.cs" />
   </ItemGroup>
 </Project>
