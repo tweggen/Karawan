@@ -1,4 +1,6 @@
-﻿using NAudio.Wave;
+﻿using System.ComponentModel;
+using NAudio.Wave;
+using static engine.Logger;
 
 namespace Boom
 {
@@ -10,17 +12,15 @@ namespace Boom
     {
         private CachedSoundSampleProvider _sourceSampleProvider;
         private int _sourcePosition = 0;
-        private int _loopLength = 0;
 
         /// <summary>
         /// Creates a new Loop stream
         /// </summary>
         /// <param name="sourceStream">The stream to read from. Note: the Read method of this stream should return 0 when it reaches the end
         /// or else we will not loop to the start again.</param>
-        public LoopSampleProvider(CachedSoundSampleProvider sourceSampleProvider, int length)
+        public LoopSampleProvider(CachedSoundSampleProvider sourceSampleProvider)
         {
             _sourceSampleProvider = sourceSampleProvider;
-            _loopLength = length;
             this.EnableLooping = true;
         }
 
@@ -39,17 +39,12 @@ namespace Boom
 
         public int Read(float[] buffer, int offset, int count)
         {
-            int totalBytesRead = 0;
+            int totalFloatsRead = 0;
 
-            while (totalBytesRead < count)
+            while (totalFloatsRead < count)
             {
-                if (_loopLength != 0)
-                {
-                    _sourcePosition = (offset + totalBytesRead) % _loopLength;
-                }
-
-                int bytesRead = _sourceSampleProvider.Read(buffer, 0, count - totalBytesRead);
-                if (bytesRead == 0)
+                int floatsRead = _sourceSampleProvider.Read(buffer, offset + totalFloatsRead, count - totalFloatsRead);
+                if (floatsRead == 0)
                 {
                     if (!EnableLooping)
                     {
@@ -63,10 +58,15 @@ namespace Boom
                     }
                 }
 
-                totalBytesRead += bytesRead;
+                totalFloatsRead += floatsRead;
+            }
+
+            if (totalFloatsRead != count)
+            {
+                Error($"Returned less bytes than demanded: totalBytesRead {totalFloatsRead} != count {count}");
             }
             
-            return totalBytesRead;
+            return totalFloatsRead;
         }
     }
 }

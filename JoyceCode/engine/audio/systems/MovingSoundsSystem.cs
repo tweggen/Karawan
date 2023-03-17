@@ -17,6 +17,12 @@ namespace engine.audio.systems
         private Vector3 _vListenerPosition;
         private Vector3 _vListenerRight;
 
+        /**
+         * We all know the speed of sound is 343 m/s.
+         * However, lowering the speed of sound makes the doppler effect more spectacular.
+         */
+        public float SpeedOfSound { get; set; } = 150f;
+        
         private engine.Engine _engine;
 
         protected override void PreUpdate(float dt)
@@ -67,7 +73,7 @@ namespace engine.audio.systems
                 }
 
                 float freqFactor;
-                if (Math.Abs(343f + projectedSourceVelocity) < 0.001)
+                if (Math.Abs(SpeedOfSound + projectedSourceVelocity) < 0.001)
                 {
                     /*
                      * supersonic boom.
@@ -76,7 +82,7 @@ namespace engine.audio.systems
                 }
                 else
                 {
-                    freqFactor = (343f + projectedListenerVelocity) / (343f + projectedSourceVelocity);
+                    freqFactor = (SpeedOfSound + projectedListenerVelocity) / (SpeedOfSound + projectedSourceVelocity);
                 }
 
                 var cMovingSound = entity.Get<engine.audio.components.MovingSound>();

@@ -9,6 +9,7 @@ namespace Boom
 
         public CachedSoundSampleProvider(CachedSound cachedSound)
         {
+            position = 0;
             this.cachedSound = cachedSound;
         }
 

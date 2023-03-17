@@ -81,7 +81,7 @@ namespace Boom
         {
             _cachedSound = cachedSound;
             _cachedSoundSampleProvider = new CachedSoundSampleProvider(_cachedSound);
-            _loopSampleProvider = new LoopSampleProvider(_cachedSoundSampleProvider, 0);
+            _loopSampleProvider = new LoopSampleProvider(_cachedSoundSampleProvider);
             _channelStripProvider = new ChannelStripProvider(_loopSampleProvider);
         }
     }

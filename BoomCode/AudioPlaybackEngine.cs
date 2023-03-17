@@ -114,7 +114,6 @@ namespace Boom
                 WaveFormat.CreateIeeeFloatWaveFormat(
                     sampleRate,
                     channelCount));
-            mixer.ReadFully = true;
             outputDevice.Init(mixer);
             outputDevice.Play();
         }

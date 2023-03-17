@@ -23,15 +23,6 @@ namespace Boom
 #endif
 
         /// <summary>
-        /// When set to true, the Read method always returns the number
-        /// of samples requested, even if there are no inputs, or if the
-        /// current inputs reach their end. Setting this to true effectively
-        /// makes this a never-ending sample provider, so take care if you plan
-        /// to write it out to a file.
-        /// </summary>
-        public bool ReadFully { get; set; }
-
-        /// <summary>
         /// Adds a new mixer input
         /// </summary>
         /// <param name="mixerInput">Mixer input</param>
@@ -120,46 +111,47 @@ namespace Boom
                 localSources = new List<ISampleProvider>(_sources);
             }
 
-            int outputSamples = 0;
+            // int outputSamples = 0;
             _sourceBuffer = BufferHelpers.Ensure(_sourceBuffer, count);
+            /*
+             * Zero out target buffer to simplify mixing.
+             */
+            for (int n = 0; n < count; ++n)
+            {
+                buffer[offset + n] = 0f;
+            }
 
             int index = localSources.Count - 1;
             while (index >= 0)
             {
                 var source = localSources[index];
-                int samplesRead = source.Read(_sourceBuffer, 0, count);
-                int outIndex = offset;
-                for (int n = 0; n < samplesRead; n++)
+                int totalBytesRead = 0;
+                while (totalBytesRead < count)
                 {
-                    if (n >= outputSamples)
+                    int samplesRead = source.Read(_sourceBuffer, 0+totalBytesRead, count-totalBytesRead);
+                    if (0 == samplesRead)
                     {
-                        buffer[outIndex++] = _sourceBuffer[n];
+                        break;
                     }
-                    else
+                    
+                    int outIndex = offset + totalBytesRead;
+                    for (int n = 0; n < samplesRead; n++)
                     {
                         buffer[outIndex++] += _sourceBuffer[n];
                     }
+
+                    totalBytesRead += samplesRead;
                 }
 
-                outputSamples = Math.Max(samplesRead, outputSamples);
-                if (samplesRead < count)
+                /*
+                 * If the source wasn't able to supply, remove it.
+                 */
+                if (totalBytesRead < count)
                 {
                     localSourcesToRemove.Add(source);
                 }
 
                 index--;
-            }
-
-            // optionally ensure we return a full buffer
-            if (ReadFully && outputSamples < count)
-            {
-                int outputIndex = offset + outputSamples;
-                while (outputIndex < offset + count)
-                {
-                    buffer[outputIndex++] = 0;
-                }
-
-                outputSamples = count;
             }
 
             lock (_sources)
@@ -171,7 +163,7 @@ namespace Boom
                 }
             }
 
-            return outputSamples;
+            return count;
         }
 
         /// <summary>

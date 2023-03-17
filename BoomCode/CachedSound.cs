@@ -1,4 +1,5 @@
 ﻿using NAudio.Wave;
+using static engine.Logger;
 
 namespace Boom
 {
@@ -24,6 +25,11 @@ namespace Boom
 
                 WaveFormat = new WaveFormat(vorbisReader.SampleRate, 16, vorbisReader.Channels);
                 AudioData = wholeFile.ToArray();
+                if (vorbisReader.TotalSamples != AudioData.Length)
+                {
+                    Warning($"Decoded more or less samples than the ogg file has: Ogg" +
+                            $" TotalSamples=={vorbisReader.TotalSamples} != AudioData.Count=={AudioData.Length}");
+                }
             }
 #if false
             using (var audioFileReader = new AudioFileReader(audioFileName))

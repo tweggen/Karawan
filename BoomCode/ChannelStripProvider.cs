@@ -1,5 +1,6 @@
+using engine;
 using NAudio.Wave;
-
+using static engine.Logger;
 
 namespace Boom
 {
@@ -100,8 +101,11 @@ namespace Boom
 
             if (recomputeResampler)
             {
-                _wdlResampler.SetRates(inSamplingRate / speed, outSamplingRate);
+                _wdlResampler.SetRates(inSamplingRate /* * speed */, outSamplingRate);
             }
+
+            left = 1.0f;
+            right = 1.0f;
 
             int framesRequested = count / channels;
 
@@ -115,6 +119,7 @@ namespace Boom
              * number of channels as the input.
              */
             float[] resampleOutBuffer;
+            int outOffset;
 
             if (channels == WaveFormat.Channels)
             {
@@ -122,10 +127,12 @@ namespace Boom
                  * Same number of channels, now resampling required.
                  */
                 resampleOutBuffer = buffer;
+                outOffset = offset;
             }
             else
             {
                 resampleOutBuffer = new float[offset + framesRequested*channels];
+                outOffset = 0;
             }
             
             /*
@@ -145,8 +152,12 @@ namespace Boom
              * Now resample them to the resampling buffer. Note, that the output buffer still does contain the source number
              * of channels.
              */
-            int outAvailable = _wdlResampler.ResampleOut(resampleOutBuffer, offset, inAvailable, framesRequested, channels);
-            
+            int outAvailable = _wdlResampler.ResampleOut(resampleOutBuffer, outOffset, inAvailable, framesRequested, channels);
+
+            if (outAvailable != count)
+            {
+                Warning($"outAvailable {outAvailable} != count {count}");
+            }
             /*
              * We might or might not have the same number of channels in the output buffer than in the input buffer.
              * No matter which way, apply volume and pan and copy if req'd.
@@ -160,8 +171,8 @@ namespace Boom
                 {
                     float l = lastLeft + (left - lastLeft) * n / outAvailable;
                     float r = lastRight + (right - lastRight) * n / outAvailable;
-                    buffer[offset + n * 2 + 0] = l * buffer[n * 2 + 0];
-                    buffer[offset + n * 2 + 1] = r * buffer[n * 2 + 1];
+                    buffer[offset + n * 2 + 0] = l * buffer[offset + n * 2 + 0];
+                    buffer[offset + n * 2 + 1] = r * buffer[offset + n * 2 + 1];
                 }
             }
             else
@@ -176,11 +187,17 @@ namespace Boom
                  */
                 for (int n = 0; n < outFrames; ++n)
                 {
+#if false
+                    float scale = (float)n / (float)outAvailable;
                     float sourceValue = resampleOutBuffer[n];
-                    float l = lastLeft + (left - lastLeft) * n / outAvailable;
-                    float r = lastRight + (right - lastRight) * n / outAvailable;
+                    float l = lastLeft + (left - lastLeft) * scale;
+                    float r = lastRight + (right - lastRight) * scale;
                     buffer[offset + n * 2 + 0] = l * sourceValue;
                     buffer[offset + n * 2 + 1] = r * sourceValue;
+#else
+                    buffer[offset + n * 2 + 0] = resampleOutBuffer[n];
+                    buffer[offset + n * 2 + 1] = resampleOutBuffer[n];
+#endif
                 }
             }
 
