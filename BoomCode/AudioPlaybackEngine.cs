@@ -45,6 +45,16 @@ namespace Boom
             throw new NotImplementedException("Not yet implemented this channel count conversion");
         }
 
+        public void StopSound(in Sound sound)
+        {
+            mixer.RemoveMixerInput(sound);
+        }
+
+        public void PlaySound(in Sound sound)
+        {
+            mixer.AddMixerInput(sound);
+        }
+
         public void PlaySound(CachedSound sound)
         {
             AddMixerInput(new CachedSoundSampleProvider(sound));
@@ -54,6 +64,7 @@ namespace Boom
         {
             mixer.AddMixerInput(ConvertToRightChannelCount(input));
         }
+        
 
         public void Dispose()
         {

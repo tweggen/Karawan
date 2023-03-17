@@ -29,18 +29,42 @@ namespace Boom.systems
          * Queue obtaining a sound and attaching it to this entity.
          */
         private void _queueLoadMovingSoundToEntity(
-            in DefaultEcs.Entity entity,
-            in engine.audio.components.MovingSound cMovingSound)
+            DefaultEcs.Entity entity,
+            engine.audio.components.MovingSound cMovingSound)
         {
-            
+            _engine.QueueCleanupAction(() =>
+            {
+                Boom.Sound bSound = new Sound(new Boom.CachedSound(cMovingSound.Sound.Url));
+                bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
+                bSound.Pan = cMovingSound.MotionPan;
+                bSound.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
+                entity.Set(new components.BoomSound(bSound));
+                _audioPlaybackEngine.PlaySound(bSound);
+            });
         }
+        
 
         protected override void PreUpdate(engine.Engine state)
         {
         }
+        
 
         protected override void PostUpdate(engine.Engine state)
         {
+            Queue<Boom.Sound> queueUnloadEntries;
+            while (true)
+            {
+                Boom.Sound bSound = null;
+                lock (_lo)
+                {
+                    if (0 == _queueUnloadEntries.Count)
+                    {
+                        break;
+                    }
+                    bSound = _queueUnloadEntries.Dequeue();
+                }
+                _audioPlaybackEngine.StopSound(bSound);
+            }
         }
 
 
