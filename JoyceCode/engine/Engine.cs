@@ -54,6 +54,11 @@ namespace engine
         public event EventHandler<uint> KeyEvent;
         public event EventHandler<physics.ContactInfo> OnContactInfo;
 
+        private WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
+
+        private WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
+
+
 
 
         class EnginePhysicsEventHandler : physics.IContactEventHandler
@@ -248,53 +253,16 @@ namespace engine
                 _queueEntitySetupActions.Enqueue(action); 
             }
         }
-        
-        
-        private void _executeCleanupActions(float maxTime)
-        {
-            _queueStopwatch.Reset();
-            _queueStopwatch.Start();
-            while(_queueStopwatch.Elapsed.TotalMilliseconds < maxTime*1000f)
-            {
-                Action action;
-                lock (_lo)
-                {
-                    if( _queueCleanupActions.Count==0)
-                    {
-                        break;
-                    }
-                    action = _queueCleanupActions.Dequeue();
-                }
 
-                try {                    
-                    action();
-                } catch( Exception e )
-                {
-                    Warning($"Error executing cleanup action: {e}.");
-                }
-            }
-            _queueStopwatch.Stop();
-
-            int queueLeft;
-            lock (_lo)
-            {
-                queueLeft = _queueCleanupActions.Count;
-            }
-
-            if (0 < queueLeft)
-            {
-                Trace( $"Left {queueLeft} items in cleanup queue.");
-            }
-
-        }
-        
 
         public void QueueCleanupAction(Action action)
         {
-            lock (_lo)
-            {
-                _queueCleanupActions.Enqueue(action);
-            }
+            _workerCleanupActions.Enqueue(action);
+        }
+
+        public void QueueMainThreadAction(Action action)
+        {
+            _workerMainThreadActions.Enqueue(action);
         }
 
 
@@ -478,7 +446,8 @@ namespace engine
              * Async create / setup new entities.
              */
             _executeEntitySetupActions(0.001f);
-            _executeCleanupActions(0.001f);
+            _workerMainThreadActions.RunPart(0.001f);
+            _workerCleanupActions.RunPart(0.001f);
         }
 
 

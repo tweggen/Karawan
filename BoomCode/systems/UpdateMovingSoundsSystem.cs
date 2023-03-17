@@ -7,8 +7,9 @@ namespace Boom.systems
     [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
     sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
-        private engine.Engine _engine;
         private object _lo = new();
+        private engine.Engine _engine;
+        private engine.WorkerQueue _audioWorkerQueue = new("UpdateMovingSoundSystem.Audio");
 
         private Queue<Boom.Sound> _queueUnloadEntries = new();
 
@@ -16,12 +17,12 @@ namespace Boom.systems
          * Schedule a sound entry for later deletion in the engine.
          * It may or may not be reused.
          */
-        private void _queueUnloadSoundEntry(in Boom.Sound bSound)
+        private void _queueUnloadSoundEntry(Boom.Sound bSound)
         {
-            lock (_lo)
+            _audioWorkerQueue.Enqueue(() =>
             {
-                _queueUnloadEntries.Enqueue(bSound);
-            }
+                AudioPlaybackEngine.Instance.StopSound(bSound);
+            });
         }
 
         /**
@@ -31,15 +32,30 @@ namespace Boom.systems
             DefaultEcs.Entity entity,
             engine.audio.components.MovingSound cMovingSound)
         {
-            _engine.QueueCleanupAction(() =>
+            string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
+
+
+            _audioWorkerQueue.Enqueue(() =>
             {
-                string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
-                Boom.Sound bSound = new Sound(new Boom.CachedSound(resourcePath + cMovingSound.Sound.Url));
-                bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
-                bSound.Pan = cMovingSound.MotionPan;
-                bSound.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
-                entity.Set(new components.BoomSound(bSound));
-                AudioPlaybackEngine.Instance.PlaySound(bSound);
+                AudioPlaybackEngine.Instance.FindCachedSound(
+                    resourcePath + cMovingSound.Sound.Url,
+                    (Boom.CachedSound bCachedSound) =>
+                    {
+                        _engine.QueueMainThreadAction(() =>
+                        {
+                            Boom.Sound bSound = new Sound(bCachedSound);
+                            entity.Set(new components.BoomSound(bSound));
+
+                            bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
+                            bSound.Pan = cMovingSound.MotionPan;
+                            bSound.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
+                            
+                            _audioWorkerQueue.Enqueue(() =>
+                            {
+                                AudioPlaybackEngine.Instance.PlaySound(bSound);
+                            });
+                        });
+                    });
             });
         }
         
@@ -48,23 +64,9 @@ namespace Boom.systems
         {
         }
         
-
+ 
         protected override void PostUpdate(float dt)
         {
-            Queue<Boom.Sound> queueUnloadEntries;
-            while (true)
-            {
-                Boom.Sound bSound = null;
-                lock (_lo)
-                {
-                    if (0 == _queueUnloadEntries.Count)
-                    {
-                        break;
-                    }
-                    bSound = _queueUnloadEntries.Dequeue();
-                }
-                AudioPlaybackEngine.Instance.StopSound(bSound);
-            }
         }
 
 
@@ -88,7 +90,7 @@ namespace Boom.systems
                     Boom.Sound bSound = cBoomSound.Sound;
 
                     /*
-                     * Caution: If the rlSoundEntry is null, the sound still is loading.
+                     * Caution: If the bSound is null, the sound still is loading.
                      * We neither can modify or unload it.
                      */
                     if (bSound == null)
@@ -98,12 +100,6 @@ namespace Boom.systems
 
                     if (cMovingSound.MotionVolume == 0)
                     {
-                        /*
-                         * Be safe and stop it.
-                         */
-                        AudioPlaybackEngine.Instance.StopSound(bSound);
-                        // Raylib_CsLo.Raylib.StopSound(rlSoundEntry.RlSound);
-
                         /*
                          * Immediately remove the sound from this entity, but asynchronously
                          * remove it from the manager.
@@ -142,6 +138,17 @@ namespace Boom.systems
             }
         }
 
+        private void _audioThread()
+        {
+            while (_engine.IsRunning())
+            {
+                const float timeSlice = 0.1f;
+                float usedTime = _audioWorkerQueue.RunPart(timeSlice);
+                float sleepTime = Math.Max(0.01f, timeSlice - usedTime);
+                Thread.Sleep((int)(sleepTime*1000f));
+            }
+        }
+
 
         public UpdateMovingSoundSystem(
             engine.Engine engine 
@@ -149,6 +156,8 @@ namespace Boom.systems
             : base(engine.GetEcsWorld())
         {
             _engine = engine;
+            Thread audioThread = new Thread(_audioThread);
+            audioThread.Start();
         }
     }
 }

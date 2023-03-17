@@ -7,8 +7,11 @@ namespace Boom
         public float[] AudioData { get; private set; }
         public WaveFormat WaveFormat { get; private set; }
 
+        public string Url;
+        
         public CachedSound(string audioFileName)
         {
+            Url = audioFileName;
             using (var vorbisReader = new NVorbis.VorbisReader(audioFileName))
             {
                 var readBuffer = new float[vorbisReader.SampleRate * vorbisReader.Channels];

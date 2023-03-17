@@ -4,8 +4,10 @@ using NAudio.Wave;
 namespace Boom
 {
 
-    public class Sound : ISampleProvider, IDisposable
+    public class Sound : ISampleProvider, IDisposable, IComparable<Sound>
     {
+        static private int _nextId = 0;
+        public int _id = ++_nextId;
         private CachedSound _cachedSound;
         private CachedSoundSampleProvider _cachedSoundSampleProvider;
         private LoopSampleProvider _loopSampleProvider;
@@ -35,6 +37,26 @@ namespace Boom
         {
             get => _channelStripProvider.WaveFormat;
             set => _channelStripProvider.WaveFormat = value;
+        }
+
+        public int CompareTo(Sound? other)
+        {
+            if (null == other) return 1;
+            if (_id < other._id)
+            {
+                return -1;
+            }
+            else
+            {
+                if (_id > other._id)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
         }
         
         public void Dispose()
