@@ -8,7 +8,7 @@ namespace Boom
     /// </summary>
     public class LoopSampleProvider : ISampleProvider
     {
-        private ISampleProvider _sourceSampleProvider;
+        private CachedSoundSampleProvider _sourceSampleProvider;
         private int _sourcePosition = 0;
         private int _loopLength = 0;
 
@@ -17,7 +17,7 @@ namespace Boom
         /// </summary>
         /// <param name="sourceStream">The stream to read from. Note: the Read method of this stream should return 0 when it reaches the end
         /// or else we will not loop to the start again.</param>
-        public LoopSampleProvider(ISampleProvider sourceSampleProvider, int length)
+        public LoopSampleProvider(CachedSoundSampleProvider sourceSampleProvider, int length)
         {
             _sourceSampleProvider = sourceSampleProvider;
             _loopLength = length;
@@ -48,7 +48,7 @@ namespace Boom
                     _sourcePosition = (offset + totalBytesRead) % _loopLength;
                 }
 
-                int bytesRead = _sourceSampleProvider.Read(buffer, _sourcePosition, count - totalBytesRead);
+                int bytesRead = _sourceSampleProvider.Read(buffer, 0, count - totalBytesRead);
                 if (bytesRead == 0)
                 {
                     if (!EnableLooping)
@@ -59,6 +59,7 @@ namespace Boom
                     else
                     {
                         _sourcePosition = 0;
+                        _sourceSampleProvider.Rewind();
                     }
                 }
 

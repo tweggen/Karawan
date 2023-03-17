@@ -14,7 +14,8 @@ namespace Boom
 
         private bool _recomputeResampler = true;
         private bool _recomputeMixer = true;
-        
+
+        private float _lastVolume = 0f;
         private float _volume = 1f;
 
         public float Volume
@@ -27,6 +28,7 @@ namespace Boom
             }
         }
 
+        private float _lastPan = 0f;
         private float _pan = 0f;
 
         public float Pan
@@ -39,6 +41,7 @@ namespace Boom
             }
         }
 
+        private float _lastSpeed = 1f;
         private float _speed = 1f;
 
         public float Speed
@@ -54,6 +57,9 @@ namespace Boom
         private Boom.WdlResampler _wdlResampler = new();
 
         public float OutSamplingRate { get; set; } = 44100f;
+
+        private float lastLeft = 0f;
+        private float lastRight = 0f;
         
         public int Read(float[] buffer, int offset, int count)
         {
@@ -119,7 +125,7 @@ namespace Boom
             }
             else
             {
-                resampleOutBuffer = new float[framesRequested*channels];
+                resampleOutBuffer = new float[offset + framesRequested*channels];
             }
             
             /*
@@ -152,8 +158,10 @@ namespace Boom
                  */
                 for (int n = 0; n < outAvailable; ++n)
                 {
-                    buffer[n * 2 + 0] = left * buffer[n * 2 + 0];
-                    buffer[n * 2 + 1] = right * buffer[n * 2 + 1];
+                    float l = lastLeft + (left - lastLeft) * n / outAvailable;
+                    float r = lastRight + (right - lastRight) * n / outAvailable;
+                    buffer[offset + n * 2 + 0] = l * buffer[n * 2 + 0];
+                    buffer[offset + n * 2 + 1] = r * buffer[n * 2 + 1];
                 }
             }
             else
@@ -169,10 +177,16 @@ namespace Boom
                 for (int n = 0; n < outFrames; ++n)
                 {
                     float sourceValue = resampleOutBuffer[n];
-                    buffer[n * 2 + 0] = left * sourceValue;
-                    buffer[n * 2 + 1] = right * sourceValue;
+                    float l = lastLeft + (left - lastLeft) * n / outAvailable;
+                    float r = lastRight + (right - lastRight) * n / outAvailable;
+                    buffer[offset + n * 2 + 0] = l * sourceValue;
+                    buffer[offset + n * 2 + 1] = r * sourceValue;
                 }
             }
+
+            lastLeft = left;
+            lastRight = right;
+            
             return outAvailable;
         }
 

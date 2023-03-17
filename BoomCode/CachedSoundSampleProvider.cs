@@ -2,22 +2,27 @@
 
 namespace Boom
 {
-    class CachedSoundSampleProvider : ISampleProvider
+    public class CachedSoundSampleProvider : ISampleProvider
     {
         private readonly CachedSound cachedSound;
-        //private long position;
+        private long position;
 
         public CachedSoundSampleProvider(CachedSound cachedSound)
         {
             this.cachedSound = cachedSound;
         }
 
+        public void Rewind()
+        {
+            position = 0;
+        }
+
         public int Read(float[] buffer, int offset, int count)
         {
-            var availableSamples = cachedSound.AudioData.Length - offset;
+            var availableSamples = cachedSound.AudioData.Length - position;
             var samplesToCopy = Math.Min(availableSamples, count);
-            Array.Copy(cachedSound.AudioData, offset, buffer, offset, samplesToCopy);
-            // position += samplesToCopy;
+            Array.Copy(cachedSound.AudioData, position, buffer, offset, samplesToCopy);
+            position += samplesToCopy;
             return (int)samplesToCopy;
         }
 
