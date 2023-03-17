@@ -26,10 +26,9 @@ using OpenTelemetry.Instrumentation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-
 namespace Karawan
 {
-
+#if false
     public class Instrumentation : IDisposable
     {
         internal const string ActivitySourceName = "Examples.AspNetCore";
@@ -54,6 +53,7 @@ namespace Karawan
             this.meter.Dispose();
         }
     }
+#endif
 
     public class DesktopMain
     {
@@ -61,6 +61,7 @@ namespace Karawan
         {
             var appBuilder = WebApplication.CreateBuilder(args);
 
+#if false
             // Build a resource configuration action to set service information.
             Action<ResourceBuilder> configureResource = r => r.AddService(
                 serviceName: "silicon_desert2",
@@ -70,7 +71,7 @@ namespace Karawan
             // Create a service to expose ActivitySource, and Metric Instruments
             // for manual instrumentation
             appBuilder.Services.AddSingleton<Instrumentation>();
-
+#endif
 #if false
             var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddHttpClientInstrumentation((options) =>
@@ -97,6 +98,7 @@ namespace Karawan
             .AddConsoleExporter()
             .Build();
 #endif
+#if false
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation(
                     // Note: Only called on .NET & .NET Core runtimes.
@@ -108,11 +110,15 @@ namespace Karawan
                         })
                 .AddConsoleExporter()
                 .Build();
+#endif
+#if false
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
                 .AddAspNetCoreInstrumentation()
                 .AddConsoleExporter()
                 .Build();
+#endif
+#if false
             appBuilder.Logging.ClearProviders();
             appBuilder.Logging.AddOpenTelemetry(opts =>
             {
@@ -154,6 +160,7 @@ namespace Karawan
 #endif
                 //opts.AddConsoleExporter();
             });
+#endif
 
             appBuilder.Logging.AddEventLog();
             appBuilder.Logging.AddConsole();
@@ -184,7 +191,8 @@ namespace Karawan
             e.SetMainScene("logos");
             boom.SetupDone();
             e.Execute();
-            
+
+            app.StopAsync();
             Boom.AudioPlaybackEngine.Instance.Dispose();
         }
     }

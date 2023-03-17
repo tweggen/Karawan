@@ -4,15 +4,13 @@ using System;
 namespace Boom.systems
 {
     [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
-    sealed public class UpdateRlMovingSoundSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
+    sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
         private engine.Engine _engine;
         private object _lo = new();
 
-        private Queue<Boom.Sound> _queueUnloadEntries;
+        private Queue<Boom.Sound> _queueUnloadEntries = new();
 
-        private AudioPlaybackEngine _audioPlaybackEngine;
-        
         /**
          * Schedule a sound entry for later deletion in the engine.
          * It may or may not be reused.
@@ -39,17 +37,17 @@ namespace Boom.systems
                 bSound.Pan = cMovingSound.MotionPan;
                 bSound.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
                 entity.Set(new components.BoomSound(bSound));
-                _audioPlaybackEngine.PlaySound(bSound);
+                AudioPlaybackEngine.Instance.PlaySound(bSound);
             });
         }
         
 
-        protected override void PreUpdate(engine.Engine state)
+        protected override void PreUpdate(float dt)
         {
         }
         
 
-        protected override void PostUpdate(engine.Engine state)
+        protected override void PostUpdate(float dt)
         {
             Queue<Boom.Sound> queueUnloadEntries;
             while (true)
@@ -63,12 +61,12 @@ namespace Boom.systems
                     }
                     bSound = _queueUnloadEntries.Dequeue();
                 }
-                _audioPlaybackEngine.StopSound(bSound);
+                AudioPlaybackEngine.Instance.StopSound(bSound);
             }
         }
 
 
-        protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
+        protected override void Update(float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
             Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
             entities.CopyTo(copiedEntities);
@@ -101,7 +99,7 @@ namespace Boom.systems
                         /*
                          * Be safe and stop it.
                          */
-                        _audioPlaybackEngine.StopSound(bSound);
+                        AudioPlaybackEngine.Instance.StopSound(bSound);
                         // Raylib_CsLo.Raylib.StopSound(rlSoundEntry.RlSound);
 
                         /*
@@ -144,14 +142,12 @@ namespace Boom.systems
         }
 
 
-        public UpdateRlMovingSoundSystem(
-            engine.Engine engine,
-            AudioPlaybackEngine audioPlaybackEngine 
+        public UpdateMovingSoundSystem(
+            engine.Engine engine 
         )
             : base(engine.GetEcsWorld())
         {
             _engine = engine;
-            _audioPlaybackEngine = audioPlaybackEngine;
         }
     }
 }

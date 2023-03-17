@@ -1,8 +1,10 @@
 ﻿
 
 using System;
+using Microsoft.VisualBasic;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using static engine.Logger;
 
 namespace Boom
 {
@@ -20,8 +22,10 @@ namespace Boom
             outputDevice.Play();
         }
 
+        #if false
         public void PlaySound(string fileName)
         {
+            
             var input = new AudioFileReader(fileName);
             /*
              * Add this input. As soon the stream has finished, it is
@@ -29,6 +33,7 @@ namespace Boom
              */
             AddMixerInput(new AutoDisposeFileReader(input));
         }
+#endif
 
         private ISampleProvider ConvertToRightChannelCount(ISampleProvider input)
         {
@@ -47,24 +52,21 @@ namespace Boom
 
         public void StopSound(in Sound sound)
         {
+            Trace($"Stopping sound.");
             mixer.RemoveMixerInput(sound);
         }
 
         public void PlaySound(in Sound sound)
         {
+            Trace($"Starting sound.");
             mixer.AddMixerInput(sound);
         }
 
         public void PlaySound(CachedSound sound)
         {
-            AddMixerInput(new CachedSoundSampleProvider(sound));
+            mixer.AddMixerInput(new CachedSoundSampleProvider(sound));
         }
 
-        private void AddMixerInput(ISampleProvider input)
-        {
-            mixer.AddMixerInput(ConvertToRightChannelCount(input));
-        }
-        
 
         public void Dispose()
         {
