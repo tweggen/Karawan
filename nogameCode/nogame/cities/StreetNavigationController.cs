@@ -297,7 +297,7 @@ namespace nogame.cities
             _lastDirection = new Vector3(1f, 0f, 0f);
             _avoidDeadEnds = false;
 
-            _speed = 2.7f * 5f;
+            _speed = 2.7f * 15f;
 
             _loadStartPoint();
 

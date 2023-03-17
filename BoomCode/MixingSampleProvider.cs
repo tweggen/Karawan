@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using NAudio.Utils;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using static engine.Logger;
 
 namespace Boom
 {
@@ -159,6 +161,7 @@ namespace Boom
                 foreach (var source in localSourcesToRemove)
                 {
                     MixerInputEnded?.Invoke(this, new SampleProviderEventArgs(source));
+                    Trace($"Removing source.");
                     _sources.Remove(source);
                 }
             }

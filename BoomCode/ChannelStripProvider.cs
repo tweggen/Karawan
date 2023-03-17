@@ -5,12 +5,12 @@ using static engine.Logger;
 namespace Boom
 {
 
-    public class ChannelStripProvider
+    public class ChannelStripProvider : ISampleProvider
     {
         private object _lo = new();
         
         public WaveFormat InWaveFormat;
-        public WaveFormat WaveFormat;
+        public WaveFormat WaveFormat { get; set; }
         public ISampleProvider SourceSampleProvider;
 
         private bool _recomputeResampler = true;
@@ -75,7 +75,7 @@ namespace Boom
             float inSamplingRate;
             float outSamplingRate;
             float speed;
-            int channels;
+            int inChannels, outChannels;
 
             lock (_lo)
             {
@@ -96,18 +96,16 @@ namespace Boom
                 _recomputeResampler = false;
                 // ignore _recomputeMixer
                 _recomputeMixer = false;
-                channels = InWaveFormat.Channels;
+                inChannels = InWaveFormat.Channels;
+                outChannels = WaveFormat.Channels;
             }
 
             if (recomputeResampler)
             {
-                _wdlResampler.SetRates(inSamplingRate /* * speed */, outSamplingRate);
+                _wdlResampler.SetRates(inSamplingRate * speed, outSamplingRate);
             }
-
-            left = 1.0f;
-            right = 1.0f;
-
-            int framesRequested = count / channels;
+            
+            int framesRequested = count / outChannels;
 
             /*
              * This buffer for original sample data will be allocated by the resampler.
@@ -121,7 +119,7 @@ namespace Boom
             float[] resampleOutBuffer;
             int outOffset;
 
-            if (channels == WaveFormat.Channels)
+            if (inChannels == outChannels)
             {
                 /*
                  * Same number of channels, now resampling required.
@@ -131,7 +129,7 @@ namespace Boom
             }
             else
             {
-                resampleOutBuffer = new float[offset + framesRequested*channels];
+                resampleOutBuffer = new float[offset + framesRequested*outChannels];
                 outOffset = 0;
             }
             
@@ -140,24 +138,26 @@ namespace Boom
              */
             int inBufferOffset;
 
-            /*
-             * First ask the resampler how many samples would be needed. 
-             */
-            int inNeeded = _wdlResampler.ResamplePrepare(framesRequested, channels, out inBuffer, out inBufferOffset);
-            /*
-             * Then read that number of samples from the source.
-             */
+            #if false
+            int inNeeded = count;
             int inAvailable = SourceSampleProvider.Read(inBuffer, inBufferOffset, inNeeded * channels) / channels;
+            int outAvailable = 
+            #else
+            /*
+             * First ask the resampler how many frames would be needed. 
+             */
+            int inNeeded = _wdlResampler.ResamplePrepare(framesRequested, inChannels, out inBuffer, out inBufferOffset);
+            /*
+             * Then read that number of frames from the source.
+             */
+            int inAvailable = SourceSampleProvider.Read(inBuffer, inBufferOffset, inNeeded * inChannels) / inChannels;
             /*
              * Now resample them to the resampling buffer. Note, that the output buffer still does contain the source number
              * of channels.
              */
-            int outAvailable = _wdlResampler.ResampleOut(resampleOutBuffer, outOffset, inAvailable, framesRequested, channels);
+            int outAvailable = _wdlResampler.ResampleOut(resampleOutBuffer, outOffset, inAvailable, framesRequested, inChannels);
+            #endif
 
-            if (outAvailable != count)
-            {
-                Warning($"outAvailable {outAvailable} != count {count}");
-            }
             /*
              * We might or might not have the same number of channels in the output buffer than in the input buffer.
              * No matter which way, apply volume and pan and copy if req'd.
@@ -177,17 +177,15 @@ namespace Boom
             }
             else
             {
-                int outFrames = outAvailable / WaveFormat.Channels;
-
                 /*
                  * This is mono to stereo, apply volume and pan while copying.
                  */
                 /*
                  * This is stereo, apply pan and volume in-place.
                  */
-                for (int n = 0; n < outFrames; ++n)
+                for (int n = 0; n < outAvailable; ++n)
                 {
-#if false
+#if true
                     float scale = (float)n / (float)outAvailable;
                     float sourceValue = resampleOutBuffer[n];
                     float l = lastLeft + (left - lastLeft) * scale;
@@ -204,7 +202,7 @@ namespace Boom
             lastLeft = left;
             lastRight = right;
             
-            return outAvailable;
+            return outAvailable*outChannels;
         }
 
 
