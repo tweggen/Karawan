@@ -59,8 +59,8 @@ namespace Boom
 
         public float OutSamplingRate { get; set; } = 44100f;
 
-        private float lastLeft = 0f;
-        private float lastRight = 0f;
+        private float _lastLeft = 0f;
+        private float _lastRight = 0f;
         
         public int Read(float[] buffer, int offset, int count)
         {
@@ -169,8 +169,8 @@ namespace Boom
                  */
                 for (int n = 0; n < outAvailable; ++n)
                 {
-                    float l = lastLeft + (left - lastLeft) * n / outAvailable;
-                    float r = lastRight + (right - lastRight) * n / outAvailable;
+                    float l = _lastLeft + (float)((left - _lastLeft) * n) / (float)outAvailable;
+                    float r = _lastRight + (float)((right - _lastRight) * n) / (float)outAvailable;
                     buffer[offset + n * 2 + 0] = l * buffer[offset + n * 2 + 0];
                     buffer[offset + n * 2 + 1] = r * buffer[offset + n * 2 + 1];
                 }
@@ -185,22 +185,17 @@ namespace Boom
                  */
                 for (int n = 0; n < outAvailable; ++n)
                 {
-#if true
                     float scale = (float)n / (float)outAvailable;
                     float sourceValue = resampleOutBuffer[n];
-                    float l = lastLeft + (left - lastLeft) * scale;
-                    float r = lastRight + (right - lastRight) * scale;
+                    float l = _lastLeft + (float)(left - _lastLeft) * scale;
+                    float r = _lastRight + (float)(right - _lastRight) * scale;
                     buffer[offset + n * 2 + 0] = l * sourceValue;
                     buffer[offset + n * 2 + 1] = r * sourceValue;
-#else
-                    buffer[offset + n * 2 + 0] = resampleOutBuffer[n];
-                    buffer[offset + n * 2 + 1] = resampleOutBuffer[n];
-#endif
                 }
             }
 
-            lastLeft = left;
-            lastRight = right;
+            _lastLeft = left;
+            _lastRight = right;
             
             return outAvailable*outChannels;
         }

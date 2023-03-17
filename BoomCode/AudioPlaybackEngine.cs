@@ -109,13 +109,18 @@ namespace Boom
 
         public AudioPlaybackEngine(int sampleRate = 44100, int channelCount = 2)
         {
+#if false
             WaveOutEvent outputDevice = new NAudio.Wave.WaveOutEvent();
+            outputDevice.DesiredLatency = 200;
+            outputDevice.NumberOfBuffers = 2;
+#endif
+#if true
+            DirectSoundOut outputDevice = new NAudio.Wave.DirectSoundOut(40);
+#endif
             _mixer = new Boom.MixingSampleProvider(
                 WaveFormat.CreateIeeeFloatWaveFormat(
                     sampleRate,
                     channelCount));
-            outputDevice.DesiredLatency = 60;
-            outputDevice.NumberOfBuffers = 2;
             outputDevice.Init(_mixer);
             _outputDevice = outputDevice;
             outputDevice.Play();
