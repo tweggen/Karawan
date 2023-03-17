@@ -14,8 +14,8 @@ namespace Boom
         public static readonly AudioPlaybackEngine Instance = new AudioPlaybackEngine(44100, 2);
 
         private object _lo = new();
-        private readonly IWavePlayer outputDevice;
-        private readonly MixingSampleProvider mixer;
+        private readonly IWavePlayer _outputDevice;
+        private readonly MixingSampleProvider _mixer;
 
         private int _nSounds = 0;
 
@@ -46,12 +46,12 @@ namespace Boom
 
         private ISampleProvider ConvertToRightChannelCount(ISampleProvider input)
         {
-            if (input.WaveFormat.Channels == mixer.WaveFormat.Channels)
+            if (input.WaveFormat.Channels == _mixer.WaveFormat.Channels)
             {
                 return input;
             }
 
-            if (input.WaveFormat.Channels == 1 && mixer.WaveFormat.Channels == 2)
+            if (input.WaveFormat.Channels == 1 && _mixer.WaveFormat.Channels == 2)
             {
                 return new MonoToStereoSampleProvider(input);
             }
@@ -75,7 +75,7 @@ namespace Boom
                 --_nSounds;
             }
             Trace($"Stopping sound, now {_nSounds}");
-            mixer.RemoveMixerInput(sound);
+            _mixer.FadeoutMixerInput(sound);
         }
 
         public void PlaySound(in Sound sound)
@@ -92,29 +92,32 @@ namespace Boom
                 ++_nSounds;
             }
             Trace($"Starting sound, now {_nSounds}");
-            mixer.AddMixerInput(sound);
+            _mixer.AddMixerInput(sound);
         }
         
 
         public void PlaySound(CachedSound sound)
         {
-            mixer.AddMixerInput(new ChannelStripProvider(new LoopSampleProvider(new CachedSoundSampleProvider(sound))));
+            _mixer.AddMixerInput(new ChannelStripProvider(new LoopSampleProvider(new CachedSoundSampleProvider(sound))));
         }
 
 
         public void Dispose()
         {
-            outputDevice.Dispose();
+            _outputDevice.Dispose();
         }
 
         public AudioPlaybackEngine(int sampleRate = 44100, int channelCount = 2)
         {
-            outputDevice = new WaveOutEvent();
-            mixer = new Boom.MixingSampleProvider(
+            WaveOutEvent outputDevice = new NAudio.Wave.WaveOutEvent();
+            _mixer = new Boom.MixingSampleProvider(
                 WaveFormat.CreateIeeeFloatWaveFormat(
                     sampleRate,
                     channelCount));
-            outputDevice.Init(mixer);
+            outputDevice.DesiredLatency = 60;
+            outputDevice.NumberOfBuffers = 2;
+            outputDevice.Init(_mixer);
+            _outputDevice = outputDevice;
             outputDevice.Play();
         }
 

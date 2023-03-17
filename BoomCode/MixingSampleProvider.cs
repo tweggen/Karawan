@@ -14,6 +14,8 @@ namespace Boom
     public class MixingSampleProvider : ISampleProvider
     {
         private readonly List<ISampleProvider> _sources;
+        private readonly List<ISampleProvider> _fadeoutSources = new();
+        
         private float[] _sourceBuffer;
         private const int MaxInputs = 1024; // protect ourselves against doing something silly
 
@@ -73,6 +75,15 @@ namespace Boom
             }
         }
 
+
+        public void FadeoutMixerInput(ISampleProvider mixerInput)
+        {
+            lock (_sources)
+            {
+                _fadeoutSources.Add(mixerInput);
+            }
+        }
+        
         /// <summary>
         /// Removes all mixer inputs
         /// </summary>
@@ -107,10 +118,12 @@ namespace Boom
              * And also a local copy of the sources we would like to remove.
              */
             List<ISampleProvider> localSourcesToRemove = new();
-
+            List<ISampleProvider> fadeoutSources;
             lock (_sources)
             {
                 localSources = new List<ISampleProvider>(_sources);
+                fadeoutSources = new List<ISampleProvider>(_fadeoutSources);
+                _fadeoutSources.Clear();
             }
 
             // int outputSamples = 0;
@@ -127,6 +140,8 @@ namespace Boom
             while (index >= 0)
             {
                 var source = localSources[index];
+                bool isFadeout = fadeoutSources.Contains(source);
+                
                 int totalBytesRead = 0;
                 while (totalBytesRead < count)
                 {
@@ -135,11 +150,25 @@ namespace Boom
                     {
                         break;
                     }
-                    
-                    int outIndex = offset + totalBytesRead;
-                    for (int n = 0; n < samplesRead; n++)
+
+                    if (!isFadeout)
                     {
-                        buffer[outIndex++] += _sourceBuffer[n];
+                        int outIndex = offset + totalBytesRead;
+                        for (int n = 0; n < samplesRead; n++)
+                        {
+                            buffer[outIndex++] += _sourceBuffer[n];
+                        }
+                    }
+                    else
+                    {
+                        int outIndex = offset + totalBytesRead;
+                        const int maxFade = 20;
+                        int fadeLength = Int32.Max(maxFade, samplesRead);
+                        for (int n = 0; n < fadeLength; n++)
+                        {
+                            buffer[outIndex++] += ((float)fadeLength-n) * _sourceBuffer[n] / (float)fadeLength;
+                        }
+                        break;
                     }
 
                     totalBytesRead += samplesRead;

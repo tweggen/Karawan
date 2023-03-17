@@ -56,15 +56,14 @@ namespace engine.audio.systems
 
                 Vector3 vListenerVelocity = (_vListenerPosition - _vPreviousListenerPosition) / dt;
                 Vector3 vSourceVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
-                Vector3 vSoundDirection = vSourceVelocity - vListenerVelocity;
-                float lengthSoundDirection = vSoundDirection.Length();
+                float lengthRelativePosition = vRelativePos.Length();
                 float projectedListenerVelocity, projectedSourceVelocity;
-                if (Math.Abs(lengthSoundDirection) > 0.001)
+                if (Math.Abs(lengthRelativePosition) > 0.001)
                 {
                     projectedListenerVelocity =
-                        Vector3.Dot(vListenerVelocity, vSoundDirection) / lengthSoundDirection;
+                        Vector3.Dot(vListenerVelocity, vRelativePos) / lengthRelativePosition;
                     projectedSourceVelocity =
-                        Vector3.Dot(vSourceVelocity, vSoundDirection) / lengthSoundDirection;
+                        Vector3.Dot(vSourceVelocity, vRelativePos) / lengthRelativePosition;
                 }
                 else
                 {

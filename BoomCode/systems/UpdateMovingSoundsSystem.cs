@@ -119,7 +119,7 @@ namespace Boom.systems
                         float resultingVolume = cMovingSound.Sound.Volume * (float)cMovingSound.MotionVolume / 65535f;
                         float resultingPitch = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
                         float resultingPan = (float) cMovingSound.MotionPan / 32767f;
-                        bSound.Volume = Math.Max(resultingVolume * 50f, 0.5f);
+                        bSound.Volume = Math.Max(resultingVolume * 10f, 0.5f);
                         bSound.Pan = resultingPan;
                         bSound.Speed = resultingPitch;
                     }
