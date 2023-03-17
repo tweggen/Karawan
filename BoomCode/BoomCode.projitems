@@ -20,6 +20,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)CachedSoundSampleProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)components\BoomSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LoopWave.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MixingSampleProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Sound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)systems\CreateMusicSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)systems\UpdateMovingSoundsSystem.cs" />

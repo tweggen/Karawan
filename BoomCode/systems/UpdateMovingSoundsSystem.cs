@@ -13,6 +13,8 @@ namespace Boom.systems
 
         private Queue<Boom.Sound> _queueUnloadEntries = new();
 
+        public float MinAudibleVolume { get; set; } = 0.01f;
+
         /**
          * Schedule a sound entry for later deletion in the engine.
          * It may or may not be reused.
@@ -72,6 +74,7 @@ namespace Boom.systems
 
         protected override void Update(float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
+            ushort minAudibleUShort = (ushort)(MinAudibleVolume * 65535f);
             Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
             entities.CopyTo(copiedEntities);
             foreach (var entity in entities)
@@ -98,7 +101,7 @@ namespace Boom.systems
                         continue;
                     }
 
-                    if (cMovingSound.MotionVolume == 0)
+                    if (cMovingSound.MotionVolume < minAudibleUShort)
                     {
                         /*
                          * Immediately remove the sound from this entity, but asynchronously
@@ -116,14 +119,14 @@ namespace Boom.systems
                         float resultingVolume = cMovingSound.Sound.Volume * (float)cMovingSound.MotionVolume / 65535f;
                         float resultingPitch = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
                         float resultingPan = (float) cMovingSound.MotionPan / 32767f;
-                        bSound.Volume = 0.5f; //resultingVolume;
+                        bSound.Volume = Math.Max(resultingVolume * 50f, 0.5f);
                         bSound.Pan = resultingPan;
                         bSound.Speed = resultingPitch;
                     }
                 }
                 else
                 {
-                    if (cMovingSound.MotionVolume > 0f)
+                    if (cMovingSound.MotionVolume >= minAudibleUShort)
                     {
                         entity.Set(new components.BoomSound(null));
                         

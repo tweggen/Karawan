@@ -11,6 +11,8 @@ namespace Boom
 {
     public class AudioPlaybackEngine : IDisposable
     {
+        public static readonly AudioPlaybackEngine Instance = new AudioPlaybackEngine(44100, 2);
+
         private object _lo = new();
         private readonly IWavePlayer outputDevice;
         private readonly MixingSampleProvider mixer;
@@ -41,27 +43,6 @@ namespace Boom
             actionOnHaveSound( bCachedSound );
         }
         
-        public AudioPlaybackEngine(int sampleRate = 44100, int channelCount = 2)
-        {
-            outputDevice = new WaveOutEvent();
-            mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channelCount));
-            mixer.ReadFully = true;
-            outputDevice.Init(mixer);
-            outputDevice.Play();
-        }
-
-        #if false
-        public void PlaySound(string fileName)
-        {
-            
-            var input = new AudioFileReader(fileName);
-            /*
-             * Add this input. As soon the stream has finished, it is
-             * removed from the mixer.
-             */
-            AddMixerInput(new AutoDisposeFileReader(input));
-        }
-#endif
 
         private ISampleProvider ConvertToRightChannelCount(ISampleProvider input)
         {
@@ -78,6 +59,7 @@ namespace Boom
             throw new NotImplementedException("Not yet implemented this channel count conversion");
         }
 
+        
         public void StopSound(in Sound sound)
         {
             lock (_lo)
@@ -112,6 +94,7 @@ namespace Boom
             Trace($"Starting sound, now {_nSounds}");
             mixer.AddMixerInput(sound);
         }
+        
 
         public void PlaySound(CachedSound sound)
         {
@@ -124,6 +107,17 @@ namespace Boom
             outputDevice.Dispose();
         }
 
-        public static readonly AudioPlaybackEngine Instance = new AudioPlaybackEngine(44100, 2);
+        public AudioPlaybackEngine(int sampleRate = 44100, int channelCount = 2)
+        {
+            outputDevice = new WaveOutEvent();
+            mixer = new Boom.MixingSampleProvider(
+                WaveFormat.CreateIeeeFloatWaveFormat(
+                    sampleRate,
+                    channelCount));
+            mixer.ReadFully = true;
+            outputDevice.Init(mixer);
+            outputDevice.Play();
+        }
+
     }
 }
