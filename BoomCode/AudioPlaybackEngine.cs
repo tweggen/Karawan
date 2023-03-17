@@ -98,7 +98,7 @@ namespace Boom
 
         public void PlaySound(CachedSound sound)
         {
-            _mixer.AddMixerInput(new ChannelStripProvider(new LoopSampleProvider(new CachedSoundSampleProvider(sound))));
+            _mixer.AddMixerInput(new CachedSoundSampleProvider(sound));
         }
 
 
