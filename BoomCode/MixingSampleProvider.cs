@@ -168,6 +168,8 @@ namespace Boom
                         {
                             buffer[outIndex++] += ((float)fadeLength-n) * _sourceBuffer[n] / (float)fadeLength;
                         }
+
+                        fadeoutSources.Remove(source);
                         break;
                     }
 

@@ -138,11 +138,28 @@ namespace Boom
              */
             int inBufferOffset;
 
-            #if false
-            int inNeeded = count;
-            int inAvailable = SourceSampleProvider.Read(inBuffer, inBufferOffset, inNeeded * channels) / channels;
-            int outAvailable = 
-            #else
+#if true
+            float inEffectiveRate = inSamplingRate * speed;
+            int inNeeded = (framesRequested * (int)inEffectiveRate + (int)outSamplingRate/2) / (int)outSamplingRate;
+            inBufferOffset = 0;
+            inBuffer = new float[inNeeded];
+            int totalSamplesRead = 0;
+            int totalSamplesRequested = inNeeded * inChannels;
+            while (totalSamplesRead < totalSamplesRequested)
+            {
+                int inRead = SourceSampleProvider.Read(inBuffer, inBufferOffset+totalSamplesRead, inNeeded * inChannels-totalSamplesRead) / inChannels;
+                totalSamplesRead += inRead;
+            }
+
+            int inAvailable = totalSamplesRequested;
+            // TXWTODO: test inAvailable
+            int outAvailable = framesRequested;
+            for (int n = 0; n < framesRequested; n++)
+            {
+                int inOffset = Int32.Min(inAvailable-1,(n*(int)inEffectiveRate) / (int)outSamplingRate);
+                resampleOutBuffer[outOffset+n] = inBuffer[inOffset];
+            }
+#else
             /*
              * First ask the resampler how many frames would be needed. 
              */
@@ -156,7 +173,7 @@ namespace Boom
              * of channels.
              */
             int outAvailable = _wdlResampler.ResampleOut(resampleOutBuffer, outOffset, inAvailable, framesRequested, inChannels);
-            #endif
+#endif
 
             /*
              * We might or might not have the same number of channels in the output buffer than in the input buffer.

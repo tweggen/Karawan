@@ -13,7 +13,7 @@ namespace Boom.systems
 
         private Queue<Boom.Sound> _queueUnloadEntries = new();
 
-        public float MinAudibleVolume { get; set; } = 0.01f;
+        public float MinAudibleVolume { get; set; } = 0.005f;
 
         /**
          * Schedule a sound entry for later deletion in the engine.
