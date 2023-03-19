@@ -116,12 +116,13 @@ namespace Boom.systems
                          * We have a sound and can modify it.
                          * Adjust the settings of the raylib sound by the MovingSound data.
                          */
-                        float resultingVolume = cMovingSound.Sound.Volume * (float)cMovingSound.MotionVolume / 65535f;
+                        float resultingVolume = cMovingSound.Sound.Volume * (float)cMovingSound.MotionVolume / engine.audio.components.MovingSound.MotionVolumeMax;
                         float resultingPitch = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
-                        float resultingPan = (float) cMovingSound.MotionPan / 32767f;
+                        float resultingPan = (float) cMovingSound.MotionPan / engine.audio.components.MovingSound.MotionPanMax;
                         bSound.Volume = Math.Max(resultingVolume * 10f, 0.5f);
                         bSound.Pan = resultingPan;
                         bSound.Speed = resultingPitch;
+                        entity.Get<engine.audio.components.MovingSound>().NFrames = 0;
                     }
                 }
                 else

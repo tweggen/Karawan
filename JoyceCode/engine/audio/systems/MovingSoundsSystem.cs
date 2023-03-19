@@ -84,16 +84,17 @@ namespace engine.audio.systems
                     freqFactor = (SpeedOfSound + projectedListenerVelocity) / (SpeedOfSound + projectedSourceVelocity);
                 }
 
-                var cMovingSound = entity.Get<engine.audio.components.MovingSound>();
+                var cPreviousMovingSound = entity.Get<engine.audio.components.MovingSound>();
+                engine.audio.components.MovingSound cNewMovingSound = new();
 
-                if (distance > cMovingSound.MaxDistance)
+                if (distance > cPreviousMovingSound.MaxDistance)
                 {
-                    cMovingSound.MotionVolume = 0;
+                    cNewMovingSound.MotionVolume = 0;
                 }
                 else
                 {
-                    cMovingSound.MotionVolume = (ushort)(volumeAdjust*65535f);
-                    cMovingSound.MotionPitch = freqFactor;
+                    cNewMovingSound.MotionVolume = (ushort)(volumeAdjust*components.MovingSound.MotionVolumeMax);
+                    cNewMovingSound.MotionPitch = freqFactor;
                     float pan;
                     if (distance < 0.1f)
                     {
@@ -105,10 +106,11 @@ namespace engine.audio.systems
                     }
 
                     pan = (float)Math.Min(1.0, Math.Max(-1.0, pan));
-                    cMovingSound.MotionPan = (short)(pan * 32767f);
+                    cNewMovingSound.MotionPan = (sbyte)(pan * components.MovingSound.MotionPanMax);
                 }
-
-                entity.Set( cMovingSound );
+                
+                cPreviousMovingSound.AddFrame(cNewMovingSound);
+                entity.Set( cPreviousMovingSound );
             }
         }
 

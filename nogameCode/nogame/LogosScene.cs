@@ -116,7 +116,7 @@ namespace nogame
                 _aTransform = _engine.GetATransform();
 
             }
-            if (true) {
+            if (false) {
                 DefaultEcs.Entity eMusic = _ecsWorld.CreateEntity();
                 eMusic.Set(new engine.audio.components.Music("assets\\shaklengokhsi.ogg"));
             }

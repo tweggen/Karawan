@@ -17,7 +17,7 @@ namespace Boom
         private bool _recomputeMixer = true;
 
         private float _lastVolume = 0f;
-        private float _volume = 1f;
+        private float _volume = 0f;
 
         public float Volume
         {
@@ -70,7 +70,6 @@ namespace Boom
             }
             
             float left, right;
-            bool recomputeMixer = true;
             bool recomputeResampler = true;
             float inSamplingRate;
             float outSamplingRate;
@@ -94,8 +93,6 @@ namespace Boom
                 }
                 recomputeResampler = _recomputeResampler;
                 _recomputeResampler = false;
-                // ignore _recomputeMixer
-                _recomputeMixer = false;
                 inChannels = InWaveFormat.Channels;
                 outChannels = WaveFormat.Channels;
             }
@@ -139,6 +136,7 @@ namespace Boom
             int inBufferOffset;
 
 #if true
+            speed = Math.Min(4f, speed);
             float inEffectiveRate = inSamplingRate * speed;
             int inNeeded = (framesRequested * (int)inEffectiveRate + (int)outSamplingRate/2) / (int)outSamplingRate;
             inBufferOffset = 0;
