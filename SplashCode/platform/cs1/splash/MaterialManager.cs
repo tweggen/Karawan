@@ -72,7 +72,7 @@ namespace Karawan.platform.cs1.splash
         
         public MaterialManager(in IThreeD threeD, TextureManager textureManager)
         {
-            _threeD = _threeD;
+            _threeD = threeD;
         }
     }
 }

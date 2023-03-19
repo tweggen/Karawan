@@ -60,8 +60,8 @@ namespace Karawan.platform.cs1.splash.systems
                     var materialIndex = (int) cInstance3.MeshMaterials[i];
                     var jMaterial = (engine.joyce.Material) cInstance3.Materials[materialIndex];
 
-                    entity.Set(new ManagedResource<engine.joyce.Mesh, RlMeshEntry>(jMesh));
-                    entity.Set(new ManagedResource<engine.joyce.Material, RlMaterialEntry>(jMaterial));
+                    entity.Set(new ManagedResource<engine.joyce.Mesh, AMeshEntry>(jMesh));
+                    entity.Set(new ManagedResource<engine.joyce.Material, AMaterialEntry>(jMaterial));
                 }
             }
         }

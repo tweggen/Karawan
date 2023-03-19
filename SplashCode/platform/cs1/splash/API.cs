@@ -196,8 +196,7 @@ namespace Karawan.platform.cs1.splash
             _lightManager.ApplyLights(renderFrame, _raylibThreeD.GetInstanceShaderEntry());
             _renderParts(renderFrame.RenderParts);
         }
-
-
+        
 
         /**
          * Called from Platform

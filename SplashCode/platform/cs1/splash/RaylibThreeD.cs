@@ -131,6 +131,7 @@ public class RaylibThreeD : IThreeD, IRenderer
                 loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
                 loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
                 // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
+                _loadingMaterial = loadingMaterial;
             }
 
             return _loadingMaterial;
@@ -210,6 +211,7 @@ public class RaylibThreeD : IThreeD, IRenderer
         _engine = engine;
         _textureManager = textureManager;
         _createDefaultShader();
+        GetDefaultMaterial();
     }
    
 }
