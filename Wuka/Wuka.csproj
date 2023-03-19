@@ -92,11 +92,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
+		<PackageReference Include="NassauRecords.Raylib-CsLo.Android" Version="4.0.0-tw.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
-	  <ProjectReference Include="..\Native.Raylib.Android\Native.Raylib.Android.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
 	  <ProjectReference Include="..\splash\splash.csproj" />
 	</ItemGroup>

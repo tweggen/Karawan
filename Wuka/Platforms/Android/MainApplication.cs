@@ -1,9 +1,5 @@
 ﻿using Android.App;
 using Android.Runtime;
-using Java.Lang;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using static AndroidX.Navigation.Navigator;
 
 
 namespace Wuka
@@ -12,30 +8,12 @@ namespace Wuka
     public class MainApplication : MauiApplication
     {
 
-        private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
-        {
-            Console.Write($"DllImportResolver: Library name is {libraryName}.");
-            if (libraryName == "raylib")
-            {
-                return NativeLibrary.Load("raylib", assembly, searchPath);
-            }
-
-            // Otherwise, fallback to default import resolver.
-            return IntPtr.Zero;
-        }
-
-
         public MainApplication(IntPtr handle, JniHandleOwnership ownership)
             : base(handle, ownership)
         {
-            NativeLibrary.SetDllImportResolver(Assembly.GetExecutingAssembly(), DllImportResolver);
-
             {
                 var runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier;
                 Console.WriteLine($"Starting on platform {runtime}");
-                //string raylibname = JavaSystem.MapLibraryName("raylib");
-                //Console.WriteLine($"Native name would be {raylibname}");
-                //JavaSystem.LoadLibrary("raylib"); 
                 var engine = Karawan.platform.cs1.Platform.EasyCreate(new string[] {});
                 engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
 
