@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Karawan.platform.cs1.splash
 {
-    public class RlShaderEntry
+    public class RlShaderEntry : AShaderEntry
     {
         public Raylib_CsLo.Shader RlShader;
     }
