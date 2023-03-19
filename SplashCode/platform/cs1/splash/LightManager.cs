@@ -11,10 +11,23 @@ namespace Karawan.platform.cs1.splash
         private object _lo = new();
 
         private engine.Engine _engine;
-
+        private IThreeD _threeD;
 
         public const int MAX_LIGHTS = 4;         // Max dynamic lights supported by shader
 
+        public class LightShaderPos
+        {
+            // Shader locations
+            public int ambientLoc;
+            public int enabledLoc;
+            public int typeLoc;
+            public int posLoc;
+            public int targetLoc;
+            public int colorLoc;
+        }
+        
+        private LightShaderPos _lightShaderPos = null;
+        
         /**
          * Light structure, as expected inside the shader.
          */
@@ -26,15 +39,8 @@ namespace Karawan.platform.cs1.splash
             public Vector3 target;
             public Color color;
             public bool enabled;
-
-            // Shader locations
-            public int enabledLoc;
-            public int typeLoc;
-            public int posLoc;
-            public int targetLoc;
-            public int colorLoc;
         }
-
+        
         // Light type
         public enum LightType
         {
@@ -72,9 +78,8 @@ namespace Karawan.platform.cs1.splash
 
 
         // Create a light and get shader locations
-        private void _compileLight(ref Light light, ref Shader shader)
+        private void _compileLightLocked(in LightShaderPos lightShaderPos, ref Shader shader)
         {
-
             // TODO: Below code doesn't look good to me, 
             // it assumes a specific shader naming and structure
             // Probably this implementation could be improved
@@ -91,46 +96,48 @@ namespace Karawan.platform.cs1.splash
             //targetName[7] = '0' + lightsCount;
             //colorName[7] = '0' + lightsCount;
 
-            light.enabledLoc = Raylib.GetShaderLocation(shader, enabledName);
-            light.typeLoc = Raylib.GetShaderLocation(shader, typeName);
-            light.posLoc = Raylib.GetShaderLocation(shader, posName);
-            light.targetLoc = Raylib.GetShaderLocation(shader, targetName);
-            light.colorLoc = Raylib.GetShaderLocation(shader, colorName);
+            lightShaderPos.ambientLoc = Raylib.GetShaderLocation(shader, "ambient");
+            lightShaderPos.enabledLoc = Raylib.GetShaderLocation(shader, enabledName);
+            lightShaderPos.typeLoc = Raylib.GetShaderLocation(shader, typeName);
+            lightShaderPos.posLoc = Raylib.GetShaderLocation(shader, posName);
+            lightShaderPos.targetLoc = Raylib.GetShaderLocation(shader, targetName);
+            lightShaderPos.colorLoc = Raylib.GetShaderLocation(shader, colorName);
 
         }
     
         /**
          * Update lights value in shader
          */
-        private unsafe void _updateLightValues(ref Shader shader, in Light light)
+        private unsafe void _applyLightValues(ref Shader shader, in Light light)
         {
+            var lightShaderPos = _getLightShaderPos(ref shader);
             fixed (Light* pLight = &light)
             {
                 // Send to shader light enabled state and type
-                Raylib.SetShaderValue(shader, light.enabledLoc, &pLight->enabled, ShaderUniformDataType.SHADER_UNIFORM_INT);
-                Raylib.SetShaderValue(shader, light.typeLoc, &pLight->type, ShaderUniformDataType.SHADER_UNIFORM_INT);
+                Raylib.SetShaderValue(shader, lightShaderPos.enabledLoc, &pLight->enabled, ShaderUniformDataType.SHADER_UNIFORM_INT);
+                Raylib.SetShaderValue(shader, lightShaderPos.typeLoc, &pLight->type, ShaderUniformDataType.SHADER_UNIFORM_INT);
 
                 // Send to shader light position values
                 Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
-                Raylib.SetShaderValue(shader, light.posLoc, position, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
+                Raylib.SetShaderValue(shader, lightShaderPos.posLoc, position, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
 
                 // Send to shader light target position values
                 Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
-                Raylib.SetShaderValue(shader, light.targetLoc, target, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
+                Raylib.SetShaderValue(shader, lightShaderPos.targetLoc, target, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
 
                 // Send to shader light color values
                 Vector4 color = new((float)light.color.r / (float)255, (float)light.color.g / (float)255,
                                    (float)light.color.b / (float)255, (float)light.color.a / (float)255);
-                Raylib.SetShaderValue(shader, light.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+                Raylib.SetShaderValue(shader, lightShaderPos.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
             }
         }
 
 
-        private void _updateAllLights(ref Shader shader)
+        private void _applyAllLights(ref Shader shader)
         {
             for (int i = 0; i < _lightsCount; i++)
             {
-                _updateLightValues(ref shader, _lights[i]);                
+                _applyLightValues(ref shader, _lights[i]);                
             }
         }
 
@@ -173,6 +180,7 @@ namespace Karawan.platform.cs1.splash
                     matTransform.Translation, vRight + matTransform.Translation, cLight.Color);
             }
         }
+        
 
         private void _collectPointLights(in RenderFrame renderFrame)
         {
@@ -200,13 +208,12 @@ namespace Karawan.platform.cs1.splash
         }
 
 
-        private void _applyAmbientLights(in RenderFrame renderFrame, in RlShaderEntry rlShaderEntry)
+        private void _applyAmbientLights(in Vector4 colAmbient, in RlShaderEntry rlShaderEntry)
         {
-            int ambientLoc = Raylib.GetShaderLocation(rlShaderEntry.RlShader, "ambient");
-            //renderFrame.ColAmbient = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+            var lightShaderPos = _getLightShaderPos(ref rlShaderEntry.RlShader);
             Raylib.SetShaderValue(
                 rlShaderEntry.RlShader,
-                ambientLoc, renderFrame.ColAmbient,
+                lightShaderPos.ambientLoc, colAmbient,
                 ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         }
 
@@ -226,24 +233,36 @@ namespace Karawan.platform.cs1.splash
             _collectAmbientLights(renderFrame);
         }
 
+        private LightShaderPos _getLightShaderPos(ref Shader shader)
+        {
+            lock (_lo)
+            {
+                if (null == _lightShaderPos)
+                {
+                    LightShaderPos lightShaderPos = new();
+                    _compileLightLocked(lightShaderPos, ref shader);
+                    _lightShaderPos = lightShaderPos;
+                }
+
+                return _lightShaderPos;
+            }
+        }
+        
 
         /**
          * Find all appropriate light entities and collect the most important.
          */
         public void ApplyLights(in RenderFrame renderFrame, in RlShaderEntry rlShaderEntry)
         {
-            _applyAmbientLights(renderFrame, rlShaderEntry);
-            for (int i = 0; i < _lightsCount; i++)
-            {
-                _compileLight(ref _lights[i], ref rlShaderEntry.RlShader);
-            }
-            _updateAllLights(ref rlShaderEntry.RlShader);
+            _applyAmbientLights(renderFrame.ColAmbient, rlShaderEntry);
+            _applyAllLights(ref rlShaderEntry.RlShader);
         }
 
 
-        public LightManager(engine.Engine engine) 
+        public LightManager(engine.Engine engine, in IThreeD threeD) 
         {
             _engine = engine;
+            _threeD = threeD;
             _lights = new Light[MAX_LIGHTS];
         }
     }

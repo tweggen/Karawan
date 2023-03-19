@@ -233,7 +233,7 @@ namespace Karawan.platform.cs1.splash
             _createAMeshesSystem = new(_engine, _meshManager, _materialManager);
             _drawAMeshesSystem = new(_engine);
             _drawSkyboxesSystem = new(_engine);
-            _lightManager = new(_engine);
+            _lightManager = new(_engine, _raylibThreeD);
         }
     }
 }
