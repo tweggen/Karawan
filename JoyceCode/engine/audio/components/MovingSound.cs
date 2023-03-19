@@ -31,14 +31,21 @@ namespace engine.audio.components
             }
             else
             {
-                if (cNewFrame.MotionVolume > 0)
-                {
-                    NFrames = NFrames;
-                }
+                /*
+                 * We take the maximal volume because players notice when something
+                 * should have been close.
+                 */
+#if true
+                MotionVolume = UInt16.Max(MotionVolume, cNewFrame.MotionVolume);
+#else
+                /*
+                 * This would be the averaged volume
+                 */
                 MotionVolume = (ushort) ((int)Math.Min(
                     MotionVolumeMax,
                     (float)NFrames * (float)MotionVolume + (float)cNewFrame.MotionVolume) / (float)(NFrames + 1)
                     );
+#endif
                 MotionPan = (sbyte)((int)
                     Math.Min(
                         MotionPanMax,

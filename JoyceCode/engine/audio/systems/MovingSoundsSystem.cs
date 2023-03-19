@@ -52,7 +52,7 @@ namespace engine.audio.systems
                 
                 float distance = vRelativePos.Length();
                 if (distance < 1f) distance = 1f;
-                float volumeAdjust = 1f / distance;
+                float volumeAdjust = (float)Math.ReciprocalSqrtEstimate((double)distance);
 
                 Vector3 vListenerVelocity = (_vListenerPosition - _vPreviousListenerPosition) / dt;
                 Vector3 vSourceVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
