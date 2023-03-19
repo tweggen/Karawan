@@ -129,7 +129,8 @@ namespace Karawan.platform.cs1
 
         public engine.IUI CreateUI()
         {
-            return new PlatformUI();
+            ErrorThrow( "CreateUI not implemented in splash", (string m) => new NotSupportedException(m));
+            return null;
         }
 
 
@@ -167,10 +168,6 @@ namespace Karawan.platform.cs1
             }
             Raylib.DisableCursor();
             Raylib.SetTargetFPS(60);
-#if SPLASH_AUDIO
-            Raylib.InitAudioDevice();
-            Raylib.SetMasterVolume(0.1f);
-#endif
 
             _aSplash = new splash.API(_engine);
         }
