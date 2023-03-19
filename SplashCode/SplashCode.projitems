@@ -10,16 +10,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\CameraOutput.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\PlatformUI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\API.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\BatchRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMaterial.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMesh.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMusic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\LightManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshGenerator.cs" />
@@ -32,19 +29,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMeshEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMusicEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlShaderEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlSoundEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlWaveEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlTextureEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingFS.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingInstancingVS.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\SoundManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateRlMeshesSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateRlMusicSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawRlMeshesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawSkyboxesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\UpdateRlMovingSoundSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\WaveManager.cs" />
   </ItemGroup>
 </Project>
