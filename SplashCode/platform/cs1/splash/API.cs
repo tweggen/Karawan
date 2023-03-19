@@ -17,8 +17,8 @@ namespace Karawan.platform.cs1.splash
 
         private engine.Engine _engine;
 
-        private systems.CreateRlMeshesSystem _createRlMeshesSystem;
-        private systems.DrawRlMeshesSystem _drawRlMeshesSystem;
+        private systems.CreateAMeshesSystem _createAMeshesSystem;
+        private systems.DrawAMeshesSystem _drawAMeshesSystem;
         private systems.DrawSkyboxesSystem _drawSkyboxesSystem;
 
         private MaterialManager _materialManager;
@@ -48,7 +48,7 @@ namespace Karawan.platform.cs1.splash
                 CameraOutput cameraOutput = new(_raylibThreeD, _materialManager, _meshManager, renderPart.Camera3.CameraMask);
                 renderPart.CameraOutput = cameraOutput;
 
-                _drawRlMeshesSystem.Update(cameraOutput);
+                _drawAMeshesSystem.Update(cameraOutput);
 
                 var vCameraPosition = renderPart.Transform3ToWorld.Matrix.Translation;
                 _drawSkyboxesSystem.CameraPosition = vCameraPosition;
@@ -65,7 +65,7 @@ namespace Karawan.platform.cs1.splash
          */
         public void CollectRenderData()
         {
-            _createRlMeshesSystem.Update(_engine);
+            _createAMeshesSystem.Update(_engine);
 
             RenderFrame renderFrame = null;
             /*
@@ -128,8 +128,7 @@ namespace Karawan.platform.cs1.splash
                 var rCamera = new Raylib_CsLo.Camera3D( vCameraPosition, vTarget, vUp, 
                     cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
-                // TXWTODO: Hack the camera position into the main shader.
-                _materialManager.HackSetCameraPos(vCameraPosition);
+                _raylibThreeD.SetCameraPos(vCameraPosition);
 
                 /*
                  * We need to reimplement BeginMode3d to freely set frustrums
@@ -231,8 +230,8 @@ namespace Karawan.platform.cs1.splash
             _materialManager.Manage(engine.GetEcsWorld());
             _meshManager = new(engine, _raylibThreeD);
             _meshManager.Manage(engine.GetEcsWorld());
-            _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
-            _drawRlMeshesSystem = new(_engine);
+            _createAMeshesSystem = new(_engine, _meshManager, _materialManager);
+            _drawAMeshesSystem = new(_engine);
             _drawSkyboxesSystem = new(_engine);
             _lightManager = new(_engine);
         }

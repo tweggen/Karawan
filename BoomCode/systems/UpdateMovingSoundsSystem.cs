@@ -119,7 +119,7 @@ namespace Boom.systems
                         float resultingVolume = cMovingSound.Sound.Volume * (float)cMovingSound.MotionVolume / engine.audio.components.MovingSound.MotionVolumeMax;
                         float resultingPitch = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
                         float resultingPan = (float) cMovingSound.MotionPan / engine.audio.components.MovingSound.MotionPanMax;
-                        bSound.Volume = Math.Max(resultingVolume * 10f, 0.5f);
+                        bSound.Volume = Math.Min(resultingVolume * 4f, 2.0f);
                         bSound.Pan = resultingPan;
                         bSound.Speed = resultingPitch;
                         entity.Get<engine.audio.components.MovingSound>().NFrames = 0;

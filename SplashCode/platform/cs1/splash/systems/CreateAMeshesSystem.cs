@@ -17,7 +17,7 @@ namespace Karawan.platform.cs1.splash.systems
      * Create a raylib mesh for every mesh defined.
      * Totally unoptimized.
      */
-    sealed class CreateRlMeshesSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
+    sealed class CreateAMeshesSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
 
@@ -66,7 +66,7 @@ namespace Karawan.platform.cs1.splash.systems
             }
         }
 
-        public unsafe CreateRlMeshesSystem(
+        public unsafe CreateAMeshesSystem(
             engine.Engine engine,
             MeshManager meshManager,
             MaterialManager materialManager

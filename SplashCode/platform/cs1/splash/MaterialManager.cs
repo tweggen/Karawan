@@ -62,13 +62,6 @@ namespace Karawan.platform.cs1.splash
             return _threeD.GetDefaultMaterial();
         }
         
-
-        // TXWTODO: This call should not be here.
-        public unsafe void HackSetCameraPos( in Vector3 vecCamera )
-        {
-            _threeD.SetCameraPos(vecCamera);
-        }
-
         
         public MaterialManager(in IThreeD threeD, TextureManager textureManager)
         {
