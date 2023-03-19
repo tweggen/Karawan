@@ -9,17 +9,22 @@
     <Import_RootNamespace>SplashCode</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\AMaterialEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\AMeshEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\CameraOutput.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\IRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\IThreeD.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\API.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMaterial.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\RlMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\PfMaterial.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\PfMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\LightManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RaylibThreeD.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RenderFrame.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RenderPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RLights.cs" />

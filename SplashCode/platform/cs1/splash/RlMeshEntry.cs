@@ -6,19 +6,18 @@ using System.Threading.Tasks;
 
 namespace Karawan.platform.cs1.splash
 {
-    public class RlMeshEntry
+    public class RlMeshEntry : AMeshEntry
     {
-        public engine.joyce.Mesh JMesh;
         public Raylib_CsLo.Mesh RlMesh;
 
-        public bool IsMeshUploaded()
+        public override bool IsMeshUploaded()
         {
             return RlMesh.vaoId != 0;
         }
 
         public RlMeshEntry(engine.joyce.Mesh jMesh)
+            : base(jMesh)
         {
-            JMesh = jMesh;
             RlMesh.vaoId = 0;
         }
     }

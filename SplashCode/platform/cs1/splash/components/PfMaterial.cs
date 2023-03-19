@@ -4,11 +4,10 @@ using System.Text;
 
 namespace Karawan.platform.cs1.splash.components
 {
-    struct RlMaterial
+    struct PfMaterial
     {
-        public RlMaterialEntry MaterialEntry;
-        public RlMaterial(
-            RlMaterialEntry materialEntry
+        public AMaterialEntry MaterialEntry;
+        public PfMaterial(AMaterialEntry materialEntry
         )
         {
             MaterialEntry = materialEntry;

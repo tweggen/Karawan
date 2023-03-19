@@ -8,12 +8,12 @@ namespace Karawan.platform.cs1.splash
     public class MaterialBatch
     {
         // public Raylib_CsLo.Material Material;
-        public RlMaterialEntry RlMaterialEntry;
-        public Dictionary<RlMeshEntry, MeshBatch> MeshBatches;
+        public AMaterialEntry AMaterialEntry;
+        public Dictionary<AMeshEntry, MeshBatch> MeshBatches;
 
-        public MaterialBatch(in RlMaterialEntry rlMaterialEntry)
+        public MaterialBatch(in AMaterialEntry aMaterialEntry)
         {
-            RlMaterialEntry = rlMaterialEntry;
+            AMaterialEntry = aMaterialEntry;
             MeshBatches = new();
         }
     }

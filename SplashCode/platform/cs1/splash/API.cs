@@ -24,6 +24,7 @@ namespace Karawan.platform.cs1.splash
         private MaterialManager _materialManager;
         private TextureGenerator _textureGenerator;
         private TextureManager _textureManager;
+        private RaylibThreeD _raylibThreeD;
         private MeshManager _meshManager;
         private LightManager _lightManager;
 
@@ -44,7 +45,7 @@ namespace Karawan.platform.cs1.splash
                 RenderPart renderPart = new();
                 renderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
                 renderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
-                CameraOutput cameraOutput = new(_materialManager, _meshManager, renderPart.Camera3.CameraMask);
+                CameraOutput cameraOutput = new(_raylibThreeD, _materialManager, _meshManager, renderPart.Camera3.CameraMask);
                 renderPart.CameraOutput = cameraOutput;
 
                 _drawRlMeshesSystem.Update(cameraOutput);
@@ -192,7 +193,7 @@ namespace Karawan.platform.cs1.splash
 
         private void _renderFrame(in RenderFrame renderFrame)
         {
-            _lightManager.ApplyLights(renderFrame, _materialManager.GetInstanceShaderEntry());
+            _lightManager.ApplyLights(renderFrame, _raylibThreeD.GetInstanceShaderEntry());
             _renderParts(renderFrame.RenderParts);
         }
 
@@ -226,9 +227,10 @@ namespace Karawan.platform.cs1.splash
             _engine = engine;
             _textureGenerator = new TextureGenerator(engine);
             _textureManager = new(_textureGenerator);
-            _materialManager = new(_textureManager);
+            _raylibThreeD = new RaylibThreeD(_engine, _textureManager);
+            _materialManager = new(_raylibThreeD, _textureManager);
             _materialManager.Manage(engine.GetEcsWorld());
-            _meshManager = new(engine);
+            _meshManager = new(engine, _raylibThreeD);
             _meshManager.Manage(engine.GetEcsWorld());
             _createRlMeshesSystem = new(_engine, _meshManager, _materialManager);
             _drawRlMeshesSystem = new(_engine);

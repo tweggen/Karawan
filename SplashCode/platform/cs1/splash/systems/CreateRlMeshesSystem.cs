@@ -11,7 +11,7 @@ namespace Karawan.platform.cs1.splash.systems
         typeof(engine.transform.components.Transform3ToWorld),
         typeof(engine.joyce.components.Skybox)
     })]
-    [DefaultEcs.System.Without(typeof(splash.components.RlMesh))]
+    [DefaultEcs.System.Without(typeof(splash.components.PfMesh))]
 
     /**
      * Create a raylib mesh for every mesh defined.

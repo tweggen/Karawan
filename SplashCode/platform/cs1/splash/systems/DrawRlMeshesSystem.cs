@@ -7,8 +7,8 @@ namespace Karawan.platform.cs1.splash.systems
 {
 
     [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
-    [DefaultEcs.System.With(typeof(splash.components.RlMesh))]
-    [DefaultEcs.System.With(typeof(splash.components.RlMaterial))]
+    [DefaultEcs.System.With(typeof(splash.components.PfMesh))]
+    [DefaultEcs.System.With(typeof(splash.components.PfMaterial))]
     /**
      * Render the raylib meshes.
      * 
@@ -33,8 +33,8 @@ namespace Karawan.platform.cs1.splash.systems
                 var transform3ToWorld = entity.Get<engine.transform.components.Transform3ToWorld>();
                 if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
                 {
-                    var rlMeshEntry = entity.Get<splash.components.RlMesh>().MeshEntry;
-                    var rlMaterialEntry = entity.Get<splash.components.RlMaterial>().MaterialEntry;
+                    var rlMeshEntry = entity.Get<splash.components.PfMesh>().MeshEntry;
+                    var rlMaterialEntry = entity.Get<splash.components.PfMaterial>().MaterialEntry;
 
 
                     // Skip things that incompletely are loaded.

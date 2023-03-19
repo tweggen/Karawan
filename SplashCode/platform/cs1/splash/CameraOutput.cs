@@ -1,12 +1,8 @@
-﻿using Karawan.platform.cs1.splash.systems;
-using Karawan.platform.cs1.splash;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using static engine.Logger;
-using BepuUtilities;
 
 namespace Karawan.platform.cs1.splash
 {
@@ -20,11 +16,12 @@ namespace Karawan.platform.cs1.splash
         private int _nMaterials = 0;
         private int _nInstances = 0;
 
-        private readonly Dictionary<RlMaterialEntry, MaterialBatch> _materialBatches = new();
-        private readonly Dictionary<RlMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
+        private readonly Dictionary<AMaterialEntry, MaterialBatch> _materialBatches = new();
+        private readonly Dictionary<AMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
 
         private readonly MaterialManager _materialManager;
         private readonly MeshManager _meshManager;
+        private readonly IRenderer _renderer; 
 
         /**
          * The actual rendering method. Must be called from the context of
@@ -32,19 +29,19 @@ namespace Karawan.platform.cs1.splash
          * 
          * Uploaders meshes/textures if required.
          */
-        private void _renderMaterialBatches(in Dictionary<RlMaterialEntry, MaterialBatch> mb)
+        private void _renderMaterialBatches(in Dictionary<AMaterialEntry, MaterialBatch> mb)
         {
             Stopwatch swUpload = new();
             int nSkippedMaterials = 0;
             int nSkippedMeshes = 0;
             foreach (var materialItem in mb)
             {
-                bool haveMaterial = materialItem.Value.RlMaterialEntry.HasRlMaterial();
+                bool haveMaterial = materialItem.Value.AMaterialEntry.IsUploaded();
                 if (!haveMaterial)
                 {
                     if (swUpload.Elapsed.TotalMilliseconds < 1f) {
                         swUpload.Start();
-                        _materialManager.FillRlMaterialEntry(materialItem.Value.RlMaterialEntry);
+                        _materialManager.FillMaterialEntry(materialItem.Value.AMaterialEntry);
                         swUpload.Stop();
                     }
                     else
@@ -56,13 +53,13 @@ namespace Karawan.platform.cs1.splash
                 
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
-                    bool haveMesh = meshItem.Value.RlMeshEntry.IsMeshUploaded();
+                    bool haveMesh = meshItem.Value.AMeshEntry.IsMeshUploaded();
                     if (!haveMesh)
                     {
                         if (swUpload.Elapsed.TotalMilliseconds < 1f)
                         {
                             swUpload.Start();
-                            _meshManager.FillRlMeshEntry(meshItem.Value.RlMeshEntry);
+                            _meshManager.FillMeshEntry(meshItem.Value.AMeshEntry);
                             swUpload.Stop();
                         }
                         else
@@ -81,12 +78,7 @@ namespace Karawan.platform.cs1.splash
 #else
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
-                    Raylib_CsLo.Raylib.DrawMeshInstanced(
-                            meshItem.Key.RlMesh,
-                            materialItem.Key.RlMaterial,
-                            spanMatrices,
-                            nMatrices
-                    );
+                    _renderer.DrawMeshInstanced(meshItem.Key, materialItem.Key, spanMatrices, nMatrices);
                 }
             }
 
@@ -97,8 +89,8 @@ namespace Karawan.platform.cs1.splash
         }
 
         public void AppendInstance(
-            in RlMeshEntry rlMeshEntry,
-            in RlMaterialEntry rlMaterialEntry,
+            in AMeshEntry aMeshEntry,
+            in AMaterialEntry aMaterialEntry,
             in Matrix4x4 matrix)
         {
             _nEntities++;
@@ -106,8 +98,8 @@ namespace Karawan.platform.cs1.splash
             /*
              * Do we have an entry for the material?
              */
-            Dictionary<RlMaterialEntry, MaterialBatch> mbs;
-            if (!rlMaterialEntry.HasTransparency())
+            Dictionary<AMaterialEntry, MaterialBatch> mbs;
+            if (!aMaterialEntry.HasTransparency())
             {
                 mbs = _materialBatches;
             }
@@ -116,11 +108,11 @@ namespace Karawan.platform.cs1.splash
                 mbs = _transparentMaterialBatches;
             }
             MaterialBatch materialBatch;
-            mbs.TryGetValue(rlMaterialEntry, out materialBatch);
+            mbs.TryGetValue(aMaterialEntry, out materialBatch);
             if (null == materialBatch)
             {
-                materialBatch = new MaterialBatch(rlMaterialEntry);
-                mbs[rlMaterialEntry] = materialBatch;
+                materialBatch = new MaterialBatch(aMaterialEntry);
+                mbs[aMaterialEntry] = materialBatch;
                 _nMaterials++;
             }
 
@@ -128,11 +120,11 @@ namespace Karawan.platform.cs1.splash
              * And do we have an entry for the mesh in the material?
              */
             MeshBatch meshBatch;
-            materialBatch.MeshBatches.TryGetValue(rlMeshEntry, out meshBatch);
+            materialBatch.MeshBatches.TryGetValue(aMeshEntry, out meshBatch);
             if (null == meshBatch)
             {
-                meshBatch = new MeshBatch(rlMeshEntry);
-                materialBatch.MeshBatches[rlMeshEntry] = meshBatch;
+                meshBatch = new MeshBatch(aMeshEntry);
+                materialBatch.MeshBatches[aMeshEntry] = meshBatch;
                 _nMeshes++;
             }
 
@@ -163,11 +155,14 @@ namespace Karawan.platform.cs1.splash
 
 
         public CameraOutput(
+            in IRenderer renderer,
             in MaterialManager materialManager, 
             in MeshManager meshManager,
             in uint cameraMask)
         {
             _cameraMask = cameraMask;
+
+            _renderer = renderer;
             _materialManager = materialManager;
             _meshManager = meshManager;
         }

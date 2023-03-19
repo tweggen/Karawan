@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace Karawan.platform.cs1.splash.components
 {
-    struct RlMesh
+    struct PfMesh
     {
-        public RlMeshEntry MeshEntry;
+        public AMeshEntry MeshEntry;
 
-        public RlMesh(
-            RlMeshEntry meshEntry
+        public PfMesh(AMeshEntry meshEntry
         )
         {
             MeshEntry = meshEntry;

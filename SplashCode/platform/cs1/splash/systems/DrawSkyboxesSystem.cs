@@ -5,8 +5,8 @@ using System.Collections.Generic;
 namespace Karawan.platform.cs1.splash.systems
 {
     [DefaultEcs.System.With(typeof(engine.joyce.components.Skybox))]
-    [DefaultEcs.System.With(typeof(splash.components.RlMesh))]
-    [DefaultEcs.System.With(typeof(splash.components.RlMaterial))]
+    [DefaultEcs.System.With(typeof(splash.components.PfMesh))]
+    [DefaultEcs.System.With(typeof(splash.components.PfMaterial))]
     sealed class DrawSkyboxesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutput>
     {
         private engine.Engine _engine;
@@ -28,8 +28,8 @@ namespace Karawan.platform.cs1.splash.systems
                 {
                     continue;
                 }
-                var rlMeshEntry = eSkybox.Get<splash.components.RlMesh>().MeshEntry;
-                var rlMaterialEntry = eSkybox.Get<splash.components.RlMaterial>().MaterialEntry;
+                var rlMeshEntry = eSkybox.Get<splash.components.PfMesh>().MeshEntry;
+                var rlMaterialEntry = eSkybox.Get<splash.components.PfMaterial>().MaterialEntry;
                 var matrixSkybox = Matrix4x4.CreateTranslation(vCameraPosition);
 
                 cameraOutput.AppendInstance(rlMeshEntry, rlMaterialEntry,matrixSkybox);

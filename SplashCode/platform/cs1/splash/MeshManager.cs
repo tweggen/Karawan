@@ -9,46 +9,38 @@ using static engine.Logger;
 
 namespace Karawan.platform.cs1.splash
 {
-    
-    public class MeshManager : AResourceManager<engine.joyce.Mesh, RlMeshEntry>
+   
+    public class MeshManager : AResourceManager<engine.joyce.Mesh, AMeshEntry>
     {
         private readonly engine.Engine _engine;
+        private readonly IThreeD _threeD;
 
-        public unsafe void FillRlMeshEntry(in RlMeshEntry rlMeshEntry)
+        public void FillMeshEntry(in AMeshEntry aMeshEntry)
         {
-            fixed (Raylib_CsLo.Mesh* pRlMeshEntry = &rlMeshEntry.RlMesh)
-            {
-                Raylib.UploadMesh(pRlMeshEntry, false);
-            }
-            Logger.Trace($"Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
+            _threeD.UploadMesh(aMeshEntry);
         }
 
-        protected override RlMeshEntry Load(engine.joyce.Mesh jMesh)
+        protected override AMeshEntry Load(engine.joyce.Mesh jMesh)
         {
-            RlMeshEntry rlMeshEntry;
-            MeshGenerator.CreateRaylibMesh(jMesh, out rlMeshEntry);
-            return rlMeshEntry;
+            return _threeD.CreateMeshEntry(jMesh);
         }
 
-        protected override void OnResourceLoaded(in Entity entity, engine.joyce.Mesh info, RlMeshEntry rlMeshEntry)
+        protected override void OnResourceLoaded(in Entity entity, engine.joyce.Mesh info, AMeshEntry aMeshEntry)
         {
-            entity.Set<components.RlMesh>(new components.RlMesh(rlMeshEntry));
+            entity.Set<components.PfMesh>(new components.PfMesh(aMeshEntry));
         }
 
-        protected override unsafe void Unload(engine.joyce.Mesh jMesh, RlMeshEntry rlMeshEntry)
+        protected override unsafe void Unload(engine.joyce.Mesh jMesh, AMeshEntry aMeshEntry)
         {
-            _engine.QueueCleanupAction(() =>
-            {
-                Logger.Trace($"Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
-                Raylib.UnloadMesh(rlMeshEntry.RlMesh);
-            });
-            base.Unload(jMesh, rlMeshEntry);
+            _threeD.DestroyMeshEntry(aMeshEntry);
+            base.Unload(jMesh, aMeshEntry);
         }
 
 
-        public MeshManager(in engine.Engine engine)
+        public MeshManager(in engine.Engine engine, in IThreeD threeD)
         {
             _engine = engine;
+            _threeD = threeD;
         }
     }
 }

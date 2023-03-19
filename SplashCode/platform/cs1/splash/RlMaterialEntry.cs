@@ -6,24 +6,23 @@ using System.Threading.Tasks;
 
 namespace Karawan.platform.cs1.splash
 {
-    public class RlMaterialEntry
+    public class RlMaterialEntry : AMaterialEntry
     {
         public Raylib_CsLo.Material RlMaterial;
-        public engine.joyce.Material JMaterial;
 
-        public bool HasRlMaterial()
+        public override bool IsUploaded()
         {
             return RlMaterial.shader.id != 0xffffffff;
         }
 
-        public bool HasTransparency()
+        public override bool HasTransparency()
         {
             return JMaterial.HasTransparency;
         }
 
-        public RlMaterialEntry(engine.joyce.Material jMaterial)
+        public RlMaterialEntry(in engine.joyce.Material jMaterial)
+            : base(jMaterial)
         {
-            JMaterial = jMaterial;
             RlMaterial.shader.id = 0xffffffff;
         }
     }
