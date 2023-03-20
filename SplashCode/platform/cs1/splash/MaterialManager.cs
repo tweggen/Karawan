@@ -4,10 +4,8 @@
 // #define GLSL_VERSION            100
 //#endif
 using System;
-using Raylib_CsLo;
 using System.Numerics;
 using System.Collections.Generic;
-using System.Text;
 using DefaultEcs;
 using DefaultEcs.Resource;
 using Material = engine.joyce.Material;

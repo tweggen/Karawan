@@ -20,27 +20,34 @@ public class RaylibThreeD : IThreeD, IRenderer
     public class LightShaderPos
     {
         // Shader locations
-        public int ambientLoc;
         public int enabledLoc;
         public int typeLoc;
         public int posLoc;
         public int targetLoc;
         public int colorLoc;
     }
-        
-    private LightShaderPos _lightShaderPos = null;
+
+    /*
+     * As the ambient lights are not per light but per total, we
+     * have an extra location in the shader.
+     */
+    private int _ambientLoc;
+
+    // TXWTODO: Ugly data structure
+    private LightShaderPos[] _lightShaderPos = null;
     
     // Create a light and get shader locations
-    private void _compileLightLocked(in LightShaderPos lightShaderPos, ref Shader shader)
+    private void _compileLightLocked(
+        in LightShaderPos lightShaderPos, int lightIndex, ref Shader shader)
     {
         // TODO: Below code doesn't look good to me, 
         // it assumes a specific shader naming and structure
         // Probably this implementation could be improved
-        string enabledName = $"lights[{_lightsCount}].enabled";
-        string typeName = $"lights[{_lightsCount}].type";
-        string posName = $"lights[{_lightsCount}].position";
-        string targetName = $"lights[{_lightsCount}].target";
-        string colorName = $"lights[{_lightsCount}].color";
+        string enabledName = $"lights[{lightIndex}].enabled";
+        string typeName = $"lights[{lightIndex}].type";
+        string posName = $"lights[{lightIndex}].position";
+        string targetName = $"lights[{lightIndex}].target";
+        string colorName = $"lights[{lightIndex}].color";
 
         // Set location name [x] depending on lights count
         //enabledName[7] = '0' + lightsCount;
@@ -49,7 +56,6 @@ public class RaylibThreeD : IThreeD, IRenderer
         //targetName[7] = '0' + lightsCount;
         //colorName[7] = '0' + lightsCount;
 
-        lightShaderPos.ambientLoc = Raylib.GetShaderLocation(shader, "ambient");
         lightShaderPos.enabledLoc = Raylib.GetShaderLocation(shader, enabledName);
         lightShaderPos.typeLoc = Raylib.GetShaderLocation(shader, typeName);
         lightShaderPos.posLoc = Raylib.GetShaderLocation(shader, posName);
@@ -59,18 +65,23 @@ public class RaylibThreeD : IThreeD, IRenderer
     }
 
 
-    private LightShaderPos _getLightShaderPos(ref Shader shader)
+    private LightShaderPos _getLightShaderPos(int index, ref Shader shader)
     {
         lock (_lo)
         {
             if (null == _lightShaderPos)
             {
-                LightShaderPos lightShaderPos = new();
-                _compileLightLocked(lightShaderPos, ref shader);
-                _lightShaderPos = lightShaderPos;
+                _lightShaderPos = new LightShaderPos[LightManager.MAX_LIGHTS];
+                for (int i = 0; i < LightManager.MAX_LIGHTS; ++i)
+                {
+                    _lightShaderPos[i] = new();
+                    _compileLightLocked(_lightShaderPos[i], i, ref shader);
+                }
+                _ambientLoc = Raylib.GetShaderLocation(shader, "ambient");
+
             }
 
-            return _lightShaderPos;
+            return _lightShaderPos[index];
         }
     }
     
@@ -78,9 +89,9 @@ public class RaylibThreeD : IThreeD, IRenderer
     /**
          * Update lights value in shader
          */
-    private unsafe void _applyLightValues(ref Shader shader, in Light light)
+    private unsafe void _applyLightValues(ref Shader shader, int index, in Light light)
     {
-        var lightShaderPos = _getLightShaderPos(ref shader);
+        var lightShaderPos = _getLightShaderPos(index, ref shader);
         fixed (Light* pLight = &light)
         {
             // Send to shader light enabled state and type
@@ -107,7 +118,7 @@ public class RaylibThreeD : IThreeD, IRenderer
     {
         for (int i = 0; i < listLights.Count; i++)
         {
-            _applyLightValues(ref shader, listLights[i]);                
+            _applyLightValues(ref shader, i, listLights[i]);                
         }
     }
 
@@ -119,10 +130,9 @@ public class RaylibThreeD : IThreeD, IRenderer
     
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry)
     {
-        var lightShaderPos = _getLightShaderPos(ref ((RlShaderEntry)aShaderEntry).RlShader);
         Raylib.SetShaderValue(
             ((RlShaderEntry)aShaderEntry).RlShader,
-            lightShaderPos.ambientLoc, colAmbient,
+            _ambientLoc, colAmbient,
             ShaderUniformDataType.SHADER_UNIFORM_VEC4);
     }
 

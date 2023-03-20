@@ -10,7 +10,7 @@ namespace Karawan.platform.cs1.splash.systems
     [DefaultEcs.System.With(typeof(splash.components.PfMesh))]
     [DefaultEcs.System.With(typeof(splash.components.PfMaterial))]
     /**
-     * Render the raylib meshes.
+     * Render the platform meshes.
      * 
      * Groups by material and mesh.
      */

@@ -1,8 +1,5 @@
-﻿using engine.joyce.components;
-using Raylib_CsLo;
-using System;
+﻿using System;
 using System.Numerics;
-using static Karawan.platform.cs1.splash.LightManager;
 
 namespace Karawan.platform.cs1.splash
 {
@@ -33,7 +30,7 @@ namespace Karawan.platform.cs1.splash
                 light.type = type;
                 light.position = position;
                 light.target = target;
-                light.color = new Color(
+                light.color = new Vector4(
                     (byte)(255f * color.X),
                     (byte)(255f * color.Y),
                     (byte)(255f * color.Z),

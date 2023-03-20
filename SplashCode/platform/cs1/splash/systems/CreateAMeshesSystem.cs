@@ -14,7 +14,7 @@ namespace Karawan.platform.cs1.splash.systems
     [DefaultEcs.System.Without(typeof(splash.components.PfMesh))]
 
     /**
-     * Create a raylib mesh for every mesh defined.
+     * Create a platform mesh for every mesh defined.
      * Totally unoptimized.
      */
     sealed class CreateAMeshesSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>

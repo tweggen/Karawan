@@ -35,7 +35,7 @@
     <ProjectReference Include="..\Boom\Boom.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
     <ProjectReference Include="..\nogame\nogame.csproj" />
-    <ProjectReference Include="..\splash\splash.csproj" />
+    <ProjectReference Include="..\TheSplash\TheSplash.csproj" />
   </ItemGroup>
 
   <ItemGroup>
