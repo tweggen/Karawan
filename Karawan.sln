@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Karawan", "Karawan\Karawan.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Joyce", "Joyce\Joyce.csproj", "{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheSplash", "TheSplash\TheSplash.csproj", "{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Splash", "Splash\Splash.csproj", "{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}"
 	ProjectSection(ProjectDependencies) = postProject
 		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917} = {4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}
 	EndProjectSection

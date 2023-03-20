@@ -97,7 +97,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
-	  <ProjectReference Include="..\TheSplash\TheSplash.csproj" />
+	  <ProjectReference Include="..\Splash\Splash.csproj" />
 	</ItemGroup>
 
 
