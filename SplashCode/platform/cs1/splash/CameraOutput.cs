@@ -21,7 +21,6 @@ namespace Karawan.platform.cs1.splash
 
         private readonly MaterialManager _materialManager;
         private readonly MeshManager _meshManager;
-        private readonly IRenderer _renderer; 
 
         /**
          * The actual rendering method. Must be called from the context of
@@ -29,7 +28,7 @@ namespace Karawan.platform.cs1.splash
          * 
          * Uploaders meshes/textures if required.
          */
-        private void _renderMaterialBatches(in Dictionary<AMaterialEntry, MaterialBatch> mb)
+        private void _renderMaterialBatches(in IThreeD threeD, in Dictionary<AMaterialEntry, MaterialBatch> mb)
         {
             Stopwatch swUpload = new();
             int nSkippedMaterials = 0;
@@ -78,7 +77,7 @@ namespace Karawan.platform.cs1.splash
 #else
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
-                    _renderer.DrawMeshInstanced(meshItem.Key, materialItem.Key, spanMatrices, nMatrices);
+                    threeD.DrawMeshInstanced(meshItem.Key, materialItem.Key, spanMatrices, nMatrices);
                 }
             }
 
@@ -136,15 +135,15 @@ namespace Karawan.platform.cs1.splash
         }
 
 
-        public void RenderStandard()
+        public void RenderStandard(in IThreeD threeD)
         {
-            _renderMaterialBatches(_materialBatches);
+            _renderMaterialBatches(threeD, _materialBatches);
         }
 
 
-        public void RenderTransparent()
+        public void RenderTransparent(in IThreeD threeD)
         {
-            _renderMaterialBatches(_transparentMaterialBatches);
+            _renderMaterialBatches(threeD, _transparentMaterialBatches);
         }
 
 
@@ -155,14 +154,12 @@ namespace Karawan.platform.cs1.splash
 
 
         public CameraOutput(
-            in IRenderer renderer,
             in MaterialManager materialManager, 
             in MeshManager meshManager,
             in uint cameraMask)
         {
             _cameraMask = cameraMask;
 
-            _renderer = renderer;
             _materialManager = materialManager;
             _meshManager = meshManager;
         }

@@ -507,11 +507,6 @@ namespace engine
         }
 
 
-        public IUI CreateUI()
-        {
-            return _platform.CreateUI();
-        }
-
         public void Execute()
         {
             _platform.Execute();

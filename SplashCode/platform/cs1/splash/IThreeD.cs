@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
 
 namespace Karawan.platform.cs1.splash;
@@ -18,4 +19,9 @@ public interface IThreeD
     public void ApplyAllLights(in IList<Light> listLights, in AShaderEntry aShaderEntry);
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry);
     public void SetCameraPos(in Vector3 vCamera);
+    public void DrawMeshInstanced(
+        in AMeshEntry aMeshEntry,
+        in AMaterialEntry aMaterialEntry,
+        in Span<Matrix4x4> spanMatrices,
+        in int nMatrices);
 }

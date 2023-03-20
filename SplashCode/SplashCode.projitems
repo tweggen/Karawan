@@ -13,13 +13,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\AMeshEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\AShaderEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\CameraOutput.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\IRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\IThreeD.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\Light.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\LogicalRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshBatch.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\API.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RaylibRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\PfMaterial.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\PfMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\LightManager.cs" />

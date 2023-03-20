@@ -7,7 +7,7 @@ using static engine.Logger;
 
 namespace Karawan.platform.cs1.splash;
 
-public class RaylibThreeD : IThreeD, IRenderer
+public class RaylibThreeD : IThreeD
 {
     private readonly engine.Engine _engine;
     private object _lo = new();

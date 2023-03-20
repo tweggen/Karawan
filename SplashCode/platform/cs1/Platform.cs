@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using engine;
+using Karawan.platform.cs1.splash;
 using Raylib_CsLo;
 using static engine.Logger;
 
@@ -13,9 +14,16 @@ namespace Karawan.platform.cs1
         private engine.ControllerState _controllerState;
         private Vector2 _vMouseMove;
 
-        private splash.API _aSplash;
+        private RaylibThreeD _raylibThreeD;
+        private TextureManager _textureManager;
+        private MaterialManager _materialManager;
+        private MeshManager _meshManager;
+        private LightManager _lightManager;
+        private RaylibRenderer _renderer;
         private bool _isRunning = true;
 
+        private LogicalRenderer _logicalRenderer;
+        
         public void SetEngine(engine.Engine engine)
         {
             lock (_lock)
@@ -98,10 +106,15 @@ namespace Karawan.platform.cs1
                 _physFrameReadKeyEvents();
                 _physFrameReadMouseMove();
 
-                /*
-                 * Call the render operations.
-                 */
-                _aSplash.RenderFrame();
+                RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
+                if (renderFrame != null)
+                {
+                    _renderer.RenderFrame(renderFrame);
+                } else
+                {
+                    Warning("No new frame found.");
+                    System.Threading.Thread.Sleep(15);
+                }
                 thisFrame = Raylib.GetTime();
                 lastFrame = thisFrame;
             }
@@ -118,6 +131,7 @@ namespace Karawan.platform.cs1
                 _vMouseMove = new Vector2(0f, 0f);
             }
         }
+        
 
         public void GetControllerState(out ControllerState controllerState)
         {
@@ -127,18 +141,13 @@ namespace Karawan.platform.cs1
             }
         }
 
-        public engine.IUI CreateUI()
-        {
-            ErrorThrow( "CreateUI not implemented in splash", (string m) => new NotSupportedException(m));
-            return null;
-        }
-
 
         public void CollectRenderData()
         {
-            _aSplash.CollectRenderData();
+            _logicalRenderer.CollectRenderData();
         }
 
+        
         public void SetupDone()
         {
             string baseDirectory = System.AppContext.BaseDirectory;
@@ -169,7 +178,27 @@ namespace Karawan.platform.cs1
             Raylib.DisableCursor();
             Raylib.SetTargetFPS(60);
 
-            _aSplash = new splash.API(_engine);
+            var textureGenerator = new TextureGenerator(_engine);
+            _textureManager = new(textureGenerator);
+            _raylibThreeD = new RaylibThreeD(_engine, _textureManager);
+            
+            _materialManager = new(_raylibThreeD, _textureManager);
+            _materialManager.Manage(_engine.GetEcsWorld());
+            _meshManager = new(_engine, _raylibThreeD);
+            _meshManager.Manage(_engine.GetEcsWorld());
+            _lightManager = new(_engine, _raylibThreeD);
+            
+            _logicalRenderer = new LogicalRenderer(
+                _engine,
+                _materialManager,
+                _meshManager,
+                _lightManager
+            );
+            _renderer = new RaylibRenderer(
+                _engine,
+                _lightManager,
+                _raylibThreeD
+            );
         }
 
         public void Sleep(double dt)
