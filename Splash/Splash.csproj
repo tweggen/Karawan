@@ -15,6 +15,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="C:\Users\WEGGEN\.nuget\packages\raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.dll" />
+    <Content Remove="C:\Users\WEGGEN\.nuget\packages\raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.pdb" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DefaultEcs" Version="0.17.2" />
     <PackageReference Include="Raylib-CsLo" Version="4.2.0.9" />
   </ItemGroup>
@@ -22,7 +27,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
-
-  <Import Project="..\SplashCode\SplashCode.projitems" Label="Shared" />
 
 </Project>

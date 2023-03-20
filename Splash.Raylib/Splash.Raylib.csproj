@@ -1,9 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\..\..\..\.nuget\packages\raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.dll" Link="raylib.dll">
+        <Private>False</Private>
+        <NuGetPackageVersion>4.2.0.9</NuGetPackageVersion>
+        <NuGetItemType>Content</NuGetItemType>
+        <NuGetPackageId>Raylib-CsLo</NuGetPackageId>
+        <Pack>false</Pack>
+      </Content>
+      <Content Include="..\..\..\..\..\.nuget\packages\raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.pdb" Link="raylib.pdb">
+        <Private>False</Private>
+        <NuGetPackageVersion>4.2.0.9</NuGetPackageVersion>
+        <NuGetItemType>Content</NuGetItemType>
+        <NuGetPackageId>Raylib-CsLo</NuGetPackageId>
+        <Pack>false</Pack>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Splash\Splash.csproj" />
+    </ItemGroup>
 
 </Project>

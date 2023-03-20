@@ -8,37 +8,4 @@
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>SplashCode</Import_RootNamespace>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\AMaterialEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\AMeshEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\AShaderEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\CameraOutput.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\IThreeD.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\Light.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\LogicalRenderer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialBatch.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshBatch.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\Platform.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RaylibRenderer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\PfMaterial.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\components\PfMesh.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\LightManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MaterialManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\MeshManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RaylibThreeD.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RenderFrame.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RenderPart.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMaterialEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlMeshEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlShaderEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\RlTextureEntry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingFS.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\shadercode\LightingInstancingVS.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\CreateAMeshesSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawAMeshesSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\systems\DrawSkyboxesSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)platform\cs1\splash\TextureManager.cs" />
-  </ItemGroup>
 </Project>

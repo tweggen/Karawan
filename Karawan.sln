@@ -18,8 +18,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Splash", "Splash\Splash.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nogame", "nogame\nogame.csproj", "{4F362D4B-F5A4-4B0D-9BDF-3B5A808F15DE}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SplashCode", "SplashCode\SplashCode.shproj", "{818A3CB5-5E55-4B19-AC0F-A61BF73F7276}"
-EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "nogameCode", "nogameCode\nogameCode.shproj", "{65A59DBA-280F-406D-B941-DF4C68797BA5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\..\github\BepuPhysics2\BepuPhysics\BepuPhysics.csproj", "{4AA96410-22F7-4473-B187-CE50FD1C6773}"
@@ -53,7 +51,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom", "Boom\Boom.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raylib-CsLo.Android", "..\..\..\coding\twg\github\Raylib-CsLo\Raylib-CsLo\Raylib-CsLo.Android.csproj", "{F5DB1A54-C246-49B8-8B3E-33E17FB76241}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Splash.Raylib", "Splash.Raylib\Splash.Raylib.csproj", "{A182147E-F380-433E-995E-AA38EBD8BE87}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Splash.Raylib", "Splash.Raylib\Splash.Raylib.csproj", "{A182147E-F380-433E-995E-AA38EBD8BE87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -427,8 +425,6 @@ Global
 		nogameCode\nogameCode.projitems*{65a59dba-280f-406d-b941-df4c68797ba5}*SharedItemsImports = 13
 		BoomCode\BoomCode.projitems*{732a58f8-7a92-461e-a3a0-cf2c535e7d9b}*SharedItemsImports = 5
 		JoyceCode\JoyceCode.projitems*{77780cb7-fbc2-4301-9187-2428ef25dc3d}*SharedItemsImports = 13
-		SplashCode\SplashCode.projitems*{818a3cb5-5e55-4b19-ac0f-a61bf73f7276}*SharedItemsImports = 13
-		SplashCode\SplashCode.projitems*{990b4c3d-1e5e-4d39-a76a-0c191c5f4a32}*SharedItemsImports = 5
 		Wire.Shared\Wire.Shared.projitems*{a3b474b2-0420-4375-89ab-a129bbb5c74c}*SharedItemsImports = 5
 		WireClient.Shared\WireClient.Shared.projitems*{a5060fe1-62ea-4769-bd17-6c97caae65ef}*SharedItemsImports = 13
 		WireClient.Shared\WireClient.Shared.projitems*{ba25f58f-e80e-4ef9-8613-f72fa4478892}*SharedItemsImports = 5
