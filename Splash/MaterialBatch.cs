@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash
 {
     public class MaterialBatch
     {

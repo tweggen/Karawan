@@ -3,12 +3,12 @@ using System.Numerics;
 using System.Collections.Generic;
 
 
-namespace Karawan.platform.cs1.splash.systems
+namespace Splash.systems
 {
 
     [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
-    [DefaultEcs.System.With(typeof(splash.components.PfMesh))]
-    [DefaultEcs.System.With(typeof(splash.components.PfMaterial))]
+    [DefaultEcs.System.With(typeof(Splash.components.PfMesh))]
+    [DefaultEcs.System.With(typeof(Splash.components.PfMaterial))]
     /**
      * Render the platform meshes.
      * 
@@ -33,8 +33,8 @@ namespace Karawan.platform.cs1.splash.systems
                 var transform3ToWorld = entity.Get<engine.transform.components.Transform3ToWorld>();
                 if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
                 {
-                    var rlMeshEntry = entity.Get<splash.components.PfMesh>().MeshEntry;
-                    var rlMaterialEntry = entity.Get<splash.components.PfMaterial>().MaterialEntry;
+                    var rlMeshEntry = entity.Get<Splash.components.PfMesh>().MeshEntry;
+                    var rlMaterialEntry = entity.Get<Splash.components.PfMaterial>().MaterialEntry;
 
 
                     // Skip things that incompletely are loaded.

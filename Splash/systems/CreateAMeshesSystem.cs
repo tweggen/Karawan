@@ -4,14 +4,14 @@ using System;
 using static engine.Logger;
 
 
-namespace Karawan.platform.cs1.splash.systems
+namespace Splash.systems
 {
     [DefaultEcs.System.With(typeof(engine.joyce.components.Instance3))]
     [DefaultEcs.System.WithEither(new Type[] {
         typeof(engine.transform.components.Transform3ToWorld),
         typeof(engine.joyce.components.Skybox)
     })]
-    [DefaultEcs.System.Without(typeof(splash.components.PfMesh))]
+    [DefaultEcs.System.Without(typeof(Splash.components.PfMesh))]
 
     /**
      * Create a platform mesh for every mesh defined.

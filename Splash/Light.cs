@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-namespace Karawan.platform.cs1.splash;
+namespace Splash;
 
 /**
  * Light structure, as expected inside the shader.

@@ -10,7 +10,7 @@ using DefaultEcs;
 using DefaultEcs.Resource;
 using Material = engine.joyce.Material;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash
 {
     public class MaterialManager : AResourceManager<engine.joyce.Material, AMaterialEntry>
     {
@@ -61,7 +61,7 @@ namespace Karawan.platform.cs1.splash
         }
         
         
-        public MaterialManager(in IThreeD threeD, TextureManager textureManager)
+        public MaterialManager(in IThreeD threeD)
         {
             _threeD = threeD;
         }

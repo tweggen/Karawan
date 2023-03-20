@@ -1,6 +1,6 @@
 ﻿using Raylib_CsLo;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash.Raylib
 {
     public class TextureGenerator
     {
@@ -21,7 +21,7 @@ namespace Karawan.platform.cs1.splash
             {
                 if( _imgChessboard.width == 0 )
                 {
-                    _imgChessboard = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
+                    _imgChessboard = Raylib_CsLo.Raylib.GenImageChecked(2, 2, 1, 1, Raylib_CsLo.Raylib.RED, Raylib_CsLo.Raylib.GREEN);
                 }
                 imgNew = _imgChessboard;
                 canFreeImage = false;
@@ -29,7 +29,7 @@ namespace Karawan.platform.cs1.splash
             {
                 if( _img64MB.width == 0)
                 {
-                    _img64MB = Raylib.GenImageColor(4096, 4096, Raylib.WHITE);
+                    _img64MB = Raylib_CsLo.Raylib.GenImageColor(4096, 4096, Raylib_CsLo.Raylib.WHITE);
                 }
                 imgNew = _img64MB;
                 canFreeImage = false;
@@ -38,7 +38,7 @@ namespace Karawan.platform.cs1.splash
             {
                 if (_imgBlack.width == 0)
                 {
-                    _imgBlack = Raylib.GenImageColor(1, 1, new Color(0, 0, 0, 0));
+                    _imgBlack = Raylib_CsLo.Raylib.GenImageColor(1, 1, new Color(0, 0, 0, 0));
                 }
                 imgNew = _imgBlack;
                 canFreeImage = false;
@@ -46,17 +46,17 @@ namespace Karawan.platform.cs1.splash
             }
             {
                 string path = resourcePath + jTexture.Source;
-                rlTextureEntry.RlTexture = Raylib.LoadTexture(path);
+                rlTextureEntry.RlTexture = Raylib_CsLo.Raylib.LoadTexture(path);
                 canFreeImage = false;
             }
 
             if (imgNew.width > 0)
             {
-                rlTextureEntry.RlTexture = Raylib.LoadTextureFromImage(imgNew);
+                rlTextureEntry.RlTexture = Raylib_CsLo.Raylib.LoadTextureFromImage(imgNew);
             }
             if (canFreeImage)
             {
-                Raylib.UnloadImage(imgNew);
+                Raylib_CsLo.Raylib.UnloadImage(imgNew);
             }
         }
 

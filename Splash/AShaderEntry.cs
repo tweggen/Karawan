@@ -1,4 +1,4 @@
-﻿namespace Karawan.platform.cs1.splash;
+﻿namespace Splash;
 
 public class AShaderEntry
 {

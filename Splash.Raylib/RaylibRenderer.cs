@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using static engine.Logger;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash.Raylib
 {
     class RaylibRenderer
     {
@@ -30,9 +30,9 @@ namespace Karawan.platform.cs1.splash
          */
         private void _renderParts(in IList<RenderPart> RenderParts)
         {
-            Raylib.BeginDrawing();
+            Raylib_CsLo.Raylib.BeginDrawing();
 
-            Raylib.ClearBackground(Raylib.BLACK);
+            Raylib_CsLo.Raylib.ClearBackground(Raylib_CsLo.Raylib.BLACK);
             int y0Stats = 30;
 
             foreach(var RenderPart in RenderParts)
@@ -100,15 +100,15 @@ namespace Karawan.platform.cs1.splash
                  */
                 RenderPart.CameraOutput.RenderTransparent(_threeD);
 
-                Raylib.EndMode3D();
+                Raylib_CsLo.Raylib.EndMode3D();
 
-                Raylib.DrawText("Debug info:\n" + RenderPart.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib.GREEN);
+                Raylib_CsLo.Raylib.DrawText("Debug info:\n" + RenderPart.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib_CsLo.Raylib.GREEN);
                 y0Stats += 20;
             }
 
-            Raylib.DrawFPS(20, 100);
-            Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib.GREEN);
-            Raylib.EndDrawing();
+            Raylib_CsLo.Raylib.DrawFPS(20, 100);
+            Raylib_CsLo.Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib_CsLo.Raylib.GREEN);
+            Raylib_CsLo.Raylib.EndDrawing();
         }
 
 

@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using static engine.Logger;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash
 {
     public class CameraOutput
     {

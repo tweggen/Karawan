@@ -35,6 +35,7 @@
     <ProjectReference Include="..\Boom\Boom.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
     <ProjectReference Include="..\nogame\nogame.csproj" />
+    <ProjectReference Include="..\Splash.Raylib\Splash.Raylib.csproj" />
     <ProjectReference Include="..\Splash\Splash.csproj" />
   </ItemGroup>
 

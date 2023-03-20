@@ -1,9 +1,6 @@
-﻿using Karawan.platform.cs1;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash
 {
     public class RenderPart
     {

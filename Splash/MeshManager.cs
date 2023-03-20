@@ -6,7 +6,7 @@ using engine;
 using static engine.Logger;
 
 
-namespace Karawan.platform.cs1.splash
+namespace Splash
 {
    
     public class MeshManager : AResourceManager<engine.joyce.Mesh, AMeshEntry>

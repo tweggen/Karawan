@@ -167,7 +167,7 @@ namespace Karawan
 
             var app = appBuilder.Build();
 
-            var e = Karawan.platform.cs1.Platform.EasyCreate(args);
+            var e = Splash.Raylib.Platform.EasyCreate(args);
 
             {
                 engine.ConsoleLogger logger = new(e, app.Logger);

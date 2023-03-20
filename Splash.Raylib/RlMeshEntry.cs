@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash.Raylib
 {
     public class RlMeshEntry : AMeshEntry
     {

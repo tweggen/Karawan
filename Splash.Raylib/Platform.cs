@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Numerics;
 using engine;
-using Karawan.platform.cs1.splash;
 using Raylib_CsLo;
 using static engine.Logger;
 
-namespace Karawan.platform.cs1
+namespace Splash.Raylib
 {
     public class Platform : engine.IPlatform
     {
@@ -39,24 +38,24 @@ namespace Karawan.platform.cs1
              * #1 Key States, filling the controller data structure.
              */
             _controllerState.Reset();
-            if(Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)
-                || Raylib.IsKeyDown(KeyboardKey.KEY_RIGHT_SHIFT))
+            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)
+                || Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_RIGHT_SHIFT))
             {
                 _controllerState.WalkFast = true;
             }
-            if(Raylib.IsKeyDown(KeyboardKey.KEY_W))
+            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_W))
             {
                 _controllerState.WalkForward = 200;
             }
-            if(Raylib.IsKeyDown(KeyboardKey.KEY_S))
+            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_S))
             {
                 _controllerState.WalkBackward = 200;
             }
-            if(Raylib.IsKeyDown(KeyboardKey.KEY_A))
+            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_A))
             {
                 _controllerState.TurnLeft = 200;
             }
-            if(Raylib.IsKeyDown(KeyboardKey.KEY_D))
+            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_D))
             {
                 _controllerState.TurnRight = 200;
             }
@@ -70,7 +69,7 @@ namespace Karawan.platform.cs1
              */
             while (true)
             {
-                var keyCode = Raylib.GetKeyPressed();
+                var keyCode = Raylib_CsLo.Raylib.GetKeyPressed();
                 if (0 == keyCode)
                 {
                     break;
@@ -85,7 +84,7 @@ namespace Karawan.platform.cs1
         
         private void _physFrameReadMouseMove()
         {
-            Vector2 vnew = Raylib.GetMouseDelta();
+            Vector2 vnew = Raylib_CsLo.Raylib.GetMouseDelta();
             lock (_lock)
             {
                 _vMouseMove += vnew;
@@ -98,9 +97,9 @@ namespace Karawan.platform.cs1
             double lastFrame = 0, thisFrame = 0;
 
             // Main game loop
-            lastFrame = Raylib.GetTime();
+            lastFrame = Raylib_CsLo.Raylib.GetTime();
 
-            while (!Raylib.WindowShouldClose()) // Detect window close button or ESC key
+            while (!Raylib_CsLo.Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
                 _physFrameUpdateControllerState();
                 _physFrameReadKeyEvents();
@@ -115,11 +114,11 @@ namespace Karawan.platform.cs1
                     Warning("No new frame found.");
                     System.Threading.Thread.Sleep(15);
                 }
-                thisFrame = Raylib.GetTime();
+                thisFrame = Raylib_CsLo.Raylib.GetTime();
                 lastFrame = thisFrame;
             }
             _isRunning = false;
-            Raylib.CloseWindow();
+            Raylib_CsLo.Raylib.CloseWindow();
         }
 
 
@@ -152,37 +151,37 @@ namespace Karawan.platform.cs1
         {
             string baseDirectory = System.AppContext.BaseDirectory;
             System.Console.WriteLine($"Running in directory {baseDirectory}" );
-            Raylib.SetTraceLogLevel(4 /* LOG_WARNING */);
-            //Raylib.SetTraceLogCallback(_raylibTraceLog);
+            Raylib_CsLo.Raylib.SetTraceLogLevel(4 /* LOG_WARNING */);
+            //Raylib_CsLo.Raylib.SetTraceLogCallback(_raylibTraceLog);
 
-            var display = Raylib.GetCurrentMonitor();
+            var display = Raylib_CsLo.Raylib.GetCurrentMonitor();
 #if DEBUG
             var width = 1280;
             var height = width / 16 * 9;
             bool isFullscreen = false;
 #else
-            var width = Raylib.GetMonitorWidth(display);
-            var height = Raylib.GetMonitorHeight(display);
+            var width = Raylib_CsLo.Raylib.GetMonitorWidth(display);
+            var height = Raylib_CsLo.Raylib.GetMonitorHeight(display);
             bool isFullscreen = false;
 #endif
 #if PLATFORM_ANDROID
-            Raylib.InitWindow(0, 0, "codename Karawan"); //Make app window 1:1 to screen size https://github.com/raysan5/raylib/issues/1731
+            Raylib_CsLo.Raylib.InitWindow(0, 0, "codename Karawan"); //Make app window 1:1 to screen size https://github.com/raysan5/raylib/issues/1731
 #else
             Trace("Calling InitWindow.");
-            Raylib.InitWindow(width, height, "codename Karawan");
+            Raylib_CsLo.Raylib.InitWindow(width, height, "codename Karawan");
 #endif
             if (isFullscreen)
             {
-                Raylib.ToggleFullscreen();
+                Raylib_CsLo.Raylib.ToggleFullscreen();
             }
-            Raylib.DisableCursor();
-            Raylib.SetTargetFPS(60);
+            Raylib_CsLo.Raylib.DisableCursor();
+            Raylib_CsLo.Raylib.SetTargetFPS(60);
 
             var textureGenerator = new TextureGenerator(_engine);
             _textureManager = new(textureGenerator);
             _raylibThreeD = new RaylibThreeD(_engine, _textureManager);
             
-            _materialManager = new(_raylibThreeD, _textureManager);
+            _materialManager = new(_raylibThreeD);
             _materialManager.Manage(_engine.GetEcsWorld());
             _meshManager = new(_engine, _raylibThreeD);
             _meshManager.Manage(_engine.GetEcsWorld());
@@ -221,7 +220,7 @@ namespace Karawan.platform.cs1
 
         }
 
-        static public engine.Engine EasyCreatePlatform(string[] args, out Karawan.platform.cs1.Platform platform)
+        static public engine.Engine EasyCreatePlatform(string[] args, out Splash.Raylib.Platform platform)
         {
             platform = new Platform(args);
             engine.Engine engine = new engine.Engine(platform);

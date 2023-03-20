@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash.Raylib
 {
     public unsafe class MeshGenerator
     {

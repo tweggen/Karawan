@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Karawan.platform.cs1.splash.shadercode
+namespace Splash.shadercode
 {
-    class LightingInstancingVS
+    public class LightingInstancingVS
     {
         static public string ShaderCode= @"
 #version 330

@@ -2,13 +2,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Karawan.platform.cs1.splash
+namespace Splash.Raylib
 {
     public class TextureManager
     {
         private object _lock = new ();
         private TextureGenerator _textureGenerator;
-        private Dictionary<string, splash.RlTextureEntry> _dictTextures;
+        private Dictionary<string, RlTextureEntry> _dictTextures;
 
 
         private string _textureKey(in engine.joyce.Texture jTexture)
@@ -23,9 +23,9 @@ namespace Karawan.platform.cs1.splash
             }
         } 
 
-        public unsafe splash.RlTextureEntry FindRlTexture(in engine.joyce.Texture jTexture)        
+        public unsafe RlTextureEntry FindRlTexture(in engine.joyce.Texture jTexture)        
         {
-            splash.RlTextureEntry rlTextureEntry;
+            RlTextureEntry rlTextureEntry;
             string textureKey = _textureKey(jTexture);
             lock (_lock)
             {
@@ -44,7 +44,7 @@ namespace Karawan.platform.cs1.splash
 
         private void _purgeLoadTexture(in engine.joyce.Texture jTexture, bool doDownload)
         {
-            splash.RlTextureEntry rlTextureEntry;
+            RlTextureEntry rlTextureEntry;
             string textureKey = _textureKey(jTexture);
             lock (_lock)
             {
@@ -52,9 +52,9 @@ namespace Karawan.platform.cs1.splash
                 {
                     if (doDownload)
                     {
-                        Image image = Raylib.LoadImageFromTexture(rlTextureEntry.RlTexture);
+                        Image image = Raylib_CsLo.Raylib.LoadImageFromTexture(rlTextureEntry.RlTexture);
                     }
-                    Raylib.UnloadTexture(rlTextureEntry.RlTexture);
+                    Raylib_CsLo.Raylib.UnloadTexture(rlTextureEntry.RlTexture);
                     _dictTextures.Remove(textureKey);
                     rlTextureEntry.RlTexture = new();
                 }

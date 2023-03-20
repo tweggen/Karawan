@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Karawan.platform.cs1.splash.components
+namespace Splash.components
 {
     struct PfMaterial
     {

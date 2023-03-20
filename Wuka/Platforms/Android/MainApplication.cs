@@ -14,7 +14,7 @@ namespace Wuka
             {
                 var runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier;
                 Console.WriteLine($"Starting on platform {runtime}");
-                var engine = Karawan.platform.cs1.Platform.EasyCreate(new string[] {});
+                var engine = Splash.Raylib.Platform.EasyCreate(new string[] {});
                 engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
 
                 engine.AddSceneFactory("root", () => new nogame.RootScene());

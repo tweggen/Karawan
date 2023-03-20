@@ -5,7 +5,7 @@ using System.Text;
 using Raylib_CsLo;
 using static engine.Logger;
 
-namespace Karawan.platform.cs1.splash;
+namespace Splash.Raylib;
 
 public class RaylibThreeD : IThreeD
 {
@@ -56,11 +56,11 @@ public class RaylibThreeD : IThreeD
         //targetName[7] = '0' + lightsCount;
         //colorName[7] = '0' + lightsCount;
 
-        lightShaderPos.enabledLoc = Raylib.GetShaderLocation(shader, enabledName);
-        lightShaderPos.typeLoc = Raylib.GetShaderLocation(shader, typeName);
-        lightShaderPos.posLoc = Raylib.GetShaderLocation(shader, posName);
-        lightShaderPos.targetLoc = Raylib.GetShaderLocation(shader, targetName);
-        lightShaderPos.colorLoc = Raylib.GetShaderLocation(shader, colorName);
+        lightShaderPos.enabledLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, enabledName);
+        lightShaderPos.typeLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, typeName);
+        lightShaderPos.posLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, posName);
+        lightShaderPos.targetLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, targetName);
+        lightShaderPos.colorLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, colorName);
 
     }
 
@@ -77,7 +77,7 @@ public class RaylibThreeD : IThreeD
                     _lightShaderPos[i] = new();
                     _compileLightLocked(_lightShaderPos[i], i, ref shader);
                 }
-                _ambientLoc = Raylib.GetShaderLocation(shader, "ambient");
+                _ambientLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, "ambient");
 
             }
 
@@ -95,21 +95,21 @@ public class RaylibThreeD : IThreeD
         fixed (Light* pLight = &light)
         {
             // Send to shader light enabled state and type
-            Raylib.SetShaderValue(shader, lightShaderPos.enabledLoc, &pLight->enabled, ShaderUniformDataType.SHADER_UNIFORM_INT);
-            Raylib.SetShaderValue(shader, lightShaderPos.typeLoc, &pLight->type, ShaderUniformDataType.SHADER_UNIFORM_INT);
+            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.enabledLoc, &pLight->enabled, ShaderUniformDataType.SHADER_UNIFORM_INT);
+            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.typeLoc, &pLight->type, ShaderUniformDataType.SHADER_UNIFORM_INT);
 
             // Send to shader light position values
             Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
-            Raylib.SetShaderValue(shader, lightShaderPos.posLoc, position, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
+            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.posLoc, position, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
 
             // Send to shader light target position values
             Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
-            Raylib.SetShaderValue(shader, lightShaderPos.targetLoc, target, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
+            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.targetLoc, target, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
 
             // Send to shader light color values
             Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,
                 (float)light.color.Z / (float)255, (float)light.color.W / (float)255);
-            Raylib.SetShaderValue(shader, lightShaderPos.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         }
     }
 
@@ -130,7 +130,7 @@ public class RaylibThreeD : IThreeD
     
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry)
     {
-        Raylib.SetShaderValue(
+        Raylib_CsLo.Raylib.SetShaderValue(
             ((RlShaderEntry)aShaderEntry).RlShader,
             _ambientLoc, colAmbient,
             ShaderUniformDataType.SHADER_UNIFORM_VEC4);
@@ -149,38 +149,38 @@ public class RaylibThreeD : IThreeD
             {
                 fixed (byte* byLFS = byLightingFS)
                 {
-                    _rlInstanceShaderEntry.RlShader = Raylib.LoadShaderFromMemory(
+                    _rlInstanceShaderEntry.RlShader = Raylib_CsLo.Raylib.LoadShaderFromMemory(
                         (sbyte*)byLIVS, (sbyte*)byLFS);
                 }
 
             }
         }
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "viewPos");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "viewPos");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MODEL] =
-            Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "instanceTransform");
+            Raylib_CsLo.Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "instanceTransform");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_NORMAL] =
-            Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "matNormal");
+            Raylib_CsLo.Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "matNormal");
 
         // Set default shader locations: attributes locations
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_POSITION] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexPosition");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexPosition");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_TEXCOORD01] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexTexCoord");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexTexCoord");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_COLOR] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexColor");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexColor");
 
         // Set default shader locations: uniform locations
         // _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
-        // Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
+        // Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_COLOR_DIFFUSE] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "colDiffuse");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "colDiffuse");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_ALBEDO] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture0");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture0");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_NORMAL] =
-            Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture2");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture2");
 
         /* 
          * Test code: Set some ambient lighting:
@@ -214,7 +214,7 @@ public class RaylibThreeD : IThreeD
         RlMeshEntry rlMeshEntry = (RlMeshEntry)aMeshEntry;
         fixed (Raylib_CsLo.Mesh* pRlMeshEntry = &rlMeshEntry.RlMesh)
         {
-            Raylib.UploadMesh(pRlMeshEntry, false);
+            Raylib_CsLo.Raylib.UploadMesh(pRlMeshEntry, false);
         }
         Trace($"Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
 
@@ -233,7 +233,7 @@ public class RaylibThreeD : IThreeD
         _engine.QueueCleanupAction(() =>
         {
             Trace($"Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
-            Raylib.UnloadMesh(rlMeshEntry.RlMesh);
+            Raylib_CsLo.Raylib.UnloadMesh(rlMeshEntry.RlMesh);
         });
     }
 
@@ -245,14 +245,14 @@ public class RaylibThreeD : IThreeD
             {
                 var loadingMaterial = new RlMaterialEntry(new engine.joyce.Material());
 
-                Image checkedImage = Raylib.GenImageChecked(2, 2, 1, 1, Raylib.RED, Raylib.GREEN);
-                var loadingTexture = Raylib.LoadTextureFromImage(checkedImage);
-                Raylib.UnloadImage(checkedImage);
+                Image checkedImage = Raylib_CsLo.Raylib.GenImageChecked(2, 2, 1, 1, Raylib_CsLo.Raylib.RED, Raylib_CsLo.Raylib.GREEN);
+                var loadingTexture = Raylib_CsLo.Raylib.LoadTextureFromImage(checkedImage);
+                Raylib_CsLo.Raylib.UnloadImage(checkedImage);
 
-                loadingMaterial.RlMaterial = Raylib.LoadMaterialDefault();
+                loadingMaterial.RlMaterial = Raylib_CsLo.Raylib.LoadMaterialDefault();
                 loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
-                loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
-                // loadingMaterial.RlMaterial.maps[(int)Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib.WHITE;
+                loadingMaterial.RlMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
+                // loadingMaterial.RlMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib_CsLo.Raylib.WHITE;
                 _loadingMaterial = loadingMaterial;
             }
 
@@ -289,7 +289,7 @@ public class RaylibThreeD : IThreeD
             rlEmissiveTextureEntry = _textureManager.FindRlTexture(new engine.joyce.Texture("joyce://col00000000"));
         }
 
-        rlMaterialEntry.RlMaterial = Raylib.LoadMaterialDefault();
+        rlMaterialEntry.RlMaterial = Raylib_CsLo.Raylib.LoadMaterialDefault();
         rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
         if (null != rlTextureEntry)
         {
@@ -321,7 +321,7 @@ public class RaylibThreeD : IThreeD
 
     public unsafe void SetCameraPos(in Vector3 vCamera)
     {
-        Raylib.SetShaderValue(
+        Raylib_CsLo.Raylib.SetShaderValue(
             _rlInstanceShaderEntry.RlShader,
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW],
             vCamera,
