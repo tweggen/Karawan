@@ -11,5 +11,10 @@ namespace Splash.Raylib
         {
             return RlTexture.width != 0;
         }
+
+        public RlTextureEntry(in engine.joyce.Texture jTexture)
+            : base(jTexture)
+        {
+        }
     }
 }

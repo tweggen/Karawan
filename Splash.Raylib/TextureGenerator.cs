@@ -2,19 +2,18 @@
 
 namespace Splash.Raylib
 {
-    public class TextureGenerator : ITextureGenerator
+    public class TextureGenerator
     {
         private Image _imgBlack;
         private Image _img64MB;
         private Image _imgChessboard;
         private engine.Engine _engine;
 
-        public ATextureEntry CreatePlatformTexture(in engine.joyce.Texture jTexture)
+        public void FillTextureEntry(in RlTextureEntry rlTextureEntry)
         {
             string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
-
+            engine.joyce.Texture jTexture = rlTextureEntry.JTexture;
             bool canFreeImage = true;
-            RlTextureEntry rlTextureEntry = new();
             Image imgNew = new Image();
             imgNew.width = 0;
             if (jTexture.Source.Length==0 || jTexture.Source == "joyce://chessboard")
@@ -58,8 +57,6 @@ namespace Splash.Raylib
             {
                 Raylib_CsLo.Raylib.UnloadImage(imgNew);
             }
-
-            return rlTextureEntry;
         }
 
         public TextureGenerator(engine.Engine engine)

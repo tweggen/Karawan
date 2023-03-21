@@ -17,7 +17,6 @@ namespace Splash.Raylib
 
         private engine.Engine _engine;
 
-        private TextureManager _textureManager;
         private IThreeD _threeD;
         private RaylibThreeD _raylibThreeD;
         private LightManager _lightManager;

@@ -12,7 +12,8 @@ public class RaylibThreeD : IThreeD
     private readonly engine.Engine _engine;
     private object _lo = new();
     
-    private RlMaterialEntry _loadingMaterial; 
+    private RlMaterialEntry _loadingMaterial;
+    private readonly TextureGenerator _textureGenerator;
     private readonly TextureManager _textureManager;
 
     private RlShaderEntry _rlInstanceShaderEntry;
@@ -325,7 +326,12 @@ public class RaylibThreeD : IThreeD
         RlTextureEntry rlTextureEntry = new RlTextureEntry(jTexture);
         return rlTextureEntry;
     }
-    
+
+
+    public void FillTextureEntry(in Splash.ATextureEntry aTextureEntry)
+    {
+        _textureGenerator.FillTextureEntry(((RlTextureEntry)aTextureEntry));
+    }
     
     
     public unsafe void SetCameraPos(in Vector3 vCamera)
@@ -337,12 +343,13 @@ public class RaylibThreeD : IThreeD
             ShaderUniformDataType.SHADER_UNIFORM_VEC3);
     }
 
-    public RaylibThreeD(in engine.Engine engine, in TextureManager textureManager)
+    public RaylibThreeD(in engine.Engine engine)
     {
         _engine = engine;
-        _textureManager = textureManager;
+        _textureGenerator = new(engine);
         _createDefaultShader();
         GetDefaultMaterial();
+        _textureManager = new TextureManager(this);
     }
    
 }

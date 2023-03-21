@@ -177,9 +177,7 @@ namespace Splash.Raylib
             Raylib_CsLo.Raylib.DisableCursor();
             Raylib_CsLo.Raylib.SetTargetFPS(60);
 
-            var textureGenerator = new TextureGenerator(_engine);
-            _textureManager = new(textureGenerator);
-            _raylibThreeD = new RaylibThreeD(_engine, _textureManager);
+            _raylibThreeD = new RaylibThreeD(_engine);
             
             _materialManager = new(_raylibThreeD);
             _materialManager.Manage(_engine.GetEcsWorld());
