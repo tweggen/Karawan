@@ -22,7 +22,7 @@ namespace Splash.Silk
         private MaterialManager _materialManager;
         private MeshManager _meshManager;
         private LightManager _lightManager;
-        // private SilkRenderer _renderer;
+        private SilkRenderer _renderer;
         private bool _isRunning = true;
 
         private LogicalRenderer _logicalRenderer;
@@ -130,6 +130,19 @@ namespace Splash.Silk
 
         private void _windowOnRender(double dt)
         {
+            _physFrameUpdateControllerState();
+            _physFrameReadKeyEvents();
+            _physFrameReadMouseMove();
+
+            RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
+            if (renderFrame != null)
+            {
+                _renderer.RenderFrame(renderFrame);
+            } else
+            {
+                Warning("No new frame found.");
+                System.Threading.Thread.Sleep(15);
+            }
             
         }
 
@@ -244,13 +257,13 @@ namespace Splash.Silk
                 _meshManager,
                 _lightManager
             );
-#if false
-            _renderer = new RaylibRenderer(
+
+            _renderer = new SilkRenderer(
                 _engine,
                 _lightManager,
-                _raylibThreeD
+                _silkThreeD
             );
-#endif
+
         }
 
         public void Sleep(double dt)
