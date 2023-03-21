@@ -263,7 +263,6 @@ public class RaylibThreeD : IThreeD
     public AMaterialEntry CreateMaterialEntry(in engine.joyce.Material jMaterial)
     {
         RlMaterialEntry rlMaterialEntry = new RlMaterialEntry(jMaterial);
-
         return rlMaterialEntry;
     }
 
@@ -272,29 +271,29 @@ public class RaylibThreeD : IThreeD
     {
         RlMaterialEntry rlMaterialEntry = (RlMaterialEntry) aMaterialEntry;
         engine.joyce.Material jMaterial = rlMaterialEntry.JMaterial;
-        RlTextureEntry rlTextureEntry = null;
+        ATextureEntry aTextureEntry = null;
 
         if (jMaterial.Texture != null)
         {
-            rlTextureEntry = _textureManager.FindRlTexture(jMaterial.Texture);
+            aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
             // TXWTODO: Add reference of this texture.
         }
-        RlTextureEntry rlEmissiveTextureEntry = null;
+        ATextureEntry aEmissiveTextureEntry = null;
         if (jMaterial.EmissiveTexture != null)
         {
-            rlEmissiveTextureEntry = _textureManager.FindRlTexture(jMaterial.EmissiveTexture);
+            aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
         }
         else
         {
-            rlEmissiveTextureEntry = _textureManager.FindRlTexture(new engine.joyce.Texture("joyce://col00000000"));
+            aEmissiveTextureEntry = _textureManager.FindATexture(new engine.joyce.Texture("joyce://col00000000"));
         }
 
         rlMaterialEntry.RlMaterial = Raylib_CsLo.Raylib.LoadMaterialDefault();
         rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
-        if (null != rlTextureEntry)
+        if (null != aTextureEntry)
         {
             rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].texture =
-                rlTextureEntry.RlTexture;
+                ((RlTextureEntry)aTextureEntry).RlTexture;
         }
         else
         {
@@ -310,15 +309,25 @@ public class RaylibThreeD : IThreeD
 
         {
             rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_NORMAL].texture =
-                rlEmissiveTextureEntry.RlTexture;
+                ((RlTextureEntry)aEmissiveTextureEntry).RlTexture;
         }
     }
+
 
     public void UnloadMaterialEntry(in AMaterialEntry aMaterialEntry)
     {
         // TWTODO: Actually write this. 
     }
 
+
+    public ATextureEntry CreateTextureEntry(in engine.joyce.Texture jTexture)
+    {
+        RlTextureEntry rlTextureEntry = new RlTextureEntry(jTexture);
+        return rlTextureEntry;
+    }
+    
+    
+    
     public unsafe void SetCameraPos(in Vector3 vCamera)
     {
         Raylib_CsLo.Raylib.SetShaderValue(
