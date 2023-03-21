@@ -37,38 +37,7 @@ namespace Splash.Silk
                 _engine = engine;
             }
         }
-
-        private void _physFrameUpdateControllerState()
-        {
-#if false
-            /*
-             * Read input devices.
-             * #1 Key States, filling the controller data structure.
-             */
-            _controllerState.Reset();
-            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)
-                || Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_RIGHT_SHIFT))
-            {
-                _controllerState.WalkFast = true;
-            }
-            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_W))
-            {
-                _controllerState.WalkForward = 200;
-            }
-            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_S))
-            {
-                _controllerState.WalkBackward = 200;
-            }
-            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_A))
-            {
-                _controllerState.TurnLeft = 200;
-            }
-            if(Raylib_CsLo.Raylib.IsKeyDown(KeyboardKey.KEY_D))
-            {
-                _controllerState.TurnRight = 200;
-            }
-#endif
-        }
+        
 
         private void _physFrameReadKeyEvents()
         {
@@ -106,12 +75,44 @@ namespace Splash.Silk
 
         private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
         {
-            
+            switch (arg2)
+            {
+                case Key.W:
+                    _controllerState.WalkForward = 200;
+                    break;
+                case Key.A:
+                    _controllerState.WalkBackward = 200;
+                    break;
+                case Key.S:
+                    _controllerState.TurnLeft = 200;
+                    break;
+                case Key.D:
+                    _controllerState.TurnRight = 200;
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void _onKeyUp(IKeyboard arg1, Key arg2, int arg3)
         {
-            
+            switch (arg2)
+            {
+                case Key.W:
+                    _controllerState.WalkForward = 0;
+                    break;
+                case Key.A:
+                    _controllerState.WalkBackward = 0;
+                    break;
+                case Key.S:
+                    _controllerState.TurnLeft = 0;
+                    break;
+                case Key.D:
+                    _controllerState.TurnRight = 0;
+                    break;
+                default:
+                    break;
+            }            
         }
 
 
@@ -130,7 +131,6 @@ namespace Splash.Silk
 
         private void _windowOnRender(double dt)
         {
-            _physFrameUpdateControllerState();
             _physFrameReadKeyEvents();
             _physFrameReadMouseMove();
 
@@ -211,7 +211,7 @@ namespace Splash.Silk
             
             var options = WindowOptions.Default;
             options.Size = new Vector2D<int>(800, 600);
-            options.Title = "LearnOpenGL with Silk.NET";
+            options.Title = "codename Karawan";
             _iWindow = Window.Create(options);
             
             _iWindow.Load += _windowOnLoad;

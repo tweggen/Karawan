@@ -3,6 +3,7 @@ namespace Splash.Silk
 {
     public class SkShaderEntry : AShaderEntry
     {
-        // public Raylib_CsLo.Shader RlShader;
+        // TXWTODO: We could remove that one level of indirection.
+        public SkShader SkShader;
     }
 }
