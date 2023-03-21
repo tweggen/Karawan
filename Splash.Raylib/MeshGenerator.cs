@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using static engine.Logger;
 
 namespace Splash.Raylib
 {
@@ -20,7 +21,6 @@ namespace Splash.Raylib
         }
 
 
-
         public static unsafe void CreateRaylibMesh( in engine.joyce.Mesh mesh, out RlMeshEntry rlMeshEntry )
         {
             if( null==mesh.Normals )
@@ -35,10 +35,7 @@ namespace Splash.Raylib
                 var nUVs = mesh.UVs.Count;
                 if (nUVs != nVertices)
                 {
-                    // TXWTODO: Throw an exception
-                    System.Console.WriteLine("Problem");
-                    rlMeshEntry = new(mesh);
-                    return;
+                    ErrorThrow("the number of uvs does not match the number of vertices.", (m) => new InvalidOperationException(m));
                 }
             }
             fixed (Raylib_CsLo.Mesh *prlm = &rlMeshEntry.RlMesh)
@@ -58,13 +55,7 @@ namespace Splash.Raylib
                 rlMeshEntry.RlMesh.normals[v * 3 + 0] = normals.X;
                 rlMeshEntry.RlMesh.normals[v * 3 + 1] = normals.Y;
                 rlMeshEntry.RlMesh.normals[v * 3 + 2] = normals.Z;
-                // Console.WriteLine("Normal:  {0}", normals.ToString());
-#if false
-                rlMeshEntry.RlMesh.colors[v * 4 + 0] = 0x00;
-                rlMeshEntry.RlMesh.colors[v * 4 + 1] = 0xff;
-                rlMeshEntry.RlMesh.colors[v * 4 + 2] = 0xff;
-                rlMeshEntry.RlMesh.colors[v * 4 + 3] = 0x00;
-#endif
+
             }
             for (int i=0;i<nIndices;++i)
             {
