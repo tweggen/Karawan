@@ -45,6 +45,11 @@ public class SkShader : IDisposable
         _gl.UseProgram(_handle);
     }
 
+    public void SetUniform(int location, int value)
+    {
+        _gl.Uniform1(location, value);
+    }
+
     //Uniforms are properties that applies to the entire geometry
     public void SetUniform(string name, int value)
     {
@@ -100,7 +105,13 @@ public class SkShader : IDisposable
         _gl.Uniform4(location, v.X, v.Y, v.Z, v.W);
     }
     
-    
+
+    public void SetUniform(int location, in Vector4 v)
+    {
+        _gl.Uniform4(location, v.X, v.Y, v.Z, v.W);
+    }
+
+
     public unsafe void SetUniform(string name, Matrix4x4 value)
     {
         //A new overload has been created for setting a uniform so we can use the transform in our shader.
@@ -112,6 +123,11 @@ public class SkShader : IDisposable
         _gl.UniformMatrix4(location, 1, false, (float*) &value);
     }
 
+    
+    public void SetUniform(int location, Vector3 value)
+    {
+        _gl.Uniform3(location, value.X, value.Y, value.Z);
+    }
     
     public void SetUniform(string name, Vector3 value)
     {

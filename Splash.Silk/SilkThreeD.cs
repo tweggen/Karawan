@@ -44,10 +44,10 @@ public class SilkThreeD : IThreeD
     // TXWTODO: Ugly data structure
     private LightShaderPos[] _lightShaderPos = null;
     
-    #if false
+    
     // Create a light and get shader locations
     private void _compileLightLocked(
-        in LightShaderPos lightShaderPos, int lightIndex, ref Shader shader)
+        in LightShaderPos lightShaderPos, int lightIndex, ref SkShader sh)
     {
         // TODO: Below code doesn't look good to me, 
         // it assumes a specific shader naming and structure
@@ -65,18 +65,16 @@ public class SilkThreeD : IThreeD
         //targetName[7] = '0' + lightsCount;
         //colorName[7] = '0' + lightsCount;
 
-        lightShaderPos.enabledLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, enabledName);
-        lightShaderPos.typeLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, typeName);
-        lightShaderPos.posLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, posName);
-        lightShaderPos.targetLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, targetName);
-        lightShaderPos.colorLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, colorName);
+        lightShaderPos.enabledLoc = (int)sh.GetUniform(enabledName);
+        lightShaderPos.typeLoc = (int)sh.GetUniform(typeName);
+        lightShaderPos.posLoc = (int)sh.GetUniform(posName);
+        lightShaderPos.targetLoc = (int)sh.GetUniform(targetName);
+        lightShaderPos.colorLoc = (int)sh.GetUniform(colorName);
 
     }
-#endif
 
-
-    #if false
-    private LightShaderPos _getLightShaderPos(int index, ref Shader shader)
+    
+    private LightShaderPos _getLightShaderPos(int index, ref SkShader sh)
     {
         lock (_lo)
         {
@@ -86,69 +84,60 @@ public class SilkThreeD : IThreeD
                 for (int i = 0; i < LightManager.MAX_LIGHTS; ++i)
                 {
                     _lightShaderPos[i] = new();
-                    _compileLightLocked(_lightShaderPos[i], i, ref shader);
+                    _compileLightLocked(_lightShaderPos[i], i, ref sh);
                 }
-                _ambientLoc = Raylib_CsLo.Raylib.GetShaderLocation(shader, "ambient");
+                _ambientLoc = (int)sh.GetUniform("ambient");
 
             }
 
             return _lightShaderPos[index];
         }
     }
-#endif
     
     
-    #if false
     /**
      * Update lights value in shader
      */
-    private unsafe void _applyLightValues(ref Shader shader, int index, in Light light)
+    private unsafe void _applyLightValues(ref SkShader sh, int index, in Light light)
     {
-        var lightShaderPos = _getLightShaderPos(index, ref shader);
-        fixed (Light* pLight = &light)
-        {
-            // Send to shader light enabled state and type
-            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.enabledLoc, &pLight->enabled, ShaderUniformDataType.SHADER_UNIFORM_INT);
-            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.typeLoc, &pLight->type, ShaderUniformDataType.SHADER_UNIFORM_INT);
+        var lightShaderPos = _getLightShaderPos(index, ref sh);
 
-            // Send to shader light position values
-            Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
-            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.posLoc, position, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
+        // Send to shader light enabled state and type
+        sh.SetUniform(lightShaderPos.enabledLoc, (light.enabled?1:0));
+        sh.SetUniform(lightShaderPos.typeLoc, (int)light.type);
 
-            // Send to shader light target position values
-            Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
-            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.targetLoc, target, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
+        // Send to shader light position values
+        Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
+        sh.SetUniform(lightShaderPos.posLoc, position);
 
-            // Send to shader light color values
-            Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,
-                (float)light.color.Z / (float)255, (float)light.color.W / (float)255);
-            Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
-        }
+        // Send to shader light target position values
+        Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
+        sh.SetUniform(lightShaderPos.targetLoc, target);
+
+        // Send to shader light color values
+        Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,
+            (float)light.color.Z / (float)255, (float)light.color.W / (float)255);
+        sh.SetUniform(lightShaderPos.colorLoc, color);
     }
-#endif
 
 
-    #if false
-    private void _applyAllLights(in IList<Light> listLights, ref Shader shader)
+    private void _applyAllLights(in IList<Light> listLights, ref SkShader sh)
     {
         for (int i = 0; i < listLights.Count; i++)
         {
-            _applyLightValues(ref shader, i, listLights[i]);                
+            _applyLightValues(ref sh, i, listLights[i]);                
         }
     }
-#endif
 
     public void ApplyAllLights(in IList<Light> listLights, in AShaderEntry aShaderEntry)
     {
-        // _applyAllLights(listLights, ref ((RlShaderEntry)aShaderEntry).RlShader);
+        _applyAllLights(listLights, ref ((SkShaderEntry)aShaderEntry).SkShader);
     }
     
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry)
     {
-        /* Raylib_CsLo.Raylib.SetShaderValue(
-            ((RlShaderEntry)aShaderEntry).RlShader,
-            _ambientLoc, colAmbient,
-            ShaderUniformDataType.SHADER_UNIFORM_VEC4);*/
+        var sh = ((SkShaderEntry)aShaderEntry).SkShader;
+        sh.SetUniform(_ambientLoc, colAmbient);
     }
 
     
