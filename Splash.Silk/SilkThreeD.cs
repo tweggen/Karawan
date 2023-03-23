@@ -20,6 +20,9 @@ public class SilkThreeD : IThreeD
     private readonly TextureManager _textureManager;
     private GL _gl = null;
 
+    private Matrix4x4 _matView;
+    private Matrix4x4 _matProjection;
+
     private SkShaderEntry _skInstanceShaderEntry;
     
     public class LightShaderPos
@@ -302,12 +305,16 @@ public class SilkThreeD : IThreeD
         }
 
         /*
-         * Setup the instance shader.
-         * First, load the vertex shader uniforms.
+         * Setup view and projection matrix.
+         * We need a combined view and projection matrix
          */
-        sh.SetUniform("mvp", Matrix4x4.Identity);
+        // mProjection = Camera.GetProjectionMatrix();
+        // mViewMatrix = Camera.GetViewKatrix();
+        Matrix4x4 mvp = _matProjection * _matView;
         
-        //_gl.DrawArrays(PrimitiveType.Triangles, 0, 36);
+        sh.SetUniform("mvp", mvp);
+        
+        _gl.DrawArrays(PrimitiveType.Triangles, 0, (uint)nMatrices);
         //_gl.DrawArraysInstanced();
 
         /*
@@ -451,6 +458,11 @@ public class SilkThreeD : IThreeD
     
     public void SetCameraPos(in Vector3 vCamera)
     {
+        /*
+         * Push the viewer's position to the fragment shader
+         */
+        // TXWTODO: Write me.
+
         /* Raylib_CsLo.Raylib.SetShaderValue(
             _rlInstanceShaderEntry.RlShader,
             _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW],
@@ -459,6 +471,17 @@ public class SilkThreeD : IThreeD
             */
     }
 
+
+    public void SetViewMatrix(in Matrix4x4 matView)
+    {
+        _matView = matView;
+    }
+
+
+    public void SetProjectionMatrix(in Matrix4x4 matProjection)
+    {
+        _matProjection = matProjection;
+    }
 
     public void SetGL(in GL gl)
     {
