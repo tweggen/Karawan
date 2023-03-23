@@ -151,21 +151,7 @@ public class SilkThreeD : IThreeD
             ShaderUniformDataType.SHADER_UNIFORM_VEC4);*/
     }
 
-
-    private uint _loadShaderSource(in ShaderType type, in string source)
-    {
-        uint handle = _gl.CreateShader(type);
-        _gl.ShaderSource(handle, source);
-        _gl.CompileShader(handle);
-        string infoLog = _gl.GetShaderInfoLog(handle);
-        if (!string.IsNullOrWhiteSpace(infoLog))
-        {
-            ErrorThrow($"Error compiling shader of type {type}, failed with error {infoLog}", (m) => new InvalidExpressionException(m));
-        }
-
-        return handle;
-    }
-
+    
     
     private void _createDefaultShader()
     {
@@ -213,6 +199,13 @@ public class SilkThreeD : IThreeD
 
     public SkShaderEntry GetInstanceShaderEntry()
     {
+        lock (_lo)
+        {
+            if (null == _skInstanceShaderEntry)
+            {
+                _createDefaultShader();
+            }
+        }
         return _skInstanceShaderEntry;
     }
 
@@ -251,11 +244,7 @@ public class SilkThreeD : IThreeD
         in int nMatrices)
     {
         SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
-        VertexArrayObject skMesh = skMeshEntry.vao;
-        if (null == skMesh)
-        {
-            return;
-        }
+        //VertexArrayObject skMesh = skMeshEntry.vao;
         
         SkMaterialEntry skMaterialEntry = ((SkMaterialEntry)aMaterialEntry);
         
@@ -263,7 +252,7 @@ public class SilkThreeD : IThreeD
          * 1. set shader uniforms if the material has changed
          * 2. Actually draw mesh.
          */
-
+        GetInstanceShaderEntry();
         SkShader sh = _skInstanceShaderEntry.SkShader;
         sh.Use();
         
@@ -290,7 +279,7 @@ public class SilkThreeD : IThreeD
         skMeshEntry.vao.BindVertexArray();
         var bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
         bMatrices.BindBuffer();
-        uint locInstanceMatrices = sh.GetUniform("instanceTransform");
+        uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
         for (uint i = 0; i < 4; ++i)
         {
             _gl.VertexAttribPointer(

@@ -77,7 +77,18 @@ public class SkShader : IDisposable
 
         return (uint) location;
     }
-    
+
+
+    public uint GetAttrib(string name)
+    {
+        int location = _gl.GetAttribLocation(_handle, name);
+        if (location == -1)
+        {
+            ErrorThrow($"{name} attribute not found on shader.", (m) => new InvalidOperationException(m));
+        }
+
+        return (uint) location;
+    }
     
     public void SetUniform(string name, in Vector4 v)
     {
