@@ -133,7 +133,7 @@ namespace Splash.Silk
         public void RenderFrame(in RenderFrame renderFrame)
         {
             _gl = _silkThreeD.GetGL();
-            _lightManager.ApplyLights(renderFrame, new SkShaderEntry() /*_raylibThreeD.GetInstanceShaderEntry() */);
+            _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
             _renderParts(renderFrame.RenderParts);
         }
         

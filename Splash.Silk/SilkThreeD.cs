@@ -131,12 +131,21 @@ public class SilkThreeD : IThreeD
 
     public void ApplyAllLights(in IList<Light> listLights, in AShaderEntry aShaderEntry)
     {
-        _applyAllLights(listLights, ref ((SkShaderEntry)aShaderEntry).SkShader);
+        var sh = ((SkShaderEntry)aShaderEntry).SkShader;
+        if (null == sh)
+        {
+            return;
+        }
+        _applyAllLights(listLights, ref sh);
     }
     
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry)
     {
         var sh = ((SkShaderEntry)aShaderEntry).SkShader;
+        if (null == sh)
+        {
+            return;
+        }
         sh.SetUniform(_ambientLoc, colAmbient);
     }
 
@@ -306,13 +315,12 @@ public class SilkThreeD : IThreeD
 
     public void UploadMesh(in AMeshEntry aMeshEntry)
     {
-        /*RlMeshEntry rlMeshEntry = (RlMeshEntry)aMeshEntry;
-        fixed (Raylib_CsLo.Mesh* pRlMeshEntry = &rlMeshEntry.RlMesh)
+        SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
+        if (!skMeshEntry.IsMeshUploaded())
         {
-            Raylib_CsLo.Raylib.UploadMesh(pRlMeshEntry, false);
+            skMeshEntry.Upload(_gl);
         }
-        Trace($"Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
-*/
+        //Trace($"Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
     }
 
     public AMeshEntry CreateMeshEntry(in engine.joyce.Mesh jMesh)
@@ -474,7 +482,7 @@ public class SilkThreeD : IThreeD
     public SilkThreeD(in engine.Engine engine)
     {
         _engine = engine;
-        _textureGenerator = new(engine);
+        _textureGenerator = new(engine, this);
         //_createDefaultShader();
         GetDefaultMaterial();
         _textureManager = new TextureManager(this);

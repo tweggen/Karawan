@@ -7,14 +7,22 @@ namespace Splash.Silk
         //private Image _imgBlack;
         //private Image _img64MB;
         //private Image _imgChessboard;
-        private engine.Engine _engine;
+        private readonly engine.Engine _engine;
+        private readonly SilkThreeD _silkThreeD;
 
         public void FillTextureEntry(in SkTextureEntry skTextureEntry)
         {
             string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
-            bool canFreeImage = true;
+
+            {
+                string path = resourcePath + jTexture.Source;
+                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), path);
+            }
+
 #if false
+            bool canFreeImage = true;
+
             Image imgNew = new Image();
             imgNew.width = 0;
             if (jTexture.Source.Length==0 || jTexture.Source == "joyce://chessboard")
@@ -61,9 +69,10 @@ namespace Splash.Silk
 #endif
         }
 
-        public TextureGenerator(engine.Engine engine)
+        public TextureGenerator(engine.Engine engine, in SilkThreeD silkThreeD)
         {
             _engine = engine;
+            _silkThreeD = silkThreeD;
         }
     }
 }
