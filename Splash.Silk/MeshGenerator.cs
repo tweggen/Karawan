@@ -24,10 +24,10 @@ namespace Splash.Silk
                     ErrorThrow("the number of uvs does not match the number of vertices.", (m) => new InvalidOperationException(m));
                 }
             }
-            skMeshEntry.Vertices = new float[nVertices];
-            skMeshEntry.UVs = new float[nVertices];
+            skMeshEntry.Vertices = new float[nVertices*3];
+            skMeshEntry.UVs = new float[nVertices*2];
             skMeshEntry.Indices = new uint[nIndices];
-            skMeshEntry.Normals = new float[nVertices];
+            skMeshEntry.Normals = new float[nVertices*3];
             
             for(int v=0; v<nVertices; v++)
             {

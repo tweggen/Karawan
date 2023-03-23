@@ -117,16 +117,16 @@ namespace Splash.Silk
                  */
                 RenderPart.CameraOutput.RenderTransparent(_threeD);
 
-                Raylib_CsLo.Raylib.EndMode3D();
+                // Raylib_CsLo.Raylib.EndMode3D();
 
-                Raylib_CsLo.Raylib.DrawText("Debug info:\n" + RenderPart.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib_CsLo.Raylib.GREEN);
+                // Raylib_CsLo.Raylib.DrawText("Debug info:\n" + RenderPart.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib_CsLo.Raylib.GREEN);
                 y0Stats += 20;
             }
 
-            Raylib_CsLo.Raylib.DrawFPS(20, 100);
-            Raylib_CsLo.Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib_CsLo.Raylib.GREEN);
-            Raylib_CsLo.Raylib.EndDrawing();
-#endif
+            //Raylib_CsLo.Raylib.DrawFPS(20, 100);
+            //Raylib_CsLo.Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib_CsLo.Raylib.GREEN);
+            //Raylib_CsLo.Raylib.EndDrawing();
+
         }
 
 
