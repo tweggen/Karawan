@@ -3,7 +3,7 @@ namespace Splash.Silk
 {
     public class SkTextureEntry : Splash.ATextureEntry
     {
-        //public Raylib_CsLo.Texture RlTexture;
+        public SkTexture SkTexture;
 
         public override bool IsUploaded()
         {

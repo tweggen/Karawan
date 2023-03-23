@@ -4,7 +4,8 @@ namespace Splash.Silk
 {
     public class SkMaterialEntry : AMaterialEntry
     {
-        //public Raylib_CsLo.Material RlMaterial;
+        public SkTextureEntry SkDiffuseTexture;
+        public SkTextureEntry SkEmissiveTexture;
 
         public override bool IsUploaded()
         {

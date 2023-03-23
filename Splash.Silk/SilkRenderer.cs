@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using static engine.Logger;
 
+using Silk.NET.OpenGL;
+
+
 namespace Splash.Silk
 {
     class SilkRenderer
@@ -19,7 +22,8 @@ namespace Splash.Silk
         private IThreeD _threeD;
         private SilkThreeD _silkThreeD;
         private LightManager _lightManager;
-        
+
+        private GL _gl;
 
         /**
          * Render all camera objects.
@@ -28,6 +32,8 @@ namespace Splash.Silk
          */
         private void _renderParts(in IList<RenderPart> RenderParts)
         {
+            _gl.Enable(EnableCap.DepthTest);
+            _gl.Clear((uint) (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
 #if false
             Raylib_CsLo.Raylib.BeginDrawing();
 
@@ -114,6 +120,7 @@ namespace Splash.Silk
 
         public void RenderFrame(in RenderFrame renderFrame)
         {
+            _gl = _silkThreeD.GetGL();
             _lightManager.ApplyLights(renderFrame, new SkShaderEntry() /*_raylibThreeD.GetInstanceShaderEntry() */);
             _renderParts(renderFrame.RenderParts);
         }

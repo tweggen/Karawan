@@ -127,7 +127,15 @@ namespace Splash.Silk
             }
 
             _gl = GL.GetApi(_iWindow);
+            _silkThreeD.SetGL(_gl);
         }
+
+
+        private void _windowOnUpdate(double dt)
+        {
+            
+        }
+        
 
         private void _windowOnRender(double dt)
         {
@@ -216,6 +224,7 @@ namespace Splash.Silk
             
             _iWindow.Load += _windowOnLoad;
             _iWindow.Render += _windowOnRender;
+            _iWindow.Update += _windowOnUpdate;
             _iWindow.Closing += _windowOnClose;
             
 #if false

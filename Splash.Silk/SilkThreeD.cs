@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Numerics;
 using System.Text;
 using static engine.Logger;
+using Silk.NET.OpenGL;
+
 
 namespace Splash.Silk;
+
 
 public class SilkThreeD : IThreeD
 {
@@ -14,8 +18,9 @@ public class SilkThreeD : IThreeD
     private SkMaterialEntry _loadingMaterial;
     private readonly TextureGenerator _textureGenerator;
     private readonly TextureManager _textureManager;
+    private GL _gl = null;
 
-    // private RlShaderEntry _rlInstanceShaderEntry;
+    private SkShaderEntry _skInstanceShaderEntry;
     
     public class LightShaderPos
     {
@@ -144,25 +149,31 @@ public class SilkThreeD : IThreeD
     }
 
 
-    
-    #if false
-    private unsafe void _createDefaultShader()
+    private uint _loadShaderSource(in ShaderType type, in string source)
     {
-        _rlInstanceShaderEntry = new RlShaderEntry();
-
+        uint handle = _gl.CreateShader(type);
+        _gl.ShaderSource(handle, source);
+        _gl.CompileShader(handle);
+        string infoLog = _gl.GetShaderInfoLog(handle);
+        if (!string.IsNullOrWhiteSpace(infoLog))
         {
-            byte[] byLightingInstancingVS = Encoding.ASCII.GetBytes(shadercode.LightingInstancingVS.ShaderCode);
-            byte[] byLightingFS = Encoding.ASCII.GetBytes(shadercode.LightingFS.ShaderCode);
-            fixed (byte* byLIVS = byLightingInstancingVS)
-            {
-                fixed (byte* byLFS = byLightingFS)
-                {
-                    _rlInstanceShaderEntry.RlShader = Raylib_CsLo.Raylib.LoadShaderFromMemory(
-                        (sbyte*)byLIVS, (sbyte*)byLFS);
-                }
-
-            }
+            ErrorThrow($"Error compiling shader of type {type}, failed with error {infoLog}", (m) => new InvalidExpressionException(m));
         }
+
+        return handle;
+    }
+
+    
+    private void _createDefaultShader()
+    {
+        _skInstanceShaderEntry = new SkShaderEntry();
+        _skInstanceShaderEntry.SkShader = new SkShader(
+            _gl,
+            shadercode.LightingInstancingVS.ShaderCode,
+            shadercode.LightingFS.ShaderCode
+        );
+
+#if false
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
             Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW] =
@@ -194,24 +205,111 @@ public class SilkThreeD : IThreeD
          * Test code: Set some ambient lighting:
          */
         // SetAmbientLight(new Vector4(0.9f, 0.6f, 0.9f, 1.0f));
-        
-    }
 #endif
+    }
 
-    #if false
-    public RlShaderEntry GetInstanceShaderEntry()
+    public SkShaderEntry GetInstanceShaderEntry()
     {
-        return _rlInstanceShaderEntry;
+        return _skInstanceShaderEntry;
     }
-#endif
+
+    private void _loadMaterialToShader(in SkShader sh, in SkMaterialEntry skMaterialEntry)
+    {
+        //sh.SetUniform("texture0");
+        SkTextureEntry skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
+        if (skDiffuseTextureEntry != null && skDiffuseTextureEntry.IsUploaded())
+        {
+            SkTexture skTexture = skDiffuseTextureEntry.SkTexture;
+            if (skTexture != null)
+            {
+                skTexture.Bind(TextureUnit.Texture0);
+            }
+        }
+
+        SkTextureEntry skEmissiveTextureEntry = skMaterialEntry.SkEmissiveTexture;
+        if (skEmissiveTextureEntry != null && skEmissiveTextureEntry.IsUploaded())
+        {
+            SkTexture skTexture = skEmissiveTextureEntry.SkTexture;
+            if (skTexture != null)
+            {
+                skTexture.Bind(TextureUnit.Texture2);
+            }
+        }
+
+        sh.SetUniform("colDiffuse", new Vector4(skMaterialEntry.JMaterial.AlbedoColor));
+        sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
+    }
     
     
-    public void DrawMeshInstanced(
+    public unsafe void DrawMeshInstanced(
         in AMeshEntry aMeshEntry, 
         in AMaterialEntry aMaterialEntry, 
         in Span<Matrix4x4> spanMatrices,
         in int nMatrices)
     {
+        SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
+        VertexArrayObject skMesh = skMeshEntry.vao;
+        if (null == skMesh)
+        {
+            return;
+        }
+        
+        SkMaterialEntry skMaterialEntry = ((SkMaterialEntry)aMaterialEntry);
+        
+        /*
+         * 1. set shader uniforms if the material has changed
+         * 2. Actually draw mesh.
+         */
+
+        SkShader sh = _skInstanceShaderEntry.SkShader;
+        sh.Use();
+        
+        /*
+         * Load the material, if it changed since the last
+         * call. Usually it does because we already group
+         * calls by material.
+         */
+        _loadMaterialToShader(sh, (SkMaterialEntry)aMaterialEntry);
+
+        /*
+         * Load the mesh, if it changed since the last call.
+         */
+        if (!skMeshEntry.IsMeshUploaded())
+        {
+            skMeshEntry.Upload(_gl);
+        }
+
+        /*
+         * 1) Bind the vao and
+         * 2) upload the matrix instance buffer.
+         */
+
+        skMeshEntry.vao.BindVertexArray();
+        var bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
+        bMatrices.BindBuffer();
+        uint locInstanceMatrices = sh.GetUniform("instanceTransform");
+        for (uint i = 0; i < 4; ++i)
+        {
+            _gl.VertexAttribPointer(
+                locInstanceMatrices+i,
+                4,
+                VertexAttribPointerType.Float,
+                false,
+                16 * (uint)sizeof(float),
+                (void*)(sizeof(float) * i)
+            );
+            _gl.VertexAttribDivisor(locInstanceMatrices+i, 1);
+        }
+
+        /*
+         * Setup the instance shader.
+         * First, load the vertex shader uniforms.
+         */
+        sh.SetUniform("mvp", Matrix4x4.Identity);
+        
+        //_gl.DrawArrays(PrimitiveType.Triangles, 0, 36);
+        //_gl.DrawArraysInstanced();
+
         /*
         Raylib_CsLo.Raylib.DrawMeshInstanced(
                 ((RlMeshEntry)aMeshEntry).RlMesh,
@@ -361,6 +459,17 @@ public class SilkThreeD : IThreeD
             */
     }
 
+
+    public void SetGL(in GL gl)
+    {
+        _gl = gl;
+    }
+
+    public GL GetGL()
+    {
+        return _gl;
+    }
+    
     public SilkThreeD(in engine.Engine engine)
     {
         _engine = engine;

@@ -15,7 +15,6 @@ namespace Splash.Silk
             }
             skMeshEntry = new(mesh);
 
-#if false
             var nVertices = mesh.Vertices.Count;
             var nIndices = mesh.Indices.Count;
             {
@@ -25,33 +24,33 @@ namespace Splash.Silk
                     ErrorThrow("the number of uvs does not match the number of vertices.", (m) => new InvalidOperationException(m));
                 }
             }
-            fixed (Raylib_CsLo.Mesh *prlm = &rlMeshEntry.RlMesh)
-            {
-                AllocateRaylibMesh(prlm, nVertices, nIndices);
-            }
+            skMeshEntry.Vertices = new float[nVertices];
+            skMeshEntry.UVs = new float[nVertices];
+            skMeshEntry.Indices = new uint[nIndices];
+            skMeshEntry.Normals = new float[nVertices];
+            
             for(int v=0; v<nVertices; v++)
             {
                 Vector3 vertex = (Vector3) mesh.Vertices[v];
                 Vector2 uv = (Vector2)mesh.UVs[v];
                 Vector3 normals = (Vector3)mesh.Normals[v];
-                rlMeshEntry.RlMesh.vertices[v * 3 + 0] = vertex.X;
-                rlMeshEntry.RlMesh.vertices[v * 3 + 1] = vertex.Y;
-                rlMeshEntry.RlMesh.vertices[v * 3 + 2] = vertex.Z;
-                rlMeshEntry.RlMesh.texcoords[v * 2 + 0] = uv.X;
-                rlMeshEntry.RlMesh.texcoords[v * 2 + 1] = uv.Y;
-                rlMeshEntry.RlMesh.normals[v * 3 + 0] = normals.X;
-                rlMeshEntry.RlMesh.normals[v * 3 + 1] = normals.Y;
-                rlMeshEntry.RlMesh.normals[v * 3 + 2] = normals.Z;
+                skMeshEntry.Vertices[v * 3 + 0] = vertex.X;
+                skMeshEntry.Vertices[v * 3 + 1] = vertex.Y;
+                skMeshEntry.Vertices[v * 3 + 2] = vertex.Z;
+                skMeshEntry.UVs[v * 2 + 0] = uv.X;
+                skMeshEntry.UVs[v * 2 + 1] = uv.Y;
+                skMeshEntry.Normals[v * 3 + 0] = normals.X;
+                skMeshEntry.Normals[v * 3 + 1] = normals.Y;
+                skMeshEntry.Normals[v * 3 + 2] = normals.Z;
 
             }
-            for (int i=0;i<nIndices;++i)
+            for (int i=0; i<nIndices; ++i)
             {
                 /*
                  * As we just copy, we can ignore the fact these are triangles.
                  */
-                rlMeshEntry.RlMesh.indices[i] = (ushort)(int)mesh.Indices[i];
+                skMeshEntry.Indices[i] = (ushort)(int)mesh.Indices[i];
             }
-#endif
         }
     }
 }

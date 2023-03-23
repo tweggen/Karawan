@@ -4,35 +4,61 @@ using System;
 namespace Splash.Silk;
 
 //The vertex array object abstraction.
-public class VertexArrayObject<TVertexType, TIndexType> : IDisposable
-    where TVertexType : unmanaged
-    where TIndexType : unmanaged
+public class VertexArrayObject : IDisposable
 {
     //Our handle and the GL instance this class will use, these are private because they have no reason to be public.
     //Most of the time you would want to abstract items to make things like this invisible.
     private uint _handle;
     private GL _gl;
 
-    public VertexArrayObject(GL gl, BufferObject<TVertexType> vbo, BufferObject<TIndexType> ebo)
+    public unsafe VertexArrayObject(GL gl, SkMeshEntry skMeshEntry)
     {
-        //Saving the GL instance.
+        /*
+         * We need the GL instance.
+         */
         _gl = gl;
+        
+        /*
+         * Now create buffer objects for all properties of the mesh entry. 
+         */
+        var bIndices = new BufferObject<uint>(_gl, skMeshEntry.Indices, BufferTargetARB.ElementArrayBuffer);
+        var bVertices = new BufferObject<float>(_gl, skMeshEntry.Vertices, BufferTargetARB.ArrayBuffer);
+        var bNormals = new BufferObject<float>(_gl, skMeshEntry.Normals, BufferTargetARB.ArrayBuffer);
+        var bUVs = new BufferObject<float>(_gl, skMeshEntry.UVs, BufferTargetARB.ArrayBuffer);
 
         //Setting out handle and binding the VBO and EBO to this VAO.
         _handle = _gl.GenVertexArray();
-        Bind();
-        vbo.Bind();
-        ebo.Bind();
+        BindVertexArray();
+        bVertices.BindBuffer();
+        _gl.VertexAttribPointer(
+            0,
+            3,
+            VertexAttribPointerType.Float,
+            false,
+            0 /* 3 * (uint) sizeof(float) */,
+            (void*) 0);
+        bNormals.BindBuffer();
+        _gl.VertexAttribPointer(
+            0,
+            3,
+            VertexAttribPointerType.Float,
+            false,
+            0 /* 3 * (uint) sizeof(float) */,
+            (void*) 0);
+        bUVs.BindBuffer();
+        _gl.VertexAttribPointer(
+            0,
+            2,
+            VertexAttribPointerType.Float,
+            false,
+            0 /* 2 * (uint) sizeof(float) */,
+            (void*) 0);
+        bIndices.BindBuffer();
+        
     }
-
-    public unsafe void VertexAttributePointer(uint index, int count, VertexAttribPointerType type, uint vertexSize, int offSet)
-    {
-        //Setting up a vertex attribute pointer
-        _gl.VertexAttribPointer(index, count, type, false, vertexSize * (uint) sizeof(TVertexType), (void*) (offSet * sizeof(TVertexType)));
-        _gl.EnableVertexAttribArray(index);
-    }
-
-    public void Bind()
+    
+    
+    public void BindVertexArray()
     {
         //Binding the vertex array.
         _gl.BindVertexArray(_handle);
