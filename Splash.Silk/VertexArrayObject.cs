@@ -37,21 +37,28 @@ public class VertexArrayObject : IDisposable
             false,
             0 /* 3 * (uint) sizeof(float) */,
             (void*) 0);
-        bNormals.BindBuffer();
-        _gl.VertexAttribPointer(
-            0,
-            3,
-            VertexAttribPointerType.Float,
-            false,
-            0 /* 3 * (uint) sizeof(float) */,
-            (void*) 0);
         bUVs.BindBuffer();
         _gl.VertexAttribPointer(
-            0,
+            1,
             2,
             VertexAttribPointerType.Float,
             false,
             0 /* 2 * (uint) sizeof(float) */,
+            (void*) 0);
+        _gl.VertexAttribPointer(
+            2,
+            2,
+            VertexAttribPointerType.Float,
+            false,
+            0 /* 2 * (uint) sizeof(float) */,
+            (void*) 0);
+        bNormals.BindBuffer();
+        _gl.VertexAttribPointer(
+            3,
+            3,
+            VertexAttribPointerType.Float,
+            false,
+            0 /* 3 * (uint) sizeof(float) */,
             (void*) 0);
         bIndices.BindBuffer();
         
