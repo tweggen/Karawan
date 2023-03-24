@@ -288,9 +288,10 @@ public class SilkThreeD : IThreeD
                 VertexAttribPointerType.Float,
                 false,
                 16 * (uint)sizeof(float),
-                (void*)(sizeof(float) * i)
+                (void*)(sizeof(float) * i + 4)
             );
             _gl.VertexAttribDivisor(locInstanceMatrices+i, 1);
+            _gl.EnableVertexAttribArray(locInstanceMatrices+i);
         }
 
         /*
