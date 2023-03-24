@@ -308,10 +308,11 @@ public class SilkThreeD : IThreeD
         sh.SetUniform("mvp", Matrix4x4.Transpose(mvp));
         skMeshEntry.vao.BindVertexArray();
 
-        _gl.DrawArraysInstanced(
+        _gl.DrawElementsInstanced(
             PrimitiveType.Triangles,
-            0,
-            (uint)aMeshEntry.JMesh.Vertices.Count,
+            (uint)skMeshEntry.JMesh.Indices.Count,
+            GLEnum.UnsignedShort,
+            (void*)0,
             (uint)nMatrices);
     }   
 
