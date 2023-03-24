@@ -313,7 +313,7 @@ public class SilkThreeD : IThreeD
         _gl.DrawElementsInstanced(
             PrimitiveType.Triangles,
             (uint)skMeshEntry.JMesh.Indices.Count,
-            GLEnum.UnsignedShort,
+            GLEnum.UnsignedInt,
             (void*)0,
             (uint)nMatrices);
     }   
