@@ -292,6 +292,12 @@ public class SilkThreeD : IThreeD
         }
 
         /*
+         * Disable buffers again.
+         */
+        _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+        _gl.BindVertexArray(0);
+
+        /*
          * Setup view and projection matrix.
          * We need a combined view and projection matrix
          */
@@ -300,17 +306,13 @@ public class SilkThreeD : IThreeD
         Matrix4x4 mvp = _matProjection * _matView;
         
         sh.SetUniform("mvp", mvp);
-        
-        _gl.DrawArrays(PrimitiveType.Triangles, 0, (uint)nMatrices);
-        //_gl.DrawArraysInstanced();
+        skMeshEntry.vao.BindVertexArray();
 
-        /*
-        Raylib_CsLo.Raylib.DrawMeshInstanced(
-                ((RlMeshEntry)aMeshEntry).RlMesh,
-                ((RlMaterialEntry)aMaterialEntry).RlMaterial,
-                spanMatrices, 
-                nMatrices
-        );*/
+        _gl.DrawArraysInstanced(
+            PrimitiveType.Triangles,
+            0,
+            (uint)aMeshEntry.JMesh.Vertices.Count,
+            (uint)nMatrices);
     }   
 
     public void UploadMesh(in AMeshEntry aMeshEntry)
@@ -375,25 +377,28 @@ public class SilkThreeD : IThreeD
 
     public void FillMaterialEntry(in AMaterialEntry aMaterialEntry)
     {
-        SkMaterialEntry rlMaterialEntry = (SkMaterialEntry) aMaterialEntry;
-        engine.joyce.Material jMaterial = rlMaterialEntry.JMaterial;
+        SkMaterialEntry skMaterialEntry = (SkMaterialEntry) aMaterialEntry;
+        engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
         ATextureEntry aTextureEntry = null;
 
         if (jMaterial.Texture != null)
         {
             aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
-            // TXWTODO: Add reference of this texture.
+            skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
         }
         ATextureEntry aEmissiveTextureEntry = null;
         if (jMaterial.EmissiveTexture != null)
         {
             aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
+            skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
         else
         {
             aEmissiveTextureEntry = _textureManager.FindATexture(new engine.joyce.Texture("joyce://col00000000"));
+            skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
 
+        skMaterialEntry.SetUploaded();
 #if false
         rlMaterialEntry.RlMaterial = Raylib_CsLo.Raylib.LoadMaterialDefault();
         rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;

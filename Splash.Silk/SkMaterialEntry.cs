@@ -6,11 +6,16 @@ namespace Splash.Silk
     {
         public SkTextureEntry SkDiffuseTexture;
         public SkTextureEntry SkEmissiveTexture;
+        public bool _isUploaded = false; 
 
         public override bool IsUploaded()
         {
-            //return RlMaterial.shader.id != 0xffffffff;
-            return true;
+            return _isUploaded;
+        }
+
+        public void SetUploaded()
+        {
+            _isUploaded = true;
         }
 
         public override bool HasTransparency()

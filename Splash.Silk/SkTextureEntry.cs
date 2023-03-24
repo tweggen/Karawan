@@ -7,8 +7,7 @@ namespace Splash.Silk
 
         public override bool IsUploaded()
         {
-            //return RlTexture.width != 0;
-            return false;
+            return SkTexture != null;
         }
 
         public SkTextureEntry(in engine.joyce.Texture jTexture)
