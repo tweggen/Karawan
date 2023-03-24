@@ -232,6 +232,8 @@ public class SilkThreeD : IThreeD
 
         sh.SetUniform("colDiffuse", new Vector4(skMaterialEntry.JMaterial.AlbedoColor));
         sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
+        sh.SetUniform("texture0", 0);
+        sh.SetUniform("texture2", 2);
     }
     
     
