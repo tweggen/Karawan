@@ -91,11 +91,33 @@ namespace Splash.Silk
                     float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
                     float aspect = 16f / 9f;
                     float right = top * aspect;
+#if true
+                    Matrix4x4 matProjection;
+                    {
+                        float n = cCameraParams.NearFrustum;
+                        float f = cCameraParams.FarFrustum;
+                        float l = -right;
+                        float r = right;
+                        float t = top;
+                        float b = -top;
+                        Matrix4x4 m = new(
+                            2f * n / (r - l), 0f, 0f, 0f,
+                            0f, 2f * n / (t - b), 0f, 0f,
+                            0f, 0f, -(f + n) / (f - n), 2f * f * n / (n - f),
+                            0f, 0f, -1f, 0f
+                        );
+                        matProjection = m; //Matrix4x4.Transpose(m);
+                    }
+#else
+                    /*
+                     * Was this, but that gives me wrong results.
+                     */
                     Matrix4x4 matProjection = Matrix4x4.CreatePerspective(
                         2f * right,
                         2f * top,
                         cCameraParams.NearFrustum,
                         cCameraParams.FarFrustum);
+#endif
                     _silkThreeD.SetProjectionMatrix(matProjection);
 
                     _gl.Enable(EnableCap.DepthTest);

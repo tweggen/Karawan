@@ -69,6 +69,8 @@ namespace Splash.Raylib
                     float right = top * aspect;
                     RlGl.rlFrustum(-right, right, -top, top, cCameraParams.NearFrustum, cCameraParams.FarFrustum);
 
+                    Matrix4x4 matProjection = RlGl.rlGetMatrixProjection();
+                    
                     RlGl.rlMatrixMode(RlGl.RL_MODELVIEW);     // Switch back to modelview matrix
                     RlGl.rlLoadIdentity();               // Reset current matrix (modelview)
 
@@ -81,7 +83,7 @@ namespace Splash.Raylib
 
                     RlGl.rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
                 }
-
+                    
 
                 /*
                  * First draw player related stuff

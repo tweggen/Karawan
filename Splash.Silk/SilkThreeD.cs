@@ -297,26 +297,38 @@ public class SilkThreeD : IThreeD
         /*
          * Disable buffers again.
          */
-        _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
         _gl.BindVertexArray(0);
-
+        _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+        
         /*
          * Setup view and projection matrix.
          * We need a combined view and projection matrix
          */
         // mProjection = Camera.GetProjectionMatrix();
         // mViewMatrix = Camera.GetViewKatrix();
-        Matrix4x4 mvp = /*_matView  * */_matProjection * _matView;
+        Matrix4x4 mvp = _matView * _matProjection;
 
         sh.SetUniform("mvp", Matrix4x4.Transpose(mvp) );
         skMeshEntry.vao.BindVertexArray();
 
+        // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);
+        // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
         _gl.DrawElementsInstanced(
             PrimitiveType.Triangles,
             (uint)skMeshEntry.JMesh.Indices.Count,
             GLEnum.UnsignedInt,
             (void*)0,
             (uint)nMatrices);
+
+        _gl.BindVertexArray(0);
+        _gl.BindBuffer( GLEnum.ArrayBuffer, 0);
+        _gl.BindBuffer( GLEnum.ElementArrayBuffer, 0);
+        
+        // TXWTODO: Shall we really always disable the current program?
+        _gl.UseProgram(0);
+
+        bMatrices.Dispose();
+        
     }   
 
     public void UploadMesh(in AMeshEntry aMeshEntry)
