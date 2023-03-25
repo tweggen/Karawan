@@ -86,7 +86,8 @@ namespace Splash.Silk
                     RlGl.rlMultMatrixf((matView));
 #endif
                     Matrix4x4 matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
-                    _silkThreeD.SetViewMatrix(matView);
+                    //_silkThreeD.SetViewMatrix(matView);
+                    _silkThreeD.SetViewMatrix(mToWorld);
                     float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
                     float aspect = 16f / 9f;
                     float right = top * aspect;

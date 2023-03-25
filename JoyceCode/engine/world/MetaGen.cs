@@ -166,29 +166,38 @@ namespace engine.world
 
             _worldOperators = new();
             _fragmentOperators = new();
-            _clusterFragmentOperatorFactoryList= new();
+            _clusterFragmentOperatorFactoryList = new();
 
             _worldOperators.Add(new world.GenerateClustersOperator(_myKey));
 
-            /*
-             * Create a fragment operator that reads the elevations after 
-             * the elevation pipeline.
-             */
-            AddFragmentOperator(new world.CreateTerrainOperator(_myKey));
+            if (false)
+            {
+                /*
+                 * Create a fragment operator that reads the elevations after 
+                 * the elevation pipeline.
+                 */
+                AddFragmentOperator(new world.CreateTerrainOperator(_myKey));
 
-            /*
-             * Create a fragment operator that creates a ground mesh.
-             */
-            AddFragmentOperator(new world.CreateTerrainMeshOperator(_myKey));
+                if (false)
+                {
+                    /*
+                     * Create a fragment operator that creates a ground mesh.
+                     */
+                    AddFragmentOperator(new world.CreateTerrainMeshOperator(_myKey));
+                }
+            }
 
-            AddClusterFragmentOperatorFactory(
-                 (string newKey, ClusterDesc clusterDesc)=>
-                    new engine.streets.GenerateClusterStreetsOperator(clusterDesc, newKey)
-            );
-            AddClusterFragmentOperatorFactory(
-                (string newKey, ClusterDesc clusterDesc) =>
-                    new engine.streets.GenerateClusterQuartersOperator(clusterDesc, newKey)
-            );
+            if (false)
+            {
+                AddClusterFragmentOperatorFactory(
+                    (string newKey, ClusterDesc clusterDesc) =>
+                        new engine.streets.GenerateClusterStreetsOperator(clusterDesc, newKey)
+                );
+                AddClusterFragmentOperatorFactory(
+                    (string newKey, ClusterDesc clusterDesc) =>
+                        new engine.streets.GenerateClusterQuartersOperator(clusterDesc, newKey)
+                );
+            }
         }
 
 

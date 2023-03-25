@@ -76,14 +76,22 @@ namespace nogame
             _engine = engine0;
 
             _worldMetaGen = engine.world.MetaGen.Instance();
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.cities.GenerateHousesOperator(clusterDesc, newKey)
-            );
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-               (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.cubes.GenerateCubeCharacterOperator(clusterDesc, newKey)
-            );
+            if (false)
+            {
+                _worldMetaGen.AddClusterFragmentOperatorFactory(
+                    (string newKey, engine.world.ClusterDesc clusterDesc) =>
+                        new nogame.cities.GenerateHousesOperator(clusterDesc, newKey)
+                );
+            }
+
+            if (false)
+            {
+                _worldMetaGen.AddClusterFragmentOperatorFactory(
+                    (string newKey, engine.world.ClusterDesc clusterDesc) =>
+                        new nogame.cubes.GenerateCubeCharacterOperator(clusterDesc, newKey)
+                );
+            }
+
             _worldMetaGen.SetupComplete();
 
             _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
