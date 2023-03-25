@@ -16,8 +16,8 @@ namespace engine.world
 
             var groundResolution = world.MetaGen.GroundResolution;
 
-            int coarseResolution = (int)(groundResolution / coarseness);
-            int coarseNElevations = coarseResolution + 1;
+            uint coarseResolution = (uint)(groundResolution / coarseness);
+            uint coarseNElevations = coarseResolution + 1;
             // trace('groundResolution: '+groundResolution+", coarseResolution: "+coarseResolution);
 
             // var verts:Array<Float> = new Array<Float>();
@@ -88,10 +88,10 @@ namespace engine.world
 
 
             // var indices:Array<UInt> = new Array<UInt>();
-            int w = coarseNElevations;
-            for(int iterY=0; iterY<coarseResolution; iterY++ )
+            uint w = coarseNElevations;
+            for(uint iterY=0; iterY<coarseResolution; iterY++ )
             {
-                for(int iterX=0; iterX<coarseResolution; iterX++ )
+                for(uint iterX=0; iterX<coarseResolution; iterX++ )
                 {
                     g.Idx(
                         (iterY + 1) * w + iterX,

@@ -61,7 +61,7 @@ namespace builtin.tools
             * That means: we generate one bottom vertice ring, nCompleteRows vertice rings
             * inbetween and one top Ring.
             */
-            var nCompleteRows = (int)( h / _mpt );
+            uint nCompleteRows = (uint)( h / _mpt );
 
             /* 
              * (Note, if lastRowHeight is less than 1cm and nCompleteRows>=1 , we do one complete
@@ -102,7 +102,7 @@ namespace builtin.tools
             var lrh = vu;
             lrh *= lastRowHeight;
 
-            int i0 = g.GetNextVertexIndex();
+            uint i0 = g.GetNextVertexIndex();
 
             /*
              * Define vertices of the house.
@@ -166,19 +166,19 @@ namespace builtin.tools
             /*
              * How many vertices are in one column?
              */
-            var columnHeight = (nCompleteRows + 1) * 2;
+            uint columnHeight = (nCompleteRows + 1) * 2;
 
-            for (int side=0; side<p.Count; ++side)
+            for (uint side=0; side<p.Count; ++side)
             {
                 /*
                  * We need to generate 2 triangles for every complete row
                  * plus one for the extra row.
                  */
-                var i = side * columnHeight + i0;
+                uint i = side * columnHeight + i0;
                 var rows = nCompleteRows + 1;
-                int nx = columnHeight;  // Offset to the next vertex in the ring on the same level
-                int ny = 1; // Offset to the vertex in the same column on the next higher level.
-                for (int row=0; row<rows; ++row )
+                uint nx = columnHeight;  // Offset to the next vertex in the ring on the same level
+                uint ny = 1; // Offset to the vertex in the same column on the next higher level.
+                for (uint row=0; row<rows; ++row )
                 {
                     g.Idx(i + 0, i + nx, i + ny);
                     g.Idx(i + ny, i + nx, i + nx + ny);

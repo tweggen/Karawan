@@ -38,9 +38,6 @@ namespace nogame.cities
         private Vector3 _lastDirection;
 
 
-        private bool _isAB;
-
-
         private void _loadNextPoint(StreetPoint previousPoint)
         {
             /*
@@ -75,12 +72,12 @@ namespace nogame.cities
                 }
                 if (_currentStroke.A == _startPoint)
                 {
-                    _isAB = true;
+                    //_isAB = true;
                     _targetPoint = _currentStroke.B;
                 }
                 else
                 {
-                    _isAB = false;
+                    //isAB = false;
                     _targetPoint = _currentStroke.A;
                 }
 

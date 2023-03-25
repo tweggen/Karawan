@@ -18,22 +18,22 @@ namespace engine.joyce
         /**
          * Indexable array like of Vector3
          */
-        public IList Vertices;
+        public IList<Vector3> Vertices;
 
         /**
          * Indexable array like of int
          */
-        public IList Indices;
+        public IList<uint> Indices;
 
         /**
          * Indexable array like of Vector2
          */
-        public IList UVs;
+        public IList<Vector2> UVs;
 
         /**
          * Indexable array like of Vector3 or null.
          */
-        public IList Normals;
+        public IList<Vector3> Normals;
 
         public bool IsEmpty()
         {
@@ -116,9 +116,9 @@ namespace engine.joyce
         }
 
 
-        public int GetNextVertexIndex()
+        public uint GetNextVertexIndex()
         {
-            return Vertices.Count;
+            return (uint) Vertices.Count;
         }
 
         public void p(in Vector3 p)
@@ -147,7 +147,7 @@ namespace engine.joyce
         }
 
 
-        public void Idx(int a, int b, int c)
+        public void Idx(uint a, uint b, uint c)
         {
             Indices.Insert(WriteIndexIndices++, a);
             Indices.Insert(WriteIndexIndices++, b);
@@ -158,7 +158,7 @@ namespace engine.joyce
         }
 
 
-        public Mesh( IList vertices, IList indices, IList uvs )
+        public Mesh( IList<Vector3> vertices, IList<uint> indices, IList<Vector2> uvs )
         {
             Vertices = vertices;
             Indices = indices;
@@ -169,12 +169,12 @@ namespace engine.joyce
 
         public static Mesh CreateListInstance()
         {
-            return new Mesh(new List<Vector3>(), new List<int>(), new List<Vector2>());
+            return new Mesh(new List<Vector3>(), new List<uint>(), new List<Vector2>());
         }
 
         public static Mesh CreateArrayListInstance()
         {
-            return new Mesh(new ArrayList(), new ArrayList(), new ArrayList() );
+            return new Mesh(new List<Vector3>(), new List<uint>(), new List<Vector2>() );
         }
     }
 }

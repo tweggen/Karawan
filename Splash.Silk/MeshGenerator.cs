@@ -49,7 +49,7 @@ namespace Splash.Silk
                 /*
                  * As we just copy, we can ignore the fact these are triangles.
                  */
-                skMeshEntry.Indices[i] = (ushort)(int)mesh.Indices[i];
+                skMeshEntry.Indices[i] = (uint)mesh.Indices[i];
             }
         }
     }

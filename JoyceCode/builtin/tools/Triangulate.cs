@@ -53,13 +53,13 @@ namespace builtin.tools
             tess.AddContour(contour, LibTessDotNet.ContourOrientation.Clockwise);
             tess.Tessellate(LibTessDotNet.WindingRule.EvenOdd, LibTessDotNet.ElementType.Polygons, 3, null);
             int outTriangles = tess.ElementCount;
-            int maxIndex = 0;
-            int ia = mesh.GetNextVertexIndex();
-            for( int i=0; i<outTriangles; i++ )
+            uint maxIndex = 0;
+            uint ia = (uint)mesh.GetNextVertexIndex();
+            for( uint i=0; i<outTriangles; i++ )
             {
-                int i0 = tess.Elements[i * 3 + 0];
-                int i1 = tess.Elements[i * 3 + 1];
-                int i2 = tess.Elements[i * 3 + 2];
+                uint i0 = (uint)tess.Elements[i * 3 + 0];
+                uint i1 = (uint)tess.Elements[i * 3 + 1];
+                uint i2 = (uint)tess.Elements[i * 3 + 2];
                 if (i0 > maxIndex) maxIndex = i0;
                 if (i1 > maxIndex) maxIndex = i1;
                 if (i2 > maxIndex) maxIndex = i2;

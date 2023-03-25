@@ -61,7 +61,7 @@ namespace engine.streets
              * We triangulate it by creating a fan around the middle.
              */
             var secArray = sp.GetSectionArray();
-            int l = secArray.Count;
+            uint l = (uint) secArray.Count;
             if (l < 2)
             {
                 // No need to generate a junction.
@@ -93,7 +93,7 @@ namespace engine.streets
             float ofsv = (0.5f);
 
             {
-                int i0 = g.GetNextVertexIndex();
+                uint i0 = g.GetNextVertexIndex();
                 g.p(ax + cx, h, ay + cy);
                 g.UV(ax * facu + ofsu, ay * facv + ofsv);
                 foreach (var b in secArray)
@@ -105,9 +105,9 @@ namespace engine.streets
                 /*
                  * Now create the vertex indices for the triangles.
                  */
-                for (int k = 0; k < l; ++k)
+                for (uint k = 0; k < l; ++k)
                 {
-                    var knext = (k + 1) % l;
+                    uint knext = (k + 1) % l;
                     g.Idx(i0 + 0, i0 + 1 + knext, i0 + 1 + k);
                 }
             }
@@ -342,7 +342,7 @@ namespace engine.streets
                      * 
                      * Note that we start from the beginning in the texture.
                      */
-                    int i0 = g.GetNextVertexIndex();
+                    uint i0 = g.GetNextVertexIndex();
                     var cm = new Vector3(q.X, 0f, q.Y); cm *= dar; cm = cm +vam;
                     var clx = cm.X - hsw * n.X;
                     var cly = cm.Z - hsw * n.Y;
@@ -383,7 +383,7 @@ namespace engine.streets
                      * 
                      * Note, that we start from the beginning in the texture
                      */
-                    int i0 = g.GetNextVertexIndex();
+                    uint i0 = g.GetNextVertexIndex();
                     var cm = new Vector3(q.X, 0f, q.Y); cm *= dal; cm += vam;
                     var crx = cm.X + hsw * n.X;
                     var cry = cm.Z + hsw * n.Y;
@@ -425,7 +425,7 @@ namespace engine.streets
                      * 
                      * Note, that we start from the beginning in the texture
                      */
-                    int i0 = g.GetNextVertexIndex();
+                    uint i0 = g.GetNextVertexIndex();
                     var cm = new Vector3(q.X, 0f, q.Y); cm *= dbl; cm += vam;
                     var crx = cm.X + hsw * n.X;
                     var cry = cm.Z + hsw * n.Y;
@@ -465,7 +465,7 @@ namespace engine.streets
                      * 
                      * Note, that we start from the beginning in the texture
                      */
-                    int i0 = g.GetNextVertexIndex();
+                    uint i0 = g.GetNextVertexIndex();
                     var cm = new Vector3(q.X, 0f, q.Y); cm *= dbr; cm += vam;
                     var clx = cm.X - hsw * n.X;
                     var cly = cm.Z - hsw * n.Y;
@@ -497,7 +497,7 @@ namespace engine.streets
              * Emit vertex rows until we are at dbmin.
              */
             {
-                int i0 = g.GetNextVertexIndex();
+                uint i0 = g.GetNextVertexIndex();
 
                 /*
                  * Count the number of rows to add tris.
@@ -601,7 +601,7 @@ namespace engine.streets
                 /*
                  * Now emit the triangles.
                  */
-                for (int row=0; row<nVertexRows; ++row )
+                for (uint row=0; row<nVertexRows; ++row )
                 {
                     g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 0, i0 + row * 4 + 2);
                     g.Idx(i0 + row * 4 + 1, i0 + row * 4 + 2, i0 + row * 4 + 3);

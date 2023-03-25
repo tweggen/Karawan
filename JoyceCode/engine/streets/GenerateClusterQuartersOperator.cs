@@ -68,7 +68,7 @@ namespace engine.streets
              * Here we have an XY mesh of the triangles in the mesh.
              */
             float h = _clusterDesc.AverageHeight + 2.15f;
-            int i0 = g.GetNextVertexIndex();
+            uint i0 = g.GetNextVertexIndex();
             foreach(Vector3 v in j2Mesh.Vertices)
             {
                 g.p(new Vector3(v.X, h, v.Y));
@@ -76,7 +76,7 @@ namespace engine.streets
             }
             for (int k = 0; k < j2Mesh.Indices.Count; k += 3)
             {
-                g.Idx(i0+(int)j2Mesh.Indices[k], i0+(int)j2Mesh.Indices[k+1], i0+(int)j2Mesh.Indices[k+2]);
+                g.Idx(i0+j2Mesh.Indices[k], i0+j2Mesh.Indices[k+1], i0+j2Mesh.Indices[k+2]);
             }
 
             return true;

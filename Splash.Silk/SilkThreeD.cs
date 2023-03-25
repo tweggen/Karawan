@@ -288,7 +288,7 @@ public class SilkThreeD : IThreeD
                 VertexAttribPointerType.Float,
                 false,
                 16 * (uint)sizeof(float),
-                (void*)(sizeof(float) * i + 4)
+                (void*)(sizeof(float) * i  *4)
             );
             _gl.VertexAttribDivisor(locInstanceMatrices+i, 1);
             _gl.EnableVertexAttribArray(locInstanceMatrices+i);
@@ -308,7 +308,7 @@ public class SilkThreeD : IThreeD
         // mViewMatrix = Camera.GetViewKatrix();
         Matrix4x4 mvp = _matProjection * _matView;
 
-        sh.SetUniform("mvp", Matrix4x4.Transpose(mvp));
+        sh.SetUniform("mvp", Matrix4x4.Transpose(mvp) );
         skMeshEntry.vao.BindVertexArray();
 
         _gl.DrawElementsInstanced(

@@ -56,8 +56,8 @@ namespace nogame.cities
          * Relation between basic texture and stories.
          * We do assume that a texture contains a integer number of stories.
          */
-        private float _storiesPerTexture = 32f;
-        private float _metersPerTexture = 3.0f * 32f;
+        private static float _storiesPerTexture = 32f;
+        private static float _metersPerTexture = 3.0f * _storiesPerTexture;
 
         public string FragmentOperatorGetPath()
         {
@@ -132,7 +132,7 @@ namespace nogame.cities
                     var f = worldFragment.Loader.GetHeightAt(xo + p0.X, zo + p0.Z);
                     if (f < inFragmentY) inFragmentY = f;
                 }
-                catch (Exception e) { }
+                catch (Exception) { }
             }
             return inFragmentY;
         }
@@ -160,7 +160,7 @@ namespace nogame.cities
             /*
              * Trivial implementation: Add a part of the texture, which is 8x8
              */
-            int i0 = neonG.GetNextVertexIndex();
+            uint i0 = neonG.GetNextVertexIndex();
 
             neonG.p(p0.X, p0.Y + h0, p0.Z);
             neonG.UV(0.0f, 1.0f - 0.0f);
@@ -283,9 +283,6 @@ namespace nogame.cities
                 xmiddle /= n;
                 ymiddle /= n;
 
-                bool haveHouse = false;
-
-
                 /*
                  * Compute some properties of this quarter.
                  * - is it convex?
@@ -345,7 +342,7 @@ namespace nogame.cities
                             trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
 
-                        haveHouse = true;
+                        //haveHouse = true;
                     }
 
                 }

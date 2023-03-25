@@ -8,7 +8,7 @@ namespace engine.joyce.mesh
     {
         private static void _addQuadIndicesXY(
             in joyce.Mesh m,
-            int i0, int i1, int i2, int i3
+            uint i0, uint i1, uint i2, uint i3
         )
         {
             m.Indices.Add(i0); m.Indices.Add(i1); m.Indices.Add(i2);
@@ -25,7 +25,7 @@ namespace engine.joyce.mesh
             in Vector2 uy
         )
         {
-            var idx = m.Vertices.Count;
+            uint idx = (uint) m.Vertices.Count;
             m.Vertices.Add(v0); m.Vertices.Add(v0 + vx); m.Vertices.Add(v0 + vy); m.Vertices.Add(v0 + vx + vy);
             m.UVs.Add(u0); m.UVs.Add(u0 + ux); m.UVs.Add(u0 + uy); m.UVs.Add(u0 + ux + uy);
             _addQuadIndicesXY(m, idx+0, idx+1, idx+2, idx+3);

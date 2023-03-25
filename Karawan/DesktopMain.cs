@@ -167,7 +167,7 @@ namespace Karawan
 
             var app = appBuilder.Build();
 
-            //var e = Splash.Raylib.Platform.EasyCreate(args);
+            // var e = Splash.Raylib.Platform.EasyCreate(args);
             var e = Splash.Silk.Platform.EasyCreate(args);
 
             {
