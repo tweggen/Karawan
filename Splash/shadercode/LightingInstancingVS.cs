@@ -25,7 +25,7 @@ uniform mat4 mvp;
 // uniform mat4 matNormal;
 
 // Output vertex attributes (to fragment shader)
-out vec3 fragPosition;
+out vec4 fragPosition;
 out vec2 fragTexCoord;
 out vec2 fragTexCoord2;
 out vec4 fragColor;
@@ -37,17 +37,17 @@ void main()
 {
     // Compute MVP for current instance
     mat4 mvpi = mvp*instanceTransform;
+    vec4 vertex = vec4(vertexPosition, 1.0);
 
     // Send vertex attributes to fragment shader
-    fragPosition = vec3(mvpi*vec4(vertexPosition, 1.0));
+    fragPosition = mvpi*vertex;
     fragTexCoord = vertexTexCoord;
     fragTexCoord2 = vertexTexCoord2;
     fragColor = vertexColor;
-    //fragNormal = normalize(vec3(matNormal*vec4(vertexNormal, 1.0)));
     fragNormal = normalize(vec3(instanceTransform*vec4(vertexNormal, 0.0)));
 
     // Calculate final vertex position
-    gl_Position = mvpi*vec4(vertexPosition, 1.0);
+    gl_Position = mvpi*vertex;
 }
 
 ";

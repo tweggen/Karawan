@@ -11,7 +11,7 @@ namespace Splash.shadercode
         static public string ShaderCode = @"#version 330
 
 // Input vertex attributes (from vertex shader)
-in vec3 fragPosition;
+in vec4 fragPosition;
 in vec2 fragTexCoord;
 in vec2 fragTexCoord2;
 in vec4 fragColor;
@@ -58,7 +58,7 @@ void main()
     vec4 emissiveColor = texture(texture2, fragTexCoord);
     vec3 lightDot = vec3(0.0);
     vec3 normal = normalize(fragNormal);
-    vec3 viewD = normalize(viewPos - fragPosition);
+    vec3 viewD = normalize(viewPos - vec3(fragPosition));
     vec3 specular = vec3(0.0);
 
     // NOTE: Implement here your fragment shader code
@@ -76,7 +76,7 @@ void main()
 
             if (lights[i].type == LIGHT_POINT)
             {
-                light = normalize(lights[i].position - fragPosition);
+                light = normalize(lights[i].position - vec3(fragPosition));
             }
 
             float NdotL = max(dot(normal, light), 0.0);
