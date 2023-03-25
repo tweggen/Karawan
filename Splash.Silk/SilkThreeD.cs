@@ -306,7 +306,7 @@ public class SilkThreeD : IThreeD
          */
         // mProjection = Camera.GetProjectionMatrix();
         // mViewMatrix = Camera.GetViewKatrix();
-        Matrix4x4 mvp = _matProjection * _matView;
+        Matrix4x4 mvp = /*_matView  * */_matProjection * _matView;
 
         sh.SetUniform("mvp", Matrix4x4.Transpose(mvp) );
         skMeshEntry.vao.BindVertexArray();
