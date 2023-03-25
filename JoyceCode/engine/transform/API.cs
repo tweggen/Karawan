@@ -35,7 +35,7 @@ namespace engine.transform
             {
                 var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
-                 mToParent = mToParent * mTranslate;
+                mToParent = mToParent * mTranslate;
                 entity.Set(new transform.components.Transform3ToParent(isVisible, cameraMask, mToParent) );
                 _isDirty = true;
             }
