@@ -106,7 +106,7 @@ namespace Splash.Silk
                             0f, 0f, -(f + n) / (f - n), 2f * f * n / (n - f),
                             0f, 0f, -1f, 0f
                         );
-                        matProjection = m; //Matrix4x4.Transpose(m);
+                        matProjection = Matrix4x4.Transpose(m);
                     }
 #else
                     /*

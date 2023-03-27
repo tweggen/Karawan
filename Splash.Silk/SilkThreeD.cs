@@ -306,9 +306,18 @@ public class SilkThreeD : IThreeD
          */
         // mProjection = Camera.GetProjectionMatrix();
         // mViewMatrix = Camera.GetViewKatrix();
-        Matrix4x4 mvp = _matView * _matProjection;
+        Matrix4x4 mvp1 = Matrix4x4.Transpose(_matView) * Matrix4x4.Transpose(_matProjection);
+        Matrix4x4 mvp2 = Matrix4x4.Transpose(_matProjection * _matView);
 
-        sh.SetUniform("mvp", Matrix4x4.Transpose(mvp) );
+        if (mvp1 != mvp2)
+        {
+            ErrorThrow("not equal", (m) => new InvalidOperationException(m));
+        }
+
+        
+        Matrix4x4 mvp3 = Matrix4x4.Transpose(_matView * _matProjection);
+        sh.SetUniform("mvp", mvp2);
+        
         skMeshEntry.vao.BindVertexArray();
 
         // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);

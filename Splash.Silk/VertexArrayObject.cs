@@ -1,5 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 using System;
+using System.Numerics;
 
 namespace Splash.Silk;
 
@@ -65,7 +66,8 @@ public class VertexArrayObject : IDisposable
             (void*) 0);
         _gl.EnableVertexAttribArray(3);
         bIndices.BindBuffer();
-        
+        _gl.VertexAttrib4(4, new Vector4(1f, 1f, 1f, 1f));
+        _gl.DisableVertexAttribArray(4);
     }
     
     

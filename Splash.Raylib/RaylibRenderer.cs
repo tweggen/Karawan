@@ -27,7 +27,7 @@ namespace Splash.Raylib
          * This function is called from a dedicated rendering thread as executed
          * inside the platform API. It must not access ECS data.
          */
-        private void _renderParts(in IList<RenderPart> RenderParts)
+        private unsafe void _renderParts(in IList<RenderPart> RenderParts)
         {
             Raylib_CsLo.Raylib.BeginDrawing();
 
@@ -79,6 +79,9 @@ namespace Splash.Raylib
                     matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
                     // matView = Matrix4x4.Transpose(matView);
                     // Multiply modelview matrix by view matrix (camera)
+                    /*
+                     * Note to myself: rlMultMatrixf automatically transposes the matrix it takes as an argument.
+                     */
                     RlGl.rlMultMatrixf((matView));
 
                     RlGl.rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
@@ -94,7 +97,7 @@ namespace Splash.Raylib
                  * Then draw standard world
                  */
                 RenderPart.CameraOutput.RenderStandard(_threeD);
-
+                
 
                 /*
                  * Then render transparent
