@@ -282,16 +282,16 @@ public class SilkThreeD : IThreeD
         uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
         for (uint i = 0; i < 4; ++i)
         {
+            _gl.EnableVertexAttribArray(locInstanceMatrices+i);
             _gl.VertexAttribPointer(
                 locInstanceMatrices+i,
                 4,
                 VertexAttribPointerType.Float,
                 false,
                 16 * (uint)sizeof(float),
-                (void*)(sizeof(float) * i  *4)
+                (void*)(sizeof(float) * i  * 4)
             );
             _gl.VertexAttribDivisor(locInstanceMatrices+i, 1);
-            _gl.EnableVertexAttribArray(locInstanceMatrices+i);
         }
 
         /*
@@ -325,7 +325,7 @@ public class SilkThreeD : IThreeD
         _gl.DrawElementsInstanced(
             PrimitiveType.Triangles,
             (uint)skMeshEntry.JMesh.Indices.Count,
-            GLEnum.UnsignedInt,
+            GLEnum.UnsignedShort,
             (void*)0,
             (uint)nMatrices);
 

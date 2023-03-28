@@ -62,36 +62,12 @@ namespace Splash.Silk
                  * The following code is the explicit wording of BeginMode3d
                  */
                 {
-#if false
-                    RlGl.rlDrawRenderBatchActive();      // Update and draw internal render batch
-
-                    RlGl.rlMatrixMode(RlGl.RL_PROJECTION);    // Switch to projection matrix
-                    RlGl.rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
-                    RlGl.rlLoadIdentity();               // Reset current matrix (projection)
-
-                    // Setup perspective projection
-                    float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
-                    float aspect = 16f / 9f;
-                    float right = top * aspect;
-                    RlGl.rlFrustum(-right, right, -top, top, cCameraParams.NearFrustum, cCameraParams.FarFrustum);
-
-                    RlGl.rlMatrixMode(RlGl.RL_MODELVIEW);     // Switch back to modelview matrix
-                    RlGl.rlLoadIdentity();               // Reset current matrix (modelview)
-
-                    // Setup Camera view
-                    Matrix4x4 matView;
-                    matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
-                    // matView = Matrix4x4.Transpose(matView);
-                    // Multiply modelview matrix by view matrix (camera)
-                    RlGl.rlMultMatrixf((matView));
-#endif
                     Matrix4x4 matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
                     _silkThreeD.SetViewMatrix(matView);
                     // _silkThreeD.SetViewMatrix(mToWorld);
                     float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
                     float aspect = 16f / 9f;
                     float right = top * aspect;
-#if true
                     Matrix4x4 matProjection;
                     {
                         float n = cCameraParams.NearFrustum;
@@ -101,26 +77,19 @@ namespace Splash.Silk
                         float t = top;
                         float b = -top;
                         Matrix4x4 m = new(
-                            2f * n / (r - l), 0f, 0f, 0f,
-                            0f, 2f * n / (t - b), 0f, 0f,
+                            2f * n / (r - l), 0f, (r+l)/(r-l), 0f,
+                            0f, 2f * n / (t - b), (t+b)/(t-b), 0f,
                             0f, 0f, -(f + n) / (f - n), 2f * f * n / (n - f),
                             0f, 0f, -1f, 0f
                         );
                         matProjection = Matrix4x4.Transpose(m);
                     }
-#else
-                    /*
-                     * Was this, but that gives me wrong results.
-                     */
-                    Matrix4x4 matProjection = Matrix4x4.CreatePerspective(
-                        2f * right,
-                        2f * top,
-                        cCameraParams.NearFrustum,
-                        cCameraParams.FarFrustum);
-#endif
                     _silkThreeD.SetProjectionMatrix(matProjection);
-
+                    
                     _gl.Enable(EnableCap.DepthTest);
+                    _gl.Enable(EnableCap.CullFace);
+                    _gl.CullFace(GLEnum.Back);
+                    _gl.FrontFace(FrontFaceDirection.Ccw);
                 }
 
 

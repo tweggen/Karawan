@@ -26,7 +26,7 @@ namespace Splash.Silk
             }
             skMeshEntry.Vertices = new float[nVertices*3];
             skMeshEntry.UVs = new float[nVertices*2];
-            skMeshEntry.Indices = new uint[nIndices];
+            skMeshEntry.Indices = new ushort[nIndices];
             skMeshEntry.Normals = new float[nVertices*3];
             
             for(int v=0; v<nVertices; v++)
@@ -49,7 +49,7 @@ namespace Splash.Silk
                 /*
                  * As we just copy, we can ignore the fact these are triangles.
                  */
-                skMeshEntry.Indices[i] = (uint)mesh.Indices[i];
+                skMeshEntry.Indices[i] = (ushort)mesh.Indices[i];
             }
         }
     }

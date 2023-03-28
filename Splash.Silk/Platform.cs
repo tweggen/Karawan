@@ -80,10 +80,10 @@ namespace Splash.Silk
                 case Key.W:
                     _controllerState.WalkForward = 200;
                     break;
-                case Key.A:
+                case Key.S:
                     _controllerState.WalkBackward = 200;
                     break;
-                case Key.S:
+                case Key.A:
                     _controllerState.TurnLeft = 200;
                     break;
                 case Key.D:
@@ -101,10 +101,10 @@ namespace Splash.Silk
                 case Key.W:
                     _controllerState.WalkForward = 0;
                     break;
-                case Key.A:
+                case Key.S:
                     _controllerState.WalkBackward = 0;
                     break;
-                case Key.S:
+                case Key.A:
                     _controllerState.TurnLeft = 0;
                     break;
                 case Key.D:
@@ -129,6 +129,7 @@ namespace Splash.Silk
             _gl = GL.GetApi(_iWindow);
             _silkThreeD.SetGL(_gl);
             _gl.ClearColor(1, 1, 1, 1);
+            _gl.ClearDepth(1f);
         }
 
 

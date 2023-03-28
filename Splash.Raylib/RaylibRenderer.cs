@@ -57,7 +57,7 @@ namespace Splash.Raylib
                  * The following code is the explicit wording of BeginMode3d
                  */
                 {
-                    RlGl.rlDrawRenderBatchActive();      // Update and draw internal render batch
+                    // RlGl.rlDrawRenderBatchActive();      // Update and draw internal render batch
 
                     RlGl.rlMatrixMode(RlGl.RL_PROJECTION);    // Switch to projection matrix
                     RlGl.rlPushMatrix();                 // Save previous matrix, which contains the settings for the 2d ortho projection
@@ -67,9 +67,24 @@ namespace Splash.Raylib
                     float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
                     float aspect = 16f / 9f;
                     float right = top * aspect;
-                    RlGl.rlFrustum(-right, right, -top, top, cCameraParams.NearFrustum, cCameraParams.FarFrustum);
-
-                    Matrix4x4 matProjection = RlGl.rlGetMatrixProjection();
+                    // RlGl.rlFrustum(-right, right, -top, top, cCameraParams.NearFrustum, cCameraParams.FarFrustum);
+                    {
+                        float n = cCameraParams.NearFrustum;
+                        float f = cCameraParams.FarFrustum;
+                        float l = -right;
+                        float r = right;
+                        float t = top;
+                        float b = -top;
+                        Matrix4x4 m = new(
+                            2f * n / (r - l), 0f, 0f, 0f,
+                            0f, 2f * n / (t - b), 0f, 0f,
+                            0f, 0f, -(f + n) / (f - n), 2f * f * n / (n - f),
+                            0f, 0f, -1f, 0f
+                        );
+                        RlGl.rlMultMatrixf(Matrix4x4.Transpose(m));
+                        // RlGl.rlMultMatrixf(m);
+                    }
+                    Matrix4x4 matNativeProjection = RlGl.rlGetMatrixProjection();
                     
                     RlGl.rlMatrixMode(RlGl.RL_MODELVIEW);     // Switch back to modelview matrix
                     RlGl.rlLoadIdentity();               // Reset current matrix (modelview)
