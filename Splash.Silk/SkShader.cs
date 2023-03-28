@@ -12,6 +12,10 @@ public class SkShader : IDisposable
     //Most of the time you would want to abstract items to make things like this invisible.
     private uint _handle;
     private GL _gl;
+    public uint Handle
+    {
+        get => _handle;
+    }
 
     public SkShader(GL gl, string vertexSource, string fragmentSource)
     {
@@ -32,11 +36,38 @@ public class SkShader : IDisposable
         {
             throw new Exception($"Program failed to link with error: {_gl.GetProgramInfoLog(_handle)}");
         }
+
+        _debuggingHook();
         //Detach and delete the shaders
         _gl.DetachShader(_handle, vertex);
         _gl.DetachShader(_handle, fragment);
         _gl.DeleteShader(vertex);
         _gl.DeleteShader(fragment);
+    }
+
+    public void _debuggingHook()
+    {
+        string[] uniforms = new string[]
+        {
+            "mvp", "texture0", "texture2", "colDiffuse", "ambient", "viewPos"
+        };
+        foreach (var name in uniforms)
+        {
+            int index = _gl.GetUniformLocation(_handle, name);
+            Console.WriteLine( $"Uniform {name} has index {index}");
+        }
+
+        string[] attribs = new string[]
+        {
+            "vertexPosition", "vertexTexCoord", "vertexTexCoord2",
+            "vertexNormal", "vertexColor", "instanceTransform"
+        };
+        foreach (var name in attribs)
+        {
+            int index = _gl.GetAttribLocation(_handle, name);
+            Console.WriteLine($"Attrib {name} has index {index}");
+        }
+
     }
 
     public void Use()

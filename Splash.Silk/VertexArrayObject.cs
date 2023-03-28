@@ -12,6 +12,11 @@ public class VertexArrayObject : IDisposable
     private uint _handle;
     private GL _gl;
 
+    public uint Handle
+    {
+        get => _handle;
+    }
+
     public unsafe VertexArrayObject(GL gl, SkMeshEntry skMeshEntry)
     {
         /*
