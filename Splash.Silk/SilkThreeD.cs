@@ -103,23 +103,29 @@ public class SilkThreeD : IThreeD
     private unsafe void _applyLightValues(ref SkShader sh, int index, in Light light)
     {
         var lightShaderPos = _getLightShaderPos(index, ref sh);
+        bool checkLights = false;
 
         // Send to shader light enabled state and type
         sh.SetUniform(lightShaderPos.enabledLoc, (light.enabled?1:0));
+        if( checkLights ) CheckError($"Set Uniform light enabled {index}");
         sh.SetUniform(lightShaderPos.typeLoc, (int)light.type);
+        if( checkLights ) CheckError($"Set Uniform light type {index}");
 
         // Send to shader light position values
         Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
         sh.SetUniform(lightShaderPos.posLoc, position);
+        if( checkLights ) CheckError($"Set Uniform light position {index}");
 
         // Send to shader light target position values
         Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
         sh.SetUniform(lightShaderPos.targetLoc, target);
+        if( checkLights ) CheckError($"Set Uniform light targetLoc {index}");
 
         // Send to shader light color values
         Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,
             (float)light.color.Z / (float)255, (float)light.color.W / (float)255);
         sh.SetUniform(lightShaderPos.colorLoc, color);
+        if( checkLights ) CheckError($"Set Uniform light color {index}");
     }
 
 
@@ -139,16 +145,19 @@ public class SilkThreeD : IThreeD
             return;
         }
         _applyAllLights(listLights, ref sh);
+        CheckError( "applyAllLights");
     }
     
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry)
     {
         var sh = ((SkShaderEntry)aShaderEntry).SkShader;
+        bool checkLights = false;
         if (null == sh)
         {
             return;
         }
         sh.SetUniform(_ambientLoc, colAmbient);
+        if( checkLights ) CheckError($"Set Uniform ambient light");
     }
 
     
@@ -275,6 +284,7 @@ public class SilkThreeD : IThreeD
         in Span<Matrix4x4> spanMatrices,
         in int nMatrices)
     {
+        CheckError("Beginning of DrawMeshInstanced");
         SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
         //VertexArrayObject skMesh = skMeshEntry.vao;
 
@@ -546,12 +556,17 @@ public class SilkThreeD : IThreeD
         _matProjection = matProjection;
     }
 
-    public void CheckError(string name)
+    public void CheckError(string what)
     {
         var error = _gl.GetError();
         if (error != GLEnum.NoError)
         {
-            ErrorThrow( $"{name}: Found OpenGL error {error}", m => new InvalidOperationException(m));
+            Error( $"Found OpenGL {what} error {error}" );
+            // ErrorThrow( $"{name}: Found OpenGL error {error}", m => new InvalidOperationException(m));
+        }
+        else
+        {
+            Console.WriteLine($"OK: {what}");
         }
     }
 

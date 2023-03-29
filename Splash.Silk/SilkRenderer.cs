@@ -32,7 +32,11 @@ namespace Splash.Silk
          */
         private void _renderParts(in IList<RenderPart> RenderParts)
         {
+            _silkThreeD.CheckError("Beginning renderParts");
+            _gl.Enable(EnableCap.DepthTest);
+            _silkThreeD.CheckError("Enable Depth");
             _gl.Clear((uint) (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+            _silkThreeD.CheckError("Clear");
 
             // Raylib_CsLo.Raylib.BeginDrawing();
 
@@ -86,10 +90,12 @@ namespace Splash.Silk
                     }
                     _silkThreeD.SetProjectionMatrix(matProjection);
                     
-                    _gl.Enable(EnableCap.DepthTest);
                     _gl.Enable(EnableCap.CullFace);
+                    _silkThreeD.CheckError("Enable CullFace");
                     _gl.CullFace(GLEnum.Back);
+                    _silkThreeD.CheckError("CullFace");
                     _gl.FrontFace(FrontFaceDirection.Ccw);
+                    _silkThreeD.CheckError("FrontFace");
                 }
 
 

@@ -13,6 +13,7 @@ public class SkTexture : IDisposable
         public unsafe SkTexture(GL gl, string path)
         {
             _gl = gl;
+            CheckError("Before load path");
             Trace($"Loading {path}");
             _handle = _gl.GenTexture();
             CheckError("GenTexture");
