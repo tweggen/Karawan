@@ -134,7 +134,13 @@ namespace Splash.Silk
             _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
             _renderParts(renderFrame.RenderParts);
         }
-        
+
+
+        public void SetDimension(int x, int y)
+        {
+            _gl = _silkThreeD.GetGL(); 
+            _gl.Viewport(new System.Drawing.Size(x,y));
+        }
 
         public SilkRenderer(
             in engine.Engine engine,

@@ -29,6 +29,7 @@ namespace Splash.Silk
 
         private IWindow _iWindow;
         private GL _gl;
+
         
         public void SetEngine(engine.Engine engine)
         {
@@ -147,6 +148,7 @@ namespace Splash.Silk
             RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
             if (renderFrame != null)
             {
+                _renderer.SetDimension(_iWindow.Size.X, _iWindow.Size.Y);
                 _renderer.RenderFrame(renderFrame);
             } else
             {
