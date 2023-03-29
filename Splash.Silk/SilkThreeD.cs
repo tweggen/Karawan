@@ -219,7 +219,7 @@ public class SilkThreeD : IThreeD
             if (skTexture != null)
             {
                 skTexture.Bind(TextureUnit.Texture0);
-                CheckError();
+                CheckError("Bind Texture0");
             }
         }
 
@@ -230,7 +230,7 @@ public class SilkThreeD : IThreeD
             if (skTexture != null)
             {
                 skTexture.Bind(TextureUnit.Texture2);
-                CheckError();
+                CheckError("Bind Texture 2");
             }
         }
 
@@ -238,6 +238,16 @@ public class SilkThreeD : IThreeD
         sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
         sh.SetUniform("texture0", 0);
         sh.SetUniform("texture2", 2);
+    }
+
+    private void _unloadMaterialFromShader()
+    {
+        _gl.ActiveTexture(TextureUnit.Texture0);
+        CheckError("unload AxtiveTexture0");
+        _gl.BindTexture(TextureTarget.Texture2D, 0);
+        _gl.ActiveTexture(TextureUnit.Texture2);
+        CheckError("unload AxtiveTexture2");
+        _gl.BindTexture(TextureTarget.Texture2D, 0);
     }
 
 
@@ -284,7 +294,6 @@ public class SilkThreeD : IThreeD
          * calls by material.
          */
         _loadMaterialToShader(sh, (SkMaterialEntry)aMaterialEntry);
-        CheckError();
 
         /*
          * Load the mesh, if it changed since the last call.
@@ -300,16 +309,16 @@ public class SilkThreeD : IThreeD
          */
 
         skMeshEntry.vao.BindVertexArray();
-        CheckError();
+        CheckError("Bind Vertex Array");
         var bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
-        CheckError();
+        CheckError("New Buffer Object");
         bMatrices.BindBuffer();
-        CheckError();
+        CheckError("Bind Buffer");
         uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
         for (uint i = 0; i < 4; ++i)
         {
             _gl.EnableVertexAttribArray(locInstanceMatrices + i);
-            CheckError();
+            CheckError("Enable vertex array in instances");
             _gl.VertexAttribPointer(
                 locInstanceMatrices + i,
                 4,
@@ -318,9 +327,9 @@ public class SilkThreeD : IThreeD
                 16 * (uint)sizeof(float),
                 (void*)(sizeof(float) * i * 4)
             );
-            CheckError();
+            CheckError("Enable vertex attribut pointer n");
             _gl.VertexAttribDivisor(locInstanceMatrices + i, 1);
-            CheckError();
+            CheckError("attrib divisoe");
         }
 
         /*
@@ -346,10 +355,10 @@ public class SilkThreeD : IThreeD
 
         Matrix4x4 mvp3 = Matrix4x4.Transpose(_matView * _matProjection);
         sh.SetUniform("mvp", mvp2);
-        CheckError();
+        CheckError("upload mvp");
 
         skMeshEntry.vao.BindVertexArray();
-        CheckError();
+        CheckError("instance vertex array bind");
 
         if (((++foo) & 0xf0) == 0)
         {
@@ -364,8 +373,9 @@ public class SilkThreeD : IThreeD
             GLEnum.UnsignedShort,
             (void*)0,
             (uint)nMatrices);
-        CheckError();
+        CheckError("draw instance");
 
+        _unloadMaterialFromShader();
         _gl.BindVertexArray(0);
         _gl.BindBuffer( GLEnum.ArrayBuffer, 0);
         _gl.BindBuffer( GLEnum.ElementArrayBuffer, 0);
@@ -536,12 +546,12 @@ public class SilkThreeD : IThreeD
         _matProjection = matProjection;
     }
 
-    public void CheckError()
+    public void CheckError(string name)
     {
         var error = _gl.GetError();
         if (error != GLEnum.NoError)
         {
-            ErrorThrow( $"Found OpenGL error {error}", m => new InvalidOperationException(m));
+            ErrorThrow( $"{name}: Found OpenGL error {error}", m => new InvalidOperationException(m));
         }
     }
 
