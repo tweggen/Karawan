@@ -35,12 +35,9 @@ namespace Splash.Silk
             _silkThreeD.CheckError("Beginning renderParts");
             _gl.Enable(EnableCap.DepthTest);
             _silkThreeD.CheckError("Enable Depth");
-            _gl.Clear((uint) (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+            _gl.Clear((uint) (ClearBufferMask.ColorBufferBit  | ClearBufferMask.DepthBufferBit));
             _silkThreeD.CheckError("Clear");
 
-            // Raylib_CsLo.Raylib.BeginDrawing();
-
-            // Raylib_CsLo.Raylib.ClearBackground(Raylib_CsLo.Raylib.BLACK);
             int y0Stats = 30;
 
             foreach(var RenderPart in RenderParts)
@@ -68,7 +65,6 @@ namespace Splash.Silk
                 {
                     Matrix4x4 matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
                     _silkThreeD.SetViewMatrix(matView);
-                    // _silkThreeD.SetViewMatrix(mToWorld);
                     float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
                     float aspect = 16f / 9f;
                     float right = top * aspect;
@@ -121,10 +117,6 @@ namespace Splash.Silk
                 y0Stats += 20;
             }
 
-            //Raylib_CsLo.Raylib.DrawFPS(20, 100);
-            //Raylib_CsLo.Raylib.DrawText("codename Karawan", 20, 20, 10, Raylib_CsLo.Raylib.GREEN);
-            //Raylib_CsLo.Raylib.EndDrawing();
-
         }
 
 
@@ -142,6 +134,7 @@ namespace Splash.Silk
             _gl.Viewport(new System.Drawing.Size(x,y));
         }
 
+        
         public SilkRenderer(
             in engine.Engine engine,
             in LightManager lightManager,
