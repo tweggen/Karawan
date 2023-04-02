@@ -22,6 +22,11 @@ namespace Boom
         private SortedDictionary<string, CachedSound> _cachedSoundDictionary = new();
         private SortedDictionary<Sound, Sound> _runningSounds = new();
 
+        private bool _traceStartStop()
+        {
+            return engine.GlobalSettings.Get("boom.AudioPlaybackEngine.TraceStartStop") == "true";
+        }
+
         public void FindCachedSound(string Uri, Action<Boom.CachedSound> actionOnHaveSound)
         {
             // Async this really instead of just wasting threads.
@@ -74,7 +79,7 @@ namespace Boom
 
                 --_nSounds;
             }
-            Trace($"Stopping sound, now {_nSounds}");
+            if( _traceStartStop() ) Trace($"Stopping sound, now {_nSounds}");
             _mixer.FadeoutMixerInput(sound);
         }
 
@@ -91,7 +96,7 @@ namespace Boom
 
                 ++_nSounds;
             }
-            Trace($"Starting sound, now {_nSounds}");
+            if( _traceStartStop() ) Trace($"Starting sound, now {_nSounds}");
             _mixer.AddMixerInput(sound);
         }
         

@@ -25,6 +25,11 @@ namespace Boom
         /// </summary>
         public IEnumerable<ISampleProvider> MixerInputs => _sources;
 #endif
+        private bool _traceStartStop()
+        {
+            return engine.GlobalSettings.Get("boom.AudioPlaybackEngine.TraceStartStop") == "true";
+        }
+        
 
         /// <summary>
         /// Adds a new mixer input
@@ -192,7 +197,7 @@ namespace Boom
                 foreach (var source in localSourcesToRemove)
                 {
                     MixerInputEnded?.Invoke(this, new SampleProviderEventArgs(source));
-                    Trace($"Removing source.");
+                    if( _traceStartStop() ) Trace($"Removing source.");
                     _sources.Remove(source);
                 }
             }
