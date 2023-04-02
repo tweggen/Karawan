@@ -129,7 +129,6 @@ namespace Splash.Silk
 
             _gl = GL.GetApi(_iWindow);
             _silkThreeD.SetGL(_gl);
-            _gl.ClearColor(1, 1, 1, 1);
             _gl.ClearDepth(1f);
         }
 

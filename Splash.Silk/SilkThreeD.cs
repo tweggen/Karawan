@@ -230,7 +230,13 @@ public class SilkThreeD : IThreeD
             }
         }
 
-        sh.SetUniform("colDiffuse", new Vector4(skMaterialEntry.JMaterial.AlbedoColor));
+        engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
+        sh.SetUniform("colDiffuse", new Vector4(
+            (float)((jMaterial.AlbedoColor >> 16) & 0xff) / 255f,
+            (float)((jMaterial.AlbedoColor >> 8) & 0xff) / 255f,
+            (float)((jMaterial.AlbedoColor) & 0xff) / 255f,
+            (float)((jMaterial.AlbedoColor >> 24) & 0xff) / 255f
+        ));
         sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
         sh.SetUniform("texture0", 0);
         sh.SetUniform("texture2", 2);
