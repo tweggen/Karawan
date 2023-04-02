@@ -31,11 +31,10 @@ namespace Splash
                 light.position = position;
                 light.target = target;
                 light.color = new Vector4(
-                    (byte)(255f * color.X),
-                    (byte)(255f * color.Y),
-                    (byte)(255f * color.Z),
-                    (byte)(255f * color.W)
-                );
+                    color.X,
+                    color.Y,
+                    color.Z,
+                    color.W);
                 _lights[_lightsCount] = light;
                 _lightsCount++;
             }

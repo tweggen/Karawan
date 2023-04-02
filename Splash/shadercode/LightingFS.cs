@@ -58,7 +58,7 @@ void main()
     // Texel color fetching from texture sampler
     vec4 texelColor = texture(texture0, fragTexCoord);
     vec4 emissiveColor = texture(texture2, fragTexCoord);
-    vec3 lightDot = vec3(0.0);
+    vec3 totalLight = vec3(0.0);
     vec3 normal = normalize(fragNormal);
     vec3 viewD = normalize(viewPos - vec3(fragPosition));
     vec3 specular = vec3(0.0);
@@ -74,19 +74,17 @@ void main()
             if (lights[i].type == LIGHT_DIRECTIONAL)
             {
                 light = -normalize(lights[i].target - lights[i].position);
+                float dotNormalLight = max(dot(normal, light), 0.0);
+                totalLight += lights[i].color.rgb*dotNormalLight;
             }
 
             if (lights[i].type == LIGHT_POINT)
             {
                 light = normalize(lights[i].position - vec3(fragPosition));
+                float dotNormalLight = max(dot(normal, light), 0.0);
+                totalLight += lights[i].color.rgb*dotNormalLight;
             }
 
-            float NdotL = max(dot(normal, light), 0.0);
-            lightDot += lights[i].color.rgb*NdotL;
-
-            // float specCo = 0.0;
-            // if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine
-            // specular += specCo;
         }
     }
 
@@ -94,11 +92,14 @@ void main()
     // finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
     // finalColor += texelColor*(ambient)*colDiffuse;
     // finalColor = texelColor+colDiffuse;
+    vec4 colDiffuseTotal = texelColor + colDiffuse;
+    vec4 colEmissiveTotal = emissiveColor; 
+    vec4 colAmbientTotal = ambient; 
     finalColor = 
-        (texelColor*colDiffuse) * vec4(lightDot,1.0)
-        + emissiveColor
+        colDiffuseTotal * vec4(totalLight,1.0)
+        + colEmissiveTotal
         //+ vec4(0.53,0.15,0.18,0.0)
-        + ambient
+        + colAmbientTotal
         ;
     
 
