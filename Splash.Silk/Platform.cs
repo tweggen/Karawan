@@ -131,6 +131,8 @@ namespace Splash.Silk
             _gl = GL.GetApi(_iWindow);
             _silkThreeD.SetGL(_gl);
             _gl.ClearDepth(1f);
+            _gl.ClearColor(0f, 0f, 0f, 0f);
+
         }
 
 
@@ -138,8 +140,9 @@ namespace Splash.Silk
         {
             
         }
-        
 
+
+        private static int _frameNo = 0;
         /**
          * OnRender for silk.
          *
@@ -163,6 +166,11 @@ namespace Splash.Silk
                 _renderer.SetDimension(_iWindow.Size.X, _iWindow.Size.Y);
                 _renderer.RenderFrame(renderFrame);
                 _iWindow.SwapBuffers();
+                ++_frameNo;
+                if (2 == _frameNo)
+                {
+                    _engine.StartTimeline();
+                }
                 break;
             }
         }

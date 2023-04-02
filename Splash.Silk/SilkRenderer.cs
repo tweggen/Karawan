@@ -36,7 +36,6 @@ namespace Splash.Silk
             _silkThreeD.CheckError("Beginning renderParts");
             _gl.Enable(EnableCap.DepthTest);
             _silkThreeD.CheckError("Enable Depth");
-            _gl.ClearColor(0f, 1f, 0f, 0f);
             _gl.Clear((uint) (ClearBufferMask.ColorBufferBit  | ClearBufferMask.DepthBufferBit));
             _silkThreeD.CheckError("Clear");
 

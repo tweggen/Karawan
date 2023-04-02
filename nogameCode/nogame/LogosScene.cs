@@ -33,7 +33,7 @@ namespace nogame
             }
             if (_isCleared)
             {
-                if (t > 1.1f)
+                if (t > 1.5f)
                 {
                     _engine.SetMainScene("root");
                     return;
@@ -41,7 +41,7 @@ namespace nogame
             }
             else
             {
-                if (t < 0.9f)
+                if (t < 1.0f)
                 {
                     _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f + _t));
                     _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
@@ -116,7 +116,7 @@ namespace nogame
                 _aTransform = _engine.GetATransform();
 
             }
-            if (false) {
+            if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false") {
                 DefaultEcs.Entity eMusic = _ecsWorld.CreateEntity();
                 eMusic.Set(new engine.audio.components.Music("assets\\shaklengokhsi.ogg"));
             }

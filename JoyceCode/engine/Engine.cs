@@ -56,8 +56,8 @@ namespace engine
 
         private WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
 
-
-
+        private bool _mayCallLogical = false;
+    
 
         class EnginePhysicsEventHandler : physics.IContactEventHandler
         {
@@ -124,6 +124,18 @@ namespace engine
             }
         }
 
+        /**
+         * Called by platform as soon platform believes the timeline starts.
+         */
+        public void StartTimeline()
+        {
+            lock (_lo)
+            {
+                _mayCallLogical = true;
+            }
+        }
+        
+        
         public void SetMainScene(in IScene scene)
         {
             lock(_lo)
@@ -349,12 +361,16 @@ namespace engine
              * Require: Previously computed world transforms.
              */
             _systemBehave.Update(dt);
-            LogicalFrame?.Invoke(this, dt);
+
+            if (_mayCallLogical)
             {
-                var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
-                foreach (KeyValuePair<float, IScene> kvp in dictScenes)
+                LogicalFrame?.Invoke(this, dt);
                 {
-                    kvp.Value.SceneOnLogicalFrame(dt);
+                    var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
+                    foreach (KeyValuePair<float, IScene> kvp in dictScenes)
+                    {
+                        kvp.Value.SceneOnLogicalFrame(dt);
+                    }
                 }
             }
 
