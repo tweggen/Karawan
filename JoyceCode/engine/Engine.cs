@@ -543,7 +543,7 @@ namespace engine
                 stopWatchProcessing.Reset();
                 stopWatchProcessing.Start();
                 float df = (float)totalPassedMicros / 1000000f;
-                // Trace($"Calling _onLogicalFrame({df}s).");
+                Trace($"Calling _onLogicalFrame({df}s).");
                 _onLogicalFrame(df);
                 stopWatchProcessing.Stop();
                 totalProcessingMicros = (int)stopWatchProcessing.Elapsed.TotalMicroseconds;
@@ -590,6 +590,7 @@ namespace engine
             _managerPhysics.Manage(this);
 
             _logicalThread = new Thread(_logicalThreadFunction);
+            _logicalThread.Priority = ThreadPriority.AboveNormal;
         }
 
 

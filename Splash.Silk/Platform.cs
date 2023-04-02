@@ -147,13 +147,13 @@ namespace Splash.Silk
             RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
             if (renderFrame != null)
             {
+                _iWindow.SwapBuffers();
                 _renderer.SetDimension(_iWindow.Size.X, _iWindow.Size.Y);
                 _renderer.RenderFrame(renderFrame);
-                _iWindow.SwapBuffers();
             } else
             {
                 Warning("No new frame found.");
-                System.Threading.Thread.Sleep(5);
+                //System.Threading.Thread.Sleep(5);
             }
             
         }
@@ -202,11 +202,13 @@ namespace Splash.Silk
             //Raylib_CsLo.Raylib.SetTraceLogCallback(_raylibTraceLog);
             
             var options = WindowOptions.Default;
+            // options.API = GraphicsAPI.
             options.Size = new Vector2D<int>(1280, 720);
             options.Title = "codename Karawan";
+            options.FramesPerSecond = 60;
+            options.VSync = false;
+            options.ShouldSwapAutomatically = false;
             _iWindow = Window.Create(options);
-            _iWindow.FramesPerSecond = 60;
-            _iWindow.ShouldSwapAutomatically = false;
             _iWindow.Load += _windowOnLoad;
             _iWindow.Render += _windowOnRender;
             _iWindow.Update += _windowOnUpdate;
