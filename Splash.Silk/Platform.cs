@@ -222,7 +222,7 @@ namespace Splash.Silk
             //Raylib_CsLo.Raylib.SetTraceLogCallback(_raylibTraceLog);
             
             var options = WindowOptions.Default;
-            options.Size = new Vector2D<int>(800, 600);
+            options.Size = new Vector2D<int>(1280, 720);
             options.Title = "codename Karawan";
             _iWindow = Window.Create(options);
             

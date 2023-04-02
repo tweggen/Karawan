@@ -20,7 +20,8 @@ namespace Splash.Raylib
         private IThreeD _threeD;
         private RaylibThreeD _raylibThreeD;
         private LightManager _lightManager;
-        
+
+        private Vector2 _vViewSize = new Vector2(1280, 720);
 
         /**
          * Render all camera objects.
@@ -64,9 +65,9 @@ namespace Splash.Raylib
                     RlGl.rlLoadIdentity();               // Reset current matrix (projection)
 
                     // Setup perspective projection
-                    float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
-                    float aspect = 16f / 9f;
-                    float right = top * aspect;
+                    float right = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
+                    float invAspect = _vViewSize.Y / _vViewSize.X;
+                    float top = right * invAspect;
                     // RlGl.rlFrustum(-right, right, -top, top, cCameraParams.NearFrustum, cCameraParams.FarFrustum);
                     {
                         float n = cCameraParams.NearFrustum;
@@ -78,11 +79,10 @@ namespace Splash.Raylib
                         Matrix4x4 m = new(
                             2f * n / (r - l), 0f, 0f, 0f,
                             0f, 2f * n / (t - b), 0f, 0f,
-                            0f, 0f, -(f + n) / (f - n), 2f * f * n / (n - f),
+                            0f, 0f, -(f + n) / (f - n), -2f * f * n / (f - n),
                             0f, 0f, -1f, 0f
-                        );
+                        ); 
                         RlGl.rlMultMatrixf(Matrix4x4.Transpose(m));
-                        // RlGl.rlMultMatrixf(m);
                     }
                     Matrix4x4 matNativeProjection = RlGl.rlGetMatrixProjection();
                     
@@ -97,7 +97,7 @@ namespace Splash.Raylib
                     /*
                      * Note to myself: rlMultMatrixf automatically transposes the matrix it takes as an argument.
                      */
-                    RlGl.rlMultMatrixf((matView));
+                    RlGl.rlMultMatrixf(matView);
 
                     RlGl.rlEnableDepthTest();            // Enable DEPTH_TEST for 3D
                 }
@@ -135,6 +135,12 @@ namespace Splash.Raylib
         {
             _lightManager.ApplyLights(renderFrame, _raylibThreeD.GetInstanceShaderEntry());
             _renderParts(renderFrame.RenderParts);
+        }
+        
+        
+        public void SetDimension(int x, int y)
+        {
+            _vViewSize = new Vector2((float)x, (float)y);
         }
         
 

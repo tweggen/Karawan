@@ -276,7 +276,7 @@ public class SilkThreeD : IThreeD
         
     }
 
-    public static bool UseInstanceRendering = false;
+    public static bool UseInstanceRendering = true;
 
     public unsafe void DrawMeshInstanced(
         in AMeshEntry aMeshEntry,
@@ -365,7 +365,7 @@ public class SilkThreeD : IThreeD
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
         if (UseInstanceRendering) 
         {
-            Matrix4x4 mvp = Matrix4x4.Transpose(_matView * _matProjection);
+            Matrix4x4 mvp = _matView * _matProjection;
             sh.SetUniform("mvp", mvp);
             CheckError("upload mvp");
             _gl.DrawElementsInstanced(
@@ -380,7 +380,7 @@ public class SilkThreeD : IThreeD
         {
             for (int i = 0; i < nMatrices; ++i)
             {
-                Matrix4x4 mvpi = Matrix4x4.Transpose(Matrix4x4.Transpose(spanMatrices[i]) * _matView * _matProjection);
+                Matrix4x4 mvpi = Matrix4x4.Transpose(spanMatrices[i]) * _matView * _matProjection;
                 sh.SetUniform("mvp", mvpi);
                 CheckError("upload mvpi");
                 _gl.DrawElements(
@@ -491,31 +491,6 @@ public class SilkThreeD : IThreeD
         }
 
         skMaterialEntry.SetUploaded();
-#if false
-        rlMaterialEntry.RlMaterial = Raylib_CsLo.Raylib.LoadMaterialDefault();
-        rlMaterialEntry.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
-        if (null != aTextureEntry)
-        {
-            rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].texture =
-                ((RlTextureEntry)aTextureEntry).RlTexture;
-        }
-        else
-        {
-            // This becomes the default color in the shader.
-            rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].color =
-                new Color(
-                    (byte)(jMaterial.AlbedoColor >> 16) & 0xff,
-                    (byte)(jMaterial.AlbedoColor >> 8) & 0xff,
-                    (byte)(jMaterial.AlbedoColor) & 0xff,
-                    (byte)(jMaterial.AlbedoColor >> 24) & 0xff);
-
-        }
-
-        {
-            rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_NORMAL].texture =
-                ((RlTextureEntry)aEmissiveTextureEntry).RlTexture;
-        }
-#endif
 
     }
 
@@ -544,14 +519,7 @@ public class SilkThreeD : IThreeD
         /*
          * Push the viewer's position to the fragment shader
          */
-        // TXWTODO: Write me.
-
-        /* Raylib_CsLo.Raylib.SetShaderValue(
-            _rlInstanceShaderEntry.RlShader,
-            _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW],
-            vCamera,
-            ShaderUniformDataType.SHADER_UNIFORM_VEC3);
-            */
+        // TXWTODO: Write me. Deprecate this by VIewMatrix and Projection Matrix
     }
 
 

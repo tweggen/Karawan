@@ -59,16 +59,17 @@ namespace Splash.Silk
                 _threeD.SetCameraPos(vCameraPosition);
 
                 /*
-                 * We need to reimplement BeginMode3d to freely set frustrums
-                 * 
-                 * The following code is the explicit wording of BeginMode3d
+                 * Create the model/projection/view matrix for use in the scaler.
+                 * This part of code only sets up the view matrix (how to move the world into
+                 * the camera's point of view) and the projection matrix (how to move camera 3d
+                 * coordinates into clip space, i.e. 2d screen with depth info).
                  */
                 {
                     Matrix4x4 matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
                     _silkThreeD.SetViewMatrix(matView);
-                    float top = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
-                    float aspect = 16f / 9f;
-                    float right = top * aspect;
+                    float right = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
+                    float invAspect = _vViewSize.Y / _vViewSize.X;
+                    float top = right * invAspect;
                     Matrix4x4 matProjection;
                     {
                         float n = cCameraParams.NearFrustum;
@@ -96,13 +97,6 @@ namespace Splash.Silk
                         matProjection = Matrix4x4.Transpose(m*mScaleToViewWindow);
                     }
                     _silkThreeD.SetProjectionMatrix(matProjection);
-                    
-                    _gl.Enable(EnableCap.CullFace);
-                    _silkThreeD.CheckError("Enable CullFace");
-                    _gl.CullFace(GLEnum.Back);
-                    _silkThreeD.CheckError("CullFace");
-                    _gl.FrontFace(FrontFaceDirection.Ccw);
-                    _silkThreeD.CheckError("FrontFace");
                 }
 
 
@@ -137,12 +131,12 @@ namespace Splash.Silk
 
         public void SetDimension(int x, int y)
         {
-            _gl = _silkThreeD.GetGL();
+            // _gl = _silkThreeD.GetGL();
             _vViewSize = new Vector2((float)x, (float)y);
-            _gl.Viewport(0, 0, (uint)x, (uint)y);
+            // _gl.Viewport(0, 0, (uint)x, (uint)y);
         }
-
         
+
         public SilkRenderer(
             in engine.Engine engine,
             in LightManager lightManager,
@@ -152,7 +146,7 @@ namespace Splash.Silk
             _lightManager = lightManager;
             _silkThreeD = silkThreeD;
             _threeD = silkThreeD;
-            _vViewSize = new Vector2(1280, 576);
+            _vViewSize = new Vector2(1280, 720);
         }
     }
 }

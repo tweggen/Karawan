@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Runtime.InteropServices;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -202,10 +203,22 @@ public class RaylibThreeD : IThreeD
         in Span<Matrix4x4> spanMatrices,
         in int nMatrices)
     {
+        List<Matrix4x4> listTMatrices = new(nMatrices);
+        for (int i = 0; i < nMatrices; ++i)
+        {
+            listTMatrices.Add(Matrix4x4.Transpose(spanMatrices[i]));
+        }
+        
+#if NET6_0_OR_GREATER
+        var spanRealMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(listTMatrices);
+#else
+        Span<Matrix4x4> spanRealMatrices = meshItem.Value.Matrices.ToArray();
+#endif
+
         Raylib_CsLo.Raylib.DrawMeshInstanced(
                 ((RlMeshEntry)aMeshEntry).RlMesh,
                 ((RlMaterialEntry)aMaterialEntry).RlMaterial,
-                spanMatrices, 
+                spanRealMatrices, // spanMatrices, 
                 nMatrices
         );
     }   

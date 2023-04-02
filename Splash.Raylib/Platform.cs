@@ -101,6 +101,9 @@ namespace Splash.Raylib
 
             while (!Raylib_CsLo.Raylib.WindowShouldClose()) // Detect window close button or ESC key
             {
+                int sw = Raylib_CsLo.Raylib.GetRenderWidth();
+                int sh = Raylib_CsLo.Raylib.GetRenderHeight();
+                _renderer.SetDimension(sw, sh);
                 _physFrameUpdateControllerState();
                 _physFrameReadKeyEvents();
                 _physFrameReadMouseMove();
