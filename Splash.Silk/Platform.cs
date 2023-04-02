@@ -31,7 +31,6 @@ namespace Splash.Silk
         private IWindow _iWindow;
         private GL _gl;
 
-        
         public void SetEngine(engine.Engine engine)
         {
             lock (_lock)
@@ -180,6 +179,11 @@ namespace Splash.Silk
             _isRunning = false;
         }
 
+        private void _windowOnResize( Vector2D<int> size)
+        {
+            
+        }
+
         public void Execute()
         {
             _iWindow.Run();
@@ -220,13 +224,22 @@ namespace Splash.Silk
             
             var options = WindowOptions.Default;
             // options.API = GraphicsAPI.
+#if DEBUG
             options.Size = new Vector2D<int>(1280, 720);
+#else
+            options.Size = new Vector2D<int>(1920, 1080);
+#endif
             options.Title = "codename Karawan";
             options.FramesPerSecond = 60;
             options.VSync = false;
             options.ShouldSwapAutomatically = false;
             _iWindow = Window.Create(options);
+#if DEBUG
+#else
+            _iWindow.WindowState = WindowState.Fullscreen;
+#endif
             _iWindow.Load += _windowOnLoad;
+            _iWindow.Resize += _windowOnResize;
             _iWindow.Render += _windowOnRender;
             _iWindow.Update += _windowOnUpdate;
             _iWindow.Closing += _windowOnClose;
