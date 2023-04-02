@@ -167,7 +167,7 @@ public class SilkThreeD : IThreeD
         _skInstanceShaderEntry = new SkShaderEntry();
         _skInstanceShaderEntry.SkShader = new SkShader(
             _gl,
-            shadercode.LightingInstancingVS.ShaderCode,
+            shadercode.LightingVS.ShaderCode,
             shadercode.LightingFS.ShaderCode
         );
 
@@ -276,7 +276,7 @@ public class SilkThreeD : IThreeD
         
     }
 
-    private static int foo;
+    public static bool UseInstanceRendering = false;
 
     public unsafe void DrawMeshInstanced(
         in AMeshEntry aMeshEntry,
@@ -318,73 +318,80 @@ public class SilkThreeD : IThreeD
          * 2) upload the matrix instance buffer.
          */
 
-        skMeshEntry.vao.BindVertexArray();
-        CheckError("Bind Vertex Array");
-        var bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
-        CheckError("New Buffer Object");
-        bMatrices.BindBuffer();
-        CheckError("Bind Buffer");
-        uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
-        for (uint i = 0; i < 4; ++i)
+        BufferObject<Matrix4x4> bMatrices = null;
+
+        if (UseInstanceRendering)
         {
-            _gl.EnableVertexAttribArray(locInstanceMatrices + i);
-            CheckError("Enable vertex array in instances");
-            _gl.VertexAttribPointer(
-                locInstanceMatrices + i,
-                4,
-                VertexAttribPointerType.Float,
-                false,
-                16 * (uint)sizeof(float),
-                (void*)(sizeof(float) * i * 4)
-            );
-            CheckError("Enable vertex attribut pointer n");
-            _gl.VertexAttribDivisor(locInstanceMatrices + i, 1);
-            CheckError("attrib divisoe");
+            skMeshEntry.vao.BindVertexArray();
+            CheckError("Bind Vertex Array");
+            bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
+            CheckError("New Buffer Object");
+            bMatrices.BindBuffer();
+            CheckError("Bind Buffer");
+            uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
+            for (uint i = 0; i < 4; ++i)
+            {
+                _gl.EnableVertexAttribArray(locInstanceMatrices + i);
+                CheckError("Enable vertex array in instances");
+                _gl.VertexAttribPointer(
+                    locInstanceMatrices + i,
+                    4,
+                    VertexAttribPointerType.Float,
+                    false,
+                    16 * (uint)sizeof(float),
+                    (void*)(sizeof(float) * i * 4)
+                );
+                CheckError("Enable vertex attribut pointer n");
+                _gl.VertexAttribDivisor(locInstanceMatrices + i, 1);
+                CheckError("attrib divisor");
+            }
+
+            /*
+             * Disable buffers again.
+             */
+            _gl.BindVertexArray(0);
+            _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
         }
-
-        /*
-         * Disable buffers again.
-         */
-        _gl.BindVertexArray(0);
-        _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
-
+        
         /*
          * Setup view and projection matrix.
          * We need a combined view and projection matrix
          */
-        // mProjection = Camera.GetProjectionMatrix();
-        // mViewMatrix = Camera.GetViewKatrix();
-        Matrix4x4 mvp1 = Matrix4x4.Transpose(_matView) * Matrix4x4.Transpose(_matProjection);
-        Matrix4x4 mvp2 = Matrix4x4.Transpose(_matProjection * _matView);
-
-        if (mvp1 != mvp2)
-        {
-            ErrorThrow("not equal", (m) => new InvalidOperationException(m));
-        }
-
-
-        Matrix4x4 mvp3 = Matrix4x4.Transpose(_matView * _matProjection);
-        sh.SetUniform("mvp", mvp2);
-        CheckError("upload mvp");
 
         skMeshEntry.vao.BindVertexArray();
         CheckError("instance vertex array bind");
 
-        if (((++foo) & 0xf0) == 0)
-        {
-            //_printUniforms();
-        }
-
         // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
-        _gl.DrawElementsInstanced(
-            PrimitiveType.Triangles,
-            (uint)skMeshEntry.JMesh.Indices.Count,
-            GLEnum.UnsignedShort,
-            (void*)0,
-            (uint)nMatrices);
-        CheckError("draw instance");
-
+        if (UseInstanceRendering) 
+        {
+            Matrix4x4 mvp = Matrix4x4.Transpose(_matProjection * _matView);
+            sh.SetUniform("mvp", mvp);
+            CheckError("upload mvp");
+            _gl.DrawElementsInstanced(
+                PrimitiveType.Triangles,
+                (uint)skMeshEntry.JMesh.Indices.Count,
+                GLEnum.UnsignedShort,
+                (void*)0,
+                (uint)nMatrices);
+            CheckError("draw instance");
+        }
+        else
+        {
+            for (int i = 0; i < nMatrices; ++i)
+            {
+                Matrix4x4 mvpi = Matrix4x4.Transpose(Matrix4x4.Transpose(spanMatrices[i]) * _matView * _matProjection);
+                sh.SetUniform("mvp", mvpi);
+                CheckError("upload mvpi");
+                _gl.DrawElements(
+                    PrimitiveType.Triangles,
+                    (uint)skMeshEntry.JMesh.Indices.Count,
+                    DrawElementsType.UnsignedShort,
+                    (void*)0);
+                CheckError("draw elements");
+            }
+        }
+        
         _unloadMaterialFromShader();
         _gl.BindVertexArray(0);
         _gl.BindBuffer( GLEnum.ArrayBuffer, 0);
@@ -393,8 +400,11 @@ public class SilkThreeD : IThreeD
         // TXWTODO: Shall we really always disable the current program?
         _gl.UseProgram(0);
 
-        bMatrices.Dispose();
-        
+        if (null != bMatrices)
+        {
+            bMatrices.Dispose();
+        }
+
     }   
 
     public void UploadMesh(in AMeshEntry aMeshEntry)
@@ -574,15 +584,15 @@ public class SilkThreeD : IThreeD
     {
         _gl = gl;
         
-        // _gl.Enable(EnableCap.CullFace);
-        // .CullFace(CullFaceMode.Back);
-        // _gl.FrontFace(FrontFaceDirection.Ccw);
-        // _gl.Enable(EnableCap.DebugOutput);
-        //_gl.Disable(EnableCap.DebugOutputSynchronous);
-        //_gl.Enable(EnableCap.DepthClamp);
-        //_gl.Enable(EnableCap.DepthTest);
-        // _gl.Disable(EnableCap.ScissorTest);
-        // _gl.Disable(EnableCap.StencilTest);
+        _gl.Enable(EnableCap.CullFace);
+        _gl.CullFace(CullFaceMode.Back);
+        _gl.FrontFace(FrontFaceDirection.Ccw);
+        _gl.Enable(EnableCap.DebugOutput);
+        _gl.Disable(EnableCap.DebugOutputSynchronous);
+        _gl.Enable(EnableCap.DepthClamp);
+        _gl.Enable(EnableCap.DepthTest);
+        _gl.Disable(EnableCap.ScissorTest);
+        _gl.Disable(EnableCap.StencilTest);
     }
 
     public GL GetGL()

@@ -144,7 +144,7 @@ public class RaylibThreeD : IThreeD
         _rlInstanceShaderEntry = new RlShaderEntry();
 
         {
-            byte[] byLightingInstancingVS = Encoding.ASCII.GetBytes(shadercode.LightingInstancingVS.ShaderCode);
+            byte[] byLightingInstancingVS = Encoding.ASCII.GetBytes(shadercode.LightingVS.ShaderCode);
             byte[] byLightingFS = Encoding.ASCII.GetBytes(shadercode.LightingFS.ShaderCode);
             fixed (byte* byLIVS = byLightingInstancingVS)
             {
