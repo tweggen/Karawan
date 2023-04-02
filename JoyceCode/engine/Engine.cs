@@ -532,7 +532,7 @@ namespace engine
                     {
                         // Trace($"Logical thread sleeping {millisToWait}ms.");
                         stopWatchSleep.Start();
-                        System.Threading.Thread.Sleep(millisToWait);
+                        System.Threading.Thread.Sleep(1 /*millisToWait*/);
                         stopWatchSleep.Stop();
                     }
 
@@ -542,8 +542,16 @@ namespace engine
                 }
                 stopWatchProcessing.Reset();
                 stopWatchProcessing.Start();
-                float df = (float)totalPassedMicros / 1000000f;
-                Trace($"Calling _onLogicalFrame({df}s).");
+                float df;
+                if (engine.GlobalSettings.Get("engine.NailLogicalFPS") == "true")
+                {
+                    df = 1f / 60f;
+                }
+                else
+                {
+                    df = (float)totalPassedMicros / 1000000f;
+                }
+                //Trace($"Calling _onLogicalFrame({df}s).");
                 _onLogicalFrame(df);
                 stopWatchProcessing.Stop();
                 totalProcessingMicros = (int)stopWatchProcessing.Elapsed.TotalMicroseconds;
