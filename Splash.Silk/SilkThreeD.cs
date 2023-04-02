@@ -493,6 +493,16 @@ public class SilkThreeD : IThreeD
     public void SetGL(in GL gl)
     {
         _gl = gl;
+        
+        // _gl.Enable(EnableCap.CullFace);
+        // .CullFace(CullFaceMode.Back);
+        // _gl.FrontFace(FrontFaceDirection.Ccw);
+        // _gl.Enable(EnableCap.DebugOutput);
+        //_gl.Disable(EnableCap.DebugOutputSynchronous);
+        //_gl.Enable(EnableCap.DepthClamp);
+        //_gl.Enable(EnableCap.DepthTest);
+        // _gl.Disable(EnableCap.ScissorTest);
+        // _gl.Disable(EnableCap.StencilTest);
     }
 
     public GL GetGL()

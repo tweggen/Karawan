@@ -10,7 +10,7 @@ namespace Splash.shadercode
     {
         static public string ShaderCode = @"#version 330
 
-// Input vertex attributes (from vertex shader)
+// (from vertex shader)
 in vec4 fragPosition;
 in vec2 fragTexCoord;
 in vec2 fragTexCoord2;
@@ -22,6 +22,8 @@ uniform sampler2D texture0;
 uniform sampler2D texture2;
 uniform vec4 colDiffuse;
 uniform vec4 ambient;
+
+
 
 // Output fragment color
 out vec4 finalColor;
