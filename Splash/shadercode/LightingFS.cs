@@ -96,7 +96,7 @@ void main()
     vec4 colEmissiveTotal = emissiveColor; 
     vec4 colAmbientTotal = ambient; 
     finalColor = 
-        (colDiffuseTotal+colAmbientTotal) // * vec4(totalLight,1.0)
+        (colDiffuseTotal+colAmbientTotal) * vec4(totalLight,1.0)
         + colEmissiveTotal
         //+ vec4(0.53,0.15,0.18,0.0)
         // + colAmbientTotal

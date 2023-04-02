@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 using engine;
 using static engine.Logger;
@@ -144,18 +145,20 @@ namespace Splash.Silk
             _physFrameReadKeyEvents();
             _physFrameReadMouseMove();
 
-            RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
-            if (renderFrame != null)
+            while (true)
             {
-                _iWindow.SwapBuffers();
+                RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
+                if (renderFrame == null)
+                {
+                    Thread.Sleep(1);
+                    continue;
+                }
+
                 _renderer.SetDimension(_iWindow.Size.X, _iWindow.Size.Y);
                 _renderer.RenderFrame(renderFrame);
-            } else
-            {
-                // Warning("No new frame found.");
-                System.Threading.Thread.Sleep(1);
+                _iWindow.SwapBuffers();
+                break;
             }
-            
         }
 
         private void _windowOnClose()
