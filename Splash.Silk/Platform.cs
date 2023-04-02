@@ -140,13 +140,19 @@ namespace Splash.Silk
         }
         
 
+        /**
+         * OnRender for silk.
+         *
+         * As silk busyloops for a new frame, we better wait for the better
+         * part of it for a new frame.
+         */
         private void _windowOnRender(double dt)
         {
-            _physFrameReadKeyEvents();
-            _physFrameReadMouseMove();
-
             while (true)
             {
+                _physFrameReadKeyEvents();
+                _physFrameReadMouseMove();
+
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
                 if (renderFrame == null)
                 {
