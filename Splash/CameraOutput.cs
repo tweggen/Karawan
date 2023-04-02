@@ -130,7 +130,8 @@ namespace Splash
             /*
              * Now we can add our matrix to the list of matrices.
              */
-            meshBatch.Matrices.Add(Matrix4x4.Transpose(matrix) );
+            // meshBatch.Matrices.Add(Matrix4x4.Transpose(matrix) );
+            meshBatch.Matrices.Add(matrix);
             _nInstances++;
         }
 

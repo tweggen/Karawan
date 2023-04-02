@@ -18,7 +18,7 @@ layout(location = 2) in vec2 vertexTexCoord2;
 layout(location = 3) in vec3 vertexNormal;
 layout(location = 4) in vec4 vertexColor;
 
-// in mat4 instanceTransform;
+in mat4 instanceTransform;
 
 // Input uniform values
 uniform mat4 mvp;
@@ -35,8 +35,9 @@ out vec3 fragNormal;
 
 void main()
 {
+    // instanceTransform = mat4(1.0);
     // Compute MVP for current instance
-    mat4 mvpi = mvp; //*instanceTransform;
+    mat4 mvpi = mvp * instanceTransform;
     vec4 vertex = vec4(vertexPosition, 1.0);
 
     // Send vertex attributes to fragment shader
@@ -44,7 +45,7 @@ void main()
     fragTexCoord = vertexTexCoord;
     fragTexCoord2 = vertexTexCoord2;
     fragColor = vertexColor;
-    fragNormal = normalize(vec3(/*instanceTransform* */vec4(vertexNormal, 0.0)));
+    fragNormal = normalize(vec3(instanceTransform * vec4(vertexNormal, 0.0)));
 
     // Calculate final vertex position
     gl_Position = mvpi*vertex;

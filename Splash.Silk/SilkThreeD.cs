@@ -103,7 +103,7 @@ public class SilkThreeD : IThreeD
     private unsafe void _applyLightValues(ref SkShader sh, int index, in Light light)
     {
         var lightShaderPos = _getLightShaderPos(index, ref sh);
-        bool checkLights = false;
+        bool checkLights = true;
 
         // Send to shader light enabled state and type
         sh.SetUniform(lightShaderPos.enabledLoc, (light.enabled?1:0));
@@ -119,7 +119,7 @@ public class SilkThreeD : IThreeD
         // Send to shader light target position values
         Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
         sh.SetUniform(lightShaderPos.targetLoc, target);
-        if( checkLights ) CheckError($"Set Uniform light targetLoc {index}");
+        if( checkLights ) CheckError($"Set Uniform light target {index}");
 
         // Send to shader light color values
         Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,

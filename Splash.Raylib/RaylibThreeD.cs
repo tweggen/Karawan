@@ -124,6 +124,7 @@ public class RaylibThreeD : IThreeD
         }
     }
 
+    
     public void ApplyAllLights(in IList<Light> listLights, in AShaderEntry aShaderEntry)
     {
         _applyAllLights(listLights, ref ((RlShaderEntry)aShaderEntry).RlShader);

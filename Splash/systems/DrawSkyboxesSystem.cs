@@ -32,7 +32,7 @@ namespace Splash.systems
                 var rlMaterialEntry = eSkybox.Get<Splash.components.PfMaterial>().MaterialEntry;
                 var matrixSkybox = Matrix4x4.CreateTranslation(vCameraPosition);
 
-                cameraOutput.AppendInstance(rlMeshEntry, rlMaterialEntry,matrixSkybox);
+                cameraOutput.AppendInstance(rlMeshEntry, rlMaterialEntry, matrixSkybox);
 
             }
         }

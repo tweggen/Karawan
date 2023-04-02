@@ -124,16 +124,17 @@ namespace Splash.Silk
         public void RenderFrame(in RenderFrame renderFrame)
         {
             _gl = _silkThreeD.GetGL();
+            var skShaderEntry = _silkThreeD.GetInstanceShaderEntry(); 
+            _gl.UseProgram(skShaderEntry.SkShader.Handle);
             _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
+            // _gl.UseProgram(0);
             _renderParts(renderFrame.RenderParts);
         }
 
 
         public void SetDimension(int x, int y)
         {
-            // _gl = _silkThreeD.GetGL();
             _vViewSize = new Vector2((float)x, (float)y);
-            // _gl.Viewport(0, 0, (uint)x, (uint)y);
         }
         
 
