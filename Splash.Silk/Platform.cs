@@ -149,10 +149,11 @@ namespace Splash.Silk
             {
                 _renderer.SetDimension(_iWindow.Size.X, _iWindow.Size.Y);
                 _renderer.RenderFrame(renderFrame);
+                _iWindow.SwapBuffers();
             } else
             {
                 Warning("No new frame found.");
-                System.Threading.Thread.Sleep(15);
+                System.Threading.Thread.Sleep(5);
             }
             
         }
@@ -165,26 +166,6 @@ namespace Splash.Silk
         public void Execute()
         {
             _iWindow.Run();
-#if false
-            while (!Raylib_CsLo.Raylib.WindowShouldClose()) // Detect window close button or ESC key
-            {
-                _physFrameUpdateControllerState();
-                _physFrameReadKeyEvents();
-                _physFrameReadMouseMove();
-
-                RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
-                if (renderFrame != null)
-                {
-                    _renderer.RenderFrame(renderFrame);
-                } else
-                {
-                    Warning("No new frame found.");
-                    System.Threading.Thread.Sleep(15);
-                }
-            }
-            _isRunning = false;
-            Raylib_CsLo.Raylib.CloseWindow();
-#endif
         }
 
 
@@ -224,36 +205,15 @@ namespace Splash.Silk
             options.Size = new Vector2D<int>(1280, 720);
             options.Title = "codename Karawan";
             _iWindow = Window.Create(options);
-            
+            _iWindow.FramesPerSecond = 60;
+            _iWindow.ShouldSwapAutomatically = false;
             _iWindow.Load += _windowOnLoad;
             _iWindow.Render += _windowOnRender;
             _iWindow.Update += _windowOnUpdate;
             _iWindow.Closing += _windowOnClose;
             
-#if false
-            var display = Raylib_CsLo.Raylib.GetCurrentMonitor();
-#if DEBUG
-            var width = 1280;
-            var height = width / 16 * 9;
-            bool isFullscreen = false;
-#else
-            var width = Raylib_CsLo.Raylib.GetMonitorWidth(display);
-            var height = Raylib_CsLo.Raylib.GetMonitorHeight(display);
-            bool isFullscreen = false;
-#endif
-#if PLATFORM_ANDROID
-            Raylib_CsLo.Raylib.InitWindow(0, 0, "codename Karawan"); //Make app window 1:1 to screen size https://github.com/raysan5/raylib/issues/1731
-#else
-            Trace("Calling InitWindow.");
-            Raylib_CsLo.Raylib.InitWindow(width, height, "codename Karawan");
-#endif
-            if (isFullscreen)
-            {
-                Raylib_CsLo.Raylib.ToggleFullscreen();
-            }
-            Raylib_CsLo.Raylib.DisableCursor();
-            Raylib_CsLo.Raylib.SetTargetFPS(60);
-#endif
+            // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
+            // disable and bind cursor.
 
             _silkThreeD = new SilkThreeD(_engine);
             
@@ -281,7 +241,6 @@ namespace Splash.Silk
         public void Sleep(double dt)
         {
             Thread.Sleep((int)(dt*1000f));
-            //Raylib_CsLo.Raylib.WaitTime(dt);
         }
 
         public bool IsRunning()

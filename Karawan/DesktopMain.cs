@@ -177,8 +177,8 @@ namespace Karawan
             }
             
             engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
-
-            Boom.API boom = new(e);
+            
+            // Boom.API boom = new(e);
 
             // Add the engine web service to the host.
             // app.MapGrpcService<GreeterService>();
@@ -191,7 +191,7 @@ namespace Karawan
             e.AddSceneFactory("root", () => new nogame.RootScene());
             e.AddSceneFactory("logos", () => new nogame.LogosScene());
             e.SetMainScene("logos");
-            boom.SetupDone();
+            // boom.SetupDone();
             e.Execute();
 
             app.StopAsync();
