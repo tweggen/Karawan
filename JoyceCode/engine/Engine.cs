@@ -513,6 +513,59 @@ namespace engine
 
         private void _logicalThreadFunction()
         {
+            float invFps = 1f / 60f;
+            float totalTime = 0f;
+
+#if true
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            while (_platform.IsRunning())
+            {
+                /*
+                 * keep times in range
+                 */
+                while (totalTime > 1f)
+                {
+                    totalTime -= 1f;
+                }
+                
+                /*
+                 * Wait for the next frame or rock it.
+                 */
+                stopWatch.Stop();
+                totalTime += (float)stopWatch.Elapsed.TotalSeconds;
+                stopWatch.Reset();
+                
+                if (totalTime < invFps)
+                {
+                    stopWatch.Start();
+                    Thread.Sleep(1);
+                    continue;
+                }
+
+                stopWatch.Start();
+                /*
+                 * Run as many logical frames as have been elapsed.
+                 */
+                while (totalTime > invFps)
+                {
+                    _onLogicalFrame(invFps);
+                    totalTime -= invFps;
+                }
+                
+                stopWatch.Stop();
+                float processedTime = (float)stopWatch.Elapsed.TotalSeconds;
+                stopWatch.Reset();
+
+                totalTime += processedTime;
+
+                /*
+                 * Now, depending on the remaining time, sleep a bit.
+                 */
+                stopWatch.Start();
+            }
+
+#else
             Stopwatch stopWatchSleep = new Stopwatch();
             Stopwatch stopWatchProcessing = new Stopwatch();
             const int microFrameDuration = 1000000 / 60;
@@ -565,6 +618,7 @@ namespace engine
                 }
                 totalPassedMicros = totalProcessingMicros;
             }
+#endif
         }
 
         /**

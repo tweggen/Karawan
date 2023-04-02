@@ -152,8 +152,8 @@ namespace Splash.Silk
                 _renderer.RenderFrame(renderFrame);
             } else
             {
-                Warning("No new frame found.");
-                //System.Threading.Thread.Sleep(5);
+                // Warning("No new frame found.");
+                System.Threading.Thread.Sleep(1);
             }
             
         }
