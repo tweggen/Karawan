@@ -266,7 +266,7 @@ public class RaylibThreeD : IThreeD
                 loadingMaterial.RlMaterial = Raylib_CsLo.Raylib.LoadMaterialDefault();
                 loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
                 loadingMaterial.RlMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
-                // loadingMaterial.RlMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib_CsLo.Raylib.WHITE;
+                loadingMaterial.RlMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib_CsLo.Raylib.WHITE;
                 _loadingMaterial = loadingMaterial;
             }
 
@@ -292,6 +292,11 @@ public class RaylibThreeD : IThreeD
             aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
             // TXWTODO: Add reference of this texture.
         }
+        else
+        {
+            // Hack for the different texture slot entry.
+            aTextureEntry =  _textureManager.FindATexture(new engine.joyce.Texture("joyce://col00000000"));
+        }
         ATextureEntry aEmissiveTextureEntry = null;
         if (jMaterial.EmissiveTexture != null)
         {
@@ -308,18 +313,19 @@ public class RaylibThreeD : IThreeD
         {
             rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].texture =
                 ((RlTextureEntry)aTextureEntry).RlTexture;
+            // rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].color =
+            //    new Color(0, 0, 0, 0);
         }
         else
         {
             // This becomes the default color in the shader.
-            rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].color =
-                new Color(
-                    (byte)(jMaterial.AlbedoColor >> 16) & 0xff,
-                    (byte)(jMaterial.AlbedoColor >> 8) & 0xff,
-                    (byte)(jMaterial.AlbedoColor) & 0xff,
-                    (byte)(jMaterial.AlbedoColor >> 24) & 0xff);
-
         }
+        rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_ALBEDO].color =
+            new Color(
+                (byte)(jMaterial.AlbedoColor >> 16) & 0xff,
+                (byte)(jMaterial.AlbedoColor >> 8) & 0xff,
+                (byte)(jMaterial.AlbedoColor) & 0xff,
+                (byte)(jMaterial.AlbedoColor >> 24) & 0xff);
 
         {
             rlMaterialEntry.RlMaterial.maps[(int)MaterialMapIndex.MATERIAL_MAP_NORMAL].texture =
