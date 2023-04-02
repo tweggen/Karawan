@@ -45,27 +45,15 @@ public class SilkThreeD : IThreeD
     private LightShaderPos[] _lightShaderPos = null;
     
     
-    
-    
     // Create a light and get shader locations
     private void _compileLightLocked(
         in LightShaderPos lightShaderPos, int lightIndex, ref SkShader sh)
     {
-        // TODO: Below code doesn't look good to me, 
-        // it assumes a specific shader naming and structure
-        // Probably this implementation could be improved
         string enabledName = $"lights[{lightIndex}].enabled";
         string typeName = $"lights[{lightIndex}].type";
         string posName = $"lights[{lightIndex}].position";
         string targetName = $"lights[{lightIndex}].target";
         string colorName = $"lights[{lightIndex}].color";
-
-        // Set location name [x] depending on lights count
-        //enabledName[7] = '0' + lightsCount;
-        //typeName[7] = '0' + lightsCount;
-        //posName[7] = '0' + lightsCount;
-        //targetName[7] = '0' + lightsCount;
-        //colorName[7] = '0' + lightsCount;
 
         lightShaderPos.enabledLoc = (int)sh.GetUniform(enabledName);
         lightShaderPos.typeLoc = (int)sh.GetUniform(typeName);
@@ -122,8 +110,7 @@ public class SilkThreeD : IThreeD
         if( checkLights ) CheckError($"Set Uniform light target {index}");
 
         // Send to shader light color values
-        Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,
-            (float)light.color.Z / (float)255, (float)light.color.W / (float)255);
+        Vector4 color = light.color;
         sh.SetUniform(lightShaderPos.colorLoc, color);
         if( checkLights ) CheckError($"Set Uniform light color {index}");
     }

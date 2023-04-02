@@ -89,8 +89,8 @@ public class RaylibThreeD : IThreeD
     
     
     /**
-         * Update lights value in shader
-         */
+     * Update lights value in shader
+     */
     private unsafe void _applyLightValues(ref Shader shader, int index, in Light light)
     {
         var lightShaderPos = _getLightShaderPos(index, ref shader);
@@ -109,8 +109,7 @@ public class RaylibThreeD : IThreeD
             Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.targetLoc, target, ShaderUniformDataType.SHADER_UNIFORM_VEC3);
 
             // Send to shader light color values
-            Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,
-                (float)light.color.Z / (float)255, (float)light.color.W / (float)255);
+            Vector4 color = light.color;
             Raylib_CsLo.Raylib.SetShaderValue(shader, lightShaderPos.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         }
     }
