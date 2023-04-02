@@ -157,42 +157,9 @@ public class SilkThreeD : IThreeD
             shadercode.LightingVS.ShaderCode,
             shadercode.LightingFS.ShaderCode
         );
-
-#if false
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "viewPos");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MODEL] =
-            Raylib_CsLo.Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "instanceTransform");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_NORMAL] =
-            Raylib_CsLo.Raylib.GetShaderLocationAttrib(_rlInstanceShaderEntry.RlShader, "matNormal");
-
-        // Set default shader locations: attributes locations
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_POSITION] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexPosition");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_TEXCOORD01] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexTexCoord");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VERTEX_COLOR] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "vertexColor");
-
-        // Set default shader locations: uniform locations
-        // _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
-        // Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_COLOR_DIFFUSE] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "colDiffuse");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_ALBEDO] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture0");
-        _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MAP_NORMAL] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "texture2");
-
-        /* 
-         * Test code: Set some ambient lighting:
-         */
-        // SetAmbientLight(new Vector4(0.9f, 0.6f, 0.9f, 1.0f));
-#endif
     }
 
+    
     public SkShaderEntry GetInstanceShaderEntry()
     {
         lock (_lo)
