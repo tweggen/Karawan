@@ -365,7 +365,7 @@ public class SilkThreeD : IThreeD
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
         if (UseInstanceRendering) 
         {
-            Matrix4x4 mvp = Matrix4x4.Transpose(_matProjection * _matView);
+            Matrix4x4 mvp = Matrix4x4.Transpose(_matView * _matProjection);
             sh.SetUniform("mvp", mvp);
             CheckError("upload mvp");
             _gl.DrawElementsInstanced(
@@ -555,12 +555,22 @@ public class SilkThreeD : IThreeD
     }
 
 
+    /**
+     * Set the current view matrix, transforming object space to camera.
+     * @param matView
+     *    view projection matrix, .NET order.
+     */
     public void SetViewMatrix(in Matrix4x4 matView)
     {
         _matView = matView;
     }
 
 
+    /**
+     * Set the current projection matrix
+     * @param matProjection
+     *    perspective projection matrix, .NET order.
+     */
     public void SetProjectionMatrix(in Matrix4x4 matProjection)
     {
         _matProjection = matProjection;

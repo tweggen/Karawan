@@ -22,6 +22,7 @@ namespace Splash.Silk
         private IThreeD _threeD;
         private SilkThreeD _silkThreeD;
         private LightManager _lightManager;
+        private Vector2 _vViewSize;
 
         private GL _gl;
 
@@ -79,10 +80,20 @@ namespace Splash.Silk
                         Matrix4x4 m = new(
                             2f * n / (r - l), 0f, (r+l)/(r-l), 0f,
                             0f, 2f * n / (t - b), (t+b)/(t-b), 0f,
-                            0f, 0f, -(f + n) / (f - n), 2f * f * n / (n - f),
+                            0f, 0f, -(f + n) / (f - n), -2f * f * n / (f - n),
                             0f, 0f, -1f, 0f
                         );
-                        matProjection = Matrix4x4.Transpose(m);
+                        // TXWTODO: We need a smarter way to fix that to the view.
+                        Matrix4x4 mScaleToViewWindow =
+                            Matrix4x4.Identity;
+                        
+                            /* new(
+                            1f/_vViewSize.X, 0f, 0f, 0f,
+                            0f, 1f/_vViewSize.Y, 0f, 0f,
+                            0f, 0f, 1f, 0f,
+                            0f, 0f, 0f, 1f
+                        ); */
+                        matProjection = Matrix4x4.Transpose(m*mScaleToViewWindow);
                     }
                     _silkThreeD.SetProjectionMatrix(matProjection);
                     
@@ -110,10 +121,6 @@ namespace Splash.Silk
                  * Then render transparent
                  */
                 RenderPart.CameraOutput.RenderTransparent(_threeD);
-
-                // Raylib_CsLo.Raylib.EndMode3D();
-
-                // Raylib_CsLo.Raylib.DrawText("Debug info:\n" + RenderPart.CameraOutput.GetDebugInfo(), 20, y0Stats, 10, Raylib_CsLo.Raylib.GREEN);
                 y0Stats += 20;
             }
 
@@ -130,8 +137,9 @@ namespace Splash.Silk
 
         public void SetDimension(int x, int y)
         {
-            _gl = _silkThreeD.GetGL(); 
-            _gl.Viewport(new System.Drawing.Size(x,y));
+            _gl = _silkThreeD.GetGL();
+            _vViewSize = new Vector2((float)x, (float)y);
+            _gl.Viewport(0, 0, (uint)x, (uint)y);
         }
 
         
@@ -144,6 +152,7 @@ namespace Splash.Silk
             _lightManager = lightManager;
             _silkThreeD = silkThreeD;
             _threeD = silkThreeD;
+            _vViewSize = new Vector2(1280, 576);
         }
     }
 }
