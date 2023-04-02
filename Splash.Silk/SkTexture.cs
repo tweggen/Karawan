@@ -99,7 +99,7 @@ public class SkTexture : IDisposable
             }
             else
             {
-                Console.WriteLine($"OK: {what}");
+                // Console.WriteLine($"OK: {what}");
             }
         }
 

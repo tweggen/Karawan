@@ -170,7 +170,7 @@ namespace engine.world
 
             _worldOperators.Add(new world.GenerateClustersOperator(_myKey));
 
-            if (false)
+            if (true)
             {
                 /*
                  * Create a fragment operator that reads the elevations after 
@@ -178,7 +178,7 @@ namespace engine.world
                  */
                 AddFragmentOperator(new world.CreateTerrainOperator(_myKey));
 
-                if (true)
+                if (engine.GlobalSettings.Get("world.CreateTerrain") != "false")
                 {
                     /*
                      * Create a fragment operator that creates a ground mesh.
@@ -187,12 +187,15 @@ namespace engine.world
                 }
             }
 
-            if (false)
+            if (engine.GlobalSettings.Get("world.CreateStreets") != "false")
             {
                 AddClusterFragmentOperatorFactory(
                     (string newKey, ClusterDesc clusterDesc) =>
                         new engine.streets.GenerateClusterStreetsOperator(clusterDesc, newKey)
                 );
+            } 
+            if (engine.GlobalSettings.Get("world.CreateClusterQuarters") != "false")
+            {
                 AddClusterFragmentOperatorFactory(
                     (string newKey, ClusterDesc clusterDesc) =>
                         new engine.streets.GenerateClusterQuartersOperator(clusterDesc, newKey)

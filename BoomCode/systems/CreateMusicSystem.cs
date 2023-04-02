@@ -30,7 +30,7 @@ namespace BoomCode.systems
                  */
                 var cMusic = entity.Get<engine.audio.components.Music>();
                 if (cMusic.IsPlaying) continue;
-                string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
+                string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
                 CachedSound sound = new(resourcePath + cMusic.Url);
                 AudioPlaybackEngine.Instance.PlaySound(sound);
                 cMusic.IsPlaying = true;

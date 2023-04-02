@@ -68,7 +68,7 @@ namespace nogame.playerhover
                 var posShip = new Vector3(0f, 35f, 0f);
                 var jShipMesh = engine.joyce.mesh.Tools.CreateCubeMesh(2f);
                 _aTransform.SetPosition(_eShip, posShip);
-                _aTransform.SetVisible(_eShip, true);
+                _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("noagme.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0xffffffff);
                 var jShipMaterial = new engine.joyce.Material();
                 jShipMaterial.AlbedoColor = 0xffeedd00;

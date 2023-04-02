@@ -76,7 +76,7 @@ namespace nogame
             _engine = engine0;
 
             _worldMetaGen = engine.world.MetaGen.Instance();
-            if (false)
+            if (engine.GlobalSettings.Get("nogame.CreateHouses") != "false")
             {
                 _worldMetaGen.AddClusterFragmentOperatorFactory(
                     (string newKey, engine.world.ClusterDesc clusterDesc) =>
@@ -84,7 +84,7 @@ namespace nogame
                 );
             }
 
-            if (false)
+            if (engine.GlobalSettings.Get("world.CreateCubeCharacters") != "false")
             {
                 _worldMetaGen.AddClusterFragmentOperatorFactory(
                     (string newKey, engine.world.ClusterDesc clusterDesc) =>

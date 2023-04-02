@@ -15,7 +15,7 @@ namespace Splash.Silk
         {
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
             string texturePath = jTexture.Source;
-            string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
+            string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
 
             if (texturePath == "joyce://col00000000")
             {

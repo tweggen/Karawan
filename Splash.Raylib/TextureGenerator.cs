@@ -11,7 +11,7 @@ namespace Splash.Raylib
 
         public void FillTextureEntry(in RlTextureEntry rlTextureEntry)
         {
-            string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
+            string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
             engine.joyce.Texture jTexture = rlTextureEntry.JTexture;
             bool canFreeImage = true;
             Image imgNew = new Image();

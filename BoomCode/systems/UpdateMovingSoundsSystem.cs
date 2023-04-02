@@ -34,7 +34,7 @@ namespace Boom.systems
             DefaultEcs.Entity entity,
             engine.audio.components.MovingSound cMovingSound)
         {
-            string resourcePath = _engine.GetConfigParam("Engine.ResourcePath");
+            string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
 
 
             _audioWorkerQueue.Enqueue(() =>

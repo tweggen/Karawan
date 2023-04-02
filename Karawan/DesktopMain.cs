@@ -175,8 +175,8 @@ namespace Karawan
                 engine.ConsoleLogger logger = new(e, app.Logger);
                 engine.Logger.SetLogTarget(logger);
             }
-
-            e.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
+            
+            engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
 
             Boom.API boom = new(e);
 

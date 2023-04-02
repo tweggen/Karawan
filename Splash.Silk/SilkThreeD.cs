@@ -554,7 +554,7 @@ public class SilkThreeD : IThreeD
         }
         else
         {
-            Console.WriteLine($"OK: {what}");
+            // Console.WriteLine($"OK: {what}");
         }
     }
 

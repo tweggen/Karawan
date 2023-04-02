@@ -43,9 +43,7 @@ namespace engine
 
         private Queue<Action<DefaultEcs.Entity>> _queueEntitySetupActions = new();
         private Queue<Action> _queueCleanupActions = new();
-
-        private Dictionary<string, string> _dictConfigParams = new();
-
+        
         private Thread _logicalThread;
         private Stopwatch _queueStopwatch = new();
 
@@ -614,30 +612,7 @@ namespace engine
              */
             _logicalThread.Start();
         }
-
-
-        public void SetConfigParam(in string key, in string value)
-        {
-            lock(_lo)
-            {
-                _dictConfigParams[key] = value;
-            }
-        }
-
-
-        public string GetConfigParam(in string key)
-        {
-            lock(_lo)
-            {
-                if( _dictConfigParams.ContainsKey(key))
-                {
-                    return _dictConfigParams[key];
-                } else
-                {
-                    return "";
-                }
-            }
-        }
+        
 
         public Engine( engine.IPlatform platform )
         {
