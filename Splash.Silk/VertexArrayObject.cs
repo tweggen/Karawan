@@ -1,5 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 using System;
+using System.Numerics;
 
 namespace Splash.Silk;
 
@@ -11,6 +12,11 @@ public class VertexArrayObject : IDisposable
     private uint _handle;
     private GL _gl;
 
+    public uint Handle
+    {
+        get => _handle;
+    }
+
     public unsafe VertexArrayObject(GL gl, SkMeshEntry skMeshEntry)
     {
         /*
@@ -21,7 +27,7 @@ public class VertexArrayObject : IDisposable
         /*
          * Now create buffer objects for all properties of the mesh entry. 
          */
-        var bIndices = new BufferObject<uint>(_gl, skMeshEntry.Indices, BufferTargetARB.ElementArrayBuffer);
+        var bIndices = new BufferObject<ushort>(_gl, skMeshEntry.Indices, BufferTargetARB.ElementArrayBuffer);
         var bVertices = new BufferObject<float>(_gl, skMeshEntry.Vertices, BufferTargetARB.ArrayBuffer);
         var bNormals = new BufferObject<float>(_gl, skMeshEntry.Normals, BufferTargetARB.ArrayBuffer);
         var bUVs = new BufferObject<float>(_gl, skMeshEntry.UVs, BufferTargetARB.ArrayBuffer);
@@ -30,6 +36,7 @@ public class VertexArrayObject : IDisposable
         _handle = _gl.GenVertexArray();
         BindVertexArray();
         bVertices.BindBuffer();
+        _gl.EnableVertexAttribArray(0);
         _gl.VertexAttribPointer(
             0,
             3,
@@ -37,8 +44,8 @@ public class VertexArrayObject : IDisposable
             false,
             0,
             (void*) 0);
-        _gl.EnableVertexAttribArray(0);
         bUVs.BindBuffer();
+        _gl.EnableVertexAttribArray(1);
         _gl.VertexAttribPointer(
             1,
             2,
@@ -46,16 +53,16 @@ public class VertexArrayObject : IDisposable
             false,
             0,
             (void*) 0);
-        _gl.EnableVertexAttribArray(1);
-        _gl.VertexAttribPointer(
-            2,
-            2,
-            VertexAttribPointerType.Float,
-            false,
-            0,
-            (void*) 0);
         _gl.EnableVertexAttribArray(2);
+        _gl.VertexAttribPointer(
+            2,
+            2,
+            VertexAttribPointerType.Float,
+            false,
+            0,
+            (void*) 0);
         bNormals.BindBuffer();
+        _gl.EnableVertexAttribArray(3);
         _gl.VertexAttribPointer(
             3,
             3,
@@ -63,9 +70,9 @@ public class VertexArrayObject : IDisposable
             false,
             0,
             (void*) 0);
-        _gl.EnableVertexAttribArray(3);
         bIndices.BindBuffer();
-        
+        _gl.VertexAttrib4(4, new Vector4(1f, 1f, 1f, 1f));
+        _gl.DisableVertexAttribArray(4);
     }
     
     

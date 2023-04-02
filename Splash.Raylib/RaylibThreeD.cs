@@ -157,7 +157,7 @@ public class RaylibThreeD : IThreeD
             }
         }
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MVP] =
-            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "mvp");
+            Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader,  "mvp");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW] =
             Raylib_CsLo.Raylib.GetShaderLocation(_rlInstanceShaderEntry.RlShader, "viewPos");
         _rlInstanceShaderEntry.RlShader.locs[(int)ShaderLocationIndex.SHADER_LOC_MATRIX_MODEL] =

@@ -45,6 +45,8 @@ public class SilkThreeD : IThreeD
     private LightShaderPos[] _lightShaderPos = null;
     
     
+    
+    
     // Create a light and get shader locations
     private void _compileLightLocked(
         in LightShaderPos lightShaderPos, int lightIndex, ref SkShader sh)
@@ -101,23 +103,29 @@ public class SilkThreeD : IThreeD
     private unsafe void _applyLightValues(ref SkShader sh, int index, in Light light)
     {
         var lightShaderPos = _getLightShaderPos(index, ref sh);
+        bool checkLights = false;
 
         // Send to shader light enabled state and type
         sh.SetUniform(lightShaderPos.enabledLoc, (light.enabled?1:0));
+        if( checkLights ) CheckError($"Set Uniform light enabled {index}");
         sh.SetUniform(lightShaderPos.typeLoc, (int)light.type);
+        if( checkLights ) CheckError($"Set Uniform light type {index}");
 
         // Send to shader light position values
         Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
         sh.SetUniform(lightShaderPos.posLoc, position);
+        if( checkLights ) CheckError($"Set Uniform light position {index}");
 
         // Send to shader light target position values
         Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
         sh.SetUniform(lightShaderPos.targetLoc, target);
+        if( checkLights ) CheckError($"Set Uniform light targetLoc {index}");
 
         // Send to shader light color values
         Vector4 color = new((float)light.color.X / (float)255, (float)light.color.Y / (float)255,
             (float)light.color.Z / (float)255, (float)light.color.W / (float)255);
         sh.SetUniform(lightShaderPos.colorLoc, color);
+        if( checkLights ) CheckError($"Set Uniform light color {index}");
     }
 
 
@@ -137,16 +145,19 @@ public class SilkThreeD : IThreeD
             return;
         }
         _applyAllLights(listLights, ref sh);
+        CheckError( "applyAllLights");
     }
     
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry)
     {
         var sh = ((SkShaderEntry)aShaderEntry).SkShader;
+        bool checkLights = false;
         if (null == sh)
         {
             return;
         }
         sh.SetUniform(_ambientLoc, colAmbient);
+        if( checkLights ) CheckError($"Set Uniform ambient light");
     }
 
     
@@ -217,6 +228,7 @@ public class SilkThreeD : IThreeD
             if (skTexture != null)
             {
                 skTexture.Bind(TextureUnit.Texture0);
+                CheckError("Bind Texture0");
             }
         }
 
@@ -227,6 +239,7 @@ public class SilkThreeD : IThreeD
             if (skTexture != null)
             {
                 skTexture.Bind(TextureUnit.Texture2);
+                CheckError("Bind Texture 2");
             }
         }
 
@@ -235,19 +248,48 @@ public class SilkThreeD : IThreeD
         sh.SetUniform("texture0", 0);
         sh.SetUniform("texture2", 2);
     }
-    
-    
+
+    private void _unloadMaterialFromShader()
+    {
+        _gl.ActiveTexture(TextureUnit.Texture0);
+        CheckError("unload AxtiveTexture0");
+        _gl.BindTexture(TextureTarget.Texture2D, 0);
+        _gl.ActiveTexture(TextureUnit.Texture2);
+        CheckError("unload AxtiveTexture2");
+        _gl.BindTexture(TextureTarget.Texture2D, 0);
+    }
+
+
+    private void _printUniforms()
+    {
+        GetInstanceShaderEntry();
+        uint shaderHandle = _skInstanceShaderEntry.SkShader.Handle;
+        string shaderLog = _gl.GetShaderInfoLog(shaderHandle);
+        Console.WriteLine(shaderLog);
+        for (int i = 0; i < 9; ++i)
+        {
+            int uniformSize;
+            UniformType uniformType;
+            string uniform = _gl.GetActiveUniform(shaderHandle, (uint)i, out uniformSize, out uniformType );
+            Console.WriteLine( $"Active Uniform {i} size {uniformSize} type {uniformType}: uniform");
+        }
+        
+    }
+
+    private static int foo;
+
     public unsafe void DrawMeshInstanced(
-        in AMeshEntry aMeshEntry, 
-        in AMaterialEntry aMaterialEntry, 
+        in AMeshEntry aMeshEntry,
+        in AMaterialEntry aMaterialEntry,
         in Span<Matrix4x4> spanMatrices,
         in int nMatrices)
     {
+        CheckError("Beginning of DrawMeshInstanced");
         SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
         //VertexArrayObject skMesh = skMeshEntry.vao;
-        
+
         SkMaterialEntry skMaterialEntry = ((SkMaterialEntry)aMaterialEntry);
-        
+
         /*
          * 1. set shader uniforms if the material has changed
          * 2. Actually draw mesh.
@@ -255,7 +297,7 @@ public class SilkThreeD : IThreeD
         GetInstanceShaderEntry();
         SkShader sh = _skInstanceShaderEntry.SkShader;
         sh.Use();
-        
+
         /*
          * Load the material, if it changed since the last
          * call. Usually it does because we already group
@@ -277,21 +319,27 @@ public class SilkThreeD : IThreeD
          */
 
         skMeshEntry.vao.BindVertexArray();
+        CheckError("Bind Vertex Array");
         var bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
+        CheckError("New Buffer Object");
         bMatrices.BindBuffer();
+        CheckError("Bind Buffer");
         uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
         for (uint i = 0; i < 4; ++i)
         {
+            _gl.EnableVertexAttribArray(locInstanceMatrices + i);
+            CheckError("Enable vertex array in instances");
             _gl.VertexAttribPointer(
-                locInstanceMatrices+i,
+                locInstanceMatrices + i,
                 4,
                 VertexAttribPointerType.Float,
                 false,
                 16 * (uint)sizeof(float),
-                (void*)(sizeof(float) * i  *4)
+                (void*)(sizeof(float) * i * 4)
             );
-            _gl.VertexAttribDivisor(locInstanceMatrices+i, 1);
-            _gl.EnableVertexAttribArray(locInstanceMatrices+i);
+            CheckError("Enable vertex attribut pointer n");
+            _gl.VertexAttribDivisor(locInstanceMatrices + i, 1);
+            CheckError("attrib divisoe");
         }
 
         /*
@@ -299,27 +347,45 @@ public class SilkThreeD : IThreeD
          */
         _gl.BindVertexArray(0);
         _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
-        
+
         /*
          * Setup view and projection matrix.
          * We need a combined view and projection matrix
          */
         // mProjection = Camera.GetProjectionMatrix();
         // mViewMatrix = Camera.GetViewKatrix();
-        Matrix4x4 mvp = _matView * _matProjection;
+        Matrix4x4 mvp1 = Matrix4x4.Transpose(_matView) * Matrix4x4.Transpose(_matProjection);
+        Matrix4x4 mvp2 = Matrix4x4.Transpose(_matProjection * _matView);
 
-        sh.SetUniform("mvp", Matrix4x4.Transpose(mvp) );
+        if (mvp1 != mvp2)
+        {
+            ErrorThrow("not equal", (m) => new InvalidOperationException(m));
+        }
+
+
+        Matrix4x4 mvp3 = Matrix4x4.Transpose(_matView * _matProjection);
+        sh.SetUniform("mvp", mvp2);
+        CheckError("upload mvp");
+
         skMeshEntry.vao.BindVertexArray();
+        CheckError("instance vertex array bind");
+
+        if (((++foo) & 0xf0) == 0)
+        {
+            //_printUniforms();
+        }
 
         // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
         _gl.DrawElementsInstanced(
             PrimitiveType.Triangles,
             (uint)skMeshEntry.JMesh.Indices.Count,
-            GLEnum.UnsignedInt,
+            GLEnum.UnsignedShort,
             (void*)0,
             (uint)nMatrices);
+        CheckError("draw instance");
 
+        _unloadMaterialFromShader();
         _gl.BindVertexArray(0);
         _gl.BindBuffer( GLEnum.ArrayBuffer, 0);
         _gl.BindBuffer( GLEnum.ElementArrayBuffer, 0);
@@ -397,13 +463,13 @@ public class SilkThreeD : IThreeD
         engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
         ATextureEntry aTextureEntry = null;
 
-        if (jMaterial.Texture != null)
+        if (jMaterial.Texture != null && jMaterial.Texture.Source != null && jMaterial.Texture.Source != "")
         {
             aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
             skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
         }
         ATextureEntry aEmissiveTextureEntry = null;
-        if (jMaterial.EmissiveTexture != null)
+        if (jMaterial.EmissiveTexture != null && jMaterial.EmissiveTexture.Source != null && jMaterial.EmissiveTexture.Source != "")
         {
             aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
@@ -490,6 +556,20 @@ public class SilkThreeD : IThreeD
         _matProjection = matProjection;
     }
 
+    public void CheckError(string what)
+    {
+        var error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            Error( $"Found OpenGL {what} error {error}" );
+            // ErrorThrow( $"{name}: Found OpenGL error {error}", m => new InvalidOperationException(m));
+        }
+        else
+        {
+            Console.WriteLine($"OK: {what}");
+        }
+    }
+
     public void SetGL(in GL gl)
     {
         _gl = gl;
@@ -509,7 +589,7 @@ public class SilkThreeD : IThreeD
     {
         return _gl;
     }
-    
+
     public SilkThreeD(in engine.Engine engine)
     {
         _engine = engine;

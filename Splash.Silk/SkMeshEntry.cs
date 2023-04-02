@@ -10,7 +10,7 @@ namespace Splash.Silk
         public float[] Vertices;
         public float[] Normals;
         public float[] UVs;
-        public uint[] Indices;
+        public ushort[] Indices;
 
         public void Upload(in GL gl)
         {

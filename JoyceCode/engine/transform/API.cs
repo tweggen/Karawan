@@ -14,9 +14,9 @@ namespace engine.transform
 
         static public void CreateTransform3ToParent(in Transform3 cTransform3, out Matrix4x4 mat)
         {
-            mat = Matrix4x4.CreateFromQuaternion(cTransform3.Rotation);
+            var mRotate = Matrix4x4.CreateFromQuaternion(cTransform3.Rotation);
             var mTranslate = Matrix4x4.CreateTranslation(cTransform3.Position);
-            mat = mat * mTranslate;
+            mat = mRotate * mTranslate;
         }
 
         public void SetTransforms(
@@ -33,9 +33,9 @@ namespace engine.transform
              * TXWTODO: IN a system only for the changed ones.
              */
             {
-                var mToParent = Matrix4x4.CreateFromQuaternion(rotation);
+                var mRotate = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
-                mToParent = mToParent * mTranslate;
+                var mToParent = mRotate * mTranslate;
                 entity.Set(new transform.components.Transform3ToParent(isVisible, cameraMask, mToParent) );
                 _isDirty = true;
             }

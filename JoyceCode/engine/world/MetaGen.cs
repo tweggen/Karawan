@@ -178,7 +178,7 @@ namespace engine.world
                  */
                 AddFragmentOperator(new world.CreateTerrainOperator(_myKey));
 
-                if (false)
+                if (true)
                 {
                     /*
                      * Create a fragment operator that creates a ground mesh.
