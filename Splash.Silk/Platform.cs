@@ -18,6 +18,7 @@ namespace Splash.Silk
         private engine.Engine _engine;
         private engine.ControllerState _controllerState;
         private Vector2 _vMouseMove;
+        private static Vector2 _lastMousePosition;
 
         private SilkThreeD _silkThreeD;
         private TextureManager _textureManager;
@@ -116,6 +117,25 @@ namespace Splash.Silk
                     break;
             }            
         }
+        
+
+        private void _onMouseMove(IMouse mouse, Vector2 position)
+        {
+            var lookSensitivity = 1f;
+            if (_lastMousePosition == default) { _lastMousePosition = position; }
+            else
+            {
+                var xOffset = (position.X - _lastMousePosition.X) * lookSensitivity;
+                var yOffset = (position.Y - _lastMousePosition.Y) * lookSensitivity;
+                _lastMousePosition = position;
+                _vMouseMove += new Vector2(xOffset, yOffset);
+            }
+        }
+
+
+        private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
+        {
+        }
 
 
 
@@ -126,6 +146,13 @@ namespace Splash.Silk
             {
                 input.Keyboards[i].KeyDown += _onKeyDown;
                 input.Keyboards[i].KeyUp += _onKeyUp;
+            }
+
+            for (int i = 0; i < input.Mice.Count; i++)
+            {
+                input.Mice[i].Cursor.CursorMode = CursorMode.Raw;
+                input.Mice[i].MouseMove += _onMouseMove;
+                input.Mice[i].Scroll += _onMouseWheel;
             }
 
             _gl = GL.GetApi(_iView);

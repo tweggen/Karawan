@@ -59,7 +59,7 @@ namespace Karawan
 
     public class DesktopMain
     {
-        
+
         public static void Main(string[] args)
         {
             var appBuilder = WebApplication.CreateBuilder(args);
@@ -189,10 +189,10 @@ namespace Karawan
 #else
                 iWindow.WindowState = WindowState.Fullscreen;
 #endif
-                
-            }
 
-            // var e = Splash.Raylib.Platform.EasyCreate(args);
+            }
+            
+        // var e = Splash.Raylib.Platform.EasyCreate(args);
             var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
 
             {
