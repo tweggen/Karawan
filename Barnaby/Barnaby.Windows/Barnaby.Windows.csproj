@@ -25,6 +25,9 @@
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Barnaby\Barnaby.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <!--
 		If you encounter this error message:
 		
