@@ -25,6 +25,8 @@ using System.Reflection.PortableExecutable;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Silk.NET.Windowing;
+using Silk.NET.Maths;
 
 namespace Karawan
 {
@@ -169,8 +171,29 @@ namespace Karawan
             var app = appBuilder.Build();
 
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+
+            IWindow iWindow = null;
+            {
+                var options = WindowOptions.Default;
+                // options.API = GraphicsAPI.
+#if DEBUG
+                options.Size = new Vector2D<int>(1280, 720);
+#else
+#endif
+                options.Title = "codename Karawan";
+                options.FramesPerSecond = 60;
+                options.VSync = false;
+                options.ShouldSwapAutomatically = false;
+                iWindow = Window.Create(options);
+#if DEBUG
+#else
+                iWindow.WindowState = WindowState.Fullscreen;
+#endif
+                
+            }
+
             // var e = Splash.Raylib.Platform.EasyCreate(args);
-            var e = Splash.Silk.Platform.EasyCreate(args);
+            var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
 
             {
                 engine.ConsoleLogger logger = new(e, app.Logger);

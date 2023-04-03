@@ -25,9 +25,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj", "{04406E59-DC40-498A-8969-08876ED3AD96}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wuka", "Wuka\Wuka.csproj", "{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}"
-	ProjectSection(ProjectDependencies) = postProject
-		{1F537D1E-007F-4CF2-9269-91997308670D} = {1F537D1E-007F-4CF2-9269-91997308670D}
-	EndProjectSection
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "JoyceCode", "JoyceCode\JoyceCode.shproj", "{77780CB7-FBC2-4301-9187-2428EF25DC3D}"
 EndProject
@@ -49,7 +46,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom", "Boom\Boom.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Splash.Raylib", "Splash.Raylib\Splash.Raylib.csproj", "{A182147E-F380-433E-995E-AA38EBD8BE87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Splash.Silk", "Splash.Silk\Splash.Silk.csproj", "{D0D207D7-1B26-4E47-B259-FF5272613F26}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Splash.Silk", "Splash.Silk\Splash.Silk.csproj", "{D0D207D7-1B26-4E47-B259-FF5272613F26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

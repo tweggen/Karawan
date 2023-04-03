@@ -52,7 +52,7 @@
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
 	  <RunAOTCompilation>False</RunAOTCompilation>
-	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+		<!-- EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk -->
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
 	  <Debugger>Xamarin</Debugger>
@@ -97,7 +97,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Joyce\Joyce.csproj" />
 	  <ProjectReference Include="..\nogame\nogame.csproj" />
-	  <ProjectReference Include="..\Splash.Raylib\Splash.Raylib.csproj" />
+	  <ProjectReference Include="..\Splash.Silk\Splash.Silk.csproj" />
 	  <ProjectReference Include="..\Splash\Splash.csproj" />
 	</ItemGroup>
 

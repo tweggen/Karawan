@@ -9,6 +9,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
+
 namespace Splash.Silk
 {
     public class Platform : engine.IPlatform
@@ -28,7 +29,7 @@ namespace Splash.Silk
 
         private LogicalRenderer _logicalRenderer;
 
-        private IWindow _iWindow;
+        private IView _iView;
         private GL _gl;
 
         public void SetEngine(engine.Engine engine)
@@ -120,14 +121,14 @@ namespace Splash.Silk
 
         private void _windowOnLoad()
         {
-            IInputContext input = _iWindow.CreateInput();
+            IInputContext input = _iView.CreateInput();
             for (int i = 0; i < input.Keyboards.Count; i++)
             {
                 input.Keyboards[i].KeyDown += _onKeyDown;
                 input.Keyboards[i].KeyUp += _onKeyUp;
             }
 
-            _gl = GL.GetApi(_iWindow);
+            _gl = GL.GetApi(_iView);
             _silkThreeD.SetGL(_gl);
             _gl.ClearDepth(1f);
             _gl.ClearColor(0f, 0f, 0f, 0f);
@@ -162,9 +163,9 @@ namespace Splash.Silk
                     continue;
                 }
 
-                _renderer.SetDimension(_iWindow.Size.X, _iWindow.Size.Y);
+                _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
                 _renderer.RenderFrame(renderFrame);
-                _iWindow.SwapBuffers();
+                _iView.SwapBuffers();
                 ++_frameNo;
                 if (2 == _frameNo)
                 {
@@ -186,7 +187,8 @@ namespace Splash.Silk
 
         public void Execute()
         {
-            _iWindow.Run();
+            _iView.Run();
+            _iView.Dispose();
         }
 
 
@@ -219,30 +221,13 @@ namespace Splash.Silk
         {
             string baseDirectory = System.AppContext.BaseDirectory;
             System.Console.WriteLine($"Running in directory {baseDirectory}" );
-            // Raylib_CsLo.Raylib.SetTraceLogLevel(4 /* LOG_WARNING */);
-            //Raylib_CsLo.Raylib.SetTraceLogCallback(_raylibTraceLog);
-            
-            var options = WindowOptions.Default;
-            // options.API = GraphicsAPI.
-#if DEBUG
-            options.Size = new Vector2D<int>(1280, 720);
-#else
-            // options.Size = new Vector2D<int>(1920, 1080);
-#endif
-            options.Title = "codename Karawan";
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            _iWindow = Window.Create(options);
-#if DEBUG
-#else
-            _iWindow.WindowState = WindowState.Fullscreen;
-#endif
-            _iWindow.Load += _windowOnLoad;
-            _iWindow.Resize += _windowOnResize;
-            _iWindow.Render += _windowOnRender;
-            _iWindow.Update += _windowOnUpdate;
-            _iWindow.Closing += _windowOnClose;
+
+
+            _iView.Load += _windowOnLoad;
+            _iView.Resize += _windowOnResize;
+            _iView.Render += _windowOnRender;
+            _iView.Update += _windowOnUpdate;
+            _iView.Closing += _windowOnClose;
             
             // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
             // disable and bind cursor.
@@ -283,6 +268,11 @@ namespace Splash.Silk
             }
         }
 
+        public void SetIView(IView iView)
+        {
+            _iView = iView;
+        }
+
         public Platform(string[] args)
         {
             _controllerState = new();
@@ -304,12 +294,13 @@ namespace Splash.Silk
         }
 
 
-        static public engine.Engine EasyCreate(string[] args)
+        static public engine.Engine EasyCreate(string[] args, IView iView)
         {
             var platform = new Platform(args);
             engine.Engine engine = new engine.Engine(platform);
             engine.SetupDone();
 
+            platform.SetIView(iView);
             platform.SetEngine(engine);
             platform.SetupDone();
             engine.PlatformSetupDone();
