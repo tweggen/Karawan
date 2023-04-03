@@ -181,7 +181,7 @@ namespace Splash.Silk
 
         private void _windowOnResize( Vector2D<int> size)
         {
-            
+            _gl.Viewport(size);
         }
 
         public void Execute()
@@ -227,7 +227,7 @@ namespace Splash.Silk
 #if DEBUG
             options.Size = new Vector2D<int>(1280, 720);
 #else
-            options.Size = new Vector2D<int>(1920, 1080);
+            // options.Size = new Vector2D<int>(1920, 1080);
 #endif
             options.Title = "codename Karawan";
             options.FramesPerSecond = 60;
