@@ -14,14 +14,14 @@ namespace Wuka
             {
                 var runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier;
                 Console.WriteLine($"Starting on platform {runtime}");
-                var engine = Splash.Raylib.Platform.EasyCreate(new string[] {});
-                engine.SetConfigParam("Engine.ResourcePath", "..\\..\\..\\..\\");
+                var e = Splash.Raylib.Platform.EasyCreate(new string[] {});
+                engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
 
-                engine.AddSceneFactory("root", () => new nogame.RootScene());
-                engine.AddSceneFactory("logos", () => new nogame.LogosScene());
+                e.AddSceneFactory("root", () => new nogame.RootScene());
+                e.AddSceneFactory("logos", () => new nogame.LogosScene());
 
-                engine.SetMainScene("logos");
-                engine.Execute();
+                e.SetMainScene("logos");
+                e.Execute();
             }
         }
 
