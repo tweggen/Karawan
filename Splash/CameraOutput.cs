@@ -35,12 +35,14 @@ namespace Splash
             int nSkippedMeshes = 0;
             foreach (var materialItem in mb)
             {
-                bool haveMaterial = materialItem.Value.AMaterialEntry.IsUploaded();
+                var aMaterialEntry = materialItem.Value.AMaterialEntry;
+                var jMaterial = aMaterialEntry.JMaterial; 
+                bool haveMaterial = aMaterialEntry.IsUploaded();
                 if (!haveMaterial)
                 {
-                    if (swUpload.Elapsed.TotalMilliseconds < 1f) {
+                    if (jMaterial.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f) {
                         swUpload.Start();
-                        _materialManager.FillMaterialEntry(materialItem.Value.AMaterialEntry);
+                        _materialManager.FillMaterialEntry(aMaterialEntry);
                         swUpload.Stop();
                     }
                     else
@@ -52,10 +54,12 @@ namespace Splash
                 
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
-                    bool haveMesh = meshItem.Value.AMeshEntry.IsMeshUploaded();
+                    var aMeshEntry = meshItem.Value.AMeshEntry;
+                    var jMesh = aMeshEntry.JMesh;
+                    bool haveMesh = aMeshEntry.IsMeshUploaded();
                     if (!haveMesh)
                     {
-                        if (swUpload.Elapsed.TotalMilliseconds < 1f)
+                        if (jMesh.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f)
                         {
                             swUpload.Start();
                             _meshManager.FillMeshEntry(meshItem.Value.AMeshEntry);

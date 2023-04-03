@@ -35,6 +35,8 @@ namespace engine.joyce
          */
         public IList<Vector3> Normals;
 
+        public bool UploadImmediately = false;
+        
         public bool IsEmpty()
         {
             return Indices.Count == 0;

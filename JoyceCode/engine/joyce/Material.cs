@@ -12,6 +12,7 @@ namespace engine.joyce
         public Texture EmissiveTexture { get; set; }
         public uint AlbedoColor;
         public bool HasTransparency;
+        public bool UploadImmediately = false;
 
         public Material(in Texture texture) 
         { 

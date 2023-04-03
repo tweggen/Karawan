@@ -33,7 +33,7 @@ namespace nogame
             }
             if (_isCleared)
             {
-                if (t > 1.5f)
+                if (t > 1.8f)
                 {
                     _engine.SetMainScene("root");
                     return;
@@ -41,8 +41,12 @@ namespace nogame
             }
             else
             {
-                if (t < 1.0f)
+                if (t < 1.7f)
                 {
+                    if (t > 0.5f)
+                    {
+                        _aTransform.SetVisible(_eLogo, true);
+                    }
                     _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f + _t));
                     _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
                     _aTransform.SetPosition(_eLight, new Vector3(-10f + 30f * t, 0f, 15f));
@@ -66,7 +70,9 @@ namespace nogame
             var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
                 vSize,
                 new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 1f));
+            jMesh.UploadImmediately = true;
             var jMaterial = new engine.joyce.Material();
+            jMaterial.UploadImmediately = true;
             jMaterial.Texture = new engine.joyce.Texture("assets\\logos\\joyce\\albedo-joyce-engine.png");
             jMaterial.EmissiveTexture = new engine.joyce.Texture("assets\\logos\\joyce\\emissive-joyce-engine.png");
             engine.joyce.InstanceDesc jInstanceDesc = new();
@@ -77,7 +83,7 @@ namespace nogame
             var entity = _ecsWorld.CreateEntity();
             entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             _aTransform.SetTransforms(
-                entity, true, 0xffffffff,
+                entity, false, 0xffffffff,
                 new Quaternion(0f, 0f, 0f, 1f),
                 new Vector3(0f, 0f, 0f));
             return entity;
