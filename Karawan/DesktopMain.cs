@@ -176,7 +176,7 @@ namespace Karawan
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
             engine.GlobalSettings.Set("platform.threeD.API.version", "330");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-            engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
+            engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
 
             engine.Assets.SetAssetImplementation(new Karawan.AssetImplementation());
             
