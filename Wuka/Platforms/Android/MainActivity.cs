@@ -2,8 +2,8 @@
 using Android.App.Roles;
 using Android.Content.PM;
 using Android.OS;
-// using Silk.NET.Windowing;
-using Silk.NET.Windowing.Sdl.Android;
+using Silk.NET.Windowing;
+// using Silk.NET.Windowing.Sdl.Android;
 
 namespace Wuka
 {
