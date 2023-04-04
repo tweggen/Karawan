@@ -6,17 +6,30 @@ using Silk.NET.Windowing;
 using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
 
+using Android.Content.Res;
+
 namespace Wuka
 {
     [Activity(MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
     public class MainActivity : Silk.NET.Windowing.Sdl.Android.SilkActivity
     {
+        internal static AssetManager AssetManager;
+        
         private Silk.NET.Windowing.IView _iView;
         protected override void OnRun()
         {
+            /*
+             * setup framework dependencies.
+             */
             SdlWindowing.RegisterPlatform();
             SdlInput.RegisterPlatform();
-            // FileManager.AssetManager = Assets;
+            
+            /*
+             * Setup singletons and statics
+             */
+            var assetManagerImplementation = new Wuka.AssetImplementation(Assets);
+            engine.Assets.SetAssetImplementation(assetManagerImplementation);
+
             var options = ViewOptions.Default;
             options.API = new GraphicsAPI(ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
             options.FramesPerSecond = 60;

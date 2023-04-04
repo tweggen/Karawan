@@ -18,7 +18,7 @@ namespace engine.streets
                 {
                     _jMaterialStreet = new engine.joyce.Material();
                     // _jMaterialHouse.AlbedoColor = 0xff444444;
-                    _jMaterialStreet.Texture = new engine.joyce.Texture("assets\\streets1to4.png");
+                    _jMaterialStreet.Texture = new engine.joyce.Texture("streets1to4.png");
                 }
                 return _jMaterialStreet;
             }

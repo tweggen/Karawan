@@ -73,8 +73,8 @@ namespace nogame
             jMesh.UploadImmediately = true;
             var jMaterial = new engine.joyce.Material();
             jMaterial.UploadImmediately = true;
-            jMaterial.Texture = new engine.joyce.Texture("assets\\logos\\joyce\\albedo-joyce-engine.png");
-            jMaterial.EmissiveTexture = new engine.joyce.Texture("assets\\logos\\joyce\\emissive-joyce-engine.png");
+            jMaterial.Texture = new engine.joyce.Texture("logos\\joyce\\albedo-joyce-engine.png");
+            jMaterial.EmissiveTexture = new engine.joyce.Texture("logos\\joyce\\emissive-joyce-engine.png");
             engine.joyce.InstanceDesc jInstanceDesc = new();
             jInstanceDesc.Meshes.Add(jMesh);
             jInstanceDesc.MeshMaterials.Add(0);
@@ -124,7 +124,7 @@ namespace nogame
             }
             if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false") {
                 DefaultEcs.Entity eMusic = _ecsWorld.CreateEntity();
-                eMusic.Set(new engine.audio.components.Music("assets\\shaklengokhsi.ogg"));
+                eMusic.Set(new engine.audio.components.Music("shaklengokhsi.ogg"));
             }
 
             /*

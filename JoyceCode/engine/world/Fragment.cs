@@ -22,7 +22,7 @@ namespace engine.world
             lock(_lock) {
                 if( _jMaterialGround==null )
                 {
-                    joyce.Texture jGroundTexture = new joyce.Texture("assets\\gridlines1.png");
+                    joyce.Texture jGroundTexture = new joyce.Texture("gridlines1.png");
                     _jMaterialGround = new joyce.Material(jGroundTexture);
                 }
                 return _jMaterialGround;

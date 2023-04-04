@@ -21,7 +21,8 @@ public class SkTexture : IDisposable
 
         try
         {
-            using (var img = Image.Load<Rgba32>(path))
+            System.IO.Stream streamImage = engine.Assets.Open(path);
+            var img = Image.Load<Rgba32>(streamImage);
             {
                 gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)img.Width, (uint)img.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
                 CheckError("TexImage2D");

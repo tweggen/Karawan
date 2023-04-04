@@ -20,6 +20,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Assets.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\MovingSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\Music.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\Music.cs" />
@@ -50,6 +51,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\OldParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Parent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\systems\NewParentSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\IAssetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ILogTarget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />

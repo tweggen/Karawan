@@ -13,7 +13,8 @@ namespace Boom
         public CachedSound(string audioFileName)
         {
             Url = audioFileName;
-            using (var vorbisReader = new NVorbis.VorbisReader(audioFileName))
+            System.IO.Stream streamAudiofile = engine.Assets.Open(audioFileName);
+            using (var vorbisReader = new NVorbis.VorbisReader(streamAudiofile))
             {
                 var readBuffer = new float[vorbisReader.SampleRate * vorbisReader.Channels];
                 var wholeFile = new List<float>((int)(vorbisReader.TotalSamples));

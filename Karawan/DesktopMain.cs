@@ -170,11 +170,16 @@ namespace Karawan
 
             var app = appBuilder.Build();
 
+            /*
+             * Setup globals and statics
+             */
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
             engine.GlobalSettings.Set("platform.threeD.API.version", "330");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
             engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
 
+            engine.Assets.SetAssetImplementation(new Karawan.AssetImplementation());
+            
             IWindow iWindow = null;
             {
                 var options = WindowOptions.Default;
