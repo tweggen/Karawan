@@ -88,6 +88,8 @@
 	  <None Remove="Platforms\Android\gridlines.png" />
 	  <None Remove="Platforms\Android\gridlines1.jpg" />
 	  <None Remove="Platforms\Android\gridlines1.png" />
+	  <None Remove="Platforms\Android\logos\joyce\albedo-joyce-engine.png" />
+	  <None Remove="Platforms\Android\logos\joyce\emissive-joyce-engine.png" />
 	  <None Remove="Platforms\Android\lorem.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon.png" />
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
@@ -113,6 +115,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\gridlines1.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\logos\joyce\albedo-joyce-engine.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\logos\joyce\emissive-joyce-engine.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\lorem.png">

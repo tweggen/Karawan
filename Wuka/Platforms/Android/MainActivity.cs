@@ -40,7 +40,7 @@ namespace Wuka
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGLES");
             engine.GlobalSettings.Set("platform.threeD.API.version", "300");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-            engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
+            engine.GlobalSettings.Set("Engine.ResourcePath", "./");
 
             var e = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
 
