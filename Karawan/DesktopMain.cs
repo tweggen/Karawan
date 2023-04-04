@@ -170,7 +170,10 @@ namespace Karawan
 
             var app = appBuilder.Build();
 
+            engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
+            engine.GlobalSettings.Set("platform.threeD.API.version", "330");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
+            engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
 
             IWindow iWindow = null;
             {
@@ -198,9 +201,7 @@ namespace Karawan
             {
                 engine.ConsoleLogger logger = new(e, app.Logger);
                 engine.Logger.SetLogTarget(logger);
-            }
-            
-            engine.GlobalSettings.Set("Engine.ResourcePath", "..\\..\\..\\..\\");
+            }            
             
             Boom.API boom = new(e);
 

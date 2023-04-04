@@ -154,8 +154,8 @@ public class SilkThreeD : IThreeD
         _skInstanceShaderEntry = new SkShaderEntry();
         _skInstanceShaderEntry.SkShader = new SkShader(
             _gl,
-            shadercode.LightingVS.ShaderCode,
-            shadercode.LightingFS.ShaderCode
+            shadercode.LightingVS.GetShaderCode(),
+            shadercode.LightingFS.GetShaderCode()
         );
     }
 

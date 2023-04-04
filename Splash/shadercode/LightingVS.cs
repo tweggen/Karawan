@@ -1,15 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using static engine.Logger;
 
 namespace Splash.shadercode
 {
     public class LightingVS
     {
-        static public string ShaderCode= @"
-#version 330
+        public static string GetShaderCode()
+        {
+            string api = engine.GlobalSettings.Get("platform.threeD.API");
+            if (api == "OpenGL")
+            {
+                return "#version 330\n\n" + _shaderCodeCommon;
+            }
+            else if (api == "OpenGLES")
+            {
+                return "#version 300 es\n\n" + _shaderCodeCommon;
+            }
+            ErrorThrow($"Invalid graphics API setup in global config \"platform.threeD.API\": \"{api}\".",
+                m => new InvalidOperationException(m));
+            return "";
+        }
+
+        static private string _shaderCodeCommon = @"
 
 // Input vertex attributes
 layout(location = 0) in vec3 vertexPosition;

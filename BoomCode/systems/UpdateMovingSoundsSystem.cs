@@ -39,25 +39,30 @@ namespace Boom.systems
 
             _audioWorkerQueue.Enqueue(() =>
             {
-                AudioPlaybackEngine.Instance.FindCachedSound(
-                    resourcePath + cMovingSound.Sound.Url,
-                    (Boom.CachedSound bCachedSound) =>
-                    {
-                        _engine.QueueMainThreadAction(() =>
+                try
+                {
+                    AudioPlaybackEngine.Instance.FindCachedSound(
+                        resourcePath + cMovingSound.Sound.Url,
+                        (Boom.CachedSound bCachedSound) =>
                         {
-                            Boom.Sound bSound = new Sound(bCachedSound);
-                            entity.Set(new components.BoomSound(bSound));
-
-                            bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
-                            bSound.Pan = cMovingSound.MotionPan;
-                            bSound.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
-                            
-                            _audioWorkerQueue.Enqueue(() =>
+                            _engine.QueueMainThreadAction(() =>
                             {
-                                AudioPlaybackEngine.Instance.PlaySound(bSound);
+                                Boom.Sound bSound = new Sound(bCachedSound);
+                                entity.Set(new components.BoomSound(bSound));
+
+                                bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
+                                bSound.Pan = cMovingSound.MotionPan;
+                                bSound.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
+
+                                _audioWorkerQueue.Enqueue(() =>
+                                {
+                                    AudioPlaybackEngine.Instance.PlaySound(bSound);
+                                });
                             });
                         });
-                    });
+                } catch (Exception ex) { 
+                    // Ignore and just don't create sound.
+                }
             });
         }
         
