@@ -19,6 +19,9 @@ namespace Wuka
             // FileManager.AssetManager = Assets;
             var options = ViewOptions.Default;
             options.API = new GraphicsAPI(ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
+            options.FramesPerSecond = 60;
+            options.VSync = false;
+            options.ShouldSwapAutomatically = false;
             _iView = Silk.NET.Windowing.Window.GetView(options); // note also GetView, instead of Window.Create.
 
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGLES");
