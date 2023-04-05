@@ -1,7 +1,10 @@
 {
   "profiles": {
-    "Barnaby.Windows": {
-      "commandName": "MsixPackage"
+    // "Barnaby.Windows (packaged)": {
+    //   "commandName": "MsixPackage"
+    // },
+    "Barnaby.Windows (unpackaged)": {
+      "commandName": "Project"
     }
   }
 }

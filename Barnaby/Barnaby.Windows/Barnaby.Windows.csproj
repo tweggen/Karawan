@@ -12,6 +12,7 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType>MSIX</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <WinUISDKReferences>false</WinUISDKReferences>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Images\**" />
