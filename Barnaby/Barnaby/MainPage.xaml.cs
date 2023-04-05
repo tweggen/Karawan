@@ -39,6 +39,7 @@ namespace Barnaby
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0003, Enabled = true });
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0004, Enabled = true });
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0005, Enabled = true });
+            lvDisplayEntities.ItemsSource = listDisplayEntities;
         }
     }
 }
