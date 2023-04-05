@@ -73,8 +73,8 @@ namespace nogame
             jMesh.UploadImmediately = true;
             var jMaterial = new engine.joyce.Material();
             jMaterial.UploadImmediately = true;
-            jMaterial.Texture = new engine.joyce.Texture("logos/joyce/albedo-joyce-engine.png");
-            jMaterial.EmissiveTexture = new engine.joyce.Texture("logos/joyce/emissive-joyce-engine.png");
+            jMaterial.Texture = new engine.joyce.Texture("logos.joyce.albedo-joyce-engine.png");
+            jMaterial.EmissiveTexture = new engine.joyce.Texture("logos.joyce.emissive-joyce-engine.png");
             engine.joyce.InstanceDesc jInstanceDesc = new();
             jInstanceDesc.Meshes.Add(jMesh);
             jInstanceDesc.MeshMaterials.Add(0);

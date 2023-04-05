@@ -10,7 +10,8 @@ public class AssetImplementation : engine.IAssetImplementation
 
     public System.IO.Stream Open(in string filename)
     {
-        return _assetManager.Open(filename);
+        string realName = "Platforms/Android/" + filename;
+        return _assetManager.Open(realName);
     }
 
     public AssetImplementation(in AssetManager assetManager)
