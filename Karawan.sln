@@ -235,6 +235,8 @@ Global
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Release|x86.Build.0 = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.Release|x86.Deploy.0 = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|Any CPU.Deploy.0 = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|arm64.ActiveCfg = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|arm64.Build.0 = Release|Any CPU
 		{8FA4A211-8A0F-4488-8E1F-46677FA01AE9}.ReleaseNoProfiling|arm64.Deploy.0 = Release|Any CPU

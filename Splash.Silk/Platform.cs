@@ -9,7 +9,6 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 
-
 namespace Splash.Silk
 {
     public class Platform : engine.IPlatform
@@ -31,8 +30,9 @@ namespace Splash.Silk
         private LogicalRenderer _logicalRenderer;
 
         private IView _iView;
+        private IInputContext _iInputContext;
         private GL _gl;
-
+        
         public void SetEngine(engine.Engine engine)
         {
             lock (_lock)
@@ -117,19 +117,79 @@ namespace Splash.Silk
                     break;
             }            
         }
-        
+
+
+        private void _onMouseMoveDesktop(IMouse mouse, Vector2 position)
+        {
+        }
+
+
+        private void _touchMouseController()
+        {
+            if (_isMouseButtonClicked)
+            {
+                Vector2 currDist = _currentMousePosition - _lastMousePosition;
+                var viewSize = _iView.Size;
+
+                float relY = (float)currDist.Y / (float)viewSize.Y;
+                float relX = (float)currDist.X / (float)viewSize.X;
+
+                if (relY < 0)
+                {
+                    _controllerState.WalkForward = (int)(Single.Min(0.5f, -relY) * 510f);
+                    _controllerState.WalkBackward = 0;
+                }
+                else if (relY > 0)
+                {
+                    _controllerState.WalkBackward = (int)(Single.Min(0.5f, relY) * 510f);
+                    _controllerState.WalkForward = 0;
+                }
+                if (relX < 0)
+                {
+                    _controllerState.TurnLeft = (int)(Single.Min(0.5f, -relX) * 510f);
+                    _controllerState.TurnRight = 0;
+                }
+                else if (relX > 0)
+                {
+                    _controllerState.TurnRight = (int)(Single.Min(0.5f, relX) * 510f);
+                    _controllerState.TurnLeft = 0;
+                }
+            } else
+            {
+                _controllerState.WalkForward = 0;
+                _controllerState.WalkBackward = 0;
+                _controllerState.TurnRight = 0;
+                _controllerState.TurnLeft = 0;
+            }
+        }
+
+
+        private void _desktopMouseController()
+        {
+            var lookSensitivity = 1f;
+            if (!_isMouseButtonClicked)
+            {
+                if (_lastMousePosition == default) { _lastMousePosition = _currentMousePosition; }
+                else
+                {
+                    var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * lookSensitivity;
+                    var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * lookSensitivity;
+                    _lastMousePosition = _currentMousePosition;
+                    _vMouseMove += new Vector2(xOffset, yOffset);
+                }
+            }
+        }
+
+
+        private bool _isMouseButtonClicked = false;
+        private Vector2 _mousePressPosition = new();
+        private Vector2 _currentMousePosition = new();
+
 
         private void _onMouseMove(IMouse mouse, Vector2 position)
         {
-            var lookSensitivity = 1f;
-            if (_lastMousePosition == default) { _lastMousePosition = position; }
-            else
-            {
-                var xOffset = (position.X - _lastMousePosition.X) * lookSensitivity;
-                var yOffset = (position.Y - _lastMousePosition.Y) * lookSensitivity;
-                _lastMousePosition = position;
-                _vMouseMove += new Vector2(xOffset, yOffset);
-            }
+            _currentMousePosition = position;
+
         }
 
 
@@ -138,27 +198,51 @@ namespace Splash.Silk
         }
 
 
+        private void _onMouseDown(IMouse mouse, MouseButton mouseButton)
+        {
+            if (mouseButton != MouseButton.Left)
+            {
+                return;
+            }
+            _mousePressPosition = mouse.Position;
+            _currentMousePosition = mouse.Position;
+            _isMouseButtonClicked = true;
+        }
+
+        private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
+        {
+            if (mouseButton != MouseButton.Left)
+            {
+                return;
+            }
+            _currentMousePosition = mouse.Position;
+            _isMouseButtonClicked = false;
+        }
 
         private void _windowOnLoad()
         {
-            IInputContext input = _iView.CreateInput();
-            for (int i = 0; i < input.Keyboards.Count; i++)
+            _iInputContext = _iView.CreateInput();
+            for (int i = 0; i < _iInputContext.Keyboards.Count; i++)
             {
-                input.Keyboards[i].KeyDown += _onKeyDown;
-                input.Keyboards[i].KeyUp += _onKeyUp;
+                _iInputContext.Keyboards[i].KeyDown += _onKeyDown;
+                _iInputContext.Keyboards[i].KeyUp += _onKeyUp;
             }
 
-            for (int i = 0; i < input.Mice.Count; i++)
+            for (int i = 0; i < _iInputContext.Mice.Count; i++)
             {
-                input.Mice[i].Cursor.CursorMode = CursorMode.Raw;
-                input.Mice[i].MouseMove += _onMouseMove;
-                input.Mice[i].Scroll += _onMouseWheel;
+                _iInputContext.Mice[i].Cursor.CursorMode = CursorMode.Raw;
+                _iInputContext.Mice[i].MouseDown += _onMouseDown;
+                _iInputContext.Mice[i].MouseUp += _onMouseUp;
+                _iInputContext.Mice[i].MouseMove += _onMouseMove;
+
+                _iInputContext.Mice[i].Scroll += _onMouseWheel;
             }
 
             _gl = GL.GetApi(_iView);
             _silkThreeD.SetGL(_gl);
             _gl.ClearDepth(1f);
             _gl.ClearColor(0f, 0f, 0f, 0f);
+            
 
         }
 
@@ -170,6 +254,7 @@ namespace Splash.Silk
 
 
         private static int _frameNo = 0;
+
         /**
          * OnRender for silk.
          *
@@ -183,6 +268,16 @@ namespace Splash.Silk
                 _physFrameReadKeyEvents();
                 _physFrameReadMouseMove();
 
+                if (engine.GlobalSettings.Get("splash.touchControls") != "false")
+                {
+                    _touchMouseController();
+                }
+                else
+                {
+                    _desktopMouseController();
+                }
+
+
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
                 if (renderFrame == null)
                 {
@@ -192,6 +287,7 @@ namespace Splash.Silk
 
                 _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
                 _renderer.RenderFrame(renderFrame);
+               
                 _iView.SwapBuffers();
                 ++_frameNo;
                 if (2 == _frameNo)
@@ -248,8 +344,7 @@ namespace Splash.Silk
         {
             string baseDirectory = System.AppContext.BaseDirectory;
             System.Console.WriteLine($"Running in directory {baseDirectory}" );
-
-
+            
             _iView.Load += _windowOnLoad;
             _iView.Resize += _windowOnResize;
             _iView.Render += _windowOnRender;
