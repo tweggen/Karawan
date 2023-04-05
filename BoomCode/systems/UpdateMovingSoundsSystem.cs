@@ -34,15 +34,11 @@ namespace Boom.systems
             DefaultEcs.Entity entity,
             engine.audio.components.MovingSound cMovingSound)
         {
-            string resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
-
-
             _audioWorkerQueue.Enqueue(() =>
             {
                 try
                 {
-                    AudioPlaybackEngine.Instance.FindCachedSound(
-                        resourcePath + cMovingSound.Sound.Url,
+                    AudioPlaybackEngine.Instance.FindCachedSound( cMovingSound.Sound.Url,
                         (Boom.CachedSound bCachedSound) =>
                         {
                             _engine.QueueMainThreadAction(() =>

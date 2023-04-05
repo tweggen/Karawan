@@ -5,10 +5,65 @@
     xmlns:local="using:Barnaby"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:input="clr-namespace:Microsoft.UI.Xaml.Input;assembly=Uno.UI"
     mc:Ignorable="d"    
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
+        <MenuBar>
+            <MenuBarItem Title="File">
+                <MenuFlyoutItem Text="New">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <input:KeyboardAccelerator Modifiers="Control" Key="N" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Open">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <input:KeyboardAccelerator Modifiers="Control" Key="O" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <input:KeyboardAccelerator Modifiers="Control" Key="S" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Exit">
+                </MenuFlyoutItem>
+            </MenuBarItem>
+            <MenuBarItem Title="Edit">
+                <MenuFlyoutItem Text="Undo">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <input:KeyboardAccelerator Modifiers="Control" Key="Z" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Cut">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <input:KeyboardAccelerator Modifiers="Control" Key="X" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Copy">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <input:KeyboardAccelerator Modifiers="Control" Key="C" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Paste">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <input:KeyboardAccelerator Modifiers="Control" Key="V" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
+            <MenuBarItem Title="Help">
+                <MenuFlyoutItem Text="About">
+                </MenuFlyoutItem>
+            </MenuBarItem>
+        </MenuBar>
+    
+        <TextBlock Text="Hello, world!" Margin="20" FontSize="30" />
 
-    <Grid>
-      <TextBlock Text="Hello, world!" Margin="20" FontSize="30" />
-    </Grid>
+        <StackPanel Orientation="Horizontal">
+            <ListView Name="lvDisplayEntities">
+                
+            </ListView>
+        </StackPanel>
+    </StackPanel>
 </Page>

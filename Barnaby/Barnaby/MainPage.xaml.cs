@@ -12,6 +12,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Windows.System;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -22,9 +23,22 @@ namespace Barnaby
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        public class DisplayEntity
+        {
+            public uint Handle { get; set; }
+            public bool Enabled {  get; set; }
+        }
+
         public MainPage()
         {
             this.InitializeComponent();
+            List<DisplayEntity> listDisplayEntities = new List<DisplayEntity>();
+            listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0001, Enabled = true });
+            listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0000, Enabled = true });
+            listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0002, Enabled = true });
+            listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0003, Enabled = true });
+            listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0004, Enabled = true });
+            listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0005, Enabled = true });
         }
     }
 }
