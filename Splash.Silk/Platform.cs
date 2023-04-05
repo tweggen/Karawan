@@ -128,7 +128,7 @@ namespace Splash.Silk
         {
             if (_isMouseButtonClicked)
             {
-                Vector2 currDist = _currentMousePosition - _lastMousePosition;
+                Vector2 currDist = _currentMousePosition - _mousePressPosition;
                 var viewSize = _iView.Size;
 
                 float relY = (float)currDist.Y / (float)viewSize.Y;
