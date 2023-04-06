@@ -281,6 +281,7 @@ namespace Splash.Silk
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
                 if (renderFrame == null)
                 {
+                    _silkThreeD.ExecuteGraphicsThreadActions(0.005f);
                     Thread.Sleep(1);
                     continue;
                 }
@@ -289,6 +290,7 @@ namespace Splash.Silk
                 _renderer.RenderFrame(renderFrame);
                
                 _iView.SwapBuffers();
+                _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
                 ++_frameNo;
                 if (2 == _frameNo)
                 {
