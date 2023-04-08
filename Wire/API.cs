@@ -1,6 +1,6 @@
 ﻿namespace Wire
 {
-    public class Class1
+    public class API
     {
 
     }

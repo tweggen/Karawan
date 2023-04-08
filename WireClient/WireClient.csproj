@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <Import Project="..\WireClient.Shared\WireClient.Shared.projitems" Label="Shared" />
+  <ItemGroup>
+    <ProjectReference Include="..\Wire\Wire.csproj" />
+  </ItemGroup>
 
 </Project>

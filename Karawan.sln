@@ -28,12 +28,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wuka", "Wuka\Wuka.csproj", 
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "JoyceCode", "JoyceCode\JoyceCode.shproj", "{77780CB7-FBC2-4301-9187-2428EF25DC3D}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Wire.Shared", "Wire.Shared\Wire.Shared.shproj", "{1842530A-8EDB-4A38-8D3F-06E33E1EEFF6}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "WireClient.Shared", "WireClient.Shared\WireClient.Shared.shproj", "{A5060FE1-62EA-4769-BD17-6C97CAAE65EF}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "WireServer.Shared", "WireServer.Shared\WireServer.Shared.shproj", "{EE6AFFB0-624D-4B21-A6AA-B55E9E8A9280}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wire", "Wire\Wire.csproj", "{A3B474B2-0420-4375-89AB-A129BBB5C74C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WireClient", "WireClient\WireClient.csproj", "{BA25F58F-E80E-4EF9-8613-F72FA4478892}"
