@@ -10,7 +10,12 @@ using Android.Content.Res;
 
 namespace Wuka
 {
-    [Activity(MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+    [Activity(
+        MainLauncher = true, 
+        ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density,
+        ScreenOrientation = ScreenOrientation.Landscape,
+        Theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen"
+    )]
     public class MainActivity : Silk.NET.Windowing.Sdl.Android.SilkActivity
     {
         internal static AssetManager AssetManager;
@@ -18,6 +23,7 @@ namespace Wuka
         private Silk.NET.Windowing.IView _iView;
         protected override void OnRun()
         {
+            
             /*
              * setup framework dependencies.
              */

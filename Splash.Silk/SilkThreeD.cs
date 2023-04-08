@@ -43,6 +43,8 @@ public class SilkThreeD : IThreeD
 
     // TXWTODO: Ugly data structure
     private LightShaderPos[] _lightShaderPos = null;
+
+    private engine.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
     
     
     // Create a light and get shader locations
@@ -374,7 +376,6 @@ public class SilkThreeD : IThreeD
         {
             skMeshEntry.Upload(_gl);
         }
-        //Trace($"Uploaded Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
     }
 
     public AMeshEntry CreateMeshEntry(in engine.joyce.Mesh jMesh)
@@ -387,11 +388,13 @@ public class SilkThreeD : IThreeD
 
     public void DestroyMeshEntry(in AMeshEntry aMeshEntry)
     {
-        SkMeshEntry rlMeshEntry = (SkMeshEntry)aMeshEntry;
-        _engine.QueueCleanupAction(() =>
+        SkMeshEntry skMeshEntry = (SkMeshEntry)aMeshEntry;
+        _graphicsThreadActions.Enqueue(() =>
         {
-            //Trace($"Unloading Mesh vaoId={rlMeshEntry.RlMesh.vaoId}, nVertices={rlMeshEntry.RlMesh.vertexCount}");
-            //Raylib_CsLo.Raylib.UnloadMesh(rlMeshEntry.RlMesh);
+            if (skMeshEntry.IsMeshUploaded())
+            {
+                skMeshEntry.Release(_gl);
+            }
         });
     }
 
@@ -537,6 +540,12 @@ public class SilkThreeD : IThreeD
     {
         return _gl;
     }
+
+    public void ExecuteGraphicsThreadActions(float dt)
+    {
+        _graphicsThreadActions.RunPart(dt);
+    }
+    
 
     public SilkThreeD(in engine.Engine engine)
     {

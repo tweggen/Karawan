@@ -8,9 +8,12 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using Silk.NET.Input.Sdl;
+using Silk.NET.SDL;
 
 namespace Splash.Silk
 {
+
     public class Platform : engine.IPlatform
     {
         private object _lock = new object();
@@ -132,7 +135,7 @@ namespace Splash.Silk
                 var viewSize = _iView.Size;
 
                 float relY = (float)currDist.Y / (float)viewSize.Y;
-                float relX = (float)currDist.X / (float)viewSize.X;
+                float relX = (float)currDist.X / (float)viewSize.Y;
 
                 if (relY < 0)
                 {
@@ -188,7 +191,7 @@ namespace Splash.Silk
 
         private void _onMouseMove(IMouse mouse, Vector2 position)
         {
-            _currentMousePosition = position;
+            _currentMousePosition = mouse.Position;
 
         }
 
@@ -219,8 +222,22 @@ namespace Splash.Silk
             _isMouseButtonClicked = false;
         }
 
+        /**
+         * Because Silk does not yet support touch events right now,
+         * we peek touch events from the event queue before they are
+         * discarded by the current input context implementation.
+         */
+        private void _peekSdlEvents()
+        {
+        }
+
+
         private void _windowOnLoad()
         {
+            /*
+             * Instead of just instantiating a SdlInput as intended, we create an
+             * input class of our own to intercept the touch events.
+             */
             _iInputContext = _iView.CreateInput();
             for (int i = 0; i < _iInputContext.Keyboards.Count; i++)
             {
@@ -281,7 +298,8 @@ namespace Splash.Silk
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
                 if (renderFrame == null)
                 {
-                    Thread.Sleep(1);
+                    _silkThreeD.ExecuteGraphicsThreadActions(0.005f);
+                    System.Threading.Thread.Sleep(1);
                     continue;
                 }
 
@@ -289,6 +307,7 @@ namespace Splash.Silk
                 _renderer.RenderFrame(renderFrame);
                
                 _iView.SwapBuffers();
+                _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
                 ++_frameNo;
                 if (2 == _frameNo)
                 {
@@ -308,9 +327,31 @@ namespace Splash.Silk
             _gl.Viewport(size);
         }
 
+
         public void Execute()
         {
-            _iView.Run();
+            /*
+             * Instead of just calling _iView.Run(),
+             * we run the same thing explicitely. That way we can inject calls.
+             */
+            IView iView = _iView;
+            iView.Initialize();
+            iView.Run(delegate
+            {
+                iView.DoEvents();
+                if (!iView.IsClosing)
+                {
+                    iView.DoUpdate();
+                }
+
+                if (!iView.IsClosing)
+                {
+                    iView.DoRender();
+                }
+            });
+            iView.DoEvents();
+            iView.Reset();
+            iView = null;
             _iView.Dispose();
         }
 
@@ -379,7 +420,7 @@ namespace Splash.Silk
 
         public void Sleep(double dt)
         {
-            Thread.Sleep((int)(dt*1000f));
+            System.Threading.Thread.Sleep((int)(dt*1000f));
         }
 
         public bool IsRunning()

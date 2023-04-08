@@ -33,7 +33,7 @@ namespace nogame
             }
             if (_isCleared)
             {
-                if (t > 1.8f)
+                if (t > 2.0f)
                 {
                     _engine.SetMainScene("root");
                     return;
@@ -41,15 +41,15 @@ namespace nogame
             }
             else
             {
-                if (t < 1.7f)
+                if (t < 1.9f)
                 {
                     if (t > 0.5f)
                     {
                         _aTransform.SetVisible(_eLogo, true);
                     }
-                    _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f + _t));
+                    _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 20f + _t));
                     _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
-                    _aTransform.SetPosition(_eLight, new Vector3(-10f + 30f * t, 0f, 15f));
+                    _aTransform.SetPosition(_eLight, new Vector3(-10f + 30f * t, 0f, 25f));
 
                 }
                 else
