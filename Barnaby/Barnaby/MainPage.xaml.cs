@@ -31,7 +31,7 @@ namespace Barnaby
 
         public MainPage()
         {
-            this.InitializeComponent();
+            this.InitializeComponent( );
             List<DisplayEntity> listDisplayEntities = new List<DisplayEntity>();
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0001, Enabled = true });
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0000, Enabled = true });
@@ -40,6 +40,10 @@ namespace Barnaby
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0004, Enabled = true });
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0005, Enabled = true });
             lvDisplayEntities.ItemsSource = listDisplayEntities;
+
+            WireClient.API aWireClient = new("127.0.0.1", 9001);
+            long result = aWireClient.Calculate(2, 4, "*");
+            Console.WriteLine($"Barnaby notices that result is {result}.");
         }
     }
 }

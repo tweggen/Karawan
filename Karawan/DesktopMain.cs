@@ -168,6 +168,10 @@ namespace Karawan
             appBuilder.Logging.AddEventLog();
             appBuilder.Logging.AddConsole();
 
+            {
+                WireServer.API aWireServer = new(9001);
+            }
+            
             var app = appBuilder.Build();
 
             /*

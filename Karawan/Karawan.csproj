@@ -38,6 +38,7 @@
     <ProjectReference Include="..\Splash.Raylib\Splash.Raylib.csproj" />
     <ProjectReference Include="..\Splash.Silk\Splash.Silk.csproj" />
     <ProjectReference Include="..\Splash\Splash.csproj" />
+    <ProjectReference Include="..\WireServer\WireServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
