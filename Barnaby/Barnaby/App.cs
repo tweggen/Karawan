@@ -5,6 +5,7 @@ using Windows.ApplicationModel.Activation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using Uno.UI;
 
 namespace Barnaby;
 
@@ -13,7 +14,7 @@ namespace Barnaby;
 /// </summary>
 public partial class App : Application
 {
-	public WireClient.API WireClient { get; }
+	public WireClient.API WireClient { get; private set; } = null;
 
 	/// <summary>
 	/// Initializes the singleton application object.  This is the first line of authored code
@@ -25,8 +26,33 @@ public partial class App : Application
 	/// </remarks>
 	public App()
 	{
-        WireClient.API aWireClient = new("127.0.0.1", 9001);
-		this.WireClient = aWireClient;
+    }
+
+	public async void TriggerConnect(string ip, ushort port)
+	{
+		ContentDialog diaConnecting = new ContentDialog()
+		{
+			Title = "Connecting...",
+			Content = $"Connecting to {ip}:{port}... ",
+			CloseButtonText = "Abort"
+        };
+		
+		
+		
+		diaConnecting.XamlRoot = MainWindow.Content.XamlRoot;
+		var pResult = diaConnecting.ShowAsync();
+        try
+		{
+			WireClient.API aWireClient = new("127.0.0.1", 9001);
+			this.WireClient = aWireClient;
+			diaConnecting.Content = $"Connecting to {ip}:{port} done.";
+        }
+        catch (Exception ex)
+		{
+            diaConnecting.Content = $"Connecting to {ip}:{port} failed:\nUnable to connect: {ex}";
+
+        }
+        diaConnecting.CloseButtonText = "Close";
     }
 
     /// <summary>

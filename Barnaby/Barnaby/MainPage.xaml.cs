@@ -16,7 +16,6 @@ using Windows.System;
 
 using Windows.UI.Xaml;
 
-// The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace Barnaby
 {
@@ -25,14 +24,29 @@ namespace Barnaby
         public uint Handle { get; set; }
         public bool Enabled { get; set; }
     }
+
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private App _app = null;
 
+        private void BtConnectToClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string serverIP = TbServerIP.Text;
+                ushort serverPort = 0;
+                UInt16.TryParse(TbServerPort.Text, out serverPort);
+                _app.TriggerConnect(serverIP, serverPort);
+            } catch (Exception ex)
+            {
+            }
+        }
         public MainPage()
         {
+            _app = (App)Microsoft.UI.Xaml.Application.Current;
             this.InitializeComponent( );
             List<DisplayEntity> listDisplayEntities = new List<DisplayEntity>();
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0001, Enabled = true });
@@ -43,10 +57,9 @@ namespace Barnaby
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0005, Enabled = true });
             lvDisplayEntities.ItemsSource = listDisplayEntities;
 
-            App app = (App)Microsoft.UI.Xaml.Application.Current;
-            long result = app.WireClient.Calculate(2, 4, "*");
-            Console.WriteLine($"Barnaby notices that result is {result}.");
-            listDisplayEntities.Add(new DisplayEntity() { Handle = (uint)result, Enabled = true });
+            // long result = _app.WireClient.Calculate(2, 4, "*");
+            // Console.WriteLine($"Barnaby notices that result is {result}.");
+            // listDisplayEntities.Add(new DisplayEntity() { Handle = (uint)result, Enabled = true });
         }
     }
 }

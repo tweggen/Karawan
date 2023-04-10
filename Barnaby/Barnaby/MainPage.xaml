@@ -60,12 +60,16 @@
             </muxc:MenuBarItem>
         </muxc:MenuBar>
 
-        <muxc:TextBlock Text="Hello, world!" Margin="20" FontSize="30" />
+        <muxc:StackPanel Orientation="Horizontal">
+            <muxc:Button Click="BtConnectToClick">Connect to </muxc:Button>
+            <muxc:TextBox x:Name="TbServerIP" Text="127.0.0.1"/>
+            <muxc:TextBox x:Name="TbServerPort" Text="9001"/>
+        </muxc:StackPanel>
 
         <muxc:StackPanel Orientation="Horizontal">
             <muxc:ScrollViewer VerticalScrollBarVisibility="Auto">
                 <muxc:StackPanel>
-                    <muxc:ListView Name="lvDisplayEntities">
+                    <muxc:ListView x:Name="lvDisplayEntities">
                         <muxc:ListView.ItemTemplate>
                             <mux:DataTemplate x:DataType="local:DisplayEntity">
                                 <muxc:TextBlock Text="{x:Bind Handle}"/>
