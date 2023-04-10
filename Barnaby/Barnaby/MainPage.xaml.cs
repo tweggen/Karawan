@@ -44,9 +44,9 @@ namespace Barnaby
             lvDisplayEntities.ItemsSource = listDisplayEntities;
 
             App app = (App)Microsoft.UI.Xaml.Application.Current;
-            //long result = app.WireClient.Calculate(2, 4, "*");
-            //Console.WriteLine($"Barnaby notices that result is {result}.");
-            //listDisplayEntities.Add(new DisplayEntity() { Handle = result, Enabled = true });
+            long result = app.WireClient.Calculate(2, 4, "*");
+            Console.WriteLine($"Barnaby notices that result is {result}.");
+            listDisplayEntities.Add(new DisplayEntity() { Handle = (uint)result, Enabled = true });
         }
     }
 }
