@@ -24,8 +24,7 @@ public class API
             Ports = { new ServerPort("127.0.0.1", port, ServerCredentials.Insecure) }
         };
         server.Start();
-        Console.WriteLine($"Server listening at port {port}. Press any key to terminate");
-        Console.ReadKey();
+        Console.WriteLine($"Server listening at port {port}.");
     }
 
 }

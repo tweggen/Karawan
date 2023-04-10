@@ -14,20 +14,22 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Windows.System;
 
+using Windows.UI.Xaml;
+
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace Barnaby
 {
+    public class DisplayEntity
+    {
+        public uint Handle { get; set; }
+        public bool Enabled { get; set; }
+    }
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        public class DisplayEntity
-        {
-            public uint Handle { get; set; }
-            public bool Enabled {  get; set; }
-        }
 
         public MainPage()
         {
@@ -41,9 +43,10 @@ namespace Barnaby
             listDisplayEntities.Add(new DisplayEntity() { Handle = 0xcafe0005, Enabled = true });
             lvDisplayEntities.ItemsSource = listDisplayEntities;
 
-            WireClient.API aWireClient = new("127.0.0.1", 9001);
-            long result = aWireClient.Calculate(2, 4, "*");
-            Console.WriteLine($"Barnaby notices that result is {result}.");
+            App app = (App)Microsoft.UI.Xaml.Application.Current;
+            //long result = app.WireClient.Calculate(2, 4, "*");
+            //Console.WriteLine($"Barnaby notices that result is {result}.");
+            //listDisplayEntities.Add(new DisplayEntity() { Handle = result, Enabled = true });
         }
     }
 }
