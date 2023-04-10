@@ -39,13 +39,20 @@ enum EngineExecutionState
 
 message EngineExecutionStatus
 {
+	// TXWTODO: Since when?
   EngineExecutionState state = 1;
 }
 
+message EngineStateParams
+{
+
+}
 
 service Svc {
   rpc Calculate (CalculateRequest) returns (CalculateReply);
   rpc Median (stream Temperature) returns (stream Temperature);
   rpc Continue (ContinueParams) returns (EngineExecutionStatus);
   rpc Pause (PauseParams) returns (EngineExecutionStatus); 
+
+  rpc ReadEngineState(EngineStateParams) returns (stream EngineExecutionStatus);
 }
