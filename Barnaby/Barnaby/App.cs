@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -28,6 +29,28 @@ public partial class App : Application
 	{
     }
 
+
+	public bool IsConnected()
+	{
+		return (this.WireClient != null);
+	}
+
+
+	public async void ShowNotConnected()
+	{
+        ContentDialog diaNotConnected= new ContentDialog()
+        {
+            Title = "Not connected",
+            Content = $"Not connected to a game engine instance, please connect first.",
+            CloseButtonText = "Dismiss"
+        };
+
+
+        diaNotConnected.XamlRoot = MainWindow.Content.XamlRoot;
+        await diaNotConnected.ShowAsync();
+    }
+
+
 	public async void TriggerConnect(string ip, ushort port)
 	{
 		ContentDialog diaConnecting = new ContentDialog()
@@ -36,7 +59,6 @@ public partial class App : Application
 			Content = $"Connecting to {ip}:{port}... ",
 			CloseButtonText = "Abort"
         };
-		
 		
 		
 		diaConnecting.XamlRoot = MainWindow.Content.XamlRoot;

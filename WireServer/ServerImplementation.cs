@@ -10,7 +10,21 @@ namespace WireServer
 {
     public class ServerImplementation : Svc.SvcBase
     {
-       public override Task<CalculateReply> Calculate(CalculateRequest request, ServerCallContext context)
+        public override Task<EngineExecutionStatus> Pause(PauseParams pauseParams, ServerCallContext context)
+        {
+            var status = new EngineExecutionStatus();
+            status.State = EngineExecutionState.Stopped;
+            return Task.FromResult(status);
+        }
+
+        public override Task<EngineExecutionStatus> Continue(ContinueParams pauseParams, ServerCallContext context)
+        {
+            var status = new EngineExecutionStatus();
+            status.State = EngineExecutionState.Running;
+            return Task.FromResult(status);
+        }
+
+        public override Task<CalculateReply> Calculate(CalculateRequest request, ServerCallContext context)
         {
             long result = -1;
             switch (request.Op)

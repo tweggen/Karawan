@@ -17,7 +17,35 @@ message Temperature {
   double value = 2;
 }
 
+message ContinueParams {
+  
+}
+
+
+message PauseParams {
+
+}
+
+
+enum EngineExecutionState
+{
+  Initialized = 0;
+  Starting = 1;
+  Running = 2;
+  Stopping = 3;
+  Stopped = 4;
+}
+
+
+message EngineExecutionStatus
+{
+  EngineExecutionState state = 1;
+}
+
+
 service Svc {
   rpc Calculate (CalculateRequest) returns (CalculateReply);
   rpc Median (stream Temperature) returns (stream Temperature);
+  rpc Continue (ContinueParams) returns (EngineExecutionStatus);
+  rpc Pause (PauseParams) returns (EngineExecutionStatus); 
 }

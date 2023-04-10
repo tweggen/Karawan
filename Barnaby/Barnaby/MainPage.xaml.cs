@@ -44,6 +44,30 @@ namespace Barnaby
             {
             }
         }
+
+
+        private void BtPause(object sender, RoutedEventArgs e)
+        {
+            if (!_app.IsConnected())
+            {
+                _app.ShowNotConnected();
+                return;
+            }
+            _app.WireClient.Pause();
+        }
+
+        
+        private void BtContinue(object sender, RoutedEventArgs e)
+        {
+            if (!_app.IsConnected())
+            {
+                _app.ShowNotConnected();
+                return;
+            }
+            _app.WireClient.Continue();
+        }
+
+        
         public MainPage()
         {
             _app = (App)Microsoft.UI.Xaml.Application.Current;
