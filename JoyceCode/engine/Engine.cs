@@ -58,6 +58,33 @@ namespace engine
 
         private bool _mayCallLogical = false;
     
+        public enum EngineState {
+            Initialized,
+            Starting,
+            Running,
+            Stopping,
+            Stopped
+        };
+
+        public EngineState State { get; private set; }
+        public event EventHandler<EngineState> EngineStateChanged;
+
+        public void SetEngineState( in EngineState newState )
+        {
+            bool isChanged = false;
+            lock(_lo)
+            {
+                if (newState != State)
+                {
+                    State = newState;
+                    isChanged = true;
+                }
+            }
+            if (isChanged)
+            {
+                EngineStateChanged.Invoke(this, newState);
+            }
+        }
 
         class EnginePhysicsEventHandler : physics.IContactEventHandler
         {
@@ -315,6 +342,20 @@ namespace engine
 
         private void _onLogicalFrame(float dt)
         {
+            EngineState engineState;
+            lock (_lo)
+            {
+                engineState = State;
+            }
+
+            /*
+             * If the engine is stopped, do not do any logical frame stuff.
+             */
+            if (engineState == EngineState.Stopped)
+            {
+                return;
+            }
+
             /*
              * Before rendering the first time and calling user handlers the first time,
              * we need to read physics to transforms, update hierarchy and transforms.

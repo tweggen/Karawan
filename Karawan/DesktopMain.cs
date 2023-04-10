@@ -168,10 +168,6 @@ namespace Karawan
             appBuilder.Logging.AddEventLog();
             appBuilder.Logging.AddConsole();
 
-            {
-                WireServer.API aWireServer = new(9001);
-            }
-            
             var app = appBuilder.Build();
 
             /*
@@ -207,6 +203,10 @@ namespace Karawan
             
         // var e = Splash.Raylib.Platform.EasyCreate(args);
             var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
+
+            {
+                WireServer.API aWireServer = new(e, 9001);
+            }
 
             {
                 engine.ConsoleLogger logger = new(e, app.Logger);

@@ -5,26 +5,30 @@ using System.IO;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Wire;
+using static engine.Logger;
 
 namespace WireServer;
 
 public class API
 {
+    private Server _wireServer;
+    private ServerImplementation _serverImplementation;
+
     
-    public API(ushort port)
+    public API(engine.Engine engine, ushort port)
     {
         // var pair = new KeyCertificatePair(
         //     File.ReadAllText("cert/service.pem"),
         //     File.ReadAllText("cert/service-key.pem")
         // );
         // var creds = new SslServerCredentials(new[] { pair });
-        var server = new Server
+        _serverImplementation = new ServerImplementation(engine);
+        _wireServer = new Server
         {
-            Services = { Svc.BindService(new ServerImplementation()) },
+            Services = { Svc.BindService(_serverImplementation) },
             Ports = { new ServerPort("127.0.0.1", port, ServerCredentials.Insecure) }
         };
-        server.Start();
-        Console.WriteLine($"Server listening at port {port}.");
+        _wireServer.Start();
+        Wonder($"Server listening at port {port}.");
     }
-
 }

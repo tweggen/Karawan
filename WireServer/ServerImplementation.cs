@@ -5,133 +5,163 @@ using System.IO;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Wire;
+using static engine.Logger;
 
-namespace WireServer
+namespace WireServer;
+
+public class ServerImplementation : Svc.SvcBase
 {
-    public class ServerImplementation : Svc.SvcBase
+    private readonly engine.Engine _engine;
+    private object _lo = new();
+
+    // TXWTODO: This might lose some transitions.
+    private EngineExecutionStatus _currentState = new();
+
+    private void _onEngineStateChanged(object sender, engine.Engine.EngineState newEngineState)
     {
-        private object _lo = new();
-
-        // TXWTODO: This might lose some transitions.
-        private EngineExecutionStatus _currentState = new();
-
-        public void OnNewServerState(EngineExecutionStatus newStatus)
+        /*
+         * Translate to protocol
+         */
+        EngineExecutionState state;
+        switch(newEngineState)
         {
+            case engine.Engine.EngineState.Initialized: state = EngineExecutionState.Initialized; break;
+            case engine.Engine.EngineState.Starting: state = EngineExecutionState.Starting; break;
+            case engine.Engine.EngineState.Running: state = EngineExecutionState.Running; break;
+            case engine.Engine.EngineState.Stopping: state = EngineExecutionState.Stopping; break;
+            case engine.Engine.EngineState.Stopped: state = EngineExecutionState.Stopped; break;
+            default: state = EngineExecutionState.Initialized; break;
+        }
+        var es = new EngineExecutionStatus { State = state };
+        lock (_lo)
+        {
+            _currentState = es;
+            Monitor.Pulse(_lo);
+        }
+    }
+
+    public override Task<EngineExecutionStatus> Pause(PauseParams pauseParams, ServerCallContext context)
+    {
+        Trace("Pause called");
+        _engine.SetEngineState(engine.Engine.EngineState.Stopped);
+
+        /*
+         * Some fake result.
+         */
+        var status = new EngineExecutionStatus();
+        status.State = EngineExecutionState.Stopped;
+        return Task.FromResult(status);
+    }
+
+    public override Task<EngineExecutionStatus> Continue(ContinueParams pauseParams, ServerCallContext context)
+    {
+        Trace("Continue called");
+        _engine.SetEngineState(engine.Engine.EngineState.Running);
+
+        /*
+         * Some fake result.
+         */
+        var status = new EngineExecutionStatus();
+        status.State = EngineExecutionState.Running;
+        return Task.FromResult(status);
+    }
+
+    public override Task<CalculateReply> Calculate(CalculateRequest request, ServerCallContext context)
+    {
+        long result = -1;
+        switch (request.Op)
+        {
+            case "+":
+                result = request.X + request.Y;
+                break;
+            case "-":
+                result = request.X - request.Y;
+                break;
+            case "*":
+                result = request.X * request.Y;
+                break;
+            case "/":
+                if (request.Y != 0)
+                {
+                    result = (long)request.X / request.Y;
+                }
+                break;
+            default:
+                break;
+        }
+        return Task.FromResult(new CalculateReply { Result = result });
+    }
+
+    public override async Task Median(IAsyncStreamReader<Temperature> requestStream, IServerStreamWriter<Temperature> responseStream, ServerCallContext context)
+    {
+        Trace("Median");
+        var vals = new List<double>();
+        while (await requestStream.MoveNext())
+        {
+            var temp = requestStream.Current;
+            vals.Add(temp.Value);
+            double med = 0;
+            if (vals.Count == 10)
+            {
+                var arr = vals.ToArray();
+                Array.Sort(arr);
+                med = (arr[4] + arr[5]) / 2;
+                vals.Clear();
+                await responseStream.WriteAsync(new Temperature { Timestamp = temp.Timestamp, Value = med });
+            }
+        }
+    }
+
+
+    /**
+     * Very bad simluation of an event queue.
+     */
+    public override async Task ReadEngineState(EngineStateParams request, IServerStreamWriter<EngineExecutionStatus> responseStream, ServerCallContext context)
+    {
+        Trace("ReadEngineState");
+        while (true)
+        {
+            EngineExecutionStatus currentState;
             lock (_lo)
             {
-                _currentState = newStatus.Clone();
-                Monitor.Pulse(_lo);
+                /*
+                 * First write the current state, then wait for the next
+                 */
+                currentState = _currentState.Clone();
             }
-        }
+            await responseStream.WriteAsync(currentState);
 
-        public override Task<EngineExecutionStatus> Pause(PauseParams pauseParams, ServerCallContext context)
-        {
-            Console.WriteLine("Pause called");
-            var status = new EngineExecutionStatus();
-            status.State = EngineExecutionState.Stopped;
-            return Task.FromResult(status);
-        }
-
-        public override Task<EngineExecutionStatus> Continue(ContinueParams pauseParams, ServerCallContext context)
-        {
-            Console.WriteLine("Continue called");
-            var status = new EngineExecutionStatus();
-            status.State = EngineExecutionState.Running;
-            return Task.FromResult(status);
-        }
-
-        public override Task<CalculateReply> Calculate(CalculateRequest request, ServerCallContext context)
-        {
-            long result = -1;
-            switch (request.Op)
-            {
-                case "+":
-                    result = request.X + request.Y;
-                    break;
-                case "-":
-                    result = request.X - request.Y;
-                    break;
-                case "*":
-                    result = request.X * request.Y;
-                    break;
-                case "/":
-                    if (request.Y != 0)
-                    {
-                        result = (long)request.X / request.Y;
-                    }
-                    break;
-                default:
-                    break;
-            }
-            return Task.FromResult(new CalculateReply { Result = result });
-        }
-
-        public override async Task Median(IAsyncStreamReader<Temperature> requestStream, IServerStreamWriter<Temperature> responseStream, ServerCallContext context)
-        {
-            Console.WriteLine("Median");
-            var vals = new List<double>();
-            while (await requestStream.MoveNext())
-            {
-                var temp = requestStream.Current;
-                vals.Add(temp.Value);
-                double med = 0;
-                if (vals.Count == 10)
-                {
-                    var arr = vals.ToArray();
-                    Array.Sort(arr);
-                    med = (arr[4] + arr[5]) / 2;
-                    vals.Clear();
-                    await responseStream.WriteAsync(new Temperature { Timestamp = temp.Timestamp, Value = med });
-                }
-            }
-        }
-
-
-        /**
-         * Very bad simluation of an event queue.
-         */
-        public override async Task ReadEngineState(EngineStateParams request, IServerStreamWriter<EngineExecutionStatus> responseStream, ServerCallContext context)
-        {
-            Console.WriteLine("ReadEngineState");
+            /*
+             * Write out new game states, as they come in.
+             */
             while (true)
             {
-                EngineExecutionStatus currentState;
+                EngineExecutionStatus newState = null;
+                bool doSend = false;
                 lock (_lo)
                 {
-                    /*
-                     * First write the current state, then wait for the next
-                     */
-                    currentState = _currentState.Clone();
+                    if (currentState.State != _currentState.State)
+                    {
+                        newState = _currentState.Clone();
+                        doSend = true;
+                    }
+                    else
+                    {
+                        Monitor.Wait(_lo);
+                    }
                 }
-                await responseStream.WriteAsync(currentState);
-
-                /*
-                 * Write out new game states, as they come in.
-                 */
-                while (true)
+                currentState = newState;
+                if (doSend)
                 {
-                    EngineExecutionStatus newState = null;
-                    bool doSend = false;
-                    lock (_lo)
-                    {
-                        if (currentState.State != _currentState.State)
-                        {
-                            newState = _currentState.Clone();
-                            doSend = true;
-                        }
-                        else
-                        {
-                            Monitor.Wait(_lo);
-                        }
-                    }
-                    currentState = newState;
-                    if (doSend)
-                    {
-                        await responseStream.WriteAsync(newState);
-                    }
+                    await responseStream.WriteAsync(newState);
                 }
             }
         }
     }
 
+    public ServerImplementation(in engine.Engine engine) : base()
+    {
+        _engine = engine;
+        _engine.EngineStateChanged += _onEngineStateChanged;
+    }
 }
