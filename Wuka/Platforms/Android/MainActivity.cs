@@ -50,6 +50,11 @@ namespace Wuka
             engine.GlobalSettings.Set("splash.touchControls", "true");
 
             var e = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
+#if false
+            {
+                WireServer.API aWireServer = new(e, 9001);
+            }
+#endif
 
             e.AddSceneFactory("root", () => new nogame.RootScene());
             e.AddSceneFactory("logos", () => new nogame.LogosScene());
