@@ -65,7 +65,7 @@ public partial class App : Application
 		var pResult = diaConnecting.ShowAsync();
         try
 		{
-			WireClient.API aWireClient = new("127.0.0.1", 9001);
+			WireClient.API aWireClient = new("127.0.0.1", 9451);
 			this.WireClient = aWireClient;
 			diaConnecting.Content = $"Connecting to {ip}:{port} done.";
         }

@@ -64,7 +64,7 @@
             <muxc:StackPanel Orientation="Horizontal">
                 <muxc:Button Click="BtConnectToClick">Connect to </muxc:Button>
                 <muxc:TextBox x:Name="TbServerIP" Text="127.0.0.1"/>
-                <muxc:TextBox x:Name="TbServerPort" Text="9001"/>
+                <muxc:TextBox x:Name="TbServerPort" Text="9451"/>
             </muxc:StackPanel>
             <muxc:StackPanel Orientation="Horizontal">
                 <muxc:Button Click="BtPause">Pause</muxc:Button>

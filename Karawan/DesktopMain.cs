@@ -205,7 +205,7 @@ namespace Karawan
             var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
 
             {
-                WireServer.API aWireServer = new(e, 9001);
+                WireServer.API aWireServer = new(e, 9451);
             }
 
             {
