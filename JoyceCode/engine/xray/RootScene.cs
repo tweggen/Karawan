@@ -21,12 +21,12 @@ namespace engine.xray
 ";
             var _uiTest = _ui.CreateUI(strTestUI);
 #endif
-            _engine.AddScene(10, this);
+            _engine.SceneSequencer.AddScene(10, this);
         }
 
         public void SceneDeactivate()
         {
-            _engine.RemoveScene(this);
+            _engine.SceneSequencer.RemoveScene(this);
         }
 
         public void SceneOnLogicalFrame(float dt)

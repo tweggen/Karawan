@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 namespace engine.physics
 {
+    
+    /**
+     * Observes entities with physics components, adding/removing them from or
+     * to the physics engine system if required.
+     */
     internal class Manager
     {
         private engine.Engine _engine;

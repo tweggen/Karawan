@@ -74,6 +74,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Binding.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Body.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Kinetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Statics.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\ApplyPosesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\MoveKineticsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\SceneSequencer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Estate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterQuartersOperator.cs" />

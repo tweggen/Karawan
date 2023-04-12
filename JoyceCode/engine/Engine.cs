@@ -3,13 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System.Threading;
-using BepuPhysics;
-using BepuPhysics.Collidables;
-using BepuPhysics.CollisionDetection;
-using BepuUtilities;
-using BepuUtilities.Collections;
-using BepuUtilities.Memory;
 using DefaultEcs;
 using static engine.Logger;
 
@@ -35,29 +30,37 @@ namespace engine
         private engine.physics.systems.MoveKineticsSystem _systemMoveKinetics;
         private engine.audio.systems.MovingSoundsSystem _systemMovingSounds;
 
-        private SortedDictionary<float, IScene> _dictScenes;
         private SortedDictionary<float, IPart> _dictParts;
-        private SortedDictionary<string, Func<IScene>> _dictSceneFactories;
-        private IScene _sceneNewMain = null;
-        private IScene _mainScene = null;
 
-        private Queue<Action<DefaultEcs.Entity>> _queueEntitySetupActions = new();
-        private Queue<Action> _queueCleanupActions = new();
+        private readonly Queue<Action<DefaultEcs.Entity>> _queueEntitySetupActions = new();
+        // private readonly Queue<Action> = new();
         
         private Thread _logicalThread;
-        private Stopwatch _queueStopwatch = new();
+        private readonly Stopwatch _queueStopwatch = new();
 
+        private readonly WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
+        private readonly WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
+
+        private bool _mayCallLogical = false;
+        
+        private physics.Manager _managerPhysics;
+        public readonly physics.Binding PhysicsBinding;
+        public readonly SceneSequencer SceneSequencer;        
+        
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
-        public event EventHandler<physics.ContactInfo> OnContactInfo;
+        
+        public event EventHandler<physics.ContactInfo> OnContactInfo {
+            add => PhysicsBinding.OnContactInfo += value; remove => PhysicsBinding.OnContactInfo -= value;
+        } 
 
-        private WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
+        
+        public BepuPhysics.Simulation Simulation
+        {
+            get => PhysicsBinding.Simulation;
+        }
 
-        private WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
-
-        private bool _mayCallLogical = false;
-    
         public enum EngineState {
             Initialized,
             Starting,
@@ -85,28 +88,6 @@ namespace engine
                 EngineStateChanged.Invoke(this, newState);
             }
         }
-
-        class EnginePhysicsEventHandler : physics.IContactEventHandler
-        {
-            public Simulation Simulation;
-            public Engine Engine;
-
-            public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
-                in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
-            {
-                physics.ContactInfo contactInfo = new(
-                    eventSource, pair, contactOffset, contactNormal, depth);
-                Engine.OnContactInfo?.Invoke(Engine,contactInfo);
-            }
-        }
-
-
-        public Simulation Simulation { get; private set;  }
-        public BufferPool BufferPool { get; private set; }
-        private physics.ContactEvents<EnginePhysicsEventHandler> _contactEvents;
-        private ThreadDispatcher  _physicsThreadDispatcher;
-
-        private physics.Manager _managerPhysics;
 
 
         public int GetNextId()
@@ -142,14 +123,7 @@ namespace engine
         {
             recorder.Execute();
         }
-
-        public void AddSceneFactory(in string name, in Func<IScene> factoryFunction)
-        {
-            lock(_lo)
-            {
-                _dictSceneFactories.Add(name, factoryFunction);
-            }
-        }
+        
 
         /**
          * Called by platform as soon platform believes the timeline starts.
@@ -163,50 +137,12 @@ namespace engine
         }
         
         
-        public void SetMainScene(in IScene scene)
-        {
-            lock(_lo)
-            {
-                _sceneNewMain = scene;
-            }
-        }
-
-        private void _loadNewMainScene()
-        {
-            IScene scene = null;
-            IScene oldScene = null;
-            lock (_lo)
-            {
-                scene = _sceneNewMain;
-                _sceneNewMain = null;
-                if (null == scene)
-                {
-                    return;
-                }
-                oldScene = _mainScene;
-                _mainScene = null;
-            }
-            if (oldScene != null)
-            {
-                oldScene.SceneDeactivate();
-            }
-            // TXWTODO: Wait for old scene to be done? No? Fadeouts??
-            lock (_lo)
-            {
-                _mainScene = scene;
-            }
-            if (scene != null)
-            {
-                scene.SceneActivate(this);
-            }
-        }
-
-
         private void _commitWorldRecord()
         {
             _entityCommandRecorder.Execute();
         }
 
+        
         private void _executeDoomedEntities()
         {
             List<IList<DefaultEcs.Entity>> listList;
@@ -303,34 +239,17 @@ namespace engine
         }
 
 
-        public void SetMainScene(in string name)
-        {
-            Func<IScene> factoryFunction = null;
-            lock(_lo)
-            {
-                factoryFunction = _dictSceneFactories[name];
-            }
-            IScene scene = factoryFunction();
-            SetMainScene(scene);
-        }
-
-
         public void AddContactListener(DefaultEcs.Entity entity)
         {
-            _contactEvents.RegisterListener(
-                new CollidableReference(
-                    CollidableMobility.Dynamic, 
-                    entity.Get<physics.components.Body>().Reference.Handle));
+            PhysicsBinding.AddContactListener(entity);
         }
 
         public void RemoveContactListener(DefaultEcs.Entity entity)
         {
-            _contactEvents.UnregisterListener(
-                new CollidableReference(
-                    CollidableMobility.Dynamic,
-                    entity.Get<physics.components.Body>().Reference.Handle));
+            PhysicsBinding.RemoveContactListener(entity);
         }
 
+        
         private bool _firstTime = true;
 
         /**
@@ -406,13 +325,6 @@ namespace engine
             if (_mayCallLogical)
             {
                 LogicalFrame?.Invoke(this, dt);
-                {
-                    var dictScenes = new SortedDictionary<float, IScene>(_dictScenes);
-                    foreach (KeyValuePair<float, IScene> kvp in dictScenes)
-                    {
-                        kvp.Value.SceneOnLogicalFrame(dt);
-                    }
-                }
             }
 
             /*
@@ -448,7 +360,7 @@ namespace engine
             /*
              * Advance physics, based on new user input and/or gravitation.
              */
-            Simulation.Timestep(dt);
+            PhysicsBinding.Simulation.Timestep(dt);
 
             /*
              * Apply poses needs input from simulation
@@ -491,12 +403,8 @@ namespace engine
              * Async delete any entities that shall be deleted 
              */
             _executeDoomedEntities();
-
-            /*
-             * Execute loading of potential new main scene.
-             */
-            _loadNewMainScene();
-
+            
+            
             /*
              * Async create / setup new entities.
              */
@@ -509,27 +417,6 @@ namespace engine
         private double _timeLeft;
         private int _fpsLogical = 60;
 
-
-        /**
-         * Add another scene.
-         */
-        public void AddScene(float zOrder, in IScene scene)
-        {
-            _dictScenes.Add(zOrder, scene);
-        }
-
-
-        public void RemoveScene(in IScene scene)
-        {
-            foreach( KeyValuePair<float, IScene> kvp in _dictScenes )
-            {
-                if( kvp.Value == scene )
-                {
-                    _dictScenes.Remove(kvp.Key);
-                    return;
-                }
-            }
-        }
 
         public void AddPart(float zOrder, in IScene scene0, in IPart part0)
         {
@@ -683,22 +570,6 @@ namespace engine
          */
         public void SetupDone()
         {
-            BufferPool = new BufferPool();
-            _physicsThreadDispatcher = new(4);
-            EnginePhysicsEventHandler enginePhysicsEventHandler = new();
-            _contactEvents = new physics.ContactEvents<EnginePhysicsEventHandler>(
-                enginePhysicsEventHandler,
-                BufferPool,
-                _physicsThreadDispatcher
-                );
-            enginePhysicsEventHandler.Engine = this;
-            Simulation = Simulation.Create(
-                BufferPool, 
-                new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(_contactEvents) /* { Properties = properties } */,
-                new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
-                new SolveDescription(8, 1)
-            );
-            enginePhysicsEventHandler.Simulation = Simulation;
             _aHierarchy = new engine.hierarchy.API(this);
             _aTransform = new engine.transform.API(this);
             _systemBehave = new(this);
@@ -740,9 +611,9 @@ namespace engine
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();
             _entityCommandRecorder = new(4096, 1024*1024);
-            _dictScenes = new();
             _dictParts = new();
-            _dictSceneFactories = new();
+            PhysicsBinding = new physics.Binding(this);
+            SceneSequencer = new(this);
         }
     }
 }

@@ -35,7 +35,7 @@ namespace nogame
             {
                 if (t > 2.0f)
                 {
-                    _engine.SetMainScene("root");
+                    _engine.SceneSequencer.SetMainScene("root");
                     return;
                 }
             }
@@ -105,7 +105,7 @@ namespace nogame
             /*
              * Null out everything we don't need when the scene is unloaded.
              */
-            engine.RemoveScene(this);
+            engine.SceneSequencer.RemoveScene(this);
         }
 
         public void SceneActivate(engine.Engine engine0)
@@ -161,7 +161,7 @@ namespace nogame
             }
 
 
-            _engine.AddScene(5, this);
+            _engine.SceneSequencer.AddScene(5, this);
 
         }
 

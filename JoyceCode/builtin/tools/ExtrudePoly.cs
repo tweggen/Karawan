@@ -227,8 +227,8 @@ namespace builtin.tools
             }
 
 
-            var bufferPool = worldFragment.Engine.BufferPool;
-            var simulation = worldFragment.Engine.Simulation;
+            var bufferPool = worldFragment.Engine.PhysicsBinding.BufferPool;
+            var simulation = worldFragment.Engine.PhysicsBinding.Simulation;
 
             Func<IList<StaticHandle>, Action> fCreatePhys = new((IList<StaticHandle> staticHandles) =>
             {

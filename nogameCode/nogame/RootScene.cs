@@ -58,12 +58,8 @@ namespace nogame
             /*
              * Null out everything we don't need when the scene is unloaded.
              */
-            _engine.RemoveScene(this);
+            _engine.SceneSequencer.RemoveScene(this);
 
-            /*
-             * Null out everything we don't need when the scene is unloaded.
-             */
-            _engine.RemoveScene(this);
             _ecsWorld = null;
             _aHierarchy = null;
             _aTransform = null;
@@ -122,7 +118,7 @@ namespace nogame
             _partPlayerhover = new();
             _partSkybox = new();
 
-            _engine.AddScene(0, this);
+            _engine.SceneSequencer.AddScene(0, this);
 
             _partPlayerhover.PartActivate(_engine, this);
             _partSkybox.PartActivate(_engine, this);
