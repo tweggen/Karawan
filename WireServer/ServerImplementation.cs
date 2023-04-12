@@ -66,52 +66,6 @@ public class ServerImplementation : Svc.SvcBase
         return Task.FromResult(status);
     }
 
-    public override Task<CalculateReply> Calculate(CalculateRequest request, ServerCallContext context)
-    {
-        long result = -1;
-        switch (request.Op)
-        {
-            case "+":
-                result = request.X + request.Y;
-                break;
-            case "-":
-                result = request.X - request.Y;
-                break;
-            case "*":
-                result = request.X * request.Y;
-                break;
-            case "/":
-                if (request.Y != 0)
-                {
-                    result = (long)request.X / request.Y;
-                }
-                break;
-            default:
-                break;
-        }
-        return Task.FromResult(new CalculateReply { Result = result });
-    }
-
-    public override async Task Median(IAsyncStreamReader<Temperature> requestStream, IServerStreamWriter<Temperature> responseStream, ServerCallContext context)
-    {
-        Trace("Median");
-        var vals = new List<double>();
-        while (await requestStream.MoveNext())
-        {
-            var temp = requestStream.Current;
-            vals.Add(temp.Value);
-            double med = 0;
-            if (vals.Count == 10)
-            {
-                var arr = vals.ToArray();
-                Array.Sort(arr);
-                med = (arr[4] + arr[5]) / 2;
-                vals.Clear();
-                await responseStream.WriteAsync(new Temperature { Timestamp = temp.Timestamp, Value = med });
-            }
-        }
-    }
-
 
     /**
      * Very bad simluation of an event queue.
@@ -157,6 +111,35 @@ public class ServerImplementation : Svc.SvcBase
                 }
             }
         }
+    }
+
+    public override Task<global::Wire.GetEntityResult> GetEntity(Wire.GetEntityParams request, ServerCallContext context)
+    {
+        Wire.GetEntityResult entityResult = new();
+        entityResult.Entity = new();
+        entityResult.Entity.Outline = "(not implemented)";
+        return Task.FromResult(entityResult);
+    }
+
+    public override Task<global::Wire.GetEntityListResult> GetEntityList(Wire.GetEntityListParams request, ServerCallContext context)
+    {
+
+        Wire.GetEntityListResult entityListResult = new();
+        /*
+         * TXWTODO: At this point we are accessing the world from outsie the main thread
+         * context.
+         */
+        var enumEntities = _engine.GetEcsWorld().GetEntities().AsEnumerable();
+        foreach (DefaultEcs.Entity entity in enumEntities)
+        {
+            Wire.Entity wireEntity = new();
+            wireEntity.Outline = entity.ToString();
+            entityListResult.Entities.Add(wireEntity);
+        }
+
+        entityListResult.StartOffset = 0;
+        entityListResult.NResults = entityListResult.Entities.Count;
+        return Task.FromResult(entityListResult);
     }
 
     public ServerImplementation(in engine.Engine engine) : base()

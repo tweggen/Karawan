@@ -116,7 +116,6 @@ namespace engine.world
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });
             taskAllFragmentOperators.Start();
-            //taskAllFragmentOperators.Wait();
         }
 
 

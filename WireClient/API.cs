@@ -46,15 +46,6 @@ namespace WireClient
             return;
         }
 
-        public long Calculate(in int x, in int y, in string op)
-        {
-            _checkClient();
-            var reply = _client.Calculate(new CalculateRequest {
-                X = x, Y = y, Op = "+" });
-            // Console.WriteLine($"The calculated result is: {reply.Result}");
-            return reply.Result;
-        }
-
 
         public void Continue()
         {
@@ -71,6 +62,13 @@ namespace WireClient
             var reply = _client?.Pause(new PauseParams());
             _maybeNewEngineExecutionStatus(reply);
 
+        }
+
+        public IList<Wire.Entity> GetEntities()
+        {
+            _checkClient();
+            var reply = _client?.GetEntityList(new GetEntityListParams());
+            return reply.Entities;
         }
 
 

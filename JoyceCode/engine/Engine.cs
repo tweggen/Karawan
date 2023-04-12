@@ -48,7 +48,6 @@ namespace engine
         public readonly SceneSequencer SceneSequencer;        
         
         public event EventHandler<float> LogicalFrame;
-        public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
         
         public event EventHandler<physics.ContactInfo> OnContactInfo {
@@ -69,6 +68,7 @@ namespace engine
             Stopped
         };
 
+        
         public EngineState State { get; private set; }
         public event EventHandler<EngineState> EngineStateChanged;
 
@@ -97,6 +97,7 @@ namespace engine
                 return ++_nextId;
             }
         }
+        
 
         public engine.hierarchy.API GetAHierarchy()
         {
@@ -109,16 +110,19 @@ namespace engine
             return _aTransform;
         }
 
+        
         public DefaultEcs.World GetEcsWorld()
         {
             return _ecsWorld;
         }
 
+        
         public DefaultEcs.Command.WorldRecord GetEcsWorldRecord()
         {
             return _entityCommandRecorder.Record(_ecsWorld);
         }
 
+        
         public void ApplyEcsRecorder(in DefaultEcs.Command.EntityCommandRecorder recorder)
         {
             recorder.Execute();
@@ -460,7 +464,6 @@ namespace engine
             float invFps = 1f / 60f;
             float totalTime = 0f;
 
-#if true
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
             while (_platform.IsRunning())
@@ -509,60 +512,6 @@ namespace engine
                 stopWatch.Start();
             }
 
-#else
-            Stopwatch stopWatchSleep = new Stopwatch();
-            Stopwatch stopWatchProcessing = new Stopwatch();
-            const int microFrameDuration = 1000000 / 60;
-            int microToWait = microFrameDuration;
-            int totalPassedMicros = 0;
-            int totalProcessingMicros = 0;
-            
-            while (_platform.IsRunning())
-            {
-                while(microToWait>999)
-                {
-                    // _platform.Sleep((int)microsToWait/1000000f);
-
-                    int millisToWait = microToWait / 1000;
-                    stopWatchSleep.Reset();
-                    if (millisToWait > 0)
-                    {
-                        // Trace($"Logical thread sleeping {millisToWait}ms.");
-                        stopWatchSleep.Start();
-                        System.Threading.Thread.Sleep(1 /*millisToWait*/);
-                        stopWatchSleep.Stop();
-                    }
-
-                    int sleepedMicros = (int)stopWatchSleep.Elapsed.TotalMicroseconds;
-                    totalPassedMicros += sleepedMicros;
-                    microToWait -= sleepedMicros;
-                }
-                stopWatchProcessing.Reset();
-                stopWatchProcessing.Start();
-                float df;
-                if (engine.GlobalSettings.Get("engine.NailLogicalFPS") == "true")
-                {
-                    df = 1f / 60f;
-                }
-                else
-                {
-                    df = (float)totalPassedMicros / 1000000f;
-                }
-                //Trace($"Calling _onLogicalFrame({df}s).");
-                _onLogicalFrame(df);
-                stopWatchProcessing.Stop();
-                totalProcessingMicros = (int)stopWatchProcessing.Elapsed.TotalMicroseconds;
-                // Warning($"Processing of logical frame took {totalProcessingMicros}us.");
-                if ( totalProcessingMicros>microFrameDuration )
-                {
-                    Warning($"Processing of logical frame took {totalProcessingMicros}us, longer than one logical frame({microFrameDuration}us).");
-                } else
-                {
-                    microToWait += microFrameDuration - totalProcessingMicros;
-                }
-                totalPassedMicros = totalProcessingMicros;
-            }
-#endif
         }
 
         /**
