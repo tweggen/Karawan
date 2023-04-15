@@ -8,6 +8,11 @@ namespace engine.world.components
     {
         public int Id;
 
+        public override string ToString()
+        {
+            return $"{base.ToString()}, Id={Id}";
+        }
+
         public FragmentId(int id)
         {
             Id = id;

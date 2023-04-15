@@ -20,6 +20,11 @@ namespace engine.audio.components
         public byte NFrames = 0;
         public float MotionPitch;
 
+        public override string ToString()
+        {
+            return $"{base.ToString()}, Sound={Sound}, MaxDistance={MaxDistance}, MotionVolume={MotionVolume}, MotionPan={MotionPan}, MotionPitch={MotionPitch}, NFrames={NFrames}";
+        }
+        
         public void AddFrame(in MovingSound cNewFrame)
         {
             if (0 == NFrames)

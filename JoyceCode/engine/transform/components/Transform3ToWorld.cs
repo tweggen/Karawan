@@ -8,6 +8,11 @@ namespace engine.transform.components
         public uint CameraMask;
         public Matrix4x4 Matrix;
 
+        public override string ToString()
+        {
+            return $"{base.ToString()}, CameraMask={CameraMask:X}, Matrix={Matrix}";
+        }
+
         public Transform3ToWorld( 
             uint cameraMask,
             in Matrix4x4 matrix 

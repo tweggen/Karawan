@@ -10,7 +10,7 @@ namespace engine.transform.components
         public Quaternion Rotation;
         public Vector3 Position;
 
-        public string ToString()
+        public override string ToString()
         {
             return $"{base.ToString()}, IsVisible={IsVisible}, CameraMask={CameraMask:X}, Rotation={Rotation}, Position={Position}";
         }

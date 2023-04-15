@@ -9,6 +9,12 @@ namespace engine.transform.components
         public uint CameraMask;
         public Matrix4x4 Matrix;
 
+        public override string ToString()
+        {
+            return $"{base.ToString()}, IsVisible={IsVisible}, CameraMask={CameraMask:X}, Matrix={Matrix}";
+        }
+
+
         public void GetFront( out Vector3 front)
         {
             front.X = -Matrix.M13;

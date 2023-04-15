@@ -12,5 +12,10 @@ namespace engine.joyce.components
         public float NearFrustum;
         public float FarFrustum;
         public uint CameraMask;
+        
+        public override string ToString()
+        {
+            return $"{base.ToString()}, Angle={Angle}, NearFrustum={NearFrustum}, NearFrustum={NearFrustum}, CameraMask={CameraMask:X}";
+        }
     }
 }
