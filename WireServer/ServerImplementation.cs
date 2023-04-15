@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using DefaultEcs.Serialization;
 using Grpc.Core;
 using Wire;
 using static engine.Logger;
@@ -16,6 +17,7 @@ public class ServerImplementation : Svc.SvcBase
 
     // TXWTODO: This might lose some transitions.
     private EngineExecutionStatus _currentState = new();
+    
 
     private void _onEngineStateChanged(object sender, engine.Engine.EngineState newEngineState)
     {
@@ -40,11 +42,46 @@ public class ServerImplementation : Svc.SvcBase
         }
     }
 
+    
+    internal class EntityComponentTypeReader : DefaultEcs.Serialization.IComponentTypeReader
+    {
+        public SortedDictionary<string, string> DictComponentTypes = new();
+        private DefaultEcs.Entity _entity;
+
+        public void OnRead<T>(int maxCapacity)
+        {
+            if (_entity.Has<T>())
+            {
+                string strTypeRepresentation = "(type unprintable)";
+                string strValueRepresentation = "(value unprintable)";
+                Type t = typeof(T);
+                try
+                {
+                    strTypeRepresentation = t.ToString();
+                    strValueRepresentation = _entity.Get<T>().ToString();
+                }
+                catch (Exception ex)
+                {
+
+                }
+
+                DictComponentTypes[strTypeRepresentation] = strValueRepresentation;
+            }
+        }
+
+        public EntityComponentTypeReader(DefaultEcs.Entity entity)
+        {
+            _entity = entity;
+        }
+    }
+    
+    
     public override Task<EngineExecutionStatus> Pause(PauseParams pauseParams, ServerCallContext context)
     {
         Trace("Pause called");
         _engine.SetEngineState(engine.Engine.EngineState.Stopped);
-
+        
+        
         /*
          * Some fake result.
          */
@@ -53,6 +90,7 @@ public class ServerImplementation : Svc.SvcBase
         return Task.FromResult(status);
     }
 
+    
     public override Task<EngineExecutionStatus> Continue(ContinueParams pauseParams, ServerCallContext context)
     {
         Trace("Continue called");
@@ -113,35 +151,43 @@ public class ServerImplementation : Svc.SvcBase
         }
     }
 
+    
     public override Task<global::Wire.GetEntityResult> GetEntity(Wire.GetEntityParams request, ServerCallContext context)
     {
+        DefaultEcs.Entity entity = _engine.GetEcsWorld().FindEntity(request.EntityId);
         Wire.GetEntityResult entityResult = new();
         entityResult.Entity = new();
-        entityResult.Entity.Outline = "(not implemented)";
+        if (entity.IsAlive)
+        {
+            EntityComponentTypeReader reader = new(entity);
+            _engine.GetEcsWorld().ReadAllComponentTypes(reader);
+            foreach (var (key,value) in reader.DictComponentTypes)
+            {
+                entityResult.Entity.Components.Add(new Wire.Component() {Type = key, Value = value});
+            }
+        }
         return Task.FromResult(entityResult);
     }
 
+    
     public override Task<global::Wire.GetEntityListResult> GetEntityList(Wire.GetEntityListParams request, ServerCallContext context)
     {
 
         Wire.GetEntityListResult entityListResult = new();
         /*
-         * TXWTODO: At this point we are accessing the world from outsie the main thread
+         * TXWTODO: At this point we are accessing the world from outside the main thread
          * context.
          */
         var enumEntities = _engine.GetEcsWorld().GetEntities().AsEnumerable();
         foreach (DefaultEcs.Entity entity in enumEntities)
         {
-            Wire.Entity wireEntity = new();
-            wireEntity.Outline = entity.ToString();
-            entityListResult.Entities.Add(wireEntity);
+            entityListResult.EntityIds.Add(entity.GetId());
         }
 
-        entityListResult.StartOffset = 0;
-        entityListResult.NResults = entityListResult.Entities.Count;
         return Task.FromResult(entityListResult);
     }
 
+    
     public ServerImplementation(in engine.Engine engine) : base()
     {
         _engine = engine;

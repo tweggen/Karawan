@@ -44,23 +44,12 @@ namespace Barnaby
             }
 
             var entities = _app.WireClient.GetEntities();
-            foreach (var entity in entities)
-            {
-                //{ "outline": "Entity 1:1.0" }
-                string outline = entity.Outline;
-                try
+            foreach (var entityId in entities)
+            { 
+                listDisplayEntities.Add(new DisplayEntity()
                 {
-                    int ofsEntityId = outline.IndexOf(':');
-                    int ofsVersion = outline.IndexOf('.');
-                    short worldId = Int16.Parse(outline.Substring(7, ofsEntityId-7));
-                    int entityId = Int32.Parse(outline.Substring(ofsEntityId+1, ofsVersion-(ofsEntityId+1)));
-                    int version = Int16.Parse(outline.Substring(ofsVersion+1));
-                    listDisplayEntities.Add(new DisplayEntity() { Handle = (uint)entityId, Enabled = -1 != entityId });
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"_readEntites(): Unable to parse entity: {e}");
-                }
+                    Handle = (uint)entityId, Enabled = true // TXWTODO; Read enabled.
+                });
             }
             lvDisplayEntities.ItemsSource = listDisplayEntities;
         }

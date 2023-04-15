@@ -64,11 +64,11 @@ namespace WireClient
 
         }
 
-        public IList<Wire.Entity> GetEntities()
+        public IList<int> GetEntities()
         {
             _checkClient();
             var reply = _client?.GetEntityList(new GetEntityListParams());
-            return reply.Entities;
+            return reply.EntityIds;
         }
 
 

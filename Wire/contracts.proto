@@ -16,12 +16,11 @@ message Component {
 }
 
 message Entity {
-   string outline = 1;
    repeated Component components = 2;
 }
 
 message GetEntityParams {
-    int64 handle = 1;
+    int32 entityId = 1;
 }
 
 message GetEntityResult {
@@ -36,7 +35,7 @@ message GetEntityListParams {
 message GetEntityListResult {
     int64 startOffset = 1;
     int64 nResults = 2;
-    repeated Entity entities = 3;
+    repeated int32 entityIds = 3;
 }
 
 enum EngineExecutionState
