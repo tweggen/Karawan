@@ -10,6 +10,14 @@ namespace engine.joyce.components
         public IList MeshMaterials;
         public IList Materials;
 
+        public override string ToString()
+        {
+            return $"{base.ToString()}: "
+                   + $"{(Meshes == null ? "null" : Meshes.Count)} meshes, "
+                   + $"{(MeshMaterials == null ? "null" : MeshMaterials.Count)} mesh materials, "
+                   + $"{(Materials == null ? "null" : Materials.Count)} materials.";
+        }
+
         public Instance3(joyce.Mesh mesh)
         {
             // PreTransform = Matrix4x4.Identity;

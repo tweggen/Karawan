@@ -26,6 +26,14 @@ namespace Barnaby
     }
 
 
+
+    public class DisplayComponent
+    {
+        public string Type { get; set; }
+        public string Value { get; set; }
+    }
+    
+    
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -39,7 +47,7 @@ namespace Barnaby
             List<DisplayEntity> listDisplayEntities = new List<DisplayEntity>();
             if (!_app.IsConnected())
             {
-                lvDisplayEntities.ItemsSource = listDisplayEntities;
+                LvDisplayEntities.ItemsSource = listDisplayEntities;
                 return;
             }
 
@@ -51,7 +59,28 @@ namespace Barnaby
                     Handle = (uint)entityId, Enabled = true // TXWTODO; Read enabled.
                 });
             }
-            lvDisplayEntities.ItemsSource = listDisplayEntities;
+            LvDisplayEntities.ItemsSource = listDisplayEntities;
+        }
+
+        private void _loadEntity(int entityId)
+        {
+            List<DisplayComponent> listDisplayComponents = new List<DisplayComponent>();
+            if (!_app.IsConnected())
+            {
+                LvDisplayComponents.ItemsSource = listDisplayComponents;
+                return;
+            }
+
+            Wire.Entity entity = _app.WireClient.GetEntity(entityId);
+            foreach(Wire.Component comp in entity.Components)
+            {
+                listDisplayComponents.Add(new DisplayComponent()
+                {
+                    Type=comp.Type, Value=comp.Value
+                });
+            }
+
+            LvDisplayComponents.ItemsSource = listDisplayComponents;
         }
 
         
@@ -89,6 +118,25 @@ namespace Barnaby
                 return;
             }
             _app.WireClient.Continue();
+        }
+
+
+        private void TbEntityClick(object sender, PointerRoutedEventArgs e)
+        {
+            if (!_app.IsConnected())
+            {
+                _app.ShowNotConnected();
+                return;
+            }
+
+            Microsoft.UI.Xaml.Controls.TextBlock tb = (TextBlock)sender;
+            int entityId;
+            if (!Int32.TryParse(tb.Name, out entityId))
+            {
+                return;
+            }
+
+            _loadEntity(entityId);
         }
 
 

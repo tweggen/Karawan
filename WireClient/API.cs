@@ -71,6 +71,13 @@ namespace WireClient
             return reply.EntityIds;
         }
 
+        public Wire.Entity GetEntity(int entityId)
+        {
+            _checkClient();
+            var reply = _client?.GetEntity(new GetEntityParams() { EntityId = entityId });
+            return reply.Entity;
+        }
+
 
         public API(in string host, in ushort port)
         {

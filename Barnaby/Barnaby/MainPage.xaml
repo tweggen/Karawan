@@ -76,17 +76,35 @@
         <muxc:StackPanel Orientation="Horizontal">
             <muxc:ScrollViewer VerticalScrollBarVisibility="Auto">
                 <muxc:StackPanel>
-                    <muxc:ListView x:Name="lvDisplayEntities">
+                    <muxc:ListView x:Name="LvDisplayEntities">
                         <muxc:ListView.ItemTemplate>
                             <mux:DataTemplate x:DataType="local:DisplayEntity">
-                                <muxc:TextBlock Text="{x:Bind Handle}"/>
+                                <muxc:TextBlock
+                                    Text="{x:Bind Handle}"
+                                    PointerPressed="TbEntityClick"
+                                    Name="{x:Bind Handle}"
+                                    />
                             </mux:DataTemplate>
                         </muxc:ListView.ItemTemplate>
                     </muxc:ListView>
                 </muxc:StackPanel>
             </muxc:ScrollViewer>
             <muxc:ScrollViewer>
-                <muxc:TreeView>
+                <muxc:ListView x:Name="LvDisplayComponents">
+                    <muxc:ListView.ItemTemplate>
+                        <mux:DataTemplate x:DataType="local:DisplayComponent">
+                            <muxc:StackPanel Orientation="Horizontal">
+                                <muxc:TextBlock
+                                    Text="{x:Bind Type}"
+                                />
+                                <muxc:TextBlock
+                                    Text="{x:Bind Value}"
+                                />
+                            </muxc:StackPanel>
+                        </mux:DataTemplate>
+                    </muxc:ListView.ItemTemplate>
+                </muxc:ListView>
+                <!-- muxc:TreeView>
                     <muxc:TreeView.RootNodes>
                         <muxc:TreeViewNode Content="engine.transform.components.Transform3">
                             <muxc:TreeViewNode.Children>
@@ -104,7 +122,7 @@
                             </muxc:TreeViewNode.Children>
                         </muxc:TreeViewNode>
                     </muxc:TreeView.RootNodes>
-                </muxc:TreeView>                
+                </-->                
             </muxc:ScrollViewer>
         </muxc:StackPanel>
     </muxc:StackPanel>
