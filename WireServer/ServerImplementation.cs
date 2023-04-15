@@ -17,7 +17,6 @@ public class ServerImplementation : Svc.SvcBase
 
     // TXWTODO: This might lose some transitions.
     private EngineExecutionStatus _currentState = new();
-    
 
     private void _onEngineStateChanged(object sender, engine.Engine.EngineState newEngineState)
     {

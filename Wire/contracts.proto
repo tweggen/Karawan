@@ -10,9 +10,15 @@ message ContinueParams {
 message PauseParams {
 }
 
+message CompProp {
+    string type = 1;
+    string value = 2;
+}
+
 message Component {
     string type = 1;
     string value = 2;
+    repeated CompProp properties = 3;
 }
 
 message Entity {
