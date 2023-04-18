@@ -8,9 +8,39 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:mux="using:Microsoft.UI.Xaml"
     xmlns:muxi="using:Microsoft.UI.Xaml.Input"
-    xmlns:self="clr-namespace:Barnaby.MainPage"
     mc:Ignorable="d"    
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    
+    <muxc:Page.Resources>
+        <DataTemplate x:Key="ComponentTemplate"
+                      x:DataType="local:DisplayComponent">
+            <muxc:TreeViewItem ItemsSource="{x:Bind Properties}" IsExpanded="True">
+                <StackPanel Orientation="Horizontal">
+                    <!-- Image Width="20" Source="../Assets/folder.png"/ -->
+                    <TextBlock Margin="0,0,10,0"/>
+                    <TextBlock Text="{x:Bind Type}" />
+                </StackPanel>
+            </muxc:TreeViewItem>
+        </DataTemplate>
+        <DataTemplate x:Key="PropertyTemplate"
+                      x:DataType="local:DisplayProperty">
+            <muxc:TreeViewItem>
+                <StackPanel Orientation="Horizontal">
+                    <!-- Image Width="20" Source="../Assets/file.png"/ -->
+                    <TextBlock Margin="0,0,10,0"/>
+                    <TextBlock Text="{x:Bind Name}"/>
+                    <TextBlock Margin="0,0,10,0"/>
+                    <TextBlock Text="{x:Bind Value}"/>
+                </StackPanel>
+            </muxc:TreeViewItem>
+        </DataTemplate>
+        
+        <local:ExplorerItemTemplateSelector 
+            x:Key="ExplorerItemTemplateSelector"
+            ComponentTemplate="{StaticResource ComponentTemplate}"
+            PropertyTemplate="{StaticResource PropertyTemplate}" />
+        
+    </muxc:Page.Resources>
     
     <muxc:StackPanel Orientation="Vertical" HorizontalAlignment="Left">
         <muxc:MenuBar>
@@ -72,7 +102,6 @@
                 <muxc:Button Click="BtContinue">Continue</muxc:Button>
             </muxc:StackPanel>
         </muxc:StackPanel>
-            
 
         <muxc:StackPanel Orientation="Horizontal">
             <muxc:ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -90,60 +119,14 @@
                     </muxc:ListView>
                 </muxc:StackPanel>
             </muxc:ScrollViewer>
+    
             <muxc:ScrollViewer>
-                <muxc:TreeView x:Name="LvDisplayComponents">
-                    <muxc:TreeView.ItemTemplate>
-                        <mux:DataTemplate
-                                x:DataType="local:DisplayComponent"
-                            >
-                            <muxc:TreeViewItem
-                                ItemsSource="{x:Bind Properties}"
-                            />
-                        </mux:DataTemplate>
-                    </muxc:TreeView.ItemTemplate>
-                </muxc:TreeView>
-                <!-- muxc:TreeView>
-                    <muxc:TreeView.RootNodes>
-                        <muxc:TreeViewNode Content="engine.transform.components.Transform3">
-                            <muxc:TreeViewNode.Children>
-                                <muxc:TreeViewNode Content="IsVisible"/>
-                                <muxc:TreeViewNode Content="CameraMask"/>
-                                <muxc:TreeViewNode Content="Rotation"/>
-                                <muxc:TreeViewNode Content="Position"/>
-                            </muxc:TreeViewNode.Children>
-                        </muxc:TreeViewNode>
-                        <muxc:TreeViewNode Content="engine.transform.components.Instance3">
-                            <muxc:TreeViewNode.Children>
-                                <muxc:TreeViewNode Content="Meshes"/>
-                                <muxc:TreeViewNode Content="MeshMaterials"/>
-                                <muxc:TreeViewNode Content="Materials"/>
-                            </muxc:TreeViewNode.Children>
-                        </muxc:TreeViewNode>
-                    </muxc:TreeView.RootNodes>
-                </-->                
+                <muxc:TreeView
+                    x:Name="LvDisplayComponents"
+                    ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}"
+                />
             </muxc:ScrollViewer>
-            <muxc:ScrollViewer>
-                <!-- TreeView.Resources>
-                    <HierarchicalDataTemplate x:DataType="{x:Type self:Family}" ItemsSource="{Binding Members}">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="/WpfTutorialSamples;component/Images/group.png" Margin="0,0,5,0" />
-                            <TextBlock Text="{Binding Name}" />
-                            <TextBlock Text=" [" Foreground="Blue" />
-                            <TextBlock Text="{Binding Members.Count}" Foreground="Blue" />
-                            <TextBlock Text="]" Foreground="Blue" />
-                        </StackPanel>
-                    </muxHierarchicalDataTemplate>
-                    <DataTemplate DataType="{system:Type self:FamilyMember}">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="/WpfTutorialSamples;component/Images/user.png" Margin="0,0,5,0" />
-                            <TextBlock Text="{Binding Name}" />
-                            <TextBlock Text=" (" Foreground="Green" />
-                            <TextBlock Text="{Binding Age}" Foreground="Green" />
-                            <TextBlock Text=" years)" Foreground="Green" />
-                        </StackPanel>
-                    </DataTemplate>
-                </-->
-            </muxc:ScrollViewer>
+
         </muxc:StackPanel>
     </muxc:StackPanel>
 </muxc:Page>

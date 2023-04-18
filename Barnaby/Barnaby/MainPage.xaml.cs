@@ -164,4 +164,25 @@ namespace Barnaby
             // listDisplayEntities.Add(new DisplayEntity() { Handle = (uint)result, Enabled = true });
         }
     }
+    
+    class ExplorerItemTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate ComponentTemplate { get; set; }
+        public DataTemplate PropertyTemplate { get; set; }
+
+        protected override DataTemplate SelectTemplateCore(object item)
+        {
+            if (item is DisplayComponent)
+            {
+                return ComponentTemplate;
+            } else if (item is DisplayProperty)
+            {
+                return PropertyTemplate;
+            }
+            else
+            {
+                return PropertyTemplate;
+            }
+        }
+    }
 }
