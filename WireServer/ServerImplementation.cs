@@ -45,6 +45,7 @@ public class ServerImplementation : Svc.SvcBase
     {
         public Type Type;
         public string ValueAsString;
+        public object Value;
     }
     
     internal class EntityComponentTypeReader : DefaultEcs.Serialization.IComponentTypeReader
@@ -60,9 +61,11 @@ public class ServerImplementation : Svc.SvcBase
                 string strType = typeof(T).ToString();
                 string strValueRepresentation = "(value unprintable)";
                 Type t = typeof(T);
+                object value = null;
                 try
                 {
                     strValueRepresentation = _entity.Get<T>().ToString();
+                    value = _entity.Get<T>();
                 }
                 catch (Exception ex)
                 {
@@ -71,7 +74,9 @@ public class ServerImplementation : Svc.SvcBase
 
                 DictComponentTypes[strType] = new ComponentInfo()
                 {
-                    Type = type, ValueAsString = strValueRepresentation
+                    Type = type, 
+                    ValueAsString = strValueRepresentation,
+                    Value = value
                 };
             }
         }
@@ -179,11 +184,11 @@ public class ServerImplementation : Svc.SvcBase
          
                 foreach(var fieldInfo in fields)
                 {
-                    Type typeAttr = fieldInfo.GetType();
+                    Type typeAttr = fieldInfo.FieldType;
                     string strValue = "(not available)";
                     try
                     {
-                        //strValue = fieldInfo.GetValue(componentInfo.object).ToString();
+                        strValue = fieldInfo.GetValue(componentInfo.Value).ToString();
                     }
                     catch (Exception e)
                     {
