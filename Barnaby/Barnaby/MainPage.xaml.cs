@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -23,13 +24,23 @@ namespace Barnaby
     {
         public uint Handle { get; set; }
         public bool Enabled { get; set; }
-    }
 
+        ObservableCollection<DisplayComponent> components;
+    }
 
 
     public class DisplayComponent
     {
         public string Type { get; set; }
+        public string Value { get; set; }
+
+        public List<DisplayProperty> Properties;
+    }
+
+
+    public class DisplayProperty
+    {
+        public string Name { get; set; }
         public string Value { get; set; }
     }
     
@@ -41,6 +52,8 @@ namespace Barnaby
     {
         private App _app = null;
 
+
+        // private ObservableCollection<DisplayEntity> 
 
         private void _reloadEntities()
         {
@@ -62,6 +75,7 @@ namespace Barnaby
             LvDisplayEntities.ItemsSource = listDisplayEntities;
         }
 
+        
         private void _loadEntity(int entityId)
         {
             List<DisplayComponent> listDisplayComponents = new List<DisplayComponent>();
@@ -138,8 +152,7 @@ namespace Barnaby
 
             _loadEntity(entityId);
         }
-
-
+        
         
         public MainPage()
         {

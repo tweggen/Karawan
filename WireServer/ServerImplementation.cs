@@ -41,22 +41,27 @@ public class ServerImplementation : Svc.SvcBase
         }
     }
 
+    internal class ComponentInfo
+    {
+        public Type Type;
+        public string ValueAsString;
+    }
     
     internal class EntityComponentTypeReader : DefaultEcs.Serialization.IComponentTypeReader
     {
-        public SortedDictionary<string, string> DictComponentTypes = new();
+        public SortedDictionary<string, ComponentInfo> DictComponentTypes = new();
         private DefaultEcs.Entity _entity;
 
         public void OnRead<T>(int maxCapacity)
         {
             if (_entity.Has<T>())
             {
-                string strTypeRepresentation = "(type unprintable)";
+                Type type = typeof(T);
+                string strType = typeof(T).ToString();
                 string strValueRepresentation = "(value unprintable)";
                 Type t = typeof(T);
                 try
                 {
-                    strTypeRepresentation = t.ToString();
                     strValueRepresentation = _entity.Get<T>().ToString();
                 }
                 catch (Exception ex)
@@ -64,7 +69,10 @@ public class ServerImplementation : Svc.SvcBase
 
                 }
 
-                DictComponentTypes[strTypeRepresentation] = strValueRepresentation;
+                DictComponentTypes[strType] = new ComponentInfo()
+                {
+                    Type = type, ValueAsString = strValueRepresentation
+                };
             }
         }
 
@@ -160,9 +168,32 @@ public class ServerImplementation : Svc.SvcBase
         {
             EntityComponentTypeReader reader = new(entity);
             _engine.GetEcsWorld().ReadAllComponentTypes(reader);
-            foreach (var (key,value) in reader.DictComponentTypes)
+            foreach (var (strType,componentInfo) in reader.DictComponentTypes)
             {
-                entityResult.Entity.Components.Add(new Wire.Component() {Type = key, Value = value});
+                Wire.Component component = new()
+                {
+                    Type = componentInfo.Type.ToString(),
+                    Value = componentInfo.ValueAsString
+                };
+                System.Reflection.FieldInfo[] fields = componentInfo.Type.GetFields();
+         
+                foreach(var fieldInfo in fields)
+                {
+                    Type typeAttr = fieldInfo.GetType();
+                    string strValue = "(not available)";
+                    try
+                    {
+                        //strValue = fieldInfo.GetValue(componentInfo.object).ToString();
+                    }
+                    catch (Exception e)
+                    {
+                        
+                    }
+
+                    Wire.CompProp compProp = new() { Type = typeAttr.ToString(), Value = strValue };
+                    component.Properties.Add(compProp);
+                }
+                entityResult.Entity.Components.Add(component);
             }
         }
         return Task.FromResult(entityResult);

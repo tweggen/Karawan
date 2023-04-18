@@ -8,7 +8,7 @@
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:mux="using:Microsoft.UI.Xaml"
     xmlns:muxi="using:Microsoft.UI.Xaml.Input"
-    xmlns:system="using:System"
+    xmlns:self="clr-namespace:Barnaby.MainPage"
     mc:Ignorable="d"    
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     
@@ -91,20 +91,17 @@
                 </muxc:StackPanel>
             </muxc:ScrollViewer>
             <muxc:ScrollViewer>
-                <muxc:ListView x:Name="LvDisplayComponents">
-                    <muxc:ListView.ItemTemplate>
-                        <mux:DataTemplate x:DataType="local:DisplayComponent">
-                            <muxc:StackPanel Orientation="Horizontal">
-                                <muxc:TextBlock
-                                    Text="{x:Bind Type}"
-                                />
-                                <muxc:TextBlock
-                                    Text="{x:Bind Value}"
-                                />
-                            </muxc:StackPanel>
+                <muxc:TreeView x:Name="LvDisplayComponents">
+                    <muxc:TreeView.ItemTemplate>
+                        <mux:DataTemplate
+                                x:DataType="local:DisplayComponent"
+                            >
+                            <muxc:TreeViewItem
+                                ItemsSource="{x:Bind Properties}"
+                            />
                         </mux:DataTemplate>
-                    </muxc:ListView.ItemTemplate>
-                </muxc:ListView>
+                    </muxc:TreeView.ItemTemplate>
+                </muxc:TreeView>
                 <!-- muxc:TreeView>
                     <muxc:TreeView.RootNodes>
                         <muxc:TreeViewNode Content="engine.transform.components.Transform3">
