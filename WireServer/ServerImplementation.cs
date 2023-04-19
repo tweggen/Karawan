@@ -195,7 +195,7 @@ public class ServerImplementation : Svc.SvcBase
                         
                     }
 
-                    Wire.CompProp compProp = new() { Type = typeAttr.ToString(), Value = strValue };
+                    Wire.CompProp compProp = new() { Type = typeAttr.ToString(), Name = fieldInfo.Name, Value = strValue };
                     component.Properties.Add(compProp);
                 }
                 entityResult.Entity.Components.Add(component);

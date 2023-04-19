@@ -13,7 +13,8 @@
     
     <muxc:Page.Resources>
         <DataTemplate x:Key="ComponentTemplate"
-                      x:DataType="local:DisplayComponent">
+                      x:DataType="local:DisplayComponent"
+                      >
             <muxc:TreeViewItem ItemsSource="{x:Bind Properties}" IsExpanded="True">
                 <StackPanel Orientation="Horizontal">
                     <!-- Image Width="20" Source="../Assets/folder.png"/ -->

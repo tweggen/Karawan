@@ -40,6 +40,7 @@ namespace Barnaby
 
     public class DisplayProperty
     {
+        public string Type { get; set; }
         public string Name { get; set; }
         public string Value { get; set; }
     }
@@ -88,10 +89,19 @@ namespace Barnaby
             Wire.Entity entity = _app.WireClient.GetEntity(entityId);
             foreach(Wire.Component comp in entity.Components)
             {
-                listDisplayComponents.Add(new DisplayComponent()
+                DisplayComponent displayComponent = new()
                 {
-                    Type=comp.Type, Value=comp.Value
-                });
+                    Type = comp.Type, Value = comp.Value, Properties = new()
+                };
+                foreach (Wire.CompProp prop in comp.Properties)
+                {
+                    DisplayProperty displayProperty = new()
+                    {
+                        Type = prop.Type, Name = prop.Name, Value = prop.Value
+                    };
+                    displayComponent.Properties.Add(displayProperty);
+                }
+                listDisplayComponents.Add(displayComponent);
             }
 
             LvDisplayComponents.ItemsSource = listDisplayComponents;
@@ -175,7 +185,8 @@ namespace Barnaby
             if (item is DisplayComponent)
             {
                 return ComponentTemplate;
-            } else if (item is DisplayProperty)
+            } 
+            else if (item is DisplayProperty)
             {
                 return PropertyTemplate;
             }

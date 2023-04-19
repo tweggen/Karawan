@@ -12,7 +12,8 @@ message PauseParams {
 
 message CompProp {
     string type = 1;
-    string value = 2;
+    string name = 2;
+    string value = 3;
 }
 
 message Component {
