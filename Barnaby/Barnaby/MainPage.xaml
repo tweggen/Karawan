@@ -16,7 +16,7 @@
                       x:DataType="local:DisplayComponent"
                       >
             <muxc:TreeViewItem ItemsSource="{x:Bind Properties}" IsExpanded="True">
-                <StackPanel Orientation="Horizontal">
+                <StackPanel  Padding="0,0,0,0" Orientation="Horizontal">
                     <!-- Image Width="20" Source="../Assets/folder.png"/ -->
                     <TextBlock Margin="0,0,10,0"/>
                     <TextBlock Text="{x:Bind Type}" />
@@ -26,7 +26,7 @@
         <DataTemplate x:Key="PropertyTemplate"
                       x:DataType="local:DisplayProperty">
             <muxc:TreeViewItem>
-                <StackPanel Orientation="Horizontal">
+                <StackPanel  Padding="0,0,0,0" Orientation="Horizontal">
                     <!-- Image Width="20" Source="../Assets/file.png"/ -->
                     <TextBlock Margin="0,0,10,0"/>
                     <TextBlock Text="{x:Bind Name}"/>
