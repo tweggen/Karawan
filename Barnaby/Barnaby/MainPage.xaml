@@ -43,8 +43,29 @@
         
     </muxc:Page.Resources>
     
-    <muxc:StackPanel Orientation="Vertical" HorizontalAlignment="Left">
-        <muxc:MenuBar>
+    <muxc:Grid>
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="80" />
+            <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        
+        <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                Background="#333388"/>
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                Background="#5555bb"/>
+        <Border Grid.Row="2"  Grid.Column="0"
+                Background="#333388"/>
+        <Border Grid.Row="2" Grid.Column="1"
+                Background="#5555bb"/>
+        
+        <muxc:MenuBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
             <muxc:MenuBarItem Title="File">
                 <muxc:MenuFlyoutItem Text="New">
                     <muxc:MenuFlyoutItem.KeyboardAccelerators>
@@ -92,7 +113,9 @@
             </muxc:MenuBarItem>
         </muxc:MenuBar>
 
-        <muxc:StackPanel Orientation="Horizontal">
+        <muxc:StackPanel 
+            Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" 
+            Orientation="Horizontal">
             <muxc:StackPanel Orientation="Horizontal">
                 <muxc:Button Click="BtConnectToClick">Connect to </muxc:Button>
                 <muxc:TextBox x:Name="TbServerIP" Text="127.0.0.1"/>
@@ -104,30 +127,30 @@
             </muxc:StackPanel>
         </muxc:StackPanel>
 
-        <muxc:StackPanel Orientation="Horizontal">
-            <muxc:ScrollViewer VerticalScrollBarVisibility="Auto">
-                <muxc:StackPanel>
-                    <muxc:ListView x:Name="LvDisplayEntities">
-                        <muxc:ListView.ItemTemplate>
-                            <mux:DataTemplate x:DataType="local:DisplayEntity">
-                                <muxc:TextBlock
-                                    Text="{x:Bind Handle}"
-                                    PointerPressed="TbEntityClick"
-                                    Name="{x:Bind Handle}"
-                                    />
-                            </mux:DataTemplate>
-                        </muxc:ListView.ItemTemplate>
-                    </muxc:ListView>
-                </muxc:StackPanel>
-            </muxc:ScrollViewer>
-    
-            <muxc:ScrollViewer>
-                <muxc:TreeView
-                    x:Name="LvDisplayComponents"
-                    ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}"
-                />
-            </muxc:ScrollViewer>
+        <muxc:ScrollViewer 
+            Grid.Row="2"  Grid.Column="0"
+            VerticalScrollBarVisibility="Auto">
+            <muxc:ListView x:Name="LvDisplayEntities">
+                <muxc:ListView.ItemTemplate>
+                    <mux:DataTemplate x:DataType="local:DisplayEntity">
+                        <muxc:TextBlock
+                            Text="{x:Bind Handle}"
+                            PointerPressed="TbEntityClick"
+                            Name="{x:Bind Handle}"
+                            />
+                    </mux:DataTemplate>
+                </muxc:ListView.ItemTemplate>
+            </muxc:ListView>
+        </muxc:ScrollViewer>
 
-        </muxc:StackPanel>
-    </muxc:StackPanel>
+        <muxc:ScrollViewer 
+            Grid.Row="2" Grid.Column="1"
+            VerticalScrollBarVisibility="Auto">
+            <muxc:TreeView
+                x:Name="LvDisplayComponents"
+                ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}"
+            />
+        </muxc:ScrollViewer>
+
+    </muxc:Grid>
 </muxc:Page>
