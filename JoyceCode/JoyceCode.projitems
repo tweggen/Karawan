@@ -17,6 +17,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Instance.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\LGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Op.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Params.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Part.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Rule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\State.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\System.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
