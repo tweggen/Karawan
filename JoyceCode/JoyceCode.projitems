@@ -18,6 +18,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\CondParams.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Instance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\LGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\Op.cs" />

@@ -1,54 +1,55 @@
-﻿
-#if false
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace builtin.tools.Lindenmayer;
 
 public class Part
 {
     public string Name;
-    public SortedDictionary<string, > parameters: LParams;
 
-    public function toString(): String {
+    public Params Parameters;
+
+    public string ToString()
+    {
         var strName = "null";
-        if( null != name ) {
-            strName = '"$name"';
+        if( null != Name ) {
+            strName = $"{Name}";
         }
         var strParameters = "null";
-        if( null != parameters ) {
-            var out = "";
+        if( null != Parameters ) {
+            var result = "";
             var isFirst = true;
-            for( key in parameters.keys() ) {
+            foreach (string key in Parameters.Map.Keys) 
+            {
                 if( !isFirst ) {
-                    out += ", ";
+                    result += ", ";
                 } else {
                     isFirst = false;
                 }
-                out += '"$key" -> ${parameters[key]}';
+                result += $"{key} -> {Parameters.Map[key]}";
             }
-            strParameters = '{ $out }';
+            strParameters = $"{result}";
         }
-        return 'LPart { name => "$strName", parameters => $strParameters }';
+        return $"Part {{ Name => \"{strName}\", Parameters => {strParameters} }}";
     }
 
-    public function clone(): LPart {
+    public Part Clone()
+    {
         /*
          * Note: Copying the map works because there are no data structures inside.
          */
-        var dupParams = null;
-        if( null != parameters ) {
-            dupParams = parameters.copy();
+        Params dupParams = null;
+        if( null != Parameters ) {
+            dupParams = Parameters.Clone();
         }
-        return new LPart( name, dupParams );
+        return new Part( Name, dupParams );
     }
 
-    public function new(
-    name0: String,
-    parameters0: LParams
+    public Part(
+        string name,
+        Params parameters
     ) {
-        name = name0;
-        parameters = parameters0;
+        Name = name;
+        Parameters = parameters;
     }
    
 }
-#endif
