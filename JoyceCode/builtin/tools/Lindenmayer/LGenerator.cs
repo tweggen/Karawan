@@ -1,94 +1,102 @@
-﻿#if false
+﻿using System.Collections.Generic;
+using static engine.Logger;
 
-namespace builtin.tools;
+namespace builtin.tools.Lindenmayer;
 
 public class LGenerator
 {
-    private var _lSystem: LSystem;
+    private System _system;
 
-    private var _traceEmit = false;
+    private bool _traceEmit = false;
 
-    private function applyRules( lInstance: LInstance, rules: Array<LRule> ): LInstance {
+    private Instance _applyRules( Instance lInstance, IList<Rule> rules )
+    {
 
         if( null==rules ) {
-            return lInstance.clone();
+            return lInstance.Clone();
         }
 
         var isChanged = false;
 
-        var os = lInstance.state;
-        var op = os.parts;
+        var os = lInstance.State;
+        var op = os.Parts;
         if( null==op ) {
-            return new LInstance( _lSystem, new LState( op ) );
+            return new Instance( _system, new State( op ) );
         }
-        var np = new Array<LPart>();
-        for( part in op ) {
+        var np = new List<Part>();
+        foreach (Part part in op ) {
             /*
              * First collect all the rules that match the part.
              */
-            var matchingRules = new Array<LRule>();
-            for( rule in rules ) {
-                if( rule.name != part.name ) {
+            var matchingRules = new List<Rule>();
+            foreach (Rule rule in rules) 
+            {
+                if( rule.Name != part.Name ) 
+                {
                     continue;
                 }
-                if( null != rule.condition ) {
-                    if( false == rule.condition( part.parameters ) ) {
+                if (null != rule.Condition) 
+                {
+                    if (false == rule.Condition( part.Parameters )) 
+                    {
                         continue;
                     }
                 }
-                if( _traceEmit ) trace('LGenerator.iterate(): Matched rule "${rule.name}".');
-                matchingRules.push( rule );
+                if( _traceEmit ) Trace($"Matched rule {rule.Name}.");
+                matchingRules.Add( rule );
             }
 
-            if( 0 != matchingRules.length ) {
+            if( 0 != matchingRules.Count ) {
                 /*
                 * If we have matching rules, select the first match.
                 * TXWTODO: Collect the probabilities and select accordingly.
                 */
                 var winningRule = matchingRules[0];
-                var newParts = winningRule.transformParts( part.parameters );
-                for( singleNewPart in newParts ) {
-                    if( _traceEmit ) trace( 'LGenerator.iterate(): Pushing new "${singleNewPart}".');
-                    np.push( singleNewPart );
+                var newParts = winningRule.TransformParts( part.Parameters );
+                foreach (Part singleNewPart in newParts ) {
+                    if( _traceEmit ) Trace( $"Pushing new \"{singleNewPart}\".");
+                    np.Add( singleNewPart );
                 }
                 isChanged = true;
             } else {
                 /*
                  * No rule match, leave part untouched.
                  */
-                if( _traceEmit ) trace( 'LGenerator.iterate(): Pushing old "${part}".');
-                np.push( part.clone() );
+                if( _traceEmit ) Trace( $"Pushing old \"{part}\".");
+                np.Add( part.Clone() );
             }
         }
         if( !isChanged ) {
             return null;
         }
-        var ns = new LState( np );
-        return new LInstance( _lSystem, ns );
+        var ns = new State( np );
+        return new Instance( _system, ns );
 
     }
 
     /**
      * Return a new instance, iterated using LSystem rules.
      */
-    public function iterate( lInstance: LInstance ): LInstance {
-        return applyRules( lInstance, _lSystem.rules );
+    public Instance Iterate( Instance instance  )
+    {
+        return _applyRules( instance, _system.Rules );
     }
 
 
-    public function finalize( lInstance: LInstance ): LInstance {
-        return applyRules( lInstance, _lSystem.macros );
+    public Instance Finalize( Instance instance )
+    {
+        return _applyRules(instance, _system.Macros );
     }
 
 
-    public function instantiate(): LInstance {
-        return new LInstance( _lSystem, _lSystem.seed.clone() );
+    public Instance Instantiate()
+    {
+        return new Instance( _system, _system.Seed.Clone() );
     }
 
 
-    public function new ( lSystem: LSystem ) {
-        _lSystem = lSystem;
+    public LGenerator( System system )
+    {
+        _system = system;
     }
 }
-}
-#endif

@@ -7,13 +7,13 @@ public class Rule
 {
     public string Name;
     public float Probability;
-    public Func<CondParams, bool> Condition;
+    public Func<Params, bool> Condition;
     public Func<Params, IList<Part>> TransformParts;
 
     public Rule(
         string name,
         float probability,
-        Func<CondParams, bool> condition,
+        Func<Params, bool> condition,
         Func<Params, IList<Part>> transformParts
     ) {
         Name = name;
