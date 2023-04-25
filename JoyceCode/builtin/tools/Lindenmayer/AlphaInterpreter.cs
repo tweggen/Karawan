@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using System.Numerics;
 using static engine.Logger;
 
@@ -84,9 +85,8 @@ public class AlphaInterpreter
             if (part.Name == "rotate(d,x,y,z)")
             {
                 var qrot = Quaternion.CreateFromAxisAngle(
-                    new Vector3(p["x"], p["y"], p["z"],
-                    p["d"] / 180f*(float)System.Math.PI
-                    )
+                    new Vector3(p["x"], p["y"], p["z"]),
+                    p["d"] / 180f * (float) Math.PI
                 );
                 state.Rotation = qrot * state.Rotation;
             }
@@ -121,77 +121,76 @@ public class AlphaInterpreter
                 /*
                  * Make a trivial four sided poly.
                  */
-                var poly = new Array<geom.Vector3D>();
-                poly.push(new geom.Vector3D(vs.x + vr.x, vs.y + vr.y, vs.z + vr.z));
-                poly.push(new geom.Vector3D(vs.x + vt.x, vs.y + vt.y, vs.z + vt.z));
-                //poly.push( new geom.Vector3D( vs.x - vr.x, vs.y - vr.y ,vs.z - vr.z ) );
-                poly.push(new geom.Vector3D(vs.x - vt.x, vs.y - vt.y, vs.z - vt.z));
-                var path = new Array<geom.Vector3D>();
-                path.push(new geom.Vector3D(vd.x, vd.y, vd.z));
+                var poly = new List<Vector3>();
+                poly.Add(vs + vr);
+                poly.Add(vs + vt);
+                poly.Add(vs - vt);
+                var path = new List<Vector3>();
+                path.Add(vd);
                 // trace( 'poly: $poly' );
-                var ext = new ops.geom.ExtrudePoly(poly, path, 27, 100., false, false, false);
-                ext.buildGeom(worldFragment, g);
-                state.position.add(vd);
+                var ext = new builtin.tools.ExtrudePoly(poly, path, 
+                    27, 100f, false, false, false);
+                ext.BuildGeom(worldFragment, g);
+                state.Position += vd;
             }
-            else if (part.name == "flat(r,l)")
+            else if (part.Name == "flat(r,l)")
             {
 
-                var vs = state.position.clone();
+                var vs = state.Position;
 
                 /*
                  * vd shall be scaled with l
                  */
-                var vd = new geom.Vector3D(1., 0., 0.);
-                vd.applyQuaternion(state.rotation);
+                var vd = new Vector3(1f, 0f, 0f);
+                vd = Vector3.Transform(vd, state.Rotation);
+                
                 /*
                  * vRadius shall be scaled with r
                  */
-                var vr = new geom.Vector3D(0., 1., 0.);
-                vr.applyQuaternion(state.rotation);
+                var vr = new Vector3(0f, 1f, 0f);
+                vr = Vector3.Transform(vr,state.Rotation);
 
-                var vt = vr.clone();
-                vt.cross(vd);
+                Vector3 vt = Vector3.Cross(vd, vr);
 
-                vd.scale(p["l"]);
-                vr.scale(p["r"]);
-                vt.scale(p["r"]);
+                vd *= p["l"];
+                vr *= p["r"];
+                vt *= p["r"];
                 // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
 
                 /*
                  * Make a trivial four sided poly.
                  */
-                var poly = new Array<geom.Vector3D>();
-                poly.push(new geom.Vector3D(vs.x + vr.x, vs.y + vr.y, vs.z + vr.z));
+                var poly = new List<Vector3>();
+                poly.Add(vs + vr);
                 //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
-                poly.push(new geom.Vector3D(vs.x - vr.x, vs.y - vr.y, vs.z - vr.z));
+                poly.Add(vs - vr); 
                 // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
-                var path = new Array<geom.Vector3D>();
-                path.push(new geom.Vector3D(vd.x, vd.y, vd.z));
+                var path = new List<Vector3>();
+                path.Add(vd);
                 // trace( 'poly: $poly' );
-                var ext = new ops.geom.ExtrudePoly(poly, path, 27, 100., false, false, false);
-                ext.buildGeom(worldFragment, g);
-                state.position.add(vd);
+                var ext = new builtin.tools.ExtrudePoly(poly, path, 27, 100f, false, false, false);
+                ext.BuildGeom(worldFragment, g);
+                state.Position += vd;
             }
-            else if (part.name == "push()")
+            else if (part.Name == "push()")
             {
-                _stack.push(state);
-                state = new LAlphaState(state);
+                _stack.Add(state);
+                state = new AlphaState(state);
             }
-            else if (part.name == "pop()")
+            else if (part.Name == "pop()")
             {
-                state = _stack.pop();
+                _stack.RemoveAt(_stack.Count - 1);
             }
             else
             {
-                trace('LAlphaInterpreter.run(): Unknown part $part.');
+                Warning($"Unknown part {part}.");
             }
         }
     }
 
 
-    public function new
-    ( lInstance: LInstance ) {
-        _lInstance = lInstance;
-        _stack = new Array<LAlphaState>();
+    public AlphaInterpreter( Instance instance ) {
+        _instance = instance;
+        _stack = new List<AlphaState>();
     }
 }
