@@ -150,7 +150,7 @@ public class AlphaInterpreter
 
                 vd *= p["l"];
                 vr *= p["r"];
-                vt *= p["r"];
+                // vt *= p["r"];
                 // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
 
                 /*
