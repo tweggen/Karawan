@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using builtin.tools.Lindenmayer;
+using static engine.Logger;
 
 namespace nogame.cities;
+
 
 public class GenerateTreesOperator : engine.world.IFragmentOperator 
 {
@@ -23,7 +27,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
             if (_jMaterialTrees == null)
             {
                 _jMaterialTrees = new engine.joyce.Material(); 
-                _jMaterialTrees.AlbedoColor = 0x44ff4444;
+                _jMaterialTrees.AlbedoColor = 0xff448822;
                 // _jMaterialTrees.Texture = new engine.joyce.Texture("buildingdiffuse.png");
             }
             return _jMaterialTrees;
@@ -43,199 +47,199 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
 
     private builtin.tools.Lindenmayer.System _createTree1System() 
     { 
-        using Part = builtin.tools.Lindenmayer.Part;
-        return new builtin.tools.Lindenmayer.System( new builtin.tools.Lindenmayer.State( 
+        
+        return new builtin.tools.Lindenmayer.System( new State( new List<Part>
             /*
              * Initial seed: One 10 up, 1m radius.
              */
-            [
+            {
                 /*
                  * Straight up.
                  */
-                new Part( "rotate(d,x,y,z)",
-                    ["d"] = 90f,["x"] = 0f, "y"=>0., "z"=>1.] ),
+                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                    ["d"] = 90f,["x"] = 0f, ["y"] = 0f, ["z"] =1f } ),
                 /*
                  * Random orientation
                  */
-                new LPart( "rotate(d,x,y,z)",
-                    ["d" => _rnd.getFloat()*359., "x"=>1., "y"=>0., "z"=>0.] ),
-                new LPart( "stem(r,l)",
-                    ["r"=>0.10, "l"=>(1.+2.*_rnd.getFloat())] )
-            ] ),
+                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                    ["d"] = _rnd.getFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
+                new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                    ["r"] = 0.10f, ["l"] = (1f+2f*_rnd.getFloat()) } )
+            } ),
             /*
              * Transformmation: Split and grow the main tree, add too branches left
              * and right.
              */            
-            [
-                new LRule("stem(r,l)", 1.0, 
-                    (p: LParams) -> (p["r"] > 0.02 && p["l"] > 0.1),
-                    (p: LParams) -> [
-                        new LPart( "stem(r,l)",
-                            ["r" => p["r"]*1.05, "l" => p["l"]*0.8]
-                        ),
-                        new LPart( "push()", null ),
-                            new LPart( "rotate(d,x,y,z)", 
-                                ["d" => 30.+_rnd.getFloat()*30., "x" => 0., "y" => 0., "z" => 1.] ),
-                            new LPart( "stem(r,l)",
-                                ["r" => p["r"]*0.6, "l" => p["l"]*0.8] ),
-                        new LPart( "pop()", null ),
-                        new LPart( "push()", null ),
-                            new LPart( "rotate(d,x,y,z)", 
-                                ["d" => -30.+_rnd.getFloat()*30., "x" => 0., "y" => 0., "z" => 1.] ),
-                            new LPart( "stem(r,l)",
-                                ["r" => p["r"]*0.6, "l" => p["l"]*0.8] ),
-                        new LPart( "pop()", null ),
-                        new LPart( "rotate(d,x,y,z)",
-                            ["d" => 90.+_rnd.getFloat()*20., "x"=>1., "y"=>0., "z"=>0.] ),
-                        new LPart( "stem(r,l)",
-                            ["r" => p["r"]*0.8, "l" => p["l"]*0.5] )
-                    ]
+            new List<Rule> {
+                new Rule("stem(r,l)", 1.0f, 
+                    (Params p) => (p["r"] > 0.02 && p["l"] > 0.1),
+                    (Params p) => new List<Part> {
+                        new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                            ["r"] = p["r"]*1.05f, ["l"] = p["l"]*0.8f } ),
+                        new Part( "push()", null ),
+                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                                ["d"] = 30f+_rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
+                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f } ),
+                        new Part( "pop()", null ),
+                        new Part( "push()", null ),
+                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                                ["d"] = -30f+_rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
+                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f }),
+                        new Part( "pop()", null ),
+                        new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                            ["d"] = 90f+_rnd.getFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
+                        new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                            ["r"] = p["r"]*0.8f, ["l"] = p["l"]*0.5f } )
+                    }
                 )
-            ],
+            },
             /*
              * Macros: Break down the specific operation "stem" to a standard
              * turtle operation.
              */
-            [
-                new LRule("stem(r,l)", 1.0, null,
-                    (p: LParams) -> [
-                        new LPart( "fillrgb(r,g,b)",
-                            ["r" => 0.2, "g" => 0.7, "b" => 0.1] ),
-                        new LPart( "cyl(r,l)",
-                            ["r" => p["r"], "l" => p["l"]] )
-                    ]
+            new List<Rule> {
+                new Rule("stem(r,l)", 1.0f, null,
+                    (Params p) => new List<Part> {
+                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                            ["r"] = 0.2f, ["g"] = 0.7f, ["b"] = 0.1f } ),
+                        new Part( "cyl(r,l)", new SortedDictionary<string, float> {
+                            ["r"] = p["r"], ["l"] = p["l"] } )
+                    }
                 )
-            ]
+            }
         );
 
     }
 
 
-    private function createTree2System(): LSystem {
-
-        return new LSystem( new LState( 
+    private builtin.tools.Lindenmayer.System _createTree2System()
+    {
+        return new builtin.tools.Lindenmayer.System( new State( new List<Part>  
             /*
              * Initial seed: One 10 up, 1m radius.
              */
-            [
+            {
                 /*
                  * Straight up.
                  */
-                new LPart( "rotate(d,x,y,z)",
-                    ["d"=>90.,"x"=>0., "y"=>0., "z"=>1.] ),
+                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                    ["d"] = 90f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
                 /*
                  * Random orientation
                  */
-                new LPart( "rotate(d,x,y,z)",
-                    ["d" => _rnd.getFloat()*359., "x"=>1., "y"=>0., "z"=>0.] ),
-                new LPart( "stem(r,l)",
-                    ["r"=>0.1, "l"=>(1.+2.*_rnd.getFloat())] )
-            ] ),
+                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                    ["d"] = _rnd.getFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
+                new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                    ["r"] = 0.1f, ["l"] = (1f+2f*_rnd.getFloat()) } )
+            } ),
             /*
              * Transformmation: Split and grow the main tree, add too branches left
              * and right.
              */            
-            [
-                new LRule("stem(r,l)", 1.0, 
-                    (p: LParams) -> (p["r"] > 0.02 && p["l"] > 0.1),
-                    (p: LParams) -> [
-                        new LPart( "stem(r,l)",
-                            ["r" => p["r"]*1.05, "l" => p["l"]*0.8]
-                        ),
-                        new LPart( "push()", null ),
-                            new LPart( "rotate(d,x,y,z)", 
-                                ["d" => 30.+_rnd.getFloat()*30., "x" => 0., "y" => 0., "z" => 1.] ),
-                            new LPart( "stem(r,l)",
-                                ["r" => p["r"]*0.6, "l" => p["l"]*0.8] ),
-                        new LPart( "pop()", null ),
-                        new LPart( "push()", null ),
-                            new LPart( "rotate(d,x,y,z)", 
-                                ["d" => -30.+_rnd.getFloat()*30., "x" => 0., "y" => 0., "z" => 1.] ),
-                            new LPart( "stem(r,l)",
-                                ["r" => p["r"]*0.6, "l" => p["l"]*0.8] ),
-                        new LPart( "pop()", null ),
-                        new LPart( "rotate(d,x,y,z)",
-                            ["d" => 90.+_rnd.getFloat()*20., "x"=>1., "y"=>0., "z"=>0.] )
-                    ]
+            new List<Rule> {
+                new Rule("stem(r,l)", 1.0f, 
+                    (Params p) => (p["r"] > 0.02f && p["l"] > 0.1f),
+                    (Params p) => new List<Part> {
+                        new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                            ["r"] = p["r"]*1.05f, ["l"] = p["l"]*0.8f } ),
+                        new Part( "push()", null ),
+                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                                ["d"] = 30f+_rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
+                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f } ),
+                        new Part( "pop()", null ),
+                        new Part( "push()", null ),
+                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                                ["d"] = -30f+_rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f} ),
+                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f} ),
+                        new Part( "pop()", null ),
+                        new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                            ["d"] = 90f+_rnd.getFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } )
+                    }
                 )
-            ],
+            },
             /*
              * Macros: Break down the specific operation "stem" to a standard
              * turtle operation.
              */
-            [
-                new LRule("stem(r,l)", 1.0, 
-                    (p: LParams) -> (p["r"] > 0.06),
-                    (p: LParams) -> [
-                        new LPart( "fillrgb(r,g,b)",
-                            ["r" => 0.4, "g" => 0.2, "b" => 0.1] ),
-                        new LPart( "cyl(r,l)",
-                            ["r" => p["r"], "l" => p["l"]] )
-                    ]
+            new List<Rule> {
+                new Rule("stem(r,l)", 1.0f, 
+                    (Params p) => (p["r"] > 0.06f),
+                    (Params p) => new List<Part> {
+                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                            ["r"] = 0.4f, ["g"] = 0.2f, ["b"] = 0.1f } ),
+                        new Part( "cyl(r,l)", new SortedDictionary<string, float> {
+                            ["r"] = p["r"], ["l"] = p["l"] } )
+                    }
                 ),
-                new LRule("stem(r,l)", 1.0, 
-                    (p: LParams) -> (p["r"] <= 0.06 && p["r"] > 0.04),
-                    (p: LParams) -> [
-                        new LPart( "fillrgb(r,g,b)",
-                            ["r" => 0.3, "g" => 0.5, "b" => 0.1] ),
-                        new LPart( "flat(r,l)",
-                            ["r" => p["r"], "l" => p["l"]] )
-                    ]
+                new Rule("stem(r,l)", 1.0f,  
+                    (Params p) => (p["r"] <= 0.06 && p["r"] > 0.04),
+                    (Params p) => new List<Part> {
+                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                            ["r"] = 0.3f, ["g"] = 0.5f, ["b"] = 0.1f } ),
+                        new Part( "flat(r,l)", new SortedDictionary<string, float> {
+                            ["r"] = p["r"], ["l"] = p["l"] } )
+                    }
                 ),
-                new LRule("stem(r,l)", 1.0, 
-                    (p: LParams) -> (p["r"] <= 0.04),
-                    (p: LParams) -> [
-                        new LPart( "fillrgb(r,g,b)",
-                            ["r" => 0.2, "g" => 0.4, "b" => 0.8] ),
-                        new LPart( "flat(r,l)",
-                            ["r" => p["r"], "l" => p["l"]] )
-                    ]
+                new Rule("stem(r,l)", 1.0f, 
+                    (Params p) => (p["r"] <= 0.04f),
+                    (Params p) => new List<Part> {
+                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                            ["r"] = 0.2f, ["g"] = 0.4f, ["b"] = 0.8f } ),
+                        new Part( "flat(r,l)", new SortedDictionary<string, float> {
+                            ["r"] = p["r"], ["l"] = p["l"] } )
+                    }
                 ),
-            ]
+            }
         );
 
     }
 
 
-    private function createLInstance(): LInstance {
+    private Instance _createLInstance()
+    {
         var whichtree = _rnd.getFloat();
 
-        var lSystem: LSystem = null;
+        builtin.tools.Lindenmayer.System lSystem = null;
         if( whichtree<0.5 ) {
-            lSystem = createTree1System();
+            lSystem = _createTree1System();
         } else {
-            lSystem = createTree2System();
+            lSystem = _createTree2System();
         }
         // TXWTODO: Create some sort of function encapsulating this?
         var lGenerator = new LGenerator( lSystem );
-        var lInstance = lGenerator.instantiate();
+        var lInstance = lGenerator.Instantiate();
         var prevInstance = lInstance;
-        for( i in 0...Std.int(_rnd.getFloat()*2.5+1) ) {
-            var nextInstance = lGenerator.iterate( prevInstance );
+        for( int i=0; i<(int)(_rnd.getFloat()*2.5f+1f); ++i ) 
+        {
+            var nextInstance = lGenerator.Iterate( prevInstance );
             if( null==nextInstance ) {
                 break;
             }
             prevInstance = nextInstance;
         }
-        return lGenerator.finalize( prevInstance );
+        return lGenerator.Finalize( prevInstance );
     }
 
 
-    public function fragmentOperatorApply(
-        allEnv: AllEnv,
-        worldFragment: WorldFragment
-    ) : Void {
-        var cx:Float = _clusterDesc.x - worldFragment.x;
-        var cz:Float = _clusterDesc.z - worldFragment.z;
+    public void FragmentOperatorApply(
+        in engine.world.Fragment worldFragment
+    )
+    {
+        float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
+        float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
-        var fsh: Float = WorldMetaGen.fragmentSize / 2.0;            
+        float fsh = engine.world.MetaGen.FragmentSize / 2.0f;            
 
         /*
          * We don't apply the operator if the fragment completely is
          * outside our boundary box (the cluster)
          */
         {
-            var csh: Float = _clusterDesc.size / 2.0;
+            float csh = _clusterDesc.Size / 2.0f;
             if (
                 (cx-csh)>(fsh)
                 || (cx+csh)<(-fsh)
@@ -254,21 +258,21 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
          */
         var quarterStore = _clusterDesc.quarterStore();
 
-        var atomsMap = new Map<String, engine.IGeomAtom>();
+        var atomsMap = new SortedDictionary<string, engine.joyce.Mesh>();
 
-        for( quarter in quarterStore.getQuarters() ) {
-            if( quarter.isInvalid() ) {
-                trace( 'GenerateHousesOperator.fragmentOperatorApply(): Skipping invalid quarter.' );
+        foreach( var quarter in quarterStore.GetQuarters() ) {
+            if( quarter.IsInvalid() ) {
+                Trace( "Skipping invalid quarter." );
                 continue;
             }
 
             var xmiddle = 0.0;
             var ymiddle = 0.0;
             var n = 0;
-            var delims = quarter.getDelims();
-            for( delim in delims ) {
-                xmiddle += delim.streetPoint.pos.x;
-                ymiddle += delim.streetPoint.pos.y;
+            var delims = quarter.GetDelims();
+            foreach( var delim in delims ) {
+                xmiddle += delim.StreetPoint.Pos.X;
+                ymiddle += delim.StreetPoint.Pos.Y;
                 ++n;
             }
             if( 3>n ) {
@@ -283,34 +287,34 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
              * - what is it extend?
              * - what is the largest side?
              */
-            for( estate in quarter.getEstates() ) {
+            foreach( var estate in quarter.GetEstates() ) {
 
                 /*
                  * Only consider this estate, if the center coordinate 
                  * is within this fragment.
                  */
-                var center = estate.getCenter();
-                center.x += cx;
-                center.z += cz;
-                if(!worldFragment.isInsideLocal( center.x, center.z )) {
+                var center = estate.GetCenter();
+                center.X += cx;
+                center.Z += cz;
+                if(!worldFragment.IsInsideLocal( center.X, center.Z )) {
                     continue;
                 }
                 
                 // TXWTODO: The 2.15 is copied from GenerateClusterQuartersOperator
-                var inFragmentY = _clusterDesc.averageHeight + 2.15;
+                var inFragmentY = _clusterDesc.AverageHeight + 2.15f;
 
                 /*
                  * Ready to add a tree if there is no house.
                  */ 
-                var buildings = estate.getBuildings();
-                if( buildings.length>0 ) {
+                var buildings = estate.GetBuildings();
+                if( buildings.Count>0 ) {
                     continue;
                 }
 
                 /*
                  * But don't use every estate, just some.
                  */
-                if( _rnd.getFloat() > 0.7 ) {
+                if( _rnd.getFloat() > 0.7f ) {
 
                 } else {
                     continue;
@@ -327,47 +331,47 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                  * 
                  * Base the decision on the quarter's size.
                  */
-                var poly = estate.getPoly();      
-                if( 0==poly.length ) {
+                var poly = estate.GetIntPoly();      
+                if( 0==poly.Count ) {
                     continue;
                 }
-                var area = estate.getArea();
-                var areaPerTree = 1.6;
+                var area = estate.GetArea();
+                float areaPerTree = 1.6f;
                 if( area<areaPerTree ) {
                     /*
                      * If the area of the estate is less than 4m2, we just plant a 
                      * single tree.
                      */
-                    var instance = createLInstance();
-                    var alpha = new engine.LAlphaInterpreter( instance );
-                    var treePos = new geom.Vector3D( center.x, inFragmentY, center.z );
-                    alpha.run( worldFragment, treePos, atomsMap );
+                    var instance = _createLInstance();
+                    var alpha = new AlphaInterpreter( instance );
+                    var treePos = new Vector3( center.X, inFragmentY, center.Z );
+                    alpha.Run( worldFragment, treePos, atomsMap );
 //                    trace( 'GenerateTreesOperator.fragmentOperatorApply(): Adding single tree at $treePos.' );
-                } else if( area >= (2.*areaPerTree) ) {
+                } else if( area >= (2f*areaPerTree) ) {
                     /*
                      * Just one other algo: random.
                      * We guess that one tree takes up 1x1m, i.e. 1m2
                      */
 
-                    var nTrees = Std.int((area+1.)/areaPerTree);
+                    var nTrees = (int)((area+1f)/areaPerTree);
                     if( nTrees > 80 ) nTrees = 80;
                     var nPlanted = 0;
                     var iterations = 0;
-                    var extent = estate.getMaxExtent();
+                    var extent = estate.GetMaxExtent();
                     var min = estate.getMin();
                     while(nPlanted < nTrees && iterations < 4*nTrees) {
                         iterations++;
-                        var treePos = new geom.Vector3D( 
-                            min.x + _rnd.getFloat()*extent.x, 
+                        var treePos = new Vector3( 
+                            min.X + _rnd.getFloat()*extent.X, 
                             inFragmentY, 
-                            min.z + _rnd.getFloat()*extent.z 
+                            min.Z + _rnd.getFloat()*extent.Z 
                         );
                         // TXWTODO: Check, if it is inside.
-                        if( !estate.isInside( treePos ) ) continue;
-                        treePos.x += cx; treePos.z += cz;
-                        var instance = createLInstance();
-                        var alpha = new engine.LAlphaInterpreter( instance );
-                        alpha.run( worldFragment, treePos, atomsMap );
+                        if( !estate.IsInside( treePos ) ) continue;
+                        treePos.X += cx; treePos.Z += cz;
+                        var instance = _createLInstance();
+                        var alpha = new AlphaInterpreter( instance );
+                        alpha.Run( worldFragment, treePos, atomsMap );
                         nPlanted++;
                         //trace( 'GenerateTreesOperator.fragmentOperatorApply(): Adding tree at $treePos.' );
                     }
@@ -377,38 +381,34 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         }
 
 
-        var mol = new engine.SimpleMolecule( null );
-        var isEmpty = true;
-        for( atom in atomsMap ) {
-            mol.moleculeAddGeomAtom( atom );
-            isEmpty = false;
-        }
-        if( !isEmpty ) {
-            worldFragment.addStaticMolecule( mol );
-        }
+        try
+        {
+            foreach (var mesh in atomsMap.Values)
+            {
+                {
+                    engine.joyce.InstanceDesc instanceDesc = new();
+                    instanceDesc.Meshes.Add(mesh);
+                    instanceDesc.MeshMaterials.Add(0);
+                    instanceDesc.Materials.Add(_getTreesMaterial());
+                    worldFragment.AddStaticMolecule(instanceDesc, null);
+                }
+            }
 
+        }
+        catch (Exception e)
+        {
+            trace($"Unknown exception: {e}");
+        }
+        
     }
     
 
-    public function new (
-        clusterDesc: ClusterDesc,
-        strKey: String
+    public GenerateTreesOperator(
+        engine.world.ClusterDesc clusterDesc,
+        string strKey
     ) {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
         _rnd = new engine.RandomSource(strKey);
-
-        /**
-         * Create a material for the trees.
-         */
-        WorldMetaGen.cat.catGetSingleton( "LAlphaInterpreter._matAlpha", function () {
-            var matAlpha = new engine.Material("");
-            matAlpha.ambientColor = 0x448822;
-            matAlpha.specular = 0.4;
-            matAlpha.ambient = 0.5;
-            return matAlpha;
-        });
-    }
-}
-
+   }
 }

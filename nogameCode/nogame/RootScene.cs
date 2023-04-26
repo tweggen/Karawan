@@ -80,6 +80,14 @@ namespace nogame
                 );
             }
 
+            if (engine.GlobalSettings.Get("nogame.CreateTrees") != "false")
+            {
+                _worldMetaGen.AddClusterFragmentOperatorFactory(
+                    (string newKey, engine.world.ClusterDesc clusterDesc) =>
+                        new nogame.cities.GenerateTreesOperator(clusterDesc, newKey)
+                );
+            }
+
             if (engine.GlobalSettings.Get("world.CreateCubeCharacters") != "false")
             {
                 _worldMetaGen.AddClusterFragmentOperatorFactory(

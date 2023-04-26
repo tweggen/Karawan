@@ -51,5 +51,14 @@ public class Part
         Name = name;
         Parameters = parameters;
     }
-   
+
+    public Part(
+        in string name,
+        in SortedDictionary<string, float> map
+    )
+    {
+        Name = name;
+        Parameters = new Params(map);
+    }
+    
 }

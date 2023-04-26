@@ -18,6 +18,11 @@ public class Params
         }
     }
 
+    public float this[string key]
+    {
+        get => Map[key];
+    }
+
 
     public Params(SortedDictionary<string, float> map)
     {
