@@ -80,7 +80,7 @@ public class AlphaInterpreter
             // trace('Before part: rotation is ${state.rotation}.');
             // trace('Before part: position is ${state.position}.');
             // trace('Now part ${part.name}');
-            var p = part.Parameters.Map;
+            var p = part.Parameters?.Map;
             if (part.Name == "rotate(d,x,y,z)")
             {
                 var qrot = Quaternion.CreateFromAxisAngle(
