@@ -344,7 +344,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                      */
                     var instance = _createLInstance();
                     var alpha = new AlphaInterpreter( instance );
-                    var treePos = new Vector3( center.X, inFragmentY, center.Z );
+                    var treePos = center with { Y = inFragmentY };
                     alpha.Run( worldFragment, treePos, atomsMap );
 //                    trace( 'GenerateTreesOperator.fragmentOperatorApply(): Adding single tree at $treePos.' );
                 } else if( area >= (2f*areaPerTree) ) {

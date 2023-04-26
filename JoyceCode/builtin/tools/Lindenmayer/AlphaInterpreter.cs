@@ -54,10 +54,7 @@ public class AlphaInterpreter
         var parts = _instance.State.Parts;
 
         var state = new AlphaState(null);
-        if (start != null)
-        {
-            state.Position = start;
-        }
+        state.Position = start;
 
         var matnameLeaves = "LAlphaInterpreter._matAlpha";
         engine.joyce.Mesh g = null;
