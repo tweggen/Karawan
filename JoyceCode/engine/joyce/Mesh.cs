@@ -25,8 +25,7 @@ namespace engine.joyce
          */
         public IList<uint> Indices;
 
-        /**
-         * Indexable array like of Vector2
+        /**         * Indexable array like of Vector2
          */
         public IList<Vector2> UVs;
 

@@ -72,8 +72,7 @@ public class AlphaInterpreter
         }
         else
         {
-            targets[matnameLeaves] = g = new engine.joyce.Mesh(
-                null, null, null);
+            targets[matnameLeaves] = g = engine.joyce.Mesh.CreateListInstance();
         }
 
         foreach (Part part in parts)
