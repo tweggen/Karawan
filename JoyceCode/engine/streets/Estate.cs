@@ -59,7 +59,7 @@ namespace engine.streets
             {
                 _poly.Add(new IntPoint(point.X*10, point.Z*10));
             }
-            _isCW = !Clipper.Orientation(_poly);
+            _isCW = Clipper.Orientation(_poly);
             _area = (float) Clipper.Area(_poly) * (_isCW ? 1f: -1f) / 100f;
             return _poly;
         }

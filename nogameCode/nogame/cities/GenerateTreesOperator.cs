@@ -346,7 +346,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                     var alpha = new AlphaInterpreter( instance );
                     var treePos = center with { Y = inFragmentY };
                     alpha.Run( worldFragment, treePos, atomsMap );
-//                    trace( 'GenerateTreesOperator.fragmentOperatorApply(): Adding single tree at $treePos.' );
+                    trace( $"GenerateTreesOperator.fragmentOperatorApply(): Adding single tree at {treePos}." );
                 } else if( area >= (2f*areaPerTree) ) {
                     /*
                      * Just one other algo: random.
@@ -373,7 +373,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                         var alpha = new AlphaInterpreter( instance );
                         alpha.Run( worldFragment, treePos, atomsMap );
                         nPlanted++;
-                        //trace( 'GenerateTreesOperator.fragmentOperatorApply(): Adding tree at $treePos.' );
+                        trace( $"GenerateTreesOperator.fragmentOperatorApply(): Adding tree at {treePos}." );
                     }
                 }
             }
