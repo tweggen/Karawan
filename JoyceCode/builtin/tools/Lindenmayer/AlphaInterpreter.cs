@@ -108,6 +108,7 @@ public class AlphaInterpreter
                 vr = Vector3.Transform(vr, state.Rotation);
 
                 Vector3 vt = Vector3.Cross(vd, vr);
+                //Vector3 vt = Vector3.Cross(vr, vd);
 
                 vd *= p["l"];
                 vr *= p["r"];
