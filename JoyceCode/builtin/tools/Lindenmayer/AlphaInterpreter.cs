@@ -27,6 +27,7 @@ class AlphaState {
     }
 }
 
+
 public class AlphaInterpreter
 {
 
@@ -84,7 +85,7 @@ public class AlphaInterpreter
                     new Vector3(p["x"], p["y"], p["z"]),
                     p["d"] / 180f * (float) Math.PI
                 );
-                state.Rotation = qrot * state.Rotation;
+                state.Rotation = state.Rotation * qrot;
             }
             else if (part.Name == "fillrgb(r,g,b)")
             {
