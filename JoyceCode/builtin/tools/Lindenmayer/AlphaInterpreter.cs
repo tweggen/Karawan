@@ -177,6 +177,7 @@ public class AlphaInterpreter
             }
             else if (part.Name == "pop()")
             {
+                state = _stack[_stack.Count - 1];
                 _stack.RemoveAt(_stack.Count - 1);
             }
             else

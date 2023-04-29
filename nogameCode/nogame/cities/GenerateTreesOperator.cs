@@ -213,7 +213,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         var lGenerator = new LGenerator( lSystem );
         var lInstance = lGenerator.Instantiate();
         var prevInstance = lInstance;
-        int iMax = 1; //(int)(_rnd.getFloat() * 2.5f + 1f);
+        int iMax = (int)(_rnd.getFloat() * 2.5f + 1f);
         for( int i=0; i<iMax; ++i ) 
         {
             var nextInstance = lGenerator.Iterate( prevInstance );
