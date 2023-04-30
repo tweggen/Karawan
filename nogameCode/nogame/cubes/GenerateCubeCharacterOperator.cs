@@ -114,7 +114,7 @@ namespace nogame.cubes
                 }
             }
 
-            if (_trace) Trace( $"GenerateCubeCharacterOperator(): cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+            if (_trace) Trace( $"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
             _rnd.clear();
 
             /*
