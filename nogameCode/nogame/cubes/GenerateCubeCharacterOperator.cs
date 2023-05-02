@@ -30,7 +30,7 @@ namespace nogame.cubes
 
         private static engine.audio.Sound _getCubeSound()
         {
-            lock (_classLock)InstanceDesc
+            lock (_classLock)
             {
                 if (_jCubeSound == null)
                 {
