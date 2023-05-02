@@ -16,6 +16,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Obj.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\CondParams.cs" />
