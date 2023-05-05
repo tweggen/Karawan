@@ -327,7 +327,11 @@ namespace Splash.Silk
         }
 
         private void _windowOnResize( Vector2D<int> size)
-        {
+        { 
+            if (size.X != 0 && size.Y != 0)
+            {
+                return;
+            }
             _renderer.SetDimension(size.X, size.Y);
             _gl.Viewport(size);
         }

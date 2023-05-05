@@ -134,7 +134,10 @@ namespace Splash.Silk
 
         public void SetDimension(int x, int y)
         {
-            _vViewSize = new Vector2((float)x, (float)y);
+            if (x != 0 && y != 0)
+            {
+                _vViewSize = new Vector2((float)x, (float)y);
+            }
         }
         
 
