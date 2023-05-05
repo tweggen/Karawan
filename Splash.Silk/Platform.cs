@@ -303,7 +303,11 @@ namespace Splash.Silk
                     continue;
                 }
 
-                _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
+                if (_iView.Size.X != 0 && _iView.Size.Y != 0)
+                {
+                    _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
+                }
+
                 _renderer.RenderFrame(renderFrame);
                
                 _iView.SwapBuffers();
@@ -324,6 +328,7 @@ namespace Splash.Silk
 
         private void _windowOnResize( Vector2D<int> size)
         {
+            _renderer.SetDimension(size.X, size.Y);
             _gl.Viewport(size);
         }
 
