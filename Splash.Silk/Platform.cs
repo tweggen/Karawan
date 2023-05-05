@@ -333,7 +333,6 @@ namespace Splash.Silk
                 return;
             }
             _renderer.SetDimension(size.X, size.Y);
-            _gl.Viewport(size);
         }
 
 
