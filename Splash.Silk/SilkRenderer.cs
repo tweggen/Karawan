@@ -23,8 +23,10 @@ namespace Splash.Silk
         private SilkThreeD _silkThreeD;
         private LightManager _lightManager;
         private Vector2 _vViewSize;
+        private Vector2 _vLastGlSize = new(0f, 0f);
+        
 
-        private GL _gl;
+        private GL _gl = null;
 
         /**
          * Render all camera objects.
@@ -121,9 +123,25 @@ namespace Splash.Silk
         }
 
 
+        private void _nailViewport()
+        {
+            if (null == _gl)
+            {
+                return;
+            }
+
+            if (_vLastGlSize != _vViewSize)
+            {
+                _gl.Viewport(0, 0, (uint)_vViewSize.X, (uint)_vViewSize.Y);
+                _vLastGlSize = _vViewSize;
+            }
+        }
+        
+
         public void RenderFrame(in RenderFrame renderFrame)
         {
             _gl = _silkThreeD.GetGL();
+            _nailViewport();
             var skShaderEntry = _silkThreeD.GetInstanceShaderEntry(); 
             _gl.UseProgram(skShaderEntry.SkShader.Handle);
             _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
@@ -134,7 +152,11 @@ namespace Splash.Silk
 
         public void SetDimension(int x, int y)
         {
-            _vViewSize = new Vector2((float)x, (float)y);
+            if (x != 0 && y != 0)
+            {
+                _vViewSize = new Vector2((float)x, (float)y);
+                _nailViewport();
+            }
         }
         
 

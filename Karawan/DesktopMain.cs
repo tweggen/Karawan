@@ -180,28 +180,35 @@ namespace Karawan
             engine.GlobalSettings.Set("splash.touchControls", "false");
             
             engine.Assets.SetAssetImplementation(new Karawan.AssetImplementation());
-            
+
             IWindow iWindow = null;
+            
+            bool startFullscreen = true;
+#if DEBUG
+            startFullscreen = true;
+#else
+            startFullscreen = true;
+#endif
+            
             {
                 var options = WindowOptions.Default;
                 // options.API = GraphicsAPI.
-#if DEBUG
-                options.Size = new Vector2D<int>(1280, 720);
-#else
-#endif
+                if (!startFullscreen)
+                {
+                    options.Size = new Vector2D<int>(1280, 720);
+                }
                 options.Title = "codename Karawan";
                 options.FramesPerSecond = 60;
                 options.VSync = false;
                 options.ShouldSwapAutomatically = false;
                 iWindow = Window.Create(options);
-#if DEBUG
-#else
-                iWindow.WindowState = WindowState.Fullscreen;
-#endif
-
+                if (startFullscreen)
+                {
+                    iWindow.WindowState = WindowState.Fullscreen;
+                }
             }
             
-        // var e = Splash.Raylib.Platform.EasyCreate(args);
+            // var e = Splash.Raylib.Platform.EasyCreate(args);
             var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
 
             {
