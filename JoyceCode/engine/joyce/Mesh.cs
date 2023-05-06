@@ -148,14 +148,23 @@ namespace engine.joyce
         }
 
 
+        public void N(in Vector3 p)
+        {
+            Normals.Insert(WriteIndexNormals++, p);
+        }
+
+
+        public void N(float x, float y, float z)
+        {
+            N(new Vector3(x, y, z));
+        }
+
+
         public void Idx(uint a, uint b, uint c)
         {
             Indices.Insert(WriteIndexIndices++, a);
             Indices.Insert(WriteIndexIndices++, b);
             Indices.Insert(WriteIndexIndices++, c);
-            // Indices[WriteIndexIndices++] = a;
-            // Indices[WriteIndexIndices++] = b;
-            // Indices[WriteIndexIndices++] = c;
         }
 
 
