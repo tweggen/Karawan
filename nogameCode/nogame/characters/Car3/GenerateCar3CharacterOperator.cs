@@ -33,16 +33,17 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
     }
     
     
-    private static engine.joyce.Mesh[] _jMeshesCar;
-    private static engine.joyce.Mesh _getCarMesh(int i)
+    private static engine.joyce.InstanceDesc[] _jInstancesCar;
+    private static engine.joyce.InstanceDesc _getCarMesh(int i)
     {
         lock(_classLock)
         {
-            if( null==_jMeshesCar)
+            if( null==_jInstancesCar)
             {
-                _jMeshesCar = new engine.joyce.Mesh[3];
+                _jInstancesCar = new engine.joyce.InstanceDesc[3];
+                _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car2.obj");
             }
-            return _jMeshesCar[i];
+            return _jInstancesCar[i];
         }
     }
 
@@ -162,10 +163,7 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    engine.joyce.InstanceDesc jInstanceDesc = new();
-                    jInstanceDesc.Meshes.Add(_getCarMesh(0));
-                    jInstanceDesc.MeshMaterials.Add(0);
-                    //jInstanceDesc.Materials.Add(_getCubeMaterial());
+                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh(0);
 
                     var wf = worldFragment;
 

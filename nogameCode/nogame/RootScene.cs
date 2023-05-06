@@ -2,6 +2,7 @@
 using engine.transform.components;
 using System;
 using System.Numerics;
+using nogame.characters.Car3;
 
 namespace nogame
 {
@@ -96,6 +97,13 @@ namespace nogame
                 );
             }
 
+            if (engine.GlobalSettings.Get("world.CreateCar3Characters") != "false")
+            {
+                _worldMetaGen.AddClusterFragmentOperatorFactory(
+                    (string newKey, engine.world.ClusterDesc clusterDesc) =>
+                        new nogame.characters.Car3.GenerateCar3CharacterOperator(clusterDesc, newKey)
+                );
+            }
             _worldMetaGen.SetupComplete();
 
             _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
