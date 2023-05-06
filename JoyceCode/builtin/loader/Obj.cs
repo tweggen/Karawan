@@ -121,7 +121,8 @@ public class Obj
             }
 
             jInstanceDesc.Meshes.Add(jMesh);
-            jInstanceDesc.MeshMaterials.Add(listMaterials.IndexOf(loadedGroup.Material));
+            int idxMaterial = listMaterials.IndexOf(loadedGroup.Material);
+            jInstanceDesc.MeshMaterials.Add(idxMaterial);
         }
         return jInstanceDesc;
     }   

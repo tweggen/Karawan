@@ -42,6 +42,8 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
             {
                 _jInstancesCar = new engine.joyce.InstanceDesc[3];
                 _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car2.obj");
+                _jInstancesCar[1] = builtin.loader.Obj.LoadModelInstance("car4.obj");
+                _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car5.obj");
             }
             return _jInstancesCar[i];
         }
@@ -163,7 +165,7 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh(0);
+                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh((int)(_rnd.getFloat()*3f));
 
                     var wf = worldFragment;
 
