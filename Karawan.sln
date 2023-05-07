@@ -48,6 +48,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Barnaby.Windows", "Barnaby\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DefaultEcs", "..\..\..\github\DefaultEcs\source\DefaultEcs\DefaultEcs.csproj", "{98FCAC5F-30BF-4A59-86DD-FECA4A5D0D11}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CjClutter.ObjLoader.Loader", "..\..\..\github\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj", "{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -470,6 +472,30 @@ Global
 		{98FCAC5F-30BF-4A59-86DD-FECA4A5D0D11}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
 		{98FCAC5F-30BF-4A59-86DD-FECA4A5D0D11}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
 		{98FCAC5F-30BF-4A59-86DD-FECA4A5D0D11}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|arm64.Build.0 = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|x64.Build.0 = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Debug|x86.Build.0 = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|arm64.ActiveCfg = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|arm64.Build.0 = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|x64.ActiveCfg = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|x64.Build.0 = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|x86.ActiveCfg = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.Release|x86.Build.0 = Release|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|Any CPU.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|Any CPU.Build.0 = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|arm64.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|arm64.Build.0 = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|x64.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|x64.Build.0 = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|x86.ActiveCfg = Debug|Any CPU
+		{0529D297-F78F-43F5-8F12-BA0F30B7A7A6}.ReleaseNoProfiling|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
