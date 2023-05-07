@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace engine.joyce.components
 {
     public struct Instance3
     {
         // public Matrix4x4 PreTransform;
-        public IList Meshes;
-        public IList MeshMaterials;
-        public IList Materials;
+        public IList<engine.joyce.Mesh> Meshes;
+        public IList<int> MeshMaterials;
+        public IList<engine.joyce.Material> Materials;
 
         public override string ToString()
         {

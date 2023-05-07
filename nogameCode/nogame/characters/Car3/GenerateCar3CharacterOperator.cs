@@ -174,7 +174,8 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
                     {
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
-                            new Car3Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)));
+                            new Car3Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
+                                .SetSpeed((40f+_rnd.getFloat()*20f)/3.6f)));
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(

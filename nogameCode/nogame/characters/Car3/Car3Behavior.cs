@@ -24,6 +24,12 @@ internal class Car3Behavior : engine.IBehavior
         );
     }
 
+    public Car3Behavior SetSpeed(float speed)
+    {
+        _snc.NavigatorSetSpeed(speed);
+        return this;
+    }
+    
     public Car3Behavior(
         in engine.Engine engine0,
         in engine.world.ClusterDesc clusterDesc0,

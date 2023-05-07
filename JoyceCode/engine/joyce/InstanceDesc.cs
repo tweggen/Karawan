@@ -12,9 +12,9 @@ namespace engine.joyce
      */
     public class InstanceDesc
     {
-        public IList Meshes;
-        public IList MeshMaterials;
-        public IList Materials;
+        public IList<engine.joyce.Mesh> Meshes;
+        public IList<int> MeshMaterials;
+        public IList<engine.joyce.Material> Materials;
 
         public InstanceDesc()
         {
@@ -24,9 +24,9 @@ namespace engine.joyce
         }
 
         public InstanceDesc(
-            in IList meshes,
-            in IList meshMaterials,
-            in IList materials
+            in IList<engine.joyce.Mesh> meshes,
+            in IList<int> meshMaterials,
+            in IList<engine.joyce.Material> materials
         )
         {
             Meshes = meshes;
