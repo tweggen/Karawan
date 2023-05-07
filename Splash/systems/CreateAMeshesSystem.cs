@@ -1,6 +1,7 @@
 ﻿
 using DefaultEcs.Resource;
 using System;
+using System.Linq;
 using static engine.Logger;
 
 
@@ -53,7 +54,11 @@ namespace Splash.systems
                 }
                 var nMaterials = cInstance3.Materials.Count;
 
-                for(var i=0; i<nMeshes; ++i)
+#if true
+                entity.Set(new ManagedResource<engine.joyce.Mesh[], AMeshEntry>(cInstance3.Meshes.ToArray()));
+                entity.Set(new ManagedResource<engine.joyce.Material[], AMeshEntry>(cInstance3.Materials.ToArray()));
+#else
+                for(var i = 0; i<nMeshes; ++i)
                 {
                     var jMesh = (engine.joyce.Mesh) cInstance3.Meshes[i];
                     // Trace($"run {_runNumber}: Creating platform mesh from jMesh with {jMesh.Vertices.Count} vertices.");
@@ -63,6 +68,7 @@ namespace Splash.systems
                     entity.Set(new ManagedResource<engine.joyce.Mesh, AMeshEntry>(jMesh));
                     entity.Set(new ManagedResource<engine.joyce.Material, AMaterialEntry>(jMaterial));
                 }
+#endif
             }
         }
 
