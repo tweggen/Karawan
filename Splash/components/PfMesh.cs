@@ -10,8 +10,7 @@ namespace Splash.components
     {
         public AMeshEntry MeshEntry;
 
-        public PfMesh(AMeshEntry meshEntry
-        )
+        public PfMesh(AMeshEntry meshEntry)
         {
             MeshEntry = meshEntry;
         }
