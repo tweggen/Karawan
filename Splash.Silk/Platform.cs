@@ -406,6 +406,7 @@ namespace Splash.Silk
             _silkThreeD = new SilkThreeD(_engine);
 
             _instanceManager = new(_silkThreeD);
+            _instanceManager.Manage(_engine.GetEcsWorld());
             _lightManager = new(_engine, _silkThreeD);
             
             _logicalRenderer = new LogicalRenderer(
