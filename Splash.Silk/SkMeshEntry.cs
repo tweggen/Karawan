@@ -31,7 +31,7 @@ namespace Splash.Silk
             vao.Dispose();
             vao = null;
         }
-        
+
         public override bool IsMeshUploaded()
         {
             return vao != null;
