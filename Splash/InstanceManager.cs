@@ -29,83 +29,6 @@ namespace Splash
         
         #endregion
 
-    #if false
-        public readonly struct ResourceEnumerable<TInfo, TResource> : IEnumerable<KeyValuePair<TInfo, TResource>>
-        {
-            private readonly InstanceManager _manager;
-
-            internal ResourceEnumerable(InstanceManager manager)
-            {
-                _manager = manager;
-            }
-
-            #region IEnumerable
-
-            public ResourceEnumerator<TInfo, TResource> GetEnumerator() => new(_manager);
-
-            IEnumerator<KeyValuePair<TInfo, TResource>> IEnumerable<KeyValuePair<TInfo, TResource>>.GetEnumerator() => GetEnumerator();
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-            #endregion
-        }
-
-
-        public struct ResourceEnumerator<TInfo, TResource> : IEnumerator<KeyValuePair<TInfo, TResource>>
-        {
-            private readonly KeyValuePair<TInfo, TResource>[] _resources;
-
-            private int _index;
-
-            internal ResourceEnumerator(InstanceManager manager)
-            {
-                lock (manager._lockObject)
-                {
-                    _resources = new KeyValuePair<TInfo, TResource>[manager._resources.Count];
-                    _index = 0;
-                    foreach (KeyValuePair<TInfo, TResource> pair in manager._resources)
-                    {
-                        _resources[_index++] = new KeyValuePair<TInfo, TResource>(pair.Key, pair.Value.Value);
-                    }
-                }
-
-                _index = -1;
-
-                Current = default;
-            }
-
-            #region IEnumerator
-
-            public KeyValuePair<TInfo, TResource> Current { get; private set; }
-
-            object IEnumerator.Current => Current;
-
-            public bool MoveNext()
-            {
-                if (++_index < _resources.Length)
-                {
-                    Current = _resources[_index];
-                    return true;
-                }
-
-                Current = default;
-                return false;
-            }
-
-            void IEnumerator.Reset() => _index = -1;
-
-            #endregion
-
-            #region IDisposable
-
-            public void Dispose()
-            { }
-
-            #endregion
-        }
-
-        #endregion
-#endif
 
         #region Fields
 
@@ -131,7 +54,7 @@ namespace Splash
         /// <summary>
         /// Creates an instance of type <see cref="AResourceManager{TInfo, TResource}"/>.
         /// </summary>
-        protected InstanceManager(in IThreeD threeD)
+        public InstanceManager(in IThreeD threeD)
         {
             _lockObject = new object();
             _threeD = threeD;
