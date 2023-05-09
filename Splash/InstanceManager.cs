@@ -1,9 +1,8 @@
 ﻿
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using DefaultEcs;
-using DefaultEcs.Internal;
+using static engine.Logger;
 
 namespace Splash
 {
@@ -27,6 +26,8 @@ namespace Splash
 
             public bool RemoveReference() => --_referencesCount == 0;
         }
+        
+        #endregion
 
     #if false
         public readonly struct ResourceEnumerable<TInfo, TResource> : IEnumerable<KeyValuePair<TInfo, TResource>>
@@ -179,10 +180,17 @@ namespace Splash
                     engine.joyce.Mesh jMesh = value.Meshes[i];
                     if (!_meshResources.TryGetValue(jMesh, out meshResource))
                     {
-                        AMeshEntry aMeshEntry = LoadMesh(jMesh);
-                        aMeshEntries.Add(aMeshEntry);
-                        meshResource = new Resource<AMeshEntry>(aMeshEntry);
-                        _meshResources.Add(jMesh, meshResource);
+                        try
+                        {
+                            AMeshEntry aMeshEntry = LoadMesh(jMesh);
+                            aMeshEntries.Add(aMeshEntry);
+                            meshResource = new Resource<AMeshEntry>(aMeshEntry);
+                            _meshResources.Add(jMesh, meshResource);
+                        }
+                        catch (Exception e)
+                        {
+                            Error("Exception loading mesh: {e}");
+                        }
                     }
                     meshResource.AddReference();
                 }
@@ -192,10 +200,16 @@ namespace Splash
                     engine.joyce.Material jMaterial = value.Materials[i];
                     if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                     {
-                        AMaterialEntry aMaterialEntry = LoadMaterial(jMaterial);
-                        aMaterialEntries.Add(aMaterialEntry);
-                        materialResource = new Resource<AMaterialEntry>(aMaterialEntry);
-                        _materialResources.Add(jMaterial, materialResource);
+                        try {
+                            AMaterialEntry aMaterialEntry = LoadMaterial(jMaterial);
+                            aMaterialEntries.Add(aMaterialEntry);
+                            materialResource = new Resource<AMaterialEntry>(aMaterialEntry);
+                            _materialResources.Add(jMaterial, materialResource);
+                        }
+                        catch (Exception e)
+                        {
+                            Error("Exception loading mesh: {e}");
+                        }
                     }
                     materialResource.AddReference();
                 }
@@ -213,25 +227,54 @@ namespace Splash
         {
             lock (_lockObject)
             {
-                if (_resources.TryGetValue(info, out Resource resource) && resource.RemoveReference())
+                for (int i = 0; i < value.Meshes.Count; ++i)
                 {
-                    try
+                    Resource<AMeshEntry> meshResource;
+                    engine.joyce.Mesh jMesh = value.Meshes[i];
+                    if (!_meshResources.TryGetValue(jMesh, out meshResource))
                     {
-                        Unload(info, resource.Value);
-                    }
-                    finally
-                    {
-                        _resources.Remove(info);
+                        try
+                        {
+                            _unloadMesh(jMesh, meshResource);
+                        }
+                        finally
+                        {
+                            _meshResources.Remove(jMesh);
+                        }
+                        
                     }
                 }
+
+                for (int i = 0; i < value.Materials.Count; ++i)
+                {
+                    Resource<AMaterialEntry> materialResource;
+                    engine.joyce.Material jMaterial = value.Materials[i];
+                    if (!_materialResources.TryGetValue(jMaterial, out materialResource))
+                    {
+                        try
+                        {
+                            _unloadMaterial(jMaterial, materialResource);
+                        }
+                        finally
+                        {
+                            _materialResources.Remove(jMaterial);
+                        }
+                    }
+                }
+
             }
         }
 
-        protected TResource Load(TInfo info);
+        private void _unloadMesh(engine.joyce.Mesh jMesh, Resource<AMeshEntry> meshResource)
+        {
+            _threeD.DestroyMeshEntry(meshResource.Value);
+        }
 
-        protected void OnResourceLoaded(in Entity entity, TInfo info, TResource resource);
-
-        protected virtual void Unload(TInfo info, TResource resource) => (resource as IDisposable)?.Dispose();
+        private void _unloadMaterial(engine.joyce.Material jMesh, Resource<AMaterialEntry> materialResource)
+        {
+            _threeD.UnloadMaterialEntry(materialResource.Value);
+        }
+        
 
         public IDisposable Manage(World world)
         {
@@ -245,24 +288,15 @@ namespace Splash
                 yield return w.SubscribeEntityComponentRemoved<Splash.components.PfInstance>(OnRemoved);
             }
 
-            world.ThrowIfNull();
-
-            ComponentPool<Splash.components.PfInstance> singleComponents = ComponentManager<Splash.components.PfInstance>.Get(world.WorldId);
-            if (singleComponents != null)
+            if (null == world)
             {
-                foreach (Entity entity in singleComponents.GetEntities())
-                {
-                    OnAdded(entity, singleComponents.Get(entity.EntityId));
-                }
+                ErrorThrow("world must not be null.", (m)=>new ArgumentException(m));
             }
 
-            ComponentPool<Splash.components.PfInstance> arrayComponents = ComponentManager<Splash.components.PfInstance>.Get(world.WorldId);
-            if (arrayComponents != null)
+            var entities = world.GetEntities().With<Splash.components.PfInstance>().AsEnumerable();
+            foreach (DefaultEcs.Entity entity in entities)
             {
-                foreach (Entity entity in arrayComponents.GetEntities())
-                {
-                    OnAdded(entity, arrayComponents.Get(entity.EntityId));
-                }
+                OnAdded(entity, entity.Get<Splash.components.PfInstance>());
             }
 
             return GetSubscriptions(world).Merge();
@@ -270,6 +304,7 @@ namespace Splash
 
         #endregion
 
+        
         #region IDisposable
 
         /// <summary>
@@ -279,12 +314,17 @@ namespace Splash
         {
             GC.SuppressFinalize(this);
 
-            foreach (KeyValuePair<TInfo, Resource> pair in _resources)
+            foreach (KeyValuePair<engine.joyce.Mesh, Resource<AMeshEntry>> pair in _meshResources)
             {
-                Unload(pair.Key, pair.Value.Value);
+                _unloadMesh(pair.Key, pair.Value);
+            }
+            foreach (KeyValuePair<engine.joyce.Material, Resource<AMaterialEntry>> pair in _materialResources)
+            {
+                _unloadMaterial(pair.Key, pair.Value);
             }
 
-            _resources.Clear();
+            _meshResources.Clear();
+            _materialResources.Clear();
         }
 
         #endregion
