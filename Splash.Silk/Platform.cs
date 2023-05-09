@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Numerics;
+using builtin.tools.Lindenmayer;
 using engine;
 using static engine.Logger;
 
@@ -24,8 +25,7 @@ namespace Splash.Silk
 
         private SilkThreeD _silkThreeD;
         private TextureManager _textureManager;
-        private MaterialManager _materialManager;
-        private MeshManager _meshManager;
+        private InstanceManager _instanceManager;
         private LightManager _lightManager;
         private SilkRenderer _renderer;
         private bool _isRunning = true;
@@ -404,17 +404,13 @@ namespace Splash.Silk
             // disable and bind cursor.
 
             _silkThreeD = new SilkThreeD(_engine);
-            
-            _materialManager = new(_silkThreeD);
-            _materialManager.Manage(_engine.GetEcsWorld());
-            _meshManager = new(_engine, _silkThreeD);
-            _meshManager.Manage(_engine.GetEcsWorld());
+
+            _instanceManager = new(_silkThreeD);
             _lightManager = new(_engine, _silkThreeD);
             
             _logicalRenderer = new LogicalRenderer(
                 _engine,
-                _materialManager,
-                _meshManager,
+                _silkThreeD,
                 _lightManager
             );
 

@@ -1,4 +1,4 @@
-﻿
+﻿#if false
 using DefaultEcs.Resource;
 using System;
 using System.Linq;
@@ -85,4 +85,4 @@ namespace Splash.systems
         }
     }
 }
-;
+#endif

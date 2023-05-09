@@ -24,9 +24,6 @@ namespace Splash.systems
     {
         private engine.Engine _engine;
 
-        private MeshManager _meshManager;
-        private MaterialManager _materialManager;
-
         private int _runNumber = 0;
 
         protected override void PreUpdate(engine.Engine state)
@@ -59,20 +56,19 @@ namespace Splash.systems
                 /*
                  * Create the platform entity. It will be filled by the instance manager.
                  */
-                entity.Set(new components.PfInstance(cInstance3.Meshes, cInstance3.Materials));
+                entity.Set(new components.PfInstance(
+                    cInstance3.Meshes,
+                    cInstance3.MeshMaterials,
+                    cInstance3.Materials));
             }
         }
 
         public unsafe CreatePfInstanceSystem(
-            engine.Engine engine,
-            MeshManager meshManager,
-            MaterialManager materialManager
+            engine.Engine engine
         )
             : base( engine.GetEcsWorld() )
         {
             _engine = engine;
-            _meshManager = meshManager;
-            _materialManager = materialManager;
         }
     }
 }

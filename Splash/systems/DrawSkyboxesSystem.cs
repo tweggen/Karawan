@@ -10,7 +10,6 @@ namespace Splash.systems
     sealed class DrawSkyboxesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutput>
     {
         private engine.Engine _engine;
-        private MaterialManager _materialManager;
         public Vector3 CameraPosition;
 
         private void _appendSkyboxes(

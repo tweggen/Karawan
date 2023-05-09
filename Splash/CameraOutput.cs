@@ -19,8 +19,9 @@ namespace Splash
         private readonly Dictionary<AMaterialEntry, MaterialBatch> _materialBatches = new();
         private readonly Dictionary<AMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
 
-        private readonly MaterialManager _materialManager;
-        private readonly MeshManager _meshManager;
+        private readonly IThreeD _threeD;
+        
+        private readonly InstanceManager _instanceManager;
 
         /**
          * The actual rendering method. Must be called from the context of
@@ -42,7 +43,7 @@ namespace Splash
                 {
                     if (jMaterial.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f) {
                         swUpload.Start();
-                        _materialManager.FillMaterialEntry(aMaterialEntry);
+                        _threeD.FillMaterialEntry(aMaterialEntry);
                         swUpload.Stop();
                     }
                     else
@@ -62,7 +63,7 @@ namespace Splash
                         if (jMesh.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f)
                         {
                             swUpload.Start();
-                            _meshManager.FillMeshEntry(meshItem.Value.AMeshEntry);
+                            _threeD.UploadMesh(meshItem.Value.AMeshEntry);
                             swUpload.Stop();
                         }
                         else
@@ -159,14 +160,12 @@ namespace Splash
 
 
         public CameraOutput(
-            in MaterialManager materialManager, 
-            in MeshManager meshManager,
+            in IThreeD threeD,
             in uint cameraMask)
         {
             _cameraMask = cameraMask;
 
-            _materialManager = materialManager;
-            _meshManager = meshManager;
+            _threeD = threeD;
         }
     }
 

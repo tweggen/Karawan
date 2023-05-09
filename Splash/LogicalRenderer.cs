@@ -10,12 +10,11 @@ public class LogicalRenderer
     
     private readonly engine.Engine _engine;
 
-    private readonly MaterialManager _materialManager;
-    private readonly MeshManager _meshManager;
+    private readonly IThreeD _threeD;
     private readonly LightManager _lightManager;
     
-    private readonly systems.CreateAMeshesSystem _createAMeshesSystem;
-    private readonly systems.DrawAMeshesSystem _drawAMeshesSystem;
+    private readonly systems.CreatePfInstanceSystem _createPfInstanceSystem;
+    private readonly systems.DrawInstancesSystem _drawInstancesSystem;
     private readonly systems.DrawSkyboxesSystem _drawSkyboxesSystem;
 
     private readonly Queue<RenderFrame> _renderQueue = new();
@@ -36,10 +35,10 @@ public class LogicalRenderer
             RenderPart renderPart = new();
             renderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
             renderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
-            CameraOutput cameraOutput = new(_materialManager, _meshManager, renderPart.Camera3.CameraMask);
+            CameraOutput cameraOutput = new(_threeD, renderPart.Camera3.CameraMask);
             renderPart.CameraOutput = cameraOutput;
 
-            _drawAMeshesSystem.Update(cameraOutput);
+            _drawInstancesSystem.Update(cameraOutput);
 
             var vCameraPosition = renderPart.Transform3ToWorld.Matrix.Translation;
             _drawSkyboxesSystem.CameraPosition = vCameraPosition;
@@ -56,7 +55,7 @@ public class LogicalRenderer
      */
     public void CollectRenderData()
     {
-        _createAMeshesSystem.Update(_engine);
+        _createPfInstanceSystem.Update(_engine);
 
         RenderFrame renderFrame = null;
         /*
@@ -108,18 +107,16 @@ public class LogicalRenderer
     
     public LogicalRenderer(
         in engine.Engine engine,
-        in MaterialManager materialManager,
-        in MeshManager meshManager,
+        in IThreeD threeD,
         in LightManager lightManager
     )
     {
         _engine = engine;
-        _materialManager = materialManager;
-        _meshManager = meshManager;
+        _threeD = threeD;
         _lightManager = lightManager;
 
-        _createAMeshesSystem = new(_engine, _meshManager, _materialManager);
-        _drawAMeshesSystem = new(_engine);
+        _createPfInstanceSystem = new(_engine);
+        _drawInstancesSystem = new(_engine, _threeD);
         _drawSkyboxesSystem = new(_engine);
     }
 }

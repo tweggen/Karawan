@@ -1,4 +1,5 @@
-﻿using DefaultEcs;
+﻿#if false
+using DefaultEcs;
 using DefaultEcs.Resource;
 using System;
 using System.Collections.Generic;
@@ -43,3 +44,4 @@ namespace Splash
         }
     }
 }
+#endif
