@@ -106,7 +106,6 @@ namespace Splash
                         try
                         {
                             AMeshEntry aMeshEntry = LoadMesh(jMesh);
-                            aMeshEntries.Add(aMeshEntry);
                             meshResource = new Resource<AMeshEntry>(aMeshEntry);
                             _meshResources.Add(jMesh, meshResource);
                         }
@@ -115,6 +114,7 @@ namespace Splash
                             Error("Exception loading mesh: {e}");
                         }
                     }
+                    aMeshEntries.Add(meshResource.Value);
                     meshResource.AddReference();
                 }
                 for (int i=0; i<value.Materials.Count; ++i)
@@ -125,7 +125,6 @@ namespace Splash
                     {
                         try {
                             AMaterialEntry aMaterialEntry = LoadMaterial(jMaterial);
-                            aMaterialEntries.Add(aMaterialEntry);
                             materialResource = new Resource<AMaterialEntry>(aMaterialEntry);
                             _materialResources.Add(jMaterial, materialResource);
                         }
@@ -134,6 +133,7 @@ namespace Splash
                             Error("Exception loading mesh: {e}");
                         }
                     }
+                    aMaterialEntries.Add(materialResource.Value);
                     materialResource.AddReference();
                 }
             }

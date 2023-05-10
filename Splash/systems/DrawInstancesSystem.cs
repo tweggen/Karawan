@@ -50,13 +50,13 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                         }
                         else
                         {
-                            Error($"Invalid material index (> nMaterials=={nMaterials}");
+                            Error($"Invalid material index {materialIndex} > nMaterials=={nMaterials}");
                             continue;
                         }
                     }
                     else
                     {
-                        Error($"Invalid index (>= nMaterialIndices=={nMaterialIndices}");
+                        Error($"Invalid index ({i} >= nMaterialIndices=={nMaterialIndices}");
                         continue;
                     }
 
