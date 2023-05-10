@@ -33,10 +33,10 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
 
-                int l = pfInstance.AMeshEntries.Count;
+                int nMeshes = pfInstance.AMeshEntries.Count;
                 int nMaterialIndices = pfInstance.MeshMaterials.Count;
                 int nMaterials = pfInstance.AMaterialEntries.Count;
-                for (int i = 0; i < l; ++i)
+                for (int i = 0; i < nMeshes; ++i)
                 {
                     AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
                     AMaterialEntry aMaterialEntry = null;
