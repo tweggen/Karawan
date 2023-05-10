@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using static engine.Logger;
 
 namespace Splash.systems;
 
@@ -33,10 +34,31 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
 
                 int l = pfInstance.AMeshEntries.Count;
+                int nMaterialIndices = pfInstance.MeshMaterials.Count;
+                int nMaterials = pfInstance.AMaterialEntries.Count;
                 for (int i = 0; i < l; ++i)
                 {
                     AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
-                    AMaterialEntry aMaterialEntry = pfInstance.AMaterialEntries[pfInstance.MeshMaterials[i]];
+                    AMaterialEntry aMaterialEntry = null;
+
+                    if (i < nMaterialIndices)
+                    {
+                        int materialIndex = pfInstance.MeshMaterials[i];
+                        if (materialIndex < nMaterials)
+                        {
+                            aMaterialEntry = pfInstance.AMaterialEntries[materialIndex];
+                        }
+                        else
+                        {
+                            Error($"Invalid material index (> nMaterials=={nMaterials}");
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        Error($"Invalid index (>= nMaterialIndices=={nMaterialIndices}");
+                        continue;
+                    }
 
                     // Skip things that incompletely are loaded.
                     if (null == aMeshEntry)

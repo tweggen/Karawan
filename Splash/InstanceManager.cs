@@ -206,9 +206,6 @@ namespace Splash
                 yield return w.SubscribeEntityComponentAdded<Splash.components.PfInstance>(OnAdded);
                 yield return w.SubscribeEntityComponentChanged<Splash.components.PfInstance>(OnChanged);
                 yield return w.SubscribeEntityComponentRemoved<Splash.components.PfInstance>(OnRemoved);
-                yield return w.SubscribeEntityComponentAdded<Splash.components.PfInstance>(OnAdded);
-                yield return w.SubscribeEntityComponentChanged<Splash.components.PfInstance>(OnChanged);
-                yield return w.SubscribeEntityComponentRemoved<Splash.components.PfInstance>(OnRemoved);
             }
 
             if (null == world)
