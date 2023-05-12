@@ -5,8 +5,7 @@ using System.Collections.Generic;
 namespace Splash.systems
 {
     [DefaultEcs.System.With(typeof(engine.joyce.components.Skybox))]
-    [DefaultEcs.System.With(typeof(Splash.components.PfMesh))]
-    [DefaultEcs.System.With(typeof(Splash.components.PfMaterial))]
+    [DefaultEcs.System.With(typeof(Splash.components.PfInstance))]
     sealed class DrawSkyboxesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutput>
     {
         private engine.Engine _engine;
@@ -27,11 +26,11 @@ namespace Splash.systems
                 {
                     continue;
                 }
-                var rlMeshEntry = eSkybox.Get<Splash.components.PfMesh>().MeshEntry;
-                var rlMaterialEntry = eSkybox.Get<Splash.components.PfMaterial>().MaterialEntry;
+                var pfInstance = eSkybox.Get<Splash.components.PfInstance>();
                 var matrixSkybox = Matrix4x4.CreateTranslation(vCameraPosition);
 
-                cameraOutput.AppendInstance(rlMeshEntry, rlMaterialEntry, matrixSkybox);
+                // TXWTODO: Somehow improve this for use with the AppendInstance API.
+                cameraOutput.AppendInstance(pfInstance, matrixSkybox);
 
             }
         }

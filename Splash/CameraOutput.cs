@@ -140,6 +140,50 @@ namespace Splash
             _nInstances++;
         }
 
+        public void AppendInstance(in Splash.components.PfInstance pfInstance, in Matrix4x4 matrix)
+        {
+            int nMeshes = pfInstance.AMeshEntries.Count;
+            int nMaterialIndices = pfInstance.MeshMaterials.Count;
+            int nMaterials = pfInstance.AMaterialEntries.Count;
+            for (int i = 0; i < nMeshes; ++i)
+            {
+                AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
+                AMaterialEntry aMaterialEntry = null;
+
+                if (i < nMaterialIndices)
+                {
+                    int materialIndex = pfInstance.MeshMaterials[i];
+                    if (materialIndex < nMaterials)
+                    {
+                        aMaterialEntry = pfInstance.AMaterialEntries[materialIndex];
+                    }
+                    else
+                    {
+                        Error($"Invalid material index {materialIndex} > nMaterials=={nMaterials}");
+                        continue;
+                    }
+                }
+                else
+                {
+                    Error($"Invalid index ({i} >= nMaterialIndices=={nMaterialIndices}");
+                    continue;
+                }
+
+                // Skip things that incompletely are loaded.
+                if (null == aMeshEntry)
+                {
+                    continue;
+                }
+
+                if (null == aMaterialEntry)
+                {
+                    aMaterialEntry = _threeD.GetDefaultMaterial();
+                }
+
+                AppendInstance(aMeshEntry, aMaterialEntry, matrix);
+            }
+        }
+
 
         public void RenderStandard(in IThreeD threeD)
         {

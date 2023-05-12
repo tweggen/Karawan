@@ -18,8 +18,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     private engine.Engine _engine;
     private IThreeD _threeD;
 
-    private CameraOutput _cameraOutput = null;
-
 
     private void _appendMeshRenderList(
         in CameraOutput cameraOutput,
@@ -32,49 +30,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
             if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
-
-                int nMeshes = pfInstance.AMeshEntries.Count;
-                int nMaterialIndices = pfInstance.MeshMaterials.Count;
-                int nMaterials = pfInstance.AMaterialEntries.Count;
-                for (int i = 0; i < nMeshes; ++i)
-                {
-                    AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
-                    AMaterialEntry aMaterialEntry = null;
-
-                    if (i < nMaterialIndices)
-                    {
-                        int materialIndex = pfInstance.MeshMaterials[i];
-                        if (materialIndex < nMaterials)
-                        {
-                            aMaterialEntry = pfInstance.AMaterialEntries[materialIndex];
-                        }
-                        else
-                        {
-                            Error($"Invalid material index {materialIndex} > nMaterials=={nMaterials}");
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        Error($"Invalid index ({i} >= nMaterialIndices=={nMaterialIndices}");
-                        continue;
-                    }
-
-                    // Skip things that incompletely are loaded.
-                    if (null == aMeshEntry)
-                    {
-                        continue;
-                    }
-
-                    if (null == aMaterialEntry)
-                    {
-                        aMaterialEntry = _threeD.GetDefaultMaterial();
-                    }
-
-                    var rMatrix = transform3ToWorld.Matrix;
-
-                    cameraOutput.AppendInstance(aMeshEntry, aMaterialEntry, rMatrix);
-                }
+                cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix);
             }
         }
     }
@@ -103,6 +59,5 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     {
         _engine = engine;
         _threeD = threeD;
-        _cameraOutput = null;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Splash.components;
 
-struct PfInstance
+public struct PfInstance
 {
     public IList<engine.joyce.Mesh> Meshes;
     public IList<int> MeshMaterials;
