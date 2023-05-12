@@ -92,29 +92,36 @@ public class SilkThreeD : IThreeD
      */
     private unsafe void _applyLightValues(ref SkShader sh, int index, in Light light)
     {
-        var lightShaderPos = _getLightShaderPos(index, ref sh);
-        bool checkLights = true;
+        try
+        {
+            var lightShaderPos = _getLightShaderPos(index, ref sh);
+            bool checkLights = true;
 
-        // Send to shader light enabled state and type
-        sh.SetUniform(lightShaderPos.enabledLoc, (light.enabled?1:0));
-        if( checkLights ) CheckError($"Set Uniform light enabled {index}");
-        sh.SetUniform(lightShaderPos.typeLoc, (int)light.type);
-        if( checkLights ) CheckError($"Set Uniform light type {index}");
+            // Send to shader light enabled state and type
+            sh.SetUniform(lightShaderPos.enabledLoc, (light.enabled ? 1 : 0));
+            if (checkLights) CheckError($"Set Uniform light enabled {index}");
+            sh.SetUniform(lightShaderPos.typeLoc, (int)light.type);
+            if (checkLights) CheckError($"Set Uniform light type {index}");
 
-        // Send to shader light position values
-        Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
-        sh.SetUniform(lightShaderPos.posLoc, position);
-        if( checkLights ) CheckError($"Set Uniform light position {index}");
+            // Send to shader light position values
+            Vector3 position = new(light.position.X, light.position.Y, light.position.Z);
+            sh.SetUniform(lightShaderPos.posLoc, position);
+            if (checkLights) CheckError($"Set Uniform light position {index}");
 
-        // Send to shader light target position values
-        Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
-        sh.SetUniform(lightShaderPos.targetLoc, target);
-        if( checkLights ) CheckError($"Set Uniform light target {index}");
+            // Send to shader light target position values
+            Vector3 target = new(light.target.X, light.target.Y, light.target.Z);
+            sh.SetUniform(lightShaderPos.targetLoc, target);
+            if (checkLights) CheckError($"Set Uniform light target {index}");
 
-        // Send to shader light color values
-        Vector4 color = light.color;
-        sh.SetUniform(lightShaderPos.colorLoc, color);
-        if( checkLights ) CheckError($"Set Uniform light color {index}");
+            // Send to shader light color values
+            Vector4 color = light.color;
+            sh.SetUniform(lightShaderPos.colorLoc, color);
+            if (checkLights) CheckError($"Set Uniform light color {index}");
+        }
+        catch (Exception e)
+        {
+            throw e;
+        }
     }
 
 
@@ -145,7 +152,10 @@ public class SilkThreeD : IThreeD
         {
             return;
         }
-        sh.SetUniform(_ambientLoc, colAmbient);
+        sh.SetUniform(_ambientLoc,
+            Vector4.Zero
+            //colAmbient
+        );
         if( checkLights ) CheckError($"Set Uniform ambient light");
     }
 
@@ -176,39 +186,46 @@ public class SilkThreeD : IThreeD
 
     private void _loadMaterialToShader(in SkShader sh, in SkMaterialEntry skMaterialEntry)
     {
-        //sh.SetUniform("texture0");
-        SkTextureEntry skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
-        if (skDiffuseTextureEntry != null && skDiffuseTextureEntry.IsUploaded())
+        try
         {
-            SkTexture skTexture = skDiffuseTextureEntry.SkTexture;
-            if (skTexture != null)
+            //sh.SetUniform("texture0");
+            SkTextureEntry skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
+            if (skDiffuseTextureEntry != null && skDiffuseTextureEntry.IsUploaded())
             {
-                skTexture.Bind(TextureUnit.Texture0);
-                CheckError("Bind Texture0");
+                SkTexture skTexture = skDiffuseTextureEntry.SkTexture;
+                if (skTexture != null)
+                {
+                    skTexture.Bind(TextureUnit.Texture0);
+                    CheckError("Bind Texture0");
+                }
             }
-        }
 
-        SkTextureEntry skEmissiveTextureEntry = skMaterialEntry.SkEmissiveTexture;
-        if (skEmissiveTextureEntry != null && skEmissiveTextureEntry.IsUploaded())
+            SkTextureEntry skEmissiveTextureEntry = skMaterialEntry.SkEmissiveTexture;
+            if (skEmissiveTextureEntry != null && skEmissiveTextureEntry.IsUploaded())
+            {
+                SkTexture skTexture = skEmissiveTextureEntry.SkTexture;
+                if (skTexture != null)
+                {
+                    skTexture.Bind(TextureUnit.Texture2);
+                    CheckError("Bind Texture 2");
+                }
+            }
+
+            engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
+            sh.SetUniform("colDiffuse", new Vector4(
+                (float)((jMaterial.AlbedoColor >> 16) & 0xff) / 255f,
+                (float)((jMaterial.AlbedoColor >> 8) & 0xff) / 255f,
+                (float)((jMaterial.AlbedoColor) & 0xff) / 255f,
+                (float)((jMaterial.AlbedoColor >> 24) & 0xff) / 255f
+            ));
+            sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
+            sh.SetUniform("texture0", 0);
+            sh.SetUniform("texture2", 2);
+        }
+        catch (Exception e)
         {
-            SkTexture skTexture = skEmissiveTextureEntry.SkTexture;
-            if (skTexture != null)
-            {
-                skTexture.Bind(TextureUnit.Texture2);
-                CheckError("Bind Texture 2");
-            }
+            throw e;
         }
-
-        engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
-        sh.SetUniform("colDiffuse", new Vector4(
-            (float)((jMaterial.AlbedoColor >> 16) & 0xff) / 255f,
-            (float)((jMaterial.AlbedoColor >> 8) & 0xff) / 255f,
-            (float)((jMaterial.AlbedoColor) & 0xff) / 255f,
-            (float)((jMaterial.AlbedoColor >> 24) & 0xff) / 255f
-        ));
-        sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
-        sh.SetUniform("texture0", 0);
-        sh.SetUniform("texture2", 2);
     }
 
     private void _unloadMaterialFromShader()
