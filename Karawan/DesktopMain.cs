@@ -210,6 +210,7 @@ namespace Karawan
             
             // var e = Splash.Raylib.Platform.EasyCreate(args);
             var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
+            e.SetFullscreen(startFullscreen);
 
             {
                 WireServer.API aWireServer = new(e, 9451);

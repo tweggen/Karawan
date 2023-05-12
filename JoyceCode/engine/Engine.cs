@@ -42,6 +42,8 @@ namespace engine
         private readonly WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
 
         private bool _mayCallLogical = false;
+
+        private bool _isFullscreen = false;
         
         private physics.Manager _managerPhysics;
         public readonly physics.Binding PhysicsBinding;
@@ -456,6 +458,31 @@ namespace engine
         public void Execute()
         {
             _platform.Execute();
+        }
+
+
+        public bool IsFullscreen()
+        {
+            lock (_lo)
+            {
+                return _isFullscreen;
+            }
+        }
+
+
+        public void SetFullscreen(bool isFullscreen)
+        {
+            IPlatform platform = null;
+            lock (_lo)
+            {
+                _isFullscreen = isFullscreen;
+                platform = _platform;
+            }
+
+            if (null != platform)
+            {
+                platform.SetFullscreen(isFullscreen);
+            }
         }
 
 

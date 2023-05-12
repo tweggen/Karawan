@@ -79,6 +79,38 @@ namespace Splash.Silk
 #endif
         }
 
+
+        private void _toggleFullscreen()
+        {
+            bool isFullscreen = _engine.IsFullscreen();
+            _engine.SetFullscreen(!isFullscreen);
+        }
+
+
+        public void SetFullscreen(bool isFullscreen)
+        {
+            if (null == _iView)
+            {
+                return;
+            }
+
+            IWindow iWindow = _iView as IWindow;
+            if (null == iWindow)
+            {
+                return;
+            }
+            if (isFullscreen)
+            {
+                iWindow.WindowState = WindowState.Fullscreen;
+            }
+            else
+            {
+                iWindow.WindowState = WindowState.Normal;
+                iWindow.Size = new Vector2D<int>(1280, 720);
+            }
+        }
+        
+        
         private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
         {
             switch (arg2)
@@ -94,6 +126,9 @@ namespace Splash.Silk
                     break;
                 case Key.D:
                     _controllerState.TurnRight = 200;
+                    break;
+                case Key.F11:
+                    _toggleFullscreen();
                     break;
                 default:
                     break;
@@ -445,7 +480,6 @@ namespace Splash.Silk
         {
             _controllerState = new();
             _vMouseMove = new Vector2(0f, 0f);
-
         }
 
         static public engine.Engine EasyCreatePlatform(string[] args, out Splash.Silk.Platform platform)

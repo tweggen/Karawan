@@ -23,6 +23,8 @@ namespace engine
         public void GetMouseMove(out Vector2 vMouseMove);
         public void Sleep(double dt);
 
+        public void SetFullscreen(bool isFullscreen);
+        
         public bool IsRunning();
     }
 }
