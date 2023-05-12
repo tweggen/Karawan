@@ -153,8 +153,8 @@ public class SilkThreeD : IThreeD
             return;
         }
         sh.SetUniform(_ambientLoc,
-            Vector4.Zero
-            //colAmbient
+            // Vector4.Zero
+            colAmbient
         );
         if( checkLights ) CheckError($"Set Uniform ambient light");
     }
@@ -218,7 +218,8 @@ public class SilkThreeD : IThreeD
                 (float)((jMaterial.AlbedoColor) & 0xff) / 255f,
                 (float)((jMaterial.AlbedoColor >> 24) & 0xff) / 255f
             ));
-            sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
+            
+            // sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
             sh.SetUniform("texture0", 0);
             sh.SetUniform("texture2", 2);
         }
