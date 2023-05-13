@@ -25,7 +25,7 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
             if (_jCar3Sound == null)
             {
                 _jCar3Sound = new engine.audio.Sound(
-                    "cubeloopmono.ogg", true, 0.3f, 1.0f);
+                    "car3noisemono.ogg", true, 0.3f, 1.0f);
             }
 
             return _jCar3Sound;
