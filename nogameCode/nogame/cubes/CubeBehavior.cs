@@ -10,7 +10,7 @@ namespace nogame.cubes
         engine.streets.StreetPoint _streetPoint;
         StreetNavigationController _snc;
 
-        private static Vector3 _cubeHeight = new Vector3(0f, 6f, 0f);
+        private static Vector3 _cubeHeight = new Vector3(0f, 4f, 0f);
 
         public void Behave(in DefaultEcs.Entity entity, float dt)
         {

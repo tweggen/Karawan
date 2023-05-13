@@ -185,7 +185,7 @@ namespace Karawan
             
             bool startFullscreen = true;
 #if DEBUG
-            startFullscreen = false;
+            startFullscreen = true;
 #else
             startFullscreen = true;
 #endif
