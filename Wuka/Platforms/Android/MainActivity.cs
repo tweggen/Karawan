@@ -56,10 +56,10 @@ namespace Wuka
             }
 #endif
 
-            e.AddSceneFactory("root", () => new nogame.RootScene());
-            e.AddSceneFactory("logos", () => new nogame.LogosScene());
+            e.SceneSequencer.AddSceneFactory("root", () => new nogame.RootScene());
+            e.SceneSequencer.AddSceneFactory("logos", () => new nogame.LogosScene());
 
-            e.SetMainScene("logos");
+            e.SceneSequencer.SetMainScene("logos");
             e.Execute();
         }
     }
