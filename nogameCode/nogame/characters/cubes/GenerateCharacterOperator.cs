@@ -7,9 +7,9 @@ using engine.world;
 using engine.streets;
 using static engine.Logger;   
 
-namespace nogame.cubes
+namespace nogame.characters.cubes
 {
-    internal class GenerateCubeCharacterOperator : engine.world.IFragmentOperator
+    internal class GenerateCharacterOperator : engine.world.IFragmentOperator
     {
         private static object _classLock = new();
         private static engine.joyce.Material _jMaterialCube;
@@ -185,7 +185,7 @@ namespace nogame.cubes
                         {
                             eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                             eTarget.Set(new engine.behave.components.Behavior(
-                                new CubeBehavior(wf.Engine, _clusterDesc, chosenStreetPoint)));
+                                new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)));
                             eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
                                 new Vector3(_rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f),
                                 _rnd.getFloat()*2f * (float)Math.PI / 180f)));
@@ -217,7 +217,7 @@ namespace nogame.cubes
         }
 
 
-        public GenerateCubeCharacterOperator(
+        public GenerateCharacterOperator(
             in ClusterDesc clusterDesc, in string strKey)
         {
             _clusterDesc = clusterDesc;

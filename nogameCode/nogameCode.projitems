@@ -9,15 +9,14 @@
     <Import_RootNamespace>nogameCode</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Car3\Car3Behavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Car3\Character.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Car3\GenerateCar3CharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\Behavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\GenerateCharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\Behavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\GenerateCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHousesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateTreesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\components\CubeSpinner.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\cubes\CubeBehavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\cubes\GenerateCubeCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\LogosScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\playerhover\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\playerhover\WASDPhysics.cs" />

@@ -2,7 +2,6 @@
 using engine.transform.components;
 using System;
 using System.Numerics;
-using nogame.characters.Car3;
 
 namespace nogame
 {
@@ -99,7 +98,7 @@ namespace nogame
             {
                 _worldMetaGen.AddClusterFragmentOperatorFactory(
                     (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                        new nogame.cubes.GenerateCubeCharacterOperator(clusterDesc, newKey)
+                        new nogame.characters.cubes.GenerateCharacterOperator(clusterDesc, newKey)
                 );
             }
 
@@ -107,7 +106,7 @@ namespace nogame
             {
                 _worldMetaGen.AddClusterFragmentOperatorFactory(
                     (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                        new nogame.characters.Car3.GenerateCar3CharacterOperator(clusterDesc, newKey)
+                        new nogame.characters.car3.GenerateCharacterOperator(clusterDesc, newKey)
                 );
             }
             _worldMetaGen.SetupComplete();

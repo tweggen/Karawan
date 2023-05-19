@@ -1,9 +1,9 @@
 ﻿using nogame.cities;
 using System.Numerics;
 
-namespace nogame.cubes
+namespace nogame.characters.cubes
 {
-    internal class CubeBehavior : engine.IBehavior
+    internal class Behavior : engine.IBehavior
     {
         engine.Engine _engine;
         engine.world.ClusterDesc _clusterDesc;
@@ -22,7 +22,7 @@ namespace nogame.cubes
             );
         }
 
-        public CubeBehavior(
+        public Behavior(
             in engine.Engine engine0,
             in engine.world.ClusterDesc clusterDesc0,
             in engine.streets.StreetPoint streetPoint0

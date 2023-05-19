@@ -3,9 +3,9 @@ using nogame.cities;
 using System.Numerics;
 using engine.world;
 
-namespace nogame.characters.Car3;
+namespace nogame.characters.car3;
 
-internal class Car3Behavior : engine.IBehavior
+internal class Behavior : engine.IBehavior
 {
     engine.Engine _engine;
     engine.world.ClusterDesc _clusterDesc;
@@ -28,13 +28,13 @@ internal class Car3Behavior : engine.IBehavior
         );
     }
 
-    public Car3Behavior SetSpeed(float speed)
+    public Behavior SetSpeed(float speed)
     {
         _snc.NavigatorSetSpeed(speed);
         return this;
     }
     
-    public Car3Behavior(
+    public Behavior(
         in engine.Engine engine0,
         in engine.world.ClusterDesc clusterDesc0,
         in engine.streets.StreetPoint streetPoint0

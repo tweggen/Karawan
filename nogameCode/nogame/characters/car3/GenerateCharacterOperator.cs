@@ -8,10 +8,10 @@ using engine.streets;
 using static engine.Logger;   
 
 
-namespace nogame.characters.Car3;
+namespace nogame.characters.car3;
 
 
-class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
+class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
     private static object _classLock = new();
     private static engine.joyce.Material _jMaterialCube;
@@ -182,7 +182,7 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
                     {
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
-                            new Car3Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
+                            new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                                 .SetSpeed((40f+_rnd.getFloat()*30f+(float)carIdx * 20f)/3.6f)));
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
@@ -212,7 +212,7 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
     }
 
 
-    public GenerateCar3CharacterOperator(
+    public GenerateCharacterOperator(
         in ClusterDesc clusterDesc, in string strKey)
     {
         _clusterDesc = clusterDesc;
