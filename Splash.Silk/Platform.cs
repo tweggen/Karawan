@@ -104,16 +104,18 @@ namespace Splash.Silk
             {
                 if (isFullscreen)
                 {
+                    iWindow.Size = new Vector2D<int>(1280, 720);
                     iWindow.WindowState = WindowState.Fullscreen;
                 }
                 else
                 {
-                    iWindow.Size = new Vector2D<int>(1280, 720);
+                    //iWindow.Size = new Vector2D<int>(1280, 720);
                     iWindow.WindowState = WindowState.Normal;
                 }
             }
             catch (Exception e)
             {
+                Error($"Exception while setting fullscreen to {isFullscreen}");
                 // TXWTODO: FIx exception when de-fullscreening.
                 // Setting fullscreeen might fail.
             }

@@ -185,7 +185,7 @@ namespace Karawan
             
             bool startFullscreen = true;
 #if DEBUG
-            startFullscreen = true;
+            startFullscreen = false;
 #else
             startFullscreen = true;
 #endif
@@ -193,24 +193,26 @@ namespace Karawan
             {
                 var options = WindowOptions.Default;
                 // options.API = GraphicsAPI.
-                if (!startFullscreen)
-                {
-                    options.Size = new Vector2D<int>(1280, 720);
-                }
+                /*
+                 * Even if we don't start up fullscreen, we need to setup a size anyway.  
+                 */
+                options.Size = new Vector2D<int>(1280, 720);
                 options.Title = "codename Karawan";
                 options.FramesPerSecond = 60;
                 options.VSync = false;
                 options.ShouldSwapAutomatically = false;
+                options.WindowState = WindowState.Normal;
+                //if (startFullscreen)
+                //{
+                //    options.WindowState = WindowState.Fullscreen;
+                //}
                 iWindow = Window.Create(options);
-                if (startFullscreen)
-                {
-                    iWindow.WindowState = WindowState.Fullscreen;
-                }
+                iWindow.Size = new Vector2D<int>(1280, 720);
             }
             
             // var e = Splash.Raylib.Platform.EasyCreate(args);
             var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
-            e.SetFullscreen(startFullscreen);
+            //e.SetFullscreen(startFullscreen);
 
             {
                 WireServer.API aWireServer = new(e, 9451);
