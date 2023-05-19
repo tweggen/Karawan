@@ -40,8 +40,9 @@ namespace nogame.cities
                 if (_jMaterialNeon == null)
                 {
                     _jMaterialNeon = new engine.joyce.Material();
-                    // _jMaterialHouse.AlbedoColor = 0xff444444;
-                    _jMaterialNeon.Texture = new engine.joyce.Texture("lorem.png");
+                    _jMaterialNeon.AlbedoColor = 0x00000000;
+                    _jMaterialNeon.Texture = null;
+                    _jMaterialNeon.EmissiveTexture = new engine.joyce.Texture("lorem.png");
                     _jMaterialNeon.HasTransparency = true;
                 }
                 return _jMaterialNeon;

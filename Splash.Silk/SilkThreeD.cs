@@ -195,7 +195,7 @@ public class SilkThreeD : IThreeD
                 SkTexture skTexture = skDiffuseTextureEntry.SkTexture;
                 if (skTexture != null)
                 {
-                    skTexture.Bind(TextureUnit.Texture0);
+                    // skTexture.Bind(TextureUnit.Texture0);
                     CheckError("Bind Texture0");
                 }
             }

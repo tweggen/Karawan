@@ -116,7 +116,9 @@ namespace Splash.Silk
                 /*
                  * Then render transparent
                  */
+                _gl.Enable(EnableCap.Blend);
                 RenderPart.CameraOutput.RenderTransparent(_threeD);
+                _gl.Disable(EnableCap.Blend);
                 y0Stats += 20;
             }
 

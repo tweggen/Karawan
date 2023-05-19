@@ -149,12 +149,12 @@ namespace nogame
              */
             {
                 _eLightMain = _ecsWorld.CreateEntity();
-                _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(1f, 1f, 1f, 1.0f)));
+                _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(1f, 1f, 1f, 0.0f)));
                 _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
             }
             {
                 _eLightBack = _ecsWorld.CreateEntity();
-                _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.3f, 0.5f, 0.3f, 1.0f)));
+                _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.3f, 0.5f, 0.3f, 0.0f)));
                 _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
             }
             /*
