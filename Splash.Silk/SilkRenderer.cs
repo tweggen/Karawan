@@ -119,13 +119,13 @@ namespace Splash.Silk
                  */
                 _gl.Enable(EnableCap.Blend);
                 _gl.Disable(EnableCap.CullFace);
-                _gl.Disable(EnableCap.DepthTest);
+                // _gl.Disable(EnableCap.DepthTest);
                 _gl.BlendFuncSeparate(
                     BlendingFactor.SrcAlpha,BlendingFactor.OneMinusSrcAlpha,
                     BlendingFactor.Zero,BlendingFactor.One);
                 _gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
                 RenderPart.CameraOutput.RenderTransparent(_threeD);
-                _gl.Enable(EnableCap.DepthTest);
+                // _gl.Enable(EnableCap.DepthTest);
                 _gl.Disable(EnableCap.Blend);
                 _gl.Enable(EnableCap.CullFace);
                 y0Stats += 20;

@@ -154,7 +154,7 @@ namespace nogame
             }
             {
                 _eLightBack = _ecsWorld.CreateEntity();
-                _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.3f, 0.5f, 0.3f, 0.0f)));
+                _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.1f, 0.3f, 0.1f, 0.0f)));
                 _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
             }
             /*
