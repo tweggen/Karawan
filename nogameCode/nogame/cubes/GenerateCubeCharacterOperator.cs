@@ -41,7 +41,8 @@ namespace nogame.cubes
                 return _jCubeSound;
             }
         }
-        
+
+        private static float _cubeSize = 0.5f; 
         
         private static engine.joyce.Mesh _jMeshCube;
         private static engine.joyce.Mesh _getCubeMesh()
@@ -50,7 +51,7 @@ namespace nogame.cubes
             {
                 if( null==_jMeshCube)
                 {
-                    _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh(1f);
+                    _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh(_cubeSize);
                 }
                 return _jMeshCube;
             }
@@ -64,7 +65,7 @@ namespace nogame.cubes
             {
                 if( !_pshapeSphere.Exists )
                 {
-                    _pbodySphere = new(0.5f);
+                    _pbodySphere = new(_cubeSize/1.4f);
                     lock (engine.Simulation)
                     {
                         _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
@@ -185,6 +186,9 @@ namespace nogame.cubes
                             eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                             eTarget.Set(new engine.behave.components.Behavior(
                                 new CubeBehavior(wf.Engine, _clusterDesc, chosenStreetPoint)));
+                            eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
+                                new Vector3(_rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f),
+                                _rnd.getFloat()*2f * (float)Math.PI / 180f)));
 
                             BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                                 BodyDescription.CreateKinematic(

@@ -1,8 +1,5 @@
-﻿using engine.joyce;
-using System;
-using System.Collections;
+﻿using System.Numerics;
 using System.Collections.Generic;
-using System.Text;
 
 namespace engine.joyce
 {
@@ -12,12 +9,14 @@ namespace engine.joyce
      */
     public class InstanceDesc
     {
+        public Matrix4x4 ModelTransform;
         public IList<engine.joyce.Mesh> Meshes;
         public IList<int> MeshMaterials;
         public IList<engine.joyce.Material> Materials;
 
         public InstanceDesc()
         {
+            ModelTransform = Matrix4x4.Identity;
             Meshes = new List<Mesh>();
             MeshMaterials = new List<int>();
             Materials = new List<Material>();
@@ -29,6 +28,7 @@ namespace engine.joyce
             in IList<engine.joyce.Material> materials
         )
         {
+            ModelTransform = Matrix4x4.Identity;
             Meshes = meshes;
             MeshMaterials = meshMaterials;
             Materials = materials;

@@ -44,6 +44,13 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
                 _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car2.obj");
                 _jInstancesCar[1] = builtin.loader.Obj.LoadModelInstance("car4.obj");
                 _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car5.obj");
+                foreach (var ji in _jInstancesCar)
+                {
+                    /*
+                     * Our models are 180 degree wrong.
+                     */
+                    ji.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
+                }
             }
             return _jInstancesCar[i];
         }
@@ -124,7 +131,7 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
             return;
         }
         int l = streetPoints.Count;
-        int nCharacters = (int)((float)l * 7f / 5f);
+        int nCharacters = (int)((float)l * 7f / 10f);
 
         for (int i=0; i<nCharacters; i++)
         {
@@ -165,7 +172,8 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh((int)(_rnd.getFloat()*3f));
+                    int carIdx = (int)(_rnd.getFloat() * 3f);
+                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh(carIdx);
 
                     var wf = worldFragment;
 
@@ -175,7 +183,7 @@ class GenerateCar3CharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Car3Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
-                                .SetSpeed((40f+_rnd.getFloat()*30f)/3.6f)));
+                                .SetSpeed((40f+_rnd.getFloat()*30f+(float)carIdx * 20f)/3.6f)));
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(

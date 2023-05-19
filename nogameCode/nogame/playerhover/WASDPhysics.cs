@@ -34,9 +34,9 @@ namespace nogame.playerhover
             Vector3 vTargetPos = _prefTarget.Pose.Position;
             Vector3 vTargetVelocity = _prefTarget.Velocity.Linear;
             Vector3 vTargetAngularVelocity = _prefTarget.Velocity.Angular;
-            var heightAtTarget = engine.world.MetaGen.Instance().Loader.GetHeightAt(vTargetPos.X, vTargetPos.Z);
+            float heightAtTarget = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(vTargetPos);
             {
-                var properDeltaY = 3.5f;
+                var properDeltaY = 0;
                 var deltaY = vTargetPos.Y - (heightAtTarget+properDeltaY);
                 const float threshDiff = 0.01f;
 
@@ -116,9 +116,9 @@ namespace nogame.playerhover
             /*
              * Finally, clip the height with the ground.
              */
-            if( vTargetPos.Y < (heightAtTarget+1.0f) )
+            if( vTargetPos.Y < (heightAtTarget) )
             {
-                vTargetPos.Y = heightAtTarget + 1.0f;
+                vTargetPos.Y = heightAtTarget;
                 _prefTarget.Pose.Position = vTargetPos;
                 vTotalImpulse += new Vector3(0f, 10f, 0f);
             }

@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections;
+using System.Numerics;
 using System.Collections.Generic;
 
 namespace engine.joyce.components
 {
     public struct Instance3
     {
-        // public Matrix4x4 PreTransform;
+        public Matrix4x4 ModelTransform;
         public IList<engine.joyce.Mesh> Meshes;
         public IList<int> MeshMaterials;
         public IList<engine.joyce.Material> Materials;
@@ -14,6 +14,7 @@ namespace engine.joyce.components
         public override string ToString()
         {
             return $"{base.ToString()}: "
+                   + $"{ModelTransform}, "
                    + $"{(Meshes == null ? "null" : Meshes.Count)} meshes, "
                    + $"{(MeshMaterials == null ? "null" : MeshMaterials.Count)} mesh materials, "
                    + $"{(Materials == null ? "null" : Materials.Count)} materials.";
@@ -21,8 +22,7 @@ namespace engine.joyce.components
 
         public Instance3(joyce.Mesh mesh)
         {
-            // PreTransform = Matrix4x4.Identity;
-
+            ModelTransform = Matrix4x4.Identity;
             Meshes = new joyce.Mesh[1];
             MeshMaterials = new int[1];
             Materials = new joyce.Material[1];
@@ -38,6 +38,7 @@ namespace engine.joyce.components
          */
         public Instance3(in engine.joyce.InstanceDesc instanceDesc)
         {
+            ModelTransform = instanceDesc.ModelTransform;
             Meshes = instanceDesc.Meshes;
             MeshMaterials = instanceDesc.MeshMaterials;
             Materials = instanceDesc.Materials;

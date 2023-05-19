@@ -64,7 +64,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                 new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
                     ["d"] = _rnd.getFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
                 new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                    ["r"] = 0.10f, ["l"] = (1f+2f*_rnd.getFloat()) } )
+                    ["r"] = 0.10f, ["l"] = (1f+3f*_rnd.getFloat()) } )
             } ),
             /*
              * Transformmation: Split and grow the main tree, add too branches left
@@ -126,13 +126,13 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                  */
                 new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
                     ["d"] = 90f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
-                /*
+                /* 
                  * Random orientation
                  */
                 new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
                     ["d"] = _rnd.getFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
                 new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                    ["r"] = 0.1f, ["l"] = (1f+2f*_rnd.getFloat()) } )
+                    ["r"] = 0.1f, ["l"] = (1f+3f*_rnd.getFloat()) } )
             } ),
             /*
              * Transformmation: Split and grow the main tree, add too branches left

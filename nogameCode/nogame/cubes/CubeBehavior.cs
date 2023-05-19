@@ -9,9 +9,7 @@ namespace nogame.cubes
         engine.world.ClusterDesc _clusterDesc;
         engine.streets.StreetPoint _streetPoint;
         StreetNavigationController _snc;
-
-        private static Vector3 _cubeHeight = new Vector3(0f, 4f, 0f);
-
+        
         public void Behave(in DefaultEcs.Entity entity, float dt)
         {
             _snc.NavigatorBehave(dt);
@@ -20,7 +18,7 @@ namespace nogame.cubes
                 entity,
                 true, 0xffffffff,
                 _snc.NavigatorGetOrientation(),
-                _cubeHeight + _snc.NavigatorGetWorldPos()
+                engine.world.MetaGen.Instance().Loader.ApplyNavigationHeight(_snc.NavigatorGetWorldPos())
             );
         }
 

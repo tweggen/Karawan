@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Numerics;
 
 namespace engine.world
 {
@@ -12,11 +10,29 @@ namespace engine.world
 
         private List<ClusterDesc> _listClusters;
 
+
+        /**
+         * Return the cluster at the given position.
+         */
+        public ClusterDesc GetClusterAt(in Vector3 pos)
+        {
+            foreach (ClusterDesc cluster in _listClusters)
+            {
+                if (cluster.IsInside(pos))
+                {
+                    return cluster;
+                }
+            }
+
+            return null;
+        }
+        
+        
         /**
          * Return a list of clusters.
          * TODO: Make a nonmodifiable list.
          */
-        public List<ClusterDesc> getClusterList()
+        public List<ClusterDesc> GetClusterList()
         {
             return _listClusters;
         }

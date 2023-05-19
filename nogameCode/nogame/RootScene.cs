@@ -18,7 +18,8 @@ namespace nogame
         private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
         private DefaultEcs.Entity _eCamera;
-        private DefaultEcs.Entity _eLight;
+        private DefaultEcs.Entity _eLightMain;
+        private DefaultEcs.Entity _eLightBack;
         private DefaultEcs.Entity _eAmbientLight;
 
         private engine.world.Loader _worldLoader;
@@ -26,6 +27,8 @@ namespace nogame
 
         private playerhover.Part _partPlayerhover;
         private skybox.Part _partSkybox;
+
+        private systems.CubeSpinnerSystem _systemCubeSpinner; 
 
         private void _triggerLoadWorld()
         {
@@ -44,11 +47,14 @@ namespace nogame
         public void SceneOnLogicalFrame( float dt )
         {
             _triggerLoadWorld();
+            //_systemCubeSpinner.Update(dt);
         }
 
 
         public void SceneDeactivate()
         {
+            _systemCubeSpinner.Dispose();
+            _systemCubeSpinner = null;
             _partPlayerhover.PartDeactivate();
             _partPlayerhover = null;
             _partSkybox.PartDeactivate();
@@ -143,18 +149,28 @@ namespace nogame
              * Directional light
              */
             {
-                _eLight = _ecsWorld.CreateEntity();
-                _eLight.Set(new engine.joyce.components.DirectionalLight(new Vector4(1f, 1f, 1f, 1.0f)));
-                _aTransform.SetRotation(_eLight, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
+                _eLightMain = _ecsWorld.CreateEntity();
+                _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(1f, 1f, 1f, 1.0f)));
+                _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
+            }
+            {
+                _eLightBack = _ecsWorld.CreateEntity();
+                _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.3f, 0.5f, 0.3f, 1.0f)));
+                _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
             }
             /*
              * Ambient light
              */
             {
                 _eAmbientLight = _ecsWorld.CreateEntity();
-                _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.1f, 0.1f, 0.1f, 0.0f)));
+                _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
             }
 
+            /*
+             * Helper systems
+             */
+            _systemCubeSpinner = new(_engine);
+            
             /*
              * Finally, create the camera.
              */
@@ -182,7 +198,7 @@ namespace nogame
              */
             _ctrlFollowCamera = new(_engine, _eCamera, _partPlayerhover.GetShipEntity());
             _ctrlFollowCamera.ActivateController();
-
+            
         }
 
         public RootScene()

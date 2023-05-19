@@ -66,16 +66,13 @@ namespace nogame.playerhover
             {
                 _eShip = _ecsWorld.CreateEntity();
                 var posShip = new Vector3(0f, 35f, 0f);
-                var jShipMesh = engine.joyce.mesh.Tools.CreateCubeMesh(2f);
                 _aTransform.SetPosition(_eShip, posShip);
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("noagme.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0xffffffff);
-                var jShipMaterial = new engine.joyce.Material();
-                jShipMaterial.AlbedoColor = 0xffeedd00;
-                engine.joyce.InstanceDesc jInstanceDesc = new();
-                jInstanceDesc.Meshes.Add(jShipMesh);
-                jInstanceDesc.MeshMaterials.Add(0);
-                jInstanceDesc.Materials.Add(jShipMaterial);
+                
+                engine.joyce.InstanceDesc jInstanceDesc = builtin.loader.Obj.LoadModelInstance("car2.obj");
+                jInstanceDesc.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
+
                 _eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                 //_eShip.Set(new engine.joyce.components.PointLight(new Vector4(1.0f, 0.95f, 0.9f, 1f)/3f));
 

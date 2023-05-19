@@ -348,6 +348,34 @@ return molArrayMap;
 
 
         /**
+         * Return the default navigational height for a given
+         * position. This is the terrain's height, if no road
+         * is present there.
+         */
+        public float GetNavigationHeightAt(in Vector3 position)
+        {
+            /*
+             * Are we in a cluster? Do an inefficient search.
+             */
+            ClusterDesc cluster = ClusterList.Instance().GetClusterAt(position);
+            if (cluster != null)
+            {
+                return cluster.AverageHeight + 3f;
+            }
+            else
+            {
+                return GetHeightAt(position.X, position.Z) + 3.5f;
+            }
+        }
+
+        
+        public Vector3 ApplyNavigationHeight(in Vector3 position)
+        {
+            return new Vector3(position.X, GetNavigationHeightAt(position), position.Z);
+        }
+
+        
+        /**
          * Return the default walking height for this position.
          * Return the height at the given position of the world.
          * If the position is unknown, it might very well be 0.0.
