@@ -99,7 +99,7 @@ void main()
         }
     }
 
-
+    
     // finalColor = (texelColor*((colDiffuse + vec4(specular, 1.0))*vec4(lightDot, 1.0)));
     // finalColor += texelColor*(ambient)*colDiffuse;
     // finalColor = texelColor+colDiffuse;
@@ -107,11 +107,15 @@ void main()
     vec4 colEmissiveTotal = emissiveColor; 
     vec4 colAmbientTotal = ambient; 
     finalColor = 
-        colDiffuseTotal * vec4(totalLight,1.0)
+        colDiffuseTotal * vec4(totalLight,0.0)
         + colEmissiveTotal
         //+ vec4(0.53,0.15,0.18,0.0)
         + colAmbientTotal
         ;
+    if (finalColor.a <= 1.0)
+    {
+        finalColor = vec4( colEmissiveTotal.r, colEmissiveTotal.g, colEmissiveTotal.b, 0.0);
+    }
     
 
     // Gamma correction

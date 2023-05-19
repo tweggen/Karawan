@@ -366,7 +366,7 @@ namespace nogame.cities
                     instanceDesc.Meshes.Add(g);
                     instanceDesc.MeshMaterials.Add(0);
                     instanceDesc.Materials.Add(_getHouseMaterial());
-                    worldFragment.AddStaticMolecule(instanceDesc, listCreatePhysics);
+                    ///worldFragment.AddStaticMolecule(instanceDesc, listCreatePhysics);
                 }
                 {
                     engine.joyce.InstanceDesc instanceDesc = new();

@@ -9,6 +9,7 @@ using System.ComponentModel;
 using static engine.Logger;
 
 using Silk.NET.OpenGL;
+using Silk.NET.SDL;
 
 
 namespace Splash.Silk
@@ -117,8 +118,14 @@ namespace Splash.Silk
                  * Then render transparent
                  */
                 _gl.Enable(EnableCap.Blend);
+                _gl.Disable(EnableCap.CullFace);
+                _gl.Disable(EnableCap.DepthTest);
+                _gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                _gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
                 RenderPart.CameraOutput.RenderTransparent(_threeD);
+                _gl.Enable(EnableCap.DepthTest);
                 _gl.Disable(EnableCap.Blend);
+                _gl.Enable(EnableCap.CullFace);
                 y0Stats += 20;
             }
 
