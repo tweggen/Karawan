@@ -180,7 +180,7 @@ namespace Splash
                     aMaterialEntry = _threeD.GetDefaultMaterial();
                 }
 
-                AppendInstance(aMeshEntry, aMaterialEntry, matrix);
+                AppendInstance(aMeshEntry, aMaterialEntry, pfInstance.ModelTransform * matrix);
             }
         }
 

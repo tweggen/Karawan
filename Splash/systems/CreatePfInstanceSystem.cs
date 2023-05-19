@@ -57,6 +57,7 @@ namespace Splash.systems
                  * Create the platform entity. It will be filled by the instance manager.
                  */
                 entity.Set(new components.PfInstance(
+                    cInstance3.ModelTransform,
                     cInstance3.Meshes,
                     cInstance3.MeshMaterials,
                     cInstance3.Materials));
