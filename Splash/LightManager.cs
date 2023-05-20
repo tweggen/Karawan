@@ -85,7 +85,7 @@ namespace Splash
         {
             /*
              * Collect all lights.
-             * // TXWTODO: This assumes we are only a littly amount of directional lights.
+             * // TXWTODO: This assumes we are only a little amount of directional lights.
              */
             var listPointLights = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.PointLight>()
