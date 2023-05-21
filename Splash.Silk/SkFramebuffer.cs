@@ -31,7 +31,7 @@ public class SkFramebuffer : AFramebuffer
     }
     
 
-    public unsafe void Upload(GL gl)
+    public unsafe void Upload(GL gl, in TextureManager textureManager)
     {
         if (_handleFramebuffer != 0)
         {
@@ -76,11 +76,13 @@ public class SkFramebuffer : AFramebuffer
         {
             Error("Unable to initialize frame buffer");
         }
+        Trace( $"Uploaded texture {_jTexture.Source}.");
+
+        textureManager.PushTexture(_jTexture.Source, _skTextureEntry);
     }
     
     
     public SkFramebuffer(in engine.joyce.Framebuffer jFramebuffer) : base(jFramebuffer)
     {
-        
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static engine.Logger;
 
 namespace Splash
 {
@@ -21,8 +22,19 @@ namespace Splash
             {
                 return jTexture.Source;
             }
-        } 
+        }
 
+
+        public void PushTexture(in string textureKey, in ATextureEntry aTextureEntry)
+        {
+            lock (_lock)
+            {
+                _dictTextures[textureKey] = aTextureEntry;
+            }
+            Trace( $"Uploaded texture {textureKey} available.");
+        }
+        
+        
         public ATextureEntry FindATexture(in engine.joyce.Texture jTexture)        
         {
             ATextureEntry aTextureEntry;
