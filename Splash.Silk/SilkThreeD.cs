@@ -514,7 +514,7 @@ public class SilkThreeD : IThreeD
         SkFramebuffer skFramebuffer = ((SkFramebuffer)aFramebuffer);
         if (!skFramebuffer.IsUploaded())
         {
-            skFramebuffer.Upload(_gl);
+            skFramebuffer.Upload(_gl, _textureManger);
         }
 
     }
