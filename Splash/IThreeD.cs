@@ -6,9 +6,9 @@ namespace Splash;
 
 public interface IThreeD
 {
-    public void UploadMesh(in AMeshEntry aMeshEntry);
     public AMeshEntry CreateMeshEntry(in engine.joyce.Mesh jMesh);
-    public void DestroyMeshEntry(in AMeshEntry aMeshEntry);
+    public void UploadMesh(in AMeshEntry aMeshEntry);
+    public void UnloadMeshEntry(in AMeshEntry aMeshEntry);
 
     public AMaterialEntry GetDefaultMaterial();
 
@@ -18,10 +18,15 @@ public interface IThreeD
 
     public ATextureEntry CreateTextureEntry(in engine.joyce.Texture jTexture);
     public void FillTextureEntry(in ATextureEntry aTextureEntry);
+
+    public AFramebuffer CreateFramebuffer(in engine.joyce.Framebuffer jFramebuffer);
+    public void UploadFramebuffer(in AFramebuffer aFramebuffer);
+    public void UnloadFramebuffer(in AFramebuffer aFramebuffer);
     
     public void ApplyAllLights(in IList<Light> listLights, in AShaderEntry aShaderEntry);
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry);
     public void SetCameraPos(in Vector3 vCamera);
+    
     public void DrawMeshInstanced(
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,

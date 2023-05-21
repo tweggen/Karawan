@@ -9,6 +9,11 @@ public class SkTexture : IDisposable
 {
     private uint _handle;
     private GL _gl;
+    
+    public uint Handle
+    {
+        get => _handle;
+    }
 
     public unsafe SkTexture(GL gl, string path)
     {
@@ -71,6 +76,19 @@ public class SkTexture : IDisposable
             SetParameters();
         }
     }
+
+
+    public unsafe SkTexture(GL gl, uint width, uint height)
+    {
+        _gl = gl;
+
+        _handle = _gl.GenTexture();
+        Bind();
+            
+        _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+        SetParameters();
+    }
+
 
     private void SetParameters()
     {

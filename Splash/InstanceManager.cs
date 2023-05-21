@@ -190,7 +190,7 @@ namespace Splash
 
         private void _unloadMesh(engine.joyce.Mesh jMesh, Resource<AMeshEntry> meshResource)
         {
-            _threeD.DestroyMeshEntry(meshResource.Value);
+            _threeD.UnloadMeshEntry(meshResource.Value);
         }
 
         private void _unloadMaterial(engine.joyce.Material jMesh, Resource<AMaterialEntry> materialResource)

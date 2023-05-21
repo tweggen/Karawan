@@ -241,7 +241,7 @@ public class RaylibThreeD : IThreeD
         return rlMeshEntry;
     }
 
-    public void DestroyMeshEntry(in AMeshEntry aMeshEntry)
+    public void UnloadMeshEntry(in AMeshEntry aMeshEntry)
     {
         RlMeshEntry rlMeshEntry = (RlMeshEntry)aMeshEntry;
         _engine.QueueCleanupAction(() =>

@@ -32,7 +32,7 @@ namespace Splash.Silk
             vao = null;
         }
 
-        public override bool IsMeshUploaded()
+        public override bool IsUploaded()
         {
             return vao != null;
         }

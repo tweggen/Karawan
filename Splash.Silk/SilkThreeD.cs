@@ -288,7 +288,7 @@ public class SilkThreeD : IThreeD
         /*
          * Load the mesh, if it changed since the last call.
          */
-        if (!skMeshEntry.IsMeshUploaded())
+        if (!skMeshEntry.IsUploaded())
         {
             skMeshEntry.Upload(_gl);
         }
@@ -390,7 +390,7 @@ public class SilkThreeD : IThreeD
     public void UploadMesh(in AMeshEntry aMeshEntry)
     {
         SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
-        if (!skMeshEntry.IsMeshUploaded())
+        if (!skMeshEntry.IsUploaded())
         {
             skMeshEntry.Upload(_gl);
         }
@@ -404,12 +404,12 @@ public class SilkThreeD : IThreeD
         return skMeshEntry;
     }
 
-    public void DestroyMeshEntry(in AMeshEntry aMeshEntry)
+    public void UnloadMeshEntry(in AMeshEntry aMeshEntry)
     {
         SkMeshEntry skMeshEntry = (SkMeshEntry)aMeshEntry;
         _graphicsThreadActions.Enqueue(() =>
         {
-            if (skMeshEntry.IsMeshUploaded())
+            if (skMeshEntry.IsUploaded())
             {
                 skMeshEntry.Release(_gl);
             }
@@ -501,6 +501,35 @@ public class SilkThreeD : IThreeD
          * Push the viewer's position to the fragment shader
          */
         // TXWTODO: Write me. Deprecate this by VIewMatrix and Projection Matrix
+    }
+
+    public AFramebuffer CreateFramebuffer(in engine.joyce.Framebuffer jFramebuffer)
+    {
+        SkFramebuffer skFramebuffer = new SkFramebuffer(jFramebuffer);
+        return skFramebuffer;
+    }
+    
+    public void UploadFramebuffer(in AFramebuffer aFramebuffer)
+    {
+        SkFramebuffer skFramebuffer = ((SkFramebuffer)aFramebuffer);
+        if (!skFramebuffer.IsUploaded())
+        {
+            skFramebuffer.Upload(_gl);
+        }
+
+    }
+
+    
+    public void UnloadFramebuffer(in AFramebuffer aFramebuffer)
+    {
+        SkFramebuffer skFramebuffer = (SkFramebuffer)aFramebuffer;
+        _graphicsThreadActions.Enqueue(() =>
+        {
+            if (skFramebuffer.IsUploaded())
+            {
+                skFramebuffer.Release(_gl);
+            }
+        });
     }
 
 

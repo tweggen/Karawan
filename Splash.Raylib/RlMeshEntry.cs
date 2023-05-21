@@ -10,7 +10,7 @@ namespace Splash.Raylib
     {
         public Raylib_CsLo.Mesh RlMesh;
 
-        public override bool IsMeshUploaded()
+        public override bool IsUploaded()
         {
             return RlMesh.vaoId != 0;
         }

@@ -57,7 +57,7 @@ namespace Splash
                 {
                     var aMeshEntry = meshItem.Value.AMeshEntry;
                     var jMesh = aMeshEntry.JMesh;
-                    bool haveMesh = aMeshEntry.IsMeshUploaded();
+                    bool haveMesh = aMeshEntry.IsUploaded();
                     if (!haveMesh)
                     {
                         if (jMesh.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f)
