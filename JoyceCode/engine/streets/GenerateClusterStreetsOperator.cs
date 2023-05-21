@@ -645,7 +645,7 @@ namespace engine.streets
 
             Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
             if (_traceStreets) Trace("Obtaining streets.");
-            var strokeStore = _clusterDesc.strokeStore();
+            var strokeStore = _clusterDesc.StrokeStore();
             if (_traceStreets) Trace("Have streets.");
 
             if (_traceStreets) Trace($"In terrain '{worldFragment.GetId()}' operator. "

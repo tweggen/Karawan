@@ -125,7 +125,7 @@ namespace nogame.characters.cubes
              * TXWTODO: We would be more intersint to place them on the streets.
              */
 
-            var strokeStore = _clusterDesc.strokeStore();
+            var strokeStore = _clusterDesc.StrokeStore();
             IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
             if (streetPoints.Count == 0)
             {

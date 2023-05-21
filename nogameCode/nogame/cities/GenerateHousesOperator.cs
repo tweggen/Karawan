@@ -254,7 +254,7 @@ namespace nogame.cities
             /*
              * Iterate through all quarters in the clusters and generate lots and houses.
              */
-            var quarterStore = _clusterDesc.quarterStore();
+            var quarterStore = _clusterDesc.QuarterStore();
 
             foreach (var quarter in quarterStore.GetQuarters() )
             {

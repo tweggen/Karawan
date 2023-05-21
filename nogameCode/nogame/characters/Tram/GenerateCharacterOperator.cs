@@ -8,42 +8,41 @@ using engine.streets;
 using static engine.Logger;   
 
 
-namespace nogame.characters.car3;
+namespace nogame.characters.tram;
 
 
 class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
     private static object _classLock = new();
+    private static engine.joyce.Material _jMaterialCube;
 
-    private static engine.audio.Sound _jCar3Sound;
+    private static engine.audio.Sound _jTramSound;
 
-    private static engine.audio.Sound _getCar3Sound()
+    private static engine.audio.Sound _getTramSound()
     {
         lock (_classLock)
         {
-            if (_jCar3Sound == null)
+            if (_jTramSound == null)
             {
-                _jCar3Sound = new engine.audio.Sound(
-                    "car3noisemono.ogg", true, 0.3f, 1.0f);
+                _jTramSound = new engine.audio.Sound(
+                    "tramnoise.ogg", true, 0.3f, 1.0f);
             }
 
-            return _jCar3Sound;
+            return _jTramSound;
         }
     }
     
     
-    private static engine.joyce.InstanceDesc[] _jInstancesCar;
-    private static engine.joyce.InstanceDesc _getCarMesh(int i)
+    private static engine.joyce.InstanceDesc[] _jInstancesTram;
+    private static engine.joyce.InstanceDesc _getTramMesh(int i)
     {
         lock(_classLock)
         {
-            if( null==_jInstancesCar)
+            if( null==_jInstancesTram)
             {
-                _jInstancesCar = new engine.joyce.InstanceDesc[3];
-                _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car2.obj");
-                _jInstancesCar[1] = builtin.loader.Obj.LoadModelInstance("car4.obj");
-                _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car5.obj");
-                foreach (var ji in _jInstancesCar)
+                _jInstancesTram = new engine.joyce.InstanceDesc[1];
+                _jInstancesTram[0] = builtin.loader.Obj.LoadModelInstance("tram1.obj");
+                foreach (var ji in _jInstancesTram)
                 {
                     /*
                      * Our models are 180 degree wrong.
@@ -51,7 +50,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     ji.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
                 }
             }
-            return _jInstancesCar[i];
+            return _jInstancesTram[i];
         }
     }
 
@@ -63,7 +62,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         {
             if( !_pshapeSphere.Exists )
             {
-                _pbodySphere = new(1f);
+                _pbodySphere = new(0.5f);
                 lock (engine.Simulation)
                 {
                     _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
@@ -84,7 +83,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"7020/GenerateCar3CharacterOperatar/{_myKey}/";
+        return $"7020/GenerateTramCharacterOperator/{_myKey}/";
     }
     
     public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
@@ -130,7 +129,11 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return;
         }
         int l = streetPoints.Count;
-        int nCharacters = (int)((float)l * 7f / 10f);
+        int nCharacters = (int)((float)_clusterDesc.Size / 20f + 1f);
+        if( nCharacters > _clusterDesc.GetNClosest() ) {
+            nCharacters = _clusterDesc.GetNClosest();
+        }
+        Trace($"Generating {nCharacters} trams.");
 
         for (int i=0; i<nCharacters; i++)
         {
@@ -171,8 +174,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    int carIdx = (int)(_rnd.getFloat() * 3f);
-                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh(carIdx);
+                    int tramIdx = 0;
+                    engine.joyce.InstanceDesc jInstanceDesc = _getTramMesh(tramIdx);
 
                     var wf = worldFragment;
 
@@ -182,7 +185,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
-                                .SetSpeed((40f+_rnd.getFloat()*30f+(float)carIdx * 20f)/3.6f)));
+                                .SetSpeed(30f)
+                                .SetHeight(10f)));
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(
@@ -194,7 +198,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             )
                         );
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        eTarget.Set(new engine.audio.components.MovingSound(_getCar3Sound(), 150f));
+                        eTarget.Set(new engine.audio.components.MovingSound(_getTramSound(), 150f));
                         eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
                     });
 

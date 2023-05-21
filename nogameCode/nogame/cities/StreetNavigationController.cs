@@ -21,8 +21,13 @@ namespace nogame.cities
         /**
          * Meters per second.
          */
-        private float _speed;
-    
+        private float _speed = 30f * 3.6f;
+
+        /**
+         * Meters above recommended riding level.
+         */
+        private float _height = 0f;
+        
         private bool _avoidDeadEnds;
 
         private ClusterDesc _clusterDesc;
@@ -230,7 +235,10 @@ namespace nogame.cities
 
         public Vector3 NavigatorGetWorldPos()
         {
-            return new Vector3( _pos.X + _clusterDesc.Pos.X, _pos.Y, _pos.Z + _clusterDesc.Pos.Z );
+            return new Vector3( 
+                _pos.X + _clusterDesc.Pos.X,
+                _pos.Y + _height, 
+                _pos.Z + _clusterDesc.Pos.Z );
         }
 
 
@@ -273,10 +281,17 @@ namespace nogame.cities
 
 
         public void NavigatorSetSpeed( float speed )
-            {
+        {
             _speed = speed;
         }
 
+        
+        public void NavigatorSetHeight( float height )
+        {
+            _height = height;
+        }
+
+        
         public void NavigatorAvoidDeadEnds( bool avoid) {
             _avoidDeadEnds = avoid;
         }

@@ -148,7 +148,7 @@ namespace engine.streets
              * We only generate quarters that have their centers within this 
              * fragment.
              */
-            var quarterStore = _clusterDesc.quarterStore();
+            var quarterStore = _clusterDesc.QuarterStore();
             foreach(var quarter in quarterStore.GetQuarters())
             {
                 try

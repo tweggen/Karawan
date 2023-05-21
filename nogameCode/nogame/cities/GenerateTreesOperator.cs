@@ -257,7 +257,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         /*
          * Iterate through all quarters in the clusters and generate lots and houses.
          */
-        var quarterStore = _clusterDesc.quarterStore();
+        var quarterStore = _clusterDesc.QuarterStore();
 
         var atomsMap = new SortedDictionary<string, engine.joyce.Mesh>();
 

@@ -28,8 +28,10 @@ namespace engine.physics.systems
                     if (oldPos != newPos)
                     {
                         bodyReference.Pose.Position = newPos;
-                        bodyReference.Awake = true;
+                        bodyReference.Velocity.Linear = (newPos - oldPos)/dt;
+                        // bodyReference.Awake = true;
                     }
+
                 }
             }
         }

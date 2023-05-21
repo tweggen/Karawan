@@ -80,7 +80,7 @@ namespace engine.world
         }
 
 
-        public streets.Quarter guessQuarter(in Vector2 p)
+        public streets.Quarter GuessQuarter(in Vector2 p)
         {
             _triggerStreets();
             /*
@@ -105,13 +105,13 @@ namespace engine.world
         }
 
 
-        public ClusterDesc[] getClosest()
+        public ClusterDesc[] GetClosest()
         {
             return _arrCloseCities;
         }
 
 
-        public int getNClosest()
+        public int GetNClosest()
         {
             return _nClosest;
         }
@@ -287,33 +287,44 @@ namespace engine.world
         }
 
 
-    public streets.Generator streetGenerator()
+    public streets.Generator StreetGenerator()
     {
         _triggerStreets();
         return _streetGenerator;
     }
 
 
-    public streets.QuarterGenerator quarterGenerator()
+    public streets.QuarterGenerator QuarterGenerator()
     {
         _triggerStreets();
         return _quarterGenerator;
     }
 
 
-    public streets.StrokeStore strokeStore() 
+    public streets.StrokeStore StrokeStore() 
     {
         _triggerStreets();
         return _strokeStore;
     }
 
 
-    public streets.QuarterStore quarterStore() 
+    public streets.QuarterStore QuarterStore() 
     {
         _triggerStreets();
         return _quarterStore;
     }
 
+    
+    /**
+     * Get the approximated number of fragments this cluster
+     * covers.
+     */
+    public float GetApproxFragments()
+    {
+        float area = Size * Size / (engine.world.MetaGen.FragmentSize * engine.world.MetaGen.FragmentSize);
+        return area;
+    }
+    
 
     public ClusterDesc(string strKey)
     {

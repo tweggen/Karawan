@@ -109,6 +109,15 @@ namespace nogame
                         new nogame.characters.car3.GenerateCharacterOperator(clusterDesc, newKey)
                 );
             }
+
+            if (engine.GlobalSettings.Get("world.CreateTramCharacters") != "false")
+            {
+                _worldMetaGen.AddClusterFragmentOperatorFactory(
+                    (string newKey, engine.world.ClusterDesc clusterDesc) =>
+                        new nogame.characters.tram.GenerateCharacterOperator(clusterDesc, newKey)
+                );
+            }
+
             _worldMetaGen.SetupComplete();
 
             _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);

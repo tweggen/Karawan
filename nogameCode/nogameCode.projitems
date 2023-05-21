@@ -13,6 +13,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\GenerateCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\GenerateCharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\Behavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\GenerateCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHousesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateTreesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />
