@@ -27,7 +27,7 @@ public class SkFramebuffer : AFramebuffer
 
     public void Release(GL gl)
     {
-        
+        Error("Not yet implemented.");
     }
     
 

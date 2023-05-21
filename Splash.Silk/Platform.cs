@@ -435,11 +435,30 @@ namespace Splash.Silk
         }
 
         
+        /**
+         * For testing purposes, create a rendering target texture.
+         * We later render a thing with it.
+         */
+        private engine.joyce.Framebuffer _jFramebuffer;
+        private AFramebuffer _aFramebuffer;
+        private void _createTestTexture()
+        {
+            _jFramebuffer = new engine.joyce.Framebuffer("mapbuffer", 1024, 1024);
+            _aFramebuffer = _silkThreeD.CreateFramebuffer(_jFramebuffer);
+            SkFramebuffer skFramebuffer = _aFramebuffer as SkFramebuffer;
+            skFramebuffer.Upload(_gl, _textureManager);
+        }
+        
+        
+        
         public void SetupDone()
         {
             string baseDirectory = System.AppContext.BaseDirectory;
             System.Console.WriteLine($"Running in directory {baseDirectory}" );
             
+            /*
+             * First, event handling from UI.
+             */
             _iView.Load += _windowOnLoad;
             _iView.Resize += _windowOnResize;
             _iView.Render += _windowOnRender;
@@ -449,12 +468,21 @@ namespace Splash.Silk
             // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
             // disable and bind cursor.
 
+            /*
+             * Internal video implementation.
+             */
             _silkThreeD = new SilkThreeD(_engine);
 
+            /*
+             * Internal helpers managing various entities.
+             */
             _instanceManager = new(_silkThreeD);
             _instanceManager.Manage(_engine.GetEcsWorld());
             _lightManager = new(_engine, _silkThreeD);
             
+            /*
+             * Create the main screen renderer.
+             */
             _logicalRenderer = new LogicalRenderer(
                 _engine,
                 _silkThreeD,
@@ -467,6 +495,7 @@ namespace Splash.Silk
                 _silkThreeD
             );
 
+            _createTestTexture();
         }
 
         public void Sleep(double dt)
