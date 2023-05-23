@@ -24,7 +24,6 @@ namespace Splash.Silk
         private static Vector2 _lastMousePosition;
 
         private SilkThreeD _silkThreeD;
-        private TextureManager _textureManager;
         private InstanceManager _instanceManager;
         private LightManager _lightManager;
         private SilkRenderer _renderer;
@@ -301,12 +300,13 @@ namespace Splash.Silk
                 _iInputContext.Mice[i].Scroll += _onMouseWheel;
             }
 
+            // TXWTODO: Create sort of "on new gl window" event.
             _gl = GL.GetApi(_iView);
             _silkThreeD.SetGL(_gl);
             _gl.ClearDepth(1f);
             _gl.ClearColor(0f, 0f, 0f, 0f);
             
-
+            _createTestTexture();
         }
 
 
@@ -446,7 +446,7 @@ namespace Splash.Silk
             _jFramebuffer = new engine.joyce.Framebuffer("mapbuffer", 1024, 1024);
             _aFramebuffer = _silkThreeD.CreateFramebuffer(_jFramebuffer);
             SkFramebuffer skFramebuffer = _aFramebuffer as SkFramebuffer;
-            skFramebuffer.Upload(_gl, _textureManager);
+            skFramebuffer.Upload(_gl,  _silkThreeD.TextureManager );
         }
         
         
@@ -494,8 +494,6 @@ namespace Splash.Silk
                 _lightManager,
                 _silkThreeD
             );
-
-            _createTestTexture();
         }
 
         public void Sleep(double dt)

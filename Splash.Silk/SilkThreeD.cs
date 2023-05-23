@@ -18,6 +18,10 @@ public class SilkThreeD : IThreeD
     private SkMaterialEntry _loadingMaterial;
     private readonly TextureGenerator _textureGenerator;
     private readonly TextureManager _textureManager;
+    public TextureManager TextureManager
+    {
+        get => _textureManager;
+    }
     private GL _gl = null;
 
     private Matrix4x4 _matView;
@@ -514,7 +518,7 @@ public class SilkThreeD : IThreeD
         SkFramebuffer skFramebuffer = ((SkFramebuffer)aFramebuffer);
         if (!skFramebuffer.IsUploaded())
         {
-            skFramebuffer.Upload(_gl, _textureManger);
+            skFramebuffer.Upload(_gl, _textureManager);
         }
 
     }
