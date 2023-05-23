@@ -178,7 +178,7 @@ namespace nogame
              * Helper systems
              */
             _systemCubeSpinner = new(_engine);
-            
+              
             /*
              * Finally, create the camera.
              */
