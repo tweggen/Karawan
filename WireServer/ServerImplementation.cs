@@ -166,11 +166,13 @@ public class ServerImplementation : Svc.SvcBase
     
     public override Task<global::Wire.GetEntityResult> GetEntity(Wire.GetEntityParams request, ServerCallContext context)
     {
+        Trace($"Called with entity {request.EntityId}.");
         DefaultEcs.Entity entity = _engine.GetEcsWorld().FindEntity(request.EntityId);
         Wire.GetEntityResult entityResult = new();
         entityResult.Entity = new();
         if (entity.IsAlive)
         {
+            Trace($"Entity {request.EntityId} is alive.");
             EntityComponentTypeReader reader = new(entity);
             _engine.GetEcsWorld().ReadAllComponentTypes(reader);
             foreach (var (strType,componentInfo) in reader.DictComponentTypes)
@@ -201,13 +203,14 @@ public class ServerImplementation : Svc.SvcBase
                 entityResult.Entity.Components.Add(component);
             }
         }
+        Trace($"Returning entity {request.EntityId}.");
         return Task.FromResult(entityResult);
     }
 
     
     public override Task<global::Wire.GetEntityListResult> GetEntityList(Wire.GetEntityListParams request, ServerCallContext context)
     {
-
+        Trace("Called.");
         Wire.GetEntityListResult entityListResult = new();
         /*
          * TXWTODO: At this point we are accessing the world from outside the main thread
@@ -219,6 +222,7 @@ public class ServerImplementation : Svc.SvcBase
             entityListResult.EntityIds.Add(entity.GetId());
         }
 
+        Trace("Returning.");
         return Task.FromResult(entityListResult);
     }
 

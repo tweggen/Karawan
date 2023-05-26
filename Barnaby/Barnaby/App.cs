@@ -51,30 +51,19 @@ public partial class App : Application
     }
 
 
-	public async void TriggerConnect(string ip, ushort port)
+	public void TriggerConnect(string ip, ushort port)
 	{
-		ContentDialog diaConnecting = new ContentDialog()
-		{
-			Title = "Connecting...",
-			Content = $"Connecting to {ip}:{port}... ",
-			CloseButtonText = "Abort"
-        };
-		
-		
-		diaConnecting.XamlRoot = MainWindow.Content.XamlRoot;
-		var pResult = diaConnecting.ShowAsync();
         try
 		{
+			
 			WireClient.API aWireClient = new("127.0.0.1", 9451);
 			this.WireClient = aWireClient;
-			diaConnecting.Content = $"Connecting to {ip}:{port} done.";
-        }
+			return;
+		}
         catch (Exception ex)
 		{
-            diaConnecting.Content = $"Connecting to {ip}:{port} failed:\nUnable to connect: {ex}";
-
-        }
-        diaConnecting.CloseButtonText = "Close";
+			throw (ex);
+		}
     }
 
     /// <summary>

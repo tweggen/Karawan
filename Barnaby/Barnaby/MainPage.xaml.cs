@@ -79,6 +79,7 @@ namespace Barnaby
         
         private void _loadEntity(int entityId)
         {
+            Console.WriteLine($"_loadEntity(): Trying to load entity {entityId}.");
             List<DisplayComponent> listDisplayComponents = new List<DisplayComponent>();
             if (!_app.IsConnected())
             {
@@ -107,18 +108,46 @@ namespace Barnaby
             LvDisplayComponents.ItemsSource = listDisplayComponents;
         }
 
+
+        private void _doConnectTo(string serverIP, ushort serverPort)
+        {
+            BtConnectTo.Content = "Connecting to ";
+            BtConnectTo.IsEnabled = false;
+            try
+            {
+                _app.TriggerConnect(serverIP, serverPort);
+                BtConnectTo.Content = "Disconnect from "; 
+            }
+            catch (Exception ex)
+            {
+                // this.Navigator().ShowMessageDialogAsync(this, 
+                //    title: "Connectivity error", 
+                //    content: $"Unable to connect to {serverIP}:{serverPort}");
+                BtConnectTo.Content = "Connect to ";
+            }
+            BtConnectTo.IsEnabled = true;
+        }
+
+
+        private void _connectToCurrent()
+        {
+            string serverIP = TbServerIP.Text;
+            ushort serverPort = 0;
+            try
+            {
+                UInt16.TryParse(TbServerPort.Text, out serverPort);
+            }
+            catch (Exception ex)
+            {
+                return;
+            }
+            _doConnectTo(serverIP, serverPort);
+        }
+        
         
         private void BtConnectToClick(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                string serverIP = TbServerIP.Text;
-                ushort serverPort = 0;
-                UInt16.TryParse(TbServerPort.Text, out serverPort);
-                _app.TriggerConnect(serverIP, serverPort);
-            } catch (Exception ex)
-            {
-            }
+            _connectToCurrent();
         }
 
 
@@ -149,6 +178,7 @@ namespace Barnaby
         {
             if (!_app.IsConnected())
             {
+                Console.WriteLine("TbEntityClick(): Not connected.");
                 _app.ShowNotConnected();
                 return;
             }
@@ -157,10 +187,17 @@ namespace Barnaby
             int entityId;
             if (!Int32.TryParse(tb.Name, out entityId))
             {
+                Console.WriteLine($"TbEntityClick(): Unable to parse entity id ${tb.Name}");
                 return;
             }
 
             _loadEntity(entityId);
+        }
+
+
+        private void _onLoaded(object sender, RoutedEventArgs a)
+        {
+            _connectToCurrent();
         }
         
         
@@ -169,9 +206,11 @@ namespace Barnaby
             _app = (App)Microsoft.UI.Xaml.Application.Current;
             this.InitializeComponent( );
 
+            this.Loaded += _onLoaded;
             // long result = _app.WireClient.Calculate(2, 4, "*");
             // Console.WriteLine($"Barnaby notices that result is {result}.");
             // listDisplayEntities.Add(new DisplayEntity() { Handle = (uint)result, Enabled = true });
+
         }
     }
     
