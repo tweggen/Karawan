@@ -496,22 +496,28 @@ namespace engine
             while (_platform.IsRunning())
             {
                 /*
+                 * Wait for the next frame or rock it.
+                 */
+                stopWatch.Stop();
+                {
+                    float elapsed = (float)stopWatch.Elapsed.TotalSeconds;
+                    totalTime += elapsed;
+                    // Trace($"elapsed {elapsed} totalTime {totalTime}");
+                }
+                stopWatch.Reset();
+
+                /*
                  * keep times in range
                  */
                 while (totalTime > 1f)
                 {
                     totalTime -= 1f;
                 }
-                
-                /*
-                 * Wait for the next frame or rock it.
-                 */
-                stopWatch.Stop();
-                totalTime += (float)stopWatch.Elapsed.TotalSeconds;
-                stopWatch.Reset();
-                
+
+
                 if (totalTime < invFps)
                 {
+                    // Trace("Sleeping.");
                     stopWatch.Start();
                     Thread.Sleep(1);
                     continue;
@@ -523,6 +529,7 @@ namespace engine
                  */
                 while (totalTime > invFps)
                 {
+                    // Trace( "Calling logical.");
                     _onLogicalFrame(invFps);
                     totalTime -= invFps;
                 }
