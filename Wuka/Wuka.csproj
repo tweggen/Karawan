@@ -84,6 +84,14 @@
 	<ItemGroup>
 	  <None Remove="Platforms\Android\buildingambient.png" />
 	  <None Remove="Platforms\Android\buildingdiffuse.png" />
+	  <None Remove="Platforms\Android\car2.mtl" />
+	  <None Remove="Platforms\Android\car2.obj" />
+	  <None Remove="Platforms\Android\car3noise.ogg" />
+	  <None Remove="Platforms\Android\car3noisemono.ogg" />
+	  <None Remove="Platforms\Android\car4.mtl" />
+	  <None Remove="Platforms\Android\car4.obj" />
+	  <None Remove="Platforms\Android\car5.mtl" />
+	  <None Remove="Platforms\Android\car5.obj" />
 	  <None Remove="Platforms\Android\cubeloopmono.ogg" />
 	  <None Remove="Platforms\Android\gridlines.png" />
 	  <None Remove="Platforms\Android\gridlines1.jpg" />
@@ -92,7 +100,11 @@
 	  <None Remove="Platforms\Android\mipmap\appicon.png" />
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
 	  <None Remove="Platforms\Android\skybox2.png" />
+	  <None Remove="Platforms\Android\skybox2noborder.png" />
 	  <None Remove="Platforms\Android\streets1to4.png" />
+	  <None Remove="Platforms\Android\tram1.mtl" />
+	  <None Remove="Platforms\Android\tram1.obj" />
+	  <None Remove="Platforms\Android\tramnoise.ogg" />
 	  <None Remove="Platforms\Android\yellowwindows.png" />
 	</ItemGroup>
 
@@ -101,6 +113,30 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\buildingdiffuse.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car2.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car2.obj">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car3noise.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car3noisemono.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car4.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car4.obj">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car5.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car5.obj">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\cubeloopmono.ogg">
@@ -130,7 +166,19 @@
 	  <AndroidAsset Include="Platforms\Android\skybox2.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\skybox2noborder.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\streets1to4.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\tram1.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\tram1.obj">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\tramnoise.ogg">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\yellowwindows.png">
