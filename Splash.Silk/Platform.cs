@@ -439,18 +439,17 @@ namespace Splash.Silk
          * For testing purposes, create a rendering target texture.
          * We later render a thing with it.
          */
-        private engine.joyce.Framebuffer _jFramebuffer;
-        private AFramebuffer _aFramebuffer;
+        private engine.joyce.Renderbuffer _jRenderbuffer;
+        private ARenderbuffer _aRenderbuffer;
         private void _createTestTexture()
         {
-            _jFramebuffer = new engine.joyce.Framebuffer("mapbuffer", 1024, 1024);
-            _aFramebuffer = _silkThreeD.CreateFramebuffer(_jFramebuffer);
-            SkFramebuffer skFramebuffer = _aFramebuffer as SkFramebuffer;
-            skFramebuffer.Upload(_gl,  _silkThreeD.TextureManager );
+            _jRenderbuffer = new engine.joyce.Renderbuffer("mapbuffer", 1024, 1024);
+            _aRenderbuffer = _silkThreeD.CreateRenderbuffer(_jRenderbuffer);
+            SkRenderbuffer skRenderbuffer = _aRenderbuffer as SkRenderbuffer;
+            skRenderbuffer.Upload(_gl,  _silkThreeD.TextureManager );
         }
-        
-        
-        
+
+
         public void SetupDone()
         {
             string baseDirectory = System.AppContext.BaseDirectory;

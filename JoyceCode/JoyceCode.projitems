@@ -78,7 +78,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Motion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\PointLight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Container3.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Framebuffer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Renderbuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstanceDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Material.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Mesh.cs" />

@@ -3,7 +3,7 @@ using static engine.Logger;
 
 namespace Splash.Silk;
 
-public class SkFramebuffer : AFramebuffer
+public class SkRenderbuffer : ARenderbuffer
 {
     private uint _handleFramebuffer = 0;
     private uint _handleDepthbuffer = 0;
@@ -21,7 +21,7 @@ public class SkFramebuffer : AFramebuffer
     public void Use(GL gl)
     {
         gl.BindFramebuffer(GLEnum.Framebuffer, _handleFramebuffer);
-        gl.Viewport(0, 0, JFramebuffer.Width, JFramebuffer.Height);
+        gl.Viewport(0, 0, JRenderbuffer.Width, JRenderbuffer.Height);
     }
     
 
@@ -43,8 +43,8 @@ public class SkFramebuffer : AFramebuffer
             gl.GenFramebuffers(1U, pHandle);
         }
 
-        _jTexture = new engine.joyce.Texture($"framebuffer://{JFramebuffer.Name}");
-        _skTexture = new SkTexture(gl, JFramebuffer.Width, JFramebuffer.Height);
+        _jTexture = new engine.joyce.Texture($"framebuffer://{JRenderbuffer.Name}");
+        _skTexture = new SkTexture(gl, JRenderbuffer.Width, JRenderbuffer.Height);
         _skTextureEntry = new SkTextureEntry(_jTexture);
         _skTextureEntry.SkTexture = _skTexture;
         
@@ -57,8 +57,8 @@ public class SkFramebuffer : AFramebuffer
             gl.GenRenderbuffers(1, pHandle);
         }
 
-        uint width = JFramebuffer.Width;
-        uint height = JFramebuffer.Height;
+        uint width = JRenderbuffer.Width;
+        uint height = JRenderbuffer.Height;
         
         gl.BindRenderbuffer(GLEnum.Renderbuffer, _handleDepthbuffer);
         gl.RenderbufferStorage(GLEnum.Renderbuffer, GLEnum.DepthComponent, 
@@ -82,7 +82,7 @@ public class SkFramebuffer : AFramebuffer
     }
     
     
-    public SkFramebuffer(in engine.joyce.Framebuffer jFramebuffer) : base(jFramebuffer)
+    public SkRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer) : base(jRenderbuffer)
     {
     }
 }

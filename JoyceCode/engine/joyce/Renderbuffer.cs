@@ -4,13 +4,17 @@ using static engine.Logger;
 
 namespace engine.joyce;
 
-public class Framebuffer
+/**
+ * A framebuffer represents a physical rendering target on the graphics card to
+ * render into.
+ */
+public class Renderbuffer
 {
     public string Name;
     public uint Width;
     public uint Height;
 
-    public Framebuffer(string name, uint width, uint height)
+    public Renderbuffer(string name, uint width, uint height)
     {
         if (0 == width || 0 == height)
         {

@@ -507,31 +507,31 @@ public class SilkThreeD : IThreeD
         // TXWTODO: Write me. Deprecate this by VIewMatrix and Projection Matrix
     }
 
-    public AFramebuffer CreateFramebuffer(in engine.joyce.Framebuffer jFramebuffer)
+    public ARenderbuffer CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer)
     {
-        SkFramebuffer skFramebuffer = new SkFramebuffer(jFramebuffer);
-        return skFramebuffer;
+        SkRenderbuffer skRenderbuffer = new SkRenderbuffer(jRenderbuffer);
+        return skRenderbuffer;
     }
     
-    public void UploadFramebuffer(in AFramebuffer aFramebuffer)
+    public void UploadRenderbuffer(in ARenderbuffer aRenderbuffer)
     {
-        SkFramebuffer skFramebuffer = ((SkFramebuffer)aFramebuffer);
-        if (!skFramebuffer.IsUploaded())
+        SkRenderbuffer skRenderbuffer = ((SkRenderbuffer)aRenderbuffer);
+        if (!skRenderbuffer.IsUploaded())
         {
-            skFramebuffer.Upload(_gl, _textureManager);
+            skRenderbuffer.Upload(_gl, _textureManager);
         }
 
     }
 
     
-    public void UnloadFramebuffer(in AFramebuffer aFramebuffer)
+    public void UnloadRenderbuffer(in ARenderbuffer aRenderbuffer)
     {
-        SkFramebuffer skFramebuffer = (SkFramebuffer)aFramebuffer;
+        SkRenderbuffer skRenderbuffer = (SkRenderbuffer)aRenderbuffer;
         _graphicsThreadActions.Enqueue(() =>
         {
-            if (skFramebuffer.IsUploaded())
+            if (skRenderbuffer.IsUploaded())
             {
-                skFramebuffer.Release(_gl);
+                skRenderbuffer.Release(_gl);
             }
         });
     }
