@@ -43,6 +43,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\WiperSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ConsoleLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\draw\Context.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\draw\IFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Cache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\CacheEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\ClusterBaseElevationOperator.cs" />
@@ -78,6 +80,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Motion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\PointLight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Container3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Framebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Renderbuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstanceDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Material.cs" />
@@ -99,6 +102,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\ApplyPosesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\MoveKineticsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ross\MemoryFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\SceneSequencer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Estate.cs" />

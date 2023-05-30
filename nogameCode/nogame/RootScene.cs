@@ -1,5 +1,4 @@
-﻿using DefaultEcs;
-using engine.transform.components;
+﻿using engine.transform.components;
 using System;
 using System.Numerics;
 
@@ -27,7 +26,7 @@ namespace nogame
         private playerhover.Part _partPlayerhover;
         private skybox.Part _partSkybox;
 
-        private systems.CubeSpinnerSystem _systemCubeSpinner; 
+        private systems.CubeSpinnerSystem _systemCubeSpinner;
 
         private void _triggerLoadWorld()
         {
@@ -43,6 +42,19 @@ namespace nogame
             _worldLoader.WorldLoaderProvideFragments(vMe);
         }
 
+        
+        private engine.draw.IFramebuffer _framebuffer;
+        private engine.draw.Context _drawContext;
+
+        private void _testFramebuffer()
+        {
+            _drawContext = new engine.draw.Context();
+            var dc = _drawContext;
+            _framebuffer = new engine.ross.MemoryFramebuffer(400, 400);
+            _framebuffer.FillRectangle(dc, new Vector2(30, 30), new Vector2(70, 70));
+            _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
+        }
+        
         public void SceneOnLogicalFrame( float dt )
         {
             _triggerLoadWorld();
@@ -206,7 +218,8 @@ namespace nogame
              */
             _ctrlFollowCamera = new(_engine, _eCamera, _partPlayerhover.GetShipEntity());
             _ctrlFollowCamera.ActivateController();
-            
+
+            _testFramebuffer();
         }
 
         public RootScene()
