@@ -48,12 +48,34 @@ namespace nogame
 
         private void _testFramebuffer()
         {
+            DefaultEcs.Entity eFramebuffer;
+            
             _drawContext = new engine.draw.Context();
             var dc = _drawContext;
             _framebuffer = new engine.ross.MemoryFramebuffer(400, 400);
             _framebuffer.FillRectangle(dc, new Vector2(30, 30), new Vector2(70, 70));
             _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
+
+            {
+                eFramebuffer = _ecsWorld.CreateEntity();
+                var posFramebuffer = new Vector3(0f, 35f, -4f);
+                _aTransform.SetPosition(eFramebuffer, posFramebuffer);
+                _aTransform.SetVisible(eFramebuffer, true);
+                _aTransform.SetCameraMask(eFramebuffer, 0xffffffff);
+
+                engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
+                engine.joyce.Texture textureFramebuffer = new(_framebuffer);
+                engine.joyce.Material materialFramebuffer = new(textureFramebuffer);
+
+                engine.joyce.InstanceDesc jInstanceDesc = new();
+                jInstanceDesc.Meshes.Add(meshFramebuffer);
+                jInstanceDesc.MeshMaterials.Add(0);
+                jInstanceDesc.Materials.Add(materialFramebuffer);
+
+                eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+            }
         }
+        
         
         public void SceneOnLogicalFrame( float dt )
         {

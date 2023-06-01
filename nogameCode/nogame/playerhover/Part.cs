@@ -67,7 +67,7 @@ namespace nogame.playerhover
                 _eShip = _ecsWorld.CreateEntity();
                 var posShip = new Vector3(0f, 35f, 0f);
                 _aTransform.SetPosition(_eShip, posShip);
-                _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("noagme.PlayerVisible") != "false");
+                _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0xffffffff);
                 
                 engine.joyce.InstanceDesc jInstanceDesc = builtin.loader.Obj.LoadModelInstance("car2.obj");

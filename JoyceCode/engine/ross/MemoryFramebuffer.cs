@@ -23,6 +23,14 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     }
     
     private Image<SixLabors.ImageSharp.PixelFormats.Rgba32> _image;
+    public uint Width
+    {
+        get => (uint)_image.Width; 
+    }
+    public uint Height
+    {
+        get => (uint)_image.Height; 
+    }
         
     public void FillRectangle(in Context context, in Vector2 ul, in Vector2 lr)
     {

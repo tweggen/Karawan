@@ -1,5 +1,7 @@
 ﻿
 
+using engine.draw;
+
 namespace Splash.Silk
 {
     public class TextureGenerator
@@ -14,14 +16,26 @@ namespace Splash.Silk
         public void FillTextureEntry(in SkTextureEntry skTextureEntry)
         {
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
-            string texturePath = jTexture.Source;
+            if (jTexture.Source != null)
+            {
+                string texturePath = jTexture.Source;
 
-            if (texturePath == "joyce://col00000000")
+                if (texturePath == "joyce://col00000000")
+                {
+                    skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), _arrBlack, 1, 1);
+                }
+                else
+                {
+                    skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.Source);
+                }
+            } 
+            else if (jTexture.Framebuffer != null)
             {
-                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), _arrBlack, 1, 1);
-            } else
-            {
-                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.Source);
+                IFramebuffer framebuffer = jTexture.Framebuffer;
+                Span<byte> spanBytes;
+                framebuffer.GetMemory(out spanBytes);
+                skTextureEntry.SkTexture = new SkTexture(
+                    _silkThreeD.GetGL(), spanBytes, framebuffer.Width, framebuffer.Height);
             }
         }
 
