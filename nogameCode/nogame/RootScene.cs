@@ -71,7 +71,6 @@ namespace nogame
                 jInstanceDesc.Meshes.Add(meshFramebuffer);
                 jInstanceDesc.MeshMaterials.Add(0);
                 jInstanceDesc.Materials.Add(materialFramebuffer);
-
                 eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             }
         }
