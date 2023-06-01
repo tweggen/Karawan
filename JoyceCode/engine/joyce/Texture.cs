@@ -13,7 +13,7 @@ namespace engine.joyce
     public class Texture
     {
         public string Source;
-        public Framebuffer Framebuffer;
+        public engine.draw.IFramebuffer Framebuffer;
 
         public Texture(string source)
         {
@@ -21,7 +21,7 @@ namespace engine.joyce
             Framebuffer = null;
         }
 
-        public Texture(Framebuffer framebuffer)
+        public Texture(engine.draw.IFramebuffer framebuffer)
         {
             Source = null;
             Framebuffer = framebuffer;

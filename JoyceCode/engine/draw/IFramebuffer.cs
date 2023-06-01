@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
 namespace engine.draw;
 
@@ -8,4 +9,6 @@ public interface IFramebuffer
     public void DrawText(in Context context, in Vector2 ul, in Vector2 lr, in string text);
 
     public void MarkDirty();
+
+    public void GetMemory(out Span<byte> spanBytes);
 }

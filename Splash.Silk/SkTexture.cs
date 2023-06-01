@@ -77,7 +77,7 @@ public class SkTexture : IDisposable
         }
     }
 
-
+    
     public unsafe SkTexture(GL gl, uint width, uint height)
     {
         _gl = gl;
