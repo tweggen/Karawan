@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using engine.draw;
+using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
@@ -15,8 +16,14 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
 {
     private object _lo = new object();
     
+    private FontCollection _fontCollection;
+    private FontFamily _ffPrototype;
+    private Font _fontPrototype;
+    private string _resourcePath;
+    
     private uint _generation = 0;
 
+    
     public uint Generation
     {
         get => _generation; 
@@ -32,7 +39,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         get => (uint)_image.Height; 
     }
         
-    public void FillRectangle(Context context, in Vector2 ul, in Vector2 lr)
+    public void FillRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         Vector2 size = lr - ul;
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
@@ -49,9 +56,12 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         }
     }
 
-    public void DrawText(Context context, in Vector2 ul, in Vector2 lr, in string text)
+    public void DrawText(Context context, Vector2 ul, Vector2 lr, string text)
     {
-        throw new System.NotImplementedException();
+        _image.Mutate(x=> x.DrawText(
+            text, _fontPrototype, 
+            Color.FromRgba(context.ColorR, context.ColorG, context.ColorB, context.ColorA),
+            new PointF(ul.X, ul.Y)));    
     }
 
     
@@ -80,6 +90,12 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     public MemoryFramebuffer(uint width, uint height)
     {
         _image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>((int)width, (int)height);
+        _resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
+        _fontCollection = new();
+        _fontCollection.Add(_resourcePath + "Prototype.ttf");
+        _fontCollection.TryGet("Prototype", out _ffPrototype);
+        _fontPrototype = _ffPrototype.CreateFont(10, FontStyle.Regular);
+        
     }
 
 }

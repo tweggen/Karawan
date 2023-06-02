@@ -34,6 +34,10 @@ public class Part : engine.IPart
         uint xofs = (2*_fbpos) % 300;
         _framebuffer.FillRectangle(dc, new Vector2(xofs+30, 30), new Vector2(xofs+70, 70));
         _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
+        
+        _framebuffer.DrawText(dc,
+            new Vector2( 30, 100), new Vector2(45, 350 ),
+            "Systems activated.");
     }
         
     private void _testFramebuffer()

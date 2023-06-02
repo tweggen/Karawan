@@ -9,8 +9,8 @@ public interface IFramebuffer
     public uint Height { get; }
     public uint Generation { get; }
 
-    public void FillRectangle(Context context, in Vector2 ul, in Vector2 lr);
-    public void DrawText(Context context, in Vector2 ul, in Vector2 lr, in string text);
+    public void FillRectangle(Context context, Vector2 ul, Vector2 lr);
+    public void DrawText(Context context, Vector2 ul, Vector2 lr, string text);
 
     public void MarkDirty();
 
