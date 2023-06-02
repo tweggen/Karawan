@@ -2,7 +2,7 @@
 
 namespace engine.joyce.components
 {
-    public class AmbientLight
+    public struct AmbientLight
     {
         public Vector4 Color;
         public AmbientLight(in Vector4 color) 

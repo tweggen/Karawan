@@ -78,7 +78,7 @@ namespace nogame
             jInstanceDesc.MeshMaterials.Add(0);
             jInstanceDesc.Materials.Add(jMaterial);            
 
-            var entity = _ecsWorld.CreateEntity();
+            var entity = _engine.CreateEntity("LogoBoard");
             entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             _aTransform.SetTransforms(
                 entity, false, 0xffffffff,
@@ -121,7 +121,7 @@ namespace nogame
 
             }
             if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false") {
-                DefaultEcs.Entity eMusic = _ecsWorld.CreateEntity();
+                DefaultEcs.Entity eMusic = _engine.CreateEntity("TitleMusic");
                 eMusic.Set(new engine.audio.components.Music("shaklengokhsi.ogg"));
             }
 
@@ -135,7 +135,7 @@ namespace nogame
              * Moving light
              */
             {
-                _eLight = _ecsWorld.CreateEntity();
+                _eLight = _engine.CreateEntity("LogosScene.PointLight");
                 _eLight.Set(new engine.joyce.components.PointLight(
                     new Vector4(1f, 0.95f, 0.9f, 1.0f)));
             }
@@ -144,7 +144,7 @@ namespace nogame
              * Create a camera.
              */
             {
-                _eCamera = _ecsWorld.CreateEntity();
+                _eCamera = _engine.CreateEntity("LogosScene.Camera");
                 var cCamera = new engine.joyce.components.Camera3();
                 cCamera.Angle = 60.0f;
                 cCamera.NearFrustum = 1f;

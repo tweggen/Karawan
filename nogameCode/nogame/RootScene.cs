@@ -163,12 +163,12 @@ namespace nogame
              * Directional light
              */
             {
-                _eLightMain = _ecsWorld.CreateEntity();
+                _eLightMain = _engine.CreateEntity("RootScene.DirectionalLight");
                 _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(1f, 1f, 1f, 0.0f)));
                 _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
             }
             {
-                _eLightBack = _ecsWorld.CreateEntity();
+                _eLightBack = _engine.CreateEntity("RootScene.OtherLight");
                 _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.1f, 0.3f, 0.1f, 0.0f)));
                 _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
             }
@@ -176,7 +176,7 @@ namespace nogame
              * Ambient light
              */
             {
-                _eAmbientLight = _ecsWorld.CreateEntity();
+                _eAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
                 _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
             }
 
@@ -193,7 +193,7 @@ namespace nogame
              * Create a scene camera.
              */
             {
-                _eCamScene = _ecsWorld.CreateEntity();
+                _eCamScene = _engine.CreateEntity("RootScene.SceneCamera");
                 var cCamScene = new engine.joyce.components.Camera3();
                 cCamScene.Angle = 60.0f;
                 cCamScene.NearFrustum = 1f;
@@ -211,7 +211,7 @@ namespace nogame
              * Create an osd camera
              */
             {
-                _eCamOSD = _ecsWorld.CreateEntity();
+                _eCamOSD = _engine.CreateEntity("RootScene.OSDCamera");
                 var cCamOSD = new engine.joyce.components.Camera3();
                 cCamOSD.Angle = 30.0f;
                 cCamOSD.NearFrustum = 1f;

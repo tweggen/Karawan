@@ -48,7 +48,7 @@ public class Part : engine.IPart
         _framebuffer = new engine.ross.MemoryFramebuffer(400, 400);
 
         {
-            eFramebuffer = _ecsWorld.CreateEntity();
+            eFramebuffer = _engine.CreateEntity("Framebuffer");
             var posFramebuffer = new Vector3(0f, 0f, 50f);
             _aTransform.SetPosition(eFramebuffer, posFramebuffer);
             _aTransform.SetVisible(eFramebuffer, true);

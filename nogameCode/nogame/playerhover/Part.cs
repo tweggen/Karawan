@@ -64,7 +64,7 @@ namespace nogame.playerhover
              * Create a ship
              */
             {
-                _eShip = _ecsWorld.CreateEntity();
+                _eShip = _engine.CreateEntity("RootScene.playership");
                 var posShip = new Vector3(0f, 35f, 0f);
                 _aTransform.SetPosition(_eShip, posShip);
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");

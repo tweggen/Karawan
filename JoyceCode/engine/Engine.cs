@@ -184,6 +184,14 @@ namespace engine
         }
 
 
+        public DefaultEcs.Entity CreateEntity(string name)
+        {
+            DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
+            entity.Set(new joyce.components.EntityName(name));
+            return entity;
+        }
+
+
         private void _executeEntitySetupActions(float matTime)
         {
             _queueStopwatch.Reset();
