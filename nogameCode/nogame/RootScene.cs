@@ -79,7 +79,6 @@ namespace nogame
         public void SceneOnLogicalFrame( float dt )
         {
             _triggerLoadWorld();
-            //_systemCubeSpinner.Update(dt);
         }
 
 
