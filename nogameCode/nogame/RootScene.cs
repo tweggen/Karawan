@@ -15,7 +15,8 @@ namespace nogame
 
         private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
-        private DefaultEcs.Entity _eCamera;
+        private DefaultEcs.Entity _eCamScene;
+        private DefaultEcs.Entity _eCamOSD;
         private DefaultEcs.Entity _eLightMain;
         private DefaultEcs.Entity _eLightBack;
         private DefaultEcs.Entity _eAmbientLight;
@@ -32,13 +33,13 @@ namespace nogame
         private void _triggerLoadWorld()
         {
             Vector3 vMe;
-            if (!_eCamera.Has<Transform3ToWorld>())
+            if (!_eCamScene.Has<Transform3ToWorld>())
             {
                 vMe = new Vector3(0f, 0f, 0f);
             }
             else
             {
-                vMe = _eCamera.Get<Transform3ToWorld>().Matrix.Translation;
+                vMe = _eCamScene.Get<Transform3ToWorld>().Matrix.Translation;
             }
             _worldLoader.WorldLoaderProvideFragments(vMe);
         }
@@ -187,29 +188,43 @@ namespace nogame
             /*
              * Finally, create the camera.
              */
+            
             /*
-             * Create a camera.
+             * Create a scene camera.
              */
             {
-                _eCamera = _ecsWorld.CreateEntity();
-                var cCamera = new engine.joyce.components.Camera3();
-                cCamera.Angle = 60.0f;
-                cCamera.NearFrustum = 1f;
+                _eCamScene = _ecsWorld.CreateEntity();
+                var cCamScene = new engine.joyce.components.Camera3();
+                cCamScene.Angle = 60.0f;
+                cCamScene.NearFrustum = 1f;
 
                 /*
                  * We need to be as far away as the skycube is. Plus a bonus.
                  */
-                cCamera.FarFrustum = (float)Math.Sqrt(3) * 1000f + 100f;
-                cCamera.CameraMask = 0x00000001;
-                _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
-                // No set position
-                // _aTransform.SetPosition(_eCamera, new Vector3(0f, 30f, 30f));
+                cCamScene.FarFrustum = (float)Math.Sqrt(3) * 1000f + 100f;
+                cCamScene.CameraMask = 0x00000001;
+                _eCamScene.Set(cCamScene);
+                // No set position, done by controller
+            }
+            
+            /*
+             * Create an osd camera
+             */
+            {
+                _eCamOSD = _ecsWorld.CreateEntity();
+                var cCamOSD = new engine.joyce.components.Camera3();
+                cCamOSD.Angle = 30.0f;
+                cCamOSD.NearFrustum = 1f;
+                cCamOSD.FarFrustum = 100f;
+                cCamOSD.CameraMask = 0x00001000;
+                _eCamOSD.Set(cCamOSD);
+                _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 30f));
             }
 
             /*
              * Create a camera controller that directly controls the camera with wasd
              */
-            _ctrlFollowCamera = new(_engine, _eCamera, _partPlayerhover.GetShipEntity());
+            _ctrlFollowCamera = new(_engine, _eCamScene, _partPlayerhover.GetShipEntity());
             _ctrlFollowCamera.ActivateController();
         }
 

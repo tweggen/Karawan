@@ -22,7 +22,7 @@ internal class Behavior : engine.IBehavior
         _qPrevRotation = qOrientation;
         _engine.GetATransform().SetTransforms(
             entity,
-            true, 0xffffffff,
+            true, 0x0000ffff,
             qOrientation,
             MetaGen.Instance().Loader.ApplyNavigationHeight(_snc.NavigatorGetWorldPos())
         );

@@ -44,7 +44,7 @@ namespace nogame.skybox
                      2000f, new Vector2(0f, 0f), new Vector2( 1f, 4f/3f ));
                 // var jMeshSkybox = engine.joyce.mesh.Tools.CreateCubeMesh(
                 //     10f);
-                _eSkybox.Set(new engine.joyce.components.Skybox(1000f, 0xffffffff));
+                _eSkybox.Set(new engine.joyce.components.Skybox(1000f, 0x0000ffff));
                 var jMaterialSkybox = new engine.joyce.Material();
                 jMaterialSkybox.EmissiveTexture = new engine.joyce.Texture("skybox2noborder.png");
                 engine.joyce.InstanceDesc jInstanceDesc = new();

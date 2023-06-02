@@ -27,7 +27,7 @@ internal class Behavior : engine.IBehavior
 
         _engine.GetATransform().SetTransforms(
             entity,
-            true, 0xffffffff,
+            true, 0x0000ffff,
             qOrientation,
             worldPos with { Y = MetaGen.Instance().Loader.GetNavigationHeightAt(worldPos) + _height }
         );

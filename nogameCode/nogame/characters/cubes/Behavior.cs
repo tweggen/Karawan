@@ -16,7 +16,7 @@ namespace nogame.characters.cubes
 
             _engine.GetATransform().SetTransforms(
                 entity,
-                true, 0xffffffff,
+                true, 0x0000ffff,
                 _snc.NavigatorGetOrientation(),
                 engine.world.MetaGen.Instance().Loader.ApplyNavigationHeight(_snc.NavigatorGetWorldPos())
             );
