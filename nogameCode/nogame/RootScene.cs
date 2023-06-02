@@ -52,10 +52,11 @@ namespace nogame
         {
             ++_fbpos;
             var dc = _drawContext;
-            dc.Color = 0x00000000;
+            dc.Color = 0xff000000;
             _framebuffer.FillRectangle(dc, new Vector2(0,0), new Vector2(399,399));
             dc.Color = 0xffffffff;
-            _framebuffer.FillRectangle(dc, new Vector2(_fbpos+30, 30), new Vector2(_fbpos+70, 70));
+            uint xofs = (2*_fbpos) % 300;
+            _framebuffer.FillRectangle(dc, new Vector2(xofs+30, 30), new Vector2(xofs+70, 70));
             _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
         }
         

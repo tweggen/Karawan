@@ -177,10 +177,10 @@ namespace Karawan
             engine.GlobalSettings.Set("platform.threeD.API.version", "330");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
             engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
-            engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "false");
+            engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
             engine.GlobalSettings.Set("splash.touchControls", "false");
-            engine.GlobalSettings.Set("nogame.CreateHouses", "false");
-            engine.GlobalSettings.Set("nogame.CreateTrees", "false");
+            engine.GlobalSettings.Set("nogame.CreateHouses", "true");
+            engine.GlobalSettings.Set("nogame.CreateTrees", "true");
             
             engine.Assets.SetAssetImplementation(new Karawan.AssetImplementation());
 
