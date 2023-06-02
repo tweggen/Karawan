@@ -16,17 +16,22 @@ namespace Splash.Silk
         public void FillTextureEntry(in SkTextureEntry skTextureEntry)
         {
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
+            if (null == skTextureEntry.SkTexture)
+            {
+                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL());
+            }
+                
             if (jTexture.Source != null)
             {
                 string texturePath = jTexture.Source;
 
                 if (texturePath == "joyce://col00000000")
                 {
-                    skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), _arrBlack, 1, 1);
+                    skTextureEntry.SkTexture.SetFrom(_arrBlack, 1, 1);
                 }
                 else
                 {
-                    skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.Source);
+                    skTextureEntry.SkTexture.SetFrom(jTexture.Source);
                 }
             } 
             else if (jTexture.Framebuffer != null)
@@ -34,8 +39,7 @@ namespace Splash.Silk
                 IFramebuffer framebuffer = jTexture.Framebuffer;
                 Span<byte> spanBytes;
                 framebuffer.GetMemory(out spanBytes);
-                skTextureEntry.SkTexture = new SkTexture(
-                    _silkThreeD.GetGL(), spanBytes, framebuffer.Width, framebuffer.Height);
+                skTextureEntry.SkTexture.SetFrom(spanBytes, framebuffer.Width, framebuffer.Height);
             }
         }
 

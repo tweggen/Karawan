@@ -32,18 +32,24 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         get => (uint)_image.Height; 
     }
         
-    public void FillRectangle(in Context context, in Vector2 ul, in Vector2 lr)
+    public void FillRectangle(Context context, in Vector2 ul, in Vector2 lr)
     {
         Vector2 size = lr - ul;
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
-        _image.Mutate(x => x.Fill(Color.White, rectangle));
+        _image.Mutate(x => 
+            x.Fill(
+                Color.FromRgba(context.ColorR, context.ColorG, context.ColorB, context.ColorA),
+                // Color.White,
+                rectangle
+            )
+        );
         lock (_lo)
         {
             ++_generation;
         }
     }
 
-    public void DrawText(in Context context, in Vector2 ul, in Vector2 lr, in string text)
+    public void DrawText(Context context, in Vector2 ul, in Vector2 lr, in string text)
     {
         throw new System.NotImplementedException();
     }

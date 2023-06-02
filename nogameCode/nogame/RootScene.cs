@@ -45,16 +45,26 @@ namespace nogame
         
         private engine.draw.IFramebuffer _framebuffer;
         private engine.draw.Context _drawContext;
+        private uint _fbpos = 0;
 
+
+        private void _updateFramebuffer()
+        {
+            ++_fbpos;
+            var dc = _drawContext;
+            dc.Color = 0x00000000;
+            _framebuffer.FillRectangle(dc, new Vector2(0,0), new Vector2(399,399));
+            dc.Color = 0xffffffff;
+            _framebuffer.FillRectangle(dc, new Vector2(_fbpos+30, 30), new Vector2(_fbpos+70, 70));
+            _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
+        }
+        
         private void _testFramebuffer()
         {
             DefaultEcs.Entity eFramebuffer;
             
             _drawContext = new engine.draw.Context();
-            var dc = _drawContext;
             _framebuffer = new engine.ross.MemoryFramebuffer(400, 400);
-            _framebuffer.FillRectangle(dc, new Vector2(30, 30), new Vector2(70, 70));
-            _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
 
             {
                 eFramebuffer = _ecsWorld.CreateEntity();
@@ -80,6 +90,7 @@ namespace nogame
         public void SceneOnLogicalFrame( float dt )
         {
             _triggerLoadWorld();
+            _updateFramebuffer();
         }
 
 

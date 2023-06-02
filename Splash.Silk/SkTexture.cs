@@ -1,5 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using static engine.Logger;
 
@@ -26,83 +27,7 @@ public class SkTexture : IDisposable
         get => _handle;
     }
 
-
-    public unsafe SkTexture(GL gl, string path)
-    {
-        _gl = gl;
-        CheckError("Before load path");
-        Trace($"Loading {path}");
-        _handle = _gl.GenTexture();
-        CheckError("GenTexture");
-        Bind();
-
-        try
-        {
-            System.IO.Stream streamImage = engine.Assets.Open(path);
-            var img = Image.Load<Rgba32>(streamImage);
-            {
-                gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)img.Width, (uint)img.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                CheckError("TexImage2D");
-
-                img.ProcessPixelRows(accessor =>
-                {
-                    for (int y = 0; y < accessor.Height; y++)
-                    {
-                        fixed (void* data = accessor.GetRowSpan(y))
-                        {
-                            gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1, PixelFormat.Rgba, PixelType.UnsignedByte, data);
-                        }
-                    }
-                });
-            }
-        }
-        catch (Exception e)
-        {
-            /*
-             * As a fallback, generate a single-colored texture.
-             */
-            byte[] arrData = new byte[4] { 128, 128, 0, 255};
-            Span<byte> spanData = arrData.AsSpan();
-            fixed (void* d = &spanData[0])
-            {
-                _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, d);
-                CheckError("TexImage2D");
-                SetParameters();
-            }
-        }
-
-        SetParameters();
-    }
-
-    public unsafe SkTexture(GL gl, Span<byte> data, uint width, uint height)
-    {
-        _gl = gl;
-
-        _handle = _gl.GenTexture();
-        Bind();
-            
-        fixed (void* d = &data[0])
-        {
-            _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, d);
-            CheckError("TexImage2D");
-            SetParameters();
-        }
-    }
-
-    
-    public unsafe SkTexture(GL gl, uint width, uint height)
-    {
-        _gl = gl;
-
-        _handle = _gl.GenTexture();
-        Bind();
-            
-        _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-        SetParameters();
-    }
-
-
-    private void SetParameters()
+    private void _setParameters()
     {
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) GLEnum.Repeat);
         CheckError("TextureWrapS");
@@ -119,6 +44,77 @@ public class SkTexture : IDisposable
         _gl.GenerateMipmap(TextureTarget.Texture2D);
         CheckError("GenerateMipMap");
     }
+
+
+
+    public unsafe void SetFrom(string path)
+    {
+        Bind();
+        try
+        {
+            System.IO.Stream streamImage = engine.Assets.Open(path);
+            var img = Image.Load<Rgba32>(streamImage);
+            {
+                _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)img.Width, (uint)img.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+                CheckError("TexImage2D");
+
+                img.ProcessPixelRows(accessor =>
+                {
+                    for (int y = 0; y < accessor.Height; y++)
+                    {
+                        fixed (void* data = accessor.GetRowSpan(y))
+                        {
+                            _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+                        }
+                    }
+                });
+            }
+        }
+        catch (Exception e)
+        {
+            /*
+             * As a fallback, generate a single-colored texture.
+             */
+            byte[] arrData = new byte[4] { 128, 128, 0, 255};
+            Span<byte> spanData = arrData.AsSpan();
+            fixed (void* d = &spanData[0])
+            {
+                _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, d);
+                CheckError("TexImage2D");
+            }
+        }
+    }
+
+    
+    public unsafe void SetFrom(Span<byte> data, uint width, uint height)
+    {
+        Bind();
+        fixed (void* d = &data[0])
+        {
+            _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, d);
+            CheckError("TexImage2D");
+        }
+        
+    }
+
+
+    public unsafe SkTexture(GL gl)
+    {
+        _gl = gl;
+
+        _handle = _gl.GenTexture();
+        Bind();
+        _setParameters();
+            
+    }
+
+
+    public unsafe void SetFrom(uint width, uint height)
+    {
+        Bind();
+        _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+    }
+    
 
     public void Bind(TextureUnit textureSlot = TextureUnit.Texture0)
     {

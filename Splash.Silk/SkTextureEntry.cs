@@ -12,7 +12,7 @@ namespace Splash.Silk
             return SkTexture != null;
         }
 
-        public bool IsOutdated()
+        public override bool IsOutdated()
         {
             if (SkTexture == null)
             {

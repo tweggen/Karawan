@@ -4,8 +4,8 @@ namespace Splash.Silk
 {
     public class SkMaterialEntry : AMaterialEntry
     {
-        public SkTextureEntry SkDiffuseTexture;
-        public SkTextureEntry SkEmissiveTexture;
+        public SkTextureEntry SkDiffuseTexture = null;
+        public SkTextureEntry SkEmissiveTexture = null;
         public bool _isUploaded = false; 
 
         public override bool IsUploaded()
@@ -21,7 +21,7 @@ namespace Splash.Silk
         public override bool IsOutdated()
         {
             return
-            (null != SkDiffuseTexture && SkDiffuseTexture.IsOutdated())
+                (null != SkDiffuseTexture && SkDiffuseTexture.IsOutdated())
                 || (null != SkEmissiveTexture && SkEmissiveTexture.IsOutdated())
                 ;
         }
