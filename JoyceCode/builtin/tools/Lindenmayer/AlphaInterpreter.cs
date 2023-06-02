@@ -15,7 +15,7 @@ class AlphaState {
         if (null==parentState)
         {
             Rotation = new Quaternion( 0f, 0f, 0f, 1f );
-            Position = new Vector3( 0f, 0f, 0f );
+            Position = new Vector3(  0f, 0f, 0f );
             Color = new Vector3( 1f, 1f, 1f );
         } 
         else
