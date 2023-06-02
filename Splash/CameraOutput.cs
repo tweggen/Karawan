@@ -38,8 +38,8 @@ namespace Splash
             {
                 var aMaterialEntry = materialItem.Value.AMaterialEntry;
                 var jMaterial = aMaterialEntry.JMaterial; 
-                bool haveMaterial = aMaterialEntry.IsUploaded();
-                if (!haveMaterial)
+                bool needMaterial = (!aMaterialEntry.IsUploaded()) || aMaterialEntry.IsOutdated();
+                if (!needMaterial)
                 {
                     if (jMaterial.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f) {
                         swUpload.Start();
