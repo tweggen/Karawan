@@ -27,7 +27,7 @@ namespace engine.streets
         private world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;
-        private bool _traceStreets = false;
+        private bool _traceQuarters = false;
 
 
         public string FragmentOperatorGetPath()
@@ -120,7 +120,7 @@ namespace engine.streets
                 }
             }
 
-            Trace( $"Cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+            if (_traceQuarters) Trace( $"Cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
 #if false
                 try
             {
@@ -172,7 +172,7 @@ namespace engine.streets
 
             if (g.IsEmpty())
             {
-                if (_traceStreets) Trace($"Nothing to add at all.");
+                if (_traceQuarters) Trace($"Nothing to add at all.");
                 return;
             }
 

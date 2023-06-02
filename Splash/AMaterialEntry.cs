@@ -2,7 +2,7 @@
 
 public abstract class AMaterialEntry
 {
-    readonly public engine.joyce.Material JMaterial;
+    public readonly  engine.joyce.Material JMaterial;
 
     public abstract bool IsUploaded();
     public abstract bool IsOutdated();

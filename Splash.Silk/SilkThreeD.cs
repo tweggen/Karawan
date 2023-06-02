@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Numerics;
 using System.Text;
+using engine;
 using static engine.Logger;
 using Silk.NET.OpenGL;
 
@@ -459,12 +460,14 @@ public class SilkThreeD : IThreeD
 
         if (jMaterial.Texture != null && jMaterial.Texture.IsValid())
         {
+            Trace($"Filling texture {jMaterial.Texture}");
             ATextureEntry? aTextureEntry;
             aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
             skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
         }
         if (jMaterial.EmissiveTexture != null && jMaterial.EmissiveTexture.IsValid())
         {
+            Trace($"Filling texture {jMaterial.EmissiveTexture}");
             ATextureEntry? aEmissiveTextureEntry;
             aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);

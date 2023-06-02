@@ -21,7 +21,7 @@ namespace engine.elevation
         private Dictionary<string, FactoryEntry> _mapFactories;
         private List<string> _keysFactories;
 
-        private bool _traceCache = true;
+        private bool _traceCache = false;
 
         private void _insertElevationFactoryEntry(
             in string id,

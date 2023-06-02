@@ -15,6 +15,17 @@ namespace engine.joyce
         public string Source;
         public engine.draw.IFramebuffer Framebuffer;
 
+        public override string ToString()
+        {
+            if (Source != null)
+            {
+                return $"Texture {{ Source: \"{Source}\" }}";
+            }
+            else
+            {
+                return $"Texture {{ Width: {Framebuffer.Width}, Height: {Framebuffer.Height}, Generation: {Framebuffer.Generation} }}";
+            }
+        }
 
         public bool IsValid()
         {

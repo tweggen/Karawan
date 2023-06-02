@@ -643,7 +643,7 @@ namespace engine.streets
                 }
             }
 
-            Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+            if (_traceStreets) Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
             if (_traceStreets) Trace("Obtaining streets.");
             var strokeStore = _clusterDesc.StrokeStore();
             if (_traceStreets) Trace("Have streets.");
@@ -708,7 +708,7 @@ namespace engine.streets
                 }
             }
 
-            Trace($"Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
+            if (_traceStreets) Trace($"Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
 
             if (g.IsEmpty())
             {
