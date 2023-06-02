@@ -71,6 +71,8 @@ public class SkTexture : IDisposable
 
     public unsafe void SetFrom(string path)
     {
+        Trace("Creating new Texture from path {path}");
+
         Bind();
         try
         {
@@ -111,6 +113,7 @@ public class SkTexture : IDisposable
     
     public unsafe void SetFrom(Span<byte> data, uint width, uint height)
     {
+        Trace("Creating new Texture from Span {width}x{height}");
         Bind();
         fixed (void* d = &data[0])
         {
@@ -123,6 +126,7 @@ public class SkTexture : IDisposable
 
     public unsafe void SetFrom(uint width, uint height)
     {
+        Trace("Creating new Texture {width}x{height}");
         Bind();
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
         _generateMipmap();

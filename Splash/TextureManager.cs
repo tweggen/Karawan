@@ -52,6 +52,7 @@ namespace Splash
                 {
                     aTextureEntry = _threeD.CreateTextureEntry(jTexture);
                     _dictTextures.Add(textureKey, aTextureEntry);
+                    needFillEntry = true;
                     // TXWTODO: Should be async and not with mutex held.
                 }
 
