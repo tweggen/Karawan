@@ -5,7 +5,7 @@ namespace Splash.Silk
 {
     public class SkTextureEntry : Splash.ATextureEntry
     {
-        public SkTexture SkTexture;
+        public SkTexture? SkTexture = null;
 
         public override bool IsUploaded()
         {

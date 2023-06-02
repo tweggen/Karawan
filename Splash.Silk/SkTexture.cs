@@ -13,7 +13,7 @@ public class SkTexture : IDisposable
     /*
      * Data generation that had been uploaded.
      */
-    private uint _generation;
+    private uint _generation = 0;
 
     public uint Generation
     {
@@ -26,6 +26,24 @@ public class SkTexture : IDisposable
     {
         get => _handle;
     }
+    
+    public void CheckError(string what)
+    {
+        var error = _gl.GetError();
+        if (error != GLEnum.NoError)
+        {
+            Error( $"Found OpenGL {what} error {error}" );
+            if (what == "ActiveTexture")
+            {
+                Console.WriteLine("ActiveTexture");
+            }
+        }
+        else
+        {
+            // Console.WriteLine($"OK: {what}");
+        }
+    }
+    
 
     private void _setParameters()
     {
@@ -41,10 +59,16 @@ public class SkTexture : IDisposable
         CheckError("TextureBaseLevel");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 8);
         CheckError("TextureMaxLevel");
+    }
+
+
+    private void _generateMipmap()
+    {
+        Bind();
+        _setParameters();
         _gl.GenerateMipmap(TextureTarget.Texture2D);
         CheckError("GenerateMipMap");
     }
-
 
 
     public unsafe void SetFrom(string path)
@@ -83,6 +107,7 @@ public class SkTexture : IDisposable
                 CheckError("TexImage2D");
             }
         }
+        _generateMipmap();
     }
 
     
@@ -94,18 +119,7 @@ public class SkTexture : IDisposable
             _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, d);
             CheckError("TexImage2D");
         }
-        
-    }
-
-
-    public unsafe SkTexture(GL gl)
-    {
-        _gl = gl;
-
-        _handle = _gl.GenTexture();
-        Bind();
-        _setParameters();
-            
+        _generateMipmap();
     }
 
 
@@ -113,6 +127,7 @@ public class SkTexture : IDisposable
     {
         Bind();
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+        _generateMipmap();
     }
     
 
@@ -123,28 +138,24 @@ public class SkTexture : IDisposable
         _gl.BindTexture(TextureTarget.Texture2D, _handle);
         CheckError("Bind Texture");
     }
-
+    
+    
     public void Dispose()
     {
         _gl.DeleteTexture(_handle);
         CheckError("DeleteTexture");
     }
-        
-    public void CheckError(string what)
+
+    
+    public unsafe SkTexture(GL gl)
     {
-        var error = _gl.GetError();
-        if (error != GLEnum.NoError)
-        {
-            Error( $"Found OpenGL {what} error {error}" );
-            if (what == "ActiveTexture")
-            {
-                Console.WriteLine("ActiveTexture");
-            }
-        }
-        else
-        {
-            // Console.WriteLine($"OK: {what}");
-        }
+        _gl = gl;
+
+        _handle = _gl.GenTexture();
+        Bind();
+        _setParameters();
     }
+
+
 
 }
