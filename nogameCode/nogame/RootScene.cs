@@ -65,7 +65,8 @@ namespace nogame
 
                 engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
                 engine.joyce.Texture textureFramebuffer = new(_framebuffer);
-                engine.joyce.Material materialFramebuffer = new(textureFramebuffer);
+                engine.joyce.Material materialFramebuffer = new();
+                materialFramebuffer.EmissiveTexture = textureFramebuffer;
 
                 engine.joyce.InstanceDesc jInstanceDesc = new();
                 jInstanceDesc.Meshes.Add(meshFramebuffer);

@@ -15,6 +15,14 @@ namespace engine.joyce
         public string Source;
         public engine.draw.IFramebuffer Framebuffer;
 
+
+        public bool IsValid()
+        {
+            return 
+                (Source != null && Source != "")
+                || (Framebuffer != null);
+        }
+        
         public Texture(string source)
         {
             Source = source;

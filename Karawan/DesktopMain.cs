@@ -178,6 +178,8 @@ namespace Karawan
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
             engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
             engine.GlobalSettings.Set("splash.touchControls", "false");
+            engine.GlobalSettings.Set("nogame.CreateHouses", "false");
+            engine.GlobalSettings.Set("nogame.CreateTrees", "false");
             
             engine.Assets.SetAssetImplementation(new Karawan.AssetImplementation());
 
