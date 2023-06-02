@@ -64,8 +64,6 @@ public class SkTexture : IDisposable
 
     private void _generateMipmap()
     {
-        Bind();
-        _setParameters();
         _gl.GenerateMipmap(TextureTarget.Texture2D);
         CheckError("GenerateMipMap");
     }
@@ -129,12 +127,18 @@ public class SkTexture : IDisposable
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
         _generateMipmap();
     }
-    
 
-    public void Bind(TextureUnit textureSlot = TextureUnit.Texture0)
+
+    public void BindAndActive(TextureUnit textureSlot)
     {
         _gl.ActiveTexture(textureSlot);
         CheckError("ActiveTexture");
+        _gl.BindTexture(TextureTarget.Texture2D, _handle);
+        CheckError("Bind Texture");
+    }
+
+    public void Bind()
+    {
         _gl.BindTexture(TextureTarget.Texture2D, _handle);
         CheckError("Bind Texture");
     }
@@ -150,7 +154,6 @@ public class SkTexture : IDisposable
     public unsafe SkTexture(GL gl)
     {
         _gl = gl;
-
         _handle = _gl.GenTexture();
         Bind();
         _setParameters();

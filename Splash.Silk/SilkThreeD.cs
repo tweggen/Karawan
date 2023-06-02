@@ -194,24 +194,24 @@ public class SilkThreeD : IThreeD
         try
         {
             //sh.SetUniform("texture0");
-            SkTextureEntry skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
+            SkTextureEntry? skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
             if (skDiffuseTextureEntry != null && skDiffuseTextureEntry.IsUploaded())
             {
                 SkTexture skTexture = skDiffuseTextureEntry.SkTexture;
                 if (skTexture != null)
                 {
-                    skTexture.Bind(TextureUnit.Texture0);
+                    skTexture.BindAndActive(TextureUnit.Texture0);
                     CheckError("Bind Texture0");
                 }
             }
 
-            SkTextureEntry skEmissiveTextureEntry = skMaterialEntry.SkEmissiveTexture;
+            SkTextureEntry? skEmissiveTextureEntry = skMaterialEntry.SkEmissiveTexture;
             if (skEmissiveTextureEntry != null && skEmissiveTextureEntry.IsUploaded())
             {
                 SkTexture skTexture = skEmissiveTextureEntry.SkTexture;
                 if (skTexture != null)
                 {
-                    skTexture.Bind(TextureUnit.Texture2);
+                    skTexture.BindAndActive(TextureUnit.Texture2);
                     CheckError("Bind Texture 2");
                 }
             }

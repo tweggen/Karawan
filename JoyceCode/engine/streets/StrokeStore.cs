@@ -92,7 +92,7 @@ namespace engine.streets
                     var dist2 = dx * dx + dy * dy;
                     if (sp0 != null && sp != null && 539 == sp0.Id && 505 == sp.Id)
                     {
-                        trace( $"dist2 is {dist2}");
+                        // trace( $"dist2 is {dist2}");
                     }
                     if (dist2 < minDist2)
                     {
