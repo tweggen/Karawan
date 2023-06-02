@@ -9,7 +9,7 @@ namespace nogame.playerhover
 {
     internal class Part : engine.IPart
     {
-        private object _lock = new object();
+        private readonly object _lock = new object();
 
         private engine.Engine _engine;
         private engine.IScene _scene;
@@ -23,7 +23,7 @@ namespace nogame.playerhover
 
         private WASDPhysics _controllerWASDPhysics;
 
-        private const float _massShip = 10f;
+        private const float MassShip = 10f;
 
         private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
         {
@@ -77,7 +77,7 @@ namespace nogame.playerhover
                 //_eShip.Set(new engine.joyce.components.PointLight(new Vector4(1.0f, 0.95f, 0.9f, 1f)/3f));
 
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(1.4f);
-                var pinertiaSphere = pbodySphere.ComputeInertia(_massShip);
+                var pinertiaSphere = pbodySphere.ComputeInertia(MassShip);
 
                 lock (_engine.Simulation)
                 {
@@ -104,13 +104,15 @@ namespace nogame.playerhover
             /*
              * And the ship's controller
              */
-            _controllerWASDPhysics = new WASDPhysics(_engine, _eShip, _massShip);
+            _controllerWASDPhysics = new WASDPhysics(_engine, _eShip, MassShip);
             _controllerWASDPhysics.ActivateController();
 
             _engine.OnContactInfo += _onContactInfo;
             _engine.AddPart(0, scene0, this);
         }
 
-        public Part() { }
+        public Part()
+        {
+        }
     }
 }

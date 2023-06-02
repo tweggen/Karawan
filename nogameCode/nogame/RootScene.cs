@@ -23,6 +23,7 @@ namespace nogame
         private engine.world.Loader _worldLoader;
         private engine.world.MetaGen _worldMetaGen;
 
+        private osd.Part _partOsd;
         private playerhover.Part _partPlayerhover;
         private skybox.Part _partSkybox;
 
@@ -42,56 +43,11 @@ namespace nogame
             _worldLoader.WorldLoaderProvideFragments(vMe);
         }
 
-        
-        private engine.draw.IFramebuffer _framebuffer;
-        private engine.draw.Context _drawContext;
-        private uint _fbpos = 0;
-
-
-        private void _updateFramebuffer()
-        {
-            ++_fbpos;
-            var dc = _drawContext;
-            dc.Color = 0xff000000;
-            _framebuffer.FillRectangle(dc, new Vector2(0,0), new Vector2(399,399));
-            dc.Color = 0xffffffff;
-            uint xofs = (2*_fbpos) % 300;
-            _framebuffer.FillRectangle(dc, new Vector2(xofs+30, 30), new Vector2(xofs+70, 70));
-            _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
-        }
-        
-        private void _testFramebuffer()
-        {
-            DefaultEcs.Entity eFramebuffer;
-            
-            _drawContext = new engine.draw.Context();
-            _framebuffer = new engine.ross.MemoryFramebuffer(400, 400);
-
-            {
-                eFramebuffer = _ecsWorld.CreateEntity();
-                var posFramebuffer = new Vector3(0f, 35f, -4f);
-                _aTransform.SetPosition(eFramebuffer, posFramebuffer);
-                _aTransform.SetVisible(eFramebuffer, true);
-                _aTransform.SetCameraMask(eFramebuffer, 0xffffffff);
-
-                engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
-                engine.joyce.Texture textureFramebuffer = new(_framebuffer);
-                engine.joyce.Material materialFramebuffer = new();
-                materialFramebuffer.EmissiveTexture = textureFramebuffer;
-
-                engine.joyce.InstanceDesc jInstanceDesc = new();
-                jInstanceDesc.Meshes.Add(meshFramebuffer);
-                jInstanceDesc.MeshMaterials.Add(0);
-                jInstanceDesc.Materials.Add(materialFramebuffer);
-                eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-            }
-        }
-        
+       
         
         public void SceneOnLogicalFrame( float dt )
         {
             _triggerLoadWorld();
-            _updateFramebuffer();
         }
 
 
@@ -103,6 +59,8 @@ namespace nogame
             _partPlayerhover = null;
             _partSkybox.PartDeactivate();
             _partSkybox = null;
+            _partOsd.PartDeactivate();
+            _partOsd = null;
             _ctrlFollowCamera.DeactivateController();
             _ctrlFollowCamera = null;
 
@@ -190,11 +148,13 @@ namespace nogame
              * Local state
              */
 
+            _partOsd = new();
             _partPlayerhover = new();
             _partSkybox = new();
 
             _engine.SceneSequencer.AddScene(0, this);
 
+            _partOsd.PartActivate(_engine, this);
             _partPlayerhover.PartActivate(_engine, this);
             _partSkybox.PartActivate(_engine, this);
 
@@ -251,8 +211,6 @@ namespace nogame
              */
             _ctrlFollowCamera = new(_engine, _eCamera, _partPlayerhover.GetShipEntity());
             _ctrlFollowCamera.ActivateController();
-
-            _testFramebuffer();
         }
 
         public RootScene()
