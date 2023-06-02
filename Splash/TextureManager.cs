@@ -38,19 +38,27 @@ namespace Splash
         public ATextureEntry FindATexture(in engine.joyce.Texture jTexture)        
         {
             ATextureEntry aTextureEntry;
+            bool needFillEntry = false;
             string textureKey = _textureKey(jTexture);
             lock (_lock)
             {
                 if (_dictTextures.TryGetValue(textureKey, out aTextureEntry))
                 {
-                    return aTextureEntry;
+                    if (aTextureEntry.IsOutdated())
+                    {
+                        needFillEntry = true;
+                    }
                 } else
                 {
                     aTextureEntry = _threeD.CreateTextureEntry(jTexture);
                     _dictTextures.Add(textureKey, aTextureEntry);
-                    // TXWTODO: Should be async and not with proxy held.
-                    _threeD.FillTextureEntry(aTextureEntry);
+                    // TXWTODO: Should be async and not with mutex held.
                 }
+
+            }
+            if (needFillEntry)
+            {
+                _threeD.FillTextureEntry(aTextureEntry);
             }
             return aTextureEntry;
         }
