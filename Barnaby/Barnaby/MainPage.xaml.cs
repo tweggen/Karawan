@@ -23,6 +23,7 @@ namespace Barnaby
     public class DisplayEntity
     {
         public uint Handle { get; set; }
+        public string Name { get; set; }
         public bool Enabled { get; set; }
 
         ObservableCollection<DisplayComponent> components;
@@ -65,12 +66,12 @@ namespace Barnaby
                 return;
             }
 
-            var entities = _app.WireClient.GetEntities();
-            foreach (var entityId in entities)
+            var entityShorts = _app.WireClient.GetEntities();
+            foreach (var entityShort in entityShorts)
             { 
                 listDisplayEntities.Add(new DisplayEntity()
                 {
-                    Handle = (uint)entityId, Enabled = true // TXWTODO; Read enabled.
+                    Handle = (uint)entityShort.EntityId, Name = entityShort.Name, Enabled = true // TXWTODO; Read enabled.
                 });
             }
             LvDisplayEntities.ItemsSource = listDisplayEntities;

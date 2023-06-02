@@ -219,7 +219,18 @@ public class ServerImplementation : Svc.SvcBase
         var enumEntities = _engine.GetEcsWorld().GetEntities().AsEnumerable();
         foreach (DefaultEcs.Entity entity in enumEntities)
         {
-            entityListResult.EntityIds.Add(entity.GetId());
+            Wire.EntityShort entityShort = new();
+            entityShort.EntityId = entity.GetId();
+            string entityName = "(untitled)";
+            try
+            {
+                entityName = entity.Get<engine.joyce.components.EntityName>().Name;
+            }
+            catch (Exception e)
+            {
+            }
+            entityShort.Name = entityName;
+            entityListResult.EntityShorts.Add(entityShort);
         }
 
         Trace("Returning.");

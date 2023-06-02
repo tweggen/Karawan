@@ -39,10 +39,15 @@ message GetEntityListParams {
     int64 maxResults = 2;
 }
 
+message EntityShort {
+  int32 entityId = 1;
+  string name = 2;
+}
+
 message GetEntityListResult {
     int64 startOffset = 1;
     int64 nResults = 2;
-    repeated int32 entityIds = 3;
+    repeated EntityShort entityShorts = 3;
 }
 
 enum EngineExecutionState

@@ -144,7 +144,7 @@
                             FontSize="10" 
                             Text="{x:Bind Handle}"
                             PointerPressed="TbEntityClick"
-                            Name="{x:Bind Handle}"
+                            Name="{x:Bind Name}"
                             />
                     </mux:DataTemplate>
                 </muxc:ListView.ItemTemplate>
