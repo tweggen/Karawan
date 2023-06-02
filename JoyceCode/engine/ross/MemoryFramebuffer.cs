@@ -7,6 +7,7 @@ using engine.draw;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using static engine.Logger;
 
@@ -24,6 +25,30 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     private uint _generation = 0;
 
     
+    private byte _r(uint color)
+    {
+        return (byte)(color & 0xff);
+    } 
+    
+    private byte _g(uint color)
+    {
+        return (byte)((color>>8) & 0xff);
+    }
+    private byte _b(uint color)
+    {
+        return (byte)((color>>16) & 0xff);
+    }
+
+    private byte _a(uint color)
+    {
+        return (byte)((color>>24) & 0xff);
+    }
+
+    private Color _col(uint color)
+    {
+        return Color.FromRgba(_r(color), _g(color), _b(color), _a(color));
+    }
+
     public uint Generation
     {
         get => _generation; 
@@ -38,17 +63,37 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     {
         get => (uint)_image.Height; 
     }
+
+    public void ClearRectangle(Context context, Vector2 ul, Vector2 lr)
+    {
+        Vector2 size = lr - ul;
+        Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
+        var graphicsOptions = new GraphicsOptions
+        {
+            AlphaCompositionMode = PixelAlphaCompositionMode.Clear
+        };
+        DrawingOptions drawingOptions = new()
+        {
+            GraphicsOptions = new()
+            {
+                ColorBlendingMode = PixelColorBlendingMode.Multiply
+            }
+        };
+        _image.Mutate(x => 
+            x.Fill(drawingOptions, _col(context.FillColor), rectangle )
+        );
+        lock (_lo)
+        {
+            ++_generation;
+        }
+    }
         
     public void FillRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         Vector2 size = lr - ul;
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
         _image.Mutate(x => 
-            x.Fill(
-                Color.FromRgba(context.ColorR, context.ColorG, context.ColorB, context.ColorA),
-                // Color.White,
-                rectangle
-            )
+            x.Fill( _col(context.FillColor), rectangle )
         );
         lock (_lo)
         {
@@ -60,7 +105,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     {
         _image.Mutate(x=> x.DrawText(
             text, _fontPrototype, 
-            Color.FromRgba(context.ColorR, context.ColorG, context.ColorB, context.ColorA),
+            _col(context.TextColor),
             new PointF(ul.X, ul.Y)));    
     }
 

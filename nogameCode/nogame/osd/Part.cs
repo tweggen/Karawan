@@ -28,13 +28,13 @@ public class Part : engine.IPart
     {
         ++_fbpos;
         var dc = _drawContext;
-        dc.Color = 0xff000000;
-        _framebuffer.FillRectangle(dc, new Vector2(0,0), new Vector2(399,399));
-        dc.Color = 0xffffffff;
+        dc.FillColor = 0x00000000;
+        _framebuffer.ClearRectangle(dc, new Vector2(0,0), new Vector2(399,399));
+        dc.FillColor = 0xffffffff;
         uint xofs = (2*_fbpos) % 300;
         _framebuffer.FillRectangle(dc, new Vector2(xofs+30, 30), new Vector2(xofs+70, 70));
         _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(70, 170));
-        
+        dc.TextColor = 0xff22aaee;
         _framebuffer.DrawText(dc,
             new Vector2( 30, 100), new Vector2(45, 350 ),
             "Systems activated.");
@@ -54,10 +54,16 @@ public class Part : engine.IPart
             _aTransform.SetVisible(eFramebuffer, true);
             _aTransform.SetCameraMask(eFramebuffer, 0xffffffff);
 
-            engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
+            // engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
+            engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
+                new Vector2(8f, -8f),
+                new Vector2(1f, 0f),
+                new Vector2(-1f, 0f),
+                new Vector2(0f, 1f)); 
             engine.joyce.Texture textureFramebuffer = new(_framebuffer);
             engine.joyce.Material materialFramebuffer = new();
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
+            materialFramebuffer.HasTransparency = true;
 
             engine.joyce.InstanceDesc jInstanceDesc = new();
             jInstanceDesc.Meshes.Add(meshFramebuffer);

@@ -67,9 +67,7 @@ namespace nogame
         private DefaultEcs.Entity _createLogoBoard()
         {
             Vector2 vSize = new(16f, 16f);
-            var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
-                vSize,
-                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 1f));
+            var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh(vSize);
             jMesh.UploadImmediately = true;
             var jMaterial = new engine.joyce.Material();
             jMaterial.UploadImmediately = true;
