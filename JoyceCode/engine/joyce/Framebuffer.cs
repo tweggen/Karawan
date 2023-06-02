@@ -10,12 +10,6 @@
  */
 public class Framebuffer
 {
-    private uint _sequenceNumber = 0;
-    public uint SequenceNumber
-    {
-        get => _sequenceNumber;
-    }
-
     public uint Width;
     public uint Height; 
     

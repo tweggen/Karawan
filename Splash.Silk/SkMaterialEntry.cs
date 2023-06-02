@@ -18,6 +18,14 @@ namespace Splash.Silk
             _isUploaded = true;
         }
 
+        public override bool IsOutdated()
+        {
+            return
+            (null != SkDiffuseTexture && SkDiffuseTexture.IsOutdated())
+                || (null != SkEmissiveTexture && SkEmissiveTexture.IsOutdated())
+                ;
+        }
+        
         public override bool HasTransparency()
         {
             return JMaterial.HasTransparency;

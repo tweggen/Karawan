@@ -8,12 +8,24 @@ namespace Splash.Silk;
 public class SkTexture : IDisposable
 {
     private uint _handle;
+    
+    /*
+     * Data generation that had been uploaded.
+     */
+    private uint _generation;
+
+    public uint Generation
+    {
+        get => _generation; 
+    }
+    
     private GL _gl;
     
     public uint Handle
     {
         get => _handle;
     }
+
 
     public unsafe SkTexture(GL gl, string path)
     {
