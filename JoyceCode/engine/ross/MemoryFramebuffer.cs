@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -136,7 +137,18 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         _fontCollection = new();
 
         System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
-        _ffPrototype = _fontCollection.Add(streamFont);
+
+        using (var assetStreamReader = new StreamReader(streamFont))
+        {
+            using (var ms = new MemoryStream())
+            {
+                assetStreamReader.BaseStream.CopyTo(ms);
+
+                ms.Position = 0;
+
+                _ffPrototype = _fontCollection.Add(ms);
+            }
+        }
         _fontPrototype = _ffPrototype.CreateFont(10, FontStyle.Regular);
         
     }

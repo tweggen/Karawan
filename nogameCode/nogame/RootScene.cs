@@ -60,8 +60,11 @@ namespace nogame
             _partPlayerhover = null;
             _partSkybox.PartDeactivate();
             _partSkybox = null;
-            _partOsd.PartDeactivate();
-            _partOsd = null;
+            if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false")
+            {
+                _partOsd.PartDeactivate();
+                _partOsd = null;
+            }
             _ctrlFollowCamera.DeactivateController();
             _ctrlFollowCamera = null;
 
@@ -149,14 +152,17 @@ namespace nogame
              * Local state
              */
 
-            _partOsd = new();
-            _partPlayerhover = new();
-            _partSkybox = new();
 
             _engine.SceneSequencer.AddScene(0, this);
 
-            _partOsd.PartActivate(_engine, this);
+            if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
+                _partOsd = new();
+                _partOsd.PartActivate(_engine, this);
+            }
+
+            _partPlayerhover = new();
             _partPlayerhover.PartActivate(_engine, this);
+            _partSkybox = new();
             _partSkybox.PartActivate(_engine, this);
 
             /*
@@ -206,6 +212,7 @@ namespace nogame
                 _eCamScene.Set(cCamScene);
                 // No set position, done by controller
             }
+
             
             /*
              * Create an osd camera
