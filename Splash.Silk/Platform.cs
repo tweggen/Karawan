@@ -363,7 +363,10 @@ namespace Splash.Silk
                 {
                     _engine.StartTimeline();
                 }
+                _engine.OnPhysicalFrame((float)dt);
+
                 break;
+
             }
         }
 

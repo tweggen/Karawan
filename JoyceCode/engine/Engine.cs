@@ -50,6 +50,7 @@ namespace engine
         public readonly SceneSequencer SceneSequencer;        
         
         public event EventHandler<float> LogicalFrame;
+        public event EventHandler<float> PhysicalFrame;
         public event EventHandler<uint> KeyEvent;
         
         public event EventHandler<physics.ContactInfo> OnContactInfo {
@@ -263,6 +264,14 @@ namespace engine
             PhysicsBinding.RemoveContactListener(entity);
         }
 
+
+        /**
+         * Called by the platform on a new physical frame.
+         */
+        public void OnPhysicalFrame(float dt)
+        {
+            PhysicalFrame?.Invoke(this, dt);
+        }
         
         private bool _firstTime = true;
 

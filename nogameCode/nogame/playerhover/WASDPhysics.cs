@@ -20,6 +20,8 @@ namespace nogame.playerhover
 
         private float _massShip;
 
+        private DefaultEcs.Entity _ePhysDisplay;
+
         private void _onLogicalFrame(object sender, float dt)
         {
             engine.ControllerState controllerState;
@@ -125,6 +127,15 @@ namespace nogame.playerhover
 
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
+
+            _ePhysDisplay.Set(new engine.draw.components.OSDText(
+                new Vector2(20f, 240f),
+                new Vector2(100, 16),
+                $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}",
+                10,
+                0xff22aaee
+            ));
+            
         }
 
 
@@ -150,6 +161,7 @@ namespace nogame.playerhover
             _engine = engine;
             _eTarget = eTarget;
             _aTransform = _engine.GetATransform();
+            _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
             _massShip = massShip;
         }
     }

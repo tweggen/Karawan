@@ -68,15 +68,12 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     {
         Vector2 size = lr - ul;
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
-        var graphicsOptions = new GraphicsOptions
-        {
-            AlphaCompositionMode = PixelAlphaCompositionMode.Clear
-        };
         DrawingOptions drawingOptions = new()
         {
             GraphicsOptions = new()
             {
-                ColorBlendingMode = PixelColorBlendingMode.Multiply
+                // ColorBlendingMode = PixelColorBlendingMode.Multiply,
+                AlphaCompositionMode = PixelAlphaCompositionMode.Clear
             }
         };
         _image.Mutate(x => 

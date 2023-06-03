@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using engine;
+using engine.draw.systems;
 
 namespace nogame.osd;
 
@@ -22,6 +23,10 @@ public class Part : engine.IPart
      */
     DefaultEcs.Entity _eFramebuffer;
 
+    /**
+     * OSD rendering system
+     */
+    private engine.draw.systems.RenderOSDSystem _renderOSDSystem;
     
     /**
      * Default draw context.
@@ -88,6 +93,25 @@ public class Part : engine.IPart
         }
     }
 
+    private uint _frameCounter = 0;
+    private readonly uint _renderSubDiv = 3;
+    private float _dtTotal = 0f;
+    private void _onPhysical(object? sender, float dt)
+    {
+        ++_frameCounter;
+        _dtTotal += dt;
+        if (_frameCounter < _renderSubDiv)
+        {
+            return;
+        }
+
+        var dtTotal = _dtTotal;
+        _dtTotal = 0f;
+        _frameCounter = 0;
+        _renderOSDSystem.SetFramebuffer(_framebuffer);
+        _renderOSDSystem.Update(dtTotal);
+    }
+
     
     public void PartDeactivate()
     {
@@ -96,6 +120,8 @@ public class Part : engine.IPart
             _engine.RemovePart(this);
             _scene = null;
         }
+        _renderOSDSystem.Dispose();
+        _renderOSDSystem = null;
     }
 
     public void PartActivate(in Engine engine0, in IScene scene0)
@@ -112,10 +138,14 @@ public class Part : engine.IPart
         _ecsWorld = _engine.GetEcsWorld();
         _aTransform = _engine.GetATransform();
 
+        _renderOSDSystem = new RenderOSDSystem(_engine);
+
         _engine.AddPart(-100f, scene0, this);
+
+        _engine.PhysicalFrame += _onPhysical;
         
         _testFramebuffer();
-        _updateFramebuffer();
+        // _updateFramebuffer();
     }
 
     public Part()
