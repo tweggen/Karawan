@@ -98,6 +98,7 @@
 	  <None Remove="Platforms\Android\gridlines1.png" />
 	  <None Remove="Platforms\Android\lorem.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon.png" />
+	  <None Remove="Platforms\Android\Prototype.ttf" />
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
 	  <None Remove="Platforms\Android\skybox2.png" />
 	  <None Remove="Platforms\Android\skybox2noborder.png" />
@@ -158,6 +159,9 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\lorem.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\Prototype.ttf">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\shaklengokhsi.ogg">
