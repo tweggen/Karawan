@@ -9,6 +9,8 @@ namespace Splash.Silk;
 public class SkTexture : IDisposable
 {
     private uint _handle;
+
+    private bool _doFilter = false;
     
     /*
      * Data generation that had been uploaded.
@@ -48,17 +50,21 @@ public class SkTexture : IDisposable
     private void _setParameters()
     {
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int) GLEnum.Repeat);
-        CheckError("TextureWrapS");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int) GLEnum.Repeat);
-        CheckError("TextureWrapT");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) GLEnum.LinearMipmapLinear);
-        CheckError("TextureMinFilter");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) GLEnum.Linear);
-        CheckError("TextureMagFilter");
+
+        if (_doFilter)
+        {
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) GLEnum.LinearMipmapLinear);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+        }
+        else
+        {
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) GLEnum.Nearest);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        }
+
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
-        CheckError("TextureBaseLevel");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 8);
-        CheckError("TextureMaxLevel");
     }
 
 
@@ -161,9 +167,10 @@ public class SkTexture : IDisposable
     }
 
     
-    public unsafe SkTexture(GL gl)
+    public unsafe SkTexture(GL gl, bool doFilter)
     {
         _gl = gl;
+        _doFilter = doFilter;
         _handle = _gl.GenTexture();
         Bind();
         _setParameters();

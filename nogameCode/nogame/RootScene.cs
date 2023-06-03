@@ -213,12 +213,12 @@ namespace nogame
             {
                 _eCamOSD = _engine.CreateEntity("RootScene.OSDCamera");
                 var cCamOSD = new engine.joyce.components.Camera3();
-                cCamOSD.Angle = 30.0f;
+                cCamOSD.Angle = 60.0f;
                 cCamOSD.NearFrustum = 1f;
                 cCamOSD.FarFrustum = 100f;
                 cCamOSD.CameraMask = 0x00010000;
                 _eCamOSD.Set(cCamOSD);
-                _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 30f));
+                _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));
             }
 
             /*

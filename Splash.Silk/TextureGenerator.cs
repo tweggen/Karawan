@@ -6,9 +6,6 @@ namespace Splash.Silk
 {
     public class TextureGenerator
     {
-        //private Image _imgBlack;
-        //private Image _img64MB;
-        //private Image _imgChessboard;
         private readonly engine.Engine _engine;
         private readonly SilkThreeD _silkThreeD;
         private static Byte[] _arrBlack = { 0, 0, 0, 0 };
@@ -18,7 +15,7 @@ namespace Splash.Silk
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
             if (null == skTextureEntry.SkTexture)
             {
-                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL());
+                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.DoFilter);
             }
                 
             if (jTexture.Source != null)

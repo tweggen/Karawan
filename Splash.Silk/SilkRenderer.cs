@@ -41,14 +41,19 @@ namespace Splash.Silk
 
             int y0Stats = 30;
 
+            /*
+             * Before any frame, clear colors and depth.
+             */
+            _gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+            
             foreach(var RenderPart in RenderParts)
             {
                 /*
                  * We clear the screen only before the very first rendering pass.
+                 * In all other passes, we clear the depth buffer only.
                  */
                 if (isFirstPart)
                 {
-                    _gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                     isFirstPart = false;
                 }
                 else
@@ -152,6 +157,7 @@ namespace Splash.Silk
                 _gl.Enable(EnableCap.CullFace);
                 y0Stats += 20;
             }
+
 
         }
 

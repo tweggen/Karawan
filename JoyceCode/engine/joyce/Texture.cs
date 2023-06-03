@@ -15,6 +15,8 @@ namespace engine.joyce
         public string Source;
         public engine.draw.IFramebuffer Framebuffer;
 
+        public bool DoFilter = true;
+
         public override string ToString()
         {
             if (Source != null)
