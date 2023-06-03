@@ -29,12 +29,6 @@ namespace engine.transform.components
             up.Z = Matrix.M32;
         }
 
-        public Transform3ToParent( bool isVisible, in Matrix4x4 matrix )
-        {
-            IsVisible = isVisible;
-            CameraMask = 0xffffffff;
-            Matrix = matrix;
-        }
 
         public Transform3ToParent(bool isVisible, uint cameraMask, in Matrix4x4 matrix)
         {

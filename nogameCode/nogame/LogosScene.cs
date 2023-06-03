@@ -81,7 +81,7 @@ namespace nogame
             var entity = _engine.CreateEntity("LogoBoard");
             entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             _aTransform.SetTransforms(
-                entity, false, 0xffffffff,
+                entity, false, 0x00010000,
                 new Quaternion(0f, 0f, 0f, 1f),
                 new Vector3(0f, 0f, 0f));
             return entity;
@@ -153,7 +153,7 @@ namespace nogame
                  * We need to be as far away as the skycube is. Plus a bonus.
                  */
                 cCamera.FarFrustum = (float)100f;
-                cCamera.CameraMask = 0x00000001;
+                cCamera.CameraMask = 0x00010000;
                 _eCamera.Set<engine.joyce.components.Camera3>(cCamera);
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
             }

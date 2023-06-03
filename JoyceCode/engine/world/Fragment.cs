@@ -317,14 +317,14 @@ namespace engine.world
         {
             var worldRecord = Engine.GetEcsWorldRecord();
 
-            /**
+            /*
              * Schedule execution of entity setup in the logical thread.
              */
             Engine.QueueEntitySetupAction((DefaultEcs.Entity entity) =>
             {
                 entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                 engine.transform.components.Transform3 cTransform3 = new(
-                    true, 0xffffffff, new Quaternion(), Position);
+                    true, 0x00000001, new Quaternion(), Position);
                 entity.Set(cTransform3);
                 engine.transform.API.CreateTransform3ToParent(cTransform3, out var mat);
                 entity.Set(new engine.transform.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));

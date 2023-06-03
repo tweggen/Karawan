@@ -36,17 +36,41 @@ namespace Splash.Silk
          */
         private void _renderParts(in IList<RenderPart> RenderParts)
         {
-            _silkThreeD.CheckError("Beginning renderParts");
-            _gl.Enable(EnableCap.DepthTest);
-            _silkThreeD.CheckError("Enable Depth");
-            _gl.Clear((uint) (ClearBufferMask.ColorBufferBit  | ClearBufferMask.DepthBufferBit));
-            _silkThreeD.CheckError("Clear");
+            
+            bool isFirstPart = true;
 
             int y0Stats = 30;
 
             foreach(var RenderPart in RenderParts)
             {
+                /*
+                 * We clear the screen only before the very first rendering pass.
+                 */
+                if (isFirstPart)
+                {
+                    _gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+                    isFirstPart = false;
+                }
+                else
+                {
+                    _gl.Clear(ClearBufferMask.DepthBufferBit);
+                }
+                
+
                 var cCameraParams = RenderPart.Camera3;
+
+                /*
+                 * We enable depth test only for the lower 16 bit camera masks.
+                 */
+                if ((cCameraParams.CameraMask & 0xffff) != 0)
+                {
+                    _gl.Enable(EnableCap.DepthTest);
+                }
+                else
+                {
+                    _gl.Disable(EnableCap.DepthTest);
+                }
+
                 var mToWorld = RenderPart.Transform3ToWorld.Matrix;
 
                 var vCameraPosition = mToWorld.Translation;
@@ -55,9 +79,6 @@ namespace Splash.Silk
                 Vector3 vZ = new Vector3(-mToWorld.M31, -mToWorld.M32, -mToWorld.M33);
                 Vector3 vFront = -vZ;
                 Vector3 vTarget = vCameraPosition + vFront;
-
-                //var rCamera = new Raylib_CsLo.Camera3D( vCameraPosition, vTarget, vUp, 
-                //    cCameraParams.Angle, CameraProjection.CAMERA_PERSPECTIVE);
 
                 _threeD.SetCameraPos(vCameraPosition);
 
@@ -119,13 +140,14 @@ namespace Splash.Silk
                  */
                 _gl.Enable(EnableCap.Blend);
                 _gl.Disable(EnableCap.CullFace);
-                // _gl.Disable(EnableCap.DepthTest);
+
                 _gl.BlendFuncSeparate(
                     BlendingFactor.SrcAlpha,BlendingFactor.OneMinusSrcAlpha,
                     BlendingFactor.Zero,BlendingFactor.One);
                 _gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
+                
                 RenderPart.CameraOutput.RenderTransparent(_threeD);
-                // _gl.Enable(EnableCap.DepthTest);
+                
                 _gl.Disable(EnableCap.Blend);
                 _gl.Enable(EnableCap.CullFace);
                 y0Stats += 20;

@@ -13,7 +13,7 @@ public class SkTexture : IDisposable
     /*
      * Data generation that had been uploaded.
      */
-    private uint _generation = 0;
+    private uint _generation = 0xfffffffe;
 
     public uint Generation
     {
@@ -111,9 +111,15 @@ public class SkTexture : IDisposable
     }
 
     
-    public unsafe void SetFrom(Span<byte> data, uint width, uint height)
+    public unsafe void SetFrom(uint generation, Span<byte> data, uint width, uint height)
     {
-        Trace("Creating new Texture from Span {width}x{height}");
+        Trace($"Creating new Texture from Span {width}x{height}");
+        if (_generation == generation)
+        {
+            Warning($"Superfluous call to SetFrom from Span, identical generation {generation}.");
+            return;
+        }
+        _generation = generation;
         Bind();
         fixed (void* d = &data[0])
         {
@@ -126,7 +132,7 @@ public class SkTexture : IDisposable
 
     public unsafe void SetFrom(uint width, uint height)
     {
-        Trace("Creating new Texture {width}x{height}");
+        Trace($"Creating new Texture {width}x{height}");
         Bind();
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
         _generateMipmap();

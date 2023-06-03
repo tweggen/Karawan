@@ -59,6 +59,7 @@ namespace Barnaby
 
         private void _reloadEntities()
         {
+            Console.WriteLine("_reloadEntities() called.");
             List<DisplayEntity> listDisplayEntities = new List<DisplayEntity>();
             if (!_app.IsConnected())
             {
@@ -71,7 +72,9 @@ namespace Barnaby
             { 
                 listDisplayEntities.Add(new DisplayEntity()
                 {
-                    Handle = (uint)entityShort.EntityId, Name = entityShort.Name, Enabled = true // TXWTODO; Read enabled.
+                    Handle = (uint)entityShort.EntityId,
+                    Name = entityShort.Name,
+                    Enabled = true // TXWTODO; Read enabled.
                 });
             }
             LvDisplayEntities.ItemsSource = listDisplayEntities;
@@ -110,14 +113,22 @@ namespace Barnaby
         }
 
 
-        private void _doConnectTo(string serverIP, ushort serverPort)
+        private async void _doConnectTo(string serverIP, ushort serverPort)
         {
             BtConnectTo.Content = "Connecting to ";
             BtConnectTo.IsEnabled = false;
             try
             {
                 _app.TriggerConnect(serverIP, serverPort);
-                BtConnectTo.Content = "Disconnect from "; 
+                bool isConnected = await _app.WireClient.IsReadyAsync(DateTime.Now.AddMilliseconds(100).ToUniversalTime());
+                if (isConnected)
+                {
+                    BtConnectTo.Content = "Disconnect from "; 
+                }
+                else
+                {
+                    BtConnectTo.Content = "Connect to ";
+                }
             }
             catch (Exception ex)
             {

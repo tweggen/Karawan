@@ -52,7 +52,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="80" />
+            <ColumnDefinition Width="200" />
             <ColumnDefinition Width="400" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -142,10 +142,14 @@
                     <mux:DataTemplate x:DataType="local:DisplayEntity">
                         <muxc:TextBlock
                             FontSize="10" 
-                            Text="{x:Bind Handle}"
+                            Name="{x:Bind Handle}"
                             PointerPressed="TbEntityClick"
-                            Name="{x:Bind Name}"
-                            />
+                            >
+                            <Run Text="#"/>
+                            <Run Text="{x:Bind Handle}"/>
+                            <Run Text=" "/>
+                            <Run Text="{x:Bind Name}"/>
+                        </muxc:TextBlock>
                     </mux:DataTemplate>
                 </muxc:ListView.ItemTemplate>
             </muxc:ListView>

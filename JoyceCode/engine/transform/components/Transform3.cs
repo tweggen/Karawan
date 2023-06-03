@@ -15,15 +15,6 @@ namespace engine.transform.components
             return $"{base.ToString()}, IsVisible={IsVisible}, CameraMask={CameraMask:X}, Rotation={Rotation}, Position={Position}";
         }
         
-        public Transform3( bool isVisible, in Quaternion rotation, in Vector3 position)
-        {
-            IsVisible = isVisible;
-            CameraMask = 0xffffffff;
-            Rotation = rotation;
-            Position = position;
-        }
-
-
         public Transform3(bool isVisible, uint cameraMask, in Quaternion rotation, in Vector3 position)
         {
             IsVisible = isVisible;

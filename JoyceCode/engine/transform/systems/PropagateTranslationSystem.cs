@@ -61,7 +61,7 @@ namespace engine.transform.systems
         {
             var cRootTransform3World = new components.Transform3ToWorld(0xffffffff, Matrix4x4.Identity);
 
-            /**
+            /*
              * We are iterating through all of the root objects with children
              * and transformations attached.
              */

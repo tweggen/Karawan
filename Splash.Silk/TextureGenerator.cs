@@ -27,7 +27,7 @@ namespace Splash.Silk
 
                 if (texturePath == "joyce://col00000000")
                 {
-                    skTextureEntry.SkTexture.SetFrom(_arrBlack, 1, 1);
+                    skTextureEntry.SkTexture.SetFrom(0, _arrBlack, 1, 1);
                 }
                 else
                 {
@@ -39,7 +39,9 @@ namespace Splash.Silk
                 IFramebuffer framebuffer = jTexture.Framebuffer;
                 Span<byte> spanBytes;
                 framebuffer.GetMemory(out spanBytes);
-                skTextureEntry.SkTexture.SetFrom(spanBytes, framebuffer.Width, framebuffer.Height);
+                skTextureEntry.SkTexture.SetFrom(
+                    framebuffer.Generation,
+                    spanBytes, framebuffer.Width, framebuffer.Height);
             }
         }
 

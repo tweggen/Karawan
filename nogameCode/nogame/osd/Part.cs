@@ -52,7 +52,7 @@ public class Part : engine.IPart
             var posFramebuffer = new Vector3(0f, 0f, 50f);
             _aTransform.SetPosition(eFramebuffer, posFramebuffer);
             _aTransform.SetVisible(eFramebuffer, true);
-            _aTransform.SetCameraMask(eFramebuffer, 0x00001000);
+            _aTransform.SetCameraMask(eFramebuffer, 0x00010000);
 
             // engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
             engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(

@@ -8,7 +8,8 @@ namespace WireClient
     public class API
     {
         private object _lo = new();
-        private Svc.SvcClient? _client = null;
+        private Svc.SvcClient? _client;
+        private Channel _channel; 
 
         public event EventHandler<EngineExecutionStatus> ExecutionStatusChanged;
         private EngineExecutionStatus? _engineExecutionStatus = null;
@@ -77,18 +78,31 @@ namespace WireClient
             var reply = _client?.GetEntity(new GetEntityParams() { EntityId = entityId });
             return reply.Entity;
         }
+        
+        public async Task<bool> IsReadyAsync(DateTime? deadline)
+        {
+            try
+            {
+                await _channel.ConnectAsync(deadline: deadline);
+            }
+            catch (TaskCanceledException)
+            {
+                return false;
+            }
 
-
+            return _channel.State == ChannelState.Ready;
+        }
+        
         public API(in string host, in ushort port)
         {
             _engineExecutionStatus = new EngineExecutionStatus();
             _engineExecutionStatus.State = EngineExecutionState.Initialized;
 
-            var channel = new Channel(
+            _channel = new Channel(
                 host, port, ChannelCredentials.Insecure
             );
 
-            _client = new Svc.SvcClient(channel);
+            _client = new Svc.SvcClient(_channel);
         }
     }
 }
