@@ -134,8 +134,9 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         _image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>((int)width, (int)height);
         _resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
         _fontCollection = new();
-        _fontCollection.Add(_resourcePath + "Prototype.ttf");
-        _fontCollection.TryGet("Prototype", out _ffPrototype);
+
+        System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
+        _ffPrototype = _fontCollection.Add(streamFont);
         _fontPrototype = _ffPrototype.CreateFont(10, FontStyle.Regular);
         
     }
