@@ -133,7 +133,8 @@ namespace nogame.playerhover
                 new Vector2(100, 16),
                 $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}",
                 10,
-                0xff22aaee
+                0xff22aaee,
+                0x00000000
             ));
             
         }

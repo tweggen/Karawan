@@ -77,7 +77,7 @@ public class SkTexture : IDisposable
 
     public unsafe void SetFrom(string path)
     {
-        Trace("Creating new Texture from path {path}");
+        // Trace("Creating new Texture from path {path}");
 
         Bind();
         try
@@ -119,7 +119,7 @@ public class SkTexture : IDisposable
     
     public unsafe void SetFrom(uint generation, Span<byte> data, uint width, uint height)
     {
-        Trace($"Creating new Texture from Span {width}x{height}");
+        // Trace($"Creating new Texture from Span {width}x{height}");
         if (_generation == generation)
         {
             Warning($"Superfluous call to SetFrom from Span, identical generation {generation}.");
@@ -138,7 +138,7 @@ public class SkTexture : IDisposable
 
     public unsafe void SetFrom(uint width, uint height)
     {
-        Trace($"Creating new Texture {width}x{height}");
+        // Trace($"Creating new Texture {width}x{height}");
         Bind();
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
         _generateMipmap();

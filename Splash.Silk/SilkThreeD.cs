@@ -487,13 +487,11 @@ public class SilkThreeD : IThreeD
 
         if (jMaterial.Texture != null && jMaterial.Texture.IsValid())
         {
-            Trace($"Filling texture {jMaterial.Texture}");
             ATextureEntry? aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
             skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
         }
         if (jMaterial.EmissiveTexture != null && jMaterial.EmissiveTexture.IsValid())
         {
-            Trace($"Filling texture {jMaterial.EmissiveTexture}");
             ATextureEntry? aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }

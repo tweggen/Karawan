@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using BepuPhysics.CollisionDetection;
 using engine.world;
 
 namespace engine.draw.systems;
@@ -22,23 +23,18 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             return;
         }
 
-        _dc.FillColor = 0x00000000;
-        
-        // TXWTODO: Avoid redrawing everything every frame.
-        _framebuffer.ClearRectangle( _dc,
-            new Vector2(0, 0), 
-            new Vector2(_framebuffer.Width-1f, _framebuffer.Height-1f));
         
         foreach (var entity in entities)
         {
             components.OSDText osdText = entity.Get<components.OSDText>();
-            _dc.TextColor = osdText.TextColor;
-            
+
+            Vector2 ul = osdText.Position;
+            Vector2 lr = osdText.Position + osdText.Size - new Vector2(1f, 1f);
+            _dc.FillColor = osdText.FillColor;
+            _framebuffer.ClearRectangle(_dc, ul, lr);
             // TXWTODO: We ignore the font size.
-            _framebuffer.DrawText(_dc, 
-                osdText.Position, 
-                osdText.Position+osdText.Size-new Vector2(1f,1f),
-                osdText.Text);
+            _dc.TextColor = osdText.TextColor;
+            _framebuffer.DrawText(_dc, ul, lr, osdText.Text);
         }
     }
 
@@ -48,11 +44,34 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         {
             return;
         }
+        _framebuffer.BeginModification();
+    }
+
+    protected override void PostUpdate(double dt)
+    {
+        if (null == _framebuffer)
+        {
+            return;
+        }
+        _framebuffer.EndModification();
     }
 
     public void SetFramebuffer(IFramebuffer framebuffer)
     {
         _framebuffer = framebuffer;
+        if (null == _framebuffer)
+        {
+            return;
+        }
+        
+        /*
+         * Do an initial clear of the framebuffer,
+         */
+        _dc.FillColor = 0x00000000;
+        _framebuffer.ClearRectangle( _dc,
+            new Vector2(0, 0), 
+            new Vector2(_framebuffer.Width-1f, _framebuffer.Height-1f));
+        
     }
     
     public RenderOSDSystem(engine.Engine engine)

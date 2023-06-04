@@ -25,6 +25,21 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     
     private uint _generation = 0;
 
+    private Vector2 _ulModified;
+    private Vector2 _lrModified;
+
+
+    private void _resetModified()
+    {
+        _ulModified = new Vector2(100000, 100000);
+        _lrModified = new Vector2(-1, -1);
+    }
+
+    private void _applyModified(in Vector2 ul, in Vector2 lr)
+    {
+        _ulModified = new Vector2(Math.Min(_ulModified.X, ul.X), Math.Min(_ulModified.Y, ul.Y));
+        _lrModified = new Vector2(Math.Min(_lrModified.X, ul.X), Math.Min(_lrModified.Y, ul.Y));
+    }
     
     private byte _r(uint color)
     {
@@ -65,6 +80,18 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         get => (uint)_image.Height; 
     }
 
+    public void BeginModification()
+    {
+    }
+
+    public void EndModification()
+    {
+        lock (_lo)
+        {
+            _generation++;
+        }
+    }
+
     public void ClearRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         Vector2 size = lr - ul;
@@ -82,7 +109,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         );
         lock (_lo)
         {
-            ++_generation;
+            _applyModified(ul, lr);
         }
     }
         
@@ -95,7 +122,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         );
         lock (_lo)
         {
-            ++_generation;
+            _applyModified(ul, lr);
         }
     }
 
@@ -105,17 +132,13 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
             text, _fontPrototype, 
             _col(context.TextColor),
             new PointF(ul.X, ul.Y)));    
-    }
-
-    
-    public void MarkDirty()
-    {
         lock (_lo)
         {
-            ++_generation;
+            _applyModified(ul, lr);
         }
     }
 
+    
     public void GetMemory(out Span<byte> spanBytes)
     {
         Memory<SixLabors.ImageSharp.PixelFormats.Rgba32> memoryRgba;
@@ -129,11 +152,27 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         spanBytes = MemoryMarshal.Cast<SixLabors.ImageSharp.PixelFormats.Rgba32, byte>(spanRgba);
     }
 
+    public void GetModified(out Vector2 ul, out Vector2 lr)
+    {
+        ul = _ulModified;
+        lr = _lrModified;
+    }
+
+    public void SetConsumed()
+    {
+        lock (_lo)
+        {
+            _resetModified();
+        }
+    }
+
 
     public MemoryFramebuffer(uint width, uint height)
     {
         _image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>((int)width, (int)height);
         _resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
+        _resetModified();
+
         _fontCollection = new();
 
         System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
@@ -150,7 +189,6 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
             }
         }
         _fontPrototype = _ffPrototype.CreateFont(10, FontStyle.Regular);
-        
     }
 
 }
