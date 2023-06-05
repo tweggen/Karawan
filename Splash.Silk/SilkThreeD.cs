@@ -601,6 +601,16 @@ public class SilkThreeD : IThreeD
     public void SetGL(in GL gl)
     {
         _gl = gl;
+
+        long[] values = new long[10];
+        var spanValues = values.AsSpan();
+        long value;
+        
+        _gl.GetInternalformat(GLEnum.Texture0, GLEnum.Rgba, 
+            GLEnum.InternalformatPreferred, 
+            1, out value);
+        
+        Trace($"Preferred format is {value}.");
         
         _gl.Enable(EnableCap.CullFace);
         _gl.CullFace(CullFaceMode.Back);
@@ -611,6 +621,7 @@ public class SilkThreeD : IThreeD
         _gl.Enable(EnableCap.DepthTest);
         _gl.Disable(EnableCap.ScissorTest);
         _gl.Disable(EnableCap.StencilTest);
+
     }
 
     public GL GetGL()

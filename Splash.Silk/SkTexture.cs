@@ -8,7 +8,8 @@ namespace Splash.Silk;
 
 public class SkTexture : IDisposable
 {
-    private uint _handle;
+    private uint _liveHandle;
+    private uint _backHandle;
 
     private bool _doFilter = false;
     
@@ -26,7 +27,10 @@ public class SkTexture : IDisposable
     
     public uint Handle
     {
-        get => _handle;
+        /*
+         * We do not use a mutex because we knoe that an 32bit assignment is reasonably atomic.
+         */
+        get => _liveHandle;
     }
     
     public void CheckError(string what)
@@ -74,12 +78,39 @@ public class SkTexture : IDisposable
         CheckError("GenerateMipMap");
     }
 
+    
+    private void _backToLive()
+    {
+        var local = _liveHandle;
+        _liveHandle = _backHandle;
+        _backHandle = _liveHandle;
+    }
+
+
+    private void _allocateBack()
+    {
+        _backHandle = _gl.GenTexture();
+        _bindBack();
+        _setParameters();
+    }
+
+
+    private void _checkReloadTexture()
+    {
+        if (_backHandle == 0xffffffff)
+        {
+            Trace( "(First) reload detected. Will allocate back buffer texture.");
+            _allocateBack();
+        }
+    }
+
 
     public unsafe void SetFrom(string path)
     {
         // Trace("Creating new Texture from path {path}");
 
-        Bind();
+        _checkReloadTexture();
+        _bindBack();
         try
         {
             System.IO.Stream streamImage = engine.Assets.Open(path);
@@ -114,6 +145,7 @@ public class SkTexture : IDisposable
             }
         }
         _generateMipmap();
+        _backToLive();
     }
 
     
@@ -126,22 +158,27 @@ public class SkTexture : IDisposable
             return;
         }
         _generation = generation;
-        Bind();
+
+        _checkReloadTexture();
+        _bindBack();
         fixed (void* d = &data[0])
         {
             _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, d);
             CheckError("TexImage2D");
         }
         _generateMipmap();
+        _backToLive();
     }
 
 
     public unsafe void SetFrom(uint width, uint height)
     {
         // Trace($"Creating new Texture {width}x{height}");
-        Bind();
+        _checkReloadTexture();
+        _bindBack();
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
         _generateMipmap();
+        _backToLive();
     }
 
 
@@ -149,21 +186,23 @@ public class SkTexture : IDisposable
     {
         _gl.ActiveTexture(textureSlot);
         CheckError("ActiveTexture");
-        _gl.BindTexture(TextureTarget.Texture2D, _handle);
+        _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
         CheckError("Bind Texture");
     }
 
-    public void Bind()
+    private void _bindBack()
     {
-        _gl.BindTexture(TextureTarget.Texture2D, _handle);
+        _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
         CheckError("Bind Texture");
     }
     
     
     public void Dispose()
     {
-        _gl.DeleteTexture(_handle);
-        CheckError("DeleteTexture");
+        _gl.DeleteTexture(_liveHandle);
+        CheckError("DeleteTexture live");
+        _gl.DeleteTexture(_backHandle);
+        CheckError("DeleteTexture back");
     }
 
     
@@ -171,9 +210,9 @@ public class SkTexture : IDisposable
     {
         _gl = gl;
         _doFilter = doFilter;
-        _handle = _gl.GenTexture();
-        Bind();
-        _setParameters();
+        _backHandle = 0xffffffff;
+        _liveHandle = 0xffffffff;
+        _allocateBack();
     }
 
 
