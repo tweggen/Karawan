@@ -92,20 +92,31 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         }
     }
 
+    private DrawingOptions _doClear = new()
+    {
+        GraphicsOptions = new()
+        {
+            // ColorBlendingMode = PixelColorBlendingMode.Multiply,
+            AlphaCompositionMode = PixelAlphaCompositionMode.Clear
+        }
+    };
+
+    private DrawingOptions _doText = new()
+    {
+        GraphicsOptions = new()
+        {
+            // ColorBlendingMode = PixelColorBlendingMode.Multiply,
+            //AlphaCompositionMode = PixelAlphaCompositionMode.Clear
+            Antialias = false
+        }
+    };
+
     public void ClearRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         Vector2 size = lr - ul;
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
-        DrawingOptions drawingOptions = new()
-        {
-            GraphicsOptions = new()
-            {
-                // ColorBlendingMode = PixelColorBlendingMode.Multiply,
-                AlphaCompositionMode = PixelAlphaCompositionMode.Clear
-            }
-        };
         _image.Mutate(x => 
-            x.Fill(drawingOptions, _col(context.FillColor), rectangle )
+            x.Fill(_doClear, _col(context.FillColor), rectangle )
         );
         lock (_lo)
         {
@@ -129,7 +140,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text)
     {
         _image.Mutate(x=> x.DrawText(
-            text, _fontPrototype, 
+            _doText, text, _fontPrototype, 
             _col(context.TextColor),
             new PointF(ul.X, ul.Y)));    
         lock (_lo)
