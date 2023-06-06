@@ -10,6 +10,13 @@ using static engine.Logger;
 
 namespace engine
 {
+
+    class EntitySetupAction
+    {
+        public string EntityName;
+        public  Action<DefaultEcs.Entity> SetupAction;
+    }
+    
     public class Engine
     {
         private object _lo = new();
@@ -31,8 +38,8 @@ namespace engine
         private engine.audio.systems.MovingSoundsSystem _systemMovingSounds;
 
         private SortedDictionary<float, IPart> _dictParts;
-
-        private readonly Queue<Action<DefaultEcs.Entity>> _queueEntitySetupActions = new();
+        
+        private readonly Queue<EntitySetupAction> _queueEntitySetupActions = new();
         // private readonly Queue<Action> = new();
         
         private Thread _logicalThread;
@@ -199,19 +206,19 @@ namespace engine
             _queueStopwatch.Start();
             while(_queueStopwatch.Elapsed.TotalMilliseconds < matTime*1000f)
             {
-                Action<DefaultEcs.Entity> action;
+                EntitySetupAction entitySetupAction;
                 lock (_lo)
                 {
                     if( _queueEntitySetupActions.Count==0)
                     {
                         break;
                     }
-                    action = _queueEntitySetupActions.Dequeue();
+                    entitySetupAction = _queueEntitySetupActions.Dequeue();
                 }
 
-                DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
+                DefaultEcs.Entity entity = CreateEntity(entitySetupAction.EntityName);
                 try {                    
-                    action(entity);
+                    entitySetupAction.SetupAction(entity);
                 } catch( Exception e )
                 {
                     Warning($"Error executing entity setup action: {e}.");
@@ -234,11 +241,18 @@ namespace engine
         }
 
 
-        public void QueueEntitySetupAction(Action<DefaultEcs.Entity> action)
+        public void QueueEntitySetupAction(
+            string entityName, Action<DefaultEcs.Entity> setupAction)
         {
             lock (_lo)
             {
-                _queueEntitySetupActions.Enqueue(action); 
+                _queueEntitySetupActions.Enqueue(
+                    new EntitySetupAction
+                    {
+                        EntityName = entityName,
+                        SetupAction = setupAction
+                    }
+                );
             }
         }
 

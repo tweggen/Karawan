@@ -202,7 +202,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
                     });
 
-                    wf.Engine.QueueEntitySetupAction(tSetupEntity);
+                    wf.Engine.QueueEntitySetupAction("nogame.characters.tram", tSetupEntity);
 
 
                 }

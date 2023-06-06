@@ -19,8 +19,8 @@
             <muxc:TreeViewItem ItemsSource="{x:Bind Properties}" IsExpanded="True">
                 <StackPanel MinHeight="5" Padding="0,0,0,0" Orientation="Horizontal">
                     <!-- Image Width="20" Source="../Assets/folder.png"/ -->
-                    <TextBlock FontSize="10" Margin="0,0,10,0"/>
-                    <TextBlock FontSize="10" Text="{x:Bind Type}" />
+                    <TextBlock FontSize="14" Margin="0,0,10,0"/>
+                    <TextBlock FontSize="14" Text="{x:Bind Type}" />
                 </StackPanel>
             </muxc:TreeViewItem>
         </DataTemplate>
@@ -29,10 +29,10 @@
             <muxc:TreeViewItem>
                 <StackPanel MinHeight="5" Height="20" Padding="0,0,0,0" Orientation="Horizontal">
                     <!-- Image Width="20" Source="../Assets/file.png"/ -->
-                    <TextBlock FontSize="10" Margin="0,0,10,0"/>
-                    <TextBlock FontSize="10" Text="{x:Bind Name}"/>
-                    <TextBlock FontSize="10" Margin="0,0,10,0"/>
-                    <TextBlock FontSize="10" Text="{x:Bind Value}"/>
+                    <TextBlock FontSize="14" Margin="0,0,10,0"/>
+                    <TextBlock FontSize="14" Text="{x:Bind Name}"/>
+                    <TextBlock FontSize="14" Margin="0,0,10,0"/>
+                    <TextBlock FontSize="14" Text="{x:Bind Value}"/>
                 </StackPanel>
             </muxc:TreeViewItem>
         </DataTemplate>
@@ -130,6 +130,7 @@
 
         <muxc:ScrollViewer 
             Grid.Row="2"  Grid.Column="0"
+            MaxHeight="50000"
             VerticalScrollBarVisibility="Auto">
             <muxc:ListView x:Name="LvDisplayEntities">
                 <muxc:ListView.ItemContainerStyle>

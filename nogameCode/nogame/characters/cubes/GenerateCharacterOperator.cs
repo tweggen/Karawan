@@ -204,7 +204,7 @@ namespace nogame.characters.cubes
                             eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
                         });
 
-                        wf.Engine.QueueEntitySetupAction(tSetupEntity);
+                        wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);
 
 
                     }

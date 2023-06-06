@@ -223,7 +223,7 @@ namespace engine.world
             jInstanceDesc.Meshes.Add(jMeshTerrain);
             jInstanceDesc.MeshMaterials.Add(0);
             jInstanceDesc.Materials.Add(_getGroundMaterial());
-            AddStaticMolecule(jInstanceDesc);
+            AddStaticMolecule("engine.world.ground", jInstanceDesc);
         }
 
 
@@ -305,13 +305,14 @@ namespace engine.world
         /**
          * Add a geometry atom to this fragment.
          */
-        public void AddStaticMolecule(in engine.joyce.InstanceDesc jInstanceDesc)
+        public void AddStaticMolecule(string staticName, in engine.joyce.InstanceDesc jInstanceDesc)
         {
-            AddStaticMolecule(jInstanceDesc, null);
+            AddStaticMolecule(staticName, jInstanceDesc, null);
         }
 
 
         public void AddStaticMolecule(
+            string staticName,
             engine.joyce.InstanceDesc jInstanceDesc,
             IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
         {
@@ -320,7 +321,7 @@ namespace engine.world
             /*
              * Schedule execution of entity setup in the logical thread.
              */
-            Engine.QueueEntitySetupAction((DefaultEcs.Entity entity) =>
+            Engine.QueueEntitySetupAction(staticName, (DefaultEcs.Entity entity) =>
             {
                 entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                 engine.transform.components.Transform3 cTransform3 = new(

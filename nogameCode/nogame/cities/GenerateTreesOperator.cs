@@ -391,7 +391,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                     instanceDesc.Meshes.Add(mesh);
                     instanceDesc.MeshMaterials.Add(0);
                     instanceDesc.Materials.Add(_getTreesMaterial());
-                    worldFragment.AddStaticMolecule(instanceDesc, null);
+                    worldFragment.AddStaticMolecule("nogame.cities.trees", instanceDesc, null);
                 }
             }
 

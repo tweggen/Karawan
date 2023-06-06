@@ -366,14 +366,14 @@ namespace nogame.cities
                     instanceDesc.Meshes.Add(g);
                     instanceDesc.MeshMaterials.Add(0);
                     instanceDesc.Materials.Add(_getHouseMaterial());
-                    worldFragment.AddStaticMolecule(instanceDesc, listCreatePhysics);
+                    worldFragment.AddStaticMolecule("nogame.cities.houses.walls", instanceDesc, listCreatePhysics);
                 }
                 {
                     engine.joyce.InstanceDesc instanceDesc = new();
                     instanceDesc.Meshes.Add(neonG);
                     instanceDesc.MeshMaterials.Add(0);
                     instanceDesc.Materials.Add(_getNeonMaterial());
-                    worldFragment.AddStaticMolecule(instanceDesc);
+                    worldFragment.AddStaticMolecule("nogame.cities.houses.neon", instanceDesc);
                 }
             }
             catch (Exception e)

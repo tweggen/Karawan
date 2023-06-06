@@ -185,7 +185,7 @@ namespace engine.streets
                 instanceDesc.Meshes.Add(g);
                 instanceDesc.MeshMaterials.Add(0);
                 instanceDesc.Materials.Add(_getQuarterMaterial());
-                worldFragment.AddStaticMolecule(instanceDesc);
+                worldFragment.AddStaticMolecule("engine.streets.quarters", instanceDesc);
             }
             catch (Exception e) {
                 Warning($"Unknown exception: {e}");
