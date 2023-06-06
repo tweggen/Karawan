@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿using System.Numerics;
+using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
@@ -17,6 +18,12 @@ public class SkTexture : IDisposable
      * Data generation that had been uploaded.
      */
     private uint _generation = 0xfffffffe;
+    
+    /*
+     * Track if the live handle already has been consumed by
+     * the renderer.
+     */
+    private bool _liveConsumed = false;
 
     public uint Generation
     {
@@ -83,7 +90,7 @@ public class SkTexture : IDisposable
     {
         var local = _liveHandle;
         _liveHandle = _backHandle;
-        _backHandle = _liveHandle;
+        _backHandle = local;
     }
 
 
@@ -149,7 +156,8 @@ public class SkTexture : IDisposable
     }
 
     
-    public unsafe void SetFrom(uint generation, Span<byte> data, uint width, uint height)
+    public unsafe void SetFrom(
+        uint generation, Span<byte> data, uint width, uint height)
     {
         // Trace($"Creating new Texture from Span {width}x{height}");
         if (_generation == generation)
@@ -158,7 +166,6 @@ public class SkTexture : IDisposable
             return;
         }
         _generation = generation;
-
         _checkReloadTexture();
         _bindBack();
         fixed (void* d = &data[0])
@@ -178,12 +185,12 @@ public class SkTexture : IDisposable
         _bindBack();
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int) InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
         _generateMipmap();
-        _backToLive();
     }
 
 
     public void BindAndActive(TextureUnit textureSlot)
     {
+        _liveConsumed = true;
         _gl.ActiveTexture(textureSlot);
         CheckError("ActiveTexture");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
