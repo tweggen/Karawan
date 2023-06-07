@@ -3,10 +3,9 @@ using DefaultEcs.Internal;
 using DefaultEcs.Resource;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
-using System.Runtime;
-using System.Text;
-using System.Threading;
+using static engine.Logger;
 
 namespace nogame.playerhover
 {
@@ -22,12 +21,20 @@ namespace nogame.playerhover
 
         private DefaultEcs.Entity _ePhysDisplay;
 
+        private bool _hadCollision = false;
+        public void HadCollision()
+        {
+            _hadCollision = true;
+        }
+        
         private void _onLogicalFrame(object sender, float dt)
         {
+            // if (_hadCollision) return;
             engine.ControllerState controllerState;
             _engine.GetControllerState(out controllerState);
 
             Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
+            
             Vector3 vTotalAngular = new Vector3(0f, 0f, 0f);
 
             /*
@@ -125,6 +132,16 @@ namespace nogame.playerhover
                 vTotalImpulse += new Vector3(0f, 10f, 0f);
             }
 
+            var mass = 500f;
+            if (vTotalImpulse.Length() > mass)
+            {
+                Trace($"Too fast: {vTotalImpulse.Length()}.");
+            }
+            if (vTotalAngular.Length() > mass)
+            {
+                Trace($"Too fast: {vTotalAngular.Length()}.");
+            }
+            
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
 

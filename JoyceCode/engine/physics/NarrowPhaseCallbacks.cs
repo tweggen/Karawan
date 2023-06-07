@@ -168,7 +168,7 @@ namespace engine.physics
             //Bounciness is handled through the contact spring settings instead. Setting See here for more details: https://github.com/bepu/bepuphysics2/issues/3 and check out the BouncinessDemo for some options.)
              */
             pairMaterial.FrictionCoefficient = 1f;
-            pairMaterial.MaximumRecoveryVelocity = 0.5f;
+            pairMaterial.MaximumRecoveryVelocity = 0.0001f;
             pairMaterial.SpringSettings = new SpringSettings(30, 1);
 
             //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.

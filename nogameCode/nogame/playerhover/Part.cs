@@ -23,10 +23,11 @@ namespace nogame.playerhover
 
         private WASDPhysics _controllerWASDPhysics;
 
-        private const float MassShip = 10f;
+        private const float MassShip = 500f;
 
         private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
         {
+            _controllerWASDPhysics.HadCollision();
             Console.WriteLine( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
         }
 
