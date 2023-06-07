@@ -93,6 +93,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Binding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\CollisionProperties.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Body.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Kinetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\components\Statics.cs" />

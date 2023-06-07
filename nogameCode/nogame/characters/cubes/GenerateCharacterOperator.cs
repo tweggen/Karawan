@@ -5,6 +5,7 @@ using System.Numerics;
 using engine;
 using engine.world;
 using engine.streets;
+using nogame.playerhover;
 using static engine.Logger;   
 
 namespace nogame.characters.cubes
@@ -201,7 +202,10 @@ namespace nogame.characters.cubes
                             );
                             BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                             eTarget.Set(new engine.audio.components.MovingSound(_getCubeSound(), 150f));
-                            eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
+                            eTarget.Set(new engine.physics.components.Kinetic(
+                                prefSphere, 
+                                new engine.physics.CollisionProperties { Name = "nogame.characters.cube", IsTangible = false })
+                                );
                         });
 
                         wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);

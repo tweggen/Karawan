@@ -195,7 +195,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         );
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         eTarget.Set(new engine.audio.components.MovingSound(_getCar3Sound(), 150f));
-                        eTarget.Set(new engine.physics.components.Kinetic(prefSphere));
+                        eTarget.Set(new engine.physics.components.Kinetic(
+                            prefSphere, 
+                            new engine.physics.CollisionProperties { Name = "nogame.characters.car3", IsTangible = true })
+                        );
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);

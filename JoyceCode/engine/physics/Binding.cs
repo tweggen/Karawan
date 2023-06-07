@@ -4,7 +4,7 @@ using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuUtilities;
-using BepuUtilities.Collections;
+// using BepuUtilities.Collections;
 using BepuUtilities.Memory;
 
 namespace engine.physics;
@@ -17,7 +17,7 @@ public class Binding
 
     class EnginePhysicsEventHandler : physics.IContactEventHandler
     {
-        public Simulation Simulation;
+        // public Simulation Simulation;
         public Binding Binding;
 
         public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
@@ -71,7 +71,7 @@ public class Binding
             new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
             new SolveDescription(8, 1)
         );
-        enginePhysicsEventHandler.Simulation = Simulation;
+        // enginePhysicsEventHandler.Simulation = Simulation;
 
 
     }
