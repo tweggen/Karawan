@@ -27,15 +27,16 @@ namespace engine
         private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
         private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
 
-        private engine.IPlatform _platform;
+        private IPlatform _platform;
 
-        private engine.hierarchy.API _aHierarchy;
-        private engine.transform.API _aTransform;
+        private hierarchy.API _aHierarchy;
+        private transform.API _aTransform;
+        private physics.API _aPhysics;
 
-        private engine.behave.systems.BehaviorSystem _systemBehave;
-        private engine.physics.systems.ApplyPosesSystem _systemApplyPoses;
-        private engine.physics.systems.MoveKineticsSystem _systemMoveKinetics;
-        private engine.audio.systems.MovingSoundsSystem _systemMovingSounds;
+        private behave.systems.BehaviorSystem _systemBehave;
+        private physics.systems.ApplyPosesSystem _systemApplyPoses;
+        private physics.systems.MoveKineticsSystem _systemMoveKinetics;
+        private audio.systems.MovingSoundsSystem _systemMovingSounds;
 
         private SortedDictionary<float, IPart> _dictParts;
         
@@ -109,15 +110,21 @@ namespace engine
         }
         
 
-        public engine.hierarchy.API GetAHierarchy()
+        public hierarchy.API GetAHierarchy()
         {
             return _aHierarchy;
         }
 
 
-        public engine.transform.API GetATransform()
+        public transform.API GetATransform()
         {
             return _aTransform;
+        }
+
+
+        public physics.API GetAPhysics()
+        {
+            return _aPhysics;
         }
 
         
@@ -584,8 +591,9 @@ namespace engine
          */
         public void SetupDone()
         {
-            _aHierarchy = new engine.hierarchy.API(this);
-            _aTransform = new engine.transform.API(this);
+            _aHierarchy = new hierarchy.API(this);
+            _aTransform = new transform.API(this);
+            _aPhysics = new physics.API(this);
             _systemBehave = new(this);
             _systemApplyPoses = new(this);
             _systemMoveKinetics = new(this);

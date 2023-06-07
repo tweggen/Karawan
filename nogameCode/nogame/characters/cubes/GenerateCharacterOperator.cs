@@ -204,8 +204,10 @@ namespace nogame.characters.cubes
                             eTarget.Set(new engine.audio.components.MovingSound(_getCubeSound(), 150f));
                             eTarget.Set(new engine.physics.components.Kinetic(
                                 prefSphere, 
-                                new engine.physics.CollisionProperties { Name = "nogame.characters.cube", IsTangible = false })
-                                );
+                                // new engine.physics.CollisionProperties { Name = "nogame.characters.cube", IsTangible = false }
+                                null
+                                )
+                            );
                         });
 
                         wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);

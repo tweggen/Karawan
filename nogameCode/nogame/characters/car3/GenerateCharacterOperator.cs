@@ -89,6 +89,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
     {
+        var aPhysics = worldFragment.Engine.GetAPhysics();
+        
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
@@ -180,9 +182,14 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                                 .SetSpeed((40f+_rnd.getFloat()*30f+(float)carIdx * 20f)/3.6f)));
+
+                        eTarget.Set(new engine.audio.components.MovingSound(
+                            _getCar3Sound(), 150f));
+
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(
@@ -194,11 +201,11 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             )
                         );
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        eTarget.Set(new engine.audio.components.MovingSound(_getCar3Sound(), 150f));
-                        eTarget.Set(new engine.physics.components.Kinetic(
-                            prefSphere, 
-                            new engine.physics.CollisionProperties { Name = "nogame.characters.car3", IsTangible = true })
-                        );
+                        engine.physics.CollisionProperties collisionProperties = new engine.physics.CollisionProperties
+                            { Name = "nogame.characters.car3", IsTangible = true };
+                        aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
+                        eTarget.Set(new engine.physics.components.Kinetic( 
+                            prefSphere, collisionProperties ));
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);

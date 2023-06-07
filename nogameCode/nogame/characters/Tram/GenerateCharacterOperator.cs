@@ -201,7 +201,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.audio.components.MovingSound(_getTramSound(), 150f));
                         eTarget.Set(new engine.physics.components.Kinetic(
                             prefSphere, 
-                            new engine.physics.CollisionProperties { Name = "nogame.characters.tram", IsTangible = false })
+                            //new engine.physics.CollisionProperties { Name = "nogame.characters.tram", IsTangible = false }
+                            null
+                            )
                         );
                     });
 

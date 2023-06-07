@@ -32,14 +32,43 @@ namespace engine.physics
             }
         }
 
+
+        private void _removeKinetic(in components.Kinetic cKinetic)
+        {
+            _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
+            if (cKinetic.ReleaseActions != null)
+            {
+                foreach (var releaseAction in cKinetic.ReleaseActions)
+                {
+                    releaseAction();
+                }
+            }
+        }
+
+        
         private void OnStaticsChanged(in Entity entity, in components.Statics cOldStatics, in components.Statics cNewStatics)
         {
             // We need to assume the user added the new entity.
             _removeStatics(cOldStatics);
         }
+
+        
         private void OnStaticsRemoved(in Entity entity, in components.Statics cStatics)
         {
             _removeStatics(cStatics);
+        }
+
+
+        private void OnKineticChanged(in Entity entity, in components.Kinetic cOldKinetic, in components.Kinetic cNewKinetic)
+        {
+            // We need to assume the user added the new entity.
+            _removeKinetic(cOldKinetic);
+        }
+
+        
+        private void OnKineticRemoved(in Entity entity, in components.Kinetic cKinetic)
+        {
+            _removeKinetic(cKinetic);
         }
 
 
@@ -67,6 +96,8 @@ namespace engine.physics
                 // yield return w.SubscribeComponentAdded<components.Body>(OnComponentAdded);
                 /* yield return */ w.SubscribeEntityComponentChanged<components.Body>(OnBodyChanged);
                 /* yield return */ w.SubscribeEntityComponentRemoved<components.Body>(OnBodyRemoved);
+                /* yield return */ w.SubscribeEntityComponentChanged<components.Kinetic>(OnKineticChanged);
+                /* yield return */ w.SubscribeEntityComponentRemoved<components.Kinetic>(OnKineticRemoved);
                 /* yield return */ w.SubscribeEntityComponentChanged<components.Statics>(OnStaticsChanged);
                 /* yield return */ w.SubscribeEntityComponentRemoved<components.Statics>(OnStaticsRemoved);
             }
