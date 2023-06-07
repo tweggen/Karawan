@@ -94,7 +94,11 @@ namespace nogame.playerhover
                     );
                     _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
                 }
-                _eShip.Set(new engine.physics.components.Body(_prefShip));
+                engine.physics.CollisionProperties collisionProperties = new engine.physics.CollisionProperties
+                    { Name = "nogame.playerhover", IsTangible = true };
+                _engine.GetAPhysics().AddCollisionEntry(_prefShip.Handle, collisionProperties);
+                _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
+
                 /*
                  * Activate collision detection for ship.
                  */

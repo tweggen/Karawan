@@ -8,10 +8,18 @@ namespace engine.physics.components
     public struct Body
     {
         public BepuPhysics.BodyReference Reference;
+        public CollisionProperties CollisionProperties;
 
-        public Body(in BodyReference reference)
+        /**
+         * Release function to free any additional data beyond the handles,
+         * like shapes, data structures carrying shapes.
+         */
+        public IList<Action> ReleaseActions;
+
+        public Body(in BodyReference bodyReference, in CollisionProperties collisionProperties)
         {
-            Reference = reference;
+            Reference = bodyReference;
+            CollisionProperties = collisionProperties;
         }
     }
 }
