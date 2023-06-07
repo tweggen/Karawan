@@ -9,13 +9,13 @@ public class API
     
     private Engine _engine;
     
-    private SortedDictionary<BodyHandle, CollisionProperties> _mapCollisionProperties = new();
+    private SortedDictionary<int, CollisionProperties> _mapCollisionProperties = new();
 
     public bool GetCollisionProperties(in BodyHandle bodyHandle, out CollisionProperties collisionProperties)
     {
         lock (_lo)
         {
-            return _mapCollisionProperties.TryGetValue(bodyHandle, out collisionProperties);
+            return _mapCollisionProperties.TryGetValue(bodyHandle.Value, out collisionProperties);
         }
     }
     
@@ -26,7 +26,7 @@ public class API
     {
         lock (_lo)
         {
-            _mapCollisionProperties[bodyHandle] = collisionProperties;
+            _mapCollisionProperties[bodyHandle.Value] = collisionProperties;
         }
     }
 
@@ -37,7 +37,7 @@ public class API
     {
         lock (_lo)
         {
-            _mapCollisionProperties.Remove(bodyHandle);
+            _mapCollisionProperties.Remove(bodyHandle.Value);
         }
     }
     
