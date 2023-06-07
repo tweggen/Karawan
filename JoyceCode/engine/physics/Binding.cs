@@ -67,7 +67,9 @@ public class Binding
         enginePhysicsEventHandler.Binding = this;
         Simulation = Simulation.Create(
             BufferPool, 
-            new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(_contactEvents) /* { Properties = properties } */,
+            new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(
+                _engine,
+                _contactEvents) /* { Properties = properties } */,
             new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
             new SolveDescription(8, 1)
         );

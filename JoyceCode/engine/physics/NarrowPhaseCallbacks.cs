@@ -23,11 +23,13 @@ namespace engine.physics
     //with delegates or virtual dispatch and allows inlining, which is valuable for extremely high frequency logic like contact callbacks.
     internal unsafe struct NarrowPhaseCallbacks<TEventHandler> : INarrowPhaseCallbacks where TEventHandler : IContactEventHandler
     {
+        private Engine _engine;
         private ContactEvents<TEventHandler> _events;
 
-        public NarrowPhaseCallbacks(ContactEvents<TEventHandler> events)
+        public NarrowPhaseCallbacks(Engine engine, ContactEvents<TEventHandler> events)
         {
-            this._events = events;
+            _engine = engine;
+            _events = events;
         }
 
         /// <summary>
@@ -41,6 +43,65 @@ namespace engine.physics
             _events.Initialize(simulation.Bodies);
         }
 
+        private bool _simpleShallCollide(CollidableReference a, CollidableReference b)
+        {
+            /*
+             * Short circuit, only care about collisions with the player (that is the
+             * only dynamic object).
+             */
+            if (a.Mobility != CollidableMobility.Dynamic && b.Mobility != CollidableMobility.Dynamic)
+            {
+                return false;
+            }
+            
+            /*
+             * Try to obtain collision properties of either body.
+             *
+             * Currently, we only care about collision between dynamic and [static, kinetic] objects.
+             */
+            bool doACollide = false;
+            switch (a.Mobility)
+            {
+                case CollidableMobility.Dynamic:
+                    doACollide = true;
+                    break;
+                case CollidableMobility.Kinematic:
+                    bool haveProperties = _engine.GetAPhysics().GetCollisionProperties(a.BodyHandle, out var collisionProperties);
+                    if (haveProperties)
+                    {
+                        doACollide = collisionProperties.IsTangible;
+                    }
+
+                    break;
+                case CollidableMobility.Static:
+                    doACollide = true;
+                    break;
+            }
+
+            bool doBCollide = false;
+            switch (b.Mobility)
+            {
+                case CollidableMobility.Dynamic:
+                    doBCollide = true;
+                    break;
+                case CollidableMobility.Kinematic:
+                    bool haveProperties = _engine.GetAPhysics().GetCollisionProperties(b.BodyHandle, out var collisionProperties);
+                    if (haveProperties)
+                    {
+                        doBCollide = collisionProperties.IsTangible;
+                    }
+
+                    break;
+                case CollidableMobility.Static:
+                    doBCollide = true;
+                    break;
+            }
+
+            return doACollide && doBCollide;
+
+        }
+        
+        
         /// <summary>
         /// Chooses whether to allow contact generation to proceed for two overlapping collidables.
         /// </summary>
@@ -62,7 +123,8 @@ namespace engine.physics
 
             //This function also exposes the speculative margin. It can be validly written to, but that is a very rare use case.
             //Most of the time, you can ignore this function's speculativeMargin parameter entirely.
-            return a.Mobility == CollidableMobility.Dynamic || b.Mobility == CollidableMobility.Dynamic;
+            return _simpleShallCollide(a, b); 
+            // a.Mobility == CollidableMobility.Dynamic || b.Mobility == CollidableMobility.Dynamic;
         }
 
         /// <summary>
@@ -96,23 +158,33 @@ namespace engine.physics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
         {
-            //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
-            //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
+
+            /*
+             * Setup a bogus pair material.
 
             //The engine does not define any per-body material properties. Instead, all material lookup and blending operations are handled by the callbacks.
             //For the purposes of this demo, we'll use the same settings for all pairs.
             //(Note that there's no 'bounciness' or 'coefficient of restitution' property!
             //Bounciness is handled through the contact spring settings instead. Setting See here for more details: https://github.com/bepu/bepuphysics2/issues/3 and check out the BouncinessDemo for some options.)
+             */
             pairMaterial.FrictionCoefficient = 1f;
             pairMaterial.MaximumRecoveryVelocity = 2f;
             pairMaterial.SpringSettings = new SpringSettings(30, 1);
+
+            //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
+            //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
             _events.HandleManifold(workerIndex, pair, ref manifold);
 
-            // TXWTODO: Test: If one of them is a kinetic, no constraint is generated. i.e. fly through cubes
-            if (pair.A.Mobility == CollidableMobility.Kinematic || pair.B.Mobility == CollidableMobility.Kinematic)
+            bool shallCollide = _simpleShallCollide(pair.A, pair.B);
+            
+            /*
+             * If either one is not collidable, ignore it.
+             */
+            if (!shallCollide)
             {
                 return false;
             }
+
             return true;
         }
 
