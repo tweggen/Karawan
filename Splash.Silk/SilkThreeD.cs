@@ -558,7 +558,7 @@ public class SilkThreeD : IThreeD
             if (skRenderbuffer.IsUploaded())
             {
                 skRenderbuffer.Release(_getGL());
-            }
+            } 
         });
     }
 
