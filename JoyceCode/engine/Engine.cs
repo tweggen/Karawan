@@ -54,7 +54,6 @@ namespace engine
         private bool _isFullscreen = false;
         
         private physics.Manager _managerPhysics;
-        public readonly physics.Binding PhysicsBinding;
         public readonly SceneSequencer SceneSequencer;        
         
         public event EventHandler<float> LogicalFrame;
@@ -62,13 +61,13 @@ namespace engine
         public event EventHandler<uint> KeyEvent;
         
         public event EventHandler<physics.ContactInfo> OnContactInfo {
-            add => PhysicsBinding.OnContactInfo += value; remove => PhysicsBinding.OnContactInfo -= value;
+            add => _aPhysics.OnContactInfo += value; remove => _aPhysics.OnContactInfo -= value;
         } 
 
         
         public BepuPhysics.Simulation Simulation
         {
-            get => PhysicsBinding.Simulation;
+            get => _aPhysics.Simulation;
         }
 
         public enum EngineState {
@@ -277,12 +276,12 @@ namespace engine
 
         public void AddContactListener(DefaultEcs.Entity entity)
         {
-            PhysicsBinding.AddContactListener(entity);
+            _aPhysics.AddContactListener(entity);
         }
 
         public void RemoveContactListener(DefaultEcs.Entity entity)
         {
-            PhysicsBinding.RemoveContactListener(entity);
+            _aPhysics.RemoveContactListener(entity);
         }
 
 
@@ -404,7 +403,7 @@ namespace engine
             /*
              * Advance physics, based on new user input and/or gravitation.
              */
-            PhysicsBinding.Simulation.Timestep(dt);
+            _aPhysics.Simulation.Timestep(dt);
 
             /*
              * Apply poses needs input from simulation
@@ -634,7 +633,6 @@ namespace engine
             _ecsWorld = new DefaultEcs.World();
             _entityCommandRecorder = new(4096, 1024*1024);
             _dictParts = new();
-            PhysicsBinding = new physics.Binding(this);
             SceneSequencer = new(this);
         }
     }

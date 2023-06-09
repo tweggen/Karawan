@@ -13,6 +13,7 @@ namespace engine.physics
     {
         public Vector3 Gravity;
         Vector3Wide gravityWideDt;
+        
         public readonly bool AllowSubstepsForUnconstrainedBodies => false;
         public readonly bool IntegrateVelocityForKinematics => false;
 
