@@ -21,8 +21,12 @@ namespace nogame.playerhover
 
         private DefaultEcs.Entity _ePhysDisplay;
 
-        private readonly float LinearThrust = 100f;
+        private readonly float LinearThrust = 150f;
         private readonly float AngularThrust = 1.8f;
+        private readonly float MaxLinearVelocity = 50f;
+        private readonly float MaxAngularVelocity = 0.8f;
+        private readonly float LevelUpThrust = 16f;
+        private readonly float LevelDownThrust = 8f;
         
         private bool _hadCollision = false;
         public void HadCollision()
@@ -60,11 +64,11 @@ namespace nogame.playerhover
                 float properVelocity = 0f;
                 if ( deltaY < -threshDiff )
                 {
-                    properVelocity = 4f; // 1ms-1 up.
+                    properVelocity = LevelUpThrust; // 1ms-1 up.
                 }
                 else if( deltaY > threshDiff )
                 {
-                    properVelocity = -2f; // 1ms-1 down.
+                    properVelocity = -LevelDownThrust; // 1ms-1 down.
                 }
                 float deltaVelocity = properVelocity - vTargetVelocity.Y;
                 float fireRate = deltaVelocity;
@@ -148,13 +152,29 @@ namespace nogame.playerhover
                 Trace($"Too fast: {vTotalAngular.Length()}.");
             }
             
+            /*
+             * TXWTODO: Workaround to limit top speed.
+             */
+            if (vTargetVelocity.Length() > MaxLinearVelocity)
+            {
+                float vel = vTargetVelocity.Length();
+                vTotalImpulse += -(vTargetVelocity * (vel - MaxLinearVelocity) / vel) / dt;
+            }
+            if (vTargetAngularVelocity.Length() > MaxAngularVelocity)
+            {
+                float avel = vTargetAngularVelocity.Length();
+                vTotalAngular += -(vTargetAngularVelocity * (avel - MaxAngularVelocity) / avel) / dt;
+            }
+            
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
 
             _ePhysDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(20f, 240f),
-                new Vector2(100, 16),
-                $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}",
+                new Vector2(20f, 212f),
+                new Vector2(100, 30),
+                $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}\n"
+                +$"v: {vTargetVelocity.Length()}\n"
+                +$"a: {vTargetAngularVelocity.Length()}",
                 10,
                 0xff22aaee,
                 0x00000000
