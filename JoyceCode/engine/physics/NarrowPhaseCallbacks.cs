@@ -43,7 +43,7 @@ namespace engine.physics
             _events.Initialize(simulation.Bodies);
         }
 
-        private bool _simpleShallCollide(CollidableReference a, CollidableReference b)
+        private bool _simpleShallCollide(CollidableReference a, CollidableReference b, bool alsoCollide)
         {
             /*
              * Short circuit, only care about collisions with the player (that is the
@@ -53,6 +53,8 @@ namespace engine.physics
             {
                 return false;
             }
+
+            CollisionProperties propsA, propsB;
             
             /*
              * Try to obtain collision properties of either body.
@@ -60,44 +62,60 @@ namespace engine.physics
              * Currently, we only care about collision between dynamic and [static, kinetic] objects.
              */
             bool doACollide = false;
+            bool doADetect = false;
             switch (a.Mobility)
             {
                 case CollidableMobility.Dynamic:
                     doACollide = true;
+                    doADetect = true;
                     break;
+                
                 case CollidableMobility.Kinematic:
-                    bool haveProperties = _engine.GetAPhysics().GetCollisionProperties(a.BodyHandle, out var collisionProperties);
-                    if (haveProperties)
+                    if(_engine.GetAPhysics().GetCollisionProperties(a.BodyHandle, out propsA))
                     {
-                        doACollide = collisionProperties.IsTangible;
+                        doACollide = propsA.IsTangible;
+                        doADetect = propsA.IsDetectable;
                     }
-
                     break;
+                
                 case CollidableMobility.Static:
+                    // TXWTODO: Read/store collision properties for static objects.
                     doACollide = true;
+                    doADetect = true;
                     break;
             }
 
             bool doBCollide = false;
+            bool doBDetect = false;
             switch (b.Mobility)
             {
                 case CollidableMobility.Dynamic:
                     doBCollide = true;
+                    doBDetect = true;
                     break;
+                
                 case CollidableMobility.Kinematic:
-                    bool haveProperties = _engine.GetAPhysics().GetCollisionProperties(b.BodyHandle, out var collisionProperties);
-                    if (haveProperties)
+                    if(_engine.GetAPhysics().GetCollisionProperties(b.BodyHandle, out propsB))
                     {
-                        doBCollide = collisionProperties.IsTangible;
+                        doBCollide = propsB.IsTangible;
+                        doBDetect = propsB.IsDetectable;
                     }
 
                     break;
                 case CollidableMobility.Static:
                     doBCollide = true;
+                    doBDetect = true;
                     break;
             }
 
-            return doACollide && doBCollide;
+            if (alsoCollide)
+            {
+                return doACollide && doBCollide;
+            }
+            else
+            {
+                return doADetect && doBDetect;
+            }
 
         }
         
@@ -123,7 +141,7 @@ namespace engine.physics
 
             //This function also exposes the speculative margin. It can be validly written to, but that is a very rare use case.
             //Most of the time, you can ignore this function's speculativeMargin parameter entirely.
-            return _simpleShallCollide(a, b); 
+            return _simpleShallCollide(a, b, false); 
             // a.Mobility == CollidableMobility.Dynamic || b.Mobility == CollidableMobility.Dynamic;
         }
 
@@ -175,7 +193,7 @@ namespace engine.physics
             //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
             _events.HandleManifold(workerIndex, pair, ref manifold);
 
-            bool shallCollide = _simpleShallCollide(pair.A, pair.B);
+            bool shallCollide = _simpleShallCollide(pair.A, pair.B, true);
             
             /*
              * If either one is not collidable, ignore it.
