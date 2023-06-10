@@ -79,6 +79,7 @@ namespace nogame
             _engine = null;
 
         }
+        
 
         public void SceneActivate(engine.Engine engine0)
         {
@@ -109,7 +110,7 @@ namespace nogame
                 );
             }
 
-            if (engine.GlobalSettings.Get("world.CreateCar3Characters") != "false")
+            if (false && engine.GlobalSettings.Get("world.CreateCar3Characters") != "false")
             {
                 _worldMetaGen.AddClusterFragmentOperatorFactory(
                     (string newKey, engine.world.ClusterDesc clusterDesc) =>

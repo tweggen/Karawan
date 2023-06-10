@@ -280,15 +280,17 @@ namespace nogame.cities
         }
 
 
-        public void NavigatorSetSpeed( float speed )
+        public StreetNavigationController NavigatorSetSpeed( float speed )
         {
             _speed = speed;
+            return this;
         }
 
         
-        public void NavigatorSetHeight( float height )
+        public StreetNavigationController NavigatorSetHeight( float height )
         {
             _height = height;
+            return this;
         }
 
         

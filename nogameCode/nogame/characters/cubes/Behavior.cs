@@ -18,7 +18,8 @@ namespace nogame.characters.cubes
                 entity,
                 true, 0x0000ffff,
                 _snc.NavigatorGetOrientation(),
-                engine.world.MetaGen.Instance().Loader.ApplyNavigationHeight(_snc.NavigatorGetWorldPos())
+                engine.world.MetaGen.Instance().Loader.ApplyNavigationHeight(
+                    _snc.NavigatorGetWorldPos(), 1f)
             );
         }
 

@@ -12,6 +12,7 @@ namespace nogame.characters.cubes
 {
     internal class GenerateCharacterOperator : engine.world.IFragmentOperator
     {
+        public static readonly string PhysicsName = "nogame.characters.cube";
         private static object _classLock = new();
         private static engine.joyce.Material _jMaterialCube;
         private static engine.joyce.Material _getCubeMaterial()
@@ -116,7 +117,7 @@ namespace nogame.characters.cubes
                 }
             }
 
-            if (_trace) Trace( $"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+            if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
             _rnd.clear();
 
             /*
@@ -204,8 +205,8 @@ namespace nogame.characters.cubes
                             eTarget.Set(new engine.audio.components.MovingSound(_getCubeSound(), 150f));
                             eTarget.Set(new engine.physics.components.Kinetic(
                                 prefSphere, 
-                                // new engine.physics.CollisionProperties { Name = "nogame.characters.cube", IsTangible = false }
-                                null
+                                new engine.physics.CollisionProperties { Name = "nogame.characters.cube", IsTangible = false }
+                                // null
                                 )
                             );
                         });

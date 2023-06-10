@@ -11,6 +11,8 @@ namespace engine.physics
         public Vector3 ContactOffset;
         public Vector3 ContactNormal;
         public float Depth;
+        public CollisionProperties PropertiesA;
+        public CollisionProperties PropertiesB;
 
         public ContactInfo(
             CollidableReference eventSource, 

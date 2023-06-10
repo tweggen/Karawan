@@ -14,6 +14,7 @@ namespace engine.physics;
  * Implements the binding of the physics engine to the main game engine.
  */
 public class API
+    : physics.IContactEventHandler
 {
     private object _lo = new();
 
@@ -24,24 +25,46 @@ public class API
     public event EventHandler<physics.ContactInfo> OnContactInfo;
 
     
-    class EnginePhysicsEventHandler : physics.IContactEventHandler
+    public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
+        in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
     {
-        // public Simulation Simulation;
-        public API API;
+        physics.ContactInfo contactInfo = new(
+            eventSource, pair, contactOffset, contactNormal, depth);
 
-        public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
-            in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
+        lock (_lo)
         {
-            physics.ContactInfo contactInfo = new(
-                eventSource, pair, contactOffset, contactNormal, depth);
-            API.OnContactInfo?.Invoke(this, contactInfo);
+            switch (pair.A.Mobility)
+            {
+                case CollidableMobility.Dynamic:
+                case CollidableMobility.Kinematic:
+                    _mapCollisionProperties.TryGetValue(pair.A.BodyHandle.Value, out contactInfo.PropertiesA);
+                    break;
+                case CollidableMobility.Static:
+                    _mapCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out contactInfo.PropertiesA);
+                    break;
+            }
+            
+            switch (pair.B.Mobility)
+            {
+                case CollidableMobility.Dynamic:
+                case CollidableMobility.Kinematic:
+                    _mapCollisionProperties.TryGetValue(pair.B.BodyHandle.Value, out contactInfo.PropertiesB);
+                    break;
+                case CollidableMobility.Static:
+                    _mapCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out contactInfo.PropertiesB);
+                    break;
+            }
+
+            // TXWTODO: Get/Filter out by name
         }
+
+        OnContactInfo?.Invoke(this, contactInfo);
     }
 
 
     public Simulation Simulation { get; private set;  }
     public BufferPool BufferPool { get; private set; }
-    private physics.ContactEvents<EnginePhysicsEventHandler> _contactEvents;
+    private physics.ContactEvents<API> _contactEvents;
     private ThreadDispatcher  _physicsThreadDispatcher;
 
     
@@ -107,24 +130,20 @@ public class API
         _engine = engine;
         BufferPool = new BufferPool();
         _physicsThreadDispatcher = new(4);
-        EnginePhysicsEventHandler enginePhysicsEventHandler = new();
-        _contactEvents = new physics.ContactEvents<EnginePhysicsEventHandler>(
-            enginePhysicsEventHandler,
+        _contactEvents = new physics.ContactEvents<API>(
+            this,
             BufferPool,
             _physicsThreadDispatcher
         );
-        enginePhysicsEventHandler.API = this;
         Simulation = Simulation.Create(
             BufferPool, 
-            new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(
+            new physics.NarrowPhaseCallbacks<API>(
                 _engine,
                 _contactEvents) /* { Properties = properties } */,
             new physics.PoseIntegratorCallbacks(engine,
                 new Vector3(0, -9.81f, 0)),
             new SolveDescription(8, 1)
         );
-        // enginePhysicsEventHandler.Simulation = Simulation;
-
 
     }
 }

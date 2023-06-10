@@ -4,11 +4,16 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using System.Threading.Tasks.Dataflow;
+using engine.physics;
+using static engine.Logger;
 
 namespace nogame.playerhover
 {
     internal class Part : engine.IPart
     {
+        static public readonly string PhysicsName = "nogame.playerhover";
+        
         private readonly object _lock = new object();
 
         private engine.Engine _engine;
@@ -27,8 +32,51 @@ namespace nogame.playerhover
 
         private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
         {
-            _controllerWASDPhysics.HadCollision();
-            Console.WriteLine( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
+            /*
+             * If this contact involved us, we store the other contact info in this variable.
+             * If the other does not have collision properties, this variable also is empty.
+             */
+            CollisionProperties other = null;
+            
+            Trace( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
+            CollisionProperties propsA = contactInfo.PropertiesA;
+            CollisionProperties propsB = contactInfo.PropertiesB;
+
+            if (null != propsA)
+            {
+                Trace( $"A: {{ Name: \"{ propsA.Name }\" }}");
+                if (propsA.Name == PhysicsName)
+                {
+                    if (propsB != null)
+                    {
+                        other = propsB;
+                    }
+                }
+            }
+            if (null != propsB)
+            {
+                Trace( $"B: {{ Name: \"{ propsB.Name }\" }}");
+                if (propsB.Name == PhysicsName)
+                {
+                    if (propsA != null)
+                    {
+                        other = propsA;
+                    }
+                }
+            }
+
+            if (other == null)
+            {
+                return;
+            }
+            
+            /*
+             * Now let's check for explicit other components.
+             */
+            if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
+            {
+                Trace($"Cube");
+            }
         }
 
         public void PartDeactivate()
@@ -95,8 +143,9 @@ namespace nogame.playerhover
                     );
                     _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
                 }
-                engine.physics.CollisionProperties collisionProperties = new engine.physics.CollisionProperties
-                    { Name = "nogame.playerhover", IsTangible = true };
+                engine.physics.CollisionProperties collisionProperties = 
+                    new engine.physics.CollisionProperties
+                    { Name = PhysicsName, IsTangible = true };
                 _engine.GetAPhysics().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
 
@@ -116,6 +165,7 @@ namespace nogame.playerhover
             _engine.AddPart(0, scene0, this);
         }
 
+        
         public Part()
         {
         }

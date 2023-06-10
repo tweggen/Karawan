@@ -369,9 +369,9 @@ return molArrayMap;
         }
 
         
-        public Vector3 ApplyNavigationHeight(in Vector3 position)
+        public Vector3 ApplyNavigationHeight(in Vector3 position, float heightOffset=0)
         {
-            return new Vector3(position.X, GetNavigationHeightAt(position), position.Z);
+            return new Vector3(position.X, heightOffset + GetNavigationHeightAt(position), position.Z);
         }
 
         
