@@ -110,7 +110,7 @@ namespace nogame
                 );
             }
 
-            if (false && engine.GlobalSettings.Get("world.CreateCar3Characters") != "false")
+            if (engine.GlobalSettings.Get("world.CreateCar3Characters") != "false")
             {
                 _worldMetaGen.AddClusterFragmentOperatorFactory(
                     (string newKey, engine.world.ClusterDesc clusterDesc) =>

@@ -201,8 +201,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             )
                         );
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        engine.physics.CollisionProperties collisionProperties = new engine.physics.CollisionProperties
-                            { Name = "nogame.characters.car3", IsTangible = true };
+                        engine.physics.CollisionProperties collisionProperties = 
+                            new engine.physics.CollisionProperties
+                                { Name = "nogame.characters.car3", IsTangible = true };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.physics.components.Kinetic( 
                             prefSphere, collisionProperties ));

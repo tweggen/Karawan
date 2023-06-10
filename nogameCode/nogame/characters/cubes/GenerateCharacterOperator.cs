@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading;
 using engine;
 using engine.world;
 using engine.streets;
@@ -93,6 +94,8 @@ namespace nogame.characters.cubes
         
         public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
         {
+            var aPhysics = worldFragment.Engine.GetAPhysics();
+
             float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
             float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
@@ -202,12 +205,13 @@ namespace nogame.characters.cubes
                                 )
                             );
                             BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                            engine.physics.CollisionProperties collisionProperties =
+                                new engine.physics.CollisionProperties
+                                    { Name = "nogame.characters.cube", IsTangible = false };
+                            aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                             eTarget.Set(new engine.audio.components.MovingSound(_getCubeSound(), 150f));
                             eTarget.Set(new engine.physics.components.Kinetic(
-                                prefSphere, 
-                                new engine.physics.CollisionProperties { Name = "nogame.characters.cube", IsTangible = false }
-                                // null
-                                )
+                                prefSphere, collisionProperties )
                             );
                         });
 
