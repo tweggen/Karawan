@@ -119,7 +119,8 @@ public class API
             new physics.NarrowPhaseCallbacks<EnginePhysicsEventHandler>(
                 _engine,
                 _contactEvents) /* { Properties = properties } */,
-            new physics.PoseIntegratorCallbacks(new Vector3(0, -9.81f, 0)),
+            new physics.PoseIntegratorCallbacks(engine,
+                new Vector3(0, -9.81f, 0)),
             new SolveDescription(8, 1)
         );
         // enginePhysicsEventHandler.Simulation = Simulation;

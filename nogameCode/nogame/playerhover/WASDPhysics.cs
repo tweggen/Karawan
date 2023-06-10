@@ -21,6 +21,9 @@ namespace nogame.playerhover
 
         private DefaultEcs.Entity _ePhysDisplay;
 
+        private readonly float LinearThrust = 100f;
+        private readonly float AngularThrust = 1.8f;
+        
         private bool _hadCollision = false;
         public void HadCollision()
         {
@@ -39,6 +42,10 @@ namespace nogame.playerhover
 
             /*
              * Balance height first.
+             *
+             * Create an impulse appropriate to work against the
+             * gravity. Note, that the empty impulse is pre-set with
+             * an impulse to accelerate against gravity.
              */
             Vector3 vTargetPos = _prefTarget.Pose.Position;
             Vector3 vTargetVelocity = _prefTarget.Velocity.Linear;
@@ -83,23 +90,22 @@ namespace nogame.playerhover
 
             if (frontMotion != 0f)
             {
-                float power = 40f;
                 // The acceleration looks wrong when combined with rotation.
-                vTotalImpulse += power * vFront * frontMotion / 256f;
+                vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
             }
             var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
             if (turnMotion != 0f)
             {
                 // TXWTODO: This does a turn that looks ríght.
-                vTotalAngular += new Vector3(0f, -turnMotion / 256f, 0f);
+                vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
             }
 
             /*
              * Now apply a damping on velocity, i.e. computing linear and angular impulses
              * proportional to the velocity
              */
-            vTotalImpulse += vTargetVelocity * -0.8f;
-            vTotalAngular += vTargetAngularVelocity * -0.8f;
+            // vTotalImpulse += vTargetVelocity * -0.8f;
+            // vTotalAngular += vTargetAngularVelocity * -0.8f;
 
             /*
              * Also, try to rotate me back to horizontal plane.
