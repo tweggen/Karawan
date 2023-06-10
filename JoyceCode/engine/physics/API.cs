@@ -29,7 +29,8 @@ public class API
     public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
         in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
     {
-        Trace($"having contact.");
+        // Trace($"having contact.");
+        
         physics.ContactInfo contactInfo = new(
             eventSource, pair, contactOffset, contactNormal, depth);
 
