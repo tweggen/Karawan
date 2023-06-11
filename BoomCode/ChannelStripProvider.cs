@@ -201,7 +201,7 @@ namespace Boom
                  */
                 for (int n = 0; n < outAvailable; ++n)
                 {
-#if false
+#if true
                     int e12l = e12Left + e12CurrLeft / outAvailable;
                     int e12r = e12Right + e12CurrRight / outAvailable;
                     e12DiffLeft += e12DiffLeft;
@@ -228,7 +228,7 @@ namespace Boom
                  */
                 for (int n = 0; n < outAvailable; ++n)
                 {
-#if false
+#if true
                     int e12l = e12Left + e12CurrLeft / outAvailable;
                     int e12r = e12Right + e12CurrRight / outAvailable;
                     e12DiffLeft += e12DiffLeft;

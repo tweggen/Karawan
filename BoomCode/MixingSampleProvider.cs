@@ -115,7 +115,7 @@ namespace Boom
         public int Read(float[] buffer, int offset, int count)
         {
             // TXWTODO: Hack: In this context, ensure top priority
-            if (false) {
+            if (true) {
                 var thread = Thread.CurrentThread;
                 var prio = thread.Priority;
                 if (prio != ThreadPriority.Highest)
