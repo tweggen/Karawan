@@ -186,11 +186,12 @@ namespace nogame.characters.cubes
                         var wf = worldFragment;
 
 
+                        var speed = 25f + _rnd.getFloat() * 15f;
                         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                         {
                             eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                             eTarget.Set(new engine.behave.components.Behavior(
-                                new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)));
+                                new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));
                             eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
                                 new Vector3(_rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f),
                                 _rnd.getFloat()*2f * (float)Math.PI / 180f)));
@@ -209,7 +210,8 @@ namespace nogame.characters.cubes
                                 new engine.physics.CollisionProperties
                                     { Name = "nogame.characters.cube", IsTangible = false };
                             aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
-                            eTarget.Set(new engine.audio.components.MovingSound(_getCubeSound(), 150f));
+                            eTarget.Set(new engine.audio.components.MovingSound(
+                                _getCubeSound(), 150f));
                             eTarget.Set(new engine.physics.components.Kinetic(
                                 prefSphere, collisionProperties )
                             );
