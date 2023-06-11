@@ -3,10 +3,11 @@
 using Boom.systems;
 using BoomCode.systems;
 using engine;
+using static engine.Logger;
 
 namespace Boom
 {
-    public class API
+    public class API : engine.ISoundAPI
     {
         private object _lo = new();
 
@@ -38,11 +39,29 @@ namespace Boom
             _updateMovingSoundsSystem.Update(dt);
         }
 
+
+        public void StopSound(string uri)
+        {
+            ErrorThrow("Not yet implemented", (m) => new InvalidOperationException(m));
+        }
+        
+        
+        public void PlaySound(string uri)
+        {
+            AudioPlaybackEngine.Instance.FindCachedSound(
+                uri, (CachedSound cachedSound) =>
+            {
+                AudioPlaybackEngine.Instance.PlaySound(cachedSound);
+            });
+        }
+        
+        
         public void SetupDone()
         {
             _engine.LogicalFrame += _onLogicalFrame;
         }
 
+        
         public API(Engine engine)
         {
             _engine = engine;

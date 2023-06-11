@@ -65,7 +65,7 @@ namespace Boom
         }
 
         
-        public void StopSound(in Sound sound)
+        public void StopSound(Sound sound)
         {
             lock (_lo)
             {
@@ -83,7 +83,7 @@ namespace Boom
             _mixer.FadeoutMixerInput(sound);
         }
 
-        public void PlaySound(in Sound sound)
+        public void PlaySound(Sound sound)
         {
             lock (_lo)
             {

@@ -30,6 +30,47 @@ namespace nogame.playerhover
 
         private const float MassShip = 500f;
 
+
+        private int _plingCounter;
+        private static readonly int FirstPling = 1;
+        private static readonly int LastPling = 19;
+
+
+        private void _playPling(int plingCounter)
+        {
+            string plingName = $"pling{(plingCounter):D2}.ogg";
+            _engine.GetASound()?.PlaySound(plingName);
+        }
+        
+
+        private void _nextCubeCollected()
+        {
+            int playPling = 0;
+            lock (_lock)
+            {
+                playPling = _plingCounter;
+                if (_plingCounter == LastPling)
+                {
+                    _plingCounter = FirstPling;
+                }
+                else
+                {
+                    ++_plingCounter;
+                }
+            }
+            
+            _playPling(playPling);
+        }
+
+        
+        private void _resetPling()
+        {
+            lock (_lock)
+            {
+                _plingCounter = FirstPling;
+            }
+        }
+
         private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
         {
             /*
@@ -76,6 +117,7 @@ namespace nogame.playerhover
             if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
             {
                 Trace($"Cube");
+                _nextCubeCollected();
             }
         }
 
@@ -155,6 +197,8 @@ namespace nogame.playerhover
                 _engine.AddContactListener(_eShip);
             }
 
+            _resetPling();
+            
             /*
              * And the ship's controller
              */

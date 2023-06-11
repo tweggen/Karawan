@@ -227,6 +227,7 @@ namespace Karawan
             }            
             
             Boom.API boom = new(e);
+            e.SetSoundAPI(boom);
 
             // Add the engine web service to the host.
             // app.MapGrpcService<GreeterService>();
