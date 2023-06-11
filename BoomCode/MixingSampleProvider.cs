@@ -182,7 +182,7 @@ namespace Boom
                         float invFadeLength = 1f / (float)fadeLength;
                         for (int n = 0; n < fadeLength; n++)
                         {
-                            buffer[outIndex++] += ((float)fadeLength-n) * _sourceBuffer[n] / invFadeLength;
+                            buffer[outIndex++] += ((float)fadeLength-n) * _sourceBuffer[n] * invFadeLength;
                         }
 
                         fadeoutSources.Remove(source);
