@@ -152,8 +152,14 @@ namespace Boom
             int inAvailable = totalSamplesRequested;
             // TXWTODO: test inAvailable
             int outAvailable = framesRequested;
+            int intInEffectiveRate = (int)inEffectiveRate;
+            int intOutEffectiveRate = (int)outSamplingRate;
+            int totalOfs = 0;
+            int maxInOffset = inAvailable - 1;
             for (int n = 0; n < framesRequested; n++)
             {
+                // int inOffset = Int32.Min(maxInOffset, totalOfs / intOutEffectiveRate);
+                // totalOfs += intInEffectiveRate;
                 int inOffset = Int32.Min(inAvailable-1,(n*(int)inEffectiveRate) / (int)outSamplingRate);
                 resampleOutBuffer[outOffset+n] = inBuffer[inOffset];
             }
@@ -173,6 +179,17 @@ namespace Boom
             int outAvailable = _wdlResampler.ResampleOut(resampleOutBuffer, outOffset, inAvailable, framesRequested, inChannels);
 #endif
 
+            int e12LastLeft = (int)(_lastLeft * 4096f);
+            int e12LastRight = (int)(_lastRight * 4096f);
+            int e12Left = (int)(left * 4096);
+            int e12Right = (int)(right * 4096f);
+            int e12DiffLeft = e12Left - e12LastLeft;
+            int e12DiffRight = e12Right - e12LastRight;
+
+            int e12CurrLeft = 0;
+            int e12CurrRight = 0;
+                
+
             /*
              * We might or might not have the same number of channels in the output buffer than in the input buffer.
              * No matter which way, apply volume and pan and copy if req'd.
@@ -184,10 +201,21 @@ namespace Boom
                  */
                 for (int n = 0; n < outAvailable; ++n)
                 {
+#if false
+                    int e12l = e12Left + e12CurrLeft / outAvailable;
+                    int e12r = e12Right + e12CurrRight / outAvailable;
+                    e12DiffLeft += e12DiffLeft;
+                    e12DiffRight += e12DiffRight;
+
+                    buffer[offset + n * 2 + 0] = e12l * buffer[offset + n * 2 + 0] * (1f/4096f);
+                    buffer[offset + n * 2 + 1] = e12r * buffer[offset + n * 2 + 1] * (1f/4096f); 
+#else
+
                     float l = _lastLeft + (float)((left - _lastLeft) * n) / (float)outAvailable;
                     float r = _lastRight + (float)((right - _lastRight) * n) / (float)outAvailable;
                     buffer[offset + n * 2 + 0] = l * buffer[offset + n * 2 + 0];
                     buffer[offset + n * 2 + 1] = r * buffer[offset + n * 2 + 1];
+#endif
                 }
             }
             else
@@ -200,12 +228,23 @@ namespace Boom
                  */
                 for (int n = 0; n < outAvailable; ++n)
                 {
+#if false
+                    int e12l = e12Left + e12CurrLeft / outAvailable;
+                    int e12r = e12Right + e12CurrRight / outAvailable;
+                    e12DiffLeft += e12DiffLeft;
+                    e12DiffRight += e12DiffRight;
+
+                    float sourceValue = resampleOutBuffer[n];
+                    buffer[offset + n * 2 + 0] = e12l * sourceValue * (1f/4096f);
+                    buffer[offset + n * 2 + 1] = e12r * sourceValue * (1f/4096f); 
+#else
                     float scale = (float)n / (float)outAvailable;
                     float sourceValue = resampleOutBuffer[n];
                     float l = _lastLeft + (float)(left - _lastLeft) * scale;
                     float r = _lastRight + (float)(right - _lastRight) * scale;
                     buffer[offset + n * 2 + 0] = l * sourceValue;
                     buffer[offset + n * 2 + 1] = r * sourceValue;
+#endif
                 }
             }
 

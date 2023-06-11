@@ -114,6 +114,16 @@ namespace Boom
         /// <returns>Number of samples read</returns>
         public int Read(float[] buffer, int offset, int count)
         {
+            // TXWTODO: Hack: In this context, ensure top priority
+            if (false) {
+                var thread = Thread.CurrentThread;
+                var prio = thread.Priority;
+                if (prio != ThreadPriority.Highest)
+                {
+                    thread.Priority = ThreadPriority.Highest;
+                }
+            }
+            
             /*
              * We need a local copy of the sources.
              */
@@ -169,9 +179,10 @@ namespace Boom
                         int outIndex = offset + totalBytesRead;
                         const int maxFade = 20;
                         int fadeLength = Int32.Max(maxFade, samplesRead);
+                        float invFadeLength = 1f / (float)fadeLength;
                         for (int n = 0; n < fadeLength; n++)
                         {
-                            buffer[outIndex++] += ((float)fadeLength-n) * _sourceBuffer[n] / (float)fadeLength;
+                            buffer[outIndex++] += ((float)fadeLength-n) * _sourceBuffer[n] / invFadeLength;
                         }
 
                         fadeoutSources.Remove(source);
