@@ -3,6 +3,10 @@ using static engine.Logger;
 
 namespace Boom
 {
+    /**
+     * Implements the data of a specific sound.
+     * Implements no intelligence at all.
+     */
     public class CachedSound
     {
         public float[] AudioData { get; private set; }

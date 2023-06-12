@@ -2,6 +2,9 @@
 
 namespace Boom
 {
+    /**
+     * Implement a sample provider around a cached sound source.
+     */
     public class CachedSoundSampleProvider : ISampleProvider
     {
         private readonly CachedSound cachedSound;

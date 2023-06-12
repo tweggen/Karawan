@@ -22,6 +22,23 @@ namespace Boom
         private SortedDictionary<string, CachedSound> _cachedSoundDictionary = new();
         private SortedDictionary<Sound, Sound> _runningSounds = new();
 
+
+        private void _onMixerInputEnded(object? sender, SampleProviderEventArgs args)
+        {
+            ISampleProvider iSampleProvider = args.SampleProvider;
+            if (null == iSampleProvider)
+            {
+                return;
+            }
+
+            if (iSampleProvider.GetType() == typeof(Sound))
+            {
+                Sound sound = iSampleProvider as Sound;
+                sound.Dispose();
+            }
+        }
+        
+        
         private bool _traceStartStop()
         {
             return engine.GlobalSettings.Get("boom.AudioPlaybackEngine.TraceStartStop") == "true";
@@ -103,7 +120,8 @@ namespace Boom
 
         public void PlaySound(CachedSound sound)
         {
-            _mixer.AddMixerInput(new CachedSoundSampleProvider(sound));
+            CachedSoundSampleProvider sampleProvider = new(sound);
+            _mixer.AddMixerInput(sampleProvider);
         }
 
 
@@ -126,6 +144,7 @@ namespace Boom
                 WaveFormat.CreateIeeeFloatWaveFormat(
                     sampleRate,
                     channelCount));
+            _mixer.MixerInputEnded += _onMixerInputEnded;
             outputDevice.Init(_mixer);
             _outputDevice = outputDevice;
             outputDevice.Play();

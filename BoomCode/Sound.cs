@@ -4,6 +4,9 @@ using NAudio.Wave;
 namespace Boom
 {
 
+    /**
+     * Implements an entire channel source with volume, speed and panning.
+     */
     public class Sound : ISampleProvider, IDisposable, IComparable<Sound>
     {
         static private int _nextId = 0;

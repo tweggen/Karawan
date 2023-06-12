@@ -9,6 +9,26 @@ using static engine.Logger;
 namespace Boom
 {
     /// <summary>
+    /// SampleProvider event args
+    /// </summary>
+    public class SampleProviderEventArgs : EventArgs
+    {
+        /// <summary>
+        /// Constructs a new SampleProviderEventArgs
+        /// </summary>
+        public SampleProviderEventArgs(ISampleProvider sampleProvider)
+        {
+            SampleProvider = sampleProvider;
+        }
+
+        /// <summary>
+        /// The Sample Provider
+        /// </summary>
+        public ISampleProvider SampleProvider { get; private set; }
+    }
+
+    
+    /// <summary>
     /// A sample provider mixer, allowing inputs to be added and removed
     /// </summary>
     public class MixingSampleProvider : ISampleProvider
@@ -251,23 +271,5 @@ namespace Boom
         }
 
 
-        /// <summary>
-        /// SampleProvider event args
-        /// </summary>
-        public class SampleProviderEventArgs : EventArgs
-        {
-            /// <summary>
-            /// Constructs a new SampleProviderEventArgs
-            /// </summary>
-            public SampleProviderEventArgs(ISampleProvider sampleProvider)
-            {
-                SampleProvider = sampleProvider;
-            }
-
-            /// <summary>
-            /// The Sample Provider
-            /// </summary>
-            public ISampleProvider SampleProvider { get; private set; }
-        }
     }
 }
