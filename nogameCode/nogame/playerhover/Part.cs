@@ -79,13 +79,13 @@ namespace nogame.playerhover
              */
             CollisionProperties other = null;
             
-            Trace( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
+            // Trace( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
             CollisionProperties propsA = contactInfo.PropertiesA;
             CollisionProperties propsB = contactInfo.PropertiesB;
 
             if (null != propsA)
             {
-                Trace( $"A: {{ Name: \"{ propsA.Name }\" }}");
+                // Trace( $"A: {{ Name: \"{ propsA.Name }\" }}");
                 if (propsA.Name == PhysicsName)
                 {
                     if (propsB != null)
@@ -96,7 +96,7 @@ namespace nogame.playerhover
             }
             if (null != propsB)
             {
-                Trace( $"B: {{ Name: \"{ propsB.Name }\" }}");
+                // Trace( $"B: {{ Name: \"{ propsB.Name }\" }}");
                 if (propsB.Name == PhysicsName)
                 {
                     if (propsA != null)
@@ -116,7 +116,7 @@ namespace nogame.playerhover
              */
             if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
             {
-                Trace($"Cube");
+                // Trace($"Cube");
                 _nextCubeCollected();
             }
         }
