@@ -34,7 +34,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             _framebuffer.ClearRectangle(_dc, ul, lr);
             // TXWTODO: We ignore the font size.
             _dc.TextColor = osdText.TextColor;
-            _framebuffer.DrawText(_dc, ul, lr, osdText.Text);
+            _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
         }
     }
 

@@ -51,7 +51,7 @@ public class Part : engine.IPart
         dc.TextColor = 0xff22aaee;
         _framebuffer.DrawText(dc,
             new Vector2( 30, 100), new Vector2(45, _height-50 ),
-            "Systems activated.");
+            "Systems activated.", 10);
     }
         
     private void _testFramebuffer()

@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -20,14 +21,13 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     
     private FontCollection _fontCollection;
     private FontFamily _ffPrototype;
-    private Font _fontPrototype;
-    private string _resourcePath;
     
     private uint _generation = 0;
 
     private Vector2 _ulModified;
     private Vector2 _lrModified;
 
+    private SortedDictionary<string, Font> _mapFont = new();
 
     private void _resetModified()
     {
@@ -137,10 +137,10 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         }
     }
 
-    public void DrawText(Context context, Vector2 ul, Vector2 lr, string text)
+    public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize)
     {
         _image.Mutate(x=> x.DrawText(
-            _doText, text, _fontPrototype, 
+            _doText, text, _mapFont[$"Prototype {fontSize}"], 
             _col(context.TextColor),
             new PointF(ul.X, ul.Y)));    
         lock (_lo)
@@ -181,7 +181,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     public MemoryFramebuffer(uint width, uint height)
     {
         _image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>((int)width, (int)height);
-        _resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
+        //_resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
         _resetModified();
 
         _fontCollection = new();
@@ -199,7 +199,8 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
                 _ffPrototype = _fontCollection.Add(ms);
             }
         }
-        _fontPrototype = _ffPrototype.CreateFont(10, FontStyle.Regular);
+        _mapFont[$"Prototype 10"] = _ffPrototype.CreateFont(10, FontStyle.Regular);
+        _mapFont[$"Prototype 30"] = _ffPrototype.CreateFont(30, FontStyle.Regular);
     }
 
 }

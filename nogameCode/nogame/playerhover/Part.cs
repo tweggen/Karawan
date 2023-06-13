@@ -26,12 +26,19 @@ namespace nogame.playerhover
         private BepuPhysics.BodyHandle _phandleShip;
         private BepuPhysics.BodyReference _prefShip;
 
+        /**
+         * Display the current pling score.
+         */
+        private DefaultEcs.Entity _eScoreDisplay;
+
+
         private WASDPhysics _controllerWASDPhysics;
 
         private const float MassShip = 500f;
-
-
+        
+        
         private int _plingCounter;
+        private int _score = 0;
         private static readonly int FirstPling = 1;
         private static readonly int LastPling = 19;
 
@@ -56,6 +63,7 @@ namespace nogame.playerhover
                 else
                 {
                     ++_plingCounter;
+                    ++_score;
                 }
             }
             
@@ -137,6 +145,7 @@ namespace nogame.playerhover
         {
             _controllerWASDPhysics.DeactivateController();
             _engine.RemovePart(this);
+            // Delete escoredisplay
             lock (_lock)
             {
                 _engine = null;
@@ -150,6 +159,18 @@ namespace nogame.playerhover
             return _eShip;
         }
 
+        private void _onLogicalFrame(object? sender, float dt)
+        {
+            _eScoreDisplay.Set(new engine.draw.components.OSDText(
+                new Vector2(400f, 20f),
+                new Vector2(60f, 30f),
+                $"{_score}",
+                30,
+                0xff22aaee,
+                0x00000000
+            ));
+        }
+        
 
         public void PartActivate(
             in engine.Engine engine0,
@@ -209,6 +230,8 @@ namespace nogame.playerhover
                 _engine.AddContactListener(_eShip);
             }
 
+            _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
+
             _resetPling();
             
             /*
@@ -219,6 +242,7 @@ namespace nogame.playerhover
 
             _engine.OnContactInfo += _onContactInfo;
             _engine.AddPart(0, scene0, this);
+            _engine.LogicalFrame += _onLogicalFrame;
         }
 
         
