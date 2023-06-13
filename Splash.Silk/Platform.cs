@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Numerics;
 using builtin.tools.Lindenmayer;
 using engine;
+using Microsoft.Win32.SafeHandles;
 using static engine.Logger;
 
 using Silk.NET.Input;
@@ -11,6 +12,7 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using Silk.NET.Input.Sdl;
 using Silk.NET.SDL;
+using Trace = System.Diagnostics.Trace;
 
 namespace Splash.Silk
 {
@@ -243,6 +245,18 @@ namespace Splash.Silk
 
         private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
         {
+            /*
+             *  Translate mouse wheel to zooming in/out. 
+             */
+            var y = scrollWheel.Y;
+            lock (_lock)
+            {
+                int currentZoomState = _controllerState.ZoomState;
+                currentZoomState -= (int) y;
+                currentZoomState = Int32.Max(-128, currentZoomState);
+                currentZoomState = Int32.Min(16, currentZoomState);
+                _controllerState.ZoomState = (sbyte) currentZoomState;
+            }
         }
 
 

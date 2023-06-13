@@ -118,7 +118,7 @@ namespace nogame.cities
                 }
 
             }
-            Trace($"took index {tookIndex}");
+            // Trace($"took index {tookIndex}");
         }
 
         private void _loadStartPoint()

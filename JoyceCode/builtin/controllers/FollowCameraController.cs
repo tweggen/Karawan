@@ -23,7 +23,8 @@ namespace builtin.controllers
              * We allow the user to move the cam.
              */
             Vector2 vMouseMove;
-            _engine.GetMouseMove(out vMouseMove);
+           _engine.GetMouseMove(out vMouseMove);
+           _engine.GetControllerState(out var controllerState);
 
             if( !_eCarrot.Has<engine.transform.components.Transform3ToWorld>()
                 || !_eCarrot.Has<engine.transform.components.Transform3>())
@@ -44,8 +45,12 @@ namespace builtin.controllers
 
             var vCarrotPos = cToParent.Matrix.Translation;
 
-            // TXWTODO: This is hard coded and static, make it softer.
-            var vCameraPos = vCarrotPos - 8f * vFront + 2f * vUp;
+            /*
+             * Compute a distance from the zoom state.
+             * TXWTODO: Remove the magic numbers.
+             */
+            float zoomDistance = (20f + (float)controllerState.ZoomState) / 2f;
+            var vCameraPos = vCarrotPos - zoomDistance * vFront + zoomDistance/4f * vUp;
 
             // var vCarrotRotation = cCarrotTransform3.Rotation;
             var qRotation = Quaternion.Slerp(_qCameraRotation, cCarrotTransform3.Rotation, 0.1f);
