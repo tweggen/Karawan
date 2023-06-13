@@ -83,6 +83,8 @@ namespace nogame.playerhover
             CollisionProperties propsA = contactInfo.PropertiesA;
             CollisionProperties propsB = contactInfo.PropertiesB;
 
+            CollisionProperties me = null;
+
             if (null != propsA)
             {
                 // Trace( $"A: {{ Name: \"{ propsA.Name }\" }}");
@@ -91,6 +93,11 @@ namespace nogame.playerhover
                     if (propsB != null)
                     {
                         other = propsB;
+                    }
+
+                    if (propsA != null)
+                    {
+                        me = propsA;
                     }
                 }
             }
@@ -102,6 +109,11 @@ namespace nogame.playerhover
                     if (propsA != null)
                     {
                         other = propsA;
+                    }
+                    
+                    if (propsB != null)
+                    {
+                        me = propsB;
                     }
                 }
             }
@@ -116,7 +128,7 @@ namespace nogame.playerhover
              */
             if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
             {
-                // Trace($"Cube");
+                Trace($"Cube chrIdx {other.DebugInfo}");
                 _nextCubeCollected();
             }
         }
