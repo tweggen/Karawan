@@ -49,7 +49,8 @@ namespace builtin.controllers
              * Compute a distance from the zoom state.
              * TXWTODO: Remove the magic numbers.
              */
-            float zoomDistance = (20f + (float)controllerState.ZoomState) / 2f;
+            var zoomFactor = controllerState.ZoomState > 0 ? controllerState.ZoomState * 2f : controllerState.ZoomState;
+            float zoomDistance = (20f + (float)zoomFactor) / 2f;
             var vCameraPos = vCarrotPos - zoomDistance * vFront + zoomDistance/4f * vUp;
 
             // var vCarrotRotation = cCarrotTransform3.Rotation;
