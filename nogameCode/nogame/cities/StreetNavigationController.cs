@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using engine;
 using engine.world;
 using engine.streets;
-
+using static engine.Logger;
 
 namespace nogame.cities
 {
@@ -58,10 +59,12 @@ namespace nogame.cities
             }
 
             var nTries = 0;
+            int tookIndex = -1;
             while (true)
             {
                 ++nTries;
                 var idx = (int)(_rnd.getFloat() * strokes.Count);
+                tookIndex = idx;
                 _currentStroke = strokes[idx];
                 if (null == _currentStroke)
                 {
@@ -115,6 +118,7 @@ namespace nogame.cities
                 }
 
             }
+            Trace($"took index {tookIndex}");
         }
 
         private void _loadStartPoint()

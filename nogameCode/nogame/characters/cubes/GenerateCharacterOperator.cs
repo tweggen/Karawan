@@ -154,6 +154,11 @@ namespace nogame.characters.cubes
                     }
                     idx++;
                 }
+
+                if (null == chosenStreetPoint)
+                {
+                    Error("chosenStreetPoint must not be null at this point.");
+                }
                 if (!chosenStreetPoint.HasStrokes())
                 {
                     continue;
@@ -169,62 +174,60 @@ namespace nogame.characters.cubes
                     float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
                     if (!worldFragment.IsInside(new Vector2(px, pz)))
                     {
-                        chosenStreetPoint = null;
+                        // chosenStreetPoint = null;
+                        continue;
                     }
                 }
-                if (null != chosenStreetPoint)
-                {
-                    if (_trace) Trace($"GenerateCubeCharacterOperator(): Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
-                    ++_characterIndex;
+                if (_trace)
+                {
+                    Trace($"GenerateCubeCharacterOperator(): Starting on streetpoint {idxPoint} {chosenStreetPoint.Pos}.");
+                }
+
+                ++_characterIndex;
+                {
+                    engine.joyce.InstanceDesc jInstanceDesc = new();
+                    jInstanceDesc.Meshes.Add(_getCubeMesh());
+                    jInstanceDesc.MeshMaterials.Add(0);
+                    jInstanceDesc.Materials.Add(_getCubeMaterial());
+
+                    var wf = worldFragment;
+
+
+                    var speed = 25f + _rnd.getFloat() * 15f;
+                    var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
-                        engine.joyce.InstanceDesc jInstanceDesc = new();
-                        jInstanceDesc.Meshes.Add(_getCubeMesh());
-                        jInstanceDesc.MeshMaterials.Add(0);
-                        jInstanceDesc.Materials.Add(_getCubeMaterial());
+                        eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                        eTarget.Set(new engine.behave.components.Behavior(
+                            new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));
+                        eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
+                            new Vector3(_rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f),
+                            _rnd.getFloat()*2f * (float)Math.PI / 180f)));
 
-                        var wf = worldFragment;
+                        BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
+                            BodyDescription.CreateKinematic(
+                                new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
+                                new BepuPhysics.Collidables.CollidableDescription(
+                                    _getSphereShape(wf.Engine),
+                                    0.1f),
+                                new BodyActivityDescription(0.01f)
+                            )
+                        );
+                        BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                        engine.physics.CollisionProperties collisionProperties =
+                            new engine.physics.CollisionProperties
+                                { Name = "nogame.characters.cube", IsTangible = false };
+                        aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
+                        eTarget.Set(new engine.audio.components.MovingSound(
+                            _getCubeSound(), 150f));
+                        eTarget.Set(new engine.physics.components.Kinetic(
+                            prefSphere, collisionProperties )
+                        );
+                    });
 
-
-                        var speed = 25f + _rnd.getFloat() * 15f;
-                        var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
-                        {
-                            eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-                            eTarget.Set(new engine.behave.components.Behavior(
-                                new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));
-                            eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
-                                new Vector3(_rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f),
-                                _rnd.getFloat()*2f * (float)Math.PI / 180f)));
-
-                            BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
-                                BodyDescription.CreateKinematic(
-                                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                                    new BepuPhysics.Collidables.CollidableDescription(
-                                        _getSphereShape(wf.Engine),
-                                        0.1f),
-                                    new BodyActivityDescription(0.01f)
-                                )
-                            );
-                            BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                            engine.physics.CollisionProperties collisionProperties =
-                                new engine.physics.CollisionProperties
-                                    { Name = "nogame.characters.cube", IsTangible = false };
-                            aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
-                            eTarget.Set(new engine.audio.components.MovingSound(
-                                _getCubeSound(), 150f));
-                            eTarget.Set(new engine.physics.components.Kinetic(
-                                prefSphere, collisionProperties )
-                            );
-                        });
-
-                        wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);
+                    wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);
 
 
-                    }
-                }
-                else
-                {
-                    if (_trace) Trace("GenerateCubeCharacterOperator(): No streetpoint found.");
                 }
             }
         }

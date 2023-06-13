@@ -10,6 +10,7 @@ namespace nogame.characters.cubes
         engine.streets.StreetPoint _streetPoint;
         StreetNavigationController _snc;
         
+        
         public void Behave(in DefaultEcs.Entity entity, float dt)
         {
             _snc.NavigatorBehave(dt);
@@ -22,6 +23,7 @@ namespace nogame.characters.cubes
                     _snc.NavigatorGetWorldPos(), 1f)
             );
         }
+        
 
         public Behavior(
             in engine.Engine engine0,

@@ -44,6 +44,7 @@ namespace Boom
             return engine.GlobalSettings.Get("boom.AudioPlaybackEngine.TraceStartStop") == "true";
         }
 
+
         public void FindCachedSound(string Uri, Action<Boom.CachedSound> actionOnHaveSound)
         {
             // Async this really instead of just wasting threads.
