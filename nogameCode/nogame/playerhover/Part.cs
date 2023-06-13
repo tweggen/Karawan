@@ -87,7 +87,7 @@ namespace nogame.playerhover
 
             if (null != propsA)
             {
-                // Trace( $"A: {{ Name: \"{ propsA.Name }\" }}");
+                Trace( $"A: {{ Name: \"{ propsA.Name }\" }}");
                 if (propsA.Name == PhysicsName)
                 {
                     if (propsB != null)
@@ -103,7 +103,7 @@ namespace nogame.playerhover
             }
             if (null != propsB)
             {
-                // Trace( $"B: {{ Name: \"{ propsB.Name }\" }}");
+                Trace( $"B: {{ Name: \"{ propsB.Name }\" }}");
                 if (propsB.Name == PhysicsName)
                 {
                     if (propsA != null)

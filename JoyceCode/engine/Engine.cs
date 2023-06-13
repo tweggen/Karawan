@@ -407,10 +407,11 @@ namespace engine
              */
             _systemMovingSounds.Update(dt);
 
+
             /*
              * Advance physics, based on new user input and/or gravitation.
              */
-            _aPhysics.Simulation.Timestep(dt);
+            _aPhysics.Update(dt);
 
             /*
              * Apply poses needs input from simulation

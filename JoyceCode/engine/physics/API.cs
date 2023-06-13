@@ -7,6 +7,7 @@ using BepuPhysics.CollisionDetection;
 using BepuUtilities;
 using BepuUtilities.Memory;
 using static engine.Logger;
+using Trace = System.Diagnostics.Trace;
 
 
 namespace engine.physics;
@@ -19,21 +20,35 @@ public class API
 {
     private object _lo = new();
 
+    private uint _frameId = 0;
+    
     private Engine _engine;
 
     private SortedDictionary<int, CollisionProperties> _mapCollisionProperties = new();
 
     public event EventHandler<physics.ContactInfo> OnContactInfo;
 
+    private SortedDictionary<ulong, uint> _previousCollisions = new();
     
+    /**
+     * This is the single one callback called for every collision.
+     * Therefore we need to dispatch and detect new collisions.
+     */
     public void OnContactAdded<TManifold>(CollidableReference eventSource, CollidablePair pair, ref TManifold contactManifold,
         in Vector3 contactOffset, in Vector3 contactNormal, float depth, int featureId, int contactIndex, int workerIndex) where TManifold : struct, IContactManifold<TManifold>
     {
         // Trace($"having contact.");
-        
+
+        if (contactManifold.Count > 0)
+        {
+            Trace("There is something in the manifold.");
+        }
+
         physics.ContactInfo contactInfo = new(
             eventSource, pair, contactOffset, contactNormal, depth);
 
+        uint ahandle = 0;
+        uint bhandle = 0;
         lock (_lo)
         {
             switch (pair.A.Mobility)
@@ -41,9 +56,11 @@ public class API
                 case CollidableMobility.Dynamic:
                 case CollidableMobility.Kinematic:
                     _mapCollisionProperties.TryGetValue(pair.A.BodyHandle.Value, out contactInfo.PropertiesA);
+                    ahandle = (uint) pair.A.BodyHandle.Value;
                     break;
                 case CollidableMobility.Static:
-                    _mapCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out contactInfo.PropertiesA);
+                    ahandle = (uint)0x80000000 | (uint) pair.A.StaticHandle.Value;
+                    // _mapCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out contactInfo.PropertiesA);
                     break;
             }
             
@@ -52,16 +69,33 @@ public class API
                 case CollidableMobility.Dynamic:
                 case CollidableMobility.Kinematic:
                     _mapCollisionProperties.TryGetValue(pair.B.BodyHandle.Value, out contactInfo.PropertiesB);
+                    bhandle = (uint) pair.B.BodyHandle.Value;
                     break;
                 case CollidableMobility.Static:
-                    _mapCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out contactInfo.PropertiesB);
+                    // _mapCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out contactInfo.PropertiesB);
+                    bhandle = (uint)0x80000000 | (uint) pair.B.StaticHandle.Value;
                     break;
             }
-
-            // TXWTODO: Get/Filter out by name
         }
 
-        OnContactInfo?.Invoke(this, contactInfo);
+        ulong collHash = ((ulong)bhandle << 32) | (ulong)ahandle;
+        if (_previousCollisions.TryGetValue(collHash, out uint lastFrameId))
+        {
+            // We already know this collision, ignore it, updating the frame id.
+            lock (_lo)
+            {
+                _previousCollisions[collHash] = _frameId;
+            }
+        }
+        else
+        {
+            OnContactInfo?.Invoke(this, contactInfo);
+            lock (_lo)
+            {
+                _previousCollisions[collHash] = _frameId;
+            }
+        }
+
     }
 
 
@@ -70,6 +104,35 @@ public class API
     private physics.ContactEvents<API> _contactEvents;
     private ThreadDispatcher  _physicsThreadDispatcher;
 
+
+    private void _refreshCollisions()
+    {
+        lock (_lo)
+        {
+            List<ulong> deleteKeys = new();
+            foreach (var kvp in _previousCollisions)
+            {
+                if (kvp.Value != _frameId)
+                {
+                    deleteKeys.Add(kvp.Key);
+                }
+            }
+
+            foreach (var key in deleteKeys)
+            {
+                _previousCollisions.Remove(key);
+            }
+
+            ++_frameId;
+        }
+    }
+
+
+    public void Update(float dt)
+    {
+        _refreshCollisions();
+        Simulation.Timestep(dt);
+    }
     
     /**
      * Register a listener who is notified on callbacks.
