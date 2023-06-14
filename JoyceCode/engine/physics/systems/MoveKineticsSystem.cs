@@ -48,7 +48,7 @@ namespace engine.physics.systems
                 }
             }
 
-            Trace($"maximal Velocity = {maxVelo}");
+            // Trace($"maximal Velocity = {maxVelo}");
         }
 
         protected override void PostUpdate(float dt)
