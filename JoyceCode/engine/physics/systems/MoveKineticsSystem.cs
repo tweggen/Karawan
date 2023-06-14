@@ -2,8 +2,10 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using DefaultEcs;
+using static engine.Logger;
 
 namespace engine.physics.systems
 {
@@ -19,21 +21,34 @@ namespace engine.physics.systems
 
         protected override void Update(float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
+            float maxVelo = 0f;
             foreach (var entity in entities)
             {
                 {
+                    // TXWTODO: Can we write that more efficiently?
                     var bodyReference = entity.Get<physics.components.Kinetic>().Reference;
-                    var oldPos = bodyReference.Pose.Position;
+                    var oldPos = entity.Get<physics.components.Kinetic>().LastPosition;
                     var newPos = entity.Get<transform.components.Transform3ToWorld>().Matrix.Translation;
                     if (oldPos != newPos)
                     {
                         bodyReference.Pose.Position = newPos;
-                        bodyReference.Velocity.Linear = (newPos - oldPos)/dt;
+                        entity.Get<physics.components.Kinetic>().LastPosition = newPos;
+                        if (oldPos != Vector3.Zero)
+                        {
+                            Vector3 vel = (newPos - oldPos) / dt;
+                            bodyReference.Velocity.Linear = vel;
+                            maxVelo = Single.Max(vel.Length(), maxVelo);
+                        }
+                        else
+                        {
+                            bodyReference.Velocity.Linear = Vector3.Zero;
+                        }
                         // bodyReference.Awake = true;
                     }
-
                 }
             }
+
+            Trace($"maximal Velocity = {maxVelo}");
         }
 
         protected override void PostUpdate(float dt)

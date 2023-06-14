@@ -1,6 +1,7 @@
 ﻿using BepuPhysics;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace engine.physics.components
@@ -8,6 +9,7 @@ namespace engine.physics.components
     public struct Kinetic
     {
         public BepuPhysics.BodyReference Reference;
+        public Vector3 LastPosition;
         public physics.CollisionProperties CollisionProperties;
 
         /**
