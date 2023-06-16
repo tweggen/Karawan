@@ -33,7 +33,7 @@ namespace nogame.parts.playerhover
         {
             _hadCollision = true;
         }
-
+        
         private void _onLogicalFrame(object sender, float dt)
         {
             // if (_hadCollision) return;
@@ -41,7 +41,7 @@ namespace nogame.parts.playerhover
             _engine.GetControllerState(out controllerState);
 
             Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
-
+            
             Vector3 vTotalAngular = new Vector3(0f, 0f, 0f);
 
             /*
@@ -57,20 +57,19 @@ namespace nogame.parts.playerhover
             float heightAtTarget = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(vTargetPos);
             {
                 var properDeltaY = 0;
-                var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
+                var deltaY = vTargetPos.Y - (heightAtTarget+properDeltaY);
                 const float threshDiff = 0.01f;
 
-                Vector3 impulse = new Vector3(0f, 9.81f, 0f);
+                Vector3 impulse = new Vector3(0f,9.81f,0f);
                 float properVelocity = 0f;
-                if (deltaY < -threshDiff)
+                if ( deltaY < -threshDiff )
                 {
                     properVelocity = LevelUpThrust; // 1ms-1 up.
                 }
-                else if (deltaY > threshDiff)
+                else if( deltaY > threshDiff )
                 {
                     properVelocity = -LevelDownThrust; // 1ms-1 down.
                 }
-
                 float deltaVelocity = properVelocity - vTargetVelocity.Y;
                 float fireRate = deltaVelocity;
                 impulse = new Vector3(0f, fireRate, 0f);
@@ -98,7 +97,6 @@ namespace nogame.parts.playerhover
                 // The acceleration looks wrong when combined with rotation.
                 vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
             }
-
             var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
             if (turnMotion != 0f)
             {
@@ -130,14 +128,14 @@ namespace nogame.parts.playerhover
             Vector3 vSpinTopAxis = Vector3.Cross(vUp, new Vector3(0f, 1f, 0f));
             if (vSpinTopAxis.Length() > 0.01f)
             {
-                vTotalAngular += vSpinTopAxis * 0.9f;
+                vTotalAngular += vSpinTopAxis*0.9f;
             }
 
 
             /*
              * Finally, clip the height with the ground.
              */
-            if (vTargetPos.Y < (heightAtTarget))
+            if( vTargetPos.Y < (heightAtTarget) )
             {
                 vTargetPos.Y = heightAtTarget;
                 _prefTarget.Pose.Position = vTargetPos;
@@ -149,12 +147,11 @@ namespace nogame.parts.playerhover
             {
                 Trace($"Too fast: {vTotalImpulse.Length()}.");
             }
-
             if (vTotalAngular.Length() > mass)
             {
                 Trace($"Too fast: {vTotalAngular.Length()}.");
             }
-
+            
             /*
              * TXWTODO: Workaround to limit top speed.
              */
@@ -163,13 +160,12 @@ namespace nogame.parts.playerhover
                 float vel = vTargetVelocity.Length();
                 vTotalImpulse += -(vTargetVelocity * (vel - MaxLinearVelocity) / vel) / dt;
             }
-
             if (vTargetAngularVelocity.Length() > MaxAngularVelocity)
             {
                 float avel = vTargetAngularVelocity.Length();
                 vTotalAngular += -(vTargetAngularVelocity * (avel - MaxAngularVelocity) / avel) / dt;
             }
-
+            
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
 
@@ -177,12 +173,13 @@ namespace nogame.parts.playerhover
                 new Vector2(20f, 212f),
                 new Vector2(100, 30),
                 $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}\n"
-                + $"v: {vTargetVelocity.Length()}\n"
-                + $"a: {vTargetAngularVelocity.Length()}",
+                +$"v: {vTargetVelocity.Length()}\n"
+                +$"a: {vTargetAngularVelocity.Length()}",
                 10,
                 0xff22aaee,
                 0x00000000
             ));
+            
         }
 
 
