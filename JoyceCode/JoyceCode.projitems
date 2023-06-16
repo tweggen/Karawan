@@ -21,6 +21,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\components\MapFragmentId.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\DefaultMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IMapProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IWorldMapProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IFragmentMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\CondParams.cs" />
