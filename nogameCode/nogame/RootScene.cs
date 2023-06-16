@@ -27,9 +27,8 @@ namespace nogame
         private nogame.parts.osd.Part _partOsd;
         private nogame.parts.playerhover.Part _partPlayerhover;
         private nogame.parts.skybox.Part _partSkybox;
-
-        private systems.CubeSpinnerSystem _systemCubeSpinner;
-
+        
+        
         private void _triggerLoadWorld()
         {
             Vector3 vMe;
@@ -43,8 +42,7 @@ namespace nogame
             }
             _worldLoader.WorldLoaderProvideFragments(vMe);
         }
-
-       
+        
         
         public void SceneOnLogicalFrame( float dt )
         {
@@ -54,8 +52,6 @@ namespace nogame
 
         public void SceneDeactivate()
         {
-            _systemCubeSpinner.Dispose();
-            _systemCubeSpinner = null;
             _partPlayerhover.PartDeactivate();
             _partPlayerhover = null;
             _partSkybox.PartDeactivate();
@@ -136,6 +132,7 @@ namespace nogame
                     engine.elevation.Cache.LAYER_BASE + "/000002/fillGrid",
                     elevationBaseFactory);
             }
+
             /*
              * trigger generating the world at the starting point.
              */ 
@@ -150,22 +147,9 @@ namespace nogame
             _aTransform = _engine.GetATransform();
 
             /*
-             * Local state
+             * Global objects.
              */
-
-
-            _engine.SceneSequencer.AddScene(0, this);
-
-            if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
-                _partOsd = new();
-                _partOsd.PartActivate(_engine, this);
-            }
-
-            _partPlayerhover = new();
-            _partPlayerhover.PartActivate(_engine, this);
-            _partSkybox = new();
-            _partSkybox.PartActivate(_engine, this);
-
+            
             /*
              * Directional light
              */
@@ -179,6 +163,7 @@ namespace nogame
                 _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.1f, 0.3f, 0.1f, 0.0f)));
                 _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
             }
+            
             /*
              * Ambient light
              */
@@ -187,15 +172,6 @@ namespace nogame
                 _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
             }
 
-            /*
-             * Helper systems
-             */
-            _systemCubeSpinner = new(_engine);
-              
-            /*
-             * Finally, create the camera.
-             */
-            
             /*
              * Create a scene camera.
              */
@@ -213,7 +189,6 @@ namespace nogame
                 _eCamScene.Set(cCamScene);
                 // No set position, done by controller
             }
-
             
             /*
              * Create an osd camera
@@ -229,11 +204,35 @@ namespace nogame
                 _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));
             }
 
+            if (true)
+            {
+                _partPlayerhover = new();
+                _partPlayerhover.PartActivate(_engine, this);
+            }
+
+
             /*
-             * Create a camera controller that directly controls the camera with wasd
+             * Create a camera controller that directly controls the camera with wasd,
+             * requires the playerhover.
              */
             _ctrlFollowCamera = new(_engine, _eCamScene, _partPlayerhover.GetShipEntity());
             _ctrlFollowCamera.ActivateController();
+
+            if (engine.GlobalSettings.Get("nogame.CreateSkybox") != "false") {
+                _partSkybox = new();
+                _partSkybox.PartActivate(_engine, this);
+            }
+
+            if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
+                _partOsd = new();
+                _partOsd.PartActivate(_engine, this);
+            }
+
+            /*
+             * Now, that everything has been created, add the scene.
+             */
+            _engine.SceneSequencer.AddScene(0, this);
+
         }
 
         public RootScene()
