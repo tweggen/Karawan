@@ -9,6 +9,7 @@
     <Import_RootNamespace>JoyceCode</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)builtin\map\systems\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\joyce\systems\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\lights\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
@@ -17,6 +18,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Obj.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\map\components\MapFragmentId.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\CondParams.cs" />

@@ -8,9 +8,9 @@ using System.Threading.Tasks.Dataflow;
 using engine.physics;
 using static engine.Logger;
 
-namespace nogame.playerhover
+namespace nogame.parts.playerhover
 {
-    internal class Part : engine.IPart
+    public class Part : engine.IPart
     {
         static public readonly string PhysicsName = "nogame.playerhover";
         

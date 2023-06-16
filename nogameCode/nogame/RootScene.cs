@@ -24,9 +24,9 @@ namespace nogame
         private engine.world.Loader _worldLoader;
         private engine.world.MetaGen _worldMetaGen;
 
-        private osd.Part _partOsd;
-        private playerhover.Part _partPlayerhover;
-        private skybox.Part _partSkybox;
+        private nogame.parts.osd.Part _partOsd;
+        private nogame.parts.playerhover.Part _partPlayerhover;
+        private nogame.parts.skybox.Part _partSkybox;
 
         private systems.CubeSpinnerSystem _systemCubeSpinner;
 

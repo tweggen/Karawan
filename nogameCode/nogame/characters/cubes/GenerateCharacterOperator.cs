@@ -2,11 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Threading;
 using engine;
 using engine.world;
 using engine.streets;
-using nogame.playerhover;
 using static engine.Logger;   
 
 namespace nogame.characters.cubes

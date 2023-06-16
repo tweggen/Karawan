@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
 
-namespace nogame.skybox
+namespace nogame.parts.skybox
 {
     public class Part : engine.IPart
     {

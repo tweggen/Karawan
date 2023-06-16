@@ -22,7 +22,6 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         {
             return;
         }
-
         
         foreach (var entity in entities)
         {

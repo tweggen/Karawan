@@ -7,9 +7,9 @@ using System.Diagnostics;
 using System.Numerics;
 using static engine.Logger;
 
-namespace nogame.playerhover
+namespace nogame.parts.playerhover
 {
-    public class WASDPhysics
+    internal class WASDPhysics
     {
         private engine.Engine _engine;
         private DefaultEcs.Entity _eTarget;

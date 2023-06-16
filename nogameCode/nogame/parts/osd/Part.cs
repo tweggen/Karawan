@@ -2,7 +2,7 @@
 using engine;
 using engine.draw.systems;
 
-namespace nogame.osd;
+namespace nogame.parts.osd;
 
 public class Part : engine.IPart
 {
