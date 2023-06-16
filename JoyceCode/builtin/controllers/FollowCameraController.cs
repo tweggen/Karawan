@@ -42,7 +42,9 @@ namespace builtin.controllers
             var vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
             var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
             var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
-
+            var angleX = -_vMouseOffset.Y * (float)Math.PI / 180f;
+            var angleY = -_vMouseOffset.X * (float)Math.PI / 180f;
+            
             var vCarrotPos = cToParent.Matrix.Translation;
 
             /*
@@ -51,7 +53,11 @@ namespace builtin.controllers
              */
             var zoomFactor = controllerState.ZoomState > 0 ? controllerState.ZoomState * 2f : controllerState.ZoomState;
             float zoomDistance = (20f + (float)zoomFactor) / 2f;
-            var vCameraPos = vCarrotPos - zoomDistance * vFront + zoomDistance/4f * vUp;
+            // var vCameraFront = vFront;
+            var vCameraFront = vFront * (float)Math.Cos(-angleY) + vRight * (float)Math.Sin(-angleY);
+            var vCameraDirection = zoomDistance * vCameraFront - zoomDistance/4f * vUp;
+  
+            var vCameraPos = vCarrotPos - vCameraDirection;
 
             // var vCarrotRotation = cCarrotTransform3.Rotation;
             var qRotation = Quaternion.Slerp(_qCameraRotation, cCarrotTransform3.Rotation, 0.1f);
