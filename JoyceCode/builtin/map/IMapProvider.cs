@@ -1,4 +1,6 @@
-﻿namespace builtin.map;
+﻿using engine.draw;
+
+namespace builtin.map;
 
 public interface IMapProvider
 {
@@ -19,6 +21,15 @@ public interface IMapProvider
     public void WorldMapCreateEntities(
         DefaultEcs.Entity parentEntity,
         uint cameraMask);
+
+
+    /**
+     * Render a bitmap of the world map into the given framebuffer.
+     * The World size as specified in the world generator applies.
+     * The implementation is free not to render anything at all.
+     * In that case, only the entities created on top will be rendered.
+     */
+    public void WorldMapCreateBitmap(IFramebuffer target);
     
     /**
      * Create the entities representing another map fragment, all child
@@ -28,4 +39,5 @@ public interface IMapProvider
         engine.world.Fragment worldFragment,
         DefaultEcs.Entity parentEntity,
         uint cameraMask);
+    
 }

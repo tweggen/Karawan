@@ -19,6 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Obj.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\components\MapFragmentId.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\map\DefaultMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />

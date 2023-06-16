@@ -138,7 +138,7 @@ namespace nogame
             }
             /*
              * trigger generating the world at the starting point.
-             */
+             */ 
             _triggerLoadWorld();
 
 
