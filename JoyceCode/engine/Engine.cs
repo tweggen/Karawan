@@ -59,7 +59,8 @@ namespace engine
         
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
-        public event EventHandler<uint> KeyEvent;
+        public event EventHandler<string> KeyPress;
+        public event EventHandler<string> KeyRelease;
         
         public event EventHandler<physics.ContactInfo> OnContactInfo {
             add => _aPhysics.OnContactInfo += value; remove => _aPhysics.OnContactInfo -= value;
@@ -494,9 +495,21 @@ namespace engine
         }
         
 
-        public void GetMouseMove( out Vector2 vMouseMove )
+        public void GetMouseMove(out Vector2 vMouseMove)
         {
             _platform.GetMouseMove(out vMouseMove);
+        }
+
+
+        public void TakeKeyPress(string code)
+        {
+            KeyPress?.Invoke(this, code);
+        }
+
+
+        public void TakeKeyRelease(string code)
+        {
+            KeyRelease?.Invoke(this, code);
         }
 
 

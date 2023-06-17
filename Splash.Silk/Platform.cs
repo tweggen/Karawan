@@ -125,47 +125,79 @@ namespace Splash.Silk
         
         private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
         {
+            string code = "";
             switch (arg2)
             {
                 case Key.W:
                     _controllerState.WalkForward = 200;
+                    code = "W";
                     break;
                 case Key.S:
                     _controllerState.WalkBackward = 200;
+                    code = "S";
                     break;
                 case Key.A:
                     _controllerState.TurnLeft = 200;
+                    code = "A";
                     break;
                 case Key.D:
                     _controllerState.TurnRight = 200;
+                    code = "D";
+                    break;
+                case Key.Tab:
+                    _controllerState.ShowMap = true;
+                    code = "(tab)";
                     break;
                 case Key.F11:
+                    code = "(F11)";
                     _toggleFullscreen();
                     break;
                 default:
                     break;
             }
+
+            if (code.Length != 0)
+            {
+                _engine.TakeKeyPress(code);
+            }
         }
 
         private void _onKeyUp(IKeyboard arg1, Key arg2, int arg3)
         {
+            string code = "";
             switch (arg2)
             {
                 case Key.W:
                     _controllerState.WalkForward = 0;
+                    code = "W";
                     break;
                 case Key.S:
                     _controllerState.WalkBackward = 0;
+                    code = "S";
                     break;
                 case Key.A:
                     _controllerState.TurnLeft = 0;
+                    code = "A";
                     break;
                 case Key.D:
                     _controllerState.TurnRight = 0;
+                    code = "D";
+                    break;
+                case Key.Tab:
+                    code = "(tab)";
+                    _controllerState.ShowMap = false;
+                    break;  
+                case Key.F11:
+                    code = "(F11)";
                     break;
                 default:
                     break;
-            }            
+            }
+
+            if (code.Length != 0)
+            {
+                _engine.TakeKeyRelease(code);
+            }
         }
 
 

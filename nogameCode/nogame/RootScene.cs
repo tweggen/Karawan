@@ -6,6 +6,8 @@ namespace nogame
 {
     public class RootScene : engine.IScene
     {
+        private object _lo = new();
+        
         private engine.Engine _engine;
 
         private DefaultEcs.World _ecsWorld;
@@ -27,6 +29,48 @@ namespace nogame
         private nogame.parts.osd.Part _partOsd;
         private nogame.parts.playerhover.Part _partPlayerhover;
         private nogame.parts.skybox.Part _partSkybox;
+
+        private bool _isMapShown = false;
+
+        private void _toggleMap()
+        {
+            bool isMapShown; 
+            lock (_lo)
+            {
+                isMapShown = _isMapShown;
+                _isMapShown = !isMapShown;
+            }
+
+            if (isMapShown)
+            {
+                /*
+                 * Map was shown, so hide it.
+                 *
+                 * TXWTODO: Remove the map part.
+                 */
+            }
+            else
+            {
+                /*
+                 * Map was invisible, so display it.
+                 *
+                 * TXWTODO: Add the map part.
+                 */
+            }
+        }
+        
+
+        private void _onKeyPress(object? sender, string keyCode)
+        {
+            switch (keyCode)
+            {
+                case "(tab)":
+                    _toggleMap();
+                    break;
+                default:
+                    break;
+            }
+        }
         
         
         private void _triggerLoadWorld()
@@ -44,7 +88,7 @@ namespace nogame
         }
         
         
-        public void SceneOnLogicalFrame( float dt )
+        public void SceneOnLogicalFrame(float dt)
         {
             _triggerLoadWorld();
         }
@@ -228,6 +272,8 @@ namespace nogame
                 _partOsd.PartActivate(_engine, this);
             }
 
+            _engine.KeyPress += _onKeyPress;
+            
             /*
              * Now, that everything has been created, add the scene.
              */

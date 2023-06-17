@@ -22,6 +22,9 @@ namespace engine
                 return frontMotion; 
             }
         }
+
+        public bool ShowMap;
+            
         public bool WalkFast;
         public int WalkForward;
         public int WalkBackward;
@@ -32,6 +35,7 @@ namespace engine
 
         public void Reset()
         {
+            ShowMap = false;
             WalkFast = false;
             WalkForward = 0;
             WalkBackward = 0;
