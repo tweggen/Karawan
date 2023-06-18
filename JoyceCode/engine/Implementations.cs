@@ -31,9 +31,11 @@ public class Implementations
         };
     }
 
-
+#if false
     public T Get<class T>()
     {
+        return null;
+#if false
         InstanceEntry instanceEntry;
         lock (_lo)
         {
@@ -55,7 +57,9 @@ public class Implementations
                 return instanceEntry.Instance;
             }
         }
+#endif
     }
+#endif
     
     public Implementations()
     {

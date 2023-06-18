@@ -19,10 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\github\DefaultEcs\source\DefaultEcs\DefaultEcs.csproj" />
-    <ProjectReference Include="..\..\..\..\github\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj" />
     <ProjectReference Include="..\..\..\github\BepuPhysics2\BepuPhysics\BepuPhysics.csproj" />
     <ProjectReference Include="..\..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj" />
+    <ProjectReference Include="..\..\DefaultEcs\source\DefaultEcs\DefaultEcs.csproj" />
+    <ProjectReference Include="..\..\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj" />
   </ItemGroup>
 
   <Import Project="..\JoyceCode\JoyceCode.projitems" Label="Shared" />
