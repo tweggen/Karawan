@@ -42,7 +42,7 @@ public class Part : IPart
         }
 
         _memoryFramebuffer = new engine.ross.MemoryFramebuffer(MapWidth, MapHeight);
-
+        
         _eMapContainer = _engine.CreateEntity("nogame.parts.map.mapContainer");
         
         _eMap = _engine.CreateEntity("nogame.parts.map.map");
