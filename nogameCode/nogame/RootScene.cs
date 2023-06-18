@@ -30,6 +30,8 @@ namespace nogame
         private nogame.parts.playerhover.Part _partPlayerhover;
         private nogame.parts.skybox.Part _partSkybox;
 
+        private nogame.parts.map.Part _partMap;
+
         private bool _isMapShown = false;
 
         private void _toggleMap()
@@ -48,6 +50,7 @@ namespace nogame
                  *
                  * TXWTODO: Remove the map part.
                  */
+                _partMap.PartDeactivate();
             }
             else
             {
@@ -56,6 +59,7 @@ namespace nogame
                  *
                  * TXWTODO: Add the map part.
                  */
+                _partMap.PartActivate(_engine, this);
             }
         }
         
@@ -270,6 +274,10 @@ namespace nogame
             if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
                 _partOsd = new();
                 _partOsd.PartActivate(_engine, this);
+            }
+
+            if (engine.GlobalSettings.Get("nogame.CreateMap") != "false") { 
+                _partMap = new();
             }
 
             _engine.KeyPress += _onKeyPress;
