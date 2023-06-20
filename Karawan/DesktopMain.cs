@@ -237,9 +237,8 @@ namespace Karawan
             var threadApp = new Thread( () => app.Run());
             threadApp.Start();
 
-            e.SceneSequencer.AddSceneFactory("root", () => new nogame.RootScene());
-            e.SceneSequencer.AddSceneFactory("logos", () => new nogame.LogosScene());
-            e.SceneSequencer.SetMainScene("logos");
+            nogame.Main.Start(e);
+
             boom.SetupDone();
             e.Execute();
 

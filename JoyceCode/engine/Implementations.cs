@@ -12,11 +12,14 @@ internal class InstanceEntry
     public Object Instance;
 }
 
+
 /**
  * Provides a global registry of implementations to particular instances.
  */
-public class Implementations
+public sealed class Implementations
 {
+    private static readonly Implementations _singleton = new Implementations();
+    
     private object _lo = new();
     private SortedDictionary<Type, InstanceEntry> _mapInstances = new();
 
@@ -31,11 +34,15 @@ public class Implementations
         };
     }
 
-#if false
-    public T Get<class T>()
+
+    public static void Register<T>(Func<Object> factory)
     {
-        return null;
-#if false
+        Instance.RegisterFactory<T>(factory);
+    }
+    
+    
+    public T GetInstance<T>()
+    {
         InstanceEntry instanceEntry;
         lock (_lo)
         {
@@ -54,15 +61,42 @@ public class Implementations
         {
             if (null != instanceEntry.Instance)
             {
-                return instanceEntry.Instance;
+                return (T) instanceEntry.Instance;
             }
+
+            if (null == instanceEntry.FactoryFunction)
+            {
+                ErrorThrow($"No factory found for type {typeof(T).FullName}", (m) => new InvalidOperationException(m));
+            }
+
+            instanceEntry.Instance = instanceEntry.FactoryFunction();
+
+            return (T)instanceEntry.Instance;
         }
-#endif
+
+
     }
-#endif
-    
-    public Implementations()
+
+
+    public static T Get<T>()
     {
-        
+        return Instance.GetInstance<T>();
+    }
+
+
+    static Implementations()
+    {}
+
+    
+    private Implementations()
+    {}
+
+
+    public static Implementations Instance
+    {
+        get
+        {
+            return _singleton;
+        }
     }
 }
