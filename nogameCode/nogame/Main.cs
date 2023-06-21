@@ -4,6 +4,9 @@ using engine;
 
 namespace nogame;
 
+/**
+ * This is the entry point and start for the game.
+ */
 public class Main
 {
     private engine.Engine _e;

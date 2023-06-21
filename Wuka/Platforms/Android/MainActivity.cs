@@ -56,11 +56,8 @@ namespace Wuka
                 WireServer.API aWireServer = new(e, 9001);
             }
 #endif
+            nogame.Main.Start(e);
 
-            e.SceneSequencer.AddSceneFactory("root", () => new nogame.RootScene());
-            e.SceneSequencer.AddSceneFactory("logos", () => new nogame.LogosScene());
-
-            e.SceneSequencer.SetMainScene("logos");
             e.Execute();
         }
     }
