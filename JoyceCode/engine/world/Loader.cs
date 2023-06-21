@@ -30,10 +30,7 @@ namespace engine.world
     public class Loader
     {
         private Engine _engine;
-        private void trace(in string message)
-        {
-            Console.WriteLine(message);
-        }
+
         private world.MetaGen _worldMetaGen = null;
         private All _all = null;
 
@@ -225,7 +222,7 @@ return molArrayMap;
             _strLastLoaded = strCurr;
             ++_lastLoadedIteration;
 
-            if (world.MetaGen.TRACE_WORLD_LOADER) trace("WorldMetaGen.worldLoaderProvideFragments(): Entered new terrain " + strCurr + ", loading.");
+            if (world.MetaGen.TRACE_WORLD_LOADER) Trace("WorldMetaGen.worldLoaderProvideFragments(): Entered new terrain " + strCurr + ", loading.");
             for (int dz=-WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; dz<= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; ++dz )
             {
                 for (int dx=-WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; dx<= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; ++dx )
@@ -234,7 +231,7 @@ return molArrayMap;
                     int j1 = j;
                     int k1 = k + dz;
                     var strKey = "fragxy-" + i1 + "_" + j1 + "_" + k1;
-                    if (world.MetaGen.TRACE_WORLD_LOADER) trace($"WorldMetaGen.worldLoaderProvideFragments(): Loading {strKey}");
+                    if (world.MetaGen.TRACE_WORLD_LOADER) Trace($"WorldMetaGen.worldLoaderProvideFragments(): Loading {strKey}");
 
                     /*
                      * Look, wether the corresponding fragment still is in the
@@ -285,7 +282,7 @@ return molArrayMap;
                             world.MetaGen.Instance().ApplyFragmentOperators(fragment);
                         }
                         catch (Exception e) {
-                            trace($"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling applyFragmentOperators(): {e}");
+                            Trace($"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling applyFragmentOperators(): {e}");
                         }
                         _mapFrags[strKey] = fragment;
 
@@ -294,7 +291,7 @@ return molArrayMap;
                             fragment.WorldFragmentAdd(1f);
                         }
                         catch (Exception e) {
-                            trace($"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling worldFragmentAdd(): {e}");
+                            Trace($"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling worldFragmentAdd(): {e}");
                         }
                     }
                 }
