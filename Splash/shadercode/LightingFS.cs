@@ -74,7 +74,7 @@ void main()
     vec3 viewD = normalize(viewPos - vec3(fragPosition));
     vec3 specular = vec3(0.0);
 
-    if ((texelColor.a + emissiveColor.a) < 0.01) discard;
+    if ((emissiveColor.a+texelColor.a) < 0.01) discard;
 
     // NOTE: Implement here your fragment shader code
 

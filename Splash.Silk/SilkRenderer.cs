@@ -41,6 +41,12 @@ namespace Splash.Silk
 
             int y0Stats = 30;
 
+            // was sFactorAlpha Zero and One before. Why does this work?
+            _gl.BlendFuncSeparate(
+                BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha,
+                BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            _gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
+            
             /*
              * Before any frame, clear colors and depth.
              */
@@ -139,12 +145,6 @@ namespace Splash.Silk
                 _gl.Enable(EnableCap.Blend);
                 _gl.Disable(EnableCap.CullFace);
 
-                // was sFactorAlpha Zero and One before. Why does this work?
-                _gl.BlendFuncSeparate(
-                    BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha,
-                    BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                _gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
-                
                 renderPart.CameraOutput.RenderTransparent(_threeD);
                 
                 _gl.Disable(EnableCap.Blend);
