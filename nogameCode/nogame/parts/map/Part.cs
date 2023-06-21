@@ -43,12 +43,15 @@ public class Part : IPart
 
         _memoryFramebuffer = new engine.ross.MemoryFramebuffer(MapWidth, MapHeight);
         
+        /*
+         * Render the actual map data.
+         */
+        Implementations.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_memoryFramebuffer);
+        
         _eMapContainer = _engine.CreateEntity("nogame.parts.map.mapContainer");
         
         _eMap = _engine.CreateEntity("nogame.parts.map.map");
         
-        var posFramebuffer = new Vector3(0f, 0f, 50f);
-
         engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
             new Vector2(16f, 16f));
         meshFramebuffer.UploadImmediately = true;
@@ -57,7 +60,7 @@ public class Part : IPart
         engine.joyce.Material materialFramebuffer = new();
         materialFramebuffer.UploadImmediately = true;
         materialFramebuffer.EmissiveTexture = textureFramebuffer;
-        materialFramebuffer.HasTransparency = false;
+        materialFramebuffer.HasTransparency = true;
 
         engine.joyce.InstanceDesc jInstanceDesc = new();
         jInstanceDesc.Meshes.Add(meshFramebuffer);
@@ -67,7 +70,7 @@ public class Part : IPart
             
         _engine.GetATransform().SetTransforms(
             _eMap, false, MapCameraMask,
-            new Quaternion(0f,0f,2f,1f),
+            new Quaternion(0f,0f,0f,1f),
             new Vector3(0f, 0f, 0f));
 
     }

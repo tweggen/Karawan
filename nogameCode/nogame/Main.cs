@@ -19,6 +19,7 @@ public class Main
     
     private DefaultMapProvider _mapProvider;
 
+    
     private IMapProvider _setupMapProvider()
     {
         lock (_lo)
@@ -31,15 +32,16 @@ public class Main
     }
     
 
-    public void SetupDependencies()
+    private void _setupImplementations()
     {
         Implementations.Register<IMapProvider>(() => _setupMapProvider());
     }
 
-    public void LoadScenes()
+    
+    private void _registerScenes()
     {
-        _e.SceneSequencer.AddSceneFactory("root", () => new nogame.RootScene());
-        _e.SceneSequencer.AddSceneFactory("logos", () => new nogame.LogosScene());
+        _e.SceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
+        _e.SceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
         _e.SceneSequencer.SetMainScene("logos");
     }
 
@@ -54,7 +56,7 @@ public class Main
     {
         Main main = new(e);
 
-        main.SetupDependencies();
-        main.LoadScenes();
+        main._setupImplementations();
+        main._registerScenes();
     }
 }

@@ -2,7 +2,7 @@
 using System;
 using System.Numerics;
 
-namespace nogame.scenes.Root;
+namespace nogame.scenes.root;
 
 public class Scene : engine.IScene
 {

@@ -25,13 +25,22 @@ public sealed class Implementations
 
     public void RegisterFactory<T>(Func<Object> factory)
     {
-        InstanceEntry instanceEntry = new()
+        lock (_lo)
         {
-            Lock = new(),
-            InterfaceType = typeof(T),
-            FactoryFunction = factory,
-            Instance = null
-        };
+            if (_mapInstances.TryGetValue(typeof(T), out _))
+            {
+                ErrorThrow($"Already registered {typeof(T).FullName}.", (m) => throw new InvalidOperationException(m));
+            }
+            InstanceEntry instanceEntry = new()
+            {
+                Lock = new(),
+                InterfaceType = typeof(T),
+                FactoryFunction = factory,
+                Instance = null
+            };
+
+            _mapInstances[typeof(T)] = instanceEntry;
+        }
     }
 
 

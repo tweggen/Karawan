@@ -18,6 +18,8 @@ public class WorldMapTerrainProvider : IWorldMapProvider
      */
     public void WorldMapCreateBitmap(IFramebuffer target)
     {
+        target.BeginModification();
+        
         /*
          * We have a grid of height sample in our skeleton map.
          * While drawing this layer of terrain, 
@@ -41,5 +43,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
 
         dc.FillColor = 0xff223388;
         target.FillRectangle(dc, new Vector2(0, 0), new Vector2( fbWidth-1, fbHeight-1) );
+        
+        target.EndModification();
     }
 }

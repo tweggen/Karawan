@@ -62,8 +62,7 @@ public class Part : engine.IPart
 
         {
             _eFramebuffer = _engine.CreateEntity("Framebuffer");
-            var posFramebuffer = new Vector3(0f, 0f, 50f);
-
+            
             // engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
             engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
                 new Vector2(16f, 8f));

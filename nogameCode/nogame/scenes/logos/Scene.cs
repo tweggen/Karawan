@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace nogame.scenes.root;
+namespace nogame.scenes.logos;
 
 public class Scene : engine.IScene
 {

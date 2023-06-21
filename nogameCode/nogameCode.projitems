@@ -22,7 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\Main.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\AllRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapTerrainProvider.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\mqp\Part.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\map\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\osd\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\WASDPhysics.cs" />
