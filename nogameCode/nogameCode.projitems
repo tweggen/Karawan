@@ -19,7 +19,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateTreesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\components\CubeSpinner.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\LogosScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\Main.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\AllRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapTerrainProvider.cs" />
@@ -28,7 +27,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\WASDPhysics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\skybox\Part.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\RootScene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\logos\Scene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\systems\CubeSpinnerSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\ElevationBaseFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\GroundOperator.cs" />
