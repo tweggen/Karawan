@@ -78,6 +78,7 @@ public class Part : IPart
     
     public void PartDeactivate()
     {
+        _engine.RemovePart(this);
         _engine.GetATransform().SetVisible(_eMap, false);
     }
 
@@ -87,6 +88,7 @@ public class Part : IPart
         _engine = engine0;
         _needResources();
         _engine.GetATransform().SetVisible(_eMap, true);
+        _engine.AddPart(-200, scene0, this);
     }
 
 
