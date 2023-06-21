@@ -21,5 +21,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
          */
         float worldMinX = -MetaGen.MaxWidth/2f;
         float worldMinZ = -MetaGen.MaxHeight/2f;
+        
+        // how to refer to skeleton ground from here.
     }
 }

@@ -15,11 +15,11 @@ namespace nogame.terrain
      */
     public class GroundOperator
     {
-        private static object _lockInstance = new();
+        private static readonly object _lo = new();
         private static GroundOperator _instance;
         public static GroundOperator Instance()
         {
-            lock (_lockInstance)
+            lock (_lo)
             {
                 if (_instance == null)
                 {
@@ -37,13 +37,21 @@ namespace nogame.terrain
 
         private float[,] _skeletonElevations;
 
+        public int SkeletonWidth
+        {
+            get => _skeletonWidth;
+        }
+        public int SkeletonHeight
+        {
+            get => _skeletonHeight;
+        }
+        
         private engine.RandomSource _rnd;
-        private engine.world.MetaGen _worldMetaGen;
 
         /** 
          * Create the elevation skeleton for the map. Sub-terrains may further refine this elevation mesh.
          */
-        private void createSkeleton()
+        private void _createSkeleton()
         {
             _rnd.clear();
 
@@ -74,7 +82,7 @@ namespace nogame.terrain
                 x0, y0, x1, y1);
         }
 
-        public float[,] getSkeleton()
+        public float[,] GetSkeleton()
         {
             return _skeletonElevations;
         }
@@ -86,8 +94,6 @@ namespace nogame.terrain
          */
         private GroundOperator(in string seed0)
         {
-            _worldMetaGen = engine.world.MetaGen.Instance();
-
             var fragmentSize = engine.world.MetaGen.FragmentSize;
             var maxWidth = engine.world.MetaGen.MaxWidth;
             var maxHeight = engine.world.MetaGen.MaxHeight;
@@ -97,7 +103,7 @@ namespace nogame.terrain
 
             _rnd = new engine.RandomSource(seed0);
  
-            createSkeleton();
+            _createSkeleton();
         }
     }
 }

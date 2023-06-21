@@ -38,7 +38,7 @@ namespace nogame.terrain
         {
 
             GroundOperator groundOperator = GroundOperator.Instance();
-            var skeletonElevations = groundOperator.getSkeleton();
+            var skeletonElevations = groundOperator.GetSkeleton();
 
             /*
              * Create a local array for computing the elevations. By convention,
