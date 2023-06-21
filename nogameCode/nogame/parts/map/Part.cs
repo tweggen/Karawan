@@ -60,7 +60,7 @@ public class Part : IPart
         engine.joyce.Material materialFramebuffer = new();
         materialFramebuffer.UploadImmediately = true;
         materialFramebuffer.EmissiveTexture = textureFramebuffer;
-        materialFramebuffer.HasTransparency = true;
+        materialFramebuffer.HasTransparency = false;
 
         engine.joyce.InstanceDesc jInstanceDesc = new();
         jInstanceDesc.Meshes.Add(meshFramebuffer);
@@ -71,7 +71,7 @@ public class Part : IPart
         _engine.GetATransform().SetTransforms(
             _eMap, false, MapCameraMask,
             new Quaternion(0f,0f,0f,1f),
-            new Vector3(0f, 0f, 0f));
+            new Vector3(0f, 0f, -1f));
 
     }
     
