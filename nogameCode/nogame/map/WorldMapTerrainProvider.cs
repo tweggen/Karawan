@@ -1,8 +1,9 @@
 using DefaultEcs;
 using engine.draw;
 using engine.world;
+using builtin.map;
 
-namespace builtin.map;
+namespace nogame.map;
 
 public class WorldMapTerrainProvider : IWorldMapProvider
 {
