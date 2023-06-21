@@ -173,6 +173,7 @@ namespace Karawan
             /*
              * Setup globals and statics
              */
+            engine.GlobalSettings.Set("nogame.CreateOSD", "true");
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
             engine.GlobalSettings.Set("platform.threeD.API.version", "330");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");

@@ -30,6 +30,8 @@ public class LogicalRenderer
             .With<engine.transform.components.Transform3ToWorld>()
             .AsEnumerable();
 
+        bool haveSkyboxPosition = false;
+        
         foreach (var eCamera in listCameras)
         {
             RenderPart renderPart = new();
@@ -40,9 +42,16 @@ public class LogicalRenderer
 
             _drawInstancesSystem.Update(cameraOutput);
 
-            var vCameraPosition = renderPart.Transform3ToWorld.Matrix.Translation;
-            _drawSkyboxesSystem.CameraPosition = vCameraPosition;
-            _drawSkyboxesSystem.Update(cameraOutput);
+            if (0 != (renderPart.Camera3.CameraMask & 0x0000ffff))
+            {
+                if (!haveSkyboxPosition)
+                {
+                    var vCameraPosition = renderPart.Transform3ToWorld.Matrix.Translation;
+                    _drawSkyboxesSystem.CameraPosition = vCameraPosition;
+                    _drawSkyboxesSystem.Update(cameraOutput);
+                    haveSkyboxPosition = true;
+                }
+            }
 
             renderFrame.RenderParts.Add(renderPart);
         }

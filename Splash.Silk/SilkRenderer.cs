@@ -20,9 +20,9 @@ namespace Splash.Silk
 
         private engine.Engine _engine;
 
-        private IThreeD _threeD;
-        private SilkThreeD _silkThreeD;
-        private LightManager _lightManager;
+        private readonly IThreeD _threeD;
+        private readonly SilkThreeD _silkThreeD;
+        private readonly LightManager _lightManager;
         private Vector2 _vViewSize;
         private Vector2 _vLastGlSize = new(0f, 0f);
         
@@ -34,7 +34,7 @@ namespace Splash.Silk
          * This function is called from a dedicated rendering thread as executed
          * inside the platform API. It must not access ECS data.
          */
-        private void _renderParts(in IList<RenderPart> RenderParts)
+        private void _renderParts(in IList<RenderPart> renderParts)
         {
             
             bool isFirstPart = true;
@@ -46,7 +46,7 @@ namespace Splash.Silk
              */
             _gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
             
-            foreach(var RenderPart in RenderParts)
+            foreach(var renderPart in renderParts)
             {
                 /*
                  * We clear the screen only before the very first rendering pass.
@@ -62,7 +62,7 @@ namespace Splash.Silk
                 }
                 
 
-                var cCameraParams = RenderPart.Camera3;
+                var cCameraParams = renderPart.Camera3;
 
                 /*
                  * We enable depth test only for the lower 16 bit camera masks.
@@ -76,7 +76,7 @@ namespace Splash.Silk
                     _gl.Disable(EnableCap.DepthTest);
                 }
 
-                var mToWorld = RenderPart.Transform3ToWorld.Matrix;
+                var mToWorld = renderPart.Transform3ToWorld.Matrix;
 
                 var vCameraPosition = mToWorld.Translation;
                 Vector3 vY;
@@ -113,16 +113,9 @@ namespace Splash.Silk
                             0f, 0f, -(f + n) / (f - n), -2f * f * n / (f - n),
                             0f, 0f, -1f, 0f
                         );
+
                         // TXWTODO: We need a smarter way to fix that to the view.
-                        Matrix4x4 mScaleToViewWindow =
-                            Matrix4x4.Identity;
-                        
-                            /* new(
-                            1f/_vViewSize.X, 0f, 0f, 0f,
-                            0f, 1f/_vViewSize.Y, 0f, 0f,
-                            0f, 0f, 1f, 0f,
-                            0f, 0f, 0f, 1f
-                        ); */
+                        Matrix4x4 mScaleToViewWindow =  Matrix4x4.Identity;
                         matProjection = Matrix4x4.Transpose(m*mScaleToViewWindow);
                     }
                     _silkThreeD.SetProjectionMatrix(matProjection);
@@ -137,7 +130,7 @@ namespace Splash.Silk
                 /*
                  * Then draw standard world
                  */
-                RenderPart.CameraOutput.RenderStandard(_threeD);
+                renderPart.CameraOutput.RenderStandard(_threeD);
 
 
                 /*
@@ -146,12 +139,13 @@ namespace Splash.Silk
                 _gl.Enable(EnableCap.Blend);
                 _gl.Disable(EnableCap.CullFace);
 
+                // was sFactorAlpha Zero and One before. Why does this work?
                 _gl.BlendFuncSeparate(
-                    BlendingFactor.SrcAlpha,BlendingFactor.OneMinusSrcAlpha,
-                    BlendingFactor.Zero,BlendingFactor.One);
+                    BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha,
+                    BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 _gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
                 
-                RenderPart.CameraOutput.RenderTransparent(_threeD);
+                renderPart.CameraOutput.RenderTransparent(_threeD);
                 
                 _gl.Disable(EnableCap.Blend);
                 _gl.Enable(EnableCap.CullFace);
