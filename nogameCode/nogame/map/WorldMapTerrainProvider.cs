@@ -13,10 +13,8 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         throw new System.NotImplementedException();
     }
 
-    /**
-     * We just render the terrain height.
-     */
-    public void WorldMapCreateBitmap(IFramebuffer target)
+
+    private void _createBitmap(IFramebuffer target)
     {
         target.BeginModification();
         
@@ -45,5 +43,13 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         target.FillRectangle(dc, new Vector2(0, 0), new Vector2( fbWidth-1, fbHeight-1) );
         
         target.EndModification();
+    }
+    
+    /**
+     * We just render the terrain height.
+     */
+    public void WorldMapCreateBitmap(IFramebuffer target)
+    {
+        _createBitmap(target);
     }
 }
