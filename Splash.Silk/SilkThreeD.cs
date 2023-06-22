@@ -497,6 +497,12 @@ public class SilkThreeD : IThreeD
         }
         else
         {
+#if false
+            if (jMaterial.Texture == null)
+            {
+                Trace( "no texture found at all.");
+            }
+#endif
             ATextureEntry? aEmissiveTextureEntry = _textureManager.FindATexture(new engine.joyce.Texture("joyce://col00000000"));
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }

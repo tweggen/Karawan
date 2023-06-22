@@ -41,7 +41,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
 
         engine.draw.Context dc = new();
 
-        dc.FillColor = 0xff223388;
+        dc.FillColor = 0xff883322;
         target.FillRectangle(dc, new Vector2(0, 0), new Vector2( fbWidth-1, fbHeight-1) );
         
         target.EndModification();
