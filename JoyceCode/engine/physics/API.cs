@@ -41,7 +41,7 @@ public class API
 
         if (contactManifold.Count > 0)
         {
-            Trace("There is something in the manifold.");
+            // Trace("There is something in the manifold.");
         }
 
         physics.ContactInfo contactInfo = new(
