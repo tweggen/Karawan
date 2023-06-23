@@ -8,6 +8,8 @@ namespace Splash
 {
     public class CameraOutput
     {
+        private object _lo = new();
+        
         private uint _cameraMask = 0;
         public uint CameraMask { get => _cameraMask; }
 
@@ -16,8 +18,8 @@ namespace Splash
         private int _nMaterials = 0;
         private int _nInstances = 0;
 
-        private readonly Dictionary<AMaterialEntry, MaterialBatch> _materialBatches = new();
-        private readonly Dictionary<AMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
+        private Dictionary<AMaterialEntry, MaterialBatch> _materialBatches = new();
+        private Dictionary<AMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
 
         private readonly IThreeD _threeD;
         
@@ -25,7 +27,7 @@ namespace Splash
 
         /**
          * The actual rendering method. Must be called from the context of
-         * the render thread class.
+         * the render thread class. The material batch must not be used concurrently. 
          * 
          * Uploaders meshes/textures if required.
          */
@@ -92,18 +94,20 @@ namespace Splash
             }
         }
 
-        public void AppendInstance(
+
+        private void _appendInstanceNoLock(
             in AMeshEntry aMeshEntry,
             in AMaterialEntry aMaterialEntry,
             in Matrix4x4 matrix)
         {
+            
             _nEntities++;
 
             /*
              * Do we have an entry for the material?
              */
             Dictionary<AMaterialEntry, MaterialBatch> mbs;
-            if (!aMaterialEntry.HasTransparency())
+                if (!aMaterialEntry.HasTransparency())
             {
                 mbs = _materialBatches;
             }
@@ -111,6 +115,7 @@ namespace Splash
             {
                 mbs = _transparentMaterialBatches;
             }
+
             MaterialBatch materialBatch;
             mbs.TryGetValue(aMaterialEntry, out materialBatch);
             if (null == materialBatch)
@@ -135,71 +140,104 @@ namespace Splash
             /*
              * Now we can add our matrix to the list of matrices.
              */
-            // meshBatch.Matrices.Add(Matrix4x4.Transpose(matrix) );
             meshBatch.Matrices.Add(matrix);
             _nInstances++;
         }
 
+
+        public void AppendInstance(
+            in AMeshEntry aMeshEntry,
+            in AMaterialEntry aMaterialEntry,
+            in Matrix4x4 matrix)
+        {
+            lock (_lo)
+            {
+                _appendInstanceNoLock(aMeshEntry, aMaterialEntry, matrix);
+            }
+        }
+        
+
         public void AppendInstance(in Splash.components.PfInstance pfInstance, in Matrix4x4 matrix)
         {
-            int nMeshes = pfInstance.AMeshEntries.Count;
-            int nMaterialIndices = pfInstance.MeshMaterials.Count;
-            int nMaterials = pfInstance.AMaterialEntries.Count;
-            for (int i = 0; i < nMeshes; ++i)
+            lock (_lo)
             {
-                AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
-                AMaterialEntry aMaterialEntry = null;
-
-                if (i < nMaterialIndices)
+                int nMeshes = pfInstance.AMeshEntries.Count;
+                int nMaterialIndices = pfInstance.MeshMaterials.Count;
+                int nMaterials = pfInstance.AMaterialEntries.Count;
+                for (int i = 0; i < nMeshes; ++i)
                 {
-                    int materialIndex = pfInstance.MeshMaterials[i];
-                    if (materialIndex < nMaterials)
+                    AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
+                    AMaterialEntry aMaterialEntry = null;
+
+                    if (i < nMaterialIndices)
                     {
-                        aMaterialEntry = pfInstance.AMaterialEntries[materialIndex];
+                        int materialIndex = pfInstance.MeshMaterials[i];
+                        if (materialIndex < nMaterials)
+                        {
+                            aMaterialEntry = pfInstance.AMaterialEntries[materialIndex];
+                        }
+                        else
+                        {
+                            Error($"Invalid material index {materialIndex} > nMaterials=={nMaterials}");
+                            continue;
+                        }
                     }
                     else
                     {
-                        Error($"Invalid material index {materialIndex} > nMaterials=={nMaterials}");
+                        Error($"Invalid index ({i} >= nMaterialIndices=={nMaterialIndices}");
                         continue;
                     }
-                }
-                else
-                {
-                    Error($"Invalid index ({i} >= nMaterialIndices=={nMaterialIndices}");
-                    continue;
-                }
 
-                // Skip things that incompletely are loaded.
-                if (null == aMeshEntry)
-                {
-                    continue;
-                }
+                    // Skip things that incompletely are loaded.
+                    if (null == aMeshEntry)
+                    {
+                        continue;
+                    }
 
-                if (null == aMaterialEntry)
-                {
-                    aMaterialEntry = _threeD.GetDefaultMaterial();
-                }
+                    if (null == aMaterialEntry)
+                    {
+                        aMaterialEntry = _threeD.GetDefaultMaterial();
+                    }
 
-                AppendInstance(aMeshEntry, aMaterialEntry, pfInstance.ModelTransform * matrix);
+                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, pfInstance.ModelTransform * matrix);
+                }
             }
         }
 
 
         public void RenderStandard(in IThreeD threeD)
         {
-            _renderMaterialBatches(threeD, _materialBatches);
+            /*
+             * We assume that nobody would modify the render batch anyway,
+             * so we lock during the entire rendering.
+             */
+            lock (_lo)
+            {
+                _renderMaterialBatches(threeD, _materialBatches);
+            }
         }
 
 
         public void RenderTransparent(in IThreeD threeD)
         {
-            _renderMaterialBatches(threeD, _transparentMaterialBatches);
+            /*
+             * We assume that nobody would modify the render batch anyway,
+             * so we lock during the entire rendering.
+             */
+            lock (_lo)
+            {
+                _renderMaterialBatches(threeD, _transparentMaterialBatches);
+            }
         }
 
 
         public string GetDebugInfo()
         {
-            return $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, {_nInstances} instances, 1 shaders.";
+            lock (_lo)
+            {
+                return
+                    $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, {_nInstances} instances, 1 shaders.";
+            }
         }
 
 
@@ -208,7 +246,6 @@ namespace Splash
             in uint cameraMask)
         {
             _cameraMask = cameraMask;
-
             _threeD = threeD;
         }
     }

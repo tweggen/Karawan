@@ -200,10 +200,10 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
 
         Action<IImageProcessingContext> op = 
             x => x.Fill(_doClear, _col(context.FillColor), rectangle);
-        // _image.Mutate(op);
+
         lock (_lo)
         {
-            _listDrawActions.Add(op);
+            // _listDrawActions.Add(op);
             _applyModified(ul, lr);
         }
     }
@@ -215,10 +215,10 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
         Action<IImageProcessingContext> op = x =>
             x.Fill(_col(context.FillColor), rectangle); 
-        // _image.Mutate(op);
+
         lock (_lo)
         {
-            _listDrawActions.Add(op);
+            // _listDrawActions.Add(op);
             _applyModified(ul, lr);
         }
     }
@@ -230,10 +230,10 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
             _doText, text, Fonts.Instance.Font($"Prototype {fontSize}"),
             _col(context.TextColor),
             new PointF(ul.X, ul.Y));
-        // _image.Mutate(op);
+
         lock (_lo)
         {
-            _listDrawActions.Add(op);
+            // _listDrawActions.Add(op);
             _applyModified(ul, lr);
         }
     }
