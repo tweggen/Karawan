@@ -51,7 +51,7 @@ namespace Splash
             {
                 if (_dictTextures.TryGetValue(textureKey, out aTextureEntry))
                 {
-                    if (aTextureEntry.IsOutdated())
+                    if (false && aTextureEntry.IsOutdated())
                     {
                         needFillEntry = true;
                     }
