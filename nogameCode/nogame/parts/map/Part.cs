@@ -41,7 +41,7 @@ public class Part : IPart
             _createdResources = true;
         }
 
-        _memoryFramebuffer = new engine.ross.MemoryFramebuffer(MapWidth, MapHeight);
+        _memoryFramebuffer = new engine.ross.MemoryFramebuffer("fbMap", MapWidth, MapHeight);
         
         /*
          * Render the actual map data.

@@ -5,6 +5,7 @@ namespace engine.draw;
 
 public interface IFramebuffer
 {
+    public string Id { get; }
     public uint Width { get; }
     public uint Height { get; }
     public uint Generation { get; }

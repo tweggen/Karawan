@@ -1,6 +1,7 @@
 ﻿
-
+using System.Diagnostics;
 using engine.draw;
+using static engine.Logger;
 
 namespace Splash.Silk
 {

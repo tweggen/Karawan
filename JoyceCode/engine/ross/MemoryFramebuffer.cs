@@ -72,11 +72,14 @@ public sealed class Fonts
 public class MemoryFramebuffer : engine.draw.IFramebuffer
 {
     private object _lo = new object();
+    private string _id;
     
     private uint _generation = 0;
 
     private Vector2 _ulModified;
     private Vector2 _lrModified;
+    
+    
 
     private void _resetModified()
     {
@@ -127,6 +130,11 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     public uint Height
     {
         get => (uint)_image.Height; 
+    }
+
+    public string Id
+    {
+        get => _id;
     }
 
     public void BeginModification()
@@ -228,8 +236,9 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     }
 
 
-    public MemoryFramebuffer(uint width, uint height)
+    public MemoryFramebuffer(string id, uint width, uint height)
     {
+        _id = id;
         _image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>((int)width, (int)height);
         //_resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
         _resetModified();

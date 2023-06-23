@@ -58,14 +58,14 @@ public class Part : engine.IPart
     {
             
         _drawContext = new engine.draw.Context();
-        _framebuffer = new engine.ross.MemoryFramebuffer(_width, _height);
+        _framebuffer = new engine.ross.MemoryFramebuffer("fbOsd", _width, _height);
 
         {
             _eFramebuffer = _engine.CreateEntity("Framebuffer");
             
             // engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
             engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
-                new Vector2(1f, 1f));
+                new Vector2(16f, 8f));
             meshFramebuffer.UploadImmediately = true;
             engine.joyce.Texture textureFramebuffer = new(_framebuffer);
             textureFramebuffer.DoFilter = false;
@@ -87,8 +87,6 @@ public class Part : engine.IPart
             //_aTransform.SetPosition(_eFramebuffer, posFramebuffer);
             //_aTransform.SetVisible(_eFramebuffer, true);
             //_aTransform.SetCameraMask(_eFramebuffer, 0x00010000);
-
-            
         }
     }
 

@@ -16,7 +16,14 @@ namespace Splash
         {
             if( jTexture.Source == null)
             {
-                return "(null)";
+                if (jTexture.Framebuffer == null)
+                {
+                    return "(null)";
+                }
+                else
+                {
+                    return jTexture.Framebuffer.Id;
+                }
             }
             else
             {
