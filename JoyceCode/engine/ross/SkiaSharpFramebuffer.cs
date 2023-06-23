@@ -91,7 +91,8 @@ public class SkiaSharpFramebuffer : IFramebuffer
         {
             Color = context.ClearColor,
             IsAntialias = false,
-            Style = SKPaintStyle.Fill
+            Style = SKPaintStyle.Fill,
+            BlendMode = SKBlendMode.Src
         };
         lock (_lo)
         {
