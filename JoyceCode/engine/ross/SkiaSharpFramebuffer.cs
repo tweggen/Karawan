@@ -15,7 +15,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
     private uint _generation = 0xfffffffe;
 
     private Vector2 _ulModified = new();
-    private Vector2 _lrModufied = new();
+    private Vector2 _lrModified = new();
 
     private SKSurface _skiaSurface;
     
@@ -32,7 +32,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         lock (_lo)
         {
             ul = _ulModified;
-            lr = _lrModufied;
+            lr = _lrModified;
         }
     }
         
@@ -46,6 +46,13 @@ public class SkiaSharpFramebuffer : IFramebuffer
     }
     
 
+    private void _applyModified(in Vector2 ul, in Vector2 lr)
+    {
+        _ulModified = new Vector2(Math.Min(_ulModified.X, ul.X), Math.Min(_ulModified.Y, ul.Y));
+        _lrModified = new Vector2(Math.Min(_lrModified.X, ul.X), Math.Min(_lrModified.Y, ul.Y));
+    }
+
+
     public void BeginModification()
     {
         
@@ -54,6 +61,10 @@ public class SkiaSharpFramebuffer : IFramebuffer
     
     public void EndModification()
     {
+        lock (_lo)
+        {
+            _generation++;
+        }
         
     }
 
@@ -69,6 +80,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         lock (_lo)
         {
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X, lr.Y, paint);
+            _applyModified(ul, lr);
         }
     }
 
@@ -84,6 +96,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         lock (_lo)
         {
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X, lr.Y, paint);
+            _applyModified(ul, lr);
         }
     }
 
@@ -116,6 +129,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         lock (_lo)
         {
             _skiaSurface.Canvas.DrawText(text, coord, paint);
+            _applyModified(ul, lr);
         }
     }
     
@@ -146,8 +160,8 @@ public class SkiaSharpFramebuffer : IFramebuffer
         {
             _ulModified.X = 0;
             _ulModified.Y = 0;
-            _lrModufied.X = _width - 1;
-            _lrModufied.Y = _height - 1;
+            _lrModified.X = _width - 1;
+            _lrModified.Y = _height - 1;
         }
     }
     
