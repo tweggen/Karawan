@@ -116,7 +116,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\ApplyPosesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\MoveKineticsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\ross\MemoryFramebuffer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ross\ImageSharpFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\SceneSequencer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Estate.cs" />

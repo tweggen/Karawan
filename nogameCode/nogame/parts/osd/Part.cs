@@ -43,7 +43,7 @@ public class Part : engine.IPart
     {
             
         _drawContext = new engine.draw.Context();
-        _framebuffer = new engine.ross.MemoryFramebuffer("fbOsd", _width, _height);
+        _framebuffer = new engine.ross.ImageSharpFramebuffer("fbOsd", _width, _height);
 
         {
             _eFramebuffer = _engine.CreateEntity("Framebuffer");

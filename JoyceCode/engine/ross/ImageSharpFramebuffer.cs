@@ -68,7 +68,7 @@ public sealed class Fonts
 }
 
 
-public class MemoryFramebuffer : engine.draw.IFramebuffer
+public class ImageSharpFramebuffer : engine.draw.IFramebuffer
 {
     private object _lo = new object();
     private string _id;
@@ -268,7 +268,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     }
 
 
-    public MemoryFramebuffer(string id, uint width, uint height)
+    public ImageSharpFramebuffer(string id, uint width, uint height)
     {
         _id = id;
         _image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>((int)width, (int)height);
