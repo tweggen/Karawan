@@ -3,6 +3,7 @@ using System.Numerics;
 using engine.draw;
 using SkiaSharp;
 using static engine.Logger;
+using Trace = System.Diagnostics.Trace;
 
 namespace engine.ross;
 
@@ -89,12 +90,13 @@ public class SkiaSharpFramebuffer : IFramebuffer
     {
         var paint = new SKPaint
         {
-            Color = 0xffffffff, // context.ClearColor,
+            Color = 0xfff00fff, // context.ClearColor,
             Style = SKPaintStyle.Fill,
             //BlendMode = SKBlendMode.Src
         };
         lock (_lo)
         {
+            Trace($"ul is {ul} lr is {lr}");
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
         }
