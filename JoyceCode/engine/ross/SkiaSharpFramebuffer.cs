@@ -1,8 +1,8 @@
 using System;
 using System.Numerics;
-using System.Runtime.Intrinsics.X86;
 using engine.draw;
 using SkiaSharp;
+using static engine.Logger;
 
 namespace engine.ross;
 
@@ -49,7 +49,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
     private void _applyModified(in Vector2 ul, in Vector2 lr)
     {
         _ulModified = new Vector2(Math.Min(_ulModified.X, ul.X), Math.Min(_ulModified.Y, ul.Y));
-        _lrModified = new Vector2(Math.Min(_lrModified.X, lr.X), Math.Min(_lrModified.Y, lr.Y));
+        _lrModified = new Vector2(Math.Max(_lrModified.X, lr.X), Math.Max(_lrModified.Y, lr.Y));
     }
 
 
@@ -136,25 +136,35 @@ public class SkiaSharpFramebuffer : IFramebuffer
 
     public unsafe void GetMemory(out Span<byte> spanBytes)
     {
-        SKImageInfo info = new((int)_width, (int)_height, SKColorType.Rgba8888);
-        SKPixmap skiaPixmap = _skiaSurface.PeekPixels();
-        lock (_lo)
+        try
         {
-            fixed (byte* p = _superfluousBackBuffer)
+#if false
+            SKImageInfo info = new((int)_width, (int)_height, SKColorType.Rgba8888);
+            SKPixmap skiaPixmap = _skiaSurface.PeekPixels();
+            lock (_lo)
             {
-                IntPtr intptr = (IntPtr)p;
+                fixed (byte* p = _superfluousBackBuffer)
+                {
+                    IntPtr intptr = (IntPtr)p;
 
-                skiaPixmap.ReadPixels(info, intptr,  (int)_width * 4);
+                    skiaPixmap.ReadPixels(info, intptr, (int)_width * 4);
+                }
+
+            }
+#endif
+
+            for (int i = 0; i < (_width * _height); ++i)
+            {
+                _superfluousBackBuffer[i] = 0xff;
             }
 
+            spanBytes = _superfluousBackBuffer.AsSpan();
         }
-
-        for (int i = 0; i < (_width * _height); ++i)
+        catch (Exception e)
         {
-            _superfluousBackBuffer[i] = 0xff;
+            Error($"Exception {e}");
+            spanBytes = _superfluousBackBuffer.AsSpan();
         }
-
-        spanBytes = _superfluousBackBuffer.AsSpan();
 
     }
 
