@@ -7,6 +7,7 @@ using System.Runtime.Loader;
 using System.Threading;
 using DefaultEcs;
 using static engine.Logger;
+using Trace = System.Diagnostics.Trace;
 
 namespace engine
 {
@@ -63,6 +64,9 @@ namespace engine
         public event EventHandler<string> KeyRelease;
 
 
+        private builtin.tools.RunningAverageComputer _fpsCounter = new();
+
+        
         public event EventHandler<physics.ContactInfo> OnContactInfo {
             add => _aPhysics.OnContactInfo += value; remove => _aPhysics.OnContactInfo -= value;
         } 
@@ -300,6 +304,11 @@ namespace engine
         public void OnPhysicalFrame(float dt)
         {
             PhysicalFrame?.Invoke(this, dt);
+            
+            /*
+             * Compute a running average of fps.
+             */
+            _fpsCounter.Add(dt);
         }
         
         private bool _firstTime = true;
@@ -549,6 +558,7 @@ namespace engine
         {
             float invFps = 1f / 60f;
             float totalTime = 0f;
+            long previousSeconds = 0;
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -603,6 +613,29 @@ namespace engine
                  * Now, depending on the remaining time, sleep a bit.
                  */
                 stopWatch.Start();
+
+                /*
+                 * Do these updates every second
+                 */
+                {
+                    long seconds = Stopwatch.GetTimestamp() / Stopwatch.Frequency;
+                    if (previousSeconds != seconds)
+                    {
+                        float dt = _fpsCounter.GetRunningAverage();
+                        float fps = 0f;
+                        if (0 == dt)
+                        {
+                            fps = 0f;
+                        }
+                        else
+                        {
+                            fps = 1f / dt;
+                        }
+
+                        Trace($"#fps {fps}");
+                    }
+                    previousSeconds = seconds;
+                }
             }
 
         }

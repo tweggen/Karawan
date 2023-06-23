@@ -38,23 +38,8 @@ public class Part : engine.IPart
     private readonly uint _width = 512;
     private readonly uint _height = 256;
     
-    private void _updateFramebuffer()
-    {
-        ++_fbpos;
-        var dc = _drawContext;
-        dc.FillColor = 0x00000000;
-        _framebuffer.ClearRectangle(dc, new Vector2(0,0), new Vector2(_width-1,_height-1));
-        dc.FillColor = 0xffffffff;
-        uint xofs = (2*_fbpos) % 300;
-        _framebuffer.FillRectangle(dc, new Vector2(xofs+30, 30), new Vector2(xofs+30+20, 30+20));
-        _framebuffer.FillRectangle(dc, new Vector2(30, 130), new Vector2(30+20, 130+20));
-        dc.TextColor = 0xff22aaee;
-        _framebuffer.DrawText(dc,
-            new Vector2( 30, 100), new Vector2(45, _height-50 ),
-            "Systems activated.", 10);
-    }
-        
-    private void _testFramebuffer()
+
+    private void _setupOSD()
     {
             
         _drawContext = new engine.draw.Context();
@@ -84,16 +69,14 @@ public class Part : engine.IPart
                 _eFramebuffer, true, 0x00010000,
                 new Quaternion(0f,0f,0f,1f),
                 new Vector3(0f, 0f, 0f));
-            //_aTransform.SetPosition(_eFramebuffer, posFramebuffer);
-            //_aTransform.SetVisible(_eFramebuffer, true);
-            //_aTransform.SetCameraMask(_eFramebuffer, 0x00010000);
         }
     }
 
     private uint _frameCounter = 0;
     private readonly uint _renderSubDiv = 3;
     private float _dtTotal = 0f;
-    private void _onPhysical(object? sender, float dt)
+    private void _onPhysical(object? sender
+        , float dt)
     {
         ++_frameCounter;
         _dtTotal += dt;
@@ -105,7 +88,6 @@ public class Part : engine.IPart
         var dtTotal = _dtTotal;
         _dtTotal = 0f;
         _frameCounter = 0;
-        _renderOSDSystem.SetFramebuffer(_framebuffer);
         _renderOSDSystem.Update(dtTotal);
     }
 
@@ -121,6 +103,7 @@ public class Part : engine.IPart
         _renderOSDSystem = null;
     }
 
+    
     public void PartActivate(in Engine engine0, in IScene scene0)
     {
         lock (_lo)
@@ -141,7 +124,8 @@ public class Part : engine.IPart
 
         _engine.PhysicalFrame += _onPhysical;
         
-        _testFramebuffer();
+        _setupOSD();
+        _renderOSDSystem.SetFramebuffer(_framebuffer);
         // _updateFramebuffer();
     }
 

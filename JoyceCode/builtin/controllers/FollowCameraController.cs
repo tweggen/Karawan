@@ -79,8 +79,8 @@ namespace builtin.controllers
             /*
              * Apply relative mouse movement
              */
-            var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), -_vMouseOffset.Y * (float)Math.PI / 180f);
-            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), -_vMouseOffset.X * (float)Math.PI / 180f);
+            var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), angleX);
+            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), angleY);
             qRotation *= rotRight;
             qRotation *= rotUp;
             _aTransform.SetTransform(_eTarget, qRotation, vCameraPos );

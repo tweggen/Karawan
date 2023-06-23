@@ -19,7 +19,7 @@ namespace Splash.Silk
 
     public class Platform : engine.IPlatform
     {
-        private object _lock = new object();
+        private object _lo = new object();
         private engine.Engine _engine;
         private engine.ControllerState _controllerState;
         private Vector2 _vMouseMove;
@@ -39,7 +39,7 @@ namespace Splash.Silk
         
         public void SetEngine(engine.Engine engine)
         {
-            lock (_lock)
+            lock (_lo)
             {
                 _engine = engine;
             }
@@ -161,6 +161,7 @@ namespace Splash.Silk
                 _engine.TakeKeyPress(code);
             }
         }
+        
 
         private void _onKeyUp(IKeyboard arg1, Key arg2, int arg3)
         {
@@ -208,56 +209,67 @@ namespace Splash.Silk
 
         private void _touchMouseController()
         {
-            if (_isMouseButtonClicked)
+            lock (_lo)
             {
-                Vector2 currDist = _currentMousePosition - _mousePressPosition;
-                var viewSize = _iView.Size;
-
-                float relY = (float)currDist.Y / (float)viewSize.Y;
-                float relX = (float)currDist.X / (float)viewSize.Y;
-
-                if (relY < 0)
+                if (_isMouseButtonClicked)
                 {
-                    _controllerState.WalkForward = (int)(Single.Min(0.5f, -relY) * 510f);
-                    _controllerState.WalkBackward = 0;
+                    Vector2 currDist = _currentMousePosition - _mousePressPosition;
+                    var viewSize = _iView.Size;
+
+                    float relY = (float)currDist.Y / (float)viewSize.Y;
+                    float relX = (float)currDist.X / (float)viewSize.Y;
+
+                    if (relY < 0)
+                    {
+                        _controllerState.WalkForward = (int)(Single.Min(0.5f, -relY) * 510f);
+                        _controllerState.WalkBackward = 0;
+                    }
+                    else if (relY > 0)
+                    {
+                        _controllerState.WalkBackward = (int)(Single.Min(0.5f, relY) * 510f);
+                        _controllerState.WalkForward = 0;
+                    }
+
+                    if (relX < 0)
+                    {
+                        _controllerState.TurnLeft = (int)(Single.Min(0.5f, -relX) * 510f);
+                        _controllerState.TurnRight = 0;
+                    }
+                    else if (relX > 0)
+                    {
+                        _controllerState.TurnRight = (int)(Single.Min(0.5f, relX) * 510f);
+                        _controllerState.TurnLeft = 0;
+                    }
                 }
-                else if (relY > 0)
+                else
                 {
-                    _controllerState.WalkBackward = (int)(Single.Min(0.5f, relY) * 510f);
                     _controllerState.WalkForward = 0;
-                }
-                if (relX < 0)
-                {
-                    _controllerState.TurnLeft = (int)(Single.Min(0.5f, -relX) * 510f);
+                    _controllerState.WalkBackward = 0;
                     _controllerState.TurnRight = 0;
-                }
-                else if (relX > 0)
-                {
-                    _controllerState.TurnRight = (int)(Single.Min(0.5f, relX) * 510f);
                     _controllerState.TurnLeft = 0;
                 }
-            } else
-            {
-                _controllerState.WalkForward = 0;
-                _controllerState.WalkBackward = 0;
-                _controllerState.TurnRight = 0;
-                _controllerState.TurnLeft = 0;
             }
         }
 
 
         private void _desktopMouseController()
         {
-            var lookSensitivity = 1f;
-            if (!_isMouseButtonClicked)
+            lock (_lo)
             {
-                if (_lastMousePosition == default) { _lastMousePosition = _currentMousePosition; }
-                else
+                var lookSensitivity = 1f;
+                if (!_isMouseButtonClicked)
                 {
-                    var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * lookSensitivity;
-                    var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * lookSensitivity;
-                    _lastMousePosition = _currentMousePosition;
-                    _vMouseMove += new Vector2(xOffset, yOffset);
+                    if (_lastMousePosition == default)
+                    {
+                        _lastMousePosition = _currentMousePosition;
+                    }
+                    else
+                    {
+                        var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * lookSensitivity;
+                        var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * lookSensitivity;
+                        _lastMousePosition = _currentMousePosition;
+                        _vMouseMove += new Vector2(xOffset, yOffset);
+                    }
                 }
             }
         }
@@ -270,8 +282,10 @@ namespace Splash.Silk
 
         private void _onMouseMove(IMouse mouse, Vector2 position)
         {
-            _currentMousePosition = mouse.Position;
-
+            lock (_lo)
+            {
+                _currentMousePosition = mouse.Position;
+            }
         }
 
 
@@ -281,7 +295,7 @@ namespace Splash.Silk
              *  Translate mouse wheel to zooming in/out. 
              */
             var y = scrollWheel.Y;
-            lock (_lock)
+            lock (_lo)
             {
                 int currentZoomState = _controllerState.ZoomState;
                 currentZoomState -= (int) y;
@@ -298,9 +312,13 @@ namespace Splash.Silk
             {
                 return;
             }
-            _mousePressPosition = mouse.Position;
-            _currentMousePosition = mouse.Position;
-            _isMouseButtonClicked = true;
+
+            lock (_lo)
+            {
+                _mousePressPosition = mouse.Position;
+                _currentMousePosition = mouse.Position;
+                _isMouseButtonClicked = true;
+            }
         }
 
         private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
@@ -309,8 +327,12 @@ namespace Splash.Silk
             {
                 return;
             }
-            _currentMousePosition = mouse.Position;
-            _isMouseButtonClicked = false;
+
+            lock (_lo)
+            {
+                _currentMousePosition = mouse.Position;
+                _isMouseButtonClicked = false;
+            }
         }
 
         /**
@@ -461,7 +483,7 @@ namespace Splash.Silk
 
         public void GetMouseMove(out Vector2 vMouseMove)
         {
-            lock (_lock)
+            lock (_lo)
             {
                 vMouseMove = _vMouseMove;
                 _vMouseMove = new Vector2(0f, 0f);
@@ -471,7 +493,7 @@ namespace Splash.Silk
 
         public void GetControllerState(out ControllerState controllerState)
         {
-            lock (_lock)
+            lock (_lo)
             {
                 controllerState = _controllerState;
             }
@@ -551,7 +573,7 @@ namespace Splash.Silk
 
         public bool IsRunning()
         {
-            lock(_lock)
+            lock(_lo)
             {
                 return _isRunning;
             }

@@ -26,7 +26,6 @@ public sealed class Fonts
     private FontFamily _ffPrototype;
     private SortedDictionary<string, Font> _mapFont = new();
 
-    
     public static Fonts Instance
     {
         get
@@ -79,8 +78,9 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     private Vector2 _ulModified;
     private Vector2 _lrModified;
     
+    private List<Action<IImageProcessingContext>> _listDrawActions = new();
     
-
+    
     private void _resetModified()
     {
         _ulModified = new Vector2(100000, 100000);
@@ -116,38 +116,61 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     {
         return Color.FromRgba(_r(color), _g(color), _b(color), _a(color));
     }
+    
 
     public uint Generation
     {
         get => _generation; 
     }
     
+    
     private Image<SixLabors.ImageSharp.PixelFormats.Rgba32> _image;
     public uint Width
     {
         get => (uint)_image.Width; 
     }
+    
+    
     public uint Height
     {
         get => (uint)_image.Height; 
     }
+    
 
     public string Id
     {
         get => _id;
     }
 
+    
     public void BeginModification()
     {
     }
+    
 
     public void EndModification()
     {
+        List<Action<IImageProcessingContext>> list;
+        lock (_lo)
+        {
+            list = new(_listDrawActions);
+            _listDrawActions.Clear();
+        }
+
+        _image.Mutate(x =>
+        {
+            foreach (var op in list)
+            {
+                op(x);
+            }
+        });
+        
         lock (_lo)
         {
             _generation++;
         }
     }
+    
 
     private DrawingOptions _doClear = new()
     {
@@ -157,6 +180,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
             AlphaCompositionMode = PixelAlphaCompositionMode.Clear
         }
     };
+    
 
     private DrawingOptions _doText = new()
     {
@@ -167,41 +191,49 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
             Antialias = false
         }
     };
+    
 
     public void ClearRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         Vector2 size = lr - ul;
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
-        _image.Mutate(x => 
-            x.Fill(_doClear, _col(context.FillColor), rectangle )
-        );
+
+        Action<IImageProcessingContext> op = 
+            x => x.Fill(_doClear, _col(context.FillColor), rectangle);
+        // _image.Mutate(op);
         lock (_lo)
         {
+            _listDrawActions.Add(op);
             _applyModified(ul, lr);
         }
     }
+    
         
     public void FillRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         Vector2 size = lr - ul;
         Rectangle rectangle = new((int)ul.X, (int)ul.Y, (int)size.X, (int)size.Y);
-        _image.Mutate(x => 
-            x.Fill( _col(context.FillColor), rectangle )
-        );
+        Action<IImageProcessingContext> op = x =>
+            x.Fill(_col(context.FillColor), rectangle); 
+        // _image.Mutate(op);
         lock (_lo)
         {
+            _listDrawActions.Add(op);
             _applyModified(ul, lr);
         }
     }
+    
 
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize)
     {
-        _image.Mutate(x=> x.DrawText(
-            _doText, text, Fonts.Instance.Font($"Prototype {fontSize}"), 
+        Action<IImageProcessingContext> op = x => x.DrawText(
+            _doText, text, Fonts.Instance.Font($"Prototype {fontSize}"),
             _col(context.TextColor),
-            new PointF(ul.X, ul.Y)));    
+            new PointF(ul.X, ul.Y));
+        // _image.Mutate(op);
         lock (_lo)
         {
+            _listDrawActions.Add(op);
             _applyModified(ul, lr);
         }
     }
