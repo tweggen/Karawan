@@ -49,7 +49,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
     private void _applyModified(in Vector2 ul, in Vector2 lr)
     {
         _ulModified = new Vector2(Math.Min(_ulModified.X, ul.X), Math.Min(_ulModified.Y, ul.Y));
-        _lrModified = new Vector2(Math.Min(_lrModified.X, ul.X), Math.Min(_lrModified.Y, ul.Y));
+        _lrModified = new Vector2(Math.Min(_lrModified.X, lr.X), Math.Min(_lrModified.Y, lr.Y));
     }
 
 
@@ -149,6 +149,11 @@ public class SkiaSharpFramebuffer : IFramebuffer
 
         }
 
+        for (int i = 0; i < (_width * _height); ++i)
+        {
+            _superfluousBackBuffer[i] = 0xff;
+        }
+
         spanBytes = _superfluousBackBuffer.AsSpan();
 
     }
@@ -158,10 +163,10 @@ public class SkiaSharpFramebuffer : IFramebuffer
     {
         lock (_lo)
         {
-            _ulModified.X = 0;
-            _ulModified.Y = 0;
-            _lrModified.X = _width - 1;
-            _lrModified.Y = _height - 1;
+            _ulModified.X = _width - 1;
+            _ulModified.Y = _height - 1;
+            _lrModified.X = 0;
+            _lrModified.Y = 0;
         }
     }
     
@@ -177,5 +182,6 @@ public class SkiaSharpFramebuffer : IFramebuffer
         var info = new SKImageInfo((int)width, (int)height, SKColorType.Rgba8888);
         _skiaSurface = SKSurface.Create(info);
         _skiaSurface.Canvas.Clear();
+        _applyModified(new Vector2(0,0), new Vector2(_width-1, _height-1));
     }
 }
