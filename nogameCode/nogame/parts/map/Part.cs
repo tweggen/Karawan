@@ -22,7 +22,8 @@ public class Part : IPart
     
     private DefaultEcs.Entity _eMapContainer;
     private DefaultEcs.Entity _eMap;
-    private ImageSharpFramebuffer _imageSharpFramebuffer;
+    //private ImageSharpFramebuffer _framebuffer;
+    private SkiaSharpFramebuffer _framebuffer;
 
     // For now, let it use the OSD camera.
     public uint MapCameraMask = 0x00010000;
@@ -41,12 +42,13 @@ public class Part : IPart
             _createdResources = true;
         }
 
-        _imageSharpFramebuffer = new engine.ross.ImageSharpFramebuffer("fbMap", MapWidth, MapHeight);
+        //_framebuffer = new engine.ross.ImageSharpFramebuffer("fbMap", MapWidth, MapHeight);
+        _framebuffer = new engine.ross.SkiaSharpFramebuffer("fbMap", MapWidth, MapHeight);
         
         /*
          * Render the actual map data.
          */
-        Implementations.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_imageSharpFramebuffer);
+        Implementations.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_framebuffer);
         
         _eMapContainer = _engine.CreateEntity("nogame.parts.map.mapContainer");
         
@@ -55,7 +57,7 @@ public class Part : IPart
         engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
             new Vector2(16f, 16f));
         meshFramebuffer.UploadImmediately = true;
-        engine.joyce.Texture textureFramebuffer = new(_imageSharpFramebuffer);
+        engine.joyce.Texture textureFramebuffer = new(_framebuffer);
         textureFramebuffer.DoFilter = false;
         engine.joyce.Material materialFramebuffer = new();
         materialFramebuffer.UploadImmediately = true;
