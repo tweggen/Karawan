@@ -171,7 +171,7 @@ namespace nogame.parts.playerhover
 
             _ePhysDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(20f, 212f),
-                new Vector2(100, 30),
+                new Vector2(400, 30),
                 $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}\n"
                 +$"v: {vTargetVelocity.Length()}\n"
                 +$"a: {vTargetAngularVelocity.Length()}",

@@ -79,7 +79,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         };
         lock (_lo)
         {
-            _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X, lr.Y, paint);
+            _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
         }
     }
@@ -89,14 +89,13 @@ public class SkiaSharpFramebuffer : IFramebuffer
     {
         var paint = new SKPaint
         {
-            Color = context.ClearColor,
-            IsAntialias = false,
+            Color = 0xffffffff, // context.ClearColor,
             Style = SKPaintStyle.Fill,
-            BlendMode = SKBlendMode.Src
+            //BlendMode = SKBlendMode.Src
         };
         lock (_lo)
         {
-            _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X, lr.Y, paint);
+            _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
         }
     }
