@@ -138,7 +138,6 @@ public class SkiaSharpFramebuffer : IFramebuffer
     {
         try
         {
-#if false
             SKImageInfo info = new((int)_width, (int)_height, SKColorType.Rgba8888);
             SKPixmap skiaPixmap = _skiaSurface.PeekPixels();
             lock (_lo)
@@ -150,12 +149,6 @@ public class SkiaSharpFramebuffer : IFramebuffer
                     skiaPixmap.ReadPixels(info, intptr, (int)_width * 4);
                 }
 
-            }
-#endif
-
-            for (int i = 0; i < (_width * _height); ++i)
-            {
-                _superfluousBackBuffer[i] = 0xff;
             }
 
             spanBytes = _superfluousBackBuffer.AsSpan();
