@@ -15,19 +15,68 @@ using static engine.Logger;
 
 namespace engine.ross;
 
-public class MemoryFramebuffer : engine.draw.IFramebuffer
+
+public sealed class Fonts
 {
-    private object _lo = new object();
+    private static readonly Fonts _singleton = new();
+
+    private readonly object _lo = new();
     
     private FontCollection _fontCollection;
     private FontFamily _ffPrototype;
+    private SortedDictionary<string, Font> _mapFont = new();
+
+    
+    public static Fonts Instance
+    {
+        get
+        {
+            return _singleton;
+        }
+    }
+
+    
+    public Font Font(string name)
+    {
+        lock (_lo)
+        {
+            return _mapFont[name];
+        }
+    }
+    
+    
+    private Fonts()
+    {
+        _fontCollection = new();
+
+        System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
+
+        using (var assetStreamReader = new StreamReader(streamFont))
+        {
+            using (var ms = new MemoryStream())
+            {
+                assetStreamReader.BaseStream.CopyTo(ms);
+
+                ms.Position = 0;
+
+                _ffPrototype = _fontCollection.Add(ms);
+            }
+        }
+
+        _mapFont[$"Prototype 10"] = _ffPrototype.CreateFont(10, FontStyle.Regular);
+        _mapFont[$"Prototype 30"] = _ffPrototype.CreateFont(30, FontStyle.Regular);
+    }
+}
+
+
+public class MemoryFramebuffer : engine.draw.IFramebuffer
+{
+    private object _lo = new object();
     
     private uint _generation = 0;
 
     private Vector2 _ulModified;
     private Vector2 _lrModified;
-
-    private SortedDictionary<string, Font> _mapFont = new();
 
     private void _resetModified()
     {
@@ -140,7 +189,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize)
     {
         _image.Mutate(x=> x.DrawText(
-            _doText, text, _mapFont[$"Prototype {fontSize}"], 
+            _doText, text, Fonts.Instance.Font($"Prototype {fontSize}"), 
             _col(context.TextColor),
             new PointF(ul.X, ul.Y)));    
         lock (_lo)
@@ -169,6 +218,7 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         lr = _lrModified;
     }
 
+    
     public void SetConsumed()
     {
         lock (_lo)
@@ -183,24 +233,6 @@ public class MemoryFramebuffer : engine.draw.IFramebuffer
         _image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>((int)width, (int)height);
         //_resourcePath = engine.GlobalSettings.Get("Engine.ResourcePath");
         _resetModified();
-
-        _fontCollection = new();
-
-        System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
-
-        using (var assetStreamReader = new StreamReader(streamFont))
-        {
-            using (var ms = new MemoryStream())
-            {
-                assetStreamReader.BaseStream.CopyTo(ms);
-
-                ms.Position = 0;
-
-                _ffPrototype = _fontCollection.Add(ms);
-            }
-        }
-        _mapFont[$"Prototype 10"] = _ffPrototype.CreateFont(10, FontStyle.Regular);
-        _mapFont[$"Prototype 30"] = _ffPrototype.CreateFont(30, FontStyle.Regular);
     }
 
 }
