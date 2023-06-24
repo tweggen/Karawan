@@ -43,7 +43,7 @@ namespace Wuka
             options.ShouldSwapAutomatically = false;
             _iView = Silk.NET.Windowing.Window.GetView(options); // note also GetView, instead of Window.Create.
 
-            engine.GlobalSettings.Set("nogame.CreateOSD", "false");
+            engine.GlobalSettings.Set("nogame.CreateOSD", "true");
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGLES");
             engine.GlobalSettings.Set("platform.threeD.API.version", "300");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");

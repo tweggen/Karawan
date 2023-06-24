@@ -35,6 +35,7 @@
 	  <EnableNETAnalyzers>False</EnableNETAnalyzers>
 	  <Nullable>disable</Nullable>
 	  <Title>Silicon Desert 2</Title>
+	  <RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android33.0|AnyCPU'">
@@ -46,18 +47,22 @@
 	  <Debugger>Xamarin</Debugger>
 	  <ApplicationTitle>Silicon Desert 2</ApplicationTitle>
 	  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
-	  <RunAOTCompilation>False</RunAOTCompilation>
+	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <EnableLLVM>False</EnableLLVM>
+	  <AndroidEnableSGenConcurrent>False</AndroidEnableSGenConcurrent>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
-	  <RunAOTCompilation>False</RunAOTCompilation>
-		<!-- EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk -->
+	  <RunAOTCompilation>True</RunAOTCompilation>
+	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
 	  <Debugger>Xamarin</Debugger>
 	  <ApplicationTitle>Silicon Desert 2</ApplicationTitle>
 	  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
+	  <EnableLLVM>False</EnableLLVM>
+	  <AndroidEnableSGenConcurrent>False</AndroidEnableSGenConcurrent>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -197,10 +202,10 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
-		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.SDL" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.16.0" />
+		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.17.1" />
+		<PackageReference Include="Silk.NET.SDL" Version="2.17.1" />
+		<PackageReference Include="Silk.NET.Windowing" Version="2.17.1" />
+		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.17.1" />
 	</ItemGroup>
 
 	<ItemGroup>
