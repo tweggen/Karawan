@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Numerics;
 using engine.draw;
 using SkiaSharp;
@@ -19,6 +20,8 @@ public class SkiaSharpFramebuffer : IFramebuffer
     private Vector2 _lrModified = new();
 
     private SKSurface _skiaSurface;
+
+    private SKTypeface _skiaTypefacePrototype;
     
     public string Id { get => _id; }
     public uint Width { get => _width; }
@@ -120,7 +123,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
 
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize)
     {
-        var paint = new SKPaint
+        var paint = new SKPaint(new SKFont(_skiaTypefacePrototype, fontSize))
         {
             Color = context.TextColor,
             IsAntialias = false,
@@ -223,5 +226,21 @@ public class SkiaSharpFramebuffer : IFramebuffer
         _skiaSurface = SKSurface.Create(info);
         //_skiaSurface.Canvas.Clear();
         _applyModified(new Vector2(0,0), new Vector2(_width-1, _height-1));
+        
+        System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
+
+        /*
+         * We need to put a memorystream on top because android does not implement seeking natively.
+         */
+        using (var assetStreamReader = new StreamReader(streamFont))
+        {
+            using (var ms = new MemoryStream())
+            {
+                assetStreamReader.BaseStream.CopyTo(ms);
+                ms.Position = 0;
+
+                _skiaTypefacePrototype = SKTypeface.FromStream(ms);
+            }
+        }
     }
 }
