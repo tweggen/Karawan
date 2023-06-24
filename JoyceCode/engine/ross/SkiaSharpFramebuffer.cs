@@ -90,7 +90,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
     {
         var paint = new SKPaint
         {
-            Color = 0xfff00fff, // context.ClearColor,
+            Color = 0xffff0000, // context.ClearColor,
             Style = SKPaintStyle.Fill,
             //BlendMode = SKBlendMode.Src
         };
@@ -140,7 +140,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
     {
         try
         {
-            SKImageInfo info = new((int)_width, (int)_height, SKColorType.Rgba8888);
+            SKImageInfo info = new((int)_width, (int)_height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
             SKPixmap skiaPixmap = _skiaSurface.PeekPixels();
             lock (_lo)
             {
@@ -184,9 +184,9 @@ public class SkiaSharpFramebuffer : IFramebuffer
 
         _superfluousBackBuffer = new byte[_width * _height * 4];
 
-        var info = new SKImageInfo((int)width, (int)height, SKColorType.Rgba8888);
+        var info = new SKImageInfo((int)width, (int)height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
         _skiaSurface = SKSurface.Create(info);
-        _skiaSurface.Canvas.Clear();
+        //_skiaSurface.Canvas.Clear();
         _applyModified(new Vector2(0,0), new Vector2(_width-1, _height-1));
     }
 }
