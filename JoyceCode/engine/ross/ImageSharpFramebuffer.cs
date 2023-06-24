@@ -207,8 +207,13 @@ public class ImageSharpFramebuffer : engine.draw.IFramebuffer
             _applyModified(ul, lr);
         }
     }
-    
-        
+
+    public void DrawPoly(Context context, in Vector2[] polyPoints)
+    {
+        throw new NotImplementedException();
+    }
+
+
     public void FillRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         Vector2 size = lr - ul;

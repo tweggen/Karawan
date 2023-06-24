@@ -94,7 +94,6 @@ public class SkiaSharpFramebuffer : IFramebuffer
         var paint = new SKPaint
         {
             Color = context.ClearColor, 
-                //0xff000000 | ((uint)ul.X * (uint)ul.Y * (uint) lr.X * (uint)lr.Y), // context.ClearColor,
             Style = SKPaintStyle.Fill,
             BlendMode = SKBlendMode.Src
         };
@@ -103,6 +102,31 @@ public class SkiaSharpFramebuffer : IFramebuffer
             // Trace($"ul is {ul} lr is {lr}");
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
+        }
+    }
+
+    public void DrawPoly(Context context, in Vector2[] polyPoints)
+    {
+        int l = polyPoints.Length;
+        if (0 == l) return;
+        var paint = new SKPaint
+        {
+            Color = context.FillColor, 
+            Style = SKPaintStyle.Fill,
+            //BlendMode = SKBlendMode.Src
+        };
+        SKPoint[] skPoints = new SKPoint[l];
+        for (int i = 0; i < l; ++i)
+        {
+            skPoints[i] = new SKPoint(polyPoints[i].X, polyPoints[i].Y);
+        }
+
+        SKPath skiaPath = new();
+        skiaPath.AddPoly(skPoints,true);
+        
+        lock (_lo)
+        {
+            _skiaSurface.Canvas.DrawPath(skiaPath, paint);
         }
     }
 
