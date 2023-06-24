@@ -90,13 +90,14 @@ public class SkiaSharpFramebuffer : IFramebuffer
     {
         var paint = new SKPaint
         {
-            Color = 0xffff0000, // context.ClearColor,
+            Color = context.ClearColor, 
+                //0xff000000 | ((uint)ul.X * (uint)ul.Y * (uint) lr.X * (uint)lr.Y), // context.ClearColor,
             Style = SKPaintStyle.Fill,
-            //BlendMode = SKBlendMode.Src
+            BlendMode = SKBlendMode.Src
         };
         lock (_lo)
         {
-            Trace($"ul is {ul} lr is {lr}");
+            // Trace($"ul is {ul} lr is {lr}");
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
         }
@@ -127,11 +128,45 @@ public class SkiaSharpFramebuffer : IFramebuffer
             TextAlign = _toSkiaTextAlign(context.HAlign),
             TextSize = fontSize
         };
-        var coord = new SKPoint(ul.X, ul.Y);
+        float x = ul.X;
+        float y = ul.Y + fontSize; //lr.Y - ul.Y
+        string remainingText = text;
         lock (_lo)
         {
-            _skiaSurface.Canvas.DrawText(text, coord, paint);
-            _applyModified(ul, lr);
+            while (remainingText.Length > 0)
+            {
+                string renderText = "";
+                /*
+                 * Render text until exluding the next \n .
+                 */
+                int i = remainingText.IndexOf('\n');
+                if (i >= 0)
+                {
+                    if (i > 0)
+                    {
+                        renderText = remainingText.Substring(0, i);
+                    }
+                    else
+                    {
+                        // Leave rendertext empty.
+                    }
+
+                    remainingText = remainingText.Substring(i + 1);
+                } else 
+                {
+                    renderText = remainingText;
+                    remainingText = "";
+                }
+
+                if (renderText.Length > 0)
+                {
+                    _skiaSurface.Canvas.DrawText(renderText, x, y, paint);
+                }
+
+                y += fontSize;
+            }
+            // TXWTODO: We do not need y+the entire fontSize, just the under lengths.
+            _applyModified(ul, lr with { Y = y + fontSize});
         }
     }
     
