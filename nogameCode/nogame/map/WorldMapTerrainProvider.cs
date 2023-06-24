@@ -22,8 +22,8 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         heightCol = Int32.Min(255, heightCol);
         heightCol = Int32.Max(0, heightCol);
 
-        byte blue = (byte)Int32.Min(255, heightCol + 64);
-        byte others = (byte)Int32.Max(0, heightCol - 64);
+        byte blue = (byte)Int32.Min(255, heightCol );
+        byte others = (byte)Int32.Max(0, heightCol - 128);
         uint col = 0xff000000 | ((uint)blue << 16) | ((uint)others << 8) | ((uint)others);
         return col;
     }
@@ -111,6 +111,22 @@ public class WorldMapTerrainProvider : IWorldMapProvider
                 target.DrawPoly(dc, polyPoints);
                 
             }
+        }
+        
+        /*
+         * Draw the clusters.
+         */
+        var clusterList = engine.world.ClusterList.Instance();
+        foreach (var clusterDesc in clusterList.GetClusterList())
+        {
+            float sizehalf = clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f;
+            float posX = (clusterDesc.Pos.X-worldMinX) / MetaGen.MaxWidth * fbWidth;
+            float posY = (clusterDesc.Pos.Z-worldMinZ) / MetaGen.MaxHeight * fbHeight;
+
+            dc.FillColor = 0xff441144;
+            target.FillRectangle(dc, new Vector2(posX-sizehalf, posY-sizehalf), new Vector2(posX+sizehalf, posY+sizehalf));
+            dc.TextColor = 0xff22aaee;
+            target.DrawText(dc, new Vector2(posX, posY-10f), new Vector2(posX+100, posY+2f), clusterDesc.Name, 12);
         }
         
         target.EndModification();
