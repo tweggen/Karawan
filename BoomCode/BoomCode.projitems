@@ -21,6 +21,5 @@
     <Compile Include="$(MSBuildThisFileDirectory)naudio\Sound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\systems\CreateMusicSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\systems\UpdateMovingSoundsSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)WdlResampler.cs" />
   </ItemGroup>
 </Project>

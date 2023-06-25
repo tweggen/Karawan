@@ -55,7 +55,7 @@ public class ChannelStripProvider : ISampleProvider
         }
     }
 
-    private WdlResampler _wdlResampler = new();
+    private boom.WdlResampler _wdlResampler = new();
 
     public float OutSamplingRate { get; set; } = 44100f;
 

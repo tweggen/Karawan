@@ -50,6 +50,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\bepuphysics2\BepuUtilities\BepuUtilities.csproj", "{9E7A3BCC-2A85-4009-A124-876753FF6269}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.NAudio", "Boom.NAudio\Boom.NAudio.csproj", "{1B0B2168-7A94-4053-9F1F-8E607ED416ED}"
+	ProjectSection(ProjectDependencies) = postProject
+		{732A58F8-7A92-461E-A3A0-CF2C535E7D9B} = {732A58F8-7A92-461E-A3A0-CF2C535E7D9B}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.OpenAL", "Boom.OpenAL\Boom.OpenAL.csproj", "{DE9315AF-6633-4916-A589-34A4BAD9C966}"
 EndProject
