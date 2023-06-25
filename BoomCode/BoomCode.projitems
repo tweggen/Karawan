@@ -9,21 +9,18 @@
     <Import_RootNamespace>BoomCode</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)components\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)API.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)components\BoomSound.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)naudio\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\AudioPlaybackEngine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\AutoDisposeFileReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\CachedSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\CachedSoundSampleProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\ChannelStripProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)naudio\components\BoomSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\LoopWave.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\MixingSampleProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)naudio\Sound.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)systems\CreateMusicSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)systems\UpdateMovingSoundsSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)naudio\systems\CreateMusicSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)naudio\systems\UpdateMovingSoundsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WdlResampler.cs" />
   </ItemGroup>
 </Project>
