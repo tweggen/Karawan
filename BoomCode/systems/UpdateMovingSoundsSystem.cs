@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System;
 using static engine.Logger;
 
-namespace Boom.systems
+namespace boom.systems
 {
     [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
     sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem<float>
@@ -11,7 +11,7 @@ namespace Boom.systems
         private engine.Engine _engine;
         private engine.WorkerQueue _audioWorkerQueue = new("UpdateMovingSoundSystem.Audio");
 
-        private Queue<Boom.Sound> _queueUnloadEntries = new();
+        private Queue<naudio.Sound> _queueUnloadEntries = new();
 
         public float MinAudibleVolume { get; set; } = 0.005f;
 
@@ -19,11 +19,11 @@ namespace Boom.systems
          * Schedule a sound entry for later deletion in the engine.
          * It may or may not be reused.
          */
-        private void _queueUnloadSoundEntry(Boom.Sound bSound)
+        private void _queueUnloadSoundEntry(naudio.Sound bSound)
         {
             _audioWorkerQueue.Enqueue(() =>
             {
-                AudioPlaybackEngine.Instance.StopSound(bSound);
+                naudio.AudioPlaybackEngine.Instance.StopSound(bSound);
             });
         }
 
@@ -38,12 +38,12 @@ namespace Boom.systems
             {
                 try
                 {
-                    AudioPlaybackEngine.Instance.FindCachedSound( cMovingSound.Sound.Url,
-                        (Boom.CachedSound bCachedSound) =>
+                    naudio.AudioPlaybackEngine.Instance.FindCachedSound( cMovingSound.Sound.Url,
+                        (naudio.CachedSound bCachedSound) =>
                         {
                             _engine.QueueMainThreadAction(() =>
                             {
-                                Boom.Sound bSound = new Sound(bCachedSound);
+                                naudio.Sound bSound = new naudio.Sound(bCachedSound);
                                 entity.Set(new components.BoomSound(bSound));
 
                                 bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
@@ -52,7 +52,7 @@ namespace Boom.systems
 
                                 _audioWorkerQueue.Enqueue(() =>
                                 {
-                                    AudioPlaybackEngine.Instance.PlaySound(bSound);
+                                    naudio.AudioPlaybackEngine.Instance.PlaySound(bSound);
                                 });
                             });
                         });
@@ -91,7 +91,7 @@ namespace Boom.systems
                 if (hasBoomSound)
                 {
                     cBoomSound = entity.Get<components.BoomSound>();
-                    Boom.Sound bSound = cBoomSound.Sound;
+                    naudio.Sound bSound = cBoomSound.Sound;
 
                     /*
                      * Caution: If the bSound is null, the sound still is loading.

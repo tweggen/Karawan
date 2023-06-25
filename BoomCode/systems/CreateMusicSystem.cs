@@ -1,8 +1,8 @@
 ﻿using System;
-using Boom;
+using boom;
 using DefaultEcs.Resource;
 
-namespace BoomCode.systems
+namespace boom.systems
 {
     [DefaultEcs.System.With(typeof(engine.audio.components.Music))]
     sealed public class CreateMusicSystem : DefaultEcs.System.AEntitySetSystem<float>
@@ -32,8 +32,8 @@ namespace BoomCode.systems
                 if (cMusic.IsPlaying) continue;
                 try
                 {
-                    CachedSound sound = new(cMusic.Url);
-                    AudioPlaybackEngine.Instance.PlaySound(sound);
+                    naudio.CachedSound sound = new(cMusic.Url);
+                    naudio.AudioPlaybackEngine.Instance.PlaySound(sound);
                 } catch(Exception ex)
                 {
                     // Do nothing. This way it might think it plays.

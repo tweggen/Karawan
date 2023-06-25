@@ -1,11 +1,10 @@
 ﻿
 
-using Boom.systems;
-using BoomCode.systems;
+using boom.systems;
 using engine;
 using static engine.Logger;
 
-namespace Boom
+namespace boom
 {
     public class API : engine.ISoundAPI
     {
@@ -14,7 +13,7 @@ namespace Boom
         private bool _haveSettings = false;
         private engine.Engine _engine;
         private CreateMusicSystem _createMusicSystem;
-        private AudioPlaybackEngine _audioPlaybackEngine;
+        private naudio.AudioPlaybackEngine _audioPlaybackEngine;
         private systems.UpdateMovingSoundSystem _updateMovingSoundsSystem;
         private bool _traceStartStop;
 
@@ -48,10 +47,10 @@ namespace Boom
         
         public void PlaySound(string uri)
         {
-            AudioPlaybackEngine.Instance.FindCachedSound(
-                uri, (CachedSound cachedSound) =>
+            naudio.AudioPlaybackEngine.Instance.FindCachedSound(
+                uri, (naudio.CachedSound cachedSound) =>
             {
-                AudioPlaybackEngine.Instance.PlaySound(cachedSound);
+                naudio.AudioPlaybackEngine.Instance.PlaySound(cachedSound);
             });
         }
         

@@ -227,7 +227,7 @@ namespace Karawan
                 engine.Logger.SetLogTarget(logger);
             }            
             
-            Boom.API boom = new(e);
+            boom.API boom = new(e);
             e.SetSoundAPI(boom);
 
             // Add the engine web service to the host.
@@ -244,7 +244,7 @@ namespace Karawan
             e.Execute();
 
             app.StopAsync();
-            Boom.AudioPlaybackEngine.Instance.Dispose();
+            global::boom.naudio.AudioPlaybackEngine.Instance.Dispose();
         }
     }
 }

@@ -49,6 +49,7 @@ namespace Wuka
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
             engine.GlobalSettings.Set("Engine.ResourcePath", "./");
             engine.GlobalSettings.Set("splash.touchControls", "true");
+            engine.GlobalSettings.Set("Android", "true");
 
             var e = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
 #if false

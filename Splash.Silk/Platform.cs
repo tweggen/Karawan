@@ -358,9 +358,25 @@ namespace Splash.Silk
                 _iInputContext.Keyboards[i].KeyUp += _onKeyUp;
             }
 
-            for (int i = 0; i < _iInputContext.Mice.Count; i++)
+            int maxMice;
+            bool useRawMouse;
+            if(GlobalSettings.Get("Android") == "true")
             {
-                _iInputContext.Mice[i].Cursor.CursorMode = CursorMode.Raw;
+                maxMice = 1;
+                useRawMouse = false;
+            }
+            else
+            {
+                maxMice = _iInputContext.Mice.Count;
+                useRawMouse = true;
+            }
+
+            for (int i = 0; i < maxMice; i++)
+            {
+                if (useRawMouse)
+                {
+                    _iInputContext.Mice[i].Cursor.CursorMode = CursorMode.Raw;
+                }
                 _iInputContext.Mice[i].MouseDown += _onMouseDown;
                 _iInputContext.Mice[i].MouseUp += _onMouseUp;
                 _iInputContext.Mice[i].MouseMove += _onMouseMove;
