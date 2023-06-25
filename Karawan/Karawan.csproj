@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- PackageReference Include="NAudio.Vorbis" Version="1.5.0" / -->
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.4.0" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs" Version="1.4.0-rc.4" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.14" />
@@ -32,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- ProjectReference Include="..\Boom.OpenAL\Boom.OpenAL.csproj" / -->
+    <!-- ProjectReference Include="..\Boom.OpenAL\Boom.OpenAL.csproj" /-->
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
     <ProjectReference Include="..\nogame\nogame.csproj" />
     <ProjectReference Include="..\Splash.Silk\Splash.Silk.csproj" />
