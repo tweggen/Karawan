@@ -5,6 +5,7 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Karawan", "Karawan\Karawan.csproj", "{C8C8DD14-DF84-4FB6-9941-576215389694}"
 	ProjectSection(ProjectDependencies) = postProject
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED} = {1B0B2168-7A94-4053-9F1F-8E607ED416ED}
 		{4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917} = {4C6243F1-1B4F-4ECF-ACE7-3E8E75B3B917}
 		{990B4C3D-1E5E-4D39-A76A-0C191C5F4A32} = {990B4C3D-1E5E-4D39-A76A-0C191C5F4A32}
 	EndProjectSection
@@ -47,6 +48,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\bepuphysics2\BepuPhysics\BepuPhysics.csproj", "{EEC28B9D-0F57-4895-B3E5-EFAE158C4B83}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\bepuphysics2\BepuUtilities\BepuUtilities.csproj", "{9E7A3BCC-2A85-4009-A124-876753FF6269}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.NAudio", "Boom.NAudio\Boom.NAudio.csproj", "{1B0B2168-7A94-4053-9F1F-8E607ED416ED}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.OpenAL", "Boom.OpenAL\Boom.OpenAL.csproj", "{DE9315AF-6633-4916-A589-34A4BAD9C966}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -472,6 +477,54 @@ Global
 		{9E7A3BCC-2A85-4009-A124-876753FF6269}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
 		{9E7A3BCC-2A85-4009-A124-876753FF6269}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
 		{9E7A3BCC-2A85-4009-A124-876753FF6269}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|arm64.Build.0 = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x64.Build.0 = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x86.Build.0 = Debug|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|arm64.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|arm64.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x64.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x64.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x86.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x86.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|arm64.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|arm64.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x64.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
+		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|arm64.Build.0 = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|x64.Build.0 = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|x86.Build.0 = Debug|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|arm64.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|arm64.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|x64.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|x64.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|x86.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Release|x86.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|arm64.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|arm64.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|x64.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
+		{DE9315AF-6633-4916-A589-34A4BAD9C966}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -484,7 +537,6 @@ Global
 		JoyceCode\JoyceCode.projitems*{4c6243f1-1b4f-4ecf-ace7-3e8e75b3b917}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{4f362d4b-f5a4-4b0d-9bdf-3b5a808f15de}*SharedItemsImports = 5
 		nogameCode\nogameCode.projitems*{65a59dba-280f-406d-b941-df4c68797ba5}*SharedItemsImports = 13
-		BoomCode\BoomCode.projitems*{732a58f8-7a92-461e-a3a0-cf2c535e7d9b}*SharedItemsImports = 5
 		JoyceCode\JoyceCode.projitems*{77780cb7-fbc2-4301-9187-2428ef25dc3d}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal
