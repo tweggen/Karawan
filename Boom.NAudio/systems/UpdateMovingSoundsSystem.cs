@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System;
 using static engine.Logger;
 
-namespace boom.naudio.systems;
+namespace Boom.NAudio.systems;
 
 
 [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
@@ -12,7 +12,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     private engine.Engine _engine;
     private engine.WorkerQueue _audioWorkerQueue = new("UpdateMovingSoundSystem.Audio");
 
-    private Queue<naudio.Sound> _queueUnloadEntries = new();
+    private Queue<Sound> _queueUnloadEntries = new();
 
     public float MinAudibleVolume { get; set; } = 0.005f;
 
@@ -20,11 +20,11 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
      * Schedule a sound entry for later deletion in the engine.
      * It may or may not be reused.
      */
-    private void _queueUnloadSoundEntry(naudio.Sound bSound)
+    private void _queueUnloadSoundEntry(Sound bSound)
     {
         _audioWorkerQueue.Enqueue(() =>
         {
-            naudio.AudioPlaybackEngine.Instance.StopSound(bSound);
+            AudioPlaybackEngine.Instance.StopSound(bSound);
         });
     }
 
@@ -39,12 +39,12 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         {
             try
             {
-                naudio.AudioPlaybackEngine.Instance.FindCachedSound( cMovingSound.Sound.Url,
-                    (naudio.CachedSound bCachedSound) =>
+                AudioPlaybackEngine.Instance.FindCachedSound( cMovingSound.Sound.Url,
+                    (CachedSound bCachedSound) =>
                     {
                         _engine.QueueMainThreadAction(() =>
                         {
-                            naudio.Sound bSound = new naudio.Sound(bCachedSound);
+                            Sound bSound = new Sound(bCachedSound);
                             entity.Set(new components.BoomSound(bSound));
 
                             bSound.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
@@ -53,7 +53,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
                             _audioWorkerQueue.Enqueue(() =>
                             {
-                                naudio.AudioPlaybackEngine.Instance.PlaySound(bSound);
+                                AudioPlaybackEngine.Instance.PlaySound(bSound);
                             });
                         });
                     });
@@ -92,7 +92,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             if (hasBoomSound)
             {
                 cBoomSound = entity.Get<components.BoomSound>();
-                naudio.Sound bSound = cBoomSound.Sound;
+                Sound bSound = cBoomSound.Sound;
 
                 /*
                  * Caution: If the bSound is null, the sound still is loading.

@@ -1,6 +1,6 @@
 ﻿using NAudio.Wave;
 
-namespace boom.naudio;
+namespace Boom.NAudio;
 
 class AutoDisposeFileReader : ISampleProvider
 {

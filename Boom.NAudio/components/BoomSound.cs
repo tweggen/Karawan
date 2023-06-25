@@ -1,10 +1,10 @@
-namespace boom.naudio.components;
+namespace Boom.NAudio.components;
 
 public struct BoomSound
 {
-    public boom.naudio.Sound Sound;
+    public Sound Sound;
 
-    public BoomSound(in boom.naudio.Sound sound)
+    public BoomSound(in Sound sound)
     {
         Sound = sound;
     }

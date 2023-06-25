@@ -1,7 +1,8 @@
-﻿using engine;
+﻿using Boom.NAudio.systems;
+using engine;
 using static engine.Logger;
 
-namespace boom.naudio;
+namespace Boom.NAudio;
 
 public class API : engine.ISoundAPI
 {
@@ -9,8 +10,8 @@ public class API : engine.ISoundAPI
 
     private bool _haveSettings = false;
     private engine.Engine _engine;
-    private boom.naudio.systems.CreateMusicSystem _createMusicSystem;
-    private naudio.AudioPlaybackEngine _audioPlaybackEngine;
+    private CreateMusicSystem _createMusicSystem;
+    private AudioPlaybackEngine _audioPlaybackEngine;
     private systems.UpdateMovingSoundSystem _updateMovingSoundsSystem;
     private bool _traceStartStop;
 
@@ -44,8 +45,8 @@ public class API : engine.ISoundAPI
 
     public void PlaySound(string uri)
     {
-        naudio.AudioPlaybackEngine.Instance.FindCachedSound(
-            uri, (naudio.CachedSound cachedSound) => { naudio.AudioPlaybackEngine.Instance.PlaySound(cachedSound); });
+        AudioPlaybackEngine.Instance.FindCachedSound(
+            uri, (CachedSound cachedSound) => { AudioPlaybackEngine.Instance.PlaySound(cachedSound); });
     }
 
 
@@ -54,11 +55,16 @@ public class API : engine.ISoundAPI
         _engine.LogicalFrame += _onLogicalFrame;
     }
 
+    public void Dispose()
+    {
+        AudioPlaybackEngine.Instance.Dispose();
+    }
+
 
     public API(Engine engine)
     {
         _engine = engine;
         _createMusicSystem = new(engine);
-        _updateMovingSoundsSystem = new boom.naudio.systems.UpdateMovingSoundSystem(engine);
+        _updateMovingSoundsSystem = new UpdateMovingSoundSystem(engine);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using NAudio.Wave;
 
-namespace boom.naudio;
+namespace Boom.NAudio;
 
 /**
  * Implement a sample provider around a cached sound source.

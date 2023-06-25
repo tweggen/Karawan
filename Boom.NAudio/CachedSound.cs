@@ -1,7 +1,7 @@
 ﻿using NAudio.Wave;
 using static engine.Logger;
 
-namespace boom.naudio;
+namespace Boom.NAudio;
 
 /**
  * Implements the data of a specific sound.

@@ -2,7 +2,7 @@ using engine;
 using NAudio.Wave;
 using static engine.Logger;
 
-namespace boom.naudio;
+namespace Boom.NAudio;
 
 
 public class ChannelStripProvider : ISampleProvider
@@ -55,7 +55,7 @@ public class ChannelStripProvider : ISampleProvider
         }
     }
 
-    private boom.WdlResampler _wdlResampler = new();
+    private Boom.WdlResampler _wdlResampler = new();
 
     public float OutSamplingRate { get; set; } = 44100f;
 

@@ -227,8 +227,8 @@ namespace Karawan
                 engine.Logger.SetLogTarget(logger);
             }            
             
-            boom.naudio.API boom = new(e);
-            e.SetSoundAPI(boom);
+            // Boom.OpenAL.API boom = new(e);
+            // e.SetSoundAPI(boom);
 
             // Add the engine web service to the host.
             // app.MapGrpcService<GreeterService>();
@@ -240,11 +240,11 @@ namespace Karawan
 
             nogame.Main.Start(e);
 
-            boom.SetupDone();
+            // boom.SetupDone();
             e.Execute();
 
             app.StopAsync();
-            global::boom.naudio.AudioPlaybackEngine.Instance.Dispose();
+            // boom.Dispose();
         }
     }
 }

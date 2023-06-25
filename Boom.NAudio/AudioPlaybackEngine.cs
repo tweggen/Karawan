@@ -7,7 +7,7 @@ using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using static engine.Logger;
 
-namespace boom.naudio;
+namespace Boom.NAudio;
 
 public class AudioPlaybackEngine : IDisposable
 {
@@ -139,7 +139,7 @@ public class AudioPlaybackEngine : IDisposable
         outputDevice.NumberOfBuffers = 2;
 #endif
 #if true
-        DirectSoundOut outputDevice = new NAudio.Wave.DirectSoundOut(40);
+        DirectSoundOut outputDevice = new DirectSoundOut(40);
 #endif
         _mixer = new MixingSampleProvider(
             WaveFormat.CreateIeeeFloatWaveFormat(
