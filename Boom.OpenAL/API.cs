@@ -8,22 +8,31 @@ public class API : ISoundAPI
 {
     private object _lo = new();
     private Engine _engine;
-
+    private systems.UpdateMovingSoundSystem _updateMovingSoundsSystem;
     
     private AL _al;
     private ALContext _alc;
 
-    private SortedDictionary<string, OGGSound> _mapSounds;
-
+    private SortedDictionary<string, OGGSound> _mapSounds = new();
+    
+    
+    private void _onLogicalFrame(object sender, float dt)
+    {
+        // _createMusicSystem.Update(dt);
+        _updateMovingSoundsSystem.Update(dt);
+    }
+    
+    
     public void PlaySound(string uri)
     {
-        // throw new NotImplementedException();
+        // TXWTODO: This leaks all sources. 
+        AudioSource audioSource = CreateAudioSource(uri);
+        audioSource.Play();
     }
 
     
     public void StopSound(string uri)
     {
-        // throw new NotImplementedException();
     }
     
 
@@ -35,6 +44,7 @@ public class API : ISoundAPI
 
     public void SetupDone()
     {
+        _engine.LogicalFrame += _onLogicalFrame;        
     }
 
 
@@ -85,6 +95,7 @@ public class API : ISoundAPI
         _engine = engine;
         
         try {
+            
             ALContext? alc = ALContext.GetApi(true);
             if (null == alc)
             {
@@ -95,6 +106,7 @@ public class API : ISoundAPI
             _alc = alc;
 
             _al = AL.GetApi();
+            
         } catch( Exception ex)
         {
             ALContext? alc = ALContext.GetApi();
@@ -111,10 +123,10 @@ public class API : ISoundAPI
         _openDevice();
         _al.DistanceModel(DistanceModel.InverseDistance);
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
+        _updateMovingSoundsSystem = new(engine, this);
 
-        OGGSound oggSound = new(_al, "shaklengokhsi.ogg");
-        AudioSource asTitle = new(_al, oggSound.ALBuffer);
-        asTitle.Play();
+        //AudioSource asTitle = CreateAudioSource("shaklengokhsi.ogg");
+        //asTitle.Play();
 
     }
 }

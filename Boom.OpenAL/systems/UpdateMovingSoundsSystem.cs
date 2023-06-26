@@ -14,7 +14,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     private engine.WorkerQueue _audioWorkerQueue = new("UpdateMovingSoundSystem.Audio");
     private Boom.OpenAL.API _api;
     
-    private Queue<AudioSource> _queueUnloadEntries = new();
+    // private Queue<AudioSource> _queueUnloadEntries = new();
 
     public float MinAudibleVolume { get; set; } = 0.005f;
 
@@ -155,12 +155,12 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
 
     public UpdateMovingSoundSystem(
-        engine.Engine engine, 
+        engine.Engine engine, API api 
     )
         : base(engine.GetEcsWorld())
     {
         _engine = engine;
-        _api = engine.GetASound() as API;
+        _api = api;
         Thread audioThread = new Thread(_audioThread);
         audioThread.Start();
     }
