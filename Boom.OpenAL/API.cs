@@ -13,7 +13,6 @@ public class API : ISoundAPI
     private AL _al;
     private ALContext _alc;
     
-    
     public void PlaySound(string uri)
     {
         // throw new NotImplementedException();
@@ -36,19 +35,51 @@ public class API : ISoundAPI
     {
     }
 
-    public API(Engine engine)
+
+    private unsafe void _openDevice()
     {
-        _engine = engine;
-        ALContext? alc = ALContext.GetApi(true);
-        if (null == alc)
+        Device *alDevice = _alc.OpenDevice("");
+        if (alDevice == null)
         {
-            ErrorThrow("Unable to get OpenAL context.", (m) => new InvalidOperationException(m));
+            ErrorThrow("Unable to open any audio device.", (m) => new InvalidOperationException(m));
             return;
         }
 
-        _alc = alc;
+        var context = _alc.CreateContext(alDevice, null);
+        _alc.MakeContextCurrent(context);
+    }
+    
 
-        _al = AL.GetApi();
+    public API(Engine engine)
+    {
+        _engine = engine;
+        
+        try {
+            ALContext? alc = ALContext.GetApi(true);
+            if (null == alc)
+            {
+                ErrorThrow("Unable to get OpenAL context.", (m) => new InvalidOperationException(m));
+                return;
+            }
+
+            _alc = alc;
+
+            _al = AL.GetApi();
+        } catch( Exception ex)
+        {
+            ALContext? alc = ALContext.GetApi();
+            if (null == alc)
+            {
+                ErrorThrow("Unable to open any OpenAL context.", (m) => new InvalidOperationException(m));
+                return;
+            }
+
+            _alc = alc;
+            _al = AL.GetApi();
+        }
+
+        _openDevice();
+        _al.DistanceModel(DistanceModel.InverseDistance);
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
 
         OGGSound oggSound = new(_al, "shaklengokhsi.ogg");

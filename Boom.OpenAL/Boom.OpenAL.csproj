@@ -4,10 +4,12 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NVorbis" Version="0.10.5" />
+    <PackageReference Include="Silk.NET.OpenAL" Version="2.17.1" />
   </ItemGroup>
 
   <ItemGroup>
