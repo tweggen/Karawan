@@ -12,7 +12,9 @@ public class API : ISoundAPI
     
     private AL _al;
     private ALContext _alc;
-    
+
+    private SortedDictionary<string, OGGSound> _mapSounds;
+
     public void PlaySound(string uri)
     {
         // throw new NotImplementedException();
@@ -35,6 +37,34 @@ public class API : ISoundAPI
     {
     }
 
+
+    public OGGSound FindSound(string url)
+    {
+        OGGSound _sound;
+        lock (_lo)
+        {
+            if (!_mapSounds.TryGetValue(url, out _sound))
+            {
+                _sound = new(_al, url);
+                _mapSounds[url] = _sound;
+            }
+            else
+            {
+                // We have the sound in _sound;
+            }
+        }
+
+        return _sound;
+    }
+    
+
+    public AudioSource CreateAudioSource(string url)
+    {
+        OGGSound oggSound = FindSound(url);
+        AudioSource audioSource = new(_al, oggSound.ALBuffer);
+        return audioSource;
+    }
+    
 
     private unsafe void _openDevice()
     {
