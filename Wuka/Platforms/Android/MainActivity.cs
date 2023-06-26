@@ -7,6 +7,7 @@ using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
 
 using Android.Content.Res;
+using Silk.NET.GLFW;
 
 namespace Wuka
 {
@@ -57,9 +58,16 @@ namespace Wuka
                 WireServer.API aWireServer = new(e, 9001);
             }
 #endif
+            //Boom.OpenAL.API boom = new(e);
+            //e.SetSoundAPI(boom);
+            //boom.SetupDone();
+
             nogame.Main.Start(e);
 
             e.Execute();
+
+            // boom.Dispose();
+
         }
     }
 }
