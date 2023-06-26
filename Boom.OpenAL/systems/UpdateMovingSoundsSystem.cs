@@ -13,6 +13,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     private engine.Engine _engine;
     private engine.WorkerQueue _audioWorkerQueue = new("UpdateMovingSoundSystem.Audio");
     private Boom.OpenAL.API _api;
+    private int _nMovingSounds = 0;
     
     // private Queue<AudioSource> _queueUnloadEntries = new();
 
@@ -24,10 +25,18 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
      */
     private void _queueUnloadSoundEntry(AudioSource audioSource)
     {
-        _audioWorkerQueue.Enqueue(() =>
+        lock (_lo)
         {
-            audioSource.Stop();
-        });
+            _audioWorkerQueue.Enqueue(() =>
+            {
+                audioSource.Stop();
+                audioSource.Dispose();
+                lock (_lo)
+                {
+                    --_nMovingSounds;
+                }
+            });
+        }
     }
 
     /**
@@ -37,28 +46,41 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         DefaultEcs.Entity entity,
         engine.audio.components.MovingSound cMovingSound)
     {
-        _audioWorkerQueue.Enqueue(() =>
+        lock (_lo)
         {
-            try
+            _audioWorkerQueue.Enqueue(() =>
             {
-                AudioSource audioSource = _api.CreateAudioSource(cMovingSound.Sound.Url);
-                _engine.QueueMainThreadAction(() =>
+                try
                 {
-                    entity.Set(new components.BoomSound(audioSource));
-
-                    audioSource.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
-                    audioSource.Pan = cMovingSound.MotionPan;
-                    audioSource.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
-
-                    _audioWorkerQueue.Enqueue(() =>
+                    AudioSource audioSource = _api.CreateAudioSource(cMovingSound.Sound.Url);
+                    _engine.QueueMainThreadAction(() =>
                     {
-                        audioSource.Play();
+                        entity.Set(new components.BoomSound(audioSource));
+
+                        audioSource.Volume = cMovingSound.Sound.Volume * cMovingSound.MotionVolume;
+                        audioSource.Pan = cMovingSound.MotionPan;
+                        audioSource.Speed = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
+
+                        lock (_lo)
+                        {
+                            _audioWorkerQueue.Enqueue(() =>
+                            {
+                                audioSource.Play();
+                                lock (_lo)
+                                {
+                                    Trace($"_nMovingSounds = {_nMovingSounds}");
+                                    ++_nMovingSounds;
+                                }
+                            });
+                        }
                     });
-                });
-            } catch (Exception ex) { 
-                // Ignore and just don't create sound.
-            }
-        });
+                }
+                catch (Exception ex)
+                {
+                    // Ignore and just don't create sound.
+                }
+            });
+        }
     }
     
 
@@ -119,7 +141,8 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     float resultingVolume = cMovingSound.Sound.Volume * (float)cMovingSound.MotionVolume / engine.audio.components.MovingSound.MotionVolumeMax;
                     float resultingPitch = cMovingSound.Sound.Pitch * cMovingSound.MotionPitch;
                     float resultingPan = (float) cMovingSound.MotionPan / engine.audio.components.MovingSound.MotionPanMax;
-                    audioSource.Volume = Math.Min(resultingVolume * 4f, 2.0f);
+                    audioSource.Volume = Math.Min(resultingVolume, 1.0f); 
+                        //Math.Min(resultingVolume * 4f, 2.0f);
                     audioSource.Pan = resultingPan;
                     audioSource.Speed = resultingPitch;
                     entity.Get<engine.audio.components.MovingSound>().NFrames = 0;

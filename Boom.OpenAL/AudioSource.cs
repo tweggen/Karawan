@@ -65,7 +65,7 @@ public class AudioSource : IDisposable
         {
             _pan = pan;
             Vector3 sourcePos = new(pan, 0f, 0f);
-            _al.SetSourceProperty(_alSource, SourceVector3.Position, sourcePos);
+            // _al.SetSourceProperty(_alSource, SourceVector3.Position, sourcePos);
         }
     }
     
