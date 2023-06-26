@@ -13,9 +13,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="OpenTelemetry.Api" Version="1.5.0-alpha.1" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.5.0-alpha.1" />
-    <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta19" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta15" />
     <PackageReference Include="SkiaSharp" Version="2.88.3" />
   </ItemGroup>
 

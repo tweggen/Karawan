@@ -1,4 +1,4 @@
-﻿
+﻿#if false
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -282,3 +282,4 @@ public class ImageSharpFramebuffer : engine.draw.IFramebuffer
     }
 
 }
+#endif
