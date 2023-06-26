@@ -620,7 +620,7 @@ public class SilkThreeD : IThreeD
 
 
         _gl.Enable(EnableCap.CullFace);
-        _gl.CullFace(CullFaceMode.Back);
+        _gl.CullFace(TriangleFace.Back);
         _gl.FrontFace(FrontFaceDirection.Ccw);
         _gl.Enable(EnableCap.DebugOutput);
         _gl.Disable(EnableCap.DebugOutputSynchronous);

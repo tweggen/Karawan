@@ -28,6 +28,7 @@
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs" Version="1.4.0-rc.4" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.14" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc9.14" />
+    <PackageReference Include="Silk.NET.OpenAL" Version="2.17.1" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.21.1.2" />
   </ItemGroup>
 
