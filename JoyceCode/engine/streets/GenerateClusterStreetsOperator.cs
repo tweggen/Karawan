@@ -17,7 +17,8 @@ namespace engine.streets
                 if (_jMaterialStreet == null)
                 {
                     _jMaterialStreet = new engine.joyce.Material();
-                    _jMaterialStreet.AlbedoColor = 0xff888888;
+                    _jMaterialStreet.AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                        ? 0x00000000 : 0xff888888;
                     _jMaterialStreet.Texture = new engine.joyce.Texture("streets1to4.png");
                 }
                 return _jMaterialStreet;

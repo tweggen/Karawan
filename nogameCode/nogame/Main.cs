@@ -56,6 +56,8 @@ public class Main
     {
         Main main = new(e);
 
+        engine.GlobalSettings.Set("debug.options.flatshading", "false");
+        
         main._setupImplementations();
         main._registerScenes();
     }
