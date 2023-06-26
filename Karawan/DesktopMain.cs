@@ -240,7 +240,7 @@ namespace Karawan
 
             nogame.Main.Start(e);
 
-            // boom.SetupDone();
+            boom.SetupDone();
             e.Execute();
 
             app.StopAsync();

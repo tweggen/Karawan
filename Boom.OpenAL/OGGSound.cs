@@ -57,19 +57,37 @@ public class OGGSound : IDisposable
                 return;
             }
 
-            int totalSamples = vorbisReader.SampleRate * vorbisReader.Channels;
-            var floatReadBuffer = new float[totalSamples];
-            var shortReadBuffer = new short[totalSamples];
+            int partSamples = vorbisReader.SampleRate * vorbisReader.Channels;
             // var wholeFile = new List<float>((int)(vorbisReader.TotalSamples));
             int samplesRead;
-            while ((samplesRead = vorbisReader.ReadSamples(floatReadBuffer, 0, floatReadBuffer.Length)) > 0)
+
+            long allSamples = vorbisReader.TotalSamples;
+            var floatReadBuffer = new float[partSamples];
+            var shortReadBuffer = new short[allSamples];
+            long position = 0;
+            long avail = allSamples;
+            while (true)
             {
+                int readNow = Int32.Min(floatReadBuffer.Length, (int)avail);
+                if (0 == readNow)
+                {
+                    break;
+                }
+                samplesRead =
+                    vorbisReader.ReadSamples(floatReadBuffer, 0, readNow);
+                if (samplesRead <= 0)
+                {
+                    break;
+                }
                 for (int i = 0; i < samplesRead; ++i)
                 {
-                    shortReadBuffer[i] = (short)(32767f * floatReadBuffer[i]);
+                    shortReadBuffer[i+position] = (short)(32767f * floatReadBuffer[i]);
                 }
-                _al.BufferData(_alBuffer, bufferFormat, shortReadBuffer, rate);
+
+                position += samplesRead;
+                avail -= samplesRead;
             }
+            _al.BufferData(_alBuffer, bufferFormat, shortReadBuffer, rate);
             
             // TXWTODO: Check for completeness
         }
