@@ -24,6 +24,7 @@ namespace engine.world
                 {
                     joyce.Texture jGroundTexture = new joyce.Texture("gridlines1.png");
                     _jMaterialGround = new joyce.Material(jGroundTexture);
+                    _jMaterialGround.AlbedoColor = 0xff002222;
                 }
                 return _jMaterialGround;
             }

@@ -25,8 +25,8 @@ namespace nogame.cities
             {
                 if (_jMaterialHouse == null)
                 {
-                    _jMaterialHouse = new engine.joyce.Material();
-                    // _jMaterialHouse.AlbedoColor = 0xff444444;
+                    _jMaterialHouse = new engine.joyce.Material(); 
+                    _jMaterialHouse.AlbedoColor = 0xff333333;
                     _jMaterialHouse.Texture = new engine.joyce.Texture("buildingdiffuse.png");
                 }
                 return _jMaterialHouse;
@@ -40,7 +40,7 @@ namespace nogame.cities
                 if (_jMaterialNeon == null)
                 {
                     _jMaterialNeon = new engine.joyce.Material();
-                    _jMaterialNeon.AlbedoColor = 0x00000000;
+                    _jMaterialNeon.AlbedoColor = 0xffff3333;
                     _jMaterialNeon.Texture = null;
                     _jMaterialNeon.EmissiveTexture = new engine.joyce.Texture("lorem.png");
                     _jMaterialNeon.HasTransparency = true;

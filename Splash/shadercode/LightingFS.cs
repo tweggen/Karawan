@@ -102,12 +102,12 @@ void main()
     }
 
     
-    vec4 colDiffuseTotal = texelColor + colDiffuse;
+    vec4 colDiffuseTotal = /*texelColor +*/ colDiffuse;
     vec4 colEmissiveTotal = emissiveColor; 
     vec4 colAmbientTotal = ambient; 
     finalColor = 
         colDiffuseTotal * vec4(totalLight,0.0)
-        + colEmissiveTotal
+        /*+ colEmissiveTotal*/
         //+ vec4(0.53,0.15,0.18,0.0)
         + colAmbientTotal
         ;    
