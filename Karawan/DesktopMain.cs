@@ -178,7 +178,7 @@ namespace Karawan
             engine.GlobalSettings.Set("platform.threeD.API.version", "330");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
             engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
-            engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "false");
+            engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
             engine.GlobalSettings.Set("splash.touchControls", "false");
             engine.GlobalSettings.Set("nogame.CreateHouses", "true");
             engine.GlobalSettings.Set("nogame.CreateTrees", "true");
@@ -227,7 +227,7 @@ namespace Karawan
                 engine.Logger.SetLogTarget(logger);
             }            
             
-            Boom.OpenAL.API boom = new(e);
+            Boom.NAudio.API boom = new(e);
             e.SetSoundAPI(boom);
 
             // Add the engine web service to the host.

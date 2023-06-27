@@ -125,8 +125,8 @@ public class API : ISoundAPI
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
         _updateMovingSoundsSystem = new(engine, this);
 
-        AudioSource asTitle = CreateAudioSource("shaklengokhsi.ogg");
-        asTitle.Play();
+        // AudioSource asTitle = CreateAudioSource("shaklengokhsi.ogg");
+        // asTitle.Play();
 
     }
 }

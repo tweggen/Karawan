@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Boom.OpenAL.systems;
 
 
-#if false
+#if true
 [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
 [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
 [DefaultEcs.System.With(typeof(engine.joyce.components.Motion))]
@@ -96,8 +96,25 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     }
 
 
+    private void _updateCameraMatrix()
+    {
+
+        var listCameras = _engine.GetEcsWorld().GetEntities()
+            .With<engine.joyce.components.Camera3>()
+            .AsEnumerable();
+        
+        if (listCameras.Count() == 0)
+        {
+            // TXWTODO: Continue here
+        }
+    }
+    
+    
+
     protected override void Update(float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
+        _updateCameraMatrix();
+        
         ushort minAudibleUShort = (ushort)(MinAudibleVolume * 65535f);
         Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
         entities.CopyTo(copiedEntities);
@@ -167,6 +184,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         }
     }
 
+    
     private void _audioThread()
     {
         while (_engine.IsRunning())
@@ -190,10 +208,9 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         audioThread.Start();
     }
 }
-#endif
 
+#else
 
-#if true
 [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
 sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem<float>
 {

@@ -9,9 +9,21 @@ public class AudioSource : IDisposable
     private AL _al;
     private uint _alBuffer = 0;
     private uint _alSource = 0;
+
+    private Vector3 _position = new();
+
+    public Vector3 Position
+    {
+        get => _position;
+        set => _setPosition(value);
+    }
     
-    public Vector3 Position;
-    public Vector3 Velocity;
+    private Vector3 _velocity = new();
+    public Vector3 Velocity
+    {
+        get => _velocity;
+        set => _setVelocity(value);
+    }
     
     public bool IsLooped;
 
@@ -36,6 +48,26 @@ public class AudioSource : IDisposable
     {
         get => _pan;
         set => _setPan(value);
+    }
+
+
+    private void _setVelocity(Vector3 velocity)
+    {
+        if (velocity != _velocity)
+        {
+            _velocity = velocity;
+            _al.SetSourceProperty(_alSource, SourceVector3.Velocity, velocity);
+        }
+    }
+
+
+    private void _setPosition(Vector3 position)
+    {
+        if (position != _position)
+        {
+            _position = position;
+            _al.SetSourceProperty(_alSource, SourceVector3.Position, position);
+        }
     }
 
 

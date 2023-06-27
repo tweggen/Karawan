@@ -670,6 +670,7 @@ namespace engine
         {
             return _platform.IsRunning();
         }
+        
 
         public void PlatformSetupDone()
         {
