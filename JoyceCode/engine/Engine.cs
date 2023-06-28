@@ -62,7 +62,10 @@ namespace engine
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<string> KeyPress;
         public event EventHandler<string> KeyRelease;
+        private Entity _cameraEntity;
+        public event EventHandler<DefaultEcs.Entity> CameraEntityChanged;
 
+        
 
         private builtin.tools.RunningAverageComputer _fpsCounter = new();
 
@@ -107,6 +110,34 @@ namespace engine
         }
 
 
+        public Entity GetCameraEntity()
+        {
+            lock (_lo)
+            {
+                return _cameraEntity;
+            }
+        }
+
+
+        public void SetCameraEntity(in DefaultEcs.Entity entity)
+        {
+            bool entityChanged = false;
+            lock (_lo)
+            {
+                if (_cameraEntity != entity)
+                {
+                    entityChanged = true;
+                    _cameraEntity = entity;
+                }
+            }
+
+            if (entityChanged)
+            {
+                CameraEntityChanged?.Invoke(this, entity);
+            }
+        }
+
+        
         public int GetNextId()
         {
             lock(_lo)
