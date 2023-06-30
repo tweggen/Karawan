@@ -25,7 +25,7 @@ public class PlingPlayer
         for (int i = FirstPling-1; i < LastPling; ++i)
         {
             _arrPlings[i] = api.CreateAudioSource($"pling{(i+1):D2}.ogg");
-            _arrPlings[i].Volume = 0.1f;
+            _arrPlings[i].Volume = 0.025f;
         }
     }
 
