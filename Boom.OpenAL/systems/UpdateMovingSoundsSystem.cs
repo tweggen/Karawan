@@ -33,6 +33,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
     private Matrix4x4 _cameraMatrix;
     private Vector3 _cameraVelocity;
+    private Vector3 _cameraPosition;
     private float[] _arrFloatOrientation = new float[6];
 
     private int _maxSounds = 32;
@@ -139,7 +140,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
          *
          * That means that at == front, pos == zero.
          */
-        var vPos = _cameraMatrix.Translation;
+        _cameraPosition = _cameraMatrix.Translation;
         
         _api.AL.SetListenerProperty(ListenerVector3.Position, Vector3.Zero);
         _api.AL.SetListenerProperty(ListenerVector3.Velocity, _cameraVelocity);
@@ -170,7 +171,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     protected override void Update(float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
         var al = _api.AL;
-        var vCameraPosition = _cameraMatrix.Translation;
+        var vCameraPosition = _cameraPosition;
         
         ushort minAudibleUShort = (ushort)(MinAudibleVolume * 65535f);
         Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
@@ -260,15 +261,17 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 if (cMovingSound.MotionVolume >= minAudibleUShort)
                 {
                     var mTransformWorld = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
-                    var vVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
                     var vPosition = mTransformWorld.Translation - vCameraPosition;
+                    var vVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
 
                     SoundEntry se = new();
                     se.Entity = entity;
                     se.AudioSource = null;
+
                     se.Position = vPosition;
                     se.Velocity = vVelocity;
                     se.Distance = vPosition.Length();
+                    
                     se.New = true;
                     se.CMovingSound = cMovingSound;
 
