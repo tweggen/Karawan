@@ -4,7 +4,7 @@ using Silk.NET.OpenAL;
 
 namespace Boom.OpenAL;
 
-public class AudioSource : IDisposable
+public class AudioSource : Boom.ISound
 {
     private AL _al;
     private uint _alBuffer = 0;
@@ -25,8 +25,13 @@ public class AudioSource : IDisposable
         get => _velocity;
         set => _setVelocity(value);
     }
-    
-    public bool IsLooped;
+
+    private bool _isLooped = false;
+    public bool IsLooped
+    {
+        get => _isLooped;
+        set => _isLooped = value;
+    }
 
     private float _volume = 1f;
     public float Volume
@@ -41,14 +46,6 @@ public class AudioSource : IDisposable
     {
         get => _speed;
         set => _setSpeed(value);
-    }
-
-    private float _pan = 0f;
-
-    public float Pan
-    {
-        get => _pan;
-        set => _setPan(value);
     }
 
 
@@ -91,21 +88,11 @@ public class AudioSource : IDisposable
         }
     }
 
-
-    private void _setPan(float pan)
-    {
-        if (pan != _pan)
-        {
-            _pan = pan;
-            Vector3 sourcePos = new(pan, 0f, 0f);
-            // _al.SetSourceProperty(_alSource, SourceVector3.Position, sourcePos);
-        }
-    }
     
     
     public void Play()
     {
-        _al.SetSourceProperty(_alSource,SourceBoolean.Looping, IsLooped);
+        _al.SetSourceProperty(_alSource,SourceBoolean.Looping, _isLooped);
         _al.SourcePlay(_alSource);
     }
 

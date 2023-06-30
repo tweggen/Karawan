@@ -32,7 +32,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
      * Schedule a sound entry for later deletion in the engine.
      * It may or may not be reused.
      */
-    private void _queueUnloadSoundEntry(AudioSource audioSource)
+    private void _queueUnloadSoundEntry(ISound audioSource)
     {
         lock (_lo)
         {
@@ -63,7 +63,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             {
                 try
                 {
-                    AudioSource audioSource = _api.CreateAudioSource(cMovingSound.Sound.Url);
+                    ISound audioSource = _api.CreateAudioSource(cMovingSound.Sound.Url);
                     _engine.QueueMainThreadAction(() =>
                     {
                         entity.Set(new components.BoomSound(audioSource));
@@ -157,7 +157,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             if (hasBoomSound)
             {
                 cBoomSound = entity.Get<components.BoomSound>();
-                AudioSource audioSource = cBoomSound.AudioSource;
+                ISound audioSource = cBoomSound.AudioSource;
 
                 /*
                  * Caution: If the bSound is null, the sound still is loading.

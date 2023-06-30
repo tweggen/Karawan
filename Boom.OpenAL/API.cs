@@ -32,7 +32,7 @@ public class API : Boom.ISoundAPI
     public void PlaySound(string uri)
     {
         // TXWTODO: This leaks all sources. 
-        AudioSource audioSource = CreateAudioSource(uri);
+        ISound audioSource = CreateAudioSource(uri);
         audioSource.Play();
     }
 
@@ -74,7 +74,7 @@ public class API : Boom.ISoundAPI
     }
     
 
-    public AudioSource CreateAudioSource(string url)
+    public ISound CreateAudioSource(string url)
     {
         OGGSound oggSound = FindSound(url);
         AudioSource audioSource = new(_al, oggSound.ALBuffer);

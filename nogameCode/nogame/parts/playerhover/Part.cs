@@ -32,54 +32,26 @@ namespace nogame.parts.playerhover
          */
         private DefaultEcs.Entity _eScoreDisplay;
 
+        private PlingPlayer _plingPlayer = new();
 
         private WASDPhysics _controllerWASDPhysics;
 
         private const float MassShip = 500f;
         
         
-        private int _plingCounter;
         private int _score = 0;
-        private static readonly int FirstPling = 1;
-        private static readonly int LastPling = 19;
-
-
-        private void _playPling(int plingCounter)
-        {
-            string plingName = $"pling{(plingCounter):D2}.ogg";
-            Implementations.Get<Boom.ISoundAPI>().PlaySound(plingName);
-        }
-        
 
         private void _nextCubeCollected()
         {
-            int playPling = 0;
+            _plingPlayer.PlayPling();
+            _plingPlayer.Next();
             lock (_lock)
             {
-                playPling = _plingCounter;
-                if (_plingCounter == LastPling)
-                {
-                    _plingCounter = FirstPling;
-                }
-                else
-                {
-                    ++_plingCounter;
-                    ++_score;
-                }
+                ++_score;
             }
-            
-            _playPling(playPling);
         }
 
         
-        private void _resetPling()
-        {
-            lock (_lock)
-            {
-                _plingCounter = FirstPling;
-            }
-        }
-
         private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
         {
             /*
@@ -232,8 +204,7 @@ namespace nogame.parts.playerhover
             }
 
             _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
-
-            _resetPling();
+            
             
             /*
              * And the ship's controller

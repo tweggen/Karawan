@@ -2,9 +2,9 @@ namespace Boom.OpenAL.components;
 
 public struct BoomSound
 {
-    public AudioSource AudioSource;
+    public ISound AudioSource;
 
-    public BoomSound(in AudioSource audioSource)
+    public BoomSound(in ISound audioSource)
     {
         AudioSource = audioSource;
     }

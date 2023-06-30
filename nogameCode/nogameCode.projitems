@@ -25,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\map\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\osd\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\Part.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\PlingPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\WASDPhysics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\skybox\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\logos\Scene.cs" />
