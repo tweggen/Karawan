@@ -227,7 +227,7 @@ namespace Karawan
                 engine.Logger.SetLogTarget(logger);
             }            
             
-            Boom.NAudio.API boom = new(e);
+            Boom.OpenAL.API boom = new(e);
             e.SetSoundAPI(boom);
 
             // Add the engine web service to the host.

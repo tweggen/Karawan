@@ -14,12 +14,26 @@ public class API : ISoundAPI
     private ALContext _alc;
 
     private SortedDictionary<string, OGGSound> _mapSounds = new();
-    
+    private DefaultEcs.Entity _cameraEntity;
     
     private void _onLogicalFrame(object sender, float dt)
     {
         // _createMusicSystem.Update(dt);
         _updateMovingSoundsSystem.Update(dt);
+    }
+
+
+    private void _onCameraEntityChanged(object? sender, DefaultEcs.Entity entity)
+    {
+        bool isChanged = false;
+        lock (_lo)
+        {
+            if (_cameraEntity != entity)
+            {
+                entity = _cameraEntity;
+                isChanged = true;
+            }
+        }
     }
     
     
@@ -44,7 +58,9 @@ public class API : ISoundAPI
 
     public void SetupDone()
     {
-        _engine.LogicalFrame += _onLogicalFrame;        
+        _engine.LogicalFrame += _onLogicalFrame;
+        _engine.CameraEntityChanged += _onCameraEntityChanged;
+        _onCameraEntityChanged(_engine, _engine.GetCameraEntity());
     }
 
 
