@@ -321,6 +321,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         int maxSounds = 16;
         int currSound = 0;
         float maxDistance = 0f;
+        float minDistance = 100000000f;
         foreach (var se in _listSoundEntries)
         {
             if (se.Dead)
@@ -334,6 +335,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 if (currSound < maxSounds)
                 {
                     maxDistance = Single.Max(se.Distance, maxDistance);
+                    minDistance = Single.Min(se.Distance, minDistance);
                     
                     /*
                      * If it is new, trigger loading, otherwise modify.
@@ -402,7 +404,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             }
         }
         _listSoundEntries.RemoveAll(se => se.Dead);
-        Trace( $"Keeping {_listSoundEntries.Count} sounds at maximum distance {maxDistance}m.");
+        Trace( $"Keeping {_listSoundEntries.Count} sounds at maximum distance {maxDistance}m, minimum distance {minDistance}.");
     }
 
 
