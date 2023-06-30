@@ -112,6 +112,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         var vUp = new Vector3(_cameraMatrix.M21, _cameraMatrix.M22, _cameraMatrix.M23);
         // var vRight = new Vector3(_cameraMatrix.M11, _cameraMatrix.M12, _cameraMatrix.M13);
 
+        Trace( $"Front is {vFront}");
         _arrFloatOrientation[0] = vFront.X;
         _arrFloatOrientation[1] = vFront.Y;
         _arrFloatOrientation[2] = vFront.Z;
@@ -214,8 +215,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             {
                 return;
             }
-            try
-            {
+            try {
                 _cameraMatrix = eCamera.Get<engine.transform.components.Transform3ToWorld>().Matrix;
                 _cameraVelocity = eCamera.Get<engine.joyce.components.Motion>().Velocity;
             }

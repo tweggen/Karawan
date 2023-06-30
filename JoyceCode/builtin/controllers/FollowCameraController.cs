@@ -17,7 +17,8 @@ namespace builtin.controllers
         Quaternion _qCameraRotation;
         Vector2 _vMouseOffset;
         float _lastMouseMove = 0f;
-
+        private bool _firstFrame = true;
+        
         private void _onLogicalFrame(object sender, float dt)
         {
             /*
@@ -59,11 +60,11 @@ namespace builtin.controllers
             var vCameraDirection = zoomDistance * vCameraFront - zoomDistance/4f * vUp;
   
             var vCameraPos = vCarrotPos - vCameraDirection;
-            if (_vPreviousCameraPos != default)
+            if (!_firstFrame)
             {
                 var vCameraVelocity = (vCameraPos - _vPreviousCameraPos) / dt;
                 _eTarget.Set(new engine.joyce.components.Motion(vCameraVelocity));
-                _vPreviousCameraPos = vCameraVelocity;
+                _vPreviousCameraPos = vCameraPos;
             }
 
             // var vCarrotRotation = cCarrotTransform3.Rotation;
@@ -99,7 +100,8 @@ namespace builtin.controllers
             {
                 _vMouseOffset *= 0.98f;
             }
-            
+
+            _firstFrame = false;
         }
 
         public void DeactivateController()
