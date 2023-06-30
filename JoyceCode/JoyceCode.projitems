@@ -81,7 +81,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\ISoundAPI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IUINode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\AmbientLight.cs" />

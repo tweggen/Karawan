@@ -33,7 +33,6 @@ namespace engine
         private hierarchy.API _aHierarchy;
         private transform.API _aTransform;
         private physics.API _aPhysics;
-        private ISoundAPI? _aSound;
 
         private behave.systems.BehaviorSystem _systemBehave;
         private physics.systems.ApplyPosesSystem _systemApplyPoses;
@@ -164,11 +163,6 @@ namespace engine
             return _aPhysics;
         }
 
-
-        public ISoundAPI? GetASound()
-        {
-            return _aSound;
-        }
         
         
         public DefaultEcs.World GetEcsWorld()
@@ -690,12 +684,6 @@ namespace engine
             _logicalThread.Priority = ThreadPriority.AboveNormal;
         }
 
-
-        public void SetSoundAPI(ISoundAPI soundAPI)
-        {
-            _aSound = soundAPI;
-        }
-        
 
         public bool IsRunning()
         {

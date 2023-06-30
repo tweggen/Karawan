@@ -21,7 +21,7 @@ public sealed class Implementations
     private static readonly Implementations _singleton = new Implementations();
     
     private object _lo = new();
-    private SortedDictionary<Type, InstanceEntry> _mapInstances = new();
+    private Dictionary<Type, InstanceEntry> _mapInstances = new();
 
     public void RegisterFactory<T>(Func<Object> factory)
     {

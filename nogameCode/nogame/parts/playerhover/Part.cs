@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks.Dataflow;
+using engine;
 using engine.physics;
 using static engine.Logger;
 
@@ -46,7 +47,7 @@ namespace nogame.parts.playerhover
         private void _playPling(int plingCounter)
         {
             string plingName = $"pling{(plingCounter):D2}.ogg";
-            _engine.GetASound()?.PlaySound(plingName);
+            Implementations.Get<Boom.ISoundAPI>().PlaySound(plingName);
         }
         
 

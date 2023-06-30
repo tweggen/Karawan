@@ -60,5 +60,8 @@ public class Main
         
         main._setupImplementations();
         main._registerScenes();
+
+        Implementations.Get<Boom.ISoundAPI>().SetupDone();
+
     }
 }

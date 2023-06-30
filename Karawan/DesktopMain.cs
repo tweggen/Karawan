@@ -22,6 +22,7 @@ using OpenTelemetry.Resources;
 using System.Runtime.CompilerServices;
 using System.Net.Http;
 using System.Reflection.PortableExecutable;
+using engine;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -227,8 +228,11 @@ namespace Karawan
                 engine.Logger.SetLogTarget(logger);
             }            
             
-            Boom.OpenAL.API boom = new(e);
-            e.SetSoundAPI(boom);
+            Implementations.Register<Boom.ISoundAPI>(() =>
+            {
+                var api = new Boom.OpenAL.API(e);
+                return api;
+            });
 
             // Add the engine web service to the host.
             // app.MapGrpcService<GreeterService>();
@@ -240,11 +244,12 @@ namespace Karawan
 
             nogame.Main.Start(e);
 
-            boom.SetupDone();
             e.Execute();
 
             app.StopAsync();
-            boom.Dispose();
+            
+            // Add Call to remove an implementations.
+
         }
     }
 }

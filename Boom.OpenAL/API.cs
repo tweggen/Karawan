@@ -4,7 +4,7 @@ using static engine.Logger;
 
 namespace Boom.OpenAL;
 
-public class API : ISoundAPI
+public class API : Boom.ISoundAPI
 {
     private object _lo = new();
     private Engine _engine;

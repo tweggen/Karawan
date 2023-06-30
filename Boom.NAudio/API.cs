@@ -4,7 +4,7 @@ using static engine.Logger;
 
 namespace Boom.NAudio;
 
-public class API : engine.ISoundAPI
+public class API : Boom.ISoundAPI
 {
     private object _lo = new();
 
