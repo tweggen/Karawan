@@ -12,6 +12,7 @@ namespace builtin.controllers
         DefaultEcs.Entity _eTarget;
         DefaultEcs.Entity _eCarrot;
         engine.transform.API _aTransform;
+        private Vector3 _vPreviousCameraPos;
 
         Quaternion _qCameraRotation;
         Vector2 _vMouseOffset;
@@ -58,6 +59,12 @@ namespace builtin.controllers
             var vCameraDirection = zoomDistance * vCameraFront - zoomDistance/4f * vUp;
   
             var vCameraPos = vCarrotPos - vCameraDirection;
+            if (_vPreviousCameraPos != default)
+            {
+                var vCameraVelocity = (vCameraPos - _vPreviousCameraPos) / dt;
+                _eTarget.Set(new engine.joyce.components.Motion(vCameraVelocity));
+                _vPreviousCameraPos = vCameraVelocity;
+            }
 
             // var vCarrotRotation = cCarrotTransform3.Rotation;
             var qRotation = Quaternion.Slerp(_qCameraRotation, cCarrotTransform3.Rotation, 0.1f);

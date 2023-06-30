@@ -9,6 +9,7 @@ public class AudioSource : IDisposable
     private AL _al;
     private uint _alBuffer = 0;
     private uint _alSource = 0;
+    private bool _haveSetupDistanceModel = false;
 
     private Vector3 _position = new();
 

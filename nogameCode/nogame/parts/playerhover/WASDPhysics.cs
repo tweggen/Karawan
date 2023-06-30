@@ -151,6 +151,7 @@ namespace nogame.parts.playerhover
             {
                 Trace($"Too fast: {vTotalAngular.Length()}.");
             }
+
             
             /*
              * TXWTODO: Workaround to limit top speed.
@@ -165,6 +166,12 @@ namespace nogame.parts.playerhover
                 float avel = vTargetAngularVelocity.Length();
                 vTotalAngular += -(vTargetAngularVelocity * (avel - MaxAngularVelocity) / avel) / dt;
             }
+
+            /*
+             * Set current velocity.
+             * TXWTODO: (or would that be the previous one?)
+             */
+            _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
             
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);

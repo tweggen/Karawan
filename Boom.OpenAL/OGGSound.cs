@@ -56,6 +56,7 @@ public class OGGSound : IDisposable
                 ErrorThrow($"Unsupported ogg file with {vorbisReader.Channels} channels.", (m) => new ArgumentException(m));
                 return;
             }
+            Trace($"Sound {url} has {vorbisReader.Channels} channels.");
 
             int partSamples = vorbisReader.SampleRate * vorbisReader.Channels;
             // var wholeFile = new List<float>((int)(vorbisReader.TotalSamples));
