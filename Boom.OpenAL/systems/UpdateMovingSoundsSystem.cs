@@ -237,7 +237,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         {
             if (_cameraEntity != entity)
             {
-                entity = _cameraEntity;
+                _cameraEntity = entity;
                 isChanged = true;
             }
         }
