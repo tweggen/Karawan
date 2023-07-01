@@ -25,7 +25,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             if (_jTramSound == null)
             {
                 _jTramSound = new engine.audio.Sound(
-                    "tramnoise.ogg", true, 0.3f, 1.0f);
+                    "tramnoise.ogg", true, 0.4f, 1.0f);
             }
 
             return _jTramSound;

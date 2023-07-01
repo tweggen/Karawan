@@ -15,19 +15,23 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
     private static object _classLock = new();
 
-    private static engine.audio.Sound _jCar3Sound;
+    private static engine.audio.Sound[] _jCar3Sound;
 
-    private static engine.audio.Sound _getCar3Sound()
+    private static engine.audio.Sound _getCar3Sound(int i)
     {
         lock (_classLock)
         {
             if (_jCar3Sound == null)
             {
-                _jCar3Sound = new engine.audio.Sound(
-                    "car3noisemono.ogg", true, 0.1f, 1.0f);
+                _jCar3Sound = new engine.audio.Sound[3];
+                for (int j = 0; j < 3; ++j)
+                {
+                    _jCar3Sound[j] = new engine.audio.Sound(
+                        "car3noisemono.ogg", true, 0.12f-0.2f*j, 0.7f + j*0.3f);
+                }
             }
 
-            return _jCar3Sound;
+            return _jCar3Sound[i];
         }
     }
     
@@ -188,7 +192,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                 .SetSpeed((40f+_rnd.getFloat()*30f+(float)carIdx * 20f)/3.6f)));
 
                         eTarget.Set(new engine.audio.components.MovingSound(
-                            _getCar3Sound(), 150f));
+                            _getCar3Sound(carIdx), 150f));
 
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(

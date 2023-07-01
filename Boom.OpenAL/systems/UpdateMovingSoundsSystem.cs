@@ -107,6 +107,10 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
                         audioSource.Position = vPosition;
                         audioSource.Velocity = vVelocity;
+                        audioSource.IsLooped = cMovingSound.Sound.IsLooped;
+                        audioSource.Volume = cMovingSound.Sound.Volume;
+                        audioSource.Speed = cMovingSound.Sound.Pitch;
+                        entity.Get<components.BoomSound>().AudioSource = audioSource;
                         
                         lock (_lo)
                         {
@@ -186,6 +190,11 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             var cMovingSound = entity.Get<engine.audio.components.MovingSound>();
             components.BoomSound cBoomSound;
             
+            var mTransformWorld = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+            var vPosition = mTransformWorld.Translation - vCameraPosition;
+            var vVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
+            var distance = vPosition.Length();
+
             /*
              * We ignore the doppler data computed in MovingSound and
              * use the implementation of OpenAL.
@@ -225,7 +234,8 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     continue;
                 }
 
-                if (cMovingSound.MotionVolume < minAudibleUShort)
+                if (cMovingSound.MotionVolume < minAudibleUShort
+                    || cMovingSound.MaxDistance < distance)
                 {
                     /*
                      * We do not want to hear that anymore due to the computed
@@ -243,13 +253,10 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     /*
                      * Update distance position etc. .
                      */
-                    var mTransformWorld = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
-                    var vPosition = mTransformWorld.Translation - vCameraPosition;
-                    var vVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
 
                     se.Position = vPosition;
                     se.Velocity = vVelocity;
-                    se.Distance = vPosition.Length();
+                    se.Distance = distance;
                 }
             }
             else
@@ -258,12 +265,8 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                  * We did not have a boom sound but might want to have one. Add it to the sound
                  * entries, but do not physically trigger the loading yet.
                  */
-                if (cMovingSound.MotionVolume >= minAudibleUShort)
+                if (cMovingSound.MotionVolume >= minAudibleUShort && cMovingSound.MaxDistance > distance)
                 {
-                    var mTransformWorld = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
-                    var vPosition = mTransformWorld.Translation - vCameraPosition;
-                    var vVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
-
                     SoundEntry se = new();
                     se.Entity = entity;
                     se.AudioSource = null;
@@ -309,9 +312,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 }
                 else
                 {
-                    {
-                        return -1;
-                    }
+                    return -1;
                 }
             }
         });
@@ -382,7 +383,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             List<SoundEntry> listRemoveSounds = new();
             foreach (var se in _listSoundEntries)
             {
-                if (se.Dead)
+                if (se.Dead && !se.New)
                 {
                     listRemoveSounds.Add(se);
                 }
@@ -400,14 +401,11 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     entity.Remove<components.BoomSound>();
                 }
 
-                if (!deadse.New)
-                {
-                    _queueUnloadSoundEntry(deadse.AudioSource);
-                }
+                _queueUnloadSoundEntry(deadse.AudioSource);
             }
         }
         _listSoundEntries.RemoveAll(se => se.Dead);
-        Trace( $"Keeping {_listSoundEntries.Count} sounds at maximum distance {maxDistance}m, minimum distance {minDistance}.");
+        Trace( $"Keeping {_listSoundEntries.Count} sounds at maximum distance {maxDistance}m, minimum distance {minDistance} cameraPos {vCameraPosition}.");
     }
 
 

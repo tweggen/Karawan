@@ -6,14 +6,14 @@ namespace engine.audio
         public string Url;
         public float Volume;
         public float Pitch;
-        public bool PlayLooped;
+        public bool IsLooped;
 
-        public Sound(in string url, in bool playLooped, in float volume, in float pitch)
+        public Sound(in string url, in bool isLooped, in float volume, in float pitch)
         {
             Url = url;
             Pitch = pitch;
             Volume = volume;
-            PlayLooped = playLooped;
+            IsLooped = isLooped;
         }
     }
 }
