@@ -49,6 +49,16 @@ public class AudioSource : Boom.ISound
     }
 
 
+    private void _setupDistanceStuff()
+    {
+        if (_haveSetupDistanceModel) return;
+        _haveSetupDistanceModel = true;
+        
+        _al.SetSourceProperty(_alSource, SourceFloat.ReferenceDistance, 1f);
+        _al.SetSourceProperty(_alSource, SourceFloat.RolloffFactor, 1f);
+        _al.SetSourceProperty(_alSource, SourceFloat.MaxDistance, 150f);
+    }
+
     private void _setVelocity(Vector3 velocity)
     {
         if (velocity != _velocity)
@@ -92,6 +102,7 @@ public class AudioSource : Boom.ISound
     
     public void Play()
     {
+        _setupDistanceStuff();
         _al.SetSourceProperty(_alSource,SourceBoolean.Looping, _isLooped);
         _al.SourcePlay(_alSource);
     }
