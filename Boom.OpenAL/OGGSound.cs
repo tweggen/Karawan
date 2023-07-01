@@ -62,7 +62,7 @@ public class OGGSound : IDisposable
             // var wholeFile = new List<float>((int)(vorbisReader.TotalSamples));
             int samplesRead;
 
-            long allSamples = vorbisReader.TotalSamples;
+            long allSamples = vorbisReader.TotalSamples * vorbisReader.Channels;
             var floatReadBuffer = new float[partSamples];
             var shortReadBuffer = new short[allSamples];
             long position = 0;
