@@ -319,6 +319,8 @@ namespace Splash.Silk
                 _currentMousePosition = mouse.Position;
                 _isMouseButtonClicked = true;
             }
+
+            _engine.TakeTouchPress(mouse.Position);
         }
 
         private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
@@ -333,6 +335,8 @@ namespace Splash.Silk
                 _currentMousePosition = mouse.Position;
                 _isMouseButtonClicked = false;
             }
+
+            _engine.TakeTouchRelease(mouse.Position);
         }
 
         /**

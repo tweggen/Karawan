@@ -61,6 +61,9 @@ namespace engine
         public event EventHandler<float> PhysicalFrame;
         public event EventHandler<string> KeyPress;
         public event EventHandler<string> KeyRelease;
+        public event EventHandler<Vector2> OnTouchPress;
+        public event EventHandler<Vector2> OnTouchRelease;
+        
         private Entity _cameraEntity;
         public event EventHandler<DefaultEcs.Entity> CameraEntityChanged;
 
@@ -547,6 +550,16 @@ namespace engine
             KeyRelease?.Invoke(this, code);
         }
 
+
+        public void TakeTouchPress(Vector2 position)
+        {
+            OnTouchPress?.Invoke(this, position);
+        }
+
+        public void TakeTouchRelease(Vector2 position)
+        {
+            OnTouchRelease?.Invoke(this, position);
+        }
 
         public void Execute()
         {

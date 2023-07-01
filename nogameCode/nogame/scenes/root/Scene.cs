@@ -75,6 +75,32 @@ public class Scene : engine.IScene
                 break;
         }
     }
+
+
+    private void _onTouchPress(object? sender, Vector2 position)
+    {
+        bool _callToggleMap = false;
+        
+        lock (_lo)
+        {
+            if (!_isMapShown)
+            {
+                if (position.X < 150 && position.Y < 150)
+                {
+                    _callToggleMap = true;
+                }
+            }
+            else
+            {
+                _callToggleMap = true;
+            }
+        }
+
+        if (_callToggleMap)
+        {
+            _toggleMap();
+        }
+    }
     
     
     private void _triggerLoadWorld()
@@ -100,6 +126,9 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
+        _engine.KeyPress -= _onKeyPress;
+        _engine.OnTouchPress -= _onTouchPress;
+            
         _partPlayerhover.PartDeactivate();
         _partPlayerhover = null;
         _partSkybox.PartDeactivate();
@@ -281,6 +310,7 @@ public class Scene : engine.IScene
         }
 
         _engine.KeyPress += _onKeyPress;
+        _engine.OnTouchPress += _onTouchPress;
         
         /*
          * Now, that everything has been created, add the scene.
