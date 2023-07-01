@@ -11,7 +11,12 @@ public class AssetImplementation : engine.IAssetImplementation
     public System.IO.Stream Open(in string filename)
     {
         string realName = "Platforms/Android/" + filename;
-        return _assetManager.Open(realName);
+        var orgStream = _assetManager.Open(realName);
+        var streamReader = new StreamReader(orgStream);
+        var memoryStream = new MemoryStream();
+        streamReader.BaseStream.CopyTo(memoryStream);
+        memoryStream.Position = 0;
+        return memoryStream;
     }
 
     public AssetImplementation(in AssetManager assetManager)

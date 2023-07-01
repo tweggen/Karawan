@@ -252,7 +252,8 @@ public class SkiaSharpFramebuffer : IFramebuffer
         _applyModified(new Vector2(0,0), new Vector2(_width-1, _height-1));
         
         System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
-
+        _skiaTypefacePrototype = SKTypeface.FromStream(streamFont);
+#if false
         /*
          * We need to put a memorystream on top because android does not implement seeking natively.
          */
@@ -266,5 +267,6 @@ public class SkiaSharpFramebuffer : IFramebuffer
                 _skiaTypefacePrototype = SKTypeface.FromStream(ms);
             }
         }
+#endif
     }
 }

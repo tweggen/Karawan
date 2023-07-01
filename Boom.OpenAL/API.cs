@@ -131,8 +131,9 @@ public class API : Boom.ISoundAPI
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
         _updateMovingSoundsSystem = new(engine, this);
 
-        // AudioSource asTitle = CreateAudioSource("shaklengokhsi.ogg");
-        // asTitle.Play();
+        ISound asTitle = CreateAudioSource("shaklengokhsi.ogg");
+        asTitle.Volume = 0.05f;
+        asTitle.Play();
 
     }
 }

@@ -87,6 +87,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\buildingambient.png" />
 	  <None Remove="Platforms\Android\buildingdiffuse.png" />
 	  <None Remove="Platforms\Android\car2.mtl" />
@@ -101,8 +102,29 @@
 	  <None Remove="Platforms\Android\gridlines.png" />
 	  <None Remove="Platforms\Android\gridlines1.jpg" />
 	  <None Remove="Platforms\Android\gridlines1.png" />
+	  <None Remove="Platforms\Android\libopenal.so" />
+	  <None Remove="Platforms\Android\libs\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\lorem.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon.png" />
+	  <None Remove="Platforms\Android\pling01.ogg" />
+	  <None Remove="Platforms\Android\pling02.ogg" />
+	  <None Remove="Platforms\Android\pling03.ogg" />
+	  <None Remove="Platforms\Android\pling04.ogg" />
+	  <None Remove="Platforms\Android\pling05.ogg" />
+	  <None Remove="Platforms\Android\pling06.ogg" />
+	  <None Remove="Platforms\Android\pling07.ogg" />
+	  <None Remove="Platforms\Android\pling08.ogg" />
+	  <None Remove="Platforms\Android\pling09.ogg" />
+	  <None Remove="Platforms\Android\pling10.ogg" />
+	  <None Remove="Platforms\Android\pling11.ogg" />
+	  <None Remove="Platforms\Android\pling12.ogg" />
+	  <None Remove="Platforms\Android\pling13.ogg" />
+	  <None Remove="Platforms\Android\pling14.ogg" />
+	  <None Remove="Platforms\Android\pling15.ogg" />
+	  <None Remove="Platforms\Android\pling16.ogg" />
+	  <None Remove="Platforms\Android\pling17.ogg" />
+	  <None Remove="Platforms\Android\pling18.ogg" />
+	  <None Remove="Platforms\Android\pling19.ogg" />
 	  <None Remove="Platforms\Android\Prototype.ttf" />
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
 	  <None Remove="Platforms\Android\skybox2.png" />
@@ -166,6 +188,63 @@
 	  <AndroidAsset Include="Platforms\Android\lorem.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling01.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling02.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling03.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling04.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling05.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling06.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling07.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling08.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling09.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling10.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling11.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling12.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling13.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling14.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling15.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling16.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling17.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling18.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\pling19.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\Prototype.ttf">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
@@ -193,6 +272,15 @@
 	  <AndroidAsset Include="Platforms\Android\yellowwindows.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libopenal.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidNativeLibrary>
+	  <AndroidNativeLibrary Include="Platforms\Android\libs\arm64-v8a\libopenal.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidNativeLibrary>
 	</ItemGroup>
 
 	<ItemGroup>

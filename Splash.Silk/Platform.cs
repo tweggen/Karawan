@@ -340,7 +340,7 @@ namespace Splash.Silk
         }
 
         /**
-         * Because Silk does not yet support touch events right now,
+         * Because Silk does not yet support touch events right now,MemoryStream
          * we peek touch events from the event queue before they are
          * discarded by the current input context implementation.
          */
