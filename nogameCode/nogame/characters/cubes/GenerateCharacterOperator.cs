@@ -36,7 +36,7 @@ namespace nogame.characters.cubes
                 if (_jCubeSound == null)
                 {
                     _jCubeSound = new engine.audio.Sound(
-                        "cubeloopmono.ogg", true, 0.4f, 1.0f);
+                        "cubeloopmono.ogg", true, 0.6f, 1.0f);
                 }
 
                 return _jCubeSound;
