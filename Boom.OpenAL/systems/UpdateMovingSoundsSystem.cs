@@ -231,8 +231,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     continue;
                 }
 
-                if (cMovingSound.MotionVolume < minAudibleUShort
-                    || cMovingSound.MaxDistance < distance)
+                if (cMovingSound.MaxDistance < distance)
                 {
                     /*
                      * We do not want to hear that anymore due to the computed
@@ -262,7 +261,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                  * We did not have a boom sound but might want to have one. Add it to the sound
                  * entries, but do not physically trigger the loading yet.
                  */
-                if (cMovingSound.MotionVolume >= minAudibleUShort && cMovingSound.MaxDistance > distance)
+                if (cMovingSound.MaxDistance > distance)
                 {
                     SoundEntry se = new();
                     se.Entity = entity;
@@ -402,7 +401,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             }
         }
         _listSoundEntries.RemoveAll(se => se.Dead);
-        Trace( $"Keeping {_listSoundEntries.Count} sounds at maximum distance {maxDistance}m, minimum distance {minDistance} cameraPos {vCameraPosition}.");
+        // Trace( $"Keeping {_listSoundEntries.Count} sounds at maximum distance {maxDistance}m, minimum distance {minDistance} cameraPos {vCameraPosition}.");
     }
 
 
