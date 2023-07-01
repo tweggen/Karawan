@@ -100,6 +100,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                         if (!entity.Has<components.BoomSound>())
                         {
                             Error($"Didn't have BoomSound but was queued.");
+                            return;
                         }
 
                         se.AudioSource.Position = se.Position;
