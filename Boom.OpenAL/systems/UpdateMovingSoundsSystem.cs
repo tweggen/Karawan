@@ -76,19 +76,16 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     /**
      * Queue obtaining a sound and attaching it to this entity.
      */
-    private void _queueLoadMovingSoundToEntity(
-        DefaultEcs.Entity entity,
-        engine.audio.components.MovingSound cMovingSound,
-        Vector3 vPosition,
-        Vector3 vVelocity)
+    private void _queueLoadMovingSoundToEntity(SoundEntry se)
     {
+        DefaultEcs.Entity entity = se.Entity;
         lock (_lo)
         {
             _audioWorkerQueue.Enqueue(() =>
             {
                 try
                 {
-                    ISound audioSource = _api.CreateAudioSource(cMovingSound.Sound.Url);
+                    se.AudioSource = _api.CreateAudioSource(se.CMovingSound.Sound.Url);
                     _engine.QueueMainThreadAction(() =>
                     {
                         if (!entity.IsAlive)
@@ -105,18 +102,18 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                             Error($"Didn't have BoomSound but was queued.");
                         }
 
-                        audioSource.Position = vPosition;
-                        audioSource.Velocity = vVelocity;
-                        audioSource.IsLooped = cMovingSound.Sound.IsLooped;
-                        audioSource.Volume = cMovingSound.Sound.Volume;
-                        audioSource.Speed = cMovingSound.Sound.Pitch;
-                        entity.Get<components.BoomSound>().AudioSource = audioSource;
+                        se.AudioSource.Position = se.Position;
+                        se.AudioSource.Velocity = se.Velocity;
+                        se.AudioSource.IsLooped = se.CMovingSound.Sound.IsLooped;
+                        se.AudioSource.Volume = se.CMovingSound.Sound.Volume;
+                        se.AudioSource.Speed = se.CMovingSound.Sound.Pitch;
+                        entity.Get<components.BoomSound>().AudioSource = se.AudioSource;
                         
                         lock (_lo)
                         {
                             _audioWorkerQueue.Enqueue(() =>
                             {
-                                audioSource.Play();
+                                se.AudioSource.Play();
                                 lock (_lo)
                                 {
                                     Trace($"_nMovingSounds = {_nMovingSounds}");
@@ -347,7 +344,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     if (se.New)
                     {
                         se.New = false;
-                        _queueLoadMovingSoundToEntity(se.Entity, se.CMovingSound, se.Position, se.Velocity);
+                        _queueLoadMovingSoundToEntity(se);
                     }
                     else
                     {

@@ -31,7 +31,7 @@ namespace Splash
          * 
          * Uploaders meshes/textures if required.
          */
-        private void _renderMaterialBatches(in IThreeD threeD, in Dictionary<AMaterialEntry, MaterialBatch> mb)
+        private void _renderMaterialBatchesNoLock(in IThreeD threeD, in Dictionary<AMaterialEntry, MaterialBatch> mb)
         {
             Stopwatch swUpload = new();
             int nSkippedMaterials = 0;
@@ -213,7 +213,7 @@ namespace Splash
              */
             lock (_lo)
             {
-                _renderMaterialBatches(threeD, _materialBatches);
+                _renderMaterialBatchesNoLock(threeD, _materialBatches);
             }
         }
 
@@ -226,7 +226,7 @@ namespace Splash
              */
             lock (_lo)
             {
-                _renderMaterialBatches(threeD, _transparentMaterialBatches);
+                _renderMaterialBatchesNoLock(threeD, _transparentMaterialBatches);
             }
         }
 
