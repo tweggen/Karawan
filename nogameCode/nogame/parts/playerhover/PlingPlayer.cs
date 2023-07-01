@@ -14,7 +14,7 @@ public class PlingPlayer
     
     public void PlayPling()
     {
-        _arrPlings[_plingCounter].Play();
+        _arrPlings[_plingCounter-FirstPling].Play();
     }
 
 

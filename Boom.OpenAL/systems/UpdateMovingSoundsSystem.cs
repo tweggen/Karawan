@@ -282,7 +282,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
             }
         }
-
+        
         /*
          * Now map/list sound entries contain all the sound entries we hear, would like to load,
          * including those we do not want to hear (in listRemoveSounds),

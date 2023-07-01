@@ -27,7 +27,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 for (int j = 0; j < 3; ++j)
                 {
                     _jCar3Sound[j] = new engine.audio.Sound(
-                        "car3noisemono.ogg", true, 0.12f-0.2f*j, 0.7f + j*0.3f);
+                        "car3noisemono.ogg", true, 0.12f, 0.7f + j*0.3f);
                 }
             }
 
