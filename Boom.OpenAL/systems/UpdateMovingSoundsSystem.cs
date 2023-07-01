@@ -16,6 +16,7 @@ class SoundEntry
     public Vector3 Position;
     public bool Dead = false;
     public bool New = true;
+    public bool LostEntity = false;
     public engine.audio.components.MovingSound CMovingSound;
 }
 
@@ -30,10 +31,16 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     private Boom.OpenAL.API _api;
     private int _nMovingSounds = 0;
     private DefaultEcs.Entity _cameraEntity;
+    private DefaultEcs.Entity _playerEntity;
 
     private Matrix4x4 _cameraMatrix;
     private Vector3 _cameraVelocity;
     private Vector3 _cameraPosition;
+
+    private Matrix4x4 _playerMatrix;
+    private Vector3 _playerVelocity;
+    private Vector3 _playerPosition;
+
     private float[] _arrFloatOrientation = new float[6];
 
     private int _maxSounds = 32;
@@ -44,11 +51,12 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
     public float MinAudibleVolume { get; set; } = 0.005f;
 
+    
     /**
      * Schedule a sound entry for later deletion in the engine.
      * It may or may not be reused.
      */
-    private void _queueUnloadSoundEntry(ISound? audioSource)
+    private void _queueUnloadSoundEntry(ISound audioSource)
     {
         if (null == audioSource)
         {
@@ -88,13 +96,27 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     se.AudioSource = _api.CreateAudioSource(se.CMovingSound.Sound.Url);
                     _engine.QueueMainThreadAction(() =>
                     {
+                        /*
+                         * It may be that an entity is not alive any more, e.g. if its fragment had
+                         * been disposed.
+                         *
+                         * In that case we need to remove it from our lists.
+                         */
+
                         if (!entity.IsAlive)
                         {
+                            se.Dead = true;
+                            se.LostEntity = true;
                             Trace($"Entity {entity} was not alive any more but queued for loading.");
-                            if (_mapSoundEntries.TryGetValue(entity, out var se))
+                            
+                            se.AudioSource.Dispose();
+                            se.AudioSource = null;
+                            
+                            lock (_lo)
                             {
-                                se.Dead = true;
+                                --_nMovingSounds;
                             }
+                            
                             return;
                         }
                         if (!entity.Has<components.BoomSound>())
@@ -137,16 +159,13 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     {
         _readCameraValues();
         
-        /*
-         * Move listener. Note, that the camera by definition is at 0/0/0
-         *
-         * That means that at == front, pos == zero.
-         */
-        _cameraPosition = _cameraMatrix.Translation;
         
         _api.AL.SetListenerProperty(ListenerVector3.Position, Vector3.Zero);
         _api.AL.SetListenerProperty(ListenerVector3.Velocity, _cameraVelocity);
         
+        /*
+         * We use the direction from the camera but the position of the ship.
+         */
         var vFront = new Vector3(-_cameraMatrix.M31, -_cameraMatrix.M32, -_cameraMatrix.M33);
         var vUp = new Vector3(_cameraMatrix.M21, _cameraMatrix.M22, _cameraMatrix.M23);
         // var vRight = new Vector3(_cameraMatrix.M11, _cameraMatrix.M12, _cameraMatrix.M13);
@@ -398,7 +417,10 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     entity.Remove<components.BoomSound>();
                 }
 
-                _queueUnloadSoundEntry(deadse.AudioSource);
+                if (deadse.AudioSource != null)
+                {
+                    _queueUnloadSoundEntry(deadse.AudioSource);
+                }
             }
         }
         _listSoundEntries.RemoveAll(se => se.Dead);
@@ -409,16 +431,23 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     private void _readCameraValues()
     {
         DefaultEcs.Entity eCamera;
+        DefaultEcs.Entity ePlayer;
         lock (_lo)
         {
             eCamera = _cameraEntity;
-            if (!eCamera.IsAlive)
+            ePlayer = _playerEntity;
+            if (!eCamera.IsAlive || !ePlayer.IsAlive)
             {
                 return;
             }
             try {
                 _cameraMatrix = eCamera.Get<engine.transform.components.Transform3ToWorld>().Matrix;
                 _cameraVelocity = eCamera.Get<engine.joyce.components.Motion>().Velocity;
+                _cameraPosition = _cameraMatrix.Translation;
+
+                _playerMatrix = ePlayer.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                _playerVelocity = ePlayer.Get<engine.joyce.components.Motion>().Velocity;
+                _playerPosition = _playerMatrix.Translation;
             }
             catch (Exception e)
             {
@@ -446,10 +475,27 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         if (isChanged)
         {
             /*
-             * Read camera velocity, position and direction.
+             * We do not update the AL listener, instead we assume the listener to be
+             * at the origin. Instead, we wait for everything else to update.
              */
-            _readCameraValues();
+        }
+    }
 
+
+    private void _onPlayerEntityChanged(object? sender, DefaultEcs.Entity entity)
+    {
+        bool isChanged = false;
+        lock (_lo)
+        {
+            if (_playerEntity != entity)
+            {
+                _playerEntity = entity;
+                isChanged = true;
+            }
+        }
+
+        if (isChanged)
+        {
             /*
              * We do not update the AL listener, instead we assume the listener to be
              * at the origin. Instead, we wait for everything else to update.
@@ -479,8 +525,10 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         _api = api;
         Thread audioThread = new Thread(_audioThread);
         audioThread.Start();
-        _engine.CameraEntityChanged += _onCameraEntityChanged;
+        _engine.OnCameraEntityChanged += _onCameraEntityChanged;
+        _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
         _onCameraEntityChanged(_engine, _engine.GetCameraEntity());
+        _onPlayerEntityChanged(_engine, _engine.GetPlayerEntity());
     }
 }
 

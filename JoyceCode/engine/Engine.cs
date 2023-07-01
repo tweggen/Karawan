@@ -65,7 +65,9 @@ namespace engine
         public event EventHandler<Vector2> OnTouchRelease;
         
         private Entity _cameraEntity;
-        public event EventHandler<DefaultEcs.Entity> CameraEntityChanged;
+        public event EventHandler<DefaultEcs.Entity> OnCameraEntityChanged;
+        private Entity _playerEntity;
+        public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
 
         
 
@@ -121,6 +123,15 @@ namespace engine
         }
 
 
+        public Entity GetPlayerEntity()
+        {
+            lock (_lo)
+            {
+                return _playerEntity;
+            }
+        }
+
+
         public void SetCameraEntity(in DefaultEcs.Entity entity)
         {
             bool entityChanged = false;
@@ -135,7 +146,26 @@ namespace engine
 
             if (entityChanged)
             {
-                CameraEntityChanged?.Invoke(this, entity);
+                OnCameraEntityChanged?.Invoke(this, entity);
+            }
+        }
+
+        
+        public void SetPlayerEntity(in DefaultEcs.Entity entity)
+        {
+            bool entityChanged = false;
+            lock (_lo)
+            {
+                if (_playerEntity != entity)
+                {
+                    entityChanged = true;
+                    _playerEntity = entity;
+                }
+            }
+
+            if (entityChanged)
+            {
+                OnPlayerEntityChanged?.Invoke(this, entity);
             }
         }
 

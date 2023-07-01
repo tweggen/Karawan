@@ -318,5 +318,6 @@ public class Scene : engine.IScene
         _engine.SceneSequencer.AddScene(0, this);
 
         _engine.SetCameraEntity(_eCamScene);
+        _engine.SetPlayerEntity(_partPlayerhover.GetShipEntity());
     }
 }
