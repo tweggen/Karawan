@@ -7,6 +7,13 @@ using Silk.NET.OpenAL;
 
 namespace Boom.OpenAL.systems;
 
+/**
+ * Note: The only transition that does not happen inside the main thread
+ * is the loading of the audio source.
+ *
+ * To keep it maintainable, we keep changing the data structure in the
+ * main thread.
+ */
 class SoundEntry
 {
     public float Distance;
@@ -19,6 +26,7 @@ class SoundEntry
     public bool LostEntity = false;
     public engine.audio.components.MovingSound CMovingSound;
 }
+
 
 [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
 [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
@@ -69,6 +77,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         }
         lock (_lo)
         {
+            Trace($"Triggering unload.");
             _audioWorkerQueue.Enqueue(() =>
             {
                 audioSource.Stop();
@@ -93,57 +102,88 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             {
                 try
                 {
-                    se.AudioSource = _api.CreateAudioSource(se.CMovingSound.Sound.Url);
+                    ISound audioSource;
+                    lock (_lo)
+                    {
+                        audioSource = _api.CreateAudioSource(se.CMovingSound.Sound.Url);
+                    }
+                    // TXWTODO: What to do if loading the audio source was not successful?
+                    
                     _engine.QueueMainThreadAction(() =>
                     {
                         /*
                          * It may be that an entity is not alive any more, e.g. if its fragment had
                          * been disposed.
                          *
-                         * In that case we need to remove it from our lists.
+                         * In that case we need to remove it from our lists, plus, the audio source
+                         * can be disposed again.
                          */
+
+                        bool cleanupSoundEntry = false;
 
                         if (!entity.IsAlive)
                         {
-                            se.Dead = true;
-                            se.LostEntity = true;
+                            cleanupSoundEntry = true;
+                        }
+
+                        if (null == audioSource)
+                        {
+                            cleanupSoundEntry = true;
+                        }
+                        
+                        /*
+                         * If the sound entry could not be loaded or the entity was
+                         * not alive, we must remove the sound entry again.
+                         */
+                        if (cleanupSoundEntry)
+                        {
                             Trace($"Entity {entity} was not alive any more but queued for loading.");
-                            
-                            se.AudioSource.Dispose();
-                            se.AudioSource = null;
                             
                             lock (_lo)
                             {
+                                se.Dead = true;
+                                se.LostEntity = true;
                                 --_nMovingSounds;
+                            }
+
+                            if (null != audioSource)
+                            {
+                                /*
+                                 * Then immediately delete the audio source again that was
+                                 * setup for me.
+                                 */
+                                audioSource.Dispose();
                             }
                             
                             return;
                         }
-                        if (!entity.Has<components.BoomSound>())
+
+                        /*
+                         * Finally, write the audiosource to the sound entry and create
+                         * the boom entry for cleanup with the entity.
+                         */
+                        se.AudioSource = audioSource;
+#if false
+                        if (entity.Has<components.BoomSound>())
                         {
-                            Error($"Didn't have BoomSound but was queued.");
+                            Error($"Queued Entity {entity} already had BoomSound.");
                             return;
                         }
+#endif
 
-                        se.AudioSource.Position = se.Position;
-                        se.AudioSource.Velocity = se.Velocity;
-                        se.AudioSource.IsLooped = se.CMovingSound.Sound.IsLooped;
-                        se.AudioSource.Volume = se.CMovingSound.Sound.Volume;
-                        se.AudioSource.Speed = se.CMovingSound.Sound.Pitch;
-                        entity.Get<components.BoomSound>().AudioSource = se.AudioSource;
-                        
-                        lock (_lo)
-                        {
-                            _audioWorkerQueue.Enqueue(() =>
-                            {
-                                se.AudioSource.Play();
-                                lock (_lo)
-                                {
-                                    Trace($"_nMovingSounds = {_nMovingSounds}");
-                                    ++_nMovingSounds;
-                                }
-                            });
-                        }
+                        /*
+                         * audioSource must be non-null here.
+                         */
+                        // entity.Set(new components.BoomSound(audioSource));
+                        audioSource.Position = se.Position;
+                        audioSource.Velocity = se.Velocity;
+                        audioSource.IsLooped = se.CMovingSound.Sound.IsLooped;
+                        audioSource.Volume = se.CMovingSound.Sound.Volume;
+                        audioSource.Speed = se.CMovingSound.Sound.Pitch;
+
+                        audioSource.Play();
+                        Trace($"Loading entity {entity} _nMovingSounds = {_nMovingSounds}");
+                        ++_nMovingSounds;
                     });
                 }
                 catch (Exception ex)
@@ -203,9 +243,14 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
              * We need to iterate through all moving sounds, finally creating
              * or updating the sounds depending on distance.
              */
-            bool hasBoomSound = entity.Has<components.BoomSound>();
+            //bool hasBoomSound = entity.Has<components.BoomSound>();
+            
+            /*
+             * Look, if we already have a record for this sound.
+             */
+            bool isInMap = _mapSoundEntries.TryGetValue(entity, out SoundEntry se);
+            
             var cMovingSound = entity.Get<engine.audio.components.MovingSound>();
-            components.BoomSound cBoomSound;
             
             var mTransformWorld = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
             var vPosition = mTransformWorld.Translation - vCameraPosition;
@@ -213,43 +258,18 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             var distance = vPosition.Length();
 
             /*
-             * We ignore the doppler data computed in MovingSound and
-             * use the implementation of OpenAL.
+             * If it has a boom sound, it already is completely loaded.
              */
-            if (hasBoomSound)
+            if (isInMap)
             {
-                cBoomSound = entity.Get<components.BoomSound>();
-                ISound? audioSource = cBoomSound.AudioSource;
+                ISound audioSource = se.AudioSource;
 
-                SoundEntry? se;
-                if (!_mapSoundEntries.TryGetValue(entity, out se))
-                {
-                    Error($"We don't know anything about entity {entity}.");
-                    /*
-                     * If we don't have it in the list, just remove the entity and cry.
-                     * Be defensice.
-                     */
-                    if (entity.IsAlive)
-                    {
-                        entity.Remove<components.BoomSound>();
-                    }
-
-                    continue;
-                }
-                
                 /*
                  * We should have the boom sound in our map.
                  * Might be a null audiosource though.
+                 * However, this doesn't matter, as we do not apply the
+                 * values to the audiosource at this point.
                  */
-
-                /*
-                 * Caution: If the bSound is null, the sound still is loading.
-                 * We neither can modify or unload it.
-                 */
-                if (audioSource == null)
-                {
-                    continue;
-                }
 
                 if (cMovingSound.MaxDistance < distance)
                 {
@@ -281,22 +301,22 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                  * We did not have a boom sound but might want to have one. Add it to the sound
                  * entries, but do not physically trigger the loading yet.
                  */
-                if (cMovingSound.MaxDistance > distance)
+                if (cMovingSound.MaxDistance >= distance)
                 {
-                    SoundEntry se = new();
-                    se.Entity = entity;
-                    se.AudioSource = null;
+                    // Trace($"New SoundEntry for entity {entity}.");
+                    SoundEntry seNew = new();
+                    seNew.Entity = entity;
+                    seNew.AudioSource = null;
 
-                    se.Position = vPosition;
-                    se.Velocity = vVelocity;
-                    se.Distance = vPosition.Length();
+                    seNew.Position = vPosition;
+                    seNew.Velocity = vVelocity;
+                    seNew.Distance = vPosition.Length();
                     
-                    se.New = true;
-                    se.CMovingSound = cMovingSound;
+                    seNew.New = true;
+                    seNew.CMovingSound = cMovingSound;
 
-                    _mapSoundEntries.Add(entity, se);
-                    _listSoundEntries.Add(se);
-                    entity.Set(new components.BoomSound(null));
+                    _mapSoundEntries.Add(entity, seNew);
+                    _listSoundEntries.Add(seNew);
                 }
 
             }
@@ -396,17 +416,36 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
          * Now there's a couple of dead sounds we want to remove. They already are marked as dead.
          */
         {
+            /*
+             * Collect all dead entries. Note, that these can be entries which
+             * - are newly found, but immediately outnumbered by distance, loading not triggerred yet
+             * - loading just has been triggered, it is not finished yet.
+             */
             List<SoundEntry> listRemoveSounds = new();
             foreach (var se in _listSoundEntries)
             {
-                if (se.Dead && !se.New)
+                if (se.Dead)
                 {
                     listRemoveSounds.Add(se);
                 }
             }
 
             /*
-             * First, remove all the sound entries from the sound map, thereby queueing unload.
+             * Remove all of the dead entries also from the list.
+             */
+            _listSoundEntries.RemoveAll(se => se.Dead);
+
+            /*
+             * Finally, remove all the sound entries from the sound map, thereby queueing unload.
+             *
+             * - the dead entries are removed from the map
+             * - if the entity associated with the entry is alive, the BoomSound component
+             *   is removed.
+             * - if an audio source already has been loaded for this entry,
+             *   it is dissociated, unloading is triggered.
+             *
+             * => Immediately, starting with the next frame, a load for this entity
+             *    could be triggered again.
              */
             foreach (var deadse in listRemoveSounds)
             {
@@ -414,16 +453,33 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 _mapSoundEntries.Remove(deadse.Entity);
                 if (entity.IsAlive)
                 {
-                    entity.Remove<components.BoomSound>();
+                    // Trace($"Removing boomSound from {entity}.");
+                    // entity.Remove<components.BoomSound>();
+                }
+                else
+                {
+                    /*
+                     * It can't be an entity that is not alive at this point.
+                     * Eventually, we collect only alive entries in the system,
+                     * and nobody can kill it on the way.
+                     */
+                    Error($"I don't understand, why entity {entity} is dead at this point.");
                 }
 
+#if true
+                // This is done by the Sound Resource 
+                /*
+                 * If the audio source already loaded successfully, unload it here.
+                 */
                 if (deadse.AudioSource != null)
                 {
                     _queueUnloadSoundEntry(deadse.AudioSource);
+                    deadse.AudioSource = null;
                 }
+#endif
             }
         }
-        _listSoundEntries.RemoveAll(se => se.Dead);
+        
         // Trace( $"Keeping {_listSoundEntries.Count} sounds at maximum distance {maxDistance}m, minimum distance {minDistance} cameraPos {vCameraPosition}.");
     }
 

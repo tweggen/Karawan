@@ -96,9 +96,9 @@ public class API : Boom.ISoundAPI
     }
     
 
-    public API(Engine engine)
+    public API(Engine engine0)
     {
-        _engine = engine;
+        _engine = engine0;
         
         try {
             
@@ -129,11 +129,14 @@ public class API : Boom.ISoundAPI
         _openDevice();
         _al.DistanceModel(DistanceModel.InverseDistance);
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
-        _updateMovingSoundsSystem = new(engine, this);
+        _updateMovingSoundsSystem = new(_engine, this);
 
-        ISound asTitle = CreateAudioSource("shaklengokhsi.ogg");
-        asTitle.Volume = 0.05f;
-        asTitle.Play();
-
+        // TXWTODO: Find a sensible music scoring system.
+        if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") == "true")
+        {
+            ISound asTitle = CreateAudioSource("shaklengokhsi.ogg");
+            asTitle.Volume = 0.05f;
+            asTitle.Play();
+        }
     }
 }
