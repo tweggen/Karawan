@@ -78,10 +78,10 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         }
         lock (_lo)
         {
-            Trace($"Triggering unload.");
+            // Trace($"Triggering unload.");
             _audioWorkerQueue.Enqueue(() =>
             {
-                Trace($"Unloading.");
+//                 Trace($"Unloading.");
                 audioSource.Stop();
                 audioSource.Dispose();
                 lock (_lo)
@@ -125,19 +125,19 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
                         if (!entity.IsAlive)
                         {
-                            Trace("Entity {entity} dead");
+                            // Trace("Entity {entity} dead");
                             cleanupSoundEntry = true;
                         }
 
                         if (null == audioSource)
                         {
-                            Trace("Unable to load");
+                            // Trace("Unable to load");
                             cleanupSoundEntry = true;
                         }
 
                         if (se.Dead)
                         {
-                            Trace("Already tagged dead.");
+                            //  Trace("Already tagged dead.");
                             cleanupSoundEntry = true;
                         }
                         
@@ -150,7 +150,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                          */
                         if (cleanupSoundEntry)
                         {
-                            Trace($"Entity {entity} was not alive any more but queued for loading.");
+                            // Trace($"Entity {entity} was not alive any more but queued for loading.");
                             
                             lock (_lo)
                             {
@@ -194,7 +194,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                         audioSource.Speed = se.CMovingSound.Sound.Pitch;
 
                         audioSource.Play();
-                        Trace($"Loading entity {entity} _nMovingSounds = {_nMovingSounds}");
+                        // Trace($"Loading entity {entity} _nMovingSounds = {_nMovingSounds}");
                         lock (_lo)
                         {
                             ++_nMovingSounds;
@@ -392,7 +392,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
              */
             if (!se.Entity.IsAlive)
             {
-                Trace($"Killing entity {se.Entity}.");
+                // Trace($"Killing entity {se.Entity}.");
                 se.Dead = true;
                 continue;
             }
