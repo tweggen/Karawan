@@ -125,16 +125,19 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
                         if (!entity.IsAlive)
                         {
+                            Trace("Entity {entity} dead");
                             cleanupSoundEntry = true;
                         }
 
                         if (null == audioSource)
                         {
+                            Trace("Unable to load");
                             cleanupSoundEntry = true;
                         }
 
                         if (se.Dead)
                         {
+                            Trace("Already tagged dead.");
                             cleanupSoundEntry = true;
                         }
                         
@@ -162,7 +165,6 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                                  * setup for me.
                                  */
                                 audioSource.Dispose();
-                                --_nMovingSounds;
                             }
                             
                             return;
