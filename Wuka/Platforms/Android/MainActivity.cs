@@ -53,6 +53,9 @@ namespace Wuka
             engine.GlobalSettings.Set("splash.touchControls", "true");
             engine.GlobalSettings.Set("Android", "true");
 
+            engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
+
+
             var e = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
 #if false
             {
@@ -70,7 +73,7 @@ namespace Wuka
 
             e.Execute();
 
-            // boom.Dispose();
+            Implementations.Get<Boom.ISoundAPI>().Dispose();
 
         }
     }
