@@ -23,7 +23,8 @@ class SoundEntry
     public Vector3 Position;
     public bool Dead = false;
     public bool New = true;
-    public bool LostEntity = false;
+    public bool IsUnloaded = false;
+    // public bool LostEntity = false;
     public engine.audio.components.MovingSound CMovingSound;
 }
 
@@ -51,7 +52,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
     private float[] _arrFloatOrientation = new float[6];
 
-    private int _maxSounds = 32;
+    // private int _maxSounds = 32;
     private List<SoundEntry> _listSoundEntries = new();
     private Dictionary<DefaultEcs.Entity, SoundEntry> _mapSoundEntries = new();
 
@@ -80,6 +81,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             Trace($"Triggering unload.");
             _audioWorkerQueue.Enqueue(() =>
             {
+                Trace($"Unloading.");
                 audioSource.Stop();
                 audioSource.Dispose();
                 lock (_lo)
@@ -130,10 +132,18 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                         {
                             cleanupSoundEntry = true;
                         }
+
+                        if (se.Dead)
+                        {
+                            cleanupSoundEntry = true;
+                        }
                         
                         /*
-                         * If the sound entry could not be loaded or the entity was
-                         * not alive, we must remove the sound entry again.
+                         * If
+                         * - the sound entry could not be loaded
+                         * - or the entity wasnot alive
+                         * - or it is dead by now
+                         * we must remove the sound entry again.
                          */
                         if (cleanupSoundEntry)
                         {
@@ -142,8 +152,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                             lock (_lo)
                             {
                                 se.Dead = true;
-                                se.LostEntity = true;
-                                --_nMovingSounds;
+                                se.IsUnloaded = true;
                             }
 
                             if (null != audioSource)
@@ -153,6 +162,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                                  * setup for me.
                                  */
                                 audioSource.Dispose();
+                                --_nMovingSounds;
                             }
                             
                             return;
@@ -183,7 +193,10 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
                         audioSource.Play();
                         Trace($"Loading entity {entity} _nMovingSounds = {_nMovingSounds}");
-                        ++_nMovingSounds;
+                        lock (_lo)
+                        {
+                            ++_nMovingSounds;
+                        }
                     });
                 }
                 catch (Exception ex)
@@ -248,7 +261,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             /*
              * Look, if we already have a record for this sound.
              */
-            bool isInMap = _mapSoundEntries.TryGetValue(entity, out SoundEntry se);
+            bool isInMap = _mapSoundEntries.TryGetValue(entity, out SoundEntry seFound);
             
             var cMovingSound = entity.Get<engine.audio.components.MovingSound>();
             
@@ -262,7 +275,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
              */
             if (isInMap)
             {
-                ISound audioSource = se.AudioSource;
+                ISound audioSource = seFound.AudioSource;
 
                 /*
                  * We should have the boom sound in our map.
@@ -277,7 +290,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                      * We do not want to hear that anymore due to the computed
                      * volume level threshold.
                      */
-                    se.Dead = true;
+                    seFound.Dead = true;
                 }
                 else
                 {
@@ -290,9 +303,9 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                      * Update distance position etc. .
                      */
 
-                    se.Position = vPosition;
-                    se.Velocity = vVelocity;
-                    se.Distance = distance;
+                    seFound.Position = vPosition;
+                    seFound.Velocity = vVelocity;
+                    seFound.Distance = distance;
                 }
             }
             else
@@ -369,46 +382,58 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 /*
                  * Already is dead, ignore.
                  */
+                continue;
             }
-            else
-            {
-                if (currSound < maxSounds)
-                {
-                    maxDistance = Single.Max(se.Distance, maxDistance);
-                    minDistance = Single.Min(se.Distance, minDistance);
-                    
-                    /*
-                     * If it is new, trigger loading, otherwise modify.
-                     */
-                    if (se.New)
-                    {
-                        se.New = false;
-                        _queueLoadMovingSoundToEntity(se);
-                    }
-                    else
-                    {
-                        if (se.AudioSource != null)
-                        {
-                            se.AudioSource.Velocity = se.Velocity;
-                            se.AudioSource.Position = se.Position;
-                        }
-                        else
-                        {
-                            /*
-                             * This one still is loading.
-                             */
-                        }
-                    }
 
-                    /*
-                     * we still can keep the sound.
-                     */
-                    ++currSound;
+            /*
+             * Entity vanished? Then remove me.
+             */
+            if (!se.Entity.IsAlive)
+            {
+                Trace($"Killing entity {se.Entity}.");
+                se.Dead = true;
+                continue;
+            }
+            
+            /*
+             * Entity is alive. Shall hear the sound.
+             */
+            if (currSound < maxSounds)
+            {
+                maxDistance = Single.Max(se.Distance, maxDistance);
+                minDistance = Single.Min(se.Distance, minDistance);
+                
+                /*
+                 * If it is new, trigger loading, otherwise modify.
+                 */
+                if (se.New)
+                {
+                    se.New = false;
+                    _queueLoadMovingSoundToEntity(se);
                 }
                 else
                 {
-                    se.Dead = true;
+                    if (se.AudioSource != null)
+                    {
+                        se.AudioSource.Velocity = se.Velocity;
+                        se.AudioSource.Position = se.Position;
+                    }
+                    else
+                    {
+                        /*
+                         * This one still is loading, unloaded can't be true.
+                         */
+                    }
                 }
+
+                /*
+                 * we still can keep the sound.
+                 */
+                ++currSound;
+            }
+            else
+            {
+                se.Dead = true;
             }
         }
         
@@ -467,14 +492,15 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 }
 
 #if true
-                // This is done by the Sound Resource 
                 /*
                  * If the audio source already loaded successfully, unload it here.
                  */
                 if (deadse.AudioSource != null)
                 {
-                    _queueUnloadSoundEntry(deadse.AudioSource);
+                    ISound seWannaUnload = deadse.AudioSource;
                     deadse.AudioSource = null;
+                    deadse.IsUnloaded = true;
+                    _queueUnloadSoundEntry(seWannaUnload);
                 }
 #endif
             }
