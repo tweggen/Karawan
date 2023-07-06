@@ -14,7 +14,7 @@ namespace engine.elevation
 
         public const string LAYER_BASE = "/000000";
 
-        private Mutex _mutexMap;
+        private readonly object _lo = new();
         private string _maxLayer;
 
         private Dictionary<string, CacheEntry> _mapEntries;
@@ -71,72 +71,76 @@ namespace engine.elevation
             FactoryEntry elevationFactoryEntry = null;
             string resultLayer;
 
-            _mutexMap.WaitOne();
-            int idx = _keysFactories.Count - 1;
+            lock (_lo)
+            {
+                int idx = _keysFactories.Count - 1;
 
-            if (factoryId == TOP_LAYER) // TXWTODO: factory id contains the prefixed layer string, elevataion-factory-TOP_LAYER
-            {
-                if (idx >= 0)
+                if (factoryId ==
+                    TOP_LAYER) // TXWTODO: factory id contains the prefixed layer string, elevataion-factory-TOP_LAYER
                 {
-                    string candString = _keysFactories[idx];
-                    elevationFactoryEntry = _mapFactories[candString];
-                    resultLayer = _mapFactories[candString].Layer;
-                }
-            }
-            else
-            {
-                while (idx >= 0)
-                {
-                    string candString = _keysFactories[idx];
-                    if (String.Compare(candString, factoryId) < 0)
+                    if (idx >= 0)
                     {
+                        string candString = _keysFactories[idx];
                         elevationFactoryEntry = _mapFactories[candString];
                         resultLayer = _mapFactories[candString].Layer;
+                    }
+                }
+                else
+                {
+                    while (idx >= 0)
+                    {
+                        string candString = _keysFactories[idx];
+                        if (String.Compare(candString, factoryId) < 0)
+                        {
+                            elevationFactoryEntry = _mapFactories[candString];
+                            resultLayer = _mapFactories[candString].Layer;
+                            break;
+                        }
+
+                        --idx;
+                    }
+                }
+
+                if (null == elevationFactoryEntry)
+                {
+                    Trace("Returning null (1).");
+                    return null;
+                }
+
+                /*
+                 * Now idx points at the candidate layer. Iterate down until we find one that
+                 * intersects. Basically, the result cannot be null at this point anymore,
+                 * because we always have a base layer.
+                 */
+                while (idx >= 0)
+                {
+                    // TXWTODO: Not nice. Double code. but consistent in the loop.
+                    string candString = _keysFactories[idx];
+                    elevationFactoryEntry = _mapFactories[candString];
+                    if (elevationFactoryEntry.ElevationOperator.ElevationOperatorIntersects(
+                            x0, z0, x1, z1
+                        ))
+                    {
+                        /*
+                         * We found a layer that matters.
+                         */
                         break;
                     }
+
                     --idx;
                 }
-            }
-            if (null == elevationFactoryEntry)
-            {
-                _mutexMap.ReleaseMutex();
-                Trace("Returning null (1).");
-                return null;
-            }
 
-            /*
-             * Now idx points at the candidate layer. Iterate down until we find one that
-             * intersects. Basically, the result cannot be null at this point anymore,
-             * because we always have a base layer.
-             */
-            while (idx >= 0)
-            {
-                // TXWTODO: Not nice. Double code. but consistent in the loop.
-                string candString = _keysFactories[idx];
-                elevationFactoryEntry = _mapFactories[candString];
-                if (elevationFactoryEntry.ElevationOperator.ElevationOperatorIntersects(
-                    x0, z0, x1, z1
-                ))
+                /*
+                 * Sanity check for bugs.
+                 */
+                if (null == elevationFactoryEntry)
                 {
-                    /*
-                     * We found a layer that matters.
-                     */
-                    break;
+                    Trace("Returning null (2).");
+                    return null;
                 }
-                --idx;
-            }
-            /*
-             * Sanity check for bugs.
-             */
-            if (null == elevationFactoryEntry)
-            {
-                _mutexMap.ReleaseMutex();
-                Trace("Returning null (2).");
-                return null;
-            }
 
-            _mutexMap.ReleaseMutex();
-            return elevationFactoryEntry;
+                return elevationFactoryEntry;
+            }
         }
 
 
@@ -158,13 +162,15 @@ namespace engine.elevation
             var elevationFactoryEntry = new FactoryEntry(
                 layer, elevationOperator
             );
-            _mutexMap.WaitOne();
-            if (String.Compare(layer, _maxLayer)>0)
+            lock (_lo)
             {
-                _maxLayer = layer;
+                if (String.Compare(layer, _maxLayer) > 0)
+                {
+                    _maxLayer = layer;
+                }
+
+                _insertElevationFactoryEntry(id, elevationFactoryEntry);
             }
-            _insertElevationFactoryEntry(id, elevationFactoryEntry);
-            _mutexMap.ReleaseMutex();
         }
 
 
@@ -207,28 +213,29 @@ namespace engine.elevation
              * If we have the entry for that layer, just return it.
              */
             var id = _createEntryId(i, k, layer);
-            _mutexMap.WaitOne();
-            if (_mapEntries.ContainsKey(id))
-            {
-                var entry = _mapEntries[id];
-                _mutexMap.ReleaseMutex();
-                return entry;
-            }
-            if (_traceCache) Trace($"Cache MISS for {i}, {k}.");
+            FactoryEntry? elevationFactoryEntry = null;
 
-            /*
-             * We do not have the entry. So look up the factory function and
-             * create it.
-             */
-            var factoryId = _createFactoryId(layer);
-            FactoryEntry elevationFactoryEntry = null;
-            if (!_mapFactories.ContainsKey(factoryId))
+            lock (_lo)
             {
-                _mutexMap.ReleaseMutex();
-                ErrorThrow($"No factory registered for layer {layer}", le => new InvalidOperationException(le));
+                if (_mapEntries.TryGetValue(id, out var entry))
+                {
+                    return entry;
+                }
+
+                if (_traceCache) Trace($"Cache MISS for {i}, {k}.");
+
+                /*
+                 * We do not have the entry. So look up the factory function and
+                 * create it.
+                 */
+                var factoryId = _createFactoryId(layer);
+                if (!_mapFactories.ContainsKey(factoryId))
+                {
+                    ErrorThrow($"No factory registered for layer {layer}", le => new InvalidOperationException(le));
+                }
+
+                elevationFactoryEntry = _mapFactories[factoryId];
             }
-            elevationFactoryEntry = _mapFactories[factoryId];
-            _mutexMap.ReleaseMutex();
 
             // TXWTODO: This is risky, we open up the mutex, depending on 
             // no cyclic dependencies.
@@ -294,9 +301,10 @@ namespace engine.elevation
             }
             if (newEntry != null)
             {
-                _mutexMap.WaitOne();
-                _mapEntries[id] = newEntry;
-                _mutexMap.ReleaseMutex();
+                lock (_lo)
+                {
+                    _mapEntries[id] = newEntry;
+                }
             }
             else
             {
@@ -514,7 +522,6 @@ namespace engine.elevation
             _mapEntries = new();
             _keysFactories = new();
             _mapFactories = new();
-            _mutexMap = new();
             // WorldMetaGen.cat.catAddGlobalEntity('elevation.Cache', this);
             _maxLayer = "";
         }
