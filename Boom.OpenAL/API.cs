@@ -1,5 +1,6 @@
 using engine;
 using Silk.NET.OpenAL;
+using Silk.NET.OpenAL.Extensions.Enumeration;
 using static engine.Logger;
 
 namespace Boom.OpenAL;
@@ -84,6 +85,15 @@ public class API : Boom.ISoundAPI
 
     private unsafe void _openDevice()
     {
+        if (_alc.IsExtensionPresent(null, "ALC_ENUMERATION_EXT"))
+        {
+            using var enumeration = _alc.GetExtension<Enumeration>(null);
+            foreach (string device in enumeration.GetStringList(GetEnumerationContextStringList.DeviceSpecifiers))
+            {
+                Console.WriteLine(device);
+            }
+        }
+        
         Device *alDevice = _alc.OpenDevice("");
         if (alDevice == null)
         {
