@@ -15,7 +15,7 @@ namespace engine.joyce.mesh
             m.Indices.Add(i2); m.Indices.Add(i1); m.Indices.Add(i3);
         }
 
-        private static void _addQuadXYUV(
+        public static void AddQuadXYUV(
             in joyce.Mesh m,
             in Vector3 v0,
             in Vector3 vx,
@@ -34,7 +34,7 @@ namespace engine.joyce.mesh
         private static void _addQuadXY(
             in joyce.Mesh m, in Vector3 v0, in Vector3 vx, in Vector3 vy )
         {
-            _addQuadXYUV( m, v0, vx, vy, new Vector2( 0f, 0f ), new Vector2( 1f, 0f ), new Vector2( 0f, 1f ) );
+            AddQuadXYUV( m, v0, vx, vy, new Vector2( 0f, 0f ), new Vector2( 1f, 0f ), new Vector2( 0f, 1f ) );
         }
 
 
@@ -43,7 +43,7 @@ namespace engine.joyce.mesh
         {
             var m = joyce.Mesh.CreateArrayListInstance();
 
-            _addQuadXYUV(m, 
+            AddQuadXYUV(m, 
                 new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
                 new Vector3(vSize.X, 0f, 0f),
                 new Vector3(0f, vSize.Y, 0f),
@@ -56,7 +56,7 @@ namespace engine.joyce.mesh
         {
             var m = joyce.Mesh.CreateArrayListInstance();
 
-            _addQuadXYUV(m, new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
+            AddQuadXYUV(m, new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
                 new Vector3(vSize.X, 0f, 0f),
                 new Vector3(0f, vSize.Y, 0f),
                 new Vector2(0f, 1f),
@@ -105,32 +105,32 @@ namespace engine.joyce.mesh
              *  Note that the direction of the surfaces is mirrored due to the inbound direction of the normals.
              */
             // -Z plane (in front of us)
-            _addQuadXYUV(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f),
+            AddQuadXYUV(m, new Vector3(-h, -h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, size, 0f),
                 vUVOrigin + new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0.5f), 
                 new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
                 new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // +Z plane (behind us)
-            _addQuadXYUV(m, new Vector3(h, -h, h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f),
+            AddQuadXYUV(m, new Vector3(h, -h, h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f),
                 vUVOrigin + new Vector2(vUVSize.X * 0.75f, vUVSize.Y * 0.5f),
                 new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
                 new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // +Y plane (above us)
-            _addQuadXYUV(m, new Vector3(-h, h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, size),
+            AddQuadXYUV(m, new Vector3(-h, h, -h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, size),
                 vUVOrigin + new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0.25f),
                     new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
                     new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // Bottom
-            _addQuadXYUV(m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, -size),
+            AddQuadXYUV(m, new Vector3(-h, -h, h), new Vector3(size, 0f, 0f), new Vector3(0f, 0f, -size),
                 vUVOrigin + new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0.75f),
                         new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
                         new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // Right
-            _addQuadXYUV(m, new Vector3(h, -h, -h), new Vector3(0f, 0f, size), new Vector3(0f, size, 0f),
+            AddQuadXYUV(m, new Vector3(h, -h, -h), new Vector3(0f, 0f, size), new Vector3(0f, size, 0f),
                 vUVOrigin + new Vector2(vUVSize.X * 0.5f, vUVSize.Y * 0.5f),
                         new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
                         new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
             // Left
-            _addQuadXYUV(m, new Vector3(-h, -h, h), new Vector3(0f, 0f, -size), new Vector3(0f, size, 0f),
+            AddQuadXYUV(m, new Vector3(-h, -h, h), new Vector3(0f, 0f, -size), new Vector3(0f, size, 0f),
                 vUVOrigin + new Vector2(vUVSize.X * 0.0f, vUVSize.Y * 0.5f),
                             new Vector2(vUVSize.X * 0.25f, vUVSize.Y * 0f),
                             new Vector2(vUVSize.X * 0f, vUVSize.Y * (-0.25f)));
