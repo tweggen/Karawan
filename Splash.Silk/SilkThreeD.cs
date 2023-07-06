@@ -6,6 +6,7 @@ using System.Text;
 using engine;
 using static engine.Logger;
 using Silk.NET.OpenGL;
+using Trace = System.Diagnostics.Trace;
 
 
 namespace Splash.Silk;
@@ -29,6 +30,8 @@ public class SilkThreeD : IThreeD
     private Matrix4x4 _matProjection;
 
     private SkShaderEntry? _skInstanceShaderEntry;
+
+    private int _nUploadedMeshes = 0;
     
     private class LightShaderPos
     {
@@ -426,6 +429,7 @@ public class SilkThreeD : IThreeD
         if (!skMeshEntry.IsUploaded())
         {
             skMeshEntry.Upload(_getGL());
+            ++_nUploadedMeshes;
         }
     }
 
@@ -440,9 +444,12 @@ public class SilkThreeD : IThreeD
         SkMeshEntry skMeshEntry = (SkMeshEntry)aMeshEntry;
         _graphicsThreadActions.Enqueue(() =>
         {
+            int nUploadedMeshes;
             if (skMeshEntry.IsUploaded())
             {
                 skMeshEntry.Release(_getGL());
+                nUploadedMeshes = --_nUploadedMeshes;
+                Trace($"Only {nUploadedMeshes} uploaded right now.");
             }
         });
     }

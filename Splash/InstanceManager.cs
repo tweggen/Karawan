@@ -8,8 +8,6 @@ namespace Splash
 {
     public class InstanceManager : IDisposable
     {
-        #region Types
-
         private sealed class Resource<ValueType>
         {
             public readonly ValueType Value;
@@ -27,30 +25,13 @@ namespace Splash
             public bool RemoveReference() => --_referencesCount == 0;
         }
         
-        #endregion
-
-
-        #region Fields
 
         private readonly object _lockObject;
         private readonly IThreeD _threeD;
         private readonly Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>> _meshResources;
         private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
 
-        #endregion
-
-        #region Properties
-
-#if false
-        /// <summary>
-        /// Gets all the <typeparamref name="TResource"/> loaded by the current instance and their corresponding <typeparamref name="TInfo"/>.
-        /// </summary>
-        public ResourceEnumerable Resources => new(this);
-#endif
-        #endregion
-
-        #region Initialisation
-
+        
         /// <summary>
         /// Creates an instance of type <see cref="AResourceManager{TInfo, TResource}"/>.
         /// </summary>
@@ -62,10 +43,7 @@ namespace Splash
             _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
         }
 
-        #endregion
-
-        #region Callbacks
-
+        
         private void OnAdded(in Entity entity, in Splash.components.PfInstance value) => Add(entity, value);
 
         private void OnChanged(in Entity entity, in Splash.components.PfInstance oldValue, in Splash.components.PfInstance newValue)
@@ -75,10 +53,7 @@ namespace Splash
         }
 
         private void OnRemoved(in Entity entity, in Splash.components.PfInstance value) => Remove(value);
-
-        #endregion
-
-        #region Methods
+        
 
         private AMeshEntry LoadMesh(in engine.joyce.Mesh jMesh)
         {
@@ -156,15 +131,21 @@ namespace Splash
                     engine.joyce.Mesh jMesh = value.Meshes[i];
                     if (!_meshResources.TryGetValue(jMesh, out meshResource))
                     {
-                        try
+                        Error($"Unknown mesh to unreference.");
+                    }
+                    else
+                    {
+                        if (meshResource.RemoveReference())
                         {
-                            _unloadMesh(jMesh, meshResource);
+                            try
+                            {
+                                _unloadMesh(jMesh, meshResource);
+                            }
+                            finally
+                            {
+                                _meshResources.Remove(jMesh);
+                            }
                         }
-                        finally
-                        {
-                            _meshResources.Remove(jMesh);
-                        }
-                        
                     }
                 }
 
@@ -174,13 +155,20 @@ namespace Splash
                     engine.joyce.Material jMaterial = value.Materials[i];
                     if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                     {
-                        try
+                        Error("Unknown material to unreference.");
+                    }
+                    else
+                    {
+                        if (materialResource.RemoveReference())
                         {
-                            _unloadMaterial(jMaterial, materialResource);
-                        }
-                        finally
-                        {
-                            _materialResources.Remove(jMaterial);
+                            try
+                            {
+                                _unloadMaterial(jMaterial, materialResource);
+                            }
+                            finally
+                            {
+                                _materialResources.Remove(jMaterial);
+                            }
                         }
                     }
                 }
@@ -222,11 +210,7 @@ namespace Splash
             return GetSubscriptions(world).Merge();
         }
 
-        #endregion
-
         
-        #region IDisposable
-
         /// <summary>
         /// Unloads all loaded resources.
         /// </summary>
@@ -246,7 +230,5 @@ namespace Splash
             _meshResources.Clear();
             _materialResources.Clear();
         }
-
-        #endregion
     }
 }

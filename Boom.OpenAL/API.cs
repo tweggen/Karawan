@@ -105,7 +105,7 @@ public class API : Boom.ISoundAPI
         _alc.MakeContextCurrent(context);
     }
     
-
+    
     public API(Engine engine0)
     {
         _engine = engine0;
