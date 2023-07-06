@@ -50,7 +50,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     private Vector3 _playerVelocity;
     private Vector3 _playerPosition;
 
-    private float[] _arrFloatOrientation = new float[6];
+    private readonly float[] _arrFloatOrientation = new float[6];
 
     // private int _maxSounds = 32;
     private List<SoundEntry> _listSoundEntries = new();
@@ -105,10 +105,8 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 try
                 {
                     ISound audioSource;
-                    lock (_lo)
-                    {
-                        audioSource = _api.CreateAudioSource(se.CMovingSound.Sound.Url);
-                    }
+                    audioSource = _api.CreateAudioSource(se.CMovingSound.Sound.Url);
+
                     // TXWTODO: What to do if loading the audio source was not successful?
                     
                     _engine.QueueMainThreadAction(() =>
@@ -152,11 +150,8 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                         {
                             // Trace($"Entity {entity} was not alive any more but queued for loading.");
                             
-                            lock (_lo)
-                            {
-                                se.Dead = true;
-                                se.IsUnloaded = true;
-                            }
+                            se.Dead = true;
+                            se.IsUnloaded = true;
 
                             if (null != audioSource)
                             {

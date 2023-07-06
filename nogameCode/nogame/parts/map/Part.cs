@@ -20,7 +20,7 @@ public class Part : IPart
     
     private bool _createdResources = false;
     
-    private DefaultEcs.Entity _eMapContainer;
+    private DefaultEcs.Entity _eMiniMap;
     private DefaultEcs.Entity _eMap;
     //private ImageSharpFramebuffer _framebuffer;
     private SkiaSharpFramebuffer _framebuffer;
@@ -49,31 +49,49 @@ public class Part : IPart
          * Render the actual map data.
          */
         Implementations.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_framebuffer);
-        
-        _eMapContainer = _engine.CreateEntity("nogame.parts.map.mapContainer");
-        
-        _eMap = _engine.CreateEntity("nogame.parts.map.map");
-        
         engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
             new Vector2(16f, 16f));
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = new(_framebuffer);
         textureFramebuffer.DoFilter = false;
-        engine.joyce.Material materialFramebuffer = new();
-        materialFramebuffer.UploadImmediately = true;
-        materialFramebuffer.EmissiveTexture = textureFramebuffer;
-        materialFramebuffer.HasTransparency = false;
 
-        engine.joyce.InstanceDesc jInstanceDesc = new();
-        jInstanceDesc.Meshes.Add(meshFramebuffer);
-        jInstanceDesc.MeshMaterials.Add(0);
-        jInstanceDesc.Materials.Add(materialFramebuffer);
-        _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-            
-        _engine.GetATransform().SetTransforms(
-            _eMap, false, MapCameraMask,
-            new Quaternion(0f,0f,0f,1f),
-            new Vector3(0f, 0f, -1f));
+        {
+            _eMap = _engine.CreateEntity("nogame.parts.map.map");
+            engine.joyce.Material materialFramebuffer = new();
+            materialFramebuffer.UploadImmediately = true;
+            materialFramebuffer.EmissiveTexture = textureFramebuffer;
+            materialFramebuffer.HasTransparency = false;
+
+            engine.joyce.InstanceDesc jInstanceDesc = new();
+            jInstanceDesc.Meshes.Add(meshFramebuffer);
+            jInstanceDesc.MeshMaterials.Add(0);
+            jInstanceDesc.Materials.Add(materialFramebuffer);
+            _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+            _engine.GetATransform().SetTransforms(
+                _eMap, false, MapCameraMask,
+                new Quaternion(0f,0f,0f,1f),
+                new Vector3(0f, 0f, -1f));
+        }
+
+
+        {
+            _eMiniMap = _engine.CreateEntity("nogame.parts.map.miniMap");
+            engine.joyce.Mesh meshMiniMap = engine.joyce.mesh.Tools.CreatePlaneMesh(
+                new Vector2(1f, 1f));
+            engine.joyce.Material materialMiniMap = new();
+            materialMiniMap.EmissiveTexture = textureFramebuffer;
+            materialMiniMap.HasTransparency = false;
+
+            engine.joyce.InstanceDesc jMiniMapInstanceDesc = new();
+            jMiniMapInstanceDesc.Meshes.Add(meshMiniMap);
+            jMiniMapInstanceDesc.MeshMaterials.Add(0);
+            jMiniMapInstanceDesc.Materials.Add(materialMiniMap);
+            _eMiniMap.Set(new engine.joyce.components.Instance3(jMiniMapInstanceDesc));
+            _engine.GetATransform().SetTransforms(
+                _eMiniMap, true, MapCameraMask,
+                new Quaternion(0f, 0f, 0f, 0f),
+                new Vector3(-5f, 5f, -0.2f));
+        }
 
     }
     

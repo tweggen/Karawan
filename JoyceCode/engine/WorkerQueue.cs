@@ -69,7 +69,7 @@ namespace engine
                 }
                 catch (Exception e)
                 {
-                    Warning($"Error executing cleanup action: {e}");
+                    Warning($"Error executing worker queue {_name} action: {e}");
                 }
             }
         }

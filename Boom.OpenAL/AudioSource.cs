@@ -1,11 +1,14 @@
+using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics.Constraints;
 using Silk.NET.OpenAL;
+using static engine.Logger;
 
 namespace Boom.OpenAL;
 
 public class AudioSource : Boom.ISound
 {
+    private readonly object _lo = new();
     private AL _al;
     private uint _alBuffer = 0;
     private uint _alSource = 0;
@@ -48,12 +51,23 @@ public class AudioSource : Boom.ISound
         set => _setSpeed(value);
     }
 
+    private void _whc()
+    {
+        Trace("Would have crashed before.");
+    }
 
-    private void _setupDistanceStuff()
+    private bool _isValidNoLock()
+    {
+        return _alSource != 0;
+    }
+
+
+
+    private void _setupDistanceStuffNoLock()
     {
         if (_haveSetupDistanceModel) return;
         _haveSetupDistanceModel = true;
-        
+
         _al.SetSourceProperty(_alSource, SourceFloat.ReferenceDistance, 1f);
         _al.SetSourceProperty(_alSource, SourceFloat.RolloffFactor, 1f);
         _al.SetSourceProperty(_alSource, SourceFloat.MaxDistance, 150f);
@@ -61,40 +75,64 @@ public class AudioSource : Boom.ISound
 
     private void _setVelocity(Vector3 velocity)
     {
-        if (velocity != _velocity)
+        lock (_lo)
         {
-            _velocity = velocity;
-            _al.SetSourceProperty(_alSource, SourceVector3.Velocity, velocity);
+            if (velocity != _velocity)
+            {
+                if (_isValidNoLock())
+                {
+                    _al.SetSourceProperty(_alSource, SourceVector3.Velocity, velocity);
+                    _velocity = velocity;
+                }
+            }
         }
     }
 
 
     private void _setPosition(Vector3 position)
     {
-        if (position != _position)
+        lock (_lo)
         {
-            _position = position;
-            _al.SetSourceProperty(_alSource, SourceVector3.Position, position);
+            if (position != _position)
+            {
+                if (_isValidNoLock())
+                {
+                    _al.SetSourceProperty(_alSource, SourceVector3.Position, position);
+                    _position = position;
+                }
+            }
         }
     }
 
 
     private void _setVolume(float volume)
     {
-        if (volume != _volume)
+        lock (_lo)
         {
-            _volume = volume;
-            _al.SetSourceProperty(_alSource, SourceFloat.Gain, volume);
+            if (volume != _volume)
+            {
+                if (_isValidNoLock())
+                {
+                    _al.SetSourceProperty(_alSource, SourceFloat.Gain, volume);
+                    _volume = volume;
+                }
+            }
         }
     }
 
 
     private void _setSpeed(float speed)
     {
-        if (speed != _speed)
+        lock (_lo)
         {
-            _speed = speed;
-            _al.SetSourceProperty(_alSource, SourceFloat.Pitch, speed);
+            if (speed != _speed)
+            {
+                if (_isValidNoLock())
+                {
+                    _al.SetSourceProperty(_alSource, SourceFloat.Pitch, speed);
+                    _speed = speed;
+                }
+            }
         }
     }
 
@@ -102,15 +140,31 @@ public class AudioSource : Boom.ISound
     
     public void Play()
     {
-        _setupDistanceStuff();
-        _al.SetSourceProperty(_alSource,SourceBoolean.Looping, _isLooped);
-        _al.SourcePlay(_alSource);
+        lock (_lo)
+        {
+            if (!_isValidNoLock())
+            {
+                return;
+            }
+
+            _setupDistanceStuffNoLock();
+            _al.SetSourceProperty(_alSource, SourceBoolean.Looping, _isLooped);
+            _al.SourcePlay(_alSource);
+        }
     }
 
     
     public void Stop()
     {
-        _al.SourceStop(_alSource);
+        lock (_lo)
+        {
+            if (!_isValidNoLock())
+            {
+                return;
+            }
+
+            _al.SourceStop(_alSource);
+        }
     }
 
     
@@ -120,9 +174,14 @@ public class AudioSource : Boom.ISound
          * TXWTODO: Properly dispose the original buffer by using reference counting.
          * Today, for simplicity, we assume to never delete it.
          */
-        if (_alSource != 0)
+        if (_isValidNoLock())
         {
             _al.DeleteSource(_alSource);
+            _alSource = 0;
+        }
+        else
+        {
+            _whc();
         }
         
     }
