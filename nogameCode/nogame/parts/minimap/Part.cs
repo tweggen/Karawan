@@ -1,7 +1,10 @@
 
+using System;
 using System.Numerics;
+using DefaultEcs;
 using engine;
 using engine.ross;
+using engine.world;
 
 namespace nogame.parts.minimap;
 
@@ -22,6 +25,7 @@ public class Part : IPart
     private bool _createdResources = false;
     
     private DefaultEcs.Entity _eMiniMap;
+    private DefaultEcs.Entity _ePlayerEntity;
 
     // For now, let it use the OSD camera.
     public uint MapCameraMask = 0x00010000;
@@ -62,10 +66,37 @@ public class Part : IPart
 
     private void _createNewMiniMap()
     {
+        DefaultEcs.Entity ePlayerEntity;
+        lock (_lo)
+        {
+            ePlayerEntity = _ePlayerEntity;
+        }
+
+        Vector3 pos;
+        
+        if (!ePlayerEntity.IsAlive)
+        {
+            pos = new Vector3(0f, 0f, 0f);
+        }
+        else
+        {
+            Matrix4x4 m = _engine.GetEcsWorld().Get<engine.transform.components.Transform3ToWorld>().Matrix;
+            pos = m.Translation;
+        }
+
+        float sourceWidth = 1000f;
+        float sourceHeight = 1000f;
+        float realPosX = Single.Min(MetaGen.MaxWidth - sourceWidth / 2f, Single.Max(sourceWidth / 2f, pos.X));
+        float realPosY = Single.Min(MetaGen.MaxHeight - sourceHeight / 2f, Single.Max(sourceHeight / 2f, pos.Z));
+        float centerUVX = realPosX / MetaGen.MaxWidth + 0.5f;
+        float centerUVY = realPosY / MetaGen.MaxHeight + 0.5f;
+        float widthUV = sourceWidth / MetaGen.MaxWidth;
+        float heightUV = sourceHeight / MetaGen.MaxHeight;
+        
         Vector2 uv0, u, v;
-        uv0 = new Vector2(0.5f - 0.1f, 0.5f - 0.1f);
-        u = new Vector2(0.2f, 0f);
-        v = new Vector2(0f, 0.2f);
+        uv0 = new Vector2(centerUVX - widthUV/2f, centerUVY - heightUV/2f);
+        u = new Vector2(widthUV, 0f);
+        v = new Vector2(0f, heightUV);
 
         float width = 1.8f;
         float height = 1.8f;
@@ -82,6 +113,7 @@ public class Part : IPart
         _eMiniMap.Set(new engine.joyce.components.Instance3(jMiniMapInstanceDesc));
     }
 
+    
     public void _onLogicalFrame(object? sender, float dt)
     {
         if (0 != _updateMinimapFrameCount)
@@ -97,13 +129,24 @@ public class Part : IPart
         _updateMinimapFrameCount = 0;
 
         _createNewMiniMap();
-
     }
-    
+
+
+    private void _onPlayerEntityChanged(object? sender, DefaultEcs.Entity newPlayerEntity)
+    {
+        lock (_lo)
+        {
+            if (_ePlayerEntity != newPlayerEntity)
+            {
+                _ePlayerEntity = newPlayerEntity;
+            }
+        }
+    }
     
     public void PartDeactivate()
     {
         _engine.LogicalFrame -= _onLogicalFrame;
+        _engine.OnPlayerEntityChanged -= _onPlayerEntityChanged;
         _engine.RemovePart(this);
     }
 
@@ -115,5 +158,6 @@ public class Part : IPart
         _createNewMiniMap();
         _engine.AddPart(-190, scene0, this);
         _engine.LogicalFrame += _onLogicalFrame;
+        _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
     }
 }
