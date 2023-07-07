@@ -45,9 +45,8 @@ public class Part : IPart
         engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
             new Vector2(16f, 16f));
         meshFramebuffer.UploadImmediately = true;
-        engine.joyce.Texture textureFramebuffer = new(
-            Implementations.Get<nogame.map.MapFramebuffer>().Framebuffer);
-        textureFramebuffer.DoFilter = false;
+        engine.joyce.Texture textureFramebuffer = 
+            Implementations.Get<nogame.map.MapFramebuffer>().Texture;
 
         {
             _eMap = _engine.CreateEntity("nogame.parts.map.map");

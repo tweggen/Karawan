@@ -31,6 +31,7 @@ public class Scene : engine.IScene
     private nogame.parts.skybox.Part _partSkybox;
 
     private nogame.parts.map.Part _partMap;
+    private nogame.parts.minimap.Part _partMiniMap;
 
     private bool _isMapShown = false;
 
@@ -51,6 +52,7 @@ public class Scene : engine.IScene
              * TXWTODO: Remove the map part.
              */
             _partMap.PartDeactivate();
+            _partMiniMap.PartActivate(_engine, this);
         }
         else
         {
@@ -60,6 +62,7 @@ public class Scene : engine.IScene
              * TXWTODO: Add the map part.
              */
             _partMap.PartActivate(_engine, this);
+            _partMiniMap.PartDeactivate();
         }
     }
     
@@ -308,7 +311,12 @@ public class Scene : engine.IScene
         if (engine.GlobalSettings.Get("nogame.CreateMap") != "false") { 
             _partMap = new();
         }
-
+        
+        if (engine.GlobalSettings.Get("nogame.CreateMiniMap") != "false") { 
+            _partMiniMap = new();
+            _partMiniMap.PartActivate(_engine, this);
+        }
+        
         _engine.KeyPress += _onKeyPress;
         _engine.OnTouchPress += _onTouchPress;
         

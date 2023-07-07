@@ -1,4 +1,4 @@
-#if false
+
 using System.Numerics;
 using engine;
 using engine.ross;
@@ -22,13 +22,9 @@ public class Part : IPart
     private bool _createdResources = false;
     
     private DefaultEcs.Entity _eMiniMap;
-    //private ImageSharpFramebuffer _framebuffer;
-    private SkiaSharpFramebuffer _framebuffer;
 
     // For now, let it use the OSD camera.
     public uint MapCameraMask = 0x00010000;
-    public uint MapWidth = 1024;
-    public uint MapHeight = 1024;
 
     private engine.joyce.Material _materialMiniMap;
     
@@ -45,48 +41,17 @@ public class Part : IPart
             _createdResources = true;
         }
 
-        //_framebuffer = new engine.ross.ImageSharpFramebuffer("fbMap", MapWidth, MapHeight);
-        _framebuffer = new engine.ross.SkiaSharpFramebuffer("fbMap", MapWidth, MapHeight);
-        
-        /*
-         * Render the actual map data.
-         */
-        Implementations.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_framebuffer);
-        engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
-            new Vector2(16f, 16f));
-        meshFramebuffer.UploadImmediately = true;
-        engine.joyce.Texture textureFramebuffer = new(_framebuffer);
-        textureFramebuffer.DoFilter = false;
-
-        {
-            _eMap = _engine.CreateEntity("nogame.parts.map.map");
-            engine.joyce.Material materialFramebuffer = new();
-            materialFramebuffer.UploadImmediately = true;
-            materialFramebuffer.EmissiveTexture = textureFramebuffer;
-            materialFramebuffer.HasTransparency = false;
-
-            engine.joyce.InstanceDesc jInstanceDesc = new();
-            jInstanceDesc.Meshes.Add(meshFramebuffer);
-            jInstanceDesc.MeshMaterials.Add(0);
-            jInstanceDesc.Materials.Add(materialFramebuffer);
-            _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-            _engine.GetATransform().SetTransforms(
-                _eMap, false, MapCameraMask,
-                new Quaternion(0f,0f,0f,1f),
-                new Vector3(0f, 0f, -1f));
-        }
-
-
         {
             _eMiniMap = _engine.CreateEntity("nogame.parts.map.miniMap");
             _materialMiniMap = new();
-            _materialMiniMap.EmissiveTexture = textureFramebuffer;
+            _materialMiniMap.EmissiveTexture =
+                Implementations.Get<nogame.map.MapFramebuffer>().Texture;
             _materialMiniMap.HasTransparency = false;
 
             _engine.GetATransform().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
-                new Vector3(-5f, 5f, -0.2f));
+                new Vector3(-5f, 5f, -1f));
         }
 
     }
@@ -100,9 +65,12 @@ public class Part : IPart
         uv0 = new Vector2(0.5f - 0.1f, 0.5f - 0.1f);
         u = new Vector2(0.2f, 0f);
         v = new Vector2(0f, 0.2f);
-        Vector3 pos0 = new(-0.5f, 0.5f, 0f);
-        Vector3 x = new(1.0f, 0f, 0f);
-        Vector3 y = new(0f, 1.0f, 0f);
+
+        float width = 4f;
+        float height = 4f;
+        Vector3 pos0 = new(-width/2f, -height/2, 0f);
+        Vector3 x = new(width, 0f, 0f);
+        Vector3 y = new(0f, height, 0f);
         
         engine.joyce.Mesh meshMiniMap = engine.joyce.Mesh.CreateListInstance();
         engine.joyce.mesh.Tools.AddQuadXYUV(meshMiniMap, pos0, x,y, uv0, u, v);
@@ -115,6 +83,10 @@ public class Part : IPart
 
     public void _onLogicalFrame(object? sender, float dt)
     {
+        if (0 != _updateMinimapFrameCount)
+        {
+            return;
+        }
         ++_updateMinimapFrameCount;
         if (_updateMinimapFrameCount != _updateMinimapCount)
         {
@@ -122,6 +94,7 @@ public class Part : IPart
         }
 
         _updateMinimapFrameCount = 0;
+
         _createNewMiniMap();
 
     }
@@ -130,7 +103,6 @@ public class Part : IPart
     public void PartDeactivate()
     {
         _engine.RemovePart(this);
-        _engine.GetATransform().SetVisible(_eMap, false);
     }
 
     
@@ -138,15 +110,7 @@ public class Part : IPart
     {
         _engine = engine0;
         _needResources();
-        _engine.GetATransform().SetVisible(_eMap, true);
-        _engine.AddPart(-200, scene0, this);
+        _engine.AddPart(-190, scene0, this);
         _engine.LogicalFrame += _onLogicalFrame;
     }
-
-
-    public Part()
-    {
-        
-    }
 }
-#endif
