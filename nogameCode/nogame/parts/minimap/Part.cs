@@ -103,6 +103,7 @@ public class Part : IPart
     
     public void PartDeactivate()
     {
+        _engine.LogicalFrame -= _onLogicalFrame;
         _engine.RemovePart(this);
     }
 
@@ -113,6 +114,6 @@ public class Part : IPart
         _needResources();
         _createNewMiniMap();
         _engine.AddPart(-190, scene0, this);
-        // _engine.LogicalFrame += _onLogicalFrame;
+        _engine.LogicalFrame += _onLogicalFrame;
     }
 }
