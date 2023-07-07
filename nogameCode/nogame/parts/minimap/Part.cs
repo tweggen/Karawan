@@ -46,12 +46,13 @@ public class Part : IPart
             _materialMiniMap = new();
             _materialMiniMap.EmissiveTexture =
                 Implementations.Get<nogame.map.MapFramebuffer>().Texture;
-            _materialMiniMap.HasTransparency = false;
+            _materialMiniMap.HasTransparency = true;
+            _materialMiniMap.UploadImmediately = true;
 
             _engine.GetATransform().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
-                new Vector3(-5f, 5f, -1f));
+                new Vector3(-7f, 3.8f, -1f));
         }
 
     }
@@ -66,8 +67,8 @@ public class Part : IPart
         u = new Vector2(0.2f, 0f);
         v = new Vector2(0f, 0.2f);
 
-        float width = 4f;
-        float height = 4f;
+        float width = 1.8f;
+        float height = 1.8f;
         Vector3 pos0 = new(-width/2f, -height/2, 0f);
         Vector3 x = new(width, 0f, 0f);
         Vector3 y = new(0f, height, 0f);
@@ -110,7 +111,8 @@ public class Part : IPart
     {
         _engine = engine0;
         _needResources();
+        _createNewMiniMap();
         _engine.AddPart(-190, scene0, this);
-        _engine.LogicalFrame += _onLogicalFrame;
+        // _engine.LogicalFrame += _onLogicalFrame;
     }
 }
