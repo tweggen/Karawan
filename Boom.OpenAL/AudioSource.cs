@@ -53,7 +53,7 @@ public class AudioSource : Boom.ISound
 
     private void _whc()
     {
-        Trace("Would have crashed before.");
+        // Trace("Would have crashed before.");
     }
 
     private bool _isValidNoLock()
