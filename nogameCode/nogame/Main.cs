@@ -35,6 +35,7 @@ public class Main
     private void _setupImplementations()
     {
         Implementations.Register<IMapProvider>(() => _setupMapProvider());
+        Implementations.Register<MapFramebuffer>(() => new MapFramebuffer());
     }
 
     
