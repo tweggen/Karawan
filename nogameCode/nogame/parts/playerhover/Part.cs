@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks.Dataflow;
 using engine;
 using engine.physics;
+using engine.world;
 using static engine.Logger;
 
 namespace nogame.parts.playerhover
@@ -32,12 +33,19 @@ namespace nogame.parts.playerhover
          */
         private DefaultEcs.Entity _eScoreDisplay;
 
+        /**
+         * Display the current cluster name.
+         */
+         private DefaultEcs.Entity _eClusterDisplay;
+
         private PlingPlayer _plingPlayer = new();
 
         private WASDPhysics _controllerWASDPhysics;
 
         private const float MassShip = 500f;
-        
+
+
+        private ClusterDesc _currentCluster = null;
         
         private int _score = 0;
 
@@ -134,6 +142,64 @@ namespace nogame.parts.playerhover
 
         private void _onLogicalFrame(object? sender, float dt)
         {
+            Matrix4x4 mShip = _eShip.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+            Vector3 posShip = mShip.Translation;
+
+            bool modifyClusterNameOSD = false;
+            ClusterDesc foundCluster = ClusterList.Instance().GetClusterAt(posShip);
+            if (foundCluster != null)
+            {
+                if (_currentCluster != foundCluster)
+                {
+                    /*
+                     * We entered a new cluster. Trigger cluster song.
+                     */
+                    
+                    /*
+                     * Remember new cluster.
+                     */
+                    _currentCluster = foundCluster;
+                    modifyClusterNameOSD = true;
+                }
+            }
+            else
+            {
+                if (_currentCluster != null)
+                {
+                    /*
+                     * We just left a cluster. Trigger void music. 
+                     */
+                    
+                    /*
+                     * Remember we are outside.
+                     */
+                    _currentCluster = null;
+                    modifyClusterNameOSD = true;
+                }
+            }
+            
+            string clusterName;
+            if (_currentCluster != null)
+            {
+                clusterName = _currentCluster.Name;
+            }
+            else
+            {
+                clusterName = "void";
+            }
+
+            if (modifyClusterNameOSD)
+            {
+                _eClusterDisplay.Set(new engine.draw.components.OSDText(
+                    new Vector2(350f, 220f),
+                    new Vector2(112f, 30f),
+                    $"{clusterName}",
+                    10,
+                    0xff22aaee,
+                    0x00000000
+                ));
+            }
+
             _eScoreDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(400f, 20f),
                 new Vector2(112f, 30f),
@@ -157,6 +223,7 @@ namespace nogame.parts.playerhover
                 _aTransform = _engine.GetATransform();
             }
 
+            
             /*
              * Create a ship
              */
@@ -204,6 +271,7 @@ namespace nogame.parts.playerhover
             }
 
             _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
+            _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
             
             
             /*
