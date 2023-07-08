@@ -101,7 +101,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
 
                 uint col = _heightColor(height);
                 dc.FillColor = col;
-                target.DrawPoly(dc, polyPoints);
+                target.FillPoly(dc, polyPoints);
                 
                 /*
                  * Now the average of those next to us. 
@@ -132,6 +132,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         Vector2[] streetPoly = new Vector2[4];
         engine.draw.Context dcStreets = new();
         dcStreets.FillColor = 0xff555555;
+
         
         var clusterList = engine.world.ClusterList.Instance();
         foreach (var clusterDesc in clusterList.GetClusterList())
@@ -146,6 +147,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
             dc.TextColor = 0xff22aaee;
             target.DrawText(dc, new Vector2(pos.X, pos.Y-10f), new Vector2(pos.X+100, pos.Y+2f), clusterDesc.Name, 12);
 
+#if false
             StrokeStore strokeStore = null;            
             try
             {
@@ -160,7 +162,8 @@ public class WorldMapTerrainProvider : IWorldMapProvider
             {
                 foreach (var stroke in strokeStore.GetStrokes())
                 {
-                    float weight = 4f*stroke.Weight;
+                    float weight = stroke.Weight;
+                    //float weight = 4f; 
                     bool isPrimary = stroke.IsPrimary;
 
                     Vector2 posA = stroke.A.Pos + clusterDesc.Pos2;
@@ -177,9 +180,10 @@ public class WorldMapTerrainProvider : IWorldMapProvider
                     {
                         streetPoly[i] = Vector2.Transform(streetPoly[i], m2fb);
                     }
-                    target.FillPoly(dcStreets, streetPoly);
+                    target.DrawPoly(dcStreets, streetPoly);
                 }
             }
+#endif
         }
         
         target.EndModification();
