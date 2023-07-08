@@ -80,23 +80,23 @@ public class Part : IPart
         }
         else
         {
-            Matrix4x4 m = _engine.GetEcsWorld().Get<engine.transform.components.Transform3ToWorld>().Matrix;
+            Matrix4x4 m = ePlayerEntity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
             pos = m.Translation;
         }
 
         float sourceWidth = 1000f;
         float sourceHeight = 1000f;
-        float realPosX = Single.Min(MetaGen.MaxWidth - sourceWidth / 2f, Single.Max(sourceWidth / 2f, pos.X));
-        float realPosY = Single.Min(MetaGen.MaxHeight - sourceHeight / 2f, Single.Max(sourceHeight / 2f, pos.Z));
-        float centerUVX = realPosX / MetaGen.MaxWidth + 0.5f;
-        float centerUVY = realPosY / MetaGen.MaxHeight + 0.5f;
+        float realPosX = Single.Min(MetaGen.MaxWidth - sourceWidth / 2f, Single.Max(-MetaGen.MaxWidth + sourceWidth / 2f, pos.X));
+        float realPosY = Single.Min(MetaGen.MaxHeight - sourceHeight / 2f, Single.Max(-MetaGen.MaxHeight + sourceHeight / 2f, pos.Z));
+        float centerUVX = realPosX / (MetaGen.MaxWidth/2f) + 0.5f;
+        float centerUVY = realPosY / (MetaGen.MaxHeight/2f) + 0.5f;
         float widthUV = sourceWidth / MetaGen.MaxWidth;
         float heightUV = sourceHeight / MetaGen.MaxHeight;
         
         Vector2 uv0, u, v;
-        uv0 = new Vector2(centerUVX - widthUV/2f, centerUVY - heightUV/2f);
+        uv0 = new Vector2(centerUVX - widthUV/2f, centerUVY + heightUV/2f);
         u = new Vector2(widthUV, 0f);
-        v = new Vector2(0f, heightUV);
+        v = new Vector2(0f, -heightUV);
 
         float width = 1.8f;
         float height = 1.8f;
@@ -116,10 +116,12 @@ public class Part : IPart
     
     public void _onLogicalFrame(object? sender, float dt)
     {
+#if false
         if (0 != _updateMinimapFrameCount)
         {
             return;
         }
+#endif
         ++_updateMinimapFrameCount;
         if (_updateMinimapFrameCount != _updateMinimapCount)
         {

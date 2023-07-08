@@ -4,231 +4,258 @@ using System.Collections.Generic;
 using DefaultEcs;
 using static engine.Logger;
 
-namespace Splash
+namespace Splash;
+
+public class InstanceManager : IDisposable
 {
-    public class InstanceManager : IDisposable
+    private sealed class Resource<ValueType>
     {
-        private sealed class Resource<ValueType>
+        public readonly ValueType Value;
+
+        private int _referencesCount;
+
+        public Resource(ValueType value)
         {
-            public readonly ValueType Value;
+            Value = value;
+            _referencesCount = 0;
+        }
 
-            private int _referencesCount;
+        public void AddReference() => ++_referencesCount;
 
-            public Resource(ValueType value)
+        public bool RemoveReference() => --_referencesCount == 0;
+    }
+
+
+    private readonly object _lockObject;
+    private readonly IThreeD _threeD;
+    private readonly Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>> _meshResources;
+    private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
+
+
+    private void _unloadMesh(engine.joyce.Mesh jMesh, Resource<AMeshEntry> meshResource)
+    {
+        _threeD.UnloadMeshEntry(meshResource.Value);
+    }
+
+    private void _unloadMaterial(engine.joyce.Material jMesh, Resource<AMaterialEntry> materialResource)
+    {
+        _threeD.UnloadMaterialEntry(materialResource.Value);
+    }
+
+
+    private AMeshEntry _loadMesh(in engine.joyce.Mesh jMesh)
+    {
+        return _threeD.CreateMeshEntry(jMesh);
+    }
+
+
+    private AMaterialEntry _loadMaterial(in engine.joyce.Material jMaterial)
+    {
+        return _threeD.CreateMaterialEntry(jMaterial);
+    }
+
+
+    private void OnAdded(in Entity entity, in Splash.components.PfInstance value) => Add(entity, value);
+
+
+    private void OnChanged(in Entity entity, in Splash.components.PfInstance oldValue,
+        in Splash.components.PfInstance newValue)
+    {
+        Add(entity, newValue);
+        Remove(oldValue);
+    }
+
+    private void OnRemoved(in Entity entity, in Splash.components.PfInstance value) => Remove(value);
+
+
+    private void Add(in Entity entity, in Splash.components.PfInstance value)
+    {
+        IList<AMeshEntry> aMeshEntries = new List<AMeshEntry>();
+        IList<AMaterialEntry> aMaterialEntries = new List<AMaterialEntry>();
+
+        lock (_lockObject)
+        {
+            for (int i = 0; i < value.Meshes.Count; ++i)
             {
-                Value = value;
-                _referencesCount = 0;
+                Resource<AMeshEntry> meshResource;
+                engine.joyce.Mesh jMesh = value.Meshes[i];
+                if (!_meshResources.TryGetValue(jMesh, out meshResource))
+                {
+                    try
+                    {
+                        AMeshEntry aMeshEntry = _loadMesh(jMesh);
+                        meshResource = new Resource<AMeshEntry>(aMeshEntry);
+                        _meshResources.Add(jMesh, meshResource);
+                    }
+                    catch (Exception e)
+                    {
+                        Error("Exception loading mesh: {e}");
+                    }
+                }
+
+                aMeshEntries.Add(meshResource.Value);
+                meshResource.AddReference();
             }
 
-            public void AddReference() => ++_referencesCount;
-
-            public bool RemoveReference() => --_referencesCount == 0;
-        }
-        
-
-        private readonly object _lockObject;
-        private readonly IThreeD _threeD;
-        private readonly Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>> _meshResources;
-        private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
-
-        
-        /// <summary>
-        /// Creates an instance of type <see cref="AResourceManager{TInfo, TResource}"/>.
-        /// </summary>
-        public InstanceManager(in IThreeD threeD)
-        {
-            _lockObject = new object();
-            _threeD = threeD;
-            _meshResources = new Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>>();
-            _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
-        }
-
-        
-        private void OnAdded(in Entity entity, in Splash.components.PfInstance value) => Add(entity, value);
-
-        private void OnChanged(in Entity entity, in Splash.components.PfInstance oldValue, in Splash.components.PfInstance newValue)
-        {
-            Add(entity, newValue);
-            Remove(oldValue);
-        }
-
-        private void OnRemoved(in Entity entity, in Splash.components.PfInstance value) => Remove(value);
-        
-
-        private AMeshEntry LoadMesh(in engine.joyce.Mesh jMesh)
-        {
-            return _threeD.CreateMeshEntry(jMesh);
-        }
-
-        private AMaterialEntry LoadMaterial(in engine.joyce.Material jMaterial)
-        {
-            return _threeD.CreateMaterialEntry(jMaterial);
-        }
-
-        private void Add(in Entity entity, in Splash.components.PfInstance value)
-        {
-            IList<AMeshEntry> aMeshEntries = new List<AMeshEntry>();
-            IList<AMaterialEntry> aMaterialEntries = new List<AMaterialEntry>();
-
-            lock (_lockObject)
+            for (int i = 0; i < value.Materials.Count; ++i)
             {
-                for (int i=0; i<value.Meshes.Count; ++i)
+                Resource<AMaterialEntry> materialResource;
+                engine.joyce.Material jMaterial = value.Materials[i];
+                if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                 {
-                    Resource<AMeshEntry> meshResource;
-                    engine.joyce.Mesh jMesh = value.Meshes[i];
-                    if (!_meshResources.TryGetValue(jMesh, out meshResource))
+                    try
+                    {
+                        AMaterialEntry aMaterialEntry = _loadMaterial(jMaterial);
+                        materialResource = new Resource<AMaterialEntry>(aMaterialEntry);
+                        _materialResources.Add(jMaterial, materialResource);
+                    }
+                    catch (Exception e)
+                    {
+                        Error("Exception loading mesh: {e}");
+                    }
+                }
+
+                aMaterialEntries.Add(materialResource.Value);
+                materialResource.AddReference();
+            }
+        }
+
+        // TXWTODO: Looks inefficient
+        /*
+         * Finally, assign these arrays to the entity.
+         */
+        entity.Get<Splash.components.PfInstance>().AMaterialEntries = aMaterialEntries;
+        entity.Get<Splash.components.PfInstance>().AMeshEntries = aMeshEntries;
+    }
+
+
+    private void Remove(in Splash.components.PfInstance value)
+    {
+        lock (_lockObject)
+        {
+            for (int i = 0; i < value.Meshes.Count; ++i)
+            {
+                Resource<AMeshEntry> meshResource;
+                engine.joyce.Mesh jMesh = value.Meshes[i];
+                if (!_meshResources.TryGetValue(jMesh, out meshResource))
+                {
+                    Error($"Unknown mesh to unreference.");
+                }
+                else
+                {
+                    if (meshResource.RemoveReference())
                     {
                         try
                         {
-                            AMeshEntry aMeshEntry = LoadMesh(jMesh);
-                            meshResource = new Resource<AMeshEntry>(aMeshEntry);
-                            _meshResources.Add(jMesh, meshResource);
+                            _unloadMesh(jMesh, meshResource);
                         }
-                        catch (Exception e)
+                        finally
                         {
-                            Error("Exception loading mesh: {e}");
+                            _meshResources.Remove(jMesh);
                         }
                     }
-                    aMeshEntries.Add(meshResource.Value);
-                    meshResource.AddReference();
                 }
-                for (int i=0; i<value.Materials.Count; ++i)
+            }
+
+            for (int i = 0; i < value.Materials.Count; ++i)
+            {
+                Resource<AMaterialEntry> materialResource;
+                engine.joyce.Material jMaterial = value.Materials[i];
+                if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                 {
-                    Resource<AMaterialEntry> materialResource;
-                    engine.joyce.Material jMaterial = value.Materials[i];
-                    if (!_materialResources.TryGetValue(jMaterial, out materialResource))
-                    {
-                        try {
-                            AMaterialEntry aMaterialEntry = LoadMaterial(jMaterial);
-                            materialResource = new Resource<AMaterialEntry>(aMaterialEntry);
-                            _materialResources.Add(jMaterial, materialResource);
-                        }
-                        catch (Exception e)
-                        {
-                            Error("Exception loading mesh: {e}");
-                        }
-                    }
-                    aMaterialEntries.Add(materialResource.Value);
-                    materialResource.AddReference();
+                    Error("Unknown material to unreference.");
                 }
-            }
-
-            // TXWTODO: Looks inefficient
-            /*
-             * Finally, assign these arrays to the entity.
-             */
-            entity.Get<Splash.components.PfInstance>().AMaterialEntries = aMaterialEntries;
-            entity.Get<Splash.components.PfInstance>().AMeshEntries = aMeshEntries;
-        }
-
-        private void Remove(in Splash.components.PfInstance value)
-        {
-            lock (_lockObject)
-            {
-                for (int i = 0; i < value.Meshes.Count; ++i)
+                else
                 {
-                    Resource<AMeshEntry> meshResource;
-                    engine.joyce.Mesh jMesh = value.Meshes[i];
-                    if (!_meshResources.TryGetValue(jMesh, out meshResource))
+                    if (materialResource.RemoveReference())
                     {
-                        Error($"Unknown mesh to unreference.");
-                    }
-                    else
-                    {
-                        if (meshResource.RemoveReference())
+                        try
                         {
-                            try
-                            {
-                                _unloadMesh(jMesh, meshResource);
-                            }
-                            finally
-                            {
-                                _meshResources.Remove(jMesh);
-                            }
+                            _unloadMaterial(jMaterial, materialResource);
+                        }
+                        finally
+                        {
+                            _materialResources.Remove(jMaterial);
                         }
                     }
                 }
-
-                for (int i = 0; i < value.Materials.Count; ++i)
-                {
-                    Resource<AMaterialEntry> materialResource;
-                    engine.joyce.Material jMaterial = value.Materials[i];
-                    if (!_materialResources.TryGetValue(jMaterial, out materialResource))
-                    {
-                        Error("Unknown material to unreference.");
-                    }
-                    else
-                    {
-                        if (materialResource.RemoveReference())
-                        {
-                            try
-                            {
-                                _unloadMaterial(jMaterial, materialResource);
-                            }
-                            finally
-                            {
-                                _materialResources.Remove(jMaterial);
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
-
-        private void _unloadMesh(engine.joyce.Mesh jMesh, Resource<AMeshEntry> meshResource)
-        {
-            _threeD.UnloadMeshEntry(meshResource.Value);
-        }
-
-        private void _unloadMaterial(engine.joyce.Material jMesh, Resource<AMaterialEntry> materialResource)
-        {
-            _threeD.UnloadMaterialEntry(materialResource.Value);
-        }
-        
-
-        public IDisposable Manage(World world)
-        {
-            IEnumerable<IDisposable> GetSubscriptions(World w)
-            {
-                yield return w.SubscribeEntityComponentAdded<Splash.components.PfInstance>(OnAdded);
-                yield return w.SubscribeEntityComponentChanged<Splash.components.PfInstance>(OnChanged);
-                yield return w.SubscribeEntityComponentRemoved<Splash.components.PfInstance>(OnRemoved);
             }
 
-            if (null == world)
-            {
-                ErrorThrow("world must not be null.", (m)=>new ArgumentException(m));
-            }
-
-            var entities = world.GetEntities().With<Splash.components.PfInstance>().AsEnumerable();
-            foreach (DefaultEcs.Entity entity in entities)
-            {
-                OnAdded(entity, entity.Get<Splash.components.PfInstance>());
-            }
-
-            return GetSubscriptions(world).Merge();
-        }
-
-        
-        /// <summary>
-        /// Unloads all loaded resources.
-        /// </summary>
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
-
-            foreach (KeyValuePair<engine.joyce.Mesh, Resource<AMeshEntry>> pair in _meshResources)
-            {
-                _unloadMesh(pair.Key, pair.Value);
-            }
-            foreach (KeyValuePair<engine.joyce.Material, Resource<AMaterialEntry>> pair in _materialResources)
-            {
-                _unloadMaterial(pair.Key, pair.Value);
-            }
-
-            _meshResources.Clear();
-            _materialResources.Clear();
         }
     }
+    
+
+    private void OnChanged(in DefaultEcs.Entity entity,
+        in engine.joyce.components.Instance3 cOldInstance,
+        in engine.joyce.components.Instance3 cNewInstance)
+    {
+        entity.Remove<Splash.components.PfInstance>();
+    }
+
+
+    private void OnRemoved(in DefaultEcs.Entity entity,
+        in engine.joyce.components.Instance3 cOldInstance)
+    {
+        entity.Remove<Splash.components.PfInstance>();
+    }
+
+    
+    public IDisposable Manage(World world)
+    {
+        IEnumerable<IDisposable> GetSubscriptions(World w)
+        {
+            yield return w.SubscribeEntityComponentAdded<Splash.components.PfInstance>(OnAdded);
+            yield return w.SubscribeEntityComponentChanged<Splash.components.PfInstance>(OnChanged);
+            yield return w.SubscribeEntityComponentRemoved<Splash.components.PfInstance>(OnRemoved);
+            yield return w.SubscribeEntityComponentChanged<engine.joyce.components.Instance3>(OnChanged);
+            yield return w.SubscribeEntityComponentRemoved<engine.joyce.components.Instance3>(OnRemoved);
+        }
+
+        if (null == world)
+        {
+            ErrorThrow("world must not be null.", (m) => new ArgumentException(m));
+        }
+
+        var entities = world.GetEntities().With<Splash.components.PfInstance>().AsEnumerable();
+        foreach (DefaultEcs.Entity entity in entities)
+        {
+            OnAdded(entity, entity.Get<Splash.components.PfInstance>());
+        }
+
+        return GetSubscriptions(world).Merge();
+    }
+
+
+    /// <summary>
+    /// Unloads all loaded resources.
+    /// </summary>
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+
+        foreach (KeyValuePair<engine.joyce.Mesh, Resource<AMeshEntry>> pair in _meshResources)
+        {
+            _unloadMesh(pair.Key, pair.Value);
+        }
+
+        foreach (KeyValuePair<engine.joyce.Material, Resource<AMaterialEntry>> pair in _materialResources)
+        {
+            _unloadMaterial(pair.Key, pair.Value);
+        }
+
+        _meshResources.Clear();
+        _materialResources.Clear();
+    }
+
+    /// <summary>
+    /// Creates an instance of type <see cref="AResourceManager{TInfo, TResource}"/>.
+    /// </summary>
+    public InstanceManager(in IThreeD threeD)
+    {
+        _lockObject = new object();
+        _threeD = threeD;
+        _meshResources = new Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>>();
+        _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
+    }
 }
+
