@@ -5,6 +5,7 @@ using DefaultEcs;
 using engine.draw;
 using engine.world;
 using builtin.map;
+using engine.streets;
 using static engine.Logger;
 
 namespace nogame.map;
@@ -27,6 +28,9 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         uint col = 0xff000000 | ((uint)blue << 16) | ((uint)others << 8) | ((uint)others);
         return col;
     }
+    
+    
+    
     
     
     private void _createBitmap(IFramebuffer target)
@@ -124,6 +128,10 @@ public class WorldMapTerrainProvider : IWorldMapProvider
             fbWidth/2f, fbHeight/2f);
         
         Vector2 worldMin = new(-MetaGen.MaxWidth / 2f, -MetaGen.MaxHeight / 2f);
+
+        Vector2[] streetPoly = new Vector2[4];
+        engine.draw.Context dcStreets = new();
+        dcStreets.FillColor = 0xff555555;
         
         var clusterList = engine.world.ClusterList.Instance();
         foreach (var clusterDesc in clusterList.GetClusterList())
@@ -138,16 +146,40 @@ public class WorldMapTerrainProvider : IWorldMapProvider
             dc.TextColor = 0xff22aaee;
             target.DrawText(dc, new Vector2(pos.X, pos.Y-10f), new Vector2(pos.X+100, pos.Y+2f), clusterDesc.Name, 12);
 
-#if false
-            foreach (var stroke in clusterDesc.StrokeStore().GetStrokes())
+            StrokeStore strokeStore = null;            
+            try
             {
-                float weight = stroke.Weight;
-                bool isPrimary = stroke.IsPrimary;
-
-                Vector2 posA = stroke.A.Pos;
-                Vector2 posB = stroke.B.Pos;
+                strokeStore = clusterDesc.StrokeStore();
             }
-#endif
+            catch (Exception e)
+            {
+                Error($"Exception while retrieving description of stroke store for cluster {clusterDesc.Name}: {e}");
+            }
+
+            if (strokeStore != null)
+            {
+                foreach (var stroke in clusterDesc.StrokeStore().GetStrokes())
+                {
+                    float weight = stroke.Weight;
+                    bool isPrimary = stroke.IsPrimary;
+
+                    Vector2 posA = stroke.A.Pos + clusterDesc.Pos2;
+                    Vector2 posB = stroke.B.Pos + clusterDesc.Pos2;
+                    Vector2 u = posB - posA;
+                    u /= u.Length();
+                    Vector2 v = new(u.Y, -u.X);
+                    Vector2 vw2 = v * weight / 2f;
+                    streetPoly[0] = posA - vw2;
+                    streetPoly[1] = posB - vw2;
+                    streetPoly[2] = posB + vw2;
+                    streetPoly[3] = posA + vw2;
+                    for (int i = 0; i < streetPoly.Length; ++i)
+                    {
+                        streetPoly[i] = Vector2.Transform(streetPoly[i], m2fb);
+                    }
+                    target.DrawPoly(dcStreets, streetPoly);
+                }
+            }
         }
         
         target.EndModification();
