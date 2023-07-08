@@ -449,7 +449,7 @@ public class SilkThreeD : IThreeD
             {
                 skMeshEntry.Release(_getGL());
                 nUploadedMeshes = --_nUploadedMeshes;
-                Trace($"Only {nUploadedMeshes} uploaded right now.");
+                // Trace($"Only {nUploadedMeshes} uploaded right now.");
             }
         });
     }
