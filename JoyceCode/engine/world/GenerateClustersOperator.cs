@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
-using System.Text;
+using static engine.Logger;
 
 namespace engine.world
 {
@@ -48,6 +49,7 @@ namespace engine.world
              * Remember the cities might become merged.
              */
             int nMaxClusters = (int) ((world.MetaGen.MaxWidth/1000f) * (world.MetaGen.MaxHeight/1000f) / 5f );
+            Trace($"Generating a maximum of {nMaxClusters} cluster.");
 
 
             /*

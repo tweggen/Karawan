@@ -15,11 +15,9 @@ namespace engine.world
         public static float FragmentSize = 400f;
         public static float MaxWidth = 30000f;
         public static float MaxHeight = 30000f;
-        public static float nFrames = 60f;
 
         public Vector3 MaxPos;
         public Vector3 MinPos;
-
 
         /**
          * FragmentSize / 20. We should compute this

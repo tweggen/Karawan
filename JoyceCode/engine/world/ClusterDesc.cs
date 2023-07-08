@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace engine.world
@@ -15,6 +16,11 @@ namespace engine.world
         public string Id;
         public bool Merged;
         public Vector3 Pos;
+
+        public Vector2 Pos2
+        {
+            get => new Vector2(Pos.X, Pos.Z);
+        }
         public float Size = 100;
         public string Name = "Unnamed";
 

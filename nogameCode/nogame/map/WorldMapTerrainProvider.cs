@@ -116,17 +116,38 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         /*
          * Draw the clusters.
          */
+        Matrix3x2 m2fb = Matrix3x2.CreateScale(
+            new Vector2(
+                fbWidth / MetaGen.MaxWidth,
+                fbHeight / MetaGen.MaxHeight));
+        m2fb *= Matrix3x2.CreateTranslation(
+            fbWidth/2f, fbHeight/2f);
+        
+        Vector2 worldMin = new(-MetaGen.MaxWidth / 2f, -MetaGen.MaxHeight / 2f);
+        
         var clusterList = engine.world.ClusterList.Instance();
         foreach (var clusterDesc in clusterList.GetClusterList())
         {
-            float sizehalf = clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f;
-            float posX = (clusterDesc.Pos.X-worldMinX) / MetaGen.MaxWidth * fbWidth;
-            float posY = (clusterDesc.Pos.Z-worldMinZ) / MetaGen.MaxHeight * fbHeight;
+            Vector2 sizehalf = new Vector2(clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f,
+                clusterDesc.Size / MetaGen.MaxHeight * fbHeight / 2f);
 
+            Vector2 pos = Vector2.Transform(clusterDesc.Pos2, m2fb); 
+            
             dc.FillColor = 0xff441144;
-            target.FillRectangle(dc, new Vector2(posX-sizehalf, posY-sizehalf), new Vector2(posX+sizehalf, posY+sizehalf));
+            target.FillRectangle(dc, pos-sizehalf, pos+sizehalf);
             dc.TextColor = 0xff22aaee;
-            target.DrawText(dc, new Vector2(posX, posY-10f), new Vector2(posX+100, posY+2f), clusterDesc.Name, 12);
+            target.DrawText(dc, new Vector2(pos.X, pos.Y-10f), new Vector2(pos.X+100, pos.Y+2f), clusterDesc.Name, 12);
+
+#if false
+            foreach (var stroke in clusterDesc.StrokeStore().GetStrokes())
+            {
+                float weight = stroke.Weight;
+                bool isPrimary = stroke.IsPrimary;
+
+                Vector2 posA = stroke.A.Pos;
+                Vector2 posB = stroke.B.Pos;
+            }
+#endif
         }
         
         target.EndModification();
