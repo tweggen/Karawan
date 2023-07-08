@@ -112,7 +112,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
                 height = (16f+height) * 4f;
                 col = _heightColor(height);
                 dc.FillColor = col;
-                target.DrawPoly(dc, polyPoints);
+                target.FillPoly(dc, polyPoints);
                 
             }
         }
@@ -158,9 +158,9 @@ public class WorldMapTerrainProvider : IWorldMapProvider
 
             if (strokeStore != null)
             {
-                foreach (var stroke in clusterDesc.StrokeStore().GetStrokes())
+                foreach (var stroke in strokeStore.GetStrokes())
                 {
-                    float weight = stroke.Weight;
+                    float weight = 4f*stroke.Weight;
                     bool isPrimary = stroke.IsPrimary;
 
                     Vector2 posA = stroke.A.Pos + clusterDesc.Pos2;
@@ -177,7 +177,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
                     {
                         streetPoly[i] = Vector2.Transform(streetPoly[i], m2fb);
                     }
-                    target.DrawPoly(dcStreets, streetPoly);
+                    target.FillPoly(dcStreets, streetPoly);
                 }
             }
         }

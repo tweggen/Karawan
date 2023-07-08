@@ -112,7 +112,33 @@ public class SkiaSharpFramebuffer : IFramebuffer
         var paint = new SKPaint
         {
             Color = context.FillColor, 
-            Style = SKPaintStyle.Fill,
+            Style = SKPaintStyle.Stroke,
+            //BlendMode = SKBlendMode.Src
+        };
+        SKPoint[] skPoints = new SKPoint[l];
+        for (int i = 0; i < l; ++i)
+        {
+            skPoints[i] = new SKPoint(polyPoints[i].X, polyPoints[i].Y);
+        }
+
+        SKPath skiaPath = new();
+        skiaPath.AddPoly(skPoints,true);
+        
+        lock (_lo)
+        {
+            _skiaSurface.Canvas.DrawPath(skiaPath, paint);
+        }
+    }
+
+
+    public void FillPoly(Context context, in Vector2[] polyPoints)
+    {
+        int l = polyPoints.Length;
+        if (0 == l) return;
+        var paint = new SKPaint
+        {
+            Color = context.FillColor, 
+            Style = SKPaintStyle.StrokeAndFill,
             //BlendMode = SKBlendMode.Src
         };
         SKPoint[] skPoints = new SKPoint[l];
