@@ -34,7 +34,7 @@ sealed public class CreateMusicSystem : DefaultEcs.System.AEntitySetSystem<float
             try
             {
                 // TXWTODO: This leaks...
-                ISound audioSource = _api.CreateAudioSource(cMusic.Url);
+                ISound audioSource = _api.FindSound(cMusic.Url);
                 audioSource.Play();
             } catch(Exception ex)
             {

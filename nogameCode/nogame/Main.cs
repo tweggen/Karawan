@@ -36,6 +36,7 @@ public class Main
     {
         Implementations.Register<IMapProvider>(() => _setupMapProvider());
         Implementations.Register<MapFramebuffer>(() => new MapFramebuffer());
+        Implementations.Register<Boom.Jukebox>(() => new Boom.Jukebox());
     }
 
     

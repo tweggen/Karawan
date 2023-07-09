@@ -84,8 +84,8 @@ public class Part : IPart
             pos = m.Translation;
         }
 
-        float sourceWidth = 1000f;
-        float sourceHeight = 1000f;
+        float sourceWidth = 2000f;
+        float sourceHeight = 2000f;
         float realPosX = Single.Min(MetaGen.MaxWidth - sourceWidth / 2f, Single.Max(-MetaGen.MaxWidth + sourceWidth / 2f, pos.X));
         float realPosY = Single.Min(MetaGen.MaxHeight - sourceHeight / 2f, Single.Max(-MetaGen.MaxHeight + sourceHeight / 2f, pos.Z));
         float centerUVX = realPosX / (MetaGen.MaxWidth/2f) + 0.5f;

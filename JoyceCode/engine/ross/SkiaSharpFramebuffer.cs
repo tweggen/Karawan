@@ -181,7 +181,20 @@ public class SkiaSharpFramebuffer : IFramebuffer
             TextAlign = _toSkiaTextAlign(context.HAlign),
             TextSize = fontSize
         };
-        float x = ul.X;
+        float x;
+        switch (context.HAlign)
+        {
+            default:
+            case HAlign.Left:
+                x = ul.X;
+                break;
+            case HAlign.Center:
+                x = (lr.X - ul.X) / 2f;
+                break;
+            case HAlign.Right:
+                x = lr.X;
+                break;
+        }
         float y = ul.Y + fontSize; //lr.Y - ul.Y
         string remainingText = text;
         lock (_lo)

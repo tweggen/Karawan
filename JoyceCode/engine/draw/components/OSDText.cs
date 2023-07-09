@@ -9,8 +9,16 @@ public struct OSDText
     public uint TextColor;
     public uint FillColor;
     public Vector2 Position, Size;
+    public HAlign HAlign;
 
-    public OSDText(in Vector2 position, in Vector2 size, in string text, uint fontSize, uint textColor, uint fillColor)
+    public OSDText(
+        in Vector2 position, 
+        in Vector2 size,
+        in string text,
+        uint fontSize,
+        uint textColor,
+        uint fillColor,
+        HAlign hAlign)
     {
         Position = position;
         Size = size;
@@ -18,5 +26,6 @@ public struct OSDText
         FontSize = fontSize;
         TextColor = textColor;
         FillColor = fillColor;
+        HAlign = hAlign;
     }
 }

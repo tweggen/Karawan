@@ -25,7 +25,7 @@ public class PlingPlayer
         _arrPlings = new Boom.ISound[LastPling - FirstPling + 1];
         for (int i = FirstPling-1; i < LastPling; ++i)
         {
-            _arrPlings[i] = api.CreateAudioSource($"pling{(i+1):D2}.ogg");
+            _arrPlings[i] = api.FindSound($"pling{(i+1):D2}.ogg");
             _arrPlings[i].Volume = 0.025f;
         }
     }

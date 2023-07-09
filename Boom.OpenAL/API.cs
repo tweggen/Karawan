@@ -27,20 +27,6 @@ public class API : Boom.ISoundAPI
         // _createMusicSystem.Update(dt);
         _updateMovingSoundsSystem.Update(dt);
     }
-
-
-    
-    public void PlaySound(string uri)
-    {
-        // TXWTODO: This leaks all sources. 
-        ISound audioSource = CreateAudioSource(uri);
-        audioSource.Play();
-    }
-
-    
-    public void StopSound(string uri)
-    {
-    }
     
 
     public void Dispose()
@@ -53,17 +39,26 @@ public class API : Boom.ISoundAPI
     {
         _engine.LogicalFrame += _onLogicalFrame;
     }
-
-
-    public OGGSound FindSound(string url)
+    
+    public Task<ISound> LoadSound(string url)
     {
-        OGGSound _sound;
+        return Task<ISound>.Run<ISound>(() =>
+        {
+            OGGSound oggSound = new(_al, url);
+            return new AudioSource(_al, oggSound.ALBuffer);
+        });
+    }
+
+
+    public ISound FindSound(string url)
+    {
+        OGGSound oggSound;
         lock (_lo)
         {
-            if (!_mapSounds.TryGetValue(url, out _sound))
+            if (!_mapSounds.TryGetValue(url, out oggSound))
             {
-                _sound = new(_al, url);
-                _mapSounds[url] = _sound;
+                oggSound = new(_al, url);
+                _mapSounds[url] = oggSound;
             }
             else
             {
@@ -71,15 +66,7 @@ public class API : Boom.ISoundAPI
             }
         }
 
-        return _sound;
-    }
-    
-
-    public ISound CreateAudioSource(string url)
-    {
-        OGGSound oggSound = FindSound(url);
-        AudioSource audioSource = new(_al, oggSound.ALBuffer);
-        return audioSource;
+        return new AudioSource(_al, oggSound.ALBuffer);
     }
     
 
@@ -140,13 +127,6 @@ public class API : Boom.ISoundAPI
         _al.DistanceModel(DistanceModel.InverseDistance);
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
         _updateMovingSoundsSystem = new(_engine, this);
-
-        // TXWTODO: Find a sensible music scoring system.
-        if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") == "true")
-        {
-            ISound asTitle = CreateAudioSource("shaklengokhsi.ogg");
-            asTitle.Volume = 0.05f;
-            asTitle.Play();
-        }
+        
     }
 }

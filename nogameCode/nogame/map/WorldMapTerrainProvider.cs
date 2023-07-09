@@ -28,9 +28,91 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         uint col = 0xff000000 | ((uint)blue << 16) | ((uint)others << 8) | ((uint)others);
         return col;
     }
-    
-    
-    
+
+
+    private void _drawThickLine(IFramebuffer target, Context context, 
+        in Matrix3x2 m2fb, 
+        in Vector2 posA, in Vector2 posB,
+        float width)
+    {
+        Vector2 w2 = new(width / 2f, width / 2f);
+        Vector2 u = posB - posA;
+        float l = u.Length();
+        if (l < 1f)
+        {
+            target.FillRectangle(context,
+                Vector2.Transform(posA-w2, m2fb),
+                Vector2.Transform(posA+w2, m2fb)-Vector2.One);
+        }
+        else
+        {
+            Vector2[] poly = new Vector2[4];
+
+            u /= l;
+            Vector2 v = new(u.Y, -u.X);
+            Vector2 vw2 = v * width / 2f;
+            poly[0] = posA - vw2;
+            poly[1] = posB - vw2;
+            poly[2] = posB + vw2;
+            poly[3] = posA + vw2;
+            for (int i = 0; i < poly.Length; ++i)
+            {
+                poly[i] = Vector2.Transform(poly[i], m2fb);
+            }
+
+            target.DrawPoly(context, poly);
+        }
+    }
+
+
+    private void _drawHighways(IFramebuffer target, ClusterDesc clusterDesc,
+        in Matrix3x2 m2fb)
+    {
+        var closest = clusterDesc.GetClosest();
+        if (null == closest)
+        {
+            return;
+        }
+
+        int nClosest = clusterDesc.GetNClosest();
+        if (0 == nClosest) return;
+
+        Context dcHighway = new Context();
+        dcHighway.FillColor = 0xff441144;
+        dcHighway.Color = 0xff441144;
+
+        ClusterDesc closestCluster = null;
+        for (int i=0; i<nClosest; ++i)
+        {
+            if (closest[i] == null) continue;
+            if (closest[i] == closestCluster) continue;
+            closestCluster = closest[i];
+            _drawThickLine(target, dcHighway, m2fb, clusterDesc.Pos2, closestCluster.Pos2, 32f);
+        }
+    }
+
+
+    private void _drawCluster(IFramebuffer target, ClusterDesc clusterDesc,
+        in Matrix3x2 m2fb)
+    {
+        int fbWidth = (int) target.Width;
+        int fbHeight = (int) target.Height;
+
+        engine.draw.Context dc = new();
+        
+        Vector2 sizehalf = new Vector2(clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f,
+            clusterDesc.Size / MetaGen.MaxHeight * fbHeight / 2f);
+
+        Vector2 pos = Vector2.Transform(clusterDesc.Pos2, m2fb); 
+            
+        dc.FillColor = 0xff441144;
+        target.FillRectangle(dc, pos-sizehalf, pos+sizehalf);
+        dc.TextColor = 0xff22aaee;
+        target.DrawText(dc, 
+            new Vector2(pos.X, pos.Y-10f), 
+            new Vector2(pos.X+100, pos.Y+2f), 
+            clusterDesc.Name, 12);
+    }
     
     
     private void _createBitmap(IFramebuffer target)
@@ -54,13 +136,15 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         var skeleton = groundOperator.GetSkeleton();
         int skeletonWidth = groundOperator.SkeletonWidth;
         int skeletonHeight = groundOperator.SkeletonHeight;
-        int fbWidth = (int) target.Width;
-        int fbHeight = (int) target.Height;
 
         engine.draw.Context dc = new();
+        
+        int fbWidth = (int) target.Width;
+        int fbHeight = (int) target.Height;
+        
 
         dc.FillColor = 0xff000000;
-        target.FillRectangle(dc, new Vector2(0, 0), new Vector2( fbWidth-1, fbHeight-1) );
+        target.FillRectangle(dc, new Vector2(0, 0), new Vector2( fbWidth, fbHeight) );
 
         Vector2[] polyPoints = new Vector2[4];
 
@@ -113,7 +197,6 @@ public class WorldMapTerrainProvider : IWorldMapProvider
                 col = _heightColor(height);
                 dc.FillColor = col;
                 target.FillPoly(dc, polyPoints);
-                
             }
         }
         
@@ -129,23 +212,12 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         
         Vector2 worldMin = new(-MetaGen.MaxWidth / 2f, -MetaGen.MaxHeight / 2f);
 
-        Vector2[] streetPoly = new Vector2[4];
-        engine.draw.Context dcStreets = new();
-        dcStreets.FillColor = 0xff555555;
-
         
         var clusterList = engine.world.ClusterList.Instance();
         foreach (var clusterDesc in clusterList.GetClusterList())
         {
-            Vector2 sizehalf = new Vector2(clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f,
-                clusterDesc.Size / MetaGen.MaxHeight * fbHeight / 2f);
-
-            Vector2 pos = Vector2.Transform(clusterDesc.Pos2, m2fb); 
-            
-            dc.FillColor = 0xff441144;
-            target.FillRectangle(dc, pos-sizehalf, pos+sizehalf);
-            dc.TextColor = 0xff22aaee;
-            target.DrawText(dc, new Vector2(pos.X, pos.Y-10f), new Vector2(pos.X+100, pos.Y+2f), clusterDesc.Name, 12);
+            _drawCluster(target, clusterDesc, m2fb);
+            _drawHighways(target, clusterDesc, m2fb);
 
 #if false
             StrokeStore strokeStore = null;            
@@ -194,6 +266,13 @@ public class WorldMapTerrainProvider : IWorldMapProvider
      */
     public void WorldMapCreateBitmap(IFramebuffer target)
     {
-        _createBitmap(target);
+        try
+        {
+            _createBitmap(target);
+        }
+        catch (Exception e)
+        {
+            Trace( $"Error creating map bitmap: {e}");
+        }
     }
 }

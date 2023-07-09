@@ -54,11 +54,6 @@ namespace engine.world
         private streets.QuarterStore _quarterStore;
 
 
-        public Vector3 GetPos() {
-            return Pos;
-        }
-
-
         public override string ToString()
         {
             return $"{{ 'id': {_strKey}; 'name': {Name}; 'pos': {Pos}; 'size': {Size}; }}";

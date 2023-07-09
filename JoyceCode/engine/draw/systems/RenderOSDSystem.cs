@@ -31,8 +31,8 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             Vector2 lr = osdText.Position + osdText.Size - new Vector2(1f, 1f);
             _dc.ClearColor = osdText.FillColor;
             _framebuffer.ClearRectangle(_dc, ul, lr);
-            // TXWTODO: We ignore the font size.
             _dc.TextColor = osdText.TextColor;
+            _dc.HAlign = osdText.HAlign;
             _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
         }
     }

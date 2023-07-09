@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using engine.draw;
 using static engine.Logger;
 
 namespace nogame.parts.playerhover
@@ -184,7 +185,8 @@ namespace nogame.parts.playerhover
                 +$"a: {vTargetAngularVelocity.Length()}",
                 10,
                 0xff22aaee,
-                0x00000000
+                0x00000000,
+                HAlign.Left
             ));
             
         }

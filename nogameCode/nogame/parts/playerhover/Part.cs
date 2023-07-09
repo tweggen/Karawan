@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks.Dataflow;
 using engine;
+using engine.draw;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
@@ -49,6 +50,27 @@ namespace nogame.parts.playerhover
         
         private int _score = 0;
 
+
+        private string _getClusterSound(ClusterDesc clusterDesc)
+        {
+            if (null == clusterDesc)
+            {
+                return "lvl-6.ogg";
+            }
+            else
+            {
+                if (clusterDesc.Pos.Length() > 200)
+                {
+                    return "lvl-1-01c.ogg";
+                }
+                else
+                {
+                    return "shaklengokhsi.ogg";
+                }
+            }
+        }
+        
+        
         private void _nextCubeCollected()
         {
             _plingPlayer.PlayPling();
@@ -145,7 +167,7 @@ namespace nogame.parts.playerhover
             Matrix4x4 mShip = _eShip.Get<engine.transform.components.Transform3ToWorld>().Matrix;
             Vector3 posShip = mShip.Translation;
 
-            bool modifyClusterNameOSD = false;
+            bool newZone = false;
             ClusterDesc foundCluster = ClusterList.Instance().GetClusterAt(posShip);
             if (foundCluster != null)
             {
@@ -159,7 +181,7 @@ namespace nogame.parts.playerhover
                      * Remember new cluster.
                      */
                     _currentCluster = foundCluster;
-                    modifyClusterNameOSD = true;
+                    newZone = true;
                 }
             }
             else
@@ -174,39 +196,44 @@ namespace nogame.parts.playerhover
                      * Remember we are outside.
                      */
                     _currentCluster = null;
-                    modifyClusterNameOSD = true;
+                    newZone = true;
                 }
             }
             
-            string clusterName;
+            string displayName;
             if (_currentCluster != null)
             {
-                clusterName = _currentCluster.Name;
+                displayName = $"{_currentCluster.Id}:{_currentCluster.Name}";
             }
             else
             {
-                clusterName = "void";
+                displayName = "void";
             }
 
-            if (modifyClusterNameOSD)
+            if (newZone)
             {
                 _eClusterDisplay.Set(new engine.draw.components.OSDText(
-                    new Vector2(350f, 220f),
-                    new Vector2(112f, 30f),
-                    $"{clusterName}",
+                    new Vector2(352f, 220f),
+                    new Vector2(144f, 30f),
+                    $"{displayName}",
                     10,
                     0xff22aaee,
-                    0x00000000
-                ));
+                    0x00000000,
+                    HAlign.Right));
+                
+
+                Implementations.Get<Boom.Jukebox>().LoadThenPlaySong(
+                    _getClusterSound(_currentCluster), 0.05f);
             }
 
             _eScoreDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(400f, 20f),
-                new Vector2(112f, 30f),
+                new Vector2(96f, 30f),
                 $"{_score}",
                 30,
                 0xff22aaee,
-                0x00000000
+                0x00000000,
+                HAlign.Right
             ));
         }
         

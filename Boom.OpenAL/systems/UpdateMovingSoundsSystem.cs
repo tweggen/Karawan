@@ -105,7 +105,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 try
                 {
                     ISound audioSource;
-                    audioSource = _api.CreateAudioSource(se.CMovingSound.Sound.Url);
+                    audioSource = _api.FindSound(se.CMovingSound.Sound.Url);
 
                     // TXWTODO: What to do if loading the audio source was not successful?
                     
