@@ -121,8 +121,7 @@ public class Scene : engine.IScene
 
         }
         if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false") {
-            DefaultEcs.Entity eMusic = _engine.CreateEntity("TitleMusic");
-            eMusic.Set(new engine.audio.components.Music("shaklengokhsi.ogg"));
+            engine.Implementations.Get<Boom.Jukebox>().LoadThenPlaySong("shaklengokhsi.ogg", 0.05f);
         }
 
         /*
