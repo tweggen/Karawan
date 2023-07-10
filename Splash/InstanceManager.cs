@@ -12,21 +12,20 @@ public class InstanceManager : IDisposable
     {
         public readonly ValueType Value;
 
-        private int _referencesCount;
+        private int _referencesCount = 0;
 
         public Resource(ValueType value)
         {
             Value = value;
-            _referencesCount = 0;
         }
 
         public void AddReference() => ++_referencesCount;
 
-        public bool RemoveReference() => --_referencesCount == 0;
+        public bool RemoveReference() => (--_referencesCount) == 0;
     }
 
 
-    private readonly object _lockObject;
+    private readonly object _lo;
     private readonly IThreeD _threeD;
     private readonly Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>> _meshResources;
     private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
@@ -55,25 +54,25 @@ public class InstanceManager : IDisposable
     }
 
 
-    private void OnAdded(in Entity entity, in Splash.components.PfInstance value) => Add(entity, value);
+    private void _onAdded(in Entity entity, in Splash.components.PfInstance value) => _add(entity, value);
 
 
-    private void OnChanged(in Entity entity, in Splash.components.PfInstance oldValue,
+    private void _onChanged(in Entity entity, in Splash.components.PfInstance oldValue,
         in Splash.components.PfInstance newValue)
     {
-        Add(entity, newValue);
-        Remove(oldValue);
+        _add(entity, newValue);
+        _remove(entity, oldValue);
     }
 
-    private void OnRemoved(in Entity entity, in Splash.components.PfInstance value) => Remove(value);
+    private void _onRemoved(in Entity entity, in Splash.components.PfInstance value) => _remove(entity, value);
 
 
-    private void Add(in Entity entity, in Splash.components.PfInstance value)
+    private void _add(in Entity entity, in Splash.components.PfInstance value)
     {
         IList<AMeshEntry> aMeshEntries = new List<AMeshEntry>();
         IList<AMaterialEntry> aMaterialEntries = new List<AMaterialEntry>();
 
-        lock (_lockObject)
+        lock (_lo)
         {
             for (int i = 0; i < value.Meshes.Count; ++i)
             {
@@ -93,8 +92,11 @@ public class InstanceManager : IDisposable
                     }
                 }
 
-                aMeshEntries.Add(meshResource.Value);
-                meshResource.AddReference();
+                if (null != meshResource)
+                {
+                    aMeshEntries.Add(meshResource.Value);
+                    meshResource.AddReference();
+                }
             }
 
             for (int i = 0; i < value.Materials.Count; ++i)
@@ -115,8 +117,11 @@ public class InstanceManager : IDisposable
                     }
                 }
 
-                aMaterialEntries.Add(materialResource.Value);
-                materialResource.AddReference();
+                if (null != materialResource)
+                {
+                    aMaterialEntries.Add(materialResource.Value);
+                    materialResource.AddReference();
+                }
             }
         }
 
@@ -129,9 +134,9 @@ public class InstanceManager : IDisposable
     }
 
 
-    private void Remove(in Splash.components.PfInstance value)
+    private void _remove(in Entity entity, in Splash.components.PfInstance value)
     {
-        lock (_lockObject)
+        lock (_lo)
         {
             for (int i = 0; i < value.Meshes.Count; ++i)
             {
@@ -156,36 +161,46 @@ public class InstanceManager : IDisposable
                     }
                 }
             }
+            value.Meshes.Clear();
 
-            for (int i = 0; i < value.Materials.Count; ++i)
+            if (value.AMaterialEntries != null)
             {
-                Resource<AMaterialEntry> materialResource;
-                engine.joyce.Material jMaterial = value.Materials[i];
-                if (!_materialResources.TryGetValue(jMaterial, out materialResource))
+                for (int i = 0; i < value.Materials.Count; ++i)
                 {
-                    Error("Unknown material to unreference.");
-                }
-                else
-                {
-                    if (materialResource.RemoveReference())
+                    Resource<AMaterialEntry> materialResource;
+                    engine.joyce.Material jMaterial = value.Materials[i];
+                    if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                     {
-                        try
+                        Error("Unknown material to unreference.");
+                    }
+                    else
+                    {
+                        if (materialResource.RemoveReference())
                         {
-                            _unloadMaterial(jMaterial, materialResource);
-                        }
-                        finally
-                        {
-                            _materialResources.Remove(jMaterial);
+                            try
+                            {
+                                _unloadMaterial(jMaterial, materialResource);
+                            }
+                            finally
+                            {
+                                _materialResources.Remove(jMaterial);
+                            }
                         }
                     }
                 }
-            }
 
+                value.Materials.Clear();
+                value.MeshMaterials.Clear();
+            }
         }
     }
     
 
-    private void OnChanged(in DefaultEcs.Entity entity,
+    /**
+     * If the user replaces the new instance3 specifying the
+     * mesh to use, we remove the pre-compiled PfInstance.
+     */
+    private void _onChanged(in DefaultEcs.Entity entity,
         in engine.joyce.components.Instance3 cOldInstance,
         in engine.joyce.components.Instance3 cNewInstance)
     {
@@ -193,7 +208,11 @@ public class InstanceManager : IDisposable
     }
 
 
-    private void OnRemoved(in DefaultEcs.Entity entity,
+    /**
+     * If the user removes the new instance3 specifying the
+     * mesh to use, we remove the pre-compiled PfInstance.
+     */
+    private void _onRemoved(in DefaultEcs.Entity entity,
         in engine.joyce.components.Instance3 cOldInstance)
     {
         entity.Remove<Splash.components.PfInstance>();
@@ -204,11 +223,11 @@ public class InstanceManager : IDisposable
     {
         IEnumerable<IDisposable> GetSubscriptions(World w)
         {
-            yield return w.SubscribeEntityComponentAdded<Splash.components.PfInstance>(OnAdded);
-            yield return w.SubscribeEntityComponentChanged<Splash.components.PfInstance>(OnChanged);
-            yield return w.SubscribeEntityComponentRemoved<Splash.components.PfInstance>(OnRemoved);
-            yield return w.SubscribeEntityComponentChanged<engine.joyce.components.Instance3>(OnChanged);
-            yield return w.SubscribeEntityComponentRemoved<engine.joyce.components.Instance3>(OnRemoved);
+            yield return w.SubscribeEntityComponentAdded<Splash.components.PfInstance>(_onAdded);
+            yield return w.SubscribeEntityComponentChanged<Splash.components.PfInstance>(_onChanged);
+            yield return w.SubscribeEntityComponentRemoved<Splash.components.PfInstance>(_onRemoved);
+            yield return w.SubscribeEntityComponentChanged<engine.joyce.components.Instance3>(_onChanged);
+            yield return w.SubscribeEntityComponentRemoved<engine.joyce.components.Instance3>(_onRemoved);
         }
 
         if (null == world)
@@ -216,11 +235,14 @@ public class InstanceManager : IDisposable
             ErrorThrow("world must not be null.", (m) => new ArgumentException(m));
         }
 
+        int nInitialEntites = 0;
         var entities = world.GetEntities().With<Splash.components.PfInstance>().AsEnumerable();
         foreach (DefaultEcs.Entity entity in entities)
         {
-            OnAdded(entity, entity.Get<Splash.components.PfInstance>());
+            _onAdded(entity, entity.Get<Splash.components.PfInstance>());
+            ++nInitialEntites;
         }
+        Trace($"Added {nInitialEntites} initial entites.");
 
         return GetSubscriptions(world).Merge();
     }
@@ -252,7 +274,7 @@ public class InstanceManager : IDisposable
     /// </summary>
     public InstanceManager(in IThreeD threeD)
     {
-        _lockObject = new object();
+        _lo = new object();
         _threeD = threeD;
         _meshResources = new Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>>();
         _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
