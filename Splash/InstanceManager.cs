@@ -142,17 +142,21 @@ public class InstanceManager : IDisposable
 
     private void _remove(in Entity entity, in Splash.components.PfInstance value)
     {
-        // bool hasInstance3 = entity.Has<engine.joyce.components.Instance3>();
+        
+        bool hasInstance3 = entity.Has<engine.joyce.components.Instance3>();
         bool hasPfInstance = entity.Has<Splash.components.PfInstance>();
-        if (!hasPfInstance)
+        
+        // Trace($"hasInstance3 is {hasInstance3}, hasPfInstance is {hasPfInstance}.");
+
+        if (hasPfInstance)
         {
             /*
-             * We are in a redundant call. Ignore.
-             *
-             * (DefaultEcs keeps the one that is removed right now true)
+             * We are in a sequence of remove entity calls.
+             * The indirect call from remove Instance3 will trigger us again.
              */
             return;
         }
+
 
         // TXWTODO: Lock is superfluous, we only have one ECS Thread.
         lock (_lo)
