@@ -105,6 +105,8 @@
 	  <None Remove="Platforms\Android\libopenal.so" />
 	  <None Remove="Platforms\Android\libs\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\lorem.png" />
+	  <None Remove="Platforms\Android\lvl-1-01c.ogg" />
+	  <None Remove="Platforms\Android\lvl-6.ogg" />
 	  <None Remove="Platforms\Android\mipmap\appicon.png" />
 	  <None Remove="Platforms\Android\pling01.ogg" />
 	  <None Remove="Platforms\Android\pling02.ogg" />
@@ -186,6 +188,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\lorem.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\lvl-1-01c.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\lvl-6.ogg">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\pling01.ogg">
