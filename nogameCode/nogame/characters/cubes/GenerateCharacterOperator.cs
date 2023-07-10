@@ -5,6 +5,7 @@ using System.Numerics;
 using engine;
 using engine.world;
 using engine.streets;
+using engine.world.components;
 using static engine.Logger;   
 
 namespace nogame.characters.cubes
@@ -193,8 +194,10 @@ namespace nogame.characters.cubes
 
 
                     var speed = 25f + _rnd.getFloat() * 15f;
+                    int fragmentId = worldFragment.NumericalId;
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
+                        eTarget.Set(new engine.world.components.FragmentId(fragmentId));
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));

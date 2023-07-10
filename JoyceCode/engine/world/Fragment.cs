@@ -36,6 +36,7 @@ namespace engine.world
 
         private string _myKey;
         private int _id;
+        public int NumericalId { get => _id; }
 
         public int LastIteration { get; set; }
 
