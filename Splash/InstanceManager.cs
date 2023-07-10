@@ -30,6 +30,12 @@ public class InstanceManager : IDisposable
     private readonly Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>> _meshResources;
     private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
 
+    /**
+     * Well, removing PfInstance from within Remove Instance3 seems correct,
+     * however, when deleting the entity, this triggers RemoveInstance3 twice.
+     * So keep track.
+     */
+    private int _inRemoveInstance3 = 0;
 
     private void _unloadMesh(engine.joyce.Mesh jMesh, Resource<AMeshEntry> meshResource)
     {
@@ -136,6 +142,19 @@ public class InstanceManager : IDisposable
 
     private void _remove(in Entity entity, in Splash.components.PfInstance value)
     {
+        // bool hasInstance3 = entity.Has<engine.joyce.components.Instance3>();
+        bool hasPfInstance = entity.Has<Splash.components.PfInstance>();
+        if (!hasPfInstance)
+        {
+            /*
+             * We are in a redundant call. Ignore.
+             *
+             * (DefaultEcs keeps the one that is removed right now true)
+             */
+            return;
+        }
+
+        // TXWTODO: Lock is superfluous, we only have one ECS Thread.
         lock (_lo)
         {
             for (int i = 0; i < value.Meshes.Count; ++i)
@@ -161,36 +180,30 @@ public class InstanceManager : IDisposable
                     }
                 }
             }
-            value.Meshes.Clear();
 
-            if (value.AMaterialEntries != null)
+
+            for (int i = 0; i < value.Materials.Count; ++i)
             {
-                for (int i = 0; i < value.Materials.Count; ++i)
+                Resource<AMaterialEntry> materialResource;
+                engine.joyce.Material jMaterial = value.Materials[i];
+                if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                 {
-                    Resource<AMaterialEntry> materialResource;
-                    engine.joyce.Material jMaterial = value.Materials[i];
-                    if (!_materialResources.TryGetValue(jMaterial, out materialResource))
+                    Error("Unknown material to unreference.");
+                }
+                else
+                {
+                    if (materialResource.RemoveReference())
                     {
-                        Error("Unknown material to unreference.");
-                    }
-                    else
-                    {
-                        if (materialResource.RemoveReference())
+                        try
                         {
-                            try
-                            {
-                                _unloadMaterial(jMaterial, materialResource);
-                            }
-                            finally
-                            {
-                                _materialResources.Remove(jMaterial);
-                            }
+                            _unloadMaterial(jMaterial, materialResource);
+                        }
+                        finally
+                        {
+                            _materialResources.Remove(jMaterial);
                         }
                     }
                 }
-
-                value.Materials.Clear();
-                value.MeshMaterials.Clear();
             }
         }
     }
@@ -204,7 +217,9 @@ public class InstanceManager : IDisposable
         in engine.joyce.components.Instance3 cOldInstance,
         in engine.joyce.components.Instance3 cNewInstance)
     {
+        ++_inRemoveInstance3;
         entity.Remove<Splash.components.PfInstance>();
+        --_inRemoveInstance3;
     }
 
 
@@ -215,7 +230,9 @@ public class InstanceManager : IDisposable
     private void _onRemoved(in DefaultEcs.Entity entity,
         in engine.joyce.components.Instance3 cOldInstance)
     {
+        ++_inRemoveInstance3;
         entity.Remove<Splash.components.PfInstance>();
+        --_inRemoveInstance3;
     }
 
     
@@ -248,9 +265,6 @@ public class InstanceManager : IDisposable
     }
 
 
-    /// <summary>
-    /// Unloads all loaded resources.
-    /// </summary>
     public void Dispose()
     {
         GC.SuppressFinalize(this);
@@ -269,9 +283,7 @@ public class InstanceManager : IDisposable
         _materialResources.Clear();
     }
 
-    /// <summary>
-    /// Creates an instance of type <see cref="AResourceManager{TInfo, TResource}"/>.
-    /// </summary>
+
     public InstanceManager(in IThreeD threeD)
     {
         _lo = new object();

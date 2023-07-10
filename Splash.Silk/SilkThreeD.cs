@@ -433,6 +433,10 @@ public class SilkThreeD : IThreeD
         }
     }
 
+    /**
+     * Create a silk mesh entry for the given mesh. That is converting
+     * engine representation to silk representation, but not yet uploading it.
+     */
     public AMeshEntry CreateMeshEntry(in engine.joyce.Mesh jMesh)
     {
         MeshGenerator.CreateSilkMesh(jMesh, out var skMeshEntry);
@@ -449,7 +453,7 @@ public class SilkThreeD : IThreeD
             {
                 skMeshEntry.Release(_getGL());
                 nUploadedMeshes = --_nUploadedMeshes;
-                // Trace($"Only {nUploadedMeshes} uploaded right now.");
+                Trace($"Only {nUploadedMeshes} uploaded right now.");
             }
         });
     }
