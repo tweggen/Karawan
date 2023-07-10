@@ -2,6 +2,7 @@ namespace engine.physics;
 
 public class CollisionProperties
 {
+    public DefaultEcs.Entity Entity;
     public string Name;
     public string DebugInfo;
     public bool IsDetectable = true;

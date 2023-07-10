@@ -81,7 +81,7 @@ namespace nogame.parts.playerhover
             }
         }
 
-        
+
         private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
         {
             /*
@@ -89,7 +89,7 @@ namespace nogame.parts.playerhover
              * If the other does not have collision properties, this variable also is empty.
              */
             CollisionProperties other = null;
-            
+
             // Trace( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
             CollisionProperties propsA = contactInfo.PropertiesA;
             CollisionProperties propsB = contactInfo.PropertiesB;
@@ -98,7 +98,7 @@ namespace nogame.parts.playerhover
 
             if (null != propsA)
             {
-                Trace( $"A: {{ Name: \"{ propsA.Name }\" }}");
+                Trace($"A: {{ Name: \"{propsA.Name}\" }}");
                 if (propsA.Name == PhysicsName)
                 {
                     if (propsB != null)
@@ -112,16 +112,17 @@ namespace nogame.parts.playerhover
                     }
                 }
             }
+
             if (null != propsB)
             {
-                Trace( $"B: {{ Name: \"{ propsB.Name }\" }}");
+                Trace($"B: {{ Name: \"{propsB.Name}\" }}");
                 if (propsB.Name == PhysicsName)
                 {
                     if (propsA != null)
                     {
                         other = propsA;
                     }
-                    
+
                     if (propsB != null)
                     {
                         me = propsB;
@@ -133,7 +134,7 @@ namespace nogame.parts.playerhover
             {
                 return;
             }
-            
+
             /*
              * Now let's check for explicit other components.
              */
@@ -141,8 +142,10 @@ namespace nogame.parts.playerhover
             {
                 Trace($"Cube chrIdx {other.DebugInfo}");
                 _nextCubeCollected();
+                _engine.AddDoomedEntity(other.Entity);
             }
         }
+    
 
         public void PartDeactivate()
         {
@@ -287,7 +290,7 @@ namespace nogame.parts.playerhover
                 }
                 engine.physics.CollisionProperties collisionProperties = 
                     new engine.physics.CollisionProperties
-                    { Name = PhysicsName, IsTangible = true };
+                    { Entity = _eShip, Name = PhysicsName, IsTangible = true };
                 _engine.GetAPhysics().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
 

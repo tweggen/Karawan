@@ -217,7 +217,7 @@ namespace nogame.characters.cubes
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
-                                { Name = "nogame.characters.cube", DebugInfo = $"_chrIdx {_characterIndex}", IsTangible = false };
+                                { Entity = eTarget, Name = "nogame.characters.cube", DebugInfo = $"_chrIdx {_characterIndex}", IsTangible = false };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCubeSound(), 150f));

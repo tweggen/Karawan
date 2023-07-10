@@ -269,6 +269,17 @@ namespace engine
         }
 
 
+        public void AddDoomedEntity(DefaultEcs.Entity entity)
+        {
+            lock (_lo)
+            {
+                List<Entity> listEntity = new List<Entity>();
+                listEntity.Add(entity);
+                _listDoomedEntityLists.Add(listEntity);
+            }
+        }
+
+
         public DefaultEcs.Entity CreateEntity(string name)
         {
             DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
