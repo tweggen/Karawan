@@ -91,6 +91,14 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         return $"7020/GenerateCar3CharacterOperatar/{_myKey}/";
     }
     
+    
+    public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+    {
+        aa = new Vector3(-MetaGen.MaxWidth / 2f, -1000f, -MetaGen.MaxHeight / 2f);
+        bb = new Vector3(MetaGen.MaxWidth / 2f, 2000f, MetaGen.MaxHeight / 2f);
+    }
+    
+    
     public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
     {
         var aPhysics = worldFragment.Engine.GetAPhysics();

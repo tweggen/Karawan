@@ -36,6 +36,12 @@ namespace engine.streets
         }
 
 
+        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+        {
+            _clusterDesc.GetAABB(out aa, out bb);
+        }
+        
+
         private bool _generateQuarterFloor(
             world.Fragment worldFragment,
             streets.Quarter quarter,

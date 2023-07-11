@@ -68,6 +68,12 @@ namespace nogame.cities
         }
 
 
+        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+        {
+            _clusterDesc.GetAABB(out aa, out bb);
+        }
+        
+
         /**
          * The trivial building texture covers 32 stories by definition.
          * We set a story to 3m. 

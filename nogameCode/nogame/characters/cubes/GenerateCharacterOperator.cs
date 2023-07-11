@@ -91,6 +91,13 @@ namespace nogame.characters.cubes
             return $"7001/GenerateCubeCharacterOperatar/{_myKey}/";
         }
         
+        
+        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+        {
+            _clusterDesc.GetAABB(out aa, out bb);
+        }
+        
+        
         public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
         {
             var aPhysics = worldFragment.Engine.GetAPhysics();

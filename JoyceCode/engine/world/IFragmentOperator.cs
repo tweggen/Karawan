@@ -1,12 +1,14 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace engine.world
 {
     public interface IFragmentOperator
     {
+        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb);
 
         /**
          * Return the path describing the order of the operator.

@@ -86,6 +86,13 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         return $"7020/GenerateTramCharacterOperator/{_myKey}/";
     }
     
+    
+    public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+    {
+        _clusterDesc.GetAABB(out aa, out bb);
+    }
+
+    
     public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
     {
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;

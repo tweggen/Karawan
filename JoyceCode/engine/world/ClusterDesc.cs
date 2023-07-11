@@ -80,6 +80,13 @@ namespace engine.world
             }
         }
 
+        public void GetAABB(out Vector3 aa, out Vector3 bb)
+        {
+            Vector3 vS2 = new(Size / 2f, Size / 2f, Size / 2f);
+            aa = Pos - vS2;
+            bb = Pos + vS2;
+        }
+        
 
         public streets.Quarter GuessQuarter(in Vector2 p)
         {

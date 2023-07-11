@@ -39,6 +39,12 @@ namespace engine.streets
         }
 
 
+        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+        {
+            _clusterDesc.GetAABB(out aa, out bb);
+        }
+        
+
         /**
          * Generate a polygon representing the street point.
          */

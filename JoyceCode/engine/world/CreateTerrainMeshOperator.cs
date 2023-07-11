@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 
 namespace engine.world
@@ -19,6 +20,13 @@ namespace engine.world
         }
 
 
+        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+        {
+            aa = new Vector3(-MetaGen.MaxWidth / 2f, -1000f, -MetaGen.MaxHeight / 2f);
+            bb = new Vector3(MetaGen.MaxWidth / 2f, 2000f, MetaGen.MaxHeight / 2f);
+        }
+        
+        
         /**
          * Load the final elevation table from the elevation cache and
          * apply it to the world fragment.

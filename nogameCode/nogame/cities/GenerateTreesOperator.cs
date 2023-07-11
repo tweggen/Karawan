@@ -45,6 +45,12 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
     }
 
 
+    public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+    {
+        _clusterDesc.GetAABB(out aa, out bb);
+    }
+        
+
     private builtin.tools.Lindenmayer.System _createTree1System() 
     { 
         

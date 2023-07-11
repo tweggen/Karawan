@@ -13,8 +13,8 @@ namespace engine.world
         private static MetaGen _instance;
 
         public static float FragmentSize = 400f;
-        public static float MaxWidth = 30000f;
-        public static float MaxHeight = 30000f;
+        public static float MaxWidth = 90000f;
+        public static float MaxHeight = 90000f;
 
         public Vector3 MaxPos;
         public Vector3 MinPos;
@@ -71,12 +71,12 @@ namespace engine.world
         }
 
 
-
         public void AddFragmentOperator(world.IFragmentOperator op)
         {
             _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
         }
 
+        
         public void ApplyFragmentOperators(world.Fragment fragment)
         {
             if( null==fragment ) {
