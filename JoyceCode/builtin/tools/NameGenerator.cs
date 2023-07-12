@@ -40,10 +40,14 @@ namespace engine.tools
         private string _createSyllable(in engine.RandomSource rnd)
         {
             string strSyl = "";
-            strSyl += _createPhoneme(rnd, _pSylOpen, _arrSylOpen);
-            strSyl += _createPhoneme(rnd, _pSylInMod, _arrSylInMod);
-            strSyl += _createPhoneme(rnd, _pSylVow, _arrSylVow);
-            strSyl += _createPhoneme(rnd, _pSylClose, _arrSylClose);
+            do
+            {
+                strSyl += _createPhoneme(rnd, _pSylOpen, _arrSylOpen);
+                strSyl += _createPhoneme(rnd, _pSylInMod, _arrSylInMod);
+                strSyl += _createPhoneme(rnd, _pSylVow, _arrSylVow);
+                strSyl += _createPhoneme(rnd, _pSylClose, _arrSylClose);
+            } while (strSyl == "");
+
             return strSyl;
         }
 
