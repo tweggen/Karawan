@@ -92,7 +92,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
     }
 
 
-    private void _drawCluster(IFramebuffer target, ClusterDesc clusterDesc,
+    private void _drawClusterBase(IFramebuffer target, ClusterDesc clusterDesc,
         in Matrix3x2 m2fb)
     {
         int fbWidth = (int) target.Width;
@@ -107,6 +107,23 @@ public class WorldMapTerrainProvider : IWorldMapProvider
             
         dc.FillColor = 0xff441144;
         target.FillRectangle(dc, pos-sizehalf, pos+sizehalf);
+    }
+    
+    
+    private void _drawClusterText(IFramebuffer target, ClusterDesc clusterDesc,
+        in Matrix3x2 m2fb)
+    {
+        int fbWidth = (int) target.Width;
+        int fbHeight = (int) target.Height;
+
+        engine.draw.Context dc = new();
+        
+        Vector2 sizehalf = new Vector2(clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f,
+            clusterDesc.Size / MetaGen.MaxHeight * fbHeight / 2f);
+
+        Vector2 pos = Vector2.Transform(clusterDesc.Pos2, m2fb); 
+            
+        dc.FillColor = 0xff441144;
         dc.TextColor = 0xff22aaee;
         target.DrawText(dc, 
             new Vector2(pos.X, pos.Y-10f), 
@@ -216,8 +233,9 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         var clusterList = engine.world.ClusterList.Instance();
         foreach (var clusterDesc in clusterList.GetClusterList())
         {
-            _drawCluster(target, clusterDesc, m2fb);
+            _drawClusterBase(target, clusterDesc, m2fb);
             _drawHighways(target, clusterDesc, m2fb);
+            _drawClusterText(target, clusterDesc, m2fb);
 
 #if false
             StrokeStore strokeStore = null;            
