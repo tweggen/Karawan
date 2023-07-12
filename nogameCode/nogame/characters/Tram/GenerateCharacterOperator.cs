@@ -140,7 +140,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         if( nCharacters > _clusterDesc.GetNClosest() ) {
             nCharacters = _clusterDesc.GetNClosest();
         }
-        Trace($"Generating {nCharacters} trams.");
+        // Trace($"Generating {nCharacters} trams.");
 
         for (int i=0; i<nCharacters; i++)
         {

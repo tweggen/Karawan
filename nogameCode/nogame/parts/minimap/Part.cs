@@ -56,7 +56,7 @@ public class Part : IPart
             _engine.GetATransform().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
-                new Vector3(-7f, 3.8f, -1f));
+                new Vector3(-7f, 3.5f, -1f));
         }
 
     }

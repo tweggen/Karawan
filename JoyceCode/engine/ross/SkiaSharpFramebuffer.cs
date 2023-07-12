@@ -198,6 +198,12 @@ public class SkiaSharpFramebuffer : IFramebuffer
                 x = lr.X;
                 break;
         }
+
+        if (fontSize > 20)
+        {
+            string foo;
+            foo = "2";
+        }
         // float y = ul.Y + fontSize; //lr.Y - ul.Y
         float y = ul.Y - metrics.Ascent; //lr.Y - ul.Y
         string remainingText = text;
