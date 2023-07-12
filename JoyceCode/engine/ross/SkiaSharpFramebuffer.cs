@@ -179,7 +179,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         var paint = new SKPaint(font)
         {
             Color = context.TextColor,
-            IsAntialias = false,
+            IsAntialias = true,
             Style = SKPaintStyle.Fill,
             TextAlign = _toSkiaTextAlign(context.HAlign),
             TextSize = fontSize

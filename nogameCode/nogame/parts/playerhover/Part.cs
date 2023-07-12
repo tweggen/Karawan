@@ -216,10 +216,10 @@ namespace nogame.parts.playerhover
             if (newZone)
             {
                 _eClusterDisplay.Set(new engine.draw.components.OSDText(
-                    new Vector2(352f, 220f),
-                    new Vector2(144f, 30f),
+                    new Vector2(786f-160f-32f, 360f),
+                    new Vector2(160f, 18f),
                     $"{displayName}",
-                    10,
+                    16,
                     0xff22aaee,
                     0x00000000,
                     HAlign.Right));
@@ -230,10 +230,10 @@ namespace nogame.parts.playerhover
             }
 
             _eScoreDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(400f, 20f),
-                new Vector2(96f, 30f),
+                new Vector2(786f-64f-32f, 0f),
+                new Vector2(64f, 40f),
                 $"{_score}",
-                30,
+                40,
                 0xff22aaee,
                 0x00000000,
                 HAlign.Right

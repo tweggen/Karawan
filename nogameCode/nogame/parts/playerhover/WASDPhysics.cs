@@ -178,12 +178,12 @@ namespace nogame.parts.playerhover
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
 
             _ePhysDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(20f, 212f),
-                new Vector2(400, 30),
+                new Vector2(20f, 330f),
+                new Vector2(400, 52),
                 $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}\n"
                 +$"v: {vTargetVelocity.Length()}\n"
                 +$"a: {vTargetAngularVelocity.Length()}",
-                10,
+                16,
                 0xff22aaee,
                 0x00000000,
                 HAlign.Left

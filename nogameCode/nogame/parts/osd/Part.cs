@@ -35,8 +35,8 @@ public class Part : engine.IPart
     
     private uint _fbpos = 0;
 
-    private readonly uint _width = 512;
-    private readonly uint _height = 256;
+    private readonly uint _width = 786;
+    private readonly uint _height = 384;
     
 
     private void _setupOSD()
