@@ -173,7 +173,10 @@ public class SkiaSharpFramebuffer : IFramebuffer
 
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize)
     {
-        var paint = new SKPaint(new SKFont(_skiaTypefacePrototype, fontSize))
+        SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
+        var metrics = font.Metrics;
+        
+        var paint = new SKPaint(font)
         {
             Color = context.TextColor,
             IsAntialias = false,
@@ -195,7 +198,8 @@ public class SkiaSharpFramebuffer : IFramebuffer
                 x = lr.X;
                 break;
         }
-        float y = ul.Y + fontSize; //lr.Y - ul.Y
+        // float y = ul.Y + fontSize; //lr.Y - ul.Y
+        float y = ul.Y - metrics.Ascent; //lr.Y - ul.Y
         string remainingText = text;
         lock (_lo)
         {
@@ -229,10 +233,12 @@ public class SkiaSharpFramebuffer : IFramebuffer
                     _skiaSurface.Canvas.DrawText(renderText, x, y, paint);
                 }
 
-                y += fontSize;
+                //y += fontSize;
+                y += metrics.Leading + metrics.Descent - metrics.Ascent;
             }
             // TXWTODO: We do not need y+the entire fontSize, just the under lengths.
-            _applyModified(ul, lr with { Y = y + fontSize});
+            //_applyModified(ul, lr with { Y = y + fontSize});
+            _applyModified(ul, lr with { Y = y /* metrics.Descent-metrics.Ascent */ });
         }
     }
     
