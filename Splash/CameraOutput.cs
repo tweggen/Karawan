@@ -157,7 +157,7 @@ namespace Splash
         }
         
 
-        public void AppendInstance(in Splash.components.PfInstance pfInstance, in Matrix4x4 matrix)
+        public void AppendInstance(in Splash.components.PfInstance pfInstance, Matrix4x4 matrix)
         {
             lock (_lo)
             {
