@@ -16,7 +16,13 @@ namespace engine.world
 
         public string Id;
         public bool Merged;
-        public Vector3 Pos;
+
+        private Vector3 _pos;
+        public Vector3 Pos
+        {
+            get => _pos;
+            set => _setPos(value);
+        }
 
         public Vector2 Pos2
         {
@@ -66,7 +72,14 @@ namespace engine.world
         private void _setSize(float size)
         {
             _size = size;
-            _aabb = new geom.AABB(Pos, size);
+            _aabb = new geom.AABB(_pos, size);
+
+        }
+        
+        private void _setPos(Vector3 pos)
+        {
+            _pos = pos;
+            _aabb = new geom.AABB(pos, _size);
 
         }
         
