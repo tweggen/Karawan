@@ -47,7 +47,7 @@ public class AlphaInterpreter
      *    A map of geom atoms that are reused or generated.
      */
     public void Run(
-        engine.world.Fragment worldFragment,
+        engine.world.Fragment? worldFragment,
         Vector3 start,
         SortedDictionary<string, engine.joyce.Mesh> targets
     )
@@ -128,7 +128,7 @@ public class AlphaInterpreter
                 // trace( 'poly: $poly' );
                 var ext = new builtin.tools.ExtrudePoly(poly, path, 
                     27, 100f, false, false, false);
-                ext.BuildGeom(worldFragment, g);
+                ext.BuildGeom( g);
                 state.Position += vd;
             }
             else if (part.Name == "flat(r,l)")
@@ -167,7 +167,7 @@ public class AlphaInterpreter
                 path.Add(vd);
                 // trace( 'poly: $poly' );
                 var ext = new builtin.tools.ExtrudePoly(poly, path, 27, 100f, false, false, false);
-                ext.BuildGeom(worldFragment, g);
+                ext.BuildGeom( g);
                 state.Position += vd;
             }
             else if (part.Name == "push()")

@@ -22,6 +22,13 @@ namespace engine.joyce
             Materials = new List<Material>();
         }
 
+        public InstanceDesc TransformedCopy(in Matrix4x4 m)
+        {
+            InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials);
+            id.ModelTransform = ModelTransform * m;
+            return id;
+        }
+
         public InstanceDesc(
             in IList<engine.joyce.Mesh> meshes,
             in IList<int> meshMaterials,

@@ -111,7 +111,7 @@ namespace nogame.cities
              */
             var opExtrudePoly = new builtin.tools.ExtrudePoly(p, path, 27, _metersPerTexture, false, false, true);
             try {
-                opExtrudePoly.BuildGeom(worldFragment, g);
+                opExtrudePoly.BuildGeom( g);
             } catch (Exception e) {
                 trace( $"GenerateHousesOperator.createHouseSubGeo(): buildGeom(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }

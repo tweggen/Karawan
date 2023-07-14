@@ -21,7 +21,6 @@ namespace builtin.tools
         private readonly bool _addCeiling;
     
         public void BuildGeom(
-            in engine.world.Fragment worldFragment,
             in engine.joyce.Mesh g)
         {
             var vh = _path[0];
