@@ -103,7 +103,7 @@ namespace engine.streets
         /**
          * Iterate until the queue of strokes is empty again.
          */
-        public void generate()
+        public void Generate()
         {
             while (true)
             {
@@ -634,7 +634,7 @@ namespace engine.streets
         }
 
 
-        public void setBounds( 
+        public void SetBounds( 
             float blx0, float bly0,
             float trx0, float try0
         ) {
@@ -643,17 +643,17 @@ namespace engine.streets
         }
 
 
-        public List<Stroke> getStrokes() 
+        public List<Stroke> GetStrokes() 
         {
             return _strokeStore.GetStrokes();
         }
 
 
-        public void addStartingStroke(in Stroke stroke0){
+        public void AddStartingStroke(in Stroke stroke0){
             _listStrokesToDo.Add(stroke0);
         }
 
-        public void reset(
+        public void Reset(
             in string seed0,
             in StrokeStore strokeStore
         ) {

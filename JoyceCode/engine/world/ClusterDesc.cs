@@ -243,36 +243,39 @@ namespace engine.world
                 float dir = _rnd.get8()*(float)Math.PI/128f;
                 var newB = new engine.streets.StreetPoint();
                 var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 30f, true, 1.5f );
-                _streetGenerator.addStartingStroke(stroke);
+                _streetGenerator.AddStartingStroke(stroke);
             }
-#if false
+#if true
+            /*
+             * Plus the four corners.
+             */
             {
                 var newA = new StreetPoint();
-                newA.SetPos( -Size/3f, -Size/3f. );
+                newA.SetPos( -Size/3f, -Size/3f );
                 var newB = new StreetPoint();
                 var stroke = Stroke.CreateByAngleFrom( newA, newB, (float)Math.PI*0.25f, 30f, true, 1.5f );
-                _streetGenerator.addStartingStroke(stroke);
+                _streetGenerator.AddStartingStroke(stroke);
             }
             {
                 var newA = new StreetPoint();
                 newA.SetPos( Size/3f, -Size/3f );
                 var newB = new StreetPoint();
                 var stroke = Stroke.CreateByAngleFrom( newA, newB, 3f*(float)Math.PI*0.25f, 30f, true, 1.5f );
-                _streetGenerator.addStartingStroke(stroke);
+                _streetGenerator.AddStartingStroke(stroke);
             }
             {
                 var newA = new StreetPoint();
                 newA.SetPos( -Size/3f, Size/3f );
                 var newB = new StreetPoint();
                 var stroke = Stroke.CreateByAngleFrom( newA, newB, -(float)Math.PI*0.25f, 30f, true, 1.5f );
-                _streetGenerator.addStartingStroke(stroke);
+                _streetGenerator.AddStartingStroke(stroke);
             }
             {
                 var newA = new StreetPoint();
                 newA.SetPos( Size/3f, Size/3f );
                 var newB = new StreetPoint();
                 var stroke = Stroke.CreateByAngleFrom( newA, newB, -3.0f*(float)Math.PI*0.25f, 30f, true, 1.5f );
-                _streetGenerator.addStartingStroke(stroke);
+                _streetGenerator.AddStartingStroke(stroke);
             }
 #endif
         }
@@ -289,10 +292,10 @@ namespace engine.world
                     _quarterStore = new streets.QuarterStore();
                     _quarterGenerator = new streets.QuarterGenerator();
 
-                    _streetGenerator.reset("streets-" + _strKey, _strokeStore);
-                    _streetGenerator.setBounds(-Size / 2f, -Size / 2f, Size / 2f, Size / 2f);
+                    _streetGenerator.Reset("streets-" + _strKey, _strokeStore);
+                    _streetGenerator.SetBounds(-Size / 2f, -Size / 2f, Size / 2f, Size / 2f);
                     _addHighwayTriggers();
-                    _streetGenerator.generate();
+                    _streetGenerator.Generate();
 
                     /*
                      * Unfortunately, we also need to generate the sections at this point.
