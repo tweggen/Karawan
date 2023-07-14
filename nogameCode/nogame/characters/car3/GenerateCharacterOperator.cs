@@ -94,10 +94,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
     {
-        aa = new Vector3(-MetaGen.MaxWidth / 2f, -1000f, -MetaGen.MaxHeight / 2f);
-        bb = new Vector3(MetaGen.MaxWidth / 2f, 2000f, MetaGen.MaxHeight / 2f);
+        _clusterDesc.GetAABB(out aa, out bb);
     }
-    
+
     
     public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
     {

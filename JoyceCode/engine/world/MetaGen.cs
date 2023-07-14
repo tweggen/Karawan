@@ -93,20 +93,16 @@ namespace engine.world
             }
             if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
             List<Task> listFragmentOperatorTasks = new();
-            int was = 0, now = 0;
             foreach( KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators )
             {
 
                 IFragmentOperator op = kvp.Value;
                 Vector3 aa, bb;
                 op.FragmentGetAABB(out aa, out bb);
-                was++;
                 if (!fragment.Touches2AABB(aa, bb))
                 {
                     continue;
                 }
-
-                now++;
                 
                 Task taskFragmentOperator = new Task(() =>
                 {
@@ -137,7 +133,6 @@ namespace engine.world
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });
             taskAllFragmentOperators.Start();
-            Trace($"Loading fragments was={was}, now={now}");
         }
 
 
