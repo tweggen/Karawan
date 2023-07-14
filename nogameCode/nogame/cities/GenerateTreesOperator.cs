@@ -188,7 +188,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
 
         }
 
-
+#if false
         try
         {
             foreach (var instanceDesc in listInstanceDesc)
@@ -201,6 +201,21 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         {
             trace($"Unknown exception: {e}");
         }
+#else
+        /*
+         * This is a large amount of instances, reduce them.
+         * That way we can't use instance rendering for the trees but reduce draw calls.
+         */
+        try
+        {
+            InstanceDesc mergedInstanceDesc = InstanceDesc.CreateMergedFrom(listInstanceDesc);
+            worldFragment.AddStaticMolecule("nogame.cities.trees", mergedInstanceDesc, null);
+        }
+        catch (Exception e)
+        {
+            trace($"Unknown exception: {e}");
+        }
+#endif
     }
     
     static TreeInstanceGenerator _treeInstanceGenerator = new();

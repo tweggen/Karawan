@@ -340,7 +340,7 @@ namespace engine.world
                 entity.Set(new engine.world.components.FragmentId(_id));
             });
             _meshesInFragment += jInstanceDesc.Meshes.Count;
-            Trace($"Fragment {_myKey} now has {_meshesInFragment} meshes.");
+            Trace($"Fragment {_myKey} now has {_meshesInFragment} static meshes.");
         }
 
 
