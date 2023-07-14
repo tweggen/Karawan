@@ -4,24 +4,20 @@ using DefaultEcs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using static engine.Logger;
 
 
 namespace nogame.cities
 {
     public class GenerateHousesOperator : engine.world.IFragmentOperator
     {
-        private void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
-
-        static private object _lock = new();
+        static private object _lo = new();
         static private engine.joyce.Material _jMaterialHouse = null;
         static private engine.joyce.Material _jMaterialNeon = null;
 
         static private engine.joyce.Material _getHouseMaterial()
         {
-            lock (_lock)
+            lock (_lo)
             {
                 if (_jMaterialHouse == null)
                 {
@@ -36,7 +32,7 @@ namespace nogame.cities
 
         static private engine.joyce.Material _getNeonMaterial()
         {
-            lock (_lock)
+            lock (_lo)
             {
                 if (_jMaterialNeon == null)
                 {
@@ -113,7 +109,7 @@ namespace nogame.cities
             try {
                 opExtrudePoly.BuildGeom( g);
             } catch (Exception e) {
-                trace( $"GenerateHousesOperator.createHouseSubGeo(): buildGeom(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                Trace( $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
             
             try
@@ -121,7 +117,7 @@ namespace nogame.cities
                 var fCreatePhysics = opExtrudePoly.BuildStaticPhys(worldFragment);
                 listCreatePhysics.Add(fCreatePhysics);
             } catch (Exception e) {
-                trace( $"GenerateHousesOperator.createHouseSubGeo(): buildPhys(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                Trace( $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
 
         }
@@ -268,7 +264,7 @@ namespace nogame.cities
             {
                 if (quarter.IsInvalid())
                 {
-                    trace( $"GenerateHousesOperator.fragmentOperatorApply(): Skipping invalid quarter.");
+                    Trace( $"Skipping invalid quarter.");
                     continue;
                 }
                 /*
@@ -341,14 +337,14 @@ namespace nogame.cities
                                 g, listCreatePhysics);
                         }
                         catch (Exception e) {
-                            trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
                         try
                         {
                             _createNeonSignsSubGeo(worldFragment, fragPoints, height, neonG);
                         }
                         catch (Exception e) {
-                            trace($"GenerateHousesOperator.fragmentOperatorApply(): createHouseSubGeo(): Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
 
                         //haveHouse = true;
@@ -386,7 +382,7 @@ namespace nogame.cities
             }
             catch (Exception e)
             {
-                trace($"Unknown exception: {e}");
+                Trace($"Unknown exception: {e}");
             }
         }
     
