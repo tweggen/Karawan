@@ -80,6 +80,12 @@ namespace engine.world
         }
 
         
+        /**
+         * Some major work is lifted here, so there are some basic optimizations.
+         * So we perform an (inefficient) clipping, which operator shall be scheduled
+         * at all. And if there are too much, we offload the task creation to a task
+         * of its own.
+         */
         public void ApplyFragmentOperators(world.Fragment fragment)
         {
             if( null==fragment ) {
@@ -87,7 +93,21 @@ namespace engine.world
             }
             if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
             List<Task> listFragmentOperatorTasks = new();
-            foreach( KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators ) {
+            int was = 0, now = 0;
+            foreach( KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators )
+            {
+
+                IFragmentOperator op = kvp.Value;
+                Vector3 aa, bb;
+                op.FragmentGetAABB(out aa, out bb);
+                was++;
+                if (!fragment.Touches2AABB(aa, bb))
+                {
+                    continue;
+                }
+
+                now++;
+                
                 Task taskFragmentOperator = new Task(() =>
                 {
                     try
@@ -117,6 +137,7 @@ namespace engine.world
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });
             taskAllFragmentOperators.Start();
+            Trace($"Loading fragments was={was}, now={now}");
         }
 
 

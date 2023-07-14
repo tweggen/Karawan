@@ -46,6 +46,7 @@ namespace engine.world
         private engine.RandomSource _rnd;
 
         public Vector3 Position { get; }
+        public Vector3 _aa, _bb;
 
         public Index3 IdxFragment;
 
@@ -62,6 +63,32 @@ namespace engine.world
          */
         private List<Entity> _eStaticMolecules;
 
+
+        /**
+         * Does this fragment touch a given aabb box.
+         */
+        public bool Touches3AABB(in Vector3 aa, in Vector3 bb)
+        {
+            if (aa.X > _bb.X || _aa.X > bb.X || aa.Y > _bb.Y || _aa.Y > bb.Y  || aa.Z > _bb.Z || _aa.Z > bb.Z)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        
+        
+        public bool Touches2AABB(in Vector3 aa, in Vector3 bb)
+        {
+            if (aa.X > _bb.X || _aa.X > bb.X || aa.Z > _bb.Z || _aa.Z > bb.Z)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        
+        
         /**
          * Test, wether the given world coordinate is inside the cluster.
          */
@@ -372,6 +399,11 @@ namespace engine.world
             _myKey = strKey;
             _rnd = new engine.RandomSource(_myKey);
             Position = position0;
+            {
+                Vector3 sh = new(MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f);
+                _aa = Position - sh;
+                _bb = Position + sh;
+            }
             IdxFragment = idxFragment0;
 
             // Create an initial elevation array that still is zeroed.
