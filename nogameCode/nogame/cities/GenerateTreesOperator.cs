@@ -157,7 +157,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                     var treePos = center with { Y = inFragmentY };
                     listInstanceDesc.Add(_treeInstanceGenerator.CreateInstance(
                         worldFragment, treePos, _rnd.get16()));
-                    // trace( $"GenerateTreesOperator.fragmentOperatorApply(): Adding single tree at {treePos}." );
                 } else if( area >= (2f*areaPerTree) ) {
                     /*
                      * Just one other algo: random.
@@ -183,7 +182,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                         listInstanceDesc.Add(_treeInstanceGenerator.CreateInstance(
                             worldFragment, treePos, _rnd.get16()));
                         nPlanted++;
-                        // trace( $"GenerateTreesOperator.fragmentOperatorApply(): Adding tree at {treePos}." );
                     }
                 }
             }
