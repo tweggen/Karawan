@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using engine.streets;
 
 namespace engine.world
 {
@@ -21,7 +22,14 @@ namespace engine.world
         {
             get => new Vector2(Pos.X, Pos.Z);
         }
-        public float Size = 100;
+
+        private float _size = 100;
+        public float Size
+        {
+            get => _size;
+            set => _setSize(value);
+        }
+        
         public string Name = "Unnamed";
 
         public float AverageHeight = 0f;
@@ -31,6 +39,7 @@ namespace engine.world
         private int _maxClosest = 5;
         private string _strKey;
         private engine.RandomSource _rnd;
+        private engine.geom.AABB _aabb;
 
         /** 
          * Each cluster has a stroke store associated that descirbes the 
@@ -54,6 +63,13 @@ namespace engine.world
         private streets.QuarterStore _quarterStore;
 
 
+        private void _setSize(float size)
+        {
+            _size = size;
+            _aabb = new geom.AABB(Pos, size);
+
+        }
+        
         public override string ToString()
         {
             return $"{{ 'id': {_strKey}; 'name': {Name}; 'pos': {Pos}; 'size': {Size}; }}";
@@ -80,11 +96,9 @@ namespace engine.world
             }
         }
 
-        public void GetAABB(out Vector3 aa, out Vector3 bb)
+        public void GetAABB(out engine.geom.AABB aabb)
         {
-            Vector3 vS2 = new(Size / 2f, Size / 2f, Size / 2f);
-            aa = Pos - vS2;
-            bb = Pos + vS2;
+            aabb = _aabb;
         }
         
 
@@ -234,30 +248,30 @@ namespace engine.world
 #if false
             {
                 var newA = new StreetPoint();
-                newA.setPos( -size/3., -size/3. );
+                newA.SetPos( -Size/3f, -Size/3f. );
                 var newB = new StreetPoint();
-                var stroke = Stroke.createByAngleFrom( newA, newB, Math.PI*0.25, 30., true, 1.5 );
+                var stroke = Stroke.CreateByAngleFrom( newA, newB, (float)Math.PI*0.25f, 30f, true, 1.5f );
                 _streetGenerator.addStartingStroke(stroke);
             }
             {
                 var newA = new StreetPoint();
-                newA.setPos( size/3., -size/3. );
+                newA.SetPos( Size/3f, -Size/3f );
                 var newB = new StreetPoint();
-                var stroke = Stroke.createByAngleFrom( newA, newB, 3.*Math.PI*0.25, 30., true, 1.5 );
+                var stroke = Stroke.CreateByAngleFrom( newA, newB, 3f*(float)Math.PI*0.25f, 30f, true, 1.5f );
                 _streetGenerator.addStartingStroke(stroke);
             }
             {
                 var newA = new StreetPoint();
-                newA.setPos( -size/3., size/3. );
+                newA.SetPos( -Size/3f, Size/3f );
                 var newB = new StreetPoint();
-                var stroke = Stroke.createByAngleFrom( newA, newB, -Math.PI*0.25, 30., true, 1.5 );
+                var stroke = Stroke.CreateByAngleFrom( newA, newB, -(float)Math.PI*0.25f, 30f, true, 1.5f );
                 _streetGenerator.addStartingStroke(stroke);
             }
             {
                 var newA = new StreetPoint();
-                newA.setPos( size/3., size/3. );
+                newA.SetPos( Size/3f, Size/3f );
                 var newB = new StreetPoint();
-                var stroke = Stroke.createByAngleFrom( newA, newB, -3.0*Math.PI*0.25, 30., true, 1.5 );
+                var stroke = Stroke.CreateByAngleFrom( newA, newB, -3.0f*(float)Math.PI*0.25f, 30f, true, 1.5f );
                 _streetGenerator.addStartingStroke(stroke);
             }
 #endif
@@ -323,17 +337,6 @@ namespace engine.world
     }
 
     
-    /**
-     * Get the approximated number of fragments this cluster
-     * covers.
-     */
-    public float GetApproxFragments()
-    {
-        float area = Size * Size / (engine.world.MetaGen.FragmentSize * engine.world.MetaGen.FragmentSize);
-        return area;
-    }
-    
-
     public ClusterDesc(string strKey)
     {
         _strKey = strKey;

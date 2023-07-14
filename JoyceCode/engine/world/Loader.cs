@@ -170,9 +170,9 @@ return molArrayMap;
                 var frag = _mapFrags[strKey];
                 if (world.MetaGen.TRACE_WORLD_LOADER) Trace($"WorldLoader.releaseFragmentList(): Discarding fragment {strKey}");
                 frag.WorldFragmentRemove();
-                frag.WorldFragmentUnload();
-                _mapFrags.Remove(strKey);
+                frag.Dispose();
                 frag = null;
+                _mapFrags.Remove(strKey);
             }
         }
 
@@ -286,13 +286,6 @@ return molArrayMap;
                         }
                         _mapFrags[strKey] = fragment;
 
-                        try
-                        {
-                            fragment.WorldFragmentAdd(1f);
-                        }
-                        catch (Exception e) {
-                            Trace($"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling worldFragmentAdd(): {e}");
-                        }
                     }
                 }
             }

@@ -16,6 +16,10 @@ namespace engine.world
         public static float MaxWidth = 90000f;
         public static float MaxHeight = 90000f;
 
+        public static readonly geom.AABB AABB = new(
+            new Vector3(-MaxWidth, -10000, -MaxHeight),
+            new Vector3(MaxWidth, 10000, MaxHeight));
+
         public static float ClusterNavigationHeight = 3f;
         public static float VoidNavigationHeight = 3.5f;
         
@@ -97,9 +101,8 @@ namespace engine.world
             {
 
                 IFragmentOperator op = kvp.Value;
-                Vector3 aa, bb;
-                op.FragmentGetAABB(out aa, out bb);
-                if (!fragment.Touches2AABB(aa, bb))
+                op.FragmentOperatorGetAABB(out var aabb);
+                if (!aabb.IntersectsXZ(fragment.AABB))
                 {
                     continue;
                 }

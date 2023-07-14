@@ -7,10 +7,11 @@ using DefaultEcs;
 using System.Linq;
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using static engine.Logger;
 
 namespace engine.world
 {
-    public class Fragment
+    public class Fragment : IDisposable
     {
         static private object _lock = new();
 
@@ -46,8 +47,8 @@ namespace engine.world
         private engine.RandomSource _rnd;
 
         public Vector3 Position { get; }
-        public Vector3 _aa, _bb;
-
+        public geom.AABB AABB; 
+        
         public Index3 IdxFragment;
 
         /**
@@ -64,31 +65,6 @@ namespace engine.world
         private List<Entity> _eStaticMolecules;
 
 
-        /**
-         * Does this fragment touch a given aabb box.
-         */
-        public bool Touches3AABB(in Vector3 aa, in Vector3 bb)
-        {
-            if (aa.X > _bb.X || _aa.X > bb.X || aa.Y > _bb.Y || _aa.Y > bb.Y  || aa.Z > _bb.Z || _aa.Z > bb.Z)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        
-        
-        public bool Touches2AABB(in Vector3 aa, in Vector3 bb)
-        {
-            if (aa.X > _bb.X || _aa.X > bb.X || aa.Z > _bb.Z || _aa.Z > bb.Z)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        
-        
         /**
          * Test, wether the given world coordinate is inside the cluster.
          */
@@ -263,12 +239,8 @@ namespace engine.world
         }
 
 
-        public void WorldFragmentUnload()
+        public void Dispose()
         {
-            // _allEnv.pfGame.platformDestroyFragment(_platformFragment);
-            // _molecules = null;
-            // _listCharacters = null;
-            // _allEnv = null;
         }
 
 
@@ -310,27 +282,15 @@ namespace engine.world
 
 
         /**
-         * Actually do add the given world fragment to the game runtime.
+         * Create an array capable of holding the elevation data
+         * of the given resolution.
          */
-        public void WorldFragmentAdd( float newDetail )
-        {
-            // TXWTODO: Make all things visible that are local to us.
-
-        }
-
-
-        /**
-            * Create an array capable of holding the elevation data
-            * of the given resolution.
-            */
         private void _createElevationArray()
         {
             var plusone = _groundNElevations+1;
             _elevations = new float[plusone, plusone];
         }
-
-
-
+        
 
         /**
          * Add a geometry atom to this fragment.
@@ -341,6 +301,7 @@ namespace engine.world
         }
 
 
+        private int _meshesInFragment = 0;
         public void AddStaticMolecule(
             string staticName,
             engine.joyce.InstanceDesc jInstanceDesc,
@@ -378,7 +339,8 @@ namespace engine.world
                  */
                 entity.Set(new engine.world.components.FragmentId(_id));
             });
-
+            _meshesInFragment += jInstanceDesc.Meshes.Count;
+            Trace($"Fragment {_myKey} now has {_meshesInFragment} meshes.");
         }
 
 
@@ -401,8 +363,7 @@ namespace engine.world
             Position = position0;
             {
                 Vector3 sh = new(MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f);
-                _aa = Position - sh;
-                _bb = Position + sh;
+                AABB = new geom.AABB(Position, MetaGen.FragmentSize);
             }
             IdxFragment = idxFragment0;
 

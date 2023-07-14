@@ -20,10 +20,9 @@ namespace engine.world
         /**
          * This operator shall execute on every fragment.
          */
-        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+        public void FragmentOperatorGetAABB(out geom.AABB aabb)
         {
-            aa = new Vector3(-MetaGen.MaxWidth / 2f, -1000f, -MetaGen.MaxHeight / 2f);
-            bb = new Vector3(MetaGen.MaxWidth / 2f, 2000f, MetaGen.MaxHeight / 2f);
+            aabb = MetaGen.AABB;
         }
         
         

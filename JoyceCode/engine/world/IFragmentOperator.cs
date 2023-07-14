@@ -8,7 +8,7 @@ namespace engine.world
 {
     public interface IFragmentOperator
     {
-        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb);
+        public void FragmentOperatorGetAABB(out engine.geom.AABB aabb);
 
         /**
          * Return the path describing the order of the operator.

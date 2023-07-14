@@ -64,9 +64,9 @@ namespace nogame.cities
         }
 
 
-        public void FragmentGetAABB(out Vector3 aa, out Vector3 bb)
+        public void FragmentOperatorGetAABB(out engine.geom.AABB aabb)
         {
-            _clusterDesc.GetAABB(out aa, out bb);
+            _clusterDesc.GetAABB(out aabb);
         }
         
 
