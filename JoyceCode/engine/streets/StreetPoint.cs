@@ -6,6 +6,8 @@ namespace engine.streets
 {
     public class StreetPoint
     {
+        private object _lo = new();
+        
         static private void trace( in string message )
         {
             Console.WriteLine( message );
@@ -37,10 +39,20 @@ namespace engine.streets
          * based on the strokes involved.
          */
         private Dictionary<int, Vector2> _sectionStrokeMap;
-        public void Invalidate()
+
+
+        private void _invalidateNoLock()
         {
             _angleArray = null;
             _sectionArray = null;
+        }
+        
+        public void Invalidate()
+        {
+            lock (_lo)
+            {
+                _invalidateNoLock();
+            }
         }
 
         public override string ToString()
@@ -55,64 +67,67 @@ namespace engine.streets
 
         public void SetPos(float x, float y)
         {
+            lock (_lo)
+            {
 #if false
             pos.x = x;
             pos.y = y;
 #else
-            Pos = new Vector2( (int)(x * 10f) / 10f, (int)(y * 10f) / 10f );
+                Pos = new Vector2((int)(x * 10f) / 10f, (int)(y * 10f) / 10f);
 #endif
-            Invalidate();
-            if (null != _listStartingStrokes)
-            {
-                foreach(var stroke in _listStartingStrokes )
+                _invalidateNoLock();
+                if (null != _listStartingStrokes)
                 {
-                    stroke.invalidate();
+                    foreach (var stroke in _listStartingStrokes)
+                    {
+                        stroke.invalidate();
+                    }
                 }
-            }
-            if (null != _listEndingStrokes)
-            {
-                foreach(var stroke in _listEndingStrokes )
+
+                if (null != _listEndingStrokes)
                 {
-                    stroke.invalidate();
+                    foreach (var stroke in _listEndingStrokes)
+                    {
+                        stroke.invalidate();
+                    }
                 }
             }
         }
 
 
-        /**
-         * Return a sorted array of strokes.
-         * 
-         * @return Array<Stroke>
-         */
-        public List<Stroke> GetAngleArray()
+        private void _computeAngleArrayNoLock()
         {
-            if(null != _angleArray) {
-                return _angleArray;
-            }
             _angleArray = new List<Stroke>();
             if (null != _listStartingStrokes)
             {
-                foreach(var stroke in _listStartingStrokes)
+                foreach (var stroke in _listStartingStrokes)
                 {
                     if (null == stroke)
                     {
-                        throw new InvalidOperationException( "StreetPoint:getAngleArray(): Refusing to add null stroke." );
+                        throw new InvalidOperationException(
+                            "StreetPoint:getAngleArray(): Refusing to add null stroke.");
                     }
+
                     _angleArray.Add(stroke);
                 }
             }
+
             if (null != _listEndingStrokes)
             {
-                foreach(var stroke in _listEndingStrokes)
+                foreach (var stroke in _listEndingStrokes)
                 {
                     if (null == stroke)
                     {
-                        throw new InvalidOperationException( "StreetPoint:getAngleArray(): Refusing to add null stroke." );
+                        throw new InvalidOperationException(
+                            "StreetPoint:getAngleArray(): Refusing to add null stroke.");
                     }
+
                     _angleArray.Add(stroke);
                 }
             }
-            _angleArray.Sort( (a, b) => {
+
+            _angleArray.Sort((a, b) =>
+            {
                 // If any of the strokes is ending here, we meed to invert the angle.
                 var aAngle = geom.Angles.Snorm(a.GetAngleSP(this));
                 var bAngle = geom.Angles.Snorm(b.GetAngleSP(this));
@@ -123,19 +138,44 @@ namespace engine.streets
                 else return 0;
             });
 
-            foreach(var stroke in _angleArray)
+            foreach (var stroke in _angleArray)
             {
                 if (null == stroke)
                 {
-                    throw new InvalidOperationException( "StreetPoint.getAngleArray(): After sorting, angle array contains a null." );
+                    throw new InvalidOperationException(
+                        "StreetPoint.getAngleArray(): After sorting, angle array contains a null.");
                 }
             }
-
-            return _angleArray;
         }
 
 
-        private void traceAngles()
+        private List<Stroke> _getAngleArrayNoLock()
+        {
+            if (null != _angleArray)
+            {
+                return _angleArray;
+            }
+            
+            _computeAngleArrayNoLock();
+            return _angleArray;
+        }
+        
+
+        /**
+         * Return a sorted array of strokes.
+         * 
+         * @return Array<Stroke>
+         */
+        public List<Stroke> GetAngleArray()
+        {
+            lock (_lo)
+            {
+                return _getAngleArrayNoLock();
+            }
+        }
+
+
+        private void _traceAnglesNoLock()
         {
             trace( "angles:" );
             foreach( var stroke in _angleArray )
@@ -152,247 +192,280 @@ namespace engine.streets
          */
         public Stroke GetNextAngle(in Stroke strokeCurrent, float angle, bool clockwise)
         {
-            float minAngle = (float) Math.PI * 2.0f;
-            Stroke minStroke = null;
-            Stroke nullStroke = null;
-            if (null == strokeCurrent)
+            lock (_lo)
             {
-                throw new InvalidOperationException( "StreetPoint.getNextAngle(): Called without current stroke." );
-            }
-
-            var debugPoint = false;
-
-            /*
-             * Also, per API, we take the angle of an incoming stroke.
-             * However, we want to find the next outgoing stroke, so we need 
-             * to inverse the angle, as we will compute outgoing angles
-             * in this function.
-             */
-            var myAngle = geom.Angles.Snorm(angle + (float) Math.PI);
-
-            if (!clockwise)
-            {
-                throw new InvalidOperationException( "'StreetPoint:getNextAngle(): Anti-Clockwise not implemented yet." );
-            }
-
-            /*
-             * Start with the outgoing strokes.
-             */
-            if (null != _listStartingStrokes)
-            {
-                foreach(var stroke in _listStartingStrokes )
+                float minAngle = (float)Math.PI * 2.0f;
+                Stroke minStroke = null;
+                Stroke nullStroke = null;
+                if (null == strokeCurrent)
                 {
-                    var currAngle = geom.Angles.Snorm(stroke.Angle);
-                    /*
-                     * Note, that we need to use the unsigned angle.
-                     */
-                    var diffAngle = geom.Angles.Unorm(currAngle - myAngle);
-
-                    bool isStart = (strokeCurrent != null) && (strokeCurrent == stroke);
-
-                    if (debugPoint)
-                    {
-                        string strStart;
-                        if( isStart )
-                        {
-                            strStart = "START";
-                        } else
-                        {
-                            strStart = "";
-                        }
-                        trace($"getNextAngle({Pos}, {myAngle}, {stroke.B.Pos.X}): OUT {strStart} {currAngle} diffAngle {diffAngle}");
-                    }
-
-                    if (isStart)
-                    {
-                        /* 
-                         * This must be the same storke.
-                         */
-                        nullStroke = stroke;
-                    }
-                    else if (minAngle > diffAngle)
-                    {
-                        /*
-                         * A new smaller one.
-                         */
-                        minStroke = stroke;
-                        minAngle = diffAngle;
-                    }
-
+                    throw new InvalidOperationException("StreetPoint.getNextAngle(): Called without current stroke.");
                 }
-            }
 
+                var debugPoint = false;
 
-            /*
-             * Now the incoming strokes. Their angles need to be inversed.
-             */
-            if (null != _listEndingStrokes)
-            {
-                foreach(var stroke in _listEndingStrokes )
+                /*
+                 * Also, per API, we take the angle of an incoming stroke.
+                 * However, we want to find the next outgoing stroke, so we need 
+                 * to inverse the angle, as we will compute outgoing angles
+                 * in this function.
+                 */
+                var myAngle = geom.Angles.Snorm(angle + (float)Math.PI);
+
+                if (!clockwise)
                 {
-                    /*
-                     * Note the offset.
-                     */
-                    float currAngle = geom.Angles.Snorm(stroke.Angle + (float)Math.PI);
-                    /*
-                     * Note, that we need to use the unsigned angle for minimizing
-                     * angle.
-                     */
-                    float diffAngle = geom.Angles.Unorm(currAngle - myAngle);
+                    throw new InvalidOperationException(
+                        "'StreetPoint:getNextAngle(): Anti-Clockwise not implemented yet.");
+                }
 
-                    bool isStart = (strokeCurrent != null) && (strokeCurrent == stroke);
-
-                    if (debugPoint)
+                /*
+                 * Start with the outgoing strokes.
+                 */
+                if (null != _listStartingStrokes)
+                {
+                    foreach (var stroke in _listStartingStrokes)
                     {
-                        string strStart;
+                        var currAngle = geom.Angles.Snorm(stroke.Angle);
+                        /*
+                         * Note, that we need to use the unsigned angle.
+                         */
+                        var diffAngle = geom.Angles.Unorm(currAngle - myAngle);
+
+                        bool isStart = (strokeCurrent != null) && (strokeCurrent == stroke);
+
+                        if (debugPoint)
+                        {
+                            string strStart;
+                            if (isStart)
+                            {
+                                strStart = "START";
+                            }
+                            else
+                            {
+                                strStart = "";
+                            }
+
+                            trace(
+                                $"getNextAngle({Pos}, {myAngle}, {stroke.B.Pos.X}): OUT {strStart} {currAngle} diffAngle {diffAngle}");
+                        }
+
                         if (isStart)
                         {
-                            strStart = "START";
+                            /* 
+                             * This must be the same storke.
+                             */
+                            nullStroke = stroke;
                         }
-                        else
+                        else if (minAngle > diffAngle)
                         {
-                            strStart = "";
+                            /*
+                             * A new smaller one.
+                             */
+                            minStroke = stroke;
+                            minAngle = diffAngle;
                         }
-                        trace($"getNextAngle({Pos}, {myAngle}, {stroke.A.Pos.X}): IN {strStart} {currAngle} diffAngle {diffAngle}");
-                    }
 
-                    if (isStart)
-                    {
-                        /* 
-                         * This must be the same storke.
-                         */
-                        nullStroke = stroke;
                     }
-                    else if (minAngle > diffAngle)
+                }
+
+
+                /*
+                 * Now the incoming strokes. Their angles need to be inversed.
+                 */
+                if (null != _listEndingStrokes)
+                {
+                    foreach (var stroke in _listEndingStrokes)
                     {
                         /*
-                         * A new smaller one.
+                         * Note the offset.
                          */
-                        minStroke = stroke;
-                        minAngle = diffAngle;
+                        float currAngle = geom.Angles.Snorm(stroke.Angle + (float)Math.PI);
+                        /*
+                         * Note, that we need to use the unsigned angle for minimizing
+                         * angle.
+                         */
+                        float diffAngle = geom.Angles.Unorm(currAngle - myAngle);
+
+                        bool isStart = (strokeCurrent != null) && (strokeCurrent == stroke);
+
+                        if (debugPoint)
+                        {
+                            string strStart;
+                            if (isStart)
+                            {
+                                strStart = "START";
+                            }
+                            else
+                            {
+                                strStart = "";
+                            }
+
+                            trace(
+                                $"getNextAngle({Pos}, {myAngle}, {stroke.A.Pos.X}): IN {strStart} {currAngle} diffAngle {diffAngle}");
+                        }
+
+                        if (isStart)
+                        {
+                            /* 
+                             * This must be the same storke.
+                             */
+                            nullStroke = stroke;
+                        }
+                        else if (minAngle > diffAngle)
+                        {
+                            /*
+                             * A new smaller one.
+                             */
+                            minStroke = stroke;
+                            minAngle = diffAngle;
+                        }
+
                     }
-
                 }
-            }
 
-            // Return null or myself.
-            return minStroke;
+                // Return null or myself.
+                return minStroke;
+            }
         }
 
         public void RemoveStartingStroke(in Stroke s)
         {
-            if (this != s.A)
+            lock (_lo)
             {
-                throw new InvalidOperationException( "StreetPoint.RemoveStartingStroke(): Stroke start is not me." );
+                if (this != s.A)
+                {
+                    throw new InvalidOperationException("StreetPoint.RemoveStartingStroke(): Stroke start is not me.");
+                }
+
+                if (null == s.B)
+                {
+                    throw new InvalidOperationException(
+                        "'StreetPoint.removeStartingStroke(): Stroke has no end point.");
+                }
+
+                if (null == _listStartingStrokes)
+                {
+                    throw new InvalidOperationException("StreetPoint: No Starting list yet.");
+                }
+
+                _invalidateNoLock();
+                _listStartingStrokes.Remove(s);
             }
-            if (null == s.B)
-            {
-                throw new InvalidOperationException( "'StreetPoint.removeStartingStroke(): Stroke has no end point." );
-            }
-            if (null == _listStartingStrokes)
-            {
-                throw new InvalidOperationException( "StreetPoint: No Starting list yet." );
-            }
-            Invalidate();
-            _listStartingStrokes.Remove(s);
         }
 
 
         public void AddStartingStroke(Stroke s)
         {
-            if (null == s.B)
+            lock (_lo)
             {
-                throw new InvalidOperationException( "StreetPoint.addStartingStroke(): Stroke had no end point." );
+                if (null == s.B)
+                {
+                    throw new InvalidOperationException("StreetPoint.addStartingStroke(): Stroke had no end point.");
+                }
+
+                if (this != s.A)
+                {
+                    throw new InvalidOperationException("StreetPoint.addStartingStroke(): Stroke start is not me.");
+                }
+
+                if (null == _listStartingStrokes)
+                {
+                    _listStartingStrokes = new List<Stroke>();
+                }
+
+                _invalidateNoLock();
+                if (0 != _listStartingStrokes.FindAll(a => a == s).Count)
+                {
+                    throw new InvalidOperationException(
+                        $"StreetPoint.addStartingStroke(): Stroke {s.ToString()} already attached.");
+                }
+
+                _listStartingStrokes.Add(s);
             }
-            if (this != s.A)
-            {
-                throw new InvalidOperationException( "StreetPoint.addStartingStroke(): Stroke start is not me." );
-            }
-            if (null == _listStartingStrokes)
-            {
-                _listStartingStrokes = new List<Stroke>();
-            }
-            Invalidate();
-            if (0 != _listStartingStrokes.FindAll( a => a == s ).Count ) {
-                throw new InvalidOperationException( $"StreetPoint.addStartingStroke(): Stroke {s.ToString()} already attached." );
-            }
-            _listStartingStrokes.Add(s);
         }
 
 
         public void RemoveEndingStroke(in Stroke s) 
         {
-            if (this != s.B)
+            lock (_lo)
             {
-                throw new InvalidOperationException( $"StreetPoint.removeEndingStroke(): Stroke end is not me." );
+                if (this != s.B)
+                {
+                    throw new InvalidOperationException($"StreetPoint.removeEndingStroke(): Stroke end is not me.");
+                }
+
+                if (null == s.A)
+                {
+                    throw new InvalidOperationException(
+                        $"StreetPoint.removeEndingStroke(): Stroke has no start point.");
+                }
+
+                if (null == _listEndingStrokes)
+                {
+                    throw new InvalidOperationException($"StreetPoint: No Ending list yet.");
+                }
+
+                _invalidateNoLock();
+                _listEndingStrokes.Remove(s);
             }
-            if (null == s.A)
-            {
-                throw new InvalidOperationException( $"StreetPoint.removeEndingStroke(): Stroke has no start point." );
-            }
-            if (null == _listEndingStrokes)
-            {
-                throw new InvalidOperationException( $"StreetPoint: No Ending list yet." );
-            }
-            Invalidate();
-            _listEndingStrokes.Remove(s);
         }
 
 
         public void AddEndingStroke(Stroke s)
         {
-            if (null == s.A)
+            lock (_lo)
             {
-                throw new InvalidOperationException( $"StreetPoint.addEndingStroke(): Stroke had no start point." );
+                if (null == s.A)
+                {
+                    throw new InvalidOperationException($"StreetPoint.addEndingStroke(): Stroke had no start point.");
+                }
+
+                if (this != s.B)
+                {
+                    throw new InvalidOperationException($"StreetPoint.addEndingStroke(): Stroke end is not me.");
+                }
+
+                if (null == _listEndingStrokes)
+                {
+                    _listEndingStrokes = new List<Stroke>();
+                }
+
+                _invalidateNoLock();
+                if (0 != _listEndingStrokes.FindAll(a => a == s).Count)
+                {
+                    throw new InvalidOperationException(
+                        $"StreetPoint.addEndingStroke(): Stroke {s.ToString()} already attached.");
+                }
+
+                _listEndingStrokes.Add(s);
             }
-            if (this != s.B)
-            {
-                throw new InvalidOperationException( $"StreetPoint.addEndingStroke(): Stroke end is not me." );
-            }
-            if (null == _listEndingStrokes)
-            {
-                _listEndingStrokes = new List<Stroke>();
-            }
-            Invalidate();
-            if (0 != _listEndingStrokes.FindAll(a => a == s).Count ) {
-                throw new InvalidOperationException( $"StreetPoint.addEndingStroke(): Stroke {s.ToString()} already attached." );
-            }
-            _listEndingStrokes.Add(s);
         }
 
 
         public bool HasStrokes()
         {
-            if (
-                (
-                    null == _listStartingStrokes || 0==_listStartingStrokes.Count
-                ) && (
-                    null == _listEndingStrokes || 0==_listEndingStrokes.Count
+            lock (_lo)
+            {
+                if (
+                    (
+                        null == _listStartingStrokes || 0 == _listStartingStrokes.Count
+                    ) && (
+                        null == _listEndingStrokes || 0 == _listEndingStrokes.Count
+                    )
                 )
-            )
-            {
-                return false;
-            }
-            else
-            {
-                return true;
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
 
 
-        /**
-         * Return an array of of points describing the intersection of each stroke with 
-         * the previous one.
-         * 
-         * @return Array<geom.Point>
-         */
-        public List<Vector2> GetSectionArray()
+        private void _computeSectionArrayNoLock()
         {
-            if (_sectionArray != null)
-            {
-                return _sectionArray;
-            }
-
             var myVerbose = false;
             if (false && 115 == Id)
             {
@@ -406,14 +479,14 @@ namespace engine.streets
             /*
              * Make sure we have the array of sorted strokes.
              */
-            GetAngleArray();
+            _getAngleArrayNoLock();
 
             /*
             * A street point with a single street does not have any section array. 
             */
             if (_angleArray.Count < 2)
             {
-                return _sectionArray;
+                return;
             }
 
             /*
@@ -424,7 +497,7 @@ namespace engine.streets
 
             if (myVerbose)
             {
-                traceAngles();
+                _traceAnglesNoLock();
             }
 
             int idx = _angleArray.Count - 1;
@@ -568,8 +641,33 @@ namespace engine.streets
                 // trace('StreetPoint.getSectionArray(): sp $id Storing stroke $ids ${curr.sid} and ${prev.sid}');
                 ++idx;
             }
+        }
 
+
+        private List<Vector2> _getSectionArrayNoLock()
+        {
+            if (_sectionArray != null)
+            {
+                return _sectionArray;
+            }
+
+            _computeSectionArrayNoLock();
             return _sectionArray;
+        }
+        
+
+        /**
+         * Return an array of of points describing the intersection of each stroke with 
+         * the previous one.
+         * 
+         * @return Array<geom.Point>
+         */
+        public List<Vector2> GetSectionArray()
+        {
+            lock (_lo)
+            {
+                return _getSectionArrayNoLock();
+            }
         }
 
 
@@ -581,17 +679,24 @@ namespace engine.streets
          */
         public Nullable<Vector2> GetSectionPointByStroke( in Stroke curr, in Stroke prev )
         {
-            if( null==_sectionArray ) {
-                GetSectionArray();
+            lock (_lo)
+            {
+                if (null == _sectionArray)
+                {
+                    _getSectionArrayNoLock();
+                }
+
+                int ids = (curr.Sid % 10000) + 10000 * (prev.Sid % 10000);
+                // trace('StreetPoint.getSectionPointByStroke(): sp $id Obtaining stroke $ids ${curr.sid} and ${prev.sid}');
+                if (!_sectionStrokeMap.ContainsKey(ids))
+                {
+                    // trace('StreetPoint.getSectionPointByStroke(): Not found.');
+                    return null;
+                }
+
+                // trace('StreetPoint.getSectionPointByStroke(): Returning point.');
+                return _sectionStrokeMap[ids];
             }
-            int ids = (curr.Sid%10000)+10000*(prev.Sid%10000);
-            // trace('StreetPoint.getSectionPointByStroke(): sp $id Obtaining stroke $ids ${curr.sid} and ${prev.sid}');
-            if( !_sectionStrokeMap.ContainsKey( ids ) ) {
-                // trace('StreetPoint.getSectionPointByStroke(): Not found.');
-                return null;
-            }
-            // trace('StreetPoint.getSectionPointByStroke(): Returning point.');
-            return _sectionStrokeMap[ids];
         }
 
 

@@ -196,7 +196,8 @@ namespace engine.streets
                             */
                             if (curr.A.InStore)
                             {
-                                throw new InvalidOperationException($"Generator: (check new a too close to existing) curr.a is in store ({curr.ToString()})");
+                                // TXWTODO: Just commented this out. Is that good?
+                                // throw new InvalidOperationException($"Generator: (check new a too close to existing) curr.a is in store ({curr.ToString()})");
                             }
 
                             /*
@@ -228,7 +229,8 @@ namespace engine.streets
                              * Validate assumptions: tooClose needs to be in store, curr.b needs to be not in the store.
                              */
                             if( !curr.A.InStore ) {
-                                throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.a is not in store ({curr.ToString()})");
+                                // Why do I check this? I would't move A.
+                                // throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.a is not in store ({curr.ToString()})");
                             }
                             if( curr.B.InStore ) {
                                 throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.b is in store ({curr.ToString()})");

@@ -666,23 +666,7 @@ namespace engine.streets
 
             var nGeneratedStreets = 0;
             var nIgnoredStrokes = 0;
-
-#if false
-            worldFragment.AddMaterialFactory(
-                "GenerateClusterStreetsOperator._matStreet", function() {
-                var mat = new engine.Material("");
-                mat.diffuseTexturePath = "street/streets1to4.png";
-                // mat.textureRepeat = true;
-                mat.textureRepeat = false;
-                mat.textureSmooth = true;
-                mat.ambientColor = 0xffffff;
-                mat.ambient = 0.5;
-                mat.specular = 0.0;
-                return mat;
-            }
-                );
-#endif
-
+            
             var g = engine.joyce.Mesh.CreateListInstance();
             /*
              * Create the roads between the junctions.
