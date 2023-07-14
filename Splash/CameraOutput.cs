@@ -129,7 +129,7 @@ namespace Splash
              * And do we have an entry for the mesh in the material?
              */
             MeshBatch meshBatch;
-            materialBatch.MeshBatches.TryGetValue(aMeshEntry, out meshBatch);
+            materialBatch.MeshBatches.TryGetValue(aMeshEntry, out meshBatch); // TXWTODO: Hotspot! Optimize!
             if (null == meshBatch)
             {
                 meshBatch = new MeshBatch(aMeshEntry);

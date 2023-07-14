@@ -16,6 +16,9 @@ namespace engine.world
         public static float MaxWidth = 90000f;
         public static float MaxHeight = 90000f;
 
+        public static float ClusterNavigationHeight = 3f;
+        public static float VoidNavigationHeight = 3.5f;
+        
         public Vector3 MaxPos;
         public Vector3 MinPos;
 

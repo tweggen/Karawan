@@ -1,5 +1,6 @@
 ﻿using nogame.cities;
 using System.Numerics;
+using engine.world;
 
 namespace nogame.characters.cubes
 {
@@ -19,8 +20,10 @@ namespace nogame.characters.cubes
                 entity,
                 true, 0x0000ffff,
                 _snc.NavigatorGetOrientation(),
-                engine.world.MetaGen.Instance().Loader.ApplyNavigationHeight(
-                    _snc.NavigatorGetWorldPos(), 1f)
+                _snc.NavigatorGetWorldPos() with
+                {
+                    Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight + 1f
+                }
             );
         }
         

@@ -267,19 +267,9 @@ namespace nogame.cities
         public Quaternion NavigatorGetOrientation()
         {
             var vYAxis = new Vector3( 0f, 1f, 0f );
-#if false
-            /*
-             * z axis is minus direction
-             */
-            var vZAxis = _lastDirection;
-            vZAxis *= -1f;
-            var qOrientation = Quaternion.fromYZBases( vYAxis, vZAxis );
-            return qOrientation;
-#else
             var vForward = _lastDirection;
             Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vForward, vYAxis);
             return Quaternion.CreateFromRotationMatrix(rot);
-#endif
 
         }
 

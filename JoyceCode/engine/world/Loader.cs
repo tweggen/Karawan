@@ -357,11 +357,11 @@ return molArrayMap;
             ClusterDesc cluster = ClusterList.Instance().GetClusterAt(position);
             if (cluster != null)
             {
-                return cluster.AverageHeight + 3f;
+                return cluster.AverageHeight + MetaGen.ClusterNavigationHeight;
             }
             else
             {
-                return GetHeightAt(position.X, position.Z) + 3.5f;
+                return GetHeightAt(position.X, position.Z) + MetaGen.VoidNavigationHeight;
             }
         }
 

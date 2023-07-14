@@ -24,7 +24,10 @@ internal class Behavior : engine.IBehavior
             entity,
             true, 0x0000ffff,
             qOrientation,
-            MetaGen.Instance().Loader.ApplyNavigationHeight(_snc.NavigatorGetWorldPos())
+            _snc.NavigatorGetWorldPos() with
+            {
+                Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight + 1f
+            }
         );
     }
 
