@@ -93,6 +93,16 @@ public class API : Boom.ISoundAPI
     }
     
     
+    public void ResumeOutput()
+    {
+    }
+
+
+    public void SuspendOutput()
+    {
+    }
+
+
     public API(Engine engine0)
     {
         _engine = engine0;

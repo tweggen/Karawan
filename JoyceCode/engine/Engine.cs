@@ -91,7 +91,6 @@ namespace engine
             Stopping,
             Stopped
         };
-
         
         public EngineState State { get; private set; }
         public event EventHandler<EngineState> EngineStateChanged;
@@ -111,6 +110,18 @@ namespace engine
             {
                 EngineStateChanged.Invoke(this, newState);
             }
+        }
+
+
+        public void Suspend()
+        {
+
+        }
+
+
+        public void Resume()
+        {
+
         }
 
 
@@ -643,6 +654,8 @@ namespace engine
             stopWatch.Start();
             while (_platform.IsRunning())
             {
+                EngineState engineState;
+
                 /*
                  * Wait for the next frame or rock it.
                  */
@@ -667,7 +680,17 @@ namespace engine
                 {
                     // Trace("Sleeping.");
                     stopWatch.Start();
-                    Thread.Sleep(1);
+                    lock (_lo)
+                    {
+                        engineState = State;
+                    }
+                    if (engineState <= EngineState.Running)
+                    {
+                        Thread.Sleep(1);
+                    } else
+                    {
+                        Thread.Sleep(50);
+                    }
                     continue;
                 }
 
@@ -677,6 +700,15 @@ namespace engine
                  */
                 while (totalTime > invFps)
                 {
+                    lock (_lo)
+                    {
+                        engineState = State;
+                        if (engineState > EngineState.Running)
+                        {
+                            break;
+                        }
+                    }
+
                     // Trace( "Calling logical.");
                     _onLogicalFrame(invFps);
                     totalTime -= invFps;

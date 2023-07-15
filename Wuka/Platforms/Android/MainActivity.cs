@@ -23,6 +23,23 @@ namespace Wuka
         internal static AssetManager AssetManager;
         
         private Silk.NET.Windowing.IView _iView;
+        private engine.Engine _engine;
+
+        protected override void OnStop()
+        {
+            Implementations.Get<Boom.ISoundAPI>().SuspendOutput();
+            _engine.Suspend();
+            base.OnStop();
+        }
+
+
+        protected override void OnRestart()
+        {
+            Implementations.Get<Boom.ISoundAPI>().ResumeOutput();
+            _engine.Resume();
+            base.OnRestart();
+        }
+
         protected override void OnRun()
         {
             
@@ -56,7 +73,7 @@ namespace Wuka
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
 
 
-            var e = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
+            _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
 #if false
             {
                 WireServer.API aWireServer = new(e, 9001);
@@ -65,13 +82,13 @@ namespace Wuka
 
             Implementations.Register<Boom.ISoundAPI>(() =>
             {
-                var api = new Boom.OpenAL.API(e);
+                var api = new Boom.OpenAL.API(_engine);
                 return api;
             });
             
-            nogame.Main.Start(e);
+            nogame.Main.Start(_engine);
 
-            e.Execute();
+            _engine.Execute();
 
             Implementations.Get<Boom.ISoundAPI>().Dispose();
 

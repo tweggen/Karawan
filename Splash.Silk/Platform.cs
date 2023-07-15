@@ -428,12 +428,18 @@ namespace Splash.Silk
                     _desktopMouseController();
                 }
 
-
+                Engine.EngineState engineState = _engine.State;
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
                 if (renderFrame == null)
                 {
                     _silkThreeD.ExecuteGraphicsThreadActions(0.005f);
-                    System.Threading.Thread.Sleep(1);
+                    if (engineState <= Engine.EngineState.Running)
+                    {
+                        System.Threading.Thread.Sleep(1);
+                    } else
+                    {
+                        System.Threading.Thread.Sleep(10);
+                    }
                     continue;
                 }
 
