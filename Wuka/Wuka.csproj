@@ -39,8 +39,8 @@
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android33.0|AnyCPU'">
-	  <AndroidPackageFormat>apk</AndroidPackageFormat>
-	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 	  <DebugSymbols>True</DebugSymbols>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
 	  <AndroidStoreUncompressedFileExtensions>.ogg;.png</AndroidStoreUncompressedFileExtensions>
@@ -53,7 +53,7 @@
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android33.0|AnyCPU'">
-	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 	  <RunAOTCompilation>False</RunAOTCompilation>
 	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	  <AndroidUseAapt2>True</AndroidUseAapt2>
@@ -63,6 +63,7 @@
 	  <ApplicationId>de.nassau_records.silicondesert2</ApplicationId>
 	  <EnableLLVM>False</EnableLLVM>
 	  <AndroidEnableSGenConcurrent>False</AndroidEnableSGenConcurrent>
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
 	</PropertyGroup>
 
 	<ItemGroup>
