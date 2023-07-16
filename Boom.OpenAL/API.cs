@@ -1,11 +1,13 @@
 using engine;
 using Silk.NET.OpenAL;
 using Silk.NET.OpenAL.Extensions.Enumeration;
+using Silk.NET.OpenAL.Extensions.Soft;
+
 using static engine.Logger;
 
 namespace Boom.OpenAL;
 
-public class API : Boom.ISoundAPI
+unsafe public class API : Boom.ISoundAPI
 {
     private object _lo = new();
     private Engine _engine;
@@ -13,7 +15,7 @@ public class API : Boom.ISoundAPI
     
     private AL _al;
     private ALContext _alc;
-
+    private Device* _alDevice = null;
     private SortedDictionary<string, OGGSound> _mapSounds = new();
 
 
@@ -32,12 +34,16 @@ public class API : Boom.ISoundAPI
     public void Dispose()
     {
         // TXWTODO: Close openal
+        _engine.OnResume -= ResumeOutput;
+        _engine.OnSuspend -= SuspendOutput;
     }
 
 
     public void SetupDone()
     {
         _engine.LogicalFrame += _onLogicalFrame;
+        _engine.OnResume += ResumeOutput;
+        _engine.OnSuspend += SuspendOutput;
     }
     
     public Task<ISound> LoadSound(string url)
@@ -68,10 +74,16 @@ public class API : Boom.ISoundAPI
 
         return new AudioSource(_al, oggSound.ALBuffer);
     }
-    
 
+
+    private ReopenDevices _extReopenDevices;
+    private bool _haveReopenDevices = false;
+    
     private unsafe void _openDevice()
     {
+        _haveReopenDevices = _al.TryGetExtension<ReopenDevices>(out _extReopenDevices);
+        Trace($"haveReopenDevices = {_haveReopenDevices}");
+
         if (_alc.IsExtensionPresent(null, "ALC_ENUMERATION_EXT"))
         {
             using var enumeration = _alc.GetExtension<Enumeration>(null);
@@ -81,25 +93,43 @@ public class API : Boom.ISoundAPI
             }
         }
         
-        Device *alDevice = _alc.OpenDevice("");
-        if (alDevice == null)
+        _alDevice = _alc.OpenDevice("");
+        if (_alDevice != null)
         {
-            ErrorThrow("Unable to open any audio device.", (m) => new InvalidOperationException(m));
-            return;
+            _currentContext = _alc.CreateContext(_alDevice, null);
+            _alc.MakeContextCurrent(_currentContext);
+            bool result = _alc.MakeContextCurrent(_currentContext);
+            AudioError error = _al.GetError();
+            Trace( $"MakeCurrentContext returned {result}, error {error.ToString()} ");
         }
-
-        var context = _alc.CreateContext(alDevice, null);
-        _alc.MakeContextCurrent(context);
     }
     
+
+    private Silk.NET.OpenAL.Context *_currentContext = null;
     
-    public void ResumeOutput()
+    public void ResumeOutput(object? sender, string reason)
     {
+        // _alc.MakeContextCurrent(_currentContext);
+        // _alc.ProcessContext(_currentContext);
+        _alDevice = _alc.OpenDevice("");
+        if (_alDevice != null)
+        {
+            _currentContext = _alc.CreateContext(_alDevice, null);
+            bool result = _alc.MakeContextCurrent(_currentContext);
+            AudioError error = _al.GetError();
+            Trace( $"MakeCurrentContext returned {result}, error {error.ToString()} ");
+            _alc.ProcessContext(_currentContext);
+        }
     }
 
 
-    public void SuspendOutput()
+    public void SuspendOutput(object? sender, string reason)
     {
+        // _currentContext = _alc.GetCurrentContext();
+        _alc.MakeContextCurrent(null);
+        _alc.DestroyContext(_currentContext);
+        _alc.CloseDevice(_alDevice);
+        _alDevice = null;
     }
 
 
@@ -137,6 +167,9 @@ public class API : Boom.ISoundAPI
         _al.DistanceModel(DistanceModel.InverseDistance);
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
         _updateMovingSoundsSystem = new(_engine, this);
-        
+
+        _engine.OnResume += ResumeOutput;
+        _engine.OnSuspend += SuspendOutput;
+
     }
 }

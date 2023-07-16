@@ -63,6 +63,9 @@ namespace engine
         public event EventHandler<string> KeyRelease;
         public event EventHandler<Vector2> OnTouchPress;
         public event EventHandler<Vector2> OnTouchRelease;
+
+        public event EventHandler<string> OnSuspend;
+        public event EventHandler<string> OnResume;
         
         private Entity _cameraEntity;
         public event EventHandler<DefaultEcs.Entity> OnCameraEntityChanged;
@@ -115,13 +118,13 @@ namespace engine
 
         public void Suspend()
         {
-
+            OnSuspend?.Invoke(this, "user call");
         }
 
 
         public void Resume()
         {
-
+            OnResume?.Invoke(this, "user call");
         }
 
 

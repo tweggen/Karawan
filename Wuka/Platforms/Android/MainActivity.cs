@@ -27,22 +27,19 @@ namespace Wuka
 
         protected override void OnStop()
         {
-            Implementations.Get<Boom.ISoundAPI>().SuspendOutput();
-            _engine.Suspend();
+            //_engine.Suspend();
             base.OnStop();
         }
 
 
         protected override void OnRestart()
         {
-            Implementations.Get<Boom.ISoundAPI>().ResumeOutput();
-            _engine.Resume();
+            //_engine.Resume();
             base.OnRestart();
         }
 
         protected override void OnRun()
         {
-            
             /*
              * setup framework dependencies.
              */

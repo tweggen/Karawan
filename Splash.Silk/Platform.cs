@@ -348,6 +348,7 @@ namespace Splash.Silk
         {
         }
 
+        private bool _hadFocus = true;
 
         private void _windowOnLoad()
         {
@@ -393,7 +394,9 @@ namespace Splash.Silk
             _silkThreeD.SetGL(_gl);
             _gl.ClearDepth(1f);
             _gl.ClearColor(0f, 0f, 0f, 0f);
-            
+
+            _hadFocus = true;
+
             _createTestTexture();
         }
 
@@ -440,7 +443,7 @@ namespace Splash.Silk
                     {
                         System.Threading.Thread.Sleep(10);
                     }
-                    continue;
+                    break;
                 }
 
                 if (_iView.Size.X != 0 && _iView.Size.Y != 0)
@@ -478,6 +481,29 @@ namespace Splash.Silk
             _renderer.SetDimension(size.X, size.Y);
         }
 
+        private void _windowOnFocusChanged(bool haveFocus)
+        {
+            if (haveFocus)
+            {
+                if (!_hadFocus)
+                {
+                    _hadFocus = true;
+                    _engine.SetEngineState(Engine.EngineState.Starting);
+                    _engine.SetEngineState(Engine.EngineState.Running);
+                    _engine.Resume();
+                }
+            }
+            else
+            {
+                if (_hadFocus)
+                {
+                    _hadFocus = false;
+                    _engine.Suspend();
+                    _engine.SetEngineState(Engine.EngineState.Stopping);
+                    _engine.SetEngineState(Engine.EngineState.Stopped);
+                }
+            }
+        }
 
         public void Execute()
         {
@@ -560,6 +586,7 @@ namespace Splash.Silk
             _iView.Render += _windowOnRender;
             _iView.Update += _windowOnUpdate;
             _iView.Closing += _windowOnClose;
+            _iView.FocusChanged += _windowOnFocusChanged;
             
             // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
             // disable and bind cursor.
