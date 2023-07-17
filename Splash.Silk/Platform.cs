@@ -488,9 +488,12 @@ namespace Splash.Silk
                 if (!_hadFocus)
                 {
                     _hadFocus = true;
-                    _engine.SetEngineState(Engine.EngineState.Starting);
-                    _engine.SetEngineState(Engine.EngineState.Running);
-                    _engine.Resume();
+                    if (GlobalSettings.Get("platform.suspendOnUnfocus") != "false")
+                    {
+                        _engine.SetEngineState(Engine.EngineState.Starting);
+                        _engine.SetEngineState(Engine.EngineState.Running);
+                        _engine.Resume();
+                    }
                 }
             }
             else
@@ -498,9 +501,12 @@ namespace Splash.Silk
                 if (_hadFocus)
                 {
                     _hadFocus = false;
-                    _engine.Suspend();
-                    _engine.SetEngineState(Engine.EngineState.Stopping);
-                    _engine.SetEngineState(Engine.EngineState.Stopped);
+                    if (GlobalSettings.Get("platform.suspendOnUnfocus") != "false")
+                    {
+                        _engine.Suspend();
+                        _engine.SetEngineState(Engine.EngineState.Stopping);
+                        _engine.SetEngineState(Engine.EngineState.Stopped);
+                    }
                 }
             }
         }
