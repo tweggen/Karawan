@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using BepuPhysics.CollisionDetection;
+using engine.joyce.components;
 using engine.transform.components;
 using engine.world;
 
@@ -20,6 +21,9 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
     private draw.Context _dc;
 
     private DefaultEcs.Entity _eCamera;
+    private Vector2 _vOSDViewSize = new (512,256);
+
+    private bool _clearWholeScreen = true;
 
     protected override void Update(double dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
@@ -29,13 +33,17 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         }
 
         bool haveCamera = false;
-        Matrix4x4 mCamera;
+        Matrix4x4 mCameraToWorld = new();
+        joyce.components.Camera3 cCamera = new();
+        transform.components.Transform3ToWorld cCamTransform;
+        
         if (_eCamera.IsAlive)
         {
-            if (_eCamera.Has<Transform3ToWorld>())
+            if (_eCamera.Has<Transform3ToWorld>() && _eCamera.Has<Camera3>())
             {
-                var cCamTransform = _eCamera.Get<Transform3ToWorld>();
-                mCamera = cCamTransform.Matrix;
+                cCamTransform = _eCamera.Get<Transform3ToWorld>();
+                cCamera = _eCamera.Get<Camera3>();
+                mCameraToWorld = cCamTransform.Matrix;
                 haveCamera = true;
             }
         }
@@ -44,7 +52,8 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         {
             components.OSDText osdText = entity.Get<components.OSDText>();
 
-#if false
+            Vector2 vScreenPos;
+            
             if (entity.Has<Transform3ToWorld>())
             {
                 if (!haveCamera)
@@ -59,23 +68,36 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 /*
                  * Render 3d label with position relative to the projected
                  * position.
+                 *
+                 * So first, transform the thing we render to world coordinates.
+                 * Then use the world and the view matrices to convert to screen space.
                  */
-                Vector3 pos = Vector3.Transform(Vector3.Zero, mModel * mCamera);
+                cCamera.GetViewMatrix(out Matrix4x4 mView, mCameraToWorld);
+                cCamera.GetProjectionMatrix(out Matrix4x4 mProjection, _vOSDViewSize);
+                Vector3 vScreenPos3 = Vector3.Transform(Vector3.Zero, mModel * mView * mProjection);
+                vScreenPos = new(vScreenPos3.X + _vOSDViewSize.X/2f, -vScreenPos3.Y + _vOSDViewSize.Y/2f);
             }
             else
-#endif
             {
-                /*
-                 * Render standard 2d text.
-                 */
-                Vector2 ul = osdText.Position;
-                Vector2 lr = osdText.Position + osdText.Size - new Vector2(1f, 1f);
+                vScreenPos = Vector2.Zero;
+            }
+
+            vScreenPos += osdText.Position;
+            
+            /*
+             * Render standard 2d text.
+             */
+            Vector2 ul = vScreenPos;
+            Vector2 lr = vScreenPos + osdText.Size - new Vector2(1f, 1f);
+            if (!_clearWholeScreen)
+            {
                 _dc.ClearColor = osdText.FillColor;
                 _framebuffer.ClearRectangle(_dc, ul, lr);
-                _dc.TextColor = osdText.TextColor;
-                _dc.HAlign = osdText.HAlign;
-                _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
             }
+
+            _dc.TextColor = osdText.TextColor;
+            _dc.HAlign = osdText.HAlign;
+            _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
 
         }
     }
@@ -110,6 +132,15 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             return;
         }
         _framebuffer.BeginModification();
+
+        if (_clearWholeScreen)
+        {
+            _dc.FillColor = 0x00000000;
+            _framebuffer.ClearRectangle(_dc,
+                new Vector2(0, 0),
+                new Vector2(_framebuffer.Width - 1f, _framebuffer.Height - 1f));
+        }
+
     }
 
     protected override void PostUpdate(double dt)

@@ -85,6 +85,7 @@ namespace Splash.Silk
                 var mCameraToWorld = renderPart.Transform3ToWorld.Matrix;
                 {
                     var vCameraPosition = mCameraToWorld.Translation;
+                    // TXWTODO: Bad API. Use OnCameraCHanged API?
                     _threeD.SetCameraPos(vCameraPosition);
                 }
                 
@@ -103,7 +104,6 @@ namespace Splash.Silk
                 /*
                  * First draw player related stuff
                  */
-                // TXWTODO: Nothing here
 
                 /*
                  * Then draw standard world
