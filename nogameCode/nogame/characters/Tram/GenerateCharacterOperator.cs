@@ -197,6 +197,14 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                                 .SetSpeed(30f)
                                 .SetHeight(10f)));
+                        eTarget.Set(new engine.draw.components.OSDText(
+                            new Vector2(0, 30f),
+                            new Vector2(160f, 18f),
+                            "Hitram",
+                            16,
+                            0xff22aaee,
+                            0x00000000,
+                            engine.draw.HAlign.Left));
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(
