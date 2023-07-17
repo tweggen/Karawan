@@ -181,7 +181,7 @@ namespace Karawan
             engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
             engine.GlobalSettings.Set("splash.touchControls", "false");
-            engine.GlobalSettings.Set("nogame.CreateHouses", "true");
+            engine.GlobalSettings.Set("nogame.CreateHouses", "false");
             engine.GlobalSettings.Set("nogame.CreateTrees", "true");
             engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
             
@@ -198,6 +198,7 @@ namespace Karawan
             
             {
                 var options = WindowOptions.Default;
+            
                 // options.API = GraphicsAPI.
                 /*
                  * Even if we don't start up fullscreen, we need to setup a size anyway.  
@@ -208,15 +209,10 @@ namespace Karawan
                 options.VSync = false;
                 options.ShouldSwapAutomatically = false;
                 options.WindowState = WindowState.Normal;
-                //if (startFullscreen)
-                //{
-                //    options.WindowState = WindowState.Fullscreen;
-                //}
                 iWindow = Window.Create(options);
                 iWindow.Size = new Vector2D<int>(1280, 720);
             }
             
-            // var e = Splash.Raylib.Platform.EasyCreate(args);
             var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
             e.SetFullscreen(startFullscreen);
 

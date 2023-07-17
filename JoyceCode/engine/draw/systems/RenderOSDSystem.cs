@@ -63,8 +63,11 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
                 
                 var cEntityTransform = entity.Get<Transform3ToWorld>();
-                Matrix4x4 mModel = cEntityTransform.Matrix;
+                //Matrix4x4 mModel = cEntityTransform.Matrix;
+                Vector3 vModel = cEntityTransform.Matrix.Translation;
+                vModel = new(0f, 35f, 0f);
                 
+
                 /*
                  * Render 3d label with position relative to the projected
                  * position.
@@ -74,7 +77,8 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                  */
                 cCamera.GetViewMatrix(out Matrix4x4 mView, mCameraToWorld);
                 cCamera.GetProjectionMatrix(out Matrix4x4 mProjection, _vOSDViewSize);
-                Vector3 vScreenPos3 = Vector3.Transform(Vector3.Zero, mModel * mView * mProjection);
+                Vector3 vWorldPos3 = Vector3.Transform(vModel, mView);
+                Vector3 vScreenPos3 = Vector3.Transform(vModel, mProjection);
                 vScreenPos = new(vScreenPos3.X + _vOSDViewSize.X/2f, -vScreenPos3.Y + _vOSDViewSize.Y/2f);
             }
             else

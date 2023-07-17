@@ -339,16 +339,16 @@ public class SilkThreeD : IThreeD
         if (_useInstanceRendering)
         {
             skMeshEntry.vao.BindVertexArray();
-            CheckError("Bind Vertex Array");
+            // CheckError("Bind Vertex Array");
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
-            CheckError("New Buffer Object");
+            // CheckError("New Buffer Object");
             bMatrices.BindBuffer();
-            CheckError("Bind Buffer");
+            // CheckError("Bind Buffer");
             uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
             for (uint i = 0; i < 4; ++i)
             {
                 gl.EnableVertexAttribArray(locInstanceMatrices + i);
-                CheckError("Enable vertex array in instances");
+                // CheckError("Enable vertex array in instances");
                 gl.VertexAttribPointer(
                     locInstanceMatrices + i,
                     4,
@@ -357,9 +357,9 @@ public class SilkThreeD : IThreeD
                     16 * (uint)sizeof(float),
                     (void*)(sizeof(float) * i * 4)
                 );
-                CheckError("Enable vertex attribute pointer n");
+                // CheckError("Enable vertex attribute pointer n");
                 gl.VertexAttribDivisor(locInstanceMatrices + i, 1);
-                CheckError("attrib divisor");
+                // CheckError("attrib divisor");
             }
 
             /*
@@ -375,7 +375,7 @@ public class SilkThreeD : IThreeD
          */
 
         skMeshEntry.vao.BindVertexArray();
-        CheckError("instance vertex array bind");
+        // CheckError("instance vertex array bind");
 
         // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
@@ -383,14 +383,12 @@ public class SilkThreeD : IThreeD
         {
             Matrix4x4 mvp = _matView * _matProjection;
             sh.SetUniform("mvp", mvp);
-            CheckError("upload mvp");
             gl.DrawElementsInstanced(
                 PrimitiveType.Triangles,
                 (uint)skMeshEntry.JMesh.Indices.Count,
                 GLEnum.UnsignedShort,
                 (void*)0,
                 (uint)nMatrices);
-            CheckError("draw instance");
         }
         else
         {
