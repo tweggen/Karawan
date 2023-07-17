@@ -78,29 +78,49 @@ unsafe public class API : Boom.ISoundAPI
 
     private ReopenDevices _extReopenDevices;
     private bool _haveReopenDevices = false;
+
+
+    private string _researchDeviceName()
+    {
+        string firstDevice = "";
+        if (_alc.IsExtensionPresent(null, "ALC_ENUMERATION_EXT"))
+        {
+            using var enumeration = _alc.GetExtension<Enumeration>(null);
+            foreach (string device in enumeration.GetStringList(GetEnumerationContextStringList.DeviceSpecifiers))
+            {
+                Trace($"Found openal sound device {device}.");
+                if (firstDevice == "" && device != "")
+                {
+                    Wonder( $"Using openal sound device {device}");
+                }
+            }
+        }
+
+        return firstDevice;
+    }
+    
     
     private unsafe void _openDevice()
     {
         _haveReopenDevices = _al.TryGetExtension<ReopenDevices>(out _extReopenDevices);
         Trace($"haveReopenDevices = {_haveReopenDevices}");
 
-        if (_alc.IsExtensionPresent(null, "ALC_ENUMERATION_EXT"))
-        {
-            using var enumeration = _alc.GetExtension<Enumeration>(null);
-            foreach (string device in enumeration.GetStringList(GetEnumerationContextStringList.DeviceSpecifiers))
-            {
-                Console.WriteLine(device);
-            }
-        }
-        
-        _alDevice = _alc.OpenDevice("");
+        string deviceName = _researchDeviceName();
+        _alDevice = _alc.OpenDevice(deviceName);
         if (_alDevice != null)
         {
             _currentContext = _alc.CreateContext(_alDevice, null);
-            _alc.MakeContextCurrent(_currentContext);
-            bool result = _alc.MakeContextCurrent(_currentContext);
-            AudioError error = _al.GetError();
-            Trace( $"MakeCurrentContext returned {result}, error {error.ToString()} ");
+            if (_currentContext != null)
+            {
+                _alc.MakeContextCurrent(_currentContext);
+                bool result = _alc.MakeContextCurrent(_currentContext);
+                AudioError error = _al.GetError();
+                Trace($"MakeCurrentContext returned {result}, error {error.ToString()} ");
+            }
+        }
+        else
+        {
+            _currentContext = null;
         }
     }
     
@@ -111,14 +131,22 @@ unsafe public class API : Boom.ISoundAPI
     {
         // _alc.MakeContextCurrent(_currentContext);
         // _alc.ProcessContext(_currentContext);
-        _alDevice = _alc.OpenDevice("");
+        string deviceName = _researchDeviceName();
+        _alDevice = _alc.OpenDevice(deviceName);
         if (_alDevice != null)
         {
             _currentContext = _alc.CreateContext(_alDevice, null);
-            bool result = _alc.MakeContextCurrent(_currentContext);
-            AudioError error = _al.GetError();
-            Trace( $"MakeCurrentContext returned {result}, error {error.ToString()} ");
-            _alc.ProcessContext(_currentContext);
+            if (_currentContext != null)
+            {
+                bool result = _alc.MakeContextCurrent(_currentContext);
+                AudioError error = _al.GetError();
+                Trace($"MakeCurrentContext returned {result}, error {error.ToString()} ");
+                _alc.ProcessContext(_currentContext);
+            }
+        }
+        else
+        {
+            _currentContext = null;
         }
     }
 
@@ -126,10 +154,13 @@ unsafe public class API : Boom.ISoundAPI
     public void SuspendOutput(object? sender, string reason)
     {
         // _currentContext = _alc.GetCurrentContext();
-        _alc.MakeContextCurrent(null);
-        _alc.DestroyContext(_currentContext);
-        _alc.CloseDevice(_alDevice);
-        _alDevice = null;
+        if (_currentContext != null)
+        {
+            _alc.MakeContextCurrent(null);
+            _alc.DestroyContext(_currentContext);
+            _alc.CloseDevice(_alDevice);
+            _alDevice = null;
+        }
     }
 
 
