@@ -82,50 +82,22 @@ namespace Splash.Silk
                     _gl.Disable(EnableCap.DepthTest);
                 }
 
-                var mToWorld = renderPart.Transform3ToWorld.Matrix;
-
-                var vCameraPosition = mToWorld.Translation;
-                Vector3 vY;
-                Vector3 vUp = vY = new Vector3(mToWorld.M21, mToWorld.M22, mToWorld.M23);
-                Vector3 vZ = new Vector3(-mToWorld.M31, -mToWorld.M32, -mToWorld.M33);
-                Vector3 vFront = -vZ;
-                Vector3 vTarget = vCameraPosition + vFront;
-
-                _threeD.SetCameraPos(vCameraPosition);
-
+                var mCameraToWorld = renderPart.Transform3ToWorld.Matrix;
+                {
+                    var vCameraPosition = mCameraToWorld.Translation;
+                    _threeD.SetCameraPos(vCameraPosition);
+                }
+                
                 /*
                  * Create the model/projection/view matrix for use in the scaler.
                  * This part of code only sets up the view matrix (how to move the world into
                  * the camera's point of view) and the projection matrix (how to move camera 3d
                  * coordinates into clip space, i.e. 2d screen with depth info).
                  */
-                {
-                    Matrix4x4 matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition+vZ , vUp);
-                    _silkThreeD.SetViewMatrix(matView);
-                    float right = cCameraParams.NearFrustum * (float)Math.Tan(cCameraParams.Angle * 0.5f * (float)Math.PI / 180f);
-                    float invAspect = _vViewSize.Y / _vViewSize.X;
-                    float top = right * invAspect;
-                    Matrix4x4 matProjection;
-                    {
-                        float n = cCameraParams.NearFrustum;
-                        float f = cCameraParams.FarFrustum;
-                        float l = -right;
-                        float r = right;
-                        float t = top;
-                        float b = -top;
-                        Matrix4x4 m = new(
-                            2f * n / (r - l), 0f, (r+l)/(r-l), 0f,
-                            0f, 2f * n / (t - b), (t+b)/(t-b), 0f,
-                            0f, 0f, -(f + n) / (f - n), -2f * f * n / (f - n),
-                            0f, 0f, -1f, 0f
-                        );
-
-                        // TXWTODO: We need a smarter way to fix that to the view.
-                        Matrix4x4 mScaleToViewWindow =  Matrix4x4.Identity;
-                        matProjection = Matrix4x4.Transpose(m*mScaleToViewWindow);
-                    }
-                    _silkThreeD.SetProjectionMatrix(matProjection);
-                }
+                cCameraParams.GetViewMatrix(out Matrix4x4 matView, mCameraToWorld);
+                _silkThreeD.SetViewMatrix(matView);
+                cCameraParams.GetProjectionMatrix(out Matrix4x4 matProjection, _vViewSize);
+                _silkThreeD.SetProjectionMatrix(matProjection);
 
 
                 /*
