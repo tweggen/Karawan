@@ -422,15 +422,6 @@ namespace Splash.Silk
                 _physFrameReadKeyEvents();
                 _physFrameReadMouseMove();
 
-                if (engine.GlobalSettings.Get("splash.touchControls") != "false")
-                {
-                    _touchMouseController();
-                }
-                else
-                {
-                    _desktopMouseController();
-                }
-
                 Engine.EngineState engineState = _engine.State;
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
                 if (renderFrame == null)
@@ -579,6 +570,19 @@ namespace Splash.Silk
         }
 
 
+        public void _onLogical(object? sender, float dt)
+        {
+            if (engine.GlobalSettings.Get("splash.touchControls") != "false")
+            {
+                _touchMouseController();
+            }
+            else
+            {
+                _desktopMouseController();
+            }
+        }
+
+
         public void SetupDone()
         {
             string baseDirectory = System.AppContext.BaseDirectory;
@@ -623,6 +627,8 @@ namespace Splash.Silk
                 _lightManager,
                 _silkThreeD
             );
+
+            _engine.LogicalFrame += _onLogical;
         }
 
         public void Sleep(double dt)
@@ -641,6 +647,11 @@ namespace Splash.Silk
         public void SetIView(IView iView)
         {
             _iView = iView;
+        }
+
+        public void Dispose()
+        {
+            _engine.LogicalFrame -= _onLogical;
         }
 
         public Platform(string[] args)

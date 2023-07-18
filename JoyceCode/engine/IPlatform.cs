@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace engine
 {
-    public interface IPlatform
+    public interface IPlatform : System.IDisposable
     {
         public void SetEngine(engine.Engine engine);
 

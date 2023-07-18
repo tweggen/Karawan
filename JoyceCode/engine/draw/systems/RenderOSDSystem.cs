@@ -157,8 +157,6 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 _cCamera.GetViewMatrix(out _mView, _mCameraToWorld);
                 _cCamera.GetProjectionMatrix(out _mProjection, _vOSDViewSize);
 
-                Trace($"View: {_mView}");
-                Trace($"Projection: {_mProjection}");
                 _haveCamera = true;
             }
         }

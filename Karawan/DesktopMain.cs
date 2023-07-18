@@ -181,7 +181,7 @@ namespace Karawan
             engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
             engine.GlobalSettings.Set("splash.touchControls", "false");
-            engine.GlobalSettings.Set("nogame.CreateHouses", "false");
+            engine.GlobalSettings.Set("nogame.CreateHouses", "true");
             engine.GlobalSettings.Set("nogame.CreateTrees", "true");
             engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
             
