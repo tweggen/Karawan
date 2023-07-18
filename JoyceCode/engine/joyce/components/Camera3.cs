@@ -42,6 +42,11 @@ namespace engine.joyce.components
             float r = right;
             float t = top;
             float b = -top;
+            /*
+             * This is the projection matrix for the usual order of matrix
+             * multiplication. result = m * v;
+             * ... however, this is not c# .net core convention.
+             */
             Matrix4x4 m = new(
                 2f * n / (r - l), 0f, (r+l)/(r-l), 0f,
                 0f, 2f * n / (t - b), (t+b)/(t-b), 0f,
@@ -51,6 +56,10 @@ namespace engine.joyce.components
 
             // TXWTODO: We need a smarter way to fix that to the view.
             Matrix4x4 mScaleToViewWindow =  Matrix4x4.Identity;
+            /*
+             * Transpose this matrix to have it in c# convention, i.e.
+             * result = v * m.
+             */
             matProjection = Matrix4x4.Transpose(m*mScaleToViewWindow);
         }
     }

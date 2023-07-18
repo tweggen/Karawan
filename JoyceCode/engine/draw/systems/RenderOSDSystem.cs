@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics.CollisionDetection;
 using engine.joyce.components;
 using engine.transform.components;
 using engine.world;
+using static engine.Logger;
 
 namespace engine.draw.systems;
 
@@ -20,10 +22,17 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
     private draw.Context _dc;
 
-    private DefaultEcs.Entity _eCamera;
-    private Vector2 _vOSDViewSize = new (512,256);
+    private Vector2 _vOSDViewSize;
 
     private bool _clearWholeScreen = true;
+
+    private DefaultEcs.Entity _eCamera;
+    private bool _haveCamera;
+    private Matrix4x4 _mCameraToWorld;
+    private Camera3 _cCamera;
+    private Transform3ToWorld _cCamTransform;
+    private Matrix4x4 _mView;
+    private Matrix4x4 _mProjection;
 
     protected override void Update(double dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
@@ -32,31 +41,16 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             return;
         }
 
-        bool haveCamera = false;
-        Matrix4x4 mCameraToWorld = new();
-        joyce.components.Camera3 cCamera = new();
-        transform.components.Transform3ToWorld cCamTransform;
-        
-        if (_eCamera.IsAlive)
-        {
-            if (_eCamera.Has<Transform3ToWorld>() && _eCamera.Has<Camera3>())
-            {
-                cCamTransform = _eCamera.Get<Transform3ToWorld>();
-                cCamera = _eCamera.Get<Camera3>();
-                mCameraToWorld = cCamTransform.Matrix;
-                haveCamera = true;
-            }
-        }
-        
         foreach (var entity in entities)
         {
             components.OSDText osdText = entity.Get<components.OSDText>();
 
             Vector2 vScreenPos;
+            bool isBehind = false;
             
             if (entity.Has<Transform3ToWorld>())
             {
-                if (!haveCamera)
+                if (!_haveCamera)
                 {
                     continue;
                 }
@@ -65,7 +59,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 var cEntityTransform = entity.Get<Transform3ToWorld>();
                 //Matrix4x4 mModel = cEntityTransform.Matrix;
                 Vector3 vModel = cEntityTransform.Matrix.Translation;
-                vModel = new(0f, 35f, 0f);
+                // Vector4 vModel = new(0f, 35f, 0f, 1f);
                 
 
                 /*
@@ -75,17 +69,28 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                  * So first, transform the thing we render to world coordinates.
                  * Then use the world and the view matrices to convert to screen space.
                  */
-                cCamera.GetViewMatrix(out Matrix4x4 mView, mCameraToWorld);
-                cCamera.GetProjectionMatrix(out Matrix4x4 mProjection, _vOSDViewSize);
-                Vector3 vWorldPos3 = Vector3.Transform(vModel, mView);
-                Vector3 vScreenPos3 = Vector3.Transform(vModel, mProjection);
-                vScreenPos = new(vScreenPos3.X + _vOSDViewSize.X/2f, -vScreenPos3.Y + _vOSDViewSize.Y/2f);
+                Vector4 vWorldPos4 = Vector4.Transform(vModel, _mView);
+#if true
+                if (vWorldPos4.Z*vWorldPos4.W > 0)
+                {
+                    // vWorldPos4.Z *= -1f;
+                    isBehind = true;
+                }
+#endif
+                Vector4 vScreenPos4 = Vector4.Transform(vWorldPos4, _mProjection);
+                vScreenPos = new(
+                    (vScreenPos4.X/vScreenPos4.W+1f) * (_vOSDViewSize.X/2f),
+                    (-vScreenPos4.Y/vScreenPos4.W+1f) * (_vOSDViewSize.Y/2f));
             }
             else
             {
                 vScreenPos = Vector2.Zero;
             }
 
+            if (isBehind)
+            {
+                continue;
+            }
             vScreenPos += osdText.Position;
             
             /*
@@ -135,14 +140,38 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         {
             return;
         }
+
+        _vOSDViewSize = new Vector2(_framebuffer.Width, _framebuffer.Height);
+        _haveCamera = false;
+        _mCameraToWorld = Matrix4x4.Identity;
+        _cCamera = new();
+        
+        if (_eCamera.IsAlive)
+        {
+            if (_eCamera.Has<Transform3ToWorld>() && _eCamera.Has<Camera3>())
+            {
+                _cCamTransform = _eCamera.Get<Transform3ToWorld>();
+                _cCamera = _eCamera.Get<Camera3>();
+                _mCameraToWorld = _cCamTransform.Matrix;
+
+                _cCamera.GetViewMatrix(out _mView, _mCameraToWorld);
+                _cCamera.GetProjectionMatrix(out _mProjection, _vOSDViewSize);
+
+                Trace($"View: {_mView}");
+                Trace($"Projection: {_mProjection}");
+                _haveCamera = true;
+            }
+        }
+
+
         _framebuffer.BeginModification();
 
         if (_clearWholeScreen)
         {
-            _dc.FillColor = 0x00000000;
+            _dc.ClearColor = 0x00000000;
             _framebuffer.ClearRectangle(_dc,
                 new Vector2(0, 0),
-                new Vector2(_framebuffer.Width - 1f, _framebuffer.Height - 1f));
+                new Vector2(_framebuffer.Width, _framebuffer.Height));
         }
 
     }
