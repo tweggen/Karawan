@@ -276,8 +276,8 @@ public class Scene : engine.IScene
         {
             _eCamOSD = _engine.CreateEntity("RootScene.OSDCamera");
             var cCamOSD = new engine.joyce.components.Camera3();
-            cCamOSD.Angle = 60.0f;
-            cCamOSD.NearFrustum = 1f;
+            cCamOSD.Angle = 0f; //60.0f;
+            cCamOSD.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
             cCamOSD.FarFrustum = 100f;  
             cCamOSD.CameraMask = 0x00010000;
             _eCamOSD.Set(cCamOSD);

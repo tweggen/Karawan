@@ -32,7 +32,12 @@ namespace engine.joyce.components
         
         public void GetProjectionMatrix(out Matrix4x4 matProjection, in Vector2 vViewSize)
         {
-            float right = NearFrustum * (float)Math.Tan(Angle * 0.5f * (float)Math.PI / 180f);
+            float realAngle = Angle;
+            if (0f == Angle)
+            {
+                realAngle = 60f;
+            }
+            float right = NearFrustum * (float)Math.Tan(realAngle * 0.5f * (float)Math.PI / 180f);
             float invAspect = vViewSize.Y / vViewSize.X;
             float top = right * invAspect;
 
@@ -42,25 +47,59 @@ namespace engine.joyce.components
             float r = right;
             float t = top;
             float b = -top;
-            /*
-             * This is the projection matrix for the usual order of matrix
-             * multiplication. result = m * v;
-             * ... however, this is not c# .net core convention.
-             */
-            Matrix4x4 m = new(
-                2f * n / (r - l), 0f, (r+l)/(r-l), 0f,
-                0f, 2f * n / (t - b), (t+b)/(t-b), 0f,
-                0f, 0f, -(f + n) / (f - n), -2f * f * n / (f - n),
-                0f, 0f, -1f, 0f
-            );
 
-            // TXWTODO: We need a smarter way to fix that to the view.
-            Matrix4x4 mScaleToViewWindow =  Matrix4x4.Identity;
-            /*
-             * Transpose this matrix to have it in c# convention, i.e.
-             * result = v * m.
-             */
-            matProjection = Matrix4x4.Transpose(m*mScaleToViewWindow);
+            if (Angle > 0f)
+            {
+                /*
+                 * This is the projection matrix for the usual order of matrix
+                 * multiplication. result = m * v;
+                 * ... however, this is not c# .net core convention.
+                 */
+                Matrix4x4 m = new(
+                    2f * n / (r - l), 0f, (r + l) / (r - l), 0f,
+                    0f, 2f * n / (t - b), (t + b) / (t - b), 0f,
+                    0f, 0f, -(f + n) / (f - n), -2f * f * n / (f - n),
+                    0f, 0f, -1f, 0f
+                );
+
+                // TXWTODO: We need a smarter way to fix that to the view.
+                Matrix4x4 mScaleToViewWindow = Matrix4x4.Identity;
+
+                /*
+                 * Transpose this matrix to have it in c# convention, i.e.
+                 * result = v * m.
+                 */
+                matProjection = Matrix4x4.Transpose(m * mScaleToViewWindow);
+            } else if (Angle == 0f)
+            {
+                /*
+                 * Orthogonal projection.
+                 */
+                /* This is the projection matrix for the usual order of matrix
+                 * multiplication. result = m * v;
+                * ... however, this is not c# .net core convention.
+                */
+                Matrix4x4 m = new(
+                    2f / (r - l), 0f, 0f, -(r + l) / (r - l),
+                    0f, 2f / (t - b), 0f, -(t + b) / (t - b),
+                    0f, 0f, -2f / (f - n), -(f + n) / (f - n),
+                    0f, 0f, 0f, 1f
+                );
+
+                // TXWTODO: We need a smarter way to fix that to the view.
+                Matrix4x4 mScaleToViewWindow = Matrix4x4.Identity;
+
+                /*
+                 * Transpose this matrix to have it in c# convention, i.e.
+                 * result = v * m.
+                 */
+                matProjection = Matrix4x4.Transpose(m * mScaleToViewWindow);
+            }
+            else
+            {
+                matProjection = Matrix4x4.Identity;
+                
+            }
         }
     }
 }

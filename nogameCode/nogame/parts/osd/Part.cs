@@ -35,8 +35,8 @@ public class Part : engine.IPart
     
     private uint _fbpos = 0;
 
-    private readonly uint _width = 786;
-    private readonly uint _height = 384;
+    private readonly uint _width = 768;
+    private readonly uint _height = 768*9/16;
     
 
     private void _setupOSD()
@@ -50,7 +50,7 @@ public class Part : engine.IPart
             
             // engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
             engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
-                new Vector2(16f, 8f));
+                new Vector2(2f, 2f*9f/16f));
             meshFramebuffer.UploadImmediately = true;
             engine.joyce.Texture textureFramebuffer = new(_framebuffer);
             textureFramebuffer.DoFilter = false;
