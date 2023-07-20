@@ -27,7 +27,7 @@ namespace nogame.parts.playerhover
         private readonly float MaxLinearVelocity = 50f;
         private readonly float MaxAngularVelocity = 0.8f;
         private readonly float LevelUpThrust = 16f;
-        private readonly float LevelDownThrust = 8f;
+        private readonly float LevelDownThrust = 16f;
         
         private bool _hadCollision = false;
         public void HadCollision()
@@ -61,7 +61,7 @@ namespace nogame.parts.playerhover
                 var deltaY = vTargetPos.Y - (heightAtTarget+properDeltaY);
                 const float threshDiff = 0.01f;
 
-                Vector3 impulse = new Vector3(0f,9.81f,0f);
+                Vector3 impulse;
                 float properVelocity = 0f;
                 if ( deltaY < -threshDiff )
                 {
