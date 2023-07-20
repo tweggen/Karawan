@@ -56,7 +56,7 @@ public class Part : IPart
             _engine.GetATransform().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
-                new Vector3(-7f, 3.5f, -1f));
+                new Vector3(-1f+0.15f, 9f/16f-0.15f, -1f));
         }
 
     }
@@ -84,8 +84,8 @@ public class Part : IPart
             pos = m.Translation;
         }
 
-        float sourceWidth = 2000f;
-        float sourceHeight = 2000f;
+        float sourceWidth = 3000f;
+        float sourceHeight = 3000f;
         float realPosX = Single.Min(MetaGen.MaxWidth - sourceWidth / 2f, Single.Max(-MetaGen.MaxWidth + sourceWidth / 2f, pos.X));
         float realPosY = Single.Min(MetaGen.MaxHeight - sourceHeight / 2f, Single.Max(-MetaGen.MaxHeight + sourceHeight / 2f, pos.Z));
         float centerUVX = realPosX / (MetaGen.MaxWidth) + 0.5f;
@@ -98,8 +98,8 @@ public class Part : IPart
         u = new Vector2(widthUV, 0f);
         v = new Vector2(0f, -heightUV);
 
-        float width = 1.8f;
-        float height = 1.8f;
+        float width = 0.2f;
+        float height = 0.2f;
         Vector3 pos0 = new(-width/2f, -height/2, 0f);
         Vector3 x = new(width, 0f, 0f);
         Vector3 y = new(0f, height, 0f);
