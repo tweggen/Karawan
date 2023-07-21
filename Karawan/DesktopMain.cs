@@ -6,6 +6,7 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 using System.Diagnostics.Metrics;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
@@ -178,7 +179,14 @@ namespace Karawan
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
             engine.GlobalSettings.Set("platform.threeD.API.version", "330");
             engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-            engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
+            if (Directory.Exists("assets"))
+            {
+                engine.GlobalSettings.Set("Engine.ResourcePath", "./assets/");
+            }
+            else
+            {
+                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
+            }
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
             engine.GlobalSettings.Set("splash.touchControls", "false");
             engine.GlobalSettings.Set("nogame.CreateHouses", "true");
