@@ -104,14 +104,18 @@ void main()
     
     vec4 colDiffuseTotal = texelColor + colDiffuse;
     vec4 colEmissiveTotal = emissiveColor; 
-    vec4 colAmbientTotal = ambient; 
-    finalColor = 
+    vec4 colAmbientTotal = ambient;
+    vec4 colFog = vec4(0.3,0.35,0.2,0.0); 
+    vec4 colUnfogged = 
         colDiffuseTotal * vec4(totalLight,0.0)
         + colEmissiveTotal
         //+ vec4(0.53,0.15,0.18,0.0)
         + colAmbientTotal
-        ;    
-
+        ;
+    //vec4 foggedColor = fragPosition.z * colUnfogged + (1-fragPosition.z) * colFog;
+    // finalColor = vec4(0.0, 0.0, fragPosition.z/1000.0, 0.0);
+    // finalColor = foggedColor;
+    finalColor = colUnfogged;
     // Gamma correction
     // finalColor = pow(finalColor, vec4(1.0/2.2));
 }

@@ -129,7 +129,7 @@ namespace nogame.parts.playerhover
             Vector3 vSpinTopAxis = Vector3.Cross(vUp, new Vector3(0f, 1f, 0f));
             if (vSpinTopAxis.Length() > 0.01f)
             {
-                vTotalAngular += vSpinTopAxis*0.9f;
+                vTotalAngular += vSpinTopAxis;
             }
 
 
