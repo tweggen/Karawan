@@ -44,8 +44,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             if( null==_jInstancesCar)
             {
                 _jInstancesCar = new engine.joyce.InstanceDesc[3];
-                _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car2.obj");
-                _jInstancesCar[1] = builtin.loader.Obj.LoadModelInstance("car4.obj");
+                //_jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car2.obj");
+                _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car6.obj");
+                _jInstancesCar[1] = builtin.loader.Obj.LoadModelInstance("car7.obj");
+                // _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car4.obj");
                 _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car5.obj");
                 foreach (var ji in _jInstancesCar)
                 {

@@ -26,7 +26,7 @@ internal class Behavior : engine.IBehavior
             qOrientation,
             _snc.NavigatorGetWorldPos() with
             {
-                Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight + 1f
+                Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight
             }
         );
     }
