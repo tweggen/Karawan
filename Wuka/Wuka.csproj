@@ -99,6 +99,8 @@
 	  <None Remove="Platforms\Android\car4.obj" />
 	  <None Remove="Platforms\Android\car5.mtl" />
 	  <None Remove="Platforms\Android\car5.obj" />
+	  <None Remove="Platforms\Android\car6.mtl" />
+	  <None Remove="Platforms\Android\car6.obj" />
 	  <None Remove="Platforms\Android\cubeloopmono.ogg" />
 	  <None Remove="Platforms\Android\gridlines.png" />
 	  <None Remove="Platforms\Android\gridlines1.jpg" />
@@ -168,6 +170,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\car5.obj">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car6.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car6.obj">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\cubeloopmono.ogg">
