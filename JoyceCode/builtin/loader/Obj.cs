@@ -9,6 +9,16 @@ using Material = ObjLoader.Loader.Data.Material;
 
 namespace builtin.loader;
 
+public class ModelInfo
+{
+    public override string? ToString()
+    {
+        return $"ModelInfo {{ AABB: {AABB}, Center: {Center} }}";
+    }
+    public engine.geom.AABB AABB = new();
+    public Vector3 Center = new();
+}
+
 class AssetMaterialStreamProvider : IMaterialStreamProvider
 {
     public Stream Open(string materialFilePath)
@@ -32,13 +42,19 @@ public class Obj
             ;
     }
     
-    static public engine.joyce.InstanceDesc LoadModelInstance(string url)
+    static public engine.joyce.InstanceDesc LoadModelInstance(string url, out ModelInfo modelInfo)
     {
         InstanceDesc jInstanceDesc = new();
         var objLoader = _objLoaderFactory.Create(_materialStreamProvider);
         var fileStream = engine.Assets.Open(url);
         var loadedObject = objLoader.Load(fileStream);
         uint[] tri = new uint[3];
+
+        modelInfo = new();
+
+        engine.geom.AABB aabb = new();
+        Vector3 vCenter = new();
+        int nVertices = 0;
 
         List<ObjLoader.Loader.Data.Material> listMaterials = new();
         foreach (var loadedMaterial in loadedObject.Materials)
@@ -60,7 +76,6 @@ public class Obj
              */
             engine.joyce.Mesh jMesh = engine.joyce.Mesh.CreateListInstance();
             jMesh.Normals = new List<Vector3>();
-            
 
             /*
              * We map each distinct triplet of indices to an index
@@ -97,11 +112,17 @@ public class Obj
                             ErrorThrow($"Vertex index {normalIndex} out of bounds (> {loadedObject.Normals.Count}.)",
                                 (m) => new InvalidDataException(m));
                         }
-                        jMesh.p(
+
+                        Vector3 vertex = new(
                             loadedObject.Vertices[vertexIndex].X,
                             loadedObject.Vertices[vertexIndex].Y,
                             loadedObject.Vertices[vertexIndex].Z
-                            );
+                        );
+                        aabb.Add(vertex);
+                        vCenter += vertex;
+                        nVertices++;
+                        
+                        jMesh.p(vertex);
                         jMesh.UV(
                             loadedObject.Textures[textureIndex].X,
                             loadedObject.Textures[textureIndex].Y
@@ -124,6 +145,9 @@ public class Obj
             int idxMaterial = listMaterials.IndexOf(loadedGroup.Material);
             jInstanceDesc.MeshMaterials.Add(idxMaterial);
         }
+
+        modelInfo.AABB = aabb;
+        modelInfo.Center = vCenter / nVertices;
         return jInstanceDesc;
     }   
 }

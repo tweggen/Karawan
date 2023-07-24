@@ -264,8 +264,10 @@ namespace nogame.parts.playerhover
                 _aTransform.SetPosition(_eShip, posShip);
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0x0000ffff);
-                
-                engine.joyce.InstanceDesc jInstanceDesc = builtin.loader.Obj.LoadModelInstance("car6.obj");
+
+                builtin.loader.ModelInfo modelInfo;
+                engine.joyce.InstanceDesc jInstanceDesc = builtin.loader.Obj.LoadModelInstance("car6.obj", out modelInfo);
+                Trace($"Player ship modelInfo {modelInfo}");
                 jInstanceDesc.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
 
                 _eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));

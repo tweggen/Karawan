@@ -37,18 +37,23 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     
     private static engine.joyce.InstanceDesc[] _jInstancesCar;
-    private static engine.joyce.InstanceDesc _getCarMesh(int i)
+    private static builtin.loader.ModelInfo[] _modelInfos; 
+    private static engine.joyce.InstanceDesc _getCarMesh(int i, out builtin.loader.ModelInfo modelInfo)
     {
         lock(_classLock)
         {
             if( null==_jInstancesCar)
             {
                 _jInstancesCar = new engine.joyce.InstanceDesc[3];
+                _modelInfos = new builtin.loader.ModelInfo[3];
                 //_jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car2.obj");
-                _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car6.obj");
-                _jInstancesCar[1] = builtin.loader.Obj.LoadModelInstance("car7.obj");
-                // _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car4.obj");
-                _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car5.obj");
+                _jInstancesCar[0] = builtin.loader.Obj.LoadModelInstance("car6.obj", out _modelInfos[0]);
+                _jInstancesCar[1] = builtin.loader.Obj.LoadModelInstance("car7.obj", out _modelInfos[1]);
+                // _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car4.obj", out _modelInfos[0]);
+                _jInstancesCar[2] = builtin.loader.Obj.LoadModelInstance("car5.obj", out _modelInfos[2]);
+                Trace($"Loaded car 0 info is {_modelInfos[0]}");
+                Trace($"Loaded car 1 info is {_modelInfos[1]}");
+                Trace($"Loaded car 2 info is {_modelInfos[2]}");
                 foreach (var ji in _jInstancesCar)
                 {
                     /*
@@ -57,6 +62,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     ji.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
                 }
             }
+
+            modelInfo = _modelInfos[i];
             return _jInstancesCar[i];
         }
     }
@@ -187,7 +194,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 ++_characterIndex;
                 {
                     int carIdx = (int)(_rnd.getFloat() * 3f);
-                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh(carIdx);
+                    builtin.loader.ModelInfo modelInfo;
+                    engine.joyce.InstanceDesc jInstanceDesc = _getCarMesh(carIdx, out modelInfo);
 
                     var wf = worldFragment;
 

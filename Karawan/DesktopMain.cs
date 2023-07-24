@@ -228,10 +228,12 @@ namespace Karawan
                 WireServer.API aWireServer = new(e, 9451);
             }
 
+#if true
             {
                 engine.ConsoleLogger logger = new(e, app.Logger);
                 engine.Logger.SetLogTarget(logger);
             }            
+#endif
             
             Implementations.Register<Boom.ISoundAPI>(() =>
             {
