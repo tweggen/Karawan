@@ -93,9 +93,10 @@ void main()
 
             if (lights[i].type == LIGHT_POINT)
             {
-                light = normalize(lights[i].position - vec3(fragPosition));
+                vec3 diffvec = lights[i].position - vec3(fragPosition);
+                light = normalize(diffvec);
                 float dotNormalLight = max(dot(normal, light), 0.0);
-                totalLight += lights[i].color.rgb*dotNormalLight;
+                totalLight += (lights[i].color.rgb*dotNormalLight) * lights[i].target.x / length(diffvec);
             }
 
         }

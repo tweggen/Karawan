@@ -279,7 +279,9 @@ namespace nogame.parts.playerhover
                 modelInfo.AABB.RotateY180();
 
                 _eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-                // _eShip.Set(new engine.joyce.components.PointLight(new Vector4(1.0f, 0.95f, 0.9f, 1f)/3f));
+                _eShip.Set(new engine.joyce.components.PointLight(
+                    new Vector4(1.0f, 0.95f, 0.9f, 1f),
+                    10f));
                 
                 /*
                  * I have absolutely no clue why, but with the real radius of the model (1.039f) the

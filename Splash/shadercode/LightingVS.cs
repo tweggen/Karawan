@@ -53,7 +53,7 @@ void main()
     vec4 vertex = vec4(vertexPosition, 1.0);
 
     // Send vertex attributes to fragment shader
-    fragPosition = mvpi*vertex;
+    fragPosition = vertex * instanceTransform;
     fragTexCoord = vertexTexCoord;
     fragTexCoord2 = vertexTexCoord2;
     fragColor = vertexColor;

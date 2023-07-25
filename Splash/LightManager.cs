@@ -102,7 +102,12 @@ namespace Splash
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.PointLight>();
                 _addLightEntry(LightType.LIGHT_POINT,
-                    matTransform.Translation, vRight + matTransform.Translation, cLight.Color);
+                    matTransform.Translation,
+                    /*
+                     * The point light takes the attenuation / (distance if intensity == 1) in .X  
+                     */
+                     new Vector3(cLight.Distance, 0f, 0f),
+                    cLight.Color);
             }
         }
 

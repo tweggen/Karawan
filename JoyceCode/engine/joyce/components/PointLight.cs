@@ -5,13 +5,15 @@ using System.Text;
 
 namespace engine.joyce.components
 {
-    public class PointLight
+    public struct PointLight
     {
         public Vector4 Color;
+        public float Distance;
 
-        public PointLight(in Vector4 color)
+        public PointLight(in Vector4 color, float distance)
         {
             Color = color;
+            Distance = distance;
         }
     }
 }
