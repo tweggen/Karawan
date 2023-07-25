@@ -8,6 +8,37 @@ public struct AABB
     public Vector3 AA;
     public Vector3 BB;
 
+    
+    public Vector3 Center
+    {
+        get => (AA + BB) / 2f;
+    }
+    
+
+    public float Radius
+    {
+        get => (BB - AA).Length() / 2f;
+    }
+    
+    
+    public void Offset(in Vector3 off)
+    {
+        AA += off;
+        BB += off;
+    }
+    
+
+    public void RotateY180()
+    {
+        /*
+         * Rotating 180 degree on the Y axis means
+         */
+        Vector3 newAA = new(-BB.X, AA.Y, -BB.Z);
+        Vector3 newBB = new(-AA.X, BB.Y, -AA.Z);
+        AA = newAA;
+        BB = newBB;
+    }
+    
 
     public override string? ToString()
     {

@@ -38,7 +38,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     private static engine.joyce.InstanceDesc[] _jInstancesCar;
     private static builtin.loader.ModelInfo[] _modelInfos; 
-    private static engine.joyce.InstanceDesc _getCarMesh(int i, out builtin.loader.ModelInfo modelInfo)
+    private static engine.joyce.InstanceDesc _getCarMesh(int carIndex, out builtin.loader.ModelInfo modelInfo)
     {
         lock(_classLock)
         {
@@ -54,35 +54,60 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 Trace($"Loaded car 0 info is {_modelInfos[0]}");
                 Trace($"Loaded car 1 info is {_modelInfos[1]}");
                 Trace($"Loaded car 2 info is {_modelInfos[2]}");
-                foreach (var ji in _jInstancesCar)
+                for(int i = 0; i < 3; ++i)
                 {
+                    var ji = _jInstancesCar[i];
+                    var mi = _modelInfos[i];
+                    
                     /*
-                     * Our models are 180 degree wrong.
+                     * Our models may not be centered on the X/Z plane.
+                     * Plus, they are 180 degree wrong.
+                     * So create the corresponding transform matrix
+                     * and modify the model info record.
                      */
-                    ji.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
+
+                    /*
+                     * This means, the collision will be slightly off because of the Y offset.
+                     */
+                    Vector3 vOffset = mi.AABB.Center with { Y = 0 }; 
+                    ji.ModelTransform =
+                        Matrix4x4.CreateTranslation(-vOffset)
+                        * Matrix4x4.CreateRotationY((float)Math.PI)
+                        ;
+                    
+                    mi.AABB.Offset(-vOffset);
+                    mi.AABB.RotateY180();
                 }
             }
 
-            modelInfo = _modelInfos[i];
-            return _jInstancesCar[i];
+            modelInfo = _modelInfos[carIndex];
+            return _jInstancesCar[carIndex];
         }
     }
 
-    private static BepuPhysics.Collidables.TypedIndex _pshapeSphere;
-    private static BepuPhysics.Collidables.Sphere _pbodySphere;
-    private static BepuPhysics.Collidables.TypedIndex _getSphereShape(in Engine engine)
+    
+    private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
+    private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
+    private static BepuPhysics.Collidables.TypedIndex _getSphereShape(float radius, in Engine engine)
     {
         lock(_classLock)
         {
-            if( !_pshapeSphere.Exists )
+            BepuPhysics.Collidables.TypedIndex pshapeSphere;
+            if (_mapPshapeSphere.TryGetValue(radius, out pshapeSphere))
             {
-                _pbodySphere = new(1f);
-                lock (engine.Simulation)
-                {
-                    _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
-                }
+                return pshapeSphere;
             }
-            return _pshapeSphere;
+
+            BepuPhysics.Collidables.Sphere pbodySphere = new(radius); 
+            lock (engine.Simulation)
+            {
+                pshapeSphere = engine.Simulation.Shapes.Add(pbodySphere);
+            }
+
+            _mapPbodySphere[radius] = pbodySphere;
+            _mapPshapeSphere[radius] = pshapeSphere;
+            
+            return pshapeSphere;
         }
     }
 
@@ -218,7 +243,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             BodyDescription.CreateKinematic(
                                 new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                                 new BepuPhysics.Collidables.CollidableDescription(
-                                    _getSphereShape(wf.Engine),
+                                    _getSphereShape(modelInfo.AABB.Radius, wf.Engine),
                                     0.1f),
                                 new BodyActivityDescription(0.01f)
                             )
