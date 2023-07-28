@@ -128,6 +128,12 @@ namespace Splash.Silk
             string code = "";
             switch (arg2)
             {
+                case Key.Q:
+                    _controllerState.FlyUp = 200;
+                    break;
+                case Key.Y:
+                    _controllerState.FlyDown = 200;
+                    break;
                 case Key.W:
                     _controllerState.WalkForward = 200;
                     code = "W";
@@ -168,6 +174,14 @@ namespace Splash.Silk
             string code = "";
             switch (arg2)
             {
+                case Key.Q:
+                    _controllerState.FlyUp = 0;
+                    code = "Q";
+                    break;
+                case Key.Y:
+                    _controllerState.FlyDown = 0;
+                    code = "Y";
+                    break;
                 case Key.W:
                     _controllerState.WalkForward = 0;
                     code = "W";

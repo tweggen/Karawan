@@ -92,13 +92,19 @@ namespace nogame.parts.playerhover
             var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
             //var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
             var frontMotion = controllerState.FrontMotion;
+            var upMotion = controllerState.UpMotion;
+            var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
 
             if (frontMotion != 0f)
             {
                 // The acceleration looks wrong when combined with rotation.
                 vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
             }
-            var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
+
+            if (upMotion != 0f)
+            {
+                vTotalImpulse += LinearThrust * vUp * upMotion / 256f;
+            }
             if (turnMotion != 0f)
             {
                 // TXWTODO: This does a turn that looks ríght.
