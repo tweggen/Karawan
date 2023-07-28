@@ -552,6 +552,12 @@ public class SilkThreeD : IThreeD
          * Push the viewer's position to the fragment shader
          */
         // TXWTODO: Write me. Deprecate this by VIewMatrix and Projection Matrix
+        // TXWTODO: Bad hack, remove me.
+        {
+            SkShaderEntry shader = GetInstanceShaderEntry();
+            shader.SkShader.SetUniform("v3AbsPosView", vCamera);     
+        }
+
     }
 
     public ARenderbuffer CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer)
