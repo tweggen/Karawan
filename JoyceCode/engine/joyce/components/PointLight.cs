@@ -20,7 +20,7 @@ namespace engine.joyce.components
             /*
              * No constraint
              */
-            CosOpening = -1f;
+            CosOpening = -2f;
         }
         
         

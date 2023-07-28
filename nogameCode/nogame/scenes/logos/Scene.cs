@@ -136,7 +136,7 @@ public class Scene : engine.IScene
         {
             _eLight = _engine.CreateEntity("LogosScene.PointLight");
             _eLight.Set(new engine.joyce.components.PointLight(
-                new Vector4(1f, 0.95f, 0.9f, 1.0f), 3.0f));
+                new Vector4(1f, 0.95f, 0.9f, 1.0f), 15.0f));
         }
 
         /*
