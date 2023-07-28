@@ -1,5 +1,7 @@
 ﻿using Silk.NET.OpenGL;
 using System;
+using System.Diagnostics;
+using static engine.Logger;
 
 namespace Splash.Silk
 {
@@ -27,6 +29,11 @@ namespace Splash.Silk
             fixed (void* d = data)
             {
                 _gl.BufferData(bufferType, (nuint) (data.Length * sizeof(TDataType)), d, BufferUsageARB.StaticDraw);
+            }
+
+            if (_gl.GetError() != GLEnum.NoError)
+            {
+                Trace("Error uploading mesh.");
             }
         }
 

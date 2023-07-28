@@ -433,6 +433,10 @@ public class SilkThreeD : IThreeD
         if (!skMeshEntry.IsUploaded())
         {
             skMeshEntry.Upload(_getGL());
+            if (CheckError("AfterUpload mesh") < 0)
+            {
+                Trace("Something to break here.");
+            }
             ++_nUploadedMeshes;
         }
     }
@@ -611,17 +615,19 @@ public class SilkThreeD : IThreeD
         _matProjection = matProjection;
     }
 
-    public void CheckError(string what)
+    public int CheckError(string what)
     {
         var error = _getGL().GetError();
         if (error != GLEnum.NoError)
         {
             Error( $"Found OpenGL {what} error {error}" );
+            return -1;
             // ErrorThrow( $"{name}: Found OpenGL error {error}", m => new InvalidOperationException(m));
         }
         else
         {
             // Console.WriteLine($"OK: {what}");
+            return 0;
         }
     }
 

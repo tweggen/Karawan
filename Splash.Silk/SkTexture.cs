@@ -1,16 +1,25 @@
-﻿using System.Numerics;
+﻿using System.ComponentModel.Design;
+using System.Numerics;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 //using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using static engine.Logger;
+using Trace = System.Diagnostics.Trace;
 
 namespace Splash.Silk;
 
 public class SkTexture : IDisposable
 {
-    private uint _liveHandle;
-    private uint _backHandle;
+    private uint _liveHandle = 0xffffffff;
+    private bool _liveBound = false;
+    private bool _liveGenerated = false;
+    private bool _liveData = false;
+    private uint _backHandle = 0xffffffff;
+    private bool _backBound = false;
+    private bool _backGenerated = false;
+    private bool _backData = false;
+    
 
     private bool _doFilter = false;
 
@@ -18,12 +27,6 @@ public class SkTexture : IDisposable
      * Data generation that had been uploaded.
      */
     private uint _generation = 0xfffffffe;
-
-    /*
-     * Track if the live handle already has been consumed by
-     * the renderer.
-     */
-    private bool _liveConsumed = false;
 
     public uint Generation
     {
@@ -40,20 +43,18 @@ public class SkTexture : IDisposable
         get => _liveHandle;
     }
 
-    public void CheckError(string what)
+    public int CheckError(string what)
     {
         var error = _gl.GetError();
         if (error != GLEnum.NoError)
         {
             Error($"Found OpenGL {what} error {error}");
-            if (what == "ActiveTexture")
-            {
-                Console.WriteLine("ActiveTexture");
-            }
+            return -(int)error;
         }
         else
         {
             // Console.WriteLine($"OK: {what}");
+            return 0;
         }
     }
 
@@ -90,14 +91,28 @@ public class SkTexture : IDisposable
     private void _backToLive()
     {
         var local = _liveHandle;
+        var localBound = _liveBound;
+        var localGenerated = _liveGenerated;
+        var localData = _liveData;
         _liveHandle = _backHandle;
+        _liveBound = _backBound;
+        _liveGenerated = _backGenerated;
+        _liveData = _backData;
         _backHandle = local;
+        _backBound = localBound;
+        _backGenerated = localGenerated;
+        _backData = localData;
     }
 
 
     private void _allocateBack()
     {
+        if (_backGenerated)
+        {
+            Trace("Already had been generated.");
+        }
         _backHandle = _gl.GenTexture();
+        _backGenerated = true;
         _bindBack();
         _setParameters();
     }
@@ -124,6 +139,7 @@ public class SkTexture : IDisposable
             System.IO.Stream streamImage = engine.Assets.Open(path);
             var img = Image.Load<Rgba32>(streamImage);
             {
+                _backData = true;
                 _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)img.Width, (uint)img.Height, 0,
                     PixelFormat.Rgba, PixelType.UnsignedByte, null);
                 CheckError("TexImage2D");
@@ -176,6 +192,7 @@ public class SkTexture : IDisposable
         _bindBack();
         fixed (void* d = &data[0])
         {
+            _backData = true;
             _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba,
                 PixelType.UnsignedByte, d);
             CheckError("TexImage2D");
@@ -191,6 +208,7 @@ public class SkTexture : IDisposable
         // Trace($"Creating new Texture {width}x{height}");
         _checkReloadTexture();
         _bindBack();
+        _backData = true;
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba,
             PixelType.UnsignedByte, null);
         _generateMipmap();
@@ -199,25 +217,51 @@ public class SkTexture : IDisposable
 
     public void BindAndActive(TextureUnit textureSlot)
     {
-        _liveConsumed = true;
         _gl.ActiveTexture(textureSlot);
         CheckError("ActiveTexture");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
-        CheckError("Bind Texture");
+        if (0 == CheckError("BindAndActive Texture"))
+        {
+            _liveBound = true;
+        }
     }
 
     private void _bindBack()
     {
+        bool isUnbound = false;
+        if (_backBound)
+        {
+            _gl.BindTexture(TextureTarget.Texture2D, 0);
+            _backBound = false;
+            isUnbound = true;
+        }
+
+        //if (!_backData)
+        //{
+        //    return;
+        //}
         _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
-        CheckError("Bind Texture");
+        int err = CheckError("_bindBack Texture");
+        if (err<0)
+        {
+            Trace("Break here.");
+        }
+        else
+        {
+            _backBound = true;
+        } 
     }
 
 
     public void Dispose()
     {
         _gl.DeleteTexture(_liveHandle);
+        _liveHandle = 0xffffffff;
+        _liveBound = false;
         CheckError("DeleteTexture live");
         _gl.DeleteTexture(_backHandle);
+        _backHandle = 0xffffffff;
+        _backBound = false;
         CheckError("DeleteTexture back");
     }
 
@@ -226,8 +270,6 @@ public class SkTexture : IDisposable
     {
         _gl = gl;
         _doFilter = doFilter;
-        _backHandle = 0xffffffff;
-        _liveHandle = 0xffffffff;
         _allocateBack();
     }
     
