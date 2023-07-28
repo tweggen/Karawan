@@ -25,7 +25,8 @@ namespace Splash.Silk
         private readonly LightManager _lightManager;
         private Vector2 _vViewSize;
         private Vector2 _vLastGlSize = new(0f, 0f);
-        
+
+        private SkShaderEntry _skShaderEntry;
 
         private GL _gl = null;
 
@@ -75,11 +76,13 @@ namespace Splash.Silk
                  */
                 if ((cCameraParams.CameraMask & 0xffff) != 0)
                 {
+                    _skShaderEntry.SkShader.SetUniform("fogDistance", 400f);
                     _gl.Enable(EnableCap.DepthTest);
                 }
                 else
                 {
                     _gl.Disable(EnableCap.DepthTest);
+                    _skShaderEntry.SkShader.SetUniform("fogDistance", 0);
                 }
 
                 var mCameraToWorld = renderPart.Transform3ToWorld.Matrix;
@@ -151,8 +154,8 @@ namespace Splash.Silk
              */
             _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
             _nailViewport(true);
-            var skShaderEntry = _silkThreeD.GetInstanceShaderEntry(); 
-            _gl.UseProgram(skShaderEntry.SkShader.Handle);
+            _skShaderEntry = _silkThreeD.GetInstanceShaderEntry(); 
+            _gl.UseProgram(_skShaderEntry.SkShader.Handle);
             _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
             // _gl.UseProgram(0);
             _renderParts(renderFrame.RenderParts);

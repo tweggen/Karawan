@@ -35,6 +35,7 @@ uniform sampler2D texture2;
 uniform vec4 colDiffuse;
 uniform vec4 ambient;
 
+uniform float fogDistance;
 
 // Output fragment color
 out vec4 finalColor;
@@ -105,10 +106,10 @@ void main()
                     // Minus, because we care about the angle at t he v3nDirLight.
                     float dotTarget = -dot(lights[i].target,v3nDirLight);
                     if (dotTarget > lights[i].param1)
-                    {{
+                    {
                         float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
                         col3TotalLight += (lights[i].color.rgb*dotNormalLight) / lengthFragLight;
-                    }}
+                    }
                 } else
                 {
                     float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
@@ -122,18 +123,27 @@ void main()
     vec4 col4DiffuseTotal = col4Texel + colDiffuse;
     vec4 col4EmissiveTotal = col4Emissive; 
     vec4 col4AmbientTotal = ambient;
-    vec4 col4Fog = vec4(0.2,0.18,0.2,0.0); 
+
     vec4 col4Unfogged = 
         col4DiffuseTotal * vec4(col3TotalLight,0.0)
         + col4EmissiveTotal
         //+ vec4(0.53,0.15,0.18,0.0)
         + col4AmbientTotal
         ;
-    float distance = length(v3RelFragPosition);
-    float fogIntensity = clamp(distance, 0, 400) / 450;
-    vec4 foggedColor = (1-fogIntensity) * col4Unfogged + fogIntensity * col4Fog;
 
-    finalColor = foggedColor;
+    if (fogDistance > 1)
+    {
+        vec4 col4Fog = vec4(0.2,0.18,0.2,0.0); 
+        float distance = length(v3RelFragPosition);
+        float fogIntensity = clamp(distance, 0, fogDistance) / (fogDistance+50);
+        vec4 foggedColor = (1-fogIntensity) * col4Unfogged + fogIntensity * col4Fog;
+
+        finalColor = foggedColor;
+    }
+    else
+    {
+        finalColor = col4Unfogged;
+    }
 
     // Gamma correction
     // finalColor = pow(finalColor, vec4(1.0/2.2));
