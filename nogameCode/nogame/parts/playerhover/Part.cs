@@ -265,8 +265,8 @@ namespace nogame.parts.playerhover
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
-                builtin.loader.ModelInfo modelInfo;
-                engine.joyce.InstanceDesc jInstanceDesc = builtin.loader.Obj.LoadModelInstance("car6.obj", out modelInfo);
+                builtin.loader.Obj.LoadModelInstanceSync("car6.obj",
+                    out var jInstanceDesc, out var modelInfo);
                 Trace($"Player ship modelInfo {modelInfo}");
                 
                 Vector3 vOffset = modelInfo.AABB.Center with { Y = 0 }; 
