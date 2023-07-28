@@ -102,6 +102,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Model.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ModelCache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ModelInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Binding.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\CollisionProperties.cs" />

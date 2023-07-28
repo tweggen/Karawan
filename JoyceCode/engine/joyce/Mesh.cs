@@ -182,6 +182,26 @@ public class Mesh
     }
 
 
+    public void Move(Vector3 off)
+    {
+        int l = Vertices.Count;
+        for (int i = 0; i < l; ++i)
+        {
+            Vertices[i] += off;
+        }
+    }
+
+
+    public void Transform(in Matrix4x4 m)
+    {
+        int l = Vertices.Count;
+        for (int i = 0; i < l; ++i)
+        {
+            Vertices[i] = Vector3.Transform(Vertices[i], m);
+        }
+    }
+
+
     public static Mesh CreateFrom(IList<MergeMeshEntry> others)
     {
         // TXWTODO: We ignore normals right now because we only create them after adding everything.

@@ -37,8 +37,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     
     private static engine.joyce.InstanceDesc[] _jInstancesCar;
-    private static builtin.loader.ModelInfo[] _modelInfos; 
-    private static engine.joyce.InstanceDesc _getCarMesh(int carIndex, out builtin.loader.ModelInfo modelInfo)
+    private static engine.ModelInfo[] _modelInfos; 
+    private static engine.joyce.InstanceDesc _getCarMesh(int carIndex, out engine.ModelInfo modelInfo)
     {
         lock(_classLock)
         {

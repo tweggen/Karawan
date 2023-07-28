@@ -38,6 +38,22 @@ public struct AABB
         AA = newAA;
         BB = newBB;
     }
+
+    public void Transform(in Matrix4x4 m)
+    {
+        Vector3 newA = Vector3.Transform(AA, m);
+        Vector3 newB = Vector3.Transform(BB, m);
+        AA = new Vector3(
+            Single.Min(newA.X, newB.X),
+            Single.Min(newA.Y, newB.Y),
+            Single.Min(newA.Z, newB.Z)
+            );
+        BB = new Vector3(
+            Single.Max(newA.X, newB.X),
+            Single.Max(newA.Y, newB.Y),
+            Single.Max(newA.Z, newB.Z)
+        );
+    }
     
 
     public override string? ToString()
