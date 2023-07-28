@@ -81,6 +81,11 @@ public class SkShader : IDisposable
         _gl.Uniform1(location, value);
     }
 
+    public void SetUniform(int location, float value)
+    {
+        _gl.Uniform1(location, value);
+    }
+    
     //Uniforms are properties that applies to the entire geometry
     public void SetUniform(string name, int value)
     {

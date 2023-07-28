@@ -20,7 +20,7 @@ namespace Splash
 
         private void _addLightEntry(in LightType type,
             in Vector3 position, in Vector3 target,
-            in Vector4 color)
+            in Vector4 color, float param1)
         {
             Light light = new();
 
@@ -35,6 +35,7 @@ namespace Splash
                     color.Y,
                     color.Z,
                     color.W);
+                light.param1 = param1;
                 _lights[_lightsCount] = light;
                 _lightsCount++;
             }
@@ -76,7 +77,7 @@ namespace Splash
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.DirectionalLight>();
                 _addLightEntry(LightType.LIGHT_DIRECTIONAL,
-                    matTransform.Translation, vRight + matTransform.Translation, cLight.Color);
+                    matTransform.Translation, vRight + matTransform.Translation, cLight.Color, 0f);
             }
         }
         
@@ -98,16 +99,15 @@ namespace Splash
                     break;
                 }
 
-                var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
-                var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
+                var cTransform = eLight.Get<engine.transform.components.Transform3ToWorld>();
                 var cLight = eLight.Get<engine.joyce.components.PointLight>();
+                var position = cTransform.Matrix.Translation;
+                var target = Vector3.Transform(cLight.Target, cTransform.Matrix) - position;
                 _addLightEntry(LightType.LIGHT_POINT,
-                    matTransform.Translation,
-                    /*
-                     * The point light takes the attenuation / (distance if intensity == 1) in .X  
-                     */
-                     new Vector3(cLight.Distance, 0f, 0f),
-                    cLight.Color);
+                    cTransform.Matrix.Translation,
+                     target,
+                    cLight.Color * cLight.Distance,
+                    cLight.CosOpening);
             }
         }
 

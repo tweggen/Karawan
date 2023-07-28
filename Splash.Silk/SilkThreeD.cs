@@ -41,6 +41,7 @@ public class SilkThreeD : IThreeD
         public int PosLoc;
         public int TargetLoc;
         public int ColorLoc;
+        public int Param1Loc;
     }
 
     /*
@@ -63,12 +64,14 @@ public class SilkThreeD : IThreeD
         string posName = $"lights[{lightIndex}].position";
         string targetName = $"lights[{lightIndex}].target";
         string colorName = $"lights[{lightIndex}].color";
+        string param1Name = $"lights[{lightIndex}].param1";
 
         lightShaderPos.EnabledLoc = (int)sh.GetUniform(enabledName);
         lightShaderPos.TypeLoc = (int)sh.GetUniform(typeName);
         lightShaderPos.PosLoc = (int)sh.GetUniform(posName);
         lightShaderPos.TargetLoc = (int)sh.GetUniform(targetName);
         lightShaderPos.ColorLoc = (int)sh.GetUniform(colorName);
+        lightShaderPos.Param1Loc = (int)sh.GetUniform(param1Name);
 
     }
 
@@ -124,6 +127,9 @@ public class SilkThreeD : IThreeD
             Vector4 color = light.color;
             sh.SetUniform(lightShaderPos.ColorLoc, color);
             if (checkLights) CheckError($"Set Uniform light color {index}");
+
+            float param1 = light.param1;
+            sh.SetUniform(lightShaderPos.Param1Loc, param1);
         }
         catch (Exception e)
         {

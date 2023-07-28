@@ -11,6 +11,11 @@ public struct Light
     public Vector3 position;
     public Vector3 target;
     public Vector4 color;
+    /**
+     * Opening for directional light source.
+     */
+    public float param1;
+    public float param2;
     public bool enabled;
 }
     

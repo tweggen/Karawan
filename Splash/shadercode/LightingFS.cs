@@ -20,7 +20,7 @@ namespace Splash.shadercode
             return "";
         }
 
-        static private string _shaderCodeCommon = @"
+        static private string _shaderCodeCommon = $@"
 // (from vertex shader)
 in vec4 fragPosition;
 in vec2 fragTexCoord;
@@ -45,19 +45,22 @@ out vec4 finalColor;
 #define     LIGHT_DIRECTIONAL       0
 #define     LIGHT_POINT             1
 
-struct MaterialProperty {
+struct MaterialProperty
+{{
     vec3 color;
     int useSampler;
     sampler2D sampler;
-};
+}};
 
-struct Light {
+struct Light
+{{
     int enabled;
     int type;
     vec3 position;
     vec3 target;
     vec4 color;
-};
+    float param1;
+}};
 
 // Input lighting values
 uniform Light lights[MAX_LIGHTS];
@@ -65,7 +68,7 @@ uniform Light lights[MAX_LIGHTS];
 uniform vec3 viewPos;
 
 void main()
-{
+{{
     // Texel color fetching from texture sampler
     vec4 texelColor = texture(texture0, fragTexCoord);
     vec4 emissiveColor = texture(texture2, fragTexCoord);
@@ -79,28 +82,42 @@ void main()
     // NOTE: Implement here your fragment shader code
 
     for (int i = 0; i < MAX_LIGHTS; i++)
-    {
+    {{
         if (lights[i].enabled != 0)
-        {
+        {{
             vec3 light = vec3(0.0);
 
             if (lights[i].type == LIGHT_DIRECTIONAL)
-            {
+            {{
                 light = -normalize(lights[i].target - lights[i].position);
                 float dotNormalLight = max(dot(normal, light), 0.0);
                 totalLight += lights[i].color.rgb*dotNormalLight;
-            }
+            }}
 
             if (lights[i].type == LIGHT_POINT)
-            {
+            {{
                 vec3 diffvec = lights[i].position - vec3(fragPosition);
                 light = normalize(diffvec);
-                float dotNormalLight = max(dot(normal, light), 0.0);
-                totalLight += (lights[i].color.rgb*dotNormalLight) * lights[i].target.x / length(diffvec);
-            }
 
-        }
-    }
+                if (lights[i].param1 > -1)
+                {{
+                    // This is a directional light, consider the target.
+                    // Minus, because we care about the angle at t he light.
+                    float dotTarget = -dot(lights[i].target,light);
+                    if (dotTarget > lights[i].param1)
+                    {{
+                        float dotNormalLight = max(dot(normal, light), 0.0);
+                        totalLight += (lights[i].color.rgb*dotNormalLight) / length(diffvec);
+                    }}
+                }} else
+                {{
+                    float dotNormalLight = max(dot(normal, light), 0.0);
+                    totalLight += (lights[i].color.rgb*dotNormalLight) / length(diffvec);
+                }}
+            }}
+
+        }}
+    }}
 
     
     vec4 colDiffuseTotal = texelColor + colDiffuse;
@@ -119,7 +136,7 @@ void main()
     finalColor = colUnfogged;
     // Gamma correction
     // finalColor = pow(finalColor, vec4(1.0/2.2));
-}
+}}
 
 ";
 
