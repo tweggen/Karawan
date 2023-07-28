@@ -21,6 +21,7 @@ namespace Splash.shadercode
         }
 
         static private string _shaderCodeCommon = $@"
+
 // (from vertex shader)
 in vec4 fragPosition;
 in vec2 fragTexCoord;
@@ -33,7 +34,6 @@ uniform sampler2D texture0;
 uniform sampler2D texture2;
 uniform vec4 colDiffuse;
 uniform vec4 ambient;
-
 
 
 // Output fragment color
@@ -65,75 +65,76 @@ struct Light
 // Input lighting values
 uniform Light lights[MAX_LIGHTS];
 
-uniform vec3 viewPos;
+uniform vec3 v3AbsPosView;
 
 void main()
 {{
+    vec3 v3RelFragPosition = vec3(fragPosition)-v3AbsPosView;
+
     // Texel color fetching from texture sampler
-    vec4 texelColor = texture(texture0, fragTexCoord);
-    vec4 emissiveColor = texture(texture2, fragTexCoord);
-    vec3 totalLight = vec3(0.0);
-    vec3 normal = normalize(fragNormal);
-    vec3 viewD = normalize(viewPos - vec3(fragPosition));
-    vec3 specular = vec3(0.0);
+    vec4 col4Texel = texture(texture0, fragTexCoord);
+    vec4 col4Emissive = texture(texture2, fragTexCoord);
+    vec3 col3TotalLight = vec3(0.0);
+    vec3 v3nNormal = normalize(fragNormal);
 
-    if ((emissiveColor.a+texelColor.a) < 0.01) discard;
-
-    // NOTE: Implement here your fragment shader code
+    // Is it all too transparent?
+    if ((col4Emissive.a+col4Texel.a) < 0.01) discard;
 
     for (int i = 0; i < MAX_LIGHTS; i++)
     {{
         if (lights[i].enabled != 0)
         {{
-            vec3 light = vec3(0.0);
+            vec3 v3nDirLight = vec3(0.0);
 
             if (lights[i].type == LIGHT_DIRECTIONAL)
             {{
-                light = -normalize(lights[i].target - lights[i].position);
-                float dotNormalLight = max(dot(normal, light), 0.0);
-                totalLight += lights[i].color.rgb*dotNormalLight;
+                v3nDirLight = -normalize(lights[i].target - lights[i].position);
+                float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
+                col3TotalLight += lights[i].color.rgb*dotNormalLight;
             }}
 
             if (lights[i].type == LIGHT_POINT)
             {{
-                vec3 diffvec = lights[i].position - vec3(fragPosition);
-                light = normalize(diffvec);
+                vec3 v3DirFragLight = lights[i].position - vec3(fragPosition);
+                float lengthFragLight = length(v3DirFragLight);
+                v3nDirLight = v3DirFragLight / lengthFragLight;
 
                 if (lights[i].param1 > -1)
                 {{
-                    // This is a directional light, consider the target.
-                    // Minus, because we care about the angle at t he light.
-                    float dotTarget = -dot(lights[i].target,light);
+                    // This is a directional v3nDirLight, consider the target.
+                    // Minus, because we care about the angle at t he v3nDirLight.
+                    float dotTarget = -dot(lights[i].target,v3nDirLight);
                     if (dotTarget > lights[i].param1)
                     {{
-                        float dotNormalLight = max(dot(normal, light), 0.0);
-                        totalLight += (lights[i].color.rgb*dotNormalLight) / length(diffvec);
+                        float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
+                        col3TotalLight += (lights[i].color.rgb*dotNormalLight) / lengthFragLight;
                     }}
                 }} else
                 {{
-                    float dotNormalLight = max(dot(normal, light), 0.0);
-                    totalLight += (lights[i].color.rgb*dotNormalLight) / length(diffvec);
+                    float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
+                    col3TotalLight += (lights[i].color.rgb*dotNormalLight) / lengthFragLight;
                 }}
             }}
 
         }}
     }}
-
     
-    vec4 colDiffuseTotal = texelColor + colDiffuse;
-    vec4 colEmissiveTotal = emissiveColor; 
-    vec4 colAmbientTotal = ambient;
-    vec4 colFog = vec4(0.3,0.35,0.2,0.0); 
-    vec4 colUnfogged = 
-        colDiffuseTotal * vec4(totalLight,0.0)
-        + colEmissiveTotal
+    vec4 col4DiffuseTotal = col4Texel + colDiffuse;
+    vec4 col4EmissiveTotal = col4Emissive; 
+    vec4 col4AmbientTotal = ambient;
+    vec4 col4Fog = vec4(0.2,0.18,0.2,0.0); 
+    vec4 col4Unfogged = 
+        col4DiffuseTotal * vec4(col3TotalLight,0.0)
+        + col4EmissiveTotal
         //+ vec4(0.53,0.15,0.18,0.0)
-        + colAmbientTotal
+        + col4AmbientTotal
         ;
-    //vec4 foggedColor = fragPosition.z * colUnfogged + (1-fragPosition.z) * colFog;
-    // finalColor = vec4(0.0, 0.0, fragPosition.z/1000.0, 0.0);
-    // finalColor = foggedColor;
-    finalColor = colUnfogged;
+    float distance = length(v3RelFragPosition);
+    float fogIntensity = clamp(distance, 0, 900) / 1000;
+    vec4 foggedColor = (1-fogIntensity) * col4Unfogged + fogIntensity * col4Fog;
+
+    finalColor = foggedColor;
+
     // Gamma correction
     // finalColor = pow(finalColor, vec4(1.0/2.2));
 }}
