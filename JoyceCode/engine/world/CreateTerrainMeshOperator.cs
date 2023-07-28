@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace engine.world
 {
@@ -27,14 +28,13 @@ namespace engine.world
         {
             aabb = MetaGen.AABB;
         }
-        
-        
+
+
         /**
          * Load the final elevation table from the elevation cache and
          * apply it to the world fragment.
          */
-        public void FragmentOperatorApply(
-           in world.Fragment worldFragment )
+        public Task FragmentOperatorApply(world.Fragment worldFragment) => new Task(() =>
         {
             /*
              * Create geometry from the elevations stored in the fragment.
@@ -42,7 +42,7 @@ namespace engine.world
             {
                 worldFragment.WorldFragmentLoadGround();
             }
-        }
+        });
 
 
         public CreateTerrainMeshOperator(string strKey)

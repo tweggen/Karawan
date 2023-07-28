@@ -1,8 +1,5 @@
 ﻿
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace engine.world
 {
@@ -31,7 +28,7 @@ namespace engine.world
          * fragment in a given state and a certain configuratino, it shall generate
          * the same output.
          */
-        public void FragmentOperatorApply(in world.Fragment worldFragment);
+        public Task FragmentOperatorApply(world.Fragment worldFragment);
 
     }
 }

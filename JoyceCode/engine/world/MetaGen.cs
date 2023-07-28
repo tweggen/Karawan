@@ -101,37 +101,30 @@ namespace engine.world
             {
 
                 IFragmentOperator op = kvp.Value;
+                /*
+                 * Pre-filter before creating the tasks, even if the task does it itself, too.
+                 */
                 op.FragmentOperatorGetAABB(out var aabb);
                 if (!aabb.IntersectsXZ(fragment.AABB))
                 {
                     continue;
                 }
                 
-                Task taskFragmentOperator = new Task(() =>
-                {
-                    try
-                    {
-                        var t0 = DateTime.Now.Ticks;
-                        kvp.Value.FragmentOperatorApply(fragment);
-                        var dt = DateTime.Now.Ticks - t0;
-                        if (dt > 0.001)
-                        {
-                            var oppath = kvp.Value.FragmentOperatorGetPath();
-                            if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen.applyFragmentOperators(): Applying operator '{oppath}' took {dt}.");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Trace($"WorldMetaGen.applyFragmentOperators(): Unknown exception applying fragment operator '{kvp.Value.FragmentOperatorGetPath()}': {e}')");
-                    }
-                });
+                Task taskFragmentOperator = kvp.Value.FragmentOperatorApply(fragment);
                 listFragmentOperatorTasks.Add(taskFragmentOperator);
             }
             var taskAllFragmentOperators = new Task(() =>
             {
                 foreach(var task in listFragmentOperatorTasks) {
-                    task.Start();
-                    task.Wait();
+                    try
+                    {
+                        task.Start();
+                        task.Wait();
+                    }
+                    catch (Exception e)
+                    {
+                        Trace($"WorldMetaGen.applyFragmentOperators(): Unknown exception applying fragment operator: {e}')");
+                    }
                 }
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });

@@ -153,6 +153,7 @@ public class Obj
         modelInfo.Center = vCenter / nVertices;
     }
     
+    
     static public Task<(engine.joyce.InstanceDesc InstanceDesc, engine.ModelInfo ModelInfo)> 
         LoadModelInstance(string url)
     {

@@ -4,6 +4,7 @@ using DefaultEcs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using static engine.Logger;
 
 
@@ -223,8 +224,7 @@ namespace nogame.cities
 
 
 
-        public void FragmentOperatorApply(
-            in engine.world.Fragment worldFragment)
+        public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(() =>
         {
             float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
             float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
@@ -260,13 +260,14 @@ namespace nogame.cities
              */
             var quarterStore = _clusterDesc.QuarterStore();
 
-            foreach (var quarter in quarterStore.GetQuarters() )
+            foreach (var quarter in quarterStore.GetQuarters())
             {
                 if (quarter.IsInvalid())
                 {
-                    Trace( $"Skipping invalid quarter.");
+                    Trace($"Skipping invalid quarter.");
                     continue;
                 }
+
                 /*
                  * Place on house in each quarter in the middle.    
                  */
@@ -274,17 +275,19 @@ namespace nogame.cities
                 float ymiddle = 0.0f;
                 int n = 0;
                 var delims = quarter.GetDelims();
-                foreach (var delim in delims )
+                foreach (var delim in delims)
                 {
                     xmiddle += delim.StreetPoint.Pos.X;
                     ymiddle += delim.StreetPoint.Pos.Y;
                     ++n;
                 }
+
                 // trace( 'middle: $xmiddle, $ymiddle');
                 if (3 > n)
                 {
                     continue;
                 }
+
                 xmiddle /= n;
                 ymiddle /= n;
 
@@ -294,14 +297,14 @@ namespace nogame.cities
                  * - what is it extend?
                  * - what is the largest side?
                  */
-                foreach (var estate in quarter.GetEstates() )
+                foreach (var estate in quarter.GetEstates())
                 {
 
                     /*
                      * Now create a house subgeometry for each of the buildings on the
                      * estate.
                      */
-                    foreach (var building in estate.GetBuildings() )
+                    foreach (var building in estate.GetBuildings())
                     {
                         var orgCenter = building.getCenter();
                         var center = orgCenter;
@@ -319,7 +322,7 @@ namespace nogame.cities
 
                         var orgPoints = building.GetPoints();
                         var fragPoints = new List<Vector3>();
-                        foreach (var p in orgPoints )
+                        foreach (var p in orgPoints)
                         {
                             fragPoints.Add(
                                 new Vector3(
@@ -329,6 +332,7 @@ namespace nogame.cities
                                 )
                             );
                         }
+
                         var height = building.GetHeight();
                         try
                         {
@@ -336,14 +340,17 @@ namespace nogame.cities
                                 worldFragment, fragPoints, height, _metersPerTexture,
                                 g, listCreatePhysics);
                         }
-                        catch (Exception e) {
+                        catch (Exception e)
+                        {
                             Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
+
                         try
                         {
                             _createNeonSignsSubGeo(worldFragment, fragPoints, height, neonG);
                         }
-                        catch (Exception e) {
+                        catch (Exception e)
+                        {
                             Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
 
@@ -384,7 +391,7 @@ namespace nogame.cities
             {
                 Trace($"Unknown exception: {e}");
             }
-        }
+        });
     
 
         public GenerateHousesOperator(

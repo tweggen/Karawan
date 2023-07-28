@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using engine;
 using engine.world;
 using engine.streets;
@@ -96,9 +97,9 @@ namespace nogame.characters.cubes
         {
             _clusterDesc.GetAABB(out aabb);
         }
-        
 
-        public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
+
+        public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(() =>
         {
             var aPhysics = worldFragment.Engine.GetAPhysics();
 
@@ -142,22 +143,24 @@ namespace nogame.characters.cubes
             {
                 return;
             }
+
             int l = streetPoints.Count;
             int nCharacters = (int)((float)l * 7f / 5f);
 
-            for (int i=0; i<nCharacters; i++)
+            for (int i = 0; i < nCharacters; i++)
             {
 
                 var idxPoint = (int)(_rnd.getFloat() * l);
                 var idx = 0;
                 StreetPoint chosenStreetPoint = null;
-                foreach (var sp in streetPoints )
+                foreach (var sp in streetPoints)
                 {
                     if (idx == idxPoint)
                     {
                         chosenStreetPoint = sp;
                         break;
                     }
+
                     idx++;
                 }
 
@@ -165,6 +168,7 @@ namespace nogame.characters.cubes
                 {
                     Error("chosenStreetPoint must not be null at this point.");
                 }
+
                 if (!chosenStreetPoint.HasStrokes())
                 {
                     continue;
@@ -187,7 +191,8 @@ namespace nogame.characters.cubes
 
                 if (_trace)
                 {
-                    Trace($"GenerateCubeCharacterOperator(): Starting on streetpoint {idxPoint} {chosenStreetPoint.Pos}.");
+                    Trace(
+                        $"GenerateCubeCharacterOperator(): Starting on streetpoint {idxPoint} {chosenStreetPoint.Pos}.");
                 }
 
                 ++_characterIndex;
@@ -209,8 +214,9 @@ namespace nogame.characters.cubes
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));
                         eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
-                            new Vector3(_rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f, _rnd.getFloat()*2f-1f),
-                            _rnd.getFloat()*2f * (float)Math.PI / 180f)));
+                            new Vector3(_rnd.getFloat() * 2f - 1f, _rnd.getFloat() * 2f - 1f,
+                                _rnd.getFloat() * 2f - 1f),
+                            _rnd.getFloat() * 2f * (float)Math.PI / 180f)));
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(
@@ -224,12 +230,15 @@ namespace nogame.characters.cubes
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
-                                { Entity = eTarget, Name = "nogame.characters.cube", DebugInfo = $"_chrIdx {_characterIndex}", IsTangible = false };
+                            {
+                                Entity = eTarget, Name = "nogame.characters.cube",
+                                DebugInfo = $"_chrIdx {_characterIndex}", IsTangible = false
+                            };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCubeSound(), 150f));
                         eTarget.Set(new engine.physics.components.Kinetic(
-                            prefSphere, collisionProperties )
+                            prefSphere, collisionProperties)
                         );
                     });
 
@@ -238,7 +247,7 @@ namespace nogame.characters.cubes
 
                 }
             }
-        }
+        });
 
 
         public GenerateCharacterOperator(

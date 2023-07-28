@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using static engine.Logger;
 
 namespace engine.streets
@@ -92,8 +93,7 @@ namespace engine.streets
         /**
          * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
          */
-        public void FragmentOperatorApply(
-            in world.Fragment worldFragment)
+        public Task FragmentOperatorApply(world.Fragment worldFragment) => new Task(() =>
         {
             // Perform clipping until we have bounding boxes
 
@@ -126,7 +126,7 @@ namespace engine.streets
                 }
             }
 
-            if (_traceQuarters) Trace( $"Cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+            if (_traceQuarters) Trace($"Cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
 #if false
                 try
             {
@@ -155,7 +155,7 @@ namespace engine.streets
              * fragment.
              */
             var quarterStore = _clusterDesc.QuarterStore();
-            foreach(var quarter in quarterStore.GetQuarters())
+            foreach (var quarter in quarterStore.GetQuarters())
             {
                 try
                 {
@@ -163,16 +163,18 @@ namespace engine.streets
                      * Is the quarter part of this fragment?
                      */
                     Vector2 center = quarter.GetCenterPoint();
-                    center += new Vector2( _clusterDesc.Pos.X, _clusterDesc.Pos.Z );
+                    center += new Vector2(_clusterDesc.Pos.X, _clusterDesc.Pos.Z);
                     if (!worldFragment.IsInside(center))
                     {
                         // This is outside, continue;
                         continue;
                     }
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     Warning($"Unknown exception: {e}");
                 }
+
                 _generateQuarterFloor(worldFragment, quarter, cx, cz, g);
             }
 
@@ -193,11 +195,12 @@ namespace engine.streets
                 instanceDesc.Materials.Add(_getQuarterMaterial());
                 worldFragment.AddStaticMolecule("engine.streets.quarters", instanceDesc);
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 Warning($"Unknown exception: {e}");
             }
 
-        }
+        });
 
 
         public GenerateClusterQuartersOperator(

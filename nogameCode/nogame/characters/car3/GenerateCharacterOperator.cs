@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using engine;
 using engine.joyce;
 using engine.world;
@@ -134,12 +135,12 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     {
         _clusterDesc.GetAABB(out aabb);
     }
-        
 
-    public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
+
+    public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(() =>
     {
         var aPhysics = worldFragment.Engine.GetAPhysics();
-        
+
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
@@ -164,7 +165,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             }
         }
 
-        if (_trace) Trace( $"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+        if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
         _rnd.clear();
 
         /*
@@ -180,24 +181,27 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         {
             return;
         }
+
         int l = streetPoints.Count;
         int nCharacters = (int)((float)l * 7f / 10f);
 
-        for (int i=0; i<nCharacters; i++)
+        for (int i = 0; i < nCharacters; i++)
         {
 
             var idxPoint = (int)(_rnd.getFloat() * l);
             var idx = 0;
             StreetPoint chosenStreetPoint = null;
-            foreach (var sp in streetPoints )
+            foreach (var sp in streetPoints)
             {
                 if (idx == idxPoint)
                 {
                     chosenStreetPoint = sp;
                     break;
                 }
+
                 idx++;
             }
+
             if (!chosenStreetPoint.HasStrokes())
             {
                 continue;
@@ -218,7 +222,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             }
             if (null != chosenStreetPoint)
             {
-                if (_trace) Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
+                if (_trace)
+                    Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
                 ++_characterIndex;
                 {
@@ -228,15 +233,15 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     var wf = worldFragment;
 
                     int fragmentId = worldFragment.NumericalId;
-                    
+
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
-                    {          
+                    {
                         eTarget.Set(new engine.world.components.FragmentId(fragmentId));
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
 
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
-                                .SetSpeed((40f+_rnd.getFloat()*30f+(float)carIdx * 20f)/3.6f)));
+                                .SetSpeed((40f + _rnd.getFloat() * 30f + (float)carIdx * 20f) / 3.6f)));
 
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCar3Sound(carIdx), 150f));
@@ -252,12 +257,12 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             )
                         );
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        engine.physics.CollisionProperties collisionProperties = 
+                        engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
                                 { Name = "nogame.characters.car3", IsTangible = true };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
-                        eTarget.Set(new engine.physics.components.Kinetic( 
-                            prefSphere, collisionProperties ));
+                        eTarget.Set(new engine.physics.components.Kinetic(
+                            prefSphere, collisionProperties));
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
@@ -270,7 +275,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 if (_trace) Trace("No streetpoint found.");
             }
         }
-    }
+    });
 
 
     public GenerateCharacterOperator(

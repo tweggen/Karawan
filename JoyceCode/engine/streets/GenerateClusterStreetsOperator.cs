@@ -1,6 +1,7 @@
 ﻿using engine.world;
 using System;
 using System.Numerics;
+using System.Threading.Tasks;
 using static engine.Logger;
 
 namespace engine.streets
@@ -621,8 +622,7 @@ namespace engine.streets
         /**
          * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
          */
-        public void FragmentOperatorApply(
-            in world.Fragment worldFragment)
+        public Task FragmentOperatorApply(world.Fragment worldFragment) => new Task(() =>
         {
             // Perform clipping until we have bounding boxes
 
@@ -655,9 +655,10 @@ namespace engine.streets
             var strokeStore = _clusterDesc.StrokeStore();
             if (_traceStreets) Trace("Have streets.");
 
-            if (_traceStreets) Trace($"In terrain '{worldFragment.GetId()}' operator. "
-                + $"Fragment @{worldFragment.Position}. "
-                + $"Cluster '{_clusterDesc.Id}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
+            if (_traceStreets)
+                Trace($"In terrain '{worldFragment.GetId()}' operator. "
+                      + $"Fragment @{worldFragment.Position}. "
+                      + $"Cluster '{_clusterDesc.Id}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
 
             /*
              * We need the coordinates of the cluster relative to the fragment to translate 
@@ -666,12 +667,12 @@ namespace engine.streets
 
             var nGeneratedStreets = 0;
             var nIgnoredStrokes = 0;
-            
+
             var g = engine.joyce.Mesh.CreateListInstance();
             /*
              * Create the roads between the junctions.
              */
-            foreach(var stroke in strokeStore.GetStrokes())
+            foreach (var stroke in strokeStore.GetStrokes())
             {
                 var didCreateStreetRun = _generateStreetRun(
                     worldFragment, cx, cz, stroke,
@@ -691,7 +692,7 @@ namespace engine.streets
              */
             if (true)
             {
-                foreach(var streetPoint in strokeStore.GetStreetPoints() )
+                foreach (var streetPoint in strokeStore.GetStreetPoints())
                 {
                     _generateJunction(
                         worldFragment, cx, cz, streetPoint, g
@@ -714,8 +715,7 @@ namespace engine.streets
             instanceDesc.MeshMaterials.Add(0);
             instanceDesc.Materials.Add(_getStreetMaterial());
             worldFragment.AddStaticMolecule("engine.streets.streets", instanceDesc);
-
-        }
+        });
 
 
         public GenerateClusterStreetsOperator(

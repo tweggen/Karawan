@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using engine;
 using engine.world;
 using engine.streets;
@@ -91,10 +92,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     {
         _clusterDesc.GetAABB(out aabb);
     }
-        
 
-    public void FragmentOperatorApply(in engine.world.Fragment worldFragment)
-    
+
+    public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(() =>
+
     {
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
@@ -120,7 +121,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             }
         }
 
-        if (_trace) Trace( $"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+        if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
         _rnd.clear();
 
         /*
@@ -136,28 +137,32 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         {
             return;
         }
+
         int l = streetPoints.Count;
         int nCharacters = (int)((float)_clusterDesc.Size / 20f + 1f);
-        if( nCharacters > _clusterDesc.GetNClosest() ) {
+        if (nCharacters > _clusterDesc.GetNClosest())
+        {
             nCharacters = _clusterDesc.GetNClosest();
         }
         // Trace($"Generating {nCharacters} trams.");
 
-        for (int i=0; i<nCharacters; i++)
+        for (int i = 0; i < nCharacters; i++)
         {
 
             var idxPoint = (int)(_rnd.getFloat() * l);
             var idx = 0;
             StreetPoint chosenStreetPoint = null;
-            foreach (var sp in streetPoints )
+            foreach (var sp in streetPoints)
             {
                 if (idx == idxPoint)
                 {
                     chosenStreetPoint = sp;
                     break;
                 }
+
                 idx++;
             }
+
             if (!chosenStreetPoint.HasStrokes())
             {
                 continue;
@@ -178,7 +183,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             }
             if (null != chosenStreetPoint)
             {
-                if (_trace) Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
+                if (_trace)
+                    Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
                 ++_characterIndex;
                 {
@@ -218,9 +224,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         eTarget.Set(new engine.audio.components.MovingSound(_getTramSound(), 150f));
                         eTarget.Set(new engine.physics.components.Kinetic(
-                            prefSphere, 
-                            //new engine.physics.CollisionProperties { Name = "nogame.characters.tram", IsTangible = false }
-                            null
+                                prefSphere,
+                                //new engine.physics.CollisionProperties { Name = "nogame.characters.tram", IsTangible = false }
+                                null
                             )
                         );
                     });
@@ -235,7 +241,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 if (_trace) Trace("No streetpoint found.");
             }
         }
-    }
+    });
 
 
     public GenerateCharacterOperator(
