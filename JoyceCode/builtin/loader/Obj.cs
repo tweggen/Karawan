@@ -65,11 +65,11 @@ public class Obj
                  * Self-lighting engine.
                  */
                 jMaterial.AlbedoColor = 0x00000000;
-                jMaterial.EmissiveColor = 0xff00ffff;
-                    //((uint)(loadedMaterial.DiffuseColor.X * 255f))
-                    //| ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
-                    //| ((uint)(loadedMaterial.DiffuseColor.Z * 255f) << 16)
-                    //| 0xff000000;
+                jMaterial.EmissiveColor =
+                    ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
+                    | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
+                    | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
+                    | 0xff000000;
                 jMaterial.HasTransparency = true;
             }
             else
@@ -78,9 +78,9 @@ public class Obj
                  * Standard case
                  */
                 jMaterial.AlbedoColor =
-                    ((uint)(loadedMaterial.DiffuseColor.X * 255f))
+                    ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
                     | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
-                    | ((uint)(loadedMaterial.DiffuseColor.Z * 255f) << 16)
+                    | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
                     | 0xff000000;
             }
             instanceDesc.Materials.Add(jMaterial);
