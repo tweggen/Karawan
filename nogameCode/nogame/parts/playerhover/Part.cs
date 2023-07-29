@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using engine;
 using engine.draw;
@@ -265,19 +266,23 @@ namespace nogame.parts.playerhover
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
-                builtin.loader.Obj.LoadModelInstanceSync("car6.obj",
-                    out var jInstanceDesc, out var modelInfo);
+                /*
+                 * Heck, why are we async here?
+                 */
+                Model model = Task.Run(() => ModelCache.Instance().Instantiate(
+                    "car6.obj",
+                    new InstantiateModelParams()
+                    {
+                        GeomFlags = 0 
+                        | InstantiateModelParams.CENTER_X
+                        | InstantiateModelParams.CENTER_Y
+                        | InstantiateModelParams.ROTATE_Y180
+                    })).GetAwaiter().GetResult();
+
+                ModelInfo modelInfo = model.ModelInfo;
+                engine.joyce.InstanceDesc jInstanceDesc = model.InstanceDesc;
                 Trace($"Player ship modelInfo {modelInfo}");
                 
-                Vector3 vOffset = modelInfo.AABB.Center with { Y = 0 }; 
-
-                jInstanceDesc.ModelTransform = 
-                    Matrix4x4.CreateTranslation(-vOffset)
-                    * Matrix4x4.CreateRotationY((float)Math.PI);
-                
-                modelInfo.AABB.Offset(-vOffset);
-                modelInfo.AABB.RotateY180();
-
                 _eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                 _eShip.Set(new engine.joyce.components.PointLight(
                     new Vector3(0f, 0f, -1f),
