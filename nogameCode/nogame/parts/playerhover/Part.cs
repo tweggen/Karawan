@@ -275,7 +275,7 @@ namespace nogame.parts.playerhover
                     {
                         GeomFlags = 0 
                         | InstantiateModelParams.CENTER_X
-                        | InstantiateModelParams.CENTER_Y
+                        | InstantiateModelParams.CENTER_Z
                         | InstantiateModelParams.ROTATE_Y180
                     })).GetAwaiter().GetResult();
 

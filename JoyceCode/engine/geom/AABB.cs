@@ -108,4 +108,11 @@ public struct AABB
         AA = pos - vS2;
         BB = pos + vS2;
     }
+
+    public AABB()
+    {
+        AA = new Vector3(Single.MaxValue, Single.MaxValue, Single.MaxValue);
+        BB = new Vector3(Single.MinValue, Single.MinValue, Single.MinValue);
+    }
+    
 }
