@@ -79,11 +79,21 @@ public class SkShader : IDisposable
     public void SetUniform(int location, int value)
     {
         _gl.Uniform1(location, value);
+        var err = _gl.GetError();
+        if (err != GLEnum.NoError)
+        {
+            Error($"Error setting uniform {location}: {err}");
+        }
     }
 
     public void SetUniform(int location, float value)
     {
         _gl.Uniform1(location, value);
+        var err = _gl.GetError();
+        if (err != GLEnum.NoError)
+        {
+            Error($"Error setting uniform {location}: {err}");
+        }
     }
     
     //Uniforms are properties that applies to the entire geometry
@@ -96,6 +106,11 @@ public class SkShader : IDisposable
             ErrorThrow($"{name} uniform not found on shader.", (m) => new InvalidOperationException(m));
         }
         _gl.Uniform1(location, value);
+        var err = _gl.GetError();
+        if (err != GLEnum.NoError)
+        {
+            Error($"Error setting uniform {name}: {err}");
+        }
     }
 
     public void SetUniform(string name, float value)
@@ -106,6 +121,11 @@ public class SkShader : IDisposable
             ErrorThrow($"{name} uniform not found on shader.", (m) => new InvalidOperationException(m));
         }
         _gl.Uniform1(location, value);
+        var err = _gl.GetError();
+        if (err != GLEnum.NoError)
+        {
+            Error($"Error setting uniform {name}: {err}");
+        }
     }
 
     public uint GetUniform(string name)

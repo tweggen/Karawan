@@ -76,13 +76,13 @@ namespace Splash.Silk
                  */
                 if ((cCameraParams.CameraMask & 0xffff) != 0)
                 {
-                    _skShaderEntry.SkShader.SetUniform("fogDistance", 400f);
+                    _skShaderEntry.SkShader.SetUniform("fogDistance", 500f);
                     _gl.Enable(EnableCap.DepthTest);
                 }
                 else
                 {
+                    _skShaderEntry.SkShader.SetUniform("fogDistance", 0.5f);
                     _gl.Disable(EnableCap.DepthTest);
-                    _skShaderEntry.SkShader.SetUniform("fogDistance", 0);
                 }
 
                 var mCameraToWorld = renderPart.Transform3ToWorld.Matrix;

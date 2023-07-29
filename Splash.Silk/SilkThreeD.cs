@@ -418,7 +418,7 @@ public class SilkThreeD : IThreeD
         gl.BindBuffer( GLEnum.ElementArrayBuffer, 0);
         
         // TXWTODO: Shall we really always disable the current program?
-        gl.UseProgram(0);
+        // gl.UseProgram(0);
 
         if (null != bMatrices)
         {
