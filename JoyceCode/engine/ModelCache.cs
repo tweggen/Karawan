@@ -94,15 +94,17 @@ public class ModelCache
                 m = m * Matrix4x4.CreateRotationZ(Single.Pi * rotZ / 2f);
             }
 
+            modelInfo.AABB.Reset();
             foreach (Mesh mesh in model.InstanceDesc.Meshes)
             {
                 mesh.Transform(m);
+                mesh.ComputeAABB(out var meshAABB);
+                modelInfo.AABB.Add(meshAABB);
             }
 
             /*
              * Keep in mind we need to adjust both the mesh and the model info.
              */
-            modelInfo.AABB.Transform(m);
             modelInfo.Center = Vector3.Transform(modelInfo.Center, m);
 
             return model;

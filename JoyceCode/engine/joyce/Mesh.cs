@@ -182,6 +182,17 @@ public class Mesh
     }
 
 
+    public void ComputeAABB(out engine.geom.AABB aabb)
+    {
+        aabb = new();
+        int l = Vertices.Count;
+        for (int i = 0; i < l; ++i)
+        {
+            aabb.Add(Vertices[i]);
+        }
+    }
+    
+    
     public void Move(Vector3 off)
     {
         int l = Vertices.Count;

@@ -89,11 +89,28 @@ public struct AABB
         AA.X = Single.Min(AA.X, v.X);
         AA.Y = Single.Min(AA.Y, v.Y);
         AA.Z = Single.Min(AA.Z, v.Z);
-        BB.X = Single.Max(AA.X, v.X);
-        BB.Y = Single.Max(AA.Y, v.Y);
-        BB.Z = Single.Max(AA.Z, v.Z);
+        BB.X = Single.Max(BB.X, v.X);
+        BB.Y = Single.Max(BB.Y, v.Y);
+        BB.Z = Single.Max(BB.Z, v.Z);
     }
 
+
+    public void Add(in AABB o)
+    {
+        AA.X = Single.Min(AA.X, o.AA.X);
+        AA.Y = Single.Min(AA.Y, o.AA.Y);
+        AA.Z = Single.Min(AA.Z, o.AA.Z);
+        BB.X = Single.Max(BB.X, o.BB.X);
+        BB.Y = Single.Max(BB.Y, o.BB.Y);
+        BB.Z = Single.Max(BB.Z, o.BB.Z);
+    }
+    
+    
+    public void Reset()
+    { 
+        AA = new Vector3(Single.MaxValue, Single.MaxValue, Single.MaxValue);
+        BB = new Vector3(Single.MinValue, Single.MinValue, Single.MinValue);
+    }
 
     public AABB(in Vector3 aa, in Vector3 bb)
     {
@@ -111,8 +128,7 @@ public struct AABB
 
     public AABB()
     {
-        AA = new Vector3(Single.MaxValue, Single.MaxValue, Single.MaxValue);
-        BB = new Vector3(Single.MinValue, Single.MinValue, Single.MinValue);
+        Reset();
     }
     
 }
