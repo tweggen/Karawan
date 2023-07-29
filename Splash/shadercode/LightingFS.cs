@@ -101,7 +101,7 @@ void main()
                 float lengthFragLight = length(v3DirFragLight);
                 v3nDirLight = v3DirFragLight / lengthFragLight;
 
-                if (lights[i].param1 > -1)
+                if (lights[i].param1 > -1.0)
                 {
                     // This is a directional v3nDirLight, consider the target.
                     // Minus, because we care about the angle at t he v3nDirLight.
@@ -137,7 +137,7 @@ void main()
         vec4 col4Fog = vec4(0.2,0.18,0.2,0.0); 
         float distance = length(v3RelFragPosition);
         float fogIntensity = clamp(distance, 0.0, fogDistance) / (fogDistance+50.0);
-        vec4 foggedColor = (1-fogIntensity) * col4Unfogged + fogIntensity * col4Fog;
+        vec4 foggedColor = (1.0-fogIntensity) * col4Unfogged + fogIntensity * col4Fog;
 
         finalColor = foggedColor;
     }
