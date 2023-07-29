@@ -12,6 +12,6 @@ Kd 0.224 0.235 0.275
 newmtl shield(Clone)
 Kd 0.18 0.196 0.259
 
-newmtl custom4(Clone)
+newmtl thrust(Clone)
 Kd 0 1 1
 

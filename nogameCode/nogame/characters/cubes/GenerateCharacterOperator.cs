@@ -23,7 +23,7 @@ namespace nogame.characters.cubes
                 if(_jMaterialCube == null)
                 {
                     _jMaterialCube = new engine.joyce.Material();
-                    _jMaterialCube.AlbedoColor = 0xff00bbee;
+                    _jMaterialCube.AlbedoColor = 0xff228866;
                 }
                 return _jMaterialCube;
             }

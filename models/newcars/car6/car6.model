@@ -10,7 +10,7 @@
 
 :models
 
+[name:;collection:Aircraft;type:hull_lowerFrontPoint;position:(-0.5000, -0.0500, 1.9300);rotation:(0.0000, 0.0000, 0.0000);scale:(1.8000, 1.1000, 2.8600);group:;locked:False;hidden:False;materials:metalPurple+_defaultMat;]
 [name:;collection:Aircraft;type:engine_turbineLarge%;position:(-0.4959, 0.3000, 0.6000);rotation:(0.0000, 0.0000, 0.0000);scale:(1.0000, 0.3200, 0.8000);group:;locked:False;hidden:False;materials:metalPurple+_defaultMat+dark;]
 [name:;collection:Aircraft;type:hull_cockpitSkewed%;position:(-0.5000, 0.0000, 2.2297);rotation:(0.0000, 0.0000, 0.0000);scale:(1.0000, 0.6000, 1.9800);group:;locked:False;hidden:False;materials:shield+_defaultMat+metalPurple;]
-[name:;collection:Aircraft;type:hull_lowerFrontPoint;position:(-0.5000, -0.0500, 1.9300);rotation:(0.0000, 0.0000, 0.0000);scale:(1.8000, 1.1000, 2.8600);group:;locked:False;hidden:False;materials:metalPurple+_defaultMat;]
-[name:;collection:Primitives;type:diamond;position:(-0.5228, 0.3400, 0.3200);rotation:(0.0000, 0.0000, 0.0000);scale:(0.5544, 0.2400, 0.6400);group:;locked:False;hidden:False;materials:custom4;]
+[name:;collection:Primitives;type:block_taper%;position:(-0.4880, 0.4664, 0.3000);rotation:(270.0000, 0.0000, 0.0000);scale:(0.5760, 0.2000, 0.1663);group:;locked:False;hidden:False;materials:custom4;]
