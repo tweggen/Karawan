@@ -257,6 +257,12 @@ public class SilkThreeD : IThreeD
                 ((jMaterial.AlbedoColor) & 0xff) / 255f,
                 ((jMaterial.AlbedoColor >> 24) & 0xff) / 255f
             ));
+            sh.SetUniform("colEmissive", new Vector4(
+                ((jMaterial.EmissiveColor >> 16) & 0xff) / 255f,
+                ((jMaterial.EmissiveColor >> 8) & 0xff) / 255f,
+                ((jMaterial.EmissiveColor) & 0xff) / 255f,
+                ((jMaterial.EmissiveColor >> 24) & 0xff) / 255f
+            ));
             
             // sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
             sh.SetUniform("texture0", 0);

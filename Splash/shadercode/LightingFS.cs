@@ -33,6 +33,7 @@ in vec3 fragNormal;
 uniform sampler2D texture0;
 uniform sampler2D texture2;
 uniform vec4 colDiffuse;
+uniform vec4 colEmissive;
 uniform vec4 ambient;
 
 uniform float fogDistance;
@@ -121,7 +122,7 @@ void main()
     }
     
     vec4 col4DiffuseTotal = col4Texel + colDiffuse;
-    vec4 col4EmissiveTotal = col4Emissive; 
+    vec4 col4EmissiveTotal = col4Emissive + colEmissive; 
     vec4 col4AmbientTotal = ambient;
 
     vec4 col4Unfogged = 

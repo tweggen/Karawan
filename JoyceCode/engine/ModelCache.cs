@@ -12,6 +12,9 @@ namespace engine;
 
 public class ModelCache
 {
+    private static object _loClass = new();
+    private static ModelCache _instance;
+    
     private object _lo = new();
     
     /**
@@ -69,12 +72,12 @@ public class ModelCache
                 m = m * Matrix4x4.CreateTranslation(-vReCenter);
             }
 
-            int rotX = ((0 != InstantiateModelParams.ROTATE_X90) ? 1 : 0) +
-                       ((0 != InstantiateModelParams.ROTATE_X180) ? 2 : 0);
-            int rotY = ((0 != InstantiateModelParams.ROTATE_Y90) ? 1 : 0) +
-                       ((0 != InstantiateModelParams.ROTATE_Y180) ? 2 : 0);
-            int rotZ = ((0 != InstantiateModelParams.ROTATE_Z90) ? 1 : 0) +
-                       ((0 != InstantiateModelParams.ROTATE_Z180) ? 2 : 0);
+            int rotX = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X90)) ? 1 : 0) +
+                       ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X180)) ? 2 : 0);
+            int rotY = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y90)) ? 1 : 0) +
+                       ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y180)) ? 2 : 0);
+            int rotZ = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z90)) ? 1 : 0) +
+                       ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z180)) ? 2 : 0);
 
             if (0 != rotX)
             {
@@ -165,4 +168,21 @@ public class ModelCache
         return model;
     }
 
+    public static ModelCache Instance()
+    {
+        lock (_loClass)
+        {
+            if (_instance == null)
+            {
+                _instance = new ModelCache();
+            }
+
+            return _instance;
+        }
+    }
+
+    private ModelCache()
+    {
+        
+    }
 }

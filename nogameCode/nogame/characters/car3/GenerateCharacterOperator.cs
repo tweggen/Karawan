@@ -38,12 +38,23 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
     
     
+#if false
     private static engine.joyce.InstanceDesc[] _jInstancesCar;
-    private static engine.ModelInfo[] _modelInfos; 
-    private static void _getCarMesh(int carIndex,
-        out InstanceDesc instanceDesc,
-        out engine.ModelInfo modelInfo)
+    private static engine.ModelInfo[] _modelInfos;
+    
+    private async Task<Model>  _getCarMesh(int carIndex)
     {
+#if false
+        string uri = $"car{5 + carIndex}.obj";
+        Model model = await ModelCache.Instance().Instantiate($"car{5 + carIndex}.obj", new InstantiateModelParams()
+        {
+            GeomFlags = 0
+                        | InstantiateModelParams.CENTER_X
+                        | InstantiateModelParams.CENTER_Z
+                        | InstantiateModelParams.ROTATE_Y180
+        });
+        return model;
+#else
         lock(_classLock)
         {
             if( null==_jInstancesCar)
@@ -88,7 +99,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             modelInfo = _modelInfos[carIndex];
             instanceDesc = _jInstancesCar[carIndex];
         }
+#endif
     }
+#endif
 
     
     private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
@@ -137,7 +150,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
 
 
-    public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(() =>
+    public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(async () =>
     {
         var aPhysics = worldFragment.Engine.GetAPhysics();
 
@@ -228,8 +241,16 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 ++_characterIndex;
                 {
                     int carIdx = (int)(_rnd.getFloat() * 3f);
-                    _getCarMesh(carIdx, out var jInstanceDesc, out var modelInfo);
-
+                    Model model = await ModelCache.Instance().Instantiate($"car{5 + carIdx}.obj", new InstantiateModelParams()
+                    {
+                        GeomFlags = 0
+                                    | InstantiateModelParams.CENTER_X
+                                    | InstantiateModelParams.CENTER_Z
+                                    | InstantiateModelParams.ROTATE_Y180
+                    });
+                    InstanceDesc jInstanceDesc = model.InstanceDesc;
+                    ModelInfo modelInfo = model.ModelInfo;
+                    
                     var wf = worldFragment;
 
                     int fragmentId = worldFragment.NumericalId;
