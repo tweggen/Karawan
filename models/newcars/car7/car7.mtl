@@ -4,11 +4,14 @@ newmtl dark(Clone)
 Kd 0 0 0
 
 newmtl metalOrange(Clone)
-Kd 0.1194415 0.1170846 0.3103448
+Kd 0.119 0.117 0.31
 
 newmtl _defaultMat(Clone)
-Kd 0.006583068 0.01463409 0.04827583
+Kd 0.007 0.015 0.048
 
 newmtl thrust(Clone)
 Kd 0 1 1
+
+newmtl standardlight(Clone)
+Kd 1 1 1
 
