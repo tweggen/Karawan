@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using engine.joyce;
+using engine.joyce.mesh;
 using engine.world;
 using static engine.Logger;
 using Trace = System.Diagnostics.Trace;
@@ -42,6 +43,56 @@ class Cluster
  */
 public class FindLights
 {
+    static private object _lock = new();
+    static private engine.joyce.Material _jMaterialLight= null;
+
+    static private engine.joyce.Material _getLightMaterial()
+    {
+        lock (_lock)
+        {
+            if (_jMaterialLight == null)
+            {
+                _jMaterialLight = new engine.joyce.Material();
+                _jMaterialLight.EmissiveColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                    ? 0x00000000 : 0xccffffcc;
+                _jMaterialLight.EmissiveTexture = new engine.joyce.Texture("standardlight.png");
+                _jMaterialLight.HasTransparency = true;
+            }
+            return _jMaterialLight;
+        }
+    }
+    
+
+    private static void _addLightToModel(engine.Model model, Vector3 p)
+    {
+        /*
+         * Add a light material to the model.
+         */
+        var getLightMaterialIndex = (in engine.Model model) =>
+        {
+            var material = _getLightMaterial();
+            InstanceDesc instanceDesc = model.InstanceDesc;
+            int nm = instanceDesc.Materials.Count;
+
+            for (int i = 0; i < nm; ++i)
+            {
+                if (instanceDesc.Materials[i] == material)
+                {
+                    return i;
+                }
+            }
+
+            instanceDesc.Materials.Add(material);
+            return nm;
+        };
+
+        InstanceDesc instanceDesc = model.InstanceDesc;
+        int il = getLightMaterialIndex(model);
+        var m = Tools.CreatePlaneMesh(new Vector2(1.4f, 1.4f));
+        m.Move(p);
+        instanceDesc.AddMesh(m, il, new MeshProperties() { MeshFlags = MeshProperties.BillboardTransform });
+    }
+        
     public static engine.Model Process(engine.Model model)
     {
         InstanceDesc instanceDesc = model.InstanceDesc;
@@ -129,6 +180,8 @@ public class FindLights
         foreach (var c in listLights)
         {
             Trace($"Found light at {c.Center}");
+
+            _addLightToModel(model, c.Center);
         }
         
         return model;

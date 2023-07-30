@@ -1,7 +1,8 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using engine.joyce;
+using static engine.Logger;
 
 
 namespace engine.joyce;
@@ -26,6 +27,51 @@ public class InstanceDesc
     public IList<engine.joyce.Material> Materials;
     public IList<MeshProperties> MeshProperties;
 
+
+    public void NeedMeshProperties()
+    {
+        if (null == MeshProperties)
+        {
+            MeshProperties = new List<MeshProperties>();
+        }
+    }
+
+
+    public void CheckIntegrity()
+    {
+        if (Meshes.Count != MeshMaterials.Count)
+        {
+            ErrorThrow(
+                $"Internal mismatch: number of meshes and mesh materials don't match {Meshes.Count} != {MeshMaterials.Count}",
+                (m) => new InvalidOperationException(m));
+            return;
+        }
+        
+    }
+    
+    public void SetMeshProperties(int idx, MeshProperties newmp)
+    {
+        NeedMeshProperties();
+        CheckIntegrity();
+        while (MeshProperties.Count <= (idx + 1))
+        {
+            MeshProperties.Add(null);
+        }
+
+        MeshProperties[idx] = newmp;
+    }
+
+
+    public void AddMesh(in Mesh mesh, int materialIndex, MeshProperties meshProperties)
+    {
+        CheckIntegrity();
+        Meshes.Add(mesh);
+        MeshMaterials.Add(materialIndex);
+        int idx = Meshes.Count-1;
+        SetMeshProperties(idx, meshProperties);
+    }
+    
+    
     public InstanceDesc()
     {
         ModelTransform = Matrix4x4.Identity;
