@@ -6,6 +6,14 @@ using engine.joyce;
 
 namespace engine.joyce;
 
+public class MeshProperties
+{
+    static public uint BillboardTransform = 0x00000001;
+    public uint MeshFlags;
+    public float MinDistance;
+    public float MaxDistance;
+}
+
 /**
  * Describe one specific instance of a 3d object (aka Instance3 components)
  * Note that this is only a descriptor, not a lifetime object.
@@ -16,6 +24,7 @@ public class InstanceDesc
     public IList<engine.joyce.Mesh> Meshes;
     public IList<int> MeshMaterials;
     public IList<engine.joyce.Material> Materials;
+    public IList<MeshProperties> MeshProperties;
 
     public InstanceDesc()
     {
@@ -27,7 +36,7 @@ public class InstanceDesc
 
     public InstanceDesc TransformedCopy(in Matrix4x4 m)
     {
-        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials);
+        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials, MeshProperties);
         id.ModelTransform = ModelTransform * m;
         return id;
     }
@@ -43,6 +52,22 @@ public class InstanceDesc
         Meshes = meshes;
         MeshMaterials = meshMaterials;
         Materials = materials;
+        MeshProperties = null;
+    }
+
+
+    public InstanceDesc(
+        in IList<engine.joyce.Mesh> meshes,
+        in IList<int> meshMaterials,
+        in IList<engine.joyce.Material> materials,
+        in IList<MeshProperties> meshProperties
+    )
+    {
+        ModelTransform = Matrix4x4.Identity;
+        Meshes = meshes;
+        MeshMaterials = meshMaterials;
+        Materials = materials;
+        MeshProperties = meshProperties;
     }
 
 

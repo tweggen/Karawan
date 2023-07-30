@@ -37,6 +37,17 @@ public class Obj
             ;
     }
 
+
+    static private bool _isThrustMaterialName(string n)
+    {
+        return (n.Length >= 6 && n.Substring(0, 6) == "thrust");
+    }
+
+    static private bool _isStandardLightMaterialName(string n)
+    {
+        return (n.Length >= 13 && n.Substring(0, 13) == "standardlight");
+    }
+
     static public void LoadModelInstanceSync(string url, 
         out InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
     {
@@ -56,10 +67,12 @@ public class Obj
         foreach (var loadedMaterial in loadedObject.Materials)
         {
             engine.joyce.Material jMaterial = new();
+            jMaterial.Name = loadedMaterial.Name;
+            
             /*
              * Handle special materials
              */
-            if (loadedMaterial.Name.Substring(0, 6) == "thrust")
+            if (_isThrustMaterialName(loadedMaterial.Name))
             {
                 /*
                  * Self-lighting engine.
@@ -71,6 +84,21 @@ public class Obj
                     | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
                     | 0xff000000;
                 jMaterial.HasTransparency = true;
+                jMaterial.Name = "thrust";
+            }
+            else if (_isStandardLightMaterialName(loadedMaterial.Name))
+            {
+                /*
+                 * Self-lighting engine.
+                 */
+                jMaterial.AlbedoColor = 0x00000000;
+                jMaterial.EmissiveColor =
+                    ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
+                    | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
+                    | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
+                    | 0xff000000;
+                jMaterial.HasTransparency = true;
+                jMaterial.Name = "standardlight";
             }
             else
             {

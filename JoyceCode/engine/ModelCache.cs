@@ -128,8 +128,9 @@ public class ModelCache
         model.InstanceDesc = resultFromFile.InstanceDesc;
         model.ModelInfo = resultFromFile.ModelInfo;
         
-        var resultInstantiateModelParams =
-            await _instantiateModelParams(model, p);
+        model = await _instantiateModelParams(model, p);
+
+        model = FindLights.Process(model);
         
         return model;
     }

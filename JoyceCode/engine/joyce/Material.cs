@@ -15,6 +15,8 @@ namespace engine.joyce
         public bool HasTransparency;
         public bool UploadImmediately = false;
 
+        public string Name;
+        
         public Material(in Texture texture) 
         { 
             Texture = texture;
