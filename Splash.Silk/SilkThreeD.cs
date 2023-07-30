@@ -532,6 +532,13 @@ public class SilkThreeD : IThreeD
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
 
+        #if false
+        if (_skInstanceShaderEntry != null)
+        {
+            _skInstanceShaderEntry.SkShader.SetUniform("materialFlags", aMaterialEntry.JMaterial.IsBillboardTransform?1:0);
+        }
+#endif
+
         skMaterialEntry.SetUploaded();
 
     }

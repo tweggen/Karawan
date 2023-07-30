@@ -34,6 +34,7 @@ in mat4 instanceTransform;
 
 // Input uniform values
 uniform mat4 mvp;
+uniform int materialFlags;
 // uniform mat4 matNormal;
 
 // Output vertex attributes (to fragment shader)

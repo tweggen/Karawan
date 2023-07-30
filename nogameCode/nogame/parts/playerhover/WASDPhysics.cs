@@ -23,7 +23,7 @@ namespace nogame.parts.playerhover
         private DefaultEcs.Entity _ePhysDisplay;
 
         private readonly float LinearThrust = 180f;
-        private readonly float AngularThrust = 80.0f;
+        private readonly float AngularThrust = 20.0f;
         private readonly float MaxLinearVelocity = 50f;
         private readonly float MaxAngularVelocity = 0.8f;
         private readonly float LevelUpThrust = 16f;

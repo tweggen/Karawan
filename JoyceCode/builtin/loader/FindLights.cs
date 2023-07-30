@@ -93,6 +93,7 @@ public class FindLights
         m.Move(p);
         instanceDesc.AddMesh(m, il, null);
     }
+    
         
     public static engine.Model Process(engine.Model model)
     {
