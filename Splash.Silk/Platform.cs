@@ -123,33 +123,47 @@ namespace Splash.Silk
         }
         
         
+        private readonly float ControllerWalkForwardFast = 255f;
+        private readonly float ControllerWalkBackwardFast = 255f;
+        private readonly float ControllerWalkForwardNormal = 200f;
+        private readonly float ControllerWalkBackwardNormal = 200f;
+        private readonly float ControllerFlyUpNormal = 200f;
+        private readonly float ControllerFlyDownNormal = 200f;
+        private readonly float ControllerTurnLeftRight = 200f;
+        
+        
+        
         private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
         {
             string code = "";
             switch (arg2)
             {
+                case Key.ShiftLeft:
+                    _controllerState.WalkFast = true;
+                    code = "(shiftleft)";
+                    break;
                 case Key.Q:
-                    _controllerState.FlyUp = 200;
+                    _controllerState.FlyUp = (int) ControllerFlyUpNormal;
                     code = "Q";
                     break;
                 case Key.Z:
-                    _controllerState.FlyDown = 200;
+                    _controllerState.FlyDown = (int)ControllerFlyDownNormal;
                     code = "Z";
                     break;
                 case Key.W:
-                    _controllerState.WalkForward = 200;
+                    _controllerState.WalkForward = _controllerState.WalkFast?(int)ControllerWalkForwardFast:(int)ControllerWalkForwardNormal;
                     code = "W";
                     break;
                 case Key.S:
-                    _controllerState.WalkBackward = 200;
+                    _controllerState.WalkBackward = _controllerState.WalkFast?(int)ControllerWalkBackwardFast:(int)ControllerWalkBackwardNormal;
                     code = "S";
                     break;
                 case Key.A:
-                    _controllerState.TurnLeft = 200;
+                    _controllerState.TurnLeft = (int)ControllerTurnLeftRight;
                     code = "A";
                     break;
                 case Key.D:
-                    _controllerState.TurnRight = 200;
+                    _controllerState.TurnRight = (int)ControllerTurnLeftRight;
                     code = "D";
                     break;
                 case Key.Tab:
@@ -176,6 +190,10 @@ namespace Splash.Silk
             string code = "";
             switch (arg2)
             {
+                case Key.ShiftLeft:
+                    _controllerState.WalkFast = false;
+                    code = "(shiftleft)";
+                    break;
                 case Key.Q:
                     _controllerState.FlyUp = 0;
                     code = "Q";
@@ -223,6 +241,9 @@ namespace Splash.Silk
         }
 
 
+        private readonly float ControllerYMax = 0.2f; 
+        private readonly float ControllerXMax = 0.2f;
+
         private void _touchMouseController()
         {
             lock (_lo)
@@ -232,28 +253,37 @@ namespace Splash.Silk
                     Vector2 currDist = _currentMousePosition - _mousePressPosition;
                     var viewSize = _iView.Size;
 
+                    /*
+                     * Compute movement relative to view height, 
+                     */
                     float relY = (float)currDist.Y / (float)viewSize.Y;
                     float relX = (float)currDist.X / (float)viewSize.Y;
 
                     if (relY < 0)
                     {
-                        _controllerState.WalkForward = (int)(Single.Min(0.5f, -relY) * 510f);
+                        /*
+                         * The user dragged up compare to the press position
+                         */
+                        _controllerState.WalkForward = (int)(Single.Min(ControllerYMax, -relY)/ControllerYMax * ControllerWalkForwardFast);
                         _controllerState.WalkBackward = 0;
                     }
                     else if (relY > 0)
                     {
-                        _controllerState.WalkBackward = (int)(Single.Min(0.5f, relY) * 510f);
+                        /*
+                         * The user dragged down compared to the press position.
+                         */
+                        _controllerState.WalkBackward = (int)(Single.Min(ControllerYMax, relY)/ControllerYMax * ControllerWalkBackwardFast);
                         _controllerState.WalkForward = 0;
                     }
 
                     if (relX < 0)
                     {
-                        _controllerState.TurnLeft = (int)(Single.Min(0.5f, -relX) * 510f);
+                        _controllerState.TurnLeft = (int)(Single.Min(ControllerXMax, -relX)/ControllerXMax * ControllerTurnLeftRight);
                         _controllerState.TurnRight = 0;
                     }
                     else if (relX > 0)
                     {
-                        _controllerState.TurnRight = (int)(Single.Min(0.5f, relX) * 510f);
+                        _controllerState.TurnRight = (int)(Single.Min(ControllerXMax, relX) * ControllerTurnLeftRight);
                         _controllerState.TurnLeft = 0;
                     }
                 }
