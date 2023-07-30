@@ -59,6 +59,10 @@ public class Scene : engine.IScene
                 {
                     _aTransform.SetVisible(_eLogo, true);
                 }
+                if (_needsLoading < 100)
+                {
+                    return;
+                }
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 20f + _t));
                 _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
                 _aTransform.SetPosition(_eLight, new Vector3(-10f + 30f * t, 0f, 25f));

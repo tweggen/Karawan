@@ -99,6 +99,8 @@ namespace nogame.parts.playerhover
             {
                 // The acceleration looks wrong when combined with rotation.
                 vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
+
+                vTotalAngular += new Vector3(AngularThrust * frontMotion / 4096f, 0f, 0f);
             }
 
             if (upMotion != 0f)
