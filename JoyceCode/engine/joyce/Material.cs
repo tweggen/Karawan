@@ -13,6 +13,7 @@ namespace engine.joyce
         public uint AlbedoColor;
         public uint EmissiveColor;
         public bool HasTransparency;
+        public bool IsBillboardTransform = false;
         public bool UploadImmediately = false;
 
         public string Name;

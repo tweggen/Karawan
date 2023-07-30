@@ -60,7 +60,8 @@ namespace Splash.systems
                     cInstance3.ModelTransform,
                     cInstance3.Meshes,
                     cInstance3.MeshMaterials,
-                    cInstance3.Materials));
+                    cInstance3.Materials,
+                    cInstance3.MeshProperties));
             }
         }
 

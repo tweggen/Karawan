@@ -57,6 +57,7 @@ public class FindLights
                     ? 0x00000000 : 0xccffffcc;
                 _jMaterialLight.EmissiveTexture = new engine.joyce.Texture("standardlight.png");
                 _jMaterialLight.HasTransparency = true;
+                _jMaterialLight.IsBillboardTransform = true;
             }
             return _jMaterialLight;
         }
@@ -88,9 +89,9 @@ public class FindLights
 
         InstanceDesc instanceDesc = model.InstanceDesc;
         int il = getLightMaterialIndex(model);
-        var m = Tools.CreatePlaneMesh(new Vector2(1.4f, 1.4f));
+        var m = Tools.CreatePlaneMesh(new Vector2(0.5f, 0.5f));
         m.Move(p);
-        instanceDesc.AddMesh(m, il, new MeshProperties() { MeshFlags = MeshProperties.BillboardTransform });
+        instanceDesc.AddMesh(m, il, null);
     }
         
     public static engine.Model Process(engine.Model model)

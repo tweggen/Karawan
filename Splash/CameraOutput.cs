@@ -164,6 +164,7 @@ namespace Splash
                 int nMeshes = pfInstance.AMeshEntries.Count;
                 int nMaterialIndices = pfInstance.MeshMaterials.Count;
                 int nMaterials = pfInstance.AMaterialEntries.Count;
+                bool hasMeshProperties = pfInstance.MeshProperties != null;
                 for (int i = 0; i < nMeshes; ++i)
                 {
                     AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
@@ -199,6 +200,13 @@ namespace Splash
                         aMaterialEntry = _threeD.GetDefaultMaterial();
                     }
 
+                    /*
+                     * Now look at the mesh entry. What special handling do the mesh properties command?
+                     */
+                    if (hasMeshProperties)
+                    {
+                        engine.joyce.MeshProperties meshProperties = pfInstance.MeshProperties[i];
+                    }
                     _appendInstanceNoLock(aMeshEntry, aMaterialEntry, pfInstance.ModelTransform * matrix);
                 }
             }

@@ -10,6 +10,7 @@ namespace engine.joyce.components
         public IList<engine.joyce.Mesh> Meshes;
         public IList<int> MeshMaterials;
         public IList<engine.joyce.Material> Materials;
+        public IList<engine.joyce.MeshProperties> MeshProperties;
 
         public override string ToString()
         {

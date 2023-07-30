@@ -9,7 +9,6 @@ namespace engine.joyce;
 
 public class MeshProperties
 {
-    static public uint BillboardTransform = 0x00000001;
     public uint MeshFlags;
     public float MinDistance;
     public float MaxDistance;
