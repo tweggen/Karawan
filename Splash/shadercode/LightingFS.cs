@@ -21,6 +21,7 @@ namespace Splash.shadercode
         }
 
         static private string _shaderCodeCommon = @"
+precision highp float;
 
 // (from vertex shader)
 in vec4 fragPosition;

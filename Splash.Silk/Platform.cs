@@ -130,9 +130,11 @@ namespace Splash.Silk
             {
                 case Key.Q:
                     _controllerState.FlyUp = 200;
+                    code = "Q";
                     break;
-                case Key.Y:
+                case Key.Z:
                     _controllerState.FlyDown = 200;
+                    code = "Z";
                     break;
                 case Key.W:
                     _controllerState.WalkForward = 200;
@@ -178,9 +180,9 @@ namespace Splash.Silk
                     _controllerState.FlyUp = 0;
                     code = "Q";
                     break;
-                case Key.Y:
+                case Key.Z:
                     _controllerState.FlyDown = 0;
-                    code = "Y";
+                    code = "Z";
                     break;
                 case Key.W:
                     _controllerState.WalkForward = 0;

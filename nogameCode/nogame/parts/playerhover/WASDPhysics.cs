@@ -23,7 +23,7 @@ namespace nogame.parts.playerhover
         private DefaultEcs.Entity _ePhysDisplay;
 
         private readonly float LinearThrust = 180f;
-        private readonly float AngularThrust = 7.0f;
+        private readonly float AngularThrust = 9.0f;
         private readonly float MaxLinearVelocity = 50f;
         private readonly float MaxAngularVelocity = 0.8f;
         private readonly float LevelUpThrust = 16f;
@@ -109,6 +109,8 @@ namespace nogame.parts.playerhover
             {
                 // TXWTODO: This does a turn that looks ríght.
                 vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
+                
+                vTotalAngular += new Vector3(0f, 0f, AngularThrust * turnMotion / 1024f);
             }
 
             /*
@@ -135,7 +137,7 @@ namespace nogame.parts.playerhover
             Vector3 vSpinTopAxis = Vector3.Cross(vUp, new Vector3(0f, 1f, 0f));
             if (vSpinTopAxis.Length() > 0.01f)
             {
-                vTotalAngular += vSpinTopAxis;
+                vTotalAngular += 10f*vSpinTopAxis;
             }
 
 
@@ -184,12 +186,13 @@ namespace nogame.parts.playerhover
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
 
             _ePhysDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(20f, 330f),
+                new Vector2(20f, 370f),
                 new Vector2(400, 54),
-                $"x: {vTargetPos.X}, y: {vTargetPos.Y}, z: {vTargetPos.Z}\n"
-                +$"v: {vTargetVelocity.Length()}\n"
-                +$"a: {vTargetAngularVelocity.Length()}",
-                16,
+                $"pos: {vTargetPos}"
+                //+$"v: {vTargetVelocity.Length()}, "
+                //+$"a: {vTargetAngularVelocity.Length()}"
+                ,
+                9,
                 0xff22aaee,
                 0x00000000,
                 HAlign.Left
