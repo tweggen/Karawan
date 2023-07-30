@@ -595,9 +595,9 @@ namespace Splash.Silk
         }
 
 
-        public void CollectRenderData()
+        public void CollectRenderData(engine.IScene scene)
         {
-            _logicalRenderer.CollectRenderData();
+            _logicalRenderer.CollectRenderData(scene);
         }
 
         

@@ -15,6 +15,12 @@ namespace Splash.Silk;
 public class SilkThreeD : IThreeD
 {
     private readonly engine.Engine _engine;
+    
+    public engine.Engine Engine
+    {
+        get => _engine;
+    }
+    
     private object _lo = new();
     
     private SkMaterialEntry? _loadingMaterial = null;

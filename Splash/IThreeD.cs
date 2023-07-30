@@ -6,6 +6,8 @@ namespace Splash;
 
 public interface IThreeD
 {
+    public engine.Engine Engine { get; }
+    
     public AMeshEntry CreateMeshEntry(in engine.joyce.Mesh jMesh);
     public void UploadMesh(in AMeshEntry aMeshEntry);
     public void UnloadMeshEntry(in AMeshEntry aMeshEntry);

@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using engine;
 using static engine.Logger;
 
 namespace Splash
@@ -25,6 +27,37 @@ namespace Splash
         
         private readonly InstanceManager _instanceManager;
 
+        private float _defaultUploadMaterialPerFrame = 0.1f;
+        private float _defaultUploadMeshPerFrame = 0.1f;
+
+        private IScene _scene;
+        
+        private float _msUploadMaterialPerFrame(in IScene scene)
+        {
+            if (scene.SceneIsLoading() < 100)
+            {
+                return Single.MaxValue;
+            }
+            else
+            {
+                return _defaultUploadMaterialPerFrame;
+            }
+        }
+        
+
+        private float _msUploadMeshPerFrame(in IScene scene)
+        {
+            if (scene.SceneIsLoading() < 100)
+            {
+                return Single.MaxValue;
+            }
+            else
+            {
+                return _defaultUploadMeshPerFrame;
+            }
+        }
+        
+
         /**
          * The actual rendering method. Must be called from the context of
          * the render thread class. The material batch must not be used concurrently. 
@@ -36,6 +69,10 @@ namespace Splash
             Stopwatch swUpload = new();
             int nSkippedMaterials = 0;
             int nSkippedMeshes = 0;
+
+            var msUploadMaterialPerFrame = _msUploadMaterialPerFrame(_scene);
+            var msUploadMeshPerFrame = _msUploadMeshPerFrame(_scene);
+            
             foreach (var materialItem in mb)
             {
                 var aMaterialEntry = materialItem.Value.AMaterialEntry;
@@ -43,7 +80,7 @@ namespace Splash
                 bool needMaterial = (!aMaterialEntry.IsUploaded()) || aMaterialEntry.IsOutdated();
                 if (needMaterial)
                 {
-                    if (jMaterial.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f) {
+                    if (jMaterial.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < msUploadMaterialPerFrame) {
                         swUpload.Start();
                         _threeD.FillMaterialEntry(aMaterialEntry);
                         swUpload.Stop();
@@ -62,7 +99,7 @@ namespace Splash
                     bool haveMesh = aMeshEntry.IsUploaded();
                     if (!haveMesh)
                     {
-                        if (jMesh.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < 1f)
+                        if (jMesh.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < msUploadMeshPerFrame)
                         {
                             swUpload.Start();
                             _threeD.UploadMesh(meshItem.Value.AMeshEntry);
@@ -91,6 +128,10 @@ namespace Splash
             if (0 < nSkippedMaterials || 0 < nSkippedMeshes)
             {
                 Trace($"Needed to skip material uploads: {nSkippedMaterials}, skpped mesh uploads: {nSkippedMeshes}");
+            }
+            else
+            {
+                _scene.NeedsLoading(0, 100);
             }
         }
 
@@ -250,9 +291,11 @@ namespace Splash
 
 
         public CameraOutput(
+            IScene scene,
             in IThreeD threeD,
             in uint cameraMask)
         {
+            _scene = scene;
             _cameraMask = cameraMask;
             _threeD = threeD;
         }

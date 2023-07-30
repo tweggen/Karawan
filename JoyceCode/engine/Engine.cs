@@ -72,8 +72,6 @@ namespace engine
         private Entity _playerEntity;
         public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
 
-        
-
         private builtin.tools.RunningAverageComputer _fpsCounter = new();
 
         
@@ -466,10 +464,14 @@ namespace engine
              */
             _systemBehave.Update(dt);
 
+#if false
             if (_mayCallLogical)
             {
                 LogicalFrame?.Invoke(this, dt);
             }
+#else
+            LogicalFrame?.Invoke(this, dt);
+#endif
 
             /*
              * After everything has behaved, read the camera(s) to get
@@ -541,7 +543,14 @@ namespace engine
              * If no new frame has been created, read all geom entities for rendering
              * into data structures.
              */
-            _platform.CollectRenderData();
+            if (null != SceneSequencer.MainScene)
+            {
+                _platform.CollectRenderData(SceneSequencer.MainScene);
+            }
+            else
+            {
+                // ErrorThrow("Null scene", (m) => new InvalidOperationException(m));
+            }
 
             // TXWTODO: Measure the time of all actions.
             /*

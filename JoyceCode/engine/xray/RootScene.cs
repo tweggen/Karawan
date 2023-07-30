@@ -1,5 +1,5 @@
 ﻿
-
+#if false
 namespace engine.xray
 {
     public class RootScene : engine.IScene
@@ -39,3 +39,4 @@ namespace engine.xray
 
     }
 }
+#endif

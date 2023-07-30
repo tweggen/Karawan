@@ -16,7 +16,7 @@ namespace engine
          * Depending on the rendering queue, the implementation can
          * decide not to collect any data at all.
          */
-        public void CollectRenderData();
+        public void CollectRenderData(IScene scene);
 
         public void GetControllerState(out ControllerState controllerState);
 

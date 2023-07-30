@@ -14,6 +14,11 @@ public class SceneSequencer : IDisposable
     private readonly SortedDictionary<string, Func<IScene>> _dictSceneFactories = new();
     private readonly SortedDictionary<float, IScene> _dictScenes = new();
 
+    public IScene MainScene
+    {
+        get { lock(_lo) { return _mainScene;} }
+    }
+
     /**
      * If there is a new scene to set up, deactivate the old scene,
      * activate the new one.
@@ -54,7 +59,7 @@ public class SceneSequencer : IDisposable
     }
 
 
-    private void _callAllSceneLogcalFrames(float dt)
+    private void _callAllSceneLogicalFrames(float dt)
     {
         SortedDictionary<float, IScene> dictScenes;
         lock (_lo)
@@ -71,7 +76,7 @@ public class SceneSequencer : IDisposable
     private void _onLogicalFrame(object sender, float dt)
     {
         _loadNewMainScene();
-        _callAllSceneLogcalFrames(dt);
+        _callAllSceneLogicalFrames(dt);
     }
     
     /**

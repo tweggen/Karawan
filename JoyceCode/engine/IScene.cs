@@ -18,5 +18,9 @@ namespace engine
          * Trigger adding this scene to the engine.
          */
         public void SceneActivate(engine.Engine engine);
+
+        public int SceneIsLoading();
+
+        public void NeedsLoading(int needs, int total);
     }
 }

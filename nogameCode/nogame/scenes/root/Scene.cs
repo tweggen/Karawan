@@ -35,6 +35,18 @@ public class Scene : engine.IScene
 
     private bool _isMapShown = false;
 
+    private int _needsLoading = 100;
+
+    public void NeedsLoading(int needs, int total)
+    {
+        _needsLoading = needs;
+    }
+    
+    public int SceneIsLoading()
+    {
+        return _needsLoading;
+    }
+    
     private void _toggleMap()
     {
         bool isMapShown; 

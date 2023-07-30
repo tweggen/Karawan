@@ -23,7 +23,7 @@ public class LogicalRenderer
     /**
      * Collect the output of the cameras for later rendering.
      */
-    private void _logicalRenderFrame(RenderFrame renderFrame)
+    private void _logicalRenderFrame(engine.IScene scene, RenderFrame renderFrame)
     {
         var listCameras = _engine.GetEcsWorld().GetEntities()
             .With<engine.joyce.components.Camera3>()
@@ -37,7 +37,7 @@ public class LogicalRenderer
             RenderPart renderPart = new();
             renderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
             renderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
-            CameraOutput cameraOutput = new(_threeD, renderPart.Camera3.CameraMask);
+            CameraOutput cameraOutput = new(scene, _threeD, renderPart.Camera3.CameraMask);
             renderPart.CameraOutput = cameraOutput;
 
             _drawInstancesSystem.Update(cameraOutput);
@@ -62,7 +62,7 @@ public class LogicalRenderer
      * Called from the logical thread context every logical frame.
      * If behavior doesn't mess up.
      */
-    public void CollectRenderData()
+    public void CollectRenderData(engine.IScene scene)
     {
         _createPfInstanceSystem.Update(_engine);
 
@@ -91,7 +91,7 @@ public class LogicalRenderer
             {
                 _lightManager.CollectLights(renderFrame);
             }
-            _logicalRenderFrame(renderFrame);
+            _logicalRenderFrame(scene, renderFrame);
             lock(_lo)
             {
                 _renderQueue.Enqueue(renderFrame);
