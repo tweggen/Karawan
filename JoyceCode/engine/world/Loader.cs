@@ -29,6 +29,8 @@ namespace engine.world
      */
     public class Loader
     {
+        private object _lo = new();
+        
         private Engine _engine;
 
         private world.MetaGen _worldMetaGen = null;
@@ -44,125 +46,8 @@ namespace engine.world
 
         private engine.behave.systems.WiperSystem _wiperSystem;
 
-        // private var _physics: engine.Physics = null;
 
-#if false
-        public function worldLoaderProvideMap(
-            xmin: Float, zmin: Float, xmax: Float, zmax: Float
-        ): Array<engine.IMolecule> {
-            if(world.MetaGen.TRACE_WORLD_LOADER) trace( 'WorldLoader.worldLoaderProvideMap( $xmin, $zmin, $xmax, $zmax ): Called.' );
-            var molArrayMap = new Array<engine.IMolecule>();
-
-            /*
-             * Make sure to have all materials available.
-             */
-
-            // TXWTODO: This is copy/paste from the create streets operator
-            WorldMetaGen.cat.catGetSingleton(
-                "GenerateClusterStreetsOperator._matStreet", function()
-            {
-                var mat = new engine.Material("");
-                mat.diffuseTexturePath = "street/streets1to4.png";
-                mat.textureRepeat = true;
-                mat.textureSmooth = false;
-                mat.ambientColor = 0xffffff;
-                mat.ambient = 0.5;
-                mat.specular = 0.0;
-                return mat;
-            }
-            );
-
-            /*
-             * Until we have a proper fragment based mapping, try to render
-             * an excerpt of the cluster content.
-             */
-
-            /*
-             * Find all clusters in range.
-             */
-            var clusterList = _worldMetaGen.metaGenGetClusterDescIn(xmin, xmax, zmin, zmax);
-            if(null == clusterList) {
-                if(world.MetaGen.TRACE_WORLD_LOADER) trace( 'WorldLoader.worldLoaderProvideMap(): Empty cluster list.' );
-                return molArrayMap;
-            }
-            if(world.MetaGen.TRACE_WORLD_LOADER) trace( 'WorldLoader.worldLoaderProvideMap(): Iterating over ${clusterList.length} clusters.' );
-
-    /*
-     * This is the geom atom that we will use for streets, sharing a single material.
-     */
-    var g_s = new engine.PlainGeomAtom(null, null, null, "GenerateClusterStreetsOperator._matStreet");
-    var g_q = new engine.PlainGeomAtom(null, null, null, "GenerateClusterQuartersOperator._matQuarter");
-
-        // var v_s = new engine.PlainGeomAtom.VertexArray();
-        // var uv_s = new engine.PlainGeomAtom.UVArray();
-        // var i_s = new engine.PlainGeomAtom.IndexArray();
-
-        /*
-         * Now, for each cluster, generate an IGeomAtom representing that particular cluster.
-         * Use world coordinates. Map rendering will scale.
-         */
-        for(cluster in clusterList ) {
-            /*
-             * We may be pretty stupid indeed, simply rendering each of the individual strokes.
-             */
-            var strokes = cluster.strokeStore().getStrokes();
-            if(world.MetaGen.TRACE_WORLD_LOADER) trace( 'WorldLoader.worldLoaderProvideMap(): Iterating over ${strokes.length} strokes in cluster.' );
-    var cx = cluster.x;
-    var cz = cluster.z;
-
-            for(stroke in strokes ) {
-                var a = stroke.a.pos;
-    var b = stroke.b.pos;
-    var unit = stroke.unit; // unit from a to b
-    var normal = stroke.normal; // a 2 b, normal right hand.
-    var weight = stroke.weight;
-    /*
-     * Let's make 1m streets.
-     */
-    var i: Int = g_s.getNextVertexIndex();
-                var nx = normal.x * weight * 2.;
-    var ny = normal.y * weight * 2.;
-    g_s.p(a.x-nx-unit.x + cx, a.y-ny-unit.y + cz, 0.);
-                g_s.uv(0., 0.);
-                g_s.p(a.x+nx-unit.x + cx, a.y+ny-unit.y + cz, 0.);
-                g_s.uv(1., 0.);
-                g_s.p(b.x+nx+unit.x + cx, b.y+ny+unit.y + cz, 0.);
-                g_s.uv(1., 1.);
-                g_s.p(b.x-nx+unit.x + cx, b.y-ny+unit.y + cz, 0.);
-                g_s.uv(0., 1.);
-                g_s.idx(i+0, i+1, i+2);
-                g_s.idx(i+0, i+2, i+3);
-                // For convenience, both sides.
-                g_s.idx(i+0, i+2, i+1);
-                g_s.idx(i+0, i+3, i+2);
-
-                // trace('added street.');
-            }
-
-/*
- * Now add the estates into the map.
- */
-var quarterStore = cluster.quarterStore();
-for (quarter in quarterStore.getQuarters() )
-{
-    for (estate in quarter.getEstates() )
-    {
-        for (building in estate.getBuildings() )
-        {
-        }
-    }
-}
-        }
-
-        var molMap = new engine.SimpleMolecule( [g_s] );
-molArrayMap.push(molMap);
-
-return molArrayMap;
-    }
-#endif
-
-
-        private void _releaseFragmentList(IList<string> eraseList )
+        private void _releaseFragmentListNoLock(IList<string> eraseList )
         {
             // TXWTODO: MOtex
             foreach (var strKey in eraseList )
@@ -212,97 +97,117 @@ return molArrayMap;
             var strCurr = "fragxy-" + i + "_" + j + "_" + k;
 
             /*
-             * Create a list of maps 
+             * Short circuit.
+             * TXWTODO: Do we really need this.
              */
-            if (_strLastLoaded == strCurr)
+            lock (_lo)
             {
-                // No need to load something new.
-                return;
-            }
-            _strLastLoaded = strCurr;
-            ++_lastLoadedIteration;
+                if (_strLastLoaded == strCurr)
+                {
+                    // No need to load something new.
+                    return;
+                }
 
-            if (world.MetaGen.TRACE_WORLD_LOADER) Trace("WorldMetaGen.worldLoaderProvideFragments(): Entered new terrain " + strCurr + ", loading.");
+                _strLastLoaded = strCurr;
+                ++_lastLoadedIteration;
+            }
+
+            if (world.MetaGen.TRACE_WORLD_LOADER) Trace($"Entered new terrain {strCurr}, loading.");
             for (int dz=-WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; dz<= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; ++dz )
             {
-                for (int dx=-WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; dx<= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; ++dx )
+                for (int dx = -WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS;
+                     dx <= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS;
+                     ++dx)
                 {
                     int i1 = i + dx;
                     int j1 = j;
                     int k1 = k + dz;
                     var strKey = "fragxy-" + i1 + "_" + j1 + "_" + k1;
-                    if (world.MetaGen.TRACE_WORLD_LOADER) Trace($"WorldMetaGen.worldLoaderProvideFragments(): Loading {strKey}");
+                    if (world.MetaGen.TRACE_WORLD_LOADER)
+                        Trace($"WorldMetaGen.worldLoaderProvideFragments(): Loading {strKey}");
 
                     /*
                      * Look, wether the corresponding fragment still is in the
                      * cache, or wether we need to load (i.e. generate) it.
                      */
                     Fragment fragment;
-                    _mapFrags.TryGetValue(strKey, out fragment);
-                    if (null != fragment)
+                    lock (_lo)
                     {
-                        // Mark as used.
-                        Trace( "Using "+strKey );
-                        fragment.LastIteration = _lastLoadedIteration;
-                    }
-                    else
-                    {
-
-                        /*
-                         * This creates a new world fragment.
-                         *
-                         * World fragments are the containers for everything that
-                         * comes on that please of the world. When they are created,
-                         * they basically contains a canvas, in which the world is
-                         * created.
-                         */
-                        fragment = new Fragment(
-                            _engine,
-                            this,
-                            strKey,
-                            new Index3(i1, j1, k1),
-                            new Vector3(
-                                world.MetaGen.FragmentSize * i1,
-                                world.MetaGen.FragmentSize * j1,
-                                world.MetaGen.FragmentSize * k1)
-                            );
-                        fragment.LastIteration = _lastLoadedIteration;
-
-
-                        /*
-                         * The following operators already might want to access this client. 
-                         */
-                        _mapFrags.Add(strKey, fragment);
-
-                        /*
-                         * Apply all fragment operators.
-                         */
-                        try
+                        _mapFrags.TryGetValue(strKey, out fragment);
+                        if (null != fragment)
                         {
-                            world.MetaGen.Instance().ApplyFragmentOperators(fragment);
+                            // Mark as used.
+                            Trace($"Using {strKey}");
+                            fragment.LastIteration = _lastLoadedIteration;
+                            continue;
                         }
-                        catch (Exception e) {
-                            Trace($"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling applyFragmentOperators(): {e}");
-                        }
-                        _mapFrags[strKey] = fragment;
+                    }
 
+                    /*
+                     * This creates a new world fragment.
+                     *
+                     * World fragments are the containers for everything that
+                     * comes on that please of the world. When they are created,
+                     * they basically contains a canvas, in which the world is
+                     * created.
+                     */
+                    fragment = new Fragment(
+                        _engine,
+                        this,
+                        strKey,
+                        new Index3(i1, j1, k1),
+                        new Vector3(
+                            world.MetaGen.FragmentSize * i1,
+                            world.MetaGen.FragmentSize * j1,
+                            world.MetaGen.FragmentSize * k1)
+                    );
+                    fragment.LastIteration = _lastLoadedIteration;
+                    
+                    /*
+                     * The following operators already might want to access this client. 
+                     */
+                    _mapFrags.Add(strKey, fragment);
+
+                    /*
+                     * Apply all fragment operators.
+                     */
+                    try
+                    {
+                        world.MetaGen.Instance().ApplyFragmentOperators(fragment);
+                    }
+                    catch (Exception e)
+                    {
+                        Trace(
+                            $"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling applyFragmentOperators(): {e}");
+                    }
+
+                    lock (_lo)
+                    {
+                        _mapFrags[strKey] = fragment;
                     }
                 }
             }
-            _fragCurrent = _mapFrags[strCurr];
+
+            lock (_lo)
+            {
+                _fragCurrent = _mapFrags[strCurr];
+            }
 
             {
                 var eraseList = new List<string>();
 
-                /*
-                 * Find out the list of fragments we do not need any more.
-                 */
-                foreach (KeyValuePair<string, Fragment> kvp in _mapFrags)
+                lock (_lo)
                 {
-                    var frag = kvp.Value;
-                    if (frag.LastIteration < _lastLoadedIteration)
+                    /*
+                     * Find out the list of fragments we do not need any more.
+                     */
+                    foreach (KeyValuePair<string, Fragment> kvp in _mapFrags)
                     {
-                        eraseList.Add(kvp.Key);
+                        var frag = kvp.Value;
+                        if (frag.LastIteration < _lastLoadedIteration)
+                        {
+                            eraseList.Add(kvp.Key);
+                        }
                     }
                 }
 
@@ -327,10 +232,13 @@ return molArrayMap;
                     aabb.Add(vBB);
                     _wiperSystem.Update(aabb);
 
-                    /*
-                     * Actually do release the list of fragments we do not need anymore.
-                     */
-                    _releaseFragmentList(eraseList);
+                    lock (_lo)
+                    {
+                        /*
+                         * Actually do release the list of fragments we do not need anymore.
+                         */
+                        _releaseFragmentListNoLock(eraseList);
+                    }
                 }
             }
 
@@ -414,29 +322,6 @@ return molArrayMap;
         }
 
 
-        private void _releaseFragments()
-        {
-            _fragCurrent = null;
-
-            _strLastLoaded = "";
-
-            var eraseList = new List<string>( _mapFrags.Keys );
-
-            _releaseFragmentList(eraseList);
-
-            // leave last loaded iteration.
-            _mapFrags = new();
-        }
-
-
-        /**
-         * We shall forget anything dynamic.
-         */
-        public void Regenerate()
-        {
-            _releaseFragments();
-        }
-
         /**
          * Constructor
          */
@@ -446,15 +331,6 @@ return molArrayMap;
         )
         {
             _engine = engine;
-#if false
-            /*
-             * First of all, run the unit tests.
-             */
-            {
-                var unit = new Unit();
-                unit.run();
-            }
-#endif
             _wiperSystem = new(engine);
             _worldMetaGen = worldMetaGen;
             _worldMetaGen.SetLoader(this);

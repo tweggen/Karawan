@@ -90,7 +90,7 @@ namespace nogame.parts.playerhover
              */
             var vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
             var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
-            //var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
+            var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
             var frontMotion = controllerState.FrontMotion;
             var upMotion = controllerState.UpMotion;
             var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
@@ -100,7 +100,10 @@ namespace nogame.parts.playerhover
                 // The acceleration looks wrong when combined with rotation.
                 vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
 
-                vTotalAngular += new Vector3(AngularThrust * frontMotion / 4096f, 0f, 0f);
+                /*
+                 * Move nose down when accelerating and vice versa.
+                 */
+                vTotalAngular += vRight * (-AngularThrust * frontMotion / 4096f);
             }
 
             if (upMotion != 0f)
@@ -109,10 +112,16 @@ namespace nogame.parts.playerhover
             }
             if (turnMotion != 0f)
             {
-                // TXWTODO: This does a turn that looks ríght.
+                /*
+                 * gently lean to the right iof turning right.
+                 */
+                vTotalAngular += vFront * (AngularThrust * turnMotion / 1024f);
+                
+                /*
+                 * And finally turn
+                 */
                 vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
                 
-                vTotalAngular += new Vector3(0f, 0f, AngularThrust * turnMotion / 1024f);
             }
 
             /*

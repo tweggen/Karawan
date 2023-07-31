@@ -57,16 +57,19 @@ namespace engine.world
         private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
         private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList;
 
-        /*
-         * TXWTODO: Remove me
-         */
-        public List<Func<string,ClusterDesc,world.IFragmentOperator>> 
-            GetClusterFragmentOperatorFactoryList()
+
+        public void GenerateFragmentOperatorsForCluster(string key, ClusterDesc cluster)
         {
-            return _clusterFragmentOperatorFactoryList;
+            lock (_lo)
+            {
+                foreach (var clusterFragmentOperatorFactory in _clusterFragmentOperatorFactoryList)
+                {
+                    IFragmentOperator op = clusterFragmentOperatorFactory(key, cluster);
+                    _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
+                }
+            }
         }
-
-
+        
 
         /**
          * For every cluster, this fragment operator generator shall be added.
@@ -110,7 +113,7 @@ namespace engine.world
             }
             if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
 
-            List<Task> listFragmentOperatorTasks = new();
+            List<IFragmentOperator> listLocalOps = new();
             lock (_lo)
             {
                 /*
@@ -131,11 +134,23 @@ namespace engine.world
                         continue;
                     }
 
-                    Task taskFragmentOperator = kvp.Value.FragmentOperatorApply(fragment);
-                    listFragmentOperatorTasks.Add(taskFragmentOperator);
+                    listLocalOps.Add(kvp.Value);
                 }
             }
 
+            /*
+             * Create the tasks for the fragment operators
+             */
+            List<Task> listFragmentOperatorTasks = new();
+            foreach (IFragmentOperator op in listLocalOps)
+            {
+                Task taskFragmentOperator = op.FragmentOperatorApply(fragment);
+                listFragmentOperatorTasks.Add(taskFragmentOperator);
+            }
+
+            /*
+             * Then create one async task to process all fragment ops.
+             */
             var taskAllFragmentOperators = new Task(() =>
             {
                 foreach(var task in listFragmentOperatorTasks) {
@@ -160,6 +175,7 @@ namespace engine.world
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });
             taskAllFragmentOperators.Start();
+            
             /*
              * And decrease my own one again.
              */
@@ -276,6 +292,7 @@ namespace engine.world
             _loader = loader;
         }
 
+        
         public static MetaGen Instance()
         {
             lock(_instanceLock)
