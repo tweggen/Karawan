@@ -137,6 +137,7 @@
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
 	  <None Remove="Platforms\Android\skybox2.png" />
 	  <None Remove="Platforms\Android\skybox2noborder.png" />
+	  <None Remove="Platforms\Android\standardlight.png" />
 	  <None Remove="Platforms\Android\streets1to4.png" />
 	  <None Remove="Platforms\Android\tram1.mtl" />
 	  <None Remove="Platforms\Android\tram1.obj" />
@@ -281,6 +282,9 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\skybox2noborder.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\standardlight.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\streets1to4.png">
