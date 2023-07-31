@@ -50,9 +50,12 @@ namespace engine
 
             StackFrame stackFrame = new StackFrame(2);
             var fileName = stackFrame.GetFileName();
+            if (null == fileName) fileName = "[null file name]";
             var lineNumber = stackFrame.GetFileLineNumber();
             var type = stackFrame.GetMethod().ReflectedType.Name;
+            if (null == type) type = "[null type name]";
             var methodName = stackFrame.GetMethod().Name;
+            if (null == methodName) methodName = "[null method name]";
             return $"{fileName}:{lineNumber}: {type}:{methodName}: {strLevel}: {msg}";
         }
 
@@ -101,7 +104,7 @@ namespace engine
 
         public static void Fatal(in string module, in string msg)
         {
-            var logEntry = _createLogEntry(Level.Error, msg);
+            var logEntry = _createLogEntry(Level.Error, (msg!=null)?msg:"[no message provided]");
             Log(Level.Fatal, msg);
             throw new InvalidOperationException(logEntry);
         }
