@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using static engine.Logger;
 
 namespace nogame.scenes.logos;
 
@@ -12,7 +13,6 @@ public class Scene : engine.IScene
 
     private DefaultEcs.World _ecsWorld;
 
-    private engine.hierarchy.API _aHierarchy;
     private engine.transform.API _aTransform;
 
     private DefaultEcs.Entity _eCamera;
@@ -23,25 +23,14 @@ public class Scene : engine.IScene
 
     private float _t;
 
-    private int _needsLoading = 100;
-
-    public void NeedsLoading(int needs, int total)
-    {
-        _needsLoading = needs;
-    }
-    
-    public int SceneIsLoading()
-    {
-        return _needsLoading;
-    }
-    
     public void SceneOnLogicalFrame(float dt)
     {
         float t;
+        float tBefore;
         lock (_lo)
         {
-            _t += dt;
-            t = _t;
+            tBefore = _t;
+            t = _t + dt;
         }
         if (_isCleared)
         {
@@ -55,17 +44,25 @@ public class Scene : engine.IScene
         {
             if (t < 1.9f)
             {
-                if (t > 0.5f)
-                {
-                    _aTransform.SetVisible(_eLogo, true);
-                }
-                if (_needsLoading < 100)
-                {
-                    return;
-                }
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 20f + _t));
                 _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
                 _aTransform.SetPosition(_eLight, new Vector3(-10f + 30f * t, 0f, 25f));
+
+                if (t >= 0.5f)
+                {
+                    _aTransform.SetVisible(_eLogo, true);
+                    if (_engine.IsLoading())
+                    {
+                        /*
+                         * Wait with the timeline until the scene is loaded.
+                         */
+                        t = 0.5f;
+                    }
+                    else
+                    {
+                        t = t;
+                    }
+                }
 
             }
             else
@@ -76,6 +73,11 @@ public class Scene : engine.IScene
                 _eLight.Dispose();
                 _isCleared = true;
             }
+        }
+
+        lock (_lo)
+        {
+            _t = t;
         }
     }
 
@@ -92,7 +94,7 @@ public class Scene : engine.IScene
         engine.joyce.InstanceDesc jInstanceDesc = new();
         jInstanceDesc.Meshes.Add(jMesh);
         jInstanceDesc.MeshMaterials.Add(0);
-        jInstanceDesc.Materials.Add(jMaterial);            
+        jInstanceDesc.Materials.Add(jMaterial);
 
         var entity = _engine.CreateEntity("LogoBoard");
         entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
@@ -112,7 +114,6 @@ public class Scene : engine.IScene
             engine = _engine;
             _engine = null;
             _ecsWorld = null;
-            _aHierarchy = null;
             _aTransform = null;
         }
 
@@ -132,7 +133,6 @@ public class Scene : engine.IScene
              * Some local shortcuts
              */
             _ecsWorld = _engine.GetEcsWorld();
-            _aHierarchy = _engine.GetAHierarchy();
             _aTransform = _engine.GetATransform();
 
         }

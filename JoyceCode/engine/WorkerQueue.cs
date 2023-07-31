@@ -14,6 +14,16 @@ namespace engine
         private Queue<Action> _queueActions = new();
         private Stopwatch _stopwatch = new();
 
+
+        public bool IsEmpty()
+        {
+            lock (_lo)
+            {
+                return _queueActions.Count == 0;
+            }
+        }
+        
+        
         public void Enqueue(Action action)
         {
             lock (_lo)

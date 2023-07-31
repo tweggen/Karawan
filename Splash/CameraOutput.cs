@@ -19,7 +19,9 @@ namespace Splash
         private int _nMeshes = 0;
         private int _nMaterials = 0;
         private int _nInstances = 0;
-
+        private int _nSkippedMeshes = 0;
+        private int _nSkippedMaterials = 0;
+        
         private Dictionary<AMaterialEntry, MaterialBatch> _materialBatches = new();
         private Dictionary<AMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
 
@@ -34,27 +36,13 @@ namespace Splash
         
         private float _msUploadMaterialPerFrame(in IScene scene)
         {
-            if (scene.SceneIsLoading() < 100)
-            {
-                return Single.MaxValue;
-            }
-            else
-            {
-                return _defaultUploadMaterialPerFrame;
-            }
+            return _defaultUploadMaterialPerFrame;
         }
         
 
         private float _msUploadMeshPerFrame(in IScene scene)
         {
-            if (scene.SceneIsLoading() < 100)
-            {
-                return Single.MaxValue;
-            }
-            else
-            {
-                return _defaultUploadMeshPerFrame;
-            }
+            return _defaultUploadMeshPerFrame;
         }
         
 
@@ -67,8 +55,6 @@ namespace Splash
         private void _renderMaterialBatchesNoLock(in IThreeD threeD, in Dictionary<AMaterialEntry, MaterialBatch> mb)
         {
             Stopwatch swUpload = new();
-            int nSkippedMaterials = 0;
-            int nSkippedMeshes = 0;
 
             var msUploadMaterialPerFrame = _msUploadMaterialPerFrame(_scene);
             var msUploadMeshPerFrame = _msUploadMeshPerFrame(_scene);
@@ -87,11 +73,11 @@ namespace Splash
                     }
                     else
                     {
-                        ++nSkippedMaterials;
+                        ++_nSkippedMaterials;
                         continue;
                     } 
                 }
-                
+
                 foreach (var meshItem in materialItem.Value.MeshBatches)
                 {
                     var aMeshEntry = meshItem.Value.AMeshEntry;
@@ -107,7 +93,7 @@ namespace Splash
                         }
                         else
                         {
-                            ++nSkippedMeshes;
+                            ++_nSkippedMeshes;
                             continue;
                         }
                     }
@@ -123,15 +109,6 @@ namespace Splash
 #endif
                     threeD.DrawMeshInstanced(meshItem.Key, materialItem.Key, spanMatrices, nMatrices);
                 }
-            }
-
-            if (0 < nSkippedMaterials || 0 < nSkippedMeshes)
-            {
-                Trace($"Needed to skip material uploads: {nSkippedMaterials}, skpped mesh uploads: {nSkippedMeshes}");
-            }
-            else
-            {
-                _scene.NeedsLoading(0, 100);
             }
         }
 
@@ -276,6 +253,16 @@ namespace Splash
             lock (_lo)
             {
                 _renderMaterialBatchesNoLock(threeD, _transparentMaterialBatches);
+            }
+        }
+
+
+        public void GetRenderStats(out int skipped, out int total)
+        {
+            lock (_lo)
+            {
+                skipped = _nSkippedMeshes + _nSkippedMaterials;
+                total = _nMeshes + _nMaterials;
             }
         }
 

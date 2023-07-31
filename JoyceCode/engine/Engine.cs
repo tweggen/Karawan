@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Threading;
 using DefaultEcs;
+using engine.world;
 using static engine.Logger;
 using Trace = System.Diagnostics.Trace;
 
@@ -42,15 +43,12 @@ namespace engine
         private SortedDictionary<float, IPart> _dictParts;
         
         private readonly Queue<EntitySetupAction> _queueEntitySetupActions = new();
-        // private readonly Queue<Action> = new();
         
         private Thread _logicalThread;
         private readonly Stopwatch _queueStopwatch = new();
 
         private readonly WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
         private readonly WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
-
-        private bool _mayCallLogical = false;
 
         private bool _isFullscreen = false;
         
@@ -233,10 +231,6 @@ namespace engine
          */
         public void StartTimeline()
         {
-            lock (_lo)
-            {
-                _mayCallLogical = true;
-            }
         }
         
         
@@ -361,6 +355,7 @@ namespace engine
         {
             _workerCleanupActions.Enqueue(action);
         }
+        
 
         public void QueueMainThreadAction(Action action)
         {
@@ -372,12 +367,38 @@ namespace engine
         {
             _aPhysics.AddContactListener(entity);
         }
+        
 
         public void RemoveContactListener(DefaultEcs.Entity entity)
         {
             _aPhysics.RemoveContactListener(entity);
         }
 
+
+        public bool IsLoading()
+        {
+            bool meWorking;
+            lock (_lo)
+            {
+                meWorking =
+                    _queueEntitySetupActions.Count > 0
+                       || !_workerMainThreadActions.IsEmpty();
+            }
+
+            if (meWorking)
+            {
+                return true;
+            }
+            
+            bool metaGenLoading = MetaGen.Instance().IsLoading();
+            if (metaGenLoading)
+            {
+                return true;
+            }
+
+            return false;
+
+        }
 
         /**
          * Called by the platform on a new physical frame.
@@ -391,6 +412,7 @@ namespace engine
              */
             _fpsCounter.Add(dt);
         }
+        
         
         private bool _firstTime = true;
 
@@ -464,14 +486,7 @@ namespace engine
              */
             _systemBehave.Update(dt);
 
-#if false
-            if (_mayCallLogical)
-            {
-                LogicalFrame?.Invoke(this, dt);
-            }
-#else
             LogicalFrame?.Invoke(this, dt);
-#endif
 
             /*
              * After everything has behaved, read the camera(s) to get
@@ -619,11 +634,13 @@ namespace engine
         {
             OnTouchPress?.Invoke(this, position);
         }
+        
 
         public void TakeTouchRelease(Vector2 position)
         {
             OnTouchRelease?.Invoke(this, position);
         }
+        
 
         public void Execute()
         {
@@ -763,6 +780,7 @@ namespace engine
 
         }
 
+        
         /**
          * Call after all dependencies are set.
          */

@@ -51,10 +51,15 @@ namespace engine.world
          */
         private string _myKey;
 
+        private object _lo = new();
+
         private List<engine.world.IWorldOperator> _worldOperators;
         private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
         private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList;
 
+        /*
+         * TXWTODO: Remove me
+         */
         public List<Func<string,ClusterDesc,world.IFragmentOperator>> 
             GetClusterFragmentOperatorFactoryList()
         {
@@ -74,15 +79,23 @@ namespace engine.world
                 Func<String, ClusterDesc, world.IFragmentOperator> fragmentOperatorFactory
         )
         {
-            _clusterFragmentOperatorFactoryList.Add(fragmentOperatorFactory);
+            lock (_lo)
+            {
+                _clusterFragmentOperatorFactoryList.Add(fragmentOperatorFactory);
+            }
         }
 
 
         public void AddFragmentOperator(world.IFragmentOperator op)
         {
-            _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
+            lock (_lo)
+            {
+                _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
+            }
         }
 
+
+        private int _nFragmentOperatorsRunning = 0;
         
         /**
          * Some major work is lifted here, so there are some basic optimizations.
@@ -96,30 +109,48 @@ namespace engine.world
                 throw new ArgumentException( $"WorldMetaGen.applyFragmentOperators(): fragment is null." );
             }
             if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
-            List<Task> listFragmentOperatorTasks = new();
-            foreach( KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators )
-            {
 
-                IFragmentOperator op = kvp.Value;
+            List<Task> listFragmentOperatorTasks = new();
+            lock (_lo)
+            {
                 /*
-                 * Pre-filter before creating the tasks, even if the task does it itself, too.
+                 * Increase one for the loading operation.
                  */
-                op.FragmentOperatorGetAABB(out var aabb);
-                if (!aabb.IntersectsXZ(fragment.AABB))
-                {
-                    continue;
-                }
+                ++_nFragmentOperatorsRunning;
                 
-                Task taskFragmentOperator = kvp.Value.FragmentOperatorApply(fragment);
-                listFragmentOperatorTasks.Add(taskFragmentOperator);
+                foreach (KeyValuePair<string, IFragmentOperator> kvp in _fragmentOperators)
+                {
+
+                    IFragmentOperator op = kvp.Value;
+                    /*
+                     * Pre-filter before creating the tasks, even if the task does it itself, too.
+                     */
+                    op.FragmentOperatorGetAABB(out var aabb);
+                    if (!aabb.IntersectsXZ(fragment.AABB))
+                    {
+                        continue;
+                    }
+
+                    Task taskFragmentOperator = kvp.Value.FragmentOperatorApply(fragment);
+                    listFragmentOperatorTasks.Add(taskFragmentOperator);
+                }
             }
+
             var taskAllFragmentOperators = new Task(() =>
             {
                 foreach(var task in listFragmentOperatorTasks) {
                     try
                     {
+                        lock (_lo)
+                        {
+                            ++_nFragmentOperatorsRunning;
+                        }
                         task.Start();
                         task.Wait();
+                        lock (_lo)
+                        {
+                            --_nFragmentOperatorsRunning;
+                        }
                     }
                     catch (Exception e)
                     {
@@ -129,8 +160,24 @@ namespace engine.world
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });
             taskAllFragmentOperators.Start();
+            /*
+             * And decrease my own one again.
+             */
+            lock (_lo)
+            {
+                --_nFragmentOperatorsRunning;
+            }
         }
 
+
+        public bool IsLoading()
+        {
+            lock (_lo)
+            {
+                return _nFragmentOperatorsRunning > 0;
+            }
+        }
+        
 
         /**
          * Execute all world operators for this metagen.
@@ -138,6 +185,10 @@ namespace engine.world
          */
         private void _applyWorldOperators()
         {
+            lock (_lo)
+            {
+                ++_nFragmentOperatorsRunning;
+            }
             Trace("WorldMetaGen: Calling world operators...");
             foreach(var o in _worldOperators) {
                 try {
@@ -150,6 +201,10 @@ namespace engine.world
                 } catch(Exception e) {
                     Warning($"WorldMetaGen.applyWorldOperators(): Unknown exception applying world operator: {e}");
                 }
+            }
+            lock (_lo)
+            {
+                --_nFragmentOperatorsRunning;
             }
             Trace("WorldMetaGen: Done calling world operators.");
         }

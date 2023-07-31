@@ -1,6 +1,8 @@
 ﻿using engine.transform.components;
 using System;
 using System.Numerics;
+using System.Threading;
+using static engine.Logger;
 
 namespace nogame.scenes.root;
 
@@ -34,19 +36,8 @@ public class Scene : engine.IScene
     private nogame.parts.minimap.Part _partMiniMap;
 
     private bool _isMapShown = false;
+    private int _isSettingUp = 0;
 
-    private int _needsLoading = 100;
-
-    public void NeedsLoading(int needs, int total)
-    {
-        _needsLoading = needs;
-    }
-    
-    public int SceneIsLoading()
-    {
-        return _needsLoading;
-    }
-    
     private void _toggleMap()
     {
         bool isMapShown; 
@@ -120,6 +111,11 @@ public class Scene : engine.IScene
     
     private void _triggerLoadWorld()
     {
+        lock (_lo)
+        {
+            ++_isSettingUp;
+        }
+        
         Vector3 vMe;
         if (!_eCamScene.Has<Transform3ToWorld>())
         {
@@ -130,6 +126,12 @@ public class Scene : engine.IScene
             vMe = _eCamScene.Get<Transform3ToWorld>().Matrix.Translation;
         }
         _worldLoader.WorldLoaderProvideFragments(vMe);
+        
+        lock (_lo)
+        {
+            --_isSettingUp;
+        }
+
     }
     
     
@@ -171,6 +173,11 @@ public class Scene : engine.IScene
 
     public void SceneActivate(engine.Engine engine0)
     {
+        lock (_lo)
+        {
+            ++_isSettingUp;
+        }
+        
         _engine = engine0;
 
         _worldMetaGen = engine.world.MetaGen.Instance();
@@ -339,5 +346,10 @@ public class Scene : engine.IScene
 
         _engine.SetCameraEntity(_eCamScene);
         _engine.SetPlayerEntity(_partPlayerhover.GetShipEntity());
+
+        lock (_lo)
+        {
+            --_isSettingUp;
+        }
     }
 }
