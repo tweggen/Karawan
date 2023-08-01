@@ -91,6 +91,7 @@
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\buildingambient.png" />
 	  <None Remove="Platforms\Android\buildingdiffuse.png" />
+	  <None Remove="Platforms\Android\car-collision.ogg" />
 	  <None Remove="Platforms\Android\car2.mtl" />
 	  <None Remove="Platforms\Android\car2.obj" />
 	  <None Remove="Platforms\Android\car3noise.ogg" />
@@ -103,6 +104,8 @@
 	  <None Remove="Platforms\Android\car6.obj" />
 	  <None Remove="Platforms\Android\car7.mtl" />
 	  <None Remove="Platforms\Android\car7.obj" />
+	  <None Remove="Platforms\Android\car8.mtl" />
+	  <None Remove="Platforms\Android\car8.obj" />
 	  <None Remove="Platforms\Android\cubeloopmono.ogg" />
 	  <None Remove="Platforms\Android\gridlines.png" />
 	  <None Remove="Platforms\Android\gridlines1.jpg" />
@@ -152,6 +155,9 @@
 	  <AndroidAsset Include="Platforms\Android\buildingdiffuse.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car-collision.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\car2.mtl">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
@@ -186,6 +192,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\car7.obj">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car8.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\car8.obj">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\cubeloopmono.ogg">

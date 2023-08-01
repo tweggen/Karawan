@@ -242,7 +242,7 @@ namespace Splash.Silk
 
 
         private readonly float ControllerYMax = 0.2f; 
-        private readonly float ControllerXMax = 0.2f;
+        private readonly float ControllerXMax = 0.13f;
 
         private void _touchMouseController()
         {
