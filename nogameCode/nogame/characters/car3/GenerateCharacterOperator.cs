@@ -25,8 +25,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         {
             if (_jCar3Sound == null)
             {
-                _jCar3Sound = new engine.audio.Sound[3];
-                for (int j = 0; j < 3; ++j)
+                _jCar3Sound = new engine.audio.Sound[4];
+                for (int j = 0; j < 4; ++j)
                 {
                     _jCar3Sound[j] = new engine.audio.Sound(
                         "car3noisemono.ogg", true, 0.5f, 0.7f + j*0.3f);
@@ -37,72 +37,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         }
     }
     
-    
-#if false
-    private static engine.joyce.InstanceDesc[] _jInstancesCar;
-    private static engine.ModelInfo[] _modelInfos;
-    
-    private async Task<Model>  _getCarMesh(int carIndex)
-    {
-#if false
-        string uri = $"car{5 + carIndex}.obj";
-        Model model = await ModelCache.Instance().Instantiate($"car{5 + carIndex}.obj", new InstantiateModelParams()
-        {
-            GeomFlags = 0
-                        | InstantiateModelParams.CENTER_X
-                        | InstantiateModelParams.CENTER_Z
-                        | InstantiateModelParams.ROTATE_Y180
-        });
-        return model;
-#else
-        lock(_classLock)
-        {
-            if( null==_jInstancesCar)
-            {
-                _jInstancesCar = new engine.joyce.InstanceDesc[3];
-                _modelInfos = new engine.ModelInfo[3];
-                builtin.loader.Obj.LoadModelInstanceSync("car6.obj",
-                    out _jInstancesCar[0], out _modelInfos[0]);
-                builtin.loader.Obj.LoadModelInstanceSync("car7.obj",
-                    out _jInstancesCar[1], out _modelInfos[1]);
-                builtin.loader.Obj.LoadModelInstanceSync( "car5.obj", 
-                    out _jInstancesCar[2], out _modelInfos[2]);
-                Trace($"Loaded car 0 info is {_modelInfos[0]}");
-                Trace($"Loaded car 1 info is {_modelInfos[1]}");
-                Trace($"Loaded car 2 info is {_modelInfos[2]}");
-                for(int i = 0; i < 3; ++i)
-                {
-                    var ji = _jInstancesCar[i];
-                    var mi = _modelInfos[i];
-                    
-                    /*
-                     * Our models may not be centered on the X/Z plane.
-                     * Plus, they are 180 degree wrong.
-                     * So create the corresponding transform matrix
-                     * and modify the model info record.
-                     */
-
-                    /*
-                     * This means, the collision will be slightly off because of the Y offset.
-                     */
-                    Vector3 vOffset = mi.AABB.Center with { Y = 0 }; 
-                    ji.ModelTransform =
-                        Matrix4x4.CreateTranslation(-vOffset)
-                        * Matrix4x4.CreateRotationY((float)Math.PI)
-                        ;
-                    
-                    mi.AABB.Offset(-vOffset);
-                    mi.AABB.RotateY180();
-                }
-            }
-
-            modelInfo = _modelInfos[carIndex];
-            instanceDesc = _jInstancesCar[carIndex];
-        }
-#endif
-    }
-#endif
-
     
     private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
     private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
@@ -240,7 +174,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    int carIdx = (int)(_rnd.getFloat() * 3f);
+                    int carIdx = (int)(_rnd.getFloat() * 4f);
                     Model model = await ModelCache.Instance().Instantiate($"car{5 + carIdx}.obj", new InstantiateModelParams()
                     {
                         GeomFlags = 0

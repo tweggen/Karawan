@@ -232,7 +232,7 @@ namespace nogame.parts.playerhover
             }
 
             _eScoreDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(786f-64f-32f, 0f),
+                new Vector2(786f-64f-32f, 10f),
                 new Vector2(64f, 40f),
                 $"{_score}",
                 40,

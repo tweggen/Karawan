@@ -117,12 +117,6 @@ public class Part : IPart
     
     public void _onLogicalFrame(object? sender, float dt)
     {
-#if false
-        if (0 != _updateMinimapFrameCount)
-        {
-            return;
-        }
-#endif
         ++_updateMinimapFrameCount;
         if (_updateMinimapFrameCount != _updateMinimapCount)
         {
