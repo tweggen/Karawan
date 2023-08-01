@@ -94,6 +94,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\PointLight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Container3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Framebuffer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\MatMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\mesh\Merger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Renderbuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstanceDesc.cs" />

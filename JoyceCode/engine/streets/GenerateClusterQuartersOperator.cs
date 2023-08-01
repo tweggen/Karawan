@@ -193,7 +193,7 @@ namespace engine.streets
                 instanceDesc.Meshes.Add(g);
                 instanceDesc.MeshMaterials.Add(0);
                 instanceDesc.Materials.Add(_getQuarterMaterial());
-                worldFragment.AddStaticMolecule("engine.streets.quarters", instanceDesc);
+                worldFragment.AddStaticInstance("engine.streets.quarters", instanceDesc);
             }
             catch (Exception e)
             {

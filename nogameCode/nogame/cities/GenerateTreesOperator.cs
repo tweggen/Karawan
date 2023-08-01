@@ -228,7 +228,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         try
         {
             InstanceDesc mergedInstanceDesc = InstanceDesc.CreateMergedFrom(listInstanceDesc);
-            worldFragment.AddStaticMolecule("nogame.cities.trees", mergedInstanceDesc, null);
+            worldFragment.AddStaticInstance("nogame.cities.trees", mergedInstanceDesc, null);
         }
         catch (Exception e)
         {

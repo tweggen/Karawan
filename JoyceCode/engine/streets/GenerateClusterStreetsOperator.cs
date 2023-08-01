@@ -714,7 +714,7 @@ namespace engine.streets
             instanceDesc.Meshes.Add(g);
             instanceDesc.MeshMaterials.Add(0);
             instanceDesc.Materials.Add(_getStreetMaterial());
-            worldFragment.AddStaticMolecule("engine.streets.streets", instanceDesc);
+            worldFragment.AddStaticInstance("engine.streets.streets", instanceDesc);
         });
 
 

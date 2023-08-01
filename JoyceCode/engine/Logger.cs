@@ -1,6 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 
+/*
+ * plent-o-matic: your job is our business
+ *
+ * 
+ * 
+ */
 namespace engine
 {
     static public class Logger
@@ -20,6 +26,7 @@ namespace engine
             Detail = 500,
             All = 1000
         }
+        
 
         private static string _createLogEntry(in Level level, in string msg)
         {
@@ -58,6 +65,7 @@ namespace engine
             if (null == methodName) methodName = "[null method name]";
             return $"{fileName}:{lineNumber}: {type}:{methodName}: {strLevel}: {msg}";
         }
+        
 
         public static void Log(in Level level, in string logEntry)
         {
@@ -74,14 +82,17 @@ namespace engine
                 Console.WriteLine(logEntry);
             }
         }
+        
 
         public static void Trace(in string msg)
         {
             Log(Level.Trace, _createLogEntry(Level.Trace, msg));
         }
+        
 
         public static void Wonder(in string msg)
         {
+           
             Log(Level.Wonder, _createLogEntry(Level.Wonder, msg));
         }
 
@@ -89,11 +100,13 @@ namespace engine
         {
             Log(Level.Warning, _createLogEntry(Level.Warning, msg));
         }
+        
 
         public static void Error(in string msg)
         {
             Log(Level.Error, _createLogEntry(Level.Error, msg));
         }
+
 
         public static void ErrorThrow(in string msg, Func<string, SystemException> excFunc )
         {
@@ -101,6 +114,7 @@ namespace engine
             Log(Level.Error, logEntry);
             throw excFunc(logEntry);
         }
+        
 
         public static void Fatal(in string module, in string msg)
         {
@@ -108,6 +122,7 @@ namespace engine
             Log(Level.Fatal, msg);
             throw new InvalidOperationException(logEntry);
         }
+        
 
         public static void SetLogTarget( ILogTarget logTarget )
         {

@@ -275,6 +275,21 @@ public class Mesh
     }
 
 
+    /*
+     * merge a couple of meshes sharing the same position.
+     */
+    public static Mesh CreateFrom(IList<Mesh> others)
+    {
+        List<MergeMeshEntry> mmelist = new();
+        foreach (var mesh in others)
+        {
+            mmelist.Add(new MergeMeshEntry() { Transform = Matrix4x4.Identity, Mesh = mesh});
+        }
+
+        return CreateFrom(mmelist);
+    }
+
+
     public Mesh(IList<Vector3> vertices, IList<uint> indices, IList<Vector2> uvs)
     {
         Vertices = vertices;
@@ -287,6 +302,13 @@ public class Mesh
         WriteIndexNormals = 0;
     }
 
+
+    public Mesh()
+    {
+        Vertices = new List<Vector3>();
+        Indices = new List<uint>();
+        UVs = new List<Vector2>();
+    }
 
     public static Mesh CreateListInstance()
     {

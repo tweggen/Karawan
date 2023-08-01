@@ -229,7 +229,7 @@ namespace engine.world
             jInstanceDesc.Meshes.Add(jMeshTerrain);
             jInstanceDesc.MeshMaterials.Add(0);
             jInstanceDesc.Materials.Add(_getGroundMaterial());
-            AddStaticMolecule("engine.world.ground", jInstanceDesc);
+            AddStaticInstance("engine.world.ground", jInstanceDesc);
         }
 
 
@@ -295,14 +295,14 @@ namespace engine.world
         /**
          * Add a geometry atom to this fragment.
          */
-        public void AddStaticMolecule(string staticName, in engine.joyce.InstanceDesc jInstanceDesc)
+        public void AddStaticInstance(string staticName, in engine.joyce.InstanceDesc jInstanceDesc)
         {
-            AddStaticMolecule(staticName, jInstanceDesc, null);
+            AddStaticInstance(staticName, jInstanceDesc, null);
         }
 
 
         private int _meshesInFragment = 0;
-        public void AddStaticMolecule(
+        public void AddStaticInstance(
             string staticName,
             engine.joyce.InstanceDesc jInstanceDesc,
             IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)

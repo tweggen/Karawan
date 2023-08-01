@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using engine.joyce;
 using static engine.Logger;
 
 
@@ -83,12 +84,16 @@ namespace nogame.cities
          */
         private void _createHouseSubGeo(
             in engine.world.Fragment worldFragment,
+            in engine.joyce.MatMesh matmesh,
             in IList<Vector3> p,
             float h0, float mpt,
-            in engine.joyce.Mesh g,
             in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
         )
         {
+            engine.joyce.Material materialHouse = _getHouseMaterial();
+            engine.joyce.Mesh meshHouse = new();
+
+
 
             /*
              * Construct a path vector for what was originally the height.
@@ -108,7 +113,8 @@ namespace nogame.cities
              */
             var opExtrudePoly = new builtin.tools.ExtrudePoly(p, path, 27, _metersPerTexture, false, false, true);
             try {
-                opExtrudePoly.BuildGeom( g);
+                opExtrudePoly.BuildGeom(meshHouse);
+                matmesh.Add(materialHouse, meshHouse);
             } catch (Exception e) {
                 Trace( $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
             }
@@ -123,33 +129,26 @@ namespace nogame.cities
 
         }
 
-
-        private float GetBaseHeight(
+#if false
+        private void _createLargeAdvertsSubGeo(
             in engine.world.Fragment worldFragment,
-            IList<Vector3> p)
+            in IList<Vector3> fragPoints,
+            float height)
         {
-            float xo = worldFragment.Position.X;
-            float zo = worldFragment.Position.Z;
-            var inFragmentY = 10000f;
-            foreach(var p0 in p)
-            {
-                try
-                {
-                    var f = worldFragment.Loader.GetHeightAt(xo + p0.X, zo + p0.Z);
-                    if (f < inFragmentY) inFragmentY = f;
-                }
-                catch (Exception) { }
-            }
-            return inFragmentY;
+            
         }
+#endif
 
-
+        
         private void _createNeonSignSubGeo(
             in engine.world.Fragment worldFragment,
+            in engine.joyce.MatMesh matmesh,
             in Vector3 p0, in Vector3 pe,
-            float h,
-            in engine.joyce.Mesh neonG)
+            float h)
         {
+            engine.joyce.Material materialNeon = _getNeonMaterial();
+            engine.joyce.Mesh meshNeon = new();
+            
             /*
              * Number of letters.
              */
@@ -166,19 +165,21 @@ namespace nogame.cities
             /*
              * Trivial implementation: Add a part of the texture, which is 8x8
              */
-            uint i0 = neonG.GetNextVertexIndex();
+            uint i0 = meshNeon.GetNextVertexIndex();
 
-            neonG.p(p0.X, p0.Y + h0, p0.Z);
-            neonG.UV(0.0f, 1.0f - 0.0f);
-            neonG.p(p0.X, p0.Y + h1, p0.Z);
-            neonG.UV(0.0f, 1.0f - 0.125f * nLetters);
-            neonG.p(p0.X + pe.X, p0.Y + h1 + pe.Y, p0.Z + pe.Z);
-            neonG.UV(0.125f, 1.0f - 0.125f * nLetters);
-            neonG.p(p0.X + pe.X, p0.Y + h0 + pe.Y, p0.Z + pe.Z);
-            neonG.UV(0.125f, 1.0f - 0.0f);
+            meshNeon.p(p0.X, p0.Y + h0, p0.Z);
+            meshNeon.UV(0.0f, 1.0f - 0.0f);
+            meshNeon.p(p0.X, p0.Y + h1, p0.Z);
+            meshNeon.UV(0.0f, 1.0f - 0.125f * nLetters);
+            meshNeon.p(p0.X + pe.X, p0.Y + h1 + pe.Y, p0.Z + pe.Z);
+            meshNeon.UV(0.125f, 1.0f - 0.125f * nLetters);
+            meshNeon.p(p0.X + pe.X, p0.Y + h0 + pe.Y, p0.Z + pe.Z);
+            meshNeon.UV(0.125f, 1.0f - 0.0f);
 
-            neonG.Idx(i0 + 0, i0 + 1, i0 + 3);
-            neonG.Idx(i0 + 1, i0 + 2, i0 + 3);
+            meshNeon.Idx(i0 + 0, i0 + 1, i0 + 3);
+            meshNeon.Idx(i0 + 1, i0 + 2, i0 + 3);
+            
+            matmesh.Add(materialNeon, meshNeon);
         }
 
 
@@ -187,9 +188,9 @@ namespace nogame.cities
          */
         private void _createNeonSignsSubGeo(
                 in engine.world.Fragment worldFragment,
+                in engine.joyce.MatMesh matmesh,
                 in IList<Vector3> p,
-                float h,
-                engine.joyce.Mesh neonG)
+                float h)
         {
             /*
              * For the neon sign, we each of the corner points, using 1 meter in wall direction to
@@ -215,10 +216,8 @@ namespace nogame.cities
                 pe *= -letterWidth;
 
                 _createNeonSignSubGeo(
-                    worldFragment,
-                    p0, pe,
-                    h,
-                    neonG);
+                    worldFragment, matmesh,
+                    p0, pe, h);
             }
         }
 
@@ -251,10 +250,14 @@ namespace nogame.cities
             // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
             _rnd.clear();
 
-            engine.joyce.Mesh g = engine.joyce.Mesh.CreateListInstance();
-            engine.joyce.Mesh neonG = engine.joyce.Mesh.CreateListInstance();
+            // TXWTODO: I'd love to have a better thing than this.
             List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
 
+            /*
+             * This is where we create our houses in. 
+             */
+            engine.joyce.MatMesh matmesh = new();
+            
             /*
              * Iterate through all quarters in the clusters and generate lots and houses.
              */
@@ -337,8 +340,12 @@ namespace nogame.cities
                         try
                         {
                             _createHouseSubGeo(
-                                worldFragment, fragPoints, height, _metersPerTexture,
-                                g, listCreatePhysics);
+                                worldFragment, matmesh,
+                                fragPoints, height, _metersPerTexture,
+                                listCreatePhysics);
+
+                            // _createLargeAdvertsSubGeo(
+                            //     worldFragment, fragPoints, height, g);
                         }
                         catch (Exception e)
                         {
@@ -347,45 +354,30 @@ namespace nogame.cities
 
                         try
                         {
-                            _createNeonSignsSubGeo(worldFragment, fragPoints, height, neonG);
+                            _createNeonSignsSubGeo(worldFragment, matmesh,
+                                fragPoints, height);
                         }
                         catch (Exception e)
                         {
                             Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                         }
-
-                        //haveHouse = true;
                     }
 
                 }
 
             }
 
-            if (g.IsEmpty())
+            if (matmesh.IsEmpty())
             {
                 return;
             }
 
-            // TXWTODO: We currently split this into two different molecules (because there's just one RlMeshEntry per entity). I'd like this to be the same.
-
             try
             {
-                // var mol = new engine.SimpleMolecule( [g] );
-                // TXWTODO: This is too inefficient. We should also use a factory here.
-                {
-                    engine.joyce.InstanceDesc instanceDesc = new();
-                    instanceDesc.Meshes.Add(g);
-                    instanceDesc.MeshMaterials.Add(0);
-                    instanceDesc.Materials.Add(_getHouseMaterial());
-                    worldFragment.AddStaticMolecule("nogame.cities.houses.walls", instanceDesc, listCreatePhysics);
-                }
-                {
-                    engine.joyce.InstanceDesc instanceDesc = new();
-                    instanceDesc.Meshes.Add(neonG);
-                    instanceDesc.MeshMaterials.Add(0);
-                    instanceDesc.Materials.Add(_getNeonMaterial());
-                    worldFragment.AddStaticMolecule("nogame.cities.houses.neon", instanceDesc);
-                }
+                // TXWTODO: Merge this, this is inefficient.
+                var mmmerged = MatMesh.CreateMerged(matmesh);
+                var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged);
+                worldFragment.AddStaticInstance("nogame.cities.houses", id, listCreatePhysics);
             }
             catch (Exception e)
             {

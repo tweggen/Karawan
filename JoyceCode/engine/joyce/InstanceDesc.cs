@@ -69,6 +69,69 @@ public class InstanceDesc
         int idx = Meshes.Count-1;
         SetMeshProperties(idx, meshProperties);
     }
+
+
+    public void AddMesh(in Mesh mesh, int materialIndex)
+    {
+        CheckIntegrity();
+        Meshes.Add(mesh);
+        MeshMaterials.Add(materialIndex);
+    }
+
+
+    public int FindMaterial(in Material material)
+    {
+        int nm = Materials.Count;
+        int idx = -1;
+        for (int i = 0; i < nm; ++i)
+        {
+            if (Materials[nm] == material)
+            {
+                idx = nm;
+            }
+        }
+
+        if (-1 == idx)
+        {
+            idx = nm;
+            Materials.Add(material);
+            nm++;
+        }
+
+        return idx;
+    }
+
+    
+    private MatMesh _createMatMeshTree()
+    {
+        MatMesh matmesh = new();
+        matmesh.AddInstance(this);
+        return matmesh;
+    }
+
+
+    /**
+     * Create a new instance desc from the matmesh given.
+     */
+    public static InstanceDesc CreateFromMatMesh(MatMesh matmesh)
+    {
+        InstanceDesc id = new();
+
+        int materialIndex = 0;
+        foreach (var kvp in matmesh.Tree)
+        {
+            id.Materials.Add(kvp.Key);
+            foreach (var me in kvp.Value)
+            {
+                id.Meshes.Add(me);
+                id.MeshMaterials.Add(materialIndex);
+            }
+
+            ++materialIndex;
+        }
+
+        return id;
+    }
     
     
     public InstanceDesc()
