@@ -93,8 +93,8 @@ public sealed class Implementations
     }
 
 
-    static Implementations()
-    {}
+    //static Implementations()
+    //{}
 
     
     private Implementations()

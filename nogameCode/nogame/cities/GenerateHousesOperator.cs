@@ -17,38 +17,6 @@ namespace nogame.cities
         static private engine.joyce.Material _jMaterialHouse = null;
         static private engine.joyce.Material _jMaterialNeon = null;
 
-        static private engine.joyce.Material _getHouseMaterial()
-        {
-            lock (_lo)
-            {
-                if (_jMaterialHouse == null)
-                {
-                    _jMaterialHouse = new engine.joyce.Material(); 
-                    _jMaterialHouse.AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
-                        ? 0x00000000 : 0xff333333;
-                    _jMaterialHouse.Texture = new engine.joyce.Texture("buildingdiffuse.png");
-                }
-                return _jMaterialHouse;
-            }
-        }
-
-        static private engine.joyce.Material _getNeonMaterial()
-        {
-            lock (_lo)
-            {
-                if (_jMaterialNeon == null)
-                {
-                    _jMaterialNeon = new engine.joyce.Material();
-                    _jMaterialNeon.AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
-                        ? 0xffff3333 : 0xffff3333;
-                    _jMaterialNeon.Texture = null;
-                    _jMaterialNeon.EmissiveTexture = new engine.joyce.Texture("lorem.png");
-                    _jMaterialNeon.HasTransparency = true;
-                }
-                return _jMaterialNeon;
-            }
-        }
-
         private engine.world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;
@@ -90,7 +58,7 @@ namespace nogame.cities
             in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
         )
         {
-            engine.joyce.Material materialHouse = _getHouseMaterial();
+            engine.joyce.Material materialHouse = MaterialCache.Get("nogame.cities.houses.materials.houses");
             engine.joyce.Mesh meshHouse = new();
 
 
@@ -129,15 +97,18 @@ namespace nogame.cities
 
         }
 
-#if false
+
+        /**
+         * Look for a suitably high wall and place an advert on it.
+         */
         private void _createLargeAdvertsSubGeo(
             in engine.world.Fragment worldFragment,
+            in engine.joyce.MatMesh matmesh,
             in IList<Vector3> fragPoints,
             float height)
         {
             
         }
-#endif
 
         
         private void _createNeonSignSubGeo(
@@ -146,7 +117,7 @@ namespace nogame.cities
             in Vector3 p0, in Vector3 pe,
             float h)
         {
-            engine.joyce.Material materialNeon = _getNeonMaterial();
+            engine.joyce.Material materialNeon = MaterialCache.Get("nogame.cities.houses.materials.neon");
             engine.joyce.Mesh meshNeon = new();
             
             /*
@@ -344,8 +315,8 @@ namespace nogame.cities
                                 fragPoints, height, _metersPerTexture,
                                 listCreatePhysics);
 
-                            // _createLargeAdvertsSubGeo(
-                            //     worldFragment, fragPoints, height, g);
+                            _createLargeAdvertsSubGeo(
+                                 worldFragment, matmesh, fragPoints, height);
                         }
                         catch (Exception e)
                         {
@@ -393,6 +364,24 @@ namespace nogame.cities
             _clusterDesc = clusterDesc;
             _myKey = strKey;
             _rnd = new engine.RandomSource(strKey);
+
+            MaterialCache.Register("nogame.cities.houses.materials.houses",
+                (name) => new engine.joyce.Material()
+                {
+                    AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                        ? 0x00000000
+                        : 0xff333333,
+                    Texture = new engine.joyce.Texture("buildingdiffuse.png")
+                });
+            MaterialCache.Register("nogame.cities.houses.materials.neon",
+                (name) => new engine.joyce.Material()
+                {
+                    AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                        ? 0xffff3333 : 0xffff3333,
+                    Texture = null,
+                    EmissiveTexture = new engine.joyce.Texture("lorem.png"),
+                    HasTransparency = true
+                });
         }
     }
 }
