@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using builtin.tools.Lindenmayer;
-using DefaultEcs;
 using engine.joyce;
 using static engine.Logger;
 
@@ -14,13 +11,6 @@ namespace nogame.cities;
 public class GenerateTreesOperator : engine.world.IFragmentOperator 
 {
     
-    private void trace(string message)
-    {
-        Console.WriteLine(message);
-    }
-
-    static private object _lo = new();
-
     private engine.world.ClusterDesc _clusterDesc;
     private engine.RandomSource _rnd;
     private string _myKey;
@@ -80,25 +70,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                 continue;
             }
 
-            float xmiddle = 0.0f;
-            float ymiddle = 0.0f;
-            var n = 0;
-            var delims = quarter.GetDelims();
-            foreach (var delim in delims)
-            {
-                xmiddle += delim.StreetPoint.Pos.X;
-                ymiddle += delim.StreetPoint.Pos.Y;
-                ++n;
-            }
-
-            if (3 > n)
-            {
-                continue;
-            }
-
-            xmiddle /= n;
-            ymiddle /= n;
-
             /*
              * Compute some properties of this quarter.
              * - is it convex?
@@ -107,7 +78,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
              */
             foreach (var estate in quarter.GetEstates())
             {
-
                 /*
                  * Only consider this estate, if the center coordinate 
                  * is within this fragment.
@@ -135,11 +105,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                 /*
                  * But don't use every estate, just some.
                  */
-                if (_rnd.getFloat() > 0.7f)
-                {
-
-                }
-                else
+                if (_rnd.getFloat() <= 0.7f)
                 {
                     continue;
                 }
@@ -218,7 +184,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         }
         catch (Exception e)
         {
-            trace($"Unknown exception: {e}");
+            Trace($"Unknown exception: {e}");
         }
 
     });
