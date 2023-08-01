@@ -24,6 +24,7 @@ namespace nogame.cities
         private static float _storiesPerTexture = 32f;
         private static float _metersPerTexture = 3.0f * _storiesPerTexture;
 
+        
         public string FragmentOperatorGetPath()
         {
             return $"8001/GenerateHousesOperator/{_myKey}/";
@@ -103,7 +104,9 @@ namespace nogame.cities
             in IList<Vector3> fragPoints,
             float height)
         {
-            
+            /*
+             * Let's assume the ads are 10m in height
+             */
         }
 
         

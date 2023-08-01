@@ -30,47 +30,43 @@ namespace engine.streets
 
         private bool _generateQuarterFloor(
             world.Fragment worldFragment,
+            MatMesh matmesh,
             streets.Quarter quarter,
             float cx,
-            float cy,
-            engine.joyce.Mesh g
+            float cy
         )
         {
-            // Trace("{worldFragment.getId()}");
-            List<Vector2> vpoly = new();
+            List<Vector3> edges = new();
+            List<Vector3> path = new();
+            
+            path.Add(new Vector3(0f, 0.15f, 0f));
             var delimList = quarter.GetDelims();
             int n = 0;
+            
+            float h = _clusterDesc.AverageHeight + 2f;
+            
+            /*
+             * Create the main poly, plus the edges.
+             */
             foreach(var delim in delimList)
             {
                 ++n;
-                vpoly.Add(new Vector2(cx + delim.StartPoint.X, cy + delim.StartPoint.Y));
+                edges.Add(new Vector3(cx + delim.StartPoint.X, h, cy + delim.StartPoint.Y));
             }
             if(n<3)
             {
                 Trace("No delims found");
                 return false;
             }
-            /*
-             * Need to reverse the quarters, they are 
-             */
-            // vpoly.Reverse();
-            engine.joyce.Mesh j2Mesh = engine.joyce.Mesh.CreateListInstance();
-            builtin.tools.Triangulate.ToMesh(vpoly, j2Mesh);
-            /*
-             * Here we have an XY mesh of the triangles in the mesh.
-             */
-            float h = _clusterDesc.AverageHeight + 2.15f;
-            uint i0 = g.GetNextVertexIndex();
-            foreach(Vector3 v in j2Mesh.Vertices)
-            {
-                g.p(new Vector3(v.X, h, v.Y));
-                g.UV(0f, 0f);
-            }
-            for (int k = 0; k < j2Mesh.Indices.Count; k += 3)
-            {
-                g.Idx(i0+j2Mesh.Indices[k], i0+j2Mesh.Indices[k+1], i0+j2Mesh.Indices[k+2]);
-            }
 
+            Mesh meshGround = new();
+            var opExtrudePoly = new builtin.tools.ExtrudePoly(edges, path, 27, 10000f, false, false, true);
+            try {
+                opExtrudePoly.BuildGeom(meshGround);
+                matmesh.Add(MaterialCache.Get("engine.streets.materials.cluster"), meshGround);
+            } catch (Exception e) {
+                Trace( $"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+            }
             return true;
         }
 
@@ -112,27 +108,8 @@ namespace engine.streets
             }
 
             if (_traceQuarters) Trace($"Cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
-#if false
-                try
-            {
-                worldFragment.AddMaterialFactory(
-                    "GenerateClusterQuartersOperator._matQuarter", function() {
-                    var mat = new engine.Material("");
-                    mat.ambientColor = 0x441144;
-                    mat.ambient = 0.5;
-                    mat.specular = 0.0;
-                    return mat;
-                }
-                    );
-            }
-            catch (unknown: Dynamic ) {
-                trace("Unknown exception: " + Std.string(unknown) + "\n"
-                    + haxe.CallStack.toString(haxe.CallStack.callStack())
-                    + haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
-            }
-#endif
 
-            var g = engine.joyce.Mesh.CreateListInstance();
+            MatMesh matmesh = new();
 
             /*
              * Now iterate through all quarters of this cluster.
@@ -160,29 +137,25 @@ namespace engine.streets
                     Warning($"Unknown exception: {e}");
                 }
 
-                _generateQuarterFloor(worldFragment, quarter, cx, cz, g);
+                _generateQuarterFloor(worldFragment, matmesh, quarter, cx, cz);
             }
 
-            if (g.IsEmpty())
+            if (matmesh.IsEmpty())
             {
                 if (_traceQuarters) Trace($"Nothing to add at all.");
                 return;
             }
 
-
             try
             {
-                // var mol = new engine.SimpleMolecule( [g] );
-                // TXWTODO: This is too inefficient. We should also use a factory here.
-                engine.joyce.InstanceDesc instanceDesc = new();
-                instanceDesc.Meshes.Add(g);
-                instanceDesc.MeshMaterials.Add(0);
-                instanceDesc.Materials.Add(MaterialCache.Get("engine.streets.materials.cluster"));
-                worldFragment.AddStaticInstance("engine.streets.quarters", instanceDesc);
+                // TXWTODO: Merge this, this is inefficient.
+                var mmmerged = MatMesh.CreateMerged(matmesh);
+                var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged);
+                worldFragment.AddStaticInstance("engine.streets.quarters", id);
             }
             catch (Exception e)
             {
-                Warning($"Unknown exception: {e}");
+                Trace($"Unknown exception: {e}");
             }
 
         });
@@ -200,7 +173,8 @@ namespace engine.streets
             MaterialCache.Register("engine.streets.materials.cluster",
                 name => new Material()
                 {
-                    AlbedoColor = 0xff441144
+                    //AlbedoColor = 0xff441144
+                    AlbedoColor = 0xff262222
                 });
         }
     }
