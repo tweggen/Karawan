@@ -105,7 +105,7 @@ public class InstanceDesc
     private MatMesh _createMatMeshTree()
     {
         MatMesh matmesh = new();
-        matmesh.AddInstance(this);
+        matmesh.Add(this);
         return matmesh;
     }
 
@@ -190,52 +190,13 @@ public class InstanceDesc
      */
     public static InstanceDesc CreateMergedFrom(IList<InstanceDesc> listInstances)
     {
-        /*
-         * this is our mesh accumulator, gathering the meshes per material.
-         */
-        SortedDictionary<Material, List<MergeMeshEntry>> mapListMeshes = new();
-        
-        /*
-         * Group all meshes by materials.
-         */
+        MatMesh mm = new();
         foreach (var instanceDesc in listInstances)
         {
-            for (int im = 0; im < instanceDesc.Meshes.Count; ++im)
-            {
-                Material jMaterial = instanceDesc.Materials[instanceDesc.MeshMaterials[im]];
-                List<MergeMeshEntry> listMMEs;
-                if (!mapListMeshes.TryGetValue(jMaterial, out listMMEs))
-                {
-                    listMMEs = new List<MergeMeshEntry>();
-                    mapListMeshes.Add(jMaterial, listMMEs);
-                }
-
-                listMMEs.Add(new MergeMeshEntry()
-                {
-                    Transform = instanceDesc.ModelTransform, 
-                    Mesh = instanceDesc.Meshes[im]
-                });
-            }
+            mm.Add(instanceDesc);
         }
-
-        Mesh[] arrMeshes = new Mesh[mapListMeshes.Count];
-        int[] arrMeshMaterials = new int[mapListMeshes.Count];
-        Material[] arrMaterials = new Material[mapListMeshes.Count];
-
-        /*
-         * Merge the source meshes, emitting them into the new instance.
-         */
-        int materialIndex = 0;
-        foreach (var kvp in mapListMeshes)
-        {
-            arrMeshes[materialIndex] = Mesh.CreateFrom(kvp.Value);
-            arrMeshMaterials[materialIndex] = materialIndex;
-            arrMaterials[materialIndex] = kvp.Key;
-            ++materialIndex;
-        }
-
-        return new InstanceDesc(arrMeshes, arrMeshMaterials, arrMaterials);
+        MatMesh mmmerged = MatMesh.CreateMerged(mm);
+        return CreateFromMatMesh(mmmerged);
     }
-
 }
     

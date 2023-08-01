@@ -10,7 +10,7 @@ namespace engine.joyce;
  */
 public class MatMesh
 {
-    public SortedDictionary<Material, List<Mesh>> Tree;
+    public Dictionary<Material, List<Mesh>> Tree;
 
 
     public bool IsEmpty()
@@ -31,7 +31,7 @@ public class MatMesh
     }
     
     
-    public void AddInstance(InstanceDesc id)
+    public void Add(InstanceDesc id)
     {
         int l = id.Meshes.Count;
         for (int i = 0; i < l; i++)
