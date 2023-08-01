@@ -38,6 +38,11 @@ public class Jukebox
                 }
                 _soundCurrentSong = sound;
                 _soundCurrentSong.Volume = volume;
+                if (uri != "shaklengokhsi.ogg")
+                {
+                    _soundCurrentSong.IsLooped = true;
+                }
+
                 _soundCurrentSong.Play();
             }
         });
