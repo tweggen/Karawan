@@ -2,6 +2,7 @@
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
+using engine.joyce;
 using static engine.Logger;
 
 namespace engine.streets
@@ -9,24 +10,6 @@ namespace engine.streets
     public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
         static private object _lock = new();
-        static private engine.joyce.Material _jMaterialStreet= null;
-
-        static private engine.joyce.Material _getStreetMaterial()
-        {
-            lock (_lock)
-            {
-                if (_jMaterialStreet == null)
-                {
-                    _jMaterialStreet = new engine.joyce.Material();
-                    _jMaterialStreet.AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
-                        ? 0x00000000 : 0xff888888;
-                    _jMaterialStreet.Texture = new engine.joyce.Texture("streets1to4.png");
-                }
-                return _jMaterialStreet;
-            }
-        }
-
-        private static bool _useRepeatTexture = false;
 
         private ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
@@ -713,7 +696,7 @@ namespace engine.streets
             engine.joyce.InstanceDesc instanceDesc = new();
             instanceDesc.Meshes.Add(g);
             instanceDesc.MeshMaterials.Add(0);
-            instanceDesc.Materials.Add(_getStreetMaterial());
+            instanceDesc.Materials.Add(MaterialCache.Get("engine.streets.materials.street"));
             worldFragment.AddStaticInstance("engine.streets.streets", instanceDesc);
         });
 
@@ -726,6 +709,14 @@ namespace engine.streets
             _clusterDesc = clusterDesc;
             _myKey = strKey;
             _rnd = new engine.RandomSource(strKey);
+
+            MaterialCache.Register("engine.streets.materials.street",
+                (name) => new Material()
+                {
+                    AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                        ? 0x00000000 : 0xff888888,
+                    Texture = new engine.joyce.Texture("streets1to4.png")
+                });
         }
     }
 }

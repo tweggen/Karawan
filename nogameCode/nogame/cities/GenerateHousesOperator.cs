@@ -1,6 +1,4 @@
 ﻿using BepuPhysics;
-using BepuPhysics.Collidables;
-using DefaultEcs;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -14,8 +12,6 @@ namespace nogame.cities
     public class GenerateHousesOperator : engine.world.IFragmentOperator
     {
         static private object _lo = new();
-        static private engine.joyce.Material _jMaterialHouse = null;
-        static private engine.joyce.Material _jMaterialNeon = null;
 
         private engine.world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;

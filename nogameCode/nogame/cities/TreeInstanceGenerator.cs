@@ -18,21 +18,7 @@ public class TreeInstanceGenerator
 
     private readonly int _nTemplates = 30;
     private InstanceDesc[] _arrInstanceDescs = null;
-    
-    private engine.joyce.Material _jMaterialTrees = null;
-    private engine.joyce.Material _getTreesMaterial()
-    {
-        lock (_lo)
-        {
-            if (_jMaterialTrees == null)
-            {
-                _jMaterialTrees = new engine.joyce.Material(); 
-                _jMaterialTrees.AlbedoColor = 0xff448822;
-                // _jMaterialTrees.Texture = new engine.joyce.Texture("buildingdiffuse.png");
-            }
-            return _jMaterialTrees;
-        }
-    }
+
     
     private builtin.tools.Lindenmayer.System _createTree1System(RandomSource rnd) 
     { 
@@ -239,7 +225,7 @@ public class TreeInstanceGenerator
                 {
                     instanceDesc.Meshes.Add(mesh);
                     instanceDesc.MeshMaterials.Add(0);
-                    instanceDesc.Materials.Add(_getTreesMaterial());
+                    instanceDesc.Materials.Add(MaterialCache.Get("nogame.cities.trees.materials.treeleave"));
                 }
             }
 
@@ -270,5 +256,14 @@ public class TreeInstanceGenerator
             Matrix4x4 mPos = Matrix4x4.CreateTranslation(vTargetPosition);
             return _arrInstanceDescs[param % _nTemplates].TransformedCopy(mPos);
         }
+    }
+
+    public TreeInstanceGenerator()
+    {
+        MaterialCache.Register("nogame.cities.trees.materials.treeleave",
+            (name) => new Material()
+            {
+                AlbedoColor = 0xff448822
+            });
     }
 }

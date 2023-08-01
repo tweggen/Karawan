@@ -7,6 +7,7 @@ using DefaultEcs;
 using System.Linq;
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using engine.joyce;
 using static engine.Logger;
 
 namespace engine.world
@@ -16,21 +17,6 @@ namespace engine.world
         static private object _lock = new();
 
         // TXWTODO: A fragment should decouple its look from its data structural nature.
-        // TXWTODO: This should be solved by some sort of material factory.
-        static private engine.joyce.Material _jMaterialGround = null;
-        static private engine.joyce.Material _getGroundMaterial()
-        {
-            lock(_lock) {
-                if( _jMaterialGround==null )
-                {
-                    joyce.Texture jGroundTexture = new joyce.Texture("gridlines1.png");
-                    _jMaterialGround = new joyce.Material(jGroundTexture);
-                    _jMaterialGround.AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
-                        ? 0x00000000 : 0xff002222;
-                }
-                return _jMaterialGround;
-            }
-        }
 
         public engine.Engine Engine { get; }
         public world.Loader Loader { get; }
@@ -40,9 +26,6 @@ namespace engine.world
         public int NumericalId { get => _id; }
 
         public int LastIteration { get; set; }
-
-        // private List<DefaultEcs.Entity> _listCharacters;
-        // private _listStaticMolecules: List<engine.IMolecule>;
 
         private engine.RandomSource _rnd;
 
@@ -58,11 +41,6 @@ namespace engine.world
 
         private int _groundResolution;
         private int _groundNElevations;
-
-        /**
-         * The list of (static) molecules.
-         */
-        private List<Entity> _eStaticMolecules;
 
 
         /**
@@ -228,7 +206,7 @@ namespace engine.world
             engine.joyce.InstanceDesc jInstanceDesc = new();
             jInstanceDesc.Meshes.Add(jMeshTerrain);
             jInstanceDesc.MeshMaterials.Add(0);
-            jInstanceDesc.Materials.Add(_getGroundMaterial());
+            jInstanceDesc.Materials.Add(MaterialCache.Get("engine.world.fragment.materials.ground"));
             AddStaticInstance("engine.world.ground", jInstanceDesc);
         }
 
@@ -357,7 +335,6 @@ namespace engine.world
             // _listCharacters = null;
             _groundResolution = world.MetaGen.GroundResolution;
             _groundNElevations = _groundResolution + 1;
-            _eStaticMolecules = new();
             _myKey = strKey;
             _rnd = new engine.RandomSource(_myKey);
             Position = position0;
@@ -369,7 +346,17 @@ namespace engine.world
 
             // Create an initial elevation array that still is zeroed.
             _createElevationArray();
+
+            MaterialCache.Register("engine.world.fragment.materials.ground",
+                (name) => new Material()
+                {
+                    Texture = new Texture("gridlines1.png"),
+                    AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                        ? 0x00000000
+                        : 0xff002222
+                });
         }
+
     }
 }
 

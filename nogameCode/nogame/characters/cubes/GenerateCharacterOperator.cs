@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine;
+using engine.joyce;
 using engine.world;
 using engine.streets;
 using engine.world.components;
@@ -15,19 +16,6 @@ namespace nogame.characters.cubes
     {
         public static readonly string PhysicsName = "nogame.characters.cube";
         private static object _classLock = new();
-        private static engine.joyce.Material _jMaterialCube;
-        private static engine.joyce.Material _getCubeMaterial()
-        {
-            lock(_classLock)
-            {
-                if(_jMaterialCube == null)
-                {
-                    _jMaterialCube = new engine.joyce.Material();
-                    _jMaterialCube.AlbedoColor = 0xff226666;
-                }
-                return _jMaterialCube;
-            }
-        }
 
         private static engine.audio.Sound _jCubeSound;
 
@@ -200,7 +188,7 @@ namespace nogame.characters.cubes
                     engine.joyce.InstanceDesc jInstanceDesc = new();
                     jInstanceDesc.Meshes.Add(_getCubeMesh());
                     jInstanceDesc.MeshMaterials.Add(0);
-                    jInstanceDesc.Materials.Add(_getCubeMaterial());
+                    jInstanceDesc.Materials.Add(MaterialCache.Get("nogame.characters.cube.materials.cube"));
 
                     var wf = worldFragment;
 
@@ -256,6 +244,11 @@ namespace nogame.characters.cubes
             _clusterDesc = clusterDesc;
             _myKey = strKey;
             _rnd = new engine.RandomSource(strKey);
+            MaterialCache.Register("nogame.characters.cube.materials.cube",
+                name => new Material()
+                {
+                    AlbedoColor = 0xff226666
+                });
         }
     }
 }

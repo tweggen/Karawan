@@ -10,21 +10,6 @@ namespace engine.streets
     public class GenerateClusterQuartersOperator : world.IFragmentOperator
     {
         static private object _lock = new();
-        static private Material _jMaterialQuarter = null;
-
-        static private Material _getQuarterMaterial()
-        {
-            lock(_lock)
-            {
-                if(_jMaterialQuarter == null)
-                {
-                    _jMaterialQuarter = new Material();
-                    _jMaterialQuarter.AlbedoColor = 0xff441144;
-                }
-                return _jMaterialQuarter;
-            }
-        }
-
         private world.ClusterDesc _clusterDesc;
         private engine.RandomSource _rnd;
         private string _myKey;
@@ -192,7 +177,7 @@ namespace engine.streets
                 engine.joyce.InstanceDesc instanceDesc = new();
                 instanceDesc.Meshes.Add(g);
                 instanceDesc.MeshMaterials.Add(0);
-                instanceDesc.Materials.Add(_getQuarterMaterial());
+                instanceDesc.Materials.Add(MaterialCache.Get("engine.streets.materials.cluster"));
                 worldFragment.AddStaticInstance("engine.streets.quarters", instanceDesc);
             }
             catch (Exception e)
@@ -211,6 +196,12 @@ namespace engine.streets
             _clusterDesc = clusterDesc;
             _myKey = strKey;
             _rnd = new engine.RandomSource(strKey);
+            
+            MaterialCache.Register("engine.streets.materials.cluster",
+                name => new Material()
+                {
+                    AlbedoColor = 0xff441144
+                });
         }
     }
 }

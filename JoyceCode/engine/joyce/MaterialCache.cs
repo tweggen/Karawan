@@ -27,7 +27,6 @@ public class MaterialCache
         {
             if (_mapMaterials.TryGetValue(name, out _))
             {
-                ErrorThrow($"Already registered {name}.", (m) => throw new InvalidOperationException(m));
                 return;
             }
             MaterialEntry instanceEntry = new()

@@ -44,24 +44,6 @@ class Cluster
 public class FindLights
 {
     static private object _lock = new();
-    static private engine.joyce.Material _jMaterialLight= null;
-
-    static private engine.joyce.Material _getLightMaterial()
-    {
-        lock (_lock)
-        {
-            if (_jMaterialLight == null)
-            {
-                _jMaterialLight = new engine.joyce.Material();
-                _jMaterialLight.EmissiveColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
-                    ? 0x00000000 : 0xccffffcc;
-                _jMaterialLight.EmissiveTexture = new engine.joyce.Texture("standardlight.png");
-                _jMaterialLight.HasTransparency = true;
-                _jMaterialLight.IsBillboardTransform = true;
-            }
-            return _jMaterialLight;
-        }
-    }
     
 
     private static void _addLightToModel(engine.Model model, Vector3 p)
@@ -71,7 +53,7 @@ public class FindLights
          */
         var getLightMaterialIndex = (in engine.Model model) =>
         {
-            var material = _getLightMaterial();
+            var material = MaterialCache.Get("builtin.loader.materials.standardlight");
             InstanceDesc instanceDesc = model.InstanceDesc;
             int nm = instanceDesc.Materials.Count;
 
@@ -97,6 +79,17 @@ public class FindLights
         
     public static engine.Model Process(engine.Model model)
     {
+        MaterialCache.Register("builtin.loader.materials.standardlight",
+            name => new Material()
+            {
+                EmissiveColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                    ? 0x00000000 : 0xccffffcc,
+                EmissiveTexture = new engine.joyce.Texture("standardlight.png"),
+                HasTransparency = true,
+                IsBillboardTransform = true
+
+            });
+        
         InstanceDesc instanceDesc = model.InstanceDesc;
         if (null == instanceDesc.MeshMaterials || null == instanceDesc.Materials)
         {
