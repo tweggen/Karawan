@@ -154,9 +154,22 @@ namespace nogame.parts.playerhover
 
             /*
              * Finally, clip the height with the ground.
+             * To increase environment interaction, try to tilt the ship accordingly.
              */
-            if( vTargetPos.Y < (heightAtTarget) )
+            if( vTargetPos.Y < heightAtTarget )
             {
+                /*
+                 * Read the height at our front, or kind of at the front.
+                 * Give us an impulse accordingly.
+                 */
+                float heightAtFront = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(
+                    vTargetPos+2f*vFront);
+                if (heightAtFront > heightAtTarget)
+                {
+                    //heightAtTarget = heightAtFront;
+                    vTotalAngular += vRight * 10f*(heightAtFront-heightAtTarget);
+                }
+
                 vTargetPos.Y = heightAtTarget;
                 _prefTarget.Pose.Position = vTargetPos;
                 vTotalImpulse += new Vector3(0f, 10f, 0f);
