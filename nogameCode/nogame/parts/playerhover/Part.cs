@@ -51,6 +51,7 @@ namespace nogame.parts.playerhover
         
         private int _score = 0;
 
+        private Boom.ISound _soundCrash;
 
         private string _getClusterSound(ClusterDesc clusterDesc)
         {
@@ -131,19 +132,25 @@ namespace nogame.parts.playerhover
                 }
             }
 
-            if (other == null)
+            bool playSound = true;
+            if (other != null)
             {
-                return;
+                /*
+                 * Now let's check for explicit other components.
+                 */
+                if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
+                {
+                    Trace($"Cube chrIdx {other.DebugInfo}");
+                    _nextCubeCollected();
+                    _engine.AddDoomedEntity(other.Entity);
+                    playSound = false;
+                }
             }
-
-            /*
-             * Now let's check for explicit other components.
-             */
-            if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
+            if (playSound) 
             {
-                Trace($"Cube chrIdx {other.DebugInfo}");
-                _nextCubeCollected();
-                _engine.AddDoomedEntity(other.Entity);
+                _soundCrash.Stop();
+                _soundCrash.Volume = 0.1f;
+                _soundCrash.Play();
             }
         }
     
@@ -342,6 +349,8 @@ namespace nogame.parts.playerhover
         
         public Part()
         {
+            var api = Implementations.Get<Boom.ISoundAPI>();
+            _soundCrash = api.FindSound($"car-collision.ogg");
         }
     }
 }
