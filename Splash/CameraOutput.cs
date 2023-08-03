@@ -29,8 +29,8 @@ namespace Splash
         
         private readonly InstanceManager _instanceManager;
 
-        private float _defaultUploadMaterialPerFrame = 0.1f;
-        private float _defaultUploadMeshPerFrame = 0.1f;
+        private float _defaultUploadMaterialPerFrame = 1f;
+        private float _defaultUploadMeshPerFrame = 1f;
 
         private IScene _scene;
         

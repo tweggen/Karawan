@@ -119,6 +119,8 @@
 	  <None Remove="Platforms\Android\lvl-1-01c.ogg" />
 	  <None Remove="Platforms\Android\lvl-6.ogg" />
 	  <None Remove="Platforms\Android\mipmap\appicon.png" />
+	  <None Remove="Platforms\Android\plentomatic-small.png" />
+	  <None Remove="Platforms\Android\plentomatic.png" />
 	  <None Remove="Platforms\Android\pling01.ogg" />
 	  <None Remove="Platforms\Android\pling02.ogg" />
 	  <None Remove="Platforms\Android\pling03.ogg" />
@@ -142,6 +144,8 @@
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
 	  <None Remove="Platforms\Android\skybox2.png" />
 	  <None Remove="Platforms\Android\skybox2noborder.png" />
+	  <None Remove="Platforms\Android\sprouce-cn.png" />
+	  <None Remove="Platforms\Android\sprouce-en.png" />
 	  <None Remove="Platforms\Android\standardlight.png" />
 	  <None Remove="Platforms\Android\streets1to4.png" />
 	  <None Remove="Platforms\Android\tram1.mtl" />
@@ -229,6 +233,12 @@
 	  <AndroidAsset Include="Platforms\Android\lvl-6.ogg">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\plentomatic-small.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\plentomatic.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\pling01.ogg">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
@@ -296,6 +306,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\skybox2noborder.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\sprouce-cn.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\sprouce-en.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\standardlight.png">

@@ -282,6 +282,10 @@ namespace Splash.Silk
             else
             {
                 var viewSize = _iView.Size;
+                if (_lastTouchPosition == default)
+                {
+                    _lastTouchPosition = _currentMousePosition;
+                }
                 _vMouseMove += ((_currentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f * _lookSensitivity;
             }
         }
@@ -728,7 +732,7 @@ namespace Splash.Silk
             _controllerState = new();
             _vMouseMove = new Vector2(0f, 0f);
 
-            _controllerState.ZoomState = (sbyte) float.Parse(engine.GlobalSettings.Get("platform.initialZoomState"), CultureInfo.InvariantCulture);
+            // _controllerState.ZoomState = (sbyte) float.Parse(engine.GlobalSettings.Get("platform.initialZoomState"), CultureInfo.InvariantCulture);
         }
 
         static public engine.Engine EasyCreatePlatform(string[] args, out Splash.Silk.Platform platform)
