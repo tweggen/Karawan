@@ -258,7 +258,12 @@ namespace builtin.tools
                     var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
                     ConvexHullHelper.CreateShape(pointsBuffer, bufferPool, out var vCenter, out var pshapeConvexHull);
                     convexHullsToRelease.Add(pshapeConvexHull);
-                    builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
+                    // builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
+                    /*
+                     * Assuming, we are adding a static, we add the shape assuming infinite mass.
+                     */
+                    //builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
+                    builder.AddForKinematic(pshapeConvexHull, new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
                 }
                 builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
                 builder.Reset();
