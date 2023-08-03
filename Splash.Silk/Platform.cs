@@ -36,7 +36,10 @@ namespace Splash.Silk
         private IView _iView;
         private IInputContext _iInputContext;
         private GL _gl;
-        
+
+        private float _lookSensitivity = 1f;
+
+
         public void SetEngine(engine.Engine engine)
         {
             lock (_lo)
@@ -236,13 +239,57 @@ namespace Splash.Silk
         }
 
 
-        private void _onMouseMoveDesktop(IMouse mouse, Vector2 position)
+        /**
+         * Respond to a move, press position is relative view size (anamorphic),
+         * vRel is movement (relative to viewY resolution)
+         */
+        private void _handleTouchMove(Vector2 vPress, Vector2 vRel)
         {
-        }
+            /*
+             * Pressed in the left half of the screen?
+             */
+            if (vPress.X <= 0.5)
+            {
+                if (vRel.Y < 0)
+                {
+                    /*
+                     * The user dragged up compare to the press position
+                     */
+                    _controllerState.WalkForward = (int)(Single.Min(ControllerYMax, -vRel.Y)/ControllerYMax * ControllerWalkForwardFast);
+                    _controllerState.WalkBackward = 0;
+                }
+                else if (vRel.Y > 0)
+                {
+                    /*
+                     * The user dragged down compared to the press position.
+                     */
+                    _controllerState.WalkBackward = (int)(Single.Min(ControllerYMax, vRel.Y)/ControllerYMax * ControllerWalkBackwardFast);
+                    _controllerState.WalkForward = 0;
+                }
 
+                if (vRel.X < 0)
+                {
+                    _controllerState.TurnLeft = (int)(Single.Min(ControllerXMax, -vRel.X)/ControllerXMax * ControllerTurnLeftRight);
+                    _controllerState.TurnRight = 0;
+                }
+                else if (vRel.X > 0)
+                {
+                    _controllerState.TurnRight = (int)(Single.Min(ControllerXMax, vRel.X) * ControllerTurnLeftRight);
+                    _controllerState.TurnLeft = 0;
+                }
+            }
+            else
+            {
+                var viewSize = _iView.Size;
+                _vMouseMove += ((_currentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f * _lookSensitivity;
+            }
+        }
+        
 
         private readonly float ControllerYMax = 0.2f; 
         private readonly float ControllerXMax = 0.13f;
+
+        private Vector2 _lastTouchPosition = default;
 
         private void _touchMouseController()
         {
@@ -259,40 +306,25 @@ namespace Splash.Silk
                     float relY = (float)currDist.Y / (float)viewSize.Y;
                     float relX = (float)currDist.X / (float)viewSize.Y;
 
-                    if (relY < 0)
-                    {
-                        /*
-                         * The user dragged up compare to the press position
-                         */
-                        _controllerState.WalkForward = (int)(Single.Min(ControllerYMax, -relY)/ControllerYMax * ControllerWalkForwardFast);
-                        _controllerState.WalkBackward = 0;
-                    }
-                    else if (relY > 0)
-                    {
-                        /*
-                         * The user dragged down compared to the press position.
-                         */
-                        _controllerState.WalkBackward = (int)(Single.Min(ControllerYMax, relY)/ControllerYMax * ControllerWalkBackwardFast);
-                        _controllerState.WalkForward = 0;
-                    }
+                    _handleTouchMove(
+                        new Vector2(
+                            _mousePressPosition.X / viewSize.X, 
+                            _mousePressPosition.Y / viewSize.Y),
+                        new Vector2(relX, relY));
 
-                    if (relX < 0)
-                    {
-                        _controllerState.TurnLeft = (int)(Single.Min(ControllerXMax, -relX)/ControllerXMax * ControllerTurnLeftRight);
-                        _controllerState.TurnRight = 0;
-                    }
-                    else if (relX > 0)
-                    {
-                        _controllerState.TurnRight = (int)(Single.Min(ControllerXMax, relX) * ControllerTurnLeftRight);
-                        _controllerState.TurnLeft = 0;
-                    }
+                    _lastTouchPosition = _currentMousePosition;
                 }
                 else
                 {
+                    /*
+                     * on any release, reset all controller movements.
+                     */
                     _controllerState.WalkForward = 0;
                     _controllerState.WalkBackward = 0;
                     _controllerState.TurnRight = 0;
                     _controllerState.TurnLeft = 0;
+
+                    _lastTouchPosition = default;
                 }
             }
         }
@@ -302,20 +334,18 @@ namespace Splash.Silk
         {
             lock (_lo)
             {
-                var lookSensitivity = 1f;
                 if (!_isMouseButtonClicked)
                 {
                     if (_lastMousePosition == default)
                     {
-                        _lastMousePosition = _currentMousePosition;
                     }
                     else
                     {
-                        var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * lookSensitivity;
-                        var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * lookSensitivity;
-                        _lastMousePosition = _currentMousePosition;
+                        var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * _lookSensitivity;
+                        var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * _lookSensitivity;
                         _vMouseMove += new Vector2(xOffset, yOffset);
                     }
+                    _lastMousePosition = _currentMousePosition;
                 }
             }
         }
@@ -385,14 +415,6 @@ namespace Splash.Silk
             _engine.TakeTouchRelease(mouse.Position);
         }
 
-        /**
-         * Because Silk does not yet support touch events right now,MemoryStream
-         * we peek touch events from the event queue before they are
-         * discarded by the current input context implementation.
-         */
-        private void _peekSdlEvents()
-        {
-        }
 
         private bool _hadFocus = true;
 
