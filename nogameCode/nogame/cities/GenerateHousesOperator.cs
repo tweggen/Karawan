@@ -136,6 +136,11 @@ namespace nogame.cities
                 return;
             }
 
+            if (_rnd.GetFloat() < 0.7f)
+            {
+                return;
+            }
+
             Vector3 vOut = new(-diff.Z, 0f, diff.X);
             Vector3 vUnitOut = vOut / vOut.Length();
             Vector3 vUnitSide = diff / diff.Length();
@@ -147,7 +152,7 @@ namespace nogame.cities
                 mesh,
                 fragPoints[idx]
                     +Single.Min(15f, height-2f-60f)*vUnitUp
-                    +_rnd.getFloat()*(diff.Length()-15f)*vUnitSide * 3f
+                    +_rnd.GetFloat()*(diff.Length()-15f)*vUnitSide * 3f
                     + vUnitOut,
                 vUnitSide * 15f,
                 vUnitUp * 60f,
@@ -156,7 +161,7 @@ namespace nogame.cities
                 new Vector2(1f, 0f)
             );
 
-            int adIdx = (int)(1f + _rnd.getFloat() * 1.99f);
+            int adIdx = (int)(1f + _rnd.GetFloat() * 1.99f);
             
             matmesh.Add(engine.joyce.MaterialCache.Get($"nogame.cities.houses.material.ad{adIdx}"), mesh);
 
@@ -175,14 +180,14 @@ namespace nogame.cities
             /*
              * Number of letters.
              */
-            int nLetters = 2 + (int)(_rnd.getFloat() * 8.0);
+            int nLetters = 2 + (int)(_rnd.GetFloat() * 8.0);
 
             float letterHeight = 1.5f;
 
             /*
              * height of first letter.
              */
-            float h0 = _rnd.getFloat() * (h - nLetters * letterHeight - 3.0f);
+            float h0 = _rnd.GetFloat() * (h - nLetters * letterHeight - 3.0f);
             float h1 = h0 + nLetters * letterHeight;
 
             /*
@@ -271,7 +276,7 @@ namespace nogame.cities
             }
 
             // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
-            _rnd.clear();
+            _rnd.Clear();
 
             // TXWTODO: I'd love to have a better thing than this.
             List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();

@@ -53,7 +53,7 @@ namespace nogame.terrain
          */
         private void _createSkeleton()
         {
-            _rnd.clear();
+            _rnd.Clear();
 
             _skeletonElevations = new float[_skeletonHeight,_skeletonWidth];
 
@@ -68,10 +68,10 @@ namespace nogame.terrain
 
             float amplitude = MaxElevation - MinElevation;
             float bias = MinElevation;
-            _skeletonElevations[y0,x0] = _rnd.getFloat() * (amplitude) + bias;
-            _skeletonElevations[y0,x1] = _rnd.getFloat() * (amplitude) + bias;
-            _skeletonElevations[y1,x0] = _rnd.getFloat() * (amplitude) + bias;
-            _skeletonElevations[y1,x1] = _rnd.getFloat() * (amplitude) + bias;
+            _skeletonElevations[y0,x0] = _rnd.GetFloat() * (amplitude) + bias;
+            _skeletonElevations[y0,x1] = _rnd.GetFloat() * (amplitude) + bias;
+            _skeletonElevations[y1,x0] = _rnd.GetFloat() * (amplitude) + bias;
+            _skeletonElevations[y1,x1] = _rnd.GetFloat() * (amplitude) + bias;
 
             // This was the start, now refine.
             engine.elevation.Tools.RefineSkeletonElevation(

@@ -192,7 +192,9 @@ namespace Karawan
             engine.GlobalSettings.Set("nogame.CreateHouses", "true");
             engine.GlobalSettings.Set("nogame.CreateTrees", "true");
             engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
-            
+            engine.GlobalSettings.Set("platform.initialZoomState", "0");
+
+
             engine.Assets.SetAssetImplementation(new Karawan.AssetImplementation());
 
             IWindow iWindow = null;

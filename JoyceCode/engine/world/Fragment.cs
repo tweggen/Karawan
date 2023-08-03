@@ -230,7 +230,7 @@ namespace engine.world
         public int WorldFragmentLoadGround()
         {
             // Re-seed to what we are.
-            _rnd.clear();
+            _rnd.Clear();
             _createGround();
 
             return 0;

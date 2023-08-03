@@ -116,7 +116,7 @@ namespace nogame.characters.cubes
             }
 
             if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
-            _rnd.clear();
+            _rnd.Clear();
 
             /*
              * Now, that we have read the cluster description that is associated, we
@@ -138,7 +138,7 @@ namespace nogame.characters.cubes
             for (int i = 0; i < nCharacters; i++)
             {
 
-                var idxPoint = (int)(_rnd.getFloat() * l);
+                var idxPoint = (int)(_rnd.GetFloat() * l);
                 var idx = 0;
                 StreetPoint chosenStreetPoint = null;
                 foreach (var sp in streetPoints)
@@ -193,7 +193,7 @@ namespace nogame.characters.cubes
                     var wf = worldFragment;
 
 
-                    var speed = 25f + _rnd.getFloat() * 15f;
+                    var speed = 25f + _rnd.GetFloat() * 15f;
                     int fragmentId = worldFragment.NumericalId;
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
@@ -202,9 +202,9 @@ namespace nogame.characters.cubes
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));
                         eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
-                            new Vector3(_rnd.getFloat() * 2f - 1f, _rnd.getFloat() * 2f - 1f,
-                                _rnd.getFloat() * 2f - 1f),
-                            _rnd.getFloat() * 2f * (float)Math.PI / 180f)));
+                            new Vector3(_rnd.GetFloat() * 2f - 1f, _rnd.GetFloat() * 2f - 1f,
+                                _rnd.GetFloat() * 2f - 1f),
+                            _rnd.GetFloat() * 2f * (float)Math.PI / 180f)));
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(

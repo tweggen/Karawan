@@ -63,7 +63,7 @@ namespace nogame.cities
             while (true)
             {
                 ++nTries;
-                var idx = (int)(_rnd.getFloat() * strokes.Count);
+                var idx = (int)(_rnd.GetFloat() * strokes.Count);
                 tookIndex = idx;
                 _currentStroke = strokes[idx];
                 if (null == _currentStroke)

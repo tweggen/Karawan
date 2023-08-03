@@ -247,13 +247,13 @@ namespace engine.world
             /*
              * Variant two: n random points
              */
-            var nSeeds = (_rnd.get8()>>5)+1;
+            var nSeeds = (_rnd.Get8()>>5)+1;
             for( int i=0; i<nSeeds; ++i ) {
                 engine.streets.StreetPoint newA = new engine.streets.StreetPoint();
-                float x = _rnd.get8()*((2f*Size)/3f)/256f-Size/3f;
-                float y = _rnd.get8()*((2f*Size)/3f)/256f-Size/3f;
+                float x = _rnd.Get8()*((2f*Size)/3f)/256f-Size/3f;
+                float y = _rnd.Get8()*((2f*Size)/3f)/256f-Size/3f;
                 newA.SetPos( x, y );
-                float dir = _rnd.get8()*(float)Math.PI/128f;
+                float dir = _rnd.Get8()*(float)Math.PI/128f;
                 var newB = new engine.streets.StreetPoint();
                 var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 30f, true, 1.5f );
                 _streetGenerator.AddStartingStroke(stroke);

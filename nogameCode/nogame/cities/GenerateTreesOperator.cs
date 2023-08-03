@@ -53,7 +53,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         }
 
         // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
-        _rnd.clear();
+        _rnd.Clear();
 
         /*
          * Iterate through all quarters in the clusters and generate lots and houses.
@@ -105,7 +105,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                 /*
                  * But don't use every estate, just some.
                  */
-                if (_rnd.getFloat() <= 0.7f)
+                if (_rnd.GetFloat() <= 0.7f)
                 {
                     continue;
                 }
@@ -137,7 +137,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                      */
                     var treePos = center with { Y = inFragmentY };
                     listInstanceDesc.Add(_treeInstanceGenerator.CreateInstance(
-                        worldFragment, treePos, _rnd.get16()));
+                        worldFragment, treePos, _rnd.Get16()));
                 }
                 else if (area >= (2f * areaPerTree))
                 {
@@ -156,16 +156,16 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                     {
                         iterations++;
                         var treePos = new Vector3(
-                            min.X + _rnd.getFloat() * extent.X,
+                            min.X + _rnd.GetFloat() * extent.X,
                             inFragmentY,
-                            min.Z + _rnd.getFloat() * extent.Z
+                            min.Z + _rnd.GetFloat() * extent.Z
                         );
                         // TXWTODO: Check, if it is inside.
                         if (!estate.IsInside(treePos)) continue;
                         treePos.X += cx;
                         treePos.Z += cz;
                         listInstanceDesc.Add(_treeInstanceGenerator.CreateInstance(
-                            worldFragment, treePos, _rnd.get16()));
+                            worldFragment, treePos, _rnd.Get16()));
                         nPlanted++;
                     }
                 }

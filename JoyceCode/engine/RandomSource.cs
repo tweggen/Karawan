@@ -12,44 +12,44 @@ namespace engine
         private string _seed0;
         private int _randomSeed;
 
-        private void next()
+        private void _next()
         {
             _randomSeed = (_randomSeed* 16807) & 0x7fffffff;;
         }
 
-        public float getFloat()
+        public float GetFloat()
         {
-            next();
+            _next();
             return (float)_randomSeed / 2147483647f;
         }
 
-        public int get8()
+        public int Get8()
         {
-            next();
+            _next();
             int result8 = _randomSeed >> 23;
             return result8;
         }
 
-        public int get16()
+        public int Get16()
         {
-            next();
+            _next();
             return _randomSeed >> 15;
         }
 
 
-        public int get24()
+        public int Get24()
         {
-            next();
+            _next();
             return _randomSeed >> 7;
         }
 
-        public int getDegrees()
+        public int GetDegrees()
         {
             return _randomSeed % 360;
         }
 
 
-        public void clear()
+        public void Clear()
         {
             int l = _seed0.Length;
             _randomSeed = 0;
@@ -63,7 +63,7 @@ namespace engine
         public RandomSource(string str)
         {
             _seed0 = str;
-            clear();
+            Clear();
         }
     }
 }

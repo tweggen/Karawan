@@ -113,7 +113,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         }
 
         if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
-        _rnd.clear();
+        _rnd.Clear();
 
         /*
          * Now, that we have read the cluster description that is associated, we
@@ -135,7 +135,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         for (int i = 0; i < nCharacters; i++)
         {
 
-            var idxPoint = (int)(_rnd.getFloat() * l);
+            var idxPoint = (int)(_rnd.GetFloat() * l);
             var idx = 0;
             StreetPoint chosenStreetPoint = null;
             foreach (var sp in streetPoints)
@@ -174,7 +174,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    int carIdx = (int)(_rnd.getFloat() * 4f);
+                    int carIdx = (int)(_rnd.GetFloat() * 4f);
                     Model model = await ModelCache.Instance().Instantiate($"car{5 + carIdx}.obj", new InstantiateModelParams()
                     {
                         GeomFlags = 0
@@ -196,7 +196,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
-                                .SetSpeed((40f + _rnd.getFloat() * 30f + (float)carIdx * 20f) / 3.6f)));
+                                .SetSpeed((40f + _rnd.GetFloat() * 30f + (float)carIdx * 20f) / 3.6f)));
 
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCar3Sound(carIdx), 150f));

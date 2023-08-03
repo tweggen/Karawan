@@ -71,7 +71,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         {
             var clusterDesc = new ClusterDesc("cluster-" + _strKey + "-" + idxCluster);
 
-            clusterDesc.Pos = new Vector3(-10f * _rnd.getFloat(), 0f, 10f);
+            clusterDesc.Pos = new Vector3(-10f * _rnd.GetFloat(), 0f, 10f);
             clusterDesc.Size = 1000f;
             clusterDesc.Name = nameGenerator.CreateWord(_rnd);
             acd.Add(clusterDesc);
@@ -88,13 +88,13 @@ public class GenerateClustersOperator : world.IWorldOperator
             var clusterDesc = new ClusterDesc("cluster-" + _strKey + "-" + idxCluster);
             ++idxCluster;
 
-            var x3 = _rnd.getFloat();
+            var x3 = _rnd.GetFloat();
             x3 = x3 * x3;
             clusterDesc.Size = 300f + 3000f * x3;
             clusterDesc.Pos = new Vector3(
-                (world.MetaGen.MaxWidth - 2f * clusterDesc.Size) * (_rnd.getFloat() - 0.5f),
-                10f + _rnd.getFloat() * 30f,
-                (world.MetaGen.MaxHeight - 2f * clusterDesc.Size) * (_rnd.getFloat() - 0.5f)
+                (world.MetaGen.MaxWidth - 2f * clusterDesc.Size) * (_rnd.GetFloat() - 0.5f),
+                10f + _rnd.GetFloat() * 30f,
+                (world.MetaGen.MaxHeight - 2f * clusterDesc.Size) * (_rnd.GetFloat() - 0.5f)
             );
             // TXWTODO: But why random and not the height in the landscape? Because I generate the landscape city operator only later on in this file.
             clusterDesc.Name = nameGenerator.CreateWord(_rnd);
@@ -255,7 +255,7 @@ public class GenerateClustersOperator : world.IWorldOperator
                 cl1.AddClosest(cl2);
             }
 
-            int rndIdx = (int)Math.Floor(_rnd.getFloat() * 1000000.0f);
+            int rndIdx = (int)Math.Floor(_rnd.GetFloat() * 1000000.0f);
 
             string newKey = _strKey + rndIdx;
 

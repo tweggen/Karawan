@@ -28,7 +28,7 @@ namespace engine.tools
 
         private string _createPhoneme(in engine.RandomSource rnd, float prob, string [] arr)
         {
-            var r = rnd.getFloat();
+            var r = rnd.GetFloat();
             if(r<prob) {
                 int idx = (int)(r* arr.Length * (0.999/prob));
                 return arr[idx];
@@ -53,7 +53,7 @@ namespace engine.tools
 
         private string _createRawWord(in engine.RandomSource rnd)
         {
-            float r = rnd.getFloat();
+            float r = rnd.GetFloat();
             int n;
             if (r < 0.05)
             {

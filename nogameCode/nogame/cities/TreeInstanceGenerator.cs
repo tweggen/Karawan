@@ -37,9 +37,9 @@ public class TreeInstanceGenerator
                  * Random orientation
                  */
                 new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                    ["d"] = rnd.getFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
+                    ["d"] = rnd.GetFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
                 new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                    ["r"] = 0.10f, ["l"] = (1f+3f*rnd.getFloat()) } )
+                    ["r"] = 0.10f, ["l"] = (1f+3f*rnd.GetFloat()) } )
             } ),
             /*
              * Transformmation: Split and grow the main tree, add too branches left
@@ -53,18 +53,18 @@ public class TreeInstanceGenerator
                             ["r"] = p["r"]*1.05f, ["l"] = p["l"]*0.8f } ),
                         new Part( "push()", null ),
                             new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                                ["d"] = 30f+rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
+                                ["d"] = 30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
                             new Part( "stem(r,l)", new SortedDictionary<string, float> {
                                 ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f } ),
                         new Part( "pop()", null ),
                         new Part( "push()", null ),
                             new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                                ["d"] = -30f+rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
+                                ["d"] = -30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
                             new Part( "stem(r,l)", new SortedDictionary<string, float> {
                                 ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f }),
                         new Part( "pop()", null ),
                         new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                            ["d"] = 90f+rnd.getFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
+                            ["d"] = 90f+rnd.GetFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
                         new Part( "stem(r,l)", new SortedDictionary<string, float> {
                             ["r"] = p["r"]*0.8f, ["l"] = p["l"]*0.5f } )
                     }
@@ -105,9 +105,9 @@ public class TreeInstanceGenerator
                  * Random orientation
                  */
                 new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                    ["d"] = rnd.getFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
+                    ["d"] = rnd.GetFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
                 new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                    ["r"] = 0.1f, ["l"] = (1f+3f*rnd.getFloat()) } )
+                    ["r"] = 0.1f, ["l"] = (1f+3f*rnd.GetFloat()) } )
             } ),
             /*
              * Transformmation: Split and grow the main tree, add too branches left
@@ -121,18 +121,18 @@ public class TreeInstanceGenerator
                             ["r"] = p["r"]*1.05f, ["l"] = p["l"]*0.8f } ),
                         new Part( "push()", null ),
                             new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                                ["d"] = 30f+rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
+                                ["d"] = 30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
                             new Part( "stem(r,l)", new SortedDictionary<string, float> {
                                 ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f } ),
                         new Part( "pop()", null ),
                         new Part( "push()", null ),
                             new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                                ["d"] = -30f+rnd.getFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f} ),
+                                ["d"] = -30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f} ),
                             new Part( "stem(r,l)", new SortedDictionary<string, float> {
                                 ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f} ),
                         new Part( "pop()", null ),
                         new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
-                            ["d"] = 90f+rnd.getFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } )
+                            ["d"] = 90f+rnd.GetFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } )
                     }
                 )
             },
@@ -176,7 +176,7 @@ public class TreeInstanceGenerator
 
     private Instance _createLInstance(RandomSource rnd)
     {
-        var whichtree = rnd.getFloat();
+        var whichtree = rnd.GetFloat();
 
         builtin.tools.Lindenmayer.System lSystem = null;
         if( whichtree<0.5 ) {
@@ -188,7 +188,7 @@ public class TreeInstanceGenerator
         var lGenerator = new LGenerator( lSystem );
         var lInstance = lGenerator.Instantiate();
         var prevInstance = lInstance;
-        int iMax = (int)(rnd.getFloat() * 1.5f + 1f);
+        int iMax = (int)(rnd.GetFloat() * 1.5f + 1f);
         for( int i=0; i<iMax; ++i ) 
         {
             var nextInstance = lGenerator.Iterate( prevInstance );

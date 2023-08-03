@@ -19,6 +19,8 @@ namespace builtin.controllers
         float _lastMouseMove = 0f;
         private bool _firstFrame = true;
         
+        private float _previousZoomDistance = 2000f;
+        
         private void _onLogicalFrame(object sender, float dt)
         {
             /*
@@ -55,6 +57,8 @@ namespace builtin.controllers
              */
             var zoomFactor = controllerState.ZoomState > 0 ? controllerState.ZoomState * 2f : controllerState.ZoomState;
             float zoomDistance = (20f + (float)zoomFactor) / 2f;
+            zoomDistance = 0.98f * _previousZoomDistance + zoomDistance * 0.02f;
+            _previousZoomDistance = zoomDistance;
             // var vCameraFront = vFront;
             var vCameraFront = vFront * (float)Math.Cos(-angleY) + vRight * (float)Math.Sin(-angleY);
             var vCameraDirection = zoomDistance * vCameraFront - zoomDistance/4f * vUp;

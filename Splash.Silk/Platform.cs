@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
 using builtin.tools.Lindenmayer;
 using engine;
@@ -726,6 +727,8 @@ namespace Splash.Silk
         {
             _controllerState = new();
             _vMouseMove = new Vector2(0f, 0f);
+
+            _controllerState.ZoomState = (sbyte) float.Parse(engine.GlobalSettings.Get("platform.initialZoomState"), CultureInfo.InvariantCulture);
         }
 
         static public engine.Engine EasyCreatePlatform(string[] args, out Splash.Silk.Platform platform)

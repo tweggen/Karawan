@@ -113,7 +113,7 @@ namespace engine.streets
             /*
                 * But do not build everywhere. Trivial: Remove 30% of the buildings.
                 */
-            if (_rnd.getFloat() > 0.7f)
+            if (_rnd.GetFloat() > 0.7f)
             {
                 quarter.AddDebugTag("leftWithoutBuilding", "true");
                 return;
@@ -151,7 +151,7 @@ namespace engine.streets
                 maxHeight = 160f * _storyHeight;
             }
 
-            var height = _storyHeight * (int)((15f + _rnd.getFloat() * 250f)/ _storyHeight);
+            var height = _storyHeight * (int)((15f + _rnd.GetFloat() * 250f)/ _storyHeight);
             if (height > maxHeight) height = maxHeight;
             building.SetHeight(height);
 
@@ -173,7 +173,7 @@ namespace engine.streets
         public void Generate()
         {
 
-            _rnd.clear();
+            _rnd.Clear();
             _strokeStore.ClearTraversed();
             var points = _strokeStore.GetStreetPoints();
             foreach (var spStart in points)
@@ -382,7 +382,7 @@ namespace engine.streets
                             /*
                              * Create the building(s) on that estate
                              */
-                            if (true || _rnd.getFloat() > 0.05)
+                            if (true || _rnd.GetFloat() > 0.05)
                             {
                                 quarter.AddDebugTag("shallHaveBuildings", "true");
                                 _createBuildings(quarter, estate);

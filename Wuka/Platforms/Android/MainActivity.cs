@@ -66,6 +66,7 @@ namespace Wuka
             engine.GlobalSettings.Set("Engine.ResourcePath", "./");
             engine.GlobalSettings.Set("splash.touchControls", "true");
             engine.GlobalSettings.Set("Android", "true");
+            engine.GlobalSettings.Set("platform.initialZoomState", "-16");
 
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
 

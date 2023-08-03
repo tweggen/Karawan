@@ -18,6 +18,10 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="cause\**" />
     <EmbeddedResource Remove="cause\**" />

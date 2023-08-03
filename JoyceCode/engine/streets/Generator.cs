@@ -537,12 +537,12 @@ namespace engine.streets
                 /*
                  * Compute some options.
                  */
-                bool doForward = _rnd.get8() < probabilityNextStrokeForward;
-                bool doRight = _rnd.get8() < (int)(probabilityNextStrokeRightWeightFactor / ((int)(curr.Weight)+1) );
-                bool doLeft = _rnd.get8() < (int)(probabilityNextStrokeLeftWeightFactor / ((int)(curr.Weight)+1) );
-                bool doRandomDirection = _rnd.get8() > (/*Std.int(curr.weight) * */ probabilityNextStrokeRandomNegWeightFactor);
-                bool doIncreaseWeight = _rnd.get8() < probabilityNextStrokeIncreaseWeight;
-                bool doDecreaseWeight = _rnd.get8() < probabilityNextStrokeDecreaseWeight;
+                bool doForward = _rnd.Get8() < probabilityNextStrokeForward;
+                bool doRight = _rnd.Get8() < (int)(probabilityNextStrokeRightWeightFactor / ((int)(curr.Weight)+1) );
+                bool doLeft = _rnd.Get8() < (int)(probabilityNextStrokeLeftWeightFactor / ((int)(curr.Weight)+1) );
+                bool doRandomDirection = _rnd.Get8() > (/*Std.int(curr.weight) * */ probabilityNextStrokeRandomNegWeightFactor);
+                bool doIncreaseWeight = _rnd.Get8() < probabilityNextStrokeIncreaseWeight;
+                bool doDecreaseWeight = _rnd.Get8() < probabilityNextStrokeDecreaseWeight;
 
                 float newWeight = curr.Weight;
                 float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
@@ -568,8 +568,8 @@ namespace engine.streets
                 }
 
                 float newAngle = curr.Angle;
-                if (_rnd.get8() < probabilityAngleSlightTurn ) {
-                    newAngle = newAngle +_rnd.getFloat()*2f*AngleSlightTurnMax-AngleSlightTurnMax;
+                if (_rnd.Get8() < probabilityAngleSlightTurn ) {
+                    newAngle = newAngle +_rnd.GetFloat()*2f*AngleSlightTurnMax-AngleSlightTurnMax;
                 }
 
                 if(!doForward && !doRight && !doLeft && !doRandomDirection) {
@@ -623,7 +623,7 @@ namespace engine.streets
                     var randStroke = Stroke.CreateByAngleFrom(
                         curr.B,
                         newB,
-                        _rnd.getFloat()*(float)Math.PI*2f,
+                        _rnd.GetFloat()*(float)Math.PI*2f,
                         newLength,
                         curr.IsPrimary,
                         newWeight
