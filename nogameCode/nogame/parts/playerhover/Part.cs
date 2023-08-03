@@ -2,6 +2,7 @@
 using BepuPhysics.Collidables;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -248,6 +249,33 @@ namespace nogame.parts.playerhover
                 HAlign.Right
             ));
         }
+
+
+        /**
+         * Find and return a suitable start position for the player.
+         * We know there is a cluster around 0/0, so find it, and find an estate
+         * within without a house build upon it.
+         */
+        private Vector3 _findStartPosition()
+        {
+            ClusterDesc startCluster = ClusterList.Instance().GetClusterAt(Vector3.Zero);
+            if (null != startCluster)
+            {
+                foreach (var quarter in startCluster.QuarterStore().GetQuarters())
+                {
+                    if (quarter.IsInvalid()) continue;
+                    foreach (var estate in quarter.GetEstates())
+                    {
+                        if (estate.GetBuildings().Count == 0)
+                        {
+                            return estate.GetCenter();
+                        }
+                    }
+                }
+            } 
+            return new Vector3(0f, 200f, 0f);
+            
+        }
         
 
         public void PartActivate(
@@ -268,7 +296,7 @@ namespace nogame.parts.playerhover
              */
             {
                 _eShip = _engine.CreateEntity("RootScene.playership");
-                var posShip = new Vector3(0f, 35f, 0f);
+                var posShip = _findStartPosition();
                 _aTransform.SetPosition(_eShip, posShip);
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0x0000ffff);
