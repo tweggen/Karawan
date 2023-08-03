@@ -33,9 +33,10 @@ in vec3 fragNormal;
 // Input uniform values
 uniform sampler2D texture0;
 uniform sampler2D texture2;
-uniform vec4 colDiffuse;
-uniform vec4 colEmissive;
-uniform vec4 ambient;
+uniform vec4 col4Diffuse;
+uniform vec4 col4Emissive;
+uniform vec4 col4EmissiveFactors;
+uniform vec4 col4Ambient;
 
 uniform float fogDistance;
 
@@ -75,13 +76,13 @@ void main()
     vec3 v3RelFragPosition = vec3(fragPosition)-v3AbsPosView;
 
     // Texel color fetching from texture sampler
-    vec4 col4Texel = texture(texture0, fragTexCoord);
-    vec4 col4Emissive = texture(texture2, fragTexCoord);
+    vec4 col4TexelDiffuse = texture(texture0, fragTexCoord);
+    vec4 col4TexelEmissive = texture(texture2, fragTexCoord);
     vec3 col3TotalLight = vec3(0.0);
     vec3 v3nNormal = normalize(fragNormal);
 
     // Is it all too transparent?
-    if ((col4Emissive.a+col4Texel.a) < 0.01) discard;
+    if ((col4TexelEmissive.a+col4TexelDiffuse.a) < 0.01) discard;
 
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
@@ -122,9 +123,9 @@ void main()
         }
     }
     
-    vec4 col4DiffuseTotal = col4Texel + colDiffuse;
-    vec4 col4EmissiveTotal = col4Emissive + colEmissive; 
-    vec4 col4AmbientTotal = ambient;
+    vec4 col4DiffuseTotal = col4TexelDiffuse + col4Diffuse;
+    vec4 col4EmissiveTotal = col4TexelEmissive * col4EmissiveFactors + col4Emissive; 
+    vec4 col4AmbientTotal = col4Ambient;
 
     vec4 col4Unfogged = 
         col4DiffuseTotal * vec4(col3TotalLight,0.0)

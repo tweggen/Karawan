@@ -423,7 +423,9 @@ namespace nogame.cities
                     AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
                         ? 0x00000000
                         : 0xff333333,
-                    Texture = new engine.joyce.Texture("buildingdiffuse.png")
+                    Texture = new engine.joyce.Texture("buildingdiffuse.png"),
+                    // TXWTODO: Why the hell is the ambient texture just a blurry yellow mess?
+                    //EmissiveTexture = new engine.joyce.Texture("buildingsambient.png")
                 });
             MaterialCache.Register("nogame.cities.houses.materials.neon",
                 (name) => new engine.joyce.Material()
@@ -438,15 +440,15 @@ namespace nogame.cities
             MaterialCache.Register("nogame.cities.houses.material.ad1",
                 name => new Material()
                 {
-                    // EmissiveColor = 0xffff0000,
                     HasTransparency = true,
+                    EmissiveFactors = 0x77ffffff,
                     EmissiveTexture = new engine.joyce.Texture("sprouce-cn.png") 
                 });
             MaterialCache.Register("nogame.cities.houses.material.ad2",
                 name => new Material()
                 {
-                    // EmissiveColor = 0xffff0000,
                     HasTransparency = true,
+                    EmissiveFactors = 0x77ffffff,
                     EmissiveTexture = new engine.joyce.Texture("plentomatic.png") 
                 });
         }

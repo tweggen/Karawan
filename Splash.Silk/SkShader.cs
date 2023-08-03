@@ -49,7 +49,7 @@ public class SkShader : IDisposable
     {
         string[] uniforms = new string[]
         {
-            "mvp", "texture0", "texture2", "colDiffuse", "ambient", "v3AbsPosView"
+            "mvp", "texture0", "texture2", "col4Diffuse", "col4Ambient", "v3AbsPosView"
         };
         foreach (var name in uniforms)
         {

@@ -94,7 +94,7 @@ public class SilkThreeD : IThreeD
                     _lightShaderPos[i] = new();
                     _compileLightLocked(_lightShaderPos[i], i, ref sh);
                 }
-                _ambientLoc = (int)sh.GetUniform("ambient");
+                _ambientLoc = (int)sh.GetUniform("col4Ambient");
 
             }
 
@@ -257,17 +257,23 @@ public class SilkThreeD : IThreeD
             }
 
             engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
-            sh.SetUniform("colDiffuse", new Vector4(
+            sh.SetUniform("col4Diffuse", new Vector4(
                 ((jMaterial.AlbedoColor >> 16) & 0xff) / 255f,
                 ((jMaterial.AlbedoColor >> 8) & 0xff) / 255f,
                 ((jMaterial.AlbedoColor) & 0xff) / 255f,
                 ((jMaterial.AlbedoColor >> 24) & 0xff) / 255f
             ));
-            sh.SetUniform("colEmissive", new Vector4(
+            sh.SetUniform("col4Emissive", new Vector4(
                 ((jMaterial.EmissiveColor >> 16) & 0xff) / 255f,
                 ((jMaterial.EmissiveColor >> 8) & 0xff) / 255f,
                 ((jMaterial.EmissiveColor) & 0xff) / 255f,
                 ((jMaterial.EmissiveColor >> 24) & 0xff) / 255f
+            ));
+            sh.SetUniform("col4EmissiveFactors", new Vector4(
+                ((jMaterial.EmissiveFactors >> 16) & 0xff) / 255f,
+                ((jMaterial.EmissiveFactors >> 8) & 0xff) / 255f,
+                ((jMaterial.EmissiveFactors) & 0xff) / 255f,
+                ((jMaterial.EmissiveFactors >> 24) & 0xff) / 255f
             ));
             
             // sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
