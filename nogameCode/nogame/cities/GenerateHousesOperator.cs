@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using engine.elevation;
 using engine.joyce;
 using static engine.Logger;
 
@@ -107,6 +108,58 @@ namespace nogame.cities
             /*
              * Let's assume the ads are 10m in height
              */
+            if (height < 75f)
+            {
+                return;
+            }
+            
+            float minWidth = 20f;
+            /*
+             * now find a reasonably wide wall.
+             */
+            int np = fragPoints.Count;
+            int idx = -1;
+            Vector3 diff = new();
+            for (int i = 0; i < np; ++i)
+            {
+                diff = fragPoints[(i + 1) % np] - fragPoints[i];
+                // TXWTODO: We always take the first fitting wall.
+                if (diff.LengthSquared() >= minWidth * minWidth)
+                {
+                    idx = i;
+                    break;
+                }
+            }
+
+            if (idx == -1)
+            {
+                return;
+            }
+
+            Vector3 vOut = new(-diff.Z, 0f, diff.X);
+            Vector3 vUnitOut = vOut / vOut.Length();
+            Vector3 vUnitSide = diff / diff.Length();
+            Vector3 vUnitUp = Vector3.UnitY;
+
+
+            engine.joyce.Mesh mesh = new();
+            engine.joyce.mesh.Tools.AddQuadXYUV(
+                mesh,
+                fragPoints[idx]
+                    +Single.Min(15f, height-2f-60f)*vUnitUp
+                    +_rnd.getFloat()*(diff.Length()-15f)*vUnitSide * 3f
+                    + vUnitOut,
+                vUnitSide * 15f,
+                vUnitUp * 60f,
+                new Vector2(0f, 0f),
+                new Vector2(0f, 1f),
+                new Vector2(1f, 0f)
+            );
+
+            int adIdx = (int)(1f + _rnd.getFloat() * 1.99f);
+            
+            matmesh.Add(engine.joyce.MaterialCache.Get($"nogame.cities.houses.material.ad{adIdx}"), mesh);
+
         }
 
         
@@ -380,6 +433,21 @@ namespace nogame.cities
                     Texture = null,
                     EmissiveTexture = new engine.joyce.Texture("lorem.png"),
                     HasTransparency = true
+                });
+
+            MaterialCache.Register("nogame.cities.houses.material.ad1",
+                name => new Material()
+                {
+                    // EmissiveColor = 0xffff0000,
+                    HasTransparency = true,
+                    EmissiveTexture = new engine.joyce.Texture("sprouce-cn.png") 
+                });
+            MaterialCache.Register("nogame.cities.houses.material.ad2",
+                name => new Material()
+                {
+                    // EmissiveColor = 0xffff0000,
+                    HasTransparency = true,
+                    EmissiveTexture = new engine.joyce.Texture("plentomatic.png") 
                 });
         }
     }
