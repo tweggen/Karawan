@@ -1,31 +1,24 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
+using engine.joyce;
 
 namespace Splash.components;
 
 public struct PfInstance
 {
     public Matrix4x4 ModelTransform;
-    public IList<engine.joyce.Mesh> Meshes;
-    public IList<int> MeshMaterials;
-    public IList<engine.joyce.Material> Materials;
-    public IList<engine.joyce.MeshProperties> MeshProperties;
     public IList<AMeshEntry> AMeshEntries;
     public IList<AMaterialEntry> AMaterialEntries;
+    public InstanceDesc InstanceDesc;
 
 
     public PfInstance(
-        in Matrix4x4 modelTransform,
-        in IList<engine.joyce.Mesh> meshes,
-        in IList<int> meshMaterials,
-        in IList<engine.joyce.Material> materials,
-        in IList<engine.joyce.MeshProperties> meshProperties)
+        InstanceDesc instanceDesc,
+        in Matrix4x4 modelTransform)
     {
         ModelTransform = modelTransform;
-        Meshes = meshes;
-        MeshMaterials = meshMaterials;
-        Materials = materials;
         AMeshEntries = new List<AMeshEntry>();
         AMaterialEntries = new List<AMaterialEntry>();
+        InstanceDesc = instanceDesc;
     }
 }

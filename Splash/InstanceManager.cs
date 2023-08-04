@@ -80,10 +80,10 @@ public class InstanceManager : IDisposable
 
         lock (_lo)
         {
-            for (int i = 0; i < value.Meshes.Count; ++i)
+            for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
                 Resource<AMeshEntry> meshResource;
-                engine.joyce.Mesh jMesh = value.Meshes[i];
+                engine.joyce.Mesh jMesh = value.InstanceDesc.Meshes[i];
                 if (!_meshResources.TryGetValue(jMesh, out meshResource))
                 {
                     try
@@ -105,10 +105,10 @@ public class InstanceManager : IDisposable
                 }
             }
 
-            for (int i = 0; i < value.Materials.Count; ++i)
+            for (int i = 0; i < value.InstanceDesc.Materials.Count; ++i)
             {
                 Resource<AMaterialEntry> materialResource;
-                engine.joyce.Material jMaterial = value.Materials[i];
+                engine.joyce.Material jMaterial = value.InstanceDesc.Materials[i];
                 if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                 {
                     try
@@ -161,10 +161,10 @@ public class InstanceManager : IDisposable
         // TXWTODO: Lock is superfluous, we only have one ECS Thread.
         lock (_lo)
         {
-            for (int i = 0; i < value.Meshes.Count; ++i)
+            for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
                 Resource<AMeshEntry> meshResource;
-                engine.joyce.Mesh jMesh = value.Meshes[i];
+                engine.joyce.Mesh jMesh = value.InstanceDesc.Meshes[i];
                 if (!_meshResources.TryGetValue(jMesh, out meshResource))
                 {
                     Error($"Unknown mesh to unreference.");
@@ -186,10 +186,10 @@ public class InstanceManager : IDisposable
             }
 
 
-            for (int i = 0; i < value.Materials.Count; ++i)
+            for (int i = 0; i < value.InstanceDesc.Materials.Count; ++i)
             {
                 Resource<AMaterialEntry> materialResource;
-                engine.joyce.Material jMaterial = value.Materials[i];
+                engine.joyce.Material jMaterial = value.InstanceDesc.Materials[i];
                 if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                 {
                     Error("Unknown material to unreference.");

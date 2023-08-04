@@ -1,5 +1,6 @@
 using System.Numerics;
 using engine;
+using engine.joyce;
 
 
 namespace nogame.parts.map;
@@ -55,10 +56,7 @@ public class Part : IPart
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
             materialFramebuffer.HasTransparency = false;
 
-            engine.joyce.InstanceDesc jInstanceDesc = new();
-            jInstanceDesc.Meshes.Add(meshFramebuffer);
-            jInstanceDesc.MeshMaterials.Add(0);
-            jInstanceDesc.Materials.Add(materialFramebuffer);
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer));
             _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             _engine.GetATransform().SetTransforms(
                 _eMap, false, MapCameraMask,

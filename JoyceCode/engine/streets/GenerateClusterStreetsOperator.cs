@@ -693,10 +693,7 @@ namespace engine.streets
 
             // var mol = new engine.SimpleMolecule( [g] );
             // TXWTODO: This is too inefficient. We should also use a factory here.
-            engine.joyce.InstanceDesc instanceDesc = new();
-            instanceDesc.Meshes.Add(g);
-            instanceDesc.MeshMaterials.Add(0);
-            instanceDesc.Materials.Add(MaterialCache.Get("engine.streets.materials.street"));
+            engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("engine.streets.materials.street"), g));
             worldFragment.AddStaticInstance("engine.streets.streets", instanceDesc);
         });
 

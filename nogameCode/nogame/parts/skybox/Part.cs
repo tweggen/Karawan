@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
+using engine.joyce;
 
 namespace nogame.parts.skybox
 {
@@ -49,10 +50,7 @@ namespace nogame.parts.skybox
                 jMaterialSkybox.AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
                     ? 0x00000000 : 0xff112233;
                 jMaterialSkybox.EmissiveTexture = new engine.joyce.Texture("skybox2noborder.png");
-                engine.joyce.InstanceDesc jInstanceDesc = new();
-                jInstanceDesc.Meshes.Add(jMeshSkybox);
-                jInstanceDesc.MeshMaterials.Add(0);
-                jInstanceDesc.Materials.Add(jMaterialSkybox);
+                var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(jMaterialSkybox, jMeshSkybox));
                 _eSkybox.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             }
 

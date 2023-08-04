@@ -203,7 +203,7 @@ public class TreeInstanceGenerator
 
     private InstanceDesc _buildTreeInstance(int idx, in RandomSource rnd)
     {
-        InstanceDesc instanceDesc = new();
+        MatMesh matmesh = new();
         
         /*
          * This takes some extra effort (cause the lindenmayer generator
@@ -222,11 +222,7 @@ public class TreeInstanceGenerator
         {
             foreach (var mesh in atomsMap.Values)
             {
-                {
-                    instanceDesc.Meshes.Add(mesh);
-                    instanceDesc.MeshMaterials.Add(0);
-                    instanceDesc.Materials.Add(MaterialCache.Get("nogame.cities.trees.materials.treeleave"));
-                }
+                matmesh.Add(MaterialCache.Get("nogame.cities.trees.materials.treeleave"), mesh);
             }
 
         }
@@ -235,7 +231,9 @@ public class TreeInstanceGenerator
             Trace($"Unknown exception: {e}");
         }
 
-        return instanceDesc;
+        var id = InstanceDesc.CreateFromMatMesh(matmesh);
+
+        return id;
     }
 
 

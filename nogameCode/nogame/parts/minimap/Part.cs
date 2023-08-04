@@ -3,6 +3,7 @@ using System;
 using System.Numerics;
 using DefaultEcs;
 using engine;
+using engine.joyce;
 using engine.ross;
 using engine.world;
 
@@ -107,10 +108,7 @@ public class Part : IPart
         engine.joyce.Mesh meshMiniMap = engine.joyce.Mesh.CreateListInstance();
         meshMiniMap.UploadImmediately = true;
         engine.joyce.mesh.Tools.AddQuadXYUV(meshMiniMap, pos0, x,y, uv0, u, v);
-        engine.joyce.InstanceDesc jMiniMapInstanceDesc = new();
-        jMiniMapInstanceDesc.Meshes.Add(meshMiniMap);
-        jMiniMapInstanceDesc.MeshMaterials.Add(0);
-        jMiniMapInstanceDesc.Materials.Add(_materialMiniMap);
+        var jMiniMapInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(_materialMiniMap, meshMiniMap));
         _eMiniMap.Set(new engine.joyce.components.Instance3(jMiniMapInstanceDesc));
     }
 

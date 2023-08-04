@@ -98,8 +98,7 @@ public class ModelCache
             foreach (Mesh mesh in model.InstanceDesc.Meshes)
             {
                 mesh.Transform(m);
-                mesh.ComputeAABB(out var meshAABB);
-                modelInfo.AABB.Add(meshAABB);
+                modelInfo.AABB.Add(mesh.AABB);
             }
 
             /*

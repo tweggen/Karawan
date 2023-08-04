@@ -61,9 +61,12 @@ public class Obj
         Vector3 vCenter = new();
         int nVertices = 0;
 
-        instanceDesc = new();
-
+        List<engine.joyce.Mesh> meshes = new();
+        List<engine.joyce.Material> materials = new();
+        List<int> meshMaterials = new();
+        
         List<ObjLoader.Loader.Data.Material> listMaterials = new();
+
         foreach (var loadedMaterial in loadedObject.Materials)
         {
             engine.joyce.Material jMaterial = new();
@@ -111,7 +114,7 @@ public class Obj
                     | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
                     | 0xff000000;
             }
-            instanceDesc.Materials.Add(jMaterial);
+            materials.Add(jMaterial);
             listMaterials.Add(loadedMaterial);
         }
 
@@ -193,11 +196,12 @@ public class Obj
                 jMesh.Idx(tri[0], tri[1], tri[2]);
             }
 
-            instanceDesc.Meshes.Add(jMesh);
+            meshes.Add(jMesh);
             int idxMaterial = listMaterials.IndexOf(loadedGroup.Material);
-            instanceDesc.MeshMaterials.Add(idxMaterial);
+            meshMaterials.Add(idxMaterial);
         }
 
+        instanceDesc = new(meshes, meshMaterials, materials);
         modelInfo = new();
         modelInfo.AABB = aabb;
         modelInfo.Center = vCenter / nVertices;

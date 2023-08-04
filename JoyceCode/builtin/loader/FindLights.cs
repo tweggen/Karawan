@@ -48,32 +48,11 @@ public class FindLights
 
     private static void _addLightToModel(engine.Model model, Vector3 p)
     {
-        /*
-         * Add a light material to the model.
-         */
-        var getLightMaterialIndex = (in engine.Model model) =>
-        {
-            var material = MaterialCache.Get("builtin.loader.materials.standardlight");
-            InstanceDesc instanceDesc = model.InstanceDesc;
-            int nm = instanceDesc.Materials.Count;
-
-            for (int i = 0; i < nm; ++i)
-            {
-                if (instanceDesc.Materials[i] == material)
-                {
-                    return i;
-                }
-            }
-
-            instanceDesc.Materials.Add(material);
-            return nm;
-        };
-
         InstanceDesc instanceDesc = model.InstanceDesc;
-        int il = getLightMaterialIndex(model);
+        int il = instanceDesc.FindMaterial(MaterialCache.Get("builtin.loader.materials.standardlight"));
         var m = Tools.CreatePlaneMesh(new Vector2(0.5f, 0.5f));
         m.Move(p);
-        instanceDesc.AddMesh(m, il, null);
+        instanceDesc.AddMesh(m, il);
     }
     
         

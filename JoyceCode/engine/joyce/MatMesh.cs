@@ -75,4 +75,12 @@ public class MatMesh
     {
         Tree = new();
     }
+
+
+    public MatMesh(Material material, Mesh mesh)
+    {
+        Tree = new();
+        Add(material, mesh);
+    }
+    
 }

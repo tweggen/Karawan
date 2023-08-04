@@ -185,10 +185,7 @@ namespace nogame.characters.cubes
 
                 ++_characterIndex;
                 {
-                    engine.joyce.InstanceDesc jInstanceDesc = new();
-                    jInstanceDesc.Meshes.Add(_getCubeMesh());
-                    jInstanceDesc.MeshMaterials.Add(0);
-                    jInstanceDesc.Materials.Add(MaterialCache.Get("nogame.characters.cube.materials.cube"));
+                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("nogame.characters.cube.materials.cube"), _getCubeMesh()));
 
                     var wf = worldFragment;
 

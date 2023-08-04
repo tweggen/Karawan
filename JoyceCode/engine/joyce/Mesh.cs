@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Runtime.CompilerServices;
+using engine.geom;
+using engine.joyce;
 
 
 namespace engine.joyce;
@@ -16,6 +18,30 @@ public class MergeMeshEntry
 
 public class Mesh
 {
+    private AABB _aabb;
+    private bool _haveAABB = false;
+
+    public AABB AABB
+    {
+        get
+        {
+            if (!_haveAABB)
+            {
+                _haveAABB = true;
+                _computeAABB(out _aabb);
+            }
+
+            return _aabb;
+        }
+
+        set
+        {
+            _haveAABB = true;
+            _aabb = value;
+        }
+    }   
+    
+    
     public int WriteIndexVertices;
     public int WriteIndexIndices;
     public int WriteIndexUVs;
@@ -24,23 +50,23 @@ public class Mesh
     // TXWTODO: Come up with a supersmart concept only storing the mesh source/factory
 
     /**
-         * Indexable array like of Vector3
-         */
+     * Indexable array like of Vector3
+     */
     public IList<Vector3> Vertices;
 
     /**
-         * Indexable array like of int
-         */
+     * Indexable array like of int
+     */
     public IList<uint> Indices;
 
     /**
-         * Indexable array like of Vector2
-         */
+     * Indexable array like of Vector2
+     */
     public IList<Vector2> UVs;
 
     /**
-         * Indexable array like of Vector3 or null.
-         */
+     * Indexable array like of Vector3 or null.
+     */
     public IList<Vector3> Normals;
 
     public bool UploadImmediately = false;
@@ -50,10 +76,12 @@ public class Mesh
     {
         return Indices.Count == 0;
     }
+    
+    
 
     /**
-         * Generate smoothed normals for this mesh.
-         */
+     * Generate smoothed normals for this mesh.
+     */
     public void GenerateCCWNormals()
     {
         if (null != Normals)
@@ -182,7 +210,7 @@ public class Mesh
     }
 
 
-    public void ComputeAABB(out engine.geom.AABB aabb)
+    private void _computeAABB(out engine.geom.AABB aabb)
     {
         aabb = new();
         int l = Vertices.Count;
@@ -200,6 +228,8 @@ public class Mesh
         {
             Vertices[i] += off;
         }
+
+        _haveAABB = false;
     }
 
 
@@ -209,6 +239,11 @@ public class Mesh
         for (int i = 0; i < l; ++i)
         {
             Vertices[i] = Vector3.Transform(Vertices[i], m);
+        }
+
+        if (_haveAABB)
+        {
+            _aabb.Transform(m);
         }
     }
 

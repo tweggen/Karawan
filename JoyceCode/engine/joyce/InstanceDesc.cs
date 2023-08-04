@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using BepuUtilities;
+using engine.geom;
 using engine.joyce;
 using static engine.Logger;
 
 
 namespace engine.joyce;
-
-public class MeshProperties
-{
-    public uint MeshFlags;
-    public float MinDistance;
-    public float MaxDistance;
-}
 
 /**
  * Describe one specific instance of a 3d object (aka Instance3 components)
@@ -20,25 +16,96 @@ public class MeshProperties
  */
 public class InstanceDesc
 {
-    public Matrix4x4 ModelTransform;
-    public IList<engine.joyce.Mesh> Meshes;
-    public IList<int> MeshMaterials;
-    public IList<engine.joyce.Material> Materials;
-    public IList<MeshProperties> MeshProperties;
+    private Matrix4x4 _m;
 
-
-    public void NeedMeshProperties()
+    public Matrix4x4 ModelTransform
     {
-        if (null == MeshProperties)
+        get => _m;
+        set
         {
-            MeshProperties = new List<MeshProperties>();
+            _haveAABBTransformed = false;
+            _m = value;
+        }
+    }
+
+    private IList<engine.joyce.Mesh> _meshes;
+    public ReadOnlyCollection<Mesh> Meshes;
+    
+    private IList<int> _meshMaterials;
+    public ReadOnlyCollection<int> MeshMaterials;
+    
+    private IList<engine.joyce.Material> _materials;
+    public ReadOnlyCollection<Material> Materials;
+    
+
+    private bool _haveAABBMerged = true;
+    private bool _haveAABBTransformed = false;
+    
+    
+    private AABB _aabbMerged;
+    public AABB AABBMerged
+    {
+        get
+        {
+            if (!_haveAABBMerged)
+            {
+                _computeAABBMerged();
+                _haveAABBMerged = true;
+                _haveAABBTransformed = false;
+            }
+
+            return _aabbMerged;
+        }
+        set
+        {
+            _aabbMerged = value;
+            _haveAABBMerged = true;
+            _haveAABBTransformed = false;
+        }
+    }
+
+    private AABB _aabbTransformed;
+    public AABB Aabb
+    {
+        get
+        {
+            if (!_haveAABBTransformed)
+            {
+                _computeAABBTransformed();
+                _haveAABBTransformed = true;
+            }
+
+            return _aabbTransformed;
         }
     }
 
 
+    private void _computeAABBMerged()
+    {
+        _aabbMerged.Reset();
+        foreach (var mesh in Meshes)
+        {
+            _aabbMerged.Add(mesh.AABB);
+        }
+    }
+
+
+    private void _computeAABBTransformed()
+    {
+        if (!_haveAABBMerged)
+        {
+            _computeAABBMerged();
+            _haveAABBMerged = true;
+        }
+        _aabbTransformed = _aabbMerged;
+        _aabbTransformed.Transform(_m);
+        _haveAABBTransformed = true;
+    }
+    
+
     public void CheckIntegrity()
     {
-        if (Meshes.Count != MeshMaterials.Count)
+        if (_meshes.Count != _meshMaterials.Count)
         {
             ErrorThrow(
                 $"Internal mismatch: number of meshes and mesh materials don't match {Meshes.Count} != {MeshMaterials.Count}",
@@ -47,66 +114,47 @@ public class InstanceDesc
         }
         
     }
+
     
-    public void SetMeshProperties(int idx, MeshProperties newmp)
-    {
-        NeedMeshProperties();
-        CheckIntegrity();
-        while (MeshProperties.Count <= (idx + 1))
-        {
-            MeshProperties.Add(null);
-        }
-
-        MeshProperties[idx] = newmp;
-    }
-
-
-    public void AddMesh(in Mesh mesh, int materialIndex, MeshProperties meshProperties)
-    {
-        CheckIntegrity();
-        Meshes.Add(mesh);
-        MeshMaterials.Add(materialIndex);
-        int idx = Meshes.Count-1;
-        SetMeshProperties(idx, meshProperties);
-    }
-
-
-    public void AddMesh(in Mesh mesh, int materialIndex)
-    {
-        CheckIntegrity();
-        Meshes.Add(mesh);
-        MeshMaterials.Add(materialIndex);
-    }
-
-
     public int FindMaterial(in Material material)
     {
-        int nm = Materials.Count;
+        int nm = _materials.Count;
         int idx = -1;
-        for (int i = 0; i < nm; ++i)
+        try
         {
-            if (Materials[nm] == material)
+            for (int i = 0; i < nm; ++i)
             {
-                idx = nm;
+                if (_materials[nm] == material)
+                {
+                    idx = nm;
+                    break;
+                }
             }
+        }
+        catch (Exception e)
+        {
+            Error($"Caught Execption {e}.");
         }
 
         if (-1 == idx)
         {
             idx = nm;
-            Materials.Add(material);
+            _materials.Add(material);
             nm++;
         }
 
         return idx;
     }
-
     
-    private MatMesh _createMatMeshTree()
+    
+    public void AddMesh(in Mesh mesh, int materialIndex)
     {
-        MatMesh matmesh = new();
-        matmesh.Add(this);
-        return matmesh;
+        CheckIntegrity();
+        _meshes.Add(mesh);
+        _aabbMerged.Add(mesh.AABB);
+        _haveAABBMerged = true;
+        _haveAABBTransformed = false;
+        _meshMaterials.Add(materialIndex);
     }
 
 
@@ -120,32 +168,40 @@ public class InstanceDesc
         int materialIndex = 0;
         foreach (var kvp in matmesh.Tree)
         {
-            id.Materials.Add(kvp.Key);
+            id._materials.Add(kvp.Key);
             foreach (var me in kvp.Value)
             {
-                id.Meshes.Add(me);
-                id.MeshMaterials.Add(materialIndex);
+                id._meshes.Add(me);
+                id._aabbMerged.Add(me.AABB);
+                id._meshMaterials.Add(materialIndex);
             }
 
             ++materialIndex;
         }
 
+        id._haveAABBMerged = true;
+        id._haveAABBTransformed = false;
+
         return id;
     }
     
     
-    public InstanceDesc()
+    private InstanceDesc()
     {
-        ModelTransform = Matrix4x4.Identity;
-        Meshes = new List<Mesh>();
-        MeshMaterials = new List<int>();
-        Materials = new List<Material>();
+        _m = Matrix4x4.Identity;
+        _meshes = new List<Mesh>();
+        Meshes = new ReadOnlyCollection<Mesh>(_meshes);
+        _meshMaterials = new List<int>();
+        MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
+        _materials = new List<Material>();
+        Materials = new ReadOnlyCollection<Material>(_materials);
     }
 
+    
     public InstanceDesc TransformedCopy(in Matrix4x4 m)
     {
-        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials, MeshProperties);
-        id.ModelTransform = ModelTransform * m;
+        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials);
+        id._m = _m * m;
         return id;
     }
 
@@ -156,26 +212,15 @@ public class InstanceDesc
         in IList<engine.joyce.Material> materials
     )
     {
-        ModelTransform = Matrix4x4.Identity;
-        Meshes = meshes;
-        MeshMaterials = meshMaterials;
-        Materials = materials;
-        MeshProperties = null;
-    }
-
-
-    public InstanceDesc(
-        in IList<engine.joyce.Mesh> meshes,
-        in IList<int> meshMaterials,
-        in IList<engine.joyce.Material> materials,
-        in IList<MeshProperties> meshProperties
-    )
-    {
-        ModelTransform = Matrix4x4.Identity;
-        Meshes = meshes;
-        MeshMaterials = meshMaterials;
-        Materials = materials;
-        MeshProperties = meshProperties;
+        _m = Matrix4x4.Identity;
+        _meshes = meshes;
+        Meshes = new ReadOnlyCollection<Mesh>(_meshes);
+        _meshMaterials = meshMaterials;
+        MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
+        _materials = materials;
+        Materials = new ReadOnlyCollection<Material>(_materials);
+        _haveAABBMerged = false;
+        _haveAABBTransformed = false;
     }
 
 

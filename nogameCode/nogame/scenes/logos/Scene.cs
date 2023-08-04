@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using engine.joyce;
 using static engine.Logger;
 
 namespace nogame.scenes.logos;
@@ -91,10 +92,7 @@ public class Scene : engine.IScene
         jMaterial.UploadImmediately = true;
         jMaterial.Texture = new engine.joyce.Texture("logos.joyce.albedo-joyce-engine.png");
         jMaterial.EmissiveTexture = new engine.joyce.Texture("logos.joyce.emissive-joyce-engine.png");
-        engine.joyce.InstanceDesc jInstanceDesc = new();
-        jInstanceDesc.Meshes.Add(jMesh);
-        jInstanceDesc.MeshMaterials.Add(0);
-        jInstanceDesc.Materials.Add(jMaterial);
+        var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(jMaterial, jMesh));
 
         var entity = _engine.CreateEntity("LogoBoard");
         entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));

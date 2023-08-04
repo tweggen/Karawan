@@ -39,29 +39,23 @@ namespace Splash.systems
         {
             foreach (var entity in entities)
             {
-                // TXWTODO: Only consider visible Instace3 things.
-
                 var cInstance3 = entity.Get<engine.joyce.components.Instance3>();
+                engine.joyce.InstanceDesc id = cInstance3.InstanceDesc;
                 
-                var nMeshes = cInstance3.Meshes.Count;
-                var nMeshMaterials = cInstance3.MeshMaterials.Count;
+                var nMeshes = id.Meshes.Count;
+                var nMeshMaterials = id.MeshMaterials.Count;
                 
                 if( nMeshes!=nMeshMaterials)
                 {
                     Warning("We have a problem.");
                     return;
                 }
-                var nMaterials = cInstance3.Materials.Count;
 
                 /*
                  * Create the platform entity. It will be filled by the instance manager.
                  */
                 entity.Set(new components.PfInstance(
-                    cInstance3.ModelTransform,
-                    cInstance3.Meshes,
-                    cInstance3.MeshMaterials,
-                    cInstance3.Materials,
-                    cInstance3.MeshProperties));
+                    id, id.ModelTransform));
             }
         }
 

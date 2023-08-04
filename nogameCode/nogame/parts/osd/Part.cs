@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using engine;
 using engine.draw.systems;
+using engine.joyce;
 
 namespace nogame.parts.osd;
 
@@ -59,10 +60,7 @@ public class Part : engine.IPart
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
             materialFramebuffer.HasTransparency = true;
 
-            engine.joyce.InstanceDesc jInstanceDesc = new();
-            jInstanceDesc.Meshes.Add(meshFramebuffer);
-            jInstanceDesc.MeshMaterials.Add(0);
-            jInstanceDesc.Materials.Add(materialFramebuffer);
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer));
             _eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             
             _aTransform.SetTransforms(

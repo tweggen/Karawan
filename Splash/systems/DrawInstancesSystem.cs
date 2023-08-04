@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using engine.geom;
 using static engine.Logger;
 
 namespace Splash.systems;
@@ -30,6 +31,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
             if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
+                AABB aabb = pfInstance.InstanceDesc.Aabb;
                 cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix);
             }
         }
