@@ -63,12 +63,16 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
         /*
          * Before the update, compute the near frustrum plane.
          */
-        _nearFrustum = new (new Vector4(
-            mViewProj.M31,
-            mViewProj.M32,
-            mViewProj.M33,
-            mViewProj.M34
-        ));
+        Vector3 vNormal = new Vector3(
+            mViewProj.M13,
+            mViewProj.M23,
+            mViewProj.M33
+        ); 
+        float distance = mViewProj.M43;
+        float l = vNormal.Length();
+        vNormal /= l;
+        distance /= l;
+        _nearFrustum = new (vNormal, distance);
 
         _nInstancesAppended = 0;
         _nInstancesConsidered = 0;
