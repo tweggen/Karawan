@@ -71,7 +71,7 @@ namespace Splash.Silk
                 }
                 
 
-                var cCameraParams = renderPart.Camera3;
+                var cCameraParams = renderPart.CameraOutput.Camera3;
 
                 /*
                  * We enable depth test only for the lower 16 bit camera masks.
@@ -87,7 +87,7 @@ namespace Splash.Silk
                     _gl.Disable(EnableCap.DepthTest);
                 }
 
-                var mCameraToWorld = renderPart.Transform3ToWorld.Matrix;
+                var mCameraToWorld = renderPart.CameraOutput.TransformToWorld;
                 {
                     var vCameraPosition = mCameraToWorld.Translation;
                     // TXWTODO: Bad API. Use OnCameraCHanged API?

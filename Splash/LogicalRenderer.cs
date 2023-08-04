@@ -35,18 +35,18 @@ public class LogicalRenderer
         foreach (var eCamera in listCameras)
         {
             RenderPart renderPart = new();
-            renderPart.Camera3 = eCamera.Get<engine.joyce.components.Camera3>();
-            renderPart.Transform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
-            CameraOutput cameraOutput = new(scene, _threeD, renderPart.Camera3.CameraMask);
+            var renderPartCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
+            var renderPartTransform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
+            CameraOutput cameraOutput = new(scene, _threeD, renderPartTransform3ToWorld.Matrix, renderPartCamera3);
             renderPart.CameraOutput = cameraOutput;
 
             _drawInstancesSystem.Update(cameraOutput);
 
-            if (0 != (renderPart.Camera3.CameraMask & 0x0000ffff))
+            if (0 != (renderPartCamera3.CameraMask & 0x0000ffff))
             {
                 if (!haveSkyboxPosition)
                 {
-                    var vCameraPosition = renderPart.Transform3ToWorld.Matrix.Translation;
+                    var vCameraPosition = renderPartTransform3ToWorld.Matrix.Translation;
                     _drawSkyboxesSystem.CameraPosition = vCameraPosition;
                     _drawSkyboxesSystem.Update(cameraOutput);
                     haveSkyboxPosition = true;

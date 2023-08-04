@@ -12,8 +12,16 @@ namespace Splash
     {
         private object _lo = new();
         
-        private uint _cameraMask = 0;
-        public uint CameraMask { get => _cameraMask; }
+        private engine.joyce.components.Camera3 _camera3;
+        public uint CameraMask { get => _camera3.CameraMask; }
+
+        public engine.joyce.components.Camera3 Camera3
+        {
+            get => _camera3;
+        }
+
+        public Matrix4x4 TransformToWorld;
+
 
         private int _nEntities = 0;
         private int _nMeshes = 0;
@@ -118,7 +126,6 @@ namespace Splash
             in AMaterialEntry aMaterialEntry,
             in Matrix4x4 matrix)
         {
-            
             _nEntities++;
 
             /*
@@ -163,6 +170,7 @@ namespace Splash
         }
 
 
+#if false
         public void AppendInstance(
             in AMeshEntry aMeshEntry,
             in AMaterialEntry aMaterialEntry,
@@ -173,6 +181,7 @@ namespace Splash
                 _appendInstanceNoLock(aMeshEntry, aMaterialEntry, matrix);
             }
         }
+#endif
         
 
         public void AppendInstance(in Splash.components.PfInstance pfInstance, Matrix4x4 matrix)
@@ -274,10 +283,12 @@ namespace Splash
         public CameraOutput(
             IScene scene,
             in IThreeD threeD,
-            in uint cameraMask)
+            in Matrix4x4 mTransformToWorld,
+            in engine.joyce.components.Camera3 camera3)
         {
             _scene = scene;
-            _cameraMask = cameraMask;
+            TransformToWorld = mTransformToWorld;
+            _camera3 = camera3;
             _threeD = threeD;
         }
     }

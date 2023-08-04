@@ -36,7 +36,6 @@ public class InstanceDesc
     
     private IList<engine.joyce.Material> _materials;
     public ReadOnlyCollection<Material> Materials;
-    
 
     private bool _haveAABBMerged = true;
     private bool _haveAABBTransformed = false;

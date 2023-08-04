@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace engine.geom;
 
@@ -112,6 +113,24 @@ public struct AABB
         BB.X = Single.Max(BB.X, o.BB.X);
         BB.Y = Single.Max(BB.Y, o.BB.Y);
         BB.Z = Single.Max(BB.Z, o.BB.Z);
+    }
+
+
+    /**
+     * Compute the signed distance to the plane defined by plane
+     */
+    public float SignedDistance(in Plane plane)
+    {
+        /*
+         * This is the point in direction of the plane. 
+         */
+        Vector3 vc = new(
+            plane.Normal.X < 0f ? AA.X : BB.X,
+            plane.Normal.Y < 0f ? AA.Y : BB.Y,
+            plane.Normal.Z < 0f ? AA.Z : BB.Z
+        );
+
+        return Vector3.Dot(vc,plane.Normal) + plane.D;
     }
     
     

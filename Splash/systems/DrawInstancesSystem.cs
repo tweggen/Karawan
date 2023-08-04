@@ -19,6 +19,10 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     private engine.Engine _engine;
     private IThreeD _threeD;
 
+    private Plane _nearFrustum = new();
+    private int _nInstancesConsidered;
+    private int _nInstancesAppended;
+    
 
     private void _appendMeshRenderList(
         in CameraOutput cameraOutput,
@@ -31,7 +35,18 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
             if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
+                _nInstancesConsidered++;
+                
+                /*
+                 * Before adding the instance, let's look, if it is in front of the camera,
+                 * inside the viewing cone.
+                 *
+                 * The AABB is in world coordinates. 
+                 */
                 AABB aabb = pfInstance.InstanceDesc.Aabb;
+                float sd = aabb.SignedDistance(_nearFrustum);
+                if (sd < 0) continue;
+                _nInstancesAppended++;
                 cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix);
             }
         }
@@ -40,10 +55,29 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
 
     protected override void PreUpdate(CameraOutput cameraOutput)
     {
+        cameraOutput.Camera3.GetViewMatrix(out var mView, cameraOutput.TransformToWorld);
+        cameraOutput.Camera3.GetProjectionMatrix(out var mProjection,new Vector2(1f, 1f));
+
+        var mViewProj = mView * mProjection;
+        
+        /*
+         * Before the update, compute the near frustrum plane.
+         */
+        _nearFrustum = new (new Vector4(
+            mViewProj.M31,
+            mViewProj.M32,
+            mViewProj.M33,
+            mViewProj.M34
+        ));
+
+        _nInstancesAppended = 0;
+        _nInstancesConsidered = 0;
+        // Trace($"{_nearFrustum}");
     }
 
     protected override void PostUpdate(CameraOutput cameraOutput)
     {
+        Trace($"Camera {cameraOutput.CameraMask}: appended {_nInstancesAppended} out of considered {_nInstancesConsidered}");
     }
 
 
