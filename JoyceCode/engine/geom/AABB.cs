@@ -44,8 +44,8 @@ public struct AABB
         if (!m.IsIdentity)
         {
             bool ok = Matrix4x4.Decompose(m, out var scale, out var rot, out var pos);
-            Vector3 newAA = new(Single.MaxValue, Single.MaxValue, Single.MaxValue);
-            Vector3 newBB = new(Single.MinValue, Single.MinValue, Single.MinValue);
+            Vector3 newAA = new(m.M41, m.M42, m.M43);
+            Vector3 newBB = new(m.M41, m.M42, m.M43);
 
             for (int i = 0; i < 3; ++i)
             {
@@ -54,8 +54,8 @@ public struct AABB
                     float a, b;
                     a = m[i, j] * AA[j];
                     b = m.M11 * BB.X;
-                    AA[i] = Single.Min(a, b);
-                    BB[i] = Single.Max(a, b);
+                    newAA[i] += Single.Min(a, b);
+                    newBB[i] += Single.Max(a, b);
                 }
             }
 
