@@ -41,9 +41,10 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                  * Before adding the instance, let's look, if it is in front of the camera,
                  * inside the viewing cone.
                  *
-                 * The AABB is in world coordinates. 
+                 * The AABB is in instance local coordinates.
                  */
                 AABB aabb = pfInstance.InstanceDesc.Aabb;
+                aabb.Transform(transform3ToWorld.Matrix);
                 float sd = aabb.SignedDistance(_nearFrustum);
                 if (sd < 0) continue;
                 _nInstancesAppended++;
