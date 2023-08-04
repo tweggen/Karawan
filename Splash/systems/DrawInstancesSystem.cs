@@ -20,6 +20,11 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     private IThreeD _threeD;
 
     private Plane _nearFrustum = new();
+    private Plane _farFrustum = new();
+    private Plane _leftFrustum = new();
+    private Plane _rightFrustum = new();
+    private Plane _topFrustum = new();
+    private Plane _bottomFrustum = new();
     private int _nInstancesConsidered;
     private int _nInstancesAppended;
     
@@ -36,21 +41,42 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
                 _nInstancesConsidered++;
-                
+
                 /*
-                 * Before adding the instance, let's look, if it is in front of the camera,
-                 * inside the viewing cone.
-                 *
-                 * The AABB is in instance local coordinates.
+                 * Only perform CPU culling for perspective projection cameras.
                  */
-                AABB aabb = pfInstance.InstanceDesc.Aabb;
-                aabb.Transform(transform3ToWorld.Matrix);
-                float sd = aabb.SignedDistance(_nearFrustum);
-                if (sd < 0) continue;
+                if (cameraOutput.Camera3.Angle > 0f)
+                {
+                    /*
+                     * Before adding the instance, let's look, if it is in front of the camera,
+                     * inside the viewing cone.
+                     *
+                     * The AABB is in instance local coordinates.
+                     */
+                    AABB aabb = pfInstance.InstanceDesc.Aabb;
+                    aabb.Transform(transform3ToWorld.Matrix);
+                    if (aabb.SignedDistance(_nearFrustum) < 0) continue;
+                    if (aabb.SignedDistance(_farFrustum) < 0) continue;
+                    if (aabb.SignedDistance(_leftFrustum) < 0) continue;
+                    if (aabb.SignedDistance(_rightFrustum) < 0) continue;
+                    if (aabb.SignedDistance(_topFrustum) < 0) continue;
+                    if (aabb.SignedDistance(_bottomFrustum) < 0) continue;
+                }
+
                 _nInstancesAppended++;
                 cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix);
             }
         }
+    }
+
+    private void _createPlane(float x, float y, float z, float w, out Plane plane)
+    {
+        Vector3 vNormal = new Vector3(x, y, z);
+        float distance = w;
+        float l = vNormal.Length();
+        vNormal /= l;
+        distance /= l;
+        plane = new (vNormal, distance);
     }
 
 
@@ -62,18 +88,14 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
         var mViewProj = mView * mProjection;
         
         /*
-         * Before the update, compute the near frustrum plane.
+         * Before the update, compute the frustrum planes.
          */
-        Vector3 vNormal = new Vector3(
-            mViewProj.M13,
-            mViewProj.M23,
-            mViewProj.M33
-        ); 
-        float distance = mViewProj.M43;
-        float l = vNormal.Length();
-        vNormal /= l;
-        distance /= l;
-        _nearFrustum = new (vNormal, distance);
+        _createPlane(mViewProj.M13, mViewProj.M23, mViewProj.M33, mViewProj.M43, out _nearFrustum);
+        _createPlane(mViewProj.M14-mViewProj.M13, mViewProj.M24-mViewProj.M23, mViewProj.M34-mViewProj.M33, mViewProj.M44-mViewProj.M43, out _farFrustum);
+        _createPlane(mViewProj.M14+mViewProj.M11, mViewProj.M24+mViewProj.M21, mViewProj.M34+mViewProj.M31, mViewProj.M44+mViewProj.M41, out _leftFrustum);
+        _createPlane(mViewProj.M14-mViewProj.M11, mViewProj.M24-mViewProj.M21, mViewProj.M34-mViewProj.M31, mViewProj.M44-mViewProj.M41, out _rightFrustum);
+        _createPlane(mViewProj.M14-mViewProj.M12, mViewProj.M24-mViewProj.M22, mViewProj.M34-mViewProj.M32, mViewProj.M44-mViewProj.M42, out _topFrustum);
+        _createPlane(mViewProj.M14+mViewProj.M12, mViewProj.M24+mViewProj.M22, mViewProj.M34+mViewProj.M32, mViewProj.M44+mViewProj.M42, out _bottomFrustum);
 
         _nInstancesAppended = 0;
         _nInstancesConsidered = 0;
@@ -82,7 +104,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
 
     protected override void PostUpdate(CameraOutput cameraOutput)
     {
-        Trace($"Camera {cameraOutput.CameraMask}: appended {_nInstancesAppended} out of considered {_nInstancesConsidered}");
+        //Trace($"Camera {cameraOutput.CameraMask}: appended {_nInstancesAppended} out of considered {_nInstancesConsidered}");
     }
 
 
