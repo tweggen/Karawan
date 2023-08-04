@@ -120,21 +120,14 @@ public class InstanceDesc
     {
         int nm = _materials.Count;
         int idx = -1;
-        try
-        {
             for (int i = 0; i < nm; ++i)
             {
-                if (_materials[nm] == material)
+                if (_materials[i] == material)
                 {
-                    idx = nm;
+                    idx = i;
                     break;
                 }
             }
-        }
-        catch (Exception e)
-        {
-            Error($"Caught Execption {e}.");
-        }
 
         if (-1 == idx)
         {

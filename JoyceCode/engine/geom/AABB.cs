@@ -41,23 +41,27 @@ public struct AABB
 
     public void Transform(in Matrix4x4 m)
     {
-        Vector3 newAA = new(Single.MaxValue, Single.MaxValue, Single.MaxValue);
-        Vector3 newBB = new(Single.MinValue, Single.MinValue, Single.MinValue);
-
-        for (int i = 0; i < 3; ++i)
+        if (!m.IsIdentity)
         {
-            for (int j = 0; j < 3; ++j)
-            {
-                float a, b;
-                a = m[i,j] * AA[j];
-                b = m.M11 * BB.X;
-                AA[i] = Single.Min(a, b);
-                BB[i] = Single.Max(a, b);
-            }
-        }
+            bool ok = Matrix4x4.Decompose(m, out var scale, out var rot, out var pos);
+            Vector3 newAA = new(Single.MaxValue, Single.MaxValue, Single.MaxValue);
+            Vector3 newBB = new(Single.MinValue, Single.MinValue, Single.MinValue);
 
-        AA = newAA;
-        BB = newBB;
+            for (int i = 0; i < 3; ++i)
+            {
+                for (int j = 0; j < 3; ++j)
+                {
+                    float a, b;
+                    a = m[i, j] * AA[j];
+                    b = m.M11 * BB.X;
+                    AA[i] = Single.Min(a, b);
+                    BB[i] = Single.Max(a, b);
+                }
+            }
+
+            AA = newAA;
+            BB = newBB;
+        }
     }
     
 
