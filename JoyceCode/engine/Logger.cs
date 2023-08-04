@@ -59,10 +59,26 @@ namespace engine
             var fileName = stackFrame.GetFileName();
             if (null == fileName) fileName = "[null file name]";
             var lineNumber = stackFrame.GetFileLineNumber();
-            var type = stackFrame.GetMethod().ReflectedType.Name;
-            if (null == type) type = "[null type name]";
-            var methodName = stackFrame.GetMethod().Name;
-            if (null == methodName) methodName = "[null method name]";
+            string type = "(null type name)";
+            string methodName = "(null method name)";
+            var method = stackFrame.GetMethod();
+            if (method != null)
+            {
+                var reflectedType = method.ReflectedType;
+                if (reflectedType != null)
+                {
+                    if (reflectedType.Name != null)
+                    {
+                        type = reflectedType.Name;
+                    }
+                }
+
+                if (method.Name != null)
+                {
+                    methodName = method.Name;
+                }
+            }
+
             return $"{fileName}:{lineNumber}: {type}:{methodName}: {strLevel}: {msg}";
         }
         
