@@ -88,6 +88,17 @@ public class Part : engine.IPart
         _renderOSDSystem.Update(dtTotal);
     }
 
+
+    /**
+     * This part does not implement a specific input event handler.
+     */
+    public void PartOnKeyEvent(engine.news.KeyEvent keyEvent)
+    {
+        /*
+         * Nothing done here.
+         */
+    }
+
     
     public void PartDeactivate()
     {
@@ -117,7 +128,7 @@ public class Part : engine.IPart
 
         _renderOSDSystem = new RenderOSDSystem(_engine);
 
-        _engine.AddPart(-100f, scene0, this);
+        _engine.AddPart(50f, scene0, this);
 
         _engine.PhysicalFrame += _onPhysical;
         

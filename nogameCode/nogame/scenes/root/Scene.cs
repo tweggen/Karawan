@@ -35,10 +35,18 @@ public class Scene : engine.IScene
     private nogame.parts.map.Part _partMap;
     private nogame.parts.minimap.Part _partMiniMap;
 
+    private nogame.scenes.root.KeyHandler _partKeyHandler;
+
     private bool _isMapShown = false;
     private int _isSettingUp = 0;
 
-    private void _toggleMap()
+
+    public void TogglePauseMenu()
+    {
+        
+    }
+    
+    public void ToggleMap()
     {
         bool isMapShown; 
         lock (_lo)
@@ -70,19 +78,6 @@ public class Scene : engine.IScene
     }
     
 
-    private void _onKeyPress(object? sender, string keyCode)
-    {
-        switch (keyCode)
-        {
-            case "(tab)":
-                _toggleMap();
-                break;
-            default:
-                break;
-        }
-    }
-
-
     private void _onTouchPress(object? sender, Vector2 position)
     {
         bool _callToggleMap = false;
@@ -91,6 +86,7 @@ public class Scene : engine.IScene
         {
             if (!_isMapShown)
             {
+                // TXWTODO: Compute a relative position depending on view size.
                 if (position.X < 150 && position.Y < 150)
                 {
                     _callToggleMap = true;
@@ -104,7 +100,7 @@ public class Scene : engine.IScene
 
         if (_callToggleMap)
         {
-            _toggleMap();
+            ToggleMap();
         }
     }
     
@@ -143,9 +139,11 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
-        _engine.KeyPress -= _onKeyPress;
         _engine.OnTouchPress -= _onTouchPress;
             
+        _partKeyHandler.PartDeactivate();
+        _partKeyHandler = null;
+        
         _partPlayerhover.PartDeactivate();
         _partPlayerhover = null;
         _partSkybox.PartDeactivate();
@@ -335,8 +333,10 @@ public class Scene : engine.IScene
             _partMiniMap = new();
             _partMiniMap.PartActivate(_engine, this);
         }
+
+        _partKeyHandler = new();
+        _partKeyHandler.PartActivate(_engine, this);
         
-        _engine.KeyPress += _onKeyPress;
         _engine.OnTouchPress += _onTouchPress;
         
         /*

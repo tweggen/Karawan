@@ -137,6 +137,15 @@ public class Part : IPart
             }
         }
     }
+
+
+    public void PartOnKeyEvent(engine.news.KeyEvent keyEvent)
+    {
+        /*
+         * nothing to handle here.
+         */
+    }
+    
     
     public void PartDeactivate()
     {
@@ -151,7 +160,7 @@ public class Part : IPart
         _engine = engine0;
         _needResources();
         _createNewMiniMap();
-        _engine.AddPart(-190, scene0, this);
+        _engine.AddPart(100, scene0, this);
         _engine.LogicalFrame += _onLogicalFrame;
         _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
     }

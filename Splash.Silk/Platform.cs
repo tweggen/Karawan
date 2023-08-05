@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Numerics;
 using builtin.tools.Lindenmayer;
 using engine;
+using engine.news;
 using Microsoft.Win32.SafeHandles;
 using static engine.Logger;
 
@@ -174,6 +175,10 @@ namespace Splash.Silk
                     _controllerState.ShowMap = true;
                     code = "(tab)";
                     break;
+                case Key.Escape:
+                    _controllerState.PauseMenu = true;
+                    code = "(escape)";
+                    break;
                 case Key.F11:
                     code = "(F11)";
                     _toggleFullscreen();
@@ -184,7 +189,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeKeyPress(code);
+                _engine.TakeKeyEvent(new engine.news.KeyEvent("pressed", code));
             }
         }
         
@@ -226,6 +231,10 @@ namespace Splash.Silk
                     code = "(tab)";
                     _controllerState.ShowMap = false;
                     break;  
+                case Key.Escape:
+                    code = "(escape)";
+                    _controllerState.PauseMenu = false;
+                    break;
                 case Key.F11:
                     code = "(F11)";
                     break;
@@ -235,7 +244,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeKeyRelease(code);
+                _engine.TakeKeyEvent(new engine.news.KeyEvent("released", code));
             }
         }
 
