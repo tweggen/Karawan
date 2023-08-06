@@ -19,7 +19,7 @@ namespace builtin.controllers
         float _lastMouseMove = 0f;
         private bool _firstFrame = true;
         
-        private float _previousZoomDistance = 2000f;
+        private float _previousZoomDistance = 33f;
         
         private void _onLogicalFrame(object sender, float dt)
         {
@@ -108,6 +108,11 @@ namespace builtin.controllers
             _firstFrame = false;
         }
 
+        public void ForcePreviousZoomDistance(float dist)
+        {
+            _previousZoomDistance = dist;
+        }
+        
         public void DeactivateController()
         {
             _engine.LogicalFrame -= _onLogicalFrame;

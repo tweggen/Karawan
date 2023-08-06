@@ -116,14 +116,16 @@ public class Scene : engine.IScene
         Vector3 vMe;
         if (!_eCamScene.Has<Transform3ToWorld>())
         {
-            vMe = new Vector3(0f, 0f, 0f);
+            return;
         }
-        else
-        {
-            vMe = _eCamScene.Get<Transform3ToWorld>().Matrix.Translation;
-        }
-        _worldLoader.WorldLoaderProvideFragments(vMe);
         
+        vMe = _eCamScene.Get<Transform3ToWorld>().Matrix.Translation;
+        // TXWTODO: We don't precisely know when we have the first valid position 
+        if (vMe != Vector3.Zero)
+        {
+            _worldLoader.WorldLoaderProvideFragments(vMe);
+        }
+
         lock (_lo)
         {
             --_isSettingUp;
@@ -135,6 +137,7 @@ public class Scene : engine.IScene
     {
         _engine.QueueMainThreadAction(() =>
         {
+            _ctrlFollowCamera.ForcePreviousZoomDistance(150f);
             _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamOSD.Get<engine.joyce.components.Camera3>().CameraFlags &=
