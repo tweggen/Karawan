@@ -56,7 +56,7 @@ public class Obj
     }
 
     static public void LoadModelInstanceSync(string url,
-        IDictionary<string, string>? properties,
+        ModelProperties modelProperties,
         out InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
     {
         var objLoader = _objLoaderFactory.Create(_materialStreamProvider);
@@ -76,7 +76,7 @@ public class Obj
         List<ObjLoader.Loader.Data.Material> listMaterials = new();
 
         string primarycolor = "";
-        if (properties != null && properties.TryGetValue("primarycolor", out var col))
+        if (modelProperties != null && modelProperties.Properties.TryGetValue("primarycolor", out var col))
         {
             primarycolor = col;
         }
@@ -240,11 +240,11 @@ public class Obj
     
     
     static public Task<(engine.joyce.InstanceDesc InstanceDesc, engine.ModelInfo ModelInfo)> 
-        LoadModelInstance(string url, IDictionary<string, string> properties)
+        LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return Task.Run(() =>
         {
-            LoadModelInstanceSync(url, properties, out var instanceDesc, out var modelInfo);
+            LoadModelInstanceSync(url, modelProperties, out var instanceDesc, out var modelInfo);
             return (instanceDesc, modelInfo);
         });
     }   

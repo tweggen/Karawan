@@ -198,7 +198,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     int carIdx = (int)(_rnd.GetFloat() * 4f);
                     int colorIdx = (int)(_rnd.GetFloat() * (float)_primarycolors.Count);
                     
-                    SortedDictionary<string, string> props = new()
+                    builtin.loader.ModelProperties props = new()
                     {
                         ["primarycolor"] = _primarycolors[colorIdx],
                     };

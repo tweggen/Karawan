@@ -29,14 +29,18 @@ public class ModelCache
     private readonly ConcurrentDictionary<string, Model> _cache = new ConcurrentDictionary<string, Model>();
     
     
-    private string _hash(string url, in InstantiateModelParams p)
+    private string _hash(string url,
+        ModelProperties modelProperties,
+        in InstantiateModelParams p)
     {
-        return $"FromFile('{url}'),{p.Hash()}";
+        string mpHash = (modelProperties != null) ? modelProperties.ToString() : "null";
+        return $"FromFile('{url}'),{mpHash},{p.Hash()}";
     }
 
 
     private Task<Model> _instantiateModelParams(
         Model model,
+        ModelProperties modelProperties,
         InstantiateModelParams p)
     {
         return Task.Run(() =>
@@ -112,23 +116,24 @@ public class ModelCache
     }
     
 
-    private Task<(InstanceDesc InstanceDesc, ModelInfo ModelInfo)> _fromFile(string url, IDictionary<string, string> properties)
+    private Task<(InstanceDesc InstanceDesc, ModelInfo ModelInfo)> _fromFile(
+        string url, ModelProperties modelProperties)
     {
-        return Obj.LoadModelInstance(url, properties);
+        return Obj.LoadModelInstance(url, modelProperties);
     }
 
 
     private async Task<Model> _obtain(
-        string url, IDictionary<string, string> properties, InstantiateModelParams p)
+        string url, ModelProperties modelProperties, InstantiateModelParams p)
     {
         var resultFromFile =
-            await _fromFile(url, properties);
+            await _fromFile(url, modelProperties);
 
         Model model = new Model();
         model.InstanceDesc = resultFromFile.InstanceDesc;
         model.ModelInfo = resultFromFile.ModelInfo;
         
-        model = await _instantiateModelParams(model, p);
+        model = await _instantiateModelParams(model, modelProperties, p);
 
         model = FindLights.Process(model);
         
@@ -143,9 +148,9 @@ public class ModelCache
      * from memory.
      */
     public async Task<Model> Instantiate(
-        string url, IDictionary<string, string> properties, InstantiateModelParams p)
+        string url, ModelProperties modelProperties, InstantiateModelParams p)
     {
-        string hash = _hash(url, p);
+        string hash = _hash(url, modelProperties, p);
         Model model;
 
         var keyLock = _keyLocks.GetOrAdd(hash, x => new SemaphoreSlim(1));
@@ -157,7 +162,7 @@ public class ModelCache
             if (!_cache.TryGetValue(hash, out model))
             {
                 // if value isn't cached, get it from the DB asynchronously
-                model = await _obtain(url, properties, p).ConfigureAwait(false);
+                model = await _obtain(url, modelProperties, p).ConfigureAwait(false);
 
                 // cache value
                 _cache.TryAdd(hash, model);
