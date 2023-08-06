@@ -129,7 +129,7 @@ namespace Splash
                         }
                     }
 
-                    if (!preloadOnly)
+                    if (true || !preloadOnly)
                     {
                         var nMatrices = meshItem.Value.Matrices.Count;
                         /*
