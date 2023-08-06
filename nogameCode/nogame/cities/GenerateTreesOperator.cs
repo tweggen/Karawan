@@ -173,7 +173,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
 
         }
 
-#if true
+#if false
         /*
          * This is a large amount of instances, reduce them.
          * That way we can't use instance rendering for the trees but reduce draw calls.
