@@ -71,7 +71,7 @@ public class VertexArrayObject : IDisposable
         _gl.VertexAttribPointer(
             3,
             3,
-            VertexAttribPointerType.Float,
+            VertexAttribPointerType.UnsignedShort,
             false,
             0,
             (void*) 0);

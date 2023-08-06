@@ -49,7 +49,13 @@ namespace Splash.Silk
                 /*
                  * As we just copy, we can ignore the fact these are triangles.
                  */
-                skMeshEntry.Indices[i] = (ushort)mesh.Indices[i];
+                var index = mesh.Indices[i];
+                if (index > 65535)
+                {
+                    Error("Invalid mesh index {index}.");
+                }
+
+                skMeshEntry.Indices[i] = (ushort)index;
             }
         }
     }

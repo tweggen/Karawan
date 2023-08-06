@@ -525,7 +525,7 @@ namespace Splash.Silk
                 }
 
                 _renderer.RenderFrame(renderFrame);
-               
+
                 _iView.SwapBuffers();
                 _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
                 ++_frameNo;

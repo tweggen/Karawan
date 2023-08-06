@@ -6,7 +6,8 @@ namespace Splash.Silk
 {
     public class SkMeshEntry : AMeshEntry
     {
-        public VertexArrayObject vao;
+        public VertexArrayObject vao = null;
+        private bool  _isUploaded = false;
 
         public float[] Vertices;
         public float[] Normals;
@@ -21,12 +22,14 @@ namespace Splash.Silk
         public void Upload(in GL gl)
         {
             vao = new VertexArrayObject(gl, this);
-            Trace($"Uploaded Mesh vaoId={vao.Handle}, nVertices={Vertices.Length}");
+            Trace($"Uploaded Mesh vaoId={vao.Handle}");
             ++_nMeshes;
             if (_nMeshes > 2000)
             {
                 Warning($"Uploaded more than 2000 meshes.");
             }
+
+            _isUploaded = true;
         }
 
         /**
@@ -34,7 +37,8 @@ namespace Splash.Silk
          */
         public void Release(in GL gl)
         {
-            Trace($"Releasing Mesh vaoId={vao.Handle}, nVertices={Vertices.Length}");
+            _isUploaded = false;
+            Trace($"Releasing Mesh vaoId={vao.Handle}");
             vao.Dispose();
             vao = null;
             --_nMeshes;
@@ -42,13 +46,20 @@ namespace Splash.Silk
 
         public override bool IsUploaded()
         {
-            return vao != null;
+            if (vao != null)
+            {
+                if (!_isUploaded)
+                {
+                    Trace($"Boom vaoId={vao.Handle}");
+                }
+            }
+
+            return _isUploaded == true;
         }
 
         public SkMeshEntry(engine.joyce.Mesh jMesh)
             : base(jMesh)
         {
-            vao = null;
         }
     }
 }

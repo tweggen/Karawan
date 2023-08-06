@@ -372,8 +372,8 @@ namespace nogame.cities
                                 fragPoints, height, _metersPerTexture,
                                 listCreatePhysics);
 
-                            _createLargeAdvertsSubGeo(
-                                 worldFragment, matmesh, fragPoints, height);
+                            // _createLargeAdvertsSubGeo(
+                            //     worldFragment, matmesh, fragPoints, height);
                         }
                         catch (Exception e)
                         {
