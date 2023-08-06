@@ -22,7 +22,6 @@ public class TreeInstanceGenerator
     
     private builtin.tools.Lindenmayer.System _createTree1System(RandomSource rnd) 
     { 
-        
         return new builtin.tools.Lindenmayer.System( new State( new List<Part>
             /*
              * Initial seed: One 10 up, 1m radius.

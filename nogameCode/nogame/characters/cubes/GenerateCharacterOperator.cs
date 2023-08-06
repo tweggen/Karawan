@@ -42,7 +42,7 @@ namespace nogame.characters.cubes
             {
                 if( null==_jMeshCube)
                 {
-                    _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh(_cubeSize);
+                    _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh("cubecharacter", _cubeSize);
                 }
                 return _jMeshCube;
             }

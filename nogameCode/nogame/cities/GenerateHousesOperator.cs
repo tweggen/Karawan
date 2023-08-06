@@ -57,7 +57,7 @@ namespace nogame.cities
         )
         {
             engine.joyce.Material materialHouse = MaterialCache.Get("nogame.cities.houses.materials.houses");
-            engine.joyce.Mesh meshHouse = new();
+            engine.joyce.Mesh meshHouse = new($"{worldFragment.GetId()}-housessubgeo");
 
 
 
@@ -147,7 +147,7 @@ namespace nogame.cities
             Vector3 vUnitUp = Vector3.UnitY;
 
 
-            engine.joyce.Mesh mesh = new();
+            engine.joyce.Mesh mesh = new($"{worldFragment.GetId()}-largeadverts");
             engine.joyce.mesh.Tools.AddQuadXYUV(
                 mesh,
                 fragPoints[idx]
@@ -175,7 +175,7 @@ namespace nogame.cities
             float h)
         {
             engine.joyce.Material materialNeon = MaterialCache.Get("nogame.cities.houses.materials.neon");
-            engine.joyce.Mesh meshNeon = new();
+            engine.joyce.Mesh meshNeon = new($"{worldFragment.GetId()}-neonsignsubgeo");
             
             /*
              * Number of letters.

@@ -53,6 +53,7 @@ namespace nogame.parts.skybox
             {
                 _eSkybox = _engine.CreateEntity("Skybox");
                  var jMeshSkybox = engine.joyce.mesh.Tools.CreateSkyboxMesh(
+                     "skybox",
                      2000f, new Vector2(0f, 0f), new Vector2( 1f, 4f/3f ));
                 // var jMeshSkybox = engine.joyce.mesh.Tools.CreateCubeMesh(
                 //     10f);

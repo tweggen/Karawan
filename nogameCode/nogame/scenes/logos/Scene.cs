@@ -101,7 +101,7 @@ public class Scene : engine.IScene
     private DefaultEcs.Entity _createLogoBoard()
     {
         Vector2 vSize = new(16f, 16f);
-        var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh(vSize);
+        var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh("joycelogo",vSize);
         jMesh.UploadImmediately = true;
         var jMaterial = new engine.joyce.Material();
         jMaterial.UploadImmediately = true;

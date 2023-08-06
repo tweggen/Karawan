@@ -173,6 +173,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
 
         }
 
+#if true
         /*
          * This is a large amount of instances, reduce them.
          * That way we can't use instance rendering for the trees but reduce draw calls.
@@ -186,6 +187,15 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         {
             Trace($"Unknown exception: {e}");
         }
+#else
+        /*
+         * Do not merge the meshes. Enable the renderer to use instanced calls.
+         */
+        foreach (var instance in listInstanceDesc)
+        {
+            worldFragment.AddStaticInstance("nogame.cities.trees", instance);
+        }
+#endif
 
     });
     

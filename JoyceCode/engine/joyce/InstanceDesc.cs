@@ -163,6 +163,14 @@ public class InstanceDesc
             id._materials.Add(kvp.Key);
             foreach (var me in kvp.Value)
             {
+                if (me.Vertices.Count > 65535)
+                {
+                    Error($"Too much vertices in mesh {me.Name}.");
+                }
+                if (me.Indices.Count > 65535)
+                {
+                    Error($"Too much indices in mesh {me.Name}.");
+                }
                 id._meshes.Add(me);
                 id._aabbMerged.Add(me.AABB);
                 id._meshMaterials.Add(materialIndex);

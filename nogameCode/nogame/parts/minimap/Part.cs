@@ -105,7 +105,7 @@ public class Part : IPart
         Vector3 x = new(width, 0f, 0f);
         Vector3 y = new(0f, height, 0f);
         
-        engine.joyce.Mesh meshMiniMap = engine.joyce.Mesh.CreateListInstance();
+        engine.joyce.Mesh meshMiniMap = engine.joyce.Mesh.CreateListInstance("minimap");
         meshMiniMap.UploadImmediately = true;
         engine.joyce.mesh.Tools.AddQuadXYUV(meshMiniMap, pos0, x,y, uv0, u, v);
         var jMiniMapInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(_materialMiniMap, meshMiniMap));

@@ -157,7 +157,6 @@ public class InstanceManager : IDisposable
             return;
         }
 
-
         // TXWTODO: Lock is superfluous, we only have one ECS Thread.
         lock (_lo)
         {

@@ -21,7 +21,7 @@ namespace Splash.Silk
         public void Upload(in GL gl)
         {
             vao = new VertexArrayObject(gl, this);
-            // Trace($"Uploaded Mesh vaoId={vao.Handle}, nVertices={Vertices.Length}");
+            Trace($"Uploaded Mesh vaoId={vao.Handle}, nVertices={Vertices.Length}");
             ++_nMeshes;
             if (_nMeshes > 2000)
             {
@@ -34,7 +34,7 @@ namespace Splash.Silk
          */
         public void Release(in GL gl)
         {
-            // Trace($"Releasing Mesh vaoId={vao.Handle}, nVertices={Vertices.Length}");
+            Trace($"Releasing Mesh vaoId={vao.Handle}, nVertices={Vertices.Length}");
             vao.Dispose();
             vao = null;
             --_nMeshes;

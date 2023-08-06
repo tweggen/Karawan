@@ -44,6 +44,7 @@ public class Part : IPart
 
         
         engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
+            "mapmesh",
             new Vector2(1f, 1f));
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 

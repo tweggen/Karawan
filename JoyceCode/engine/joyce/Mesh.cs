@@ -19,6 +19,7 @@ public class MergeMeshEntry
 public class Mesh
 {
     private AABB _aabb;
+
     private bool _haveAABB = false;
 
     public AABB AABB
@@ -39,8 +40,9 @@ public class Mesh
             _haveAABB = true;
             _aabb = value;
         }
-    }   
-    
+    }
+
+    public string Name = "unnamed mesh";
     
     public int WriteIndexVertices;
     public int WriteIndexIndices;
@@ -267,6 +269,7 @@ public class Mesh
         int off = 0;
         int offIndices = 0;
         int l, k;
+        string lastName = "(nomesh)";
 
         /*
          * Copy each of the meshes into the arrays.
@@ -274,6 +277,7 @@ public class Mesh
         foreach (var mme in others)
         {
             var otherMesh = mme.Mesh;
+            lastName = otherMesh.Name;
             l = otherMesh.Vertices.Count;
             k = otherMesh.Indices.Count;
             if (mme.Transform.IsIdentity)
@@ -306,7 +310,7 @@ public class Mesh
          * Finally create a new mesh consisting of the arrays
          * we have created.
          */
-        return new Mesh(arrVertices, arrIndices, arrUVs);
+        return new Mesh(lastName, arrVertices, arrIndices, arrUVs);
     }
 
 
@@ -325,8 +329,9 @@ public class Mesh
     }
 
 
-    public Mesh(IList<Vector3> vertices, IList<uint> indices, IList<Vector2> uvs)
+    public Mesh(string name, IList<Vector3> vertices, IList<uint> indices, IList<Vector2> uvs)
     {
+        Name = name;
         Vertices = vertices;
         Indices = indices;
         UVs = uvs;
@@ -338,21 +343,22 @@ public class Mesh
     }
 
 
-    public Mesh()
+    public Mesh(string name)
     {
+        Name = name;
         Vertices = new List<Vector3>();
         Indices = new List<uint>();
         UVs = new List<Vector2>();
     }
 
-    public static Mesh CreateListInstance()
+    public static Mesh CreateListInstance(string name)
     {
-        return new Mesh(new List<Vector3>(), new List<uint>(), new List<Vector2>());
+        return new Mesh(name, new List<Vector3>(), new List<uint>(), new List<Vector2>());
     }
 
-    public static Mesh CreateArrayListInstance()
+    public static Mesh CreateArrayListInstance(string name)
     {
-        return new Mesh(new List<Vector3>(), new List<uint>(), new List<Vector2>());
+        return new Mesh(name, new List<Vector3>(), new List<uint>(), new List<Vector2>());
     }
 }
 

@@ -59,7 +59,7 @@ namespace engine.streets
                 return false;
             }
 
-            Mesh meshGround = new();
+            Mesh meshGround = new($"{worldFragment.GetId()}-quarterfloor");
             var opExtrudePoly = new builtin.tools.ExtrudePoly(edges, path, 27, 10000f, false, false, true);
             try {
                 opExtrudePoly.BuildGeom(meshGround);

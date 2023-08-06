@@ -409,15 +409,15 @@ public class SilkThreeD : IThreeD
             sh.SetUniform("mvp", mvp);
             if (skMeshEntry.JMesh.Vertices.Count > 65535)
             {
-                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
             }
             if (skMeshEntry.JMesh.Indices.Count > 65535)
             {
-                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
             }
             if (nMatrices > 1023)
             {
-                Error($"Trying to render too much mesh instances at once ({nMatrices})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh instances at once ({nMatrices})");
             }
             gl.DrawElementsInstanced(
                 PrimitiveType.Triangles,
@@ -430,11 +430,11 @@ public class SilkThreeD : IThreeD
         {
             if (skMeshEntry.JMesh.Vertices.Count > 65535)
             {
-                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
             }
             if (skMeshEntry.JMesh.Indices.Count > 65535)
             {
-                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
             }
 
             for (int i = 0; i < nMatrices; ++i)

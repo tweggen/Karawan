@@ -12,7 +12,7 @@ namespace engine.world
             //string materialId
         )
         {
-            var g = joyce.Mesh.CreateListInstance();
+            var g = joyce.Mesh.CreateListInstance("terrainknitter");
 
             var groundResolution = world.MetaGen.GroundResolution;
 

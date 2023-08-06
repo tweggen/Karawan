@@ -154,7 +154,7 @@ public class Obj
             /*
              * For each of the Wavefront groups we create a mesh
              */
-            engine.joyce.Mesh jMesh = engine.joyce.Mesh.CreateListInstance();
+            engine.joyce.Mesh jMesh = engine.joyce.Mesh.CreateListInstance(url);
             jMesh.Normals = new List<Vector3>();
 
             /*

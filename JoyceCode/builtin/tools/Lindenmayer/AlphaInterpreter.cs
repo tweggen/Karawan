@@ -70,7 +70,7 @@ public class AlphaInterpreter
         }
         else
         {
-            targets[matnameLeaves] = g = engine.joyce.Mesh.CreateListInstance();
+            targets[matnameLeaves] = g = engine.joyce.Mesh.CreateListInstance("treegenerator");
         }
 
         foreach (Part part in parts)

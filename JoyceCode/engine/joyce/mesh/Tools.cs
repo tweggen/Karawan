@@ -38,10 +38,10 @@ namespace engine.joyce.mesh
         }
 
 
-        public static joyce.Mesh CreatePlaneMesh(in Vector2 vSize,
+        public static joyce.Mesh CreatePlaneMesh(string name, in Vector2 vSize,
             in Vector2 vUV0, in Vector2 vUVX, in Vector2 vUVY)
         {
-            var m = joyce.Mesh.CreateArrayListInstance();
+            var m = joyce.Mesh.CreateArrayListInstance(name);
 
             AddQuadXYUV(m, 
                 new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
@@ -52,9 +52,9 @@ namespace engine.joyce.mesh
             return m;
         }
 
-        public static joyce.Mesh CreatePlaneMesh(in Vector2 vSize)
+        public static joyce.Mesh CreatePlaneMesh(in string name, Vector2 vSize)
         {
-            var m = joyce.Mesh.CreateArrayListInstance();
+            var m = joyce.Mesh.CreateArrayListInstance(name);
 
             AddQuadXYUV(m, new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
                 new Vector3(vSize.X, 0f, 0f),
@@ -66,11 +66,11 @@ namespace engine.joyce.mesh
             return m;
         }
 
-        public static joyce.Mesh CreateCubeMesh(float size)
+        public static joyce.Mesh CreateCubeMesh(string name, float size)
         {
             float h /* half */ = size / 2;
 
-            var m = joyce.Mesh.CreateArrayListInstance();
+            var m = joyce.Mesh.CreateArrayListInstance(name);
 
             // Back (-Z)
             _addQuadXY( m, new Vector3(h, -h, -h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f) );
@@ -94,12 +94,12 @@ namespace engine.joyce.mesh
          * attached at the second of 4 rectangles are the sky the hell, the sky being "above" the x -z view,
          * the hell right below it.
          */
-        public static joyce.Mesh CreateSkyboxMesh(float size,
+        public static joyce.Mesh CreateSkyboxMesh(string name, float size,
             in Vector2 vUVOrigin, in Vector2 vUVSize )
         {
             float h /* half */ = size / 2f;
 
-            var m = joyce.Mesh.CreateArrayListInstance();
+            var m = joyce.Mesh.CreateArrayListInstance(name);
 
             /*
              *  Note that the direction of the surfaces is mirrored due to the inbound direction of the normals.

@@ -59,6 +59,11 @@ public class Main
         Main main = new(e);
 
         engine.GlobalSettings.Set("debug.options.flatshading", "false");
+
+        engine.GlobalSettings.Set("nogame.CreateOSD", "false");
+        engine.GlobalSettings.Set("nogame.CreateMap", "false");
+        engine.GlobalSettings.Set("nogame.CreateMiniMap", "false");
+        engine.GlobalSettings.Set("nogame.CreateTrees", "false");
         
         main._setupImplementations();
         main._registerScenes();

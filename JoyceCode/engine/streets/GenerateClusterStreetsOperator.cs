@@ -651,7 +651,7 @@ namespace engine.streets
             var nGeneratedStreets = 0;
             var nIgnoredStrokes = 0;
 
-            var g = engine.joyce.Mesh.CreateListInstance();
+            var g = engine.joyce.Mesh.CreateListInstance($"{worldFragment.GetId()}-streetsgenerator");
             /*
              * Create the roads between the junctions.
              */
