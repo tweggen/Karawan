@@ -317,6 +317,16 @@ public class SilkThreeD : IThreeD
 
     private static readonly  bool _useInstanceRendering = true;
 
+    public void FinishUploadOnly(in AMeshEntry aMeshEntry)
+    {
+        // TXWTODO: Some of these calls have been required.
+        SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
+        skMeshEntry.vao.BindVertexArray();
+        _gl.BindVertexArray(0);
+        _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+
+    }
+    
     public unsafe void DrawMeshInstanced(
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,

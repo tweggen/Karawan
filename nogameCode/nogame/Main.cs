@@ -60,15 +60,15 @@ public class Main
 
         engine.GlobalSettings.Set("debug.options.flatshading", "false");
 
-        engine.GlobalSettings.Set("nogame.CreateOSD", "false");
-        engine.GlobalSettings.Set("nogame.CreateMap", "false");
-        engine.GlobalSettings.Set("nogame.CreateMiniMap", "false");
-        engine.GlobalSettings.Set("nogame.CreateTrees", "false");
-        engine.GlobalSettings.Set("world.CreateCubeCharacters", "false");
-        engine.GlobalSettings.Set("world.CreateCar3Characters", "false");
-        engine.GlobalSettings.Set("world.CreateTramCharacters", "false");
-        engine.GlobalSettings.Set("world.CreateStreets", "false");
-        engine.GlobalSettings.Set("world.CreateClusterQuarters", "false");
+        //engine.GlobalSettings.Set("nogame.CreateOSD", "false");
+        //engine.GlobalSettings.Set("nogame.CreateMap", "false");
+        //engine.GlobalSettings.Set("nogame.CreateMiniMap", "false");
+        //engine.GlobalSettings.Set("nogame.CreateTrees", "false");
+        //engine.GlobalSettings.Set("world.CreateCubeCharacters", "false");
+        //engine.GlobalSettings.Set("world.CreateCar3Characters", "false");
+        //engine.GlobalSettings.Set("world.CreateTramCharacters", "false");
+        //engine.GlobalSettings.Set("world.CreateStreets", "false");
+        //engine.GlobalSettings.Set("world.CreateClusterQuarters", "false");
         
         
         main._setupImplementations();

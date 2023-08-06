@@ -129,7 +129,7 @@ namespace Splash
                         }
                     }
 
-                    if (true || !preloadOnly)
+                    if (!preloadOnly)
                     {
                         var nMatrices = meshItem.Value.Matrices.Count;
                         /*
@@ -141,6 +141,11 @@ namespace Splash
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
                         threeD.DrawMeshInstanced(meshItem.Key, materialItem.Key, spanMatrices, nMatrices);
+                    }
+                    else
+                    {
+                        threeD.FinishUploadOnly(meshItem.Key);
+
                     }
                 }
             }

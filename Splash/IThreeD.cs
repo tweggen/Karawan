@@ -34,4 +34,6 @@ public interface IThreeD
         in AMaterialEntry aMaterialEntry,
         in Span<Matrix4x4> spanMatrices,
         in int nMatrices);
+
+    public void FinishUploadOnly(in AMeshEntry aMeshEntry);
 }

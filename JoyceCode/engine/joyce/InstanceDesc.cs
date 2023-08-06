@@ -166,11 +166,14 @@ public class InstanceDesc
                 if (me.Vertices.Count > 65535)
                 {
                     Error($"Too much vertices in mesh {me.Name}.");
+                    continue;
                 }
                 if (me.Indices.Count > 65535)
                 {
                     Error($"Too much indices in mesh {me.Name}.");
+                    continue;
                 }
+
                 id._meshes.Add(me);
                 id._aabbMerged.Add(me.AABB);
                 id._meshMaterials.Add(materialIndex);
