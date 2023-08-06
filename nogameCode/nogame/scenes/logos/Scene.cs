@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text;
 using engine;
 using engine.joyce;
+using engine.joyce.components;
 using static engine.Logger;
 
 namespace nogame.scenes.logos;
@@ -26,6 +27,8 @@ public class Scene : engine.IScene
     private bool _shallHideTitle = false;
 
     private float _t;
+    
+    public static string TimepointTitlesongStarted = "nogame.scenes.logos.titlesong.Started"; 
 
     public void SceneOnLogicalFrame(float dt)
     {
@@ -39,12 +42,10 @@ public class Scene : engine.IScene
         
         if (_isCleared)
         {
-            // TXWTODO: Reprogram main scened to load earlier.
-            if (t > 2.0f)
-            {
-                _engine.SceneSequencer.SetMainScene("root");
-                return;
-            }
+            /*
+             * Immediately trigger main scene. It will setup loading.
+             */
+            _engine.SceneSequencer.SetMainScene("root");
         }
         else
         {
@@ -75,6 +76,10 @@ public class Scene : engine.IScene
             {
                 _t = 0f;
                 _eLogo.Dispose();
+                /*
+                 * Be totally safe and blank the camera.
+                 */
+                _eCamera.Get<engine.joyce.components.Camera3>().CameraMask = 0;
                 _eCamera.Dispose();
                 _eLight.Dispose();
                 _isCleared = true;
@@ -131,6 +136,30 @@ public class Scene : engine.IScene
         engine.SceneSequencer.RemoveScene(this);
     }
 
+    
+    private void _onTitleSongStarted()
+    {
+        DateTime now = DateTime.Now;
+        var timeline = Implementations.Get<engine.Timeline>();
+        timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
+        /*
+         * Fade out 4.674 after first bit of intro song. Read that one in audacity.
+         */
+        timeline.RunAt(
+            TimepointTitlesongStarted, 
+            TimeSpan.FromMilliseconds(4674),
+            _hideTitle);
+    }
+
+
+    private void _onTitleSongStopped()
+    {
+        /*
+         * After title song, introduce in-game radio.
+         */
+    }
+    
+    
     public void SceneActivate(engine.Engine engine0)
     {
         lock(_lo)
@@ -144,28 +173,16 @@ public class Scene : engine.IScene
             _aTransform = _engine.GetATransform();
 
         }
-        if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false") {
+        if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false")
+        {
             engine.Implementations.Get<Boom.Jukebox>().LoadThenPlaySong(
                 "shaklengokhsi.ogg", 0.05f, false,
-                () =>
-                {
-                    DateTime now = DateTime.Now;
-                    var timeline = Implementations.Get<engine.Timeline>();
-                    timeline.SetMarker("nogame.scenes.logos.titlesong.Started", DateTime.Now);
-                    /*
-                     * Fade out 4.674 after first bit of intro song. Read that one in audacity.
-                     */
-                    timeline.RunAt(
-                        "nogame.scenes.logos.titlesong.Started", 
-                        new TimeSpan(0, 0, 0, 4, 674),
-                        _hideTitle);
-                },
-                () =>
-                {
-                    /*
-                     * Theme song finished, start normal game playback.
-                     */
-                });
+                _onTitleSongStarted, _onTitleSongStopped);
+        }
+        else
+        {
+            _onTitleSongStarted();
+            _onTitleSongStopped();
         }
 
         /*

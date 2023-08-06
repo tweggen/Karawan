@@ -44,13 +44,35 @@ namespace Splash
         
         private float _msUploadMaterialPerFrame(in IScene scene)
         {
-            return _defaultUploadMaterialPerFrame;
+            if ((_camera3.CameraFlags & engine.joyce.components.Camera3.Flags.PreloadOnly) != 0)
+            {
+                /*
+                 * If we do not render, grant a lot of time for uploading, cause we most likely
+                 * blank for upload
+                 */
+                return 15f;
+            }
+            else
+            {
+                return _defaultUploadMaterialPerFrame;
+            }
         }
         
 
         private float _msUploadMeshPerFrame(in IScene scene)
         {
-            return _defaultUploadMeshPerFrame;
+            if ((_camera3.CameraFlags & engine.joyce.components.Camera3.Flags.PreloadOnly) != 0)
+            {
+                /*
+                 * If we do not render, grant a lot of time for uploading, cause we most likely
+                 * blank for upload
+                 */
+                return 15f;
+            }
+            else
+            {
+                return _defaultUploadMeshPerFrame;
+            }
         }
         
 
@@ -63,6 +85,7 @@ namespace Splash
         private void _renderMaterialBatchesNoLock(in IThreeD threeD, in Dictionary<AMaterialEntry, MaterialBatch> mb)
         {
             Stopwatch swUpload = new();
+            bool preloadOnly = (_camera3.CameraFlags & engine.joyce.components.Camera3.Flags.PreloadOnly) != 0;
 
             var msUploadMaterialPerFrame = _msUploadMaterialPerFrame(_scene);
             var msUploadMeshPerFrame = _msUploadMeshPerFrame(_scene);
@@ -106,16 +129,19 @@ namespace Splash
                         }
                     }
 
-                    var nMatrices = meshItem.Value.Matrices.Count;
-                    /*
-                     * I must draw using the instanced call because I only use an instanced shader.
-                     */
+                    if (!preloadOnly)
+                    {
+                        var nMatrices = meshItem.Value.Matrices.Count;
+                        /*
+                         * I must draw using the instanced call because I only use an instanced shader.
+                         */
 #if NET6_0_OR_GREATER
-                    var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
+                        var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Value.Matrices);
 #else
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
-                    threeD.DrawMeshInstanced(meshItem.Key, materialItem.Key, spanMatrices, nMatrices);
+                        threeD.DrawMeshInstanced(meshItem.Key, materialItem.Key, spanMatrices, nMatrices);
+                    }
                 }
             }
         }

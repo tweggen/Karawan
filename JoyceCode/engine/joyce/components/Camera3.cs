@@ -6,11 +6,16 @@ namespace engine.joyce.components
 {
     public struct Camera3
     {
+        public enum Flags
+        {
+            PreloadOnly = 0x00000001
+        };
+            
         public float Angle;
         public float NearFrustum;
         public float FarFrustum;
         public uint CameraMask;
-        
+        public Flags CameraFlags;
         
         public override string ToString()
         {

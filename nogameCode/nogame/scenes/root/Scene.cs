@@ -2,6 +2,7 @@
 using System;
 using System.Numerics;
 using System.Threading;
+using engine;
 using static engine.Logger;
 
 namespace nogame.scenes.root;
@@ -127,7 +128,18 @@ public class Scene : engine.IScene
         {
             --_isSettingUp;
         }
+    }
 
+
+    private void _kickoffScene()
+    {
+        _engine.QueueMainThreadAction(() =>
+        {
+            _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
+                ~engine.joyce.components.Camera3.Flags.PreloadOnly;
+            _eCamOSD.Get<engine.joyce.components.Camera3>().CameraFlags &=
+                ~engine.joyce.components.Camera3.Flags.PreloadOnly;
+        });        
     }
     
     
@@ -165,7 +177,6 @@ public class Scene : engine.IScene
         _aHierarchy = null;
         _aTransform = null;
         _engine = null;
-
     }
     
 
@@ -271,12 +282,14 @@ public class Scene : engine.IScene
 
         /*
          * Create a scene camera.
+         * Keep it invisible.
          */
         {
             _eCamScene = _engine.CreateEntity("RootScene.SceneCamera");
             var cCamScene = new engine.joyce.components.Camera3();
             cCamScene.Angle = 60.0f;
             cCamScene.NearFrustum = 1f;
+            cCamScene.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
 
             /*
              * We need to be as far away as the skycube is. Plus a bonus.
@@ -289,6 +302,7 @@ public class Scene : engine.IScene
         
         /*
          * Create an osd camera
+         * Keep it invisible.
          */
         {
             _eCamOSD = _engine.CreateEntity("RootScene.OSDCamera");
@@ -297,6 +311,7 @@ public class Scene : engine.IScene
             cCamOSD.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
             cCamOSD.FarFrustum = 100f;  
             cCamOSD.CameraMask = 0x00010000;
+            cCamOSD.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamOSD.Set(cCamOSD);
             _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));
         }
@@ -347,6 +362,15 @@ public class Scene : engine.IScene
         _engine.SetCameraEntity(_eCamScene);
         _engine.SetPlayerEntity(_partPlayerhover.GetShipEntity());
 
+        /*
+         * Finally, set the timeline trigger for unblanking the cameras and starting the show.
+         *
+         * Kick off 2 frames before nominal start.
+         */
+        Implementations.Get<Timeline>().RunAt(
+            nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
+            TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
+        
         lock (_lo)
         {
             --_isSettingUp;
