@@ -3,7 +3,7 @@
 newmtl dark(Clone)
 Kd 0 0 0
 
-newmtl metalOrange(Clone)
+newmtl primarycolor(Clone)
 Kd 0.119 0.117 0.31
 
 newmtl _defaultMat(Clone)

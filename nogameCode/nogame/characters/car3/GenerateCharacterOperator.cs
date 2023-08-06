@@ -19,6 +19,27 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     private static engine.audio.Sound[] _jCar3Sound;
 
+    private static List<string> _primarycolors = new List<string>()
+    {
+#if false
+        "#ff88ee33",
+        "#ff224411",
+        "#ff444433",
+        "#ffcc2244",
+        "#ff164734",
+        "#ff209897"
+#else
+        "#ff000000",
+        "#ff0000ff",
+        "#ff00ff00",
+        // "#ff00ffff",
+        "#ffff0000",
+        "#ffff00ff",
+        "#ffffff00"
+        //"#ffffffff"
+#endif
+    };
+
     private static engine.audio.Sound _getCar3Sound(int i)
     {
         lock (_classLock)
@@ -175,7 +196,14 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 ++_characterIndex;
                 {
                     int carIdx = (int)(_rnd.GetFloat() * 4f);
-                    Model model = await ModelCache.Instance().Instantiate($"car{5 + carIdx}.obj", new InstantiateModelParams()
+                    int colorIdx = (int)(_rnd.GetFloat() * (float)_primarycolors.Count);
+                    
+                    SortedDictionary<string, string> props = new()
+                    {
+                        ["primarycolor"] = _primarycolors[colorIdx],
+                    };
+                    Model model = await ModelCache.Instance().Instantiate(
+                        $"car{5 + carIdx}.obj", props, new InstantiateModelParams()
                     {
                         GeomFlags = 0
                                     | InstantiateModelParams.CENTER_X

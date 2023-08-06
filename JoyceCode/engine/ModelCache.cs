@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Numerics;
@@ -111,17 +112,17 @@ public class ModelCache
     }
     
 
-    private Task<(InstanceDesc InstanceDesc, ModelInfo ModelInfo)> _fromFile(string url)
+    private Task<(InstanceDesc InstanceDesc, ModelInfo ModelInfo)> _fromFile(string url, IDictionary<string, string> properties)
     {
-        return Obj.LoadModelInstance(url);
+        return Obj.LoadModelInstance(url, properties);
     }
 
 
     private async Task<Model> _obtain(
-        string url, InstantiateModelParams p)
+        string url, IDictionary<string, string> properties, InstantiateModelParams p)
     {
         var resultFromFile =
-            await _fromFile(url);
+            await _fromFile(url, properties);
 
         Model model = new Model();
         model.InstanceDesc = resultFromFile.InstanceDesc;
@@ -142,7 +143,7 @@ public class ModelCache
      * from memory.
      */
     public async Task<Model> Instantiate(
-        string url, InstantiateModelParams p)
+        string url, IDictionary<string, string> properties, InstantiateModelParams p)
     {
         string hash = _hash(url, p);
         Model model;
@@ -156,7 +157,7 @@ public class ModelCache
             if (!_cache.TryGetValue(hash, out model))
             {
                 // if value isn't cached, get it from the DB asynchronously
-                model = await _obtain(url, p).ConfigureAwait(false);
+                model = await _obtain(url, properties, p).ConfigureAwait(false);
 
                 // cache value
                 _cache.TryAdd(hash, model);

@@ -317,7 +317,7 @@ namespace nogame.parts.playerhover
                  * Heck, why are we async here?
                  */
                 Model model = Task.Run(() => ModelCache.Instance().Instantiate(
-                    "car6.obj",
+                    "car6.obj", null,
                     new InstantiateModelParams()
                     {
                         GeomFlags = 0 

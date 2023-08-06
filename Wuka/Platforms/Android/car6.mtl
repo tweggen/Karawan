@@ -1,6 +1,6 @@
 # Created by Kenney (www.kenney.nl)
 
-newmtl metalPurple(Clone)
+newmtl primarycolor(Clone)
 Kd 0.11 0.325 0.149
 
 newmtl _defaultMat(Clone)

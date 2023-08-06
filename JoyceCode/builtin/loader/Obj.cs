@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using builtin.tools.Lindenmayer;
 using ObjLoader.Loader.Loaders;
@@ -48,7 +50,13 @@ public class Obj
         return (n.Length >= 13 && n.Substring(0, 13) == "standardlight");
     }
 
-    static public void LoadModelInstanceSync(string url, 
+    static private bool _isPrimaryColorMaterialName(string n)
+    {
+        return (n.Length >= 12 && n.Substring(0, 12) == "primarycolor");
+    }
+
+    static public void LoadModelInstanceSync(string url,
+        IDictionary<string, string>? properties,
         out InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
     {
         var objLoader = _objLoaderFactory.Create(_materialStreamProvider);
@@ -66,6 +74,13 @@ public class Obj
         List<int> meshMaterials = new();
         
         List<ObjLoader.Loader.Data.Material> listMaterials = new();
+
+        string primarycolor = "";
+        if (properties != null && properties.TryGetValue("primarycolor", out var col))
+        {
+            primarycolor = col;
+        }
+        Color syscol = System.Drawing.ColorTranslator.FromHtml(primarycolor);
 
         foreach (var loadedMaterial in loadedObject.Materials)
         {
@@ -103,6 +118,21 @@ public class Obj
                 jMaterial.HasTransparency = true;
                 jMaterial.Name = "standardlight";
             }
+            else if (primarycolor.Length != 0 && _isPrimaryColorMaterialName(loadedMaterial.Name))
+            {
+                /*
+                 * Self-lighting engine.
+                 */
+                jMaterial.AlbedoColor =
+                    ((uint)syscol.B)
+                    | (((uint)syscol.G) << 8)
+                    | (((uint)syscol.R) << 16)
+                    | 0xff000000
+                    ;
+                //jMaterial.EmissiveColor = 0x00000000;
+                //jMaterial.HasTransparency = false;
+                jMaterial.Name = "primarycolor";
+            }
             else
             {
                 /*
@@ -113,6 +143,7 @@ public class Obj
                     | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
                     | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
                     | 0xff000000;
+                jMaterial.Name = loadedMaterial.Name;
             }
             materials.Add(jMaterial);
             listMaterials.Add(loadedMaterial);
@@ -209,11 +240,11 @@ public class Obj
     
     
     static public Task<(engine.joyce.InstanceDesc InstanceDesc, engine.ModelInfo ModelInfo)> 
-        LoadModelInstance(string url)
+        LoadModelInstance(string url, IDictionary<string, string> properties)
     {
         return Task.Run(() =>
         {
-            LoadModelInstanceSync(url, out var instanceDesc, out var modelInfo);
+            LoadModelInstanceSync(url, properties, out var instanceDesc, out var modelInfo);
             return (instanceDesc, modelInfo);
         });
     }   
