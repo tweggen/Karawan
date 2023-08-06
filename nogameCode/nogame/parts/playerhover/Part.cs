@@ -248,7 +248,7 @@ namespace nogame.parts.playerhover
                 
 
                 Implementations.Get<Boom.Jukebox>().LoadThenPlaySong(
-                    _getClusterSound(_currentCluster), 0.05f);
+                    _getClusterSound(_currentCluster), 0.05f, true, () => {}, () => {});
             }
 
             _eScoreDisplay.Set(new engine.draw.components.OSDText(

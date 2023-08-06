@@ -14,7 +14,7 @@ public class Jukebox
      * Without caching, first asynchronously load the uiri to a sound source,
      * then start playing.
      */
-    public void LoadThenPlaySong(string uri, float volume)
+    public void LoadThenPlaySong(string uri, float volume, bool isLooped, Action onStart, Action onStop)
     {
         lock (_lo)
         {
@@ -38,12 +38,10 @@ public class Jukebox
                 }
                 _soundCurrentSong = sound;
                 _soundCurrentSong.Volume = volume;
-                if (uri != "shaklengokhsi.ogg")
-                {
-                    _soundCurrentSong.IsLooped = true;
-                }
+                _soundCurrentSong.IsLooped = isLooped;
 
                 _soundCurrentSong.Play();
+                if (onStart != default) onStart();
             }
         });
     }

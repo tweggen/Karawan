@@ -529,10 +529,6 @@ namespace Splash.Silk
                 _iView.SwapBuffers();
                 _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
                 ++_frameNo;
-                if (2 == _frameNo)
-                {
-                    _engine.StartTimeline();
-                }
                 _engine.OnPhysicalFrame((float)dt);
 
                 break;
@@ -544,6 +540,7 @@ namespace Splash.Silk
         {
             _isRunning = false;
         }
+        
 
         private void _windowOnResize( Vector2D<int> size)
         { 
@@ -554,6 +551,7 @@ namespace Splash.Silk
             _renderer.SetDimension(size.X, size.Y);
         }
 
+        
         private void _windowOnFocusChanged(bool haveFocus)
         {
             if (haveFocus)

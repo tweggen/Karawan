@@ -228,14 +228,6 @@ namespace engine
         }
         
 
-        /**
-         * Called by platform as soon platform believes the timeline starts.
-         */
-        public void StartTimeline()
-        {
-        }
-        
-        
         private void _commitWorldRecord()
         {
             _entityCommandRecorder.Execute();
@@ -864,7 +856,10 @@ namespace engine
             _ecsWorld = new DefaultEcs.World();
             _entityCommandRecorder = new(4096, 1024*1024);
             _dictParts = new();
+            
             SceneSequencer = new(this);
+
+            Implementations.Register<engine.Timeline>(() => new engine.Timeline());
         }
     }
 }

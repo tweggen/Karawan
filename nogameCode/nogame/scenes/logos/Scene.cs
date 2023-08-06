@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using engine;
 using engine.joyce;
 using static engine.Logger;
 
@@ -22,6 +23,8 @@ public class Scene : engine.IScene
 
     private bool _isCleared = false;
 
+    private bool _shallHideTitle = false;
+
     private float _t;
 
     public void SceneOnLogicalFrame(float dt)
@@ -33,8 +36,10 @@ public class Scene : engine.IScene
             tBefore = _t;
             t = _t + dt;
         }
+        
         if (_isCleared)
         {
+            // TXWTODO: Reprogram main scened to load earlier.
             if (t > 2.0f)
             {
                 _engine.SceneSequencer.SetMainScene("root");
@@ -43,7 +48,7 @@ public class Scene : engine.IScene
         }
         else
         {
-            if (t < 1.9f)
+            if (!_shallHideTitle)
             {
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 20f + _t));
                 _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
@@ -82,6 +87,11 @@ public class Scene : engine.IScene
         }
     }
 
+
+    private void _hideTitle()
+    {
+        _shallHideTitle = true;
+    }
 
     private DefaultEcs.Entity _createLogoBoard()
     {
@@ -135,7 +145,27 @@ public class Scene : engine.IScene
 
         }
         if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false") {
-            engine.Implementations.Get<Boom.Jukebox>().LoadThenPlaySong("shaklengokhsi.ogg", 0.05f);
+            engine.Implementations.Get<Boom.Jukebox>().LoadThenPlaySong(
+                "shaklengokhsi.ogg", 0.05f, false,
+                () =>
+                {
+                    DateTime now = DateTime.Now;
+                    var timeline = Implementations.Get<engine.Timeline>();
+                    timeline.SetMarker("nogame.scenes.logos.titlesong.Started", DateTime.Now);
+                    /*
+                     * Fade out 4.674 after first bit of intro song. Read that one in audacity.
+                     */
+                    timeline.RunAt(
+                        "nogame.scenes.logos.titlesong.Started", 
+                        new TimeSpan(0, 0, 0, 4, 674),
+                        _hideTitle);
+                },
+                () =>
+                {
+                    /*
+                     * Theme song finished, start normal game playback.
+                     */
+                });
         }
 
         /*
