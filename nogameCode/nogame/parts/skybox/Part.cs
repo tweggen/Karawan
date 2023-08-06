@@ -17,6 +17,17 @@ namespace nogame.parts.skybox
         private DefaultEcs.Entity _eSkybox;
 
 
+        /**
+         * This part does not implement a specific input event handler.
+         */
+        public void PartOnKeyEvent(engine.news.KeyEvent keyEvent)
+        {
+            /*
+             * Nothing done here.
+             */
+        }
+
+    
         public void PartDeactivate()
         {
             _engine.RemovePart(this);

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Threading;
+using System.Threading.Tasks;
 using DefaultEcs;
 using engine.world;
 using static engine.Logger;
@@ -59,8 +60,7 @@ namespace engine
         
         public event EventHandler<float> LogicalFrame;
         public event EventHandler<float> PhysicalFrame;
-        public event EventHandler<string> KeyPress;
-        public event EventHandler<string> KeyRelease;
+        public event EventHandler<engine.news.KeyEvent> KeyEvent;
         public event EventHandler<Vector2> OnTouchPress;
         public event EventHandler<Vector2> OnTouchRelease;
 
@@ -620,15 +620,47 @@ namespace engine
         }
 
 
-        public void TakeKeyPress(string code)
+        public void TakeKeyEvent(engine.news.KeyEvent keyEvent)
         {
-            KeyPress?.Invoke(this, code);
-        }
+            /*
+             * We need to propagate the event through all of the parts z order.
+             */
+            List<engine.IPart> listParts;
+            lock (_lo)
+            {
+                listParts = new List<engine.IPart>(_dictParts.Values);
+            }
 
+            /*
+             * Now run distribution of key events in a dedicated task.
+             * TXWTODO: This may become out of order, until we have a proper global event queue.
+             */
+            if (keyEvent.IsHandled)
+            {
+                Trace($"KeyEvent {keyEvent} not dispatched at all, already handled from the beginning.");
+                return;
+            }
 
-        public void TakeKeyRelease(string code)
-        {
-            KeyRelease?.Invoke(this, code);
+            Task.Run(() =>
+            {
+                foreach (var part in listParts)
+                {
+                    try
+                    {
+                        part.PartOnKeyEvent(keyEvent);
+                    }
+                    catch (Exception e)
+                    {
+                        Error($"Exception handling key event by part {part}: {e}.");
+                    }
+
+                    if (keyEvent.IsHandled)
+                    {
+                        Trace($"Key event {keyEvent} was handled by part {part}.");
+                        break;
+                    }
+                }
+            });
         }
 
 

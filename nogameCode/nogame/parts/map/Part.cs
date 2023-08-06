@@ -63,9 +63,16 @@ public class Part : IPart
                 new Quaternion(0f,0f,0f,1f),
                 new Vector3(0f, 0f, -1f));
         }
-
-        
     }
+
+    
+    public void PartOnKeyEvent(engine.news.KeyEvent keyEvent)
+    {
+        /*
+         * Nothing to do yet.
+         */
+    }
+    
 
     public void PartDeactivate()
     {
@@ -79,7 +86,7 @@ public class Part : IPart
         _engine = engine0;
         _needResources();
         _engine.GetATransform().SetVisible(_eMap, true);
-        _engine.AddPart(-200, scene0, this);
+        _engine.AddPart(200, scene0, this);
     }
 
 }

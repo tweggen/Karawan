@@ -32,6 +32,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\WASDPhysics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\skybox\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\logos\Scene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\KeyHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\systems\CubeSpinnerSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\ElevationBaseFactory.cs" />
