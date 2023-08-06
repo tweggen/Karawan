@@ -407,6 +407,18 @@ public class SilkThreeD : IThreeD
         {
             Matrix4x4 mvp = _matView * _matProjection;
             sh.SetUniform("mvp", mvp);
+            if (skMeshEntry.JMesh.Vertices.Count > 65535)
+            {
+                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
+            }
+            if (skMeshEntry.JMesh.Indices.Count > 65535)
+            {
+                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
+            }
+            if (nMatrices > 1023)
+            {
+                Error($"Trying to render too much mesh instances at once ({nMatrices})");
+            }
             gl.DrawElementsInstanced(
                 PrimitiveType.Triangles,
                 (uint)skMeshEntry.JMesh.Indices.Count,
@@ -416,6 +428,15 @@ public class SilkThreeD : IThreeD
         }
         else
         {
+            if (skMeshEntry.JMesh.Vertices.Count > 65535)
+            {
+                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
+            }
+            if (skMeshEntry.JMesh.Indices.Count > 65535)
+            {
+                Error($"Trying to render too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
+            }
+
             for (int i = 0; i < nMatrices; ++i)
             {
                 Matrix4x4 mvpi = Matrix4x4.Transpose(spanMatrices[i]) * _matView * _matProjection;
