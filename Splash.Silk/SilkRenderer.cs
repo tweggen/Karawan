@@ -164,9 +164,8 @@ namespace Splash.Silk
             _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
             _silkThreeD.CheckError("glBindFramebuffer");
             _nailViewport(true);
-            _skShaderEntry = _silkThreeD.GetInstanceShaderEntry(); 
-            _gl.UseProgram(_skShaderEntry.SkShader.Handle);
-            _silkThreeD.CheckError("Use Shader");
+            _skShaderEntry = _silkThreeD.GetInstanceShaderEntry();
+            _skShaderEntry.SkShader.Use();
             _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
             // _gl.UseProgram(0);
             _renderParts(renderFrame.RenderParts);

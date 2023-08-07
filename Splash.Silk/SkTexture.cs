@@ -263,6 +263,11 @@ public class SkTexture : IDisposable
     {
         _gl.ActiveTexture(textureSlot);
         CheckError("ActiveTexture {texureSlot}");
+        if (!_liveData)
+        {
+            Error($"Live handle for texture {_liveHandle} does not have data.");
+            return;
+        }
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
         if (0 == CheckError("BindAndActive Texture"))
         {

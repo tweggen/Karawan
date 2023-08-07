@@ -355,14 +355,16 @@ public class SilkThreeD : IThreeD
          * call. Usually it does because we already group
          * calls by material.
          */
-        _loadMaterialToShader(sh, (SkMaterialEntry)aMaterialEntry);
+        _loadMaterialToShader(sh, skMaterialEntry);
 
         /*
          * Load the mesh, if it changed since the last call.
          */
         if (!skMeshEntry.IsUploaded())
         {
-            skMeshEntry.Upload(gl);
+            Error("Mesh should have been uploaded by now.");
+            // skMeshEntry.Upload(gl);
+            return;
         }
 
         /*
