@@ -16,13 +16,15 @@ namespace Splash.Silk
 
         private static int _nMeshes = 0;
 
+        private bool _traceMesh = false;
+
         /**
          * Upload the mesh to the GPU.
          */
         public void Upload(in GL gl)
         {
             vao = new VertexArrayObject(gl, this);
-            Trace($"Uploaded Mesh vaoId={vao.Handle}");
+            if (_traceMesh) Trace($"Uploaded Mesh vaoId={vao.Handle}");
             ++_nMeshes;
             if (_nMeshes > 2000)
             {
@@ -38,7 +40,7 @@ namespace Splash.Silk
         public void Release(in GL gl)
         {
             _isUploaded = false;
-            Trace($"Releasing Mesh vaoId={vao.Handle}");
+            if (_traceMesh) Trace($"Releasing Mesh vaoId={vao.Handle}");
             vao.Dispose();
             vao = null;
             --_nMeshes;

@@ -266,12 +266,12 @@ public class Scene : engine.IScene
          */
         {
             _eLightMain = _engine.CreateEntity("RootScene.DirectionalLight");
-            _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0f, 1f, 1f, 0.0f)));
+            _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.7f, 0.8f, 0.9f, 0.0f)));
             _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
         }
         {
             _eLightBack = _engine.CreateEntity("RootScene.OtherLight");
-            _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(1.0f, 1.1f, 0.0f, 0.0f)));
+            _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.2f, 0.2f, 0.0f, 0.0f)));
             _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
         }
         

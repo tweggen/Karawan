@@ -711,7 +711,7 @@ namespace engine.streets
                 (name) => new Material()
                 {
                     AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
-                        ? 0xffff0000 : 0xff888888,
+                        ? 0x00000000 : 0xff888888,
                     Texture = new engine.joyce.Texture("streets1to4.png")
                 });
         }
