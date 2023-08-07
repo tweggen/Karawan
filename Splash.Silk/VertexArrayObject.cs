@@ -75,7 +75,7 @@ public class VertexArrayObject : IDisposable
             false,
             0,
             (void*) 0);
-        _bIndices.BindBuffer();
+        //_bIndices.BindBuffer();
         _gl.VertexAttrib4(4, new Vector4(1f, 1f, 1f, 1f));
         _gl.DisableVertexAttribArray(4);
     }
@@ -85,6 +85,7 @@ public class VertexArrayObject : IDisposable
     {
         //Binding the vertex array.
         _gl.BindVertexArray(_handle);
+        _bIndices.BindBuffer();
     }
 
     public void Dispose()

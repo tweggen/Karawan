@@ -23,7 +23,7 @@ public class SkTexture : IDisposable
 
     private bool _doFilter = false;
 
-    private bool _traceTexture = true;
+    private bool _traceTexture = false;
     
     /*
      * Data generation that had been uploaded.

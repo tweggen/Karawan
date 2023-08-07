@@ -61,6 +61,26 @@ public class SilkThreeD : IThreeD
     private readonly engine.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
     
     
+    public int CheckError(string what)
+    {
+        int err = 0;
+        while (true)
+        {
+            var error = _gl.GetError();
+            if (error != GLEnum.NoError)
+            {
+                Error($"Found OpenGL {what} error {error}");
+                err += (int)error;
+            }
+            else
+            {
+                // Console.WriteLine($"OK: {what}");
+                return err;
+            }
+        }
+    }
+    
+    
     // Create a light and get shader locations
     private void _compileLightLocked(
         in LightShaderPos lightShaderPos, int lightIndex, ref SkShader sh)
@@ -322,10 +342,10 @@ public class SilkThreeD : IThreeD
     public void FinishUploadOnly(in AMeshEntry aMeshEntry)
     {
         // TXWTODO: Some of these calls have been required.
-        SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
-        skMeshEntry.vao.BindVertexArray();
-        _gl.BindVertexArray(0);
-        _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+        // SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
+        // skMeshEntry.vao.BindVertexArray();
+        // _gl.BindVertexArray(0);
+        // _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
     }
     
@@ -377,16 +397,16 @@ public class SilkThreeD : IThreeD
         if (_useInstanceRendering)
         {
             skMeshEntry.vao.BindVertexArray();
-            // CheckError("Bind Vertex Array");
+            CheckError("Bind Vertex Array");
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
-            // CheckError("New Buffer Object");
+            CheckError("New Buffer Object");
             bMatrices.BindBuffer();
-            // CheckError("Bind Buffer");
+            CheckError("Bind Buffer");
             uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
             for (uint i = 0; i < 4; ++i)
             {
                 gl.EnableVertexAttribArray(locInstanceMatrices + i);
-                // CheckError("Enable vertex array in instances");
+                CheckError("Enable vertex array in instances");
                 gl.VertexAttribPointer(
                     locInstanceMatrices + i,
                     4,
@@ -395,16 +415,22 @@ public class SilkThreeD : IThreeD
                     16 * (uint)sizeof(float),
                     (void*)(sizeof(float) * i * 4)
                 );
-                // CheckError("Enable vertex attribute pointer n");
+                CheckError("Enable vertex attribute pointer n");
                 gl.VertexAttribDivisor(locInstanceMatrices + i, 1);
-                // CheckError("attrib divisor");
+                CheckError("attrib divisor");
             }
 
             /*
              * Disable buffers again.
+             * TXWTODO: Why that????
              */
-            gl.BindVertexArray(0);
-            gl.BindBuffer(GLEnum.ArrayBuffer, 0);
+            // gl.BindVertexArray(0);
+            // gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
+        }
+        else
+        {
+            skMeshEntry.vao.BindVertexArray();
+            CheckError("instance vertex array bind");
         }
         
         /*
@@ -412,8 +438,6 @@ public class SilkThreeD : IThreeD
          * We need a combined view and projection matrix
          */
 
-        skMeshEntry.vao.BindVertexArray();
-        // CheckError("instance vertex array bind");
 
         // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
@@ -465,10 +489,10 @@ public class SilkThreeD : IThreeD
             }
         }
         
-        _unloadMaterialFromShader();
         gl.BindVertexArray(0);
         gl.BindBuffer( GLEnum.ArrayBuffer, 0);
         gl.BindBuffer( GLEnum.ElementArrayBuffer, 0);
+        _unloadMaterialFromShader();
         
         // TXWTODO: Shall we really always disable the current program?
         // gl.UseProgram(0);
@@ -675,25 +699,7 @@ public class SilkThreeD : IThreeD
         _matProjection = matProjection;
     }
 
-    public int CheckError(string what)
-    {
-        while (true)
-        {
-            var error = _gl.GetError();
-            if (error != GLEnum.NoError)
-            {
-                Error($"Found OpenGL {what} error {error}");
-            }
-            else
-            {
-                // Console.WriteLine($"OK: {what}");
-                return 0;
-            }
-        }
-    }
-
-
-
+    
     public void SetGL(in GL gl)
     {
         _gl = gl;
@@ -707,8 +713,7 @@ public class SilkThreeD : IThreeD
             Trace($"Preferred format is {value}.");
         }
 #endif
-
-
+        
         _gl.Enable(EnableCap.CullFace);
         _gl.CullFace(TriangleFace.Back);
         _gl.FrontFace(FrontFaceDirection.Ccw);
@@ -718,7 +723,6 @@ public class SilkThreeD : IThreeD
         _gl.Enable(EnableCap.DepthTest);
         _gl.Disable(EnableCap.ScissorTest);
         _gl.Disable(EnableCap.StencilTest);
-
     }
 
     public GL GetGL()
