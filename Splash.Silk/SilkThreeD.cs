@@ -315,9 +315,11 @@ public class SilkThreeD : IThreeD
         gl.ActiveTexture(TextureUnit.Texture0);
         CheckError("unload ActiveTexture0");
         gl.BindTexture(TextureTarget.Texture2D, 0);
+        CheckError("unbund texturetarget 0");
         gl.ActiveTexture(TextureUnit.Texture2);
         CheckError("unload ActiveTexture2");
         gl.BindTexture(TextureTarget.Texture2D, 0);
+        CheckError("unbund texturetarget 2");
     }
 
 
@@ -392,6 +394,7 @@ public class SilkThreeD : IThreeD
          * 2) upload the matrix instance buffer.
          */
 
+        // TXWTODO: Only re-bind it if it has changed since the last call.
         BufferObject<Matrix4x4>? bMatrices = null;
 
         if (_useInstanceRendering)

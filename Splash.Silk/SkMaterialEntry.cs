@@ -34,7 +34,6 @@ namespace Splash.Silk
         public SkMaterialEntry(in engine.joyce.Material jMaterial)
             : base(jMaterial)
         {
-            //RlMaterial.shader.id = 0xffffffff;
         }
     }
 }

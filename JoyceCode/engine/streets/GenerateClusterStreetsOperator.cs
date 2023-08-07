@@ -12,7 +12,7 @@ namespace engine.streets
         static private object _lock = new();
 
         private ClusterDesc _clusterDesc;
-        private engine.RandomSource _rnd;
+        // private engine.RandomSource _rnd;
         private string _myKey;
         private bool _traceStreets = false;
 
@@ -693,7 +693,8 @@ namespace engine.streets
 
             // var mol = new engine.SimpleMolecule( [g] );
             // TXWTODO: This is too inefficient. We should also use a factory here.
-            engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("engine.streets.materials.street"), g));
+            var matmesh = new MatMesh(MaterialCache.Get("engine.streets.materials.street"), g);
+            engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh);
             worldFragment.AddStaticInstance("engine.streets.streets", instanceDesc);
         });
 
@@ -705,7 +706,6 @@ namespace engine.streets
         {
             _clusterDesc = clusterDesc;
             _myKey = strKey;
-            _rnd = new engine.RandomSource(strKey);
 
             MaterialCache.Register("engine.streets.materials.street",
                 (name) => new Material()
