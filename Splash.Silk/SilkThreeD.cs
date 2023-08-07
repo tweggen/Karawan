@@ -160,6 +160,8 @@ public class SilkThreeD : IThreeD
         {
             return;
         }
+
+        sh.Use();
         _applyAllLights(listLights, ref sh);
         CheckError( "applyAllLights");
     }
@@ -673,19 +675,22 @@ public class SilkThreeD : IThreeD
 
     public int CheckError(string what)
     {
-        var error = _getGL().GetError();
-        if (error != GLEnum.NoError)
+        while (true)
         {
-            Error( $"Found OpenGL {what} error {error}" );
-            return -1;
-            // ErrorThrow( $"{name}: Found OpenGL error {error}", m => new InvalidOperationException(m));
-        }
-        else
-        {
-            // Console.WriteLine($"OK: {what}");
-            return 0;
+            var error = _gl.GetError();
+            if (error != GLEnum.NoError)
+            {
+                Error($"Found OpenGL {what} error {error}");
+            }
+            else
+            {
+                // Console.WriteLine($"OK: {what}");
+                return 0;
+            }
         }
     }
+
+
 
     public void SetGL(in GL gl)
     {

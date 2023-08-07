@@ -148,6 +148,7 @@ namespace Splash.Silk
             if (force || _vLastGlSize != _vViewSize)
             {
                 _gl.Viewport(0, 0, (uint)_vViewSize.X, (uint)_vViewSize.Y);
+                _silkThreeD.CheckError($"glViewport {_vViewSize}");
                 _vLastGlSize = _vViewSize;
             }
         }
@@ -156,13 +157,16 @@ namespace Splash.Silk
         public void RenderFrame(in RenderFrame renderFrame)
         {
             _gl = _silkThreeD.GetGL();
+            
             /*
              * Switch to the main viewport.
              */
             _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
+            _silkThreeD.CheckError("glBindFramebuffer");
             _nailViewport(true);
             _skShaderEntry = _silkThreeD.GetInstanceShaderEntry(); 
             _gl.UseProgram(_skShaderEntry.SkShader.Handle);
+            _silkThreeD.CheckError("Use Shader");
             _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
             // _gl.UseProgram(0);
             _renderParts(renderFrame.RenderParts);

@@ -16,6 +16,25 @@ public class SkShader : IDisposable
     {
         get => _handle;
     }
+    
+    
+    public int CheckError(string what)
+    {
+        while (true)
+        {
+            var error = _gl.GetError();
+            if (error != GLEnum.NoError)
+            {
+                Error($"Found OpenGL {what} error {error}");
+            }
+            else
+            {
+                // Console.WriteLine($"OK: {what}");
+                return 0;
+            }
+        }
+    }
+
 
     public SkShader(GL gl, string vertexSource, string fragmentSource)
     {
@@ -26,12 +45,17 @@ public class SkShader : IDisposable
         uint fragment = LoadShaderSource(ShaderType.FragmentShader, fragmentSource);
         //Create the shader program.
         _handle = _gl.CreateProgram();
+        CheckError("glCreateProgram.");
         //Attach the individual shaders.
         _gl.AttachShader(_handle, vertex);
+        CheckError($"glAttachShader {_handle} vertex .");
         _gl.AttachShader(_handle, fragment);
+        CheckError($"glAttachShader {_handle} fragment .");
         _gl.LinkProgram(_handle); 
+        CheckError($"glLinkProgram {_handle}.");
         //Check for linking errors.
         _gl.GetProgram(_handle, GLEnum.LinkStatus, out var status);
+        CheckError($"glGetProgram LinkStatus {_handle}.");
         if (status == 0)
         {
             throw new Exception($"Program failed to link with error: {_gl.GetProgramInfoLog(_handle)}");
@@ -40,16 +64,22 @@ public class SkShader : IDisposable
         _debuggingHook();
         //Detach and delete the shaders
         _gl.DetachShader(_handle, vertex);
+        CheckError($"glDetachShader vertex {_handle}.");
         _gl.DetachShader(_handle, fragment);
+        CheckError($"glDetachShader fragment {_handle}.");
         _gl.DeleteShader(vertex);
+        CheckError($"glDeleteShader vertex.");
         _gl.DeleteShader(fragment);
+        CheckError($"glDeleteShader fragment.");
     }
 
     public void _debuggingHook()
     {
         string[] uniforms = new string[]
         {
-            "mvp", "texture0", "texture2", "col4Diffuse", "col4Ambient", "v3AbsPosView"
+            "mvp", "texture0", "texture2",
+            "col4Diffuse", "col4Emissive", "col4EmissiveFactors",
+            "col4Ambient", "v3AbsPosView"
         };
         foreach (var name in uniforms)
         {
@@ -60,7 +90,9 @@ public class SkShader : IDisposable
         string[] attribs = new string[]
         {
             "vertexPosition", "vertexTexCoord", "vertexTexCoord2",
-            "vertexNormal", "vertexColor", "instanceTransform"
+            "vertexNormal", "vertexColor", "instanceTransform",
+            "fragPosition", "fragTexCoord", "fragTexCoord2",
+            "fragColor", "fragNormal"
         };
         foreach (var name in attribs)
         {
@@ -72,8 +104,14 @@ public class SkShader : IDisposable
 
     public void Use()
     {
+        
         //Using the program
         _gl.UseProgram(_handle);
+        var err = _gl.GetError();
+        if (err != GLEnum.NoError)
+        {
+            Error($"Error using shader {_handle}: {err}");
+        }
     }
 
     public void SetUniform(int location, int value)
@@ -199,6 +237,7 @@ public class SkShader : IDisposable
     {
         //Remember to delete the program when we are done.
         _gl.DeleteProgram(_handle);
+        CheckError($"glDeleteProgram {_handle}.");
     }
 
     private uint LoadShaderSource(ShaderType type, string source)
@@ -210,9 +249,13 @@ public class SkShader : IDisposable
         //4) Compile the shader.
         //5) Check for errors.
         uint handle = _gl.CreateShader(type);
+        CheckError($"glCreateShader {type}.");
         _gl.ShaderSource(handle, source);
+        CheckError($"glShaderSource {handle}.");
         _gl.CompileShader(handle);
+        CheckError($"glCompileShader {handle}.");
         string infoLog = _gl.GetShaderInfoLog(handle);
+        CheckError($"glGetShaderInfoLog {handle}.");
         if (!string.IsNullOrWhiteSpace(infoLog))
         {
             ErrorThrow($"Error compiling shader of type {type}, failed with error {infoLog}", (m)=>new InvalidExpressionException(m));

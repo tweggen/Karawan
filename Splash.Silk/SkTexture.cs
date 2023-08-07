@@ -23,6 +23,8 @@ public class SkTexture : IDisposable
 
     private bool _doFilter = false;
 
+    private bool _traceTexture = true;
+    
     /*
      * Data generation that had been uploaded.
      */
@@ -43,46 +45,80 @@ public class SkTexture : IDisposable
         get => _liveHandle;
     }
 
+
+    public uint UploadHandle
+    {
+        /*
+         * We do not use a mutex because we knoe that an 32bit assignment is reasonably atomic.
+         */
+        get => _backHandle;
+    }
+    
+    
+
+    private void _trace(string msg)
+    {
+        if (_traceTexture)
+        {
+            Trace(msg);
+        }
+    }
+    
+    
     public int CheckError(string what)
     {
-        var error = _gl.GetError();
-        if (error != GLEnum.NoError)
+        int err = 0;
+        while (true)
         {
-            Error($"Found OpenGL {what} error {error}");
-            return -(int)error;
-        }
-        else
-        {
-            // Console.WriteLine($"OK: {what}");
-            return 0;
+            var error = _gl.GetError();
+            if (error != GLEnum.NoError)
+            {
+                Error($"Found OpenGL {what} error {error}");
+                err += (int)error;
+            }
+            else
+            {
+                // Console.WriteLine($"OK: {what}");
+                return err;
+            }
         }
     }
 
 
     private void _setParameters()
     {
+        _trace("_setParameters");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        CheckError("TexParam WrapS");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        CheckError("TexParam WrapT");
 
         if (_doFilter)
         {
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter,
                 (int)GLEnum.LinearMipmapLinear);
+            CheckError("TexParam MinFilter");
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+            CheckError("TexParam MagFilter");
         }
         else
         {
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+            CheckError("TexParam MinFilter");
             _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+            CheckError("TexParam MagFilter");
         }
 
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
+        CheckError("TexParam BaseLevel");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 8);
+        CheckError("TexParam MAxLevel");
     }
 
 
     private void _generateMipmap()
     {
+        _trace("generate mipmap");
         _gl.GenerateMipmap(TextureTarget.Texture2D);
         CheckError("GenerateMipMap");
     }
@@ -90,6 +126,7 @@ public class SkTexture : IDisposable
 
     private void _backToLive()
     {
+        _trace("backToLive");
         var local = _liveHandle;
         var localBound = _liveBound;
         var localGenerated = _liveGenerated;
@@ -107,11 +144,13 @@ public class SkTexture : IDisposable
 
     private void _allocateBack()
     {
+        _trace("_allocateBack");
         if (_backGenerated)
         {
             Trace("Already had been generated.");
         }
         _backHandle = _gl.GenTexture();
+        _trace($"_allocateBack handle {_backHandle}");
         _backGenerated = true;
         _bindBack();
         _setParameters();
@@ -120,6 +159,7 @@ public class SkTexture : IDisposable
 
     private void _checkReloadTexture()
     {
+        _trace("_checkReload");
         if (_backHandle == 0xffffffff)
         {
             Trace("(First) reload detected. Will allocate back buffer texture.");
@@ -130,7 +170,7 @@ public class SkTexture : IDisposable
 
     public unsafe void SetFrom(string path)
     {
-        // Trace("Creating new Texture from path {path}");
+        _trace($"Creating new Texture from path {path}");
 
         _checkReloadTexture();
         _bindBack();
@@ -152,6 +192,8 @@ public class SkTexture : IDisposable
                         {
                             _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1,
                                 PixelFormat.Rgba, PixelType.UnsignedByte, data);
+                            CheckError("TexParam SubImage2D {y}");
+
                         }
                     }
                 });
@@ -180,7 +222,7 @@ public class SkTexture : IDisposable
     public unsafe void SetFrom(
         uint generation, Span<byte> data, uint width, uint height)
     {
-        // Trace($"Creating new Texture from Span {width}x{height}");
+        _trace($"Creating new Texture from Span {width}x{height}");
         if (_generation == generation)
         {
             Warning($"Superfluous call to SetFrom from Span, identical generation {generation}.");
@@ -205,12 +247,14 @@ public class SkTexture : IDisposable
 
     public unsafe void SetFrom(uint width, uint height)
     {
-        // Trace($"Creating new Texture {width}x{height}");
+        _trace($"Creating new Texture {width}x{height}");
         _checkReloadTexture();
         _bindBack();
         _backData = true;
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba,
             PixelType.UnsignedByte, null);
+        CheckError("TexImage2D black");
+
         _generateMipmap();
     }
 
@@ -218,7 +262,7 @@ public class SkTexture : IDisposable
     public void BindAndActive(TextureUnit textureSlot)
     {
         _gl.ActiveTexture(textureSlot);
-        CheckError("ActiveTexture");
+        CheckError("ActiveTexture {texureSlot}");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
         if (0 == CheckError("BindAndActive Texture"))
         {
@@ -228,10 +272,13 @@ public class SkTexture : IDisposable
 
     private void _bindBack()
     {
+        _trace("_bindBack");
         bool isUnbound = false;
         if (_backBound)
         {
+            _trace("unbind old");
             _gl.BindTexture(TextureTarget.Texture2D, 0);
+            CheckError("unbind Texture2D");
             _backBound = false;
             isUnbound = true;
         }
@@ -240,6 +287,7 @@ public class SkTexture : IDisposable
         //{
         //    return;
         //}
+        _trace($"bind {_backHandle}");
         _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
         int err = CheckError("_bindBack Texture");
         if (err<0)
@@ -255,6 +303,7 @@ public class SkTexture : IDisposable
 
     public void Dispose()
     {
+        _trace($"Dispose {_liveHandle} and {_backHandle}");
         _gl.DeleteTexture(_liveHandle);
         _liveHandle = 0xffffffff;
         _liveBound = false;
@@ -268,6 +317,7 @@ public class SkTexture : IDisposable
 
     public unsafe SkTexture(GL gl, bool doFilter)
     {
+        _trace("SkTexture");
         _gl = gl;
         _doFilter = doFilter;
         _allocateBack();
