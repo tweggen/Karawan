@@ -145,6 +145,11 @@ public class Obj
                     | 0xff000000;
                 jMaterial.Name = loadedMaterial.Name;
             }
+
+            /*
+             * Find the common version of the material instead of creating a new one.
+             */
+            jMaterial = MaterialCache.Instance.FindMaterial(jMaterial);
             materials.Add(jMaterial);
             listMaterials.Add(loadedMaterial);
         }

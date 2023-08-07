@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DefaultEcs;
 
 namespace engine.joyce
 {
@@ -18,6 +20,26 @@ namespace engine.joyce
         public bool UploadImmediately = false;
 
         public string Name = "(unnamed)";
+
+        public bool IsSameAs(in Material other)
+        {
+            return true
+                   && Texture == other.Texture
+                   && EmissiveTexture == other.EmissiveTexture
+                   && AlbedoColor == other.AlbedoColor
+                   && EmissiveColor == other.EmissiveColor
+                   && EmissiveFactors == other.EmissiveFactors
+                   && HasTransparency == other.HasTransparency
+                   && IsBillboardTransform == other.IsBillboardTransform
+                   && UploadImmediately == other.UploadImmediately;
+        }
+
+        public override string ToString()
+        {
+            return
+                $"Texture: {{ {Texture} }}, EmissiveTexture: {{ {EmissiveTexture} }}, AlbedoColor: {AlbedoColor}, EmissiveColor: {EmissiveColor}, EmissiveFactors: {EmissiveFactors}, HasTransparency: {HasTransparency}, IsBillboardTransform: {IsBillboardTransform}";
+        }
+        
         
         public Material(in Texture texture) 
         { 

@@ -8,7 +8,7 @@ internal class MaterialEntry
 {
     public object Lock;
     public string Name;
-    public Func<string, Material> FactoryFunction;
+    public Func<string, Material>? FactoryFunction;
     public Material Instance;
 }
 
@@ -20,6 +20,28 @@ public class MaterialCache
     private object _lo = new();
     private SortedDictionary<string, MaterialEntry> _mapMaterials = new();
 
+
+    public Material FindMaterial(in Material referenceMaterial)
+    {
+        string key = referenceMaterial.ToString();
+        lock (_lo)
+        {
+            if (_mapMaterials.TryGetValue(key, out var me))
+            {
+                return me.Instance;
+            }
+            MaterialEntry instanceEntry = new()
+            {
+                Lock = new(),
+                Name = referenceMaterial.Name,
+                FactoryFunction = null,
+                Instance = referenceMaterial
+            };
+            _mapMaterials[key] = instanceEntry;
+            return referenceMaterial;
+        }
+    }
+    
     
     public void RegisterFactory(string name, Func<string, Material> factory)
     {
