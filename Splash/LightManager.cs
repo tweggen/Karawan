@@ -1,5 +1,7 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Numerics;
+using static engine.Logger;
 
 namespace Splash
 {
@@ -70,6 +72,7 @@ namespace Splash
             {
                 if (_lightsCount==MAX_LIGHTS)
                 {
+                    Warning("Out of lights.");
                     break;
                 }
 
@@ -96,6 +99,7 @@ namespace Splash
             {
                 if (_lightsCount == MAX_LIGHTS)
                 {
+                    Warning("Out of lights.");
                     break;
                 }
 

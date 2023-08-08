@@ -22,6 +22,6 @@ public class TitleCard
     public engine.joyce.Texture AlbedoTexture;
     public engine.joyce.Texture EmissiveTexture;
     
-    public Vector2 PosUV = Vector2.Zero;
-    public Vector2 SizeUV = Vector2.One;
+    public Vector2 PosUV = new Vector2(0f, 1f);
+    public Vector2 SizeUV = new Vector2(1f, -1f);
 }

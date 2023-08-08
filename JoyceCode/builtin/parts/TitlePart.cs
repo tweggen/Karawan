@@ -25,6 +25,7 @@ class ActiveCardEntry
 public class TitlePart : engine.IPart
 {
     private object _lo = new();
+    private static int idx = 0;
     private engine.Engine _engine;
     private engine.IScene _scene;
 
@@ -40,7 +41,7 @@ public class TitlePart : engine.IPart
                 card.StartTransform.Rotation, card.EndTransform.Rotation,
                 (float)t),
             card.StartTransform.Position +
-            (card.EndTransform.Position - card.StartTransform.Position) * (float)t
+            (card.EndTransform.Position - card.StartTransform.Position) * ((float)t/1000f)
         );
     }
 
@@ -55,6 +56,7 @@ public class TitlePart : engine.IPart
         engine.joyce.Mesh mesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
             "TitleCard", card.Size, card.PosUV, card.SizeUV with { Y = 0 }, card.SizeUV with { X = 0 }
         );
+        mesh.UploadImmediately = true;
         engine.joyce.Material mat = new()
         {
             Texture = card.AlbedoTexture,
@@ -73,8 +75,8 @@ public class TitlePart : engine.IPart
         _engine.QueueEntitySetupAction("titlecard", (DefaultEcs.Entity entity) =>
         {
             ace.Entity = entity;
+            _engine.GetATransform().SetTransforms(entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
             entity.Set(new engine.joyce.components.Instance3(ace.InstanceDesc));
-            entity.Set(t3);
             lock (_lo)
             {
                 _dictCards.Add(card, ace);
@@ -90,12 +92,14 @@ public class TitlePart : engine.IPart
         lock (_lo)
         {
             _dictCards.TryGetValue(card, out ace);
+            _dictCards.Remove(card);
         }
 
         if (ace != null)
         {
             _engine.QueueMainThreadAction(() =>
             {
+                ace.Entity.Disable();
                 ace.Entity.Dispose();
                 // ace.InstanceDesc.Dispose();
             });
@@ -119,9 +123,9 @@ public class TitlePart : engine.IPart
         DateTime now = DateTime.Now;
         foreach (var ace in activeCards)
         {
-            float t = (float)(ace.StartTime - now).TotalMilliseconds;
+            float t = (float)(now- ace.StartTime).TotalMilliseconds;
             _computeTransformAt(ace.Card, t, out engine.transform.components.Transform3 t3);
-            ace.Entity.Set(t3);
+            _engine.GetATransform().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
         }
     }
 
@@ -146,7 +150,7 @@ public class TitlePart : engine.IPart
         _scene = scene0;
         _engine = engine0;
 
-        _engine.AddPart(500, _scene, this);
+        _engine.AddPart(500+((float)idx++ / 1000f), _scene, this);
 
         var timeline = Implementations.Get<Timeline>();
 

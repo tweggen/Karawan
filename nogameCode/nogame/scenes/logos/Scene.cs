@@ -53,30 +53,11 @@ public class Scene : engine.IScene
             if (!_shallHideTitle)
             {
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 20f + _t));
-                _aTransform.SetRotation(_eLogo, Quaternion.CreateFromAxisAngle(new Vector3(0.1f, 0.9f, 0f), (t - 1f) * 2f * (float)Math.PI / 180f));
-                _aTransform.SetPosition(_eLight, new Vector3(-10f + 30f * t, 0f, 25f));
-
-                if (t >= 0.5f)
-                {
-                    _aTransform.SetVisible(_eLogo, true);
-                    if (_engine.IsLoading())
-                    {
-                        /*
-                         * Wait with the timeline until the scene is loaded.
-                         */
-                        t = 0.5f;
-                    }
-                    else
-                    {
-                        t = t;
-                    }
-                }
-
+                _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
             }
             else
             {
                 _t = 0f;
-                _eLogo.Dispose();
                 /*
                  * Be totally safe and blank the camera.
                  */
@@ -97,27 +78,6 @@ public class Scene : engine.IScene
     private void _hideTitle()
     {
         _shallHideTitle = true;
-    }
-
-    private DefaultEcs.Entity _createLogoBoard()
-    {
-        Vector2 vSize = new(16f, 16f);
-        var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh("joycelogo",vSize);
-        jMesh.UploadImmediately = true;
-        var jMaterial = new engine.joyce.Material();
-        jMaterial.UploadImmediately = true;
-        jMaterial.Texture = new engine.joyce.Texture("logos.joyce.albedo-joyce-engine.png");
-        jMaterial.EmissiveTexture = new engine.joyce.Texture("logos.joyce.emissive-joyce-engine.png");
-        var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(jMaterial, jMesh));
-
-        var entity = _engine.CreateEntity("LogoBoard");
-        entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-        _aTransform.SetTransforms(
-            entity, false, 0x00010000,
-            new Quaternion(0f, 0f, 0f, 1f),
-            new Vector3(0f, 0f, 0f));
-        return entity;
-
     }
 
     public void SceneDeactivate()
@@ -154,6 +114,22 @@ public class Scene : engine.IScene
         new builtin.parts.TitlePart(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
+            StartOffset = TimeSpan.FromMilliseconds(500),
+            EndReference = TimepointTitlesongStarted,
+            EndOffset = TimeSpan.FromMilliseconds(2200),
+            Duration = 2200-500,
+            Size = new(16f, 16f),
+            AlbedoTexture = new Texture("logos.joyce.albedo-joyce-engine.png"),
+            //EmissiveTexture = new Texture("logos.joyce.emissive-joyce-engine.png"),
+            StartTransform =  new engine.transform.components.Transform3(
+                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
+            EndTransform =  new engine.transform.components.Transform3(
+                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
+        }).PartActivate(_engine, this);
+        
+        new builtin.parts.TitlePart(new TitleCard()
+        {
+            StartReference = TimepointTitlesongStarted,
             StartOffset = TimeSpan.FromMilliseconds(2000),
             EndReference = TimepointTitlesongStarted,
             EndOffset = TimeSpan.FromMilliseconds(4000),
@@ -161,9 +137,9 @@ public class Scene : engine.IScene
             Size = new(13f, 13f/1280f*400f),
             EmissiveTexture = new Texture("titlelogo.png"),
             StartTransform =  new engine.transform.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 2f)),
+                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
             EndTransform =  new engine.transform.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, -10f)),
+                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
         }).PartActivate(_engine, this);
     }
 
@@ -202,18 +178,22 @@ public class Scene : engine.IScene
         }
 
         /*
-         * Joyce engine logo
-         */
-        {
-            _eLogo = _createLogoBoard();
-        }
-        /*
          * Moving light
          */
         {
+#if false
             _eLight = _engine.CreateEntity("LogosScene.PointLight");
             _eLight.Set(new engine.joyce.components.PointLight(
                 new Vector4(1f, 0.95f, 0.9f, 1.0f), 15.0f));
+#else
+            _eLight = _engine.CreateEntity("LogosScene.DirectionalLight");
+            _eLight.Set(new engine.joyce.components.DirectionalLight(
+                new Vector4(1f, 1f, 1f, 1.0f)));
+            _aTransform.SetRotation(_eLight, 
+                Quaternion.CreateFromAxisAngle(
+                    new Vector3(0f, 1f, 0f), -Single.Pi/4f));
+            _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
+#endif
         }
 
         /*
