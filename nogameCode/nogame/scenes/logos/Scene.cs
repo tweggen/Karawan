@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using builtin.parts;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -149,6 +150,21 @@ public class Scene : engine.IScene
             TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(4674),
             _hideTitle);
+        
+        new builtin.parts.TitlePart(new TitleCard()
+        {
+            StartReference = TimepointTitlesongStarted,
+            StartOffset = TimeSpan.FromMilliseconds(2000),
+            EndReference = TimepointTitlesongStarted,
+            EndOffset = TimeSpan.FromMilliseconds(4000),
+            Duration = 2000,
+            Size = new(13f, 13f/1280f*400f),
+            EmissiveTexture = new Texture("titlelogo.png"),
+            StartTransform =  new engine.transform.components.Transform3(
+                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 2f)),
+            EndTransform =  new engine.transform.components.Transform3(
+                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, -10f)),
+        }).PartActivate(_engine, this);
     }
 
 

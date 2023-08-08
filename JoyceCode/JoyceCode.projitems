@@ -25,6 +25,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IWorldMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IFragmentMapProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\parts\TitleCard.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\parts\TitlePart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\RunningAverageComputer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />

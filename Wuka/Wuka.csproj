@@ -148,6 +148,7 @@
 	  <None Remove="Platforms\Android\sprouce-en.png" />
 	  <None Remove="Platforms\Android\standardlight.png" />
 	  <None Remove="Platforms\Android\streets1to4.png" />
+	  <None Remove="Platforms\Android\titlelogo.png" />
 	  <None Remove="Platforms\Android\tram1.mtl" />
 	  <None Remove="Platforms\Android\tram1.obj" />
 	  <None Remove="Platforms\Android\tramnoise.ogg" />
@@ -318,6 +319,9 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\streets1to4.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\titlelogo.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\tram1.mtl">

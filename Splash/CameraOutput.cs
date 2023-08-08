@@ -50,7 +50,7 @@ namespace Splash
                  * If we do not render, grant a lot of time for uploading, cause we most likely
                  * blank for upload
                  */
-                return 2000f;
+                return 16f;
             }
             else
             {
@@ -67,7 +67,7 @@ namespace Splash
                  * If we do not render, grant a lot of time for uploading, cause we most likely
                  * blank for upload
                  */
-                return 2000f;
+                return 16f;
             }
             else
             {
