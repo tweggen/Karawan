@@ -120,7 +120,7 @@ public class Scene : engine.IScene
             Duration = 2200-500,
             Size = new(16f, 16f),
             AlbedoTexture = new Texture("logos.joyce.albedo-joyce-engine.png"),
-            //EmissiveTexture = new Texture("logos.joyce.emissive-joyce-engine.png"),
+            EmissiveTexture = new Texture("logos.joyce.emissive-joyce-engine.png"),
             StartTransform =  new engine.transform.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
             EndTransform =  new engine.transform.components.Transform3(
