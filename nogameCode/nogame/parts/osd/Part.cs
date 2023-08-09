@@ -53,7 +53,10 @@ public class Part : engine.IPart
             engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
                 "osd", new Vector2(2f, 2f*9f/16f));
             meshFramebuffer.UploadImmediately = true;
-            engine.joyce.Texture textureFramebuffer = new(_framebuffer);
+            engine.joyce.Texture textureFramebuffer = new(_framebuffer)
+            {
+                DoFilter = false
+            };
             textureFramebuffer.DoFilter = false;
             engine.joyce.Material materialFramebuffer = new();
             materialFramebuffer.UploadImmediately = true;

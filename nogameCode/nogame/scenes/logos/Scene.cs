@@ -126,7 +126,7 @@ public class Scene : engine.IScene
             EndTransform =  new engine.transform.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
         }).PartActivate(_engine, this);
-        
+
         new builtin.parts.TitlePart(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
@@ -191,7 +191,7 @@ public class Scene : engine.IScene
                 new Vector4(1f, 1f, 1f, 1.0f)));
             _aTransform.SetRotation(_eLight, 
                 Quaternion.CreateFromAxisAngle(
-                    new Vector3(0f, 1f, 0f), -Single.Pi/4f));
+                    new Vector3(0f, 1f, 0f), Single.Pi/2f));
             _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
 #endif
         }

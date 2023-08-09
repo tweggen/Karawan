@@ -262,7 +262,7 @@ public class SilkThreeD : IThreeD
                 SkTexture? skTexture = skDiffuseTextureEntry.SkTexture;
                 if (skTexture != null)
                 {
-                    skTexture.BindAndActive(TextureUnit.Texture0);
+                    skTexture.ActiveAndBind(TextureUnit.Texture0);
                     CheckError("Bind Texture0");
                 }
             }
@@ -273,7 +273,7 @@ public class SilkThreeD : IThreeD
                 SkTexture? skTexture = skEmissiveTextureEntry.SkTexture;
                 if (skTexture != null)
                 {
-                    skTexture.BindAndActive(TextureUnit.Texture2);
+                    skTexture.ActiveAndBind(TextureUnit.Texture2);
                     CheckError("Bind Texture 2");
                 }
             }
@@ -594,25 +594,17 @@ public class SilkThreeD : IThreeD
             ATextureEntry? aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
-        else
-        {
 #if false
+        {
             if (jMaterial.Texture == null)
             {
                 Trace( "no texture found at all.");
             }
-#endif
             ATextureEntry? aEmissiveTextureEntry = _textureManager.FindATexture(new engine.joyce.Texture("joyce://col00000000"));
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
-
-        #if false
-        if (_skInstanceShaderEntry != null)
-        {
-            _skInstanceShaderEntry.SkShader.SetUniform("materialFlags", aMaterialEntry.JMaterial.IsBillboardTransform?1:0);
-        }
 #endif
-
+        
         skMaterialEntry.SetUploaded();
 
     }

@@ -1,4 +1,5 @@
 using engine.joyce;
+using static engine.Logger;
 
 namespace Boom;
 
@@ -41,7 +42,14 @@ public class Jukebox
                 _soundCurrentSong.IsLooped = isLooped;
 
                 _soundCurrentSong.Play();
-                if (onStart != default) onStart();
+                try
+                {
+                    if (onStart != default) onStart();
+                }
+                catch (Exception e)
+                {
+                    Error($"Caught exception in onStart() of music {uri}: {e}");
+                }
             }
         });
     }

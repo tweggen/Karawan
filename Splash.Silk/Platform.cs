@@ -479,7 +479,7 @@ namespace Splash.Silk
 
             _hadFocus = true;
 
-            _createTestTexture();
+            // _createTestTexture();
         }
 
 
@@ -634,7 +634,8 @@ namespace Splash.Silk
             _logicalRenderer.CollectRenderData(scene);
         }
 
-        
+
+#if false
         /**
          * For testing purposes, create a rendering target texture.
          * We later render a thing with it.
@@ -648,7 +649,7 @@ namespace Splash.Silk
             SkRenderbuffer skRenderbuffer = _aRenderbuffer as SkRenderbuffer;
             skRenderbuffer.Upload(_gl,  _silkThreeD.TextureManager );
         }
-
+#endif
 
         public void _onLogical(object? sender, float dt)
         {

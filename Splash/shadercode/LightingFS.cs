@@ -77,7 +77,7 @@ void main()
 
     // Texel color fetching from texture sampler
     vec4 col4TexelDiffuse = texture(texture0, fragTexCoord);
-    vec4 col4TexelEmissive = texture(texture2, fragTexCoord);
+    vec4 col4TexelEmissive = texture(texture2, fragTexCoord2);
     vec3 col3TotalLight = vec3(0.0);
     vec3 v3nNormal = normalize(fragNormal);
 

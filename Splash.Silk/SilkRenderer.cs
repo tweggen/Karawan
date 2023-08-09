@@ -166,7 +166,7 @@ namespace Splash.Silk
             _nailViewport(true);
             _skShaderEntry = _silkThreeD.GetInstanceShaderEntry();
             _skShaderEntry.SkShader.Use();
-            _lightManager.ApplyLights(renderFrame, _silkThreeD.GetInstanceShaderEntry());
+            _lightManager.ApplyLights(renderFrame, _skShaderEntry);
             // _gl.UseProgram(0);
             _renderParts(renderFrame.RenderParts);
         }
