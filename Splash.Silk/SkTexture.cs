@@ -285,37 +285,44 @@ public class SkTexture : IDisposable
         }
     }
 
+
+    public void ActiveAndUnbind(TextureUnit textureSlot)
+    {
+        _gl.ActiveTexture(textureSlot);
+        CheckError("ActiveTexture {texureSlot}");
+        if (!_liveData)
+        {
+            Error($"Live handle for texture {_liveHandle} does not have data.");
+            return;
+        }
+        _gl.BindTexture(TextureTarget.Texture2D, 0);
+        if (0 == CheckError("BindAndActive Texture"))
+        {
+            _liveBound = false;
+        }
+    }
+    
     private void _bindBack()
     {
         _trace("_bindBack");
-        if (!_backBound)
+        _trace($"bind {_backHandle}");
+        _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
+        int err = CheckError("_bindBack Texture");
+        if (err < 0)
         {
-            _trace($"bind {_backHandle}");
-            _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
-            int err = CheckError("_bindBack Texture");
-            if (err < 0)
-            {
-                Trace("Break here.");
-            }
-            else
-            {
-                _backBound = true;
-            }
+            Trace("Break here.");
         }
         else
         {
-            _trace("_back was bound.");
+            _backBound = true;
         }
     }
 
     private void _unbindBack()
     {
-        if (_backBound)
-        {
-            _trace($"Unbind back {_backHandle}");
-            _gl.BindTexture(TextureTarget.Texture2D, 0);
-            _backBound = false;
-        }
+        _trace($"Unbind back {_backHandle}");
+        _gl.BindTexture(TextureTarget.Texture2D, 0);
+        _backBound = false;
     }
 
 

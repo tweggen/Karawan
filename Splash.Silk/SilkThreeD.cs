@@ -263,7 +263,6 @@ public class SilkThreeD : IThreeD
                 if (skTexture != null)
                 {
                     skTexture.ActiveAndBind(TextureUnit.Texture0);
-                    CheckError("Bind Texture0");
                 }
             }
 
@@ -274,7 +273,6 @@ public class SilkThreeD : IThreeD
                 if (skTexture != null)
                 {
                     skTexture.ActiveAndBind(TextureUnit.Texture2);
-                    CheckError("Bind Texture 2");
                 }
             }
 
@@ -304,22 +302,42 @@ public class SilkThreeD : IThreeD
         }
         catch (Exception e)
         {
-            Error("Error loading material to shader");
+            Error($"Error loading material to shader: {e}");
         }
     }
 
-    private void _unloadMaterialFromShader()
+    private void _unloadMaterialFromShader(in SkShader sh, in SkMaterialEntry skMaterialEntry)
     {
         var gl = _getGL();
 
-        gl.ActiveTexture(TextureUnit.Texture0);
-        CheckError("unload ActiveTexture0");
-        gl.BindTexture(TextureTarget.Texture2D, 0);
-        CheckError("unbund texturetarget 0");
-        gl.ActiveTexture(TextureUnit.Texture2);
-        CheckError("unload ActiveTexture2");
-        gl.BindTexture(TextureTarget.Texture2D, 0);
-        CheckError("unbund texturetarget 2");
+        try
+        {
+            //sh.SetUniform("texture0");
+            SkTextureEntry? skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
+            if (skDiffuseTextureEntry != null && skDiffuseTextureEntry.IsUploaded())
+            {
+                SkTexture? skTexture = skDiffuseTextureEntry.SkTexture;
+                if (skTexture != null)
+                {
+                    skTexture.ActiveAndUnbind(TextureUnit.Texture0);
+                }
+            }
+
+            SkTextureEntry? skEmissiveTextureEntry = skMaterialEntry.SkEmissiveTexture;
+            if (skEmissiveTextureEntry != null && skEmissiveTextureEntry.IsUploaded())
+            {
+                SkTexture? skTexture = skEmissiveTextureEntry.SkTexture;
+                if (skTexture != null)
+                {
+                    skTexture.ActiveAndUnbind(TextureUnit.Texture2);
+                }
+            }
+
+        }
+        catch (Exception e)
+        {
+            Error($"Error loading material to shader: {e}");
+        }
     }
 
 
@@ -495,7 +513,7 @@ public class SilkThreeD : IThreeD
         gl.BindVertexArray(0);
         gl.BindBuffer( GLEnum.ArrayBuffer, 0);
         gl.BindBuffer( GLEnum.ElementArrayBuffer, 0);
-        _unloadMaterialFromShader();
+        _unloadMaterialFromShader(sh, skMaterialEntry);
         
         // TXWTODO: Shall we really always disable the current program?
         // gl.UseProgram(0);
