@@ -14,7 +14,7 @@ public class AudioSource : Boom.ISound
     private uint _alSource = 0xffffffff;
     private bool _haveSetupDistanceModel = false;
 
-    private bool _traceAudio = true;
+    private bool _traceAudio = false;
 
     private void _trace(in string msg)
     {

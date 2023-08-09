@@ -153,8 +153,6 @@ public class FindLights
          */
         foreach (var c in listLights)
         {
-            Trace($"Found light at {c.Center}");
-
             _addLightToModel(model, c.Center);
         }
         
