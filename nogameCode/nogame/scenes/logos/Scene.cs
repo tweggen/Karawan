@@ -181,10 +181,14 @@ public class Scene : engine.IScene
          * Moving light
          */
         {
-#if false
+#if true
             _eLight = _engine.CreateEntity("LogosScene.PointLight");
             _eLight.Set(new engine.joyce.components.PointLight(
                 new Vector4(1f, 0.95f, 0.9f, 1.0f), 15.0f));
+            _aTransform.SetRotation(_eLight, 
+                Quaternion.CreateFromAxisAngle(
+                    new Vector3(0f, 1f, 0f), Single.Pi/2f));
+            _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
 #else
             _eLight = _engine.CreateEntity("LogosScene.DirectionalLight");
             _eLight.Set(new engine.joyce.components.DirectionalLight(

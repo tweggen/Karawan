@@ -583,18 +583,24 @@ namespace engine
 
         public void AddPart(float zOrder, in IScene scene0, in IPart part0)
         {
-            _dictParts.Add(zOrder, part0);
+            lock (_lo)
+            {
+                _dictParts.Add(zOrder, part0);
+            }
         }
 
 
         public void RemovePart(in IPart part)
         {
-            foreach (KeyValuePair<float, IPart> kvp in _dictParts)
+            lock (_lo)
             {
-                if (kvp.Value == part)
+                foreach (KeyValuePair<float, IPart> kvp in _dictParts)
                 {
-                    _dictParts.Remove(kvp.Key);
-                    return;
+                    if (kvp.Value == part)
+                    {
+                        _dictParts.Remove(kvp.Key);
+                        return;
+                    }
                 }
             }
         }

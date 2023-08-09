@@ -23,7 +23,7 @@ public class SkTexture : IDisposable
 
     private bool _doFilter = false;
 
-    private bool _traceTexture = true;
+    private bool _traceTexture = false;
     
     /*
      * Data generation that had been uploaded.
@@ -271,6 +271,7 @@ public class SkTexture : IDisposable
 
     public void ActiveAndBind(TextureUnit textureSlot)
     {
+        _trace($"Bind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
         CheckError("ActiveTexture {texureSlot}");
         if (!_liveData)
@@ -278,6 +279,7 @@ public class SkTexture : IDisposable
             Error($"Live handle for texture {_liveHandle} does not have data.");
             return;
         }
+        _trace($"Bind texture {_liveHandle}");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
         if (0 == CheckError("BindAndActive Texture"))
         {
@@ -288,13 +290,15 @@ public class SkTexture : IDisposable
 
     public void ActiveAndUnbind(TextureUnit textureSlot)
     {
+        _trace($"Unbind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
-        CheckError("ActiveTexture {texureSlot}");
+        CheckError("ActiveTexture {textureSlot}");
         if (!_liveData)
         {
             Error($"Live handle for texture {_liveHandle} does not have data.");
             return;
         }
+        _trace($"Unbind texture 0");
         _gl.BindTexture(TextureTarget.Texture2D, 0);
         if (0 == CheckError("BindAndActive Texture"))
         {
