@@ -172,6 +172,8 @@ namespace Karawan
 
             var app = appBuilder.Build();
 
+            System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");
+            
             /*
              * Setup globals and statics
              */

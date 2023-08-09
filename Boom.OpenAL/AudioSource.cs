@@ -14,7 +14,7 @@ public class AudioSource : Boom.ISound
     private uint _alSource = 0xffffffff;
     private bool _haveSetupDistanceModel = false;
 
-    private bool _traceAudio = false;
+    private bool _traceAudio = true;
 
     private void _trace(in string msg)
     {
@@ -204,7 +204,9 @@ public class AudioSource : Boom.ISound
         _al = al;
         _alBuffer = alBuffer;
         _alSource = _al.GenSource();
+        _trace($"GenSource returned {_al.GetError().ToString()}");
         uint[] buffers = { _alBuffer };
         _al.SourceQueueBuffers(_alSource, buffers);
+        _trace($"SourceQueueBuffers returned {_al.GetError().ToString()}");
     }
 }

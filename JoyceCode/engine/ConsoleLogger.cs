@@ -49,65 +49,61 @@ namespace engine
             List<LogEntry> outlist;
             lock (_lo)
             {
-                int rightNow = DEBUG_CHUNK_LINES;
-
                 if (_listBuffer.Count == 0)
                 {
                     return;
                 }
 
+                int rightNow;
                 if (_listBuffer.Count > 5000)
                 {
                     rightNow = _listBuffer.Count;
                 }
-                startIndex = _listBuffer.Count;
-                if (startIndex > rightNow)
-                {
-                    startIndex -= rightNow;
-                    outlist = _listBuffer.GetRange(startIndex, rightNow);
-                    _listBuffer.RemoveRange(startIndex, rightNow);
-                }
                 else
                 {
-                    outlist = _listBuffer;
-                    _listBuffer = new();
+                    rightNow = Int32.Min(DEBUG_CHUNK_LINES, _listBuffer.Count);
+
                 }
 
-                foreach (var logEntry in outlist)
-                {
+                outlist = _listBuffer.GetRange(startIndex, rightNow);
+                _listBuffer.RemoveRange(startIndex, rightNow);
+            }
+
+            foreach (var logEntry in outlist)
+            {
 #if true
-                    Console.WriteLine($"{logEntry.Level}: {logEntry.Message}");
+                Console.WriteLine($"{logEntry.Level}: {logEntry.Message}");
 #else
-                    string message = logEntry.Message;
-                    switch (logEntry.Level)
-                    {
-                        default:
-                        case engine.Logger.Level.All:
-                            Logger.LogInformation(message);
-                            break;
-                        case engine.Logger.Level.Detail:
-                            Logger.LogDebug(message);
-                            break;
-                        case engine.Logger.Level.Error:
-                            Logger.LogError(message);
-                            break;
-                        case engine.Logger.Level.Fatal:
-                            Logger.LogCritical(message);
-                            break;
-                        case engine.Logger.Level.Trace:
-                            Logger.LogTrace(message);
-                            break;
-                        case engine.Logger.Level.Warning:
-                            Logger.LogWarning(message);
-                            break;
-                        case engine.Logger.Level.Wonder:
-                            Logger.LogInformation(message);
-                            break;
-                    }
-#endif
+                string message = logEntry.Message;
+                switch (logEntry.Level)
+                {
+                    default:
+                    case engine.Logger.Level.All:
+                        Logger.LogInformation(message);
+                        break;
+                    case engine.Logger.Level.Detail:
+                        Logger.LogDebug(message);
+                        break;
+                    case engine.Logger.Level.Error:
+                        Logger.LogError(message);
+                        break;
+                    case engine.Logger.Level.Fatal:
+                        Logger.LogCritical(message);
+                        break;
+                    case engine.Logger.Level.Trace:
+                        Logger.LogTrace(message);
+                        break;
+                    case engine.Logger.Level.Warning:
+                        Logger.LogWarning(message);
+                        break;
+                    case engine.Logger.Level.Wonder:
+                        Logger.LogInformation(message);
+                        break;
                 }
+#endif
             }
         }
+
 
         private void _loggingThreadFunction()
         {
