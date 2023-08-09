@@ -76,7 +76,7 @@ public class Part : engine.IPart
     private uint _frameCounter = 0;
     private readonly uint _renderSubDiv = 3;
     private float _dtTotal = 0f;
-    private void _onPhysical(object? sender, float dt)
+    private void OnOnPhysical(object? sender, float dt)
     {
         ++_frameCounter;
         _dtTotal += dt;
@@ -133,7 +133,7 @@ public class Part : engine.IPart
 
         _engine.AddPart(50f, scene0, this);
 
-        _engine.PhysicalFrame += _onPhysical;
+        _engine.OnPhysicalFrame += OnOnPhysical;
         
         _setupOSD();
         _renderOSDSystem.SetFramebuffer(_framebuffer);

@@ -35,7 +35,7 @@ namespace nogame.parts.playerhover
             _hadCollision = true;
         }
         
-        private void _onLogicalFrame(object sender, float dt)
+        private void OnOnLogicalFrame(object sender, float dt)
         {
             // if (_hadCollision) return;
             engine.ControllerState controllerState;
@@ -227,7 +227,7 @@ namespace nogame.parts.playerhover
 
         public void DeactivateController()
         {
-            _engine.LogicalFrame -= _onLogicalFrame;
+            _engine.OnLogicalFrame -= OnOnLogicalFrame;
         }
 
 
@@ -235,7 +235,7 @@ namespace nogame.parts.playerhover
         {
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             
-            _engine.LogicalFrame += _onLogicalFrame;
+            _engine.OnLogicalFrame += OnOnLogicalFrame;
         }
 
 

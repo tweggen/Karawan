@@ -11,7 +11,7 @@ namespace builtin.controllers
         private DefaultEcs.Entity _entity;
         private engine.transform.API _aTransform;
 
-        private void _onLogicalFrame(object sender, float dt)
+        private void OnOnLogicalFrame(object sender, float dt)
         {
             engine.ControllerState controllerState;
             _engine.GetControllerState(out controllerState);
@@ -81,12 +81,12 @@ namespace builtin.controllers
 
         public void DeactivateController()
         {
-            _engine.LogicalFrame -= _onLogicalFrame;
+            _engine.OnLogicalFrame -= OnOnLogicalFrame;
         }
 
         public void ActivateController()
         {
-            _engine.LogicalFrame += _onLogicalFrame;
+            _engine.OnLogicalFrame += OnOnLogicalFrame;
         }
 
         public WASDController(engine.Engine engine, DefaultEcs.Entity entity)

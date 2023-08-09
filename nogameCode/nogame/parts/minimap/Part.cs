@@ -113,7 +113,7 @@ public class Part : IPart
     }
 
     
-    public void _onLogicalFrame(object? sender, float dt)
+    public void OnOnLogicalFrame(object? sender, float dt)
     {
         ++_updateMinimapFrameCount;
         if (_updateMinimapFrameCount != _updateMinimapCount)
@@ -149,7 +149,7 @@ public class Part : IPart
     
     public void PartDeactivate()
     {
-        _engine.LogicalFrame -= _onLogicalFrame;
+        _engine.OnLogicalFrame -= OnOnLogicalFrame;
         _engine.OnPlayerEntityChanged -= _onPlayerEntityChanged;
         _engine.RemovePart(this);
     }
@@ -161,7 +161,7 @@ public class Part : IPart
         _needResources();
         _createNewMiniMap();
         _engine.AddPart(100, scene0, this);
-        _engine.LogicalFrame += _onLogicalFrame;
+        _engine.OnLogicalFrame += OnOnLogicalFrame;
         _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
     }
 }

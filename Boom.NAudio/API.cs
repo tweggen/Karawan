@@ -30,7 +30,7 @@ public class API : Boom.ISoundAPI
     }
 
 
-    private void _onLogicalFrame(object sender, float dt)
+    private void OnOnLogicalFrame(object sender, float dt)
     {
         _createMusicSystem.Update(dt);
         _updateMovingSoundsSystem.Update(dt);
@@ -52,7 +52,7 @@ public class API : Boom.ISoundAPI
 
     public void SetupDone()
     {
-        _engine.LogicalFrame += _onLogicalFrame;
+        _engine.OnLogicalFrame += OnOnLogicalFrame;
     }
 
     public void Dispose()

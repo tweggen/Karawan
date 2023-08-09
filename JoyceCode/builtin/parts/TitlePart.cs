@@ -109,7 +109,7 @@ public class TitlePart : engine.IPart
     }
 
 
-    private void _onLogicalFrame(object? sender, float dt)
+    private void OnOnLogicalFrame(object? sender, float dt)
     {
         List<ActiveCardEntry> activeCards = new();
         lock (_lo)
@@ -138,7 +138,7 @@ public class TitlePart : engine.IPart
     public void PartDeactivate()
     {
         _engine.RemovePart(this);
-        _engine.LogicalFrame -= _onLogicalFrame;
+        _engine.OnLogicalFrame -= OnOnLogicalFrame;
     }
 
 
@@ -160,7 +160,7 @@ public class TitlePart : engine.IPart
             timeline.RunAt(card.EndReference, card.EndOffset, () => { _onCardStop(card); });
         }
 
-        _engine.LogicalFrame += _onLogicalFrame;
+        _engine.OnLogicalFrame += OnOnLogicalFrame;
     }
 
 

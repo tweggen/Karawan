@@ -21,7 +21,7 @@ namespace builtin.controllers
         
         private float _previousZoomDistance = 33f;
         
-        private void _onLogicalFrame(object sender, float dt)
+        private void OnOnLogicalFrame(object sender, float dt)
         {
             /*
              * We allow the user to move the cam.
@@ -115,12 +115,12 @@ namespace builtin.controllers
         
         public void DeactivateController()
         {
-            _engine.LogicalFrame -= _onLogicalFrame;
+            _engine.OnLogicalFrame -= OnOnLogicalFrame;
         }
 
         public void ActivateController()
         {
-            _engine.LogicalFrame += _onLogicalFrame;
+            _engine.OnLogicalFrame += OnOnLogicalFrame;
         }
 
         public FollowCameraController(engine.Engine engine, DefaultEcs.Entity eTarget, DefaultEcs.Entity eCarrot) 

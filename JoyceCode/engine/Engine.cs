@@ -58,9 +58,9 @@ namespace engine
         private physics.Manager _managerPhysics;
         public readonly SceneSequencer SceneSequencer;        
         
-        public event EventHandler<float> LogicalFrame;
-        public event EventHandler<float> PhysicalFrame;
-        public event EventHandler<engine.news.KeyEvent> KeyEvent;
+        public event EventHandler<float> OnLogicalFrame;
+        public event EventHandler<float> OnPhysicalFrame;
+        public event EventHandler<engine.news.KeyEvent> OnKeyEvent;
         public event EventHandler<Vector2> OnTouchPress;
         public event EventHandler<Vector2> OnTouchRelease;
 
@@ -74,6 +74,8 @@ namespace engine
 
         private builtin.tools.RunningAverageComputer _fpsCounter = new();
 
+        private bool _platformIsAvailable = false;
+        
         
         public event EventHandler<physics.ContactInfo> OnContactInfo {
             add => _aPhysics.OnContactInfo += value; remove => _aPhysics.OnContactInfo -= value;
@@ -397,14 +399,27 @@ namespace engine
         /**
          * Called by the platform on a new physical frame.
          */
-        public void OnPhysicalFrame(float dt)
+        public void CallOnPhysicalFrame(float dt)
         {
-            PhysicalFrame?.Invoke(this, dt);
+            OnPhysicalFrame?.Invoke(this, dt);
             
             /*
              * Compute a running average of fps.
              */
             _fpsCounter.Add(dt);
+        }
+
+
+        /**
+         * Called by the platform as soon we believe the
+         * platform APIs are available.
+         */
+        public void CallOnPlatformAvailable()
+        {
+            lock (_lo)
+            {
+                _platformIsAvailable = true;
+            }
         }
         
         
@@ -480,7 +495,7 @@ namespace engine
              */
             _systemBehave.Update(dt);
 
-            LogicalFrame?.Invoke(this, dt);
+            OnLogicalFrame?.Invoke(this, dt);
 
             /*
              * After everything has behaved, read the camera(s) to get
@@ -770,8 +785,11 @@ namespace engine
                         }
                     }
 
-                    // Trace( "Calling logical.");
-                    _onLogicalFrame(invFps);
+                    if (_platformIsAvailable)
+                    {
+                        _onLogicalFrame(invFps);
+                    }
+
                     totalTime -= invFps;
                 }
                 

@@ -79,7 +79,7 @@ public class Scene : engine.IScene
     }
     
 
-    private void _onTouchPress(object? sender, Vector2 position)
+    private void OnTouchPress(object? sender, Vector2 position)
     {
         bool _callToggleMap = false;
         
@@ -154,7 +154,7 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
-        _engine.OnTouchPress -= _onTouchPress;
+        _engine.OnTouchPress -= OnTouchPress;
             
         _partKeyHandler.PartDeactivate();
         _partKeyHandler = null;
@@ -355,7 +355,7 @@ public class Scene : engine.IScene
         _partKeyHandler = new();
         _partKeyHandler.PartActivate(_engine, this);
         
-        _engine.OnTouchPress += _onTouchPress;
+        _engine.OnTouchPress += OnTouchPress;
         
         /*
          * Now, that everything has been created, add the scene.

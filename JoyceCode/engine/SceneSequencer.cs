@@ -73,7 +73,7 @@ public class SceneSequencer : IDisposable
     }
 
 
-    private void _onLogicalFrame(object sender, float dt)
+    private void OnOnLogicalFrame(object sender, float dt)
     {
         _loadNewMainScene();
         _callAllSceneLogicalFrames(dt);
@@ -136,13 +136,13 @@ public class SceneSequencer : IDisposable
 
     public void Dispose()
     {
-        _engine.LogicalFrame -= _onLogicalFrame;
+        _engine.OnLogicalFrame -= OnOnLogicalFrame;
     }
     
     
     public SceneSequencer(Engine engine)
     {
         _engine = engine;
-        _engine.LogicalFrame += _onLogicalFrame;
+        _engine.OnLogicalFrame += OnOnLogicalFrame;
     }
 }

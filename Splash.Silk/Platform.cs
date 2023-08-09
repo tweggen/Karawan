@@ -478,6 +478,8 @@ namespace Splash.Silk
             _gl.ClearColor(0f, 0f, 0f, 0f);
 
             _hadFocus = true;
+            
+            _engine.CallOnPlatformAvailable();
 
             // _createTestTexture();
         }
@@ -529,7 +531,7 @@ namespace Splash.Silk
                 _iView.SwapBuffers();
                 _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
                 ++_frameNo;
-                _engine.OnPhysicalFrame((float)dt);
+                _engine.CallOnPhysicalFrame((float)dt);
 
                 break;
 
@@ -651,7 +653,7 @@ namespace Splash.Silk
         }
 #endif
 
-        public void _onLogical(object? sender, float dt)
+        public void OnOnLogical(object? sender, float dt)
         {
             if (engine.GlobalSettings.Get("splash.touchControls") != "false")
             {
@@ -709,7 +711,7 @@ namespace Splash.Silk
                 _silkThreeD
             );
 
-            _engine.LogicalFrame += _onLogical;
+            _engine.OnLogicalFrame += OnOnLogical;
         }
 
         public void Sleep(double dt)
@@ -732,7 +734,7 @@ namespace Splash.Silk
 
         public void Dispose()
         {
-            _engine.LogicalFrame -= _onLogical;
+            _engine.OnLogicalFrame -= OnOnLogical;
         }
 
         public Platform(string[] args)

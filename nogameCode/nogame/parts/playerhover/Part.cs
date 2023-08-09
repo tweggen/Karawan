@@ -187,7 +187,7 @@ namespace nogame.parts.playerhover
         }
         
 
-        private void _onLogicalFrame(object? sender, float dt)
+        private void OnOnLogicalFrame(object? sender, float dt)
         {
             Matrix4x4 mShip = _eShip.Get<engine.transform.components.Transform3ToWorld>().Matrix;
             Vector3 posShip = mShip.Translation;
@@ -383,7 +383,7 @@ namespace nogame.parts.playerhover
 
             _engine.OnContactInfo += _onContactInfo;
             _engine.AddPart(0, scene0, this);
-            _engine.LogicalFrame += _onLogicalFrame;
+            _engine.OnLogicalFrame += OnOnLogicalFrame;
         }
 
         
