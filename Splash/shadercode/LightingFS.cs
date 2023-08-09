@@ -82,7 +82,11 @@ void main()
     vec3 v3nNormal = normalize(fragNormal);
 
     // Is it all too transparent?
-    if ((col4TexelEmissive.a+col4TexelDiffuse.a) < 0.01) discard;
+    if ((col4TexelEmissive.a+col4TexelDiffuse.a) < 0.01) {
+        //discard;
+        //finalColor = vec4(1.0,1.0,0.0,0.0);
+        // return;
+    } 
 
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
@@ -127,10 +131,10 @@ void main()
     vec4 col4EmissiveTotal = col4TexelEmissive * col4EmissiveFactors + col4Emissive; 
     vec4 col4AmbientTotal = col4Ambient;
 
-    vec4 col4Unfogged = 
-        col4DiffuseTotal * vec4(col3TotalLight,0.0)
+    vec4 col4Unfogged =  
+        vec4(col4DiffuseTotal.xyz * col3TotalLight, col4DiffuseTotal.w)
+        //+ col4DiffuseTotal * vec4(col3TotalLight,0.0)
         + col4EmissiveTotal
-        //+ vec4(0.53,0.15,0.18,0.0)
         + col4AmbientTotal
         ;
 

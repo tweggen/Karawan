@@ -607,22 +607,22 @@ public class SilkThreeD : IThreeD
             ATextureEntry? aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
             skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
         }
+        else
+        {
+            ATextureEntry? aTextureEntry = _textureManager.FindATexture(new engine.joyce.Texture("joyce://col00000000"));
+            skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
+        }
         if (jMaterial.EmissiveTexture != null && jMaterial.EmissiveTexture.IsValid())
         {
             ATextureEntry? aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
-#if false
+        else
         {
-            if (jMaterial.Texture == null)
-            {
-                Trace( "no texture found at all.");
-            }
             ATextureEntry? aEmissiveTextureEntry = _textureManager.FindATexture(new engine.joyce.Texture("joyce://col00000000"));
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
-#endif
-        
+
         skMaterialEntry.SetUploaded();
 
     }

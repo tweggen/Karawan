@@ -13,7 +13,7 @@ public class TitleCard
     public TimeSpan EndOffset;
     public double Duration;
 
-    public float FadeInTime = 0.2f;
+    // public float FadeOutTime = 1.2f;
 
     public Vector2 Size;
     public Transform3 StartTransform;

@@ -436,7 +436,7 @@ namespace nogame.cities
                 (name) => new engine.joyce.Material()
                 {
                     AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
-                        ? 0xffff3333 : 0xffff3333,
+                        ?  0x00000000 : 0xffff3333,
                     Texture = null,
                     EmissiveTexture = new engine.joyce.Texture("lorem.png"),
                     HasTransparency = true

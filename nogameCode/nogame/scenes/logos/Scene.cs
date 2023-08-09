@@ -134,7 +134,7 @@ public class Scene : engine.IScene
             EndReference = TimepointTitlesongStarted,
             EndOffset = TimeSpan.FromMilliseconds(4000),
             Duration = 2000,
-            Size = new(13f, 13f/1280f*400f),
+            Size = new(26f, 26f/1280f*400f),
             EmissiveTexture = new Texture("titlelogo.png"),
             StartTransform =  new engine.transform.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),

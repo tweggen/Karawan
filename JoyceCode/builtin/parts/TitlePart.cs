@@ -126,6 +126,27 @@ public class TitlePart : engine.IPart
             float t = (float)(now- ace.StartTime).TotalMilliseconds;
             _computeTransformAt(ace.Card, t, out engine.transform.components.Transform3 t3);
             _engine.GetATransform().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
+#if false
+            {
+                float inFadeOut = t - ((float)ace.Card.Duration - ace.Card.FadeOutTime*1000f);
+                if (inFadeOut < 0f)
+                {
+                    /*
+                     * already was setup that way.
+                     */
+                    // ace.InstanceDesc.Materials[0].EmissiveFactors = 0xffffffff;
+                }
+                else if (inFadeOut<1000f)
+                {
+                    byte fade = (byte)((1f - inFadeOut) * 255f);
+                    ace.InstanceDesc.Materials[0].EmissiveFactors = (uint)fade << 24;
+                }
+                else
+                {
+                    ace.InstanceDesc.Materials[0].EmissiveFactors = 0;
+                }
+            }
+#endif
         }
     }
 
