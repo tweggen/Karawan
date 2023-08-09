@@ -91,7 +91,8 @@ unsafe public class API : Boom.ISoundAPI
                 Trace($"Found openal sound device {device}.");
                 if (firstDevice == "" && device != "")
                 {
-                    Wonder( $"Using openal sound device {device}");
+                    Trace( $"Using openal sound device {device}");
+                    firstDevice = device;
                 }
             }
         }
@@ -113,13 +114,16 @@ unsafe public class API : Boom.ISoundAPI
             if (_currentContext != null)
             {
                 _alc.MakeContextCurrent(_currentContext);
-                bool result = _alc.MakeContextCurrent(_currentContext);
-                AudioError error = _al.GetError();
-                Trace($"MakeCurrentContext returned {result}, error {error.ToString()} ");
+                Trace($"MakeCurrentContext returned {_al.GetError().ToString()} ");
+            }
+            else
+            {
+                Trace($"CreateContext returned {_al.GetError().ToString()} ");
             }
         }
         else
         {
+            Trace($"OpenDevice returned {_al.GetError().ToString()} ");
             _currentContext = null;
         }
     }
@@ -129,8 +133,8 @@ unsafe public class API : Boom.ISoundAPI
     
     public void ResumeOutput(object? sender, string reason)
     {
-        // _alc.MakeContextCurrent(_currentContext);
-        // _alc.ProcessContext(_currentContext);
+        Trace($"Resume output called reason '{reason}'");
+
         string deviceName = _researchDeviceName();
         _alDevice = _alc.OpenDevice(deviceName);
         if (_alDevice != null)
@@ -196,7 +200,9 @@ unsafe public class API : Boom.ISoundAPI
 
         _openDevice();
         _al.DistanceModel(DistanceModel.InverseDistance);
+        Trace($"DistanceModel returned {_al.GetError().ToString()} ");
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
+        Trace($"SetListenerProperty returned {_al.GetError().ToString()} ");
         _updateMovingSoundsSystem = new(_engine, this);
 
         _engine.OnResume += ResumeOutput;

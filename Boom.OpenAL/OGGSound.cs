@@ -8,7 +8,7 @@ public class OGGSound : IDisposable
 {
     private AL _al;
     private string _url;
-    private uint _alBuffer = 0;
+    private uint _alBuffer = 0xffffffff;
 
     public string Url
     {
@@ -19,14 +19,47 @@ public class OGGSound : IDisposable
     {
         get => _alBuffer;
     }
+
+    public int CheckError(string msg)
+    {
+        Silk.NET.OpenAL.AudioError aerr = _al.GetError();
+        if (aerr != Silk.NET.OpenAL.AudioError.NoError)
+        {
+            string astring = "unknown error";
+            switch (aerr)
+            {
+                case AudioError.IllegalCommand:
+                    astring = "Illegal Command";
+                    break;
+                case AudioError.InvalidEnum:
+                    astring = "Invalid Enum";
+                    break;
+                case AudioError.InvalidName:
+                    astring = "Invalid Name";
+                    break;
+                default:
+                case AudioError.NoError:
+                    astring = "No error";
+                    break;
+                case AudioError.OutOfMemory:
+                    astring = "OutOfMemory";
+                    break;
+                
+            }
+            Error($"Encountered audio error {aerr}.");
+            return (int) aerr;
+        }
+
+        return 0;
+    }
     
     
     public void Dispose()
     {
-        if (0 != _alBuffer)
+        if (0xffffffff != _alBuffer)
         {
             _al.DeleteBuffer(_alBuffer);
-            _alBuffer = 0;
+            _alBuffer = 0xffffffff;
         }
     }
 
@@ -36,7 +69,7 @@ public class OGGSound : IDisposable
         _al = al;
         _url = url;
         _alBuffer = _al.GenBuffer();
-        
+        CheckError("OGGSound: _al.GenBuffer().");
         System.IO.Stream streamAudiofile = engine.Assets.Open(_url);
         using (var vorbisReader = new NVorbis.VorbisReader(streamAudiofile))
         {
@@ -89,6 +122,7 @@ public class OGGSound : IDisposable
                 avail -= samplesRead;
             }
             _al.BufferData(_alBuffer, bufferFormat, shortReadBuffer, rate);
+            CheckError($"OGGSound: _al.BufferData({_alBuffer}).");
             
             // TXWTODO: Check for completeness
         }

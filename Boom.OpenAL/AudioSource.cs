@@ -10,10 +10,17 @@ public class AudioSource : Boom.ISound
 {
     private readonly object _lo = new();
     private AL _al;
-    private uint _alBuffer = 0;
-    private uint _alSource = 0;
+    private uint _alBuffer = 0xffffffff;
+    private uint _alSource = 0xffffffff;
     private bool _haveSetupDistanceModel = false;
 
+    private bool _traceAudio = true;
+
+    private void _trace(in string msg)
+    {
+        if(_traceAudio) Trace(msg);
+    }
+    
     private Vector3 _position = new();
 
     public Vector3 Position
@@ -58,7 +65,7 @@ public class AudioSource : Boom.ISound
 
     private bool _isValidNoLock()
     {
-        return _alSource != 0;
+        return _alSource != 0xffffffff;
     }
 
 
@@ -69,8 +76,11 @@ public class AudioSource : Boom.ISound
         _haveSetupDistanceModel = true;
 
         _al.SetSourceProperty(_alSource, SourceFloat.ReferenceDistance, 1f);
+        _trace($"_setupDistanceStuffNoLock ReferenceDistance returned {_al.GetError().ToString()}");
         _al.SetSourceProperty(_alSource, SourceFloat.RolloffFactor, 1f);
+        _trace($"_setupDistanceStuffNoLock RolloffFactor returned {_al.GetError().ToString()}");
         _al.SetSourceProperty(_alSource, SourceFloat.MaxDistance, 150f);
+        _trace($"_setupDistanceStuffNoLock MaxDistance returned {_al.GetError().ToString()}");
     }
 
     private void _setVelocity(Vector3 velocity)
@@ -149,7 +159,9 @@ public class AudioSource : Boom.ISound
 
             _setupDistanceStuffNoLock();
             _al.SetSourceProperty(_alSource, SourceBoolean.Looping, _isLooped);
+            _trace($"SetSourceProperty _isLooped returned {_al.GetError().ToString()}");
             _al.SourcePlay(_alSource);
+            _trace($"SourcePlay returned {_al.GetError().ToString()}");
         }
     }
 
@@ -177,7 +189,7 @@ public class AudioSource : Boom.ISound
         if (_isValidNoLock())
         {
             _al.DeleteSource(_alSource);
-            _alSource = 0;
+            _alSource = 0xffffffff;
         }
         else
         {
