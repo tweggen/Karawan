@@ -34,7 +34,7 @@ public class PlaceDebrisOperator : IFragmentOperator
          * Iterate random spots, placing debris there.
          */
         // TXWTODO: Isn't that more like a fragment biome classification.
-        float tmp = (rnd.GetFloat() * 5f);
+        float tmp = (rnd.GetFloat() * 4f);
         tmp *= tmp;
         int nDebris = Int32.Max(0, (int) (tmp)-3);
 
@@ -55,9 +55,9 @@ public class PlaceDebrisOperator : IFragmentOperator
                 float debrisSize = rnd.GetFloat() * 3f;
                 debrisSize *= debrisSize;
                 Vector3 vRock = vCenter + new Vector3( 
-                    rnd.GetFloat() * nRocks/2f - nRocks/4f,
+                    rnd.GetFloat() * nRocks*2f - nRocks*4f,
                     0f,
-                    rnd.GetFloat() * nRocks/2f - nRocks/4f
+                    rnd.GetFloat() * nRocks*2f - nRocks*4f
                 );
                 vRock.Y = engine.world.MetaGen.Instance().Loader.GetHeightAt(
                               worldFragment.Position.X+vRock.X, 
