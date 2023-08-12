@@ -192,6 +192,8 @@ public class Scene : engine.IScene
         
         _engine = engine0;
 
+        string keyScene = "abx";
+
         _worldMetaGen = engine.world.MetaGen.Instance();
         if (engine.GlobalSettings.Get("nogame.CreateHouses") != "false")
         {
@@ -231,6 +233,11 @@ public class Scene : engine.IScene
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
                     new nogame.characters.tram.GenerateCharacterOperator(clusterDesc, newKey)
             );
+        }
+
+        if (engine.GlobalSettings.Get("world.CreateDebris") != "false")
+        {
+            _worldMetaGen.AddFragmentOperator(new nogame.terrain.PlaceDebrisOperator(keyScene));
         }
 
         _worldMetaGen.SetupComplete();

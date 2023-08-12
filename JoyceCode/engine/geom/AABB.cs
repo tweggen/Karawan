@@ -6,6 +6,9 @@ namespace engine.geom;
 
 public struct AABB
 {
+    static public AABB All = new(
+        new Vector3(Single.MinValue, Single.MinValue, Single.MinValue),
+        new Vector3(Single.MaxValue, Single.MaxValue, Single.MaxValue));
     public Vector3 AA;
     public Vector3 BB;
 

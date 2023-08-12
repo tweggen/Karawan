@@ -37,5 +37,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\systems\CubeSpinnerSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\ElevationBaseFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\GroundOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\PlaceDebrisOperator.cs" />
   </ItemGroup>
 </Project>
