@@ -17,9 +17,18 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         throw new System.NotImplementedException();
     }
 
+
+    static private float MapColorMinHeight = -64f; 
+    static private float MapColorMaxHeight = 192f; 
     private uint _heightColor(float height)
     {
-        int heightCol = (int)(height + 64f);
+        float normalizedHeight = (height - MapColorMinHeight) / (MapColorMaxHeight - MapColorMinHeight);
+        normalizedHeight = Single.Max(0f, Single.Min(1f, normalizedHeight));
+        /*
+         * normalizedheight now ranges from 0 to 1.
+         */
+        
+        int heightCol = (int)(normalizedHeight * 255f);
         heightCol = Int32.Min(255, heightCol);
         heightCol = Int32.Max(0, heightCol);
 
@@ -100,7 +109,8 @@ public class WorldMapTerrainProvider : IWorldMapProvider
 
         engine.draw.Context dc = new();
         
-        Vector2 sizehalf = new Vector2(clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f,
+        Vector2 sizehalf = new Vector2(
+            clusterDesc.Size / MetaGen.MaxWidth * fbWidth / 2f,
             clusterDesc.Size / MetaGen.MaxHeight * fbHeight / 2f);
 
         Vector2 pos = Vector2.Transform(clusterDesc.Pos2, m2fb); 

@@ -305,6 +305,7 @@ namespace engine.world
                     _quarterStore = new streets.QuarterStore();
                     _quarterGenerator = new streets.QuarterGenerator();
 
+                    _streetGenerator.SetAnnotation($"Cluster {Name}");
                     _streetGenerator.Reset("streets-" + _strKey, _strokeStore);
                     _streetGenerator.SetBounds(-Size / 2f, -Size / 2f, Size / 2f, Size / 2f);
                     _addHighwayTriggers();

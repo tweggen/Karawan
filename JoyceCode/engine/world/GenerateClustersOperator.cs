@@ -24,19 +24,29 @@ public class GenerateClustersOperator : world.IWorldOperator
         return "none/GenerateClustersOperator";
     }
 
+
+    private float _randomClusterSize(RandomSource rnd)
+    {
+        var x2 = _rnd.GetFloat();
+        //x2 = x2 * x2;
+        float size = 800f + 3000f * x2;
+        // Trace($"Size is {size}");
+        return size;
+    }
+
     /**
-         * Create the actual cities.
-         *
-         * Clusters/cities are the objects in the void which may be 
-         * interconnected by roads/trains .
-         *
-         * The actual generation function shall be replaced by a reference
-         * to an [global] operator doing the actual work. This function shall just 
-         * manage the actual extents. However, since this is once per world, we 
-         * currently keep it in the world metagen.
-         * That way, the actual cluster operator working on the fragments can just
-         * refer to this data.
-         */
+     * Create the actual cities.
+     *
+     * Clusters/cities are the objects in the void which may be 
+     * interconnected by roads/trains .
+     *
+     * The actual generation function shall be replaced by a reference
+     * to an [global] operator doing the actual work. This function shall just 
+     * manage the actual extents. However, since this is once per world, we 
+     * currently keep it in the world metagen.
+     * That way, the actual cluster operator working on the fragments can just
+     * refer to this data.
+     */
     public void WorldOperatorApply(world.MetaGen worldMetaGen)
     {
         tools.NameGenerator nameGenerator = tools.NameGenerator.Instance();
@@ -88,9 +98,7 @@ public class GenerateClustersOperator : world.IWorldOperator
             var clusterDesc = new ClusterDesc("cluster-" + _strKey + "-" + idxCluster);
             ++idxCluster;
 
-            var x3 = _rnd.GetFloat();
-            x3 = x3 * x3;
-            clusterDesc.Size = 300f + 3000f * x3;
+            clusterDesc.Size = _randomClusterSize(_rnd);
             clusterDesc.Pos = new Vector3(
                 (world.MetaGen.MaxWidth - 2f * clusterDesc.Size) * (_rnd.GetFloat() - 0.5f),
                 10f + _rnd.GetFloat() * 30f,
@@ -149,7 +157,7 @@ public class GenerateClustersOperator : world.IWorldOperator
                 // This one is not merged.
                 float distance = (float)Vector3.Distance(candClusterDesc.Pos, testClusterDesc.Pos);
 
-                var minDist = candClusterDesc.Size + testClusterDesc.Size;
+                var minDist = candClusterDesc.Size + testClusterDesc.Size + 800;
 
                 // Don't overlap.
                 if (distance > minDist)

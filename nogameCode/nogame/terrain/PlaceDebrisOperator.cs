@@ -62,7 +62,7 @@ public class PlaceDebrisOperator : IFragmentOperator
                 vRock.Y = engine.world.MetaGen.Instance().Loader.GetHeightAt(
                               worldFragment.Position.X+vRock.X, 
                               worldFragment.Position.Z+vRock.Z)
-                          + debrisSize/2f;
+                          + debrisSize/3f;
 
                 Mesh m = engine.joyce.mesh.Tools.CreateCubeMesh("debris", debrisSize);
                 m.Transform(

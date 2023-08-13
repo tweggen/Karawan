@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using static engine.Logger;
 
 namespace engine.streets
 {
@@ -8,11 +9,13 @@ namespace engine.streets
     {
         private void trace(string message)
         {
-            Console.WriteLine(message);
+            Trace($"{_annotation}: {message}");
         }
+        
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
         private bool _traceGenerator = false;
+        private string _annotation = "";
 
         private int _generationCounter;
         private engine.RandomSource _rnd;
@@ -108,7 +111,7 @@ namespace engine.streets
             while (true)
             {
 
-                if (1000 < _generationCounter)
+                if (10000 < _generationCounter)
                 {
                     if (_traceGenerator) trace("Generator: Returning: max generations reached.");
                     return;
@@ -651,10 +654,17 @@ namespace engine.streets
         }
 
 
+        public void SetAnnotation(string annotation)
+        {
+            _annotation = annotation;
+        }
+        
+
         public void AddStartingStroke(in Stroke stroke0){
             _listStrokesToDo.Add(stroke0);
         }
 
+        
         public void Reset(
             in string seed0,
             in StrokeStore strokeStore
