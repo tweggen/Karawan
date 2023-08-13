@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -823,6 +824,13 @@ namespace engine
                         }
 
                         Trace($"#fps {fps}");
+                        if (seconds%10 == 0)
+                        {
+                            var allBehaved = GetEcsWorld().GetEntities()
+                                .With<engine.behave.components.Behavior>()
+                                .AsEnumerable();
+                            Trace($"#behavior {allBehaved.Count()}");
+                        }
                     }
                     previousSeconds = seconds;
                 }

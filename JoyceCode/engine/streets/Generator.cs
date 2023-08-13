@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using engine.world;
 using static engine.Logger;
 
 namespace engine.streets
@@ -16,6 +17,7 @@ namespace engine.streets
         private StrokeStore _strokeStore;
         private bool _traceGenerator = false;
         private string _annotation = "";
+        private ClusterDesc _clusterDesc;
 
         private int _generationCounter;
         private engine.RandomSource _rnd;
@@ -108,10 +110,12 @@ namespace engine.streets
          */
         public void Generate()
         {
+            int maxGenerations = (int)(_clusterDesc.Size * _clusterDesc.Size / 1000f);
+            
             while (true)
             {
 
-                if (10000 < _generationCounter)
+                if (maxGenerations < _generationCounter)
                 {
                     if (_traceGenerator) trace("Generator: Returning: max generations reached.");
                     return;
@@ -667,11 +671,13 @@ namespace engine.streets
         
         public void Reset(
             in string seed0,
-            in StrokeStore strokeStore
+            in StrokeStore strokeStore,
+            in ClusterDesc clusterDesc
         ) {
             _rnd = new engine.RandomSource(seed0);
             _listStrokesToDo = new List<Stroke>();
             _strokeStore = strokeStore;
+            _clusterDesc = clusterDesc;
             _generationCounter = 0;
         }
 

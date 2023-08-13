@@ -37,6 +37,7 @@ internal class Behavior : engine.IBehavior
         return this;
     }
     
+    
     public Behavior(
         in engine.Engine engine0,
         in engine.world.ClusterDesc clusterDesc0,

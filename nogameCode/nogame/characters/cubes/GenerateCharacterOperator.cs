@@ -133,7 +133,7 @@ namespace nogame.characters.cubes
             }
 
             int l = streetPoints.Count;
-            int nCharacters = (int)((float)l * 7f / 5f);
+            int nCharacters = (int)((float)l * 4f / 5f);
 
             for (int i = 0; i < nCharacters; i++)
             {
