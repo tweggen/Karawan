@@ -384,14 +384,19 @@ namespace engine.streets
                             continueCheck = false;
                             break;
                         }
+
+                        bool doGenerateTail = true;
                         if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.B.Pos) < minPointToCandIntersectionDistance ) {
                             /*
                              * The current one intersects very close to the ending of this stroke.
                              */
                             // TXWTOOD: Add the part until this endpoint, continuing with the tail.
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
+                            // TXWTODO: Why don't we want to add this? Just use the intersection as b and we are fine, just leave out the tail.
+                            
+                            //doAdd = false;
+                            //continueCheck = false;
+                            doGenerateTail = false;
+                            // break;
                         }
 #if false
                         /*
@@ -479,16 +484,21 @@ namespace engine.streets
                         }
                         curr.B = intersectionStreetPoint;
 
-                        /*
-                         * And add the continuation, after the intersection.
-                         */
-                        var currTail = curr.CreateUnattachedCopy();
-                        currTail.PushCreator( "newTail" );
-                        currTail.A = intersectionStreetPoint;
-                        currTail.B = oldCurrB;
+                        if (doGenerateTail)
+                        {
+                            /*
+                             * And add the continuation, after the intersection.
+                             */
+                            var currTail = curr.CreateUnattachedCopy();
+                            currTail.PushCreator("newTail");
+                            currTail.A = intersectionStreetPoint;
+                            currTail.B = oldCurrB;
 
-                        // As this is a stack, first the continuation, then the head.
-                        _listStrokesToDo.Add(currTail);
+                            // As this is a stack, first the continuation, then the head.
+                            _listStrokesToDo.Add(currTail);
+                        }
+                        
+
                         _listStrokesToDo.Add(curr);
                         _generationCounter++;
 
