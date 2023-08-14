@@ -19,6 +19,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     private engine.Engine _engine;
     private IThreeD _threeD;
 
+    private Vector3 _vCameraPos = new();
     private Plane _nearFrustum = new();
     private Plane _farFrustum = new();
     private Plane _leftFrustum = new();
@@ -40,8 +41,26 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
             if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
+                var id = pfInstance.InstanceDesc;
                 _nInstancesConsidered++;
 
+                Vector3 vTranslate = transform3ToWorld.Matrix.Translation;
+                Vector3 vInstancePos = id.ModelTransform.Translation;
+
+                Vector3 vPos = vTranslate + vInstancePos;
+                
+                /*
+                 * Per instance lod test
+                 */
+                if (Vector3.Distance(_vCameraPos, vPos) > id.MaxDistance)
+                {
+                    /*
+                     * Too for away to render instance.
+                     */
+                    continue;
+                }
+                
+                
                 /*
                  * Only perform CPU culling for perspective projection cameras.
                  */
@@ -53,7 +72,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                      *
                      * The AABB is in instance local coordinates.
                      */
-                    AABB aabb = pfInstance.InstanceDesc.Aabb;
+                    AABB aabb = id.Aabb;
                     aabb.Transform(transform3ToWorld.Matrix);
                     if (aabb.SignedDistance(_nearFrustum) < 0) continue;
                     if (aabb.SignedDistance(_farFrustum) < 0) continue;
@@ -85,6 +104,8 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
         cameraOutput.Camera3.GetViewMatrix(out var mView, cameraOutput.TransformToWorld);
         cameraOutput.Camera3.GetProjectionMatrix(out var mProjection,new Vector2(1f, 1f));
 
+        _vCameraPos = cameraOutput.TransformToWorld.Translation;
+        
         var mViewProj = mView * mProjection;
         
         /*

@@ -28,6 +28,8 @@ public class InstanceDesc
         }
     }
 
+    public float MaxDistance = 200f;
+    
     private IList<engine.joyce.Mesh> _meshes;
     public ReadOnlyCollection<Mesh> Meshes;
     
@@ -153,7 +155,7 @@ public class InstanceDesc
     /**
      * Create a new instance desc from the matmesh given.
      */
-    public static InstanceDesc CreateFromMatMesh(MatMesh matmesh)
+    public static InstanceDesc CreateFromMatMesh(MatMesh matmesh, float maxDistance)
     {
         InstanceDesc id = new();
 
@@ -185,6 +187,8 @@ public class InstanceDesc
         id._haveAABBMerged = true;
         id._haveAABBTransformed = false;
 
+        id.MaxDistance = maxDistance;
+        
         return id;
     }
     
@@ -198,12 +202,13 @@ public class InstanceDesc
         MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
         _materials = new List<Material>();
         Materials = new ReadOnlyCollection<Material>(_materials);
+        MaxDistance = 200f;
     }
 
     
     public InstanceDesc TransformedCopy(in Matrix4x4 m)
     {
-        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials);
+        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials, this.MaxDistance);
         id._m = _m * m;
         return id;
     }
@@ -212,7 +217,8 @@ public class InstanceDesc
     public InstanceDesc(
         in IList<engine.joyce.Mesh> meshes,
         in IList<int> meshMaterials,
-        in IList<engine.joyce.Material> materials
+        in IList<engine.joyce.Material> materials,
+        float maxDistance
     )
     {
         _m = Matrix4x4.Identity;
@@ -236,7 +242,7 @@ public class InstanceDesc
      *
      * (we do not merge vertex points)
      */
-    public static InstanceDesc CreateMergedFrom(IList<InstanceDesc> listInstances)
+    public static InstanceDesc CreateMergedFrom(IList<InstanceDesc> listInstances, float maxDistance)
     {
         MatMesh mm = new();
         foreach (var instanceDesc in listInstances)
@@ -244,7 +250,7 @@ public class InstanceDesc
             mm.Add(instanceDesc);
         }
         MatMesh mmmerged = MatMesh.CreateMerged(mm);
-        return CreateFromMatMesh(mmmerged);
+        return CreateFromMatMesh(mmmerged, maxDistance);
     }
 }
     

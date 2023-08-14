@@ -69,7 +69,7 @@ public class TitlePart : engine.IPart
         {
             Card = card,
             StartTime = now,
-            InstanceDesc = engine.joyce.InstanceDesc.CreateFromMatMesh(new MatMesh(mat, mesh))
+            InstanceDesc = engine.joyce.InstanceDesc.CreateFromMatMesh(new MatMesh(mat, mesh), 100f)
         };
 
         _engine.QueueEntitySetupAction("titlecard", (DefaultEcs.Entity entity) =>

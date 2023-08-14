@@ -49,6 +49,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                      * Our models are 180 degree wrong.
                      */
                     ji.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
+                    ji.MaxDistance = 1000f;
                 }
             }
             return _jInstancesTram[i];

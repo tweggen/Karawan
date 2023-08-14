@@ -208,7 +208,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         GeomFlags = 0
                                     | InstantiateModelParams.CENTER_X
                                     | InstantiateModelParams.CENTER_Z
-                                    | InstantiateModelParams.ROTATE_Y180
+                                    | InstantiateModelParams.ROTATE_Y180,
+                        MaxDistance = 300f
                     });
                     InstanceDesc jInstanceDesc = model.InstanceDesc;
                     ModelInfo modelInfo = model.ModelInfo;

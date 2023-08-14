@@ -63,7 +63,7 @@ public class Part : engine.IPart
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
             materialFramebuffer.HasTransparency = true;
 
-            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer));
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 100f);
             _eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             
             _aTransform.SetTransforms(

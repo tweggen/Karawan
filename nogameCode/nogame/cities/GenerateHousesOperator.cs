@@ -404,7 +404,7 @@ namespace nogame.cities
             {
                 // TXWTODO: Merge this, this is inefficient.
                 var mmmerged = MatMesh.CreateMerged(matmesh);
-                var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged);
+                var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, 1000f);
                 worldFragment.AddStaticInstance("nogame.cities.houses", id, listCreatePhysics);
             }
             catch (Exception e)

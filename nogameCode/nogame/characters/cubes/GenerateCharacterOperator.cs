@@ -185,7 +185,7 @@ namespace nogame.characters.cubes
 
                 ++_characterIndex;
                 {
-                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("nogame.characters.cube.materials.cube"), _getCubeMesh()));
+                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("nogame.characters.cube.materials.cube"), _getCubeMesh()), 300f);
 
                     var wf = worldFragment;
 

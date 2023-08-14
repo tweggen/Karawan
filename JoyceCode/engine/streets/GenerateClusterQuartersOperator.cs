@@ -150,7 +150,7 @@ namespace engine.streets
             {
                 // TXWTODO: Merge this, this is inefficient.
                 var mmmerged = MatMesh.CreateMerged(matmesh);
-                var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged);
+                var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, 400f);
                 worldFragment.AddStaticInstance("engine.streets.quarters", id);
             }
             catch (Exception e)

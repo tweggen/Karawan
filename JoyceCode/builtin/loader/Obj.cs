@@ -237,7 +237,7 @@ public class Obj
             meshMaterials.Add(idxMaterial);
         }
 
-        instanceDesc = new(meshes, meshMaterials, materials);
+        instanceDesc = new(meshes, meshMaterials, materials, 100f);
         modelInfo = new();
         modelInfo.AABB = aabb;
         modelInfo.Center = vCenter / nVertices;

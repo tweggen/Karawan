@@ -230,7 +230,7 @@ public class TreeInstanceGenerator
             Trace($"Unknown exception: {e}");
         }
 
-        var id = InstanceDesc.CreateFromMatMesh(matmesh);
+        var id = InstanceDesc.CreateFromMatMesh(matmesh, 500f);
 
         return id;
     }

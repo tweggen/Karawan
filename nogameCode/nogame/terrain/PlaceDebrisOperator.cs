@@ -80,7 +80,7 @@ public class PlaceDebrisOperator : IFragmentOperator
             return;
         }
         matmesh = MatMesh.CreateMerged(matmesh);
-        worldFragment.AddStaticInstance("debris", InstanceDesc.CreateFromMatMesh(matmesh));
+        worldFragment.AddStaticInstance("debris", InstanceDesc.CreateFromMatMesh(matmesh, 800f));
     });
 
     public PlaceDebrisOperator(string strKey)

@@ -24,10 +24,11 @@ public class InstantiateModelParams
     public static int ROTATE_Z180 = 0x4000;
 
     public int GeomFlags = 0;
+    public float MaxDistance = 10f;
 
     public string Hash()
     {
-        return $"InstantiateModelParams({GeomFlags})";
+        return $"InstantiateModelParams({GeomFlags},{MaxDistance})";
     }
 }
 

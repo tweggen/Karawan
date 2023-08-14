@@ -57,7 +57,7 @@ public class Part : IPart
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
             materialFramebuffer.HasTransparency = false;
 
-            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer));
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 50000f);
             _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             _engine.GetATransform().SetTransforms(
                 _eMap, false, MapCameraMask,

@@ -203,7 +203,7 @@ namespace engine.world
         private void _createGround()
         {
             joyce.Mesh jMeshTerrain = world.TerrainKnitter.BuildMolecule(_elevations, 1);
-            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("engine.world.fragment.materials.ground"), jMeshTerrain));
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("engine.world.fragment.materials.ground"), jMeshTerrain), 3000f);
             AddStaticInstance("engine.world.ground", jInstanceDesc);
         }
 
