@@ -157,6 +157,7 @@ namespace engine.streets
                          */
                         if (curr.A.InStore && curr.B.InStore)
                         {
+                            // TXWTODO: Is this really invalid? Couldn't that happen due to merging both sides of a stroke?
                             throw new InvalidOperationException( "Generator: (test too short) Found too close points (curr.a and curr.b) both in store" );
                         }
                         doAdd = false;
@@ -167,7 +168,12 @@ namespace engine.streets
                     /*
                      * Check: Is any of our endpoints too close to an existing endpoint?
                      */
-                    {
+                    if(false) {
+                        // TXWTODO: I don't check point a any more. Is that ok?
+                        /*
+                         * I wonder why a should be too close to another point?
+                         * Possibly due to moving intersections?
+                         */
                         StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
                             curr.A, minPointToCandPointDistance, curr.B);
 
@@ -179,18 +185,9 @@ namespace engine.streets
                             }
 
                             /*
-                            * If a is too close, it better not be in the store.
-                            */
-                            if (curr.A.InStore)
-                            {
-                                // TXWTODO: Just commented this out. Is that good?
-                                // throw new InvalidOperationException($"Generator: (check new a too close to existing) curr.a is in store ({curr.ToString()})");
-                            }
-
-                            /*
-                             * Anyway, we won't add the stroke. 
-                             * b might be in the store or not, I don't thinbk about it.
+                             * A probably already is in the store, as we are moving from a to be. 
                              */
+
 #if false
                              /*
                              * if a is close to another existing point, use that one.
@@ -203,6 +200,10 @@ namespace engine.streets
                         }
                     }
 
+                    /*
+                     * if B is new, look if it is too close to an existing point.
+                     */
+                    if (!curr.B.InStore)
                     {
                         StreetPoint tooClose = _strokeStore.FindClosestBelowButNot(
                             curr.B, minPointToCandPointDistance, curr.A );
@@ -375,17 +376,20 @@ namespace engine.streets
                          * Check, if the intersection is too close to either endpoint. It it is, just route it through
                          * the existing end point.
                          */
+
+                        bool doGenerateTail = true;
+                        
                         if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.A.Pos) < minPointToCandIntersectionDistance ) {
                             /*
                              * The current one intersects very close to the beginning of this stroke.
                              */
                             // TXWTOOD: Add the part until this endpoint, continuing with the tail.
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
+                            //doAdd = false;
+                            //continueCheck = false;
+                            //break;
+                            doGenerateTail = true;
                         }
 
-                        bool doGenerateTail = true;
                         if( Vector2.Distance( intersectionStreetPoint.Pos, intersectingStroke.B.Pos) < minPointToCandIntersectionDistance ) {
                             /*
                              * The current one intersects very close to the ending of this stroke.
