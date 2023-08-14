@@ -117,7 +117,7 @@ unsafe public class API : Boom.ISoundAPI
 
             for(int i=0; i<nAttrs; ++i)
             {
-                Trace($"Property {attrs[i]}");
+                //Trace($"Property {attrs[i]}");
             }
         }
 

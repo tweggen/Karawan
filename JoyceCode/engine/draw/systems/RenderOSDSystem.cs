@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics.CollisionDetection;
+using engine.draw.components;
 using engine.joyce.components;
 using engine.transform.components;
 using engine.world;
@@ -31,6 +32,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
     private Matrix4x4 _mCameraToWorld;
     private Camera3 _cCamera;
     private Transform3ToWorld _cCamTransform;
+    private Vector3 _vCamPosition;
     private Matrix4x4 _mView;
     private Matrix4x4 _mProjection;
 
@@ -47,6 +49,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
             Vector2 vScreenPos;
             bool isBehind = false;
+            Vector3 vModel;
             
             if (entity.Has<Transform3ToWorld>())
             {
@@ -58,7 +61,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 
                 var cEntityTransform = entity.Get<Transform3ToWorld>();
                 //Matrix4x4 mModel = cEntityTransform.Matrix;
-                Vector3 vModel = cEntityTransform.Matrix.Translation;
+                vModel = cEntityTransform.Matrix.Translation;
                 // Vector4 vModel = new(0f, 35f, 0f, 1f);
                 
 
@@ -85,6 +88,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             else
             {
                 vScreenPos = Vector2.Zero;
+                vModel = Vector3.Zero;
             }
 
             if (isBehind)
@@ -93,6 +97,12 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             }
             vScreenPos += osdText.Position;
             
+            float distance = Vector3.Distance(_vCamPosition, vModel);
+            if (distance > osdText.MaxDistance)
+            {
+                continue;
+            }
+
             /*
              * Render standard 2d text.
              */
@@ -104,7 +114,19 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 _framebuffer.ClearRectangle(_dc, ul, lr);
             }
 
-            _dc.TextColor = osdText.TextColor;
+            uint textColor;
+            if ((osdText.OSDTextFlags & OSDText.ENABLE_DISTANCE_FADE) != 0)
+            {
+                float distFactor = 1f- distance / osdText.MaxDistance;
+                byte distAlpha = (byte)(distFactor * (osdText.TextColor>>24));
+                textColor = (osdText.TextColor & 0xffffff) | (uint)(distAlpha << 24);
+            }
+            else
+            {
+                textColor = osdText.TextColor;
+            }
+            
+            _dc.TextColor = textColor;
             _dc.HAlign = osdText.HAlign;
             _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
 
@@ -153,6 +175,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 _cCamTransform = _eCamera.Get<Transform3ToWorld>();
                 _cCamera = _eCamera.Get<Camera3>();
                 _mCameraToWorld = _cCamTransform.Matrix;
+                _vCamPosition = _mCameraToWorld.Translation;
 
                 _cCamera.GetViewMatrix(out _mView, _mCameraToWorld);
                 _cCamera.GetProjectionMatrix(out _mProjection, _vOSDViewSize);

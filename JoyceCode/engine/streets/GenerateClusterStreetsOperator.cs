@@ -28,7 +28,7 @@ namespace engine.streets
             _clusterDesc.GetAABB(out aabb);
         }
         
-
+        
         /**
          * Generate a polygon representing the street point.
          */

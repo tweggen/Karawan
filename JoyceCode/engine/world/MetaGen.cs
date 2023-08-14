@@ -277,6 +277,13 @@ namespace engine.world
                         new engine.streets.GenerateClusterStreetsOperator(clusterDesc, newKey)
                 );
             } 
+            if (engine.GlobalSettings.Get("world.CreateStreetAnnotations") != "false")
+            {
+                AddClusterFragmentOperatorFactory(
+                    (string newKey, ClusterDesc clusterDesc) =>
+                        new engine.streets.GenerateClusterStreetAnnotationsOperator(clusterDesc, newKey)
+                );
+            } 
             if (engine.GlobalSettings.Get("world.CreateClusterQuarters") != "false")
             {
                 AddClusterFragmentOperatorFactory(

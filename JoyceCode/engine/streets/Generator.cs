@@ -214,21 +214,6 @@ namespace engine.streets
                             }
 
                             /*
-                             * Validate assumptions: tooClose needs to be in store, curr.b needs to be not in the store.
-                             */
-                            if( curr.B.InStore ) {
-                                throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.b is in store ({curr.ToString()})");
-                            }
-
-                            /*
-                             * Validate assumption: We must not move a stroke that already is in the store.
-                             * However, in the store it already needs to have valid endpoints.
-                             */
-                            if( curr.Store != null ) {
-                                throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr already is in store ({curr})");
-                            }
-
-                            /*
                              * if a is close to another existing point, use that one.
                              */
                             curr.B = tooClose;
@@ -240,6 +225,7 @@ namespace engine.streets
                             continue;
                         }
                     }
+                    
                     /*
                      * Now test whether the given points already are connected?
                      */
@@ -250,43 +236,7 @@ namespace engine.streets
                             break;
                         }
                     }
-
-                    /*
-                     * Look, whether the stroke is too close to an existing point
-                     */
-                    {
-                        var si = _strokeStore.GetClosestPoint( curr );
-                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
-                            /*
-                             * If there is any point closer the d meters to this stroke,
-                             * then [look, which point is closer to the stroke and connect
-                             * it instead] drop it.
-                             */
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
-
-                    /*
-                     * Look, whether the new point to is too close to an existing stroke
-                     */
-                    {
-                        var si = _strokeStore.GetClosestStroke( curr.B );
-                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}" );
-
-                            /*
-                             * If there is any point closer the d meters to this stroke,
-                             * then [look, which point is closer to the stroke and connect
-                             * it instead] drop it.
-                             */
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
-                        }
-                    }
+                    
 
                     /*
                      * Look if the stroke would be too close to an existing one origining from either endpoint.
@@ -331,6 +281,44 @@ namespace engine.streets
                         }
                         if( closestAngle < (AngleMinStrokes*(float) Math.PI/180f) ) {
                             if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
+                            doAdd = false;
+                            continueCheck = false;
+                            break;
+                        }
+                    }
+
+
+                    /*
+                     * Look, whether the stroke is too close to an existing point
+                     */
+                    {
+                        var si = _strokeStore.GetClosestPoint( curr );
+                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
+                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
+                            /*
+                             * If there is any point closer the d meters to this stroke,
+                             * then [look, which point is closer to the stroke and connect
+                             * it instead] drop it.
+                             */
+                            doAdd = false;
+                            continueCheck = false;
+                            break;
+                        }
+                    }
+
+                    /*
+                     * Look, whether the new point to is too close to an existing stroke
+                     */
+                    {
+                        var si = _strokeStore.GetClosestStroke( curr.B );
+                        if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
+                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}" );
+
+                            /*
+                             * If there is any point closer the d meters to this stroke,
+                             * then [look, which point is closer to the stroke and connect
+                             * it instead] drop it.
+                             */
                             doAdd = false;
                             continueCheck = false;
                             break;
