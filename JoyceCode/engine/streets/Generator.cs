@@ -34,9 +34,9 @@ namespace engine.streets
          * between platforms due to rounding errors on floats.
          */
         public int probabilityNextStrokeForward { get; set; } = 252;
-        public int probabilityNextStrokeRightWeightFactor { get; set; } = 150;
-        public int probabilityNextStrokeLeftWeightFactor { get; set; } = 150;
-        public int probabilityNextStrokeRandomNegWeightFactor { get; set; } = 240;
+        public int probabilityNextStrokeRightWeightFactor { get; set; } = 130;
+        public int probabilityNextStrokeLeftWeightFactor { get; set; } = 130;
+        public int probabilityNextStrokeRandomNegWeightFactor { get; set; } = 245;
         public int probabilityNextStrokeIncreaseWeight { get; set; } = 8;
         public int probabilityNextStrokeDecreaseWeight { get; set; } = 77;
 
@@ -54,22 +54,6 @@ namespace engine.streets
         public int AngleSlightTurnMax { get; set; } = 6;
 
         public float AngleMinStrokes { get; set; } = 30.0f;
-
-        /**
-         * Return the primary direction at the given point.
-         */
-        public Vector2 PrimaryVector(Vector2 origin)
-        {
-            return new Vector2(0f, 1f);
-        }
-
-        /**
-         * Return the secondary direction at the given point.
-         */
-        public Vector2 SecondaryVector(Vector2 origin)
-        {
-            return new Vector2(1f, 0f);
-        }
 
 
         /**
@@ -117,13 +101,13 @@ namespace engine.streets
 
                 if (maxGenerations < _generationCounter)
                 {
-                    if (_traceGenerator) trace("Generator: Returning: max generations reached.");
+                    Trace("Returning: max generations reached.");
                     return;
                 }
 
                 if (!_haveStrokesToDo())
                 {
-                    if (_traceGenerator) trace("Generator: Returning: no more streets to do.");
+                    Trace("Returning: no more streets to do.");
                     return;
                 }
 
@@ -139,7 +123,7 @@ namespace engine.streets
                  */
                 if (!_inBounds(curr))
                 {
-                    if (_traceGenerator) trace($"Generator: Out of bounds: {curr.ToString()}");
+                    if (_traceGenerator) Trace($"curr is out of bounds: {curr.ToString()}");
                     /*
                      * Out of range, so discard it.
                      */
@@ -153,10 +137,6 @@ namespace engine.streets
                  * is too close to each other).
                  */
 
-                /*
-                 * TXWTODO: This actually is the wrong name. The proper would be: Stop to
-                 * loop and do not add the current thing.
-                 */
                 bool continueCheck = true;
                 bool doAdd = true;
 
@@ -170,7 +150,7 @@ namespace engine.streets
                     {
                         if (_traceGenerator)
                         {
-                            trace("Generator: Discarding candidate: is too short. $curr");
+                            Trace("Discarding candidate: is too short. $curr");
                         }
                         /*
                          * Test: If both are in store, we have an invalid entry in the store.
@@ -195,7 +175,7 @@ namespace engine.streets
                         {
                             if (_traceGenerator)
                             {
-                                trace($"Generator: StreetPoint ({curr.A}) too close to StreetPoint ({tooClose}) ");
+                                Trace($"StreetPoint A ({curr.A}) too close to StreetPoint ({tooClose}).");
                             }
 
                             /*
@@ -229,16 +209,12 @@ namespace engine.streets
 
                         if( null != tooClose ) {
                             if( _traceGenerator ) {
-                                trace($"Generator: StreetPoint (${curr.B}) too close to StreetPoint ({tooClose})");
+                                Trace($"StreetPoint B (${curr.B}) too close to StreetPoint ({tooClose}).");
                             }
 
                             /*
                              * Validate assumptions: tooClose needs to be in store, curr.b needs to be not in the store.
                              */
-                            if( !curr.A.InStore ) {
-                                // Why do I check this? I would't move A.
-                                // throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.a is not in store ({curr.ToString()})");
-                            }
                             if( curr.B.InStore ) {
                                 throw new InvalidOperationException( $"Generator: (check new b too close to existing) curr.b is in store ({curr.ToString()})");
                             }
@@ -280,7 +256,7 @@ namespace engine.streets
                     {
                         var si = _strokeStore.GetClosestPoint( curr );
                         if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
+                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
                             /*
                              * If there is any point closer the d meters to this stroke,
                              * then [look, which point is closer to the stroke and connect
@@ -298,7 +274,7 @@ namespace engine.streets
                     {
                         var si = _strokeStore.GetClosestStroke( curr.B );
                         if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}" );
+                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}" );
 
                             /*
                              * If there is any point closer the d meters to this stroke,
@@ -312,9 +288,9 @@ namespace engine.streets
                     }
 
                     /*
-                     * Look if the stroke would be too close to an existing one.
+                     * Look if the stroke would be too close to an existing one origining from either endpoint.
                      */
-                     {
+                    {
                         /*
                          * Anything too close in point a?
                          */
@@ -330,7 +306,7 @@ namespace engine.streets
                             }
                         }
                         if( closestAngle < (AngleMinStrokes*(float)Math.PI/180f) ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToStringSP(curr.A)}, angle too close {closestAngle}" );
+                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToStringSP(curr.A)}, angle too close {closestAngle}" );
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -353,7 +329,7 @@ namespace engine.streets
                             }
                         }
                         if( closestAngle < (AngleMinStrokes*(float) Math.PI/180f) ) {
-                            if( _traceGenerator ) trace( $"Generator: Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
+                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToStringSP(curr.B)}, angle too close {closestAngle}" );
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -392,7 +368,7 @@ namespace engine.streets
                         intersectionStreetPoint.SetPos( intersection.Pos );
                         intersectionStreetPoint.PushCreator("intersection");
                         if( _traceGenerator ) {
-                            trace( $"Generator: Trying intersection point {intersectionStreetPoint}" );
+                            Trace( $"Trying intersection point {intersectionStreetPoint}" );
                         }
 
                         /*
@@ -403,7 +379,7 @@ namespace engine.streets
                             /*
                              * The current one intersects very close to the beginning of this stroke.
                              */
-                            // TXWTOOD: Add the part until this endpoint, continueing with the tail.
+                            // TXWTOOD: Add the part until this endpoint, continuing with the tail.
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -412,7 +388,7 @@ namespace engine.streets
                             /*
                              * The current one intersects very close to the ending of this stroke.
                              */
-                            // TXWTOOD: Add the part until this endpoint, continueing with the tail.
+                            // TXWTOOD: Add the part until this endpoint, continuing with the tail.
                             doAdd = false;
                             continueCheck = false;
                             break;
@@ -649,12 +625,6 @@ namespace engine.streets
         ) {
             _tr = new Vector2( trx0, try0 );
             _bl = new Vector2( blx0, bly0 );
-        }
-
-
-        public List<Stroke> GetStrokes() 
-        {
-            return _strokeStore.GetStrokes();
         }
 
 
