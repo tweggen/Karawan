@@ -15,7 +15,7 @@ namespace engine.streets
         
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
-        private bool _traceGenerator = false;
+        private bool _traceGenerator = true;
         private string _annotation = "";
         private ClusterDesc _clusterDesc;
 
@@ -144,6 +144,10 @@ namespace engine.streets
                 {
 
                     /*
+                     * This actually might happen due to intersections etc. 
+                     */
+
+                    /*
                      * Is the end of the stroke too close to the beginning of the stroke?
                      */
                     if (Vector2.Distance(curr.A.Pos, curr.B.Pos) < minPointToCandPointDistance)
@@ -158,7 +162,7 @@ namespace engine.streets
                         if (curr.A.InStore && curr.B.InStore)
                         {
                             // TXWTODO: Is this really invalid? Couldn't that happen due to merging both sides of a stroke?
-                            throw new InvalidOperationException( "Generator: (test too short) Found too close points (curr.a and curr.b) both in store" );
+                            // throw new InvalidOperationException( "Generator: (test too short) Found too close points (curr.a and curr.b) both in store" );
                         }
                         doAdd = false;
                         continueCheck = false;
@@ -307,6 +311,10 @@ namespace engine.streets
                     }
 
                     /*
+                     * The following does not seem to have pleasing results.
+                     */
+#if true
+                    /*
                      * Look, whether the new point to is too close to an existing stroke
                      */
                     {
@@ -324,6 +332,7 @@ namespace engine.streets
                             break;
                         }
                     }
+#endif
 
                     /*
                      * Neither of the endpoints is too close to an existing one.
