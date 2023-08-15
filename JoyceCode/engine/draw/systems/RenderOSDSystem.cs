@@ -49,7 +49,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
             Vector2 vScreenPos;
             bool isBehind = false;
-            Vector3 vModel;
+            float distance;
             
             if (entity.Has<Transform3ToWorld>())
             {
@@ -61,7 +61,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 
                 var cEntityTransform = entity.Get<Transform3ToWorld>();
                 //Matrix4x4 mModel = cEntityTransform.Matrix;
-                vModel = cEntityTransform.Matrix.Translation;
+                Vector3 vModel = cEntityTransform.Matrix.Translation;
                 // Vector4 vModel = new(0f, 35f, 0f, 1f);
                 
 
@@ -80,6 +80,14 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                     isBehind = true;
                 }
 #endif
+
+                distance = Vector3.Distance(_vCamPosition, vModel);
+                if (distance > osdText.MaxDistance)
+                {
+                    continue;
+                }
+
+                
                 Vector4 vScreenPos4 = Vector4.Transform(vWorldPos4, _mProjection);
                 vScreenPos = new(
                     (vScreenPos4.X/vScreenPos4.W+1f) * (_vOSDViewSize.X/2f),
@@ -88,7 +96,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             else
             {
                 vScreenPos = Vector2.Zero;
-                vModel = Vector3.Zero;
+                distance = 0f;
             }
 
             if (isBehind)
@@ -97,12 +105,6 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             }
             vScreenPos += osdText.Position;
             
-            float distance = Vector3.Distance(_vCamPosition, vModel);
-            if (distance > osdText.MaxDistance)
-            {
-                continue;
-            }
-
             /*
              * Render standard 2d text.
              */

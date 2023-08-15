@@ -61,6 +61,7 @@ public class Main
 
         engine.GlobalSettings.Set("debug.options.flatshading", "false");
 
+        engine.GlobalSettings.Set("world.CreateStreetAnnotations", "false");
         //engine.GlobalSettings.Set("nogame.CreateOSD", "false");
         //engine.GlobalSettings.Set("nogame.CreateMap", "false");
         //engine.GlobalSettings.Set("nogame.CreateMiniMap", "false");
