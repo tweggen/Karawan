@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -76,6 +77,21 @@ namespace engine
         public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
 
         private builtin.tools.RunningAverageComputer _fpsCounter = new();
+
+        public int NFrameDurations = 200;
+
+        private Queue<float> _frameDurationQueue = new();
+        public IReadOnlyList<float> FrameDurations
+        {
+            get
+            {
+                lock (_lo)
+                {
+                    return new List<float>(_frameDurationQueue);
+                }
+            }
+        }
+
 
         private bool _platformIsAvailable = false;
         
@@ -405,11 +421,20 @@ namespace engine
         public void CallOnPhysicalFrame(float dt)
         {
             OnPhysicalFrame?.Invoke(this, dt);
-            
-            /*
-             * Compute a running average of fps.
-             */
-            _fpsCounter.Add(dt);
+
+            lock (_lo)
+            {
+                /*
+                 * Compute a running average of fps.
+                 */
+                _fpsCounter.Add(dt);
+                while (_frameDurationQueue.Count >= NFrameDurations)
+                {
+                    _frameDurationQueue.Dequeue();
+                }
+
+                _frameDurationQueue.Enqueue(dt);
+            }
         }
 
 
@@ -819,7 +844,13 @@ namespace engine
                     long seconds = Stopwatch.GetTimestamp() / Stopwatch.Frequency;
                     if (previousSeconds != seconds)
                     {
-                        float dt = _fpsCounter.GetRunningAverage();
+                        
+                        float dt;
+                        lock (_lo)
+                        {
+                            dt = _fpsCounter.GetRunningAverage();
+                        }
+
                         float fps = 0f;
                         if (0 == dt)
                         {

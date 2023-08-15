@@ -9,7 +9,7 @@ public class Main
     private object _lo = new();
     private Engine _engine;
     
-    public void Render(float dt)
+    public unsafe void Render(float dt)
     {
         ImGui.SetNextWindowPos(new Vector2(0, 20), ImGuiCond.Appearing);
         ImGui.SetNextWindowSize(ImGui.GetMainViewport().Size with {X = 400 } - new Vector2(0, 20), ImGuiCond.Appearing);
@@ -58,6 +58,25 @@ public class Main
 
                     ImGui.EndListBox();
                 }
+            }
+
+            if (ImGui.CollapsingHeader("Monitor"))
+            {
+                var frameTimings = _engine.FrameDurations;
+
+                int count = frameTimings.Count;
+                float[] arrTimings = new float[frameTimings.Count];
+                int idx = 0;
+                foreach (float val in frameTimings)
+                {
+                    arrTimings[idx++] = val;
+                }
+
+                fixed (float* pTiming = &arrTimings[0])
+                {
+                    ImGui.PlotLines("Time per frame", ref *pTiming, count);
+                }
+
             }
 
             ImGui.EndChild();
