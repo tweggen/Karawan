@@ -11,7 +11,7 @@ namespace engine.transform.components
 
         public override string ToString()
         {
-            return $"{base.ToString()}, IsVisible={IsVisible}, CameraMask={CameraMask:X}, Matrix={Matrix}";
+            return $"IsVisible={IsVisible}, CameraMask={CameraMask:X}, Matrix={Matrix}";
         }
 
 

@@ -22,7 +22,7 @@ namespace engine.audio.components
 
         public override string ToString()
         {
-            return $"{base.ToString()}, Sound={Sound}, MaxDistance={MaxDistance}, MotionVolume={MotionVolume}, MotionPan={MotionPan}, MotionPitch={MotionPitch}, NFrames={NFrames}";
+            return $"Sound={Sound}, MaxDistance={MaxDistance}, MotionVolume={MotionVolume}, MotionPan={MotionPan}, MotionPitch={MotionPitch}, NFrames={NFrames}";
         }
         
         public void AddFrame(in MovingSound cNewFrame)

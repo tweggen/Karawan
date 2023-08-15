@@ -9,6 +9,14 @@ namespace engine.joyce.components
     public class DirectionalLight
     {
         public Vector4 Color;
+
+        
+        public override string ToString()
+        {
+            return $"Color: {Color.ToString()}";
+        }
+        
+        
         public DirectionalLight(in Vector4 color)
         {
             Color = color;

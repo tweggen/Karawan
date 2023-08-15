@@ -81,13 +81,13 @@ namespace engine
         public int NFrameDurations = 200;
 
         private Queue<float> _frameDurationQueue = new();
-        public IReadOnlyList<float> FrameDurations
+        public float[] FrameDurations
         {
             get
             {
                 lock (_lo)
                 {
-                    return new List<float>(_frameDurationQueue);
+                    return _frameDurationQueue.ToArray();
                 }
             }
         }

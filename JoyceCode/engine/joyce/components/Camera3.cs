@@ -19,7 +19,7 @@ namespace engine.joyce.components
         
         public override string ToString()
         {
-            return $"{base.ToString()}, Angle={Angle}, NearFrustum={NearFrustum}, NearFrustum={NearFrustum}, CameraMask={CameraMask:X}";
+            return $"Angle={Angle}, NearFrustum={NearFrustum}, NearFrustum={NearFrustum}, CameraMask={CameraMask:X}, CameraFlags={CameraFlags:X}";
         }
         
 

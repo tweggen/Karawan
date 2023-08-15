@@ -44,6 +44,7 @@ public class Scene : engine.IScene
     private nogame.parts.menu.Part _partUI;
     private bool _isUIShown = false;
 
+    
     public void TogglePauseMenu()
     {
         bool isUIShown;
@@ -64,6 +65,7 @@ public class Scene : engine.IScene
             _partUI.PartActivate(_engine, this);
         }
     }
+    
     
     public void ToggleMap()
     {

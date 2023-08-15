@@ -10,7 +10,7 @@ namespace engine.transform.components
 
         public override string ToString()
         {
-            return $"{base.ToString()}, CameraMask={CameraMask:X}, Matrix={Matrix}";
+            return $"CameraMask={CameraMask:X}, Matrix={Matrix}";
         }
 
         public Transform3ToWorld( 

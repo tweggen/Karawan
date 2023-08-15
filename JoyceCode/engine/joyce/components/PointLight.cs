@@ -12,6 +12,12 @@ namespace engine.joyce.components
         public float Distance;
         public float CosOpening = -1f;
 
+        public override string ToString()
+        {
+            return $"Target: {Target.ToString()}, Color: {Color.ToString()}, Distance: {Distance}, CosOpening: {CosOpening}";
+        }
+
+
         public PointLight(in Vector4 color, float distance)
         {
             Target = -Vector3.UnitZ;

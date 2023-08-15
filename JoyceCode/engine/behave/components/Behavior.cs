@@ -9,7 +9,7 @@ namespace engine.behave.components
         public engine.IBehavior Provider;
         public override string ToString()
         {
-            return $"{base.ToString()}, Provider={Provider.GetType()}";
+            return $"Provider={Provider.GetType()}";
         }
         
         public Behavior(engine.IBehavior provider)

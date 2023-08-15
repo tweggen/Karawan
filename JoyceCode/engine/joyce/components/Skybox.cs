@@ -14,6 +14,12 @@ namespace engine.joyce.components
         public float Distance;
         public uint CameraMask;
 
+
+        public override string ToString()
+        {
+            return $"Distance: {Distance}, CameraMask {CameraMask:X}";
+        }
+        
         public Skybox(float distance, uint cameraMask)
         {
             Distance = distance;

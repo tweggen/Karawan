@@ -15,6 +15,12 @@ public struct OSDText
     public uint OSDTextFlags = 0;
     public float MaxDistance = 200f;
 
+    public override string ToString()
+    {
+        return
+            $"Text: {Text}, FontSize: {FontSize}, TextColor: {TextColor}, FillColor: {FillColor}, Position: {Position}, Size: {Size}, HAlign: {HAlign}, OSDTextFlags: {OSDTextFlags:X}, MaxDistance: {MaxDistance};";
+    }
+    
     public OSDText(
         in Vector2 position, 
         in Vector2 size,

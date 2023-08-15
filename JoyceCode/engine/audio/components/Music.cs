@@ -8,7 +8,7 @@ namespace engine.audio.components
 
         public override string ToString()
         {
-            return $"{base.ToString()}, Url={Url}, IsPlaying={(IsPlaying?"true":"false")}";
+            return $"Url={Url}, IsPlaying={(IsPlaying?"true":"false")}";
         }
 
         public Music(in string url)

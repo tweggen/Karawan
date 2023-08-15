@@ -10,8 +10,7 @@ namespace engine.joyce.components
 
         public override string ToString()
         {
-            return $"{base.ToString()}: "
-                   + $"{InstanceDesc.ToString()}";
+            return $"{InstanceDesc.ToString()}";
         }
 
         /**

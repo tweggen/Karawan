@@ -12,7 +12,7 @@ namespace engine.transform.components
 
         public override string ToString()
         {
-            return $"{base.ToString()}, IsVisible={IsVisible}, CameraMask={CameraMask:X}, Rotation={Rotation}, Position={Position}";
+            return $"IsVisible={IsVisible}, CameraMask={CameraMask:X}, Rotation={Rotation}, Position={Position}";
         }
         
         public Transform3(bool isVisible, uint cameraMask, in Quaternion rotation, in Vector3 position)
