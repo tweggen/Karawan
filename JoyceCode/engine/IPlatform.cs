@@ -8,8 +8,10 @@ namespace engine
     {
         public void SetEngine(engine.Engine engine);
 
-        
+       
         public void Execute();
+
+        public bool MouseEnabled { get; set; }
 
         /**
          * Collect all data from the ECS to later render a frame.

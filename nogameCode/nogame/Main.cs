@@ -37,6 +37,7 @@ public class Main
         Implementations.Register<IMapProvider>(() => _setupMapProvider());
         Implementations.Register<MapFramebuffer>(() => new MapFramebuffer());
         Implementations.Register<Boom.Jukebox>(() => new Boom.Jukebox());
+        Implementations.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
     }
 
     

@@ -15,7 +15,7 @@ namespace engine.streets
         
         private List<Stroke> _listStrokesToDo;
         private StrokeStore _strokeStore;
-        private bool _traceGenerator = true;
+        private bool _traceGenerator = false;
         private string _annotation = "";
         private ClusterDesc _clusterDesc;
 
@@ -299,14 +299,23 @@ namespace engine.streets
                         var si = _strokeStore.GetClosestPoint( curr );
                         if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
                             if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
+
+                            if (curr.B.InStore)
+                            {
+                                /*
+                                 * If B already is in the store, we do not want to exchange it.
+                                 */
+                                doAdd = false;
+                                continueCheck = false;
+                                break;
+                            }
+                            
                             /*
-                             * If there is any point closer the d meters to this stroke,
-                             * then [look, which point is closer to the stroke and connect
-                             * it instead] drop it.
+                             * Be is not in the store, maybe we can replace it by the streetpoint we found?
                              */
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
+                            // float distB = (si.StreetPoint.Pos - curr.B.Pos).Length();
+                            curr.B = si.StreetPoint;
+                            continue;
                         }
                     }
 
@@ -320,16 +329,26 @@ namespace engine.streets
                     {
                         var si = _strokeStore.GetClosestStroke( curr.B );
                         if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
-                            if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}" );
-
                             /*
-                             * If there is any point closer the d meters to this stroke,
-                             * then [look, which point is closer to the stroke and connect
-                             * it instead] drop it.
+                             * We might want to check here, if it is perpendicular to the stroke as opposed to parallel.
+                             * If it is perpendicular, we might be able to keep it, it might be a meaningful route.
                              */
-                            doAdd = false;
-                            continueCheck = false;
-                            break;
+                            float angleVice = Single.Abs(geom.Angles.Snorm(curr.Angle - si.StrokeExists.Angle));
+                            float angleVersa = Single.Abs(geom.Angles.Snorm(Single.Pi+angleVice));
+                            if (true ||angleVice<(Single.Pi/4f) || angleVersa<(Single.Pi/4f)) {
+                                if (_traceGenerator)
+                                    Trace(
+                                        $"Discarding stroke {curr.ToString()}, point b too close to stroke: {si.StrokeExists}");
+
+                                /*
+                                 * If there is any point closer the d meters to this stroke,
+                                 * then [look, which point is closer to the stroke and connect
+                                 * it instead] drop it.
+                                 */
+                                doAdd = false;
+                                continueCheck = false;
+                                break;
+                            }
                         }
                     }
 #endif

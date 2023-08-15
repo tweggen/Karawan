@@ -166,5 +166,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\MetaGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\TerrainKnitter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\xray\RootScene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ui\Main.cs" />
   </ItemGroup>
 </Project>

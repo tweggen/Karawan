@@ -25,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\MapFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapTerrainProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\map\Part.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\menu\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\minimap\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\osd\Part.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\parts\playerhover\Part.cs" />

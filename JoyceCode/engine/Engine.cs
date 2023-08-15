@@ -61,6 +61,8 @@ namespace engine
         
         public event EventHandler<float> OnLogicalFrame;
         public event EventHandler<float> OnPhysicalFrame;
+
+        public event EventHandler<float> OnImGuiRender;
         public event EventHandler<engine.news.KeyEvent> OnKeyEvent;
         public event EventHandler<Vector2> OnTouchPress;
         public event EventHandler<Vector2> OnTouchRelease;
@@ -688,7 +690,12 @@ namespace engine
         {
             OnTouchRelease?.Invoke(this, position);
         }
-        
+
+
+        public void CallOnImGuiRender(float dt)
+        {
+            OnImGuiRender?.Invoke(this, dt);
+        }
 
         public void Execute()
         {
@@ -863,7 +870,48 @@ namespace engine
         {
             return _platform.IsRunning();
         }
-        
+
+
+        private int _enableMouseCounter = 0;
+        public void EnableMouse()
+        {
+            bool doEnable = false;
+            lock (_lo)
+            {
+                ++_enableMouseCounter;
+                if (1 == _enableMouseCounter)
+                {
+                    doEnable = true;
+                }
+            }
+
+            if (doEnable)
+            {
+                _platform.MouseEnabled = true;
+            }
+        }
+
+        public void DisableMouse()
+        {
+            bool doDisable = false;
+            lock (_lo)
+            {
+                if (0 == _enableMouseCounter)
+                {
+                    ErrorThrow("Mismatch disabling mouse.", (m) => new InvalidOperationException(m));
+                }
+                if (1 == _enableMouseCounter)
+                {
+                    doDisable = true;
+                }
+                --_enableMouseCounter;
+            }
+
+            if (doDisable)
+            {
+                _platform.MouseEnabled = false;
+            }
+        }
 
         public void PlatformSetupDone()
         {

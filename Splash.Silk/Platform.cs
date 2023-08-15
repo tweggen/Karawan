@@ -5,6 +5,7 @@ using System.Numerics;
 using builtin.tools.Lindenmayer;
 using engine;
 using engine.news;
+using ImGuiNET;
 using Microsoft.Win32.SafeHandles;
 using static engine.Logger;
 
@@ -13,7 +14,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using Silk.NET.Input.Sdl;
-using Silk.NET.SDL;
+using Silk.NET.OpenGL.Extensions.ImGui;
 using Trace = System.Diagnostics.Trace;
 
 namespace Splash.Silk
@@ -41,7 +42,20 @@ namespace Splash.Silk
 
         private float _lookSensitivity = 1f;
 
+        private engine.WorkerQueue _platformThreadActions = new("platformThread");
 
+        private ImGuiController _imGuiController;
+
+
+        private bool _mouseEnabled = false;
+
+        public bool MouseEnabled
+        {
+            get => _mouseEnabled;
+            set => _platformThreadActions.Enqueue(() => _setMouseEnabled(value));
+        }
+        
+        
         public void SetEngine(engine.Engine engine)
         {
             lock (_lo)
@@ -432,6 +446,21 @@ namespace Splash.Silk
 
         private bool _hadFocus = true;
 
+
+        private void _setMouseEnabled(bool value)
+        {
+            if (GlobalSettings.Get("Android") == "true") return;
+            
+            _mouseEnabled = value;
+            var maxMice = _iInputContext.Mice.Count;
+            for (int i = 0; i < maxMice; i++)
+            {
+                _iInputContext.Mice[i].Cursor.CursorMode =
+                    value ? CursorMode.Normal : CursorMode.Raw;
+            }
+        }
+        
+
         private void _windowOnLoad()
         {
             /*
@@ -477,6 +506,8 @@ namespace Splash.Silk
             _gl.ClearDepth(1f);
             _gl.ClearColor(0f, 0f, 0f, 0f);
 
+            _imGuiController = new ImGuiController(_gl, _iView, _iInputContext);
+            
             _hadFocus = true;
             
             _engine.CallOnPlatformAvailable();
@@ -528,10 +559,16 @@ namespace Splash.Silk
 
                 _renderer.RenderFrame(renderFrame);
 
+                _imGuiController.Update((float)dt);
+                _engine.CallOnImGuiRender((float)dt);
+                // ImGui.ShowDemoWindow();
+                _imGuiController.Render();
+                
                 _iView.SwapBuffers();
                 _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
                 ++_frameNo;
                 _engine.CallOnPhysicalFrame((float)dt);
+                _platformThreadActions.RunPart(1000f);
 
                 break;
 
@@ -540,6 +577,9 @@ namespace Splash.Silk
 
         private void _windowOnClose()
         {
+            _imGuiController?.Dispose();
+            _instanceManager?.Dispose();
+            _gl?.Dispose();
             _isRunning = false;
         }
         
@@ -680,6 +720,8 @@ namespace Splash.Silk
             _iView.Update += _windowOnUpdate;
             _iView.Closing += _windowOnClose;
             _iView.FocusChanged += _windowOnFocusChanged;
+            // TXWTODO: Add this handler to handle window resizes.
+            // _iView.FramebufferResize +=
             
             // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
             // disable and bind cursor.
@@ -714,10 +756,12 @@ namespace Splash.Silk
             _engine.OnLogicalFrame += OnOnLogical;
         }
 
+        
         public void Sleep(double dt)
         {
             System.Threading.Thread.Sleep((int)(dt*1000f));
         }
+        
 
         public bool IsRunning()
         {
@@ -726,17 +770,20 @@ namespace Splash.Silk
                 return _isRunning;
             }
         }
+        
 
         public void SetIView(IView iView)
         {
             _iView = iView;
         }
+        
 
         public void Dispose()
         {
             _engine.OnLogicalFrame -= OnOnLogical;
         }
 
+        
         public Platform(string[] args)
         {
             _controllerState = new();
@@ -744,6 +791,7 @@ namespace Splash.Silk
 
             // _controllerState.ZoomState = (sbyte) float.Parse(engine.GlobalSettings.Get("platform.initialZoomState"), CultureInfo.InvariantCulture);
         }
+        
 
         static public engine.Engine EasyCreatePlatform(string[] args, out Splash.Silk.Platform platform)
         {

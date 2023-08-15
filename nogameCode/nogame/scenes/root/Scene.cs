@@ -41,10 +41,28 @@ public class Scene : engine.IScene
     private bool _isMapShown = false;
     private int _isSettingUp = 0;
 
+    private nogame.parts.menu.Part _partUI;
+    private bool _isUIShown = false;
 
     public void TogglePauseMenu()
     {
-        
+        bool isUIShown;
+        lock (_lo)
+        {
+            isUIShown = _isUIShown;
+            _isUIShown = !isUIShown;
+        }
+
+        if (isUIShown)
+        {
+            _partUI.PartDeactivate();
+            _engine.DisableMouse();
+        }
+        else
+        {
+            _engine.EnableMouse();
+            _partUI.PartActivate(_engine, this);
+        }
     }
     
     public void ToggleMap()
@@ -339,6 +357,10 @@ public class Scene : engine.IScene
          */
         _ctrlFollowCamera = new(_engine, _eCamScene, _partPlayerhover.GetShipEntity());
         _ctrlFollowCamera.ActivateController();
+
+        if (engine.GlobalSettings.Get("nogame.CreateUI") != "false") { 
+            _partUI = new();
+        }
 
         if (engine.GlobalSettings.Get("nogame.CreateSkybox") != "false") {
             _partSkybox = new();

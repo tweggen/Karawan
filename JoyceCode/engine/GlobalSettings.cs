@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Dynamic;
 using engine.joyce.components;
 
@@ -12,7 +13,13 @@ public class GlobalSettings
     private object _lo = new();
     private Dictionary<string, string> _dictConfigParams = new();
 
-
+    private ReadOnlyDictionary<string, string> _rodictConfigParams;
+    
+    public ReadOnlyDictionary<string, string> Dictionary
+    {
+        get => _rodictConfigParams;
+    }
+    
     static public string Get(in string key)
     {
         return GlobalSettings.Instance()._get(key);
@@ -51,7 +58,9 @@ public class GlobalSettings
     
     private GlobalSettings()
     {
+        _rodictConfigParams = new ReadOnlyDictionary<string, string>(_dictConfigParams);
     }
+    
 
     static public GlobalSettings Instance()
     {
