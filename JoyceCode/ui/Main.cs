@@ -213,11 +213,6 @@ public class Main
                                 ImGui.AlignTextToFramePadding();
                                 
 
-                                ImGuiTreeNodeFlags treeNodeFlags =
-                                    ImGuiTreeNodeFlags.Leaf
-                                    | ImGuiTreeNodeFlags.NoTreePushOnOpen
-                                    | ImGuiTreeNodeFlags.Bullet;
-
                                 string displayType;
                                 string typeString = componentInfo.Type.ToString();
                                 int lastTypeDotIndex = typeString.LastIndexOf('.');
@@ -229,16 +224,53 @@ public class Main
                                 {
                                     displayType = typeString;
                                 }
-                                
-                                ImGui.TreeNodeEx("field", treeNodeFlags,displayType);
+
+                                bool treeNodeResult = ImGui.TreeNodeEx("field", 0,displayType);
 
                                 ImGui.TableSetColumnIndex(1);
                                 // ImGui.SetNextItemWidth(Single.MinValue);
                                 ImGui.Text(componentInfo.ValueAsString);
                                 ImGui.NextColumn();
                                 
-                                ++componentIndex;
                                 ImGui.PopID();
+
+                                if (treeNodeResult)
+                                {
+                                    System.Reflection.FieldInfo[] fields = componentInfo.Type.GetFields();
+
+                                    foreach (var fieldInfo in fields)
+                                    {
+                                        Type typeAttr = fieldInfo.FieldType;
+                                        string strValue = "(not available)";
+                                        try
+                                        {
+                                            strValue = fieldInfo.GetValue(componentInfo.Value).ToString();
+                                        }
+                                        catch (Exception e)
+                                        {
+
+                                        }
+                                        ImGuiTreeNodeFlags treeNodeFlags =
+                                            ImGuiTreeNodeFlags.Leaf
+                                            | ImGuiTreeNodeFlags.NoTreePushOnOpen;
+
+                                        ImGui.TableNextRow();
+                                        ImGui.TableSetColumnIndex(0);
+                                        ImGui.AlignTextToFramePadding();
+
+                                        ImGui.TreeNodeEx("value", treeNodeFlags, fieldInfo.Name);
+
+                                        ImGui.TableSetColumnIndex(1);
+                                        // ImGui.SetNextItemWidth(Single.MinValue);
+                                        ImGui.Text(strValue);
+                                        ImGui.NextColumn();
+
+                                    }
+
+                                    ImGui.TreePop();
+                                }
+
+                                ++componentIndex;
                             }
 
                             ImGui.EndTable();
