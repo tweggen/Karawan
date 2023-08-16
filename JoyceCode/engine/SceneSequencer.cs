@@ -19,6 +19,15 @@ public class SceneSequencer : IDisposable
         get { lock(_lo) { return _mainScene;} }
     }
 
+    public IList<string> GetAvailableScenes()
+    {
+        lock (_lo)
+        {
+            return new List<string>(_dictSceneFactories.Keys);
+        }
+    }
+
+
     /**
      * If there is a new scene to set up, deactivate the old scene,
      * activate the new one.

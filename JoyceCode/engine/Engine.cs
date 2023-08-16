@@ -34,6 +34,20 @@ namespace engine
         private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
         private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
 
+
+        private int _requireEntityIdArrays = 0;
+        private DefaultEcs.Entity[] _arrayEntityIds = new DefaultEcs.Entity[0];
+        
+        public DefaultEcs.Entity[] Entities
+        {
+            get {
+                lock (_lo)
+                {
+                    return _arrayEntityIds;
+                }
+            }
+        }
+        
         private IPlatform _platform;
 
         private hierarchy.API _aHierarchy;
@@ -94,8 +108,7 @@ namespace engine
 
 
         private bool _platformIsAvailable = false;
-        
-        
+
         public event EventHandler<physics.ContactInfo> OnContactInfo {
             add => _aPhysics.OnContactInfo += value; remove => _aPhysics.OnContactInfo -= value;
         } 
@@ -752,12 +765,81 @@ namespace engine
             }
         }
 
+        private int _entityUpdateRate = 6;
+        private int _entityUpdateCount = 0;
+        private void _checkUpdateEntityArray()
+        {
+            lock (_lo)
+            {
+                if (_requireEntityIdArrays > 0)
+                {
+                    if (_entityUpdateCount <= 0)
+                    {
+                        _entityUpdateCount = _entityUpdateRate;
+                        var entities = GetEcsWorld().GetEntities().AsEnumerable();
+                        _arrayEntityIds = new DefaultEcs.Entity[entities.Count()];
+                        int idx = 0;
+                        foreach (var entity in GetEcsWorld().GetEntities().AsEnumerable())
+                        {
+                            _arrayEntityIds[idx] = entity;
+                            idx++;
+                        }
+                    }
+                    else
+                    {
+                        _entityUpdateCount--;
+                    }
+                }
+            }
+        }
+
+
+        private long _previousSeconds = 0;
+        private void _logicalUpdateFpsAverage()
+        {
+            /*
+             * Do these updates every second
+             */
+            {
+                long seconds = Stopwatch.GetTimestamp() / Stopwatch.Frequency;
+                if (_previousSeconds != seconds)
+                {
+
+                    float dt;
+                    lock (_lo)
+                    {
+                        dt = _fpsCounter.GetRunningAverage();
+                    }
+
+                    float fps = 0f;
+                    if (0 == dt)
+                    {
+                        fps = 0f;
+                    }
+                    else
+                    {
+                        fps = 1f / dt;
+                    }
+
+                    Trace($"#fps {fps}");
+                    if (seconds % 10 == 0)
+                    {
+                        var allBehaved = GetEcsWorld().GetEntities()
+                            .With<engine.behave.components.Behavior>()
+                            .AsEnumerable();
+                        Trace($"#behavior {allBehaved.Count()}");
+                    }
+                }
+
+                _previousSeconds = seconds;
+            }
+        }
+
 
         private void _logicalThreadFunction()
         {
             float invFps = 1f / 60f;
             float totalTime = 0f;
-            long previousSeconds = 0;
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -837,41 +919,8 @@ namespace engine
                  */
                 stopWatch.Start();
 
-                /*
-                 * Do these updates every second
-                 */
-                {
-                    long seconds = Stopwatch.GetTimestamp() / Stopwatch.Frequency;
-                    if (previousSeconds != seconds)
-                    {
-                        
-                        float dt;
-                        lock (_lo)
-                        {
-                            dt = _fpsCounter.GetRunningAverage();
-                        }
-
-                        float fps = 0f;
-                        if (0 == dt)
-                        {
-                            fps = 0f;
-                        }
-                        else
-                        {
-                            fps = 1f / dt;
-                        }
-
-                        Trace($"#fps {fps}");
-                        if (seconds%10 == 0)
-                        {
-                            var allBehaved = GetEcsWorld().GetEntities()
-                                .With<engine.behave.components.Behavior>()
-                                .AsEnumerable();
-                            Trace($"#behavior {allBehaved.Count()}");
-                        }
-                    }
-                    previousSeconds = seconds;
-                }
+                _logicalUpdateFpsAverage();
+                _checkUpdateEntityArray();
             }
 
         }
@@ -922,6 +971,7 @@ namespace engine
             }
         }
 
+        
         public void DisableMouse()
         {
             bool doDisable = false;
@@ -944,6 +994,25 @@ namespace engine
             }
         }
 
+
+        public void EnableEntityIds()
+        {
+            lock (_lo)
+            {
+                _requireEntityIdArrays++;
+            }
+        }
+
+
+        public void DisableEntityIds()
+        {
+            lock (_lo)
+            {
+                _requireEntityIdArrays--;
+            }
+        }
+        
+        
         public void PlatformSetupDone()
         {
             {

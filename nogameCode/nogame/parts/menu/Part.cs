@@ -41,6 +41,7 @@ public class Part : IPart
     {
         _engine.RemovePart(this);
         _engine.OnImGuiRender -= _onImGuiRender;
+        _engine.DisableEntityIds();
     }
 
     
@@ -50,6 +51,7 @@ public class Part : IPart
         // _engine.GetATransform().SetVisible(_eMap, true);
         _engine.AddPart(1000, scene0, this);
         _engine.OnImGuiRender += _onImGuiRender;
+        _engine.EnableEntityIds();
     }
 
 }
