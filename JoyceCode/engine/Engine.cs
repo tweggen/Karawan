@@ -11,6 +11,7 @@ using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
 using DefaultEcs;
+using engine.news;
 using engine.world;
 using static engine.Logger;
 using Trace = System.Diagnostics.Trace;
@@ -78,7 +79,7 @@ namespace engine
         public event EventHandler<float> OnPhysicalFrame;
 
         public event EventHandler<float> OnImGuiRender;
-        public event EventHandler<engine.news.Event> OnKeyEvent;
+        public event EventHandler<engine.news.Event> OnEvent;
         public event EventHandler<Vector2> OnTouchPress;
         public event EventHandler<Vector2> OnTouchRelease;
 
@@ -111,8 +112,9 @@ namespace engine
 
         public event EventHandler<physics.ContactInfo> OnContactInfo {
             add => _aPhysics.OnContactInfo += value; remove => _aPhysics.OnContactInfo -= value;
-        } 
+        }
 
+        public event EventHandler<engine.news.Event> OnContactEvent;
         
         public BepuPhysics.Simulation Simulation
         {
@@ -1031,6 +1033,8 @@ namespace engine
         
         public Engine( engine.IPlatform platform )
         {
+            SubscriptionManager.Unit();
+            
             _nextId = 0;
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();

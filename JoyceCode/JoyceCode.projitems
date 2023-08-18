@@ -115,7 +115,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\Event.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\news\EventQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\KeyEvent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\news\SubscriptionManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Binding.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\CollisionProperties.cs" />
