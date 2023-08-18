@@ -1,23 +1,10 @@
+#if  false
 namespace engine.news;
 
-public class KeyEvent
+public class KeyEvent : Event
 {
-    public string Type;
-    public string Code;
-    
-    private bool _isHandled = false;
-    public bool IsHandled
+    public KeyEvent(string type, string code) : base(type, code)
     {
-        get => _isHandled;
-        set
-        {
-            _isHandled = value;
-        }
-    }
-    
-    public KeyEvent(string type, string code)
-    {
-        Type = type;
-        Code = code;
     }
 }
+#endif

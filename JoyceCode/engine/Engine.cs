@@ -78,7 +78,7 @@ namespace engine
         public event EventHandler<float> OnPhysicalFrame;
 
         public event EventHandler<float> OnImGuiRender;
-        public event EventHandler<engine.news.KeyEvent> OnKeyEvent;
+        public event EventHandler<engine.news.Event> OnKeyEvent;
         public event EventHandler<Vector2> OnTouchPress;
         public event EventHandler<Vector2> OnTouchRelease;
 
@@ -674,7 +674,7 @@ namespace engine
         }
 
 
-        public void TakeKeyEvent(engine.news.KeyEvent keyEvent)
+        public void TakeKeyEvent(engine.news.Event ev)
         {
             /*
              * We need to propagate the event through all of the parts z order.
@@ -689,9 +689,9 @@ namespace engine
              * Now run distribution of key events in a dedicated task.
              * TXWTODO: This may become out of order, until we have a proper global event queue.
              */
-            if (keyEvent.IsHandled)
+            if (ev.IsHandled)
             {
-                Trace($"KeyEvent {keyEvent} not dispatched at all, already handled from the beginning.");
+                Trace($"Event {ev} not dispatched at all, already handled from the beginning.");
                 return;
             }
 
@@ -701,16 +701,16 @@ namespace engine
                 {
                     try
                     {
-                        part.PartOnKeyEvent(keyEvent);
+                        part.PartOnKeyEvent(ev);
                     }
                     catch (Exception e)
                     {
                         Error($"Exception handling key event by part {part}: {e}.");
                     }
 
-                    if (keyEvent.IsHandled)
+                    if (ev.IsHandled)
                     {
-                        Trace($"Key event {keyEvent} was handled by part {part}.");
+                        Trace($"Key event {ev} was handled by part {part}.");
                         break;
                     }
                 }

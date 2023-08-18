@@ -31,21 +31,21 @@ public class KeyHandler : engine.IPart
     }
 #endif    
     
-    public void PartOnKeyEvent(KeyEvent keyEvent)
+    public void PartOnKeyEvent(Event ev)
     {
-        if (keyEvent.Type != "pressed")
+        if (ev.Type != "pressed")
         {
             return;
         }
 
-        switch (keyEvent.Code)
+        switch (ev.Code)
         {
             case "(tab)":
-                keyEvent.IsHandled = true;
+                ev.IsHandled = true;
                 (_scene as nogame.scenes.root.Scene).ToggleMap();
                 break;
             case "(escape)":
-                keyEvent.IsHandled = true;
+                ev.IsHandled = true;
                 (_scene as nogame.scenes.root.Scene).TogglePauseMenu();
                 break;
             default:

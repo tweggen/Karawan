@@ -203,7 +203,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeKeyEvent(new engine.news.KeyEvent("pressed", code));
+                _engine.TakeKeyEvent(new engine.news.Event("pressed", code));
             }
         }
         
@@ -258,7 +258,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeKeyEvent(new engine.news.KeyEvent("released", code));
+                _engine.TakeKeyEvent(new engine.news.Event("released", code));
             }
         }
 

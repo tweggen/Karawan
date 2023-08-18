@@ -29,7 +29,7 @@ public class Part : IPart
         Implementations.Get<joyce.ui.Main>().Render(dt);
     }
     
-    public void PartOnKeyEvent(engine.news.KeyEvent keyEvent)
+    public void PartOnKeyEvent(engine.news.Event keyEvent)
     {
         /*
          * Nothing to do yet.

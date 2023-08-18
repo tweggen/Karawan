@@ -198,11 +198,12 @@ namespace nogame.characters.cubes
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));
+#if false
                         eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
                             new Vector3(_rnd.GetFloat() * 2f - 1f, _rnd.GetFloat() * 2f - 1f,
                                 _rnd.GetFloat() * 2f - 1f),
                             _rnd.GetFloat() * 2f * (float)Math.PI / 180f)));
-
+#endif
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(
                                 new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.

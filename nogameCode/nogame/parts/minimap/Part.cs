@@ -139,7 +139,7 @@ public class Part : IPart
     }
 
 
-    public void PartOnKeyEvent(engine.news.KeyEvent keyEvent)
+    public void PartOnKeyEvent(engine.news.Event keyEvent)
     {
         /*
          * nothing to handle here.
