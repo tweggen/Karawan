@@ -151,7 +151,7 @@ public class TitlePart : engine.IPart
     }
 
 
-    public void PartOnKeyEvent(Event _)
+    public void PartOnInputEvent(Event _)
     {
     }
 

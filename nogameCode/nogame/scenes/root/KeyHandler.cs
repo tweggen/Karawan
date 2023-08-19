@@ -31,7 +31,7 @@ public class KeyHandler : engine.IPart
     }
 #endif    
     
-    public void PartOnKeyEvent(Event ev)
+    public void PartOnInputEvent(Event ev)
     {
         if (ev.Type != "pressed")
         {

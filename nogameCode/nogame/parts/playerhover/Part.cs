@@ -160,7 +160,7 @@ namespace nogame.parts.playerhover
          * Our part does read input events, however, we are reading them
          * from the controllerstate. Is that smart?
          */
-        public void PartOnKeyEvent(engine.news.Event keyEvent)
+        public void PartOnInputEvent(engine.news.Event keyEvent)
         {
             /*
              * Nothing done here.

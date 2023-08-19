@@ -6,7 +6,7 @@ namespace engine
 {
     public interface IPart
     {
-        public void PartOnKeyEvent(engine.news.Event ev);
+        public void PartOnInputEvent(engine.news.Event ev);
         public void PartDeactivate();
         public void PartActivate(
             in engine.Engine engine0,

@@ -67,7 +67,7 @@ public class Part : IPart
     }
 
     
-    public void PartOnKeyEvent(engine.news.Event ev)
+    public void PartOnInputEvent(engine.news.Event ev)
     {
         /*
          * Nothing to do yet.

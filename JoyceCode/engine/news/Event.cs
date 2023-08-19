@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace engine.news;
 
 public class Event
@@ -14,6 +16,7 @@ public class Event
     
     public string Type;
     public string Code;
+    public Vector2 Position = Vector2.Zero;
 
     public Event(string type, string code)
     {

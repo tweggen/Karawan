@@ -24,7 +24,7 @@ public class EventQueue
     }
     
     
-    public void PostEvent(Event ev)
+    public void Push(Event ev)
     {
         lock (_lo)
         {
@@ -39,10 +39,5 @@ public class EventQueue
         {
             return _queue.Count == 0;
         }
-    }
-    
-    
-    public EventQueue()
-    {
     }
 }

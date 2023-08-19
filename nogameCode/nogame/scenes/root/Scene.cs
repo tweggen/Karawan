@@ -3,6 +3,7 @@ using System;
 using System.Numerics;
 using System.Threading;
 using engine;
+using engine.news;
 using static engine.Logger;
 
 namespace nogame.scenes.root;
@@ -99,7 +100,7 @@ public class Scene : engine.IScene
     }
     
 
-    private void OnTouchPress(object? sender, Vector2 position)
+    private void _onTouchPress(Event ev)
     {
         bool _callToggleMap = false;
         
@@ -108,7 +109,7 @@ public class Scene : engine.IScene
             if (!_isMapShown)
             {
                 // TXWTODO: Compute a relative position depending on view size.
-                if (position.X < 150 && position.Y < 150)
+                if (ev.Position.X < 150 && ev.Position.Y < 150)
                 {
                     _callToggleMap = true;
                 }
@@ -174,7 +175,7 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
-        _engine.OnTouchPress -= OnTouchPress;
+        Implementations.Get<SubscriptionManager>().Unsubscribe("input.touch.press", _onTouchPress);
             
         _partKeyHandler.PartDeactivate();
         _partKeyHandler = null;
@@ -386,7 +387,7 @@ public class Scene : engine.IScene
         _partKeyHandler = new();
         _partKeyHandler.PartActivate(_engine, this);
         
-        _engine.OnTouchPress += OnTouchPress;
+        Implementations.Get<SubscriptionManager>().Subscribe("input.touch.press", _onTouchPress);
         
         /*
          * Now, that everything has been created, add the scene.

@@ -20,7 +20,7 @@ namespace nogame.parts.skybox
         /**
          * This part does not implement a specific input event handler.
          */
-        public void PartOnKeyEvent(engine.news.Event ev)
+        public void PartOnInputEvent(engine.news.Event ev)
         {
             /*
              * Nothing done here.

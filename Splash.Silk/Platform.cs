@@ -203,7 +203,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeKeyEvent(new engine.news.Event("pressed", code));
+                _engine.TakeInputEvent(new engine.news.Event("pressed", code));
             }
         }
         
@@ -258,7 +258,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeKeyEvent(new engine.news.Event("released", code));
+                _engine.TakeInputEvent(new engine.news.Event("released", code));
             }
         }
 
@@ -424,7 +424,11 @@ namespace Splash.Silk
                 _isMouseButtonClicked = true;
             }
 
-            _engine.TakeTouchPress(mouse.Position);
+            Implementations.Get<EventQueue>().Push(
+                new Event("input.touch.press", "")
+                {
+                    Position = mouse.Position
+                });
         }
 
         private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
@@ -440,7 +444,11 @@ namespace Splash.Silk
                 _isMouseButtonClicked = false;
             }
 
-            _engine.TakeTouchRelease(mouse.Position);
+            Implementations.Get<EventQueue>().Push(
+                new Event("input.touch.release", "")
+                {
+                    Position = mouse.Position
+                });
         }
 
 

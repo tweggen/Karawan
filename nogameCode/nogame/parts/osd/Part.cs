@@ -95,7 +95,7 @@ public class Part : engine.IPart
     /**
      * This part does not implement a specific input event handler.
      */
-    public void PartOnKeyEvent(engine.news.Event keyEvent)
+    public void PartOnInputEvent(engine.news.Event keyEvent)
     {
         /*
          * Nothing done here.

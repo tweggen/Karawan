@@ -1,4 +1,5 @@
 using engine;
+using engine.news;
 using Silk.NET.OpenAL;
 using Silk.NET.OpenAL.Extensions.Enumeration;
 using Silk.NET.OpenAL.Extensions.Soft;
@@ -34,16 +35,16 @@ unsafe public class API : Boom.ISoundAPI
     public void Dispose()
     {
         // TXWTODO: Close openal
-        _engine.OnResume -= ResumeOutput;
-        _engine.OnSuspend -= SuspendOutput;
+        Implementations.Get<SubscriptionManager>().Unsubscribe("lifecycle.resume", ResumeOutput);
+        Implementations.Get<SubscriptionManager>().Unsubscribe("lifecycle.suspend", SuspendOutput);
     }
 
 
     public void SetupDone()
     {
         _engine.OnLogicalFrame += OnOnLogicalFrame;
-        _engine.OnResume += ResumeOutput;
-        _engine.OnSuspend += SuspendOutput;
+        Implementations.Get<SubscriptionManager>().Subscribe("lifecycle.resume", ResumeOutput);
+        Implementations.Get<SubscriptionManager>().Subscribe("lifecycle.suspend", SuspendOutput);
     }
     
     public Task<ISound> LoadSound(string url)
@@ -163,9 +164,9 @@ unsafe public class API : Boom.ISoundAPI
 
     private Silk.NET.OpenAL.Context *_currentContext = null;
     
-    public void ResumeOutput(object? sender, string reason)
+    public void ResumeOutput(Event ev)
     {
-        Trace($"Resume output called reason '{reason}'");
+        Trace($"Resume output called reason '{ev.Code}'");
 
         string deviceName = _researchDeviceName();
         _alDevice = _alc.OpenDevice(deviceName);
@@ -187,7 +188,7 @@ unsafe public class API : Boom.ISoundAPI
     }
 
 
-    public void SuspendOutput(object? sender, string reason)
+    public void SuspendOutput(Event ev)
     {
         // _currentContext = _alc.GetCurrentContext();
         if (_currentContext != null)
@@ -236,9 +237,5 @@ unsafe public class API : Boom.ISoundAPI
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
         Trace($"SetListenerProperty returned {_al.GetError().ToString()} ");
         _updateMovingSoundsSystem = new(_engine, this);
-
-        _engine.OnResume += ResumeOutput;
-        _engine.OnSuspend += SuspendOutput;
-
     }
 }

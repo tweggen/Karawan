@@ -156,8 +156,9 @@ public class SubscriptionManager
     }
 
 
-    static public void Unit()
+    static public int Unit()
     {
+        int result = 0;
         var subman = new SubscriptionManager();
 
         subman.Subscribe("event.key.up", ev => {});
@@ -171,12 +172,15 @@ public class SubscriptionManager
             if (res != 2)
             {
                 Error("Wrong result.");
+                result -= 1;
             }
         }
-    }
 
+        if (0 != result)
+        {
+            ErrorThrow("Unit test failed.", (m) => new InvalidOperationException(m));
+        }
 
-    public SubscriptionManager()
-    {
+        return result;
     }
 }

@@ -79,12 +79,6 @@ namespace engine
         public event EventHandler<float> OnPhysicalFrame;
 
         public event EventHandler<float> OnImGuiRender;
-        public event EventHandler<engine.news.Event> OnEvent;
-        public event EventHandler<Vector2> OnTouchPress;
-        public event EventHandler<Vector2> OnTouchRelease;
-
-        public event EventHandler<string> OnSuspend;
-        public event EventHandler<string> OnResume;
         
         private Entity _cameraEntity;
         public event EventHandler<DefaultEcs.Entity> OnCameraEntityChanged;
@@ -152,13 +146,13 @@ namespace engine
 
         public void Suspend()
         {
-            OnSuspend?.Invoke(this, "user call");
+            Implementations.Get<EventQueue>().Push(new Event("lifecycle.suspend", ""));
         }
 
 
         public void Resume()
         {
-            OnResume?.Invoke(this, "user call");
+            Implementations.Get<EventQueue>().Push(new Event("lifecycle.suspend", "user call"));
         }
 
 
@@ -676,7 +670,7 @@ namespace engine
         }
 
 
-        public void TakeKeyEvent(engine.news.Event ev)
+        public void TakeInputEvent(engine.news.Event ev)
         {
             /*
              * We need to propagate the event through all of the parts z order.
@@ -703,7 +697,7 @@ namespace engine
                 {
                     try
                     {
-                        part.PartOnKeyEvent(ev);
+                        part.PartOnInputEvent(ev);
                     }
                     catch (Exception e)
                     {
@@ -717,18 +711,6 @@ namespace engine
                     }
                 }
             });
-        }
-
-
-        public void TakeTouchPress(Vector2 position)
-        {
-            OnTouchPress?.Invoke(this, position);
-        }
-        
-
-        public void TakeTouchRelease(Vector2 position)
-        {
-            OnTouchRelease?.Invoke(this, position);
         }
 
 
@@ -1044,6 +1026,8 @@ namespace engine
             SceneSequencer = new(this);
 
             Implementations.Register<engine.Timeline>(() => new engine.Timeline());
+            Implementations.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
+            Implementations.Register<engine.news.EventQueue>(() => new EventQueue());
         }
     }
 }
