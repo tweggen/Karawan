@@ -74,16 +74,31 @@ public class Main
         colors[(int)ImGuiCol.NavWindowingDimBg]      = new Vector4(0.80f, 0.80f, 0.80f, 0.20f);
         colors[(int)ImGuiCol.ModalWindowDimBg]       = new Vector4(0.80f, 0.80f, 0.80f, 0.35f);        
     }
-    
-    public unsafe void Render(float dt)
+
+
+    private void _setStyle()
     {
         var style = ImGui.GetStyle();
-        
-        style.GrabRounding = style.FrameRounding = 4f;
+
+        style.GrabRounding = 8f; 
+        style.FrameRounding = 8f;
         _setColorScheme();
         style.Alpha = 0.8f;
         style.IndentSpacing = 8f;
+        style.WindowBorderSize = 0f;
+        style.ChildBorderSize = 0f;
+        style.PopupBorderSize = 1f;
+        style.FrameBorderSize = 0f;
+        style.TabBorderSize = 0f;
+        
+        
 
+    }
+    
+    public unsafe void Render(float dt)
+    {
+        _setStyle();
+        
         ImGui.SetNextWindowPos(new Vector2(0, 20), ImGuiCond.Appearing);
         ImGui.SetNextWindowSize(ImGui.GetMainViewport().Size with {X = 500 } - new Vector2(0, 20), ImGuiCond.Appearing);
         if (ImGui.Begin("selector", ImGuiWindowFlags.NoCollapse))
