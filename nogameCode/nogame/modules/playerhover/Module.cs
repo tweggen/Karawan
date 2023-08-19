@@ -15,7 +15,7 @@ using static engine.Logger;
 
 namespace nogame.modules.playerhover
 {
-    public class Module : engine.IModule
+    public class Module : engine.AModule
     {
         static public readonly string PhysicsName = "nogame.playerhover";
         
@@ -38,7 +38,7 @@ namespace nogame.modules.playerhover
         /**
          * Display the current cluster name.
          */
-         private DefaultEcs.Entity _eClusterDisplay;
+        private DefaultEcs.Entity _eClusterDisplay;
 
         private PlingPlayer _plingPlayer = new();
 

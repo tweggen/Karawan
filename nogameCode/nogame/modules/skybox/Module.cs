@@ -6,7 +6,7 @@ using engine.joyce;
 
 namespace nogame.modules.skybox
 {
-    public class Module : engine.IModule
+    public class Module : engine.AModule
     {
         private object _lock = new object();
 

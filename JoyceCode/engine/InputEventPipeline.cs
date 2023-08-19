@@ -7,7 +7,7 @@ using static engine.Logger;
 namespace engine;
 
 
-public class InputEventPipeline : engine.IModule
+public class InputEventPipeline : engine.AModule
 {
     private object _lo = new();
     private Engine _engine;

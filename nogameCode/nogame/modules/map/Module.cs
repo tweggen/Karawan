@@ -13,7 +13,7 @@ namespace nogame.modules.map;
  *
  * On activation, makes the map entities visible
  */
-public class Module : IModule
+public class Module : AModule
 {
     private object _lo = new();
 

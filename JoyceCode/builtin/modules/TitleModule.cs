@@ -22,7 +22,7 @@ class ActiveCardEntry
 /**
  * Implement a part that displays a title card.
  */
-public class TitleModule : engine.IModule
+public class TitleModule : engine.AModule
 {
     private object _lo = new();
     private engine.Engine _engine;

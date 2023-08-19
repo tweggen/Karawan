@@ -5,7 +5,7 @@ using engine.joyce;
 
 namespace nogame.modules.osd;
 
-public class Module : engine.IModule
+public class Module : engine.AModule
 {
     private readonly object _lo = new();
     private engine.Engine _engine = null;

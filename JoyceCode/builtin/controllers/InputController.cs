@@ -12,7 +12,7 @@ namespace builtin.controllers;
  *
  * COnsumes input 
  */
-public class InputController : engine.IModule, engine.IInputPart
+public class InputController : engine.AModule, engine.IInputPart
 {
     private object _lo = new();
     

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using static engine.Logger;
 
 namespace engine;
@@ -57,6 +58,27 @@ public sealed class Implementations
     {
         Instance.RegisterFactory<T>(factory);
     }
+
+
+    private Object _getInstance(InstanceEntry instanceEntry)
+    {
+        lock (instanceEntry.Lock)
+        {
+            if (null != instanceEntry.Instance)
+            {
+                return instanceEntry.Instance;
+            }
+
+            if (null == instanceEntry.FactoryFunction)
+            {
+                ErrorThrow($"No factory found for type {instanceEntry.InterfaceType.FullName}", (m) => new InvalidOperationException(m));
+            }
+
+            instanceEntry.Instance = instanceEntry.FactoryFunction();
+
+            return instanceEntry.Instance;
+        }
+    }
     
     
     public T GetInstance<T>()
@@ -75,24 +97,30 @@ public sealed class Implementations
             }
         }
 
-        lock (instanceEntry.Lock)
+        return (T)_getInstance(instanceEntry);
+    }
+
+
+    public Object GetInstance(string typeName)
+    {
+        InstanceEntry ie = null;
+        lock (_lo)
         {
-            if (null != instanceEntry.Instance)
+            foreach (var kvp in _mapInstances)
             {
-                return (T) instanceEntry.Instance;
+                if (kvp.Key.ToString() == typeName)
+                {
+                    ie = kvp.Value;
+                }
             }
-
-            if (null == instanceEntry.FactoryFunction)
-            {
-                ErrorThrow($"No factory found for type {typeof(T).FullName}", (m) => new InvalidOperationException(m));
-            }
-
-            instanceEntry.Instance = instanceEntry.FactoryFunction();
-
-            return (T)instanceEntry.Instance;
         }
 
+        if (null == ie)
+        {
+            ErrorThrow($"Requested unknown instance type {typeName}.", (m) => new ArgumentException(m));
+        }
 
+        return _getInstance(ie);
     }
 
 
