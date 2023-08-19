@@ -6,47 +6,38 @@ using engine.joyce;
 
 namespace nogame.parts.skybox
 {
-    public class Part : engine.IPart
+    public class Part : engine.IModule
     {
         private object _lock = new object();
 
         private engine.Engine _engine;
-        private engine.IScene _scene;
 
         private DefaultEcs.World _ecsWorld;
         private DefaultEcs.Entity _eSkybox;
 
 
-        /**
-         * This part does not implement a specific input event handler.
-         */
-        public void PartOnInputEvent(engine.news.Event ev)
+        public void Dispose()
         {
-            /*
-             * Nothing done here.
-             */
         }
+        
 
-    
-        public void PartDeactivate()
+        public void ModuleDeactivate()
         {
-            _engine.RemovePart(this);
+            _engine.RemoveModule(this);
             lock (_lock)
             {
                 _engine = null;
-                _scene = null;
             }
+
+            _eSkybox.Dispose();
         }
 
 
-        public void PartActivate(
-            in engine.Engine engine0, 
-            in engine.IScene scene0)
+        public void ModuleActivate(engine.Engine engine0)
         {
             lock (_lock)
             {
                 _engine = engine0;
-                _scene = scene0;
                 _ecsWorld = _engine.GetEcsWorld();
             }
 
@@ -66,7 +57,7 @@ namespace nogame.parts.skybox
                 _eSkybox.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             }
 
-            _engine.AddPart(-1000, scene0, this);
+            _engine.AddModule(this);
         }
     }
 }

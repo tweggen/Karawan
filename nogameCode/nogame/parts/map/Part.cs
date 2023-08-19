@@ -13,7 +13,7 @@ namespace nogame.parts.map;
  *
  * On activation, makes the map entities visible
  */
-public class Part : IPart
+public class Part : IModule
 {
     private object _lo = new();
 
@@ -27,9 +27,7 @@ public class Part : IPart
     // For now, let it use the OSD camera.
     public uint MapCameraMask = 0x00010000;
 
-    private engine.joyce.Material _materialMiniMap;
-    
-    
+
     private void _needResources()
     {
         lock (_lo)
@@ -66,28 +64,27 @@ public class Part : IPart
         }
     }
 
-    
-    public void PartOnInputEvent(engine.news.Event ev)
+
+    public void Dispose()
     {
-        /*
-         * Nothing to do yet.
-         */
+        _eMap.Dispose();
+        _createdResources = false;
     }
     
-
-    public void PartDeactivate()
+    
+    public void ModuleDeactivate()
     {
-        _engine.RemovePart(this);
+        _engine.RemoveModule(this);
         _engine.GetATransform().SetVisible(_eMap, false);
     }
 
     
-    public void PartActivate(in Engine engine0, in IScene scene0)
+    public void ModuleActivate(Engine engine0)
     {
         _engine = engine0;
         _needResources();
         _engine.GetATransform().SetVisible(_eMap, true);
-        _engine.AddPart(200, scene0, this);
+        _engine.AddModule(this);
     }
 
 }

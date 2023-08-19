@@ -4,12 +4,8 @@ using System.Text;
 
 namespace engine
 {
-    public interface IPart
+    public interface IInputPart : IModule
     {
-        public void PartOnInputEvent(engine.news.Event ev);
-        public void PartDeactivate();
-        public void PartActivate(
-            in engine.Engine engine0,
-            in engine.IScene scene0 );
+        public void InputPartOnInputEvent(engine.news.Event ev);
     }
 }

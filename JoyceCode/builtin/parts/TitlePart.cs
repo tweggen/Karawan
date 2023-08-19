@@ -22,13 +22,10 @@ class ActiveCardEntry
 /**
  * Implement a part that displays a title card.
  */
-public class TitlePart : engine.IPart
+public class TitleModule : engine.IModule
 {
     private object _lo = new();
-    private static int idx = 0;
     private engine.Engine _engine;
-    private engine.IScene _scene;
-
     private List<TitleCard> _cards = new();
     private Dictionary<TitleCard, ActiveCardEntry> _dictCards = new();
 
@@ -105,11 +102,11 @@ public class TitlePart : engine.IPart
             });
         }
 
-        _engine.RemovePart(this);
+        _engine.RemoveModule(this);
     }
 
 
-    private void OnOnLogicalFrame(object? sender, float dt)
+    private void _onLogicalFrame(object? sender, float dt)
     {
         List<ActiveCardEntry> activeCards = new();
         lock (_lo)
@@ -151,27 +148,21 @@ public class TitlePart : engine.IPart
     }
 
 
-    public void PartOnInputEvent(Event _)
+    public void ModuleDeactivate()
     {
-    }
-
-
-    public void PartDeactivate()
-    {
-        _engine.RemovePart(this);
-        _engine.OnLogicalFrame -= OnOnLogicalFrame;
+        _engine.RemoveModule(this);
+        _engine.OnLogicalFrame -= _onLogicalFrame;
     }
 
 
     /**
      * Immediately after activation, the timepoints are registered.
      */
-    public void PartActivate(in Engine engine0, in IScene scene0)
+    public void ModuleActivate(Engine engine0)
     {
-        _scene = scene0;
         _engine = engine0;
 
-        _engine.AddPart(500+((float)idx++ / 1000f), _scene, this);
+        _engine.AddModule(this);
 
         var timeline = Implementations.Get<Timeline>();
 
@@ -181,9 +172,15 @@ public class TitlePart : engine.IPart
             timeline.RunAt(card.EndReference, card.EndOffset, () => { _onCardStop(card); });
         }
 
-        _engine.OnLogicalFrame += OnOnLogicalFrame;
+        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 
+
+    public void Dispose()
+    {
+        
+    }
+    
 
     public void Add(TitleCard card)
     {
@@ -194,7 +191,7 @@ public class TitlePart : engine.IPart
     }
 
 
-    public TitlePart(TitleCard card)
+    public TitleModule(TitleCard card)
     {
         Add(card);
     }

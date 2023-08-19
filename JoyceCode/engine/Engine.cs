@@ -60,13 +60,12 @@ namespace engine
         private physics.systems.MoveKineticsSystem _systemMoveKinetics;
         private audio.systems.MovingSoundsSystem _systemMovingSounds;
 
-        private SortedDictionary<float, IPart> _dictParts;
-
-        public IEnumerable<IPart> GetParts()
+        private List<IModule> _listModules = new();
+        public IEnumerable<IModule> GetModules()
         {
             lock (_lo)
             {
-                return new List<IPart>(_dictParts.Values);
+                return new List<IModule>(_listModules);
             }
         }
         
@@ -653,28 +652,23 @@ namespace engine
         private double _timeLeft;
         private int _fpsLogical = 60;
 
+        
+        
 
-        public void AddPart(float zOrder, in IScene scene0, in IPart part0)
+        public void AddModule(in IModule module)
         {
             lock (_lo)
             {
-                _dictParts.Add(zOrder, part0);
+                _listModules.Add(module);
             }
         }
 
 
-        public void RemovePart(in IPart part)
+        public void RemoveModule(in IModule module)
         {
             lock (_lo)
             {
-                foreach (KeyValuePair<float, IPart> kvp in _dictParts)
-                {
-                    if (kvp.Value == part)
-                    {
-                        _dictParts.Remove(kvp.Key);
-                        return;
-                    }
-                }
+                _listModules.Remove(module);
             }
         }
 
@@ -992,7 +986,6 @@ namespace engine
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();
             _entityCommandRecorder = new(4096, 1024*1024);
-            _dictParts = new();
             
             SceneSequencer = new(this);
 

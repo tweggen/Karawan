@@ -7,18 +7,23 @@ using static engine.Logger;
 namespace engine;
 
 
-public class InputEventPipeline
+public class InputEventPipeline : engine.IModule
 {
     private object _lo = new();
     private Engine _engine;
 
-
+    private SortedDictionary<float, IInputPart> _dictParts = new();
+    
     void _onInputEvent(engine.news.Event ev)
     {
         /*
          * We need to propagate the event through all of the parts z order.
          */
-        IEnumerable<IPart> listParts = _engine.GetParts();
+        IEnumerable<IInputPart> listParts;
+        lock (_lo)
+        {
+            listParts = _dictParts.Values;
+        }
 
         /*
          * Now run distribution of key events in a dedicated task.
@@ -36,7 +41,7 @@ public class InputEventPipeline
         {
             try
             {
-                part.PartOnInputEvent(ev);
+                part.InputPartOnInputEvent(ev);
             }
             catch (Exception e)
             {
@@ -48,6 +53,31 @@ public class InputEventPipeline
                 Trace($"Key event {ev} was handled by part {part}.");
                 break;
             }
+        }
+    }
+
+
+    public void RemoveInputPart(IInputPart part)
+    {
+        lock (_lo)
+        {
+            foreach (KeyValuePair<float, IInputPart> kvp in _dictParts)
+            {
+                if (kvp.Value == part)
+                {
+                    _dictParts.Remove(kvp.Key);
+                    return;
+                }
+            }
+        }
+    }
+
+
+    public void AddInputPart(float zOrder, IInputPart part0)
+    {
+        lock (_lo)
+        {
+            _dictParts.Add(zOrder, part0);
         }
     }
     
@@ -62,5 +92,9 @@ public class InputEventPipeline
     {
         _engine = engine0;
         Implementations.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
+    }
+
+    public void Dispose()
+    {
     }
 }

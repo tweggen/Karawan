@@ -39,8 +39,6 @@ public class Scene : engine.IScene
     private nogame.parts.map.Part _partMap;
     private nogame.parts.minimap.Part _partMiniMap;
 
-    private nogame.scenes.root.KeyHandler _partKeyHandler;
-
     private bool _isMapShown = false;
     private int _isSettingUp = 0;
 
@@ -59,13 +57,13 @@ public class Scene : engine.IScene
 
         if (isUIShown)
         {
-            _partUI.PartDeactivate();
+            _partUI.ModuleDeactivate();
             _engine.DisableMouse();
         }
         else
         {
             _engine.EnableMouse();
-            _partUI.PartActivate(_engine, this);
+            _partUI.ModuleActivate(_engine);
         }
     }
     
@@ -86,8 +84,8 @@ public class Scene : engine.IScene
              *
              * TXWTODO: Remove the map part.
              */
-            _partMap.PartDeactivate();
-            _partMiniMap.PartActivate(_engine, this);
+            _partMap.ModuleDeactivate();
+            _partMiniMap.ModuleActivate(_engine);
         }
         else
         {
@@ -96,8 +94,8 @@ public class Scene : engine.IScene
              *
              * TXWTODO: Add the map part.
              */
-            _partMap.PartActivate(_engine, this);
-            _partMiniMap.PartDeactivate();
+            _partMap.ModuleActivate(_engine);
+            _partMiniMap.ModuleDeactivate();
         }
     }
     
@@ -129,6 +127,29 @@ public class Scene : engine.IScene
     }
     
     
+    public void PartOnInputEvent(Event ev)
+    {
+        if (ev.Type != Event.INPUT_KEY_PRESSED)
+        {
+            return;
+        }
+
+        switch (ev.Code)
+        {
+            case "(tab)":
+                ev.IsHandled = true;
+                ToggleMap();
+                break;
+            case "(escape)":
+                ev.IsHandled = true;
+                TogglePauseMenu();
+                break;
+            default:
+                break;
+        }
+    }
+
+
     private void _triggerLoadWorld()
     {
         lock (_lo)
@@ -179,18 +200,15 @@ public class Scene : engine.IScene
     {
         Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         
-        _partInputController.PartDeactivate();
+        _partInputController.ModuleDeactivate();
         
-        _partKeyHandler.PartDeactivate();
-        _partKeyHandler = null;
-        
-        _partPlayerhover.PartDeactivate();
+        _partPlayerhover.ModuleDeactivate();
         _partPlayerhover = null;
-        _partSkybox.PartDeactivate();
+        _partSkybox.ModuleDeactivate();
         _partSkybox = null;
         if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false")
         {
-            _partOsd.PartDeactivate();
+            _partOsd.ModuleDeactivate();
             _partOsd = null;
         }
         _ctrlFollowCamera.DeactivateController();
@@ -355,7 +373,7 @@ public class Scene : engine.IScene
         if (true)
         {
             _partPlayerhover = new();
-            _partPlayerhover.PartActivate(_engine, this);
+            _partPlayerhover.ModuleActivate(_engine);
         }
 
         /*
@@ -371,12 +389,12 @@ public class Scene : engine.IScene
 
         if (engine.GlobalSettings.Get("nogame.CreateSkybox") != "false") {
             _partSkybox = new();
-            _partSkybox.PartActivate(_engine, this);
+            _partSkybox.ModuleActivate(_engine);
         }
 
         if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
             _partOsd = new();
-            _partOsd.PartActivate(_engine, this);
+            _partOsd.ModuleActivate(_engine);
         }
 
         if (engine.GlobalSettings.Get("nogame.CreateMap") != "false") { 
@@ -385,16 +403,13 @@ public class Scene : engine.IScene
         
         if (engine.GlobalSettings.Get("nogame.CreateMiniMap") != "false") { 
             _partMiniMap = new();
-            _partMiniMap.PartActivate(_engine, this);
+            _partMiniMap.ModuleActivate(_engine);
         }
 
-        _partKeyHandler = new();
-        _partKeyHandler.PartActivate(_engine, this);
-        
         Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
 
         _partInputController = Implementations.Get<builtin.controllers.InputController>();
-        _partInputController.PartActivate(_engine, this);
+        _partInputController.ModuleActivate(_engine);
         
         /*
          * Now, that everything has been created, add the scene.

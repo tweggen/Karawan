@@ -5,13 +5,11 @@ using engine.joyce;
 
 namespace nogame.parts.osd;
 
-public class Part : engine.IPart
+public class Part : engine.IModule
 {
     private readonly object _lo = new();
     private engine.Engine _engine = null;
-    private engine.IScene _scene = null;
 
-    private DefaultEcs.World _ecsWorld;
     private engine.transform.API _aTransform;
 
     /**
@@ -76,7 +74,7 @@ public class Part : engine.IPart
     private uint _frameCounter = 0;
     private readonly uint _renderSubDiv = 3;
     private float _dtTotal = 0f;
-    private void OnOnPhysical(object? sender, float dt)
+    private void _onPhysical(object? sender, float dt)
     {
         ++_frameCounter;
         _dtTotal += dt;
@@ -91,56 +89,42 @@ public class Part : engine.IPart
         _renderOSDSystem.Update(dtTotal);
     }
 
-
-    /**
-     * This part does not implement a specific input event handler.
-     */
-    public void PartOnInputEvent(engine.news.Event keyEvent)
-    {
-        /*
-         * Nothing done here.
-         */
-    }
-
     
-    public void PartDeactivate()
+    public void Dispose()
     {
-        _engine.RemovePart(this);
-        lock (_lo)
-        {
-            _scene = null;
-        }
+        // renderosdsystem already was disposed in deactivate.
+    }
+    
+    
+    public void ModuleDeactivate()
+    {
+        _engine.RemoveModule(this);
+        _engine.OnPhysicalFrame -= _onPhysical;
         _renderOSDSystem.Dispose();
         _renderOSDSystem = null;
     }
 
     
-    public void PartActivate(in Engine engine0, in IScene scene0)
+    public void ModuleActivate(Engine engine0)
     {
         lock (_lo)
         {
             _engine = engine0;
-            _scene = scene0;
         }
 
         /*
          * local shortcuts.
          */
-        _ecsWorld = _engine.GetEcsWorld();
         _aTransform = _engine.GetATransform();
 
         _renderOSDSystem = new RenderOSDSystem(_engine);
 
-        _engine.AddPart(50f, scene0, this);
+        _engine.AddModule(this);
 
-        _engine.OnPhysicalFrame += OnOnPhysical;
+        _engine.OnPhysicalFrame += _onPhysical;
         
         _setupOSD();
         _renderOSDSystem.SetFramebuffer(_framebuffer);
         // _updateFramebuffer();
-    }
-
-    public Part()
-    {
     }
 }

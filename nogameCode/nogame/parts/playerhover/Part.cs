@@ -15,14 +15,13 @@ using static engine.Logger;
 
 namespace nogame.parts.playerhover
 {
-    public class Part : engine.IPart
+    public class Part : engine.IModule
     {
         static public readonly string PhysicsName = "nogame.playerhover";
         
         private readonly object _lock = new object();
 
         private engine.Engine _engine;
-        private engine.IScene _scene;
 
         private DefaultEcs.World _ecsWorld;
         private engine.transform.API _aTransform;
@@ -52,7 +51,7 @@ namespace nogame.parts.playerhover
         
         private int _score = 0;
 
-        private Boom.ISound _soundCrash;
+        private Boom.ISound _soundCrash = null;
 
         private string _getClusterSound(ClusterDesc clusterDesc)
         {
@@ -155,31 +154,6 @@ namespace nogame.parts.playerhover
             }
         }
     
-
-        /**
-         * Our part does read input events, however, we are reading them
-         * from the controllerstate. Is that smart?
-         */
-        public void PartOnInputEvent(engine.news.Event keyEvent)
-        {
-            /*
-             * Nothing done here.
-             */
-        }
-
-    
-        public void PartDeactivate()
-        {
-            _controllerWASDPhysics.DeactivateController();
-            _engine.RemovePart(this);
-            // Delete escoredisplay
-            lock (_lock)
-            {
-                _engine = null;
-                _scene = null;
-            }
-        }
-
 
         public DefaultEcs.Entity GetShipEntity()
         {
@@ -288,21 +262,45 @@ namespace nogame.parts.playerhover
             return new Vector3(0f, 200f, 0f);
             
         }
+
+
+
+        public void Dispose()
+        {
+            _soundCrash.Dispose();
+            _soundCrash = null;
+        }
         
 
-        public void PartActivate(
-            in engine.Engine engine0,
-            in engine.IScene scene0)
+        public void ModuleDeactivate()
+        {
+            _engine.OnLogicalFrame -= OnOnLogicalFrame;
+            _engine.OnContactInfo -= _onContactInfo;
+            _controllerWASDPhysics.DeactivateController();
+            _engine.RemoveModule(this);
+
+            lock (_lock)
+            {
+                _engine = null;
+            }
+        }
+
+
+        public void ModuleActivate(engine.Engine engine0)
         {
             lock (_lock)
             {
                 _engine = engine0;
-                _scene = scene0;
                 _ecsWorld = _engine.GetEcsWorld();
                 _aTransform = _engine.GetATransform();
             }
 
-            
+            if (null == _soundCrash)
+            {
+                var soundApi = Implementations.Get<Boom.ISoundAPI>();
+                _soundCrash = soundApi.FindSound($"car-collision.ogg");
+            }
+
             /*
              * Create a ship
              */
@@ -382,15 +380,13 @@ namespace nogame.parts.playerhover
             _controllerWASDPhysics.ActivateController();
 
             _engine.OnContactInfo += _onContactInfo;
-            _engine.AddPart(0, scene0, this);
+            _engine.AddModule(this);
             _engine.OnLogicalFrame += OnOnLogicalFrame;
         }
 
         
         public Part()
         {
-            var api = Implementations.Get<Boom.ISoundAPI>();
-            _soundCrash = api.FindSound($"car-collision.ogg");
         }
     }
 }

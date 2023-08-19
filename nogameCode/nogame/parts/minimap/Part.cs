@@ -17,7 +17,7 @@ namespace nogame.parts.minimap;
  *
  * On activation, makes the map entities visible
  */
-public class Part : IPart
+public class Part : IModule
 {
     private object _lo = new();
 
@@ -62,6 +62,23 @@ public class Part : IPart
 
     }
 
+
+    private void _destroyResources()
+    {
+        lock (_lo)
+        {
+            if (!_createdResources)
+            {
+                return;
+            }
+
+            _createdResources = false;
+        }
+
+        _eMiniMap.Dispose();
+        _materialMiniMap = null;
+    }
+    
     private int _updateMinimapFrameCount = 0;
     private readonly int _updateMinimapCount = 4;
 
@@ -139,28 +156,25 @@ public class Part : IPart
     }
 
 
-    public void PartOnInputEvent(engine.news.Event keyEvent)
+    public void Dispose()
     {
-        /*
-         * nothing to handle here.
-         */
+        _destroyResources();
     }
-    
-    
-    public void PartDeactivate()
+
+    public void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= OnOnLogicalFrame;
         _engine.OnPlayerEntityChanged -= _onPlayerEntityChanged;
-        _engine.RemovePart(this);
+        _engine.RemoveModule(this);
     }
 
     
-    public void PartActivate(in Engine engine0, in IScene scene0)
+    public void ModuleActivate(Engine engine0)
     {
         _engine = engine0;
         _needResources();
         _createNewMiniMap();
-        _engine.AddPart(100, scene0, this);
+        _engine.AddModule(this);
         _engine.OnLogicalFrame += OnOnLogicalFrame;
         _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
     }

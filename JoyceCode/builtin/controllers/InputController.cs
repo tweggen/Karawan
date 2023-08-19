@@ -12,7 +12,7 @@ namespace builtin.controllers;
  *
  * COnsumes input 
  */
-public class InputController : engine.IPart
+public class InputController : engine.IModule, engine.IInputPart
 {
     private object _lo = new();
     
@@ -359,7 +359,7 @@ public class InputController : engine.IPart
     }
     
     
-    public void PartOnInputEvent(Event ev)
+    public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
@@ -370,19 +370,27 @@ public class InputController : engine.IPart
     }
 
     
-    public void PartDeactivate()
+    public void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        _engine.RemovePart(this);
+        Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
+        Implementations.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
+        _engine.RemoveModule(this);
+    }
+
+
+    public void Dispose()
+    {
+        
     }
     
 
-    public void PartActivate(in Engine engine0, in IScene scene0)
+    public void ModuleActivate(Engine engine0)
     {
         _engine = engine0;
         Implementations.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
+        Implementations.Get<InputEventPipeline>().AddInputPart(10000, this);
         _refreshViewSize();
-        _engine.AddPart(10000, scene0, this);
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

@@ -13,12 +13,12 @@ namespace nogame.parts.menu;
  *
  * On activation, makes the map entities visible
  */
-public class Part : IPart
+public class Part : IModule
 {
     private object _lo = new();
 
     private engine.Engine _engine;
-    
+
     // For now, let it use the OSD camera.
     public uint MenuCameraMask = 0x00010000;
 
@@ -28,28 +28,24 @@ public class Part : IPart
     {
         Implementations.Get<joyce.ui.Main>().Render(dt);
     }
-    
-    public void PartOnInputEvent(engine.news.Event keyEvent)
-    {
-        /*
-         * Nothing to do yet.
-         */
-    }
-    
 
-    public void PartDeactivate()
+    public void Dispose()
     {
-        _engine.RemovePart(this);
+    }
+
+
+    public void ModuleDeactivate()
+    {
+        _engine.RemoveModule(this);
         _engine.OnImGuiRender -= _onImGuiRender;
         _engine.DisableEntityIds();
     }
 
     
-    public void PartActivate(in Engine engine0, in IScene scene0)
+    public void ModuleActivate(Engine engine0)
     {
         _engine = engine0;
-        // _engine.GetATransform().SetVisible(_eMap, true);
-        _engine.AddPart(1000, scene0, this);
+        _engine.AddModule(this);
         _engine.OnImGuiRender += _onImGuiRender;
         _engine.EnableEntityIds();
     }

@@ -111,7 +111,7 @@ public class Scene : engine.IScene
             TimeSpan.FromMilliseconds(4674),
             _hideTitle);
         
-        new builtin.parts.TitlePart(new TitleCard()
+        new builtin.parts.TitleModule(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
             StartOffset = TimeSpan.FromMilliseconds(500),
@@ -125,9 +125,9 @@ public class Scene : engine.IScene
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
             EndTransform =  new engine.transform.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
-        }).PartActivate(_engine, this);
+        }).ModuleActivate(_engine);
 
-        new builtin.parts.TitlePart(new TitleCard()
+        new builtin.parts.TitleModule(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
             StartOffset = TimeSpan.FromMilliseconds(2000),
@@ -140,7 +140,7 @@ public class Scene : engine.IScene
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
             EndTransform =  new engine.transform.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
-        }).PartActivate(_engine, this);
+        }).ModuleActivate(_engine);
     }
 
 
