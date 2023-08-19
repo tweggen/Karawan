@@ -6,6 +6,7 @@ using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuUtilities;
 using BepuUtilities.Memory;
+using engine.news;
 using static engine.Logger;
 using Trace = System.Diagnostics.Trace;
 
@@ -25,8 +26,6 @@ public class API
     private Engine _engine;
 
     private SortedDictionary<int, CollisionProperties> _mapCollisionProperties = new();
-
-    public event EventHandler<physics.ContactInfo> OnContactInfo;
 
     private SortedDictionary<ulong, uint> _previousCollisions = new();
     
@@ -89,7 +88,7 @@ public class API
         }
         else
         {
-            OnContactInfo?.Invoke(this, contactInfo);
+            Implementations.Get<EventQueue>().Push(new ContactEvent(contactInfo));
             lock (_lo)
             {
                 _previousCollisions[collHash] = _frameId;

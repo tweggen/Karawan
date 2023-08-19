@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using engine;
 using engine.draw;
+using engine.news;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
@@ -84,8 +85,10 @@ namespace nogame.modules.playerhover
         }
 
 
-        private void _onContactInfo(object eventSource, engine.physics.ContactInfo contactInfo)
+        private void _onContactInfo(engine.news.Event ev)
         {
+            var cev = ev as ContactEvent;
+
             /*
              * If this contact involved us, we store the other contact info in this variable.
              * If the other does not have collision properties, this variable also is empty.
@@ -93,8 +96,8 @@ namespace nogame.modules.playerhover
             CollisionProperties other = null;
 
             // Trace( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
-            CollisionProperties propsA = contactInfo.PropertiesA;
-            CollisionProperties propsB = contactInfo.PropertiesB;
+            CollisionProperties propsA = cev.ContactInfo.PropertiesA;
+            CollisionProperties propsB = cev.ContactInfo.PropertiesB;
 
             CollisionProperties me = null;
 
@@ -275,7 +278,7 @@ namespace nogame.modules.playerhover
         public void ModuleDeactivate()
         {
             _engine.OnLogicalFrame -= OnOnLogicalFrame;
-            _engine.OnContactInfo -= _onContactInfo;
+            Implementations.Get<SubscriptionManager>().Unsubscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
             _controllerWASDPhysics.DeactivateController();
             _engine.RemoveModule(this);
 
@@ -379,7 +382,7 @@ namespace nogame.modules.playerhover
             _controllerWASDPhysics = new WASDPhysics(_engine, _eShip, MassShip);
             _controllerWASDPhysics.ActivateController();
 
-            _engine.OnContactInfo += _onContactInfo;
+            Implementations.Get<SubscriptionManager>().Subscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
             _engine.AddModule(this);
             _engine.OnLogicalFrame += OnOnLogicalFrame;
         }

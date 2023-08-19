@@ -111,12 +111,6 @@ namespace engine
 
         private bool _platformIsAvailable = false;
 
-        public event EventHandler<physics.ContactInfo> OnContactInfo {
-            add => _aPhysics.OnContactInfo += value; remove => _aPhysics.OnContactInfo -= value;
-        }
-
-        public event EventHandler<engine.news.Event> OnContactEvent;
-        
         public BepuPhysics.Simulation Simulation
         {
             get => _aPhysics.Simulation;
