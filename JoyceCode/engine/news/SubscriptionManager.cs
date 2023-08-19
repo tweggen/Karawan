@@ -156,6 +156,44 @@ public class SubscriptionManager
     }
 
 
+    public void Handle(Event ev)
+    {
+        List<Action<Event>> listActions;
+        lock (_lo)
+        {
+            int idx = _findFirstPathGE_nolock(ev.Type);
+            if (idx < 0)
+            {
+                return;
+            }
+
+            listActions = new();
+            while (true)
+            {
+                var sub = _subscriberList.GetKeyAtIndex(idx);
+                if (!ev.Type.StartsWith(sub.SubscriptionPath))
+                {
+                    break;
+                }
+                listActions.Add(sub.Handler);
+            }
+        }
+
+        foreach (var action in listActions)
+        {
+            if (ev.IsHandled) break;
+            try
+            {
+                action(ev);
+            }
+            catch (Exception e)
+            {
+                Warning($"Caught exception while handling event {ev}: {e}");
+            }
+        }
+    }
+
+
     static public int Unit()
     {
         int result = 0;

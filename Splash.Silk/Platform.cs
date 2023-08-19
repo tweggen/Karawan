@@ -221,9 +221,6 @@ namespace Splash.Silk
         }
 
         
-        private bool _isMouseButtonClicked = false;
-
-
         private void _onMouseMove(IMouse mouse, Vector2 position)
         {
             Implementations.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")

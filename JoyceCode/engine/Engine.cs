@@ -523,6 +523,19 @@ namespace engine
             /*
              * Goal: shortest latency from user input to screen.
              */
+            
+            /*
+             * First collect and execute all events, so that they can
+             * affect behaviours.
+             */
+            {
+                var eq = Implementations.Get<EventQueue>();
+                var sm = Implementations.Get<SubscriptionManager>();
+                while (!eq.IsEmpty())
+                {
+                    sm.Handle(eq.Pop());
+                }
+            }
 
             /*
              * Call the various ways of user behavior and/or controllers.
