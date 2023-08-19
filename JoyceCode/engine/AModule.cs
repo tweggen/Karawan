@@ -6,12 +6,12 @@ namespace engine;
 
 public abstract class AModule : IModule
 {
-    protected List<string> _moduleRequires = new();
+    protected List<ModuleDependency> _moduleDependencies = new();
     private List<IModule> _activatedModules = new();
     
-    public IEnumerable<string> ModuleRequires()
+    public IEnumerable<ModuleDependency> ModuleRequires()
     {
-        return new List<string>(_moduleRequires);
+        return new List<ModuleDependency>(_moduleDependencies);
     }
 
 
@@ -32,21 +32,27 @@ public abstract class AModule : IModule
 
     public void ModuleActivate(engine.Engine engine)
     {
-        foreach (var moduleTypeString in _moduleRequires)
+        foreach (var moduleDependency in _moduleDependencies)
         {
             try
             {
-                IModule module = Implementations.Instance.GetInstance(moduleTypeString) as IModule;
-                if (module == null)
+                Object implementation = Implementations.Instance.GetInstance(moduleDependency.TypeName);
+                moduleDependency.Implementation = implementation;
+                if (moduleDependency.ActivateAsModule)
                 {
-                    ErrorThrow("Depending implementation is not a module.", (m) => new InvalidCastException(m));
+                    var module = implementation as IModule;
+                    if (module == null)
+                    {
+                        ErrorThrow($"Dependency {moduleDependency.TypeName} is not an IModule.", (m) => new InvalidCastException(m));
+                    }
+                        
+                    module.ModuleActivate(engine);
+                    _activatedModules.Add(module);
                 }
-                module.ModuleActivate(engine);
-                _activatedModules.Add(module);
             }
             catch (Exception e)
             {
-                Error($"Unable to resolve dependency ${moduleTypeString}: {e}.");
+                Error($"Unable to resolve dependency ${moduleDependency.TypeName}: {e}.");
             }
         }
     }
