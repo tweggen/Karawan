@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Dynamic;
 using engine.joyce.components;
+using engine.news;
 
 namespace engine;
 

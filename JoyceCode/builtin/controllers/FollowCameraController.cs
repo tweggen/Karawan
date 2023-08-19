@@ -21,14 +21,13 @@ namespace builtin.controllers
         
         private float _previousZoomDistance = 33f;
         
-        private void OnOnLogicalFrame(object sender, float dt)
+        private void _onLogicalFrame(object sender, float dt)
         {
             /*
              * We allow the user to move the cam.
              */
-            Vector2 vMouseMove;
-           _engine.GetMouseMove(out vMouseMove);
-           _engine.GetControllerState(out var controllerState);
+            engine.Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
+            engine.Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out var vMouseMove);
 
             if( !_eCarrot.Has<engine.transform.components.Transform3ToWorld>()
                 || !_eCarrot.Has<engine.transform.components.Transform3>())
@@ -115,12 +114,12 @@ namespace builtin.controllers
         
         public void DeactivateController()
         {
-            _engine.OnLogicalFrame -= OnOnLogicalFrame;
+            _engine.OnLogicalFrame -= _onLogicalFrame;
         }
 
         public void ActivateController()
         {
-            _engine.OnLogicalFrame += OnOnLogicalFrame;
+            _engine.OnLogicalFrame += _onLogicalFrame;
         }
 
         public FollowCameraController(engine.Engine engine, DefaultEcs.Entity eTarget, DefaultEcs.Entity eCarrot) 

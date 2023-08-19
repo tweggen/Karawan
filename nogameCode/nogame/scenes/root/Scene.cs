@@ -30,6 +30,8 @@ public class Scene : engine.IScene
     private engine.world.Loader _worldLoader;
     private engine.world.MetaGen _worldMetaGen;
 
+    private builtin.controllers.InputController _partInputController;
+    
     private nogame.parts.osd.Part _partOsd;
     private nogame.parts.playerhover.Part _partPlayerhover;
     private nogame.parts.skybox.Part _partSkybox;
@@ -175,8 +177,10 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
-        Implementations.Get<SubscriptionManager>().Unsubscribe("input.touch.press", _onTouchPress);
-            
+        Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        
+        _partInputController.PartDeactivate();
+        
         _partKeyHandler.PartDeactivate();
         _partKeyHandler = null;
         
@@ -347,12 +351,12 @@ public class Scene : engine.IScene
             _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));
         }
 
+
         if (true)
         {
             _partPlayerhover = new();
             _partPlayerhover.PartActivate(_engine, this);
         }
-
 
         /*
          * Create a camera controller that directly controls the camera with wasd,
@@ -387,7 +391,10 @@ public class Scene : engine.IScene
         _partKeyHandler = new();
         _partKeyHandler.PartActivate(_engine, this);
         
-        Implementations.Get<SubscriptionManager>().Subscribe("input.touch.press", _onTouchPress);
+        Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+
+        _partInputController = Implementations.Get<builtin.controllers.InputController>();
+        _partInputController.PartActivate(_engine, this);
         
         /*
          * Now, that everything has been created, add the scene.

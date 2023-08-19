@@ -33,7 +33,7 @@ public class KeyHandler : engine.IPart
     
     public void PartOnInputEvent(Event ev)
     {
-        if (ev.Type != "pressed")
+        if (ev.Type != "input.key.pressed")
         {
             return;
         }

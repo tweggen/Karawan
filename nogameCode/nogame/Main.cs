@@ -1,4 +1,5 @@
 
+using builtin.controllers;
 using builtin.map;
 using engine;
 using nogame.map;
@@ -38,6 +39,7 @@ public class Main
         Implementations.Register<MapFramebuffer>(() => new MapFramebuffer());
         Implementations.Register<Boom.Jukebox>(() => new Boom.Jukebox());
         Implementations.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
+        Implementations.Register<builtin.controllers.InputController>(() => new InputController());
     }
 
     

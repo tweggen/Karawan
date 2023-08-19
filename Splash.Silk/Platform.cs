@@ -24,9 +24,6 @@ namespace Splash.Silk
     {
         private object _lo = new object();
         private engine.Engine _engine;
-        private engine.ControllerState _controllerState;
-        private Vector2 _vMouseMove;
-        private static Vector2 _lastMousePosition;
 
         private SilkThreeD _silkThreeD;
         private InstanceManager _instanceManager;
@@ -40,7 +37,6 @@ namespace Splash.Silk
         private IInputContext _iInputContext;
         private GL _gl;
 
-        private float _lookSensitivity = 1f;
 
         private engine.WorkerQueue _platformThreadActions = new("platformThread");
 
@@ -86,18 +82,7 @@ namespace Splash.Silk
             }
 #endif
         }
-
         
-        private void _physFrameReadMouseMove()
-        {
-#if false
-            Vector2 vnew = Raylib_CsLo.Raylib.GetMouseDelta();
-            lock (_lock)
-            {
-                _vMouseMove += vnew;
-            }
-#endif
-        }
 
 
         private void _toggleFullscreen()
@@ -142,55 +127,36 @@ namespace Splash.Silk
         }
         
         
-        private readonly float ControllerWalkForwardFast = 255f;
-        private readonly float ControllerWalkBackwardFast = 255f;
-        private readonly float ControllerWalkForwardNormal = 200f;
-        private readonly float ControllerWalkBackwardNormal = 200f;
-        private readonly float ControllerFlyUpNormal = 200f;
-        private readonly float ControllerFlyDownNormal = 200f;
-        private readonly float ControllerTurnLeftRight = 200f;
-        
-        
-        
         private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
         {
             string code = "";
             switch (arg2)
             {
                 case Key.ShiftLeft:
-                    _controllerState.WalkFast = true;
                     code = "(shiftleft)";
                     break;
                 case Key.Q:
-                    _controllerState.FlyUp = (int) ControllerFlyUpNormal;
                     code = "Q";
                     break;
                 case Key.Z:
-                    _controllerState.FlyDown = (int)ControllerFlyDownNormal;
                     code = "Z";
                     break;
                 case Key.W:
-                    _controllerState.WalkForward = _controllerState.WalkFast?(int)ControllerWalkForwardFast:(int)ControllerWalkForwardNormal;
                     code = "W";
                     break;
                 case Key.S:
-                    _controllerState.WalkBackward = _controllerState.WalkFast?(int)ControllerWalkBackwardFast:(int)ControllerWalkBackwardNormal;
                     code = "S";
                     break;
                 case Key.A:
-                    _controllerState.TurnLeft = (int)ControllerTurnLeftRight;
                     code = "A";
                     break;
                 case Key.D:
-                    _controllerState.TurnRight = (int)ControllerTurnLeftRight;
                     code = "D";
                     break;
                 case Key.Tab:
-                    _controllerState.ShowMap = true;
                     code = "(tab)";
                     break;
                 case Key.Escape:
-                    _controllerState.PauseMenu = true;
                     code = "(escape)";
                     break;
                 case Key.F11:
@@ -203,7 +169,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeInputEvent(new engine.news.Event("pressed", code));
+                _engine.TakeInputEvent(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
             }
         }
         
@@ -214,40 +180,31 @@ namespace Splash.Silk
             switch (arg2)
             {
                 case Key.ShiftLeft:
-                    _controllerState.WalkFast = false;
                     code = "(shiftleft)";
                     break;
                 case Key.Q:
-                    _controllerState.FlyUp = 0;
                     code = "Q";
                     break;
                 case Key.Z:
-                    _controllerState.FlyDown = 0;
                     code = "Z";
                     break;
                 case Key.W:
-                    _controllerState.WalkForward = 0;
                     code = "W";
                     break;
                 case Key.S:
-                    _controllerState.WalkBackward = 0;
                     code = "S";
                     break;
                 case Key.A:
-                    _controllerState.TurnLeft = 0;
                     code = "A";
                     break;
                 case Key.D:
-                    _controllerState.TurnRight = 0;
                     code = "D";
                     break;
                 case Key.Tab:
                     code = "(tab)";
-                    _controllerState.ShowMap = false;
                     break;  
                 case Key.Escape:
                     code = "(escape)";
-                    _controllerState.PauseMenu = false;
                     break;
                 case Key.F11:
                     code = "(F11)";
@@ -255,197 +212,60 @@ namespace Splash.Silk
                 default:
                     break;
             }
+            
 
             if (code.Length != 0)
             {
-                _engine.TakeInputEvent(new engine.news.Event("released", code));
+                _engine.TakeInputEvent(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
             }
         }
 
-
-        /**
-         * Respond to a move, press position is relative view size (anamorphic),
-         * vRel is movement (relative to viewY resolution)
-         */
-        private void _handleTouchMove(Vector2 vPress, Vector2 vRel)
-        {
-            /*
-             * Pressed in the left half of the screen?
-             */
-            if (vPress.X <= 0.5)
-            {
-                if (vRel.Y < 0)
-                {
-                    /*
-                     * The user dragged up compare to the press position
-                     */
-                    _controllerState.WalkForward = (int)(Single.Min(ControllerYMax, -vRel.Y)/ControllerYMax * ControllerWalkForwardFast);
-                    _controllerState.WalkBackward = 0;
-                }
-                else if (vRel.Y > 0)
-                {
-                    /*
-                     * The user dragged down compared to the press position.
-                     */
-                    _controllerState.WalkBackward = (int)(Single.Min(ControllerYMax, vRel.Y)/ControllerYMax * ControllerWalkBackwardFast);
-                    _controllerState.WalkForward = 0;
-                }
-
-                if (vRel.X < 0)
-                {
-                    _controllerState.TurnLeft = (int)(Single.Min(ControllerXMax, -vRel.X)/ControllerXMax * ControllerTurnLeftRight);
-                    _controllerState.TurnRight = 0;
-                }
-                else if (vRel.X > 0)
-                {
-                    _controllerState.TurnRight = (int)(Single.Min(ControllerXMax, vRel.X) * ControllerTurnLeftRight);
-                    _controllerState.TurnLeft = 0;
-                }
-            }
-            else
-            {
-                var viewSize = _iView.Size;
-                if (_lastTouchPosition == default)
-                {
-                    _lastTouchPosition = _currentMousePosition;
-                }
-                _vMouseMove += ((_currentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f * _lookSensitivity;
-            }
-        }
         
-
-        private readonly float ControllerYMax = 0.2f; 
-        private readonly float ControllerXMax = 0.13f;
-
-        private Vector2 _lastTouchPosition = default;
-
-        private void _touchMouseController()
-        {
-            lock (_lo)
-            {
-                if (_isMouseButtonClicked)
-                {
-                    Vector2 currDist = _currentMousePosition - _mousePressPosition;
-                    var viewSize = _iView.Size;
-
-                    /*
-                     * Compute movement relative to view height, 
-                     */
-                    float relY = (float)currDist.Y / (float)viewSize.Y;
-                    float relX = (float)currDist.X / (float)viewSize.Y;
-
-                    _handleTouchMove(
-                        new Vector2(
-                            _mousePressPosition.X / viewSize.X, 
-                            _mousePressPosition.Y / viewSize.Y),
-                        new Vector2(relX, relY));
-
-                    _lastTouchPosition = _currentMousePosition;
-                }
-                else
-                {
-                    /*
-                     * on any release, reset all controller movements.
-                     */
-                    _controllerState.WalkForward = 0;
-                    _controllerState.WalkBackward = 0;
-                    _controllerState.TurnRight = 0;
-                    _controllerState.TurnLeft = 0;
-
-                    _lastTouchPosition = default;
-                }
-            }
-        }
-
-
-        private void _desktopMouseController()
-        {
-            lock (_lo)
-            {
-                if (!_isMouseButtonClicked)
-                {
-                    if (_lastMousePosition == default)
-                    {
-                    }
-                    else
-                    {
-                        var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * _lookSensitivity;
-                        var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * _lookSensitivity;
-                        _vMouseMove += new Vector2(xOffset, yOffset);
-                    }
-                    _lastMousePosition = _currentMousePosition;
-                }
-            }
-        }
-
-
         private bool _isMouseButtonClicked = false;
-        private Vector2 _mousePressPosition = new();
-        private Vector2 _currentMousePosition = new();
 
 
         private void _onMouseMove(IMouse mouse, Vector2 position)
         {
-            lock (_lo)
+            Implementations.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
             {
-                _currentMousePosition = mouse.Position;
-            }
+                Position = position
+            });
         }
 
 
         private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
         {
-            /*
-             *  Translate mouse wheel to zooming in/out. 
-             */
-            var y = scrollWheel.Y;
-            lock (_lo)
+            Implementations.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_WHEEL, "")
             {
-                int currentZoomState = _controllerState.ZoomState;
-                currentZoomState -= (int) y;
-                currentZoomState = Int32.Max(-128, currentZoomState);
-                currentZoomState = Int32.Min(16, currentZoomState);
-                _controllerState.ZoomState = (sbyte) currentZoomState;
-            }
+                Position = new(scrollWheel.X, scrollWheel.Y)
+            });
         }
 
 
         private void _onMouseDown(IMouse mouse, MouseButton mouseButton)
-        {
-            if (mouseButton != MouseButton.Left)
-            {
-                return;
-            }
-
-            lock (_lo)
-            {
-                _mousePressPosition = mouse.Position;
-                _currentMousePosition = mouse.Position;
-                _isMouseButtonClicked = true;
-            }
-
+        {          
             Implementations.Get<EventQueue>().Push(
-                new Event("input.touch.press", "")
+                new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
+                {
+                    Position = mouse.Position
+                });
+            Implementations.Get<EventQueue>().Push(
+                new Event(Event.INPUT_TOUCH_PRESSED, "")
                 {
                     Position = mouse.Position
                 });
         }
 
+        
         private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
         {
-            if (mouseButton != MouseButton.Left)
-            {
-                return;
-            }
-
-            lock (_lo)
-            {
-                _currentMousePosition = mouse.Position;
-                _isMouseButtonClicked = false;
-            }
-
             Implementations.Get<EventQueue>().Push(
-                new Event("input.touch.release", "")
+                new Event(Event.INPUT_MOUSE_RELEASED, $"{(int)mouseButton}")
+                {
+                    Position = mouse.Position
+                });
+            Implementations.Get<EventQueue>().Push(
+                new Event(Event.INPUT_TOUCH_RELEASED, "")
                 {
                     Position = mouse.Position
                 });
@@ -543,7 +363,6 @@ namespace Splash.Silk
             while (true)
             {
                 _physFrameReadKeyEvents();
-                _physFrameReadMouseMove();
 
                 Engine.EngineState engineState = _engine.State;
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
@@ -598,7 +417,14 @@ namespace Splash.Silk
             {
                 return;
             }
+            
+            // TXWTODO: We are abusing the global settings as global variables.
             _renderer.SetDimension(size.X, size.Y);
+            engine.GlobalSettings.Set("view.size", $"{size.X}x{size.Y}");
+            Implementations.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
+            {
+                Position = new(size.X, size.Y)
+            });
         }
 
         
@@ -660,25 +486,6 @@ namespace Splash.Silk
         }
 
 
-        public void GetMouseMove(out Vector2 vMouseMove)
-        {
-            lock (_lo)
-            {
-                vMouseMove = _vMouseMove;
-                _vMouseMove = new Vector2(0f, 0f);
-            }
-        }
-        
-
-        public void GetControllerState(out ControllerState controllerState)
-        {
-            lock (_lo)
-            {
-                controllerState = _controllerState;
-            }
-        }
-
-
         public void CollectRenderData(engine.IScene scene)
         {
             _logicalRenderer.CollectRenderData(scene);
@@ -701,21 +508,10 @@ namespace Splash.Silk
         }
 #endif
 
-        public void OnOnLogical(object? sender, float dt)
-        {
-            if (engine.GlobalSettings.Get("splash.touchControls") != "false")
-            {
-                _touchMouseController();
-            }
-            else
-            {
-                _desktopMouseController();
-            }
-        }
-
-
         public void SetupDone()
         {
+            engine.GlobalSettings.Set("view.size", "320x200");
+            
             string baseDirectory = System.AppContext.BaseDirectory;
             System.Console.WriteLine($"Running in directory {baseDirectory}" );
             
@@ -760,17 +556,9 @@ namespace Splash.Silk
                 _lightManager,
                 _silkThreeD
             );
-
-            _engine.OnLogicalFrame += OnOnLogical;
         }
 
         
-        public void Sleep(double dt)
-        {
-            System.Threading.Thread.Sleep((int)(dt*1000f));
-        }
-        
-
         public bool IsRunning()
         {
             lock(_lo)
@@ -788,16 +576,11 @@ namespace Splash.Silk
 
         public void Dispose()
         {
-            _engine.OnLogicalFrame -= OnOnLogical;
         }
 
         
         public Platform(string[] args)
         {
-            _controllerState = new();
-            _vMouseMove = new Vector2(0f, 0f);
-
-            // _controllerState.ZoomState = (sbyte) float.Parse(engine.GlobalSettings.Get("platform.initialZoomState"), CultureInfo.InvariantCulture);
         }
         
 

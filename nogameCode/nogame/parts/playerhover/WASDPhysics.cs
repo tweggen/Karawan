@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using engine;
 using engine.draw;
 using static engine.Logger;
 
@@ -35,11 +36,9 @@ namespace nogame.parts.playerhover
             _hadCollision = true;
         }
         
-        private void OnOnLogicalFrame(object sender, float dt)
+        private void _onLogicalFrame(object sender, float dt)
         {
-            // if (_hadCollision) return;
-            engine.ControllerState controllerState;
-            _engine.GetControllerState(out controllerState);
+            Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
             Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
             
@@ -227,7 +226,7 @@ namespace nogame.parts.playerhover
 
         public void DeactivateController()
         {
-            _engine.OnLogicalFrame -= OnOnLogicalFrame;
+            _engine.OnLogicalFrame -= _onLogicalFrame;
         }
 
 
@@ -235,7 +234,7 @@ namespace nogame.parts.playerhover
         {
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             
-            _engine.OnLogicalFrame += OnOnLogicalFrame;
+            _engine.OnLogicalFrame += _onLogicalFrame;
         }
 
 

@@ -11,12 +11,10 @@ namespace builtin.controllers
         private DefaultEcs.Entity _entity;
         private engine.transform.API _aTransform;
 
-        private void OnOnLogicalFrame(object sender, float dt)
+        private void _onLogicalFrame(object sender, float dt)
         {
-            engine.ControllerState controllerState;
-            _engine.GetControllerState(out controllerState);
-            Vector2 vMouseMove;
-            _engine.GetMouseMove(out vMouseMove);
+            engine.Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
+            engine.Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out var vMouseMove);
 
             var cTransform3 = _entity.Get<engine.transform.components.Transform3>();
             var cToParent = _entity.Get<engine.transform.components.Transform3ToParent>();
@@ -81,12 +79,12 @@ namespace builtin.controllers
 
         public void DeactivateController()
         {
-            _engine.OnLogicalFrame -= OnOnLogicalFrame;
+            _engine.OnLogicalFrame -= _onLogicalFrame;
         }
 
         public void ActivateController()
         {
-            _engine.OnLogicalFrame += OnOnLogicalFrame;
+            _engine.OnLogicalFrame += _onLogicalFrame;
         }
 
         public WASDController(engine.Engine engine, DefaultEcs.Entity entity)

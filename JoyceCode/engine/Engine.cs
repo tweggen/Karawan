@@ -660,13 +660,13 @@ namespace engine
 
         public void GetControllerState(out ControllerState controllerState)
         {
-            _platform.GetControllerState(out controllerState);
+            Implementations.Get<builtin.controllers.InputController>().GetControllerState(out controllerState);
         }
         
 
         public void GetMouseMove(out Vector2 vMouseMove)
         {
-            _platform.GetMouseMove(out vMouseMove);
+            Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
         }
 
 
@@ -999,13 +999,6 @@ namespace engine
         
         public void PlatformSetupDone()
         {
-            {
-                /*
-                 * Zero out initial accumulated mouse move.
-                 */
-                GetMouseMove(out _);
-            }
-
             /*
              * Start the reality as soon the platform also is set up.
              */
