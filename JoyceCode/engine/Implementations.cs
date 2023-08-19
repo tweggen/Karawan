@@ -23,6 +23,15 @@ public sealed class Implementations
     private object _lo = new();
     private Dictionary<Type, InstanceEntry> _mapInstances = new();
 
+
+    public IEnumerable<Type> GetTypes()
+    {
+        lock (_lo)
+        {
+            return new List<Type>(_mapInstances.Keys);
+        }
+    }
+
     public void RegisterFactory<T>(Func<Object> factory)
     {
         lock (_lo)

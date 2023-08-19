@@ -134,9 +134,34 @@ public class Main
                 }
             }
 
+            if (ImGui.CollapsingHeader("Software"))
+            {
+                if (ImGui.TreeNode("Modules"))
+                {
+                    var modules = _engine.GetModules();
+                    foreach (var module in modules)
+                    {
+                        ImGui.Text(module.GetType().ToString());
+                    }
+
+                    ImGui.TreePop();
+                }
+
+                if (ImGui.TreeNode("Implementations"))
+                {
+                    var types = Implementations.Instance.GetTypes();
+                    foreach (var type in types)
+                    {
+                        ImGui.Text(type.ToString());
+                    }
+
+                    ImGui.TreePop();
+                }
+            }
+
             if (ImGui.CollapsingHeader("Entities"))
             {
-                if (ImGui.BeginListBox("entities"))
+                if (ImGui.BeginListBox(""))
                 {
                     var entities = _engine.Entities;
                     foreach (var entity in entities)

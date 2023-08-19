@@ -8,7 +8,7 @@ using static engine.Logger;
 
 namespace nogame.scenes.root;
 
-public class Scene : engine.IScene
+public class Scene : engine.IScene, engine.IInputPart
 {
     private object _lo = new();
     
@@ -30,7 +30,7 @@ public class Scene : engine.IScene
     private engine.world.Loader _worldLoader;
     private engine.world.MetaGen _worldMetaGen;
 
-    private builtin.controllers.InputController _partInputController;
+    private builtin.controllers.InputController _moduleInputController;
     
     private nogame.modules.osd.Module _moduleOsd;
     private nogame.modules.playerhover.Module _modulePlayerhover;
@@ -127,7 +127,7 @@ public class Scene : engine.IScene
     }
     
     
-    public void PartOnInputEvent(Event ev)
+    public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type != Event.INPUT_KEY_PRESSED)
         {
@@ -198,9 +198,11 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
+        Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
+
         Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         
-        _partInputController.ModuleDeactivate();
+        _moduleInputController.ModuleDeactivate();
         
         _modulePlayerhover.ModuleDeactivate();
         _modulePlayerhover = null;
@@ -408,8 +410,9 @@ public class Scene : engine.IScene
 
         Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
 
-        _partInputController = Implementations.Get<builtin.controllers.InputController>();
-        _partInputController.ModuleActivate(_engine);
+        _moduleInputController = Implementations.Get<builtin.controllers.InputController>();
+        _moduleInputController.ModuleActivate(_engine);
+        
         
         /*
          * Now, that everything has been created, add the scene.
@@ -427,6 +430,8 @@ public class Scene : engine.IScene
         Implementations.Get<Timeline>().RunAt(
             nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
+
+        Implementations.Get<InputEventPipeline>().AddInputPart(10, this);
         
         lock (_lo)
         {

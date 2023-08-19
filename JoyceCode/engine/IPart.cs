@@ -4,7 +4,7 @@ using System.Text;
 
 namespace engine
 {
-    public interface IInputPart : IModule
+    public interface IInputPart
     {
         public void InputPartOnInputEvent(engine.news.Event ev);
     }

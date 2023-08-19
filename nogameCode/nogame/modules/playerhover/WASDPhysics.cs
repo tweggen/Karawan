@@ -30,12 +30,6 @@ namespace nogame.modules.playerhover
         private readonly float LevelUpThrust = 16f;
         private readonly float LevelDownThrust = 16f;
         
-        private bool _hadCollision = false;
-        public void HadCollision()
-        {
-            _hadCollision = true;
-        }
-        
         private void _onLogicalFrame(object sender, float dt)
         {
             Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
