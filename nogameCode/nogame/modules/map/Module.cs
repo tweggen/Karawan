@@ -3,7 +3,7 @@ using engine;
 using engine.joyce;
 
 
-namespace nogame.parts.map;
+namespace nogame.modules.map;
 
 
 /**
@@ -13,7 +13,7 @@ namespace nogame.parts.map;
  *
  * On activation, makes the map entities visible
  */
-public class Part : IModule
+public class Module : IModule
 {
     private object _lo = new();
 

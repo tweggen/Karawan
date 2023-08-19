@@ -9,7 +9,7 @@ using engine;
 using engine.draw;
 using static engine.Logger;
 
-namespace nogame.parts.playerhover
+namespace nogame.modules.playerhover
 {
     internal class WASDPhysics
     {

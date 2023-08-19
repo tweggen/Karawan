@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Text;
 using engine.joyce;
 
-namespace nogame.parts.skybox
+namespace nogame.modules.skybox
 {
-    public class Part : engine.IModule
+    public class Module : engine.IModule
     {
         private object _lock = new object();
 

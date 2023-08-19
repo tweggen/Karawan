@@ -3,9 +3,9 @@ using engine;
 using engine.draw.systems;
 using engine.joyce;
 
-namespace nogame.parts.osd;
+namespace nogame.modules.osd;
 
-public class Part : engine.IModule
+public class Module : engine.IModule
 {
     private readonly object _lo = new();
     private engine.Engine _engine = null;

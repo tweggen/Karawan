@@ -3,7 +3,7 @@ using engine;
 using engine.joyce;
 using static engine.Logger;
 
-namespace nogame.parts.menu;
+namespace nogame.modules.menu;
 
 
 /**
@@ -13,7 +13,7 @@ namespace nogame.parts.menu;
  *
  * On activation, makes the map entities visible
  */
-public class Part : IModule
+public class Module : IModule
 {
     private object _lo = new();
 

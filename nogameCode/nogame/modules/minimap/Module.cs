@@ -7,7 +7,7 @@ using engine.joyce;
 using engine.ross;
 using engine.world;
 
-namespace nogame.parts.minimap;
+namespace nogame.modules.minimap;
 
 
 /**
@@ -17,7 +17,7 @@ namespace nogame.parts.minimap;
  *
  * On activation, makes the map entities visible
  */
-public class Part : IModule
+public class Module : IModule
 {
     private object _lo = new();
 

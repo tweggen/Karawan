@@ -1,6 +1,6 @@
 using engine;
 
-namespace nogame.parts.playerhover;
+namespace nogame.modules.playerhover;
 
 public class PlingPlayer
 {

@@ -13,9 +13,9 @@ using engine.physics;
 using engine.world;
 using static engine.Logger;
 
-namespace nogame.parts.playerhover
+namespace nogame.modules.playerhover
 {
-    public class Part : engine.IModule
+    public class Module : engine.IModule
     {
         static public readonly string PhysicsName = "nogame.playerhover";
         
@@ -385,7 +385,7 @@ namespace nogame.parts.playerhover
         }
 
         
-        public Part()
+        public Module()
         {
         }
     }

@@ -32,17 +32,17 @@ public class Scene : engine.IScene
 
     private builtin.controllers.InputController _partInputController;
     
-    private nogame.parts.osd.Part _partOsd;
-    private nogame.parts.playerhover.Part _partPlayerhover;
-    private nogame.parts.skybox.Part _partSkybox;
+    private nogame.modules.osd.Module _moduleOsd;
+    private nogame.modules.playerhover.Module _modulePlayerhover;
+    private nogame.modules.skybox.Module _moduleSkybox;
 
-    private nogame.parts.map.Part _partMap;
-    private nogame.parts.minimap.Part _partMiniMap;
+    private modules.map.Module _moduleMap;
+    private nogame.modules.minimap.Module _moduleMiniMap;
 
     private bool _isMapShown = false;
     private int _isSettingUp = 0;
 
-    private nogame.parts.menu.Part _partUI;
+    private modules.menu.Module _moduleUi;
     private bool _isUIShown = false;
 
     
@@ -57,13 +57,13 @@ public class Scene : engine.IScene
 
         if (isUIShown)
         {
-            _partUI.ModuleDeactivate();
+            _moduleUi.ModuleDeactivate();
             _engine.DisableMouse();
         }
         else
         {
             _engine.EnableMouse();
-            _partUI.ModuleActivate(_engine);
+            _moduleUi.ModuleActivate(_engine);
         }
     }
     
@@ -84,8 +84,8 @@ public class Scene : engine.IScene
              *
              * TXWTODO: Remove the map part.
              */
-            _partMap.ModuleDeactivate();
-            _partMiniMap.ModuleActivate(_engine);
+            _moduleMap.ModuleDeactivate();
+            _moduleMiniMap.ModuleActivate(_engine);
         }
         else
         {
@@ -94,8 +94,8 @@ public class Scene : engine.IScene
              *
              * TXWTODO: Add the map part.
              */
-            _partMap.ModuleActivate(_engine);
-            _partMiniMap.ModuleDeactivate();
+            _moduleMap.ModuleActivate(_engine);
+            _moduleMiniMap.ModuleDeactivate();
         }
     }
     
@@ -202,14 +202,14 @@ public class Scene : engine.IScene
         
         _partInputController.ModuleDeactivate();
         
-        _partPlayerhover.ModuleDeactivate();
-        _partPlayerhover = null;
-        _partSkybox.ModuleDeactivate();
-        _partSkybox = null;
+        _modulePlayerhover.ModuleDeactivate();
+        _modulePlayerhover = null;
+        _moduleSkybox.ModuleDeactivate();
+        _moduleSkybox = null;
         if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false")
         {
-            _partOsd.ModuleDeactivate();
-            _partOsd = null;
+            _moduleOsd.ModuleDeactivate();
+            _moduleOsd = null;
         }
         _ctrlFollowCamera.DeactivateController();
         _ctrlFollowCamera = null;
@@ -372,38 +372,38 @@ public class Scene : engine.IScene
 
         if (true)
         {
-            _partPlayerhover = new();
-            _partPlayerhover.ModuleActivate(_engine);
+            _modulePlayerhover = new();
+            _modulePlayerhover.ModuleActivate(_engine);
         }
 
         /*
          * Create a camera controller that directly controls the camera with wasd,
          * requires the playerhover.
          */
-        _ctrlFollowCamera = new(_engine, _eCamScene, _partPlayerhover.GetShipEntity());
+        _ctrlFollowCamera = new(_engine, _eCamScene, _modulePlayerhover.GetShipEntity());
         _ctrlFollowCamera.ActivateController();
 
         if (engine.GlobalSettings.Get("nogame.CreateUI") != "false") { 
-            _partUI = new();
+            _moduleUi = new();
         }
 
         if (engine.GlobalSettings.Get("nogame.CreateSkybox") != "false") {
-            _partSkybox = new();
-            _partSkybox.ModuleActivate(_engine);
+            _moduleSkybox = new();
+            _moduleSkybox.ModuleActivate(_engine);
         }
 
         if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
-            _partOsd = new();
-            _partOsd.ModuleActivate(_engine);
+            _moduleOsd = new();
+            _moduleOsd.ModuleActivate(_engine);
         }
 
         if (engine.GlobalSettings.Get("nogame.CreateMap") != "false") { 
-            _partMap = new();
+            _moduleMap = new();
         }
         
         if (engine.GlobalSettings.Get("nogame.CreateMiniMap") != "false") { 
-            _partMiniMap = new();
-            _partMiniMap.ModuleActivate(_engine);
+            _moduleMiniMap = new();
+            _moduleMiniMap.ModuleActivate(_engine);
         }
 
         Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
@@ -417,7 +417,7 @@ public class Scene : engine.IScene
         _engine.SceneSequencer.AddScene(0, this);
 
         _engine.SetCameraEntity(_eCamScene);
-        _engine.SetPlayerEntity(_partPlayerhover.GetShipEntity());
+        _engine.SetPlayerEntity(_modulePlayerhover.GetShipEntity());
 
         /*
          * Finally, set the timeline trigger for unblanking the cameras and starting the show.
