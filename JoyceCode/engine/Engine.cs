@@ -61,6 +61,14 @@ namespace engine
         private audio.systems.MovingSoundsSystem _systemMovingSounds;
 
         private SortedDictionary<float, IPart> _dictParts;
+
+        public IEnumerable<IPart> GetParts()
+        {
+            lock (_lo)
+            {
+                return new List<IPart>(_dictParts.Values);
+            }
+        }
         
         private readonly Queue<EntitySetupAction> _queueEntitySetupActions = new();
         
@@ -681,51 +689,7 @@ namespace engine
         {
             Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
         }
-
-
-        public void TakeInputEvent(engine.news.Event ev)
-        {
-            /*
-             * We need to propagate the event through all of the parts z order.
-             */
-            List<engine.IPart> listParts;
-            lock (_lo)
-            {
-                listParts = new List<engine.IPart>(_dictParts.Values);
-            }
-
-            /*
-             * Now run distribution of key events in a dedicated task.
-             * TXWTODO: This may become out of order, until we have a proper global event queue.
-             */
-            if (ev.IsHandled)
-            {
-                Trace($"Event {ev} not dispatched at all, already handled from the beginning.");
-                return;
-            }
-
-            Task.Run(() =>
-            {
-                foreach (var part in listParts)
-                {
-                    try
-                    {
-                        part.PartOnInputEvent(ev);
-                    }
-                    catch (Exception e)
-                    {
-                        Error($"Exception handling key event by part {part}: {e}.");
-                    }
-
-                    if (ev.IsHandled)
-                    {
-                        Trace($"Key event {ev} was handled by part {part}.");
-                        break;
-                    }
-                }
-            });
-        }
-
+        
 
         public void CallOnImGuiRender(float dt)
         {
@@ -940,6 +904,7 @@ namespace engine
 
             _logicalThread = new Thread(_logicalThreadFunction);
             _logicalThread.Priority = ThreadPriority.AboveNormal;
+            Implementations.Get<InputEventPipeline>().ModuleActivate(this);
         }
 
 
@@ -1034,6 +999,7 @@ namespace engine
             Implementations.Register<engine.Timeline>(() => new engine.Timeline());
             Implementations.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
             Implementations.Register<engine.news.EventQueue>(() => new EventQueue());
+            Implementations.Register<engine.InputEventPipeline>(() => new InputEventPipeline());
         }
     }
 }

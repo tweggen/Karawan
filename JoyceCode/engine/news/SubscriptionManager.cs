@@ -12,7 +12,7 @@ class SubscriberEntry : IComparable<SubscriberEntry>
     
     public int CompareTo(SubscriberEntry other)
     {
-        int result = SubscriptionPath.CompareTo(other.SubscriptionPath);
+        int result = string.CompareOrdinal(SubscriptionPath, other.SubscriptionPath);
         if (result != 0)
         {
             return result;
@@ -35,7 +35,7 @@ public class SubscriptionManager
     /*
      * Return the index of the first entry greater or equal than path.
      */
-    private int _findFirstPathGE_nolock(string path)
+    private int _findFirstSubscriber(string path)
     {
         int l = _subscriberList.Count;
         
@@ -51,7 +51,8 @@ public class SubscriptionManager
 
         if (i0 == i1)
         {
-            lastResult = _subscriberList.GetKeyAtIndex(i0).SubscriptionPath.CompareTo(path);
+            var subscribedPath = _subscriberList.GetKeyAtIndex(i0).SubscriptionPath;
+            lastResult = String.CompareOrdinal(subscribedPath, 0, path, 0, subscribedPath.Length);
         }
         else
         {
@@ -60,7 +61,8 @@ public class SubscriptionManager
                 int il = i1 - i0 + 1;
 
                 im = i0 + il / 2;
-                lastResult = _subscriberList.GetKeyAtIndex(im).SubscriptionPath.CompareTo(path);
+                var subscribedPath = _subscriberList.GetKeyAtIndex(im).SubscriptionPath;
+                lastResult = String.CompareOrdinal(subscribedPath, 0, path, 0, subscribedPath.Length);
 
                 if (lastResult < 0)
                 {
@@ -79,7 +81,7 @@ public class SubscriptionManager
                          * 
                          * So continue to search for the beginning, including this end.
                          */
-                        i1 = im;
+                        i1 = im - 1;
                     }
                     else
                     {
@@ -92,6 +94,12 @@ public class SubscriptionManager
                     }
                 }
             }
+
+            if (i0 != im)
+            {
+                var subscribedPath = _subscriberList.GetKeyAtIndex(i0).SubscriptionPath;
+                lastResult = String.CompareOrdinal(subscribedPath, 0, path, 0, subscribedPath.Length);
+            }
         }
 
         /*
@@ -103,18 +111,18 @@ public class SubscriptionManager
          */
         if (lastResult < 0)
         {
-            if (im == l - 1)
+            if (i0 == l - 1)
             {
                 return -1;
             }
             else
             {
-                return im + 1;
+                return i0 + 1;
             }
         }
         else
         {
-            return im;
+            return i0;
         }
     }
     
@@ -161,7 +169,7 @@ public class SubscriptionManager
         List<Action<Event>> listActions;
         lock (_lo)
         {
-            int idx = _findFirstPathGE_nolock(ev.Type);
+            int idx = _findFirstSubscriber(ev.Type);
             if (idx < 0)
             {
                 return;
@@ -176,6 +184,7 @@ public class SubscriptionManager
                     break;
                 }
                 listActions.Add(sub.Handler);
+                idx++;
             }
         }
 
@@ -203,11 +212,13 @@ public class SubscriptionManager
         subman.Subscribe("event.key.down", ev => {});
         subman.Subscribe("event", ev => {});
         subman.Subscribe("event.collision", ev => {});
+        subman.Subscribe("absolutely.nothing", ev => {});
+        subman.Subscribe("freely.speaking", ev => {});
 
         lock (subman._lo)
         {
-            int res = subman._findFirstPathGE_nolock("event.key");
-            if (res != 2)
+            int res = subman._findFirstSubscriber("event.key");
+            if (res != 1)
             {
                 Error("Wrong result.");
                 result -= 1;

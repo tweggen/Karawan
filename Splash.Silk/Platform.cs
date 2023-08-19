@@ -169,7 +169,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeInputEvent(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
             }
         }
         
@@ -216,7 +216,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                _engine.TakeInputEvent(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
+                Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
             }
         }
 

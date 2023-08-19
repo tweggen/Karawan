@@ -87,6 +87,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ILogTarget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Implementations.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\InputEventPipeline.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
