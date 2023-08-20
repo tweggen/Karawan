@@ -43,6 +43,8 @@ namespace nogame.modules.playerhover
 
         private PlingPlayer _plingPlayer = new();
 
+        private Boom.ISound _polyballSound;
+
         private WASDPhysics _controllerWASDPhysics;
 
         private const float MassShip = 500f;
@@ -147,6 +149,13 @@ namespace nogame.modules.playerhover
                     _nextCubeCollected();
                     _engine.AddDoomedEntity(other.Entity);
                     playSound = false;
+                }
+                else if (other.Name == "nogame.furniture.polytopeBall")
+                {
+                    Trace($"Polyball chrIdx {other.DebugInfo}");
+                    playSound = false;
+                    _polyballSound.Stop();
+                    _polyballSound.Play();
                 }
             }
             if (playSound) 
@@ -385,6 +394,12 @@ namespace nogame.modules.playerhover
             Implementations.Get<SubscriptionManager>().Subscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
             _engine.AddModule(this);
             _engine.OnLogicalFrame += OnOnLogicalFrame;
+
+            {
+                var api = Implementations.Get<Boom.ISoundAPI>();
+                _polyballSound = api.FindSound($"polyball.ogg");
+                _polyballSound.Volume = 0.1f;
+            }
         }
 
         

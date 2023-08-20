@@ -127,7 +127,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             BodyReference prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
             engine.physics.CollisionProperties collisionProperties =
                 new engine.physics.CollisionProperties
-                    { Name = "nogame.characters.car3", IsTangible = true };
+                    { Name = "nogame.furniture.polytopeBall", IsTangible = true };
             worldFragment.Engine.GetAPhysics().AddCollisionEntry(prefSphere.Handle, collisionProperties);
             eTarget.Set(new engine.physics.components.Kinetic(
                 prefSphere, collisionProperties));
