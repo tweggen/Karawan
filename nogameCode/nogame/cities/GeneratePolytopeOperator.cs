@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Security.Principal;
 using System.Threading.Tasks;
+using BepuPhysics;
 using engine;
 using engine.joyce;
 using engine.world;
@@ -12,9 +13,38 @@ namespace nogame.cities;
 
 public class GeneratePolytopeOperator : IFragmentOperator
 {
+    private static object _classLock = new();
     private engine.world.ClusterDesc _clusterDesc;
     private engine.RandomSource _rnd;
     private string _myKey;
+    
+    private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
+    private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
+    private static BepuPhysics.Collidables.TypedIndex _getSphereShape(float radius, in Engine engine)
+    {
+        lock(_classLock)
+        {
+            BepuPhysics.Collidables.TypedIndex pshapeSphere;
+            if (_mapPshapeSphere.TryGetValue(radius, out pshapeSphere))
+            {
+                return pshapeSphere;
+            }
+
+            BepuPhysics.Collidables.Sphere pbodySphere = new(radius); 
+            lock (engine.Simulation)
+            {
+                pshapeSphere = engine.Simulation.Shapes.Add(pbodySphere);
+            }
+
+            _mapPbodySphere[radius] = pbodySphere;
+            _mapPshapeSphere[radius] = pshapeSphere;
+            
+            return pshapeSphere;
+        }
+    }
+
+
+
 
     public string FragmentOperatorGetPath()
     {
@@ -34,7 +64,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
          * We need to create two instances, one for the stand and one for the ball.
          * The stand will be static, the ball will not be, as it can be consumed.
          */
-        Model model = await ModelCache.Instance().Instantiate(
+        Model modelStand = await ModelCache.Instance().Instantiate(
             $"polytope-stand-only.obj", new builtin.loader.ModelProperties(), new InstantiateModelParams()
             {
                 GeomFlags = 0
@@ -48,9 +78,61 @@ public class GeneratePolytopeOperator : IFragmentOperator
             _clusterDesc.Pos - worldFragment.Position +
             estate.GetCenter() with { Y = _clusterDesc.AverageHeight + 2.5f };
         worldFragment.AddStaticInstance(
-            "nogame.furniture.polytopeStand", model.InstanceDesc,
+            "nogame.furniture.polytopeStand", modelStand.InstanceDesc,
                 vPos, Quaternion.Identity, null);
         Trace($"Placing polytope @{worldFragment.Position+vPos}");
+        
+
+        Model modelBall = await ModelCache.Instance().Instantiate(
+            $"polytope-ball-only.obj", new builtin.loader.ModelProperties(), new InstantiateModelParams()
+            {
+                GeomFlags = 0
+                            | InstantiateModelParams.CENTER_X
+                            | InstantiateModelParams.CENTER_Z
+                //| InstantiateModelParams.ROTATE_Y180
+                ,
+                MaxDistance = 800f
+            });
+
+        /*
+         * Now, a bit more work for the ball, which is a dynamic entity that can
+         * vanish. 
+         */
+        var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
+        {
+            ModelInfo modelInfo = modelBall.ModelInfo;
+            
+            eTarget.Set(new engine.world.components.FragmentId(worldFragment.NumericalId));
+            eTarget.Set(new engine.joyce.components.Instance3(modelBall.InstanceDesc));
+            
+            //eTarget.Set(new engine.audio.components.MovingSound(
+            //    _getCar3Sound(carIdx), 150f));
+
+            engine.transform.components.Transform3 cTransform3 = new(
+                true, 0x00000001, Quaternion.Identity, worldFragment.Position+vPos);
+            eTarget.Set(cTransform3);
+            engine.transform.API.CreateTransform3ToParent(cTransform3, out var mat);
+            eTarget.Set(new engine.transform.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
+            
+
+            BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(
+                BodyDescription.CreateKinematic(
+                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
+                    new BepuPhysics.Collidables.CollidableDescription(
+                        _getSphereShape(modelInfo.AABB.Radius, worldFragment.Engine),
+                        0.1f),
+                    new BodyActivityDescription(0.01f)
+                )
+            );
+            BodyReference prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+            engine.physics.CollisionProperties collisionProperties =
+                new engine.physics.CollisionProperties
+                    { Name = "nogame.characters.car3", IsTangible = true };
+            worldFragment.Engine.GetAPhysics().AddCollisionEntry(prefSphere.Handle, collisionProperties);
+            eTarget.Set(new engine.physics.components.Kinetic(
+                prefSphere, collisionProperties));
+        });
+        worldFragment.Engine.QueueEntitySetupAction("nogame.furniture.polytopeBall", tSetupEntity);
     }
     
 
