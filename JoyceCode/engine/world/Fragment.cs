@@ -275,11 +275,19 @@ namespace engine.world
             AddStaticInstance(staticName, jInstanceDesc, null);
         }
 
+        public void AddStaticInstance(
+            string staticName,
+            engine.joyce.InstanceDesc jInstanceDesc,
+            IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
+        {
+            AddStaticInstance(staticName, jInstanceDesc, Vector3.Zero, Quaternion.Identity, listCreatePhysics);
+        }
 
         private int _meshesInFragment = 0;
         public void AddStaticInstance(
             string staticName,
             engine.joyce.InstanceDesc jInstanceDesc,
+            Vector3 vPosition, Quaternion qRotation,
             IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
         {
             var worldRecord = Engine.GetEcsWorldRecord();
@@ -291,7 +299,7 @@ namespace engine.world
             {
                 entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                 engine.transform.components.Transform3 cTransform3 = new(
-                    true, 0x00000001, new Quaternion(), Position);
+                    true, 0x00000001, qRotation, Position+vPosition);
                 entity.Set(cTransform3);
                 engine.transform.API.CreateTransform3ToParent(cTransform3, out var mat);
                 entity.Set(new engine.transform.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));

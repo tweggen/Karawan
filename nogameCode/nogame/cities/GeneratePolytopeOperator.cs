@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using engine;
 using engine.joyce;
@@ -39,14 +40,16 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 GeomFlags = 0
                             | InstantiateModelParams.CENTER_X
                             | InstantiateModelParams.CENTER_Z
-                            | InstantiateModelParams.ROTATE_Y180,
+                            //| InstantiateModelParams.ROTATE_Y180
+                            ,
                 MaxDistance = 500f
             });
         var vPos =
             _clusterDesc.Pos - worldFragment.Position +
-            estate.GetCenter() with { Y = _clusterDesc.AverageHeight + 2.5f };
-        model.InstanceDesc.ModelTransform *= Matrix4x4.CreateTranslation(vPos);
-        worldFragment.AddStaticInstance("nogame.furniture.polytopeStand", model.InstanceDesc);
+            estate.GetCenter() with { Y = _clusterDesc.AverageHeight + 5.5f };
+        worldFragment.AddStaticInstance(
+            "nogame.furniture.polytopeStand", model.InstanceDesc,
+                vPos, Quaternion.Identity, null);
         Trace($"Placing polytope @{worldFragment.Position+vPos}");
     }
     
