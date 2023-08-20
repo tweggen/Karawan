@@ -68,6 +68,7 @@ public class Main
         //engine.GlobalSettings.Set("nogame.CreateMap", "false");
         //engine.GlobalSettings.Set("nogame.CreateMiniMap", "false");
         //engine.GlobalSettings.Set("nogame.CreateTrees", "false");
+        //engine.GlobalSettings.Set("nogame.CreateHouses", "false");
         //engine.GlobalSettings.Set("world.CreateCubeCharacters", "false");
         //engine.GlobalSettings.Set("world.CreateCar3Characters", "false");
         //engine.GlobalSettings.Set("world.CreateTramCharacters", "false");

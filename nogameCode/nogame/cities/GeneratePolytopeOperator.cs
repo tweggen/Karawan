@@ -42,11 +42,11 @@ public class GeneratePolytopeOperator : IFragmentOperator
                             | InstantiateModelParams.CENTER_Z
                             //| InstantiateModelParams.ROTATE_Y180
                             ,
-                MaxDistance = 500f
+                MaxDistance = 800f
             });
         var vPos =
             _clusterDesc.Pos - worldFragment.Position +
-            estate.GetCenter() with { Y = _clusterDesc.AverageHeight + 5.5f };
+            estate.GetCenter() with { Y = _clusterDesc.AverageHeight + 2.5f };
         worldFragment.AddStaticInstance(
             "nogame.furniture.polytopeStand", model.InstanceDesc,
                 vPos, Quaternion.Identity, null);
@@ -105,6 +105,8 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 }
 
                 potentialEstates.Add(estate);
+                
+                //_placePolytope(worldFragment, estate);
             }
         }
 
