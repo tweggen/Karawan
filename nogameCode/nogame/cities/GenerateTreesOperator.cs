@@ -33,25 +33,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
-        float fsh = engine.world.MetaGen.FragmentSize / 2.0f;
-
-        /*
-         * We don't apply the operator if the fragment completely is
-         * outside our boundary box (the cluster)
-         */
-        {
-            float csh = _clusterDesc.Size / 2.0f;
-            if (
-                (cx - csh) > (fsh)
-                || (cx + csh) < (-fsh)
-                || (cz - csh) > (fsh)
-                || (cz + csh) < (-fsh)
-            )
-            {
-                return;
-            }
-        }
-
         // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
         _rnd.Clear();
 

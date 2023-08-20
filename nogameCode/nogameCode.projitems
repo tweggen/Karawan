@@ -16,6 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\GenerateCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHousesOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GeneratePolytopeOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateTreesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\HouseInstanceGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />

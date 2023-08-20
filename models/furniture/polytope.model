@@ -1,0 +1,11 @@
+# Made using Asset Forge (2.3.0)
+
+:materials
+
+[name:bricks;color:RGBA(0.021, 0.015, 0.014, 1.000);scale:(1.0, 1.0);shader:Default;valueA:0.35;valueB:0;]
+[name:thrust;color:RGBA(0.000, 1.000, 1.000, 1.000);scale:(1.0, 1.0);shader:Gradient;valueA:1;valueB:0;]
+
+:models
+
+[name:;collection:Primitives;type:block_hollow;position:(-1.0000, 0.0000, -1.0000);rotation:(0.0000, 0.0000, 0.0000);scale:(1.0000, 1.0000, 1.0000);group:;locked:False;hidden:False;materials:bricks;]
+[name:;collection:Primitives;type:icosphere;position:(-1.0000, 1.0000, -1.0000);rotation:(0.0000, 0.0000, 0.0000);scale:(1.0000, 1.0000, 1.0000);group:;locked:False;hidden:False;materials:thrust;]
