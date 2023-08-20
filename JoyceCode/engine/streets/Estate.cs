@@ -86,15 +86,11 @@ namespace engine.streets
                     _max.X = Math.Max(_max.X, p.X);
                     _max.Y = Math.Max(_max.Y, p.Y);
                     _max.Z = Math.Max(_max.Z, p.Z);
-                    _center.X += p.X;
-                    _center.Y += p.Y;
-                    _center.Z += p.Z;
+                    _center += p;
                 }
                 if (_points.Count > 0)
                 {
-                    _center.X = _center.X / _points.Count;
-                    _center.Y = _center.Y / _points.Count;
-                    _center.Z = _center.Z / _points.Count;
+                    _center = _center / _points.Count;
                 }
                 _extent = _max;
                 _extent -= _min;
