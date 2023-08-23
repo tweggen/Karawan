@@ -131,6 +131,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ContactInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\DefaultRayHitHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\NarrowPhaseCallbacks.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\PoseIntegratorCallbacks.cs" />
