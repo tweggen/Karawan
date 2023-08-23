@@ -23,18 +23,22 @@ public class DefaultRayHitHandler : IRayHitHandler
     
     public bool AllowTest(CollidableReference collidable)
     {
-#if true
         /*
-         * Currently we want to test everything.
+         * This does not belong here, but we don't want to raycast the player today.
          */
-        return true;
-#else
         CollisionProperties collisionProperties = null;
         
         switch (collidable.Mobility)
         {
             case CollidableMobility.Dynamic:
                 _api.GetCollisionProperties(collidable.BodyHandle, out collisionProperties);
+                if (collisionProperties != null)
+                {
+                    if (collisionProperties.Name == "nogame.playerhover")
+                    {
+                        return false;
+                    }
+                }
                 break;
             case CollidableMobility.Kinematic:
                 _api.GetCollisionProperties(collidable.BodyHandle, out collisionProperties);
@@ -44,8 +48,8 @@ public class DefaultRayHitHandler : IRayHitHandler
                 // _api.GetCollisionProperties(collidable.StaticHandle, out collisionProperties);
                 break;
         }
-#endif
-        
+
+        return true;
     }
 
     public bool AllowTest(CollidableReference collidable, int childIndex)

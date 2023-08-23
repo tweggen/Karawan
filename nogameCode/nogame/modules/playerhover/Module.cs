@@ -20,13 +20,16 @@ namespace nogame.modules.playerhover
     {
         static public readonly string PhysicsName = "nogame.playerhover";
         
-        private readonly object _lock = new object();
+        private readonly object _lo = new object();
 
         private engine.Engine _engine;
 
         private DefaultEcs.World _ecsWorld;
         private engine.transform.API _aTransform;
 
+        private DefaultEcs.Entity _eCamera;
+        private string _strFacingObject = "";
+        
         private DefaultEcs.Entity _eShip;
         private BepuPhysics.BodyHandle _phandleShip;
         private BepuPhysics.BodyReference _prefShip;
@@ -41,6 +44,11 @@ namespace nogame.modules.playerhover
          */
         private DefaultEcs.Entity _eClusterDisplay;
 
+        /**
+         * Display the object we are facing.
+         */
+        private DefaultEcs.Entity _eTargetDisplay;
+        
         private PlingPlayer _plingPlayer = new();
 
         private Boom.ISound _polyballSound;
@@ -56,6 +64,7 @@ namespace nogame.modules.playerhover
 
         private Boom.ISound _soundCrash = null;
 
+        
         private string _getClusterSound(ClusterDesc clusterDesc)
         {
             if (null == clusterDesc)
@@ -80,7 +89,7 @@ namespace nogame.modules.playerhover
         {
             _plingPlayer.PlayPling();
             _plingPlayer.Next();
-            lock (_lock)
+            lock (_lo)
             {
                 ++_score;
             }
@@ -145,14 +154,14 @@ namespace nogame.modules.playerhover
                  */
                 if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
                 {
-                    Trace($"Cube chrIdx {other.DebugInfo}");
+                    // Trace($"Cube chrIdx {other.DebugInfo}");
                     _nextCubeCollected();
                     _engine.AddDoomedEntity(other.Entity);
                     playSound = false;
                 }
                 else if (other.Name == "nogame.furniture.polytopeBall")
                 {
-                    Trace($"Polyball chrIdx {other.DebugInfo}");
+                    // Trace($"Polyball chrIdx {other.DebugInfo}");
                     playSound = false;
                     _polyballSound.Stop();
                     _polyballSound.Play();
@@ -173,11 +182,69 @@ namespace nogame.modules.playerhover
         }
         
 
-        private void OnOnLogicalFrame(object? sender, float dt)
+        private void _onCameraEntityChanged(object? sender, DefaultEcs.Entity entity)
+        {
+            bool isChanged = false;
+            lock (_lo)
+            {
+                if (_eCamera != entity)
+                {
+                    _eCamera = entity;
+                    isChanged = true;
+                }
+            }
+        }
+
+
+        private void _onCenterRayHit(
+            CollidableReference collidableReference,
+            CollisionProperties collisionProperties,
+            Vector3 vNormal)
+        {
+            if (null != collisionProperties)
+            {
+                lock (_lo)
+                {
+                    _strFacingObject = $"{collisionProperties.Name} ({collisionProperties.DebugInfo})";
+                }
+            }
+            else
+            {
+                lock (_lo)
+                {
+                    _strFacingObject = $"(nothing)";
+                }
+            }
+        }
+        
+        
+        private void _onLogicalFrame(object? sender, float dt)
         {
             Matrix4x4 mShip = _eShip.Get<engine.transform.components.Transform3ToWorld>().Matrix;
             Vector3 posShip = mShip.Translation;
 
+            /*
+             * Look up the object we are facing.
+             */
+            {
+                if (_eCamera.IsAlive)
+                {
+                    if (_eCamera.Has<engine.transform.components.Transform3ToWorld>() && _eCamera.Has<engine.joyce.components.Camera3>())
+                    {
+                        var cCamTransform = _eCamera.Get<engine.transform.components.Transform3ToWorld>();
+                        var cCamera = _eCamera.Get<engine.joyce.components.Camera3>();
+                        var mCameraToWorld = cCamTransform.Matrix;
+                        Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
+                        var vCamPosition = mCameraToWorld.Translation;
+
+                        _engine.GetAPhysics().RayCast(vCamPosition, -vZ, 200f, _onCenterRayHit);
+                    }
+                }
+            }
+            
+            /*
+             * Look up the zone we are in. 
+             */
             bool newZone = false;
             ClusterDesc foundCluster = ClusterList.Instance().GetClusterAt(posShip);
             if (foundCluster != null)
@@ -221,6 +288,22 @@ namespace nogame.modules.playerhover
                 displayName = "void";
             }
 
+            {
+                string strFacingObject;
+                lock (_lo)
+                {
+                    strFacingObject = _strFacingObject;
+                }
+                _eTargetDisplay.Set(new engine.draw.components.OSDText(
+                    new Vector2((786f-160f)/2f, 360f),
+                    new Vector2(160f, 18f),
+                    $"{strFacingObject}",
+                    12,
+                    0xff22aaee,
+                    0x00000000,
+                    HAlign.Left));
+            }
+            
             if (newZone)
             {
                 _eClusterDisplay.Set(new engine.draw.components.OSDText(
@@ -286,12 +369,14 @@ namespace nogame.modules.playerhover
 
         public void ModuleDeactivate()
         {
-            _engine.OnLogicalFrame -= OnOnLogicalFrame;
+            _engine.OnLogicalFrame -= _onLogicalFrame;
+            _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
+
             Implementations.Get<SubscriptionManager>().Unsubscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
             _controllerWASDPhysics.DeactivateController();
             _engine.RemoveModule(this);
 
-            lock (_lock)
+            lock (_lo)
             {
                 _engine = null;
             }
@@ -300,7 +385,7 @@ namespace nogame.modules.playerhover
 
         public void ModuleActivate(engine.Engine engine0)
         {
-            lock (_lock)
+            lock (_lo)
             {
                 _engine = engine0;
                 _ecsWorld = _engine.GetEcsWorld();
@@ -383,6 +468,7 @@ namespace nogame.modules.playerhover
 
             _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
+            _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
             
             
             /*
@@ -393,13 +479,16 @@ namespace nogame.modules.playerhover
 
             Implementations.Get<SubscriptionManager>().Subscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
             _engine.AddModule(this);
-            _engine.OnLogicalFrame += OnOnLogicalFrame;
+            _engine.OnLogicalFrame += _onLogicalFrame;
+            _onCameraEntityChanged(this, _engine.GetCameraEntity());
+            _engine.OnCameraEntityChanged += _onCameraEntityChanged;
 
             {
                 var api = Implementations.Get<Boom.ISoundAPI>();
                 _polyballSound = api.FindSound($"polyball.ogg");
                 _polyballSound.Volume = 0.1f;
             }
+            
         }
 
         

@@ -192,7 +192,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
                 x = ul.X;
                 break;
             case HAlign.Center:
-                x = (lr.X - ul.X) / 2f;
+                x = ul.X + (lr.X - ul.X) / 2f;
                 break;
             case HAlign.Right:
                 x = lr.X;
