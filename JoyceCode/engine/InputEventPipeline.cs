@@ -77,7 +77,10 @@ public class InputEventPipeline : engine.AModule
     {
         lock (_lo)
         {
-            _dictParts.Add(zOrder, part0);
+            /*
+             * We use the negative sign because we want to iterate in reverse order.
+             */
+            _dictParts.Add(-zOrder, part0);
         }
     }
     

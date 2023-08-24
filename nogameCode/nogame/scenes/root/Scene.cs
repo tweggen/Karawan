@@ -439,7 +439,7 @@ public class Scene : engine.IScene, engine.IInputPart
             nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
 
-        Implementations.Get<InputEventPipeline>().AddInputPart(10, this);
+        Implementations.Get<InputEventPipeline>().AddInputPart(20, this);
         
         lock (_lo)
         {

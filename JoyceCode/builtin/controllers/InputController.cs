@@ -389,7 +389,7 @@ public class InputController : engine.AModule, engine.IInputPart
     {
         _engine = engine0;
         Implementations.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
-        Implementations.Get<InputEventPipeline>().AddInputPart(10000, this);
+        Implementations.Get<InputEventPipeline>().AddInputPart(100, this);
         _refreshViewSize();
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
