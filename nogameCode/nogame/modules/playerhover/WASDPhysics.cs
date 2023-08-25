@@ -11,8 +11,9 @@ using static engine.Logger;
 
 namespace nogame.modules.playerhover
 {
-    internal class WASDPhysics
+    internal class WASDPhysics : AModule, IInputPart
     {
+        private static float MY_Z_ORDER = 25f;
         private engine.Engine _engine;
         private DefaultEcs.Entity _eTarget;
         private engine.transform.API _aTransform;
@@ -84,37 +85,42 @@ namespace nogame.modules.playerhover
             var vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
             var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
             var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
-            var frontMotion = controllerState.FrontMotion;
-            var upMotion = controllerState.UpMotion;
-            var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
 
-            if (frontMotion != 0f)
+            if (MY_Z_ORDER == Implementations.Get<InputEventPipeline>().GetFrontZ())
             {
-                // The acceleration looks wrong when combined with rotation.
-                vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
+                var frontMotion = controllerState.FrontMotion;
+                var upMotion = controllerState.UpMotion;
+                var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
 
-                /*
-                 * Move nose down when accelerating and vice versa.
-                 */
-                vTotalAngular += vRight * (-AngularThrust * frontMotion / 4096f);
-            }
+                if (frontMotion != 0f)
+                {
+                    // The acceleration looks wrong when combined with rotation.
+                    vTotalImpulse += LinearThrust * vFront * frontMotion / 256f;
 
-            if (upMotion != 0f)
-            {
-                vTotalImpulse += LinearThrust * vUp * upMotion / 256f;
-            }
-            if (turnMotion != 0f)
-            {
-                /*
-                 * gently lean to the right iof turning right.
-                 */
-                vTotalAngular += vFront * (AngularThrust * turnMotion / 1024f);
-                
-                /*
-                 * And finally turn
-                 */
-                vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
-                
+                    /*
+                     * Move nose down when accelerating and vice versa.
+                     */
+                    vTotalAngular += vRight * (-AngularThrust * frontMotion / 4096f);
+                }
+
+                if (upMotion != 0f)
+                {
+                    vTotalImpulse += LinearThrust * vUp * upMotion / 256f;
+                }
+
+                if (turnMotion != 0f)
+                {
+                    /*
+                     * gently lean to the right iof turning right.
+                     */
+                    vTotalAngular += vFront * (AngularThrust * turnMotion / 1024f);
+
+                    /*
+                     * And finally turn
+                     */
+                    vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
+
+                }
             }
 
             /*
@@ -218,29 +224,42 @@ namespace nogame.modules.playerhover
         }
 
 
-        public void DeactivateController()
+        public void ModuleDeactivate()
         {
             _engine.OnLogicalFrame -= _onLogicalFrame;
+            Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
+
         }
 
 
-        public void ActivateController()
+        public void ModuleActivate(engine.Engine engine)
         {
+            _engine = engine;
+            _aTransform = _engine.GetATransform();
+            _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
+
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             
+            Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
             _engine.OnLogicalFrame += _onLogicalFrame;
         }
 
+        
+        public void InputPartOnInputEvent(engine.news.Event ev)
+        {
+        }
+
+
+        public void Dispose()
+        {
+        }
+        
 
         public WASDPhysics(
-            in engine.Engine engine, 
             in DefaultEcs.Entity eTarget,
             in float massShip)
         {
-            _engine = engine;
             _eTarget = eTarget;
-            _aTransform = _engine.GetATransform();
-            _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
             _massShip = massShip;
         }
     }

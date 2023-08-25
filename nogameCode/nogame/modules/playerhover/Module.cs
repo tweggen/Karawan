@@ -373,7 +373,7 @@ namespace nogame.modules.playerhover
             _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
 
             Implementations.Get<SubscriptionManager>().Unsubscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
-            _controllerWASDPhysics.DeactivateController();
+            _controllerWASDPhysics.ModuleDeactivate();
             _engine.RemoveModule(this);
 
             lock (_lo)
@@ -430,6 +430,8 @@ namespace nogame.modules.playerhover
                     new Vector3(0f, 0f, -1f),
                     new Vector4(1.0f, 0.95f, 0.9f, 1f),
                     10f, 0.9f));
+                _eShip.Set(new engine.world.components.MapIcon()
+                    { Code = engine.world.components.MapIcon.IconCode.Player0 });
                 
                 /*
                  * I have absolutely no clue why, but with the real radius of the model (1.039f) the
@@ -474,8 +476,8 @@ namespace nogame.modules.playerhover
             /*
              * And the ship's controller
              */
-            _controllerWASDPhysics = new WASDPhysics(_engine, _eShip, MassShip);
-            _controllerWASDPhysics.ActivateController();
+            _controllerWASDPhysics = new WASDPhysics(_eShip, MassShip);
+            _controllerWASDPhysics.ModuleActivate(_engine);
 
             Implementations.Get<SubscriptionManager>().Subscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
             _engine.AddModule(this);

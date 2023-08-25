@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using engine.news;
 using static engine.Logger;
@@ -13,6 +14,7 @@ public class InputEventPipeline : engine.AModule
     private Engine _engine;
 
     private SortedDictionary<float, IInputPart> _dictParts = new();
+    
     
     void _onInputEvent(engine.news.Event ev)
     {
@@ -83,6 +85,20 @@ public class InputEventPipeline : engine.AModule
             _dictParts.Add(-zOrder, part0);
         }
     }
+
+
+    public float GetFrontZ()
+    {
+        lock (_lo)
+        {
+            foreach (KeyValuePair<float, IInputPart> kvp in _dictParts)
+            {
+                return -kvp.Key;
+            }
+
+            return Single.MinValue;
+        }
+    }
     
     
     public void ModuleDeactivate()
@@ -97,6 +113,7 @@ public class InputEventPipeline : engine.AModule
         Implementations.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
     }
 
+    
     public void Dispose()
     {
     }

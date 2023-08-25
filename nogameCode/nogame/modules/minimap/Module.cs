@@ -59,7 +59,6 @@ public class Module : AModule
                 new Quaternion(0f, 0f, 0f, 0f),
                 new Vector3(-1f+0.15f, 9f/16f-0.24f, -1f));
         }
-
     }
 
 
@@ -130,7 +129,7 @@ public class Module : AModule
     }
 
     
-    public void OnOnLogicalFrame(object? sender, float dt)
+    private void _onLogicalFrame(object? sender, float dt)
     {
         ++_updateMinimapFrameCount;
         if (_updateMinimapFrameCount != _updateMinimapCount)
@@ -163,7 +162,7 @@ public class Module : AModule
 
     public void ModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= OnOnLogicalFrame;
+        _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.OnPlayerEntityChanged -= _onPlayerEntityChanged;
         _engine.RemoveModule(this);
     }
@@ -175,7 +174,7 @@ public class Module : AModule
         _needResources();
         _createNewMiniMap();
         _engine.AddModule(this);
-        _engine.OnLogicalFrame += OnOnLogicalFrame;
+        _engine.OnLogicalFrame += _onLogicalFrame;
         _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
     }
 }

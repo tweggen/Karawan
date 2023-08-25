@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using builtin.controllers;
 using engine;
 using engine.joyce;
 using engine.news;
@@ -10,7 +11,22 @@ namespace nogame.modules.map;
 
 struct DisplayMapParams
 {
+    static public float MAX_ZOOM_STATE = 32f;
+    static public float MIN_ZOOM_STATE = 0f;
+    static public float MAP_STEP_SIZE = (1f / 8f);
     public float CurrentZoomState = 16f;
+
+    static public float MAP_MOVE_PER_FRAME = (1f / 8f);
+    
+    /**
+     * Relative position of the map: (0f, 0f) would be upper left in the middle
+     * of the screen, (1f, 1f) would be lower right in the middle of the screen.
+     */
+    public Vector2 Position = new (0.5f, 0.5f);
+    
+    /**
+     * Shall the map be visible or not.
+     */
     public bool IsVisible = false;
 
     public void Slerp(DisplayMapParams other, float amount)
@@ -18,6 +34,7 @@ struct DisplayMapParams
         IsVisible = other.IsVisible;
 
         CurrentZoomState = (other.CurrentZoomState * amount) + (CurrentZoomState * (1f - amount));
+        Position = (other.Position * amount) + (Position * (1f - amount));
     }
 
     public DisplayMapParams()
@@ -35,6 +52,8 @@ struct DisplayMapParams
  */
 public class Module : AModule, IInputPart
 {
+    private static float MY_Z_ORDER = 500f;
+    
     private object _lo = new();
 
     private engine.Engine _engine;
@@ -47,7 +66,6 @@ public class Module : AModule, IInputPart
     /*
      * Map display parameters
      */
-    private bool _displayParamsChanged = true;
     private DisplayMapParams _requestedMapParams = new();
     private DisplayMapParams _visibleMapParams = new();
 
@@ -70,7 +88,10 @@ public class Module : AModule, IInputPart
         _engine.GetATransform().SetTransforms(
             _eMap, dmp.IsVisible, MapCameraMask,
             new Quaternion(0f,0f,0f,1f),
-            new Vector3(0f, 0f, -1f),
+            new Vector3(
+                dmp.Position.X * effectiveSize - effectiveSize/2f, 
+                dmp.Position.Y * effectiveSize - effectiveSize/2f,
+                -1f),
             effectiveSize * Vector3.One);
     }
     
@@ -118,12 +139,78 @@ public class Module : AModule, IInputPart
         {
             int currentZoomState = (int) _requestedMapParams.CurrentZoomState;
             currentZoomState += (int)y;
-            currentZoomState = Int32.Max(1, Int32.Min(64, currentZoomState));
+            currentZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE, Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, currentZoomState));
             _requestedMapParams.CurrentZoomState = (float) currentZoomState;
-            _displayParamsChanged = true;
         }
 
         ev.IsHandled = true;
+    }
+
+
+    private void _applyDeltaMove(Vector2 vDelta)
+    {
+        /*
+         * The size of the map is...
+         *
+         * mapsize * 2 ^ (CurrentZoomState/4)
+         *
+         * If CurrentZoomState is MIN, the map fits the screen.
+         *
+         * Let's say we want to step by 1/8 of the visible map on every
+         * keypress.
+         */
+        lock (_lo)
+        {
+            vDelta *= DisplayMapParams.MAP_STEP_SIZE / Single.Exp2(_visibleMapParams.CurrentZoomState / 4f);
+            _requestedMapParams.Position = 
+                Vector2.Min(Vector2.One,
+                    Vector2.Max(Vector2.Zero,
+                        _requestedMapParams.Position + vDelta));
+        }
+    }
+    
+
+    private void _handleKeyDown(Event ev)
+    {
+        lock (_lo)
+        {
+            DisplayMapParams dmp = _requestedMapParams;
+            bool haveChange = false;
+            Vector2 vDelta = Vector2.Zero;
+            
+            switch (ev.Code)
+            {
+                case "W":
+                    vDelta.Y = 1f;
+                    haveChange = true;
+                    break;
+                case "A":
+                    vDelta.X = 1f;
+                    haveChange = true;
+                    break;
+                case "S":
+                    vDelta.Y = -1f;
+                    haveChange = true;
+                    break;
+                case "D":
+                    vDelta.X = -1f;
+                    haveChange = true;
+                    break;
+                default:
+                    break;
+            }
+
+            if (haveChange)
+            {
+                _applyDeltaMove(vDelta);
+                ev.IsHandled = true;
+            }
+        }
+    }
+
+    
+    private void _handleKeyUp(Event ev)
+    {
     }
 
     
@@ -133,23 +220,31 @@ public class Module : AModule, IInputPart
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_WHEEL)) _handleMouseWheel(ev);
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
-        // if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
-        // if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _onKeyUp(ev);
-        bool displayParamsChanged;
-        lock (_lo)
-        {
-            displayParamsChanged = _displayParamsChanged;
-        }
+        // if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _handleKeyDown(ev);
+        // if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _handleKeyUp(ev);
+    }
 
-        if (_displayParamsChanged)
-        {
-            _engine.QueueMainThreadAction(_updateMapParams);
-        }
+    
+    private void _handleController()
+    {
+        Implementations.Get<InputController>().GetControllerState(out var controllerState);
+
+        Vector2 vDelta = Vector2.Zero;
+        vDelta.X += (float)controllerState.TurnRight / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+        vDelta.X -= (float)controllerState.TurnLeft / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+        vDelta.Y += (float)controllerState.WalkForward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+        vDelta.Y -= (float)controllerState.WalkBackward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+
+        _applyDeltaMove(vDelta);
     }
 
 
     public void _onLogicalFrame(object? sender, float dt)
     {
+        if (MY_Z_ORDER == Implementations.Get<InputEventPipeline>().GetFrontZ())
+        {
+            _handleController();
+        }
         _updateMapParams();
     }
     
@@ -158,7 +253,6 @@ public class Module : AModule, IInputPart
     {
         _eMap.Dispose();
         _createdResources = false;
-        _displayParamsChanged = true;
     }
     
     
@@ -166,7 +260,6 @@ public class Module : AModule, IInputPart
     {
         lock(_lo) {
             _requestedMapParams.IsVisible = false;
-            _displayParamsChanged = true;
         }
         _engine.QueueMainThreadAction(_updateMapParams);
 
@@ -186,9 +279,8 @@ public class Module : AModule, IInputPart
 
         lock(_lo) {
             _requestedMapParams.IsVisible = true;
-            _displayParamsChanged = true;
         }
 
-        Implementations.Get<InputEventPipeline>().AddInputPart(500, this);
+        Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
     }
 }
