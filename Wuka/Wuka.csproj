@@ -140,6 +140,11 @@
 	  <None Remove="Platforms\Android\pling17.ogg" />
 	  <None Remove="Platforms\Android\pling18.ogg" />
 	  <None Remove="Platforms\Android\pling19.ogg" />
+	  <None Remove="Platforms\Android\polyball.ogg" />
+	  <None Remove="Platforms\Android\polytope-ball-only.mtl" />
+	  <None Remove="Platforms\Android\polytope-ball-only.obj" />
+	  <None Remove="Platforms\Android\polytope-stand-only.mtl" />
+	  <None Remove="Platforms\Android\polytope-stand-only.obj" />
 	  <None Remove="Platforms\Android\Prototype.ttf" />
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
 	  <None Remove="Platforms\Android\skybox2.png" />
@@ -295,6 +300,21 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\pling19.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\polyball.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\polytope-ball-only.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\polytope-ball-only.obj">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\polytope-stand-only.mtl">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\polytope-stand-only.obj">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\Prototype.ttf">
