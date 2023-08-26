@@ -90,9 +90,12 @@ public class Main
         style.PopupBorderSize = 1f;
         style.FrameBorderSize = 0f;
         style.TabBorderSize = 0f;
-        
-        
+    }
 
+
+    public void SetStyle()
+    {
+        _setStyle();
     }
     
     public unsafe void Render(float dt)
