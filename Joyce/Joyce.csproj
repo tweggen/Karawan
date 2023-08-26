@@ -12,6 +12,7 @@
     <PackageReference Include="LibTessDotNet" Version="1.1.15" />
     <PackageReference Include="LiteDB" Version="5.0.15" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="NetOctree" Version="2.1.0" />
     <PackageReference Include="NLua" Version="1.6.3" />
     <PackageReference Include="OpenTelemetry.Api" Version="1.5.0-alpha.1" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.5.0-alpha.1" />

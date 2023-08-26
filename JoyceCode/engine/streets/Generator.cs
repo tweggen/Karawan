@@ -296,7 +296,7 @@ namespace engine.streets
                      * Look, whether the stroke is too close to an existing point
                      */
                     {
-                        var si = _strokeStore.GetClosestPoint( curr );
+                        var si = _strokeStore.GetClosestPoint(curr, minPointToCandStrokeDistance);
                         if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
                             if( _traceGenerator ) Trace( $"Discarding stroke {curr.ToString()}, too close to point: {si.StreetPoint}" );
 
@@ -327,7 +327,7 @@ namespace engine.streets
                      * Look, whether the new point to is too close to an existing stroke
                      */
                     {
-                        var si = _strokeStore.GetClosestStroke( curr.B );
+                        var si = _strokeStore.GetClosestStroke( curr.B, minPointToCandStrokeDistance);
                         if( si != null && si.ScaleExists < minPointToCandStrokeDistance ) {
                             /*
                              * We might want to check here, if it is perpendicular to the stroke as opposed to parallel.

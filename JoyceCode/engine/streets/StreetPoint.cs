@@ -18,6 +18,10 @@ namespace engine.streets
         public int Id;
 
         public Vector2 Pos; // { get; private set; }
+        public Vector3 Pos3
+        {
+            get => new Vector3(Pos.X, 0f, Pos.Y); 
+        }
         public string Creator { get; private set; }
 
         /*

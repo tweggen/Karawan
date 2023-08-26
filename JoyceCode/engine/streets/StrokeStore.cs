@@ -1,26 +1,59 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Octree;
+using static engine.Logger;
 
 namespace engine.streets
 {
     public class StrokeStore
     {
-        static private void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
-        private List<Stroke> _listStrokes;
-        private List<StreetPoint> _listPoints;
+        private List<Stroke> _listStrokes = new();
+        private List<StreetPoint> _listPoints = new();
 
+        private Octree.PointOctree<StreetPoint> _octreeSP = new(1000, Vector3.Zero, 2);
+        private Octree.BoundsOctree<Stroke> _octreeStrokes = new(1000, Vector3.Zero, 5f, 1f);
+        private HashSet<long> _setStrokes = new();
+        
         private bool _traceStrokes;
 
+
+        static private void _computeStrokeBoundingBox(in Stroke stroke, out Octree.BoundingBox bb)
+        {
+            /*
+             * Now the API demands this to be the all coordinates maximum vector.
+             */
+            Vector3 vSize = stroke.B.Pos3 - stroke.A.Pos3;
+            vSize = new Vector3(Single.Abs(vSize.X), Single.Abs(vSize.Y), Single.Abs(vSize.Z));
+            bb = new Octree.BoundingBox((stroke.B.Pos3 + stroke.A.Pos3) / 2f, vSize);
+        }
+        
+        /**
+         * Look for a stroke that intersects with the given stroke.
+         * @param cand
+         *   The stroke we shall look to be intersected with
+         * @param refSP
+         *   This is the reference point when describing the intersection.
+         */
         public StrokeIntersection IntersectsMayTouchClosest(in Stroke cand, in StreetPoint refSP)
         {
+#if true
+            // TXWTODO: This gives the same result.
+            _computeStrokeBoundingBox(cand, out var bb);
+            if (!_octreeStrokes.GetCollidingNonAlloc(_tmpStrokeList, bb))
+            {
+                return null;
+            }
+
+            List<Stroke> strokesToCheck = _tmpStrokeList;
+            _tmpStrokeList = new();
+#else
+            List<Stroke> strokesToCheck = _listStrokes;
+#endif
             StrokeIntersection closestIntersection = null;
             float closestDist = 100000000.0f;
 
-            foreach(var stroke in _listStrokes) {
+            foreach(var stroke in strokesToCheck) {
                 var si = stroke.Intersects(cand);
 
                 // Default to collide.
@@ -68,18 +101,56 @@ namespace engine.streets
             in StreetPoint spNot
         )
         {
-            return FindClosestToCoordBelowButNot(
+            return _findClosestToCoordBelowButNot(
                 sp0.Pos.X, sp0.Pos.Y, sp0, minDist, spNot
             );
         }
 
 
-        public StreetPoint? FindClosestToCoordBelowButNot(
+        private StreetPoint? _findClosestToCoordBelowButNot(
             float x, float y,
             in StreetPoint sp0,
             float minDist,
             in StreetPoint spNot)
         {
+#if true
+            // This does not modify the result.
+            if (_octreeSP.GetNearbyNonAlloc(sp0.Pos3, minDist, _tmpListNearby))
+            {
+                bool haveSome = false;
+                int l = _tmpListNearby.Count;
+                float closestDist2 = minDist * minDist * 10f;
+                StreetPoint? closestSP = null;
+                for (int i = 0; i < l; ++i)
+                {
+                    StreetPoint cand = _tmpListNearby[i];
+                    if (cand != spNot && cand != sp0)
+                    {
+                        if (null == closestSP)
+                        {
+                            closestSP = cand;
+                            closestDist2 = (cand.Pos - sp0.Pos).LengthSquared();
+                        }
+                        else
+                        {
+                            float myDist2 = (cand.Pos - sp0.Pos).LengthSquared();
+                            if (myDist2 < closestDist2)
+                            {
+                                closestSP = cand;
+                                closestDist2 = myDist2;
+                            }
+                        }
+                    }
+                }
+                _tmpListNearby.Clear();
+
+                return closestSP;
+            }
+            else
+            {
+                return null;
+            }
+#else
             float minDist2 = minDist * minDist;
             float minDiff2 = 100000000f;
             StreetPoint? minSp = null;
@@ -110,17 +181,47 @@ namespace engine.streets
                 // trace('Returning from sp0: ${sp0.pos} : sp: ${minSp.pos} with $minDiff2');
             }
             return minSp;
+#endif
         }
 
 
+        private List<Stroke> _tmpStrokeList = new();
+        /**
+         * Return the closest stroke to the given street point,
+         * which is closer than maxDistance.
+         */
         public StrokeIntersection? GetClosestStroke(
-            in StreetPoint sp)
+            in StreetPoint sp, float maxDistance)
         {
-            if (_traceStrokes) trace( $"getClosestStroke(): Testing point {sp.Pos.ToString()}");
+#if true
+            // TXWTODO: This gives the same result.
+            /*
+             * Optimized: iterate only through strokes within a reasonable neighbourhood.
+             *
+             * This means we look for bounding boxes intersecting streetpoint plus distance.
+             */
+            if (!_octreeStrokes.GetCollidingNonAlloc(_tmpStrokeList,
+                    new BoundingBox(sp.Pos3, 2f * maxDistance * Vector3.One)))
+            {
+                /*
+                 * Nothing found? Short circuit.
+                 */
+                return null;
+            }
+
+            List<Stroke> strokesToIterate = _tmpStrokeList;
+            _tmpStrokeList = new();
+#else
+            /*
+             * Unoptimized: Iterate through all strokes
+             */
+            List<Stroke> strokesToIterate = _listStrokes;
+#endif
+            if (_traceStrokes) Trace( $"Testing point {sp.Pos.ToString()}");
             float closestDist = 100000f; // 100km
             Stroke closestStroke = null;
 
-            foreach(var stroke in _listStrokes)
+            foreach(var stroke in strokesToIterate)
             {
 
                 /*
@@ -128,7 +229,7 @@ namespace engine.streets
                  */
                 if (sp == stroke.A || sp == stroke.B)
                 {
-                    if (_traceStrokes) trace( $"Skipping stroke {stroke.ToString()}, because point is part of stroke.");
+                    if (_traceStrokes) Trace( $"Skipping stroke {stroke.ToString()}, because point is part of stroke.");
                     continue;
                 }
 
@@ -149,7 +250,7 @@ namespace engine.streets
                     strokeExists: closestStroke,
                     scaleExists: closestDist
                 );
-                if (_traceStrokes) trace( $"Stroke in range for {si.Pos.X}, {si.Pos.Y}, length {closestStroke.Length} distance {closestDist}");
+                if (_traceStrokes) Trace( $"Stroke in range for {si.Pos.X}, {si.Pos.Y}, length {closestStroke.Length} distance {closestDist}");
                 return si;
             }
             else
@@ -158,16 +259,33 @@ namespace engine.streets
             }
         }
 
+        
         /**
          * Return the point that is closest to the given stroke.
          */
-        public StrokeIntersection GetClosestPoint(in Stroke stroke)
+        public StrokeIntersection GetClosestPoint(in Stroke stroke, float maxDistance)
         {
-            if (_traceStrokes) trace($"GetClosestPoint(): Testing stroke {stroke.ToString()}");
+#if true
+            // This does not modify the result.
+            /*
+             * To opimize, we raycast into the octree for points.
+             * Due to the nature of 
+             */
+            if (!_octreeSP.GetNearbyNonAlloc(new Octree.Ray(stroke.A.Pos3, stroke.B.Pos3-stroke.A.Pos3), maxDistance, _tmpListNearby))
+            {
+                return null;
+            }
+
+            List<StreetPoint> pointsToSearch = _tmpListNearby;
+            _tmpListNearby = new();
+#else
+            List<StreetPoint> pointsToSearch = _listPoints;
+#endif
+            if (_traceStrokes) Trace($"Testing stroke {stroke.ToString()}");
             float closestDist = 100000f;  // 100km
             StreetPoint? closestPoint = null;
 
-            foreach(var sp0 in _listPoints)
+            foreach(var sp0 in pointsToSearch)
             {
 
                 /*
@@ -175,7 +293,7 @@ namespace engine.streets
                  */
                 if (sp0 == stroke.A || sp0 == stroke.B)
                 {
-                    if (_traceStrokes) trace($"Skipping point {sp0.Pos.X}, {sp0.Pos.Y}, because its part of this stroke.");
+                    if (_traceStrokes) Trace($"Skipping point {sp0.Pos.X}, {sp0.Pos.Y}, because its part of this stroke.");
                     continue;
                 }
 
@@ -196,7 +314,7 @@ namespace engine.streets
                     strokeExists: stroke,
                     scaleExists: closestDist
                 );
-                if (_traceStrokes) trace($"Stroke in range for {si.Pos.X}, ${si.Pos.Y}, length {stroke.Length} distance $closestDist");
+                if (_traceStrokes) Trace($"Stroke in range for {si.Pos.X}, ${si.Pos.Y}, length {stroke.Length} distance $closestDist");
                 return si;
             }
             else
@@ -209,46 +327,48 @@ namespace engine.streets
         /**
          * Remove the given stroke
          */
-        public void Remove(in Stroke p) {
-            if (null == p.Store)
+        public void Remove(in Stroke stroke) {
+            if (null == stroke.Store)
             {
-                throw new InvalidOperationException( "StrokeStore: Stroke not in any store.");
+                ErrorThrow("StrokeStore: Stroke not in any store.", m => new InvalidOperationException(m));
             }
-            if (this != p.Store)
+            if (this != stroke.Store)
             {
-                throw new InvalidOperationException( "StrokeStore: Stroke not in this store." );
+                ErrorThrow("StrokeStore: Stroke not in this store.", m => new InvalidOperationException(m));
             }
 
-            _listStrokes.Remove(p);
-            p.Store = null;
-            p.A.RemoveStartingStroke(p);
-            p.B.RemoveEndingStroke(p);
+            _listStrokes.Remove(stroke);
+            _octreeStrokes.Remove(stroke);
+            _setStrokes.Remove((long)stroke.A.Id | ((long)stroke.B.Id << 32));
+            _setStrokes.Remove((long)stroke.B.Id | ((long)stroke.A.Id << 32));
+
+            stroke.Store = null;
+            stroke.A.RemoveStartingStroke(stroke);
+            stroke.B.RemoveEndingStroke(stroke);
         }
 
 
+        private List<StreetPoint> _tmpListNearby = new();
+        
         private void AddPoint(in StreetPoint sp)
         {
             if (sp.InStore)
             {
-                throw new InvalidOperationException( $"StrokeStore.addPoint(): Unable to add point {sp.ToString()}: Already in store." );
+                ErrorThrow($"Unable to add point {sp.ToString()}: Already in store.", m => new InvalidOperationException(m));
             }
-            if (_traceStrokes) trace( $"Adding point {sp}.");
-
-            // TXWTODO: Probably do not include this in the final
-            foreach(var spExist in _listPoints )
-            {
-                float dx = spExist.Pos.X - sp.Pos.X;
-                float dy = spExist.Pos.Y - sp.Pos.Y;
-                float dist2 = dx * dx + dy * dy;
-                if (dist2 < 0.00000001f)
-                {
-                    throw new InvalidOperationException( $"StrokeStore.addPoint(): Refusing to add point {sp.ToString()}, found considerably close {spExist.ToString()}." );
-                }
-            }
+            if (_traceStrokes) Trace( $"Adding point {sp}.");
 
             /*
              * For debugging purposes, find a considerably close point.
              */
+#if DEBUG
+            if (_octreeSP.GetNearbyNonAlloc(sp.Pos3, 0.00000001f, _tmpListNearby))
+            {
+                _tmpListNearby.Clear();
+                ErrorThrow( $"Refusing to add point {sp.ToString()}, found considerably close points {_tmpListNearby[0]}." , m => new InvalidOperationException(m));
+            }
+#endif
+            _octreeSP.Add(sp, sp.Pos3);
 
             sp.InStore = true;
             _listPoints.Add(sp);
@@ -257,17 +377,17 @@ namespace engine.streets
 
         public void AddStroke(in Stroke stroke)
         {
-            if (_traceStrokes) trace($"Adding stroke {stroke}");
+            if (_traceStrokes) Trace($"Adding stroke {stroke}");
 
             if (stroke.Store != null)
             {
                 if (stroke.Store == this)
                 {
-                    throw new InvalidOperationException( $"StrokeStore.add(): Stroke already in this store." );
+                    ErrorThrow($"Stroke already in this store.", m => new InvalidOperationException(m));
                 }
                 else
                 {
-                    throw new InvalidOperationException( $"StrokeStore.add(): Stroke already in other store." );
+                    ErrorThrow($"Stroke already in other store.", m => new InvalidOperationException(m));
                 }
             }
 
@@ -286,51 +406,33 @@ namespace engine.streets
 
             stroke.Store = this;
             _listStrokes.Add(stroke);
+            _setStrokes.Add((long)stroke.A.Id | ((long)stroke.B.Id << 32));
+            _setStrokes.Add((long)stroke.B.Id | ((long)stroke.A.Id << 32));
+            _computeStrokeBoundingBox(stroke, out var bb);
+            _octreeStrokes.Add(stroke, bb); 
         }
 
 
         public bool AreConnected(in StreetPoint sp0, in StreetPoint sp1)
         {
+#if true
+            return
+                _setStrokes.Contains((long)sp0.Id | ((long)sp1.Id << 32))
+                || _setStrokes.Contains((long)sp1.Id | ((long)sp0.Id << 32));
+
+#else
             foreach(var stroke in _listStrokes)
             {
                 if (stroke.A == sp0 && stroke.B == sp1
                     || stroke.B == sp0 && stroke.A == sp1)
                 {
-                    if (_traceStrokes) trace( $"StrokeStore(): Already connected in {stroke.ToString()}.");
+                    if (_traceStrokes) Trace( $"Already connected in {stroke.ToString()}.");
                     return true;
                 }
             }
             return false;
-        }
-
-
-#if false
-        /**
-         * Starting from the given streetpoint, navigate to the next stroke.
-         */
-        public function getNextStroke(
-            sp0: StreetPoint,
-            str0: Stroke
-        ) {
-            var spNew: StreetPoint = null;
-            if( str0.a == sp0 ) {
-                spNew = str0.b;
-            } else if( str0.b == sp0 ) {
-                spNew = str0.a;
-            } else {
-                throw 'StrokeStore.getNextStroke(): Called with streetpoint/stroke pair that does not match.';
-            }
-            var angleOld = str0.angle;
-
-            /*
-             * Now, for a clockwise loop, we need to find the stroke
-             * starting/ending in spNew with the smallest angle greater than
-             * my angle. In that case, it does not matter whether this is a
-             * starting or an ending stroke.
-             */
-            var strNew = spNew.getNextAngle( str0, angleOld, true /* clockwise */ );
-        }
 #endif
+        }
 
 
         public List<Stroke> GetStrokes()
@@ -351,12 +453,8 @@ namespace engine.streets
                 stroke.TraversedBA = false;
             }
         }
+        
+        // should be : Trace: Cluster Yelukhdidru has 480 street points, 818 street segments.
 
-
-        public StrokeStore()
-        {
-            _listStrokes = new List<Stroke>();
-            _listPoints = new List<StreetPoint>();
-        }
     }
 }
