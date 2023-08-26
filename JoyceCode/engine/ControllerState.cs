@@ -42,9 +42,6 @@ namespace engine
             }
         }
 
-        public bool ShowMap;
-        public bool PauseMenu;
-            
         public bool WalkFast;
         public int WalkForward;
         public int WalkBackward;
@@ -57,8 +54,6 @@ namespace engine
 
         public void Reset()
         {
-            ShowMap = false;
-            PauseMenu = false;
             WalkFast = false;
             WalkForward = 0;
             WalkBackward = 0;

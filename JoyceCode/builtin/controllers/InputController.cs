@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using engine;
 using engine.news;
+using static engine.Logger;
 
 namespace builtin.controllers;
 
@@ -29,7 +30,8 @@ public class InputController : engine.AModule, engine.IInputPart
     public ControllerState _controllerState = new();
 
 
-    private float _touchLookMoveSensitivity = 1f;
+    private float _touchLookMoveSensitivity = 1.5f;
+    private float _mouseLookMoveSensitivity = 1f;
 
 
     private void _onKeyDown(Event ev)
@@ -56,12 +58,6 @@ public class InputController : engine.AModule, engine.IInputPart
                 break;
             case "D":
                 _controllerState.TurnRight = (int)ControllerTurnLeftRight;
-                break;
-            case "(tab)":
-                _controllerState.ShowMap = true;
-                break;
-            case "(escape)":
-                _controllerState.PauseMenu = true;
                 break;
             default:
                 break;
@@ -93,12 +89,6 @@ public class InputController : engine.AModule, engine.IInputPart
                 break;
             case "D":
                 _controllerState.TurnRight = 0;
-                break;
-            case "(tab)":
-                _controllerState.ShowMap = false;
-                break;  
-            case "(escape)":
-                _controllerState.PauseMenu = false;
                 break;
             default:
                 break;
@@ -177,8 +167,33 @@ public class InputController : engine.AModule, engine.IInputPart
     private readonly float ControllerYMax = 0.2f; 
     private readonly float ControllerXMax = 0.13f;
 
+    
+    /*
+     * Vars to implement zoom emulation on touch
+     */
     private Vector2 _lastTouchPosition = default;
-
+    
+    /**
+     * How far on the y axis do I need to move to do a complete zoom controller?
+     */
+    private readonly float ControllerTouchZoomFull = 0.6f;
+    private float _zoomAtPress = 0f;
+    
+    /*
+     * Vars to emulate debug button on touch
+     *
+     * We have to click alteratingly into the right and left half of the screen
+     * quickly to enable debug display.
+     */
+    private int _enableDebugCounter = 0;
+    private readonly int _maxDebugCounter = 5;
+    private float _enableDebugYAbove = 0.9f;
+    private DateTime _enableDebugStartTime = default;
+    
+    /**
+     * Besides reading the standard touch movements, the touch controller also implements
+     * a zoom controller (mouse wheel) on the right hand side of the screen.
+     */
     private void _touchMouseController()
     {
         lock (_lo)
@@ -194,13 +209,23 @@ public class InputController : engine.AModule, engine.IInputPart
                 float relY = (float)currDist.Y / (float)viewSize.Y;
                 float relX = (float)currDist.X / (float)viewSize.Y;
 
-                _handleTouchMove(
-                    new Vector2(
-                        _mousePressPosition.X / viewSize.X, 
-                        _mousePressPosition.Y / viewSize.Y),
-                    new Vector2(relX, relY));
+                if (_mousePressPosition.X >= viewSize.X - 10f)
+                {
+                    float zoomWay = relY / ControllerTouchZoomFull * 255f;
+                    float newZoom = (float)_controllerState.ZoomState + zoomWay;
+                    _controllerState.ZoomState = (sbyte)Single.Min(255.4f, Single.Max(0f, newZoom));
+                }
+                else
+                {
+                    _handleTouchMove(
+                        new Vector2(
+                            _mousePressPosition.X / viewSize.X, 
+                            _mousePressPosition.Y / viewSize.Y),
+                        new Vector2(relX, relY));
 
-                _lastTouchPosition = _currentMousePosition;
+                    _lastTouchPosition = _currentMousePosition;
+                }
+                
             }
             else
             {
@@ -229,8 +254,8 @@ public class InputController : engine.AModule, engine.IInputPart
                 }
                 else
                 {
-                    var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * _touchLookMoveSensitivity;
-                    var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * _touchLookMoveSensitivity;
+                    var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * _mouseLookMoveSensitivity;
+                    var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * _mouseLookMoveSensitivity;
                     _vMouseMove += new Vector2(xOffset, yOffset);
                 }
                 _lastMousePosition = _currentMousePosition;
@@ -273,6 +298,88 @@ public class InputController : engine.AModule, engine.IInputPart
 
     }
 
+
+    private void _touchCheckDebugClick(Event ev)
+    {
+        DateTime now = DateTime.Now;
+        bool doEmitDebug = false;
+        
+        lock (_lo)
+        {
+            var sinceFirst = _enableDebugStartTime - now;
+            bool doResetDebug = false;
+
+            if (ev.Position.Y / _vViewSize.Y < _enableDebugYAbove)
+            {
+                doResetDebug = true;
+            }
+            else
+            {
+                /*
+                 * Is this a first click?
+                 */
+                if (sinceFirst > TimeSpan.FromMilliseconds(2000))
+                {
+                    if (ev.Position.X > _vViewSize.X / 2f)
+                    {
+                        _enableDebugStartTime = now;
+                        _enableDebugCounter = 1;
+                    }
+                }
+                else
+                {
+                    /*
+                     * So this could be a continued click?
+                     */
+                    bool expectOnLeft = (_enableDebugCounter & 1) != 0;
+                    if (expectOnLeft && ev.Position.X <= _vViewSize.X / 2f
+                        || !expectOnLeft && ev.Position.X >= _vViewSize.X / 2f)
+                    {
+                        /*
+                         * This is inside the correct side of the screen.
+                         */
+                        _enableDebugCounter++;
+                        if (_enableDebugCounter == _maxDebugCounter)
+                        {
+                            doEmitDebug = true;
+                        }
+                    }
+                    else
+                    {
+                        /*
+                         * Wrong side, so reset.
+                         */
+                        doResetDebug = true;
+                    }
+                }
+            }
+
+            if (doResetDebug)
+            {
+                _enableDebugCounter = 0;
+                _enableDebugStartTime = default;
+            }
+        }
+
+        if (doEmitDebug)
+        {
+            Trace("Emitting debug key \"(escape)\".");
+            Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, "(escape)"));
+            Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(escape)"));
+        }
+    }
+    
+
+    private void _handleAdditionalTouchPressed(Event ev)
+    {
+        lock (_lo)
+        {
+            _zoomAtPress = _controllerState.ZoomState;
+        }
+
+        _touchCheckDebugClick(ev);
+    }
+    
     
     private void _handleMousePressed(Event ev)
     {
@@ -287,6 +394,11 @@ public class InputController : engine.AModule, engine.IInputPart
             _currentMousePosition = ev.Position;
             _isMouseButtonClicked = true;
         }
+        if (engine.GlobalSettings.Get("splash.touchControls") != "false")
+        {
+            _handleAdditionalTouchPressed(ev);
+        }
+
     }
 
 
