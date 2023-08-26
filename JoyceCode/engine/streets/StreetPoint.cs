@@ -6,13 +6,15 @@ namespace engine.streets
 {
     public class StreetPoint
     {
+        private static object _classLo = new();
+        static private int _nextId;
+
         private object _lo = new();
         
         static private void trace( in string message )
         {
             Console.WriteLine( message );
         }
-        static private int _nextId;
         public int Id;
 
         public Vector2 Pos { get; private set; }
@@ -80,7 +82,7 @@ namespace engine.streets
                 {
                     foreach (var stroke in _listStartingStrokes)
                     {
-                        stroke.invalidate();
+                        stroke.Invalidate();
                     }
                 }
 
@@ -88,7 +90,7 @@ namespace engine.streets
                 {
                     foreach (var stroke in _listEndingStrokes)
                     {
-                        stroke.invalidate();
+                        stroke.Invalidate();
                     }
                 }
             }
@@ -707,7 +709,11 @@ namespace engine.streets
 
         public StreetPoint() 
         {
-            Id = _nextId++;
+            lock (_classLo)
+            {
+                Id = _nextId++;
+            }
+
             Pos = new Vector2( 0f, 0f );
             InStore = false;
             _listStartingStrokes = null;
