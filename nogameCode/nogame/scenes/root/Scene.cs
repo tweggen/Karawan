@@ -11,6 +11,9 @@ namespace nogame.scenes.root;
 public class Scene : engine.IScene, engine.IInputPart
 {
     private object _lo = new();
+
+
+    private static float MY_Z_ORDER = 20f;
     
     private engine.Engine _engine;
 
@@ -42,12 +45,17 @@ public class Scene : engine.IScene, engine.IInputPart
     private bool _isMapShown = false;
     private int _isSettingUp = 0;
 
-    private modules.menu.Module _moduleUi;
+    private modules.menu.Module _moduleUi = null;
     private bool _isUIShown = false;
 
     
-    public void TogglePauseMenu()
+    private void _togglePauseMenu()
     {
+        if (null == _moduleUi)
+        {
+            return;
+        }
+
         bool isUIShown;
         lock (_lo)
         {
@@ -68,7 +76,7 @@ public class Scene : engine.IScene, engine.IInputPart
     }
     
     
-    public void ToggleMap()
+    private void _toggleMap()
     {
         bool isMapShown; 
         lock (_lo)
@@ -122,7 +130,7 @@ public class Scene : engine.IScene, engine.IInputPart
 
         if (_callToggleMap)
         {
-            ToggleMap();
+            _toggleMap();
         }
     }
     
@@ -138,11 +146,11 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             case "(tab)":
                 ev.IsHandled = true;
-                ToggleMap();
+                _toggleMap();
                 break;
             case "(escape)":
                 ev.IsHandled = true;
-                TogglePauseMenu();
+                _togglePauseMenu();
                 break;
             default:
                 break;
@@ -439,7 +447,7 @@ public class Scene : engine.IScene, engine.IInputPart
             nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
 
-        Implementations.Get<InputEventPipeline>().AddInputPart(20, this);
+        Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         lock (_lo)
         {
