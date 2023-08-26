@@ -140,7 +140,7 @@ namespace engine
             }
             if (isChanged)
             {
-                EngineStateChanged.Invoke(this, newState);
+                EngineStateChanged?.Invoke(this, newState);
             }
         }
 
