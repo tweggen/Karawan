@@ -21,7 +21,7 @@ namespace engine.streets
             float closestDist = 100000000.0f;
 
             foreach(var stroke in _listStrokes) {
-                var si = stroke.intersects(cand);
+                var si = stroke.Intersects(cand);
 
                 // Default to collide.
                 bool xx = true;
@@ -132,7 +132,7 @@ namespace engine.streets
                     continue;
                 }
 
-                var dist = stroke.distance(sp.Pos.X, sp.Pos.Y);
+                var dist = stroke.Distance(sp.Pos);
 
                 if (dist < closestDist)
                 {
@@ -179,7 +179,7 @@ namespace engine.streets
                     continue;
                 }
 
-                float dist = stroke.distance(sp0.Pos.X, sp0.Pos.Y);
+                float dist = stroke.Distance(sp0.Pos);
 
                 if (dist < closestDist)
                 {

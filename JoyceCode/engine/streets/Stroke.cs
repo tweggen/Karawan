@@ -5,10 +5,7 @@ namespace engine.streets
 {
     public class Stroke
     {
-        static private void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
+        static private object _classLock = new();
         static private int _nextId = 10000;
 
         public int Sid;
@@ -36,13 +33,24 @@ namespace engine.streets
         /**
          * The point this stroke is coming from.
          */
-        public StreetPoint A { get; set; }
+        private StreetPoint _a;
+        public StreetPoint A 
+        {
+            get => _a;
+            set { _setA(value); }
+        }
 
 
         /**
          * The point this stroke is going to.
          */
-        public StreetPoint B { get; set; }
+        private StreetPoint _b;
+
+        public StreetPoint B
+        {
+            get => _b;
+            set { _setB(value); }
+        }
 
 
         /**
@@ -63,7 +71,9 @@ namespace engine.streets
         /**
          * Whether the geometry is valid.
          */
-        private bool _isValid;
+        private bool _isLengthValid;
+        private bool _isAngleValid;
+        private bool _isUnitValid;
 
 
         private float _angle;
@@ -74,13 +84,15 @@ namespace engine.streets
         {
             get
             {
-                if (!_isValid) _updateGeom();
+                if (!_isAngleValid) _updateAngle();
                 return _angle;
             }
         }
 
 
         private float _length;
+        private float _length2;
+        private Vector2 _vAB;
         /**
          * The length of the stroke.
          */
@@ -88,7 +100,7 @@ namespace engine.streets
         {
             get
             {
-                if (!_isValid) _updateGeom();
+                if (!_isLengthValid) _updateLength();
                 return _length;
             }
         }
@@ -103,7 +115,7 @@ namespace engine.streets
         {
             get
             {
-                if (!_isValid) _updateGeom();
+                if (!_isUnitValid) _updateUnit();
                 return _normal;
             }
         }
@@ -116,68 +128,81 @@ namespace engine.streets
         { 
             get
             {
-                if (_isValid) _updateGeom();
+                if (!_isUnitValid) _updateUnit();
                 return _unit;
             }
         }
 
 
-        private void _updateGeom()
+        private void _updateLength()
         {
-            float dx = B.Pos.X - A.Pos.X;
-            float dy = B.Pos.Y - A.Pos.Y;
-
-            _length = (float) Math.Sqrt(dx* dx+dy* dy);
+            _vAB = _b.Pos - _a.Pos;
+            _length2 = _vAB.LengthSquared();
+            _length = Single.Sqrt(_length2);
             if(_length<0.000001) {
                 throw new InvalidOperationException( "Stroke._updateGeom(): Zero length stroke." );
             }
 
-            /*
-             * Make it a unit vector to have better NaN thesholds
-             */
-            var prevPhi = _angle;
-            dx = dx / _length;
-            dy = dy / _length;
-            float phi = (float) Math.Atan2(dy, dx);
-            if(Math.Abs(prevPhi-phi) > 0.00000001 ) {
+            _isLengthValid = true;
+        }
+
+
+        private void _updateUnit()
+        {
+            if (!_isLengthValid) _updateLength();
+            _unit = _vAB / _length;
+            _normal = new Vector2(_unit.Y, -_unit.X);
+            
+            _isUnitValid = true;
+        }
+        
+
+        private void _updateAngle()
+        {
+            if (!_isUnitValid) _updateUnit();
+            float prevPhi = _angle;
+            float phi = Single.Atan2(_unit.Y, _unit.X);
+            if(Single.Abs(prevPhi-phi) > 0.00000001 ) {
                 _angle = phi;
             }
-            _unit = new Vector2(dx, dy);
-            _normal = new Vector2(dy, -dx);
-            _isValid = true;
+
+            _isAngleValid = true;
         }
+        
 
-
-        public void invalidate()
-        {
-            _angle = -1000f;
-            _unit = new Vector2();
-            _normal = new Vector2();
-            _length = 0f;
-            _isValid = false;
-        }
-
-        /**
-         * Debug function to test, whether stroke was valid
-         */
-        public bool isValid()
-        {
-            return _isValid;
-        }
-
-        public StreetPoint set_a(StreetPoint sp)
+        private void _setA(StreetPoint sp)
         {
             if (null != Store)
             {
                 throw new InvalidOperationException( "Stroke: Tried to exchange endpoint while in graph." );
             }
-            if (A != null)
+            if (_a != null)
             {
-                A.Invalidate();
-                A = null;
+                _a.Invalidate();
+                _a = null;
             }
-            invalidate();
-            A = sp;
+            Invalidate();
+            _a = sp;
+            if (sp != null)
+            {
+                sp.Invalidate();
+            }
+        }
+
+
+        private StreetPoint _setB(StreetPoint sp)
+        {
+            if (null != Store)
+            {
+                throw new InvalidOperationException( "Stroke: Tried to exchange endpoint while in graph." );
+            }
+            if (_b != null)
+            {
+                _b.Invalidate();
+                _b = null;
+            }
+            Invalidate();
+            _b = sp;
             if (sp != null)
             {
                 sp.Invalidate();
@@ -185,36 +210,15 @@ namespace engine.streets
             return sp;
         }
 
-
-        public StreetPoint set_b(StreetPoint sp)
-        {
-            if (null != Store)
-            {
-                throw new InvalidOperationException( "Stroke: Tried to exchange endpoint while in graph." );
-            }
-            if (B != null)
-            {
-                B.Invalidate();
-                B = null;
-            }
-            invalidate();
-            B = sp;
-            if (sp != null)
-            {
-                sp.Invalidate();
-            }
-            return sp;
-        }
-
-
+        
         public float GetAngleSP(in StreetPoint sp)
         {
             var isEnding = false;
-            if (sp == B)
+            if (sp == _b)
             {
                 isEnding = true;
             }
-            else if (sp == A)
+            else if (sp == _a)
             {
                 // Just checking
             }
@@ -222,7 +226,7 @@ namespace engine.streets
             {
                 throw new InvalidOperationException( $"Stroke.getAngleSP(): Invalid stroke #{Sid} that does not contain street point {sp.Id}" );
             }
-            return Angle + (isEnding ? (float)Math.PI : 0f);
+            return Angle + (isEnding ? Single.Pi : 0f);
         }
 
 
@@ -247,21 +251,21 @@ namespace engine.streets
         /**
          * Stolen from https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
          */
-        public StrokeIntersection? intersects(in Stroke o)
+        public StrokeIntersection? Intersects(in Stroke o)
         {
             if (null == o)
             {
                 throw new InvalidOperationException( "Stroke: intersect arg is null." );
             }
-            var p0_x = A.Pos.X;
-            var p0_y = A.Pos.Y;
-            var p1_x = B.Pos.X;
-            var p1_y = B.Pos.Y;
+            var p0_x = _a.Pos.X;
+            var p0_y = _a.Pos.Y;
+            var p1_x = _b.Pos.X;
+            var p1_y = _b.Pos.Y;
 
-            var p2_x = o.A.Pos.X;
-            var p2_y = o.A.Pos.Y;
-            var p3_x = o.B.Pos.X;
-            var p3_y = o.B.Pos.Y;
+            var p2_x = o._a.Pos.X;
+            var p2_y = o._a.Pos.Y;
+            var p3_x = o._b.Pos.X;
+            var p3_y = o._b.Pos.Y;
 
             var i_x = 0f;
             var i_y = 0f;
@@ -308,14 +312,16 @@ namespace engine.streets
         /**
          * Compute the distance of the given point to this stroke.
          */
-        public float distance(float px, float py)
+        public float Distance(in Vector2 p)
         {
-            var abx = B.Pos.X - A.Pos.X;
-            var aby = B.Pos.Y - A.Pos.Y;
-            var acx = px - A.Pos.X;
-            var acy = py - A.Pos.Y;
+            if (!_isLengthValid) _updateLength();
+            
+            //var abx = B.Pos.X - A.Pos.X;
+            //var aby = B.Pos.Y - A.Pos.Y;
+            float acx = p.X - _a.Pos.X;
+            float acy = p.Y - _a.Pos.Y;
 
-            var dotproduct = abx * acx + aby * acy;
+            float dotproduct = _vAB.X * acx + _vAB.Y * acy;
 
             /*
              * If the dot product is negative, the point is "before" point a anyway. However, 
@@ -330,14 +336,8 @@ namespace engine.streets
                 return 1000000000f;
             }
 
-            var crossproduct = abx * acy - aby * acx;
-            if (Length < 0.0000001f && Length > -0.0000001f)
-            {
-                trace("Stroke.distance(): near null division.");
-                return 1000000000f;
-            }
-            var dist = Math.Abs(crossproduct) / Length;
-            // trace( 'dist=$dist');
+            float crossproduct = _vAB.X * acy - _vAB.Y * acx;
+            float dist = Single.Abs(crossproduct) / _length;
 
             /*
              * Now look, whether this stroke is in range at all.
@@ -349,11 +349,9 @@ namespace engine.streets
             */
             float ac2 = acx * acx + acy * acy;
             float ad2 = ac2 - dist * dist;
-            float ad = (float) Math.Sqrt(ad2);
 
-            if (ad >= Length)
+            if (ad2 >= _length2)
             {
-                //trace( 'Skipping point ${sp0.pos.x}, ${sp0.pos.y}, because its beyond stroke.');
                 return 1000000000f;
             }
 
@@ -364,7 +362,7 @@ namespace engine.streets
         {
             IsPrimary = o.IsPrimary;
             Weight = o.Weight;
-            invalidate();
+            Invalidate();
         }
 
 
@@ -401,7 +399,7 @@ namespace engine.streets
              * Round the angle to avoid rounding artefacts
              */
             {
-                var angle0int = (int)(angle0 * 180f/ (float)Math.PI);
+                var angle0int = (int)(angle0 * 180f/ Single.Pi);
                 if (angle0int > 180)
                 {
                     angle0int -= 360;
@@ -410,13 +408,13 @@ namespace engine.streets
                 {
                     angle0int += 180;
                 }
-                angle0 = angle0int * (float)Math.PI / 180f;
+                angle0 = angle0int * Single.Pi / 180f;
             }
             var stroke = new Stroke();
 
             b0.SetPos(
-                a0.Pos.X + (float) Math.Cos(angle0) * length0,
-                a0.Pos.Y + (float) Math.Sin(angle0) * length0
+                a0.Pos.X + Single.Cos(angle0) * length0,
+                a0.Pos.Y + Single.Sin(angle0) * length0
             );
             stroke.A = a0;
             stroke.B = b0;
@@ -430,24 +428,16 @@ namespace engine.streets
 
         public override string ToString()
         {
-            var ax = A.Pos.X;
-            var ay = A.Pos.Y;
-            var bx = B.Pos.X;
-            var by = B.Pos.Y;
             return $"{Sid}: ^{Angle} ({A.ToString()}-({B.ToString()}) ('{Creator}')";
         }
 
 
         public string ToStringSP(in StreetPoint sp)
         {
-            var ax = A.Pos.X;
-            var ay = A.Pos.Y;
-            var bx = B.Pos.X;
-            var by = B.Pos.Y;
             float relativeAngle = Angle;
             if (B == sp)
             {
-                relativeAngle += (float) Math.PI;
+                relativeAngle += Single.Pi;
             }
             else if (A == sp)
             {
@@ -467,20 +457,38 @@ namespace engine.streets
         }
 
 
+        public void Invalidate()
+        {
+            /*
+             * Reset the angle to something impossible so that we are forced to recompute.
+             */
+            _angle = -1000f;
+            _unit = Vector2.Zero;
+            _normal = Vector2.Zero;
+            _length = 0f;
+            _length2 = 0;
+            _isLengthValid = false;
+            _isUnitValid = false;
+            _isAngleValid = false;
+        }
+
+
         private Stroke()
         {
-            Sid = ++_nextId;
-            A = null; //new StreetPoint();
-            B = null; //new StreetPoint();
+            lock (_classLock)
+            {
+                Sid = ++_nextId;
+            }
+
+            _a = null;
+            _b = null;
             Store = null;
-            _angle = -1000f;
-            _length = 0f;
+
             TraversedAB = false;
             TraversedBA = false;
-            _unit = new Vector2();
-            _normal = new Vector2();
-            _isValid = false;
             Creator = "";
+
+            Invalidate();
         }
     }
 }
