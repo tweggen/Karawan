@@ -17,7 +17,7 @@ namespace engine.streets
         }
         public int Id;
 
-        public Vector2 Pos { get; private set; }
+        public Vector2 Pos; // { get; private set; }
         public string Creator { get; private set; }
 
         /*

@@ -1,7 +1,9 @@
+using System;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine;
 using engine.news;
+using static engine.Logger;
 
 namespace builtin.tunestreets;
 
@@ -67,17 +69,28 @@ public class Scene : IScene, IInputPart
         _engine.SceneSequencer.AddScene(5, this);
         Task.Run(() =>
         {
+            double aver = 0;
+            int n = 0;
             while (true)
             {
                 lock (_lo)
                 {
                     if (!_shallGenerate)
                     {
+                        if (n > 0)
+                        {
+                            Trace($"average duration {aver / n}ms.");
+                        }
                         return;
                     }
 
+                    DateTime nowStart = DateTime.Now;
                     _clusterDesc = _createDefaultCluster();
                     var strokeStore = _clusterDesc.StrokeStore();
+                    DateTime nowEnd = DateTime.Now;
+                    var duration = nowEnd - nowStart;
+                    ++n;
+                    aver += duration.TotalMilliseconds;
                 }
             }
         });

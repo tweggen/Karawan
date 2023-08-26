@@ -257,15 +257,18 @@ namespace engine.streets
             {
                 throw new InvalidOperationException( "Stroke: intersect arg is null." );
             }
+            if (!_isLengthValid) _updateLength();
+            if (!o._isLengthValid) o._updateLength();
+            
             var p0_x = _a.Pos.X;
             var p0_y = _a.Pos.Y;
-            var p1_x = _b.Pos.X;
-            var p1_y = _b.Pos.Y;
+            //var p1_x = _b.Pos.X;
+            //var p1_y = _b.Pos.Y;
 
             var p2_x = o._a.Pos.X;
             var p2_y = o._a.Pos.Y;
-            var p3_x = o._b.Pos.X;
-            var p3_y = o._b.Pos.Y;
+            //var p3_x = o._b.Pos.X;
+            //var p3_y = o._b.Pos.Y;
 
             var i_x = 0f;
             var i_y = 0f;
@@ -273,8 +276,12 @@ namespace engine.streets
 
             float s1_x, s1_y, s2_x, s2_y;
 
-            s1_x = p1_x - p0_x; s1_y = p1_y - p0_y;
-            s2_x = p3_x - p2_x; s2_y = p3_y - p2_y;
+            //s1_x = p1_x - p0_x; s1_y = p1_y - p0_y;
+            s1_x = _vAB.X;
+            s1_y = _vAB.Y;
+            //s2_x = p3_x - p2_x; s2_y = p3_y - p2_y;
+            s2_x = o._vAB.X;
+            s2_y = o._vAB.Y;
 
             var d = (-s2_x * s1_y + s1_x * s2_y);
             if (d < 0.0000001f && d > -0.0000001f)
