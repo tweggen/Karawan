@@ -79,6 +79,7 @@ public class Scene : engine.IScene
     {
         _shallHideTitle = true;
     }
+    
 
     public void SceneDeactivate()
     {
