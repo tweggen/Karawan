@@ -67,9 +67,8 @@ namespace Wuka
             engine.GlobalSettings.Set("splash.touchControls", "true");
             engine.GlobalSettings.Set("Android", "true");
             engine.GlobalSettings.Set("platform.initialZoomState", "-16");
-
+            engine.GlobalSettings.Set("nogame.CreateUI", "false");
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
-
 
             _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
 #if false
