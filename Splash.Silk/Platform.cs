@@ -40,7 +40,7 @@ namespace Splash.Silk
 
         private engine.WorkerQueue _platformThreadActions = new("platformThread");
 
-        private ImGuiController _imGuiController;
+        private ImGuiController _imGuiController = null;
 
 
         private bool _mouseEnabled = false;
@@ -331,7 +331,10 @@ namespace Splash.Silk
             _gl.ClearDepth(1f);
             _gl.ClearColor(0f, 0f, 0f, 0f);
 
-            _imGuiController = new ImGuiController(_gl, _iView, _iInputContext);
+            if (engine.GlobalSettings.Get("nogame.CreateUI") != "false")
+            {
+                _imGuiController = new ImGuiController(_gl, _iView, _iInputContext);
+            }
             
             _hadFocus = true;
             
@@ -383,10 +386,13 @@ namespace Splash.Silk
 
                 _renderer.RenderFrame(renderFrame);
 
-                _imGuiController.Update((float)dt);
-                _engine.CallOnImGuiRender((float)dt);
-                // ImGui.ShowDemoWindow();
-                _imGuiController.Render();
+                if (null != _imGuiController)
+                {
+                    _imGuiController.Update((float)dt);
+                    _engine.CallOnImGuiRender((float)dt);
+                    // ImGui.ShowDemoWindow();
+                    _imGuiController.Render();
+                }
                 
                 _iView.SwapBuffers();
                 _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
@@ -401,7 +407,10 @@ namespace Splash.Silk
 
         private void _windowOnClose()
         {
-            _imGuiController?.Dispose();
+            if (null != _imGuiController)
+            {
+                _imGuiController?.Dispose();
+            }
             _instanceManager?.Dispose();
             _gl?.Dispose();
             _isRunning = false;
