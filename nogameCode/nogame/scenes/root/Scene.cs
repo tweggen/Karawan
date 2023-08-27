@@ -150,7 +150,7 @@ public class Scene : engine.IScene, engine.IInputPart
         }
     }
 
-
+    
     private void _triggerLoadWorld()
     {
         lock (_lo)
@@ -194,6 +194,18 @@ public class Scene : engine.IScene, engine.IInputPart
     public void SceneOnLogicalFrame(float dt)
     {
         _triggerLoadWorld();
+        
+                    
+        // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
+        var frontZ = Implementations.Get<InputEventPipeline>().GetFrontZ();
+        if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
+        {
+            _ctrlFollowCamera.EnableInput(false);
+        }
+        else
+        {
+            _ctrlFollowCamera.EnableInput(true);
+        }
     }
 
 

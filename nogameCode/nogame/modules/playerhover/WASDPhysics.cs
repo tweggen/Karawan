@@ -13,7 +13,7 @@ namespace nogame.modules.playerhover
 {
     internal class WASDPhysics : AModule, IInputPart
     {
-        private static float MY_Z_ORDER = 25f;
+        public static float MY_Z_ORDER = 25f;
         private engine.Engine _engine;
         private DefaultEcs.Entity _eTarget;
         private engine.transform.API _aTransform;
@@ -33,8 +33,6 @@ namespace nogame.modules.playerhover
         
         private void _onLogicalFrame(object sender, float dt)
         {
-            Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
-
             Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
             
             Vector3 vTotalAngular = new Vector3(0f, 0f, 0f);
@@ -88,6 +86,8 @@ namespace nogame.modules.playerhover
 
             if (MY_Z_ORDER == Implementations.Get<InputEventPipeline>().GetFrontZ())
             {
+                Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
+
                 var frontMotion = controllerState.FrontMotion;
                 var upMotion = controllerState.UpMotion;
                 var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;

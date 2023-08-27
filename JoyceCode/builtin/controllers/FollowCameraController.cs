@@ -18,11 +18,12 @@ namespace builtin.controllers
         Vector2 _vMouseOffset;
         float _lastMouseMove = 0f;
         private bool _firstFrame = true;
+        private bool _isInputEnabled = true;
         
         private float _previousZoomDistance = 33f;
 
         static private float ORIENTATION_SLERP_AMOUNT = 0.07f;
-        static private float ZOOM_SLERP_AMOUNT = 0.02f;
+        static private float ZOOM_SLERP_AMOUNT = 0.1f;
         static private float MOUSE_RELATIVE_AMOUNT = 0.05f;
         static private float MOUSE_RETURN_SLERP = 0.98f;
         static private float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT = 1.6f;
@@ -33,8 +34,8 @@ namespace builtin.controllers
             /*
              * We allow the user to move the cam.
              */
-            engine.Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
-            engine.Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out var vMouseMove);
+            //
+            //engine.Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out var vMouseMove);
 
             if( !_eCarrot.Has<engine.transform.components.Transform3ToWorld>()
                 || !_eCarrot.Has<engine.transform.components.Transform3>())
@@ -57,14 +58,28 @@ namespace builtin.controllers
             
             var vCarrotPos = cToParent.Matrix.Translation;
 
-            /*
-             * Compute a distance from the zoom state.
-             * TXWTODO: Remove the magic numbers.
-             */
-            var zoomFactor = controllerState.ZoomState < 0 ? controllerState.ZoomState : controllerState.ZoomState * 2f;
-            float zoomDistance = (36f - (float)zoomFactor) / 2f;
-            zoomDistance = (1f-ZOOM_SLERP_AMOUNT) * _previousZoomDistance + zoomDistance * ZOOM_SLERP_AMOUNT;
-            _previousZoomDistance = zoomDistance;
+            float zoomDistance;
+            if (_isInputEnabled)
+            {
+                engine.Implementations.Get<builtin.controllers.InputController>()
+                    .GetControllerState(out var controllerState);
+
+                /*
+                 * Compute a distance from the zoom state.
+                 * TXWTODO: Remove the magic numbers.
+                 */
+                var zoomFactor = controllerState.ZoomState < 0
+                    ? controllerState.ZoomState
+                    : controllerState.ZoomState * 2f;
+                zoomDistance = (36f - (float)zoomFactor) / 2f;
+                zoomDistance = (1f - ZOOM_SLERP_AMOUNT) * _previousZoomDistance + zoomDistance * ZOOM_SLERP_AMOUNT;
+                _previousZoomDistance = zoomDistance;
+            }
+            else
+            {
+                zoomDistance = _previousZoomDistance;
+            }
+
             // var vCameraFront = vFront;
             var vCameraFront = vFront * (float)Math.Cos(-angleY) + vRight * (float)Math.Sin(-angleY);
             var vCameraDirection = zoomDistance * vCameraFront - zoomDistance/4f * vUp;
@@ -80,6 +95,16 @@ namespace builtin.controllers
             // var vCarrotRotation = cCarrotTransform3.Rotation;
             var qRotation = Quaternion.Slerp(_qCameraRotation, cCarrotTransform3.Rotation, ORIENTATION_SLERP_AMOUNT);
             _qCameraRotation = qRotation;
+
+            Vector2 vMouseMove;
+            if (_isInputEnabled)
+            {
+                engine.Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
+            }
+            else
+            {
+                vMouseMove = Vector2.Zero;
+            }
 
             /*
              * Some up the relative mouse movement.
@@ -110,25 +135,35 @@ namespace builtin.controllers
             {
                 _vMouseOffset *= MOUSE_RETURN_SLERP;
             }
-
+            
             _firstFrame = false;
         }
 
+        
         public void ForcePreviousZoomDistance(float dist)
         {
             _previousZoomDistance = dist;
         }
+
+
+        public void EnableInput(bool isInputEnabled)
+        {
+            _isInputEnabled = isInputEnabled;
+        }
+        
         
         public void DeactivateController()
         {
             _engine.OnLogicalFrame -= _onLogicalFrame;
         }
 
+        
         public void ActivateController()
         {
             _engine.OnLogicalFrame += _onLogicalFrame;
         }
 
+        
         public FollowCameraController(engine.Engine engine, DefaultEcs.Entity eTarget, DefaultEcs.Entity eCarrot) 
         {
             _engine = engine;

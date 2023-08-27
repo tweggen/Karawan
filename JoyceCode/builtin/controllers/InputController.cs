@@ -215,7 +215,7 @@ public class InputController : engine.AModule, engine.IInputPart
                 if (_mousePressPosition.X >= (viewSize.X - viewSize.X/25f))
                 {
                     float zoomWay = relY / ControllerTouchZoomFull * 255f;
-                    float newZoom = (float)_zoomAtPress+zoomWay;
+                    float newZoom = (float)_zoomAtPress-zoomWay;
                     _controllerState.ZoomState = (sbyte)Single.Min(16, Single.Max(-128, newZoom));
                 }
                 else
@@ -277,7 +277,7 @@ public class InputController : engine.AModule, engine.IInputPart
         lock (_lo)
         {
             int currentZoomState = _controllerState.ZoomState;
-            currentZoomState -= (int) y;
+            currentZoomState += (int) y;
             currentZoomState = Int32.Max(-128, currentZoomState);
             currentZoomState = Int32.Min(16, currentZoomState);
             _controllerState.ZoomState = (sbyte) currentZoomState;
