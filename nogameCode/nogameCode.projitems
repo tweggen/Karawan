@@ -19,6 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GeneratePolytopeOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateTreesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\HouseInstanceGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\PolytopeVanishBehaviour.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\TreeInstanceGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\components\CubeSpinner.cs" />

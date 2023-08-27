@@ -61,8 +61,8 @@ namespace builtin.controllers
              * Compute a distance from the zoom state.
              * TXWTODO: Remove the magic numbers.
              */
-            var zoomFactor = controllerState.ZoomState > 0 ? controllerState.ZoomState * 2f : controllerState.ZoomState;
-            float zoomDistance = (20f + (float)zoomFactor) / 2f;
+            var zoomFactor = controllerState.ZoomState < 0 ? controllerState.ZoomState : controllerState.ZoomState * 2f;
+            float zoomDistance = (36f - (float)zoomFactor) / 2f;
             zoomDistance = (1f-ZOOM_SLERP_AMOUNT) * _previousZoomDistance + zoomDistance * ZOOM_SLERP_AMOUNT;
             _previousZoomDistance = zoomDistance;
             // var vCameraFront = vFront;

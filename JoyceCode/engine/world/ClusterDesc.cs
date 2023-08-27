@@ -341,10 +341,28 @@ public class ClusterDesc
         return _quarterStore;
     }
 
+
+    public Vector3 FindStartPosition()
+    {
+        _triggerStreets();
+        foreach (var quarter in _quarterStore.GetQuarters())
+        {
+            if (quarter.IsInvalid()) continue;
+            foreach (var estate in quarter.GetEstates())
+            {
+                if (estate.GetBuildings().Count == 0)
+                {
+                    return estate.GetCenter() with { Y = AverageHeight + 3f };
+                }
+            }
+        }
+        return Pos with { Y = AverageHeight + 3f };
+    }
+    
     
     public ClusterDesc(string strKey)
     {
-        _strKey = strKey;
+        Id = _strKey = strKey;
         _rnd = new engine.RandomSource(_strKey);
         _arrCloseCities = new ClusterDesc[_maxClosest];
         _nClosest = 0;

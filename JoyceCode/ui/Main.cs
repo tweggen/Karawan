@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Numerics;
 using engine;
+using engine.world;
 using ImGuiNET;
 
 namespace joyce.ui;
@@ -12,6 +13,7 @@ public class Main
     private Engine _engine;
 
     private int _currentEntityId = -1;
+    private string _currentClusterId = "";
 
 
     private void _setColorScheme()
@@ -149,6 +151,45 @@ public class Main
                 foreach (var sceneKey in sceneKeys)
                 {
                     ImGui.Text(sceneKey);
+                }
+            }
+
+            if (ImGui.CollapsingHeader("Clusters"))
+            {
+                if (ImGui.BeginListBox(""))
+                {
+                    var clusterList = ClusterList.Instance().GetClusterList();
+                    foreach (var clusterDesc in clusterList)
+                    {
+                        var id = clusterDesc.Id;
+                        ImGui.PushID(id);
+
+                        bool isSelected = _currentClusterId == id;
+                        string clusterString = clusterDesc.Name;
+
+                        if (ImGui.Selectable(clusterString, isSelected))
+                        {
+                            _currentClusterId = id;
+                        }
+                        
+                        if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(0))
+                        {
+                            _engine.QueueMainThreadAction(() =>
+                            {
+                                _engine.BeamTo(clusterDesc.FindStartPosition());
+                            });
+                        }
+
+                        if (isSelected)
+                        {
+                            ImGui.SetItemDefaultFocus();
+                        }
+
+                        ImGui.PopID();
+                    }
+
+                    ImGui.EndListBox();
+
                 }
             }
 

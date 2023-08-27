@@ -16,7 +16,7 @@ struct DisplayMapParams
     static public float MAP_STEP_SIZE = (1f / 8f);
     public float CurrentZoomState = 16f;
 
-    static public float MAP_MOVE_PER_FRAME = (1f / 8f);
+    static public float MAP_MOVE_PER_FRAME = (0.16f);
     
     /**
      * Relative position of the map: (0f, 0f) would be upper left in the middle
@@ -79,7 +79,7 @@ public class Module : AModule, IInputPart
         DisplayMapParams dmp;
         lock (_lo)
         {
-            _visibleMapParams.Slerp(_requestedMapParams, 0.05f);
+            _visibleMapParams.Slerp(_requestedMapParams, 0.2f);
             dmp = _visibleMapParams;
         }
 
@@ -129,6 +129,19 @@ public class Module : AModule, IInputPart
         }
     }
 
+
+    private void _applyZoomState(sbyte zoomState)
+    {
+        lock (_lo)
+        {
+            float newZoomState = (((float)-zoomState) + 32f)
+                                 * (DisplayMapParams.MAX_ZOOM_STATE - DisplayMapParams.MIN_ZOOM_STATE)
+                                 / (128f + 32f) + DisplayMapParams.MIN_ZOOM_STATE;
+            newZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE, Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, (int) newZoomState));
+            _requestedMapParams.CurrentZoomState = (float) newZoomState;
+        }
+    }
+    
 
     private void _handleMouseWheel(Event ev)
     {
@@ -219,7 +232,7 @@ public class Module : AModule, IInputPart
     {
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
-        if (ev.Type.StartsWith(Event.INPUT_MOUSE_WHEEL)) _handleMouseWheel(ev);
+        // if (ev.Type.StartsWith(Event.INPUT_MOUSE_WHEEL)) _handleMouseWheel(ev);
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
         // if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _handleKeyDown(ev);
         // if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _handleKeyUp(ev);
@@ -237,6 +250,9 @@ public class Module : AModule, IInputPart
         vDelta.Y -= (float)controllerState.WalkBackward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
 
         _applyDeltaMove(vDelta);
+
+        sbyte zoomState = controllerState.ZoomState;
+        _applyZoomState(zoomState);
     }
 
 

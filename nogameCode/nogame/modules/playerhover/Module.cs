@@ -162,6 +162,10 @@ namespace nogame.modules.playerhover
                 else if (other.Name == "nogame.furniture.polytopeBall")
                 {
                     // Trace($"Polyball chrIdx {other.DebugInfo}");
+                    _engine.QueueMainThreadAction(() =>
+                    {
+                        other.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour()));
+                    });
                     playSound = false;
                     _polyballSound.Stop();
                     _polyballSound.Play();
@@ -342,20 +346,9 @@ namespace nogame.modules.playerhover
             ClusterDesc startCluster = ClusterList.Instance().GetClusterAt(Vector3.Zero);
             if (null != startCluster)
             {
-                foreach (var quarter in startCluster.QuarterStore().GetQuarters())
-                {
-                    if (quarter.IsInvalid()) continue;
-                    foreach (var estate in quarter.GetEstates())
-                    {
-                        if (estate.GetBuildings().Count == 0)
-                        {
-                            return estate.GetCenter();
-                        }
-                    }
-                }
+                return startCluster.FindStartPosition();
             } 
             return new Vector3(0f, 200f, 0f);
-            
         }
 
 

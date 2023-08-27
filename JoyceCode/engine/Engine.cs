@@ -175,6 +175,14 @@ namespace engine
         }
 
 
+        public void BeamTo(Vector3 vPos)
+        {
+            var pref = _playerEntity.Get<engine.physics.components.Body>().Reference;
+            pref.Pose.Position = vPos;
+            pref.Pose.Orientation = Quaternion.Identity;
+        }
+        
+        
         public void SetCameraEntity(in DefaultEcs.Entity entity)
         {
             bool entityChanged = false;
@@ -944,6 +952,9 @@ namespace engine
             }
         }
 
+        
+        
+        
 
         public void EnableEntityIds()
         {

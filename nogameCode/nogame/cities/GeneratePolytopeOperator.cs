@@ -127,10 +127,19 @@ public class GeneratePolytopeOperator : IFragmentOperator
             BodyReference prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
             engine.physics.CollisionProperties collisionProperties =
                 new engine.physics.CollisionProperties
-                    { Name = "nogame.furniture.polytopeBall", IsTangible = true };
+                    { Entity = eTarget, Name = "nogame.furniture.polytopeBall", IsTangible = true };
             worldFragment.Engine.GetAPhysics().AddCollisionEntry(prefSphere.Handle, collisionProperties);
             eTarget.Set(new engine.physics.components.Kinetic(
                 prefSphere, collisionProperties));
+            eTarget.Set(new engine.draw.components.OSDText(
+                new Vector2(0, 30f),
+                new Vector2(160f, 18f),
+                $"polytope {worldFragment.NumericalId}",
+                12,
+                0x88226622,
+                0x00000000,
+                engine.draw.HAlign.Left) {MaxDistance = 800f});
+
         });
         worldFragment.Engine.QueueEntitySetupAction("nogame.furniture.polytopeBall", tSetupEntity);
     }
