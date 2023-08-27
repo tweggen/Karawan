@@ -176,7 +176,8 @@ public class SubscriptionManager
             }
 
             listActions = new();
-            while (true)
+            int l = _subscriberList.Count;
+            while (idx<l)
             {
                 var sub = _subscriberList.GetKeyAtIndex(idx);
                 if (!ev.Type.StartsWith(sub.SubscriptionPath))
