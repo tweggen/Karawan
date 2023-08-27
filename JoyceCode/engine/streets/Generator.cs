@@ -481,6 +481,19 @@ namespace engine.streets
                          */
                         _strokeStore.Remove( intersection.StrokeExists );
                         var newStrokeExists = intersection.StrokeExists.CreateUnattachedCopy();
+                        /*
+                         * Warning: [null file name]:0: WorkerQueue:RunPart: Warning: Error executing worker queue engine.Engine.MainThread action: System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
+   at System.Collections.Generic.List`1.get_Item(Int32 index)
+   at engine.streets.StrokeStore.AddPoint(StreetPoint& sp) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\StrokeStore.cs:line 368
+   at engine.streets.StrokeStore.AddStroke(Stroke& stroke) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\StrokeStore.cs:line 396
+   at engine.streets.Generator.Generate() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\Generator.cs:line 494
+   at engine.world.ClusterDesc._triggerStreets() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\world\ClusterDesc.cs:line 310
+   at engine.world.ClusterDesc.FindStartPosition() in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\world\ClusterDesc.cs:line 347
+   at joyce.ui.Main.<>c__DisplayClass7_0.<Render>b__1() in C:\Users\timow\coding\github\Karawan\JoyceCode\ui\Main.cs:line 181
+   at engine.WorkerQueue.RunPart(Single dt) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\WorkerQueue.cs:line 78
+Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue engine.Engine.MainThread
+
+                         */
                         newStrokeExists.PushCreator( "newStrokeExists" );
 
                         oldStrokeExists.B = intersectionStreetPoint;
