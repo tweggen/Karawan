@@ -298,7 +298,7 @@ public class ClusterDesc
         {
             if (null == _streetGenerator)
             {
-                _strokeStore = new streets.StrokeStore();
+                _strokeStore = new streets.StrokeStore(Size);
                 _streetGenerator = new streets.Generator();
                 _quarterStore = new streets.QuarterStore();
                 _quarterGenerator = new streets.QuarterGenerator();

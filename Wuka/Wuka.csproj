@@ -72,9 +72,9 @@
 		<!-- App Icon -->
 		<!-- MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" / -->
 		<MauiIcon Include="Resources\mipmap\appicon.png" Color="#080800" />
+		<MauiSplashScreen Include="Resources\Splash\splash_nassau.svg" Color="#000000" BaseSize="256,256" />
 
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<Resource Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
@@ -158,6 +158,7 @@
 	  <None Remove="Platforms\Android\tram1.obj" />
 	  <None Remove="Platforms\Android\tramnoise.ogg" />
 	  <None Remove="Platforms\Android\yellowwindows.png" />
+	  <None Remove="Resources\Splash\splash_nassau.svg" />
 	</ItemGroup>
 
 	<ItemGroup>

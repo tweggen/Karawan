@@ -108,9 +108,10 @@ public class Module : AModule, IInputPart
             _createdResources = true;
         }
 
-        engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
-            "mapmesh",
-            new Vector2(1f, 1f));
+        engine.joyce.Mesh meshFramebuffer = 
+            engine.joyce.mesh.Tools.CreatePlaneMesh(
+                "mapmesh",
+                new Vector2(1f, 1f));
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
             Implementations.Get<nogame.map.MapFramebuffer>().Texture;

@@ -109,34 +109,33 @@ public class InputController : engine.AModule, engine.IInputPart
              */
             if (vPress.X <= 0.5)
             {
-                if (vRel.Y < 0)
+                if (vRel.Y < -ControllerYTolerance)
                 {
                     /*
                      * The user dragged up compare to the press position
                      */
-                    _controllerState.WalkForward = (int)(Single.Min(ControllerYMax, -vRel.Y) / ControllerYMax *
+                    _controllerState.WalkForward = (int)(Single.Min(ControllerYMax, -vRel.Y-ControllerYTolerance) / ControllerYMax *
                                                          ControllerWalkForwardFast);
                     _controllerState.WalkBackward = 0;
                 }
-                else if (vRel.Y > 0)
+                else if (vRel.Y > ControllerYTolerance)
                 {
                     /*
                      * The user dragged down compared to the press position.
                      */
-                    _controllerState.WalkBackward = (int)(Single.Min(ControllerYMax, vRel.Y) / ControllerYMax *
+                    _controllerState.WalkBackward = (int)(Single.Min(ControllerYMax, vRel.Y-ControllerYTolerance) / ControllerYMax *
                                                           ControllerWalkBackwardFast);
                     _controllerState.WalkForward = 0;
                 }
 
-                if (vRel.X < 0)
+                if (vRel.X < -ControllerXTolerance)
                 {
-                    _controllerState.TurnLeft =
-                        (int)(Single.Min(ControllerXMax, -vRel.X) / ControllerXMax * ControllerTurnLeftRight);
+                    _controllerState.TurnLeft = (int)(Single.Min(ControllerXMax, -vRel.X-ControllerXTolerance) / ControllerXMax * ControllerTurnLeftRight);
                     _controllerState.TurnRight = 0;
                 }
-                else if (vRel.X > 0)
+                else if (vRel.X > ControllerXTolerance)
                 {
-                    _controllerState.TurnRight = (int)(Single.Min(ControllerXMax, vRel.X) * ControllerTurnLeftRight);
+                    _controllerState.TurnRight = (int)(Single.Min(ControllerXMax, vRel.X-ControllerXTolerance) / ControllerXMax * ControllerTurnLeftRight);
                     _controllerState.TurnLeft = 0;
                 }
             }
@@ -164,8 +163,10 @@ public class InputController : engine.AModule, engine.IInputPart
     private readonly float ControllerTurnLeftRight = 200f;
 
 
-    private readonly float ControllerYMax = 0.2f; 
-    private readonly float ControllerXMax = 0.13f;
+    private readonly float ControllerYMax = 0.2f;
+    private readonly float ControllerYTolerance = 0.05f;
+    private readonly float ControllerXMax = 0.15f;
+    private readonly float ControllerXTolerance = 0.05f;
 
     
     /*
@@ -209,11 +210,13 @@ public class InputController : engine.AModule, engine.IInputPart
                 float relY = (float)currDist.Y / (float)viewSize.Y;
                 float relX = (float)currDist.X / (float)viewSize.Y;
 
-                if (_mousePressPosition.X >= viewSize.X - 10f)
+                // Console.WriteLine($"ViewSize: {_vViewSize}, press: {_mousePressPosition}, relX: {relX}, relY: {relY}");
+
+                if (_mousePressPosition.X >= (viewSize.X - viewSize.X/25f))
                 {
                     float zoomWay = relY / ControllerTouchZoomFull * 255f;
-                    float newZoom = (float)_controllerState.ZoomState + zoomWay;
-                    _controllerState.ZoomState = (sbyte)Single.Min(255.4f, Single.Max(0f, newZoom));
+                    float newZoom = (float)_zoomAtPress+zoomWay;
+                    _controllerState.ZoomState = (sbyte)Single.Min(16, Single.Max(-128, newZoom));
                 }
                 else
                 {
@@ -422,8 +425,8 @@ public class InputController : engine.AModule, engine.IInputPart
         if (xpos != -1)
         {
             string ypart = viewSize.Substring(xpos + 1);
-            if (Int32.TryParse(viewSize, out x)) {}
-            if (Int32.TryParse(ypart, out x)) {}
+            if (Int32.TryParse(viewSize.Substring(0, xpos), out x)) {}
+            if (Int32.TryParse(ypart, out y)) {}
         }
 
         lock (_lo)

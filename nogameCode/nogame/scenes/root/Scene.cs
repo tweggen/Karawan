@@ -114,15 +114,8 @@ public class Scene : engine.IScene, engine.IInputPart
         
         lock (_lo)
         {
-            if (!_isMapShown)
-            {
-                // TXWTODO: Compute a relative position depending on view size.
-                if (ev.Position.X < 150 && ev.Position.Y < 150)
-                {
-                    _callToggleMap = true;
-                }
-            }
-            else
+            // TXWTODO: Compute a relative position depending on view size.
+            if (ev.Position.X < 150 && ev.Position.Y < 150) 
             {
                 _callToggleMap = true;
             }

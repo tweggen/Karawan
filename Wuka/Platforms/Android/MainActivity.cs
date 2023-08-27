@@ -16,7 +16,7 @@ namespace Wuka
         MainLauncher = true, 
         ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density,
         ScreenOrientation = ScreenOrientation.Landscape,
-        Theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen"
+        Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
     )]
     public class MainActivity : Silk.NET.Windowing.Sdl.Android.SilkActivity
     {

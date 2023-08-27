@@ -418,19 +418,17 @@ namespace Splash.Silk
         
 
         private void _windowOnResize( Vector2D<int> size)
-        { 
+        {
             if (size.X != 0 && size.Y != 0)
             {
-                return;
+                // TXWTODO: We are abusing the global settings as global variables.
+                _renderer.SetDimension(size.X, size.Y);
+                engine.GlobalSettings.Set("view.size", $"{size.X}x{size.Y}");
+                Implementations.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
+                {
+                    Position = new(size.X, size.Y)
+                });
             }
-            
-            // TXWTODO: We are abusing the global settings as global variables.
-            _renderer.SetDimension(size.X, size.Y);
-            engine.GlobalSettings.Set("view.size", $"{size.X}x{size.Y}");
-            Implementations.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
-            {
-                Position = new(size.X, size.Y)
-            });
         }
 
         

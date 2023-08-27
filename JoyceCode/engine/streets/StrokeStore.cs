@@ -11,8 +11,8 @@ namespace engine.streets
         private List<Stroke> _listStrokes = new();
         private List<StreetPoint> _listPoints = new();
 
-        private Octree.PointOctree<StreetPoint> _octreeSP = new(1000, Vector3.Zero, 2);
-        private Octree.BoundsOctree<Stroke> _octreeStrokes = new(1000, Vector3.Zero, 5f, 1f);
+        private Octree.PointOctree<StreetPoint> _octreeSP;
+        private Octree.BoundsOctree<Stroke> _octreeStrokes;
         private HashSet<long> _setStrokes = new();
         
         private bool _traceStrokes;
@@ -455,6 +455,10 @@ namespace engine.streets
         }
         
         // should be : Trace: Cluster Yelukhdidru has 480 street points, 818 street segments.
-
+        public StrokeStore(float clusterSize)
+        {
+            _octreeSP = new(clusterSize, Vector3.Zero, 2);
+            _octreeStrokes = new(clusterSize, Vector3.Zero, 5f, 1f);
+        }
     }
 }

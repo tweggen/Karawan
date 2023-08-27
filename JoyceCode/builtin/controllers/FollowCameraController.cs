@@ -20,7 +20,14 @@ namespace builtin.controllers
         private bool _firstFrame = true;
         
         private float _previousZoomDistance = 33f;
-        
+
+        static private float ORIENTATION_SLERP_AMOUNT = 0.07f;
+        static private float ZOOM_SLERP_AMOUNT = 0.02f;
+        static private float MOUSE_RELATIVE_AMOUNT = 0.05f;
+        static private float MOUSE_RETURN_SLERP = 0.98f;
+        static private float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT = 1.6f;
+
+
         private void _onLogicalFrame(object sender, float dt)
         {
             /*
@@ -56,7 +63,7 @@ namespace builtin.controllers
              */
             var zoomFactor = controllerState.ZoomState > 0 ? controllerState.ZoomState * 2f : controllerState.ZoomState;
             float zoomDistance = (20f + (float)zoomFactor) / 2f;
-            zoomDistance = 0.98f * _previousZoomDistance + zoomDistance * 0.02f;
+            zoomDistance = (1f-ZOOM_SLERP_AMOUNT) * _previousZoomDistance + zoomDistance * ZOOM_SLERP_AMOUNT;
             _previousZoomDistance = zoomDistance;
             // var vCameraFront = vFront;
             var vCameraFront = vFront * (float)Math.Cos(-angleY) + vRight * (float)Math.Sin(-angleY);
@@ -71,13 +78,13 @@ namespace builtin.controllers
             }
 
             // var vCarrotRotation = cCarrotTransform3.Rotation;
-            var qRotation = Quaternion.Slerp(_qCameraRotation, cCarrotTransform3.Rotation, 0.1f);
+            var qRotation = Quaternion.Slerp(_qCameraRotation, cCarrotTransform3.Rotation, ORIENTATION_SLERP_AMOUNT);
             _qCameraRotation = qRotation;
 
             /*
              * Some up the relative mouse movement.
              */
-            _vMouseOffset += vMouseMove * 0.05f;
+            _vMouseOffset += vMouseMove * MOUSE_RELATIVE_AMOUNT;
             if( vMouseMove.X == 0f && vMouseMove.Y == 0f )
             {
                 _lastMouseMove += dt;
@@ -99,9 +106,9 @@ namespace builtin.controllers
             /*
              * ramp down mouse offset after 1.5s of inactivity.
              */
-            if( _lastMouseMove > 1.5f )
+            if( _lastMouseMove > MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT )
             {
-                _vMouseOffset *= 0.98f;
+                _vMouseOffset *= MOUSE_RETURN_SLERP;
             }
 
             _firstFrame = false;
