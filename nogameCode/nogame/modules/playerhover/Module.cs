@@ -285,7 +285,7 @@ namespace nogame.modules.playerhover
             string displayName;
             if (_currentCluster != null)
             {
-                displayName = $"{_currentCluster.Id}:{_currentCluster.Name}";
+                displayName = $"{_currentCluster.Name}";
             }
             else
             {

@@ -364,8 +364,9 @@ namespace engine.streets
 #if DEBUG
             if (_octreeSP.GetNearbyNonAlloc(sp.Pos3, 0.00000001f, _tmpListNearby))
             {
+                StreetPoint spFirst = _tmpListNearby[0];
                 _tmpListNearby.Clear();
-                ErrorThrow( $"Refusing to add point {sp.ToString()}, found considerably close points {_tmpListNearby[0]}." , m => new InvalidOperationException(m));
+                ErrorThrow( $"Refusing to add point {sp.ToString()}, found considerably close points {spFirst}." , m => new InvalidOperationException(m));
             }
 #endif
             _octreeSP.Add(sp, sp.Pos3);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Numerics;
 using engine;
@@ -158,7 +159,8 @@ public class Main
             {
                 if (ImGui.BeginListBox(""))
                 {
-                    var clusterList = ClusterList.Instance().GetClusterList();
+                    var clusterList = new List<ClusterDesc>(ClusterList.Instance().GetClusterList());
+                    clusterList.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
                     foreach (var clusterDesc in clusterList)
                     {
                         var id = clusterDesc.Id;
