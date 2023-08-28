@@ -4,9 +4,11 @@ using System.Text;
 
 namespace engine.behave.components
 {
-    public class Behavior
+    public struct Behavior
     {
         public engine.IBehavior Provider;
+        public float MaxDistance = 150f;
+        
         public override string ToString()
         {
             return $"Provider={Provider.GetType()}";

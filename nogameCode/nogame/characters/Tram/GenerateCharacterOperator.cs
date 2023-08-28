@@ -203,7 +203,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                                 .SetSpeed(30f)
-                                .SetHeight(10f)));
+                                .SetHeight(10f))
+                            { MaxDistance = 1000f }
+                        );
 #if false
                         eTarget.Set(new engine.draw.components.OSDText(
                             new Vector2(0, 30f),
@@ -214,6 +216,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             0x00000000,
                             engine.draw.HAlign.Left));
 #endif
+#if false
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                             BodyDescription.CreateKinematic(
@@ -225,13 +228,14 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             )
                         );
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        eTarget.Set(new engine.audio.components.MovingSound(_getTramSound(), 150f));
                         eTarget.Set(new engine.physics.components.Kinetic(
                                 prefSphere,
                                 //new engine.physics.CollisionProperties { Name = "nogame.characters.tram", IsTangible = false }
                                 null
                             )
                         );
+#endif
+                        eTarget.Set(new engine.audio.components.MovingSound(_getTramSound(), 150f));
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.tram", tSetupEntity);

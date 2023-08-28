@@ -197,7 +197,9 @@ namespace nogame.characters.cubes
                         eTarget.Set(new engine.world.components.FragmentId(fragmentId));
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
-                            new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed)));
+                            new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
+                            { MaxDistance = 400f }
+                        );
 #if false
                         eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
                             new Vector3(_rnd.GetFloat() * 2f - 1f, _rnd.GetFloat() * 2f - 1f,

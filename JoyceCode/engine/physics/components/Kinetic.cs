@@ -11,6 +11,7 @@ namespace engine.physics.components
         public BepuPhysics.BodyReference Reference;
         public Vector3 LastPosition;
         public physics.CollisionProperties CollisionProperties;
+        public float MaxDistance = 50f;
 
         /**
          * Release function to free any additional data beyond the handles,
