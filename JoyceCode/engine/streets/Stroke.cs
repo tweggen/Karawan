@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using static engine.Logger;
 
 namespace engine.streets
 {
@@ -286,7 +287,7 @@ namespace engine.streets
             var d = (-s2_x * s1_y + s1_x * s2_y);
             if (d < 0.0000001f && d > -0.0000001f)
             {
-                // trace('Stroke.intersects(): near-zero determinant. No intersection.');
+                // Trace("Stroke.intersects(): near-zero determinant. No intersection.");
                 return null;
             }
 

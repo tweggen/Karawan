@@ -482,6 +482,9 @@ namespace engine.streets
                         _strokeStore.Remove( intersection.StrokeExists );
                         var newStrokeExists = intersection.StrokeExists.CreateUnattachedCopy();
                         /*
+                         * the two endpoints of stroke still are in the stroke store.
+                         */
+                        /*
                          * Warning: [null file name]:0: WorkerQueue:RunPart: Warning: Error executing worker queue engine.Engine.MainThread action: System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')
    at System.Collections.Generic.List`1.get_Item(Int32 index)
    at engine.streets.StrokeStore.AddPoint(StreetPoint& sp) in C:\Users\timow\coding\github\Karawan\JoyceCode\engine\streets\StrokeStore.cs:line 368
@@ -496,10 +499,21 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                          */
                         newStrokeExists.PushCreator( "newStrokeExists" );
 
+                        /*
+                         * Intersection street point is not in the stroke store.
+                         */
                         oldStrokeExists.B = intersectionStreetPoint;
                         oldStrokeExists.PushCreator( "oldStrokeExists" );
 
                         newStrokeExists.A = intersectionStreetPoint;
+                        
+                        /*
+                         * So at this point:
+                         * - oldStrokeExists.A already is in the stroke store.
+                         * - oldStrokeExists.B is not.
+                         * - newStrokeExists.A is not in the stroke store, same as old.B
+                         * - newStrokeExists.B already is in the stroke store.
+                         */
 
                         // newStrokeExists.weight = 0.1;
                         // oldStrokeExists.weight = 6.0;
