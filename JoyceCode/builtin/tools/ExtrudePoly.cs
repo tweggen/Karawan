@@ -232,8 +232,6 @@ namespace builtin.tools
             Func<IList<StaticHandle>, Action> fCreatePhys = new((IList<StaticHandle> staticHandles) =>
             {
                 List<ConvexHull> convexHullsToRelease = new();
-                List<StaticHandle> handlesToRelease = new();
-                List<TypedIndex> shapesToRelease = new();
 
                 IList<IList<Vector3>> listConvexPolys;
                 builtin.tools.Triangulate.ToConvexArrays(_poly, out listConvexPolys);

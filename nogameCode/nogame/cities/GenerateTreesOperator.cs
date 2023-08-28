@@ -10,7 +10,6 @@ namespace nogame.cities;
 
 public class GenerateTreesOperator : engine.world.IFragmentOperator 
 {
-    
     private engine.world.ClusterDesc _clusterDesc;
     private engine.RandomSource _rnd;
     private string _myKey;
@@ -154,21 +153,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
 
         }
 
-#if false
-        /*
-         * This is a large amount of instances, reduce them.
-         * That way we can't use instance rendering for the trees but reduce draw calls.
-         */
-        try
-        {
-            InstanceDesc mergedInstanceDesc = InstanceDesc.CreateMergedFrom(listInstanceDesc);
-            worldFragment.AddStaticInstance("nogame.cities.trees", mergedInstanceDesc, null);
-        }
-        catch (Exception e)
-        {
-            Trace($"Unknown exception: {e}");
-        }
-#else
         /*
          * Do not merge the meshes. Enable the renderer to use instanced calls.
          */
@@ -176,8 +160,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         {
             worldFragment.AddStaticInstance("nogame.cities.trees", instance);
         }
-#endif
-
     });
     
     static TreeInstanceGenerator _treeInstanceGenerator = new();
@@ -189,5 +171,5 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         _clusterDesc = clusterDesc;
         _myKey = strKey;
         _rnd = new engine.RandomSource(strKey);
-   }
+    }
 }

@@ -157,7 +157,7 @@ public class Main
 
             if (ImGui.CollapsingHeader("Clusters"))
             {
-                if (ImGui.BeginListBox(""))
+                if (ImGui.BeginListBox("Clusters"))
                 {
                     var clusterList = new List<ClusterDesc>(ClusterList.Instance().GetClusterList());
                     clusterList.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
@@ -189,10 +189,8 @@ public class Main
 
                         ImGui.PopID();
                     }
-
-                    ImGui.EndListBox();
-
                 }
+                ImGui.EndListBox();
             }
 
             if (ImGui.CollapsingHeader("Software"))
@@ -222,9 +220,13 @@ public class Main
 
             if (ImGui.CollapsingHeader("Entities"))
             {
-                if (ImGui.BeginListBox(""))
+                var entities = _engine.Entities;
+                ImGui.Text($"Total {entities.Length} entities.");
+                ImGui.Text($"{_engine.Simulation.Statics.Count} statics, {_engine.Simulation.Bodies.ActiveSet.Count} active bodies.");
+
+
+                if (ImGui.BeginListBox("Entities"))
                 {
-                    var entities = _engine.Entities;
                     foreach (var entity in entities)
                     {
                         var id = entity.GetId();
@@ -263,9 +265,8 @@ public class Main
 
                         ImGui.PopID();
                     }
-
-                    ImGui.EndListBox();
                 }
+                ImGui.EndListBox();
             }
 
             if (ImGui.CollapsingHeader("Inspector"))
