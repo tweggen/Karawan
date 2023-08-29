@@ -425,7 +425,7 @@ namespace nogame.cities
             MaterialCache.Register("nogame.cities.houses.materials.houses",
                 (name) => new engine.joyce.Material()
                 {
-                    AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                    AlbedoColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
                         ? 0x00000000
                         : 0xff333333,
                     Texture = new engine.joyce.Texture("buildingdiffuse.png"),
@@ -435,7 +435,7 @@ namespace nogame.cities
             MaterialCache.Register("nogame.cities.houses.materials.neon",
                 (name) => new engine.joyce.Material()
                 {
-                    AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                    AlbedoColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
                         ?  0x00000000 : 0xffff3333,
                     Texture = null,
                     EmissiveTexture = new engine.joyce.Texture("lorem.png"),

@@ -50,7 +50,7 @@ namespace nogame.modules.skybox
                 //     10f);
                 _eSkybox.Set(new engine.joyce.components.Skybox(1000f, 0x00000001));
                 var jMaterialSkybox = new engine.joyce.Material();
-                jMaterialSkybox.AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                jMaterialSkybox.AlbedoColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000 : 0xff112233;
                 jMaterialSkybox.EmissiveTexture = new engine.joyce.Texture("skybox2noborder.png");
                 var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(jMaterialSkybox, jMeshSkybox), 5000f);

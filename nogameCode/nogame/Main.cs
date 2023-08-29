@@ -63,23 +63,24 @@ public class Main
     {
         Main main = new(e);
 
-        engine.GlobalSettings.Set("debug.options.flatshading", "false");
+        engine.GlobalSettings.Set("nogame.CreateOSD", "true");
+        engine.GlobalSettings.Set("nogame.CreateMap", "true");
+        engine.GlobalSettings.Set("nogame.CreateMiniMap", "true");
 
         engine.GlobalSettings.Set("world.CreateStreetAnnotations", "false");
-        //engine.GlobalSettings.Set("nogame.CreateOSD", "false");
-        //engine.GlobalSettings.Set("nogame.CreateMap", "false");
-        //engine.GlobalSettings.Set("nogame.CreateMiniMap", "false");
-        //engine.GlobalSettings.Set("nogame.CreateTrees", "false");
-        //engine.GlobalSettings.Set("nogame.CreateHouses", "false");
-        //engine.GlobalSettings.Set("world.CreateCubeCharacters", "false");
-        //engine.GlobalSettings.Set("world.CreateCar3Characters", "false");
-        //engine.GlobalSettings.Set("world.CreateTramCharacters", "false");
-        //engine.GlobalSettings.Set("world.CreateStreets", "false");
-        //engine.GlobalSettings.Set("world.CreateClusterQuarters", "false");
+        engine.GlobalSettings.Set("nogame.CreateTrees", "true");
+        engine.GlobalSettings.Set("nogame.CreateHouses", "true");
+        engine.GlobalSettings.Set("world.CreateCubeCharacters", "true");
+        engine.GlobalSettings.Set("world.CreateCar3Characters", "true");
+        engine.GlobalSettings.Set("world.CreateTramCharacters", "true");
+        engine.GlobalSettings.Set("world.CreateStreets", "true");
+        engine.GlobalSettings.Set("world.CreateClusterQuarters", "true");
 
+        engine.Props.Set("debug.options.flatshading", false);
         engine.Props.Set("nogame.characters.cube.maxDistance", 400f);
         engine.Props.Set("nogame.characters.car3.maxDistance", 800f);
         engine.Props.Set("nogame.characters.tram.maxDistance", 1600f);
+
         
         main._setupImplementations();
         main._registerScenes();

@@ -61,7 +61,7 @@ public class FindLights
         MaterialCache.Register("builtin.loader.materials.standardlight",
             name => new Material()
             {
-                EmissiveColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                EmissiveColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000 : 0xccffffcc,
                 EmissiveTexture = new engine.joyce.Texture("standardlight.png"),
                 HasTransparency = true,

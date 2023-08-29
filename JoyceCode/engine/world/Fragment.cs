@@ -356,7 +356,7 @@ namespace engine.world
                 (name) => new Material()
                 {
                     Texture = new Texture("gridlines1.png"),
-                    AlbedoColor = engine.GlobalSettings.Get("debug.options.flatshading") != "true"
+                    AlbedoColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
                         ? 0x00000000
                         : 0xff002222
                 });
