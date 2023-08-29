@@ -12,7 +12,7 @@ public class TaskBuilder
     /**
      * Build a c# task from the task description in the execution nodes.
      */
-    static Task<int> BuildExecTask(
+    public static Task<int> BuildExecTask(
         ExecDesc ed0, 
         IDictionary<string, object> overallParams,
         IDictionary<string, IEnumerable<object>> applyParameters)

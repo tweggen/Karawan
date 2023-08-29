@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using engine;
+using engine.meta;
 using engine.news;
 using static engine.Logger;
 
@@ -282,20 +283,6 @@ public class Scene : engine.IScene, engine.IInputPart
             );
         }
 
-        if (engine.GlobalSettings.Get("nogame.CreatePolytopes") != "false")
-        {
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator(
-                        new Dictionary<string,object>() 
-                        {
-                            { "clusterDesc", clusterDesc },
-                            { "strKey", newKey }
-                        })
-                    // new nogame.cities.GeneratePolytopeOperator(clusterDesc, newKey)
-            );
-        }
-
         if (engine.GlobalSettings.Get("world.CreateCubeCharacters") != "false")
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(
@@ -338,10 +325,66 @@ public class Scene : engine.IScene, engine.IInputPart
             );
         }
 
+#if false
+        engine.meta.ExecDesc edRoot = new()
+        {
+            Mode = ExecDesc.ExecMode.Parallel,
+            Children = new List<ExecDesc>()
+            {
+                new()
+                {
+                    Mode = ExecDesc.ExecMode.ApplyParallel,
+                    Selector = "clustersDescList",
+                    Target = "clusterDesc",
+                    Children = new()
+                    {
+                        new()
+                        {
+                            Mode = ExecDesc.ExecMode.Task,
+                            Implementation = "nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator"
+                        }
+                    }
+                },
+                new ()
+                {
+                    Mode = ExecDesc.ExecMode.Task,
+                    Implementation = "nogame.terrain.PlaceDebrisOperator.InstantiateFragmentOperator"
+                }
+            }
+        };
+
+        var tEdRoot = engine.meta.TaskBuilder.BuildExecTask(
+            edRoot,
+            new Dictionary<string, object>()
+            {
+                { "strKey", keyScene }
+            },
+            new Dictionary<string, IEnumerable<object>>()
+            {
+                { "clusterDescList", engine.world.ClusterList.Instance().GetClusterList() }
+            }
+        );
+        
+#else        
+        if (engine.GlobalSettings.Get("nogame.CreatePolytopes") != "false")
+        {
+            _worldMetaGen.AddClusterFragmentOperatorFactory(
+                (string newKey, engine.world.ClusterDesc clusterDesc) =>
+                    nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator(
+                        new Dictionary<string,object>() 
+                        {
+                            { "clusterDesc", clusterDesc },
+                            { "strKey", newKey }
+                        })
+                // new nogame.cities.GeneratePolytopeOperator(clusterDesc, newKey)
+            );
+        }
+
         if (engine.GlobalSettings.Get("world.CreateDebris") != "false")
         {
             _worldMetaGen.AddFragmentOperator(new nogame.terrain.PlaceDebrisOperator(keyScene));
         }
+#endif
 
         _worldMetaGen.SetupComplete();
 

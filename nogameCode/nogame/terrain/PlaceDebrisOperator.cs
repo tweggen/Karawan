@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine.geom;
@@ -83,6 +84,7 @@ public class PlaceDebrisOperator : IFragmentOperator
         worldFragment.AddStaticInstance("debris", InstanceDesc.CreateFromMatMesh(matmesh, 800f));
     });
 
+    
     public PlaceDebrisOperator(string strKey)
     {
         _myKey = strKey;
@@ -92,6 +94,13 @@ public class PlaceDebrisOperator : IFragmentOperator
             {
                 AlbedoColor = 0xffaa6688
             });
-
     }
+    
+
+    public static engine.world.IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+    {
+        return new PlaceDebrisOperator(
+            (string)p["strKey"]);
+    }
+
 }
