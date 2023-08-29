@@ -116,6 +116,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecDesc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\TaskBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelInfo.cs" />

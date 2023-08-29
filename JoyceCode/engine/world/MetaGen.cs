@@ -2,8 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using static engine.Logger;
 using System.Threading.Tasks;
+using engine.meta;
+using Trace = System.Diagnostics.Trace;
 
 namespace engine.world
 {
@@ -64,8 +68,16 @@ namespace engine.world
             {
                 foreach (var clusterFragmentOperatorFactory in _clusterFragmentOperatorFactoryList)
                 {
-                    IFragmentOperator op = clusterFragmentOperatorFactory(key, cluster);
-                    _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
+                    IFragmentOperator op;
+                    try
+                    {
+                        op = clusterFragmentOperatorFactory(key, cluster);
+                        _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
+                    }
+                    catch (Exception e)
+                    {
+                        Error($"Exception while instantiating and adding cluster fragment operator: {e}.");
+                    }
                 }
             }
         }
@@ -239,6 +251,50 @@ namespace engine.world
         }
 
 
+        private void _unitExecDesc()
+        {
+            meta.ExecDesc ed1 = new()
+            {
+                Mode = ExecDesc.ExecMode.Sequence,
+                Children = new ()
+                {
+                    new ExecDesc()
+                    {
+                        Mode = ExecDesc.ExecMode.Task,
+                        Implementation = "nogame.test.prerequisites"
+                    },
+                    new () {
+                        Mode = ExecDesc.ExecMode.Parallel,
+                        Children = new()
+                        {
+                            new ()
+                            {
+                                Mode = ExecDesc.ExecMode.Task,
+                                Implementation = "nogame.test.candy1"
+                            },
+                            new ()
+                            {
+                                Mode = ExecDesc.ExecMode.Task,
+                                Implementation = "nogame.test.camdy2"
+                            },
+                        }
+                    }
+                }
+            };
+            
+            JsonSerializerOptions options = new()
+            {
+                ReferenceHandler = ReferenceHandler.Preserve,
+                WriteIndented = true
+            };
+            string jsonEd1 = JsonSerializer.Serialize(ed1, options);
+            Trace("Serializer output:");
+            Trace(jsonEd1);
+
+            meta.ExecDesc? ed2 = JsonSerializer.Deserialize<meta.ExecDesc>(jsonEd1, options);
+            Trace(ed2.ToString());
+        }
+
 
         private MetaGen()
         {
@@ -251,6 +307,8 @@ namespace engine.world
             _fragmentOperators = new();
             _clusterFragmentOperatorFactoryList = new();
 
+            _unitExecDesc();
+            
             _worldOperators.Add(new world.GenerateClustersOperator(_myKey));
 
             if (true)

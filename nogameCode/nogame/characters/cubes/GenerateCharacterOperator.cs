@@ -252,5 +252,12 @@ namespace nogame.characters.cubes
                     AlbedoColor = 0xff226666
                 });
         }
+
+        public static IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+        {
+            return new GenerateCharacterOperator(
+                (ClusterDesc)p["clusterDesc"],
+                (string)p["strKey"]);
+        }
     }
 }

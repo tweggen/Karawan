@@ -1,5 +1,6 @@
 ﻿using engine.transform.components;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using engine;
@@ -257,7 +258,13 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.cities.GenerateHousesOperator(clusterDesc, newKey)
+                    nogame.cities.GenerateHousesOperator.InstantiateFragmentOperator(
+                        new Dictionary<string,object>() 
+                        {
+                            { "clusterDesc", clusterDesc },
+                            { "strKey", newKey }
+                        })
+                    //new nogame.cities.GenerateHousesOperator(clusterDesc, newKey)
             );
         }
 
@@ -265,7 +272,13 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.cities.GenerateTreesOperator(clusterDesc, newKey)
+                    nogame.cities.GenerateTreesOperator.InstantiateFragmentOperator(
+                        new Dictionary<string,object>() 
+                        {
+                            { "clusterDesc", clusterDesc },
+                            { "strKey", newKey }
+                        })
+                    //new nogame.cities.GenerateTreesOperator(clusterDesc, newKey)
             );
         }
 
@@ -273,7 +286,13 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.cities.GeneratePolytopeOperator(clusterDesc, newKey)
+                    nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator(
+                        new Dictionary<string,object>() 
+                        {
+                            { "clusterDesc", clusterDesc },
+                            { "strKey", newKey }
+                        })
+                    // new nogame.cities.GeneratePolytopeOperator(clusterDesc, newKey)
             );
         }
 
@@ -281,7 +300,13 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.characters.cubes.GenerateCharacterOperator(clusterDesc, newKey)
+                    nogame.characters.cubes.GenerateCharacterOperator.InstantiateFragmentOperator(
+                        new Dictionary<string,object>() 
+                        {
+                            { "clusterDesc", clusterDesc },
+                            { "strKey", newKey }
+                        })
+                    //new nogame.characters.cubes.GenerateCharacterOperator(clusterDesc, newKey)
             );
         }
 
@@ -289,7 +314,13 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.characters.car3.GenerateCharacterOperator(clusterDesc, newKey)
+                    nogame.characters.car3.GenerateCharacterOperator.InstantiateFragmentOperator(
+                        new Dictionary<string,object>() 
+                        {
+                            { "clusterDesc", clusterDesc },
+                            { "strKey", newKey }
+                        })
+                    //new nogame.characters.car3.GenerateCharacterOperator(clusterDesc, newKey)
             );
         }
 
@@ -297,7 +328,13 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(
                 (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    new nogame.characters.tram.GenerateCharacterOperator(clusterDesc, newKey)
+                    nogame.characters.tram.GenerateCharacterOperator.InstantiateFragmentOperator(
+                        new Dictionary<string,object>() 
+                        {
+                            { "clusterDesc", clusterDesc },
+                            { "strKey", newKey }
+                        })
+                    //new nogame.characters.tram.GenerateCharacterOperator(clusterDesc, newKey)
             );
         }
 

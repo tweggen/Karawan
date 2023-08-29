@@ -273,4 +273,12 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         _myKey = strKey;
         _rnd = new engine.RandomSource(strKey);
     }
+    
+    
+    public static IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+    {
+        return new GenerateCharacterOperator(
+            (ClusterDesc)p["clusterDesc"],
+            (string)p["strKey"]);
+    }
 }

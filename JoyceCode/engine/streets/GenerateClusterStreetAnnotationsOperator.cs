@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine.draw.components;
@@ -122,5 +123,12 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
                 Texture = new engine.joyce.Texture("streets1to4.png")
             });
     }
-
+    
+    
+    public static engine.world.IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+    {
+        return new GenerateClusterStreetAnnotationsOperator(
+            (engine.world.ClusterDesc)p["clusterDesc"],
+            (string)p["strKey"]);
+    }
 }

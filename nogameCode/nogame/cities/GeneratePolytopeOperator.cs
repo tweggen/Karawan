@@ -221,4 +221,12 @@ public class GeneratePolytopeOperator : IFragmentOperator
         _myKey = strKey;
         _rnd = new engine.RandomSource(strKey);
     }
+    
+    
+    public static engine.world.IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+    {
+        return new GeneratePolytopeOperator(
+            (engine.world.ClusterDesc)p["clusterDesc"],
+            (string)p["strKey"]);
+    }
 }

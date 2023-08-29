@@ -172,4 +172,12 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         _myKey = strKey;
         _rnd = new engine.RandomSource(strKey);
     }
+    
+    
+    public static engine.world.IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+    {
+        return new GenerateTreesOperator(
+            (engine.world.ClusterDesc)p["clusterDesc"],
+            (string)p["strKey"]);
+    }
 }
