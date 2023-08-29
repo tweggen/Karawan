@@ -277,7 +277,7 @@ namespace engine.world
                         new engine.streets.GenerateClusterStreetsOperator(clusterDesc, newKey)
                 );
             } 
-            if (engine.Props.Get("world.CreateStreetAnnotations") != "false")
+            if (engine.GlobalSettings.Get("world.CreateStreetAnnotations") != "false")
             {
                 AddClusterFragmentOperatorFactory(
                     (string newKey, ClusterDesc clusterDesc) =>
