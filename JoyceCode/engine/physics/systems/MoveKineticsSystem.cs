@@ -58,7 +58,11 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                     {
                         bodyReference.Velocity.Linear = Vector3.Zero;
                     }
-                    bodyReference.Awake = true;
+
+                    if (!bodyReference.Awake)
+                    {
+                        bodyReference.Awake = true;
+                    }
                 }
             }
             else

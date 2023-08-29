@@ -46,11 +46,11 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
 
             if (hadTransform3)
             {
-                if (false && Vector3.DistanceSquared(oldTransform.Position, _vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
+                if (Vector3.DistanceSquared(oldTransform.Position, _vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
                 {
                     if (oldTransform.IsVisible)
                     {
-                        //_engine.GetATransform().SetVisible(entity, false);
+                        _engine.GetATransform().SetVisible(entity, false);
                     }
                     continue;
                 }

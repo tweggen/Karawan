@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Diagnostics;
 using System.Numerics;
+using System.Security.Cryptography;
 using engine;
 using engine.world;
 using ImGuiNET;
+using static engine.Logger;
 
 namespace joyce.ui;
 
@@ -140,6 +142,38 @@ public class Main
                         ImGui.Text(kvp.Key);
                         ImGui.SameLine();
                         ImGui.Text(kvp.Value);
+                    }
+
+                    ImGui.TreePop();
+                }
+
+                if (ImGui.TreeNode("Props"))
+                {
+                    var dict = engine.Props.Instance().Dictionary;
+                    foreach (var kvp in dict)
+                    {
+                        if (kvp.Value is float)
+                        {
+                            float currentInput = (float)kvp.Value;
+                            if (ImGui.InputFloat(kvp.Key, ref currentInput,
+                                    10f, 100f,
+                                    "%.2f",
+                                    ImGuiInputTextFlags.EnterReturnsTrue))
+                            {
+                                // ImGui.Text(((float)kvp.Value).ToString());
+                                if (currentInput != (float)kvp.Value)
+                                {
+                                    Trace($"new Value {currentInput}");
+                                    Props.Set(kvp.Key, currentInput);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ImGui.Text("Can't parse \"${kvp.Key}\"");  
+                        }
+
+                        //ImGui.Text(kvp.Value);
                     }
 
                     ImGui.TreePop();

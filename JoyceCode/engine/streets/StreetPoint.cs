@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using static engine.Logger;
 
 namespace engine.streets
 {
@@ -11,15 +13,12 @@ namespace engine.streets
 
         private object _lo = new();
         
-        static private void trace( in string message )
-        {
-            Console.WriteLine( message );
-        }
         public int Id;
 
         public Vector2 Pos; // { get; private set; }
         public Vector3 Pos3
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => new Vector3(Pos.X, 0f, Pos.Y); 
         }
         public string Creator { get; private set; }
@@ -47,6 +46,7 @@ namespace engine.streets
         private Dictionary<int, Vector2> _sectionStrokeMap;
 
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void _invalidateNoLock()
         {
             _angleArray = null;
@@ -183,11 +183,11 @@ namespace engine.streets
 
         private void _traceAnglesNoLock()
         {
-            trace( "angles:" );
+            Trace( "angles:" );
             foreach( var stroke in _angleArray )
             {
                 var angle = geom.Angles.Snorm(stroke.GetAngleSP(this));
-                trace( $"getAngleArray(): angle={angle} ({angle * 180.0 / Math.PI})");
+                Trace( $"getAngleArray(): angle={angle} ({angle * 180.0 / Math.PI})");
             }
         }
 
@@ -251,7 +251,7 @@ namespace engine.streets
                                 strStart = "";
                             }
 
-                            trace(
+                            Trace(
                                 $"getNextAngle({Pos}, {myAngle}, {stroke.B.Pos.X}): OUT {strStart} {currAngle} diffAngle {diffAngle}");
                         }
 
@@ -306,7 +306,7 @@ namespace engine.streets
                                 strStart = "";
                             }
 
-                            trace(
+                            Trace(
                                 $"getNextAngle({Pos}, {myAngle}, {stroke.A.Pos.X}): IN {strStart} {currAngle} diffAngle {diffAngle}");
                         }
 
@@ -477,7 +477,7 @@ namespace engine.streets
             {
                 myVerbose = true;
             }
-            // trace( 'getSectionArray(): Called.' );
+            // Trace( 'getSectionArray(): Called.' );
 
             _sectionArray = new List<Vector2>();
             _sectionStrokeMap = new Dictionary<int, Vector2>();
@@ -515,7 +515,7 @@ namespace engine.streets
              */
             foreach(var curr in _angleArray )
             {
-                // trace( 'getSectionArray(): curr.angle is ${curr.angle}, ${curr.angle+Math.PI}.' );
+                // Trace( 'getSectionArray(): curr.angle is ${curr.angle}, ${curr.angle+Math.PI}.' );
                 var prev = _angleArray[idx % _angleArray.Count];
                 if (curr != _angleArray[(idx + 1) % _angleArray.Count])
                 {
@@ -578,7 +578,7 @@ namespace engine.streets
                 bool doUseSide = false;
                 if (null == i0)
                 {
-                    if (myVerbose) trace("no intersect");
+                    if (myVerbose) Trace("no intersect");
                     doUseSide = true;
                     // Please the compiler and assign newI a value that later is overridden.
                     newI.X = newI.Y = 0;
@@ -596,7 +596,7 @@ namespace engine.streets
                     float dist2 = dx * dx + dy * dy;
                     if (dist2 > 4000f)
                     {
-                        if (myVerbose) trace("farout intersect");
+                        if (myVerbose) Trace("farout intersect");
                         /*
                          * If this intersection is too far away, we use the point offset by the (angle)
                          * average of both normals.
@@ -610,20 +610,20 @@ namespace engine.streets
                         var prevAngle = prev.getAngleSP(this);
                         var currAngle = curr.getAngleSP(this);
                         var junctionAngle = (currAngle - prevAngle)*180./Math.PI;
-                        trace( 'When intersecting prev $sp and curr $sc (normals prev $np curr $nc): Far out intersection $i' );
-                        trace( 'prevHalfStreetWidth is $prevHalfStreetWidth currHalfStreetWidth is $currHalfStreetWidth');
+                        Trace( 'When intersecting prev $sp and curr $sc (normals prev $np curr $nc): Far out intersection $i' );
+                        Trace( 'prevHalfStreetWidth is $prevHalfStreetWidth currHalfStreetWidth is $currHalfStreetWidth');
                         traceAngles();
                         throw ( 'getSectionArray(): Far out intersection $i {between ${prev.toStringSP(this)} and ${curr.toStringSP(this)}: $dist, $junctionAngle deg' );
                         // doUseSide = true;   
 #endif
                     } else {
-                        if( myVerbose ) trace( "close intersect" );
+                        if( myVerbose ) Trace( "close intersect" );
                         newI = i;
                     }
                 }
 
                 if( doUseSide ) {
-                    // trace( 'getSectionArray(): no intersection.' );
+                    // Trace( 'getSectionArray(): no intersection.' );
                     /*
                      * If the streets are parallel and the sides in line, use the offset
                      * street point itself as an intersection, using the average street width.
@@ -635,7 +635,7 @@ namespace engine.streets
                 }
 
                 if( myVerbose ) {
-                    trace($"Adding point $newI");
+                    Trace($"Adding point $newI");
                 }
                 _sectionArray.Add(newI);
                 /*
@@ -644,7 +644,7 @@ namespace engine.streets
                     */
                 int ids = (curr.Sid%10000)+10000*(prev.Sid%10000);
                 _sectionStrokeMap.Add(ids, newI);
-                // trace('StreetPoint.getSectionArray(): sp $id Storing stroke $ids ${curr.sid} and ${prev.sid}');
+                // Trace('StreetPoint.getSectionArray(): sp $id Storing stroke $ids ${curr.sid} and ${prev.sid}');
                 ++idx;
             }
         }
@@ -693,14 +693,14 @@ namespace engine.streets
                 }
 
                 int ids = (curr.Sid % 10000) + 10000 * (prev.Sid % 10000);
-                // trace('StreetPoint.getSectionPointByStroke(): sp $id Obtaining stroke $ids ${curr.sid} and ${prev.sid}');
+                // Trace('StreetPoint.getSectionPointByStroke(): sp $id Obtaining stroke $ids ${curr.sid} and ${prev.sid}');
                 if (!_sectionStrokeMap.ContainsKey(ids))
                 {
-                    // trace('StreetPoint.getSectionPointByStroke(): Not found.');
+                    // Trace('StreetPoint.getSectionPointByStroke(): Not found.');
                     return null;
                 }
 
-                // trace('StreetPoint.getSectionPointByStroke(): Returning point.');
+                // Trace('StreetPoint.getSectionPointByStroke(): Returning point.');
                 return _sectionStrokeMap[ids];
             }
         }

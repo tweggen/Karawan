@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using static engine.Logger;
 
 namespace engine.streets
@@ -37,6 +38,7 @@ namespace engine.streets
         private StreetPoint _a;
         public StreetPoint A 
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _a;
             set { _setA(value); }
         }
@@ -49,6 +51,7 @@ namespace engine.streets
 
         public StreetPoint B
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _b;
             set { _setB(value); }
         }
@@ -83,6 +86,7 @@ namespace engine.streets
          */
         public float Angle 
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (!_isAngleValid) _updateAngle();
@@ -99,6 +103,7 @@ namespace engine.streets
          */
         public float Length 
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (!_isLengthValid) _updateLength();
@@ -114,6 +119,7 @@ namespace engine.streets
         private Vector2 _normal;
         public Vector2 Normal
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (!_isUnitValid) _updateUnit();
@@ -127,6 +133,7 @@ namespace engine.streets
         private Vector2 _unit;
         public Vector2 Unit 
         { 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (!_isUnitValid) _updateUnit();

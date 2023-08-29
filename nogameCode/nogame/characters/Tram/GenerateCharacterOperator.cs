@@ -125,12 +125,15 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
         _rnd.Clear();
 
+
+        float propMaxDistance = (float) engine.Props.Get("nogame.characters.tram.maxDistance", 1600f); 
+        
         /*
-         * Now, that we have read the cluster description that is associated, we
-         * can place the characters randomly on the streetpoints.
-         *
-         * TXWTODO: We would be more intersint to place them on the streets.
-         */
+        * Now, that we have read the cluster description that is associated, we
+        * can place the characters randomly on the streetpoints.
+        *
+        * TXWTODO: We would be more intersint to place them on the streets.
+        */
 
         var strokeStore = _clusterDesc.StrokeStore();
         IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
@@ -204,7 +207,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                                 .SetSpeed(30f)
                                 .SetHeight(10f))
-                            { MaxDistance = 1000f }
+                            { MaxDistance = propMaxDistance }
                         );
 #if false
                         eTarget.Set(new engine.draw.components.OSDText(

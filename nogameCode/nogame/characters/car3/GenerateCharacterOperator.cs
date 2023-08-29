@@ -133,6 +133,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             }
         }
 
+        float propMaxDistance = (float) engine.Props.Get("nogame.characters.car3.maxDistance", 800f); 
+        
         if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
         _rnd.Clear();
 
@@ -226,7 +228,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                                 .SetSpeed((40f + _rnd.GetFloat() * 30f + (float)carIdx * 20f) / 3.6f))
-                            { MaxDistance = 400f }
+                            { MaxDistance = propMaxDistance }
                         );
 
                         eTarget.Set(new engine.audio.components.MovingSound(

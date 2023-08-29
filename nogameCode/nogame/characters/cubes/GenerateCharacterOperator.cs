@@ -118,6 +118,8 @@ namespace nogame.characters.cubes
             if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
             _rnd.Clear();
 
+            float propMaxDistance = (float) engine.Props.Get("nogame.characters.cube.maxDistance", 400f); 
+            
             /*
              * Now, that we have read the cluster description that is associated, we
              * can place the characters randomly on the streetpoints.
@@ -198,7 +200,7 @@ namespace nogame.characters.cubes
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
-                            { MaxDistance = 400f }
+                            { MaxDistance = propMaxDistance }
                         );
 #if false
                         eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(

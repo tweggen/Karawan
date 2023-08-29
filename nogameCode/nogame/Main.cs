@@ -76,7 +76,10 @@ public class Main
         //engine.GlobalSettings.Set("world.CreateTramCharacters", "false");
         //engine.GlobalSettings.Set("world.CreateStreets", "false");
         //engine.GlobalSettings.Set("world.CreateClusterQuarters", "false");
-        
+
+        engine.Props.Set("nogame.characters.cube.maxDistance", 400f);
+        engine.Props.Set("nogame.characters.car3.maxDistance", 800f);
+        engine.Props.Set("nogame.characters.tram.maxDistance", 1600f);
         
         main._setupImplementations();
         main._registerScenes();
