@@ -22,7 +22,7 @@ public class PlaceDebrisOperator : IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"5100/PlaceDebrisOperator/{_myKey}/";
+        return $"5100/PlaceDebrisOperator/{_myKey}";
     }
 
     public Task FragmentOperatorApply(Fragment worldFragment) => new Task(() =>

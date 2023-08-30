@@ -77,7 +77,7 @@ namespace nogame.characters.cubes
 
         public string FragmentOperatorGetPath()
         {
-            return $"7001/GenerateCubeCharacterOperatar/{_myKey}/";
+            return $"7001/GenerateCubeCharacterOperatar/{_myKey}/{_clusterDesc.Id}";
         }
         
         

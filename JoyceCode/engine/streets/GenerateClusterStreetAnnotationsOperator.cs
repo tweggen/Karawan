@@ -21,7 +21,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"5002/GenerateClusterStreetAnnotationsOperator/{_myKey}/";
+        return $"5002/GenerateClusterStreetAnnotationsOperator/{_myKey}/{_clusterDesc.Id}";
     }
 
 

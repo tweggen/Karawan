@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
+using System.Threading.Tasks;
 using engine;
 using engine.meta;
 using engine.news;
+using engine.world;
 using static engine.Logger;
 
 namespace nogame.scenes.root;
@@ -325,7 +327,6 @@ public class Scene : engine.IScene, engine.IInputPart
             );
         }
 
-#if false
         engine.meta.ExecDesc edRoot = new()
         {
             Mode = ExecDesc.ExecMode.Parallel,
@@ -334,7 +335,7 @@ public class Scene : engine.IScene, engine.IInputPart
                 new()
                 {
                     Mode = ExecDesc.ExecMode.ApplyParallel,
-                    Selector = "clustersDescList",
+                    Selector = "clusterDescList",
                     Target = "clusterDesc",
                     Children = new()
                     {
@@ -352,20 +353,9 @@ public class Scene : engine.IScene, engine.IInputPart
                 }
             }
         };
+        _worldMetaGen.EdRoot = edRoot;
 
-        var tEdRoot = engine.meta.TaskBuilder.BuildExecTask(
-            edRoot,
-            new Dictionary<string, object>()
-            {
-                { "strKey", keyScene }
-            },
-            new Dictionary<string, IEnumerable<object>>()
-            {
-                { "clusterDescList", engine.world.ClusterList.Instance().GetClusterList() }
-            }
-        );
-        
-#else        
+#if false        
         if (engine.GlobalSettings.Get("nogame.CreatePolytopes") != "false")
         {
             _worldMetaGen.AddClusterFragmentOperatorFactory(

@@ -85,7 +85,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"7020/GenerateTramCharacterOperator/{_myKey}/";
+        return $"7020/GenerateTramCharacterOperator/{_myKey}/{_clusterDesc.Id}";
     }
     
     
@@ -222,7 +222,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 #if false
 
                         BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
-                            BodyDescription.CreateKinematic(
+                            BodyDescrLoadeription.CreateKinematic(
                                 new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                                 new BepuPhysics.Collidables.CollidableDescription(
                                     _getSphereShape(wf.Engine),

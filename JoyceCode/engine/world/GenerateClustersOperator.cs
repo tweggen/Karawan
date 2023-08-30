@@ -263,9 +263,9 @@ public class GenerateClustersOperator : world.IWorldOperator
                 cl1.AddClosest(cl2);
             }
 
-            int rndIdx = (int)Math.Floor(_rnd.GetFloat() * 1000000.0f);
+            // int rndIdx = (int)Math.Floor(_rnd.GetFloat() * 1000000.0f);
 
-            string newKey = _strKey + rndIdx;
+            string newKey = _strKey; //rndIdx;
 
             /*
              * TXWTODO: World Gen shall generate them, or some kind of operator
@@ -283,7 +283,7 @@ public class GenerateClustersOperator : world.IWorldOperator
                     newKey
                 );
                 elevationCache.ElevationCacheRegisterElevationOperator(
-                    engine.elevation.Cache.LAYER_BASE + $"/000100/flattenCluster/{newKey}",
+                    engine.elevation.Cache.LAYER_BASE + $"/000100/flattenCluster/{newKey}-{cl1.Id}",
                     clusterElevationOperator
                 );
             }

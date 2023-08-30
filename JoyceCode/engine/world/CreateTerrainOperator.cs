@@ -14,7 +14,7 @@ namespace engine.world
         public string FragmentOperatorGetPath()
         {
             // TXWTODO: The mesh should be generated very late, after everybody applied their terrain operators.
-            return $"4001/CreateTerrainOperator/{_myKey}/";
+            return $"4001/CreateTerrainOperator/{_myKey}";
         }
 
 

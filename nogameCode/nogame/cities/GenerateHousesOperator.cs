@@ -29,7 +29,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"8001/GenerateHousesOperator/{_myKey}/";
+        return $"8001/GenerateHousesOperator/{_myKey}/{_clusterDesc.Id}";
     }
 
 

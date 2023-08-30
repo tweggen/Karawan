@@ -7,7 +7,7 @@ namespace engine.elevation
 {
     public class Cache
     {
-        static private object _instanceLock = new object();
+        static private object _classLock = new();
         static private Cache _instance = null;
 
         public const string TOP_LAYER = "TOP_LAYER";
@@ -23,7 +23,7 @@ namespace engine.elevation
 
         private bool _traceCache = false;
 
-        private void _insertElevationFactoryEntry(
+        private void _insertElevationFactoryEntryNoLock(
             in string id,
             in FactoryEntry elevationFactoryEntry
         )
@@ -32,8 +32,6 @@ namespace engine.elevation
             _mapFactories.Add(id, elevationFactoryEntry);
             _keysFactories.Add(id);
             _keysFactories.Sort();
-            // var f = _keysFactories[0];
-            // trace('elevation.Cache: f = $f');
         }
 
 
@@ -169,7 +167,7 @@ namespace engine.elevation
                     _maxLayer = layer;
                 }
 
-                _insertElevationFactoryEntry(id, elevationFactoryEntry);
+                _insertElevationFactoryEntryNoLock(id, elevationFactoryEntry);
             }
         }
 
@@ -528,7 +526,7 @@ namespace engine.elevation
 
         static public Cache Instance()
         {
-            lock (_instanceLock)
+            lock (_classLock)
             {
                 if (null == _instance)
                 {

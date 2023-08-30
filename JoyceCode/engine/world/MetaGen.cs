@@ -13,7 +13,7 @@ namespace engine.world
 {
     public class MetaGen
     {
-        private static readonly object _instanceLock = new object();
+        private static readonly object _classLock = new object();
         private static MetaGen _instance;
 
         public static float FragmentSize = 400f;
@@ -61,7 +61,33 @@ namespace engine.world
         private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
         private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList;
 
+        private meta.ExecDesc _edRoot;
 
+        public meta.ExecDesc EdRoot
+        {
+            get => _getEdRoot();
+            set => _setEdRoot(value);
+        }
+
+
+        private meta.ExecDesc _getEdRoot()
+        {
+            lock (_lo)
+            {
+                return _edRoot;
+            }
+        }
+
+
+        private void _setEdRoot(meta.ExecDesc edRoot)
+        {
+            lock (_lo)
+            {
+                _edRoot = edRoot;
+            }
+        }
+        
+        
         public void GenerateFragmentOperatorsForCluster(string key, ClusterDesc cluster)
         {
             lock (_lo)
@@ -187,6 +213,35 @@ namespace engine.world
                 if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Done calling fragment operators for {fragment.GetId()}...");
             });
             taskAllFragmentOperators.Start();
+            
+            /*
+             * After that, try out the new way of triggering fragment operators.
+             */
+            ExecDesc edRoot;
+            lock (_lo)
+            {
+                edRoot = _edRoot;
+            }
+
+            if (null != edRoot)
+            {
+                // TXWTODO: Do we really need to compile this every time?
+                var enRoot = engine.meta.ExecNodeFactory.CreateExecNode(
+                    edRoot,
+                    new ExecScope(
+                        new Dictionary<string, object>()
+                        {
+                            { "strKey", _myKey }
+                        },
+                        new Dictionary<string, IEnumerable<object>>()
+                        {
+                            { "clusterDescList", engine.world.ClusterList.Instance().GetClusterList() }
+                        }
+                    )
+                );
+
+                enRoot.Execute();
+            }
             
             /*
              * And decrease my own one again.
@@ -360,7 +415,7 @@ namespace engine.world
         
         public static MetaGen Instance()
         {
-            lock(_instanceLock)
+            lock(_classLock)
             {
                 if( null == _instance )
                 {

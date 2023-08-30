@@ -18,7 +18,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"5010/GenerateClusterQuartersOperator/{_myKey}/";
+        return $"5010/GenerateClusterQuartersOperator/{_myKey}/{_clusterDesc.Id}";
     }
 
 

@@ -1,3 +1,4 @@
+#if false
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -12,7 +13,7 @@ public class TaskBuilder
     /**
      * Build a c# task from the task description in the execution nodes.
      */
-    public static Task<int> BuildExecTask(
+    public static Task BuildExecTask(
         ExecDesc ed0, 
         IDictionary<string, object> overallParams,
         IDictionary<string, IEnumerable<object>> applyParameters)
@@ -27,11 +28,12 @@ public class TaskBuilder
                 break;
             case ExecDesc.ExecMode.Parallel:
             case ExecDesc.ExecMode.Sequence:
+            case ExecDesc.ExecMode.ApplyParallel:
                 needChildrenTasks = true;
                 break;
         }
 
-        List<Task<int>> listChildrenTasks;
+        List<Task> listChildrenTasks;
         if (needChildrenTasks)
         {
             listChildrenTasks = new() { Capacity = ed0.Children.Count };
@@ -52,152 +54,90 @@ public class TaskBuilder
                 Error($"ExecDesc with type {ed0.Mode} is not supported.");
                 return new Task<int>(() => -1);
                 break;
-            
+
             case ExecDesc.ExecMode.Task:
-                return new Task<int>(new Func<int>(() =>
-                {
-                    int lastDot = ed0.Implementation.LastIndexOf('.');
-                    if (-1 == lastDot)
-                    {
-                        Error($"Invalid implementation name string \"{ed0.Implementation}\": Does not contain a last dot to mark the method.");
-                        return -1;
-                    }
-
-                    string className = ed0.Implementation.Substring(0, lastDot);
-                    if (className.Length == 0)
-                    {
-                        Error($"Invalid empty class name \"{ed0.Implementation}\".");
-                        return -1;
-                    }
-                    string methodName = ed0.Implementation.Substring(lastDot + 1);
-                    if (methodName.Length == 0)
-                    {
-                        Error($"Invalid empty method name \"{ed0.Implementation}\".");
-                        return -1;
-                    }
-
-                    Type t = Type.GetType(className);
-                    if (null == t)
-                    {
-                        Error($"Class \"{className}\" not found.");
-                        return -1;
-                    }
-
-                    var methodInfo = t.GetMethod(methodName, new Type[] { typeof(IDictionary<string, object>) });
-                    if (null == methodInfo)
-                    {
-                        Error(
-                            $"Method \"{methodName}\"(IDictionary<string, object>) not found in class \"{className}\".");
-                        return -1;
-                    }
-
-                    /*
-                     * merge the parameters and call the method.
-                     */
-                    var p = new Dictionary<string, object>();
-                    if (null != overallParams)
-                    {
-                        foreach (var kvp in overallParams)
-                        {
-                            p[kvp.Key] = kvp.Value;
-                        }
-                    }
-
-                    if (null != ed0.Parameters)
-                    {
-                        foreach (var kvp in ed0.Parameters)
-                        {
-                            p[kvp.Key] = kvp.Value;
-                        }
-                    }
-
-                    var r = methodInfo.Invoke(null, new object[1] { p });
-                    
-                    return 0;
-                }));
+            {
                 break;
+            }
+
             case ExecDesc.ExecMode.Parallel:
-                return new Task<int>(new Func<int>(() =>
+                return new Task(new Action(async () =>
                 {
                     var taskAll = Task.WhenAll(listChildrenTasks);
                     try
                     {
-                        taskAll.RunSynchronously();
+                        taskAll.Start();
+                        await taskAll;
                         if (taskAll.IsCompletedSuccessfully)
                         {
-                            return 0;
                         }
                         else
                         {
-                            return -1;
+                            ErrorThrow("Failed to run all tasks.", m => new InvalidOperationException(m));
                         }
                     }
                     catch (Exception e)
                     {
-                        Error($"Running ExecDesc is ${e}.");
-                        return -1;
+                        ErrorThrow($"Running ExecDesc is ${e}.", m => new InvalidOperationException(m));
                     }
                 }));
                 break;
+            
             case ExecDesc.ExecMode.ApplyParallel:
-                IEnumerable<object> listToApply = applyParameters[ed0.Selector];
-                return new Task<int>(new Func<int>(() =>
+                if (listChildrenTasks.Count != 1)
                 {
-                    if (listChildrenTasks.Count != 1)
-                    {
-                        Error("Excepting exactly one child for a ApplyParallel ExecDesc.");
-                        return -1;
-                    }
+                    ErrorThrow("Excepting exactly one child for a ApplyParallel ExecDesc.", m => new ArgumentException(m));
+                }
 
-                    if (listChildrenTasks.Count == 0)
-                    {
-                        return 0;
-                    }
+                IEnumerable<object> listToApply = applyParameters[ed0.Selector];
 
-                    List<Task<int>> listAllTasks = new();
-                    foreach (var applyParam in listToApply)
-                    {
-                        var p = new Dictionary<string, object>(overallParams);
-                        p[ed0.Target] = applyParam;
+                List<Task> listAllTasks = new();
+                foreach (var applyParam in listToApply)
+                {
+                    var p = new Dictionary<string, object>(overallParams);
+                    p[ed0.Target] = applyParam;
 
-                        Task<int> tChild = BuildExecTask(ed0.Children[0], p, applyParameters);
-                        listAllTasks.Add(tChild);
-                    }
+                    Task tChild = BuildExecTask(ed0.Children[0], p, applyParameters);
+                    listAllTasks.Add(tChild);
+                }
                     
+                return new Task(new Action(() =>
+                {
                     var taskAll = Task.WhenAll(listAllTasks);
+                    taskAll.Start();
                     try
                     {
-                        taskAll.RunSynchronously();
+                        taskAll.Wait();
                         if (taskAll.IsCompletedSuccessfully)
                         {
-                            return 0;
+                            return;
                         }
                         else
                         {
-                            return -1;
+                            ErrorThrow("Failed to run all tasks.", m => new InvalidOperationException(m));
                         }
                     }
                     catch (Exception e)
                     {
-                        Error($"Running ExecDesc is ${e}.");
-                        return -1;
+                        ErrorThrow($"Running ExecDesc is ${e}.", m => new InvalidOperationException(m));
                     }
                 }));
                 break;
+            
             case ExecDesc.ExecMode.Sequence:
 #if true
-                return new Task<int>(() =>
+                return new Task(new Action(async () =>
                 {
                     foreach (var task in listChildrenTasks)
                     {
-                        task.RunSynchronously();
+                        task.Start();
+                        await task;
                         if (!task.IsCompletedSuccessfully)
                         {
-                            return -1;
+                            ErrorThrow("Failed to run all tasks.", m => new InvalidOperationException(m));
                         }
                     }
-                    return 0;
-                });              
+                }));
 #else
             {
 /*
@@ -230,3 +170,4 @@ public class TaskBuilder
         }
     }
 }
+#endif

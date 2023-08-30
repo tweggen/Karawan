@@ -95,7 +95,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"7020/GenerateCar3CharacterOperatar/{_myKey}/";
+        return $"7020/GenerateCar3CharacterOperatar/{_myKey}/{_clusterDesc.Id}";
     }
     
     

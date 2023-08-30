@@ -116,7 +116,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\BuildExecTree.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecApplyParallelNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecDesc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\AExecNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecNodeFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecParallelNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecScope.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecTaskNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecSequenceNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\TaskBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelCache.cs" />
