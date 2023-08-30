@@ -11,7 +11,7 @@ public class ExecTaskNode : AExecNode
     private object _instance = null;
 
     
-    public override Task Execute(Func<object, Task> op)
+    public override Task? Execute(Func<object, Task?> op)
     {
         return op(_instance);
     }

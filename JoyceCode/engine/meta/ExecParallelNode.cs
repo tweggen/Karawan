@@ -6,13 +6,16 @@ namespace engine.meta;
 
 public class ExecParallelNode : AExecNode
 {
-    public override Task Execute(Func<object, Task> op)
+    public override Task? Execute(Func<object, Task?> op)
     {
         List<Task> tAllChildren = new();
         foreach (AExecNode en in _children)
         {
-            Task tChild = en.Execute(op);
-            tAllChildren.Add(tChild);
+            Task? tChild = en.Execute(op);
+            if (null != tChild)
+            {
+                tAllChildren.Add(tChild);
+            }
         }
         Task taskAll = Task.WhenAll(tAllChildren);
         return taskAll;

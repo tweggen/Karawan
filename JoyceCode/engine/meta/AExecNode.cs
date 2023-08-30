@@ -15,7 +15,7 @@ public abstract class AExecNode
     /**
      * Return a started instance of the given function.
      */
-    public abstract Task Execute(Func<object, Task> operation);
+    public abstract Task? Execute(Func<object, Task?> operation);
     
     
     protected void _buildChildren(ExecScope esParent)

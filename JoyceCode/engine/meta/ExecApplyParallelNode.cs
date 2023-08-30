@@ -7,14 +7,17 @@ namespace engine.meta;
 
 public class ExecApplyParallelNode : AExecNode
 {
-    public override Task Execute(Func<object, Task> op)
+    public override Task? Execute(Func<object, Task?> op)
     {
         // TXWTODO: Create some common abstract parallel execution class, this code is shared with ExecParallelNode
         List<Task> tAllChildren = new();
         foreach (AExecNode en in _children)
         {
-            Task tChild = en.Execute(op);
-            tAllChildren.Add(tChild);
+            Task? tChild = en.Execute(op);
+            if (tChild != null)
+            {
+                tAllChildren.Add(tChild);
+            }
         }
         Task taskAll = Task.WhenAll(tAllChildren);
         return taskAll;

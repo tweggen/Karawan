@@ -6,7 +6,7 @@ namespace engine.meta;
 
 public class ExecSequenceNode : AExecNode
 {
-    public override Task Execute(Func<object, Task> op)
+    public override Task? Execute(Func<object, Task?> op)
     {
         return Task.Run(async () =>
         {
@@ -14,7 +14,11 @@ public class ExecSequenceNode : AExecNode
             {
                 foreach (AExecNode execNode in _children)
                 {
-                    await execNode.Execute(op);
+                    Task? t = execNode.Execute(op);
+                    if (null != t)
+                    {
+                        await t;
+                    }
                 }
             }
         });

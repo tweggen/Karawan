@@ -241,21 +241,24 @@ namespace engine.world
                     )
                 );
 
-                #if false
                 enRoot.Execute( (object instance) =>
                 {
                     var op = instance as IFragmentOperator;
                     if (null != op)
                     {
+                        op.FragmentOperatorGetAABB(out var aabb);
+                        if (!aabb.IntersectsXZ(fragment.AABB))
+                        {
+                            return null;
+                        }
                         return Task.Run(op.FragmentOperatorApply(fragment));
                     }
                     else
                     {
                         ErrorThrow("Invalid operator instance specified.", m => new InvalidOperationException(m));
-                        return new Task(async () => {});
+                        return null;
                     }
                 });
-                #endif
             }
             
             /*
