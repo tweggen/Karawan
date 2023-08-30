@@ -12,7 +12,6 @@ public class ExecParallelNode : AExecNode
         foreach (AExecNode en in _children)
         {
             Task tChild = en.Execute(op);
-            tChild.Start();
             tAllChildren.Add(tChild);
         }
         Task taskAll = Task.WhenAll(tAllChildren);

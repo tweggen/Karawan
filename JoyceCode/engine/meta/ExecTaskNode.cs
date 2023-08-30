@@ -13,7 +13,7 @@ public class ExecTaskNode : AExecNode
     
     public override Task Execute(Func<object, Task> op)
     {
-        return Task.Run(async () => op(_instance));
+        return op(_instance);
     }
 
     
