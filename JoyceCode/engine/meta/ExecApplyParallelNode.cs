@@ -14,10 +14,10 @@ public class ExecApplyParallelNode : AExecNode
         foreach (AExecNode en in _children)
         {
             Task tChild = en.Execute(op);
+            tChild.Start();
             tAllChildren.Add(tChild);
         }
         Task taskAll = Task.WhenAll(tAllChildren);
-        taskAll.Start();
         return taskAll;
     }
     
@@ -46,8 +46,8 @@ public class ExecApplyParallelNode : AExecNode
         var esIntermediateParent = new ExecScope(esParent, pDummyApplyParams);
         foreach (var applyParam in listToApply)
         {
+            esIntermediateParent.OverallParams[ed0.Target] = applyParam;
             AExecNode enChild = ExecNodeFactory.CreateExecNode(edChild, esIntermediateParent);
-            enChild.ExecScope.OverallParams[ed0.Target] = applyParam;
             _children.Add(enChild);
         }
     }

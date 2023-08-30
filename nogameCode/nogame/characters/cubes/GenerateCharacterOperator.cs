@@ -87,7 +87,7 @@ namespace nogame.characters.cubes
         }
 
 
-        public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(() =>
+        public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
         {
             var aPhysics = worldFragment.Engine.GetAPhysics();
 

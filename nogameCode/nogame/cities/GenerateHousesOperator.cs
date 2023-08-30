@@ -257,7 +257,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
 
 
-    public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(() =>
+    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
     {
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;

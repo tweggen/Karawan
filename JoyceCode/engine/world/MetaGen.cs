@@ -179,11 +179,11 @@ namespace engine.world
             /*
              * Create the tasks for the fragment operators
              */
-            List<Task> listFragmentOperatorTasks = new();
+            List<Func<Task>> listFragmentOperatorFuncs = new();
             foreach (IFragmentOperator op in listLocalOps)
             {
-                Task taskFragmentOperator = op.FragmentOperatorApply(fragment);
-                listFragmentOperatorTasks.Add(taskFragmentOperator);
+                Func<Task> actionFragmentOperator = op.FragmentOperatorApply(fragment);
+                listFragmentOperatorFuncs.Add(actionFragmentOperator);
             }
 
             /*
@@ -191,14 +191,15 @@ namespace engine.world
              */
             var taskAllFragmentOperators = new Task(() =>
             {
-                foreach(var task in listFragmentOperatorTasks) {
+                foreach(var func in listFragmentOperatorFuncs) {
                     try
                     {
                         lock (_lo)
                         {
                             ++_nFragmentOperatorsRunning;
                         }
-                        task.Start();
+
+                        var task = Task.Run(func);
                         task.Wait();
                         lock (_lo)
                         {
@@ -240,7 +241,7 @@ namespace engine.world
                     )
                 );
 
-                enRoot.Execute();
+                // enRoot.Execute((object instance) => (instance as IFragmentOperator).FragmentOperatorApply(fragment));
             }
             
             /*

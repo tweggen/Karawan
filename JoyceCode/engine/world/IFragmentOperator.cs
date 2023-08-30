@@ -28,7 +28,7 @@ namespace engine.world
          * fragment in a given state and a certain configuratino, it shall generate
          * the same output.
          */
-        public Task FragmentOperatorApply(world.Fragment worldFragment);
+        public System.Func<Task> FragmentOperatorApply(world.Fragment worldFragment);
 
     }
 }

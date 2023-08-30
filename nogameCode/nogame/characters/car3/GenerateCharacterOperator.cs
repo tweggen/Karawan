@@ -105,7 +105,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
 
 
-    public Task FragmentOperatorApply(engine.world.Fragment worldFragment) => new Task(async () =>
+    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
     {
         var aPhysics = worldFragment.Engine.GetAPhysics();
 

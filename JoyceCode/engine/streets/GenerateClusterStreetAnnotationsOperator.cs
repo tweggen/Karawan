@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -68,7 +69,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     }
 
 
-    public Task FragmentOperatorApply(world.Fragment worldFragment) => new Task(() =>
+    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment) => new (async () =>
     {
         // Perform clipping until we have bounding boxes
 

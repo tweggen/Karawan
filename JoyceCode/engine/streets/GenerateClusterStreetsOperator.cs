@@ -656,7 +656,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     /**
      * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
      */
-    public Task FragmentOperatorApply(world.Fragment worldFragment) => new Task(() =>
+    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment) => new (async () =>
     {
         // Perform clipping until we have bounding boxes
 
