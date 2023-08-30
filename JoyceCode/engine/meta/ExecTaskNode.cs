@@ -13,7 +13,15 @@ public class ExecTaskNode : AExecNode
     
     public override Task? Execute(Func<object, Task?> op)
     {
-        return op(_instance);
+        if (ExecDesc.ConfigCondition != null)
+        {
+            if (Props.Get(ExecDesc.ConfigCondition, "true") as string != "true")
+            {
+                return null;
+            }
+        }
+        Task? t = op(_instance);
+        return t;
     }
 
     

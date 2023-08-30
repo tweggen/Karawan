@@ -21,12 +21,21 @@ public class ExecDesc
         // Timed,
     };
 
-    public required ExecMode Mode
+    public ExecMode Mode
     {
         get;
         set;
-    }
+    } = ExecMode.Task;
 
+    
+    public string Comment { get; set; }
+    
+    
+    /**
+     * This props path may be asked to find out if the node shall be executed or not. 
+     */
+    public string ConfigCondition { get; set; }
+    
     /**
      * What list shall we apply?
      */

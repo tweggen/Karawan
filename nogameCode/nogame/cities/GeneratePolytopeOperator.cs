@@ -80,7 +80,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
         worldFragment.AddStaticInstance(
             "nogame.furniture.polytopeStand", modelStand.InstanceDesc,
                 vPos, Quaternion.Identity, null);
-        Trace($"Placing polytope @{worldFragment.Position+vPos}");
+        // Trace($"Placing polytope @{worldFragment.Position+vPos}");
         
 
         Model modelBall = await ModelCache.Instance().Instantiate(

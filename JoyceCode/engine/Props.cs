@@ -59,10 +59,26 @@ public class Props
 
         if (doEmitEvent)
         {
-            Implementations.Get<EventQueue>().Push( 
-                new PropertyEvent(
-                    $"{PropertyEvent.PROPERTY_CHANGED}.{key}", 
-                    key, value));
+            /*
+             * In initialization situations, the event queue might not be available.
+             */
+            EventQueue eq = null;
+            try
+            {
+                eq = Implementations.Get<EventQueue>();
+            }
+            catch (System.Exception e)
+            {
+                
+            }
+
+            if (null != eq)
+            {
+                eq.Push(
+                    new PropertyEvent(
+                        $"{PropertyEvent.PROPERTY_CHANGED}.{key}",
+                        key, value));
+            }
         }
     }
 

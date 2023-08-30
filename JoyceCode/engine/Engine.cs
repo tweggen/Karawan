@@ -408,6 +408,7 @@ namespace engine
         }
 
 
+#if false
         public bool IsLoading()
         {
             bool meWorking;
@@ -432,6 +433,8 @@ namespace engine
             return false;
 
         }
+#endif
+
 
         /**
          * Called by the platform on a new physical frame.
@@ -645,7 +648,7 @@ namespace engine
             /*
              * Async create / setup new entities.
              */
-            _executeEntitySetupActions(0.001f);
+            _executeEntitySetupActions(0.005f);
             _workerMainThreadActions.RunPart(0.001f);
             _workerCleanupActions.RunPart(0.001f);
         }

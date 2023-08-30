@@ -73,8 +73,8 @@ public class DesktopMain
 
         engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
         engine.GlobalSettings.Set("splash.touchControls", "false");
-        engine.GlobalSettings.Set("nogame.CreateHouses", "true");
-        engine.GlobalSettings.Set("nogame.CreateTrees", "true");
+        engine.Props.Set("nogame.CreateHouses", "true");
+        engine.Props.Set("nogame.CreateTrees", "true");
         engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
         engine.GlobalSettings.Set("platform.initialZoomState", "0");
 

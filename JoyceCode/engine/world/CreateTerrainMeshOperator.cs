@@ -49,5 +49,12 @@ namespace engine.world
         {
             _myKey = strKey;
         }
+        
+        
+        public static engine.world.IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+        {
+            return new CreateTerrainMeshOperator(
+                (string)p["strKey"]);
+        }
     }
 }

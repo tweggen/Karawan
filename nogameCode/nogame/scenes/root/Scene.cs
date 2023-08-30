@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using engine;
@@ -257,124 +259,120 @@ public class Scene : engine.IScene, engine.IInputPart
         string keyScene = "abx";
 
         _worldMetaGen = engine.world.MetaGen.Instance();
-        if (engine.GlobalSettings.Get("nogame.CreateHouses") != "false")
-        {
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    nogame.cities.GenerateHousesOperator.InstantiateFragmentOperator(
-                        new Dictionary<string,object>() 
-                        {
-                            { "clusterDesc", clusterDesc },
-                            { "strKey", newKey }
-                        })
-                    //new nogame.cities.GenerateHousesOperator(clusterDesc, newKey)
-            );
-        }
-
-        if (engine.GlobalSettings.Get("nogame.CreateTrees") != "false")
-        {
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    nogame.cities.GenerateTreesOperator.InstantiateFragmentOperator(
-                        new Dictionary<string,object>() 
-                        {
-                            { "clusterDesc", clusterDesc },
-                            { "strKey", newKey }
-                        })
-                    //new nogame.cities.GenerateTreesOperator(clusterDesc, newKey)
-            );
-        }
-
-        if (engine.GlobalSettings.Get("world.CreateCubeCharacters") != "false")
-        {
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    nogame.characters.cubes.GenerateCharacterOperator.InstantiateFragmentOperator(
-                        new Dictionary<string,object>() 
-                        {
-                            { "clusterDesc", clusterDesc },
-                            { "strKey", newKey }
-                        })
-                    //new nogame.characters.cubes.GenerateCharacterOperator(clusterDesc, newKey)
-            );
-        }
-
-        if (engine.GlobalSettings.Get("world.CreateCar3Characters") != "false")
-        {
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    nogame.characters.car3.GenerateCharacterOperator.InstantiateFragmentOperator(
-                        new Dictionary<string,object>() 
-                        {
-                            { "clusterDesc", clusterDesc },
-                            { "strKey", newKey }
-                        })
-                    //new nogame.characters.car3.GenerateCharacterOperator(clusterDesc, newKey)
-            );
-        }
-
-        if (engine.GlobalSettings.Get("world.CreateTramCharacters") != "false")
-        {
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    nogame.characters.tram.GenerateCharacterOperator.InstantiateFragmentOperator(
-                        new Dictionary<string,object>() 
-                        {
-                            { "clusterDesc", clusterDesc },
-                            { "strKey", newKey }
-                        })
-                    //new nogame.characters.tram.GenerateCharacterOperator(clusterDesc, newKey)
-            );
-        }
 
         engine.meta.ExecDesc edRoot = new()
         {
-            Mode = ExecDesc.ExecMode.Parallel,
+            Mode = ExecDesc.ExecMode.Sequence,
+            Comment = "We need a top level sequence of executing things for the fragments."
+                + "This is not much, but first we need to get the terrain height done.",
             Children = new List<ExecDesc>()
             {
                 new()
                 {
-                    Mode = ExecDesc.ExecMode.ApplyParallel,
-                    Selector = "clusterDescList",
-                    Target = "clusterDesc",
+                    Implementation = "engine.world.CreateTerrainOperator.InstantiateFragmentOperator",
+                },
+                new()
+                {
+                    Mode = ExecDesc.ExecMode.Parallel,
+                    Comment = "Now, there's no particular order to prepare the remaining things.",
                     Children = new()
                     {
                         new()
                         {
+                            Implementation = "engine.world.CreateTerrainMeshOperator.InstantiateFragmentOperator"  
+                        },
+                        new ()
+                        {
                             Mode = ExecDesc.ExecMode.Task,
-                            Implementation = "nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator"
-                        }
+                            Implementation = "nogame.terrain.PlaceDebrisOperator.InstantiateFragmentOperator"
+                        },
+                        new()
+                        {
+                            Mode = ExecDesc.ExecMode.ApplyParallel,
+                            Comment = "This includes all cluster operators.",
+                            Selector = "clusterDescList",
+                            Target = "clusterDesc",
+                            Children = new()
+                            {
+                                new()
+                                {
+                                    Mode = ExecDesc.ExecMode.Sequence,
+                                    Comment = 
+                                        "Some things need to be set up in order: The house operator needs to decide where we"
+                                        +"will build houses, otherwise other things will not properly be placed.",
+                                    Children = new()
+                                    {
+                                        new ()
+                                        {
+                                            Implementation = "engine.streets.GenerateClusterStreetsOperator.InstantiateFragmentOperator",
+                                        },
+                                        new ()
+                                        {
+                                            ConfigCondition = "nogame.CreateHouses",
+                                            Implementation = "nogame.cities.GenerateHousesOperator.InstantiateFragmentOperator"
+                                        },
+                                        new ()
+                                        {
+                                            ConfigCondition = "world.CreateClusterQuarters",
+                                            Implementation = "engine.streets.GenerateClusterQuartersOperator.InstantiateFragmentOperator",                                            
+                                        },
+                                        new ()
+                                        {
+                                            Mode = ExecDesc.ExecMode.Parallel,
+                                            Children = new()
+                                            {
+                                                // TXWTODO: Add the street annotations.
+                                                new ()
+                                                {
+                                                    ConfigCondition = "world.CreateStreetAnnotations",
+                                                    Implementation = "engine.streets.GenerateClusterStreetAnnotationsOperator.InstantiateFragmentOperator",
+                                                },
+                                                new ()
+                                                {
+                                                    ConfigCondition = "nogame.CreateTrees",
+                                                    Implementation = "nogame.cities.GenerateTreesOperator.InstantiateFragmentOperator"
+                                                },
+                                                new ()
+                                                {
+                                                    Implementation = "nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator"
+                                                },
+                                                new () 
+                                                {
+                                                    ConfigCondition = "world.CreateCubeCharacters",
+                                                    Implementation = "nogame.characters.cubes.GenerateCharacterOperator.InstantiateFragmentOperator"
+                                                },
+                                                new () 
+                                                {
+                                                    ConfigCondition = "world.CreateCar3Characters",
+                                                    Implementation = "nogame.characters.car3.GenerateCharacterOperator.InstantiateFragmentOperator"
+                                                },
+                                                new () 
+                                                {
+                                                    ConfigCondition = "world.CreateTramCharacters",
+                                                    Implementation = "nogame.characters.tram.GenerateCharacterOperator.InstantiateFragmentOperator"
+                                                },
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
                     }
-                },
-                new ()
-                {
-                    Mode = ExecDesc.ExecMode.Task,
-                    Implementation = "nogame.terrain.PlaceDebrisOperator.InstantiateFragmentOperator"
                 }
             }
         };
         _worldMetaGen.EdRoot = edRoot;
-
-#if false        
-        if (engine.GlobalSettings.Get("nogame.CreatePolytopes") != "false")
         {
-            _worldMetaGen.AddClusterFragmentOperatorFactory(
-                (string newKey, engine.world.ClusterDesc clusterDesc) =>
-                    nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator(
-                        new Dictionary<string,object>() 
-                        {
-                            { "clusterDesc", clusterDesc },
-                            { "strKey", newKey }
-                        })
-                // new nogame.cities.GeneratePolytopeOperator(clusterDesc, newKey)
-            );
+            JsonSerializerOptions options = new()
+            {
+                // ReferenceHandler = ReferenceHandler.Preserve,
+                WriteIndented = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            };
+            string jsonEdRoot = JsonSerializer.Serialize(edRoot, options);
+            Trace("MetaGen Configuration: ");
+            Trace(jsonEdRoot);
         }
-
-        if (engine.GlobalSettings.Get("world.CreateDebris") != "false")
-        {
-            _worldMetaGen.AddFragmentOperator(new nogame.terrain.PlaceDebrisOperator(keyScene));
-        }
-#endif
 
         _worldMetaGen.SetupComplete();
 

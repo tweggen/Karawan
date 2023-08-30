@@ -6,6 +6,7 @@ using builtin.parts;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
+using engine.world;
 using static engine.Logger;
 
 namespace nogame.scenes.logos;
@@ -111,7 +112,7 @@ public class Scene : engine.IScene
             TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(4674),
             _hideTitle);
-        
+
         new builtin.parts.TitleModule(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
