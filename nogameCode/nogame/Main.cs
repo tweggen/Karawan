@@ -71,7 +71,7 @@ public class Main
 
         engine.Props.Set("world.CreateStreetAnnotations", "false");
         engine.Props.Set("nogame.CreateTrees", "true");
-        engine.Props.Set("nogame.CreateHouses", "true");
+        engine.Props.Set("nogame.CreateHouses", "false");
         engine.Props.Set("world.CreateCubeCharacters", "true");
         engine.Props.Set("world.CreateCar3Characters", "true");
         engine.Props.Set("world.CreateTramCharacters", "true");

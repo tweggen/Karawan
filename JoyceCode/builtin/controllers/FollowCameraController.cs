@@ -22,15 +22,21 @@ namespace builtin.controllers
         
         private float _previousZoomDistance = 33f;
 
-        static private float ORIENTATION_SLERP_AMOUNT = 0.07f;
-        static private float ZOOM_SLERP_AMOUNT = 0.1f;
-        static private float MOUSE_RELATIVE_AMOUNT = 0.05f;
-        static private float MOUSE_RETURN_SLERP = 0.98f;
-        static private float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT = 1.6f;
+        private float ORIENTATION_SLERP_AMOUNT = 0.07f;
+        private float ZOOM_SLERP_AMOUNT = 0.05f;
+        private float MOUSE_RELATIVE_AMOUNT = 0.03f;
+        private float MOUSE_RETURN_SLERP = 0.98f;
+        private float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT = 1.6f;
 
+        private long _frame = 0;
 
         private void _onLogicalFrame(object sender, float dt)
         {
+            ++_frame;
+            if (_frame >= 600)
+            {
+                ZOOM_SLERP_AMOUNT = 0.1f;
+            }
             /*
              * We allow the user to move the cam.
              */

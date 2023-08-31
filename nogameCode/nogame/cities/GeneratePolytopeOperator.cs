@@ -70,7 +70,6 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 GeomFlags = 0
                             | InstantiateModelParams.CENTER_X
                             | InstantiateModelParams.CENTER_Z
-                            //| InstantiateModelParams.ROTATE_Y180
                             ,
                 MaxDistance = 800f
             });
@@ -80,7 +79,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
         worldFragment.AddStaticInstance(
             "nogame.furniture.polytopeStand", modelStand.InstanceDesc,
                 vPos, Quaternion.Identity, null);
-        // Trace($"Placing polytope @{worldFragment.Position+vPos}");
+        Trace($"in frag {worldFragment.GetId()} Placing polytope @{worldFragment.Position+vPos}");
         
 
         Model modelBall = await ModelCache.Instance().Instantiate(
@@ -147,6 +146,8 @@ public class GeneratePolytopeOperator : IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
     {
+        _rnd.Clear();
+ 
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
@@ -219,7 +220,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
     ) {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new engine.RandomSource(strKey);
+        _rnd = new engine.RandomSource(_myKey);
     }
     
     

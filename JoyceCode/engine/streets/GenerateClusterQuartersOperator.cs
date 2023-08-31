@@ -81,6 +81,8 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
      */
     public Func<Task> FragmentOperatorApply(world.Fragment worldFragment) => new (async () =>
     {
+        _rnd = new engine.RandomSource(_myKey);
+
         // Perform clipping until we have bounding boxes
 
         /*
@@ -173,7 +175,6 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
     {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new engine.RandomSource(strKey);
 
         MaterialCache.Register("engine.streets.materials.cluster",
             name => new Material()

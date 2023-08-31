@@ -91,7 +91,13 @@ public class Scene : engine.IScene
         Task.Run(() =>
         {
             Implementations.Get<SetupMetaGen>().PrepareMetaGen(_engine);
-            Implementations.Get<SetupMetaGen>().Preload(Vector3.Zero);
+            /*
+             * We just wrote down this position from the current seed.
+             */
+            Implementations.Get<SetupMetaGen>().Preload(
+                new Vector3(292f,29f,314f)
+                //Vector3.Zero
+                );
         });
     }
     

@@ -15,7 +15,6 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     static private object _lock = new();
 
     private ClusterDesc _clusterDesc;
-    // private engine.RandomSource _rnd;
     private string _myKey;
     private bool _traceStreets = false;
 
@@ -114,8 +113,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     )
     {
         _clusterDesc = clusterDesc;
-        _myKey = strKey;
-
+ 
         MaterialCache.Register("engine.streets.materials.street",
             (name) => new Material()
             {
