@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using System.Threading.Tasks;
 using builtin.parts;
 using engine;
 using engine.joyce;
@@ -80,6 +81,19 @@ public class Scene : engine.IScene
     {
         _shallHideTitle = true;
     }
+
+
+    private void _preload()
+    {
+        /*
+         * Start preloading in the background.
+         */
+        Task.Run(() =>
+        {
+            Implementations.Get<SetupMetaGen>().PrepareMetaGen(_engine);
+            Implementations.Get<SetupMetaGen>().Preload(Vector3.Zero);
+        });
+    }
     
 
     public void SceneDeactivate()
@@ -105,6 +119,7 @@ public class Scene : engine.IScene
         DateTime now = DateTime.Now;
         var timeline = Implementations.Get<engine.Timeline>();
         timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
+        
         /*
          * Fade out 4.674 after first bit of intro song. Read that one in audacity.
          */
@@ -112,6 +127,14 @@ public class Scene : engine.IScene
             TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(4674),
             _hideTitle);
+
+        /*
+         * Start preloading after the first title starts display
+         */
+        timeline.RunAt(
+            TimepointTitlesongStarted, 
+            TimeSpan.FromMilliseconds(800),
+            _preload);
 
         new builtin.parts.TitleModule(new TitleCard()
         {

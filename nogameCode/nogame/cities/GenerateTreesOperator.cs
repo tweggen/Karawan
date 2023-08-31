@@ -162,6 +162,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         }
     });
     
+    
     static TreeInstanceGenerator _treeInstanceGenerator = new();
     
     public GenerateTreesOperator(

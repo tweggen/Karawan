@@ -3,6 +3,7 @@ using builtin.controllers;
 using builtin.map;
 using engine;
 using nogame.map;
+using static engine.Logger;
 
 namespace nogame;
 
@@ -40,6 +41,7 @@ public class Main
         Implementations.Register<Boom.Jukebox>(() => new Boom.Jukebox());
         Implementations.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
         Implementations.Register<builtin.controllers.InputController>(() => new InputController());
+        Implementations.Register<SetupMetaGen>(() => new SetupMetaGen());
     }
 
     
@@ -57,7 +59,7 @@ public class Main
     {
         _e = e;
     }
-
+    
     
     public static void Start(engine.Engine e)
     {
