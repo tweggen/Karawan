@@ -6,7 +6,7 @@ namespace engine.meta;
 public class ExecScope
 {
     public IDictionary<string, object> OverallParams;
-    public IDictionary<string, IEnumerable<object>> ApplyParameters;
+    public IDictionary<string, System.Func<IEnumerable<object>>> ApplyParameters;
 
 
     private static IDictionary<string, object> _mergeParams(IDictionary<string, object> pParent, IDictionary<string, object> pNew)
@@ -43,7 +43,7 @@ public class ExecScope
     }
     
     
-    public ExecScope(IDictionary<string, object> newParams, IDictionary<string, IEnumerable<object>> newApplyParams)
+    public ExecScope(IDictionary<string, object> newParams, IDictionary<string, System.Func<IEnumerable<object>>> newApplyParams)
     {
         OverallParams = newParams;
         ApplyParameters = newApplyParams;
@@ -60,6 +60,6 @@ public class ExecScope
     public ExecScope()
     {
         OverallParams = new Dictionary<string, object>();
-        ApplyParameters = new Dictionary<string, IEnumerable<object>>();
+        ApplyParameters = new Dictionary<string, System.Func<IEnumerable<object>>>();
     }
 }

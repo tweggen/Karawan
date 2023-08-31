@@ -66,6 +66,7 @@ public class MetaGen
     private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList;
 
     private meta.ExecDesc _edRoot;
+    private meta.AExecNode _enRoot;
 
     public meta.ExecDesc EdRoot
     {
@@ -83,10 +84,61 @@ public class MetaGen
     }
 
 
-    private void _setEdRoot(meta.ExecDesc edRoot)
+    private AExecNode _getEnRoot()
     {
+        ExecDesc edRoot;
         lock (_lo)
         {
+            if (_enRoot != null)
+            {
+                return _enRoot;
+            }
+
+            edRoot = _edRoot;
+        }
+        /*
+         * Yes, this is a race condition.
+         */
+        AExecNode enRoot = null;
+        if (edRoot != null)
+        {
+            try
+            {
+                enRoot = engine.meta.ExecNodeFactory.CreateExecNode(
+                    edRoot,
+                    new ExecScope(
+                        new Dictionary<string, object>()
+                        {
+                            { "strKey", _myKey }
+                        },
+                        new Dictionary<string, Func<IEnumerable<object>>>()
+                        {
+                            { "clusterDescList", engine.world.ClusterList.Instance().GetClusterList }
+                        }
+                    )
+                );
+                lock (_lo)
+                {
+                    _enRoot = enRoot;
+                }
+            }
+            catch (Exception e)
+            {
+                Error($"Exception compiling fragment operator tree: {e}.");
+                enRoot = null;
+            }
+        }
+        return enRoot;
+    }
+    
+
+    private void _setEdRoot(meta.ExecDesc edRoot)
+    {
+        Trace("Setting new execdescription.");
+
+        lock (_lo)
+        {
+            _enRoot = null;
             _edRoot = edRoot;
         }
     }
@@ -111,9 +163,6 @@ public class MetaGen
             }
         }
     }
-
-
-    //private List<Task> _listRunningFragmentOperators = new();
     
 
     /**
@@ -132,84 +181,40 @@ public class MetaGen
         if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
 
 
-        ExecDesc edRoot;
-        lock (_lo)
-        {
-            edRoot = _edRoot;
-        }
+        /*
+         * Get and possibly compile the fragment operator tree.
+         */
+        AExecNode enRoot = _getEnRoot();
 
-        if (null != edRoot)
+        if (null != enRoot)
         {
-            // TXWTODO: Do we really need to compile this every time?
-            var enRoot = engine.meta.ExecNodeFactory.CreateExecNode(
-                edRoot,
-                new ExecScope(
-                    new Dictionary<string, object>()
-                    {
-                        { "strKey", _myKey }
-                    },
-                    new Dictionary<string, IEnumerable<object>>()
-                    {
-                        { "clusterDescList", engine.world.ClusterList.Instance().GetClusterList() }
-                    }
-                )
-            );
-
-            Task tApplyFragmentOperators = enRoot.Execute((object instance) =>
-            {
-                var op = instance as IFragmentOperator;
-                if (null != op)
+            Task.Run(() => {
+                Task tApplyFragmentOperators = enRoot.Execute((object instance) =>
                 {
-                    op.FragmentOperatorGetAABB(out var aabb);
-                    if (!aabb.IntersectsXZ(fragment.AABB))
+                    var op = instance as IFragmentOperator;
+                    if (null != op)
                     {
+                        op.FragmentOperatorGetAABB(out var aabb);
+                        if (!aabb.IntersectsXZ(fragment.AABB))
+                        {
+                            return null;
+                        }
+
+                        // Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
+
+                        return Task.Run(op.FragmentOperatorApply(fragment));
+                    }
+                    else
+                    {
+                        ErrorThrow("Invalid operator instance specified.", m => new InvalidOperationException(m));
                         return null;
                     }
-
-                    // Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
-
-                    return Task.Run(op.FragmentOperatorApply(fragment));
-                }
-                else
-                {
-                    ErrorThrow("Invalid operator instance specified.", m => new InvalidOperationException(m));
-                    return null;
-                }
+                });
             });
 
-#if false
-            lock (_lo)
-            {
-                _listRunningFragmentOperators.Add(tApplyFragmentOperators);
-            }
-#endif
         }
     }
 
-
-#if false
-    public bool IsLoading()
-    {
-        bool isLoading = false;
-        lock (_lo)
-        {
-            _listRunningFragmentOperators.RemoveAll(t =>
-            {
-                if (!t.IsCompleted)
-                {
-                    isLoading = true;
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            });
-        }
-
-        return false;
-    }
-#endif
 
 
     /**

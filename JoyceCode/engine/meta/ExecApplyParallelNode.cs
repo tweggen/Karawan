@@ -40,7 +40,7 @@ public class ExecApplyParallelNode : AExecNode
 
     public ExecApplyParallelNode(ExecDesc ed0, ExecScope esParent) : base(ed0, esParent)
     {
-        IEnumerable<object> listToApply = ExecScope.ApplyParameters[ed0.Selector];
+        IEnumerable<object> listToApply = ExecScope.ApplyParameters[ed0.Selector]();
 
         if (ExecDesc.Children == null || ExecDesc.Children.Count != 1)
         {
