@@ -344,6 +344,8 @@ public class ClusterDesc
 
     public Vector3 FindStartPosition()
     {
+        var vOffset = new Vector3(0f, 0f, -3f);
+        
         _triggerStreets();
         foreach (var quarter in _quarterStore.GetQuarters())
         {
@@ -352,11 +354,11 @@ public class ClusterDesc
             {
                 if (estate.GetBuildings().Count == 0)
                 {
-                    return (Pos + estate.GetCenter()) with { Y = AverageHeight + 3f };
+                    return (Pos + estate.GetCenter() + vOffset) with { Y = AverageHeight + 3f };
                 }
             }
         }
-        return Pos with { Y = AverageHeight + 3f };
+        return (Pos+vOffset) with { Y = AverageHeight + 3f };
     }
     
     

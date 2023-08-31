@@ -166,7 +166,7 @@ public class MetaGen
                         return null;
                     }
 
-                    Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
+                    // Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
 
                     return Task.Run(op.FragmentOperatorApply(fragment));
                 }

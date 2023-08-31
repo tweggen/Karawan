@@ -22,7 +22,7 @@ namespace engine
     class EntitySetupAction
     {
         public string EntityName;
-        public  Action<DefaultEcs.Entity> SetupAction;
+        public Action<DefaultEcs.Entity> SetupAction;
     }
     
     public class Engine

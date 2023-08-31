@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using static engine.Logger;
+using Trace = System.Diagnostics.Trace;
 
 namespace engine.meta;
 
@@ -10,17 +11,30 @@ public class ExecApplyParallelNode : AExecNode
     public override Task? Execute(Func<object, Task?> op)
     {
         // TXWTODO: Create some common abstract parallel execution class, this code is shared with ExecParallelNode
-        List<Task> tAllChildren = new();
+        List<Task> tAllChildren = null;
         foreach (AExecNode en in _children)
         {
             Task? tChild = en.Execute(op);
             if (tChild != null)
             {
+                if (null == tAllChildren)
+                {
+                    tAllChildren = new();
+                }
                 tAllChildren.Add(tChild);
             }
         }
-        Task taskAll = Task.WhenAll(tAllChildren);
-        return taskAll;
+
+        if (null != tAllChildren)
+        {
+            Task taskAll = Task.WhenAll(tAllChildren);
+            return taskAll;
+        }
+        else
+        {
+            //Trace("Optimize2");
+            return null;
+        }
     }
     
 
