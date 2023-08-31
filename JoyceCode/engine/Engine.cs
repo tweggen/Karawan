@@ -901,9 +901,10 @@ namespace engine
          */
         public void SetupDone()
         {
-            _aHierarchy = new hierarchy.API(this);
-            _aTransform = new transform.API(this);
-            _aPhysics = new physics.API(this);
+            _aPhysics = Implementations.Get<engine.physics.API>();
+            _aTransform = Implementations.Get<engine.transform.API>();
+            _aHierarchy = Implementations.Get<engine.hierarchy.API>();
+ 
             _systemBehave = new(this);
             _systemApplyPoses = new(this);
             _systemMoveKinetics = new(this);
@@ -1011,11 +1012,7 @@ namespace engine
             Implementations.Register<engine.transform.API>(() => new transform.API(this));
             Implementations.Register<engine.physics.API>(() => new physics.API(this));
             Implementations.Register<engine.hierarchy.API>(() => new hierarchy.API(this));
-
-            _aPhysics = Implementations.Get<engine.physics.API>();
-            _aTransform = Implementations.Get<engine.transform.API>();
-            _aHierarchy = Implementations.Get<engine.hierarchy.API>();
-        }
+         }
     }
 }
  
