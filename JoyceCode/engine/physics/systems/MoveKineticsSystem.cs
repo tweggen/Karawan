@@ -95,7 +95,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
 
     protected override void PreUpdate(float dt)
     {
-        _aTransform = _engine.GetATransform();
+        _aTransform = Implementations.Get<engine.transform.API>();
         _havePlayerPosition = false;
         _ePlayer = _engine.GetPlayerEntity();
         if (_ePlayer.IsAlive && _ePlayer.IsEnabled())

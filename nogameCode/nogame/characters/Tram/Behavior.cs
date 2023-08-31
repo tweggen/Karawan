@@ -25,7 +25,7 @@ internal class Behavior : engine.IBehavior
         _qPrevRotation = qOrientation;
         Vector3 worldPos = _snc.NavigatorGetWorldPos();
 
-        _engine.GetATransform().SetTransforms(
+        engine.Implementations.Get<engine.transform.API>().SetTransforms(
             entity,
             true, 0x0000ffff,
             qOrientation,

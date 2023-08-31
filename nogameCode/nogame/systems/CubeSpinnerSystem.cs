@@ -20,10 +20,10 @@ namespace nogame.systems
             }
         }
 
-        public CubeSpinnerSystem(engine.Engine engine)
-            : base(engine.GetEcsWorld())
+        public CubeSpinnerSystem(engine.Engine engine0)
+            : base(engine0.GetEcsWorld())
         {
-            _aTransform = engine.GetATransform();
+            _aTransform = engine.Implementations.Get<engine.transform.API>();
         }
     }
 }

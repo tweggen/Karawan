@@ -18,6 +18,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     private string _myKey;
     private bool _traceStreets = false;
 
+    private engine.transform.API _aTransform;
 
     public string FragmentOperatorGetPath()
     {
@@ -57,7 +58,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
                     MaxDistance = 200f,
                     OSDTextFlags = OSDText.ENABLE_DISTANCE_FADE
                 });
-                worldFragment.Engine.GetATransform().SetTransforms(
+                _aTransform.SetTransforms(
                     entity,
                     true, 0x0000ffff,
                     Quaternion.Identity, 
@@ -113,6 +114,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     )
     {
         _clusterDesc = clusterDesc;
+        _aTransform = Implementations.Get<engine.transform.API>();
  
         MaterialCache.Register("engine.streets.materials.street",
             (name) => new Material()

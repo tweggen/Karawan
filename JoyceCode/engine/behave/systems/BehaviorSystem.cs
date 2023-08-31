@@ -50,7 +50,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                 {
                     if (oldTransform.IsVisible)
                     {
-                        _engine.GetATransform().SetVisible(entity, false);
+                        Implementations.Get<engine.transform.API>().SetVisible(entity, false);
                     }
                     continue;
                 }

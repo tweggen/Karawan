@@ -170,12 +170,12 @@ namespace builtin.controllers
         }
 
         
-        public FollowCameraController(engine.Engine engine, DefaultEcs.Entity eTarget, DefaultEcs.Entity eCarrot) 
+        public FollowCameraController(engine.Engine engine0, DefaultEcs.Entity eTarget, DefaultEcs.Entity eCarrot) 
         {
-            _engine = engine;
+            _engine = engine0;
             _eTarget = eTarget;
             _eCarrot = eCarrot;
-            _aTransform = _engine.GetATransform();
+            _aTransform = engine.Implementations.Get<engine.transform.API>();
         }
     }
 }

@@ -71,7 +71,7 @@ namespace engine.physics
                     break;
                 
                 case CollidableMobility.Kinematic:
-                    if(_engine.GetAPhysics().GetCollisionProperties(a.BodyHandle, out propsA))
+                    if(Implementations.Get<engine.physics.API>().GetCollisionProperties(a.BodyHandle, out propsA))
                     {
                         doACollide = propsA.IsTangible;
                         doADetect = propsA.IsDetectable;
@@ -95,7 +95,7 @@ namespace engine.physics
                     break;
                 
                 case CollidableMobility.Kinematic:
-                    if(_engine.GetAPhysics().GetCollisionProperties(b.BodyHandle, out propsB))
+                    if(Implementations.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
                     {
                         doBCollide = propsB.IsTangible;
                         doBDetect = propsB.IsDetectable;

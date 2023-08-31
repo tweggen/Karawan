@@ -55,7 +55,7 @@ public class Scene : engine.IScene
             if (!_shallHideTitle)
             {
                 _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 20f + _t));
-                _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
+                _aTransform.SetPosition(_eLight, new Vector3(0f, -10f + 3f * t, 25f));
             }
             else
             {
@@ -193,7 +193,7 @@ public class Scene : engine.IScene
              * Some local shortcuts
              */
             _ecsWorld = _engine.GetEcsWorld();
-            _aTransform = _engine.GetATransform();
+            _aTransform = Implementations.Get<engine.transform.API>();
 
         }
         if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false")

@@ -20,7 +20,7 @@ internal class Behavior : engine.IBehavior
         Quaternion qOrientation = _snc.NavigatorGetOrientation();
         qOrientation = Quaternion.Slerp(_qPrevRotation, qOrientation, 0.1f);
         _qPrevRotation = qOrientation;
-        _engine.GetATransform().SetTransforms(
+        engine.Implementations.Get<engine.transform.API>().SetTransforms(
             entity,
             true, 0x0000ffff,
             qOrientation,

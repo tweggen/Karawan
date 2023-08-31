@@ -87,11 +87,11 @@ namespace builtin.controllers
             _engine.OnLogicalFrame += _onLogicalFrame;
         }
 
-        public WASDController(engine.Engine engine, DefaultEcs.Entity entity)
+        public WASDController(engine.Engine engine0, DefaultEcs.Entity entity)
         {
-            _engine = engine;
+            _engine = engine0;
             _entity = entity;
-            _aTransform = _engine.GetATransform();
+            _aTransform = engine.Implementations.Get<engine.transform.API>();
         }
     }
 }

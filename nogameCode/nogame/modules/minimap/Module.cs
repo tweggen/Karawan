@@ -54,7 +54,7 @@ public class Module : AModule
             _materialMiniMap.HasTransparency = true;
             _materialMiniMap.UploadImmediately = true;
 
-            _engine.GetATransform().SetTransforms(
+            Implementations.Get<engine.transform.API>().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
                 new Vector3(-1f+0.15f, 9f/16f-0.24f, -1f));

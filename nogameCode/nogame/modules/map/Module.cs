@@ -85,7 +85,7 @@ public class Module : AModule, IInputPart
 
         float effectiveSize = Single.Exp2(dmp.CurrentZoomState / 4f);
 
-        _engine.GetATransform().SetTransforms(
+        Implementations.Get<engine.transform.API>().SetTransforms(
             _eMap, dmp.IsVisible, MapCameraMask,
             new Quaternion(0f,0f,0f,1f),
             new Vector3(

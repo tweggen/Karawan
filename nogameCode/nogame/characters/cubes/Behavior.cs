@@ -16,7 +16,7 @@ namespace nogame.characters.cubes
         {
             _snc.NavigatorBehave(dt);
 
-            _engine.GetATransform().SetTransforms(
+            engine.Implementations.Get<engine.transform.API>().SetTransforms(
                 entity,
                 true, 0x0000ffff,
                 _snc.NavigatorGetOrientation(),

@@ -235,7 +235,7 @@ namespace nogame.modules.playerhover
         public void ModuleActivate(engine.Engine engine)
         {
             _engine = engine;
-            _aTransform = _engine.GetATransform();
+            _aTransform = Implementations.Get<engine.transform.API>();
             _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;

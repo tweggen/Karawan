@@ -241,7 +241,7 @@ namespace nogame.modules.playerhover
                         Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
                         var vCamPosition = mCameraToWorld.Translation;
 
-                        _engine.GetAPhysics().RayCast(vCamPosition, -vZ, 200f, _onCenterRayHit);
+                        Implementations.Get<engine.physics.API>().RayCast(vCamPosition, -vZ, 200f, _onCenterRayHit);
                     }
                 }
             }
@@ -382,7 +382,7 @@ namespace nogame.modules.playerhover
             {
                 _engine = engine0;
                 _ecsWorld = _engine.GetEcsWorld();
-                _aTransform = _engine.GetATransform();
+                _aTransform = Implementations.Get<engine.transform.API>();
             }
 
             if (null == _soundCrash)
@@ -452,7 +452,7 @@ namespace nogame.modules.playerhover
                 engine.physics.CollisionProperties collisionProperties = 
                     new engine.physics.CollisionProperties
                     { Entity = _eShip, Name = PhysicsName, IsTangible = true };
-                _engine.GetAPhysics().AddCollisionEntry(_prefShip.Handle, collisionProperties);
+                Implementations.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
 
                 /*

@@ -60,6 +60,8 @@ public class GeneratePolytopeOperator : IFragmentOperator
 
     private async void _placePolytope(engine.world.Fragment worldFragment, engine.streets.Estate estate)
     {
+        engine.physics.API aPhysics = engine.Implementations.Get<engine.physics.API>();
+        
         /*
          * We need to create two instances, one for the stand and one for the ball.
          * The stand will be static, the ball will not be, as it can be consumed.
@@ -127,7 +129,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             engine.physics.CollisionProperties collisionProperties =
                 new engine.physics.CollisionProperties
                     { Entity = eTarget, Name = "nogame.furniture.polytopeBall", IsTangible = true };
-            worldFragment.Engine.GetAPhysics().AddCollisionEntry(prefSphere.Handle, collisionProperties);
+            aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
             eTarget.Set(new engine.physics.components.Kinetic(
                 prefSphere, collisionProperties));
             eTarget.Set(new engine.draw.components.OSDText(

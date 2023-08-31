@@ -32,6 +32,11 @@ namespace engine
         private int _nextId = 0;
 
         private DefaultEcs.World _ecsWorld;
+        
+        private engine.physics.API _aPhysics;
+        private engine.transform.API _aTransform;
+        private engine.hierarchy.API _aHierarchy;
+        
         private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
         private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
 
@@ -50,10 +55,6 @@ namespace engine
         }
         
         private IPlatform _platform;
-
-        private hierarchy.API _aHierarchy;
-        private transform.API _aTransform;
-        private physics.API _aPhysics;
 
         private behave.systems.BehaviorSystem _systemBehave;
         private physics.systems.ApplyPosesSystem _systemApplyPoses;
@@ -145,6 +146,24 @@ namespace engine
         }
 
 
+        private int _isLoading = 0;
+        public void SuggestBeginLoading()
+        {
+            lock (_lo)
+            {
+                ++_isLoading;
+            }
+        }
+
+        public void SuggestEndLoading()
+        {
+            lock (_lo)
+            {
+                --_isLoading;
+            }
+        }
+
+
         public void Suspend()
         {
             Implementations.Get<EventQueue>().Push(new Event("lifecycle.suspend", ""));
@@ -230,25 +249,6 @@ namespace engine
         }
         
 
-        public hierarchy.API GetAHierarchy()
-        {
-            return _aHierarchy;
-        }
-
-
-        public transform.API GetATransform()
-        {
-            return _aTransform;
-        }
-
-
-        public physics.API GetAPhysics()
-        {
-            return _aPhysics;
-        }
-
-        
-        
         public DefaultEcs.World GetEcsWorld()
         {
             return _ecsWorld;
@@ -590,14 +590,17 @@ namespace engine
             _systemMovingSounds.Update(dt);
 
 
-            /*
-             * Advance physics, based on new user input and/or gravitation.
-             */
-            _aPhysics.Update(dt);
+            //if (0 == _isLoading)
+            {
+                /*
+                 * Advance physics, based on new user input and/or gravitation.
+                 */
+                _aPhysics.Update(dt);
+            }
 
             /*
              * Apply poses needs input from simulation
-             */
+             */ 
             _systemApplyPoses.Update(dt);
 
             /*
@@ -644,12 +647,19 @@ namespace engine
              */
             _executeDoomedEntities();
             
-            
             /*
              * Async create / setup new entities.
              */
-            _executeEntitySetupActions(0.005f);
-            _workerMainThreadActions.RunPart(0.001f);
+            _executeEntitySetupActions(
+                (_isLoading>0)
+                    ? 0.024f
+                    : 0.001f
+                );
+            _workerMainThreadActions.RunPart(
+                (_isLoading>0)
+                    ? 0.004f
+                    : 0.001f
+            );
             _workerCleanupActions.RunPart(0.001f);
         }
 
@@ -954,9 +964,6 @@ namespace engine
                 _platform.MouseEnabled = false;
             }
         }
-
-        
-        
         
 
         public void EnableEntityIds()
@@ -1001,6 +1008,13 @@ namespace engine
             Implementations.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
             Implementations.Register<engine.news.EventQueue>(() => new EventQueue());
             Implementations.Register<engine.InputEventPipeline>(() => new InputEventPipeline());
+            Implementations.Register<engine.transform.API>(() => new transform.API(this));
+            Implementations.Register<engine.physics.API>(() => new physics.API(this));
+            Implementations.Register<engine.hierarchy.API>(() => new hierarchy.API(this));
+
+            _aPhysics = Implementations.Get<engine.physics.API>();
+            _aTransform = Implementations.Get<engine.transform.API>();
+            _aHierarchy = Implementations.Get<engine.hierarchy.API>();
         }
     }
 }

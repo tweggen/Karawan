@@ -115,7 +115,7 @@ public class Module : engine.AModule
         /*
          * local shortcuts.
          */
-        _aTransform = _engine.GetATransform();
+        _aTransform = Implementations.Get<engine.transform.API>();
 
         _renderOSDSystem = new RenderOSDSystem(_engine);
 

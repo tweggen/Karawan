@@ -34,7 +34,7 @@ namespace engine.physics.systems
 
         protected override void PreUpdate(float dt)
         {
-            _aTransform = _engine.GetATransform();
+            _aTransform = Implementations.Get<engine.transform.API>();
         }
 
         public ApplyPosesSystem(in engine.Engine engine)

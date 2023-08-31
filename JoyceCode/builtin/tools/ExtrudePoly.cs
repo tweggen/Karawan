@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using engine;
 
 namespace builtin.tools
 {
@@ -19,6 +20,8 @@ namespace builtin.tools
         private readonly bool _inverseTexture;
         private readonly bool _addFloor;
         private readonly bool _addCeiling;
+
+        private engine.physics.API _aPhysics;
     
         public void BuildGeom(
             in engine.joyce.Mesh g)
@@ -226,11 +229,11 @@ namespace builtin.tools
             }
 
 
-            var bufferPool = worldFragment.Engine.GetAPhysics().BufferPool;
-            var simulation = worldFragment.Engine.GetAPhysics().Simulation;
-
             Func<IList<StaticHandle>, Action> fCreatePhys = new((IList<StaticHandle> staticHandles) =>
             {
+                var bufferPool = _aPhysics.BufferPool;
+                var simulation = _aPhysics.Simulation;
+
                 List<ConvexHull> convexHullsToRelease = new();
 
                 IList<IList<Vector3>> listConvexPolys;
@@ -322,6 +325,7 @@ namespace builtin.tools
             _inverseTexture = inverseTexture;
             _addFloor = addFloor;
             _addCeiling = addCeiling;
+            _aPhysics = Implementations.Get<engine.physics.API>();
         }
     }
 }

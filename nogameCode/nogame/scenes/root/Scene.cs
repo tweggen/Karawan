@@ -25,7 +25,6 @@ public class Scene : engine.IScene, engine.IInputPart
 
     private DefaultEcs.World _ecsWorld;
 
-    private engine.hierarchy.API _aHierarchy;
     private engine.transform.API _aTransform;
 
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
@@ -193,6 +192,7 @@ public class Scene : engine.IScene, engine.IInputPart
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamOSD.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
+            _engine.SuggestEndLoading();
         });        
     }
     
@@ -200,7 +200,6 @@ public class Scene : engine.IScene, engine.IInputPart
     public void SceneOnLogicalFrame(float dt)
     {
         _triggerLoadWorld();
-        
                     
         // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
         var frontZ = Implementations.Get<InputEventPipeline>().GetFrontZ();
@@ -241,7 +240,6 @@ public class Scene : engine.IScene, engine.IInputPart
         _engine.SceneSequencer.RemoveScene(this);
 
         _ecsWorld = null;
-        _aHierarchy = null;
         _aTransform = null;
         _engine = null;
     }
@@ -255,6 +253,7 @@ public class Scene : engine.IScene, engine.IInputPart
         }
         
         _engine = engine0;
+        _engine.SuggestBeginLoading();
 
         string keyScene = "abx";
 
@@ -271,8 +270,7 @@ public class Scene : engine.IScene, engine.IInputPart
          * Some local shortcuts
          */
         _ecsWorld = _engine.GetEcsWorld();
-        _aHierarchy = _engine.GetAHierarchy();
-        _aTransform = _engine.GetATransform();
+        _aTransform = Implementations.Get<engine.transform.API>();
 
         /*
          * Global objects.
