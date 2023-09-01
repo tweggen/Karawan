@@ -20,7 +20,10 @@ namespace engine.physics
             {
                 foreach (var handle in statics.Handles)
                 {
-                    _engine.Simulation.Statics.Remove(handle);
+                    if (handle.Value != 0x7fffffff)
+                    {
+                        _engine.Simulation.Statics.Remove(handle);
+                    }
                 }
             }
             if (statics.ReleaseActions != null)
@@ -35,7 +38,11 @@ namespace engine.physics
 
         private void _removeKinetic(in components.Kinetic cKinetic)
         {
-            _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
+            if (cKinetic.Reference.Handle.Value != (int)0x7fffffff)
+            {
+                _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
+            }
+
             if (cKinetic.ReleaseActions != null)
             {
                 foreach (var releaseAction in cKinetic.ReleaseActions)

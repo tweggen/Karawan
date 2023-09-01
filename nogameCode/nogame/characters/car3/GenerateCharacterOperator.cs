@@ -61,7 +61,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
     private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
-    private static BepuPhysics.Collidables.TypedIndex _getSphereShape(float radius, in Engine engine)
+    public static BepuPhysics.Collidables.TypedIndex GetSphereShape(float radius, in Engine engine)
     {
         lock(_classLock)
         {
@@ -239,7 +239,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             BodyDescription.CreateKinematic(
                                 new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                                 new BepuPhysics.Collidables.CollidableDescription(
-                                    _getSphereShape(modelInfo.AABB.Radius, wf.Engine),
+                                    GetSphereShape(modelInfo.AABB.Radius, wf.Engine),
                                     0.1f),
                                 new BodyActivityDescription(0.01f)
                             )
@@ -247,7 +247,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
-                                { Name = "nogame.characters.car3", IsTangible = true };
+                                { Name = "nogame.characters.car3", IsTangible = true, Entity = eTarget };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.physics.components.Kinetic(
                             prefSphere, collisionProperties));
