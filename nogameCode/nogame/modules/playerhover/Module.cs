@@ -154,9 +154,11 @@ namespace nogame.modules.playerhover
                  */
                 if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
                 {
-                    // Trace($"Cube chrIdx {other.DebugInfo}");
+                    _engine.QueueMainThreadAction(() =>
+                    {
+                        other.Entity.Set(new engine.behave.components.Behavior(new nogame.characters.cubes.CubeVanishBehavior() { Engine = _engine }));
+                    });
                     _nextCubeCollected();
-                    _engine.AddDoomedEntity(other.Entity);
                     playSound = false;
                 }
                 else if (other.Name == "nogame.furniture.polytopeBall")
@@ -164,7 +166,7 @@ namespace nogame.modules.playerhover
                     // Trace($"Polyball chrIdx {other.DebugInfo}");
                     _engine.QueueMainThreadAction(() =>
                     {
-                        other.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour()));
+                        other.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour() { Engine = _engine }));
                     });
                     playSound = false;
                     _polyballSound.Stop();
