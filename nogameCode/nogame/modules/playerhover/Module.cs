@@ -172,7 +172,7 @@ namespace nogame.modules.playerhover
                     _polyballSound.Stop();
                     _polyballSound.Play();
                 } 
-                else if (other.Name == "nogame.characters.car3")
+                else if (false && other.Name == "nogame.characters.car3")
                 {
                     _engine.QueueMainThreadAction(() =>
                     {
@@ -180,19 +180,19 @@ namespace nogame.modules.playerhover
                         engine.physics.components.Kinetic cCarKinetic;
                         if (other.Entity.Has<engine.physics.components.Kinetic>())
                         {
-                            // isKinetic = true;
                             cCarKinetic = other.Entity.Get<engine.physics.components.Kinetic>();
                             int orgHandle = cCarKinetic.Reference.Handle.Value;
+                            
                             /*
                              * Prevent value from automatic removal.
                              */
-                            cCarKinetic.Reference.Handle.Value = 0x7fffffff;
+                            other.Entity.Get<engine.physics.components.Kinetic>().Reference.Handle.Value = 0x7fffffff;
                             other.Entity.Remove<engine.physics.components.Kinetic>();
-                            cCarKinetic.Reference.Handle.Value = orgHandle;
+                            other.Entity.Get<engine.physics.components.Kinetic>().Reference.Handle.Value = orgHandle;
                             //cCarBody = new(cCarKinetic.Reference, other);
                             lock (_engine.Simulation)
                             {
-                                BepuPhysics.Collidables.TypedIndex pshapeSphere;
+                                //BepuPhysics.Collidables.TypedIndex pshapeSphere;
                                 BepuPhysics.Collidables.Sphere pbodySphere = new(5f); 
                                 var pinertiaSphere = pbodySphere.ComputeInertia(500f);
                                 cCarKinetic.Reference.SetLocalInertia(pinertiaSphere);
