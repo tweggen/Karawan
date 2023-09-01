@@ -153,7 +153,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         }
 
         int l = streetPoints.Count;
-        int nCharacters = (int)((float)l * 3f / 10f);
+        int nCharacters = (int)((float)l * 6f / 10f);
 
         for (int i = 0; i < nCharacters; i++)
         {

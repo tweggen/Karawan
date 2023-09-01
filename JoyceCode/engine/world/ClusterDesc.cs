@@ -45,6 +45,11 @@ public class ClusterDesc
     private engine.RandomSource _rnd;
     private engine.geom.AABB _aabb;
 
+    private float _initialOuterStreetLength;
+    private float _initialOuterStreetWeight = 1.7f;
+    private float _initialInnerStreetLength;
+    private float _initialInnerStreetWeight = 1.4f;
+
     /** 
      * Each cluster has a stroke store associated that descirbes the 
      * street graph.
@@ -208,40 +213,11 @@ public class ClusterDesc
      */
     private void _addHighwayTriggers()
     {
-        // TXWTODO: Do it acually
-        /*
-         * Variant one: From each of the sides.
-         */
-#if false
-        {
-            var newA = new StreetPoint();
-            newA.setPos( -size/3., -size/3. );
-            var newB = new StreetPoint();
-            var stroke = Stroke.createByAngleFrom( newA, newB, Math.PI*0.25, 30., true, 1.5 );
-            _streetGenerator.addStartingStroke(stroke);
-        }
-        {
-            var newA = new StreetPoint();
-            newA.setPos( size/3., -size/3. );
-            var newB = new StreetPoint();
-            var stroke = Stroke.createByAngleFrom( newA, newB, 3.*Math.PI*0.25, 30., true, 1.5 );
-            _streetGenerator.addStartingStroke(stroke);
-        }
-        {
-            var newA = new StreetPoint();
-            newA.setPos( -size/3., size/3. );
-            var newB = new StreetPoint();
-            var stroke = Stroke.createByAngleFrom( newA, newB, -Math.PI*0.25, 30., true, 1.5 );
-            _streetGenerator.addStartingStroke(stroke);
-        }
-        {
-            var newA = new StreetPoint();
-            newA.setPos( size/3., size/3. );
-            var newB = new StreetPoint();
-            var stroke = Stroke.createByAngleFrom( newA, newB, -3.0*Math.PI*0.25, 30., true, 1.5 );
-            _streetGenerator.addStartingStroke(stroke);
-        }
-#endif
+        _initialOuterStreetLength =
+            Single.Max(35f, Single.Min(1000f, Size) / 18f);
+        _initialInnerStreetLength =
+            Single.Max(30f, Single.Min(1000f, Size) / 25f);
+        
         /*
          * Variant two: n random points
          */
@@ -253,7 +229,8 @@ public class ClusterDesc
             newA.SetPos( x, y );
             float dir = _rnd.Get8()*(float)Math.PI/128f;
             var newB = new engine.streets.StreetPoint();
-            var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 30f, true, 1.5f );
+            var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 
+                _initialInnerStreetLength, true, _initialInnerStreetWeight );
             _streetGenerator.AddStartingStroke(stroke);
         }
 #if true
@@ -262,30 +239,34 @@ public class ClusterDesc
          */
         {
             var newA = new StreetPoint();
-            newA.SetPos( -Size/3f, -Size/3f );
+            newA.SetPos( -Size/2.2f, -Size/2.2f );
             var newB = new StreetPoint();
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, (float)Math.PI*0.25f, 30f, true, 1.5f );
+            var stroke = Stroke.CreateByAngleFrom( newA, newB, (float)Math.PI*0.25f, 
+                _initialOuterStreetLength, true, _initialOuterStreetWeight );
             _streetGenerator.AddStartingStroke(stroke);
         }
         {
             var newA = new StreetPoint();
-            newA.SetPos( Size/3f, -Size/3f );
+            newA.SetPos( Size/2.1f, -Size/2.1f );
             var newB = new StreetPoint();
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, 3f*(float)Math.PI*0.25f, 30f, true, 1.5f );
+            var stroke = Stroke.CreateByAngleFrom( newA, newB, 3f*(float)Math.PI*0.25f,
+                _initialOuterStreetLength, true, _initialOuterStreetWeight );
             _streetGenerator.AddStartingStroke(stroke);
         }
         {
             var newA = new StreetPoint();
-            newA.SetPos( -Size/3f, Size/3f );
+            newA.SetPos( -Size/2.2f, Size/2.2f );
             var newB = new StreetPoint();
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, -(float)Math.PI*0.25f, 30f, true, 1.5f );
+            var stroke = Stroke.CreateByAngleFrom( newA, newB, -(float)Math.PI*0.25f, 
+                _initialOuterStreetLength, true, _initialOuterStreetWeight );
             _streetGenerator.AddStartingStroke(stroke);
         }
         {
             var newA = new StreetPoint();
-            newA.SetPos( Size/3f, Size/3f );
+            newA.SetPos( Size/2.15f, Size/2.2f );
             var newB = new StreetPoint();
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, -3.0f*(float)Math.PI*0.25f, 30f, true, 1.5f );
+            var stroke = Stroke.CreateByAngleFrom( newA, newB, -3.0f*(float)Math.PI*0.25f, 
+                _initialOuterStreetLength, true, _initialOuterStreetWeight );
             _streetGenerator.AddStartingStroke(stroke);
         }
 #endif

@@ -48,12 +48,12 @@ namespace engine.streets
         public float weightIncreaseFactor { get; set; } = 1.1f;
         public float weightDecreaseFactor { get; set; } = 0.9f;
         public float weightMin { get; set; } = 0.1f;
-        public float weightMax { get; set; } = 1.9f;
+        public float weightMax { get; set; } = 1.3f;
 
         public float probabilityAngleSlightTurn { get; set; } = 20f;
         public int AngleSlightTurnMax { get; set; } = 6;
 
-        public float AngleMinStrokes { get; set; } = 30.0f;
+        public float AngleMinStrokes { get; set; } = 40.0f;
 
 
         /**
