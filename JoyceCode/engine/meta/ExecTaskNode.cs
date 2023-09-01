@@ -15,9 +15,20 @@ public class ExecTaskNode : AExecNode
     {
         if (ExecDesc.ConfigCondition != null)
         {
-            if (Props.Get(ExecDesc.ConfigCondition, "true") as string != "true")
+            object propValue = Props.Get(ExecDesc.ConfigCondition, true);
+            if (propValue is bool)
             {
-                return null;
+                if (((bool)propValue) != true)
+                {
+                    return null;
+                }
+            }
+            if (propValue is string)
+            {
+                if (((string)propValue) != "true")
+                {
+                    return null;
+                }
             }
         }
         Task? t = op(_instance);

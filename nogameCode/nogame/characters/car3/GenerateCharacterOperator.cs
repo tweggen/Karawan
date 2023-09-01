@@ -153,7 +153,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         }
 
         int l = streetPoints.Count;
-        int nCharacters = (int)((float)l * 6f / 10f);
+        int nCharacters = (int)((float)l * 8f / 10f);
 
         for (int i = 0; i < nCharacters; i++)
         {
@@ -211,7 +211,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                     | InstantiateModelParams.CENTER_X
                                     | InstantiateModelParams.CENTER_Z
                                     | InstantiateModelParams.ROTATE_Y180,
-                        MaxDistance = 300f
+                        MaxDistance = propMaxDistance
                     });
                     InstanceDesc jInstanceDesc = model.InstanceDesc;
                     ModelInfo modelInfo = model.ModelInfo;

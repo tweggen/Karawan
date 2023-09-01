@@ -152,7 +152,19 @@ public class Main
                     var dict = engine.Props.Instance().Dictionary;
                     foreach (var kvp in dict)
                     {
-                        if (kvp.Value is float)
+                        if (kvp.Value is bool) 
+                        {
+                            bool value = (bool) kvp.Value;
+                            if (ImGui.Checkbox(kvp.Key, ref value))
+                            {
+                                if (value != (bool)kvp.Value)
+                                {
+                                    Trace($"new Value {value}");
+                                    Props.Set(kvp.Key, value);
+                                }
+                            }
+                        }
+                        else if (kvp.Value is float)
                         {
                             float currentInput = (float)kvp.Value;
                             if (ImGui.InputFloat(kvp.Key, ref currentInput,
@@ -170,7 +182,7 @@ public class Main
                         }
                         else
                         {
-                            ImGui.Text("Can't parse \"${kvp.Key}\"");  
+                            ImGui.Text($"Can't parse \"{kvp.Value}\"");  
                         }
 
                         //ImGui.Text(kvp.Value);

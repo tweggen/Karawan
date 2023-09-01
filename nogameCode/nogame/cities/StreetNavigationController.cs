@@ -153,7 +153,7 @@ public class StreetNavigationController
              * Be sure to have a destination point and compute the vector
              * to it and its length to have the unit vector to it.
              */
-            Vector2 vuDist = Vector2.Zero;
+            Vector2 vuDest = Vector2.Zero;
             float dist = 0.0f;
             while (true)
             {
@@ -170,10 +170,9 @@ public class StreetNavigationController
                  * tx is the target we move to, ux is the
                  * unit vector of the direction.
                  */
-                Vector2 vTarget = _targetPoint.Pos;
-                Vector2 vStart = _startPoint.Pos;
-
-                Vector2 vuTravelDirection = Vector2.Normalize(vTarget - vStart);
+                Vector2 vStreetTarget = _targetPoint.Pos;
+                Vector2 vStreetStart = _startPoint.Pos;
+                Vector2 vuStreetDirection = Vector2.Normalize(vStreetTarget - vStreetStart);
 
                 /*
                  * Offset the target one unit towards the start point
@@ -214,26 +213,84 @@ public class StreetNavigationController
                     rightLane = streetWidth / 2f - 2f;
                 }
                 
-                vTarget = vTarget
-                          /*
-                           * Not quite to the center of the junction
-                           */
-                          - vuTravelDirection * streetWidth / 2f
-                          /*
-                           * And up to the right lane.
-                           */
-                          + rightLane * new Vector2(-vuTravelDirection.Y, vuTravelDirection.X);
+                var vLaneOffset = rightLane * new Vector2(-vuStreetDirection.Y, vuStreetDirection.X); 
+                
                 /*
-                 * understand how long we still need to go and set the direction.
+                 * This is where we actually are heading to.
                  */
-                var vDelta = vTarget - _vPos2;
-                dist = vDelta.Length();
-                if (dist > 0.05f)
+                var vPerfectTarget = vStreetTarget
+                              /*
+                               * Not quite to the center of the junction
+                               */
+                              - vuStreetDirection * streetWidth / 2f
+                              /*
+                               * And up to the right lane.
+                               */
+                              + vLaneOffset;
+                var vPerfectStart = vStreetStart + vLaneOffset;
+
+                /*
+                 * Now compute the actual target for the current iteration.
+                 */
+                Vector2 vCurrentTarget = vPerfectTarget;
+                var vPerfectDirection = vPerfectTarget - vPerfectStart;
+                var vuPerfectDirection = Vector2.Normalize(vPerfectDirection);
+
+                Vector2 vPerfectMe = default;
+                Vector2 vMeFromStart = _vPos2 - vPerfectStart;
+                float vMeFromStartLength = vMeFromStart.Length();
+                if (vMeFromStartLength > 0.1f)
                 {
-                    vuDist = vDelta / dist;
-                    _lastDirection = new Vector3(vuDist.X * _speed, 0f, vuDist.Y * _speed);
-                    break;
+                    float vPerfectMeScale = 
+                        Vector2.Dot(vMeFromStart, vPerfectDirection)
+                        / vMeFromStartLength;
+                    vPerfectMe = vPerfectStart + vuPerfectDirection * vPerfectMeScale;
+
+                    Vector2 vOff = (vPerfectMe - _vPos2);
+                    float offLength = vOff.Length();
+                    if (offLength > 1f)
+                    {
+                        vCurrentTarget = vPerfectMe; // + vuPerfectDirection/2f;
+                    }
+                    else
+                    {
+                        vCurrentTarget = vPerfectTarget;
+                    }
                 }
+
+                vuDest = Vector2.Normalize(vCurrentTarget - _vPos2);
+
+                {
+                    /*
+                     * Derive the current direction from the computed actual target.
+                     */
+                    var vActualDelta = vCurrentTarget - _vPos2;
+                    float actualDist2 = vActualDelta.LengthSquared();
+                    if (actualDist2 > 0.0025f)
+                    {
+                        _lastDirection = new Vector3(vuDest.X * _speed, 0f, vuDest.Y * _speed);
+                    }
+                }
+
+                {
+                    /*
+                     * Now check, how far it is from me to the perfect target
+                     */
+                    var vPerfectDelta = vPerfectTarget - _vPos2;
+                    float perfectDist2 = vPerfectDelta.LengthSquared();
+                    if (perfectDist2 > 0.0025f)
+                    {
+                        /*
+                         * Yes, there's still a way to go.
+                         */
+                        dist = Single.Sqrt(perfectDist2);
+                        break;
+                    }
+                }
+
+                /*
+                 * No, we do not have a proper way to go, look for the next street point.
+                 */
 
                 _prevStart = _startPoint;
                 _startPoint = _targetPoint;
@@ -260,7 +317,7 @@ public class StreetNavigationController
             }
 
             togo -= gonow;
-            _vPos2 += vuDist * gonow;
+            _vPos2 += vuDest * gonow;
         }
     }
 

@@ -64,8 +64,6 @@ public class Scene : engine.IScene
                  * Be totally safe and blank the camera.
                  */
                 _eCamera.Get<engine.joyce.components.Camera3>().CameraMask = 0;
-                _eCamera.Dispose();
-                _eLight.Dispose();
                 _isCleared = true;
             }
         }
@@ -104,6 +102,11 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
+        /*
+         * 
+         */
+        _engine.AddDoomedEntity(_eCamera);
+        _engine.AddDoomedEntity(_eLight);
         engine.Engine engine = null;
         lock (_lo)
         {

@@ -94,12 +94,7 @@ public class TitleModule : engine.AModule
 
         if (ace != null)
         {
-            _engine.QueueMainThreadAction(() =>
-            {
-                ace.Entity.Disable();
-                ace.Entity.Dispose();
-                // ace.InstanceDesc.Dispose();
-            });
+            _engine.AddDoomedEntity(ace.Entity);
         }
 
         _engine.RemoveModule(this);
