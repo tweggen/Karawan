@@ -195,14 +195,14 @@ public class StreetNavigationController
                         /*
                          * fast? Drive on the Left hand side.
                          */
-                        rightLane = streetWidth / 2f - 4.1f;
+                        rightLane = streetWidth / 2f - 6f;
                     }
                     else
                     {
                         /*
                          * Slow? Drive on the right hand side.
                          */
-                        rightLane = streetWidth / 2f - 2f;
+                        rightLane = streetWidth / 2f - 3f;
                     }
                 }
                 else
@@ -234,7 +234,8 @@ public class StreetNavigationController
                  */
                 Vector2 vCurrentTarget = vPerfectTarget;
                 var vPerfectDirection = vPerfectTarget - vPerfectStart;
-                var vuPerfectDirection = Vector2.Normalize(vPerfectDirection);
+                var vPerfectDirectionLength = vPerfectDirection.Length();
+                var vuPerfectDirection = vPerfectDirection / vPerfectDirectionLength;
 
                 Vector2 vPerfectMe = default;
                 Vector2 vMeFromStart = _vPos2 - vPerfectStart;
@@ -243,14 +244,23 @@ public class StreetNavigationController
                 {
                     float vPerfectMeScale = 
                         Vector2.Dot(vMeFromStart, vPerfectDirection)
-                        / vMeFromStartLength;
+                        / vPerfectDirectionLength;
+
+                    /*
+                     * If we already did overshoot, pick the next street point.
+                     */
+                    if (vPerfectMeScale >= vPerfectDirectionLength)
+                    {
+                        dist = 0;
+                        break;
+                    }
                     vPerfectMe = vPerfectStart + vuPerfectDirection * vPerfectMeScale;
 
                     Vector2 vOff = (vPerfectMe - _vPos2);
                     float offLength = vOff.Length();
                     if (offLength > 1f)
                     {
-                        vCurrentTarget = vPerfectMe; // + vuPerfectDirection/2f;
+                        vCurrentTarget = vPerfectMe + vuPerfectDirection/2f;
                     }
                     else
                     {
@@ -258,7 +268,8 @@ public class StreetNavigationController
                     }
                 }
 
-                vuDest = Vector2.Normalize(vCurrentTarget - _vPos2);
+                var vDest = vCurrentTarget - _vPos2;        
+                vuDest = Vector2.Normalize(vDest);
 
                 {
                     /*
@@ -282,8 +293,10 @@ public class StreetNavigationController
                     {
                         /*
                          * Yes, there's still a way to go.
+                         * However, return only what we can apply in the given direction.
                          */
-                        dist = Single.Sqrt(perfectDist2);
+                        dist = vDest.Length();
+                        //dist = Single.Sqrt(perfectDist2);
                         break;
                     }
                 }
