@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
 using engine;
+using engine.gongzuo;
 using engine.world;
 using ImGuiNET;
 using static engine.Logger;
@@ -415,7 +416,14 @@ public class Main
                                         string strValue = "(not available)";
                                         try
                                         {
-                                            strValue = fieldInfo.GetValue(componentInfo.Value).ToString();
+                                            if (typeAttr == typeof(engine.gongzuo.LuaScriptEntry))
+                                            {
+                                                strValue = (fieldInfo.GetValue(componentInfo.Value) as LuaScriptEntry).LuaScript;
+                                            }
+                                            else
+                                            {
+                                                strValue = fieldInfo.GetValue(componentInfo.Value).ToString();
+                                            }
                                         }
                                         catch (Exception e)
                                         {
