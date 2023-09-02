@@ -81,6 +81,7 @@ namespace engine
         private bool _isFullscreen = false;
         
         private physics.Manager _managerPhysics;
+        private gongzuo.LuaScriptManager _managerLuaScript;
         public readonly SceneSequencer SceneSequencer;        
         
         public event EventHandler<float> OnLogicalFrame;
@@ -915,6 +916,8 @@ namespace engine
             _systemMovingSounds = new(this);
             _managerPhysics = new physics.Manager();
             _managerPhysics.Manage(this);
+            _managerLuaScript = new ();
+            _managerLuaScript.Manage(_ecsWorld);
 
             _logicalThread = new Thread(_logicalThreadFunction);
             _logicalThread.Priority = ThreadPriority.AboveNormal;

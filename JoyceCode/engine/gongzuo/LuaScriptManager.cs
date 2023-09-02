@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using DefaultEcs;
 using static engine.Logger;
 
-namespace engine.gongzuo.systems;
+namespace engine.gongzuo;
 
 public class LuaScriptManager : IDisposable
 {
@@ -34,14 +34,14 @@ public class LuaScriptManager : IDisposable
      */
     private int _inRemoveInstance3 = 0;
 
-    private void _unloadMesh(in LuaScriptEntry luaScriptEntry)
+    private void _unload(in LuaScriptEntry luaScriptEntry)
     {
-        // TXWTODO: Unload script entry
+        luaScriptEntry.Dispose();
     }
 
-    private void _loadMesh(in LuaScriptEntry luaScriptEntry)
+    private void _compile(in LuaScriptEntry luaScriptEntry)
     {
-        // TXWTODO: Load script entry
+        // Actually, it compiles itself.
     }
 
 
@@ -65,13 +65,13 @@ public class LuaScriptManager : IDisposable
             {
                 try
                 {
-                    _loadMesh(value.LuaScriptEntry);
+                    _compile(value.LuaScriptEntry);
                     luaScriptResource = new Resource<LuaScriptEntry>(value.LuaScriptEntry);
                     _luaScriptResources.Add(value.LuaScriptEntry, luaScriptResource);
                 }
                 catch (Exception e)
                 {
-                    Error("Exception loading lua script function: {e}");
+                    Error($"Exception loading lua script function: {e}");
                 }
                
                 if (null != luaScriptResource)
@@ -100,7 +100,7 @@ public class LuaScriptManager : IDisposable
                 {
                     try
                     {
-                        _unloadMesh(value.LuaScriptEntry);
+                        _unload(value.LuaScriptEntry);
                     }
                     finally
                     {
@@ -145,7 +145,7 @@ public class LuaScriptManager : IDisposable
 
         foreach (var pair in _luaScriptResources)
         {
-            _unloadMesh(pair.Key);
+            _unload(pair.Key);
         }
 
         _luaScriptResources.Clear();

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using engine;
 using engine.draw;
+using engine.gongzuo;
 using engine.news;
 using engine.physics;
 using engine.world;
@@ -463,6 +464,12 @@ namespace nogame.modules.playerhover
                     10f, 0.9f));
                 _eShip.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Player0 });
+                _eShip.Set(
+                    new engine.gongzuo.components.LuaScript(
+                        new LuaScriptEntry()
+                        {
+                            LuaScript = "print(\"Script successfully has been loaded.\")"
+                        }));
                 
                 /*
                  * I have absolutely no clue why, but with the real radius of the model (1.039f) the
