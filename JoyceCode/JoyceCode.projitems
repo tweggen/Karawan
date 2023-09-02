@@ -78,6 +78,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Angles.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Line.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\GlobalSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\components\LuaScript.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptEntry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\systems\LuaScriptManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\systems\LuaScriptRunSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Children.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\NewParent.cs" />
