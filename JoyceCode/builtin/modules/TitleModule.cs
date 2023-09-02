@@ -96,8 +96,6 @@ public class TitleModule : engine.AModule
         {
             _engine.AddDoomedEntity(ace.Entity);
         }
-
-        _engine.RemoveModule(this);
     }
 
 
@@ -145,6 +143,10 @@ public class TitleModule : engine.AModule
 
     public void ModuleDeactivate()
     {
+        foreach (var card in _cards)
+        {
+            _onCardStop(card);
+        }
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
     }
@@ -183,11 +185,5 @@ public class TitleModule : engine.AModule
         {
             _cards.Add(card);
         }
-    }
-
-
-    public TitleModule(TitleCard card)
-    {
-        Add(card);
     }
 }

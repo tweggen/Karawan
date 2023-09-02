@@ -145,6 +145,10 @@ namespace engine
             }
         }
 
+        
+        Vector2 _vViewUl = Vector2.Zero;
+        Vector2 _vViewLr = Vector2.Zero; 
+        
 
         private int _isLoading = 0;
         public void SuggestBeginLoading()
@@ -987,10 +991,26 @@ namespace engine
         
         public void PlatformSetupDone()
         {
+            State = EngineState.Running;
+
             /*
              * Start the reality as soon the platform also is set up.
              */
             _logicalThread.Start();
+        }
+
+
+        public void SetViewRectangle(Vector2 ul, Vector2 lr)
+        {
+            _vViewUl = ul;
+            _vViewLr = lr;
+        }
+
+
+        public void GetViewRectangle(out Vector2 ul, out Vector2 lr)
+        {
+            ul = _vViewUl;
+            lr = _vViewLr;
         }
         
         
@@ -1012,7 +1032,9 @@ namespace engine
             Implementations.Register<engine.transform.API>(() => new transform.API(this));
             Implementations.Register<engine.physics.API>(() => new physics.API(this));
             Implementations.Register<engine.hierarchy.API>(() => new hierarchy.API(this));
-         }
+            
+            State = EngineState.Starting;
+        }
     }
 }
  

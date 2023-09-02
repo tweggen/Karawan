@@ -103,13 +103,20 @@ public class Main
         _setStyle();
     }
     
+    
     public unsafe void Render(float dt)
     {
         _setStyle();
         
         ImGui.SetNextWindowPos(new Vector2(0, 20), ImGuiCond.Appearing);
-        ImGui.SetNextWindowSize(ImGui.GetMainViewport().Size with {X = 500 } - new Vector2(0, 20), ImGuiCond.Appearing);
-        if (ImGui.Begin("selector", ImGuiWindowFlags.NoCollapse))
+        ImGui.SetNextWindowSize(
+            ImGui.GetMainViewport().Size with {X = 500} - new Vector2(0, 20),
+            ImGuiCond.Appearing);
+        if (ImGui.Begin("selector", 0
+                |ImGuiWindowFlags.NoCollapse
+                |ImGuiWindowFlags.NoMove
+                |ImGuiWindowFlags.NoResize
+                ))
         {
             if (ImGui.BeginMainMenuBar())
             {
@@ -130,6 +137,37 @@ public class Main
                 }
 
                 ImGui.EndMainMenuBar();
+            }
+
+            {
+                var state = _engine.State;
+                switch (state)
+                {
+                    case Engine.EngineState.Initialized:
+                    case Engine.EngineState.Starting:
+                    case Engine.EngineState.Stopping:
+                        ImGui.Text(state.ToString());
+                        break;
+                    case Engine.EngineState.Running:
+                        if (ImGui.Button("Pause"))
+                        {
+                            _engine.SetEngineState(Engine.EngineState.Stopped);
+                        }
+                        break;
+                    case Engine.EngineState.Stopped:
+                        if (ImGui.Button("Continue"))
+                        {
+                            _engine.SetEngineState(Engine.EngineState.Running);
+                        }
+                        break;
+                }
+
+                ImGui.SameLine();
+
+                if (ImGui.Button("Regenerate"))
+                {
+                    MetaGen.Instance().Loader.WorldLoaderReleaseFragments();
+                }
             }
 
             if (ImGui.CollapsingHeader("Config"))

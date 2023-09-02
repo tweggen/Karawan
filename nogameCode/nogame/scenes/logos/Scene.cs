@@ -25,6 +25,8 @@ public class Scene : engine.IScene
     private DefaultEcs.Entity _eLogo;
     private DefaultEcs.Entity _eLight;
 
+    private TitleModule _modTitle;
+    
     private bool _isCleared = false;
 
     private bool _shallHideTitle = false;
@@ -102,6 +104,8 @@ public class Scene : engine.IScene
 
     public void SceneDeactivate()
     {
+        _modTitle.ModuleDeactivate();
+
         /*
          * 
          */
@@ -145,7 +149,7 @@ public class Scene : engine.IScene
             TimeSpan.FromMilliseconds(800),
             _preload);
 
-        new builtin.parts.TitleModule(new TitleCard()
+        _modTitle.Add(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
             StartOffset = TimeSpan.FromMilliseconds(500),
@@ -159,9 +163,9 @@ public class Scene : engine.IScene
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
             EndTransform =  new engine.transform.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
-        }).ModuleActivate(_engine);
+        });
 
-        new builtin.parts.TitleModule(new TitleCard()
+        _modTitle.Add(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
             StartOffset = TimeSpan.FromMilliseconds(2000),
@@ -174,7 +178,9 @@ public class Scene : engine.IScene
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
             EndTransform =  new engine.transform.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
-        }).ModuleActivate(_engine);
+        });
+        
+        _modTitle.ModuleActivate(_engine);
     }
 
 
@@ -254,6 +260,7 @@ public class Scene : engine.IScene
 
 
         _engine.SceneSequencer.AddScene(5, this);
-
+        _modTitle = new();
+        
     }
 }

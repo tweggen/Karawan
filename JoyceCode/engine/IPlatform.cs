@@ -21,7 +21,7 @@ namespace engine
         public void CollectRenderData(IScene scene);
 
         public void SetFullscreen(bool isFullscreen);
-        
+
         public bool IsRunning();
     }
 }

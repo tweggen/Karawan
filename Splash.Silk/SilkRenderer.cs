@@ -138,16 +138,35 @@ namespace Splash.Silk
         }
 
 
-        private void _nailViewport(bool force = false)
+        private void _nailViewport(bool useViewRectangle, bool force = false)
         {
-            if (null == _gl)
+            Vector2 vDesiredSize;
+            Vector2 ul;
+            if (useViewRectangle)
             {
-                return;
+                _engine.GetViewRectangle(out ul, out var lr);
+                if (Vector2.Zero == lr)
+                {
+                    vDesiredSize = _vViewSize;
+                }
+                else
+                {
+                    
+                    vDesiredSize = lr - ul + Vector2.One;
+                }
+            }
+            else
+            {
+                ul = Vector2.Zero;
+                vDesiredSize =  _vViewSize;
             }
 
-            if (force || _vLastGlSize != _vViewSize)
+            if (null != _gl && (force || _vLastGlSize != vDesiredSize))
             {
-                _gl.Viewport(0, 0, (uint)_vViewSize.X, (uint)_vViewSize.Y);
+
+                _gl.Viewport((int)ul.X, (int)ul.Y,
+                    (uint)(vDesiredSize.X),
+                    (uint)(vDesiredSize.Y));
                 _silkThreeD.CheckError($"glViewport {_vViewSize}");
                 _vLastGlSize = _vViewSize;
             }
@@ -163,12 +182,13 @@ namespace Splash.Silk
              */
             _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
             _silkThreeD.CheckError("glBindFramebuffer");
-            _nailViewport(true);
+            _nailViewport(true, true);
             _skShaderEntry = _silkThreeD.GetInstanceShaderEntry();
             _skShaderEntry.SkShader.Use();
             _lightManager.ApplyLights(renderFrame, _skShaderEntry);
             // _gl.UseProgram(0);
             _renderParts(renderFrame.RenderParts);
+            _nailViewport(false, true);
         }
 
 
@@ -177,7 +197,6 @@ namespace Splash.Silk
             if (x != 0 && y != 0)
             {
                 _vViewSize = new Vector2((float)x, (float)y);
-                _nailViewport();
             }
         }
         

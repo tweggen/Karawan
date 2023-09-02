@@ -70,11 +70,13 @@ public class Scene : engine.IScene, engine.IInputPart
 
         if (isUIShown)
         {
+            _engine.SetViewRectangle(Vector2.Zero, Vector2.Zero );
             _moduleUi.ModuleDeactivate();
             _engine.DisableMouse();
         }
         else
         {
+            _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
             _engine.EnableMouse();
             _moduleUi.ModuleActivate(_engine);
         }
@@ -116,19 +118,23 @@ public class Scene : engine.IScene, engine.IInputPart
     private void _onTouchPress(Event ev)
     {
         bool _callToggleMap = false;
-        
-        lock (_lo)
-        {
-            // TXWTODO: Compute a relative position depending on view size.
-            if (ev.Position.X < 150 && ev.Position.Y < 150) 
-            {
-                _callToggleMap = true;
-            }
-        }
 
-        if (_callToggleMap)
+        // TXWTODO: Separater touch from click ui input
+        if (GlobalSettings.Get("Android") == "true")
         {
-            _toggleMap();
+            lock (_lo)
+            {
+                // TXWTODO: Compute a relative position depending on view size.
+                if (ev.Position.X < 150 && ev.Position.Y < 150)
+                {
+                    _callToggleMap = true;
+                }
+            }
+
+            if (_callToggleMap)
+            {
+                _toggleMap();
+            }
         }
     }
     

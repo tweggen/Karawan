@@ -52,12 +52,36 @@ namespace engine.world
             // TXWTODO: MOtex
             foreach (var strKey in eraseList )
             {
-                var frag = _mapFrags[strKey];
-                if (world.MetaGen.TRACE_WORLD_LOADER) Trace($"WorldLoader.releaseFragmentList(): Discarding fragment {strKey}");
-                frag.WorldFragmentRemove();
-                frag.Dispose();
-                frag = null;
-                _mapFrags.Remove(strKey);
+                if (_mapFrags.TryGetValue(strKey, out var frag))
+                {
+                    if (strKey==_strLastLoaded)
+                    {
+                        _strLastLoaded = "";
+                    }
+                    if (world.MetaGen.TRACE_WORLD_LOADER)
+                        Trace($"WorldLoader.releaseFragmentList(): Discarding fragment {strKey}");
+                    frag.WorldFragmentRemove();
+                    frag.Dispose();
+                    frag = null;
+                    _mapFrags.Remove(strKey);
+                }
+            }
+        }
+
+
+        /**
+         * Reload the current fragments
+         */
+        public void WorldLoaderReleaseFragments()
+        {
+            List<string> fragments = new();
+            lock (_lo)
+            {
+                foreach (var kvp in _mapFrags)
+                {
+                    fragments.Add(kvp.Key);
+                }
+                _releaseFragmentListNoLock(fragments);
             }
         }
 
