@@ -76,8 +76,8 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 MaxDistance = 800f
             });
         var vPos =
-            _clusterDesc.Pos - worldFragment.Position +
-            estate.GetCenter() with { Y = _clusterDesc.AverageHeight + 2.5f };
+            (_clusterDesc.Pos - worldFragment.Position +
+            estate.GetCenter()) with { Y = _clusterDesc.AverageHeight + 2.5f };
         worldFragment.AddStaticInstance(
             "nogame.furniture.polytopeStand", modelStand.InstanceDesc,
                 vPos, Quaternion.Identity, null);
