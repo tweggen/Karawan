@@ -160,9 +160,9 @@ public class Scene : engine.IScene
             AlbedoTexture = new Texture("logos.joyce.albedo-joyce-engine.png"),
             EmissiveTexture = new Texture("logos.joyce.emissive-joyce-engine.png"),
             StartTransform =  new engine.transform.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
+                true, 0x00010000, Quaternion.Identity, Vector3.Zero),
             EndTransform =  new engine.transform.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
+                true, 0x00010000, Quaternion.Identity, Vector3.Zero),
         });
 
         _modTitle.Add(new TitleCard()
