@@ -57,7 +57,7 @@ public struct AABB
                 {
                     float a, b;
                     a = m[i, j] * AA[j];
-                    b = m.M11 * BB.X;
+                    b = m[i, j] * BB[j];
                     newAA[i] += Single.Min(a, b);
                     newBB[i] += Single.Max(a, b);
                 }
