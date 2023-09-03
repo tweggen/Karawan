@@ -94,8 +94,10 @@ namespace engine
         private Entity _playerEntity;
         public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
 
-        private builtin.tools.RunningAverageComputer _fpsCounter = new();
 
+        private FPSMonitor _fpsPhysicalMonitor = new("physical");
+        private FPSMonitor _fpsLogicalMonitor = new("logical");
+        
         public int NFrameDurations = 200;
 
         private Queue<float> _frameDurationQueue = new();
@@ -453,7 +455,7 @@ namespace engine
                 /*
                  * Compute a running average of fps.
                  */
-                _fpsCounter.Add(dt);
+                _fpsPhysicalMonitor.OnFrame(dt);
                 while (_frameDurationQueue.Count >= NFrameDurations)
                 {
                     _frameDurationQueue.Dequeue();
@@ -769,48 +771,9 @@ namespace engine
         }
 
 
-        private long _previousSeconds = 0;
-        private void _logicalUpdateFpsAverage()
-        {
-            /*
-             * Do these updates every second
-             */
-            {
-                long seconds = Stopwatch.GetTimestamp() / Stopwatch.Frequency;
-                if (_previousSeconds != seconds)
-                {
-
-                    float dt;
-                    lock (_lo)
-                    {
-                        dt = _fpsCounter.GetRunningAverage();
-                    }
-
-                    float fps = 0f;
-                    if (0 == dt)
-                    {
-                        fps = 0f;
-                    }
-                    else
-                    {
-                        fps = 1f / dt;
-                    }
-
-                    Trace($"#fps {fps}");
-                    if (seconds % 10 == 0)
-                    {
-                        var allBehaved = GetEcsWorld().GetEntities()
-                            .With<engine.behave.components.Behavior>()
-                            .AsEnumerable();
-                        Trace($"#behavior {allBehaved.Count()}");
-                    }
-                }
-
-                _previousSeconds = seconds;
-            }
-        }
-
-
+       
+        
+        
         private void _logicalThreadFunction()
         {
             float invFps = 1f / 60f;
@@ -861,6 +824,7 @@ namespace engine
                 }
 
                 stopWatch.Start();
+                int nLogical = 0;
                 /*
                  * Run as many logical frames as have been elapsed.
                  */
@@ -878,6 +842,7 @@ namespace engine
                     if (_platformIsAvailable)
                     {
                         _onLogicalFrame(invFps);
+                        ++nLogical;
                     }
 
                     totalTime -= invFps;
@@ -894,7 +859,17 @@ namespace engine
                  */
                 stopWatch.Start();
 
-                _logicalUpdateFpsAverage();
+                if (0 < nLogical)
+                {
+                    float eachFrame = processedTime / (float)nLogical;
+                    for (int i = 0; i < nLogical; ++i)
+                    {
+                        _fpsLogicalMonitor.OnFrame(eachFrame);
+                    }
+                }
+
+                _fpsPhysicalMonitor.Update();
+                _fpsLogicalMonitor.Update();
                 _checkUpdateEntityArray();
             }
 
