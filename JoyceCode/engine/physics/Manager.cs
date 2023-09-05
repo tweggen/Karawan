@@ -1,6 +1,8 @@
 ﻿using DefaultEcs;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using static engine.Logger;
 
 namespace engine.physics
 {
@@ -20,10 +22,7 @@ namespace engine.physics
             {
                 foreach (var handle in statics.Handles)
                 {
-                    if (handle.Value != 0x7fffffff)
-                    {
-                        _engine.Simulation.Statics.Remove(handle);
-                    }
+                    _engine.Simulation.Statics.Remove(handle);
                 }
             }
             if (statics.ReleaseActions != null)
@@ -38,9 +37,13 @@ namespace engine.physics
 
         private void _removeKinetic(in components.Kinetic cKinetic)
         {
-            if (cKinetic.Reference.Handle.Value != (int)0x7fffffff)
+            if (0 == (cKinetic.Flags & components.Kinetic.DONT_FREE_PHYSICS))
             {
                 _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
+            }
+            else
+            {
+                Trace("Hit me.");
             }
 
             if (cKinetic.ReleaseActions != null)
@@ -68,8 +71,11 @@ namespace engine.physics
 
         private void OnKineticChanged(in Entity entity, in components.Kinetic cOldKinetic, in components.Kinetic cNewKinetic)
         {
-            // We need to assume the user added the new entity.
-            _removeKinetic(cOldKinetic);
+            if (cOldKinetic.Reference.Handle.Value != cNewKinetic.Reference.Handle.Value)
+            {
+                // We need to assume the user added the new entity.
+                _removeKinetic(cOldKinetic);
+            }
         }
 
         
@@ -81,12 +87,22 @@ namespace engine.physics
 
         private void OnBodyChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
         {
-            // We need to assume the user added the new entity.
-            _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
+            if (cOldBody.Reference.Handle.Value != cNewBody.Reference.Handle.Value)
+            {
+                // We need to assume the user added the new entity.
+                if (0 == (cOldBody.Flags & components.Body.DONT_FREE_PHYSICS))
+                {
+                    _engine.Simulation.Bodies.Remove(cOldBody.Reference.Handle);
+                }
+            }
         }
+        
         private void OnBodyRemoved(in Entity entity, in components.Body cBody)
         {
-            _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
+            if (0 == (cBody.Flags & components.Body.DONT_FREE_PHYSICS))
+            {
+                _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
+            }
         }
 
         public void Dispose()

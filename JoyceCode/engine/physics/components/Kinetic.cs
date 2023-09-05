@@ -8,10 +8,13 @@ namespace engine.physics.components
 {
     public struct Kinetic
     {
+        public static uint DONT_FREE_PHYSICS = 1;
+        
         public BepuPhysics.BodyReference Reference;
         public Vector3 LastPosition;
         public physics.CollisionProperties CollisionProperties;
         public float MaxDistance = 50f;
+        public uint Flags = 0;
 
         /**
          * Release function to free any additional data beyond the handles,

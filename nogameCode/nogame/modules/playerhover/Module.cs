@@ -173,7 +173,7 @@ namespace nogame.modules.playerhover
                     _polyballSound.Stop();
                     _polyballSound.Play();
                 } 
-                else if (false && other.Name == "nogame.characters.car3")
+                else if (other.Name == "nogame.characters.car3")
                 {
                     _engine.QueueMainThreadAction(() =>
                     {
@@ -181,16 +181,18 @@ namespace nogame.modules.playerhover
                         engine.physics.components.Kinetic cCarKinetic;
                         if (other.Entity.Has<engine.physics.components.Kinetic>())
                         {
+                            /*
+                             * Get a copy of the original.
+                             */
                             cCarKinetic = other.Entity.Get<engine.physics.components.Kinetic>();
-                            int orgHandle = cCarKinetic.Reference.Handle.Value;
+                            cCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
                             
                             /*
-                             * Prevent value from automatic removal.
+                             * Prevent value from automatic removal, patching it in place.
                              */
-                            other.Entity.Get<engine.physics.components.Kinetic>().Reference.Handle.Value = 0x7fffffff;
+                            other.Entity.Set(cCarKinetic);
                             other.Entity.Remove<engine.physics.components.Kinetic>();
-                            other.Entity.Get<engine.physics.components.Kinetic>().Reference.Handle.Value = orgHandle;
-                            //cCarBody = new(cCarKinetic.Reference, other);
+
                             lock (_engine.Simulation)
                             {
                                 //BepuPhysics.Collidables.TypedIndex pshapeSphere;
@@ -201,6 +203,12 @@ namespace nogame.modules.playerhover
                             }
 
                             other.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, other));
+                            
+                            /*
+                             * Replace the previous behavior with the after crash behavior.
+                             */
+                            other.Entity.Get<engine.behave.components.Behavior>().Provider =
+                                new nogame.characters.car3.AfterCrashBehavior(_engine, other.Entity);
 
                         }
                         else
