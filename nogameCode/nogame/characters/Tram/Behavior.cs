@@ -15,6 +15,11 @@ internal class Behavior : engine.IBehavior
     private Quaternion _qPrevRotation = Quaternion.Identity;
     private float _height;
 
+    
+    public void Sync(in DefaultEcs.Entity entity)
+    {
+    }
+    
 
     public void Behave(in DefaultEcs.Entity entity, float dt)
     {

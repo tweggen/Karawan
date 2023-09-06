@@ -14,6 +14,11 @@ public class AfterCrashBehavior : IBehavior
 
     static private float LIFETIME = 10f;
     private float t = 0;
+
+    
+    public void Sync(in DefaultEcs.Entity entity)
+    {
+    }
     
     
     public void Behave(in Entity entity, float dt)

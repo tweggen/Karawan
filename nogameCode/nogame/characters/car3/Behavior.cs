@@ -13,6 +13,12 @@ internal class Behavior : engine.IBehavior
     StreetNavigationController _snc;
     private Quaternion _qPrevRotation = Quaternion.Identity;
     
+    
+    public void Sync(in DefaultEcs.Entity entity)
+    {
+    }
+
+
     public void Behave(in DefaultEcs.Entity entity, float dt)
     {
         _snc.NavigatorBehave(dt);

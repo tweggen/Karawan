@@ -10,7 +10,11 @@ namespace nogame.characters.cubes
         engine.world.ClusterDesc _clusterDesc;
         engine.streets.StreetPoint _streetPoint;
         StreetNavigationController _snc;
-        
+
+
+        public void Sync(in DefaultEcs.Entity entity)
+        {
+        }
         
         public void Behave(in DefaultEcs.Entity entity, float dt)
         {
