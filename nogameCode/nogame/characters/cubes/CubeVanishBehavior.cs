@@ -12,7 +12,12 @@ public class CubeVanishBehavior : IBehavior
     private static float POLYTOPE_MIN_SCALE = 0.1f;
 
     private float _lifetime = 0f;
-    
+
+
+    public void Sync(in Entity entity)
+    {
+    }
+
     public void Behave(in Entity entity, float dt)
     {
         _lifetime += dt;

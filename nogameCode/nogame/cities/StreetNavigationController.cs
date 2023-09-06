@@ -392,6 +392,16 @@ public class StreetNavigationController
     }
 
 
+    /**
+     * Reality has changed, update the current state from the given numbers.
+     */
+    public void TakeCurrentPosition(Vector3 vPos3, Quaternion qRotation)
+    {
+        _vPos2 = new Vector2(vPos3.X, vPos3.Z);
+        _lastDirection = Vector3.Transform(new Vector3(0f, -1f, 0f), qRotation);
+    }
+    
+
     public StreetNavigationController(
         ClusterDesc clusterDesc0,
         StreetPoint startPoint0

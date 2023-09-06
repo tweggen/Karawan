@@ -96,6 +96,7 @@ public class AfterCrashBehavior : IBehavior
                         cCarDynamic.Reference, 
                         cCarDynamic.CollisionProperties));
                 entity.Get<engine.behave.components.Behavior>().Provider = _oldBehavior;
+                _oldBehavior.Sync(entity);
             }
         }
     }

@@ -15,7 +15,11 @@ public class PolytopeVanishBehaviour : IBehavior
     public required Engine Engine;
 
     private float _lifetime = 0f;
-    
+
+    public void Sync(in Entity entity)
+    {
+    }
+
     public void Behave(in Entity entity, float dt)
     {
         _lifetime += dt;

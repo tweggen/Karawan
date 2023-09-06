@@ -16,6 +16,14 @@ internal class Behavior : engine.IBehavior
     
     public void Sync(in DefaultEcs.Entity entity)
     {
+        if (entity.Has<engine.physics.components.Kinetic>())
+        {
+            var prefTarget = entity.Get<engine.physics.components.Kinetic>().Reference;
+            Vector3 vPos3 = prefTarget.Pose.Position;
+            Quaternion qRotation = prefTarget.Pose.Orientation;
+            _snc.TakeCurrentPosition(vPos3, qRotation);
+        }
+
     }
 
 
