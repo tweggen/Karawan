@@ -39,6 +39,14 @@ namespace nogame.modules.playerhover
          * Display the current pling score.
          */
         private DefaultEcs.Entity _eScoreDisplay;
+        /**
+         * Display the current polytope score.
+         */
+        private DefaultEcs.Entity _ePolytopeDisplay;
+        /**
+         * Display the current polytope score.
+         */
+        private DefaultEcs.Entity _eHealthDisplay;
 
         /**
          * Display the current cluster name.
@@ -60,6 +68,8 @@ namespace nogame.modules.playerhover
         private ClusterDesc _currentCluster = null;
         
         private int _score = 0;
+        private int _polytopeCount = 0;
+        private int _health = 1000;
 
         private Boom.ISound _soundCrash = null;
 
@@ -82,19 +92,17 @@ namespace nogame.modules.playerhover
                 }
             }
         }
-        
-        
-        private void _nextCubeCollected()
+
+
+        private void _decreaseHealth(int less)
         {
-            _plingPlayer.PlayPling();
-            _plingPlayer.Next();
             lock (_lo)
             {
-                ++_score;
+                _health = int.Max(0, _health-less);
             }
         }
-
-
+        
+        
         private void _playCollisionSound()
         {
             _soundCrash.Stop();
@@ -105,8 +113,9 @@ namespace nogame.modules.playerhover
 
         private void _onAnonymousCollision(engine.news.Event ev)
         {
-            // var cev = ev as ContactEvent;
+            var cev = ev as ContactEvent;
             _playCollisionSound();
+            _decreaseHealth(14);
         }
         
 
@@ -114,6 +123,12 @@ namespace nogame.modules.playerhover
         {
             var cev = ev as ContactEvent;
             cev.ContactInfo.PropertiesB.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour() { Engine = _engine }));
+            lock (_lo)
+            {
+                ++_polytopeCount;
+                _health = 1000;
+            }
+
             _polyballSound.Stop();
             _polyballSound.Play();
         }
@@ -123,7 +138,13 @@ namespace nogame.modules.playerhover
         {
             var cev = ev as ContactEvent;
             cev.ContactInfo.PropertiesB.Entity.Set(new engine.behave.components.Behavior(new nogame.characters.cubes.CubeVanishBehavior() { Engine = _engine }));
-            _nextCubeCollected();
+            
+            _plingPlayer.PlayPling();
+            _plingPlayer.Next();
+            lock (_lo)
+            {
+                ++_score;
+            }
         }
         
 
@@ -131,6 +152,8 @@ namespace nogame.modules.playerhover
         {
             var cev = ev as ContactEvent;
             var other = cev.ContactInfo.PropertiesB;
+
+            _playCollisionSound();
             
             engine.physics.components.Kinetic cCarKinetic;
             if (other.Entity.Has<engine.physics.components.Kinetic>())
@@ -163,7 +186,8 @@ namespace nogame.modules.playerhover
                  */
                 other.Entity.Get<engine.behave.components.Behavior>().Provider =
                     new nogame.characters.car3.AfterCrashBehavior(_engine, other.Entity);
-
+                
+                _decreaseHealth(17);
             }
             else
             {
@@ -320,8 +344,26 @@ namespace nogame.modules.playerhover
                 new Vector2(786f-64f-32f, 48f),
                 new Vector2(64f, 40f),
                 $"{_score}",
-                40,
+                32,
                 0xff22aaee,
+                0x00000000,
+                HAlign.Right
+            ));
+            _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
+                new Vector2(786f-64f-32f-48f, 48f),
+                new Vector2(64f, 40f),
+                $"{_polytopeCount}",
+                32,
+                0xff999922,
+                0x00000000,
+                HAlign.Right
+            ));
+            _eHealthDisplay.Set(new engine.draw.components.OSDText(
+                new Vector2(786f-64f-32f-48f, 48f+48f),
+                new Vector2(64f+48f, 40f),
+                $"{_health}",
+                32,
+                0xff448822,
                 0x00000000,
                 HAlign.Right
             ));
@@ -470,6 +512,8 @@ namespace nogame.modules.playerhover
             }
 
             _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
+            _ePolytopeDisplay = _engine.CreateEntity("OsdPolytopeDisplay");
+            _eHealthDisplay = _engine.CreateEntity("OsdHealthDisplay");
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
             _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
             

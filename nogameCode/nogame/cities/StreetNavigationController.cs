@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using engine;
 using engine.world;
 using engine.streets;
 using static engine.Logger;
@@ -41,7 +38,12 @@ public class StreetNavigationController
      * Contains the last directeion of the character, the length
      * represents the meter per second.
      */
-    private Vector3 _lastDirection;
+    private Vector3 _lastSpeed;
+
+    /**
+     * Unit vector of the last direction.
+     */
+    private Vector2 _lastDirection;
 
 
     private void _loadNextPoint(StreetPoint previousPoint)
@@ -236,7 +238,7 @@ public class StreetNavigationController
                 var vPerfectDirection = vPerfectTarget - vPerfectStart;
                 var vPerfectDirectionLength = vPerfectDirection.Length();
                 var vuPerfectDirection = vPerfectDirection / vPerfectDirectionLength;
-
+                
                 Vector2 vPerfectMe = default;
                 Vector2 vMeFromStart = _vPos2 - vPerfectStart;
                 float vMeFromStartLength = vMeFromStart.Length();
@@ -279,7 +281,8 @@ public class StreetNavigationController
                     float actualDist2 = vActualDelta.LengthSquared();
                     if (actualDist2 > 0.0025f)
                     {
-                        _lastDirection = new Vector3(vuDest.X * _speed, 0f, vuDest.Y * _speed);
+                        _lastDirection = vuDest;
+                        _lastSpeed = new Vector3(vuDest.X * _speed, 0f, vuDest.Y * _speed);
                     }
                 }
 
@@ -346,13 +349,13 @@ public class StreetNavigationController
 
     public Vector3 NavigatorGetLastDirection()
     {
-        return _lastDirection;
+        return _lastSpeed;
     }
 
 
     public Vector3 NavigatorGetLinearVelocity()
     {
-        return _lastDirection;
+        return _lastSpeed;
     }
 
 
@@ -365,7 +368,7 @@ public class StreetNavigationController
     public Quaternion NavigatorGetOrientation()
     {
         var vYAxis = new Vector3(0f, 1f, 0f);
-        var vForward = _lastDirection;
+        var vForward = _lastSpeed;
         Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vForward, vYAxis);
         return Quaternion.CreateFromRotationMatrix(rot);
 
@@ -399,7 +402,8 @@ public class StreetNavigationController
     {
         vPos3 -= _clusterDesc.Pos;
         _vPos2 = new Vector2(vPos3.X, vPos3.Z);
-        _lastDirection = Vector3.Transform(new Vector3(0f, -1f, 0f), qRotation);
+        _lastSpeed = Vector3.Transform(new Vector3(0f, -1f, 0f), qRotation);
+        _lastDirection = new Vector2( _lastSpeed.X, _lastSpeed.Z);
     }
     
 
@@ -413,7 +417,8 @@ public class StreetNavigationController
         _startPoint = startPoint0;
         _targetPoint = null;
         _prevStart = null;
-        _lastDirection = new Vector3(1f, 0f, 0f);
+        _lastDirection = new Vector2(1f, 0f);
+        _lastSpeed = new Vector3(1f, 0f, 0f);
         _avoidDeadEnds = false;
 
         _speed = 2.7f * 15f;
