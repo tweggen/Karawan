@@ -11,6 +11,7 @@ using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
 using DefaultEcs;
+using engine.behave.components;
 using engine.news;
 using engine.world;
 using static engine.Logger;
@@ -82,6 +83,7 @@ namespace engine
         
         private physics.Manager _managerPhysics;
         private gongzuo.LuaScriptManager _managerLuaScript;
+        private behave.Manager _managerBehavior;
         public readonly SceneSequencer SceneSequencer;        
         
         public event EventHandler<float> OnLogicalFrame;
@@ -413,34 +415,6 @@ namespace engine
         {
             _aPhysics.RemoveContactListener(entity);
         }
-
-
-#if false
-        public bool IsLoading()
-        {
-            bool meWorking;
-            lock (_lo)
-            {
-                meWorking =
-                    _queueEntitySetupActions.Count > 0
-                       || !_workerMainThreadActions.IsEmpty();
-            }
-
-            if (meWorking)
-            {
-                return true;
-            }
-            
-            bool metaGenLoading = MetaGen.Instance().IsLoading();
-            if (metaGenLoading)
-            {
-                return true;
-            }
-
-            return false;
-
-        }
-#endif
 
 
         /**
@@ -891,6 +865,8 @@ namespace engine
             _systemMovingSounds = new(this);
             _managerPhysics = new physics.Manager();
             _managerPhysics.Manage(this);
+            _managerBehavior = new behave.Manager();
+            _managerBehavior.Manage(this);
             _managerLuaScript = new ();
             _managerLuaScript.Manage(_ecsWorld);
 

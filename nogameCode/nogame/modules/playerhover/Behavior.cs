@@ -62,22 +62,19 @@ public class Behavior : engine.IBehavior
 
     public void Behave(in Entity entity, float dt)
     {
-        
     }
 
     
-    public Behavior OnDetach(in Entity entity)
+    public void OnDetach(in Entity entity)
     {
         _controllerWASDPhysics.ModuleDeactivate();
         _controllerWASDPhysics.Dispose();
         _controllerWASDPhysics = null;
         _engine = null;
-        
-        return this;
     }
     
     
-    public Behavior OnAttach(in engine.Engine engine0, in Entity entity)
+    public void OnAttach(in engine.Engine engine0, in Entity entity)
     {
         _engine = engine0;
         _eShip = entity;
@@ -88,7 +85,5 @@ public class Behavior : engine.IBehavior
         
         _controllerWASDPhysics = new WASDPhysics(_eShip, playerhover.Module.MassShip);
         _controllerWASDPhysics.ModuleActivate(_engine);
-        
-        return this;
     }
 }

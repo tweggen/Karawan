@@ -6,7 +6,7 @@ using engine.physics;
 
 namespace nogame.characters.car3;
 
-public class AfterCrashBehavior : IBehavior
+public class AfterCrashBehavior : ABehavior
 {
     private engine.Engine _engine;
     private DefaultEcs.Entity _entity;

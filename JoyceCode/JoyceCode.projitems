@@ -44,6 +44,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tunestreets\Scene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ABehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Assets.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\SoundInstance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\systems\MovingSoundsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Behavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\BehaviorSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\WiperSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ConsoleLogger.cs" />

@@ -466,13 +466,12 @@ namespace nogame.modules.playerhover
                 // TXWTODO: We need to get rid of AddContactListener
                 _engine.AddContactListener(_eShip);
 
-                _eShip.Set(new engine.behave.components.Behavior(new Behavior().OnAttach(_engine, _eShip)));
+                _eShip.Set(new engine.behave.components.Behavior(new Behavior()));
             }
 
             _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
             _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
-            
             
             Implementations.Get<SubscriptionManager>().Subscribe(
                 Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);

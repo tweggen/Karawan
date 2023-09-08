@@ -6,7 +6,7 @@ using engine.world;
 
 namespace nogame.characters.car3;
 
-internal class Behavior : engine.IBehavior
+internal class Behavior : engine.ABehavior
 {
     engine.Engine _engine;
     engine.world.ClusterDesc _clusterDesc;

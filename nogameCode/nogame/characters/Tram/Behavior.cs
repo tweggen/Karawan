@@ -6,7 +6,7 @@ using engine.world;
 
 namespace nogame.characters.tram;
 
-internal class Behavior : engine.IBehavior
+internal class Behavior : engine.ABehavior
 {
     private readonly engine.Engine _engine;
     private readonly engine.world.ClusterDesc _clusterDesc;
@@ -16,15 +16,6 @@ internal class Behavior : engine.IBehavior
     private Quaternion _qPrevRotation = Quaternion.Identity;
     private float _height;
 
-
-    public void OnCollision(ContactEvent cev)
-    {
-    }
-
-    public void Sync(in DefaultEcs.Entity entity)
-    {
-    }
-    
 
     public void Behave(in DefaultEcs.Entity entity, float dt)
     {

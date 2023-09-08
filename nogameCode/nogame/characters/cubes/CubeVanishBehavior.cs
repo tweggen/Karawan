@@ -6,7 +6,7 @@ using engine.physics;
 
 namespace nogame.characters.cubes;
 
-public class CubeVanishBehavior : IBehavior
+public class CubeVanishBehavior : ABehavior
 {
     public required Engine Engine;
     private static float CUBE_VANISH_TIME = 0.4f;
@@ -14,14 +14,6 @@ public class CubeVanishBehavior : IBehavior
 
     private float _lifetime = 0f;
 
-
-    public void OnCollision(ContactEvent cev)
-    {
-    }
-
-    public void Sync(in Entity entity)
-    {
-    }
 
     public void Behave(in Entity entity, float dt)
     {

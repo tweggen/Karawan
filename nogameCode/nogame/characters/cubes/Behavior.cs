@@ -5,7 +5,7 @@ using engine.world;
 
 namespace nogame.characters.cubes
 {
-    internal class Behavior : engine.IBehavior
+    internal class Behavior : engine.ABehavior
     {
         engine.Engine _engine;
         engine.world.ClusterDesc _clusterDesc;
@@ -17,10 +17,7 @@ namespace nogame.characters.cubes
         {
         }
 
-        public void Sync(in DefaultEcs.Entity entity)
-        {
-        }
-        
+
         public void Behave(in DefaultEcs.Entity entity, float dt)
         {
             _snc.NavigatorBehave(dt);

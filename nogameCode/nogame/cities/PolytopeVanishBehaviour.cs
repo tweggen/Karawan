@@ -6,7 +6,7 @@ using engine.physics;
 
 namespace nogame.cities;
 
-public class PolytopeVanishBehaviour : IBehavior
+public class PolytopeVanishBehaviour : ABehavior
 {
     private static float POLYTOPE_VANISH_TIME = 0.9f;
     private static float POLYTOPE_WOBBLE_FACTOR = 0.1f;
@@ -17,14 +17,7 @@ public class PolytopeVanishBehaviour : IBehavior
 
     private float _lifetime = 0f;
 
-    public void OnCollision(ContactEvent cev)
-    {
-    }
-
-    public void Sync(in Entity entity)
-    {
-    }
-
+    
     public void Behave(in Entity entity, float dt)
     {
         _lifetime += dt;
