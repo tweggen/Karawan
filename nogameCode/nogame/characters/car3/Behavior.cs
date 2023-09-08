@@ -1,6 +1,7 @@
 ﻿using System;
 using nogame.cities;
 using System.Numerics;
+using engine.physics;
 using engine.world;
 
 namespace nogame.characters.car3;
@@ -12,8 +13,13 @@ internal class Behavior : engine.IBehavior
     engine.streets.StreetPoint _streetPoint;
     StreetNavigationController _snc;
     private Quaternion _qPrevRotation = Quaternion.Identity;
-    
-    
+
+
+    public void OnCollision(ContactEvent cev)
+    {
+        // throw new NotImplementedException();
+    }
+
     public void Sync(in DefaultEcs.Entity entity)
     {
         if (entity.Has<engine.physics.components.Kinetic>())

@@ -33,6 +33,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\minimap\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlingPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WASDPhysics.cs" />

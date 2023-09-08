@@ -1,6 +1,7 @@
 ﻿using System;
 using nogame.cities;
 using System.Numerics;
+using engine.physics;
 using engine.world;
 
 namespace nogame.characters.tram;
@@ -15,7 +16,11 @@ internal class Behavior : engine.IBehavior
     private Quaternion _qPrevRotation = Quaternion.Identity;
     private float _height;
 
-    
+
+    public void OnCollision(ContactEvent cev)
+    {
+    }
+
     public void Sync(in DefaultEcs.Entity entity)
     {
     }

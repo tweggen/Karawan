@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using DefaultEcs;
 using engine;
+using engine.physics;
 
 namespace nogame.cities;
 
@@ -15,6 +16,10 @@ public class PolytopeVanishBehaviour : IBehavior
     public required Engine Engine;
 
     private float _lifetime = 0f;
+
+    public void OnCollision(ContactEvent cev)
+    {
+    }
 
     public void Sync(in Entity entity)
     {

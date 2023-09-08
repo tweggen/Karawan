@@ -1,5 +1,6 @@
 ﻿using nogame.cities;
 using System.Numerics;
+using engine.physics;
 using engine.world;
 
 namespace nogame.characters.cubes
@@ -11,6 +12,10 @@ namespace nogame.characters.cubes
         engine.streets.StreetPoint _streetPoint;
         StreetNavigationController _snc;
 
+
+        public void OnCollision(ContactEvent cev)
+        {
+        }
 
         public void Sync(in DefaultEcs.Entity entity)
         {

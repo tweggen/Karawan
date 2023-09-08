@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace engine
 {
     public interface IBehavior
     {
+        public void OnCollision(engine.physics.ContactEvent cev);
         /**
          * Called after a given period of inactivity: Sync with reality before
          * continueing your behavior.

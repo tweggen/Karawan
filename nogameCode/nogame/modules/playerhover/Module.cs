@@ -54,9 +54,7 @@ namespace nogame.modules.playerhover
 
         private Boom.ISound _polyballSound;
 
-        private WASDPhysics _controllerWASDPhysics;
-
-        private const float MassShip = 500f;
+        static public float MassShip = 500f;
 
 
         private ClusterDesc _currentCluster = null;
@@ -97,135 +95,82 @@ namespace nogame.modules.playerhover
         }
 
 
-        private void _onContactInfo(engine.news.Event ev)
+        private void _playCollisionSound()
+        {
+            _soundCrash.Stop();
+            _soundCrash.Volume = 0.1f;
+            _soundCrash.Play();
+        }
+
+
+        private void _onAnonymousCollision(engine.news.Event ev)
+        {
+            // var cev = ev as ContactEvent;
+            _playCollisionSound();
+        }
+        
+
+        private void _onPolytopeCollision(engine.news.Event ev)
         {
             var cev = ev as ContactEvent;
+            cev.ContactInfo.PropertiesB.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour() { Engine = _engine }));
+            _polyballSound.Stop();
+            _polyballSound.Play();
+        }
+        
 
-            /*
-             * If this contact involved us, we store the other contact info in this variable.
-             * If the other does not have collision properties, this variable also is empty.
-             */
-            CollisionProperties other = null;
+        private void _onCubeCollision(engine.news.Event ev)
+        {
+            var cev = ev as ContactEvent;
+            cev.ContactInfo.PropertiesB.Entity.Set(new engine.behave.components.Behavior(new nogame.characters.cubes.CubeVanishBehavior() { Engine = _engine }));
+            _nextCubeCollected();
+        }
+        
 
-            // Trace( $"ship reference is {_prefShip.Handle}, contactEventSource is {contactInfo.EventSource}, pair is {contactInfo.ContactPair}" );
-            CollisionProperties propsA = cev.ContactInfo.PropertiesA;
-            CollisionProperties propsB = cev.ContactInfo.PropertiesB;
-
-            CollisionProperties me = null;
-
-            if (null != propsA)
-            {
-                Trace($"A: {{ Name: \"{propsA.Name}\" }}");
-                if (propsA.Name == PhysicsName)
-                {
-                    if (propsB != null)
-                    {
-                        other = propsB;
-                    }
-
-                    if (propsA != null)
-                    {
-                        me = propsA;
-                    }
-                }
-            }
-
-            if (null != propsB)
-            {
-                Trace($"B: {{ Name: \"{propsB.Name}\" }}");
-                if (propsB.Name == PhysicsName)
-                {
-                    if (propsA != null)
-                    {
-                        other = propsA;
-                    }
-
-                    if (propsB != null)
-                    {
-                        me = propsB;
-                    }
-                }
-            }
-
-            bool playSound = true;
-            if (other != null)
+        private void _onCarCollision(engine.news.Event ev)
+        {
+            var cev = ev as ContactEvent;
+            var other = cev.ContactInfo.PropertiesB;
+            
+            engine.physics.components.Kinetic cCarKinetic;
+            if (other.Entity.Has<engine.physics.components.Kinetic>())
             {
                 /*
-                 * Now let's check for explicit other components.
+                 * Get a copy of the original.
                  */
-                if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
+                cCarKinetic = other.Entity.Get<engine.physics.components.Kinetic>();
+                cCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
+                        
+                /*
+                 * Prevent value from automatic removal, patching it in place.
+                 */
+                other.Entity.Set(cCarKinetic);
+                other.Entity.Remove<engine.physics.components.Kinetic>();
+
+                lock (_engine.Simulation)
                 {
-                    _engine.QueueMainThreadAction(() =>
-                    {
-                        other.Entity.Set(new engine.behave.components.Behavior(new nogame.characters.cubes.CubeVanishBehavior() { Engine = _engine }));
-                    });
-                    _nextCubeCollected();
-                    playSound = false;
+                    //BepuPhysics.Collidables.TypedIndex pshapeSphere;
+                    BepuPhysics.Collidables.Sphere pbodySphere = new(5f); 
+                    var pinertiaSphere = pbodySphere.ComputeInertia(500f);
+                    cCarKinetic.Reference.SetLocalInertia(pinertiaSphere);
+                    cCarKinetic.Reference.Awake = true;
                 }
-                else if (other.Name == "nogame.furniture.polytopeBall")
-                {
-                    // Trace($"Polyball chrIdx {other.DebugInfo}");
-                    _engine.QueueMainThreadAction(() =>
-                    {
-                        other.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour() { Engine = _engine }));
-                    });
-                    playSound = false;
-                    _polyballSound.Stop();
-                    _polyballSound.Play();
-                } 
-                else if (other.Name == "nogame.characters.car3")
-                {
-                    _engine.QueueMainThreadAction(() =>
-                    {
-                        // bool isKinetic;
-                        engine.physics.components.Kinetic cCarKinetic;
-                        if (other.Entity.Has<engine.physics.components.Kinetic>())
-                        {
-                            /*
-                             * Get a copy of the original.
-                             */
-                            cCarKinetic = other.Entity.Get<engine.physics.components.Kinetic>();
-                            cCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
-                            
-                            /*
-                             * Prevent value from automatic removal, patching it in place.
-                             */
-                            other.Entity.Set(cCarKinetic);
-                            other.Entity.Remove<engine.physics.components.Kinetic>();
 
-                            lock (_engine.Simulation)
-                            {
-                                //BepuPhysics.Collidables.TypedIndex pshapeSphere;
-                                BepuPhysics.Collidables.Sphere pbodySphere = new(5f); 
-                                var pinertiaSphere = pbodySphere.ComputeInertia(500f);
-                                cCarKinetic.Reference.SetLocalInertia(pinertiaSphere);
-                                cCarKinetic.Reference.Awake = true;
-                            }
+                other.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, other));
+                        
+                /*
+                 * Replace the previous behavior with the after crash behavior.
+                 */
+                other.Entity.Get<engine.behave.components.Behavior>().Provider =
+                    new nogame.characters.car3.AfterCrashBehavior(_engine, other.Entity);
 
-                            other.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, other));
-                            
-                            /*
-                             * Replace the previous behavior with the after crash behavior.
-                             */
-                            other.Entity.Get<engine.behave.components.Behavior>().Provider =
-                                new nogame.characters.car3.AfterCrashBehavior(_engine, other.Entity);
-
-                        }
-                        else
-                        {
-                            return;
-                        }
-                    });
-                }
             }
-            if (playSound) 
+            else
             {
-                _soundCrash.Stop();
-                _soundCrash.Volume = 0.1f;
-                _soundCrash.Play();
+                return;
             }
         }
-    
+        
 
         public DefaultEcs.Entity GetShipEntity()
         {
@@ -412,8 +357,15 @@ namespace nogame.modules.playerhover
             _engine.OnLogicalFrame -= _onLogicalFrame;
             _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
 
-            Implementations.Get<SubscriptionManager>().Unsubscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
-            _controllerWASDPhysics.ModuleDeactivate();
+            Implementations.Get<SubscriptionManager>().Unsubscribe(
+                Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+            Implementations.Get<SubscriptionManager>().Unsubscribe(
+                Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+            Implementations.Get<SubscriptionManager>().Unsubscribe(
+                Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+            Implementations.Get<SubscriptionManager>().Unsubscribe(
+                Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+
             _engine.RemoveModule(this);
 
             lock (_lo)
@@ -511,7 +463,10 @@ namespace nogame.modules.playerhover
                 /*
                  * Activate collision detection for ship.
                  */
+                // TXWTODO: We need to get rid of AddContactListener
                 _engine.AddContactListener(_eShip);
+
+                _eShip.Set(new engine.behave.components.Behavior(new Behavior().OnAttach(_engine, _eShip)));
             }
 
             _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
@@ -519,13 +474,15 @@ namespace nogame.modules.playerhover
             _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
             
             
-            /*
-             * And the ship's controller
-             */
-            _controllerWASDPhysics = new WASDPhysics(_eShip, MassShip);
-            _controllerWASDPhysics.ModuleActivate(_engine);
-
-            Implementations.Get<SubscriptionManager>().Subscribe(ContactEvent.PHYSICS_CONTACT_INFO, _onContactInfo);
+            Implementations.Get<SubscriptionManager>().Subscribe(
+                Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+            Implementations.Get<SubscriptionManager>().Subscribe(
+                Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+            Implementations.Get<SubscriptionManager>().Subscribe(
+                Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+            Implementations.Get<SubscriptionManager>().Subscribe(
+                Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+            
             _engine.AddModule(this);
             _engine.OnLogicalFrame += _onLogicalFrame;
             _onCameraEntityChanged(this, _engine.GetCameraEntity());

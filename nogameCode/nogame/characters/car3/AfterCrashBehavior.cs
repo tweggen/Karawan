@@ -2,6 +2,7 @@ using System.Net.NetworkInformation;
 using System.Numerics;
 using DefaultEcs;
 using engine;
+using engine.physics;
 
 namespace nogame.characters.car3;
 
@@ -15,7 +16,11 @@ public class AfterCrashBehavior : IBehavior
     static private float LIFETIME = 10f;
     private float t = 0;
 
-    
+
+    public void OnCollision(ContactEvent cev)
+    {
+    }
+
     public void Sync(in DefaultEcs.Entity entity)
     {
     }

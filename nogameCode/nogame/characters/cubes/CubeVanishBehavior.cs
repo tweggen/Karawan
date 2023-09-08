@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using DefaultEcs;
 using engine;
+using engine.physics;
 
 namespace nogame.characters.cubes;
 
@@ -13,6 +14,10 @@ public class CubeVanishBehavior : IBehavior
 
     private float _lifetime = 0f;
 
+
+    public void OnCollision(ContactEvent cev)
+    {
+    }
 
     public void Sync(in Entity entity)
     {
