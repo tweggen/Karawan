@@ -80,6 +80,7 @@ public class Manager
             ErrorThrow("world must not be null.", (m) => new ArgumentException(m));
         }
         
+        
         var entities = world.GetEntities().With<components.Behavior>().AsEnumerable();
         foreach (DefaultEcs.Entity entity in entities)
         {

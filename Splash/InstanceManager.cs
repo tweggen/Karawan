@@ -254,7 +254,7 @@ public class InstanceManager : IDisposable
         {
             ErrorThrow("world must not be null.", (m) => new ArgumentException(m));
         }
-
+        
         int nInitialEntites = 0;
         var entities = world.GetEntities().With<Splash.components.PfInstance>().AsEnumerable();
         foreach (DefaultEcs.Entity entity in entities)
@@ -263,7 +263,7 @@ public class InstanceManager : IDisposable
             ++nInitialEntites;
         }
         Trace($"Added {nInitialEntites} initial entites.");
-
+        
         return GetSubscriptions(world).Merge();
     }
 
