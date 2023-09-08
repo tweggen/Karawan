@@ -15,12 +15,13 @@ internal class Behavior : engine.ABehavior
     private Quaternion _qPrevRotation = Quaternion.Identity;
 
 
-    public void OnCollision(ContactEvent cev)
+    public override void OnCollision(ContactEvent cev)
     {
         // throw new NotImplementedException();
     }
 
-    public void Sync(in DefaultEcs.Entity entity)
+    
+    public override void Sync(in DefaultEcs.Entity entity)
     {
         if (entity.Has<engine.physics.components.Kinetic>())
         {
@@ -33,7 +34,7 @@ internal class Behavior : engine.ABehavior
     }
 
 
-    public void Behave(in DefaultEcs.Entity entity, float dt)
+    public override void Behave(in DefaultEcs.Entity entity, float dt)
     {
         _snc.NavigatorBehave(dt);
 
@@ -51,6 +52,7 @@ internal class Behavior : engine.ABehavior
         );
     }
 
+    
     public Behavior SetSpeed(float speed)
     {
         _snc.NavigatorSetSpeed(speed);

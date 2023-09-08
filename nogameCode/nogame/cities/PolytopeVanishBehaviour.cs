@@ -18,7 +18,7 @@ public class PolytopeVanishBehaviour : ABehavior
     private float _lifetime = 0f;
 
     
-    public void Behave(in Entity entity, float dt)
+    public override void Behave(in Entity entity, float dt)
     {
         _lifetime += dt;
         float time = _lifetime / POLYTOPE_VANISH_TIME;

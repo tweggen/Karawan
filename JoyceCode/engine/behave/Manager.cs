@@ -48,7 +48,10 @@ public class Manager
             if (null != newProvider)
             {
                 newProvider.OnAttach(_engine, entity);
-                newProvider.Sync(entity);
+                if (null != oldProvider)
+                {
+                    newProvider.Sync(entity);
+                }
             }
         }
     }
@@ -63,6 +66,7 @@ public class Manager
             newProvider.OnAttach(_engine, entity);
         }
     }
+    
     
     public IDisposable Manage(in engine.Engine engine)
     {

@@ -13,12 +13,12 @@ namespace nogame.characters.cubes
         StreetNavigationController _snc;
 
 
-        public void OnCollision(ContactEvent cev)
+        public override void OnCollision(ContactEvent cev)
         {
         }
 
 
-        public void Behave(in DefaultEcs.Entity entity, float dt)
+        public override void Behave(in DefaultEcs.Entity entity, float dt)
         {
             _snc.NavigatorBehave(dt);
 

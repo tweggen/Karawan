@@ -11,7 +11,7 @@ public class FPSMonitor
     private builtin.tools.RunningAverageComputer _fpsCounter = new();
     
     private long _previousSeconds = 0;
-    private void _logicalUpdateFpsAverage()
+    private void _updateFpsAverage()
     {
         float fps = 0f;
         /*
@@ -43,14 +43,14 @@ public class FPSMonitor
 
         if (0f != fps)
         {
-            Trace($"#fps {fps}");
+            Trace($"{_name} #fps {fps}");
         }
     }
 
 
     public void Update()
     {
-        _logicalUpdateFpsAverage();
+        _updateFpsAverage();
     }
     
 

@@ -47,7 +47,7 @@ public class Behavior : engine.IBehavior
         else if (other.Name == "nogame.characters.car3")
         {
             cev.Type = PLAYER_COLLISION_CAR3;
-            Implementations.Get<EventQueue>().Push(cev);
+            // Implementations.Get<EventQueue>().Push(cev);
         }
     }
 

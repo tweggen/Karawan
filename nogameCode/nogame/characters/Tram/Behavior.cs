@@ -17,7 +17,7 @@ internal class Behavior : engine.ABehavior
     private float _height;
 
 
-    public void Behave(in DefaultEcs.Entity entity, float dt)
+    public override void Behave(in DefaultEcs.Entity entity, float dt)
     {
         _snc.NavigatorBehave(dt);
 

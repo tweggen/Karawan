@@ -17,16 +17,16 @@ public class AfterCrashBehavior : ABehavior
     private float t = 0;
 
 
-    public void OnCollision(ContactEvent cev)
+    public override void OnCollision(ContactEvent cev)
     {
     }
 
-    public void Sync(in DefaultEcs.Entity entity)
+    public override void Sync(in DefaultEcs.Entity entity)
     {
     }
     
     
-    public void Behave(in Entity entity, float dt)
+    public override void Behave(in Entity entity, float dt)
     {
         var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
         if (t < LIFETIME)

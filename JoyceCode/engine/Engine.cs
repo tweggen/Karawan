@@ -465,6 +465,8 @@ namespace engine
         private void _onLogicalFrame(float dt)
         {
             EngineState engineState;
+            _fpsLogicalMonitor.OnFrame(dt);
+            
             lock (_lo)
             {
                 engineState = State;
@@ -647,8 +649,6 @@ namespace engine
 
         private double _timeLeft;
         private int _fpsLogical = 60;
-
-        
         
 
         public void AddModule(in IModule module)
@@ -716,6 +716,7 @@ namespace engine
             }
         }
 
+        
         private int _entityUpdateRate = 6;
         private int _entityUpdateCount = 0;
         private void _checkUpdateEntityArray()
@@ -745,9 +746,6 @@ namespace engine
         }
 
 
-       
-        
-        
         private void _logicalThreadFunction()
         {
             float invFps = 1f / 60f;
@@ -833,6 +831,7 @@ namespace engine
                  */
                 stopWatch.Start();
 
+#if false
                 if (0 < nLogical)
                 {
                     float eachFrame = processedTime / (float)nLogical;
@@ -841,6 +840,7 @@ namespace engine
                         _fpsLogicalMonitor.OnFrame(eachFrame);
                     }
                 }
+#endif
 
                 _fpsPhysicalMonitor.Update();
                 _fpsLogicalMonitor.Update();
