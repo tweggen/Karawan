@@ -93,16 +93,17 @@ public class AfterCrashBehavior : ABehavior
         {
             if (null != _oldBehavior)
             {
+                var cCarDynamic = entity.Get<engine.physics.components.Body>();
+                cCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
+                entity.Set(cCarDynamic);
+                entity.Remove<engine.physics.components.Body>();
+
                 lock (_engine.Simulation)
                 {
                     prefTarget.Awake = false;
                     prefTarget.BecomeKinematic();
                 }
 
-                var cCarDynamic = entity.Get<engine.physics.components.Body>();
-                cCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
-                entity.Set(cCarDynamic);
-                entity.Remove<engine.physics.components.Body>();
                 entity.Set(
                     new engine.physics.components.Kinetic(
                         cCarDynamic.Reference, 

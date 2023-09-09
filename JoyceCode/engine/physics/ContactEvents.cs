@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Diagnostics;
+using static engine.Logger;
 
 namespace engine.physics
 {
@@ -78,7 +79,16 @@ namespace engine.physics
         {
             var exists = listeners.GetTableIndices(ref collidable, out var tableIndex, out var elementIndex);
             Debug.Assert(exists, "Should only try to unregister listeners that actually exist.");
-            listeners.Values[elementIndex].Dispose(pool);
+            if (listeners.Values[elementIndex].Span.Memory != null)
+            {
+                listeners.Values[elementIndex].Dispose(pool);
+            }
+            else
+            {
+                // But why is it? We shouldn't be here?
+                // Trace("Is null.");
+            }
+
             listeners.FastRemove(tableIndex, elementIndex);
         }
 
