@@ -154,45 +154,7 @@ namespace nogame.modules.playerhover
             var other = cev.ContactInfo.PropertiesB;
 
             _playCollisionSound();
-            
-            engine.physics.components.Kinetic cCarKinetic;
-            if (other.Entity.Has<engine.physics.components.Kinetic>())
-            {
-                /*
-                 * Get a copy of the original.
-                 */
-                cCarKinetic = other.Entity.Get<engine.physics.components.Kinetic>();
-                cCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
-                        
-                /*
-                 * Prevent value from automatic removal, patching it in place.
-                 */
-                other.Entity.Set(cCarKinetic);
-                other.Entity.Remove<engine.physics.components.Kinetic>();
-
-                lock (_engine.Simulation)
-                {
-                    //BepuPhysics.Collidables.TypedIndex pshapeSphere;
-                    BepuPhysics.Collidables.Sphere pbodySphere = new(5f); 
-                    var pinertiaSphere = pbodySphere.ComputeInertia(500f);
-                    cCarKinetic.Reference.SetLocalInertia(pinertiaSphere);
-                    cCarKinetic.Reference.Awake = true;
-                }
-
-                other.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, other));
-                        
-                /*
-                 * Replace the previous behavior with the after crash behavior.
-                 */
-                other.Entity.Get<engine.behave.components.Behavior>().Provider =
-                    new nogame.characters.car3.AfterCrashBehavior(_engine, other.Entity);
-                
-                _decreaseHealth(17);
-            }
-            else
-            {
-                return;
-            }
+            _decreaseHealth(17);
         }
         
 
@@ -500,7 +462,10 @@ namespace nogame.modules.playerhover
                     new engine.physics.CollisionProperties
                     {
                         Entity = _eShip,
-                        Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable,
+                        Flags = 
+                            CollisionProperties.CollisionFlags.IsTangible 
+                            | CollisionProperties.CollisionFlags.IsDetectable
+                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
                         Name = PhysicsName, 
                     };
                 Implementations.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);

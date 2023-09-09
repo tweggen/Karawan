@@ -3,6 +3,7 @@ using System.Numerics;
 using DefaultEcs;
 using engine;
 using engine.physics;
+using static engine.Logger;
 
 namespace nogame.characters.car3;
 
@@ -15,10 +16,27 @@ public class AfterCrashBehavior : ABehavior
 
     static private float LIFETIME = 10f;
     private float t = 0;
-
+    
 
     public override void OnCollision(ContactEvent cev)
     {
+        var me = cev.ContactInfo.PropertiesA;
+        engine.physics.components.Kinetic cCarKinetic;
+
+        if (me.Entity.Has<engine.physics.components.Body>())
+        {
+            /*
+             * I collided again with something, so increase my timer. 
+             */
+            t = LIFETIME - (RandomSource.Instance.GetFloat() + 0.5f);
+            
+            Trace("Another collision with me, a dynamic being.");
+        }
+        else
+        {
+            Trace("I wasn't expecting to be a kinematic physics object here.");
+            return;
+        }
     }
 
     public override void Sync(in DefaultEcs.Entity entity)

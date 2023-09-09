@@ -16,6 +16,11 @@ namespace nogame.characters.car3;
 
 class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
+
+    static public readonly string PhysicsName = "nogame.characters.car3";
+    static public readonly float PhysicsMass = 500f;
+    static public readonly float PhysicsRadius = 5f;
+    
     private static object _classLock = new();
 
     private static engine.audio.Sound[] _jCar3Sound;
@@ -250,8 +255,11 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             new engine.physics.CollisionProperties
                             {
                                 Entity = eTarget,
-                                Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable, 
-                                Name = "nogame.characters.car3",
+                                Flags = 
+                                    CollisionProperties.CollisionFlags.IsTangible 
+                                    | CollisionProperties.CollisionFlags.IsDetectable
+                                    | CollisionProperties.CollisionFlags.TriggersCallbacks,
+                                Name = PhysicsName,
                             };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.physics.components.Kinetic(

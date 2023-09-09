@@ -97,7 +97,7 @@ public class API
             // TXWTODO: Maybe there's a faster way to enqueue?
             Vector3 vContactOffset = contactOffset;
             Vector3 vContactNormal = contactNormal;
-            if (propsA != null)
+            if (null != propsA && 0 != (propsA.Flags & CollisionProperties.CollisionFlags.TriggersCallbacks))
             {
                 _engine.QueueMainThreadAction(() =>
                 {
@@ -125,7 +125,7 @@ public class API
                     }
                 });
             }
-            if (propsB != null)
+            if (null != propsB && 0 != (propsB.Flags & CollisionProperties.CollisionFlags.TriggersCallbacks))
             {
                 _engine.QueueMainThreadAction(() =>
                 {

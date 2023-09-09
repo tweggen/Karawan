@@ -65,5 +65,8 @@ namespace engine
             _seed0 = str;
             Clear();
         }
+        
+        
+        public static readonly RandomSource Instance = new RandomSource("nil");
     }
 }
