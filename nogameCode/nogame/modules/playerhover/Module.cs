@@ -29,7 +29,10 @@ namespace nogame.modules.playerhover
         private engine.transform.API _aTransform;
 
         private DefaultEcs.Entity _eCamera;
+
+        private DateTime _timestampFacingObject = DateTime.Now;
         private string _strFacingObject = "";
+        private CollisionProperties _cpFacingObject = null;
         
         private DefaultEcs.Entity _eShip;
         private BepuPhysics.BodyHandle _phandleShip;
@@ -187,14 +190,28 @@ namespace nogame.modules.playerhover
             {
                 lock (_lo)
                 {
-                    _strFacingObject = $"{collisionProperties.Name} ({collisionProperties.DebugInfo})";
+                    _timestampFacingObject = DateTime.Now;
+                    if (_cpFacingObject != collisionProperties)
+                    {
+                        _cpFacingObject = collisionProperties;
+                        _strFacingObject = $"{collisionProperties.Name} ({collisionProperties.DebugInfo})";
+                    }
                 }
             }
-            else
+        }
+
+
+        private void _testResetFacingObject()
+        {
+            lock (_lo)
             {
-                lock (_lo)
+                if (_cpFacingObject != null)
                 {
-                    _strFacingObject = $"(nothing)";
+                    if ((DateTime.Now - _timestampFacingObject).TotalMilliseconds > 1000)
+                    {
+                        _cpFacingObject = null;
+                        _strFacingObject = "";
+                    }
                 }
             }
         }
@@ -222,6 +239,8 @@ namespace nogame.modules.playerhover
                         Implementations.Get<engine.physics.API>().RayCast(vCamPosition, -vZ, 200f, _onCenterRayHit);
                     }
                 }
+
+                _testResetFacingObject();
             }
             
             /*
@@ -276,14 +295,16 @@ namespace nogame.modules.playerhover
                 {
                     strFacingObject = _strFacingObject;
                 }
+
+                float width = 320f;
                 _eTargetDisplay.Set(new engine.draw.components.OSDText(
-                    new Vector2((786f-160f)/2f, 360f),
-                    new Vector2(160f, 18f),
+                    new Vector2((786f-width)/2f, 360f),
+                    new Vector2(width, 18f),
                     $"{strFacingObject}",
-                    12,
+                    10,
                     0xff22aaee,
                     0x00000000,
-                    HAlign.Left));
+                    HAlign.Center));
             }
             
             if (newZone)
