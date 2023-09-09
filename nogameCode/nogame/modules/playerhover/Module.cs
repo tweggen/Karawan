@@ -498,7 +498,7 @@ namespace nogame.modules.playerhover
                 }
                 engine.physics.CollisionProperties collisionProperties = 
                     new engine.physics.CollisionProperties
-                    { Entity = _eShip, Name = PhysicsName, IsTangible = true };
+                    { Entity = _eShip, Name = PhysicsName, Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE };
                 Implementations.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
 

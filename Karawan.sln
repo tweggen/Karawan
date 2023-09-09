@@ -48,8 +48,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\bepuphysi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\bepuphysics2\BepuUtilities\BepuUtilities.csproj", "{9E7A3BCC-2A85-4009-A124-876753FF6269}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.NAudio", "Boom.NAudio\Boom.NAudio.csproj", "{1B0B2168-7A94-4053-9F1F-8E607ED416ED}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.OpenAL", "Boom.OpenAL\Boom.OpenAL.csproj", "{DE9315AF-6633-4916-A589-34A4BAD9C966}"
 EndProject
 Global
@@ -476,30 +474,6 @@ Global
 		{9E7A3BCC-2A85-4009-A124-876753FF6269}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
 		{9E7A3BCC-2A85-4009-A124-876753FF6269}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
 		{9E7A3BCC-2A85-4009-A124-876753FF6269}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|arm64.ActiveCfg = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|arm64.Build.0 = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x64.Build.0 = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Debug|x86.Build.0 = Debug|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|arm64.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|arm64.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x64.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x64.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x86.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.Release|x86.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|Any CPU.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|Any CPU.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|arm64.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|arm64.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x64.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x64.Build.0 = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x86.ActiveCfg = Release|Any CPU
-		{1B0B2168-7A94-4053-9F1F-8E607ED416ED}.ReleaseNoProfiling|x86.Build.0 = Release|Any CPU
 		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9315AF-6633-4916-A589-34A4BAD9C966}.Debug|arm64.ActiveCfg = Debug|Any CPU

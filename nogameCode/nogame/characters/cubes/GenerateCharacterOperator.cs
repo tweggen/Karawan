@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using engine;
 using engine.joyce;
+using engine.physics;
 using engine.world;
 using engine.streets;
 using engine.world.components;
@@ -221,8 +222,10 @@ namespace nogame.characters.cubes
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
                             {
-                                Entity = eTarget, Name = "nogame.characters.cube",
-                                DebugInfo = $"_chrIdx {_characterIndex}", IsTangible = false
+                                DebugInfo = $"_chrIdx {_characterIndex}",
+                                Entity = eTarget, 
+                                Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE,
+                                Name = "nogame.characters.cube",
                             };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.audio.components.MovingSound(

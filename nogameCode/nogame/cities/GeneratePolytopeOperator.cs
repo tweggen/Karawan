@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BepuPhysics;
 using engine;
 using engine.joyce;
+using engine.physics;
 using engine.world;
 using static engine.Logger; 
 
@@ -128,7 +129,11 @@ public class GeneratePolytopeOperator : IFragmentOperator
             BodyReference prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
             engine.physics.CollisionProperties collisionProperties =
                 new engine.physics.CollisionProperties
-                    { Entity = eTarget, Name = "nogame.furniture.polytopeBall", IsTangible = true };
+                    { 
+                        Entity = eTarget,
+                        Name = "nogame.furniture.polytopeBall",
+                        Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE
+                    };
             aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
             eTarget.Set(new engine.physics.components.Kinetic(
                 prefSphere, collisionProperties));

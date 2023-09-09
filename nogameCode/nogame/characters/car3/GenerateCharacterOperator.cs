@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using engine;
 using engine.joyce;
+using engine.physics;
 using engine.world;
 using engine.streets;
 using static engine.Logger;   
@@ -247,7 +248,11 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
-                                { Name = "nogame.characters.car3", IsTangible = true, Entity = eTarget };
+                            {
+                                Entity = eTarget,
+                                Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE, 
+                                Name = "nogame.characters.car3",
+                            };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.physics.components.Kinetic(
                             prefSphere, collisionProperties));
