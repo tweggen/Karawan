@@ -34,6 +34,7 @@ internal class Behavior : engine.ABehavior
              * Get a copy of the original.
              */
             cCarKinetic = me.Entity.Get<engine.physics.components.Kinetic>();
+            var bodyHandle = cCarKinetic.Reference.Handle;
             cCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
 
             /*
@@ -47,8 +48,13 @@ internal class Behavior : engine.ABehavior
                 // TXWTODO: THis is a bit hard coded. 
                 BepuPhysics.Collidables.Sphere pbodySphere = new(GenerateCharacterOperator.PhysicsRadius);
                 var pinertiaSphere = pbodySphere.ComputeInertia(GenerateCharacterOperator.PhysicsMass);
-                cCarKinetic.Reference.SetLocalInertia(pinertiaSphere);
-                cCarKinetic.Reference.Awake = true;
+                /*
+                 * We need to call Simulation.Bodies.SetLocalInertia to remove the kinematic from a
+                 * couple of lists. 
+                 */
+                _engine.Simulation.Bodies.SetLocalInertia(bodyHandle, pinertiaSphere);
+                //cCarKinetic.Reference.SetLocalInertia(pinertiaSphere);
+                //cCarKinetic.Reference.Awake = true;
             }
 
             me.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, me));

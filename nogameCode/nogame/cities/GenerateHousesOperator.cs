@@ -49,7 +49,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * @param mpt
      *     The number of meters per texture.
      */
-    private void _createHouseSubGeo(
+    private void _createClassicHouseSubGeo(
         in engine.world.Fragment worldFragment,
         in engine.joyce.MatMesh matmesh,
         in IList<Vector3> p,
@@ -98,7 +98,6 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         {
             Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
         }
-
     }
 
 
@@ -373,7 +372,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     var height = building.GetHeight();
                     try
                     {
-                        _createHouseSubGeo(
+                        _createClassicHouseSubGeo(
                             worldFragment, matmesh,
                             fragPoints, height, _metersPerTexture,
                             listCreatePhysics);
