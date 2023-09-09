@@ -132,7 +132,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                     { 
                         Entity = eTarget,
                         Name = "nogame.furniture.polytopeBall",
-                        Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE
+                        Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable
                     };
             aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
             eTarget.Set(new engine.physics.components.Kinetic(

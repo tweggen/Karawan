@@ -8,6 +8,7 @@ public class Manager
 {
     private engine.Engine _engine;
 
+    private IDisposable? _subscriptions;
 
     public void _onBehaviorRemoved(in DefaultEcs.Entity entity,
         in components.Behavior cOldBehavior)
@@ -66,9 +67,19 @@ public class Manager
             newProvider.OnAttach(_engine, entity);
         }
     }
+
+
+    public void Stop()
+    {
+        if (_subscriptions != null)
+        {
+            _subscriptions.Dispose();
+            _subscriptions = null;
+        }
+    }
     
     
-    public IDisposable Manage(in engine.Engine engine)
+    public void Manage(in engine.Engine engine)
     {
         _engine = engine;
         
@@ -84,13 +95,19 @@ public class Manager
             ErrorThrow("world must not be null.", (m) => new ArgumentException(m));
         }
         
-        
         var entities = world.GetEntities().With<components.Behavior>().AsEnumerable();
         foreach (DefaultEcs.Entity entity in entities)
         {
             _onBehaviorAdded(entity, entity.Get<components.Behavior>());
         }
 
-        return GetSubscriptions(world).Merge();
+        _subscriptions = GetSubscriptions(world).Merge();
+    }
+
+
+    public void Dispose()
+    {
+        Stop();
+        _engine = null;
     }
 }

@@ -83,15 +83,22 @@ public class AfterCrashBehavior : ABehavior
              */
             float massShip = 500f;
             entity.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
-            prefTarget.ApplyImpulse(vTotalImpulse * dt * massShip, new Vector3(0f, 0f, 0f));
-            prefTarget.Awake = true;
+            lock (_engine.Simulation)
+            {
+                prefTarget.ApplyImpulse(vTotalImpulse * dt * massShip, new Vector3(0f, 0f, 0f));
+                prefTarget.Awake = true;
+            }
         }
         else
         {
             if (null != _oldBehavior)
             {
-                prefTarget.Awake = false;
-                prefTarget.BecomeKinematic();
+                lock (_engine.Simulation)
+                {
+                    prefTarget.Awake = false;
+                    prefTarget.BecomeKinematic();
+                }
+
                 var cCarDynamic = entity.Get<engine.physics.components.Body>();
                 cCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
                 entity.Set(cCarDynamic);

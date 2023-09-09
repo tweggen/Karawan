@@ -250,7 +250,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             new engine.physics.CollisionProperties
                             {
                                 Entity = eTarget,
-                                Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE, 
+                                Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable, 
                                 Name = "nogame.characters.car3",
                             };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);

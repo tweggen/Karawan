@@ -224,7 +224,7 @@ namespace nogame.characters.cubes
                             {
                                 DebugInfo = $"_chrIdx {_characterIndex}",
                                 Entity = eTarget, 
-                                Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE,
+                                Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable,
                                 Name = "nogame.characters.cube",
                             };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);

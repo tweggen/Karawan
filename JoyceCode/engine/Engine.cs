@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
+using BepuPhysics;
 using DefaultEcs;
 using engine.behave.components;
 using engine.news;
@@ -402,18 +403,6 @@ namespace engine
         public void QueueMainThreadAction(Action action)
         {
             _workerMainThreadActions.Enqueue(action);
-        }
-
-
-        public void AddContactListener(DefaultEcs.Entity entity)
-        {
-            _aPhysics.AddContactListener(entity);
-        }
-        
-
-        public void RemoveContactListener(DefaultEcs.Entity entity)
-        {
-            _aPhysics.RemoveContactListener(entity);
         }
 
 

@@ -498,16 +498,13 @@ namespace nogame.modules.playerhover
                 }
                 engine.physics.CollisionProperties collisionProperties = 
                     new engine.physics.CollisionProperties
-                    { Entity = _eShip, Name = PhysicsName, Flags = CollisionProperties.CollisionFlags.IS_TANGIBLE };
+                    {
+                        Entity = _eShip,
+                        Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable,
+                        Name = PhysicsName, 
+                    };
                 Implementations.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
-
-                /*
-                 * Activate collision detection for ship.
-                 */
-                // TXWTODO: We need to get rid of AddContactListener
-                _engine.AddContactListener(_eShip);
-
                 _eShip.Set(new engine.behave.components.Behavior(new Behavior()));
             }
 

@@ -213,7 +213,7 @@ public class API
     /**
      * Register a listener who is notified on callbacks.
      */
-    public void AddContactListener(DefaultEcs.Entity entity)
+    public void AddContactListener(in DefaultEcs.Entity entity)
     {
         _contactEvents.RegisterListener(
             new CollidableReference(
@@ -225,12 +225,14 @@ public class API
     /**
      * Unregister a notify listener.
      */
-    public void RemoveContactListener(DefaultEcs.Entity entity)
+    public void RemoveContactListener(
+        in DefaultEcs.Entity entity, 
+        in BepuPhysics.BodyReference bodyReference)
     {
         _contactEvents.UnregisterListener(
             new CollidableReference(
                 CollidableMobility.Dynamic,
-                entity.Get<physics.components.Body>().Reference.Handle));
+                bodyReference.Handle));
     }
     
     
