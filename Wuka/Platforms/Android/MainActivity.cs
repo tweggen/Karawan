@@ -93,6 +93,7 @@ namespace Wuka
             engine.GlobalSettings.Set("platform.initialZoomState", "-16");
             engine.GlobalSettings.Set("nogame.CreateUI", "false");
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
+            engine.GlobalSettings.Set("Engine.RWPath", "./data/");
 
             _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
 #if false
