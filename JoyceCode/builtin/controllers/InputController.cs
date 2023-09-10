@@ -177,7 +177,7 @@ public class InputController : engine.AModule, engine.IInputPart
     /**
      * How far on the y axis do I need to move to do a complete zoom controller?
      */
-    private readonly float ControllerTouchZoomFull = 0.6f;
+    private readonly float ControllerTouchZoomFull = 1.0f;
     private float _zoomAtPress = 0f;
     
     /*
@@ -210,11 +210,11 @@ public class InputController : engine.AModule, engine.IInputPart
                 float relY = (float)currDist.Y / (float)viewSize.Y;
                 float relX = (float)currDist.X / (float)viewSize.Y;
 
-                // Console.WriteLine($"ViewSize: {_vViewSize}, press: {_mousePressPosition}, relX: {relX}, relY: {relY}");
+                //Console.WriteLine($"ViewSize: {_vViewSize}, press: {_mousePressPosition}, relX: {relX}, relY: {relY}");
 
                 if (_mousePressPosition.X >= (viewSize.X - viewSize.X/25f))
                 {
-                    float zoomWay = relY / ControllerTouchZoomFull * 255f;
+                    float zoomWay = relY / ControllerTouchZoomFull * (16+128);
                     float newZoom = (float)_zoomAtPress-zoomWay;
                     _controllerState.ZoomState = (sbyte)Single.Min(16, Single.Max(-128, newZoom));
                 }

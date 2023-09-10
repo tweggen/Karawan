@@ -9,6 +9,10 @@ using Silk.NET.Input.Sdl;
 using Android.Content.Res;
 using engine;
 using Silk.NET.GLFW;
+using Android.Media;
+using Wuka.Platforms.Android;
+using Java.Util;
+using System.Numerics;
 
 namespace Wuka
 {
@@ -40,6 +44,23 @@ namespace Wuka
 
         protected override void OnRun()
         {
+#if false
+            try
+            {
+                var tCompletionSource = new TaskCompletionSource<PermissionStatus>();
+                Device.BeginInvokeOnMainThread(async () =>
+                {
+                    tCompletionSource.SetResult(await Permissions.RequestAsync<MyBluetoothPermission>());
+                });
+                await tCompletionSource.Task;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+#endif
+
+
             /*
              * setup framework dependencies.
              */

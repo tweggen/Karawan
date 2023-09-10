@@ -1,6 +1,7 @@
 ﻿using Android.App;
+using Android.Media;
 using Android.Runtime;
-
+using Wuka.Platforms.Android;
 
 namespace Wuka
 {
@@ -13,8 +14,9 @@ namespace Wuka
         {
             {
                 var runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier;
-                Console.WriteLine($"Starting on platform {runtime}");
-
+                Console.WriteLine($"Starting on platform {runtime}. Waiting for permissions...");
+ 
+                Console.WriteLine($"Continueing...");
             }
         }
 
