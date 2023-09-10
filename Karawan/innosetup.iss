@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=Silicon Desert 2
-AppVersion=0.2070
+AppVersion=0.0390
 WizardStyle=modern
 DefaultDirName={autopf}\SiliconDesert2
 DefaultGroupName=SiliconDesert2

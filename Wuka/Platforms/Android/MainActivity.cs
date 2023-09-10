@@ -29,12 +29,31 @@ namespace Wuka
         private Silk.NET.Windowing.IView _iView;
         private engine.Engine _engine;
 
+        private async void _requestBluetoothPermission()
+        {
+            try
+            {
+                var permissionStatus = await Permissions.RequestAsync<MyBluetoothPermission>();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+
         protected override void OnStop()
         {
             //_engine.Suspend();
             base.OnStop();
         }
 
+        protected override void OnCreate(Bundle savedInstanceState)
+        {
+            base.OnCreate(savedInstanceState);
+            _requestBluetoothPermission();
+        }
 
         protected override void OnRestart()
         {
@@ -44,22 +63,6 @@ namespace Wuka
 
         protected override void OnRun()
         {
-#if false
-            try
-            {
-                var tCompletionSource = new TaskCompletionSource<PermissionStatus>();
-                Device.BeginInvokeOnMainThread(async () =>
-                {
-                    tCompletionSource.SetResult(await Permissions.RequestAsync<MyBluetoothPermission>());
-                });
-                await tCompletionSource.Task;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-#endif
-
 
             /*
              * setup framework dependencies.
