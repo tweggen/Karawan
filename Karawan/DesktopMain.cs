@@ -70,7 +70,8 @@ public class DesktopMain
         {
             engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
         }
-
+        engine.GlobalSettings.Set("Engine.RWPath", "./");
+        
         engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
         engine.GlobalSettings.Set("splash.touchControls", "false");
         engine.Props.Set("nogame.CreateHouses", "true");
