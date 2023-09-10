@@ -5,10 +5,11 @@ namespace nogame;
 
 public class GameState
 {
-    public int Id { get; set; }
-    public Vector3 PlayerPosition { get; set; }
-    public Quaternion PlayerOrientation { get; set; }
-    public int NumberCubes { get; set; }
-    public int NumberPolytopes { get; set; }
-    public int Health { get; set; }
+    [LiteDB.BsonId]
+    public string Id { get; set; } = "0";
+    public Vector3 PlayerPosition { get; set; } = Vector3.Zero;
+    public Quaternion PlayerOrientation { get; set; } = Quaternion.Identity;
+    public int NumberCubes { get; set; } = 0;
+    public int NumberPolytopes { get; set; } = 0;
+    public int Health { get; set; } = 1000;
 }

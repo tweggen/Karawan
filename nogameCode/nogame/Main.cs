@@ -1,4 +1,5 @@
 
+using System.Timers;
 using builtin.controllers;
 using builtin.map;
 using engine;
@@ -21,6 +22,13 @@ public class Main
     
     private DefaultMapProvider _mapProvider;
 
+    private System.Timers.Timer _saveTimer;
+
+    private void _onSaveTimer(object sender, ElapsedEventArgs e)
+    {
+        Implementations.Get<DBStorage>().SaveGameState(Implementations.Get<GameState>());
+    }
+    
     
     private IMapProvider _setupMapProvider()
     {
@@ -42,6 +50,8 @@ public class Main
         Implementations.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
         Implementations.Register<builtin.controllers.InputController>(() => new InputController());
         Implementations.Register<SetupMetaGen>(() => new SetupMetaGen());
+        Implementations.Register<DBStorage>(() => new DBStorage());
+        
     }
 
     
@@ -52,6 +62,16 @@ public class Main
         //_e.SceneSequencer.AddSceneFactory("tunestreets", () => new builtin.tunestreets.Scene());
         //_e.SceneSequencer.SetMainScene("tunestreets");
         _e.SceneSequencer.SetMainScene("logos");
+    }
+
+
+    private void _startAutoSave()
+    {
+        _saveTimer = new System.Timers.Timer(60000);
+        // Hook up the Elapsed event for the timer. 
+        _saveTimer.Elapsed += _onSaveTimer;
+        _saveTimer.AutoReset = true;
+        _saveTimer.Enabled = true;
     }
 
 
@@ -82,12 +102,25 @@ public class Main
         engine.Props.Set("nogame.characters.cube.maxDistance", 400f);
         engine.Props.Set("nogame.characters.car3.maxDistance", 800f);
         engine.Props.Set("nogame.characters.tram.maxDistance", 1600f);
-
         
         main._setupImplementations();
         main._registerScenes();
 
+        {
+            bool haveGameState = Implementations.Get<DBStorage>().LoadGameState(out var gameState);
+            if (false == haveGameState)
+            {
+                gameState = new GameState();
+                Implementations.Get<DBStorage>().SaveGameState(gameState);
+            }
+            /*
+             * Global Data structures
+             */
+            Implementations.Register<GameState>(() => gameState);
+        }
+
         Implementations.Get<Boom.ISoundAPI>().SetupDone();
 
+        main._startAutoSave();
     }
 }

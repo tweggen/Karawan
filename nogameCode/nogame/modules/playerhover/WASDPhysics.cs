@@ -220,7 +220,12 @@ namespace nogame.modules.playerhover
                 0x00000000,
                 HAlign.Left
             ));
-            
+            {
+                var gameState = Implementations.Get<GameState>();
+                gameState.PlayerPosition = vTargetPos;
+                gameState.PlayerOrientation = _prefTarget.Pose.Orientation;
+            }
+
         }
 
 

@@ -70,10 +70,6 @@ namespace nogame.modules.playerhover
 
         private ClusterDesc _currentCluster = null;
         
-        private int _score = 0;
-        private int _polytopeCount = 0;
-        private int _health = 1000;
-
         private Boom.ISound _soundCrash = null;
 
         
@@ -101,7 +97,8 @@ namespace nogame.modules.playerhover
         {
             lock (_lo)
             {
-                _health = int.Max(0, _health-less);
+                var gameState = Implementations.Get<GameState>();
+                gameState.Health = int.Max(0, gameState.Health-less);
             }
         }
         
@@ -126,11 +123,9 @@ namespace nogame.modules.playerhover
         {
             var cev = ev as ContactEvent;
             cev.ContactInfo.PropertiesB.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour() { Engine = _engine }));
-            lock (_lo)
-            {
-                ++_polytopeCount;
-                _health = 1000;
-            }
+            var gameState = Implementations.Get<GameState>();
+            gameState.NumberPolytopes++;
+            gameState.Health = 1000;
 
             _polyballSound.Stop();
             _polyballSound.Play();
@@ -144,10 +139,9 @@ namespace nogame.modules.playerhover
             
             _plingPlayer.PlayPling();
             _plingPlayer.Next();
-            lock (_lo)
-            {
-                ++_score;
-            }
+            
+            var gameState = Implementations.Get<GameState>();
+            gameState.NumberCubes++;
         }
         
 
@@ -323,10 +317,12 @@ namespace nogame.modules.playerhover
                     _getClusterSound(_currentCluster), 0.05f, true, () => {}, () => {});
             }
 
+            var gameState = Implementations.Get<GameState>();
+
             _eScoreDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(786f-64f-32f, 48f),
                 new Vector2(64f, 40f),
-                $"{_score}",
+                $"{gameState.NumberCubes}",
                 32,
                 0xff22aaee,
                 0x00000000,
@@ -335,7 +331,7 @@ namespace nogame.modules.playerhover
             _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(786f-64f-32f-48f, 48f),
                 new Vector2(64f, 40f),
-                $"{_polytopeCount}",
+                $"{gameState.NumberPolytopes}",
                 32,
                 0xff999922,
                 0x00000000,
@@ -344,7 +340,7 @@ namespace nogame.modules.playerhover
             _eHealthDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(786f-64f-32f-48f, 48f+48f),
                 new Vector2(64f+48f, 40f),
-                $"{_health}",
+                $"{gameState.Health}",
                 32,
                 0xff448822,
                 0x00000000,
@@ -420,8 +416,16 @@ namespace nogame.modules.playerhover
              */
             {
                 _eShip = _engine.CreateEntity("RootScene.playership");
-                var posShip = _findStartPosition();
+                
+                var gameState = Implementations.Get<GameState>();
+                var posShip = gameState.PlayerPosition;
+                var rotShip = gameState.PlayerOrientation;
+                if (posShip == Vector3.Zero)
+                {
+                    posShip = _findStartPosition();
+                }
                 _aTransform.SetPosition(_eShip, posShip);
+                _aTransform.SetRotation(_eShip, rotShip);
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
