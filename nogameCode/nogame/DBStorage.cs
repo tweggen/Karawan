@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices.JavaScript;
 using engine;
 using LiteDB;
@@ -13,8 +15,29 @@ public class DBStorage : IDisposable
 {
     private object _lo = new();
     private LiteDatabase _db;
+    private BsonMapper _mappers;
 
-
+    private BsonMapper _createMappers()
+    {
+        BsonMapper m = new();
+        m.RegisterType(
+            vector => new BsonArray(new BsonValue[] { vector.X, vector.Y, vector.Z }),
+            value => new Vector3(
+                (float)value.AsArray[0].AsDouble,
+                (float)value.AsArray[1].AsDouble,
+                (float)value.AsArray[2].AsDouble)
+        );
+        m.RegisterType(
+            quat => new BsonArray(new BsonValue[] { quat.X, quat.Y, quat.Z, quat.W }),
+            value => new Quaternion(
+                    (float)value.AsArray[0].AsDouble,
+                    (float)value.AsArray[1].AsDouble,
+                    (float)value.AsArray[2].AsDouble,
+                    (float)value.AsArray[3].AsDouble)
+        );
+        return m;
+    }
+    
     private bool _readGameState(out GameState gameState)
     {
         bool haveIt = false;
@@ -24,7 +47,7 @@ public class DBStorage : IDisposable
             var col = _db.GetCollection<GameState>();
             Trace($"Collection has {col.Count()}: {col}");
             var allGameStates = col.FindAll();
-            GameState? foundGameState = col.FindOne((x) => x.Id == "0");
+            GameState? foundGameState = col.FindById(1);
             if (foundGameState != null)
             {
                 gameState = foundGameState;
@@ -68,7 +91,7 @@ public class DBStorage : IDisposable
         string path = GlobalSettings.Get("Engine.RWPath");
         string dbname = "gamestate.db";
 
-        _db = new LiteDatabase(path+dbname);
+        _db = new LiteDatabase(Path.Combine(path, dbname), _mappers);
     }
 
 
@@ -132,5 +155,11 @@ public class DBStorage : IDisposable
     public void Dispose()
     {
         Close();
+    }
+
+
+    public DBStorage()
+    {
+        _mappers = _createMappers();
     }
 }

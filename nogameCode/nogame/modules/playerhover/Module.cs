@@ -472,7 +472,7 @@ namespace nogame.modules.playerhover
                 {
                     _phandleShip = _engine.Simulation.Bodies.Add(
                         BodyDescription.CreateDynamic(
-                            posShip,
+                            new RigidPose(posShip, rotShip),
                             pinertiaSphere,
                             new BepuPhysics.Collidables.CollidableDescription(
                                 _engine.Simulation.Shapes.Add(pbodySphere),
