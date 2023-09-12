@@ -107,7 +107,7 @@ public class Main
         main._registerScenes();
 
         {
-            bool haveGameState = Implementations.Get<DBStorage>().LoadGameState(out var gameState);
+            bool haveGameState = Implementations.Get<DBStorage>().LoadGameState(out GameState gameState);
             if (false == haveGameState)
             {
                 gameState = new GameState();

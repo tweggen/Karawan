@@ -244,12 +244,14 @@ namespace Splash.Silk
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
                 {
-                    Position = mouse.Position
+                    Position = mouse.Position,
+                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
                 });
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_TOUCH_PRESSED, "")
                 {
-                    Position = mouse.Position
+                    Position = mouse.Position,
+                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
                 });
         }
 
@@ -259,12 +261,14 @@ namespace Splash.Silk
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_RELEASED, $"{(int)mouseButton}")
                 {
-                    Position = mouse.Position
+                    Position = mouse.Position,
+                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
                 });
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_TOUCH_RELEASED, "")
                 {
-                    Position = mouse.Position
+                    Position = mouse.Position,
+                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
                 });
         }
 

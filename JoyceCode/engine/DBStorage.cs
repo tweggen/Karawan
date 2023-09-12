@@ -9,7 +9,7 @@ using engine;
 using LiteDB;
 using static engine.Logger;
 
-namespace nogame;
+namespace engine;
 
 public class DBStorage : IDisposable
 {
@@ -38,16 +38,16 @@ public class DBStorage : IDisposable
         return m;
     }
     
-    private bool _readGameState(out GameState gameState)
+    private bool _readGameState<GS>(out GS gameState) where GS : class
     {
         bool haveIt = false;
         gameState = null;
         try
         {
-            var col = _db.GetCollection<GameState>();
+            var col = _db.GetCollection<GS>();
             Trace($"Collection has {col.Count()}: {col}");
             var allGameStates = col.FindAll();
-            GameState? foundGameState = col.FindById(1);
+            GS? foundGameState = col.FindById(1);
             if (foundGameState != null)
             {
                 gameState = foundGameState;
@@ -63,13 +63,13 @@ public class DBStorage : IDisposable
     }
     
 
-    private void _writeGameState(GameState gameState)
+    private void _writeGameState<GS>(GS gameState) where GS : class
     {
         if (gameState == null)
         {
             ErrorThrow("GameState is null", m => new ArgumentNullException(m));
         }
-        var col = _db.GetCollection<GameState>();
+        var col = _db.GetCollection<GS>();
         col.Upsert(gameState);
         _db.Commit();
     }
@@ -96,7 +96,7 @@ public class DBStorage : IDisposable
 
 
 
-    public void SaveGameState(GameState gameState)
+    public void SaveGameState<GS>(GS gameState) where GS : class
     {
         lock (_lo)
         {
@@ -122,7 +122,7 @@ public class DBStorage : IDisposable
     }
     
 
-    public bool LoadGameState(out GameState gameState)
+    public bool LoadGameState<GS>(out GS gameState) where GS : class
     {
         bool haveIt = false;
         lock (_lo)

@@ -13,6 +13,8 @@ using Android.Media;
 using Wuka.Platforms.Android;
 using Java.Util;
 using System.Numerics;
+using nogame;
+using GameState = Android.App.GameState;
 
 namespace Wuka
 {
@@ -45,8 +47,14 @@ namespace Wuka
 
         protected override void OnStop()
         {
+            /*
+             * Try to save a backup copy
+             */
+            Implementations.Get<engine.DBStorage>().SaveGameState(Implementations.Get<GameState>());
+
             //_engine.Suspend();
             base.OnStop();
+            _engine.Exit();
         }
 
         protected override void OnCreate(Bundle savedInstanceState)

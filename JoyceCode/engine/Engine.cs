@@ -117,6 +117,7 @@ namespace engine
 
 
         private bool _platformIsAvailable = false;
+        private bool _isRunning = true;
 
         public BepuPhysics.Simulation Simulation
         {
@@ -838,6 +839,15 @@ namespace engine
 
         }
 
+
+        public void Exit()
+        {
+            lock (_lo)
+            {
+                _isRunning = false;
+            }
+        }
+        
         
         /**
          * Call after all dependencies are set.
@@ -867,7 +877,11 @@ namespace engine
 
         public bool IsRunning()
         {
-            return _platform.IsRunning();
+            bool platformIsRunning = _platform.IsRunning();
+            lock (_lo)
+            {
+                return _isRunning && platformIsRunning;
+            }
         }
 
 

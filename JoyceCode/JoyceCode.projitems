@@ -29,6 +29,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleCard.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\RunningAverageComputer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />
@@ -55,11 +56,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\SoundInstance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\systems\MovingSoundsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Behavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Clickable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\BehaviorSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\ClickableScanner.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\WiperSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ConsoleLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\DBStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\draw\components\OSDText.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\draw\Context.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\draw\IFramebuffer.cs" />
@@ -153,7 +157,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\NarrowPhaseCallbacks.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\PoseIntegratorCallbacks.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\SimpleThreadDispatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\ApplyPosesSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\MoveKineticsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\PropertyEvent.cs" />

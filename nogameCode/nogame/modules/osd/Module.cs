@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using engine;
+using engine.behave.components;
 using engine.draw.systems;
 using engine.joyce;
 
@@ -36,7 +37,8 @@ public class Module : engine.AModule
 
     private readonly uint _width = 768;
     private readonly uint _height = 768*9/16;
-    
+
+    private engine.behave.systems.ClickableHandler _clickableHandler;
 
     private void _setupOSD()
     {
@@ -118,6 +120,7 @@ public class Module : engine.AModule
         _aTransform = Implementations.Get<engine.transform.API>();
 
         _renderOSDSystem = new RenderOSDSystem(_engine);
+        // _clickableHandler = new (engine0, )
 
         _engine.AddModule(this);
 
