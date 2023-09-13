@@ -19,7 +19,7 @@ public class ClickableHandler
     private Matrix4x4 _mProjection;
     private Matrix4x4 _mView;
 
-    private void _findAt(in Vector2 pos)
+    private bool _findAt(in Vector2 pos, out DefaultEcs.Entity resultingEntity)
     {
         /*
          * Iterate through all clickables that also have
@@ -68,8 +68,13 @@ public class ClickableHandler
             /*
              * This is a hit.
              */
-            Trace($"Clickable {entity} was clicked.");
+            // Trace($"Clickable {entity} was clicked.");
+            resultingEntity = entity;
+            return true;
         }
+
+        resultingEntity = default;
+        return false;
     }
 
 
@@ -81,7 +86,7 @@ public class ClickableHandler
     }
     
     
-    public void OnClick(engine.news.Event ev)
+    public DefaultEcs.Entity OnClick(engine.news.Event ev)
     {
         _vViewSize = ev.Size;
         _updateFromCamera();
@@ -95,13 +100,13 @@ public class ClickableHandler
                  */
                 break;
             default:
-                return;
+                return default;
                 break;
         }
 
         Vector2 pos = ev.Position;
-        _findAt(pos);
-        
+        _findAt(pos, out var eFound);
+        return eFound;
     }
 
     public ClickableHandler(Engine engine0, DefaultEcs.Entity eCamera)

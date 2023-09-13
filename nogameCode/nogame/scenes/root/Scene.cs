@@ -119,14 +119,22 @@ public class Scene : engine.IScene, engine.IInputPart
 
     private void _testClickable(Event ev)
     {
-        _clickableHandler.OnClick(ev);
+        var eFound = _clickableHandler.OnClick(ev);
+        // TXWTODO: This is a hack, we really should delegate this to the entity.
+        if (eFound.IsAlive)
+        {
+            _toggleMap();
+        }
     }
-    
+
 
     private void _onTouchPress(Event ev)
     {
-        _testClickable(ev);
-#if false
+        if (GlobalSettings.Get("Android") == "true")
+        {
+            _testClickable(ev);
+        }
+#if false   
         bool _callToggleMap = false;
 
         // TXWTODO: Separater touch from click ui input
