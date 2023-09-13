@@ -56,7 +56,7 @@ public class ClickableHandler
             Vector2 ul = Vector2.Min(vAA2, vBB2);
             Vector2 lr = Vector2.Max(vAA2, vBB2);
             
-            Trace($"Transformed position is ul={ul}, lr={lr}");
+            Trace($"pos is {pos} Transformed position is ul={ul}, lr={lr}");
 
             if (!
                 (pos.X >= ul.X && pos.X < lr.X 

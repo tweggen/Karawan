@@ -23,7 +23,15 @@ namespace Splash.Silk
         private readonly IThreeD _threeD;
         private readonly SilkThreeD _silkThreeD;
         private readonly LightManager _lightManager;
+        /**
+         * This is the size of the physical view
+         */
         private Vector2 _vViewSize;
+        
+        /**
+         * This is the size of the logical view.
+         */
+        private Vector2 _v3dSize;
         private Vector2 _vLastGlSize = new(0f, 0f);
 
         private SkShaderEntry _skShaderEntry;
@@ -102,7 +110,7 @@ namespace Splash.Silk
                  */
                 cCameraParams.GetViewMatrix(out Matrix4x4 matView, mCameraToWorld);
                 _silkThreeD.SetViewMatrix(matView);
-                cCameraParams.GetProjectionMatrix(out Matrix4x4 matProjection, _vViewSize);
+                cCameraParams.GetProjectionMatrix(out Matrix4x4 matProjection, _v3dSize);
                 _silkThreeD.SetProjectionMatrix(matProjection);
 
 
@@ -147,11 +155,11 @@ namespace Splash.Silk
                 _engine.GetViewRectangle(out ul, out var lr);
                 if (Vector2.Zero == lr)
                 {
-                    vDesiredSize = _vViewSize;
+                    lr = _vViewSize - Vector2.One;
+                    vDesiredSize = _vViewSize - ul;
                 }
                 else
                 {
-                    
                     vDesiredSize = lr - ul + Vector2.One;
                 }
             }
@@ -163,12 +171,11 @@ namespace Splash.Silk
 
             if (null != _gl && (force || _vLastGlSize != vDesiredSize))
             {
-
-                _gl.Viewport((int)ul.X, (int)ul.Y,
-                    (uint)(vDesiredSize.X),
-                    (uint)(vDesiredSize.Y));
-                _silkThreeD.CheckError($"glViewport {_vViewSize}");
-                _vLastGlSize = _vViewSize;
+                _v3dSize = vDesiredSize;
+                _gl.Viewport((int)ul.X, (int)(_vViewSize.Y-vDesiredSize.Y-ul.Y),
+                    (uint)(vDesiredSize.X), (uint)(vDesiredSize.Y));
+                _silkThreeD.CheckError($"glViewport {_v3dSize}");
+                _vLastGlSize = _v3dSize;
             }
         }
         

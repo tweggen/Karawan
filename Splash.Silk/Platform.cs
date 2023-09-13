@@ -238,37 +238,57 @@ namespace Splash.Silk
             });
         }
 
+        private void _getActualViewRectangle(out Vector2 ul, out Vector2 lr)
+        {
+            _engine.GetViewRectangle(out ul, out lr);
+            if (Vector2.Zero == lr)
+            {
+                lr = new Vector2(_iView.Size.X, _iView.Size.Y) - Vector2.One;
+            }
+        }
+
+        private void _fullToViewPosition(in Vector2 i, out Vector2 o, out Vector2 s)
+        {
+            _getActualViewRectangle(out var ul, out var lr);
+            o = i - ul;
+            s = lr - ul + Vector2.One;
+        }
+
 
         private void _onMouseDown(IMouse mouse, MouseButton mouseButton)
-        {          
+        {
+            _fullToViewPosition(mouse.Position, out var pos, out var size);
+
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
                 {
-                    Position = mouse.Position,
-                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
+                    Position = pos,
+                    Size = size
                 });
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_TOUCH_PRESSED, "")
                 {
-                    Position = mouse.Position,
-                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
+                    Position = pos,
+                    Size = size
                 });
         }
 
         
         private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
         {
+            _fullToViewPosition(mouse.Position, out var pos, out var size);
+
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_RELEASED, $"{(int)mouseButton}")
                 {
-                    Position = mouse.Position,
-                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
+                    Position = pos,
+                    Size = size
                 });
             Implementations.Get<EventQueue>().Push(
                 new Event(Event.INPUT_TOUCH_RELEASED, "")
                 {
-                    Position = mouse.Position,
-                    Size = new Vector2(_iView.Size.X, _iView.Size.Y)
+                    Position = pos,
+                    Size = size
                 });
         }
 
