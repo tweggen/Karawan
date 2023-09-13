@@ -45,24 +45,18 @@ public class ClickableHandler
              */
 
             joyce.InstanceDesc id = entity.Get<Instance3>().InstanceDesc;
-            Vector4 vAA4 =
-                Vector4.Transform(
-                    Vector4.Transform(id.Aabb.AA, _mView),
-                    _mProjection);
-            Vector4 vBB4 =
-                Vector4.Transform(
-                    Vector4.Transform(id.Aabb.BB, _mView),
-                    _mProjection);
+            Vector4 vAA4 = Vector4.Transform(id.Aabb.AA, cTransform.Matrix * _mView * _mProjection);
+            Vector4 vBB4 = Vector4.Transform(id.Aabb.BB, cTransform.Matrix * _mView * _mProjection);
             Vector2 vAA2 = new(
                 (vAA4.X / vAA4.W + 1f) * _vViewSize.X / 2f, 
-                (vAA4.Y / vAA4.W + 1f) * _vViewSize.Y / 2f);
+                (-vAA4.Y / vAA4.W + 1f) * _vViewSize.Y / 2f);
             Vector2 vBB2 = new(
                 (vBB4.X / vBB4.W + 1f) * _vViewSize.X / 2f, 
-                (vBB4.Y / vBB4.W + 1f) * _vViewSize.Y / 2f);
+                (-vBB4.Y / vBB4.W + 1f) * _vViewSize.Y / 2f);
             Vector2 ul = Vector2.Min(vAA2, vBB2);
             Vector2 lr = Vector2.Max(vAA2, vBB2);
             
-            Trace("Transformed position is ul={ul}, lr={lr}");
+            Trace($"Transformed position is ul={ul}, lr={lr}");
 
             if (!
                 (pos.X >= ul.X && pos.X < lr.X 
@@ -106,6 +100,7 @@ public class ClickableHandler
         }
 
         Vector2 pos = ev.Position;
+        _findAt(pos);
         
     }
 

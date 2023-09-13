@@ -3,6 +3,7 @@ using System;
 using System.Numerics;
 using DefaultEcs;
 using engine;
+using engine.behave.systems;
 using engine.joyce;
 using engine.ross;
 using engine.world;
@@ -58,6 +59,8 @@ public class Module : AModule
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
                 new Vector3(-1f+0.15f, 9f/16f-0.24f, -1f));
+
+            _eMiniMap.Set(new engine.behave.components.Clickable());
         }
     }
 
@@ -160,7 +163,7 @@ public class Module : AModule
         _destroyResources();
     }
 
-    public void ModuleDeactivate()
+    public new void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.OnPlayerEntityChanged -= _onPlayerEntityChanged;
@@ -168,7 +171,7 @@ public class Module : AModule
     }
 
     
-    public void ModuleActivate(Engine engine0)
+    public new void ModuleActivate(Engine engine0)
     {
         _engine = engine0;
         _needResources();

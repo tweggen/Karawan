@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using engine;
+using engine.behave.systems;
 using engine.meta;
 using engine.news;
 using engine.world;
@@ -53,6 +54,7 @@ public class Scene : engine.IScene, engine.IInputPart
     private modules.menu.Module _moduleUi = null;
     private bool _isUIShown = false;
 
+    private ClickableHandler _clickableHandler;
     
     private void _togglePauseMenu()
     {
@@ -113,10 +115,18 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleMiniMap.ModuleDeactivate();
         }
     }
+
+
+    private void _testClickable(Event ev)
+    {
+        _clickableHandler.OnClick(ev);
+    }
     
 
     private void _onTouchPress(Event ev)
     {
+        _testClickable(ev);
+#if false
         bool _callToggleMap = false;
 
         // TXWTODO: Separater touch from click ui input
@@ -136,6 +146,13 @@ public class Scene : engine.IScene, engine.IInputPart
                 _toggleMap();
             }
         }
+#endif
+    }
+
+
+    private void _onMousePress(Event ev)
+    {
+        _testClickable(ev);
     }
     
     
@@ -225,6 +242,7 @@ public class Scene : engine.IScene, engine.IInputPart
         Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
 
         Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
         
         _moduleInputController.ModuleDeactivate();
         
@@ -326,7 +344,6 @@ public class Scene : engine.IScene, engine.IInputPart
         
         /*
          * Create an osd camera
-         * Keep it invisible.
          */
         {
             _eCamOSD = _engine.CreateEntity("RootScene.OSDCamera");
@@ -340,6 +357,12 @@ public class Scene : engine.IScene, engine.IInputPart
             _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));
         }
 
+        /*
+         * Setup osd interaction handler
+         */
+        {
+            _clickableHandler = new(_engine, _eCamOSD);
+        }
 
         if (true)
         {
@@ -378,6 +401,7 @@ public class Scene : engine.IScene, engine.IInputPart
         }
 
         Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
 
         _moduleInputController = Implementations.Get<builtin.controllers.InputController>();
         _moduleInputController.ModuleActivate(_engine);
