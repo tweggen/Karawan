@@ -250,7 +250,7 @@ public class Scene : engine.IScene, engine.IInputPart
         Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
 
         Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
+        // Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
         
         _moduleInputController.ModuleDeactivate();
         
@@ -409,7 +409,7 @@ public class Scene : engine.IScene, engine.IInputPart
         }
 
         Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
+        // Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
 
         _moduleInputController = Implementations.Get<builtin.controllers.InputController>();
         _moduleInputController.ModuleActivate(_engine);
