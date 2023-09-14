@@ -1,6 +1,4 @@
 ﻿using System;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Logging;
 
 using System.IO;
 using System.Threading;
@@ -46,13 +44,6 @@ public class DesktopMain
 
     public static void Main(string[] args)
     {
-        var appBuilder = WebApplication.CreateBuilder(args);
-
-        appBuilder.Logging.AddEventLog();
-        appBuilder.Logging.AddConsole();
-
-        var app = appBuilder.Build();
-
         System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");
 
         /*
@@ -112,15 +103,9 @@ public class DesktopMain
         e.SetFullscreen(startFullscreen);
 
         {
-            WireServer.API aWireServer = new(e, 9451);
-        }
-
-#if true
-        {
-            engine.ConsoleLogger logger = new(e, app.Logger);
+            engine.ConsoleLogger logger = new(e);
             engine.Logger.SetLogTarget(logger);
         }
-#endif
 
         Implementations.Register<Boom.ISoundAPI>(() =>
         {
@@ -133,17 +118,11 @@ public class DesktopMain
         // app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client.
         // To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
-        var threadApp = new Thread(() => app.Run());
-        threadApp.Start();
-
         // nogame.Main.Start(e);
         LoadGame(e, "nogame.dll", "nogame.Main", "Start");
 
         e.Execute();
 
-        app.StopAsync();
-
         // Add Call to remove an implementations.
-
     }
 }

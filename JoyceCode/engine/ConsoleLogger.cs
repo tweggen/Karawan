@@ -1,9 +1,6 @@
-﻿using BepuPhysics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Extensions.Logging;
-using OpenTelemetry.Logs;
 
 namespace engine
 {
@@ -25,7 +22,6 @@ namespace engine
         private System.Threading.Thread _loggingThread;
         private List<LogEntry> _listBuffer = new();
         private engine.Engine _engine;
-        public ILogger Logger { get; private set; }
 
         private const int DEBUG_CHUNK_LINES = 30;
 
@@ -114,22 +110,9 @@ namespace engine
             }
         }
 
-        public ConsoleLogger(in engine.Engine engine, in ILogger logger) 
+        public ConsoleLogger(in engine.Engine engine) 
         {
             _engine = engine;
-#if false
-            using var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddOpenTelemetry(options =>
-                {
-                    options.AddConsoleExporter();
-
-                });
-            });
-            Logger = loggerFactory.CreateLogger<ConsoleLogger>();
-#else
-            Logger = logger;
-#endif
             _loggingThread = new(_loggingThreadFunction);
             _loggingThread.Priority = System.Threading.ThreadPriority.Lowest;
             _loggingThread.Start();
