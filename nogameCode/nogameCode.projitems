@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\CubeVanishBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\GenerateCharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\intercity\GenerateCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\GenerateCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHousesOperator.cs" />

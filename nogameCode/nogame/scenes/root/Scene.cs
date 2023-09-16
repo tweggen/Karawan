@@ -204,6 +204,10 @@ public class Scene : engine.IScene, engine.IInputPart
         // TXWTODO: We don't precisely know when we have the first valid position 
         if (vMe != Vector3.Zero)
         {
+            if (_worldLoader == null)
+            {
+                ErrorThrow("WorldLoader is null here?", m => new InvalidOperationException(m));
+            }
             _worldLoader.WorldLoaderProvideFragments(vMe);
         }
 

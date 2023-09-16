@@ -395,7 +395,6 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                     }
                 }
-
             }
 
         }
@@ -409,7 +408,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         {
             // TXWTODO: Merge this, this is inefficient.
             var mmmerged = MatMesh.CreateMerged(matmesh);
-            var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, 1000f);
+            var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, 1500f);
             worldFragment.AddStaticInstance("nogame.cities.houses", id, listCreatePhysics);
         }
         catch (Exception e)

@@ -152,7 +152,9 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
             }
 
         }
-
+     
+        // TXWTODO: Algorithmically decide between these methods to optimize performance.
+#if true
         /*
          * Do not merge the meshes. Enable the renderer to use instanced calls.
          */
@@ -160,10 +162,23 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         {
             worldFragment.AddStaticInstance("nogame.cities.trees", instance);
         }
+#else
+        {
+            MatMesh mmTrees = new();
+            foreach (var instance in listInstanceDesc)
+            {
+                mmTrees.Add(instance);
+            }
+            // TXWTODO: Merge this, this is inefficient.
+            var mmMerged = MatMesh.CreateMerged(mmTrees);
+            var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmMerged, 1000f);
+            worldFragment.AddStaticInstance("nogame.cities.trees", id);
+        }
+#endif
     });
     
     
-    static TreeInstanceGenerator _treeInstanceGenerator = new();
+    static readonly TreeInstanceGenerator _treeInstanceGenerator = new();
     
     public GenerateTreesOperator(
         engine.world.ClusterDesc clusterDesc,

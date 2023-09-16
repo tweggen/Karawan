@@ -10,11 +10,6 @@ namespace engine.world;
 
 public class GenerateClustersOperator : world.IWorldOperator
 {
-    static private void trace(string message)
-    {
-        Console.WriteLine(message);
-    }
-
     private string _strKey;
     private engine.RandomSource _rnd;
     private tools.NameGenerator _nameGenerator;
@@ -76,7 +71,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         var clusterList = ClusterList.Instance();
 
         int idxCluster = 0;
-        trace("GenerateClustersOperator: Generating cluster list...");
+        Trace("GenerateClustersOperator: Generating cluster list...");
 
         {
             var clusterDesc = new ClusterDesc("cluster-" + _strKey + "-" + idxCluster);
@@ -118,14 +113,14 @@ public class GenerateClustersOperator : world.IWorldOperator
          * This terminates worst case with a single cluster.
          */
 
-        // trace( "GenerateClustersOperator: Merging "+nClusters+" clusters..." );
+        // Trace( "GenerateClustersOperator: Merging "+nClusters+" clusters..." );
 
         int nMerges = 0;
 
         int idx = 0;
         while (idx < nClusters)
         {
-            //trace( idx );
+            //Trace( idx );
             ClusterDesc candClusterDesc = acd[idx];
             // Already merged, ignore.
             if (candClusterDesc.Merged)
@@ -137,7 +132,7 @@ public class GenerateClustersOperator : world.IWorldOperator
             int idxTest = 0;
             while (idxTest < nClusters)
             {
-                //trace( idxTest );
+                //Trace( idxTest );
 
                 // Ignore myself.
                 if (idx == idxTest)
@@ -204,12 +199,12 @@ public class GenerateClustersOperator : world.IWorldOperator
                 {
                     // Larger overlaps the smaller. Discard the smaller.
                     smaller.Merged = true;
-                    // trace('Smaller is merged');
+                    // Trace('Smaller is merged');
                     ++idxTest;
                     continue;
                 }
 
-                //trace( "Creating merge: "+distance+" is less than "+minDist
+                //Trace( "Creating merge: "+distance+" is less than "+minDist
                 //    +" but more than "+(larger.size-smaller.size) );
 
                 // Merge them.
@@ -223,7 +218,7 @@ public class GenerateClustersOperator : world.IWorldOperator
                 testClusterDesc.Merged = true;
                 candClusterDesc.Merged = true;
 
-                //trace( newClusterDesc );
+                //Trace( newClusterDesc );
 
                 acd.Add(newClusterDesc);
                 nClusters++;
@@ -233,7 +228,7 @@ public class GenerateClustersOperator : world.IWorldOperator
 
             ++idx;
 
-            // trace( idx );
+            // Trace( idx );
         }
 
         /*
@@ -242,8 +237,8 @@ public class GenerateClustersOperator : world.IWorldOperator
         acd = acd.FindAll(c => !c.Merged);
         nClusters = acd.Count;
 
-        trace("GenerateClustersOperator: Merged " + nMerges + " clusters to " + (nClusters - nMerges * 2));
-        trace("GenerateClustersOperator: Computing data highways...");
+        Trace("GenerateClustersOperator: Merged " + nMerges + " clusters to " + (nClusters - nMerges * 2));
+        Trace("GenerateClustersOperator: Computing data highways...");
 
         /*
          * Now generate per cluster info.
@@ -300,7 +295,7 @@ public class GenerateClustersOperator : world.IWorldOperator
             clusterList.AddCluster(clusterDesc);
         }
 
-        trace("GenerateClustersOperator: Done.");
+        Trace("GenerateClustersOperator: Done.");
     }
 
     public GenerateClustersOperator(string strKey)

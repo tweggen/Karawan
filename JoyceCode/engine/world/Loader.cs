@@ -115,7 +115,7 @@ namespace engine.world
             int j = (int) Math.Floor(pos.Y);
             int k = (int) Math.Floor(pos.Z);
 
-            //trace( [x, y, z] );
+            //Trace( [x, y, z] );
             //trace( [i, j, k ] );
 
             var strCurr = "fragxy-" + i + "_" + j + "_" + k;

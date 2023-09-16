@@ -19,7 +19,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     private static engine.audio.Sound _jTramSound;
 
-    private static engine.audio.Sound _getTramSound()
+    public static engine.audio.Sound GetTramSound()
     {
         lock (_classLock)
         {
@@ -35,7 +35,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     
     private static engine.joyce.InstanceDesc[] _jInstancesTram;
-    private static engine.joyce.InstanceDesc _getTramMesh(int i)
+    public static engine.joyce.InstanceDesc GetTramMesh(int i)
     {
         lock(_classLock)
         {
@@ -58,7 +58,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     private static BepuPhysics.Collidables.TypedIndex _pshapeSphere;
     private static BepuPhysics.Collidables.Sphere _pbodySphere;
-    private static BepuPhysics.Collidables.TypedIndex _getSphereShape(in Engine engine)
+    public static BepuPhysics.Collidables.TypedIndex GetSphereShape(in Engine engine)
     {
         lock(_classLock)
         {
@@ -193,7 +193,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 ++_characterIndex;
                 {
                     int tramIdx = 0;
-                    engine.joyce.InstanceDesc jInstanceDesc = _getTramMesh(tramIdx);
+                    engine.joyce.InstanceDesc jInstanceDesc = GetTramMesh(tramIdx);
 
                     var wf = worldFragment;
 
@@ -238,7 +238,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             )
                         );
 #endif
-                        eTarget.Set(new engine.audio.components.MovingSound(_getTramSound(), 150f));
+                        eTarget.Set(new engine.audio.components.MovingSound(GetTramSound(), 150f));
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.tram", tSetupEntity);
