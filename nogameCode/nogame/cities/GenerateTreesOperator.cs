@@ -42,6 +42,8 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
 
         List<InstanceDesc> listInstanceDesc = new();
 
+        bool mergeTrees = true;
+
         foreach (var quarter in quarterStore.GetQuarters())
         {
             if (quarter.IsInvalid())
@@ -154,15 +156,17 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         }
      
         // TXWTODO: Algorithmically decide between these methods to optimize performance.
-#if true
-        /*
-         * Do not merge the meshes. Enable the renderer to use instanced calls.
-         */
-        foreach (var instance in listInstanceDesc)
+        if (!mergeTrees)
         {
-            worldFragment.AddStaticInstance("nogame.cities.trees", instance);
-        }
-#else
+            /*
+             * Do not merge the meshes. Enable the renderer to use instanced calls.
+             */
+            foreach (var instance in listInstanceDesc)
+            {
+                worldFragment.AddStaticInstance("nogame.cities.trees", instance);
+            }
+        } 
+        else
         {
             MatMesh mmTrees = new();
             foreach (var instance in listInstanceDesc)
@@ -174,7 +178,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
             var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmMerged, 1000f);
             worldFragment.AddStaticInstance("nogame.cities.trees", id);
         }
-#endif
+
     });
     
     

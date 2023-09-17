@@ -42,7 +42,17 @@ public class MatMesh
                 meshlist = new List<Mesh>();
                 Tree[id.Materials[id.MeshMaterials[i]]] = meshlist;
             }
-            meshlist.Add(id.Meshes[i]);
+
+            if (id.ModelTransform.IsIdentity)
+            {
+                meshlist.Add(id.Meshes[i]);
+            }
+            else
+            {
+                Mesh tm = Mesh.CreateFrom( new List<Mesh>(){ id.Meshes[i] } );
+                tm.Transform(id.ModelTransform);
+                meshlist.Add(tm);
+            }
         }
     }
 
