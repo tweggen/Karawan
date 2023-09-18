@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using engine;
 using engine.world;
 using engine.streets;
 using static engine.Logger;
 
 namespace nogame.cities;
 
-public class StreetNavigationController
+public class StreetNavigationController : INavigator
 {
     private engine.RandomSource _rnd;
 
@@ -358,6 +359,7 @@ public class StreetNavigationController
         set => _speed = value;
     }
 
+    
     public void NavigatorGetTransformation(
         out Vector3 position,
         out Quaternion orientation)
