@@ -338,67 +338,45 @@ public class StreetNavigationController
     }
 
 
-    public Vector3 NavigatorGetWorldPos()
+    public float Height
     {
-        return new Vector3(
+        get => _height;
+        set => _height = value; 
+    }
+
+
+    public bool AvoidDeadEnds
+    {
+        get => _avoidDeadEnds;
+        set => _avoidDeadEnds = value;
+    }
+
+
+    public float Speed
+    {
+        get => _speed;
+        set => _speed = value;
+    }
+
+    public void NavigatorGetTransformation(
+        out Vector3 position,
+        out Quaternion orientation)
+    {
+        var vYAxis = new Vector3(0f, 1f, 0f);
+        var vForward = _lastSpeed;
+        Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vForward, vYAxis);
+        orientation = Quaternion.CreateFromRotationMatrix(rot);
+        position =new Vector3(
             _vPos2.X + _clusterDesc.Pos.X,
             _clusterDesc.AverageHeight + _height,
             _vPos2.Y + _clusterDesc.Pos.Z);
     }
 
 
-    public Vector3 NavigatorGetLastDirection()
-    {
-        return _lastSpeed;
-    }
-
-
-    public Vector3 NavigatorGetLinearVelocity()
-    {
-        return _lastSpeed;
-    }
-
-
-    public Quaternion NavigatorGetAngularVelocity()
-    {
-        return new Quaternion(0f, 0f, 0f, 1f);
-    }
-
-
-    public Quaternion NavigatorGetOrientation()
-    {
-        var vYAxis = new Vector3(0f, 1f, 0f);
-        var vForward = _lastSpeed;
-        Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vForward, vYAxis);
-        return Quaternion.CreateFromRotationMatrix(rot);
-
-    }
-
-
-    public StreetNavigationController NavigatorSetSpeed(float speed)
-    {
-        _speed = speed;
-        return this;
-    }
-
-
-    public StreetNavigationController NavigatorSetHeight(float height)
-    {
-        _height = height;
-        return this;
-    }
-
-
-    public void NavigatorAvoidDeadEnds(bool avoid)
-    {
-        _avoidDeadEnds = avoid;
-    }
-
-
     /**
      * Reality has changed, update the current state from the given numbers.
      */
-    public void TakeCurrentPosition(Vector3 vPos3, Quaternion qRotation)
+    public void NavigatorSetTransformation(Vector3 vPos3, Quaternion qRotation)
     {
         vPos3 -= _clusterDesc.Pos;
         _vPos2 = new Vector2(vPos3.X, vPos3.Z);

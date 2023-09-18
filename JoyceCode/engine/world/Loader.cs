@@ -40,7 +40,10 @@ namespace engine.world
 
         private string _strLastLoaded = "";
         private int _lastLoadedIteration = 0;
+        
         private Dictionary<string,world.Fragment> _mapFrags;
+        // TXWTODO: Use that lru.
+        private List<world.Fragment> _lruFrags = new();
 
         private static int WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS = 2;
 

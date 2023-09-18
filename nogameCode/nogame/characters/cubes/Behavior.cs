@@ -22,11 +22,11 @@ namespace nogame.characters.cubes
         {
             _snc.NavigatorBehave(dt);
 
+            _snc.NavigatorGetTransformation(out var vPosition, out var qOrientation);
             engine.Implementations.Get<engine.transform.API>().SetTransforms(
                 entity,
                 true, 0x0000ffff,
-                _snc.NavigatorGetOrientation(),
-                _snc.NavigatorGetWorldPos() with
+                qOrientation, vPosition with
                 {
                     Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight + 1f
                 }
@@ -44,7 +44,8 @@ namespace nogame.characters.cubes
             _engine = engine0;
             _clusterDesc = clusterDesc0;
             _streetPoint = streetPoint0;
-            _snc = new StreetNavigationController(_clusterDesc, _streetPoint).NavigatorSetSpeed(speed);
+            _snc = new StreetNavigationController(_clusterDesc, _streetPoint);
+            _snc.Speed = speed;
         }
     }
 }

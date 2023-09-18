@@ -20,17 +20,15 @@ internal class Behavior : engine.ABehavior
     public override void Behave(in DefaultEcs.Entity entity, float dt)
     {
         _snc.NavigatorBehave(dt);
+        _snc.NavigatorGetTransformation(out var vPosition, out var qOrientation);
 
-        Quaternion qOrientation = _snc.NavigatorGetOrientation();
         qOrientation = Quaternion.Slerp(_qPrevRotation, qOrientation, 0.1f);
         _qPrevRotation = qOrientation;
-        Vector3 worldPos = _snc.NavigatorGetWorldPos();
-
         engine.Implementations.Get<engine.transform.API>().SetTransforms(
             entity,
             true, 0x0000ffff,
             qOrientation,
-            worldPos with
+            vPosition with
             {
                 Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight + _height
             }
@@ -39,7 +37,7 @@ internal class Behavior : engine.ABehavior
 
     public Behavior SetSpeed(float speed)
     {
-        _snc.NavigatorSetSpeed(speed);
+        _snc.Speed = speed;
         return this;
     }
     

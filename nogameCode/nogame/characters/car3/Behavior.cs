@@ -79,7 +79,7 @@ internal class Behavior : engine.ABehavior
             var prefTarget = entity.Get<engine.physics.components.Kinetic>().Reference;
             Vector3 vPos3 = prefTarget.Pose.Position;
             Quaternion qRotation = prefTarget.Pose.Orientation;
-            _snc.TakeCurrentPosition(vPos3, qRotation);
+            _snc.NavigatorSetTransformation(vPos3, qRotation);
         }
 
     }
@@ -89,14 +89,15 @@ internal class Behavior : engine.ABehavior
     {
         _snc.NavigatorBehave(dt);
 
-        Quaternion qOrientation = _snc.NavigatorGetOrientation();
+        _snc.NavigatorGetTransformation(out var vPosition, out var qOrientation);
+
         qOrientation = Quaternion.Slerp(_qPrevRotation, qOrientation, 0.1f);
         _qPrevRotation = qOrientation;
         engine.Implementations.Get<engine.transform.API>().SetTransforms(
             entity,
             true, 0x0000ffff,
             qOrientation,
-            _snc.NavigatorGetWorldPos() with
+            vPosition with
             {
                 Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight
             }
@@ -106,7 +107,7 @@ internal class Behavior : engine.ABehavior
     
     public Behavior SetSpeed(float speed)
     {
-        _snc.NavigatorSetSpeed(speed);
+        _snc.Speed = speed;
         return this;
     }
     
