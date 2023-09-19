@@ -43,10 +43,7 @@ public class SimpleNavigationBehavior : engine.ABehavior
             entity,
             true, 0x0000ffff,
             qOrientation,
-            vPosition with
-            {
-                Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight
-            }
+            vPosition
         );
     }
 

@@ -332,6 +332,15 @@ public class MetaGen
     }
 
 
+    public void WorldOperatorAdd(IWorldOperator worldOperator)
+    {
+        lock (_lo)
+        {
+            _worldOperators.Add(worldOperator);
+        }
+    }
+
+
     public void SetLoader(in world.Loader loader)
     {
         _loader = loader;

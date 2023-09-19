@@ -3,6 +3,7 @@ using System.Timers;
 using builtin.controllers;
 using builtin.map;
 using engine;
+using engine.world;
 using nogame.map;
 using static engine.Logger;
 
@@ -52,6 +53,12 @@ public class Main
         Implementations.Register<SetupMetaGen>(() => new SetupMetaGen());
         Implementations.Register<DBStorage>(() => new DBStorage());
         
+    }
+
+
+    private void _setupMetaGen()
+    {
+        MetaGen.Instance().WorldOperatorAdd(new nogame.characters.intercity.GenerateCharacterOperator(_e));
     }
 
     
@@ -104,6 +111,7 @@ public class Main
         engine.Props.Set("nogame.characters.tram.maxDistance", 1600f);
         
         main._setupImplementations();
+        main._setupMetaGen();
         main._registerScenes();
 
         {

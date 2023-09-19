@@ -238,7 +238,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             })
                         {
                             MaxDistance = propMaxDistance
-                            
                         });
 
                         eTarget.Set(new engine.audio.components.MovingSound(

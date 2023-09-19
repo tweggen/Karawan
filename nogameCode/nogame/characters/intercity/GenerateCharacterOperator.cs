@@ -43,8 +43,7 @@ public class GenerateCharacterOperator : IWorldOperator
         {
             eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             eTarget.Set(new engine.behave.components.Behavior(
-                new builtin.tools.SimpleNavigationBehavior(_engine, segnav)
-                )
+                new builtin.tools.SimpleNavigationBehavior(_engine, segnav))
                 {
                     MaxDistance = 2000f
                 }
@@ -86,4 +85,5 @@ public class GenerateCharacterOperator : IWorldOperator
     {
         _engine = engine0;
     }
+    
 }

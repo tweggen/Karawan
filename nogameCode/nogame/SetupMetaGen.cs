@@ -46,7 +46,6 @@ public class SetupMetaGen
                         },
                         new ()
                         {
-                            Mode = ExecDesc.ExecMode.Task,
                             Implementation = "nogame.terrain.PlaceDebrisOperator.InstantiateFragmentOperator"
                         },
                         new()
