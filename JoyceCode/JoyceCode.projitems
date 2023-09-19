@@ -43,6 +43,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\State.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\System.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SegmentNavigator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SimpleNavigationBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tunestreets\Scene.cs" />

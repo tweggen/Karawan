@@ -7,12 +7,12 @@ using static engine.Logger;
 
 namespace nogame.characters.car3;
 
-internal class Behavior : engine.ABehavior
+internal class Behavior : builtin.tools.SimpleNavigationBehavior
 {
-    engine.Engine _engine;
-    engine.world.ClusterDesc _clusterDesc;
-    engine.streets.StreetPoint _streetPoint;
-    StreetNavigationController _snc;
+    private engine.Engine _engine;
+    private engine.world.ClusterDesc _clusterDesc;
+    private engine.streets.StreetPoint _streetPoint;
+    private StreetNavigationController _snc;
     private Quaternion _qPrevRotation = Quaternion.Identity;
 
 
@@ -25,6 +25,7 @@ internal class Behavior : engine.ABehavior
      */
     public override void OnCollision(ContactEvent cev)
     {
+        base.OnCollision(cev);
         var me = cev.ContactInfo.PropertiesA;
         engine.physics.components.Kinetic cCarKinetic;
 
@@ -53,8 +54,6 @@ internal class Behavior : engine.ABehavior
                  * couple of lists. 
                  */
                 _engine.Simulation.Bodies.SetLocalInertia(bodyHandle, pinertiaSphere);
-                //cCarKinetic.Reference.SetLocalInertia(pinertiaSphere);
-                //cCarKinetic.Reference.Awake = true;
             }
 
             me.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, me));
@@ -74,6 +73,7 @@ internal class Behavior : engine.ABehavior
     
     public override void Sync(in DefaultEcs.Entity entity)
     {
+        base.Sync(entity);
         if (entity.Has<engine.physics.components.Kinetic>())
         {
             var prefTarget = entity.Get<engine.physics.components.Kinetic>().Reference;
@@ -85,30 +85,10 @@ internal class Behavior : engine.ABehavior
     }
 
 
-    public override void Behave(in DefaultEcs.Entity entity, float dt)
+    public float Speed
     {
-        _snc.NavigatorBehave(dt);
-
-        _snc.NavigatorGetTransformation(out var vPosition, out var qOrientation);
-
-        qOrientation = Quaternion.Slerp(_qPrevRotation, qOrientation, 0.1f);
-        _qPrevRotation = qOrientation;
-        engine.Implementations.Get<engine.transform.API>().SetTransforms(
-            entity,
-            true, 0x0000ffff,
-            qOrientation,
-            vPosition with
-            {
-                Y = _clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight
-            }
-        );
-    }
-
-    
-    public Behavior SetSpeed(float speed)
-    {
-        _snc.Speed = speed;
-        return this;
+        get => _snc.Speed;
+        set => _snc.Speed = value;
     }
     
     
@@ -116,11 +96,11 @@ internal class Behavior : engine.ABehavior
         in engine.Engine engine0,
         in engine.world.ClusterDesc clusterDesc0,
         in engine.streets.StreetPoint streetPoint0
-    )
+    ) : base(engine0, new StreetNavigationController(clusterDesc0,streetPoint0))
     {
         _engine = engine0;
+        _snc = Navigator as StreetNavigationController;
         _clusterDesc = clusterDesc0;
         _streetPoint = streetPoint0;
-        _snc = new StreetNavigationController(_clusterDesc, _streetPoint);
     }
 }

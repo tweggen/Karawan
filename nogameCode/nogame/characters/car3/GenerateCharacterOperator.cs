@@ -232,10 +232,14 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
 
                         eTarget.Set(new engine.behave.components.Behavior(
-                            new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
-                                .SetSpeed((40f + _rnd.GetFloat() * 30f + (float)carIdx * 20f) / 3.6f))
-                            { MaxDistance = propMaxDistance }
-                        );
+                            new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
+                            { 
+                                Speed = (40f + _rnd.GetFloat() * 30f + (float)carIdx * 20f) / 3.6f
+                            })
+                        {
+                            MaxDistance = propMaxDistance
+                            
+                        });
 
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCar3Sound(carIdx), 150f));
