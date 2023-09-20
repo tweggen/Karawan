@@ -14,6 +14,10 @@ public class SegmentEnd
 /**
  * Implement a navigator for a run between two points.
  * Can take several objects that shall be navigated along that way.
+ *
+ * Segment navigator may be used over large distances. To avoid a continuous
+ * iteration over the behavior, we will need to be able to derive the position/state
+ * from the "absolute" time. 
  */
 public class SegmentNavigator : INavigator
 {
