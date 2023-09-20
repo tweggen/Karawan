@@ -54,6 +54,21 @@ public class GenerateCharacterOperator : IWorldOperator
             eTarget.Set(new engine.audio.components.MovingSound(
                 nogame.characters.tram.GenerateCharacterOperator.GetTramSound(), 
                 300f));
+#if true
+            eTarget.Set(new engine.draw.components.OSDText(
+                new Vector2(0, 30f),
+                new Vector2(160f, 18f),
+                "intercity",
+                12,
+                0x88226622,
+                0x00000000,
+                engine.draw.HAlign.Left)
+                {
+                    MaxDistance = 20000
+                }
+            );
+#endif
+
         });
 
         _engine.QueueEntitySetupAction("nogame.characters.intercity", tSetupEntity);
