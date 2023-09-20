@@ -2,12 +2,15 @@
 using DefaultEcs;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
+using engine.world.components;
 
 namespace engine.behave.systems
 {
     [DefaultEcs.System.With(typeof(components.Behavior))]
     [DefaultEcs.System.With(typeof(transform.components.Transform3ToWorld))]
+    [DefaultEcs.System.With(typeof(FragmentId))]
     internal class WiperSystem : DefaultEcs.System.AEntitySetSystem<IList<Vector3>>
     {
         private engine.Engine _engine;

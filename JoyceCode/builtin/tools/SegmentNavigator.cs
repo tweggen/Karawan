@@ -80,6 +80,7 @@ public class SegmentNavigator : INavigator
         {
             float togo;
             float direction;
+            bool doTurnaround = false;
 
             if (_isReturning)
             {
@@ -97,7 +98,23 @@ public class SegmentNavigator : INavigator
             togo = Single.Min(totalTogo, togo);
             _absolutePos += direction * togo;
             totalTogo -= togo;
-            if (Single.Abs(_absolutePos - _distance) < 0.001)
+
+            if (_isReturning)
+            {
+                if (_absolutePos < 0.001)
+                {
+                    doTurnaround = true;
+                }
+            }
+            else
+            {
+                if (Single.Abs(_absolutePos - _distance) < 0.001)
+                {
+                    doTurnaround = true;
+                }
+            }
+
+            if (doTurnaround)
             {
                 _isReturning = !_isReturning;
             }
