@@ -45,7 +45,10 @@ public class GenerateCharacterOperator : IWorldOperator
             eTarget.Set(new engine.behave.components.Behavior(
                 new builtin.tools.SimpleNavigationBehavior(_engine, segnav))
                 {
-                    MaxDistance = 2000f
+                    /*
+                     * This means, the behavior always is called.
+                     */
+                    MaxDistance = MetaGen.MaxWidth
                 }
             );
             eTarget.Set(new engine.audio.components.MovingSound(
