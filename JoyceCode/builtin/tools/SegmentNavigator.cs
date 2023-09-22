@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using engine;
+using static engine.Logger;
 
 namespace Joyce.builtin.tools;
 
@@ -22,25 +24,33 @@ public class SegmentEnd
 public class SegmentNavigator : INavigator
 {
     private float _speed = 50f;
-    private bool _isReturning = false;
 
     private float _relativePos = 0f;
     private float _absolutePos = 0f;
+
+    /*
+     * The properties of the current segment as computed by
+     * _prepareSegment
+     */
     private float _distance = 0f;
+    private Vector3 _vForward;
+    private Vector3 _vuForward;
 
     private Vector3 _vPosition;
     private Quaternion _qOrientation;
-    
-    private SegmentEnd _a;
-    public SegmentEnd A
-    {
-        get => _a;
-    }
-    private SegmentEnd _b;
 
-    public SegmentEnd B
+    private SegmentEnd? _a = null;
+    private SegmentEnd? _b = null;
+
+    private int _idxNextSegment;
+    private List<SegmentEnd> _listSegments;
+
+
+    private bool _loopSegments;
+    public bool LoopSegments
     {
-        get => _b;
+        get => _loopSegments;
+        set => _loopSegments = value;
     }
     
     
@@ -48,13 +58,6 @@ public class SegmentNavigator : INavigator
     {
         get => _speed;
         set => _speed = value;
-    }
-
-
-    public bool IsReturning
-    {
-        get => _isReturning;
-        set => _isReturning = value;
     }
 
 
@@ -70,71 +73,103 @@ public class SegmentNavigator : INavigator
         // Not supported.
     }
 
+
+    private void _resetTravel()
+    {
+        _idxNextSegment = 0;
+        _a = null;
+        _b = null;
+    }
+
+
+    private void _prepareSegment()
+    {
+        _vForward = (_b.Position - _a.Position);
+        _distance = (_b.Position - _a.Position).Length();
+        _vuForward = _vForward / _distance;
+        _absolutePos = 0;
+    }
+    
+
+    /**
+     * Set rup the initial segment.
+     */
+    private void _setStartSegment()
+    {
+        _a = _listSegments[0];
+        _b = _listSegments[1];
+        _idxNextSegment = 2 % _listSegments.Count;
+    }
+
+
+    private void _shiftForward()
+    {
+        _a = _b;
+        _b = null;
+    }
+
+
+    private void _setNextSegment()
+    {
+        _b = _listSegments[_idxNextSegment];
+        _idxNextSegment = (_idxNextSegment + 1) % _listSegments.Count;
+    }
+    
     
     public void NavigatorBehave(float dt)
     {
         float totalTogo = dt * _speed;
 
-        Vector3 vuForward = Vector3.One;
+        if (null == _a)
+        {
+            _setStartSegment();
+            _prepareSegment();
+        }
+            
         while (totalTogo > 0.001)
         {
             float togo;
             float direction;
             bool doTurnaround = false;
 
-            if (_isReturning)
-            {
-                togo = _absolutePos;
-                direction = -1f;
-                vuForward = (_a.Position - _b.Position) / _distance;
-            }
-            else
-            {
-                togo = _distance - _absolutePos;
-                direction = 1f;
-                vuForward = (_b.Position - _a.Position) / _distance;
-            }
+            togo = _distance - _absolutePos;
+            direction = 1f;
 
             togo = Single.Min(totalTogo, togo);
             _absolutePos += direction * togo;
             totalTogo -= togo;
 
-            if (_isReturning)
+            if (Single.Abs(_absolutePos - _distance) < 0.001)
             {
-                if (_absolutePos < 0.001)
-                {
-                    doTurnaround = true;
-                }
-            }
-            else
-            {
-                if (Single.Abs(_absolutePos - _distance) < 0.001)
-                {
-                    doTurnaround = true;
-                }
+                doTurnaround = true;
             }
 
             if (doTurnaround)
             {
-                _isReturning = !_isReturning;
+                _shiftForward();
+                _setNextSegment();
+                _prepareSegment();
             }
         }
 
         _relativePos = _absolutePos / _distance;
         _vPosition = _a.Position + (_b.Position - _a.Position) * _relativePos 
-                                   + _a.Right * (_isReturning?-0.5f:0.5f);
+                                   + _a.Right * 5.0f;
         _qOrientation = Quaternion.CreateFromRotationMatrix(
             Matrix4x4.CreateWorld(
                 Vector3.Zero, 
-                vuForward, 
+                _vuForward, 
                 new Vector3(0f, 1f, 0f)));
     }
     
     
-    public SegmentNavigator(SegmentEnd a, SegmentEnd b)
+    public SegmentNavigator(List<SegmentEnd> listSegments)
     {
-        _a = a;
-        _b = b;
-        _distance = (b.Position - a.Position).Length();
+        if (listSegments.Count < 2)
+        {
+            ErrorThrow("List of segments must contain at least 2 items.", m => new ArgumentException(m));
+        }
+        _listSegments = listSegments;
+        _resetTravel();
     }
 }

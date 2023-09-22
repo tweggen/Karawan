@@ -38,6 +38,7 @@ public class Module : engine.AModule
     private readonly uint _width = 768;
     private readonly uint _height = 768*9/16;
 
+    
     private void _setupOSD()
     {
             
@@ -70,11 +71,12 @@ public class Module : engine.AModule
                 new Vector3(0f, 0f, 0f));
         }
     }
+    
 
     private uint _frameCounter = 0;
-    private readonly uint _renderSubDiv = 3;
+    private readonly uint _renderSubDiv = 2;
     private float _dtTotal = 0f;
-    private void _onPhysical(object? sender, float dt)
+    private void _onLogical(object? sender, float dt)
     {
         ++_frameCounter;
         _dtTotal += dt;
@@ -99,7 +101,7 @@ public class Module : engine.AModule
     public void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
-        _engine.OnPhysicalFrame -= _onPhysical;
+        _engine.OnLogicalFrame -= _onLogical;
         _renderOSDSystem.Dispose();
         _renderOSDSystem = null;
     }
@@ -121,7 +123,7 @@ public class Module : engine.AModule
 
         _engine.AddModule(this);
 
-        _engine.OnPhysicalFrame += _onPhysical;
+        _engine.OnLogicalFrame += _onLogical;
         
         _setupOSD();
         _renderOSDSystem.SetFramebuffer(_framebuffer);

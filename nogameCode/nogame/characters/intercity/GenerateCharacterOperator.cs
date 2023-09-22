@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using engine.elevation;
 using engine.world;
@@ -20,20 +21,28 @@ public class GenerateCharacterOperator : IWorldOperator
     {
         Vector3 vuAB = Vector3.Normalize(cb.Pos - ca.Pos);
         Vector3 vuUp = new Vector3(0f, 1f, 0f);
-        SegmentEnd sa = new()
+
+        List<SegmentEnd> listSegments = new()
         {
-            Position = ca.Pos,
-            Up = vuUp,
-            Right = Vector3.Cross(vuAB, vuUp)
+            new()
+            {
+                Position = ca.Pos with { Y = ca.AverageHeight + 20f },
+                Up = vuUp,
+                Right = Vector3.Cross(vuAB, vuUp)
+            },
+            new()
+            {
+                Position = cb.Pos with { Y = ca.AverageHeight + 20f },
+                Up = vuUp,
+                Right = Vector3.Cross(-vuAB, vuUp)
+            }
         };
-        SegmentEnd sb = new()
+        
+        SegmentNavigator segnav = new SegmentNavigator(listSegments)
         {
-            Position = cb.Pos,
-            Up = vuUp,
-            Right = Vector3.Cross(-vuAB, vuUp)
+            LoopSegments = true,
+            Speed = 60f
         };
-        SegmentNavigator segnav = new SegmentNavigator(sa, sb) 
-            { Speed = 60f };
         
         int tramIdx = 0;
         engine.joyce.InstanceDesc jInstanceDesc = 
