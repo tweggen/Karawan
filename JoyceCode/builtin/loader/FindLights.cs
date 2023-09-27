@@ -50,7 +50,7 @@ public class FindLights
     {
         InstanceDesc instanceDesc = model.InstanceDesc;
         int il = instanceDesc.FindMaterial(MaterialCache.Get("builtin.loader.materials.standardlight"));
-        var m = Tools.CreatePlaneMesh("autolight", new Vector2(0.5f, 0.5f));
+        var m = Tools.CreatePlaneMesh("autolight", new Vector2(0.8f, 0.8f));
         m.Move(p);
         instanceDesc.AddMesh(m, il);
     }
