@@ -44,6 +44,29 @@ namespace Splash
 
         private IScene _scene;
         
+        public void GetRotation(ref Matrix4x4 mOut, in Matrix4x4 mIn)
+        {
+            /*
+             * Note: We know/assume, the camera matrix has a scaling of one.
+             */
+            mOut.M11 = mIn.M11;
+            mOut.M12 = mIn.M12;
+            mOut.M13 = mIn.M13;
+            mOut.M14 = 0f;
+            mOut.M21 = mIn.M21;
+            mOut.M22 = mIn.M22;
+            mOut.M23 = mIn.M23;
+            mOut.M24 = 0f;
+            mOut.M31 = mIn.M31;
+            mOut.M32 = mIn.M32;
+            mOut.M33 = mIn.M33;
+            mOut.M34 = 0f;
+            mOut.M41 = 0f;
+            mOut.M42 = 0f;
+            mOut.M41 = 0f;
+            mOut.M44 = 1f;
+        }
+        
         private float _msUploadMaterialPerFrame(in IScene scene)
         {
             if ((_camera3.CameraFlags & engine.joyce.components.Camera3.Flags.PreloadOnly) != 0)
@@ -267,7 +290,7 @@ namespace Splash
                      * The regular one, from the transform component and from the instance?
                      * Something artificial, as for the billboard materials?
                      */
-                    if (true ||!aMaterialEntry.JMaterial.IsBillboardTransform)
+                    if (!aMaterialEntry.JMaterial.IsBillboardTransform)
                     {
                         _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
                             pfInstance.ModelTransform * transform3ToWorld);
@@ -276,6 +299,8 @@ namespace Splash
                     {
                         /*
                          * This is inefficient.
+                         * Compute the center of the mesh.
+                         * 
                          * We have a mesh, aligned with z axis (which is close to perfect).
                          *
                          * Instance transform and transformToWorld matrices. ... but ..., the
@@ -291,10 +316,31 @@ namespace Splash
                          * Plus, we want to apply the inverse camera rotation matrix.
                          * So let's start.
                          */
-                        Matrix4x4 m = pfInstance.ModelTransform * transform3ToWorld;
+                        Vector3 vc = Vector3.Zero;
+                        {
+                            int l = aMeshEntry.JMesh.Vertices.Count;
+                            for (int vi = 0; vi < l; ++vi)
+                            {
+                                vc += aMeshEntry.JMesh.Vertices[vi];
+                            }
+
+                            vc /= l;
+                        }
+
+                        Matrix4x4 mTrans = pfInstance.ModelTransform * transform3ToWorld;
+                        Matrix4x4 mInvRot = Matrix4x4.Identity;
+                        GetRotation(ref mInvRot, mTrans);
+                        mInvRot = Matrix4x4.Transpose(mInvRot);
                         
-                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
-                            m /* * _mInverseCameraRotation */);
+                        Matrix4x4 m = 
+                            Matrix4x4.CreateTranslation(-vc)
+                            * _mInverseCameraRotation
+                            * mInvRot
+                            * Matrix4x4.CreateTranslation(vc)
+                            * mTrans
+                            ;
+                        
+                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry, m );
                     }
                 }
             }
@@ -357,8 +403,8 @@ namespace Splash
             TransformToWorld = mTransformToWorld;
             _camera3 = camera3;
             _threeD = threeD;
-            _camera3.GetCameraRotation(ref _mInverseCameraRotation, in mTransformToWorld);
-            _mInverseCameraRotation = Matrix4x4.Transpose(_mInverseCameraRotation);
+            GetRotation(ref _mInverseCameraRotation, in mTransformToWorld);
+            // _mInverseCameraRotation = Matrix4x4.Transpose(_mInverseCameraRotation);
         }
     }
 
