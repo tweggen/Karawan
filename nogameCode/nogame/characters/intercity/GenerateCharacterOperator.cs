@@ -7,6 +7,9 @@ using Joyce.builtin.tools;
 
 namespace nogame.characters.intercity;
 
+/**
+ * This creates the intercity network.
+ */
 public class GenerateCharacterOperator : IWorldOperator
 {
     private engine.Engine _engine;

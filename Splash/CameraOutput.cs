@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using engine;
+using SkiaSharp;
 using static engine.Logger;
 
 namespace Splash
@@ -21,6 +22,7 @@ namespace Splash
         }
 
         public Matrix4x4 TransformToWorld;
+        private Matrix4x4 _mInverseCameraRotation;
 
 
         private int _nEntities = 0;
@@ -215,7 +217,7 @@ namespace Splash
 #endif
         
 
-        public void AppendInstance(in Splash.components.PfInstance pfInstance, Matrix4x4 matrix)
+        public void AppendInstance(in Splash.components.PfInstance pfInstance, Matrix4x4 transform3ToWorld)
         {
             lock (_lo)
             {
@@ -259,7 +261,41 @@ namespace Splash
                         aMaterialEntry = _threeD.GetDefaultMaterial();
                     }
 
-                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, pfInstance.ModelTransform * matrix);
+                    /*
+                     * Now we have the combination of mesh and material to add.
+                     * Look, what kind of shape this is. What sort of transform matrix do we require?
+                     * The regular one, from the transform component and from the instance?
+                     * Something artificial, as for the billboard materials?
+                     */
+                    if (true ||!aMaterialEntry.JMaterial.IsBillboardTransform)
+                    {
+                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
+                            pfInstance.ModelTransform * transform3ToWorld);
+                    }
+                    else
+                    {
+                        /*
+                         * This is inefficient.
+                         * We have a mesh, aligned with z axis (which is close to perfect).
+                         *
+                         * Instance transform and transformToWorld matrices. ... but ..., the
+                         * canera natrix still will be applied.
+                         *
+                         * Everything we pass here as matrix argument will be multiplied by the
+                         * camera to world and the projection matrix by the vertex shader.
+                         *
+                         * What do we want? We want a matrix argument solely translating the
+                         * position.
+                         *
+                         * Then, we want to apply the inverse 
+                         * Plus, we want to apply the inverse camera rotation matrix.
+                         * So let's start.
+                         */
+                        Matrix4x4 m = pfInstance.ModelTransform * transform3ToWorld;
+                        
+                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
+                            m /* * _mInverseCameraRotation */);
+                    }
                 }
             }
         }
@@ -321,6 +357,8 @@ namespace Splash
             TransformToWorld = mTransformToWorld;
             _camera3 = camera3;
             _threeD = threeD;
+            _camera3.GetCameraRotation(ref _mInverseCameraRotation, in mTransformToWorld);
+            _mInverseCameraRotation = Matrix4x4.Transpose(_mInverseCameraRotation);
         }
     }
 

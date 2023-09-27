@@ -21,6 +21,30 @@ namespace engine.joyce.components
         {
             return $"Angle={Angle}, NearFrustum={NearFrustum}, NearFrustum={NearFrustum}, CameraMask={CameraMask:X}, CameraFlags={CameraFlags:X}";
         }
+
+
+        public void GetCameraRotation(ref Matrix4x4 matRotation, in Matrix4x4 mCameraToWorld)
+        {
+            /*
+             * Note: We know/assume, the camera matrix has a scaling of one.
+             */
+            matRotation.M11 = mCameraToWorld.M11;
+            matRotation.M12 = mCameraToWorld.M12;
+            matRotation.M13 = mCameraToWorld.M13;
+            matRotation.M14 = 0f;
+            matRotation.M21 = mCameraToWorld.M21;
+            matRotation.M22 = mCameraToWorld.M22;
+            matRotation.M23 = mCameraToWorld.M23;
+            matRotation.M24 = 0f;
+            matRotation.M31 = mCameraToWorld.M31;
+            matRotation.M32 = mCameraToWorld.M32;
+            matRotation.M33 = mCameraToWorld.M33;
+            matRotation.M34 = 0f;
+            matRotation.M41 = 0f;
+            matRotation.M42 = 0f;
+            matRotation.M41 = 0f;
+            matRotation.M42 = 1f;
+        }
         
 
         public void GetViewMatrix(out Matrix4x4 matView, in Matrix4x4 mCameraToWorld)
