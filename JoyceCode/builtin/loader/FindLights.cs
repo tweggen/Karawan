@@ -50,6 +50,9 @@ public class FindLights
     {
         InstanceDesc instanceDesc = model.InstanceDesc;
         int il = instanceDesc.FindMaterial(MaterialCache.Get("builtin.loader.materials.standardlight"));
+        /*
+         * We are adding a mesh that will not be rotate
+         */
         var m = Tools.CreatePlaneMesh("autolight", new Vector2(0.8f, 0.8f));
         m.Move(p);
         instanceDesc.AddMesh(m, il);

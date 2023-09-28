@@ -80,7 +80,6 @@ public class Mesh
     }
     
     
-
     /**
      * Generate smoothed normals for this mesh.
      */
