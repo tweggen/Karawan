@@ -138,7 +138,7 @@ unsafe public class API : Boom.ISoundAPI
         Trace($"haveReopenDevices = {_haveReopenDevices}");
 
         string deviceName = _researchDeviceName();
-        _alDevice = _alc.OpenDevice(null);
+        _alDevice = _alc.OpenDevice(deviceName);
         if (_alDevice != null)
         {
             _currentContext = _alc.CreateContext(_alDevice, null);
