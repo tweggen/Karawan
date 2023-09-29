@@ -15,7 +15,7 @@ unsafe public class API : Boom.ISoundAPI
     private systems.UpdateMovingSoundSystem _updateMovingSoundsSystem;
     
     private AL _al;
-    private ALContext _alc;
+    private ALContext _alc = null;
     private Device* _alDevice = null;
     private SortedDictionary<string, OGGSound> _mapSounds = new();
 
@@ -25,6 +25,27 @@ unsafe public class API : Boom.ISoundAPI
         get => _al;
     }
     
+    public void _checkForErrors(string call)
+    {
+        if (null != _alc)
+        {
+            var context = _alc.GetCurrentContext();
+            if (null != context)
+            {
+                var device = _alc.GetContextsDevice(context);
+                var error = _alc.GetError(device);
+
+                if (error != ContextError.NoError)
+                    Trace($"After {call} ALC ERROR: (" + error + ")  " + error.ToString());
+            }
+        }
+        {
+            var error = _al.GetError();
+            if (error != AudioError.NoError)
+                Trace($"After {call} AL ERROR: (" + error + ") " + error.ToString());
+        }
+    }
+
     private void OnOnLogicalFrame(object sender, float dt)
     {
         // _createMusicSystem.Update(dt);
@@ -137,26 +158,27 @@ unsafe public class API : Boom.ISoundAPI
         _haveReopenDevices = _al.TryGetExtension<ReopenDevices>(out _extReopenDevices);
         Trace($"haveReopenDevices = {_haveReopenDevices}");
 
+
         string deviceName = _researchDeviceName();
         _alDevice = _alc.OpenDevice(deviceName);
+        _checkForErrors($"OpenDevice(\"{deviceName}\"");
         if (_alDevice != null)
         {
             _currentContext = _alc.CreateContext(_alDevice, null);
+            _checkForErrors("CreateContext");
             if (_currentContext != null)
             {
                 _alc.MakeContextCurrent(_currentContext);
-                Trace($"MakeCurrentContext returned {_al.GetError().ToString()} alc error {_alc.GetError(_alDevice).ToString()}");
+                _checkForErrors("MakeCurrentContext");
             }
             else
             {
-                Trace($"CreateContext returned {_al.GetError().ToString()} alc error {_alc.GetError(_alDevice).ToString()}");
             }
 
             _researchOutputMode();
         }
         else
         {
-            Trace($"OpenDevice returned {_al.GetError().ToString()}");
             _currentContext = null;
         }
     }
@@ -177,8 +199,9 @@ unsafe public class API : Boom.ISoundAPI
             if (_currentContext != null)
             {
                 bool result = _alc.MakeContextCurrent(_currentContext);
-                Trace($"MakeCurrentContext returned {result}, al error {_al.GetError().ToString()} alc error {_alc.GetError(_alDevice).ToString()}");
+                _checkForErrors("MakeContextCurrent");
                 _alc.ProcessContext(_currentContext);
+                _checkForErrors("ProcessContext");
             }
         }
         else
@@ -233,9 +256,9 @@ unsafe public class API : Boom.ISoundAPI
 
         _openDevice();
         _al.DistanceModel(DistanceModel.InverseDistance);
-        Trace($"DistanceModel returned {_al.GetError().ToString()} ");
+        _checkForErrors("DistanceModel");
         _al.SetListenerProperty(ListenerFloat.Gain, 4f);
-        Trace($"SetListenerProperty returned {_al.GetError().ToString()} ");
+        _checkForErrors("SetListenerProperty");
         _updateMovingSoundsSystem = new(_engine, this);
     }
 }
