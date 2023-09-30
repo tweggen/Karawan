@@ -21,8 +21,20 @@ public class GenerateCharacterOperator : IWorldOperator
     }
     
     
+    /*
+     * Create the actual route of the intercity. This right now will follow
+     * the direct connection from A to B, we only compute the height required.
+     */
     private void _createIntercity(Vector3 caPos, Vector3 cbPos, float relpos)
     {
+        /*
+         * Read all data we need to scale our drawing.
+         */
+        terrain.GroundOperator groundOperator = terrain.GroundOperator.Instance();
+        var skeleton = groundOperator.GetSkeleton();
+        int skeletonWidth = groundOperator.SkeletonWidth;
+        int skeletonHeight = groundOperator.SkeletonHeight;
+        
         Vector3 vuAB = Vector3.Normalize(cbPos - caPos);
         Vector3 vuUp = new Vector3(0f, 1f, 0f);
 
@@ -90,40 +102,36 @@ public class GenerateCharacterOperator : IWorldOperator
     
     public void WorldOperatorApply(MetaGen worldMetaGen)
     {
-#if true
-        nogame.intercity.Network network = Implementations.Get<nogame.intercity.Network>();
+        var network = Implementations.Get<nogame.intercity.Network>();
         var lines = network.Lines;
+
+        /*
+         * TXWTODO: We should put this code into an intercity module, which we previously load.
+         */
+        {
+            foreach (var line in lines)
+            {
+                string newkey = line.ToString();
+                {
+                    var elevationCache = engine.elevation.Cache.Instance();
+                    var intercityTrailOperator = new nogame.intercity.IntercityTrackElevationOperator(line, newkey);
+                    elevationCache.ElevationCacheRegisterElevationOperator(
+                        engine.elevation.Cache.LAYER_BASE + $"/000200/intercityTrails/{newkey}",
+                        intercityTrailOperator
+                    );
+                }
+            }
+        }
+        
         foreach (var line in lines)
         {
             Vector3 caPos = line.ClusterA.Pos with { Y = line.ClusterA.AverageHeight + 20f };
             Vector3 cbPos = line.ClusterB.Pos with { Y = line.ClusterB.AverageHeight + 20f };
             _createIntercity(caPos, cbPos, 0.5f);
         }
-
-#else
-        /*
-         * For every cluster larger than X (600 threshold),
-         * Create trams to the closest cities 
-         */
-        var clusterList = ClusterList.Instance().GetClusterList();
-        foreach (ClusterDesc clusterDesc in clusterList)
-        {
-            int maxNTrams = 1;
-            //    Int32.Clamp(0, 2999, (int)clusterDesc.Size - 800)
-            //    / (3000/5) + 1;
-
-
-            var closestClusters = clusterDesc.GetClosest();
-            // maxNTrams = Int32.Min(closestClusters.Length, maxNTrams);
-
-            for (int i = 0; i < maxNTrams; ++i)
-            {
-                _createIntercity(clusterDesc, closestClusters[0], 0.5f);
-            }
-        }
-#endif
     }
 
+    
     public GenerateCharacterOperator(engine.Engine engine0)
     {
         _engine = engine0;

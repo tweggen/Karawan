@@ -6,7 +6,6 @@ namespace engine.geom
 {
     public class Line
     {
-
         public Vector2 A;
         public Vector2 B;
 
@@ -36,6 +35,7 @@ namespace engine.geom
             }
             return new Vector2(aby / l, -(abx / l));
         }
+        
 
         public void Move(float px, float py)
         {

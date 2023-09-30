@@ -42,12 +42,24 @@ public class Line
 
     public Station StationA;
     public Station StationB;
+    
+    public float Width = 5f;
+    public float Height = 0f;
+
+    public string ToString()
+    {
+        return $"{ClusterA.Id}-{ClusterB.Id}";
+    }
 }
 
 
 public class Station
 {
     public Vector3 Position;
+    public Vector2 Pos2
+    {
+        get => new Vector2(Position.X, Position.Z);
+    }
     public string Name;
 
     public string Hash()
@@ -165,7 +177,8 @@ public class Network
             ClusterA = clusterA,
             ClusterB = clusterB,
             StationA = stationA,
-            StationB = stationB
+            StationB = stationB,
+            Height = Single.Min(clusterA.AverageHeight, clusterB.AverageHeight)
         };
 
         _mapLines.Add(ld.Hash(), line);

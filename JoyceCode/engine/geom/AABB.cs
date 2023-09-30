@@ -88,7 +88,7 @@ public struct AABB
     
     public bool IntersectsXZ(in AABB o)
     {
-        if (o.AA.X > BB.X || AA.X > o.BB.X || o.AA.Y > BB.Y || AA.Y > o.BB.Y || o.AA.Z > BB.Z || AA.Z > o.BB.Z)
+        if (o.AA.X > BB.X || AA.X > o.BB.X || o.AA.Z > BB.Z || AA.Z > o.BB.Z)
         {
             return false;
         }
