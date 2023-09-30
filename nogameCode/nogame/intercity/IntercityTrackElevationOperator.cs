@@ -143,16 +143,26 @@ public class IntercityTrackElevationOperator : IOperator
             return false;
         }
 
-        engine.geom.Line ll = new(_line.StationA.Pos2, _line.StationB.Pos2);
+        var vd = _line.StationB.Pos2 - _line.StationA.Pos2;
+        var vp = new Vector2(vd.Y, -vd.X);
+        var vup = Vector2.Normalize(vp);
+        var lineWidthHalf = vup * (_line.Width / 2f);
+        engine.geom.Line ll1 = new(_line.StationA.Pos2-lineWidthHalf, _line.StationB.Pos2-lineWidthHalf);
+        engine.geom.Line ll2 = new(_line.StationA.Pos2+lineWidthHalf, _line.StationB.Pos2+lineWidthHalf);
 
         /*
          * Does it exactly intersect?
          */
         if (true
-            && null != ll.Intersect(new engine.geom.Line(new(x0, z0), new Vector2(x0, z1)))
-            && null != ll.Intersect(new engine.geom.Line(new(x0, z1), new Vector2(x1, z1)))
-            && null != ll.Intersect(new engine.geom.Line(new(x1, z1), new Vector2(x1, z0)))
-            && null != ll.Intersect(new engine.geom.Line(new(x1, z0), new Vector2(x0, z0))))
+            && null == ll1.Intersect(new engine.geom.Line(new(x0, z0), new Vector2(x0, z1)))
+            && null == ll1.Intersect(new engine.geom.Line(new(x0, z1), new Vector2(x1, z1)))
+            && null == ll1.Intersect(new engine.geom.Line(new(x1, z1), new Vector2(x1, z0)))
+            && null == ll1.Intersect(new engine.geom.Line(new(x1, z0), new Vector2(x0, z0)))
+            && null == ll2.Intersect(new engine.geom.Line(new(x0, z0), new Vector2(x0, z1)))
+            && null == ll2.Intersect(new engine.geom.Line(new(x0, z1), new Vector2(x1, z1)))
+            && null == ll2.Intersect(new engine.geom.Line(new(x1, z1), new Vector2(x1, z0)))
+            && null == ll2.Intersect(new engine.geom.Line(new(x1, z0), new Vector2(x0, z0)))
+        )
         {
             return false;
         }
