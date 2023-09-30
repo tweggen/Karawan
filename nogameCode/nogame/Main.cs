@@ -45,14 +45,15 @@ public class Main
 
     private void _setupImplementations()
     {
+        Implementations.Register<DBStorage>(() => new DBStorage());
+
         Implementations.Register<IMapProvider>(() => _setupMapProvider());
         Implementations.Register<MapFramebuffer>(() => new MapFramebuffer());
         Implementations.Register<Boom.Jukebox>(() => new Boom.Jukebox());
         Implementations.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
         Implementations.Register<builtin.controllers.InputController>(() => new InputController());
         Implementations.Register<SetupMetaGen>(() => new SetupMetaGen());
-        Implementations.Register<DBStorage>(() => new DBStorage());
-        
+        Implementations.Register<nogame.intercity.Network>(() => new nogame.intercity.Network());
     }
 
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using engine;
 using engine.elevation;
 using engine.world;
 using Joyce.builtin.tools;
@@ -20,22 +21,22 @@ public class GenerateCharacterOperator : IWorldOperator
     }
     
     
-    private void _createIntercity(ClusterDesc ca, ClusterDesc cb, float relpos)
+    private void _createIntercity(Vector3 caPos, Vector3 cbPos, float relpos)
     {
-        Vector3 vuAB = Vector3.Normalize(cb.Pos - ca.Pos);
+        Vector3 vuAB = Vector3.Normalize(cbPos - caPos);
         Vector3 vuUp = new Vector3(0f, 1f, 0f);
 
         List<SegmentEnd> listSegments = new()
         {
             new()
             {
-                Position = ca.Pos with { Y = ca.AverageHeight + 20f },
+                Position = caPos,
                 Up = vuUp,
                 Right = Vector3.Cross(vuAB, vuUp)
             },
             new()
             {
-                Position = cb.Pos with { Y = ca.AverageHeight + 20f },
+                Position = cbPos,
                 Up = vuUp,
                 Right = Vector3.Cross(-vuAB, vuUp)
             }
@@ -89,6 +90,17 @@ public class GenerateCharacterOperator : IWorldOperator
     
     public void WorldOperatorApply(MetaGen worldMetaGen)
     {
+#if true
+        nogame.intercity.Network network = Implementations.Get<nogame.intercity.Network>();
+        var lines = network.Lines;
+        foreach (var line in lines)
+        {
+            Vector3 caPos = line.ClusterA.Pos with { Y = line.ClusterA.AverageHeight + 20f };
+            Vector3 cbPos = line.ClusterB.Pos with { Y = line.ClusterB.AverageHeight + 20f };
+            _createIntercity(caPos, cbPos, 0.5f);
+        }
+
+#else
         /*
          * For every cluster larger than X (600 threshold),
          * Create trams to the closest cities 
@@ -109,6 +121,7 @@ public class GenerateCharacterOperator : IWorldOperator
                 _createIntercity(clusterDesc, closestClusters[0], 0.5f);
             }
         }
+#endif
     }
 
     public GenerateCharacterOperator(engine.Engine engine0)
