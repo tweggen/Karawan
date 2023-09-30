@@ -129,7 +129,7 @@ public class Network
 
         return clusterA.Size / 2f * ofs + clusterA.Pos;
     }
-
+    
 
     private Line _findLine_nolock(ClusterDesc clusterA, ClusterDesc clusterB)
     {
@@ -142,6 +142,21 @@ public class Network
         Vector3 stationAPos = _getStationPosition_nolock(clusterA, clusterB, out var postfixA);
         Vector3 stationBPos = _getStationPosition_nolock(clusterB, clusterA, out var postfixB);
 
+        var listTouchedClusters = ClusterList.Instance().IntersectsCluster(stationAPos, stationBPos);
+        if (listTouchedClusters != null) 
+        {
+            /*
+             * This line intersects other clusters, do not add it.
+             */
+            foreach (var c in listTouchedClusters)
+            {
+                if (c != clusterA && c != clusterB)
+                {
+                    return null;
+                }
+            }
+        }
+        
         Station stationA = _findStation(stationAPos, clusterA, postfixA);
         Station stationB = _findStation(stationBPos, clusterB, postfixB);
         
@@ -174,22 +189,35 @@ public class Network
             var clusterList = ClusterList.Instance().GetClusterList();
             foreach (ClusterDesc clusterDesc in clusterList)
             {
-                int maxNTrams = 1;
+                int maxNTrams = 5;
                 //    Int32.Clamp(0, 2999, (int)clusterDesc.Size - 800)
                 //    / (3000/5) + 1;
 
 
                 var closestClusters = clusterDesc.GetClosest();
-                maxNTrams = Int32.Min(closestClusters.Length, maxNTrams);
+                int ncc = closestClusters.Length;
+                maxNTrams = Int32.Min(ncc, maxNTrams);
 
-                for (int i = 0; i < maxNTrams; ++i)
+                int nTrams = 0;
+                for (int i = 0; i < ncc; ++i)
                 {
                     ClusterDesc other = closestClusters[i];
+                    if (other == null) continue;
+
                     Line line = _findLine_nolock(clusterDesc, other);
+                    if (line != null)
+                    {
+                        nTrams++;
+                        if (maxNTrams == nTrams)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
         }
     }
+    
     
     public IEnumerable<Line> Lines
     {

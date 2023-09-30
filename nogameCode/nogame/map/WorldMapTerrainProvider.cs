@@ -5,6 +5,7 @@ using DefaultEcs;
 using engine.draw;
 using engine.world;
 using builtin.map;
+using engine;
 using engine.streets;
 using static engine.Logger;
 
@@ -74,29 +75,20 @@ public class WorldMapTerrainProvider : IWorldMapProvider
     }
 
 
-    private void _drawHighways(IFramebuffer target, ClusterDesc clusterDesc,
-        in Matrix3x2 m2fb)
+    private void _drawIntercityLines(IFramebuffer target, in Matrix3x2 m2fb)
     {
-        var closest = clusterDesc.GetClosest();
-        if (null == closest)
-        {
-            return;
-        }
-
-        int nClosest = clusterDesc.GetNClosest();
-        if (0 == nClosest) return;
+        var network = Implementations.Get<nogame.intercity.Network>();
+        var lines = network.Lines;
 
         Context dcHighway = new Context();
         dcHighway.FillColor = 0xff441144;
         dcHighway.Color = 0xff441144;
 
-        ClusterDesc closestCluster = null;
-        for (int i=0; i<nClosest; ++i)
+        foreach (var line in lines)
         {
-            if (closest[i] == null) continue;
-            if (closest[i] == closestCluster) continue;
-            closestCluster = closest[i];
-            _drawThickLine(target, dcHighway, m2fb, clusterDesc.Pos2, closestCluster.Pos2, 32f);
+            _drawThickLine(target, dcHighway, m2fb, 
+                new Vector2(line.StationA.Position.X, line.StationA.Position.Z),
+                new Vector2(line.StationB.Position.X, line.StationB.Position.Z), 32f);
         }
     }
 
@@ -239,12 +231,13 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         
         Vector2 worldMin = new(-MetaGen.MaxWidth / 2f, -MetaGen.MaxHeight / 2f);
 
-        
+
+        _drawIntercityLines(target, m2fb);
+
         var clusterList = engine.world.ClusterList.Instance();
         foreach (var clusterDesc in clusterList.GetClusterList())
         {
             _drawClusterBase(target, clusterDesc, m2fb);
-            _drawHighways(target, clusterDesc, m2fb);
             _drawClusterText(target, clusterDesc, m2fb);
 
 #if false
