@@ -125,8 +125,8 @@ public class GenerateCharacterOperator : IWorldOperator
         
         foreach (var line in lines)
         {
-            Vector3 caPos = line.ClusterA.Pos with { Y = line.ClusterA.AverageHeight + 20f };
-            Vector3 cbPos = line.ClusterB.Pos with { Y = line.ClusterB.AverageHeight + 20f };
+            Vector3 caPos = line.StationA.Position with { Y = line.ClusterA.AverageHeight + 20f };
+            Vector3 cbPos = line.StationB.Position with { Y = line.ClusterB.AverageHeight + 20f };
             _createIntercity(caPos, cbPos, 0.5f);
         }
     }
