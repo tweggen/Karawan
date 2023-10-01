@@ -310,7 +310,7 @@ namespace engine.world
          * TXWTODO: This does not require the entire worldLoader 
          * but only the elevation.
          */
-        public float GetHeightAt(
+        public engine.elevation.ElevationPixel GetElevationPixelAt(
             float x0,
             float z0,
             string layer = engine.elevation.Cache.TOP_LAYER
@@ -334,11 +334,20 @@ namespace engine.world
             float localX = x0 - (world.MetaGen.FragmentSize) * i;
             float localZ = z0 - (world.MetaGen.FragmentSize) * k;
 
-            float height = entry.GetHeightAt(localX, localZ);
+            var epx = entry.GetElevationPixelAt(localX, localZ);
 
-            return height;
+            return epx;
         }
 
+
+        public float GetHeightAt(
+            float x0,
+            float z0,
+            string layer = engine.elevation.Cache.TOP_LAYER
+        )
+        {
+            return GetElevationPixelAt(x0, z0, layer).Height;
+        }
 
         /**
          * Global initialise function

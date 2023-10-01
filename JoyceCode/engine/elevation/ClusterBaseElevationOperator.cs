@@ -30,7 +30,7 @@ namespace engine.elevation
             float aver = 0f;
             for(int cez=0; cez < erCluster.nVert; ++cez ) {
                 for(int cex=0; cex<erCluster.nHoriz; ++cex ) {
-                    aver += erCluster.Elevations[cez,cex];
+                    aver += erCluster.Elevations[cez,cex].Height;
                 }
             }
 
@@ -73,11 +73,14 @@ namespace engine.elevation
                         + ((esTarget.Rect2.B.X - esTarget.Rect2.A.X) * tex)
                         / esTarget.nHoriz;
 
-                    float resultHeight;
-                    float sourceHeight = erSource.Elevations[tez,tex];
+                    var epxSource = erSource.Elevations[tez,tex];
+                    var epxDest = epxSource;
 
                     if (_clusterDesc.Rect2.Contains(x, z))
                     {
+                        // TXWTODO: Define this somewhere.
+                        epxDest.Biome = 1;
+                        
                         /*
                          * This is wihtin the range of our city. 
                          * So flatten it.
@@ -85,24 +88,18 @@ namespace engine.elevation
                          * Just use one plain elevation, we cannot deal yet with
                          * different levels.
                          */
-                        if (sourceHeight < aver)
+                        if (epxSource.Height < aver)
                         {
                             // resultHeight = aver - 0 ;
-                            resultHeight = aver + 1.5f;
+                            epxDest.Height = aver + 1.5f;
                         }
                         else
                         {
-                            resultHeight = aver + 1.5f;
+                            epxDest.Height = aver + 1.5f;
                         }
                     }
-                    else
-                    {
-                        /*
-                         * This is not within the range of our city.
-                         */
-                        resultHeight = sourceHeight;
-                    }
-                    esTarget.Elevations[tez,tex] = resultHeight;
+
+                    esTarget.Elevations[tez,tex] = epxDest;
                 }
             }
         }

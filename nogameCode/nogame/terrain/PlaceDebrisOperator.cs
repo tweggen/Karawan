@@ -46,11 +46,16 @@ public class PlaceDebrisOperator : IFragmentOperator
                 rnd.GetFloat() * MetaGen.FragmentSize - MetaGen.FragmentSize / 2f,
                 0f,
                 rnd.GetFloat() * MetaGen.FragmentSize - MetaGen.FragmentSize / 2f);
-            if (ClusterList.Instance().GetClusterAt(vCenter + worldFragment.Position) != null)
+
+            var epx = engine.world.MetaGen.Instance().Loader.GetElevationPixelAt(
+                worldFragment.Position.X + vCenter.X, worldFragment.Position.Z + vCenter.Z);
+            /*
+             * Only place them outside a cluster, not in trails or other things.
+             */
+            if (epx.Biome != 0)
             {
                 continue;
             }
-
             for (int j = 0; j < nRocks; ++j)
             {
                 float debrisSize = rnd.GetFloat() * 3f;

@@ -5,13 +5,13 @@ namespace engine.elevation
     public class CacheEntry
     {
 
-        public float[,] elevations;
+        public ElevationPixel[,] elevations;
 
 
         /**
          * Return the interpolated height at the given relative position.
          */
-        public float GetHeightAt(float x0, float z0)
+        public ElevationPixel GetElevationPixelAt(float x0, float z0)
         {
             if (null == elevations) {
                 throw new NullReferenceException(
@@ -34,13 +34,15 @@ namespace engine.elevation
                     $"Invalid ex: {ey} > groundResolution: {groundResolution}, z0: {z0}" );
             }
 
+            var epxOrg = elevations[ey, ex];
+            
             /*
              * Now compute, where exactly within the triangles we are.
              */
-            float y00 = elevations[ey,ex];
-            float y01 = elevations[ey,ex + 1];
-            float y10 = elevations[ey + 1,ex];
-            float y11 = elevations[ey + 1,ex + 1];
+            float y00 = elevations[ey,ex].Height;
+            float y01 = elevations[ey,ex + 1].Height;
+            float y10 = elevations[ey + 1,ex].Height;
+            float y11 = elevations[ey + 1,ex + 1].Height;
 
             float tileX = (x0 + world.MetaGen.FragmentSize / 2f) - (elevationStepSize * ex);
             float tileY = (z0 + world.MetaGen.FragmentSize / 2f) - (elevationStepSize * ey);
@@ -62,7 +64,7 @@ namespace engine.elevation
                 yResult += (y01 - y11) * (elevationStepSize - tileY) / elevationStepSize;
             }
 
-            return yResult;
+            return epxOrg with { Height = yResult };
         }
 
 

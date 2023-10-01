@@ -1,12 +1,7 @@
-﻿using engine;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
-using DefaultEcs;
-using System.Linq;
 using BepuPhysics;
-using BepuPhysics.Collidables;
 using engine.joyce;
 using static engine.Logger;
 
@@ -37,7 +32,7 @@ namespace engine.world
         /**
          * Our array of elevations.
          */
-        private float[,] _elevations;
+        private engine.elevation.ElevationPixel[,] _elevations;
 
         private int _groundResolution;
         private int _groundNElevations;
@@ -107,7 +102,7 @@ namespace engine.world
          *     top index in fragment elevation
          */
         public void WorldFragmentSetGroundArray(
-            in float[,] groundArray,
+            in engine.elevation.ElevationPixel[,] groundArray,
             int groundResolution,
             int ax, int ay, int bx, int by,
             int dx, int dy )
@@ -263,7 +258,7 @@ namespace engine.world
         private void _createElevationArray()
         {
             var plusone = _groundNElevations+1;
-            _elevations = new float[plusone, plusone];
+            _elevations = new engine.elevation.ElevationPixel[plusone, plusone];
         }
         
 

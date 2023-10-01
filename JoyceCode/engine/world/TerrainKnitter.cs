@@ -7,7 +7,7 @@ namespace engine.world
     public class TerrainKnitter
     {
         public static joyce.Mesh BuildMolecule(
-            float[,] elevations,
+            engine.elevation.ElevationPixel[,] elevations,
             int coarseness //,
             //string materialId
         )
@@ -36,13 +36,13 @@ namespace engine.world
                     float localY = 0f;
 
                     if(1==coarseness) {
-                        localY = elevations[iterY,iterX];
+                        localY = elevations[iterY,iterX].Height;
                     } else {
                         int n  = 0;
                         for(int ey=y0; ey<y1; ey++ ) {
                             for(int ex=x0; ex<x1; ex++ ) {
                                 // trace("ex: "+ex+", ey="+ey+", localY="+localY);
-                                localY += elevations[ey,ex];
+                                localY += elevations[ey,ex].Height;
                                 ++n;
                             }
                         }

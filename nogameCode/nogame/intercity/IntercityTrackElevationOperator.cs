@@ -86,8 +86,8 @@ public class IntercityTrackElevationOperator : IOperator
                         + ((esTarget.Rect2.B.X - esTarget.Rect2.A.X) * tex)
                         / esTarget.nHoriz;
 
-                float resultHeight;
-                float sourceHeight = erSource.Elevations[tez, tex];
+                ElevationPixel epxSource = erSource.Elevations[tez, tex];
+                ElevationPixel epxDest = epxSource;
                 
                 bool hitsIntercity = false;
                 float dist = 0f;
@@ -111,17 +111,11 @@ public class IntercityTrackElevationOperator : IOperator
 
                 if (hitsIntercity)
                 {
-                    resultHeight = _line.Height;
-                }
-                else
-                {
-                    /*
-                     * This is not within the range of our city.
-                     */
-                    resultHeight = sourceHeight;
+                    epxDest.Height = _line.Height;
+                    epxDest.Biome = 2;
                 }
 
-                esTarget.Elevations[tez, tex] = resultHeight;
+                esTarget.Elevations[tez, tex] = epxDest;
             }
         }
     }

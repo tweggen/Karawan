@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using engine.elevation;
 using engine.geom;
 using static engine.Logger;
 
@@ -40,7 +41,8 @@ namespace nogame.terrain
              * it also includes the individual borders.
              */
             var nElevations = engine.world.MetaGen.GroundResolution + 1;
-            float[,] localElevations = elevationSegment.Elevations;
+            float[,] localElevations = new float[nElevations, nElevations]; 
+            //= elevationSegment.Elevations;
 
             /*
              * First setup the corners from the skeleton information.
@@ -127,6 +129,21 @@ namespace nogame.terrain
                 GroundOperator.MaxElevation,
                 x0, y0, x1, y1);
 
+            /*
+             * Create the entire default ElevationPixel info from the local array.
+             */
+            for (int y=y0; y<=y1; y++)
+            {
+                for (int x = x0; x < x1; x++)
+                {
+                    elevationSegment.Elevations[x, y] = new ElevationPixel()
+                    {
+                        Height = localElevations[x, y],
+                        Biome = 0,
+                        Flags1 = 0
+                    };
+                }
+            }
         }
 
 
