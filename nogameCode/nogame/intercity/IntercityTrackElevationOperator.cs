@@ -34,7 +34,7 @@ public class IntercityTrackElevationOperator : IOperator
      */
     public void ElevationOperatorProcess(
         in IElevationProvider elevationInterface,
-        in Rect erTarget
+        in ElevationSegment esTarget
     )
     {
         var va = _line.StationA.Pos2;
@@ -47,9 +47,8 @@ public class IntercityTrackElevationOperator : IOperator
         /*
          * Now that we have the average, read the level below us.
          */
-        var erSource = elevationInterface.GetElevationRectBelow(
-            erTarget.X0, erTarget.Z0,
-            erTarget.X1, erTarget.Z1
+        var erSource = elevationInterface.GetElevationSegmentBelow(
+            esTarget.Rect2
         );
 
         /*
@@ -57,8 +56,8 @@ public class IntercityTrackElevationOperator : IOperator
          * data from source, modifying the data along the way.
          */
 
-        var stepX = (erTarget.X1 - erTarget.X0) / erTarget.nHoriz;
-        var stepZ = (erTarget.Z1 - erTarget.Z0) / erTarget.nVert;
+        var stepX = (esTarget.Rect2.B.X - esTarget.Rect2.A.X) / esTarget.nHoriz;
+        var stepZ = (esTarget.Rect2.B.Y - esTarget.Rect2.A.Y) / esTarget.nVert;
 
         //var minDist = Single.Max(_line.Width / 2f, stepX / 2f);
         var minDist = 2f*stepX;
@@ -68,13 +67,13 @@ public class IntercityTrackElevationOperator : IOperator
          *
          * Set the landscape height to the height of the intercity.
          */
-        for (int tez = 0; tez < erTarget.nVert; tez++)
+        for (int tez = 0; tez < esTarget.nVert; tez++)
         {
-            var z = erTarget.Z0
-                    + ((erTarget.Z1 - erTarget.Z0) * tez)
-                    / erTarget.nVert;
+            var z = esTarget.Rect2.A.Y
+                    + ((esTarget.Rect2.B.Y - esTarget.Rect2.A.Y) * tez)
+                    / esTarget.nVert;
 
-            for (int tex = 0; tex < erTarget.nHoriz; tex++)
+            for (int tex = 0; tex < esTarget.nHoriz; tex++)
             {
                 /*
                  * Compute the absolute position derived from the target
@@ -83,9 +82,9 @@ public class IntercityTrackElevationOperator : IOperator
                  * Then check, wether this is within the bounds of the
                  * city.
                  */
-                var x = erTarget.X0
-                        + ((erTarget.X1 - erTarget.X0) * tex)
-                        / erTarget.nHoriz;
+                var x = esTarget.Rect2.A.X
+                        + ((esTarget.Rect2.B.X - esTarget.Rect2.A.X) * tex)
+                        / esTarget.nHoriz;
 
                 float resultHeight;
                 float sourceHeight = erSource.Elevations[tez, tex];
@@ -122,23 +121,18 @@ public class IntercityTrackElevationOperator : IOperator
                     resultHeight = sourceHeight;
                 }
 
-                erTarget.Elevations[tez, tex] = resultHeight;
+                esTarget.Elevations[tez, tex] = resultHeight;
             }
         }
     }
 
 
-    public bool ElevationOperatorIntersects(
-        float x0, float z0,
-        float x1, float z1)
+    public bool ElevationOperatorIntersects(engine.geom.AABB aabb)
     {
         /*
          * Does it roughly intersect?
          */
-        engine.geom.AABB o = new();
-        o.Add(new Vector3(x0, 0f, z0));
-        o.Add(new Vector3(x1, 0f, z1));
-        if (!_aabb.IntersectsXZ(o))
+        if (!_aabb.IntersectsXZ(aabb))
         {
             return false;
         }
@@ -150,18 +144,20 @@ public class IntercityTrackElevationOperator : IOperator
         engine.geom.Line ll1 = new(_line.StationA.Pos2-lineWidthHalf, _line.StationB.Pos2-lineWidthHalf);
         engine.geom.Line ll2 = new(_line.StationA.Pos2+lineWidthHalf, _line.StationB.Pos2+lineWidthHalf);
 
+        Vector2 v1 = new(aabb.AA.X, aabb.AA.Z);
+        Vector2 v2 = new(aabb.AA.X, aabb.BB.Z);
+        Vector2 v3 = new(aabb.BB.X, aabb.BB.Z);
+        Vector2 v4 = new(aabb.BB.X, aabb.AA.Z);
+        engine.geom.Line l1 = new(v1, v2); 
+        engine.geom.Line l2 = new(v2, v3); 
+        engine.geom.Line l3 = new(v3, v4); 
+        engine.geom.Line l4 = new(v4, v1); 
         /*
          * Does it exactly intersect?
          */
         if (true
-            && null == ll1.Intersect(new engine.geom.Line(new(x0, z0), new Vector2(x0, z1)))
-            && null == ll1.Intersect(new engine.geom.Line(new(x0, z1), new Vector2(x1, z1)))
-            && null == ll1.Intersect(new engine.geom.Line(new(x1, z1), new Vector2(x1, z0)))
-            && null == ll1.Intersect(new engine.geom.Line(new(x1, z0), new Vector2(x0, z0)))
-            && null == ll2.Intersect(new engine.geom.Line(new(x0, z0), new Vector2(x0, z1)))
-            && null == ll2.Intersect(new engine.geom.Line(new(x0, z1), new Vector2(x1, z1)))
-            && null == ll2.Intersect(new engine.geom.Line(new(x1, z1), new Vector2(x1, z0)))
-            && null == ll2.Intersect(new engine.geom.Line(new(x1, z0), new Vector2(x0, z0)))
+            && null == ll1.Intersect(l1) && null == ll1.Intersect(l2) && null == ll1.Intersect(l3) && null == ll1.Intersect(l4)
+            && null == ll2.Intersect(l1) && null == ll2.Intersect(l2) && null == ll2.Intersect(l3) && null == ll2.Intersect(l4)
         )
         {
             return false;

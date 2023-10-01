@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using engine.geom;
 
 namespace engine.elevation
 {
@@ -22,12 +23,11 @@ namespace engine.elevation
          */
         public void ElevationOperatorProcess(
             in IElevationProvider elevationInterface,
-            in Rect target
+            in ElevationSegment esTarget
         );
 
         public bool ElevationOperatorIntersects(
-            float x0, float z0,
-            float x1, float z1
+            AABB aabb
         );    
     }
 }

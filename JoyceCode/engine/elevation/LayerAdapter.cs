@@ -12,11 +12,9 @@ namespace engine.elevation
         private Cache _elevationCache;
 
 
-        public Rect GetElevationRectBelow(
-            float x0, float z0,
-            float x1, float z1
-        ) {
-            return _elevationCache.ElevationCacheGetRectBelow(x0, z0, x1, z1, layer);
+        public ElevationSegment GetElevationSegmentBelow(in geom.Rect2 rect2)
+        {
+            return _elevationCache.ElevationCacheGetRectBelow(rect2, layer);
         }
 
 

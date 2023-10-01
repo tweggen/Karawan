@@ -22,19 +22,11 @@ namespace engine.elevation
          */ 
         public void ElevationOperatorProcess(
             in IElevationProvider elevationInterface,
-            in Rect erTarget
+            in ElevationSegment esTarget
         )
         {
-            // trace('ClusterBaseElevationOperator(): Operating.');
-            // var fs = WorldMetaGens.fragmentSize;
-
-            float x0 = _clusterDesc.Pos.X - _clusterDesc.Size / 2f;
-            float z0 = _clusterDesc.Pos.Z - _clusterDesc.Size / 2f;
-            float x1 = _clusterDesc.Pos.X + _clusterDesc.Size / 2f;
-            float z1 = _clusterDesc.Pos.Z + _clusterDesc.Size / 2f;
-
-            // TXWTODO: Cache this in the cluster?
-            Rect erCluster = elevationInterface.GetElevationRectBelow(x0, z0, x1, z1);
+            ElevationSegment erCluster = elevationInterface.GetElevationSegmentBelow(
+                _clusterDesc.Rect2);
             float aver = 0f;
             for(int cez=0; cez < erCluster.nVert; ++cez ) {
                 for(int cex=0; cex<erCluster.nHoriz; ++cex ) {
@@ -48,10 +40,8 @@ namespace engine.elevation
             /*
              * Now that we have the average, read the level below us.
              */
-            var erSource = elevationInterface.GetElevationRectBelow(
-                erTarget.X0, erTarget.Z0,
-                erTarget.X1, erTarget.Z1
-            );
+            var erSource = elevationInterface.GetElevationSegmentBelow(
+                esTarget.Rect2);
 
             /*
              * Now we iterate through our target, filling it with the
@@ -64,13 +54,13 @@ namespace engine.elevation
              * In this version we only apply the change to values within our
              * city bounds.
              */
-            for (int tez=0; tez<erTarget.nVert; tez++ )
+            for (int tez=0; tez<esTarget.nVert; tez++ )
             {
-                var z = erTarget.Z0
-                    + ((erTarget.Z1 - erTarget.Z0) * tez)
-                        / erTarget.nVert;
+                var z = esTarget.Rect2.A.Y
+                    + ((esTarget.Rect2.B.Y - esTarget.Rect2.A.Y) * tez)
+                        / esTarget.nVert;
 
-                for (int tex=0; tex<erTarget.nHoriz; tex++ )
+                for (int tex=0; tex<esTarget.nHoriz; tex++ )
                 {
                     /*
                      * Compute the absolute position derived from the target
@@ -79,19 +69,14 @@ namespace engine.elevation
                      * Then check, wether this is within the bounds of the 
                      * city.
                      */
-                    var x = erTarget.X0
-                        + ((erTarget.X1 - erTarget.X0) * tex)
-                        / erTarget.nHoriz;
+                    var x = esTarget.Rect2.A.X
+                        + ((esTarget.Rect2.B.X - esTarget.Rect2.A.X) * tex)
+                        / esTarget.nHoriz;
 
                     float resultHeight;
                     float sourceHeight = erSource.Elevations[tez,tex];
 
-                    if (true
-                        && x >= x0
-                        && x <= x1
-                        && z >= z0
-                        && z <= z1
-                    )
+                    if (_clusterDesc.Rect2.Contains(x, z))
                     {
                         /*
                          * This is wihtin the range of our city. 
@@ -117,32 +102,15 @@ namespace engine.elevation
                          */
                         resultHeight = sourceHeight;
                     }
-                    erTarget.Elevations[tez,tex] = resultHeight;
+                    esTarget.Elevations[tez,tex] = resultHeight;
                 }
             }
         }
 
 
-        public bool ElevationOperatorIntersects(
-            float x0, float z0,
-            float x1, float z1)
+        public bool ElevationOperatorIntersects(engine.geom.AABB aabb)
         {
-            var sh = _clusterDesc.Size / 2.0;
-            var cx0 = _clusterDesc.Pos.X - sh;
-            var cz0 = _clusterDesc.Pos.Z - sh;
-            var cx1 = _clusterDesc.Pos.X + sh;
-            var cz1 = _clusterDesc.Pos.Z + sh;
-            if (
-                false
-                || x0 > cx1
-                || z0 > cz1
-                || x1 < cx0
-                || z1 < cz0
-            )
-            {
-                return false;
-            }
-            return true;
+            return aabb.IntersectsXZ(_clusterDesc.AABB);
         }
 
 

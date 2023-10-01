@@ -27,6 +27,12 @@ public class ClusterDesc
         get => new Vector2(Pos.X, Pos.Z);
     }
 
+    private engine.geom.Rect2 _rect2;
+    public engine.geom.Rect2 Rect2
+    {
+        get => _rect2;
+    }
+    
     private float _size = 100;
     public float Size
     {
@@ -76,14 +82,22 @@ public class ClusterDesc
     {
         _size = size;
         _aabb = new geom.AABB(_pos, size);
-
+        _rect2 = new()
+        {
+            A = new(_pos.X - _size / 2f, _pos.Z - _size / 2f),
+            B = new(_pos.X + _size / 2f, _pos.Z + _size / 2f),
+        };
     }
     
     private void _setPos(Vector3 pos)
     {
         _pos = pos;
         _aabb = new geom.AABB(pos, _size);
-
+        _rect2 = new()
+        {
+            A = new(_pos.X - _size / 2f, _pos.Z - _size / 2f),
+            B = new(_pos.X + _size / 2f, _pos.Z + _size / 2f),
+        };
     }
     
     public override string ToString()
@@ -112,6 +126,10 @@ public class ClusterDesc
         }
     }
 
+    public engine.geom.AABB AABB
+    {
+        get => _aabb; 
+    }
     public void GetAABB(out engine.geom.AABB aabb)
     {
         aabb = _aabb;

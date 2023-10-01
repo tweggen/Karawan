@@ -143,6 +143,15 @@ public struct AABB
         BB = new Vector3(Single.MinValue, Single.MinValue, Single.MinValue);
     }
 
+
+    public AABB(in engine.geom.Rect2 rect2)
+    {
+        Reset();
+        Add(new Vector3(rect2.A.X, 0f, rect2.A.Y));
+        Add(new Vector3(rect2.B.X, 0f, rect2.B.Y));
+    }
+    
+    
     public AABB(in Vector3 aa, in Vector3 bb)
     {
         AA = aa;

@@ -47,16 +47,17 @@ namespace engine.world
                  * This would be the right way, however, it's more expensive.
                  */
                 var fs = world.MetaGen.FragmentSize;
-                float x0 = i * fs - fs / 2f;
-                float z0 = k * fs - fs / 2f;
-                float x1 = (i + 1) * fs - fs / 2f;
-                float z1 = (k + 1) * fs - fs / 2f;
+                geom.Rect2 rect2 = new()
+                {
+                    A = new(i * fs - fs / 2f, k * fs - fs / 2f),
+                    B = new((i + 1) * fs - fs / 2f, (k + 1) * fs - fs / 2f)
+                };
 
-                elevation.Rect elevationRect = elevationCache.ElevationCacheGetRectBelow(
-                    x0, z0, x1, z1, elevation.Cache.TOP_LAYER
+                elevation.ElevationSegment elevationSegment = elevationCache.ElevationCacheGetRectBelow(
+                    rect2, elevation.Cache.TOP_LAYER
                 );
                 worldFragment.WorldFragmentSetGroundArray(
-                    elevationRect.Elevations,
+                    elevationSegment.Elevations,
                     world.MetaGen.GroundResolution,
                     0, 0, world.MetaGen.GroundResolution, world.MetaGen.GroundResolution,
                     0, 0);

@@ -144,6 +144,17 @@ public class MetaGen
     }
 
 
+    static public void GetFragmentRect(int i, int k, out engine.geom.Rect2 rect2)
+    {
+        float fs = FragmentSize;
+        rect2 = new()
+        {
+            A = new((float)((i * fs) - fs / 2.0), (float)((k * fs) - fs / 2.0)),
+            B = new((float)(((i + 1) * fs) - fs / 2.0), (float)(((k + 1) * fs) - fs / 2.0))
+        };
+    }
+
+
     public void GenerateFragmentOperatorsForCluster(string key, ClusterDesc cluster)
     {
         lock (_lo)

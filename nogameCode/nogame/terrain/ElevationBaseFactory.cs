@@ -1,8 +1,7 @@
-﻿using DefaultEcs;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System;
+using System.Numerics;
+using engine.geom;
+using static engine.Logger;
 
 namespace nogame.terrain
 {
@@ -17,11 +16,7 @@ namespace nogame.terrain
         /// Number of indices vertically (depth) in world.
         float _skeletonHeight;
 
-        private void trace(string message)
-        {
-            Console.WriteLine(message);
-        }
-
+        private engine.geom.AABB _aabb;
 
         private string createSeed(int x, int y) 
         {
@@ -34,7 +29,7 @@ namespace nogame.terrain
          */
         private void _createElevationCacheEntry(
             int i, int k,
-            in engine.elevation.Rect elevationRect)
+            in engine.elevation.ElevationSegment elevationSegment)
         {
 
             GroundOperator groundOperator = GroundOperator.Instance();
@@ -45,7 +40,7 @@ namespace nogame.terrain
              * it also includes the individual borders.
              */
             var nElevations = engine.world.MetaGen.GroundResolution + 1;
-            float[,] localElevations = elevationRect.Elevations;
+            float[,] localElevations = elevationSegment.Elevations;
 
             /*
              * First setup the corners from the skeleton information.
@@ -119,7 +114,7 @@ namespace nogame.terrain
                 localElevations[y1, x1] = skeletonElevations[idxY + 1, idxX + 1];
             } catch(Exception e)
             {
-                trace($"Caught exception {e}");
+                Error($"Caught exception {e}");
             }
 
             /*
@@ -137,7 +132,7 @@ namespace nogame.terrain
 
         public void ElevationOperatorProcess(
             in engine.elevation.IElevationProvider elevationInterface,
-            in engine.elevation.Rect target
+            in engine.elevation.ElevationSegment esTarget
         )
         {
             /*
@@ -146,18 +141,16 @@ namespace nogame.terrain
              */
             // TXWTODO: Create a convenicence function for this.
             var fs = engine.world.MetaGen.FragmentSize;
-            int i = (int) Math.Floor((target.X0 + fs / 2.0) / fs);
-            int k = (int) Math.Floor((target.Z0 + fs / 2.0) / fs);
+            int i = (int) Math.Floor((esTarget.Rect2.A.X + fs / 2.0) / fs);
+            int k = (int) Math.Floor((esTarget.Rect2.A.Y + fs / 2.0) / fs);
 
-            _createElevationCacheEntry(i, k, target);
+            _createElevationCacheEntry(i, k, esTarget);
         }
 
 
-        public bool ElevationOperatorIntersects(
-            float x0, float z0,
-            float x1, float z1)
+        public bool ElevationOperatorIntersects(engine.geom.AABB aabb)
         {
-            return true;
+            return _aabb.IntersectsXZ(aabb);
         }
 
 
@@ -165,6 +158,9 @@ namespace nogame.terrain
         {
             _maxWidth = engine.world.MetaGen.MaxWidth;
             _maxHeight = engine.world.MetaGen.MaxHeight;
+            _aabb = new AABB(
+                new Vector3(-_maxWidth / 2f, 0f, -_maxHeight / 2f),
+                new Vector3(+_maxWidth / 2f, 0f, +_maxHeight / 2f)); 
 
             var fragmentSize = engine.world.MetaGen.FragmentSize;
 

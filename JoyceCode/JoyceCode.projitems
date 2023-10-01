@@ -77,7 +77,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IElevationProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\IOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\LayerAdapter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Rect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\ElevationSegment.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityComponentTypeReader.cs" />
@@ -86,6 +86,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\AABB.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Angles.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Line.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Rect2.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\GlobalSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\components\LuaScript.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptEntry.cs" />

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
+using engine.geom;
 using static engine.Logger;
 
 namespace engine.elevation
@@ -52,11 +53,11 @@ namespace engine.elevation
          * Return the factory below the given layer
          */
         private FactoryEntry _getNextFactoryEntryBelow(
-            float x0, float z0,
-            float x1, float z1,
+            engine.geom.Rect2 rect2,
             in string layer )
         {
-
+            AABB aabb = new(rect2);
+            
             /*
              * We need the factory id for the map to find the starting point.
              */
@@ -115,9 +116,7 @@ namespace engine.elevation
                     // TXWTODO: Not nice. Double code. but consistent in the loop.
                     string candString = _keysFactories[idx];
                     elevationFactoryEntry = _mapFactories[candString];
-                    if (elevationFactoryEntry.ElevationOperator.ElevationOperatorIntersects(
-                            x0, z0, x1, z1
-                        ))
+                    if (elevationFactoryEntry.ElevationOperator.ElevationOperatorIntersects(aabb))
                     {
                         /*
                          * We found a layer that matters.
@@ -245,12 +244,9 @@ namespace engine.elevation
                  */
                 var gr = world.MetaGen.GroundResolution;
                 var fs = world.MetaGen.FragmentSize;
-                var elevationRect = new Rect(gr + 1, gr + 1);
+                var elevationSegment = new ElevationSegment(gr + 1, gr + 1);
 
-                elevationRect.X0 = (float)( (i * fs) - fs / 2.0 );
-                elevationRect.Z0 = (float)( (k * fs) - fs / 2.0 );
-                elevationRect.X1 = (float)( ((i + 1) * fs) - fs / 2.0 );
-                elevationRect.Z1 = (float)( ((k + 1) * fs) - fs / 2.0 );
+                world.MetaGen.GetFragmentRect(i, k, out elevationSegment.Rect2);
                 try
                 {
                     /*
@@ -267,7 +263,7 @@ namespace engine.elevation
                     )
                     {
                         elevationFactoryEntry.ElevationOperator.ElevationOperatorProcess(
-                            elevationAdapter, elevationRect
+                            elevationAdapter, elevationSegment
                         );
                     }
                 }
@@ -287,7 +283,7 @@ namespace engine.elevation
                  * Simply use the elevations from the rect. Nobody will use
                  * the rect after this function.
                  */
-                newEntry.elevations = elevationRect.Elevations;
+                newEntry.elevations = elevationSegment.Elevations;
 
             } else
             {
@@ -325,13 +321,9 @@ namespace engine.elevation
 
             // TXWTODO: Double code, also in CacheGetAt.
             var fs = world.MetaGen.FragmentSize;
-            float x0 = (float)( (i * fs) - fs / 2.0 );
-            float z0 = (float)( (k * fs) - fs / 2.0 );
-            float x1 = (float)( ((i + 1) * fs) - fs / 2.0 );
-            float z1 = (float)( ((k + 1) * fs) - fs / 2.0 );
+            world.MetaGen.GetFragmentRect(i, k, out var rect2Fragment);
 
-            FactoryEntry entry = _getNextFactoryEntryBelow(
-                x0, z0, x1, z1, layer);
+            FactoryEntry entry = _getNextFactoryEntryBelow(rect2Fragment, layer);
             if (null == entry)
             {
                 throw new InvalidOperationException(
@@ -344,12 +336,16 @@ namespace engine.elevation
         /**
          * Return an elevation rect describing all elevations within the given boundaries.
          */
-        private Rect _elevationCacheGetRectAt(
-            float x0, float z0,
-            float x1, float z1,
+        private ElevationSegment _elevationCacheGetRectAt(
+            engine.geom.Rect2 rect2,
             string layer
         )
         {
+            float x0 = rect2.A.X;
+            float z0 = rect2.A.Y;
+            float x1 = rect2.B.X;
+            float z1 = rect2.B.Y;
+            
             /* 
              * Sort the arguments. I feel like this is a bit too defensive.
              */
@@ -366,7 +362,7 @@ namespace engine.elevation
                 z1 = t;
             }
 
-            Rect elevationRect = null;
+            ElevationSegment elevationSegment = null;
 
             var fs = world.MetaGen.FragmentSize;
             var gr = world.MetaGen.GroundResolution;
@@ -412,11 +408,11 @@ namespace engine.elevation
             /* 
              * Create the target rectangle. Note: We need one more per dimenstion.
              */
-            elevationRect = new Rect(nHoriz + 1, nVert + 1);
-            elevationRect.X0 = x0;
-            elevationRect.Z0 = z0;
-            elevationRect.X1 = x1;
-            elevationRect.Z1 = z1;
+            elevationSegment = new ElevationSegment(nHoriz + 1, nVert + 1);
+            elevationSegment.Rect2.A.X = x0;
+            elevationSegment.Rect2.A.Y = z0;
+            elevationSegment.Rect2.B.X = x1;
+            elevationSegment.Rect2.B.Y = z1;
 
             /* 
              * At this point, ex0,ez0 - ex1,ez1 contain the indices of the
@@ -480,7 +476,7 @@ namespace engine.elevation
                         for (int ex=exLocal0; ex<(exLocal1 + 1); ++ex)
                         {
                             var elevation = srcCacheEntry.elevations[srcZ,srcX];
-                            elevationRect.Elevations[destZ,destX] = elevation;
+                            elevationSegment.Elevations[destZ,destX] = elevation;
                             // trace('elevation is $elevation');
                             ++destX;
                             ++srcX;
@@ -491,23 +487,21 @@ namespace engine.elevation
                 }
             }
 
-            return elevationRect;
+            return elevationSegment;
         }
 
 
-        public Rect ElevationCacheGetRectBelow(
-            float x0, float z0,
-            float x1, float z1,
+        public ElevationSegment ElevationCacheGetRectBelow(
+            engine.geom.Rect2 rect2,
             in string layer
         ) {
-            FactoryEntry entry = _getNextFactoryEntryBelow(
-                x0, z0, x1, z1, layer);
+            FactoryEntry entry = _getNextFactoryEntryBelow(rect2, layer);
             if (null == entry)
             {
                 throw new InvalidOperationException(
                     $"elevation.Cache: No entry found below '{layer}'." );
             }
-            return _elevationCacheGetRectAt(x0, z0, x1, z1, entry.Layer);
+            return _elevationCacheGetRectAt(rect2, entry.Layer);
         }
 
 

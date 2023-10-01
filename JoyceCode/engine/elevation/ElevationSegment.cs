@@ -10,11 +10,14 @@ namespace engine.elevation
      *
      * The resolution
      */
-    public class Rect
+    public class ElevationSegment
     {
 
         public float[,] Elevations { get; }
 
+        public engine.geom.Rect2 Rect2;
+
+#if false
         /**
             * The minimal x position of this elevation rectangle.
             * This position is after the previous grid entry, but before or
@@ -38,6 +41,7 @@ namespace engine.elevation
             * the maximal x position of this elevation rectangle.
             */
         public float Z1;
+#endif
 
         /**
             * The number of horizontal raster points publically available in this grid.
@@ -49,13 +53,11 @@ namespace engine.elevation
             */
         public int nVert { get; }
 
-        public Rect(
+        public ElevationSegment(
             int nHoriz0, int nVert0
-        ) {
-            X0 = 0f;
-            Z0 = 0f;
-            X1 = 0f;
-            Z1 = 0f;
+        )
+        {
+            Rect2 = new();
             nHoriz = nHoriz0;
             nVert = nVert0;
             Elevations = new float[nVert, nHoriz];
