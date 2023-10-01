@@ -106,7 +106,7 @@ public class IntercityTrackElevationOperator : IOperator
                 if (Single.Abs(dist) <= minDist)
                 {
                     hitsIntercity = true;
-                    Trace($"Hits intercity at {x}, {z}");
+                    // Trace($"Hits intercity at {x}, {z}");
                 }
 
                 if (hitsIntercity)
