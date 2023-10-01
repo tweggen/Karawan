@@ -54,10 +54,10 @@ public class InputController : engine.AModule, engine.IInputPart
                 _controllerState.WalkBackward = _controllerState.WalkFast?(int)ControllerWalkBackwardFast:(int)ControllerWalkBackwardNormal;
                 break;
             case "A":
-                _controllerState.TurnLeft = (int)ControllerTurnLeftRight;
+                _controllerState.TurnLeft = Int32.Min((int)(_controllerState.TurnLeft + ControllerTurnLeftRight / 3), (int)ControllerTurnLeftRight); 
                 break;
             case "D":
-                _controllerState.TurnRight = (int)ControllerTurnLeftRight;
+                _controllerState.TurnRight = Int32.Min((int)(_controllerState.TurnRight + ControllerTurnLeftRight / 3), (int)ControllerTurnLeftRight); 
                 break;
             default:
                 break;

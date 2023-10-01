@@ -84,6 +84,9 @@ namespace nogame.modules.playerhover
             var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
             var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
 
+            /*
+             * If I shall control the ship.
+             */
             if (MY_Z_ORDER == Implementations.Get<InputEventPipeline>().GetFrontZ())
             {
                 Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
