@@ -17,6 +17,7 @@ public class MetaGen
     private static MetaGen _instance;
 
     public static float FragmentSize = 400f;
+    public static Vector3 FragmentSize3 = new(FragmentSize, FragmentSize, FragmentSize);
     public static float MaxWidth = 90000f;
     public static float MaxHeight = 90000f;
 

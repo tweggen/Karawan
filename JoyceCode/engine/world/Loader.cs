@@ -49,7 +49,12 @@ namespace engine.world
 
         private engine.behave.systems.WiperSystem _wiperSystem;
 
+        /*
+         * We keep a fragment at least as long it takes to drive through it wiht 60 km/h.
+         */
+        public readonly float KeepFragmentMinTime = MetaGen.FragmentSize / (60*1000/3600);
 
+        
         private void _releaseFragmentListNoLock(IList<string> eraseList )
         {
             // TXWTODO: MOtex
@@ -101,15 +106,7 @@ namespace engine.world
          */
         public void WorldLoaderProvideFragments(in Vector3 pos0)
         {
-            // Trace($"WorldLoader.worldLoaderProvideFragments(): Called {pos0}.");
-            Vector3 pos = pos0;
-            pos += new Vector3(
-                world.MetaGen.FragmentSize/2f,
-                world.MetaGen.FragmentSize/2f,
-                world.MetaGen.FragmentSize/2f);
-            pos.X /= world.MetaGen.FragmentSize;
-            pos.Y /= world.MetaGen.FragmentSize;
-            pos.Z /= world.MetaGen.FragmentSize;
+            Vector3 pos = (pos0+MetaGen.FragmentSize3 / 2f) / world.MetaGen.FragmentSize;
 
             // Rest y to 0, we don't use heights now.
             pos.Y = 0;
@@ -164,7 +161,8 @@ namespace engine.world
                         if (null != fragment)
                         {
                             // Mark as used.
-                            Trace($"Using {strKey}");
+                            if (world.MetaGen.TRACE_WORLD_LOADER)
+                                Trace($"Using existing version of {strKey}");
                             fragment.LastIteration = _lastLoadedIteration;
                             continue;
                         }
@@ -222,15 +220,22 @@ namespace engine.world
 
             {
                 var eraseList = new List<string>();
-
+                DateTime now = DateTime.Now;
+                
                 lock (_lo)
                 {
                     /*
                      * Find out the list of fragments we do not need any more.
+                     *
+                     * Keep the fragments in memory for a time.
                      */
                     foreach (KeyValuePair<string, Fragment> kvp in _mapFrags)
                     {
                         var frag = kvp.Value;
+                        if ((now - frag.LoadedAt).TotalSeconds < KeepFragmentMinTime)
+                        {
+                            continue;
+                        }
                         if (frag.LastIteration < _lastLoadedIteration)
                         {
                             eraseList.Add(kvp.Key);
@@ -257,7 +262,7 @@ namespace engine.world
                     List<Vector3> aabb = new();
                     aabb.Add(vAA); 
                     aabb.Add(vBB);
-                    _wiperSystem.Update(aabb);
+                    _engine.QueueCleanupAction( () => _wiperSystem.Update(aabb));
 
                     lock (_lo)
                     {

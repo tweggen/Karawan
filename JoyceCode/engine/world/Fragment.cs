@@ -19,7 +19,8 @@ namespace engine.world
         private string _myKey;
         private int _id;
         public int NumericalId { get => _id; }
-
+        public DateTime LoadedAt { get; private set; }
+        
         public int LastIteration { get; set; }
 
         private engine.RandomSource _rnd;
@@ -37,7 +38,7 @@ namespace engine.world
         private int _groundResolution;
         private int _groundNElevations;
 
-
+        
         /**
          * Test, wether the given world coordinate is inside the cluster.
          */
@@ -343,6 +344,7 @@ namespace engine.world
                 AABB = new geom.AABB(Position, MetaGen.FragmentSize);
             }
             IdxFragment = idxFragment0;
+            LoadedAt = DateTime.Now;
 
             // Create an initial elevation array that still is zeroed.
             _createElevationArray();
