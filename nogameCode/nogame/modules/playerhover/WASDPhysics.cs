@@ -93,7 +93,7 @@ namespace nogame.modules.playerhover
 
                 var frontMotion = controllerState.FrontMotion;
                 var upMotion = controllerState.UpMotion;
-                var turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
+                float turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
 
                 if (frontMotion != 0f)
                 {
@@ -113,6 +113,10 @@ namespace nogame.modules.playerhover
 
                 if (turnMotion != 0f)
                 {
+                    float fullThresh = 0.5f;
+                    float damp = Single.Clamp(vTargetAngularVelocity.LengthSquared(), 0.1f, fullThresh) / fullThresh;
+                    turnMotion *= damp;
+                    
                     /*
                      * gently lean to the right iof turning right.
                      */
