@@ -111,6 +111,12 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
 
 
+    private string _carFileName(int carIdx)
+    {
+        return $"car{5 + carIdx}.obj";
+    }
+
+
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
     {
         var aPhysics = Implementations.Get<engine.physics.API>();
@@ -211,7 +217,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         ["primarycolor"] = _primarycolors[colorIdx],
                     };
                     Model model = await ModelCache.Instance().Instantiate(
-                        $"car{5 + carIdx}.obj", props, new InstantiateModelParams()
+                        _carFileName(carIdx), props, new InstantiateModelParams()
                     {
                         GeomFlags = 0
                                     | InstantiateModelParams.CENTER_X

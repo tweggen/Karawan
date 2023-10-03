@@ -433,13 +433,14 @@ namespace nogame.modules.playerhover
                  * Heck, why are we async here?
                  */
                 Model model = Task.Run(() => ModelCache.Instance().Instantiate(
-                    "car6.obj", null,
+                    /*"car6.obj"*/
+                    "cardbot1.obj", null,
                     new InstantiateModelParams()
                     {
                         GeomFlags = 0 
                         | InstantiateModelParams.CENTER_X
                         | InstantiateModelParams.CENTER_Z
-                        | InstantiateModelParams.ROTATE_Y180
+                        // | InstantiateModelParams.ROTATE_Y180
                     })).GetAwaiter().GetResult();
 
                 ModelInfo modelInfo = model.ModelInfo;
