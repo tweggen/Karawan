@@ -441,7 +441,7 @@ namespace nogame.modules.playerhover
                         GeomFlags = 0 
                         | InstantiateModelParams.CENTER_X
                         | InstantiateModelParams.CENTER_Z
-                        // | InstantiateModelParams.ROTATE_Y180
+                        | InstantiateModelParams.ROTATE_Y180
                     })).GetAwaiter().GetResult();
 
                 ModelInfo modelInfo = model.ModelInfo;
