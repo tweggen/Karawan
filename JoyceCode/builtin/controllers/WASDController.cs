@@ -11,6 +11,10 @@ namespace builtin.controllers
         private DefaultEcs.Entity _entity;
         private engine.transform.API _aTransform;
 
+        public float SideMetersPerSecond { get; set; } = 50f;
+        public float FrontMetersPerSecond { get; set; } = 50f;
+        public float TurnMouseXScale { get; set; } = 0.1f;
+
         private void _onLogicalFrame(object sender, float dt)
         {
             engine.Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
@@ -36,7 +40,7 @@ namespace builtin.controllers
             if (frontMotion != 0f)
             {
                 float meterPerSecond = 50f;
-                cTransform3.Position += vFront * (frontMotion / 256f * (meterPerSecond * dt) );
+                cTransform3.Position += vFront * (frontMotion / 256f * (FrontMetersPerSecond * dt) );
                 haveChange = true;
             }
 #if false
@@ -55,12 +59,12 @@ namespace builtin.controllers
             if( sideMotion != 0f)
             {
                 float meterPerSecond = 50f;
-                cTransform3.Position += vRight * (sideMotion / 256f * (meterPerSecond * dt));
+                cTransform3.Position += vRight * (sideMotion / 256f * (SideMetersPerSecond * dt));
                 haveChange = true;
             }
 #endif
 #if true
-            var turnMotion = (float)vMouseMove.X * 0.1f / 180.0f * (float)Math.PI;
+            var turnMotion = (float)vMouseMove.X * TurnMouseXScale / 180.0f * (float)Math.PI;
             if (turnMotion != 0f)
             {
                 cTransform3.Rotation =

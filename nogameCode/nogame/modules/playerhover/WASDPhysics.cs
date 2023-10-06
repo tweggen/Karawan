@@ -24,12 +24,14 @@ namespace nogame.modules.playerhover
 
         private DefaultEcs.Entity _ePhysDisplay;
 
-        private readonly float LinearThrust = 180f;
-        private readonly float AngularThrust = 40.0f;
-        private readonly float MaxLinearVelocity = 50f;
-        private readonly float MaxAngularVelocity = 0.8f;
-        private readonly float LevelUpThrust = 16f;
-        private readonly float LevelDownThrust = 16f;
+        public float LinearThrust { get; set; } = 180f;
+        public float AngularThrust { get; set; } = 40.0f;
+        public float MaxLinearVelocity { get; set; } = 50f;
+        public float MaxAngularVelocity { get; set; } = 0.8f;
+        public float LevelUpThrust { get; set; } = 16f;
+        public float LevelDownThrust { get; set; } = 16f;
+        public float NoseDownWhileAcceleration { get; set; } = 16f;
+        public float WingsDownWhileTurning { get; set; } = 4f;
         
         private void _onLogicalFrame(object sender, float dt)
         {
@@ -103,7 +105,7 @@ namespace nogame.modules.playerhover
                     /*
                      * Move nose down when accelerating and vice versa.
                      */
-                    vTotalAngular += vRight * (-AngularThrust * frontMotion / 4096f);
+                    vTotalAngular += vRight * (-AngularThrust * frontMotion / (256f * NoseDownWhileAcceleration));
                 }
 
                 if (upMotion != 0f)
@@ -120,7 +122,7 @@ namespace nogame.modules.playerhover
                     /*
                      * gently lean to the right iof turning right.
                      */
-                    vTotalAngular += vFront * (AngularThrust * turnMotion / 1024f);
+                    vTotalAngular += vFront * (AngularThrust * turnMotion / (256f*WingsDownWhileTurning));
 
                     /*
                      * And finally turn
@@ -238,6 +240,7 @@ namespace nogame.modules.playerhover
 
         public void ModuleDeactivate()
         {
+            _engine.RemoveModule(this);
             _engine.OnLogicalFrame -= _onLogicalFrame;
             Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
 
@@ -253,6 +256,7 @@ namespace nogame.modules.playerhover
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             
             Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+            _engine.AddModule(this);
             _engine.OnLogicalFrame += _onLogicalFrame;
         }
 

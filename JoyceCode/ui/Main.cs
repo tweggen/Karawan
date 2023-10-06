@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using System.Reflection;
 using System.Security.Cryptography;
 using engine;
 using engine.gongzuo;
@@ -103,8 +104,48 @@ public class Main
     {
         _setStyle();
     }
-    
-    
+
+
+    public void _propEdit(string key, object currValue, Action<string, object> setFunction)
+    {
+        if (currValue is bool)
+        {
+            bool value = (bool)currValue;
+            if (ImGui.Checkbox(key, ref value))
+            {
+                if (value != (bool)currValue)
+                {
+                    Trace($"new Value {value}");
+                    setFunction(key, value);
+                    //Props.Set(kvp.Key, value);
+                }
+            }
+        }
+        else if (currValue is float)
+        {
+            float currentInput = (float)currValue;
+            if (ImGui.InputFloat(key, ref currentInput,
+                    10f, 100f,
+                    "%.2f",
+                    ImGuiInputTextFlags.EnterReturnsTrue))
+            {
+                // ImGui.Text(((float)kvp.Value).ToString());
+                if (currentInput != (float)currValue)
+                {
+                    Trace($"new Value {currentInput}");
+                    setFunction(key, currentInput);
+                    // 
+                }
+            }
+        }
+        else
+        {
+            ImGui.Text($"Can't parse \"{currValue}\"");
+        }
+    }
+
+//ImGui.Text(kvp.Value);
+
     public unsafe void Render(float dt)
     {
         _setStyle();
@@ -191,40 +232,7 @@ public class Main
                     var dict = engine.Props.Instance().Dictionary;
                     foreach (var kvp in dict)
                     {
-                        if (kvp.Value is bool) 
-                        {
-                            bool value = (bool) kvp.Value;
-                            if (ImGui.Checkbox(kvp.Key, ref value))
-                            {
-                                if (value != (bool)kvp.Value)
-                                {
-                                    Trace($"new Value {value}");
-                                    Props.Set(kvp.Key, value);
-                                }
-                            }
-                        }
-                        else if (kvp.Value is float)
-                        {
-                            float currentInput = (float)kvp.Value;
-                            if (ImGui.InputFloat(kvp.Key, ref currentInput,
-                                    10f, 100f,
-                                    "%.2f",
-                                    ImGuiInputTextFlags.EnterReturnsTrue))
-                            {
-                                // ImGui.Text(((float)kvp.Value).ToString());
-                                if (currentInput != (float)kvp.Value)
-                                {
-                                    Trace($"new Value {currentInput}");
-                                    Props.Set(kvp.Key, currentInput);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            ImGui.Text($"Can't parse \"{kvp.Value}\"");  
-                        }
-
-                        //ImGui.Text(kvp.Value);
+                        _propEdit(kvp.Key,kvp.Value, (key, newValue) => Props.Set(key, newValue) );
                     }
 
                     ImGui.TreePop();
@@ -285,7 +293,25 @@ public class Main
                     var modules = _engine.GetModules();
                     foreach (var module in modules)
                     {
-                        ImGui.Text(module.GetType().ToString());
+                        if (ImGui.TreeNode(module.GetType().ToString()))
+                        {
+                            foreach (PropertyInfo property in module.GetType().GetProperties())
+                            {
+                                string propName = property.Name;
+                                object propValue = property.GetValue(module);
+                                if (propValue != null)
+                                {
+                                    _propEdit(propName, propValue, 
+                                        (key, newValue) => property.SetValue(module, newValue) );
+                                }
+                                else
+                                {
+                                    ImGui.Text($"{propName}: null");
+                                }
+                            }
+
+                            ImGui.TreePop();
+                        }
                     }
 
                     ImGui.TreePop();
