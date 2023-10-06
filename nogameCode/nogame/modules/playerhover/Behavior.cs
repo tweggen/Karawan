@@ -15,6 +15,8 @@ public class Behavior : engine.IBehavior
     private WASDPhysics _controllerWASDPhysics = null;
     private engine.Engine _engine = null;
     private DefaultEcs.Entity _eShip;
+
+    private float _massShip;
     
     public void OnCollision(ContactEvent cev)
     {
@@ -83,7 +85,13 @@ public class Behavior : engine.IBehavior
          * And the ship's controller
          */
         
-        _controllerWASDPhysics = new WASDPhysics(_eShip, playerhover.Module.MassShip);
+        _controllerWASDPhysics = new WASDPhysics(_eShip, _massShip);
         _controllerWASDPhysics.ModuleActivate(_engine);
+    }
+
+
+    public Behavior(float massShip)
+    {
+        _massShip = massShip;
     }
 }

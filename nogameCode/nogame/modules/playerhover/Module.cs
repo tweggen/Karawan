@@ -65,7 +65,7 @@ namespace nogame.modules.playerhover
 
         private Boom.ISound _polyballSound;
 
-        static public float MassShip = 500f;
+        public float MassShip { get; set; } = 500f;
 
 
         private ClusterDesc _currentCluster = null;
@@ -497,7 +497,7 @@ namespace nogame.modules.playerhover
                     };
                 Implementations.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
-                _eShip.Set(new engine.behave.components.Behavior(new Behavior()));
+                _eShip.Set(new engine.behave.components.Behavior(new Behavior(MassShip)));
             }
 
             _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");

@@ -30,8 +30,8 @@ public class InputController : engine.AModule, engine.IInputPart
     public ControllerState _controllerState = new();
 
 
-    private float _touchLookMoveSensitivity = 1.5f;
-    private float _mouseLookMoveSensitivity = 1f;
+    public float TouchLookMoveSensitivity { get; set; } = 1.5f;
+    public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
 
     private void _onKeyDown(Event ev)
@@ -148,25 +148,25 @@ public class InputController : engine.AModule, engine.IInputPart
                 }
 
                 _vMouseMove += ((_currentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f *
-                               _touchLookMoveSensitivity;
+                               TouchLookMoveSensitivity;
             }
         }
     }
     
     
-    private readonly float ControllerWalkForwardFast = 255f;
-    private readonly float ControllerWalkBackwardFast = 255f;
-    private readonly float ControllerWalkForwardNormal = 200f;
-    private readonly float ControllerWalkBackwardNormal = 200f;
-    private readonly float ControllerFlyUpNormal = 200f;
-    private readonly float ControllerFlyDownNormal = 200f;
-    private readonly float ControllerTurnLeftRight = 200f;
+    public float ControllerWalkForwardFast { get; set; } = 255f;
+    public float ControllerWalkBackwardFast { get; set; } = 255f;
+    public float ControllerWalkForwardNormal { get; set; } = 200f;
+    public float ControllerWalkBackwardNormal { get; set; } = 200f;
+    public float ControllerFlyUpNormal { get; set; } = 200f;
+    public float ControllerFlyDownNormal { get; set; } = 200f;
+    public float ControllerTurnLeftRight { get; set; } = 200f;
 
 
-    private readonly float ControllerYMax = 0.2f;
-    private readonly float ControllerYTolerance = 0.05f;
-    private readonly float ControllerXMax = 0.15f;
-    private readonly float ControllerXTolerance = 0.05f;
+    public float ControllerYMax { get; set; } = 0.2f;
+    public float ControllerYTolerance { get; set; } = 0.05f;
+    public float ControllerXMax { get; set; } = 0.15f;
+    public float ControllerXTolerance { get; set; } = 0.05f;
 
     
     /*
@@ -177,7 +177,7 @@ public class InputController : engine.AModule, engine.IInputPart
     /**
      * How far on the y axis do I need to move to do a complete zoom controller?
      */
-    private readonly float ControllerTouchZoomFull = 1.0f;
+    public float ControllerTouchZoomFull { get; set; } = 1.0f;
     private float _zoomAtPress = 0f;
     
     /*
@@ -257,8 +257,8 @@ public class InputController : engine.AModule, engine.IInputPart
                 }
                 else
                 {
-                    var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * _mouseLookMoveSensitivity;
-                    var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * _mouseLookMoveSensitivity;
+                    var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * MouseLookMoveSensitivity;
+                    var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * MouseLookMoveSensitivity;
                     _vMouseMove += new Vector2(xOffset, yOffset);
                 }
                 _lastMousePosition = _currentMousePosition;
