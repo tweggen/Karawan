@@ -14,6 +14,7 @@ public class LogicalRenderer
     private readonly LightManager _lightManager;
     
     private readonly systems.CreatePfInstanceSystem _createPfInstanceSystem;
+    private readonly systems.CreatePfRenderbufferSystem _createPfRenderbufferSystem;
     private readonly systems.DrawInstancesSystem _drawInstancesSystem;
     private readonly systems.DrawSkyboxesSystem _drawSkyboxesSystem;
 
@@ -64,6 +65,13 @@ public class LogicalRenderer
      */
     public void CollectRenderData(engine.IScene scene)
     {
+        /*
+         * First the renderbuffers to give the GPU more latency.
+         */
+        _createPfRenderbufferSystem.Update(_engine);
+        /*
+         * Then prepare mesh uploads.
+         */
         _createPfInstanceSystem.Update(_engine);
 
         RenderFrame renderFrame = null;
@@ -85,7 +93,7 @@ public class LogicalRenderer
         if(null != renderFrame)
         {
             /*
-             * Create/upload all ressources that haven't been uploaded.
+             * Create/upload all resources that haven't been uploaded.
              */
             lock (_lightManager)
             {
@@ -125,6 +133,7 @@ public class LogicalRenderer
         _lightManager = lightManager;
 
         _createPfInstanceSystem = new(_engine);
+        _createPfRenderbufferSystem = new(_engine);
         _drawInstancesSystem = new(_engine, _threeD);
         _drawSkyboxesSystem = new(_engine);
     }

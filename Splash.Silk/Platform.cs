@@ -27,6 +27,7 @@ namespace Splash.Silk
 
         private SilkThreeD _silkThreeD;
         private InstanceManager _instanceManager;
+        private CameraManager _cameraManager;
         private LightManager _lightManager;
         private SilkRenderer _renderer;
         private bool _isRunning = true;
@@ -567,6 +568,8 @@ namespace Splash.Silk
              */
             _instanceManager = new(_silkThreeD);
             _instanceManager.Manage(_engine.GetEcsWorld());
+            _cameraManager = new(_silkThreeD);
+            _cameraManager.Manage(_engine.GetEcsWorld());
             _lightManager = new(_engine, _silkThreeD);
             
             /*

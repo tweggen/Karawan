@@ -2,10 +2,10 @@ namespace Splash.components;
 
 public struct PfRenderbuffer
 {
+    public engine.joyce.Renderbuffer Renderbuffer;
     public ARenderbufferEntry RenderbufferEntry;
-    public PfRenderbuffer(ARenderbufferEntry renderbufferEntry
-    )
+    public PfRenderbuffer(engine.joyce.Renderbuffer renderbuffer)
     {
-        RenderbufferEntry = renderbufferEntry;
+        Renderbuffer = renderbuffer;
     }
 }
