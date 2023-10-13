@@ -17,6 +17,13 @@ namespace engine.joyce.components
         public uint CameraMask;
         public Flags CameraFlags;
         
+        /**
+         * The renderbuffer this camera shall be rendered into.
+         * If null, we shall use the main screen.
+         */
+        public engine.joyce.Renderbuffer Renderbuffer;
+        
+        
         public override string ToString()
         {
             return $"Angle={Angle}, NearFrustum={NearFrustum}, NearFrustum={NearFrustum}, CameraMask={CameraMask:X}, CameraFlags={CameraFlags:X}";

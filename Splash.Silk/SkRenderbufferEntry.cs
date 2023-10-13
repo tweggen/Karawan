@@ -3,7 +3,7 @@ using static engine.Logger;
 
 namespace Splash.Silk;
 
-public class SkRenderbuffer : ARenderbuffer
+public class SkRenderbufferEntry : ARenderbufferEntry
 {
     private GL _gl;
     private uint _handleFramebuffer = 0;
@@ -125,7 +125,7 @@ public class SkRenderbuffer : ARenderbuffer
     }
     
     
-    public SkRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer) : base(jRenderbuffer)
+    public SkRenderbufferEntry(in engine.joyce.Renderbuffer jRenderbuffer) : base(jRenderbuffer)
     {
     }
 }

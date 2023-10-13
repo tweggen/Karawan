@@ -661,31 +661,31 @@ public class SilkThreeD : IThreeD
 
     }
 
-    public ARenderbuffer CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer)
+    public ARenderbufferEntry CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer)
     {
-        SkRenderbuffer skRenderbuffer = new SkRenderbuffer(jRenderbuffer);
-        return skRenderbuffer;
+        SkRenderbufferEntry skRenderbufferEntry = new SkRenderbufferEntry(jRenderbuffer);
+        return skRenderbufferEntry;
     }
     
-    public void UploadRenderbuffer(in ARenderbuffer aRenderbuffer)
+    public void UploadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry)
     {
-        SkRenderbuffer skRenderbuffer = ((SkRenderbuffer)aRenderbuffer);
-        if (!skRenderbuffer.IsUploaded())
+        SkRenderbufferEntry skRenderbufferEntry = ((SkRenderbufferEntry)aRenderbufferEntry);
+        if (!skRenderbufferEntry.IsUploaded())
         {
-            skRenderbuffer.Upload(_getGL(), _textureManager);
+            skRenderbufferEntry.Upload(_getGL(), _textureManager);
         }
 
     }
 
     
-    public void UnloadRenderbuffer(in ARenderbuffer aRenderbuffer)
+    public void UnloadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry)
     {
-        SkRenderbuffer skRenderbuffer = (SkRenderbuffer)aRenderbuffer;
+        SkRenderbufferEntry skRenderbufferEntry = (SkRenderbufferEntry)aRenderbufferEntry;
         _graphicsThreadActions.Enqueue(() =>
         {
-            if (skRenderbuffer.IsUploaded())
+            if (skRenderbufferEntry.IsUploaded())
             {
-                skRenderbuffer.Release(_getGL());
+                skRenderbufferEntry.Release(_getGL());
             } 
         });
     }

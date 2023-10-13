@@ -21,9 +21,9 @@ public interface IThreeD
     public ATextureEntry CreateTextureEntry(in engine.joyce.Texture jTexture);
     public void FillTextureEntry(in ATextureEntry aTextureEntry);
 
-    public ARenderbuffer CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer);
-    public void UploadRenderbuffer(in ARenderbuffer aRenderbuffer);
-    public void UnloadRenderbuffer(in ARenderbuffer aRenderbuffer);
+    public ARenderbufferEntry CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer);
+    public void UploadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
+    public void UnloadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
     
     public void ApplyAllLights(in IList<Light> listLights, in AShaderEntry aShaderEntry);
     public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry);
