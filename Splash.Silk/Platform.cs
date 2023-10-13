@@ -414,7 +414,6 @@ namespace Splash.Silk
                 {
                     _imGuiController.Update((float)dt);
                     _engine.CallOnImGuiRender((float)dt);
-                    // ImGui.ShowDemoWindow();
                     _imGuiController.Render();
                 }
                 

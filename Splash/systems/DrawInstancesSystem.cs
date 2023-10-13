@@ -60,7 +60,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                     continue;
                 }
                 
-                
                 /*
                  * Only perform CPU culling for perspective projection cameras.
                  */

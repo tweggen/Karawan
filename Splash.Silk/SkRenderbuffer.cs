@@ -12,10 +12,17 @@ public class SkRenderbuffer : ARenderbuffer
     private SkTexture _skTexture = null;
     private SkTextureEntry _skTextureEntry = null;
     private DrawBufferMode[] _modesDrawbuffer = null;
+    private string _jTextureName = "";
     
     public override bool IsUploaded()
     {
-        return false;
+        return _handleFramebuffer != 0;
+    }
+
+    
+    public string TextureName
+    {
+        get => _jTextureName;
     }
     
     public int CheckError(string what)
@@ -38,9 +45,6 @@ public class SkRenderbuffer : ARenderbuffer
     }
 
 
-
-
-
     public void Use(GL gl)
     {
         _gl = gl;
@@ -57,7 +61,6 @@ public class SkRenderbuffer : ARenderbuffer
         Error("Not yet implemented.");
     }
     
-
     public unsafe void Upload(GL gl, in TextureManager textureManager)
     {
         _gl = gl;
@@ -73,7 +76,8 @@ public class SkRenderbuffer : ARenderbuffer
             CheckError("SkRenderbuffer GenFramebuffers");
         }
 
-        _jTexture = new engine.joyce.Texture($"framebuffer://{JRenderbuffer.Name}");
+        _jTextureName = $"framebuffer://{JRenderbuffer.Name}";
+        _jTexture = new engine.joyce.Texture(_jTextureName);
         _skTexture = new SkTexture(gl, false);
         _skTexture.SetFrom(JRenderbuffer.Width, JRenderbuffer.Height);
         _skTextureEntry = new SkTextureEntry(_jTexture);
