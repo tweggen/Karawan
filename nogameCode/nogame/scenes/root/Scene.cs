@@ -287,7 +287,10 @@ public class Scene : engine.IScene, engine.IInputPart
     {
         I.Get<ObjectRegistry<Renderbuffer>>().RegisterFactory(
             "rootscene_3d", 
-            name => new Renderbuffer(name, 480,270));
+            name => new Renderbuffer(name,
+                368, 207
+                //480,270
+                ));
         
         lock (_lo)
         {
