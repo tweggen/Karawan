@@ -14,6 +14,11 @@ public class Renderbuffer
     public uint Width;
     public uint Height;
     
+    /**
+     * This counter can be used by the renderer to keep state.
+     */
+    public uint LastFrame;
+    
     public string TextureName
     {
         get => $"framebuffer://{Name}";

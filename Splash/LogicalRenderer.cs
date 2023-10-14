@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Splash.components;
 
 
 namespace Splash;
@@ -32,11 +33,24 @@ public class LogicalRenderer
             .AsEnumerable();
 
         bool haveSkyboxPosition = false;
+
+        List<RenderPart> listDirectRenders = new();
         
         foreach (var eCamera in listCameras)
         {
             RenderPart renderPart = new();
             var renderPartCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
+            if (eCamera.Has<PfRenderbuffer>())
+            {
+                renderPart.PfRenderbuffer = eCamera.Get<PfRenderbuffer>();
+            }
+            else
+            {
+                /*
+                 * It remains null.
+                 */
+            }
+
             var renderPartTransform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
             CameraOutput cameraOutput = new(scene, _threeD, renderPartTransform3ToWorld.Matrix, renderPartCamera3);
             renderPart.CameraOutput = cameraOutput;
@@ -54,6 +68,23 @@ public class LogicalRenderer
                 }
             }
 
+            /*
+             * If this one renders into a buffer, add it to the list of renderparts now.
+             * If it renders directly on screen, add it after the parts that render into
+             * a buffer.
+             */
+            if (renderPartCamera3.Renderbuffer == null)
+            {
+                listDirectRenders.Add(renderPart);
+            }
+            else
+            {
+                renderFrame.RenderParts.Add(renderPart);
+            }
+        }
+
+        foreach (var renderPart in listDirectRenders)
+        {
             renderFrame.RenderParts.Add(renderPart);
         }
     }

@@ -6,19 +6,14 @@ namespace Splash
     public class RenderFrame
     {
         public Vector4 ColAmbient;
-        public IList<engine.joyce.components.AmbientLight> ListAmbientLights;
-        public IList<engine.joyce.components.DirectionalLight> ListDirectionalLights;
-        public IList<engine.joyce.components.PointLight> ListPointLights;
+        public IList<engine.joyce.components.AmbientLight> ListAmbientLights = new();
+        public IList<engine.joyce.components.DirectionalLight> ListDirectionalLights = new();
+        public IList<engine.joyce.components.PointLight> ListPointLights = new();
 
-        public IList<RenderPart> RenderParts;
-
-        public RenderFrame()
-        {
-            ListAmbientLights = new List<engine.joyce.components.AmbientLight>();
-            ListDirectionalLights = new List<engine.joyce.components.DirectionalLight>();
-            ListPointLights = new List<engine.joyce.components.PointLight>();
-
-            RenderParts = new List<RenderPart>();
-        }
+        /*
+         * Contains the list of parts to render, order is significant.
+         * So first into renderbuffers, finally on screen.
+         */
+        public IList<RenderPart> RenderParts = new();
     }
 }
