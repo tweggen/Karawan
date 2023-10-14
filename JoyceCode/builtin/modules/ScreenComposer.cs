@@ -45,8 +45,15 @@ public class ScreenComposer : AModule
         _engine.QueueEntitySetupAction($"ScreenLayer_{l.Name}", e =>
         {
             l.ELayer = e;
-            var mesh = engine.joyce.mesh.Tools.CreatePlaneMesh($"ScreenLayer_{l.Name}", new(0.5f, 0.5f));
-            var material = new Material(new Texture(l.Renderbuffer.TextureName)) { HasTransparency =  true};
+            var mesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
+                $"ScreenLayer_{l.Name}", 
+                new(2f, 2f * (float)l.Renderbuffer.Height / (float) l.Renderbuffer.Width));
+            var material = new Material(){
+                HasTransparency = true,
+                EmissiveTexture = new Texture(l.Renderbuffer.TextureName)
+                //AlbedoColor = 0xffffffff,
+                //EmissiveColor = 0xffffffff
+            };
             l.Instance = InstanceDesc.CreateFromMatMesh(new MatMesh(material, mesh), 1000f);
             e.Set(new engine.joyce.components.Instance3(l.Instance));
             e.Set(new engine.transform.components.Transform3ToWorld(CameraMask, l.Transformation));
@@ -113,7 +120,7 @@ public class ScreenComposer : AModule
         {
             Name = name,
             Renderbuffer = jRenderbuffer,
-            Transformation = Matrix4x4.CreateScale(1f / (float)jRenderbuffer.Width, 1f / (float)jRenderbuffer.Height, 0f )
+            Transformation = Matrix4x4.CreateScale(1f, -1f, 1f)
         };
         _addLayer(targetIndex, l);
     }
@@ -129,7 +136,11 @@ public class ScreenComposer : AModule
         _eCamera.Set(new engine.joyce.components.Camera3()
         {
             Angle = 0f,
-            NearFrustum = 1f / Single.Tan(30f * Single.Pi / 180f),
+            /*
+             * Configure a camera with the width of 1 and a centered aspect ratio
+             * as the screen has.
+             */
+            NearFrustum = 1f / Single.Tan(30f * Single.Pi / 180f), 
             FarFrustum = 100f,
             CameraMask = this.CameraMask,
             /*

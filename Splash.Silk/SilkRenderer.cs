@@ -166,7 +166,18 @@ namespace Splash.Silk
                  */
                 cCameraParams.GetViewMatrix(out Matrix4x4 matView, mCameraToWorld);
                 _silkThreeD.SetViewMatrix(matView);
-                cCameraParams.GetProjectionMatrix(out Matrix4x4 matProjection, _v3dSize);
+                Vector2 v3dSize;
+
+                if (haveRenderbuffer)
+                {
+                    v3dSize = new(renderbuffer.Width, renderbuffer.Height);
+                }
+                else
+                {
+                    v3dSize = _v3dSize;
+                }
+                cCameraParams.GetProjectionMatrix(out Matrix4x4 matProjection, v3dSize);
+
                 _silkThreeD.SetProjectionMatrix(matProjection);
 
 
