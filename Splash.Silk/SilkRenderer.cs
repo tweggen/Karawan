@@ -109,8 +109,12 @@ namespace Splash.Silk
                  */
                 if (haveRenderbuffer)
                 {
+                    if (!skRenderbufferEntry.IsUploaded())
+                    {
+                        skRenderbufferEntry.Upload(_gl, _silkThreeD.TextureManager);
+                    }
                     skRenderbufferEntry.Use(_gl);
-                    _gl.Viewport(0, 0, renderbuffer.Width, renderbuffer.Height);
+                    // _gl.Viewport(0, 0, renderbuffer.Width, renderbuffer.Height);
                 }
                 else
                 {

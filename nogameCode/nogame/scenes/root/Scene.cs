@@ -366,6 +366,7 @@ public class Scene : engine.IScene, engine.IInputPart
          */
         {
             _moduleScreenComposer = new();
+            _moduleScreenComposer.ModuleActivate(_engine);
             _moduleScreenComposer.AddLayer(
                 "rootscene_3d", 0,
                 I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d"));

@@ -14,6 +14,7 @@ public class SkRenderbufferEntry : ARenderbufferEntry
     private DrawBufferMode[] _modesDrawbuffer = null;
     private string _jTextureName = "";
     
+    
     public override bool IsUploaded()
     {
         return _handleFramebuffer != 0;
@@ -65,12 +66,16 @@ public class SkRenderbufferEntry : ARenderbufferEntry
             ErrorThrow( "Framebuffer already uploaded.", (m)=>new ArgumentException());
         }
 
-        fixed (uint* pHandle = &_handleFramebuffer)
-        {
-            gl.GenFramebuffers(1U, pHandle);
-            CheckError("SkRenderbuffer GenFramebuffers");
-        }
+        /*
+         * Create a framebuffer.
+         *
+         * - create a texture, add it as color attachment
+         * - create a renderbuffer, add it as depth attachment.
+         */
 
+        /*
+         * First, the framebuffer with our internal api.
+         */
         _jTextureName = JRenderbuffer.TextureName;
         _jTexture = new engine.joyce.Texture(_jTextureName);
         _skTexture = new SkTexture(gl, false);
@@ -79,30 +84,50 @@ public class SkRenderbufferEntry : ARenderbufferEntry
         _skTextureEntry.SkTexture = _skTexture;
         
         /*
-         * Use it, adding the depth buffer.
+         * Now, create the framebuffer and bind it as current.
          */
+        fixed (uint* pHandle = &_handleFramebuffer)
+        {
+            gl.GenFramebuffers(1U, pHandle);
+            CheckError("SkRenderbuffer GenFramebuffers");
+        }
         gl.BindFramebuffer(GLEnum.Framebuffer, _handleFramebuffer);
         CheckError("SkRenderbuffer BindFramebuffer");
 
+        /*
+         * Assign the texture as color channel.
+         */
+        gl.FramebufferTexture(GLEnum.Framebuffer, GLEnum.ColorAttachment0, _skTexture.Handle, 0);
+        CheckError("SkRenderbuffer FramebufferTexture");
+
+        /*
+         * Create a renderbuffer for depth.
+         */
         fixed (uint *pHandle = &_handleDepthbuffer) {
             gl.GenRenderbuffers(1, pHandle);
             CheckError("SkRenderbuffer GenRenderbuffers");
         }
-
-        uint width = JRenderbuffer.Width;
-        uint height = JRenderbuffer.Height;
-        
+        /*
+         * Bind as current ...
+         */
         gl.BindRenderbuffer(GLEnum.Renderbuffer, _handleDepthbuffer);
         CheckError("SkRenderbuffer BindRenderbuffers");
-        gl.RenderbufferStorage(GLEnum.Renderbuffer, GLEnum.DepthComponent, 
-            width, height);
+        /*
+         * ... allocate ram ...
+         */
+        gl.RenderbufferStorage(GLEnum.Renderbuffer, GLEnum.DepthComponent16, 
+            JRenderbuffer.Width, JRenderbuffer.Height);
         CheckError("SkRenderbuffer RenderbufferStorage");
+        /*
+         * ... bind it to the framebufffer.
+         */
         gl.FramebufferRenderbuffer(GLEnum.Framebuffer, GLEnum.DepthAttachment,
             GLEnum.Renderbuffer, _handleDepthbuffer);
         CheckError("SkRenderbuffer FramebufferRenderbuffer");
-        gl.FramebufferTexture(GLEnum.Framebuffer, GLEnum.ColorAttachment0, _skTexture.Handle, 0);
-        CheckError("SkRenderbuffer FramebufferTexture");
+        
+        
         _modesDrawbuffer = new DrawBufferMode[1];
+        _modesDrawbuffer[0] = DrawBufferMode.ColorAttachment0;
         fixed (DrawBufferMode* pModes = _modesDrawbuffer)
         {
             gl.DrawBuffers(1, pModes);

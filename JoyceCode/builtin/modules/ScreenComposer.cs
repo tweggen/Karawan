@@ -46,7 +46,7 @@ public class ScreenComposer : AModule
         {
             l.ELayer = e;
             var mesh = engine.joyce.mesh.Tools.CreatePlaneMesh($"ScreenLayer_{l.Name}", new(0.5f, 0.5f));
-            var material = new Material(new Texture(l.Renderbuffer.TextureName));
+            var material = new Material(new Texture(l.Renderbuffer.TextureName)) { HasTransparency =  true};
             l.Instance = InstanceDesc.CreateFromMatMesh(new MatMesh(material, mesh), 1000f);
             e.Set(new engine.joyce.components.Instance3(l.Instance));
             e.Set(new engine.transform.components.Transform3ToWorld(CameraMask, l.Transformation));
@@ -61,6 +61,7 @@ public class ScreenComposer : AModule
             _listLayers.Insert(targetIndex, l);
             _mapLayers.Add(l.Name, l);
         }
+        _createLayer(l);
     }
 
 
