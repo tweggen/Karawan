@@ -25,7 +25,7 @@ public class Module : AModule
     
     private void _onImGuiRender(object? sender, float dt)
     {
-        Implementations.Get<joyce.ui.Main>().Render(dt);
+        I.Get<joyce.ui.Main>().Render(dt);
     }
     
 

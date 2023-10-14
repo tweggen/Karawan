@@ -27,7 +27,7 @@ public class Main
 
     private void _onSaveTimer(object sender, ElapsedEventArgs e)
     {
-        Implementations.Get<DBStorage>().SaveGameState(Implementations.Get<GameState>());
+        I.Get<DBStorage>().SaveGameState(I.Get<GameState>());
     }
     
     
@@ -45,15 +45,15 @@ public class Main
 
     private void _setupImplementations()
     {
-        Implementations.Register<DBStorage>(() => new DBStorage());
+        I.Register<DBStorage>(() => new DBStorage());
 
-        Implementations.Register<IMapProvider>(() => _setupMapProvider());
-        Implementations.Register<MapFramebuffer>(() => new MapFramebuffer());
-        Implementations.Register<Boom.Jukebox>(() => new Boom.Jukebox());
-        Implementations.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
-        Implementations.Register<builtin.controllers.InputController>(() => new InputController());
-        Implementations.Register<SetupMetaGen>(() => new SetupMetaGen());
-        Implementations.Register<nogame.intercity.Network>(() => new nogame.intercity.Network());
+        I.Register<IMapProvider>(() => _setupMapProvider());
+        I.Register<MapFramebuffer>(() => new MapFramebuffer());
+        I.Register<Boom.Jukebox>(() => new Boom.Jukebox());
+        I.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
+        I.Register<builtin.controllers.InputController>(() => new InputController());
+        I.Register<SetupMetaGen>(() => new SetupMetaGen());
+        I.Register<nogame.intercity.Network>(() => new nogame.intercity.Network());
     }
 
 
@@ -69,6 +69,10 @@ public class Main
         _e.SceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
         //_e.SceneSequencer.AddSceneFactory("tunestreets", () => new builtin.tunestreets.Scene());
         //_e.SceneSequencer.SetMainScene("tunestreets");
+    }
+
+    private void _startScenes()
+    {
         _e.SceneSequencer.SetMainScene("logos");
     }
 
@@ -114,22 +118,24 @@ public class Main
         main._setupImplementations();
         main._setupMetaGen();
         main._registerScenes();
+        main._startScenes();
 
         {
-            bool haveGameState = Implementations.Get<DBStorage>().LoadGameState(out GameState gameState);
+            bool haveGameState = I.Get<DBStorage>().LoadGameState(out GameState gameState);
             if (false == haveGameState)
             {
                 gameState = new GameState();
-                Implementations.Get<DBStorage>().SaveGameState(gameState);
+                I.Get<DBStorage>().SaveGameState(gameState);
             }
             /*
              * Global Data structures
              */
-            Implementations.Register<GameState>(() => gameState);
+            I.Register<GameState>(() => gameState);
         }
 
-        Implementations.Get<Boom.ISoundAPI>().SetupDone();
+        I.Get<Boom.ISoundAPI>().SetupDone();
 
         main._startAutoSave();
+
     }
 }

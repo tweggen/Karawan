@@ -51,11 +51,11 @@ public class Module : AModule
             _eMiniMap = _engine.CreateEntity("nogame.parts.map.miniMap");
             _materialMiniMap = new();
             _materialMiniMap.EmissiveTexture =
-                Implementations.Get<nogame.map.MapFramebuffer>().Texture;
+                I.Get<nogame.map.MapFramebuffer>().Texture;
             _materialMiniMap.HasTransparency = true;
             _materialMiniMap.UploadImmediately = true;
 
-            Implementations.Get<engine.transform.API>().SetTransforms(
+            I.Get<engine.transform.API>().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
                 new Vector3(-1f+0.15f, 9f/16f-0.24f, -1f));

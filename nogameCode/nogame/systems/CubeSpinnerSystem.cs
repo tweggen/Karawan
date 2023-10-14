@@ -23,7 +23,7 @@ namespace nogame.systems
         public CubeSpinnerSystem(engine.Engine engine0)
             : base(engine0.GetEcsWorld())
         {
-            _aTransform = engine.Implementations.Get<engine.transform.API>();
+            _aTransform = engine.I.Get<engine.transform.API>();
         }
     }
 }

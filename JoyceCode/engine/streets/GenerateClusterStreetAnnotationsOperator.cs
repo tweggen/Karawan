@@ -114,9 +114,9 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     )
     {
         _clusterDesc = clusterDesc;
-        _aTransform = Implementations.Get<engine.transform.API>();
+        _aTransform = I.Get<engine.transform.API>();
  
-        MaterialCache.Register("engine.streets.materials.street",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.street",
             (name) => new Material()
             {
                 AlbedoColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true

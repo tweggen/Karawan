@@ -66,7 +66,7 @@ public class CameraManager : IDisposable
     private void _add(in Entity entity, in PfRenderbuffer value)
     {
         Resource<ARenderbufferEntry> renderbufferResource;
-        engine.joyce.Renderbuffer jRenderbuffer = value.RenderbufferEntry.JRenderbuffer;
+        engine.joyce.Renderbuffer jRenderbuffer = value.Renderbuffer;
         if (!_renderbufferResources.TryGetValue(jRenderbuffer, out renderbufferResource))
         {
             try

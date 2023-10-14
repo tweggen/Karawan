@@ -36,7 +36,7 @@ public abstract class AModule : IModule
         {
             try
             {
-                Object implementation = Implementations.Instance.GetInstance(moduleDependency.TypeName);
+                Object implementation = I.Instance.GetInstance(moduleDependency.TypeName);
                 moduleDependency.Implementation = implementation;
                 if (moduleDependency.ActivateAsModule)
                 {

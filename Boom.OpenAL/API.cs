@@ -56,16 +56,16 @@ unsafe public class API : Boom.ISoundAPI
     public void Dispose()
     {
         // TXWTODO: Close openal
-        Implementations.Get<SubscriptionManager>().Unsubscribe("lifecycle.resume", ResumeOutput);
-        Implementations.Get<SubscriptionManager>().Unsubscribe("lifecycle.suspend", SuspendOutput);
+        I.Get<SubscriptionManager>().Unsubscribe("lifecycle.resume", ResumeOutput);
+        I.Get<SubscriptionManager>().Unsubscribe("lifecycle.suspend", SuspendOutput);
     }
 
 
     public void SetupDone()
     {
         _engine.OnLogicalFrame += OnOnLogicalFrame;
-        Implementations.Get<SubscriptionManager>().Subscribe("lifecycle.resume", ResumeOutput);
-        Implementations.Get<SubscriptionManager>().Subscribe("lifecycle.suspend", SuspendOutput);
+        I.Get<SubscriptionManager>().Subscribe("lifecycle.resume", ResumeOutput);
+        I.Get<SubscriptionManager>().Subscribe("lifecycle.suspend", SuspendOutput);
     }
     
     public Task<ISound> LoadSound(string url)

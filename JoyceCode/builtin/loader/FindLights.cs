@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using engine;
 using engine.joyce;
 using engine.joyce.mesh;
 using engine.world;
@@ -49,7 +50,8 @@ public class FindLights
     private static void _addLightToModel(engine.Model model, Vector3 p)
     {
         InstanceDesc instanceDesc = model.InstanceDesc;
-        int il = instanceDesc.FindMaterial(MaterialCache.Get("builtin.loader.materials.standardlight"));
+        int il = instanceDesc.FindMaterial(
+            I.Get<ObjectRegistry<Material>>().Get("builtin.loader.materials.standardlight"));
         /*
          * We are adding a mesh that will not be rotate
          */
@@ -61,7 +63,7 @@ public class FindLights
         
     public static engine.Model Process(engine.Model model)
     {
-        MaterialCache.Register("builtin.loader.materials.standardlight",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("builtin.loader.materials.standardlight",
             name => new Material()
             {
                 EmissiveColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true

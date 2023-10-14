@@ -50,7 +50,7 @@ namespace Wuka
             /*
              * Try to save a backup copy
              */
-            Implementations.Get<engine.DBStorage>().SaveGameState(Implementations.Get<GameState>());
+            I.Get<engine.DBStorage>().SaveGameState(I.Get<GameState>());
 
             //_engine.Suspend();
             base.OnStop();
@@ -110,7 +110,7 @@ namespace Wuka
             }
 #endif
 
-            Implementations.Register<Boom.ISoundAPI>(() =>
+            I.Register<Boom.ISoundAPI>(() =>
             {
                 var api = new Boom.OpenAL.API(_engine);
                 return api;
@@ -120,7 +120,7 @@ namespace Wuka
 
             _engine.Execute();
 
-            Implementations.Get<Boom.ISoundAPI>().Dispose();
+            I.Get<Boom.ISoundAPI>().Dispose();
 
         }
     }

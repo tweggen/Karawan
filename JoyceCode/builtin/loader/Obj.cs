@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using builtin.tools.Lindenmayer;
+using engine;
 using ObjLoader.Loader.Loaders;
 using engine.joyce;
 using static engine.Logger;
@@ -149,7 +150,7 @@ public class Obj
             /*
              * Find the common version of the material instead of creating a new one.
              */
-            jMaterial = MaterialCache.Instance.FindMaterial(jMaterial);
+            jMaterial = I.Get<ObjectRegistry<engine.joyce.Material>>().FindLike(jMaterial);
             materials.Add(jMaterial);
             listMaterials.Add(loadedMaterial);
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using engine;
 using engine.geom;
 using engine.joyce;
 using engine.world;
@@ -76,7 +77,7 @@ public class PlaceDebrisOperator : IFragmentOperator
                     * Matrix4x4.CreateRotationY(rnd.GetFloat() * Single.Pi * 2f)
                     * Matrix4x4.CreateTranslation(vRock));
                 
-                matmesh.Add(engine.joyce.MaterialCache.Get("nogame.terrain.debris.materials.debris"), m);
+                matmesh.Add(I.Get<ObjectRegistry<Material>>().Get("nogame.terrain.debris.materials.debris"), m);
             }
 
         }
@@ -94,7 +95,7 @@ public class PlaceDebrisOperator : IFragmentOperator
     {
         _myKey = strKey;
         
-        engine.joyce.MaterialCache.Register("nogame.terrain.debris.materials.debris",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.terrain.debris.materials.debris",
             name => new engine.joyce.Material()
             {
                 AlbedoColor = 0xffaa6688

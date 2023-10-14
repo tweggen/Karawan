@@ -97,7 +97,7 @@ namespace nogame.modules.playerhover
         {
             lock (_lo)
             {
-                var gameState = Implementations.Get<GameState>();
+                var gameState = I.Get<GameState>();
                 gameState.Health = int.Max(0, gameState.Health-less);
             }
         }
@@ -123,7 +123,7 @@ namespace nogame.modules.playerhover
         {
             var cev = ev as ContactEvent;
             cev.ContactInfo.PropertiesB.Entity.Set(new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour() { Engine = _engine }));
-            var gameState = Implementations.Get<GameState>();
+            var gameState = I.Get<GameState>();
             gameState.NumberPolytopes++;
             gameState.Health = 1000;
 
@@ -140,7 +140,7 @@ namespace nogame.modules.playerhover
             _plingPlayer.PlayPling();
             _plingPlayer.Next();
             
-            var gameState = Implementations.Get<GameState>();
+            var gameState = I.Get<GameState>();
             gameState.NumberCubes++;
         }
         
@@ -230,7 +230,7 @@ namespace nogame.modules.playerhover
                         Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
                         var vCamPosition = mCameraToWorld.Translation;
 
-                        Implementations.Get<engine.physics.API>().RayCast(vCamPosition, -vZ, 200f, _onCenterRayHit);
+                        I.Get<engine.physics.API>().RayCast(vCamPosition, -vZ, 200f, _onCenterRayHit);
                     }
                 }
 
@@ -313,11 +313,11 @@ namespace nogame.modules.playerhover
                     HAlign.Right));
                 
 
-                Implementations.Get<Boom.Jukebox>().LoadThenPlaySong(
+                I.Get<Boom.Jukebox>().LoadThenPlaySong(
                     _getClusterSound(_currentCluster), 0.05f, true, () => {}, () => {});
             }
 
-            var gameState = Implementations.Get<GameState>();
+            var gameState = I.Get<GameState>();
 
             _eScoreDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(786f-64f-32f, 48f),
@@ -378,13 +378,13 @@ namespace nogame.modules.playerhover
             _engine.OnLogicalFrame -= _onLogicalFrame;
             _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
 
-            Implementations.Get<SubscriptionManager>().Unsubscribe(
+            I.Get<SubscriptionManager>().Unsubscribe(
                 Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
-            Implementations.Get<SubscriptionManager>().Unsubscribe(
+            I.Get<SubscriptionManager>().Unsubscribe(
                 Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
-            Implementations.Get<SubscriptionManager>().Unsubscribe(
+            I.Get<SubscriptionManager>().Unsubscribe(
                 Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
-            Implementations.Get<SubscriptionManager>().Unsubscribe(
+            I.Get<SubscriptionManager>().Unsubscribe(
                 Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
 
             _engine.RemoveModule(this);
@@ -402,12 +402,12 @@ namespace nogame.modules.playerhover
             {
                 _engine = engine0;
                 _ecsWorld = _engine.GetEcsWorld();
-                _aTransform = Implementations.Get<engine.transform.API>();
+                _aTransform = I.Get<engine.transform.API>();
             }
 
             if (null == _soundCrash)
             {
-                var soundApi = Implementations.Get<Boom.ISoundAPI>();
+                var soundApi = I.Get<Boom.ISoundAPI>();
                 _soundCrash = soundApi.FindSound($"car-collision.ogg");
             }
 
@@ -417,7 +417,7 @@ namespace nogame.modules.playerhover
             {
                 _eShip = _engine.CreateEntity("RootScene.playership");
                 
-                var gameState = Implementations.Get<GameState>();
+                var gameState = I.Get<GameState>();
                 var posShip = gameState.PlayerPosition;
                 var rotShip = gameState.PlayerOrientation;
                 if (posShip == Vector3.Zero)
@@ -495,7 +495,7 @@ namespace nogame.modules.playerhover
                             | CollisionProperties.CollisionFlags.TriggersCallbacks,
                         Name = PhysicsName, 
                     };
-                Implementations.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
+                I.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
                 _eShip.Set(new engine.behave.components.Behavior(new Behavior(MassShip)));
             }
@@ -506,13 +506,13 @@ namespace nogame.modules.playerhover
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
             _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
             
-            Implementations.Get<SubscriptionManager>().Subscribe(
+            I.Get<SubscriptionManager>().Subscribe(
                 Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
-            Implementations.Get<SubscriptionManager>().Subscribe(
+            I.Get<SubscriptionManager>().Subscribe(
                 Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
-            Implementations.Get<SubscriptionManager>().Subscribe(
+            I.Get<SubscriptionManager>().Subscribe(
                 Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
-            Implementations.Get<SubscriptionManager>().Subscribe(
+            I.Get<SubscriptionManager>().Subscribe(
                 Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
             
             _engine.AddModule(this);
@@ -521,7 +521,7 @@ namespace nogame.modules.playerhover
             _engine.OnCameraEntityChanged += _onCameraEntityChanged;
 
             {
-                var api = Implementations.Get<Boom.ISoundAPI>();
+                var api = I.Get<Boom.ISoundAPI>();
                 _polyballSound = api.FindSound($"polyball.ogg");
                 _polyballSound.Volume = 0.1f;
             }

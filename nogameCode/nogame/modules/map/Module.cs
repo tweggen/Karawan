@@ -85,7 +85,7 @@ public class Module : AModule, IInputPart
 
         float effectiveSize = Single.Exp2(dmp.CurrentZoomState / 4f);
 
-        Implementations.Get<engine.transform.API>().SetTransforms(
+        I.Get<engine.transform.API>().SetTransforms(
             _eMap, dmp.IsVisible, MapCameraMask,
             new Quaternion(0f,0f,0f,1f),
             new Vector3(
@@ -114,7 +114,7 @@ public class Module : AModule, IInputPart
                 new Vector2(1f, 1f));
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
-            Implementations.Get<nogame.map.MapFramebuffer>().Texture;
+            I.Get<nogame.map.MapFramebuffer>().Texture;
 
         {
             _eMap = _engine.CreateEntity("nogame.parts.map.map");
@@ -242,7 +242,7 @@ public class Module : AModule, IInputPart
     
     private void _handleController()
     {
-        Implementations.Get<InputController>().GetControllerState(out var controllerState);
+        I.Get<InputController>().GetControllerState(out var controllerState);
 
         Vector2 vDelta = Vector2.Zero;
         vDelta.X += (float)controllerState.TurnRight / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
@@ -259,7 +259,7 @@ public class Module : AModule, IInputPart
 
     public void _onLogicalFrame(object? sender, float dt)
     {
-        if (MY_Z_ORDER == Implementations.Get<InputEventPipeline>().GetFrontZ())
+        if (MY_Z_ORDER == I.Get<InputEventPipeline>().GetFrontZ())
         {
             _handleController();
         }
@@ -281,7 +281,7 @@ public class Module : AModule, IInputPart
         }
         _engine.QueueMainThreadAction(_updateMapParams);
 
-        Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
+        I.Get<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.RemoveModule(this);
     }
@@ -299,6 +299,6 @@ public class Module : AModule, IInputPart
             _requestedMapParams.IsVisible = true;
         }
 
-        Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
     }
 }

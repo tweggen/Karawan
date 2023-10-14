@@ -65,7 +65,7 @@ public class Props
             EventQueue eq = null;
             try
             {
-                eq = Implementations.Get<EventQueue>();
+                eq = I.Get<EventQueue>();
             }
             catch (System.Exception e)
             {

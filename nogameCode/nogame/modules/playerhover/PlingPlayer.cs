@@ -21,7 +21,7 @@ public class PlingPlayer
 
     private void _loadPlings()
     {
-        var api = Implementations.Get<Boom.ISoundAPI>();
+        var api = I.Get<Boom.ISoundAPI>();
         _arrPlings = new Boom.ISound[LastPling - FirstPling + 1];
         for (int i = FirstPling-1; i < LastPling; ++i)
         {

@@ -65,7 +65,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         try
         {
             opExtrudePoly.BuildGeom(meshGround);
-            matmesh.Add(MaterialCache.Get("engine.streets.materials.cluster"), meshGround);
+            matmesh.Add(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.cluster"), meshGround);
         }
         catch (Exception e)
         {
@@ -176,7 +176,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         _clusterDesc = clusterDesc;
         _myKey = strKey;
 
-        MaterialCache.Register("engine.streets.materials.cluster",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.cluster",
             name => new Material()
             {
                 //AlbedoColor = 0xff441144

@@ -319,7 +319,7 @@ public class Main
 
                 if (ImGui.TreeNode("Implementations"))
                 {
-                    var types = Implementations.Instance.GetTypes();
+                    var types = I.Instance.GetTypes();
                     foreach (var type in types)
                     {
                         ImGui.Text(type.ToString());

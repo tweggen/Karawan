@@ -89,9 +89,9 @@ namespace nogame.modules.playerhover
             /*
              * If I shall control the ship.
              */
-            if (MY_Z_ORDER == Implementations.Get<InputEventPipeline>().GetFrontZ())
+            if (MY_Z_ORDER == I.Get<InputEventPipeline>().GetFrontZ())
             {
-                Implementations.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
+                I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
                 var frontMotion = controllerState.FrontMotion;
                 var upMotion = controllerState.UpMotion;
@@ -230,7 +230,7 @@ namespace nogame.modules.playerhover
                 HAlign.Left
             ));
             {
-                var gameState = Implementations.Get<GameState>();
+                var gameState = I.Get<GameState>();
                 gameState.PlayerPosition = vTargetPos;
                 gameState.PlayerOrientation = _prefTarget.Pose.Orientation;
             }
@@ -242,7 +242,7 @@ namespace nogame.modules.playerhover
         {
             _engine.RemoveModule(this);
             _engine.OnLogicalFrame -= _onLogicalFrame;
-            Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
+            I.Get<InputEventPipeline>().RemoveInputPart(this);
 
         }
 
@@ -250,12 +250,12 @@ namespace nogame.modules.playerhover
         public void ModuleActivate(engine.Engine engine)
         {
             _engine = engine;
-            _aTransform = Implementations.Get<engine.transform.API>();
+            _aTransform = I.Get<engine.transform.API>();
             _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             
-            Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+            I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
             _engine.AddModule(this);
             _engine.OnLogicalFrame += _onLogicalFrame;
         }

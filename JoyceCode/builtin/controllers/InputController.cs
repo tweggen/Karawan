@@ -367,8 +367,8 @@ public class InputController : engine.AModule, engine.IInputPart
         if (doEmitDebug)
         {
             Trace("Emitting debug key \"(escape)\".");
-            Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, "(escape)"));
-            Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(escape)"));
+            I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, "(escape)"));
+            I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(escape)"));
         }
     }
     
@@ -488,8 +488,8 @@ public class InputController : engine.AModule, engine.IInputPart
     public void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
-        Implementations.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
+        I.Get<InputEventPipeline>().RemoveInputPart(this);
+        I.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         _engine.RemoveModule(this);
     }
 
@@ -503,8 +503,8 @@ public class InputController : engine.AModule, engine.IInputPart
     public void ModuleActivate(Engine engine0)
     {
         _engine = engine0;
-        Implementations.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
-        Implementations.Get<InputEventPipeline>().AddInputPart(0f, this);
+        I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
+        I.Get<InputEventPipeline>().AddInputPart(0f, this);
         _refreshViewSize();
         _engine.OnLogicalFrame += _onLogicalFrame;
     }

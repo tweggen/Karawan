@@ -57,7 +57,7 @@ public class Scene : IScene, IInputPart
     {
         _shallGenerate = false;
         _engine.SceneSequencer.RemoveScene(this);
-        Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
+        I.Get<InputEventPipeline>().RemoveInputPart(this);
     }
     
 
@@ -65,7 +65,7 @@ public class Scene : IScene, IInputPart
     {
         _engine = engine;
 
-        Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.SceneSequencer.AddScene(5, this);
         Task.Run(() =>
         {

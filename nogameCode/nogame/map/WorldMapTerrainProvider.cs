@@ -77,7 +77,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
 
     private void _drawIntercityLines(IFramebuffer target, in Matrix3x2 m2fb)
     {
-        var network = Implementations.Get<nogame.intercity.Network>();
+        var network = I.Get<nogame.intercity.Network>();
         var lines = network.Lines;
 
         Context dcHighway = new Context();

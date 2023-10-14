@@ -26,6 +26,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IWorldMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IFragmentMapProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ScreenComposer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleCard.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
@@ -103,7 +104,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\IBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ILogTarget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IModule.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\Implementations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\I.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\INavigator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\InputEventPipeline.cs" />
@@ -149,6 +150,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\EventQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\KeyEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\SubscriptionManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Binding.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\CollisionProperties.cs" />

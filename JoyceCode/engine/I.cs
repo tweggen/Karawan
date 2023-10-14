@@ -17,9 +17,9 @@ internal class InstanceEntry
 /**
  * Provides a global registry of implementations to particular instances.
  */
-public sealed class Implementations
+public sealed class I
 {
-    private static readonly Implementations _singleton = new Implementations();
+    private static readonly I _singleton = new I();
     
     private object _lo = new();
     private Dictionary<Type, InstanceEntry> _mapInstances = new();
@@ -134,11 +134,11 @@ public sealed class Implementations
     //{}
 
     
-    private Implementations()
+    private I()
     {}
 
 
-    public static Implementations Instance
+    public static I Instance
     {
         get
         {

@@ -107,7 +107,7 @@ public class DesktopMain
             engine.Logger.SetLogTarget(logger);
         }
 
-        Implementations.Register<Boom.ISoundAPI>(() =>
+        I.Register<Boom.ISoundAPI>(() =>
         {
             var api = new Boom.OpenAL.API(e);
             return api;

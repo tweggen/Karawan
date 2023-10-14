@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using engine;
 using engine.behave.systems;
+using engine.joyce;
 using engine.meta;
 using engine.news;
 using engine.world;
@@ -44,6 +45,7 @@ public class Scene : engine.IScene, engine.IInputPart
     private nogame.modules.osd.Module _moduleOsd;
     private nogame.modules.playerhover.Module _modulePlayerhover;
     private nogame.modules.skybox.Module _moduleSkybox;
+    private builtin.modules.ScreenComposer _moduleScreenComposer; 
 
     private modules.map.Module _moduleMap;
     private nogame.modules.minimap.Module _moduleMiniMap;
@@ -237,7 +239,7 @@ public class Scene : engine.IScene, engine.IInputPart
         _triggerLoadWorld();
                     
         // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
-        var frontZ = Implementations.Get<InputEventPipeline>().GetFrontZ();
+        var frontZ = I.Get<InputEventPipeline>().GetFrontZ();
         if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
         {
             _ctrlFollowCamera.EnableInput(false);
@@ -251,9 +253,9 @@ public class Scene : engine.IScene, engine.IInputPart
 
     public void SceneDeactivate()
     {
-        Implementations.Get<InputEventPipeline>().RemoveInputPart(this);
+        I.Get<InputEventPipeline>().RemoveInputPart(this);
 
-        Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         // Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
         
         _moduleInputController.ModuleDeactivate();
@@ -283,6 +285,10 @@ public class Scene : engine.IScene, engine.IInputPart
 
     public void SceneActivate(engine.Engine engine0)
     {
+        I.Get<ObjectRegistry<Renderbuffer>>().RegisterFactory(
+            "rootscene_3d", 
+            name => new Renderbuffer(name, 480,270));
+        
         lock (_lo)
         {
             ++_isSettingUp;
@@ -306,7 +312,7 @@ public class Scene : engine.IScene, engine.IInputPart
          * Some local shortcuts
          */
         _ecsWorld = _engine.GetEcsWorld();
-        _aTransform = Implementations.Get<engine.transform.API>();
+        _aTransform = I.Get<engine.transform.API>();
 
         /*
          * Global objects.
@@ -349,11 +355,22 @@ public class Scene : engine.IScene, engine.IInputPart
              * We need to be as far away as the skycube is. Plus a bonus.
              */
             cCamScene.FarFrustum = (float)Math.Sqrt(3) * 1000f + 100f;
+            cCamScene.Renderbuffer = I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d");
             cCamScene.CameraMask = 0x00000001;
             _eCamScene.Set(cCamScene);
             // No set position, done by controller
         }
-        
+
+        /*
+         * Create the screen composer
+         */
+        {
+            _moduleScreenComposer = new();
+            _moduleScreenComposer.AddLayer(
+                "rootscene_3d", 0,
+                I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d"));
+            
+        }
         /*
          * Create an osd camera
          */
@@ -412,10 +429,10 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleMiniMap.ModuleActivate(_engine);
         }
 
-        Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         // Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
 
-        _moduleInputController = Implementations.Get<builtin.controllers.InputController>();
+        _moduleInputController = I.Get<builtin.controllers.InputController>();
         _moduleInputController.ModuleActivate(_engine);
         
         /*
@@ -431,11 +448,11 @@ public class Scene : engine.IScene, engine.IInputPart
          *
          * Kick off 2 frames before nominal start.
          */
-        Implementations.Get<Timeline>().RunAt(
+        I.Get<Timeline>().RunAt(
             nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
 
-        Implementations.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         lock (_lo)
         {

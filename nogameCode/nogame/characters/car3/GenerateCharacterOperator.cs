@@ -119,7 +119,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
     {
-        var aPhysics = Implementations.Get<engine.physics.API>();
+        var aPhysics = I.Get<engine.physics.API>();
 
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;

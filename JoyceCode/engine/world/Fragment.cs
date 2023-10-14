@@ -199,7 +199,7 @@ namespace engine.world
         private void _createGround()
         {
             joyce.Mesh jMeshTerrain = world.TerrainKnitter.BuildMolecule(_elevations, 1);
-            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("engine.world.fragment.materials.ground"), jMeshTerrain), 3000f);
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.world.fragment.materials.ground"), jMeshTerrain), 3000f);
             AddStaticInstance("engine.world.ground", jInstanceDesc);
         }
 
@@ -349,7 +349,7 @@ namespace engine.world
             // Create an initial elevation array that still is zeroed.
             _createElevationArray();
 
-            MaterialCache.Register("engine.world.fragment.materials.ground",
+            I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.world.fragment.materials.ground",
                 (name) => new Material()
                 {
                     Texture = new Texture("gridlines1.png"),

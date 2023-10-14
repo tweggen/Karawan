@@ -170,7 +170,7 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
             }
         }
         
@@ -217,14 +217,14 @@ namespace Splash.Silk
 
             if (code.Length != 0)
             {
-                Implementations.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
             }
         }
 
         
         private void _onMouseMove(IMouse mouse, Vector2 position)
         {
-            Implementations.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
+            I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
             {
                 Position = position
             });
@@ -233,7 +233,7 @@ namespace Splash.Silk
 
         private void _onMouseWheel(IMouse mouse, ScrollWheel scrollWheel)
         {
-            Implementations.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_WHEEL, "")
+            I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_WHEEL, "")
             {
                 Position = new(scrollWheel.X, scrollWheel.Y)
             });
@@ -260,13 +260,13 @@ namespace Splash.Silk
         {
             _fullToViewPosition(mouse.Position, out var pos, out var size);
 
-            Implementations.Get<EventQueue>().Push(
+            I.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
                 {
                     Position = pos,
                     Size = size
                 });
-            Implementations.Get<EventQueue>().Push(
+            I.Get<EventQueue>().Push(
                 new Event(Event.INPUT_TOUCH_PRESSED, "")
                 {
                     Position = pos,
@@ -279,13 +279,13 @@ namespace Splash.Silk
         {
             _fullToViewPosition(mouse.Position, out var pos, out var size);
 
-            Implementations.Get<EventQueue>().Push(
+            I.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_RELEASED, $"{(int)mouseButton}")
                 {
                     Position = pos,
                     Size = size
                 });
-            Implementations.Get<EventQueue>().Push(
+            I.Get<EventQueue>().Push(
                 new Event(Event.INPUT_TOUCH_RELEASED, "")
                 {
                     Position = pos,
@@ -448,7 +448,7 @@ namespace Splash.Silk
                 // TXWTODO: We are abusing the global settings as global variables.
                 _renderer.SetDimension(size.X, size.Y);
                 engine.GlobalSettings.Set("view.size", $"{size.X}x{size.Y}");
-                Implementations.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
+                I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
                 {
                     Position = new(size.X, size.Y)
                 });

@@ -90,7 +90,7 @@ namespace nogame.characters.cubes
 
         public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
         {
-            var aPhysics = Implementations.Get<engine.physics.API>();
+            var aPhysics = I.Get<engine.physics.API>();
 
             float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
             float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
@@ -188,7 +188,7 @@ namespace nogame.characters.cubes
 
                 ++_characterIndex;
                 {
-                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(MaterialCache.Get("nogame.characters.cube.materials.cube"), _getCubeMesh()), 300f);
+                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.cube.materials.cube"), _getCubeMesh()), 300f);
 
                     var wf = worldFragment;
 
@@ -249,7 +249,7 @@ namespace nogame.characters.cubes
             _clusterDesc = clusterDesc;
             _myKey = strKey;
             _rnd = new engine.RandomSource(strKey);
-            MaterialCache.Register("nogame.characters.cube.materials.cube",
+            I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.cube.materials.cube",
                 name => new Material()
                 {
                     AlbedoColor = 0xff226666

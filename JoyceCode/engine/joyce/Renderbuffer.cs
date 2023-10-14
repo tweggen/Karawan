@@ -13,6 +13,11 @@ public class Renderbuffer
     public string Name;
     public uint Width;
     public uint Height;
+    
+    public string TextureName
+    {
+        get => $"framebuffer://{Name}";
+    }
 
     public Renderbuffer(string name, uint width, uint height)
     {
@@ -25,5 +30,4 @@ public class Renderbuffer
         Width = width;
         Height = height;
     }
-
 }

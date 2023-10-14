@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using engine;
 using engine.elevation;
 using engine.joyce;
 using static engine.Logger;
@@ -57,7 +58,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
     )
     {
-        engine.joyce.Material materialHouse = MaterialCache.Get("nogame.cities.houses.materials.houses");
+        engine.joyce.Material materialHouse = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.materials.houses");
         engine.joyce.Mesh meshHouse = new($"{worldFragment.GetId()}-housessubgeo");
 
 
@@ -168,7 +169,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
         int adIdx = (int)(1f + _rnd.GetFloat() * 1.99f);
 
-        matmesh.Add(engine.joyce.MaterialCache.Get($"nogame.cities.houses.material.ad{adIdx}"), mesh);
+        matmesh.Add(I.Get<ObjectRegistry<Material>>().Get($"nogame.cities.houses.material.ad{adIdx}"), mesh);
 
     }
 
@@ -179,7 +180,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         in Vector3 p0, in Vector3 pe,
         float h)
     {
-        engine.joyce.Material materialNeon = MaterialCache.Get("nogame.cities.houses.materials.neon");
+        engine.joyce.Material materialNeon = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.materials.neon");
         engine.joyce.Mesh meshNeon = new($"{worldFragment.GetId()}-neonsignsubgeo");
 
         /*
@@ -426,7 +427,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         _myKey = strKey;
         _rnd = new engine.RandomSource(strKey);
 
-        MaterialCache.Register("nogame.cities.houses.materials.houses",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses",
             (name) => new engine.joyce.Material()
             {
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
@@ -436,7 +437,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 // TXWTODO: Why the hell is the ambient texture just a blurry yellow mess?
                 //EmissiveTexture = new engine.joyce.Texture("buildingsambient.png")
             });
-        MaterialCache.Register("nogame.cities.houses.materials.neon",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.neon",
             (name) => new engine.joyce.Material()
             {
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
@@ -447,14 +448,14 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 HasTransparency = true
             });
 
-        MaterialCache.Register("nogame.cities.houses.material.ad1",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.ad1",
             name => new Material()
             {
                 HasTransparency = true,
                 EmissiveFactors = 0x77ffffff,
                 EmissiveTexture = new engine.joyce.Texture("sprouce-cn.png")
             });
-        MaterialCache.Register("nogame.cities.houses.material.ad2",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.ad2",
             name => new Material()
             {
                 HasTransparency = true,

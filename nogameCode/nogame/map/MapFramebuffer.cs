@@ -44,7 +44,7 @@ public class MapFramebuffer
             /*
              * Render the actual map data.
              */
-            engine.Implementations.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_framebuffer);
+            engine.I.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_framebuffer);
             
             _jTexture = new(_framebuffer);
             _jTexture.DoFilter = false;

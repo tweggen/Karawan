@@ -744,7 +744,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         // var mol = new engine.SimpleMolecule( [g] );
         // TXWTODO: This is too inefficient. We should also use a factory here.
-        var matmesh = new MatMesh(MaterialCache.Get("engine.streets.materials.street"), g);
+        var matmesh = new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), g);
         engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 600f);
         worldFragment.AddStaticInstance("engine.streets.streets", instanceDesc);
     });
@@ -758,7 +758,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         _clusterDesc = clusterDesc;
         _myKey = strKey;
 
-        MaterialCache.Register("engine.streets.materials.street",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.street",
             (name) => new Material()
             {
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true

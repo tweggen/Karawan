@@ -177,13 +177,13 @@ namespace engine
 
         public void Suspend()
         {
-            Implementations.Get<EventQueue>().Push(new Event("lifecycle.suspend", ""));
+            I.Get<EventQueue>().Push(new Event("lifecycle.suspend", ""));
         }
 
 
         public void Resume()
         {
-            Implementations.Get<EventQueue>().Push(new Event("lifecycle.suspend", "user call"));
+            I.Get<EventQueue>().Push(new Event("lifecycle.suspend", "user call"));
         }
 
 
@@ -514,8 +514,8 @@ namespace engine
              * affect behaviours.
              */
             {
-                var eq = Implementations.Get<EventQueue>();
-                var sm = Implementations.Get<SubscriptionManager>();
+                var eq = I.Get<EventQueue>();
+                var sm = I.Get<SubscriptionManager>();
                 while (!eq.IsEmpty())
                 {
                     sm.Handle(eq.Pop());
@@ -661,13 +661,13 @@ namespace engine
 
         public void GetControllerState(out ControllerState controllerState)
         {
-            Implementations.Get<builtin.controllers.InputController>().GetControllerState(out controllerState);
+            I.Get<builtin.controllers.InputController>().GetControllerState(out controllerState);
         }
         
 
         public void GetMouseMove(out Vector2 vMouseMove)
         {
-            Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
+            I.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
         }
         
 
@@ -854,9 +854,9 @@ namespace engine
          */
         public void SetupDone()
         {
-            _aPhysics = Implementations.Get<engine.physics.API>();
-            _aTransform = Implementations.Get<engine.transform.API>();
-            _aHierarchy = Implementations.Get<engine.hierarchy.API>();
+            _aPhysics = I.Get<engine.physics.API>();
+            _aTransform = I.Get<engine.transform.API>();
+            _aHierarchy = I.Get<engine.hierarchy.API>();
  
             _systemBehave = new(this);
             _systemApplyPoses = new(this);
@@ -871,7 +871,7 @@ namespace engine
 
             _logicalThread = new Thread(_logicalThreadFunction);
             _logicalThread.Priority = ThreadPriority.AboveNormal;
-            Implementations.Get<InputEventPipeline>().ModuleActivate(this);
+            I.Get<InputEventPipeline>().ModuleActivate(this);
         }
 
 
@@ -982,13 +982,15 @@ namespace engine
             
             SceneSequencer = new(this);
 
-            Implementations.Register<engine.Timeline>(() => new engine.Timeline());
-            Implementations.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
-            Implementations.Register<engine.news.EventQueue>(() => new EventQueue());
-            Implementations.Register<engine.InputEventPipeline>(() => new InputEventPipeline());
-            Implementations.Register<engine.transform.API>(() => new transform.API(this));
-            Implementations.Register<engine.physics.API>(() => new physics.API(this));
-            Implementations.Register<engine.hierarchy.API>(() => new hierarchy.API(this));
+            I.Register<engine.Timeline>(() => new engine.Timeline());
+            I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
+            I.Register<engine.news.EventQueue>(() => new EventQueue());
+            I.Register<engine.InputEventPipeline>(() => new InputEventPipeline());
+            I.Register<engine.transform.API>(() => new transform.API(this));
+            I.Register<engine.physics.API>(() => new physics.API(this));
+            I.Register<engine.hierarchy.API>(() => new hierarchy.API(this));
+            I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
+            I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
             
             State = EngineState.Starting;
         }

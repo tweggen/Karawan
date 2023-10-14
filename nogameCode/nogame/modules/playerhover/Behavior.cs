@@ -29,7 +29,7 @@ public class Behavior : engine.IBehavior
         if (other == null)
         {
             cev.Type = PLAYER_COLLISION_ANONYMOUS;
-            Implementations.Get<EventQueue>().Push(cev);
+            I.Get<EventQueue>().Push(cev);
             return;
         }
 
@@ -39,17 +39,17 @@ public class Behavior : engine.IBehavior
         if (other.Name == nogame.characters.cubes.GenerateCharacterOperator.PhysicsName)
         {
             cev.Type = PLAYER_COLLISION_CUBE;
-            Implementations.Get<EventQueue>().Push(cev);
+            I.Get<EventQueue>().Push(cev);
         }
         else if (other.Name == "nogame.furniture.polytopeBall")
         {
             cev.Type = PLAYER_COLLISION_POLYTOPE;
-            Implementations.Get<EventQueue>().Push(cev);
+            I.Get<EventQueue>().Push(cev);
         } 
         else if (other.Name == "nogame.characters.car3")
         {
             cev.Type = PLAYER_COLLISION_CAR3;
-            Implementations.Get<EventQueue>().Push(cev);
+            I.Get<EventQueue>().Push(cev);
         }
     }
 

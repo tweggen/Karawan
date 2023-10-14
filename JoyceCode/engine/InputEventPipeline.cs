@@ -103,14 +103,14 @@ public class InputEventPipeline : engine.AModule
     
     public void ModuleDeactivate()
     {
-        Implementations.Get<SubscriptionManager>().Unsubscribe("input.", _onInputEvent);
+        I.Get<SubscriptionManager>().Unsubscribe("input.", _onInputEvent);
     }
 
     
     public void ModuleActivate(engine.Engine engine0)
     {
         _engine = engine0;
-        Implementations.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
+        I.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
     }
 
     

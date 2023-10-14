@@ -102,7 +102,7 @@ public class GenerateCharacterOperator : IWorldOperator
     
     public void WorldOperatorApply(MetaGen worldMetaGen)
     {
-        var network = Implementations.Get<nogame.intercity.Network>();
+        var network = I.Get<nogame.intercity.Network>();
         var lines = network.Lines;
 
         /*

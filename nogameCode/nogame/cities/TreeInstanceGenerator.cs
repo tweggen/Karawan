@@ -221,7 +221,7 @@ public class TreeInstanceGenerator
         {
             foreach (var mesh in atomsMap.Values)
             {
-                matmesh.Add(MaterialCache.Get("nogame.cities.trees.materials.treeleave"), mesh);
+                matmesh.Add(I.Get<ObjectRegistry<Material>>().Get("nogame.cities.trees.materials.treeleave"), mesh);
             }
 
         }
@@ -257,7 +257,7 @@ public class TreeInstanceGenerator
 
     public TreeInstanceGenerator()
     {
-        MaterialCache.Register("nogame.cities.trees.materials.treeleave",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.trees.materials.treeleave",
             (name) => new Material()
             {
                 AlbedoColor = 0xff448822

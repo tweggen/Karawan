@@ -90,11 +90,11 @@ public class Scene : engine.IScene
          */
         Task.Run(() =>
         {
-            Implementations.Get<SetupMetaGen>().PrepareMetaGen(_engine);
+            I.Get<SetupMetaGen>().PrepareMetaGen(_engine);
             /*
              * We just wrote down this position from the current seed.
              */
-            Implementations.Get<SetupMetaGen>().Preload(
+            I.Get<SetupMetaGen>().Preload(
                 new Vector3(292f,29f,314f)
                 //Vector3.Zero
                 );
@@ -130,7 +130,7 @@ public class Scene : engine.IScene
     private void _onTitleSongStarted()
     {
         DateTime now = DateTime.Now;
-        var timeline = Implementations.Get<engine.Timeline>();
+        var timeline = I.Get<engine.Timeline>();
         timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
         
         /*
@@ -202,12 +202,12 @@ public class Scene : engine.IScene
              * Some local shortcuts
              */
             _ecsWorld = _engine.GetEcsWorld();
-            _aTransform = Implementations.Get<engine.transform.API>();
+            _aTransform = I.Get<engine.transform.API>();
 
         }
         if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false")
         {
-            engine.Implementations.Get<Boom.Jukebox>().LoadThenPlaySong(
+            engine.I.Get<Boom.Jukebox>().LoadThenPlaySong(
                 "shaklengokhsi.ogg", 0.05f, false,
                 _onTitleSongStarted, _onTitleSongStopped);
         }

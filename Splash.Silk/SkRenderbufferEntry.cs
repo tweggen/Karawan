@@ -20,11 +20,6 @@ public class SkRenderbufferEntry : ARenderbufferEntry
     }
 
     
-    public string TextureName
-    {
-        get => _jTextureName;
-    }
-    
     public int CheckError(string what)
     {
         int err = 0;
@@ -76,7 +71,7 @@ public class SkRenderbufferEntry : ARenderbufferEntry
             CheckError("SkRenderbuffer GenFramebuffers");
         }
 
-        _jTextureName = $"framebuffer://{JRenderbuffer.Name}";
+        _jTextureName = JRenderbuffer.TextureName;
         _jTexture = new engine.joyce.Texture(_jTextureName);
         _skTexture = new SkTexture(gl, false);
         _skTexture.SetFrom(JRenderbuffer.Width, JRenderbuffer.Height);

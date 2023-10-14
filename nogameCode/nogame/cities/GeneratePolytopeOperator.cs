@@ -61,7 +61,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
 
     private async void _placePolytope(engine.world.Fragment worldFragment, engine.streets.Estate estate)
     {
-        engine.physics.API aPhysics = engine.Implementations.Get<engine.physics.API>();
+        engine.physics.API aPhysics = engine.I.Get<engine.physics.API>();
         
         /*
          * We need to create two instances, one for the stand and one for the ball.
