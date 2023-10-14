@@ -84,6 +84,7 @@ public class CameraManager : IDisposable
         if (null != renderbufferResource)
         {
             renderbufferResource.AddReference();
+            entity.Get<PfRenderbuffer>().RenderbufferEntry = renderbufferResource.Value;
         }
     }
 

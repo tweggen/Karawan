@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using Splash.components;
-
+using static engine.Logger;
 
 namespace Splash;
 
@@ -43,6 +44,12 @@ public class LogicalRenderer
             if (eCamera.Has<PfRenderbuffer>())
             {
                 renderPart.PfRenderbuffer = eCamera.Get<PfRenderbuffer>();
+                if (renderPart.PfRenderbuffer.Renderbuffer == null ||
+                    renderPart.PfRenderbuffer.RenderbufferEntry == null)
+                {
+                    Trace("No renderbuffer allocated yet.");
+                    continue;
+                }
             }
             else
             {

@@ -10,6 +10,8 @@ using static engine.Logger;
 
 using Silk.NET.OpenGL;
 using Silk.NET.SDL;
+using Splash.components;
+using Renderbuffer = engine.joyce.Renderbuffer;
 
 
 namespace Splash.Silk
@@ -38,6 +40,8 @@ namespace Splash.Silk
 
         private GL _gl = null;
 
+        private uint _frameNumber = 0;
+
         /**
          * Render all camera objects.
          * This function is called from a dedicated rendering thread as executed
@@ -52,16 +56,13 @@ namespace Splash.Silk
 
             int y0Stats = 30;
 
+            ++_frameNumber;
+
             // was sFactorAlpha Zero and One before. Why does this work?
             _gl.BlendFuncSeparate(
                 BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha,
                 BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             _gl.BlendEquation(BlendEquationModeEXT.FuncAdd);
-            
-            /*
-             * Before any frame, clear colors and depth.
-             */
-            _gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
             
             foreach(var renderPart in renderParts)
             {
@@ -69,15 +70,66 @@ namespace Splash.Silk
                  * We clear the screen only before the very first rendering pass.
                  * In all other passes, we clear the depth buffer only.
                  */
-                if (isFirstPart)
+                bool clearDepthBuffer = false;
+                bool clearAll = false;
+
+                Renderbuffer renderbuffer = renderPart.PfRenderbuffer.Renderbuffer;
+                SkRenderbufferEntry skRenderbufferEntry = renderPart.PfRenderbuffer.RenderbufferEntry as SkRenderbufferEntry;
+                
+                bool haveRenderbuffer = renderbuffer != null && skRenderbufferEntry != null;
+                
+                if (!haveRenderbuffer)
                 {
-                    isFirstPart = false;
+                    if (isFirstPart)
+                    {
+                        clearAll = true;
+                        isFirstPart = false;
+                    }
+                    else
+                    {
+                        clearDepthBuffer = true;
+                    }
                 }
                 else
                 {
-                    _gl.Clear(ClearBufferMask.DepthBufferBit);
+                    if (renderbuffer.LastFrame != _frameNumber)
+                    {
+                        clearAll = true;
+                    }
+                    else
+                    {
+                        clearDepthBuffer = true;
+                    }
+                    
+                    renderbuffer.LastFrame = _frameNumber;
+                }
+
+                /*
+                 * Switch to the appropriate renderbuffer
+                 */
+                if (haveRenderbuffer)
+                {
+                    skRenderbufferEntry.Use(_gl);
+                    _gl.Viewport(0, 0, renderbuffer.Width, renderbuffer.Height);
+                }
+                else
+                {
+                    _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
+                    _nailViewport(true, true);
                 }
                 
+                if (clearDepthBuffer)
+                {
+                    _gl.Clear(ClearBufferMask.DepthBufferBit);
+                }
+
+                if (clearAll)
+                {            
+                    /*
+                     * Before any frame, clear colors and depth.
+                     */
+                    _gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+                }
 
                 var cCameraParams = renderPart.CameraOutput.Camera3;
 
