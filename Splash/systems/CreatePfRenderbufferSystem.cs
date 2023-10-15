@@ -1,6 +1,7 @@
 using DefaultEcs.Resource;
 using System;
 using System.Linq;
+using engine;
 using static engine.Logger;
 
 namespace Splash.systems;
@@ -45,11 +46,9 @@ public class CreatePfRenderbufferSystem : DefaultEcs.System.AEntitySetSystem<eng
         }
     }
 
-    public unsafe CreatePfRenderbufferSystem(
-        engine.Engine engine
-    )
-        : base( engine.GetEcsWorld() )
+    public unsafe CreatePfRenderbufferSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
+        _engine = I.Get<Engine>();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using engine;
 using static engine.Logger;
 
 namespace Splash
@@ -71,10 +72,10 @@ namespace Splash
             return aTextureEntry;
         }
         
-        public TextureManager(in IThreeD threeD)
+        public TextureManager()
         {
             _dictTextures = new();
-            _threeD = threeD;
+            _threeD = I.Get<IThreeD>();
         }
     }
 }

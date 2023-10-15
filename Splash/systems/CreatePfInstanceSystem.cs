@@ -2,6 +2,7 @@
 using DefaultEcs.Resource;
 using System;
 using System.Linq;
+using engine;
 using static engine.Logger;
 
 
@@ -60,11 +61,9 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
         }
     }
 
-    public unsafe CreatePfInstanceSystem(
-        engine.Engine engine
-    )
-        : base(engine.GetEcsWorld())
+    public unsafe CreatePfInstanceSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
+        _engine = I.Get<Engine>();
     }
 }

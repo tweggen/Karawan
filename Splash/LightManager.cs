@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Numerics;
+using engine;
 using static engine.Logger;
 
 namespace Splash
@@ -141,10 +142,10 @@ namespace Splash
         }
 
 
-        public LightManager(engine.Engine engine, in IThreeD threeD) 
+        public LightManager() 
         {
-            _engine = engine;
-            _threeD = threeD;
+            _engine = I.Get<Engine>();
+            _threeD = I.Get<IThreeD>();
             _lights = new Light[MAX_LIGHTS];
         }
     }

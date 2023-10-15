@@ -1,5 +1,6 @@
 ﻿
 using System.Diagnostics;
+using engine;
 using engine.draw;
 using static engine.Logger;
 
@@ -43,10 +44,10 @@ namespace Splash.Silk
             }
         }
 
-        public TextureGenerator(engine.Engine engine, in SilkThreeD silkThreeD)
+        public TextureGenerator()
         {
-            _engine = engine;
-            _silkThreeD = silkThreeD;
+            _engine = I.Get<Engine>();
+            _silkThreeD = I.Get<IThreeD>() as SilkThreeD;
         }
     }
 }

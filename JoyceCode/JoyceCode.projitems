@@ -98,6 +98,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NewParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\OldParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Parent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\FragmentShader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\systems\NewParentSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IAssetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IBehavior.cs" />
@@ -152,6 +153,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\InputEventPipeline.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\KeyEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\SubscriptionManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Binding.cs" />

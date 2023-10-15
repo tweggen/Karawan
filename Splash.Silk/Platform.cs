@@ -25,6 +25,11 @@ namespace Splash.Silk
         private object _lo = new object();
         private engine.Engine _engine;
 
+        /**
+         * Keeps all Splash implementations.
+         */
+        private Splash.Common _common;
+        
         private SilkThreeD _silkThreeD;
         private InstanceManager _instanceManager;
         private CameraManager _cameraManager;
@@ -536,8 +541,12 @@ namespace Splash.Silk
         }
 #endif
 
+        /**
+         * Call this after all dependencies are created.
+         */
         public void SetupDone()
         {
+            _common = new();
             engine.GlobalSettings.Set("view.size", "320x200");
             
             string baseDirectory = System.AppContext.BaseDirectory;
@@ -558,34 +567,31 @@ namespace Splash.Silk
             // TXWTODO: Test DEBUG and PLATFORM_ANDROID for format options.
             // disable and bind cursor.
 
+            I.Register<TextureGenerator>(() => new TextureGenerator());
+            
             /*
              * Internal video implementation.
              */
-            _silkThreeD = new SilkThreeD(_engine);
+            I.Register<IThreeD>(() => new SilkThreeD());
+            _silkThreeD = I.Get<IThreeD>() as SilkThreeD;
+            _silkThreeD.SetupDone();
+            
 
             /*
              * Internal helpers managing various entities.
              */
-            _instanceManager = new(_silkThreeD);
+            _instanceManager = I.Get<InstanceManager>();
             _instanceManager.Manage(_engine.GetEcsWorld());
-            _cameraManager = new(_silkThreeD);
+            _cameraManager = I.Get<CameraManager>();
             _cameraManager.Manage(_engine.GetEcsWorld());
-            _lightManager = new(_engine, _silkThreeD);
+            _lightManager = I.Get<LightManager>();
             
             /*
              * Create the main screen renderer.
              */
-            _logicalRenderer = new LogicalRenderer(
-                _engine,
-                _silkThreeD,
-                _lightManager
-            );
+            _logicalRenderer = I.Get<LogicalRenderer>();
 
-            _renderer = new SilkRenderer(
-                _engine,
-                _lightManager,
-                _silkThreeD
-            );
+            _renderer = new SilkRenderer();
         }
 
         
@@ -614,32 +620,35 @@ namespace Splash.Silk
         }
         
 
-        static public engine.Engine EasyCreatePlatform(string[] args, out Splash.Silk.Platform platform)
+        static public engine.Engine EasyCreatePlatform(string[] args, out Splash.Silk.Platform out_platform)
         {
-            platform = new Platform(args);
-            engine.Engine engine = new engine.Engine(platform);
-            engine.SetupDone();
+            var platform = new Platform(args);
+            out_platform = platform;
+            I.Register<engine.Engine>(() => new engine.Engine(platform));
+            engine.Engine e = I.Get<engine.Engine>();
+            e.SetupDone();
 
-            platform.SetEngine(engine);
+            platform.SetEngine(e);
             platform.SetupDone();
-            engine.PlatformSetupDone();
+            e.PlatformSetupDone();
 
-            return engine;
+            return e;
         }
 
 
         static public engine.Engine EasyCreate(string[] args, IView iView)
         {
             var platform = new Platform(args);
-            engine.Engine engine = new engine.Engine(platform);
-            engine.SetupDone();
+            I.Register<engine.Engine>(() => new engine.Engine(platform));
+            engine.Engine e = I.Get<engine.Engine>();
+            e.SetupDone();
 
             platform.SetIView(iView);
-            platform.SetEngine(engine);
+            platform.SetEngine(e);
             platform.SetupDone();
-            engine.PlatformSetupDone();
+            e.PlatformSetupDone();
 
-            return engine;
+            return e;
         }
     }
 }

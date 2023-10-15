@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using DefaultEcs;
+using engine;
 using static engine.Logger;
 
 namespace Splash;
@@ -287,10 +288,10 @@ public class InstanceManager : IDisposable
     }
 
 
-    public InstanceManager(in IThreeD threeD)
+    public InstanceManager()
     {
         _lo = new object();
-        _threeD = threeD;
+        _threeD = I.Get<IThreeD>();
         _meshResources = new Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>>();
         _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
     }

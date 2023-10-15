@@ -6,7 +6,6 @@ namespace Splash.Silk
 {
     public class MeshGenerator
     {
-
         public static void CreateSilkMesh( in engine.joyce.Mesh mesh, out SkMeshEntry skMeshEntry )
         {
             if( null==mesh.Normals )

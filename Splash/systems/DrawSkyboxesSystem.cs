@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using engine;
 
 namespace Splash.systems
 {
@@ -48,10 +49,10 @@ namespace Splash.systems
             _appendSkyboxes(entities, CameraPosition, cameraOutput);
         }
 
-        public DrawSkyboxesSystem(engine.Engine engine)
-            : base(engine.GetEcsWorld())
+        public DrawSkyboxesSystem()
+            : base(I.Get<Engine>().GetEcsWorld())
         {
-            _engine = engine;
+            _engine = I.Get<Engine>();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using engine;
 using engine.geom;
 using static engine.Logger;
 
@@ -29,7 +30,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     private int _nInstancesConsidered;
     private int _nInstancesAppended;
     
-
     private void _appendMeshRenderList(
         in CameraOutput cameraOutput,
         in ReadOnlySpan<DefaultEcs.Entity> entities
@@ -134,13 +134,10 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     }
 
 
-    public DrawInstancesSystem(
-        engine.Engine engine,
-        IThreeD threeD
-    )
-        : base(engine.GetEcsWorld())
+    public DrawInstancesSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
-        _threeD = threeD;
+        _engine = I.Get<Engine>();
+        _threeD = I.Get<IThreeD>();
     }
 }

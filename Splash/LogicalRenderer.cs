@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using engine;
 using Splash.components;
 using static engine.Logger;
 
@@ -160,19 +161,15 @@ public class LogicalRenderer
     }
     
     
-    public LogicalRenderer(
-        in engine.Engine engine,
-        in IThreeD threeD,
-        in LightManager lightManager
-    )
+    public LogicalRenderer()
     {
-        _engine = engine;
-        _threeD = threeD;
-        _lightManager = lightManager;
+        _engine = I.Get<Engine>();
+        _threeD = I.Get<IThreeD>();
+        _lightManager = I.Get<LightManager>();
 
-        _createPfInstanceSystem = new(_engine);
-        _createPfRenderbufferSystem = new(_engine);
-        _drawInstancesSystem = new(_engine, _threeD);
-        _drawSkyboxesSystem = new(_engine);
+        _createPfInstanceSystem = new();
+        _createPfRenderbufferSystem = new();
+        _drawInstancesSystem = new();
+        _drawSkyboxesSystem = new();
     }
 }

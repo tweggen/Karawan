@@ -6,6 +6,7 @@ using DefaultEcs;
 using BepuUtilities;
 using System.Collections.Generic;
 using System.ComponentModel;
+using engine;
 using static engine.Logger;
 
 using Silk.NET.OpenGL;
@@ -25,6 +26,8 @@ namespace Splash.Silk
         private readonly IThreeD _threeD;
         private readonly SilkThreeD _silkThreeD;
         private readonly LightManager _lightManager;
+        private readonly TextureManager _textureManager;
+        
         /**
          * This is the size of the physical view
          */
@@ -111,7 +114,7 @@ namespace Splash.Silk
                 {
                     if (!skRenderbufferEntry.IsUploaded())
                     {
-                        skRenderbufferEntry.Upload(_gl, _silkThreeD.TextureManager);
+                        skRenderbufferEntry.Upload(_gl, _textureManager);
                     }
                     skRenderbufferEntry.Use(_gl);
                     // _gl.Viewport(0, 0, renderbuffer.Width, renderbuffer.Height);
@@ -275,15 +278,13 @@ namespace Splash.Silk
         }
         
 
-        public SilkRenderer(
-            in engine.Engine engine,
-            in LightManager lightManager,
-            in SilkThreeD silkThreeD)
+        public SilkRenderer()
         {
-            _engine = engine;
-            _lightManager = lightManager;
-            _silkThreeD = silkThreeD;
-            _threeD = silkThreeD;
+            _engine = I.Get<Engine>();
+            _lightManager = I.Get<LightManager>();
+            _textureManager = I.Get<TextureManager>();
+            _threeD = I.Get<IThreeD>();
+            _silkThreeD = _threeD as SilkThreeD;
             _vViewSize = new Vector2(1280, 720);
         }
     }

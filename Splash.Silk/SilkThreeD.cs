@@ -24,12 +24,8 @@ public class SilkThreeD : IThreeD
     private object _lo = new();
     
     private SkMaterialEntry? _loadingMaterial = null;
-    private readonly TextureGenerator _textureGenerator;
-    private readonly TextureManager _textureManager;
-    public TextureManager TextureManager
-    {
-        get => _textureManager;
-    }
+    private TextureGenerator _textureGenerator;
+    private TextureManager _textureManager;
     private GL? _gl = null;
 
     private Matrix4x4 _matView;
@@ -747,15 +743,16 @@ public class SilkThreeD : IThreeD
     {
         _graphicsThreadActions.RunPart(dt);
     }
-    
 
-    public SilkThreeD(in engine.Engine engine)
+
+    public void SetupDone()
     {
-        _engine = engine;
-        _textureGenerator = new(engine, this);
-        //_createDefaultShader();
-        // GetDefaultMaterial();
-        _textureManager = new TextureManager(this);
+        _textureGenerator = I.Get<TextureGenerator>();
+        _textureManager = I.Get<TextureManager>();
     }
-   
+
+    public SilkThreeD()
+    {
+        _engine = I.Get<Engine>();
+    }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DefaultEcs;
+using engine;
 using Splash.components;
 using static engine.Logger;
 
@@ -178,10 +179,10 @@ public class CameraManager : IDisposable
     }
 
 
-    public CameraManager(in IThreeD threeD)
+    public CameraManager()
     {
         _lo = new object();
-        _threeD = threeD;
+        _threeD = I.Get<IThreeD>();
         _renderbufferResources = new Dictionary<engine.joyce.Renderbuffer, Resource<ARenderbufferEntry>>();
     }
 }
