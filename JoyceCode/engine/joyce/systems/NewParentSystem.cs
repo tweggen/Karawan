@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace engine.hierarchy.systems
+namespace engine.joyce.systems
 {
     /**
      * Update the hierarchy entites after any change.

@@ -55,7 +55,7 @@ public class Module : AModule
             _materialMiniMap.HasTransparency = true;
             _materialMiniMap.UploadImmediately = true;
 
-            I.Get<engine.transform.API>().SetTransforms(
+            I.Get<engine.joyce.TransformApi>().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
                 new Vector3(-1f+0.15f, 9f/16f-0.24f, -1f));
@@ -100,7 +100,7 @@ public class Module : AModule
         }
         else
         {
-            Matrix4x4 m = ePlayerEntity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+            Matrix4x4 m = ePlayerEntity.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
             pos = m.Translation;
         }
 

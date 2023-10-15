@@ -32,11 +32,11 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
              * We automagically update velocity from behavior.
              * Assuming, that it modifies Transform3
              */
-            bool hadTransform3 = entity.Has<transform.components.Transform3>();
-            transform.components.Transform3 oldTransform = new();
+            bool hadTransform3 = entity.Has<joyce.components.Transform3>();
+            joyce.components.Transform3 oldTransform = new();
             if (hadTransform3)
             {
-                oldTransform = entity.Get<transform.components.Transform3>();
+                oldTransform = entity.Get<joyce.components.Transform3>();
             }
             else
             {
@@ -50,7 +50,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                 {
                     if (oldTransform.IsVisible)
                     {
-                        I.Get<engine.transform.API>().SetVisible(entity, false);
+                        I.Get<engine.joyce.TransformApi>().SetVisible(entity, false);
                     }
                     continue;
                 }
@@ -68,9 +68,9 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
  
             if (dt > 0.0000001 && hadTransform3)
             {
-                if (entity.Has<transform.components.Transform3>())
+                if (entity.Has<joyce.components.Transform3>())
                 {
-                    Vector3 vNewPosition = entity.Get<transform.components.Transform3>().Position;
+                    Vector3 vNewPosition = entity.Get<joyce.components.Transform3>().Position;
                     /*
                      * Write back/create motion for that one.
                      */
@@ -92,9 +92,9 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
         _ePlayer = _engine.GetPlayerEntity();
         if (_ePlayer.IsAlive && _ePlayer.IsEnabled())
         {
-            if (_ePlayer.Has<engine.transform.components.Transform3ToWorld>())
+            if (_ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
             {
-                _mPlayerTransform = _ePlayer.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                _mPlayerTransform = _ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
                 _vPlayerPos = _mPlayerTransform.Translation;
                 _havePlayerPosition = true;
             }

@@ -30,7 +30,7 @@ public class LogicalRenderer
     {
         var listCameras = _engine.GetEcsWorld().GetEntities()
             .With<engine.joyce.components.Camera3>()
-            .With<engine.transform.components.Transform3ToWorld>()
+            .With<engine.joyce.components.Transform3ToWorld>()
             .AsEnumerable();
 
         bool haveSkyboxPosition = false;
@@ -58,7 +58,7 @@ public class LogicalRenderer
                  */
             }
 
-            var renderPartTransform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
+            var renderPartTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
             CameraOutput cameraOutput = new(scene, _threeD, renderPartTransform3ToWorld.Matrix, renderPartCamera3);
             renderPart.CameraOutput = cameraOutput;
 

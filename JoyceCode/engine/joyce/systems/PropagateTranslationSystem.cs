@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Numerics;
+using engine.joyce.components;
 
-namespace engine.transform.systems
+namespace engine.joyce.systems
 {
-    [DefaultEcs.System.Without(typeof(hierarchy.components.Parent))]
-    [DefaultEcs.System.With(typeof(transform.components.Transform3ToParent))]
+    [DefaultEcs.System.Without(typeof(joyce.components.Parent))]
+    [DefaultEcs.System.With(typeof(Transform3ToParent))]
     sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<engine.Engine>
     {
         private engine.Engine _engine;
@@ -24,7 +25,7 @@ namespace engine.transform.systems
             DefaultEcs.Entity childEntity,
             ref components.Transform3ToWorld cChildTransform3ToWorld ) 
         {
-            var cTransform3 = childEntity.Get<transform.components.Transform3ToParent>();
+            var cTransform3 = childEntity.Get<Transform3ToParent>();
             // Console.WriteLine("parent transform {0}", cTransform3.Matrix);
 
             /*
@@ -35,22 +36,22 @@ namespace engine.transform.systems
                     (cTransform3.IsVisible ? cTransform3.CameraMask : 0);
             cChildTransform3ToWorld.Matrix =
                 cTransform3.Matrix * cParentTransform3ToWorld.Matrix;
-            childEntity.Set<transform.components.Transform3ToWorld>(cChildTransform3ToWorld);
+            childEntity.Set<Transform3ToWorld>(cChildTransform3ToWorld);
         }
 
         private void _recurseChildren(
             in components.Transform3ToWorld cParentTransform3ToWorld, 
             DefaultEcs.Entity entity )
         {
-            var children = entity.Get<hierarchy.components.Children>().Entities;
+            var children = entity.Get<joyce.components.Children>().Entities;
             // Console.WriteLine("nChildren = {0}", children.Count);
             foreach (var childEntity in children)
             {
-                var cChildTransform3ToWorld = new transform.components.Transform3ToWorld();
+                var cChildTransform3ToWorld = new Transform3ToWorld();
                 _updateChildToWorld( cParentTransform3ToWorld, childEntity, ref cChildTransform3ToWorld);
 
-                if (childEntity.Has<hierarchy.components.Children>()
-                    && childEntity.Has<transform.components.Transform3ToParent>())
+                if (childEntity.Has<joyce.components.Children>()
+                    && childEntity.Has<Transform3ToParent>())
                 {
                     _recurseChildren(cChildTransform3ToWorld, childEntity);
                 }
@@ -70,9 +71,9 @@ namespace engine.transform.systems
                 /*
                  * Update the root itself. The root's parent always is visible.
                  */
-                var cChildTransform3ToWorld = new transform.components.Transform3ToWorld();
+                var cChildTransform3ToWorld = new Transform3ToWorld();
                 _updateChildToWorld(cRootTransform3World, entity, ref cChildTransform3ToWorld);
-                if ( entity.Has<hierarchy.components.Children>() )
+                if ( entity.Has<joyce.components.Children>() )
                 { 
                     _recurseChildren(cChildTransform3ToWorld, entity);
                 }

@@ -19,7 +19,7 @@ public class Scene : engine.IScene
 
     private DefaultEcs.World _ecsWorld;
 
-    private engine.transform.API _aTransform;
+    private engine.joyce.TransformApi _aTransform;
 
     private DefaultEcs.Entity _eCamera;
     private DefaultEcs.Entity _eLogo;
@@ -159,9 +159,9 @@ public class Scene : engine.IScene
             Size = new(16f, 16f),
             AlbedoTexture = new Texture("logos.joyce.albedo-joyce-engine.png"),
             EmissiveTexture = new Texture("logos.joyce.emissive-joyce-engine.png"),
-            StartTransform =  new engine.transform.components.Transform3(
+            StartTransform =  new engine.joyce.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, Vector3.Zero),
-            EndTransform =  new engine.transform.components.Transform3(
+            EndTransform =  new engine.joyce.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, Vector3.Zero),
         });
 
@@ -174,9 +174,9 @@ public class Scene : engine.IScene
             Duration = 2000,
             Size = new(40f, 40f/1280f*400f),
             EmissiveTexture = new Texture("titlelogo.png"),
-            StartTransform =  new engine.transform.components.Transform3(
+            StartTransform =  new engine.joyce.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
-            EndTransform =  new engine.transform.components.Transform3(
+            EndTransform =  new engine.joyce.components.Transform3(
                 true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
         });
         
@@ -202,7 +202,7 @@ public class Scene : engine.IScene
              * Some local shortcuts
              */
             _ecsWorld = _engine.GetEcsWorld();
-            _aTransform = I.Get<engine.transform.API>();
+            _aTransform = I.Get<engine.joyce.TransformApi>();
 
         }
         if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false")

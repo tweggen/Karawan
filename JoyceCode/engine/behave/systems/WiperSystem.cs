@@ -9,7 +9,7 @@ using engine.world.components;
 namespace engine.behave.systems
 {
     [DefaultEcs.System.With(typeof(components.Behavior))]
-    [DefaultEcs.System.With(typeof(transform.components.Transform3ToWorld))]
+    [DefaultEcs.System.With(typeof(joyce.components.Transform3ToWorld))]
     [DefaultEcs.System.With(typeof(FragmentId))]
     internal class WiperSystem : DefaultEcs.System.AEntitySetSystem<IList<Vector3>>
     {
@@ -25,7 +25,7 @@ namespace engine.behave.systems
             entities.CopyTo(copy);
             foreach (var entity in copy)
             {
-                Vector3 pos = entity.Get<transform.components.Transform3ToWorld>().Matrix.Translation;
+                Vector3 pos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
                 if( pos.X >= aabb[0].X && pos.Y >= aabb[0].Y && pos.Z > aabb[0].Z
                     && pos.X <= aabb[1].X && pos.Y <= aabb[1].Y && pos.Z < aabb[1].Z )
                 {

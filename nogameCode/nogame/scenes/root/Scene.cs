@@ -1,4 +1,4 @@
-﻿using engine.transform.components;
+﻿using engine.joyce.components;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -27,7 +27,7 @@ public class Scene : engine.IScene, engine.IInputPart
 
     private DefaultEcs.World _ecsWorld;
 
-    private engine.transform.API _aTransform;
+    private engine.joyce.TransformApi _aTransform;
 
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
@@ -315,7 +315,7 @@ public class Scene : engine.IScene, engine.IInputPart
          * Some local shortcuts
          */
         _ecsWorld = _engine.GetEcsWorld();
-        _aTransform = I.Get<engine.transform.API>();
+        _aTransform = I.Get<engine.joyce.TransformApi>();
 
         /*
          * Global objects.

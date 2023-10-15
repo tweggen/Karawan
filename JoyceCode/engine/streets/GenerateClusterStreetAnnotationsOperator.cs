@@ -18,7 +18,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     private string _myKey;
     private bool _traceStreets = false;
 
-    private engine.transform.API _aTransform;
+    private engine.joyce.TransformApi _aTransform;
 
     public string FragmentOperatorGetPath()
     {
@@ -114,7 +114,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     )
     {
         _clusterDesc = clusterDesc;
-        _aTransform = I.Get<engine.transform.API>();
+        _aTransform = I.Get<engine.joyce.TransformApi>();
  
         I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.street",
             (name) => new Material()

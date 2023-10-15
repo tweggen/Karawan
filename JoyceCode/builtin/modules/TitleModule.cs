@@ -30,7 +30,7 @@ public class TitleModule : engine.AModule
     private Dictionary<TitleCard, ActiveCardEntry> _dictCards = new();
 
 
-    private void _computeTransformAt(TitleCard card, double t, out engine.transform.components.Transform3 t3)
+    private void _computeTransformAt(TitleCard card, double t, out engine.joyce.components.Transform3 t3)
     {
         t3 = new(
             true, card.StartTransform.CameraMask,
@@ -48,7 +48,7 @@ public class TitleModule : engine.AModule
         Trace("Card Start.");
         var now = DateTime.Now;
 
-        _computeTransformAt(card, 0f, out engine.transform.components.Transform3 t3);
+        _computeTransformAt(card, 0f, out engine.joyce.components.Transform3 t3);
 
         engine.joyce.Mesh mesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
             "TitleCard", card.Size, card.PosUV, card.SizeUV with { Y = 0 }, card.SizeUV with { X = 0 }
@@ -72,7 +72,7 @@ public class TitleModule : engine.AModule
         _engine.QueueEntitySetupAction("titlecard", (DefaultEcs.Entity entity) =>
         {
             ace.Entity = entity;
-            I.Get<engine.transform.API>().SetTransforms(entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
+            I.Get<engine.joyce.TransformApi>().SetTransforms(entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
             entity.Set(new engine.joyce.components.Instance3(ace.InstanceDesc));
             lock (_lo)
             {
@@ -114,8 +114,8 @@ public class TitleModule : engine.AModule
         foreach (var ace in activeCards)
         {
             float t = (float)(now- ace.StartTime).TotalMilliseconds;
-            _computeTransformAt(ace.Card, t, out engine.transform.components.Transform3 t3);
-            I.Get<engine.transform.API>().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
+            _computeTransformAt(ace.Card, t, out engine.joyce.components.Transform3 t3);
+            I.Get<engine.joyce.TransformApi>().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
 #if false
             {
                 float inFadeOut = t - ((float)ace.Card.Duration - ace.Card.FadeOutTime*1000f);

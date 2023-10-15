@@ -66,7 +66,7 @@ namespace Splash
              */
             var listDirectionalLights = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.DirectionalLight>()
-                .With<engine.transform.components.Transform3ToWorld>()
+                .With<engine.joyce.components.Transform3ToWorld>()
                 .AsEnumerable();
             foreach (var eLight in listDirectionalLights)
             {
@@ -76,7 +76,7 @@ namespace Splash
                     break;
                 }
 
-                var matTransform = eLight.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                var matTransform = eLight.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
                 var vRight = new Vector3(matTransform.M11, matTransform.M12, matTransform.M13);
                 var cLight = eLight.Get<engine.joyce.components.DirectionalLight>();
                 _addLightEntry(LightType.LIGHT_DIRECTIONAL,
@@ -93,7 +93,7 @@ namespace Splash
              */
             var listPointLights = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.PointLight>()
-                .With<engine.transform.components.Transform3ToWorld>()
+                .With<engine.joyce.components.Transform3ToWorld>()
                 .AsEnumerable();
             foreach (var eLight in listPointLights)
             {
@@ -103,7 +103,7 @@ namespace Splash
                     break;
                 }
 
-                var cTransform = eLight.Get<engine.transform.components.Transform3ToWorld>();
+                var cTransform = eLight.Get<engine.joyce.components.Transform3ToWorld>();
                 var cLight = eLight.Get<engine.joyce.components.PointLight>();
                 var position = cTransform.Matrix.Translation;
                 var target = Vector3.Transform(cLight.Target, cTransform.Matrix) - position;

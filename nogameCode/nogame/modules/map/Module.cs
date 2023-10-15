@@ -85,7 +85,7 @@ public class Module : AModule, IInputPart
 
         float effectiveSize = Single.Exp2(dmp.CurrentZoomState / 4f);
 
-        I.Get<engine.transform.API>().SetTransforms(
+        I.Get<engine.joyce.TransformApi>().SetTransforms(
             _eMap, dmp.IsVisible, MapCameraMask,
             new Quaternion(0f,0f,0f,1f),
             new Vector3(

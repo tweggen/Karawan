@@ -4,10 +4,10 @@
 namespace nogame.systems
 {
     [DefaultEcs.System.With(typeof(components.CubeSpinner))]
-    [DefaultEcs.System.With(typeof(engine.transform.components.Transform3))]
+    [DefaultEcs.System.With(typeof(engine.joyce.components.Transform3))]
     sealed class CubeSpinnerSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
-        engine.transform.API _aTransform;
+        engine.joyce.TransformApi _aTransform;
 
         /**
          * Rotate each 
@@ -23,7 +23,7 @@ namespace nogame.systems
         public CubeSpinnerSystem(engine.Engine engine0)
             : base(engine0.GetEcsWorld())
         {
-            _aTransform = engine.I.Get<engine.transform.API>();
+            _aTransform = engine.I.Get<engine.joyce.TransformApi>();
         }
     }
 }

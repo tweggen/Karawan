@@ -1,5 +1,5 @@
 ﻿
-namespace engine.hierarchy.components
+namespace engine.joyce.components
 {
     struct Parent
     {

@@ -39,7 +39,7 @@ public class SimpleNavigationBehavior : engine.ABehavior
 
         qOrientation = Quaternion.Slerp(_qPrevRotation, qOrientation, 0.1f);
         _qPrevRotation = qOrientation;
-        engine.I.Get<engine.transform.API>().SetTransforms(
+        engine.I.Get<engine.joyce.TransformApi>().SetTransforms(
             entity,
             true, 0x0000ffff,
             qOrientation,

@@ -34,7 +34,6 @@ namespace engine.world
         private Engine _engine;
 
         private world.MetaGen _worldMetaGen = null;
-        private All _all = null;
 
         private world.Fragment _fragCurrent = null;
 

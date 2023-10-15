@@ -11,7 +11,7 @@ namespace Splash.systems;
  * 
  * Groups by material and mesh.
  */
-[DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
+[DefaultEcs.System.With(typeof(engine.joyce.components.Transform3ToWorld))]
 [DefaultEcs.System.With(typeof(Splash.components.PfInstance))]
 sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutput>
 {
@@ -37,7 +37,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
     {
         foreach (var entity in entities)
         {
-            var transform3ToWorld = entity.Get<engine.transform.components.Transform3ToWorld>();
+            var transform3ToWorld = entity.Get<engine.joyce.components.Transform3ToWorld>();
             if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();

@@ -11,7 +11,7 @@ public class Module : engine.AModule
     private readonly object _lo = new();
     private engine.Engine _engine = null;
 
-    private engine.transform.API _aTransform;
+    private engine.joyce.TransformApi _aTransform;
 
     /**
      * This is the standard framebuffer we draw into.
@@ -117,7 +117,7 @@ public class Module : engine.AModule
         /*
          * local shortcuts.
          */
-        _aTransform = I.Get<engine.transform.API>();
+        _aTransform = I.Get<engine.joyce.TransformApi>();
 
         _renderOSDSystem = new RenderOSDSystem(_engine);
 

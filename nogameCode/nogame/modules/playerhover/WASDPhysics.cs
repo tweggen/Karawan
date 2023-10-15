@@ -1,9 +1,6 @@
 ﻿using DefaultEcs;
-using DefaultEcs.Internal;
-using DefaultEcs.Resource;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Numerics;
 using engine;
 using engine.draw;
@@ -16,7 +13,7 @@ namespace nogame.modules.playerhover
         public static float MY_Z_ORDER = 25f;
         private engine.Engine _engine;
         private DefaultEcs.Entity _eTarget;
-        private engine.transform.API _aTransform;
+        private engine.joyce.TransformApi _aTransform;
 
         private BepuPhysics.BodyReference _prefTarget;
 
@@ -74,8 +71,8 @@ namespace nogame.modules.playerhover
             /*
              * Apply controls
              */
-            var cTransform3 = _eTarget.Get<engine.transform.components.Transform3>();
-            var cToParent = _eTarget.Get<engine.transform.components.Transform3ToParent>();
+            var cTransform3 = _eTarget.Get<engine.joyce.components.Transform3>();
+            var cToParent = _eTarget.Get<engine.joyce.components.Transform3ToParent>();
 
             /*
              * We cheat a bit, reading the matrix for the direction matrix,
@@ -89,7 +86,7 @@ namespace nogame.modules.playerhover
             /*
              * If I shall control the ship.
              */
-            if (MY_Z_ORDER == I.Get<InputEventPipeline>().GetFrontZ())
+            if (MY_Z_ORDER == I.Get<engine.news.InputEventPipeline>().GetFrontZ())
             {
                 I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
@@ -242,7 +239,7 @@ namespace nogame.modules.playerhover
         {
             _engine.RemoveModule(this);
             _engine.OnLogicalFrame -= _onLogicalFrame;
-            I.Get<InputEventPipeline>().RemoveInputPart(this);
+            I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
 
         }
 
@@ -250,12 +247,12 @@ namespace nogame.modules.playerhover
         public void ModuleActivate(engine.Engine engine)
         {
             _engine = engine;
-            _aTransform = I.Get<engine.transform.API>();
+            _aTransform = I.Get<engine.joyce.TransformApi>();
             _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             
-            I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+            I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
             _engine.AddModule(this);
             _engine.OnLogicalFrame += _onLogicalFrame;
         }

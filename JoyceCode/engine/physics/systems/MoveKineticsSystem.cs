@@ -13,7 +13,7 @@ namespace engine.physics.systems;
 /**
      * Read the world transform position of the entities and set it to the kinetics.
      */
-[DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
+[DefaultEcs.System.With(typeof(engine.joyce.components.Transform3ToWorld))]
 [DefaultEcs.System.With(typeof(engine.physics.components.Kinetic))]
 internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
@@ -27,7 +27,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
 
     static private Vector3 _vOffPosition = new(0f, -3000f, 0f);
 
-    private engine.transform.API _aTransform;
+    private engine.joyce.TransformApi _aTransform;
 
     protected override void Update(float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
@@ -35,7 +35,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
         {
             var cKinetic = entity.Get<physics.components.Kinetic>();
             var oldPos = cKinetic.LastPosition;
-            var newPos = entity.Get<transform.components.Transform3ToWorld>().Matrix.Translation;
+            var newPos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
 
             bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <= cKinetic.MaxDistance * cKinetic.MaxDistance; 
             bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= cKinetic.MaxDistance * cKinetic.MaxDistance; 
@@ -95,14 +95,14 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
 
     protected override void PreUpdate(float dt)
     {
-        _aTransform = I.Get<engine.transform.API>();
+        _aTransform = I.Get<engine.joyce.TransformApi>();
         _havePlayerPosition = false;
         _ePlayer = _engine.GetPlayerEntity();
         if (_ePlayer.IsAlive && _ePlayer.IsEnabled())
         {
-            if (_ePlayer.Has<engine.transform.components.Transform3ToWorld>())
+            if (_ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
             {
-                _mPlayerTransform = _ePlayer.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                _mPlayerTransform = _ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
                 _vPlayerPos = _mPlayerTransform.Translation;
                 _havePlayerPosition = true;
             }

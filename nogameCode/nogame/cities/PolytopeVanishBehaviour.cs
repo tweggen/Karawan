@@ -29,8 +29,8 @@ public class PolytopeVanishBehaviour : ABehavior
         }
 
         float size = 1f - time * (1f - POLYTOPE_MIN_SCALE) + Single.Sin(time*2f*Single.Pi*POLYTOPE_N_WOBBLES) * POLYTOPE_WOBBLE_FACTOR;
-        entity.Get<engine.transform.components.Transform3>().Scale = size * Vector3.One;
-        entity.Get<engine.transform.components.Transform3ToParent>().Transform3 =
-            entity.Get<engine.transform.components.Transform3>();
+        entity.Get<engine.joyce.components.Transform3>().Scale = size * Vector3.One;
+        entity.Get<engine.joyce.components.Transform3ToParent>().Transform3 =
+            entity.Get<engine.joyce.components.Transform3>();
     }
 }

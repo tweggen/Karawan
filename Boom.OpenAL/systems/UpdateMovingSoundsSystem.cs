@@ -30,7 +30,7 @@ class SoundEntry
 
 
 [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
-[DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
+[DefaultEcs.System.With(typeof(engine.joyce.components.Transform3ToWorld))]
 [DefaultEcs.System.With(typeof(engine.joyce.components.Motion))]
 sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
@@ -262,7 +262,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
             
             var cMovingSound = entity.Get<engine.audio.components.MovingSound>();
             
-            var mTransformWorld = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+            var mTransformWorld = entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
             var vPosition = mTransformWorld.Translation - vCameraPosition;
             var vVelocity = entity.Get<engine.joyce.components.Motion>().Velocity;
             var distance = vPosition.Length();
@@ -520,11 +520,11 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 return;
             }
             try {
-                _cameraMatrix = eCamera.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                _cameraMatrix = eCamera.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
                 _cameraVelocity = eCamera.Get<engine.joyce.components.Motion>().Velocity;
                 _cameraPosition = _cameraMatrix.Translation;
 
-                _playerMatrix = ePlayer.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+                _playerMatrix = ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
                 _playerVelocity = ePlayer.Get<engine.joyce.components.Motion>().Velocity;
                 _playerPosition = _playerMatrix.Translation;
             }

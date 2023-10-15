@@ -4,7 +4,6 @@ using System.Numerics;
 using BepuPhysics.CollisionDetection;
 using engine.draw.components;
 using engine.joyce.components;
-using engine.transform.components;
 using engine.world;
 using static engine.Logger;
 

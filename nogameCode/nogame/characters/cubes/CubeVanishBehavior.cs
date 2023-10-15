@@ -26,8 +26,8 @@ public class CubeVanishBehavior : ABehavior
         }
 
         float size = 1f - time * (1f - POLYTOPE_MIN_SCALE);
-        entity.Get<engine.transform.components.Transform3>().Scale = size * Vector3.One;
-        entity.Get<engine.transform.components.Transform3ToParent>().Transform3 =
-            entity.Get<engine.transform.components.Transform3>();
+        entity.Get<engine.joyce.components.Transform3>().Scale = size * Vector3.One;
+        entity.Get<engine.joyce.components.Transform3ToParent>().Transform3 =
+            entity.Get<engine.joyce.components.Transform3>();
     }
 }

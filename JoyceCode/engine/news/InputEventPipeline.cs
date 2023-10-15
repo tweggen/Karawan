@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using engine.news;
 using static engine.Logger;
 
-namespace engine;
+namespace engine.news;
 
 
 public class InputEventPipeline : engine.AModule

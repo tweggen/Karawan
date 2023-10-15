@@ -11,7 +11,7 @@ namespace builtin.controllers
         engine.Engine _engine;
         DefaultEcs.Entity _eTarget;
         DefaultEcs.Entity _eCarrot;
-        engine.transform.API _aTransform;
+        engine.joyce.TransformApi _aTransform;
         private Vector3 _vPreviousCameraPos;
 
         Quaternion _qCameraRotation;
@@ -43,13 +43,13 @@ namespace builtin.controllers
             //
             //engine.Implementations.Get<builtin.controllers.InputController>().GetMouseMove(out var vMouseMove);
 
-            if( !_eCarrot.Has<engine.transform.components.Transform3ToWorld>()
-                || !_eCarrot.Has<engine.transform.components.Transform3>())
+            if( !_eCarrot.Has<engine.joyce.components.Transform3ToWorld>()
+                || !_eCarrot.Has<engine.joyce.components.Transform3>())
             {
                 return;
             }
-            var cToParent = _eCarrot.Get<engine.transform.components.Transform3ToWorld>();
-            var cCarrotTransform3 = _eCarrot.Get<engine.transform.components.Transform3>();
+            var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
+            var cCarrotTransform3 = _eCarrot.Get<engine.joyce.components.Transform3>();
 
             /*
              * We cheat a bit, reading the matrix for the direction matrix,
@@ -175,7 +175,7 @@ namespace builtin.controllers
             _engine = engine0;
             _eTarget = eTarget;
             _eCarrot = eCarrot;
-            _aTransform = engine.I.Get<engine.transform.API>();
+            _aTransform = engine.I.Get<engine.joyce.TransformApi>();
         }
     }
 }

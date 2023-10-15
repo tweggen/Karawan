@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace engine.transform.components
+namespace engine.joyce.components
 {
     public struct Transform3ToWorld
     {

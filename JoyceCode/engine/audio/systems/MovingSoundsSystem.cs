@@ -7,7 +7,7 @@ namespace engine.audio.systems
 {
 
     [DefaultEcs.System.With(typeof(engine.audio.components.MovingSound))]
-    [DefaultEcs.System.With(typeof(engine.transform.components.Transform3ToWorld))]
+    [DefaultEcs.System.With(typeof(engine.joyce.components.Transform3ToWorld))]
     [DefaultEcs.System.With(typeof(engine.joyce.components.Motion))]
     sealed public class MovingSoundsSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
@@ -47,7 +47,7 @@ namespace engine.audio.systems
                  * For each entity, compute the volume and sound adjustment
                  * from the distance.
                  */
-                Vector3 vEntityPos = entity.Get<engine.transform.components.Transform3ToWorld>().Matrix.Translation;
+                Vector3 vEntityPos = entity.Get<engine.joyce.components.Transform3ToWorld>().Matrix.Translation;
                 Vector3 vRelativePos = vEntityPos - _vListenerPosition;
                 
                 float distance = vRelativePos.Length();

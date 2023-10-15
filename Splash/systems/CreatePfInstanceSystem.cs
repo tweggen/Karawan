@@ -16,7 +16,7 @@ namespace Splash.systems;
 [DefaultEcs.System.With(typeof(engine.joyce.components.Instance3))]
 [DefaultEcs.System.WithEither(new Type[]
 {
-    typeof(engine.transform.components.Transform3ToWorld),
+    typeof(engine.joyce.components.Transform3ToWorld),
     typeof(engine.joyce.components.Skybox)
 })]
 [DefaultEcs.System.Without(typeof(Splash.components.PfInstance))]

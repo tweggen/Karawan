@@ -36,8 +36,8 @@ namespace engine
         private DefaultEcs.World _ecsWorld;
         
         private engine.physics.API _aPhysics;
-        private engine.transform.API _aTransform;
-        private engine.hierarchy.API _aHierarchy;
+        private engine.joyce.TransformApi _aTransform;
+        private engine.joyce.HierarchyApi _aHierarchy;
         
         private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
         private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
@@ -540,12 +540,12 @@ namespace engine
             var vCameraRight = new Vector3(1f, 1f, 0f);
             var listCameras = GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.Camera3>()
-                .With<engine.transform.components.Transform3ToWorld>()
+                .With<engine.joyce.components.Transform3ToWorld>()
                 .AsEnumerable();
             foreach (var eCamera in listCameras)
             {
                 var cCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
-                var cTransform3ToWorld = eCamera.Get<engine.transform.components.Transform3ToWorld>();
+                var cTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
                 var mToWorld = cTransform3ToWorld.Matrix;
                 
                 vCameraPosition = cTransform3ToWorld.Matrix.Translation;
@@ -855,8 +855,8 @@ namespace engine
         public void SetupDone()
         {
             _aPhysics = I.Get<engine.physics.API>();
-            _aTransform = I.Get<engine.transform.API>();
-            _aHierarchy = I.Get<engine.hierarchy.API>();
+            _aTransform = I.Get<engine.joyce.TransformApi>();
+            _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
  
             _systemBehave = new(this);
             _systemApplyPoses = new(this);
@@ -985,10 +985,10 @@ namespace engine
             I.Register<engine.Timeline>(() => new engine.Timeline());
             I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
             I.Register<engine.news.EventQueue>(() => new EventQueue());
-            I.Register<engine.InputEventPipeline>(() => new InputEventPipeline());
-            I.Register<engine.transform.API>(() => new transform.API(this));
+            I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
+            I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi(this));
             I.Register<engine.physics.API>(() => new physics.API(this));
-            I.Register<engine.hierarchy.API>(() => new hierarchy.API(this));
+            I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi(this));
             I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
             I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
             

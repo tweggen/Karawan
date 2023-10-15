@@ -10,7 +10,7 @@ namespace engine.physics.systems
     internal class ApplyPosesSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
         private engine.Engine _engine;
-        private engine.transform.API _aTransform;
+        private engine.joyce.TransformApi _aTransform;
 
         protected override void Update(float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
         {
@@ -34,7 +34,7 @@ namespace engine.physics.systems
 
         protected override void PreUpdate(float dt)
         {
-            _aTransform = I.Get<engine.transform.API>();
+            _aTransform = I.Get<engine.joyce.TransformApi>();
         }
 
         public ApplyPosesSystem(in engine.Engine engine)

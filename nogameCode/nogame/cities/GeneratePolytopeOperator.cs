@@ -110,11 +110,11 @@ public class GeneratePolytopeOperator : IFragmentOperator
             //eTarget.Set(new engine.audio.components.MovingSound(
             //    _getCar3Sound(carIdx), 150f));
 
-            engine.transform.components.Transform3 cTransform3 = new(
+            engine.joyce.components.Transform3 cTransform3 = new(
                 true, 0x00000001, Quaternion.Identity, worldFragment.Position+vPos);
             eTarget.Set(cTransform3);
-            engine.transform.API.CreateTransform3ToParent(cTransform3, out var mat);
-            eTarget.Set(new engine.transform.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
+            engine.joyce.TransformApi.CreateTransform3ToParent(cTransform3, out var mat);
+            eTarget.Set(new engine.joyce.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
             
 
             BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(

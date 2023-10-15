@@ -9,7 +9,7 @@ namespace builtin.controllers
     {
         private engine.Engine _engine;
         private DefaultEcs.Entity _entity;
-        private engine.transform.API _aTransform;
+        private engine.joyce.TransformApi _aTransform;
 
         public float SideMetersPerSecond { get; set; } = 50f;
         public float FrontMetersPerSecond { get; set; } = 50f;
@@ -20,8 +20,8 @@ namespace builtin.controllers
             engine.I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
             engine.I.Get<builtin.controllers.InputController>().GetMouseMove(out var vMouseMove);
 
-            var cTransform3 = _entity.Get<engine.transform.components.Transform3>();
-            var cToParent = _entity.Get<engine.transform.components.Transform3ToParent>();
+            var cTransform3 = _entity.Get<engine.joyce.components.Transform3>();
+            var cToParent = _entity.Get<engine.joyce.components.Transform3ToParent>();
 
             /*
              * We cheat a bit, reading the matrix for the direction matrix,
@@ -77,7 +77,7 @@ namespace builtin.controllers
             if (haveChange)
             {
                 _aTransform.SetTransforms(_entity, cTransform3.IsVisible, cTransform3.CameraMask, cTransform3.Rotation, cTransform3.Position);
-                _entity.Set<engine.transform.components.Transform3>(cTransform3);
+                _entity.Set<engine.joyce.components.Transform3>(cTransform3);
             }
         }
 
@@ -95,7 +95,7 @@ namespace builtin.controllers
         {
             _engine = engine0;
             _entity = entity;
-            _aTransform = engine.I.Get<engine.transform.API>();
+            _aTransform = engine.I.Get<engine.joyce.TransformApi>();
         }
     }
 }

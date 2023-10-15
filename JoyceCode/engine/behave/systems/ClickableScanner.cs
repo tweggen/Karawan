@@ -14,7 +14,7 @@ public class ClickableHandler
     private engine.Engine _engine;
     private DefaultEcs.Entity _eCamera;
     private Camera3 _cCamera3;
-    private transform.components.Transform3ToWorld _cCamTransform;
+    private joyce.components.Transform3ToWorld _cCamTransform;
     private Vector2 _vViewSize;
     private Matrix4x4 _mProjection;
     private Matrix4x4 _mView;
@@ -28,12 +28,12 @@ public class ClickableHandler
          */
         var clickableEntities = _engine.GetEcsWorld().GetEntities()
             .With<components.Clickable>()
-            .With<transform.components.Transform3ToWorld>()
+            .With<joyce.components.Transform3ToWorld>()
             .With<joyce.components.Instance3>()
             .AsEnumerable();
         foreach (var entity in clickableEntities)
         {
-            var cTransform = entity.Get<transform.components.Transform3ToWorld>();
+            var cTransform = entity.Get<joyce.components.Transform3ToWorld>();
             
             /*
              * Is it visible by the camera we are looking for?
@@ -80,7 +80,7 @@ public class ClickableHandler
 
     private void _updateFromCamera()
     {
-        _cCamTransform = _eCamera.Get<transform.components.Transform3ToWorld>();
+        _cCamTransform = _eCamera.Get<joyce.components.Transform3ToWorld>();
         _cCamera3.GetProjectionMatrix(out _mProjection, _vViewSize);
         _cCamera3.GetViewMatrix(out _mView, _cCamTransform.Matrix);
     }

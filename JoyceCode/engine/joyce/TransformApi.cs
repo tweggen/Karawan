@@ -1,11 +1,11 @@
 ﻿using DefaultEcs;
-using engine.transform.components;
 using System;
 using System.Numerics;
+using engine.joyce.components;
 
-namespace engine.transform
+namespace engine.joyce
 {
-    public class API
+    public class TransformApi
     {
         private engine.Engine _engine;
         private systems.PropagateTranslationSystem _propagateTranslationSystem;
@@ -38,7 +38,7 @@ namespace engine.transform
             in Vector3 position,
             in Vector3 scale)
         {
-            entity.Set(new transform.components.Transform3(isVisible, cameraMask, rotation, position, scale));
+            entity.Set(new Transform3(isVisible, cameraMask, rotation, position, scale));
 
             /*
              * Write it back to parent transformation
@@ -49,7 +49,7 @@ namespace engine.transform
                 var mRotate = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
                 var mToParent = mScale * mRotate * mTranslate;
-                entity.Set(new transform.components.Transform3ToParent(isVisible, cameraMask, mToParent) );
+                entity.Set(new Transform3ToParent(isVisible, cameraMask, mToParent) );
                 _isDirty = true;
             }
         }
@@ -72,26 +72,26 @@ namespace engine.transform
         {
             components.Transform3 transform3;
             GetTransform(entity, out transform3);
-            entity.Set(new transform.components.Transform3(transform3.IsVisible, transform3.CameraMask, rotation, position, scale));
+            entity.Set(new Transform3(transform3.IsVisible, transform3.CameraMask, rotation, position, scale));
             {
                 var mScale = Matrix4x4.CreateScale(scale);
                 var mRotate = Matrix4x4.CreateFromQuaternion(rotation);
                 var mTranslate = Matrix4x4.CreateTranslation(position);
                 var mToParent = mScale * mRotate * mTranslate;
-                entity.Set(new transform.components.Transform3ToParent(transform3.IsVisible, transform3.CameraMask, mToParent));
+                entity.Set(new Transform3ToParent(transform3.IsVisible, transform3.CameraMask, mToParent));
                 _isDirty = true;
             }
         }
 
 
-        public void GetTransform(DefaultEcs.Entity entity, out transform.components.Transform3 transform3)
+        public void GetTransform(DefaultEcs.Entity entity, out Transform3 transform3)
         {
-            if( entity.Has<transform.components.Transform3>() )
+            if( entity.Has<Transform3>() )
             {
-                transform3 = entity.Get<transform.components.Transform3>();
+                transform3 = entity.Get<Transform3>();
             } else
             {
-                transform3 = new transform.components.Transform3(
+                transform3 = new Transform3(
                     false, 0,
                     Quaternion.Identity, 
                     new Vector3(99999f,99999f,99999f),
@@ -164,7 +164,7 @@ namespace engine.transform
         }
 
 
-        public API(engine.Engine engine)
+        public TransformApi(engine.Engine engine)
         {
             _engine = engine;
             _propagateTranslationSystem = new systems.PropagateTranslationSystem(_engine);

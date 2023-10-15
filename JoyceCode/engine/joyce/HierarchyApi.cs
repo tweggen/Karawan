@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace engine.hierarchy
+namespace engine.joyce
 {
-    public class API
+    public class HierarchyApi
     {
         private engine.Engine _engine;
 
@@ -56,7 +56,7 @@ namespace engine.hierarchy
             }
         }
 
-        public API( engine.Engine engine )
+        public HierarchyApi( engine.Engine engine )
         {
             _engine = engine;
             _newParentSystem = new systems.NewParentSystem(_engine);

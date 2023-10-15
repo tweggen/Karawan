@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)builtin\map\systems\" />
-    <Folder Include="$(MSBuildThisFileDirectory)engine\joyce\systems\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\lights\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
@@ -49,7 +48,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tunestreets\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ABehavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\All.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Assets.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\MovingSound.cs" />
@@ -94,12 +92,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\systems\LuaScriptRunSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\API.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Children.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\NewParent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\OldParent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\components\Parent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\hierarchy\systems\NewParentSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Children.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NewParent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\OldParent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Parent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\systems\NewParentSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IAssetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ILogTarget.cs" />
@@ -107,7 +104,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\I.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\INavigator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\InputEventPipeline.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
@@ -120,8 +116,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Motion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\ComponentName.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\PointLight.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3ToParent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3ToWorld.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Container3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Framebuffer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\MaterialCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\MatMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\mesh\Merger.cs" />
@@ -130,8 +130,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Material.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Mesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\mesh\Tools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\systems\PropagateTranslationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TransformApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\BuildExecTree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecApplyParallelNode.cs" />
@@ -148,6 +150,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\Event.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\EventQueue.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\news\InputEventPipeline.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\KeyEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\SubscriptionManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ObjectRegistry.cs" />
@@ -187,12 +190,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeIntersection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Timeline.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\transform\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Skybox.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToParent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\transform\components\Transform3ToWorld.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\transform\systems\PropagateTranslationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\WorkerQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterList.cs" />

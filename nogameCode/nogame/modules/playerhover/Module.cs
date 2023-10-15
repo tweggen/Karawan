@@ -26,7 +26,7 @@ namespace nogame.modules.playerhover
         private engine.Engine _engine;
 
         private DefaultEcs.World _ecsWorld;
-        private engine.transform.API _aTransform;
+        private engine.joyce.TransformApi _aTransform;
 
         private DefaultEcs.Entity _eCamera;
 
@@ -213,7 +213,7 @@ namespace nogame.modules.playerhover
         
         private void _onLogicalFrame(object? sender, float dt)
         {
-            Matrix4x4 mShip = _eShip.Get<engine.transform.components.Transform3ToWorld>().Matrix;
+            Matrix4x4 mShip = _eShip.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
             Vector3 posShip = mShip.Translation;
 
             /*
@@ -222,9 +222,9 @@ namespace nogame.modules.playerhover
             {
                 if (_eCamera.IsAlive)
                 {
-                    if (_eCamera.Has<engine.transform.components.Transform3ToWorld>() && _eCamera.Has<engine.joyce.components.Camera3>())
+                    if (_eCamera.Has<engine.joyce.components.Transform3ToWorld>() && _eCamera.Has<engine.joyce.components.Camera3>())
                     {
-                        var cCamTransform = _eCamera.Get<engine.transform.components.Transform3ToWorld>();
+                        var cCamTransform = _eCamera.Get<engine.joyce.components.Transform3ToWorld>();
                         var cCamera = _eCamera.Get<engine.joyce.components.Camera3>();
                         var mCameraToWorld = cCamTransform.Matrix;
                         Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
@@ -402,7 +402,7 @@ namespace nogame.modules.playerhover
             {
                 _engine = engine0;
                 _ecsWorld = _engine.GetEcsWorld();
-                _aTransform = I.Get<engine.transform.API>();
+                _aTransform = I.Get<engine.joyce.TransformApi>();
             }
 
             if (null == _soundCrash)
