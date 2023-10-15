@@ -28,7 +28,7 @@ public class AfterCrashBehavior : ABehavior
             /*
              * I collided again with something, so increase my timer. 
              */
-            t = LIFETIME - (RandomSource.Instance.GetFloat() + 0.5f);
+            t = LIFETIME - (builtin.tools.RandomSource.Instance.GetFloat() + 0.5f);
             
             Trace("Another collision with me, a dynamic being.");
         }

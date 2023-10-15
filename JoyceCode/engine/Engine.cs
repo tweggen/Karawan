@@ -98,8 +98,8 @@ namespace engine
         public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
 
 
-        private FPSMonitor _fpsPhysicalMonitor = new("physical");
-        private FPSMonitor _fpsLogicalMonitor = new("logical");
+        private builtin.tools.FPSMonitor _fpsPhysicalMonitor = new("physical");
+        private builtin.tools.FPSMonitor _fpsLogicalMonitor = new("logical");
         
         public int NFrameDurations = 200;
 

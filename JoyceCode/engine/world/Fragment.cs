@@ -23,7 +23,7 @@ namespace engine.world
         
         public int LastIteration { get; set; }
 
-        private engine.RandomSource _rnd;
+        private builtin.tools.RandomSource _rnd;
 
         public Vector3 Position { get; }
         public geom.AABB AABB; 
@@ -337,7 +337,7 @@ namespace engine.world
             _groundResolution = world.MetaGen.GroundResolution;
             _groundNElevations = _groundResolution + 1;
             _myKey = strKey;
-            _rnd = new engine.RandomSource(_myKey);
+            _rnd = new builtin.tools.RandomSource(_myKey);
             Position = position0;
             {
                 Vector3 sh = new(MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f);

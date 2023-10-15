@@ -20,7 +20,7 @@ namespace engine.streets
         private ClusterDesc _clusterDesc;
 
         private int _generationCounter;
-        private engine.RandomSource _rnd;
+        private builtin.tools.RandomSource _rnd;
 
         private Vector2 _bl;
         private Vector2 _tr;
@@ -701,7 +701,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
             in StrokeStore strokeStore,
             in ClusterDesc clusterDesc
         ) {
-            _rnd = new engine.RandomSource(seed0);
+            _rnd = new builtin.tools.RandomSource(seed0);
             _listStrokesToDo = new List<Stroke>();
             _strokeStore = strokeStore;
             _clusterDesc = clusterDesc;

@@ -46,7 +46,7 @@ namespace nogame.terrain
             get => _skeletonHeight;
         }
         
-        private engine.RandomSource _rnd;
+        private builtin.tools.RandomSource _rnd;
 
         /** 
          * Create the elevation skeleton for the map. Sub-terrains may further refine this elevation mesh.
@@ -101,7 +101,7 @@ namespace nogame.terrain
             _skeletonWidth = (int) ((maxWidth+fragmentSize-1)/fragmentSize ) + 1;
             _skeletonHeight = (int) ((maxHeight+fragmentSize-1)/fragmentSize ) + 1;
 
-            _rnd = new engine.RandomSource(seed0);
+            _rnd = new builtin.tools.RandomSource(seed0);
  
             _createSkeleton();
         }

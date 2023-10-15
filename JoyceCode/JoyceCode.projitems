@@ -31,6 +31,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\FPSMonitor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\RandomSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\RunningAverageComputer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\CondParams.cs" />
@@ -81,7 +83,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityComponentTypeReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\FPSMonitor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\GameLoader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\AABB.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Angles.cs" />
@@ -92,6 +93,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\systems\LuaScriptRunSystem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Children.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NewParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\OldParent.cs" />
@@ -103,12 +105,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\IModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\I.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\INavigator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\Index3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IPlatform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IScene.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\IUI.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\IUINode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\AmbientLight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Camera3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\DirectionalLight.cs" />
@@ -171,7 +170,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\MoveKineticsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\PropertyEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Props.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\RandomSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\ImageSharpFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\SkiaSharpFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\SceneSequencer.cs" />

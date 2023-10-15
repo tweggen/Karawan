@@ -48,7 +48,7 @@ public class ClusterDesc
     private int _nClosest;
     private int _maxClosest = 5;
     private string _strKey;
-    private engine.RandomSource _rnd;
+    private builtin.tools.RandomSource _rnd;
     private engine.geom.AABB _aabb;
 
     private float _initialOuterStreetLength;
@@ -364,7 +364,7 @@ public class ClusterDesc
     public ClusterDesc(string strKey)
     {
         Id = _strKey = strKey;
-        _rnd = new engine.RandomSource(_strKey);
+        _rnd = new builtin.tools.RandomSource(_strKey);
         _arrCloseCities = new ClusterDesc[_maxClosest];
         _nClosest = 0;
         Merged = false;

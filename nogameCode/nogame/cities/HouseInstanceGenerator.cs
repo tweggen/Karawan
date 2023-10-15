@@ -21,7 +21,7 @@ public class HouseInstanceGenerator
         // TXWTODO: Register materials
     }
 
-    private builtin.tools.Lindenmayer.System _createHouse1System(engine.RandomSource rnd)
+    private builtin.tools.Lindenmayer.System _createHouse1System(builtin.tools.RandomSource rnd)
     {
         return new builtin.tools.Lindenmayer.System(new State(new List<Part>
             /*

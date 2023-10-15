@@ -11,7 +11,7 @@ namespace engine.world;
 public class GenerateClustersOperator : world.IWorldOperator
 {
     private string _strKey;
-    private engine.RandomSource _rnd;
+    private builtin.tools.RandomSource _rnd;
     private tools.NameGenerator _nameGenerator;
 
     public string WorldOperatorGetPath()
@@ -20,7 +20,7 @@ public class GenerateClustersOperator : world.IWorldOperator
     }
 
 
-    private float _randomClusterSize(RandomSource rnd)
+    private float _randomClusterSize(builtin.tools.RandomSource rnd)
     {
         var x2 = _rnd.GetFloat();
         //x2 = x2 * x2;
@@ -301,7 +301,7 @@ public class GenerateClustersOperator : world.IWorldOperator
     public GenerateClustersOperator(string strKey)
     {
         _strKey = "clusters-" + strKey;
-        _rnd = new engine.RandomSource(_strKey);
+        _rnd = new builtin.tools.RandomSource(_strKey);
 
         // TXWTODO: Move this to the game specific objects.
     }

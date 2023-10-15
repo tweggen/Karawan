@@ -69,7 +69,7 @@ namespace nogame.characters.cubes
 
 
         private ClusterDesc _clusterDesc;
-        private engine.RandomSource _rnd;
+        private builtin.tools.RandomSource _rnd;
         private string _myKey;
 
         private bool _trace = false;
@@ -248,7 +248,7 @@ namespace nogame.characters.cubes
         {
             _clusterDesc = clusterDesc;
             _myKey = strKey;
-            _rnd = new engine.RandomSource(strKey);
+            _rnd = new builtin.tools.RandomSource(strKey);
             I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.cube.materials.cube",
                 name => new Material()
                 {

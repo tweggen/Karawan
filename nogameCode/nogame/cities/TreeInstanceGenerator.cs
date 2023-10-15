@@ -20,7 +20,7 @@ public class TreeInstanceGenerator
     private InstanceDesc[] _arrInstanceDescs = null;
 
     
-    private builtin.tools.Lindenmayer.System _createTree1System(RandomSource rnd) 
+    private builtin.tools.Lindenmayer.System _createTree1System(builtin.tools.RandomSource rnd) 
     { 
         return new builtin.tools.Lindenmayer.System( new State( new List<Part>
             /*
@@ -88,7 +88,7 @@ public class TreeInstanceGenerator
     }
 
 
-    private builtin.tools.Lindenmayer.System _createTree2System(RandomSource rnd)
+    private builtin.tools.Lindenmayer.System _createTree2System(builtin.tools.RandomSource rnd)
     {
         return new builtin.tools.Lindenmayer.System( new State( new List<Part>  
             /*
@@ -173,7 +173,7 @@ public class TreeInstanceGenerator
     }
 
 
-    private Instance _createLInstance(RandomSource rnd)
+    private Instance _createLInstance(builtin.tools.RandomSource rnd)
     {
         var whichtree = rnd.GetFloat();
 
@@ -200,7 +200,7 @@ public class TreeInstanceGenerator
     }
 
 
-    private InstanceDesc _buildTreeInstance(int idx, in RandomSource rnd)
+    private InstanceDesc _buildTreeInstance(int idx, in builtin.tools.RandomSource rnd)
     {
         MatMesh matmesh = new();
         
@@ -245,7 +245,7 @@ public class TreeInstanceGenerator
                 _arrInstanceDescs = new InstanceDesc[_nTemplates];
                 for (int i = 0; i < _nTemplates; ++i)
                 {
-                    RandomSource rnd = new($"TreeGen{i}");
+                    builtin.tools.RandomSource rnd = new($"TreeGen{i}");
                     _arrInstanceDescs[i] = _buildTreeInstance(i, rnd);
                 }
             }

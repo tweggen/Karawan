@@ -26,7 +26,7 @@ namespace engine.tools
             "ng", "kh", "f", "k", "l", "m", "p", "r", "s", "t"
         };
 
-        private string _createPhoneme(in engine.RandomSource rnd, float prob, string [] arr)
+        private string _createPhoneme(in builtin.tools.RandomSource rnd, float prob, string [] arr)
         {
             var r = rnd.GetFloat();
             if(r<prob) {
@@ -37,7 +37,7 @@ namespace engine.tools
             }
         }
 
-        private string _createSyllable(in engine.RandomSource rnd)
+        private string _createSyllable(in builtin.tools.RandomSource rnd)
         {
             string strSyl = "";
             do
@@ -51,7 +51,7 @@ namespace engine.tools
             return strSyl;
         }
 
-        private string _createRawWord(in engine.RandomSource rnd)
+        private string _createRawWord(in builtin.tools.RandomSource rnd)
         {
             float r = rnd.GetFloat();
             int n;
@@ -87,7 +87,7 @@ namespace engine.tools
             return s;
         }
 
-        public string CreateWord(in engine.RandomSource rnd)
+        public string CreateWord(in builtin.tools.RandomSource rnd)
         {
             string lower = _createRawWord(rnd);
             string first = lower.Substring(0, 1);

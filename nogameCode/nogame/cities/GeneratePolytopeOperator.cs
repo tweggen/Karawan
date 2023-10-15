@@ -16,7 +16,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
 {
     private static object _classLock = new();
     private engine.world.ClusterDesc _clusterDesc;
-    private engine.RandomSource _rnd;
+    private builtin.tools.RandomSource _rnd;
     private string _myKey;
     
     private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
@@ -227,7 +227,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
     ) {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new engine.RandomSource(_myKey);
+        _rnd = new builtin.tools.RandomSource(_myKey);
     }
     
     

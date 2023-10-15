@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using static engine.Logger;
 
-namespace engine;
+namespace builtin.tools;
 
 public class FPSMonitor
 {

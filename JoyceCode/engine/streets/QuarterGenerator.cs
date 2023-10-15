@@ -17,7 +17,7 @@ namespace engine.streets
         private bool _traceGenerate = false;
         private float _storyHeight = 3f;
 
-        private engine.RandomSource _rnd;
+        private builtin.tools.RandomSource _rnd;
 
         private void _createBuildings(in Quarter quarter, in Estate estate)
         {
@@ -407,7 +407,7 @@ namespace engine.streets
             QuarterStore quarterStore,
             StrokeStore strokeStore) 
         {
-            _rnd = new engine.RandomSource(seed0);
+            _rnd = new builtin.tools.RandomSource(seed0);
             _quarterStore = quarterStore;
             _strokeStore = strokeStore;
         }

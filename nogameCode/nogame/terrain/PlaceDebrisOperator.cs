@@ -28,7 +28,7 @@ public class PlaceDebrisOperator : IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(Fragment worldFragment) => new (async () =>
     {
-        engine.RandomSource rnd = new(_myKey+worldFragment.GetId());
+        builtin.tools.RandomSource rnd = new(_myKey+worldFragment.GetId());
         AABB aabbFragment = worldFragment.AABB;
         MatMesh matmesh = new();
         

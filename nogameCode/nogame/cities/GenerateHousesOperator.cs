@@ -17,7 +17,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     static private object _lo = new();
 
     private engine.world.ClusterDesc _clusterDesc;
-    private engine.RandomSource _rnd;
+    private builtin.tools.RandomSource _rnd;
     private string _myKey;
 
     /*
@@ -425,7 +425,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new engine.RandomSource(strKey);
+        _rnd = new builtin.tools.RandomSource(strKey);
 
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses",
             (name) => new engine.joyce.Material()

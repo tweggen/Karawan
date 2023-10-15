@@ -10,7 +10,7 @@ namespace nogame.cities;
 
 public class StreetNavigationController : INavigator
 {
-    private engine.RandomSource _rnd;
+    private builtin.tools.RandomSource _rnd;
 
     /*
      * Coordinates are relative to cluster.
@@ -392,7 +392,7 @@ public class StreetNavigationController : INavigator
         StreetPoint startPoint0
     )
     {
-        _rnd = new engine.RandomSource(clusterDesc0.Name);
+        _rnd = new builtin.tools.RandomSource(clusterDesc0.Name);
         _clusterDesc = clusterDesc0;
         _startPoint = startPoint0;
         _targetPoint = null;
