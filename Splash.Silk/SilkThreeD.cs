@@ -146,6 +146,8 @@ public class SilkThreeD : IThreeD
     private void _unloadMaterialFromShader()
     {
         var skMaterialEntry = _lastMaterialEntry;
+        if (null == skMaterialEntry) return;
+        
         _lastMaterialEntry = null;
         try
         {
