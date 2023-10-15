@@ -1,4 +1,4 @@
-﻿
+﻿#if false
 namespace Splash.Silk
 {
     public class SkShaderEntry : AShaderEntry
@@ -7,3 +7,4 @@ namespace Splash.Silk
         public SkShader? SkShader;
     }
 }
+#endif

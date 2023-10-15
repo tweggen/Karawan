@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿#if false
+using Silk.NET.OpenGL;
 using static engine.Logger;
 using System.Numerics;
 using System;
@@ -6,6 +7,10 @@ using System.Data;
 
 namespace Splash.Silk;
 
+
+/**
+ * Represent both fragment and vertex shader.
+ */
 public class SkShader : IDisposable
 {
     //Our handle and the GL instance this class will use, these are private because they have no reason to be public.
@@ -240,27 +245,6 @@ public class SkShader : IDisposable
         CheckError($"glDeleteProgram {_handle}.");
     }
 
-    private uint LoadShaderSource(ShaderType type, string source)
-    {
-        //To load a single shader we need to:
-        //1) Load the shader from a file.
-        //2) Create the handle.
-        //3) Upload the source to opengl.
-        //4) Compile the shader.
-        //5) Check for errors.
-        uint handle = _gl.CreateShader(type);
-        CheckError($"glCreateShader {type}.");
-        _gl.ShaderSource(handle, source);
-        CheckError($"glShaderSource {handle}.");
-        _gl.CompileShader(handle);
-        CheckError($"glCompileShader {handle}.");
-        string infoLog = _gl.GetShaderInfoLog(handle);
-        CheckError($"glGetShaderInfoLog {handle}.");
-        if (!string.IsNullOrWhiteSpace(infoLog))
-        {
-            ErrorThrow($"Error compiling shader of type {type}, failed with error {infoLog}", (m)=>new InvalidExpressionException(m));
-        }
 
-        return handle;
-    }
 }
+#endif

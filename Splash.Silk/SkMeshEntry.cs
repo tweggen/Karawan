@@ -6,6 +6,7 @@ namespace Splash.Silk
 {
     public class SkMeshEntry : AMeshEntry
     {
+        public GL _gl;
         public VertexArrayObject vao = null;
         private bool  _isUploaded = false;
 
@@ -18,12 +19,13 @@ namespace Splash.Silk
 
         private bool _traceMesh = false;
 
+        
         /**
          * Upload the mesh to the GPU.
          */
-        public void Upload(in GL gl)
+        public void Upload()
         {
-            vao = new VertexArrayObject(gl, this);
+            vao = new VertexArrayObject(_gl, this);
             if (_traceMesh) Trace($"Uploaded Mesh vaoId={vao.Handle}");
             ++_nMeshes;
             if (_nMeshes > 2000)
@@ -34,10 +36,8 @@ namespace Splash.Silk
             _isUploaded = true;
         }
 
-        /**
-         * Release the ressources creaeted by Upload again.
-         */
-        public void Release(in GL gl)
+
+        public void Release()
         {
             _isUploaded = false;
             if (_traceMesh) Trace($"Releasing Mesh vaoId={vao.Handle}");
@@ -45,6 +45,19 @@ namespace Splash.Silk
             vao = null;
             --_nMeshes;
         }
+        
+
+        /**
+         * Release the ressources creaeted by Upload again.
+         */
+        public override void Dispose()
+        {
+            if (_isUploaded)
+            {
+                Release();
+            }
+        }
+        
 
         public override bool IsUploaded()
         {
@@ -58,10 +71,12 @@ namespace Splash.Silk
 
             return _isUploaded == true;
         }
+        
 
-        public SkMeshEntry(engine.joyce.Mesh jMesh)
+        public SkMeshEntry(GL gl, engine.joyce.Mesh jMesh)
             : base(jMesh)
         {
+            _gl = gl;
         }
     }
 }

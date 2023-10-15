@@ -4,6 +4,9 @@ namespace Splash.Silk
 {
     public class SkMaterialEntry : AMaterialEntry
     {
+        public SkSingleShaderEntry? SkVertexShader = null;
+        public SkSingleShaderEntry? SkFragmentShader = null;
+        public SkProgramEntry? SkProgram = null;
         public SkTextureEntry? SkDiffuseTexture = null;
         public SkTextureEntry? SkEmissiveTexture = null;
         public bool _isUploaded = false; 

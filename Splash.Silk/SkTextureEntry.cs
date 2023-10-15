@@ -7,10 +7,12 @@ namespace Splash.Silk
     {
         public SkTexture? SkTexture = null;
 
+        
         public override bool IsUploaded()
         {
             return SkTexture != null;
         }
+        
 
         public override bool IsOutdated()
         {
@@ -33,6 +35,7 @@ namespace Splash.Silk
             return false;
         }
 
+        
         public SkTextureEntry(in engine.joyce.Texture jTexture)
             : base(jTexture)
         {

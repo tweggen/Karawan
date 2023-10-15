@@ -6,7 +6,8 @@ namespace Splash
 {
     public class RenderFrame
     {
-        public Vector4 ColAmbient;
+        public LightCollector LightCollector = new();
+        
         public IList<engine.joyce.components.AmbientLight> ListAmbientLights = new List<AmbientLight>();
         public IList<engine.joyce.components.DirectionalLight> ListDirectionalLights = new List<DirectionalLight>();
         public IList<engine.joyce.components.PointLight> ListPointLights = new List<PointLight>();

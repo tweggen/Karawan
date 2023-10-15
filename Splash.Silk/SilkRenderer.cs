@@ -13,7 +13,7 @@ using Silk.NET.OpenGL;
 using Silk.NET.SDL;
 using Splash.components;
 using Renderbuffer = engine.joyce.Renderbuffer;
-
+using static Splash.Silk.GLCheck;
 
 namespace Splash.Silk
 {
@@ -25,7 +25,6 @@ namespace Splash.Silk
 
         private readonly IThreeD _threeD;
         private readonly SilkThreeD _silkThreeD;
-        private readonly LightManager _lightManager;
         private readonly TextureManager _textureManager;
         
         /**
@@ -38,8 +37,6 @@ namespace Splash.Silk
          */
         private Vector2 _v3dSize;
         private Vector2 _vLastGlSize = new(0f, 0f);
-
-        private SkShaderEntry _skShaderEntry;
 
         private GL _gl = null;
 
@@ -145,12 +142,12 @@ namespace Splash.Silk
                  */
                 if ((cCameraParams.CameraMask & 0xffff) != 0)
                 {
-                    _skShaderEntry.SkShader.SetUniform("fogDistance", 200f);
+                    _silkThreeD.SetFogDistance(200f);
                     _gl.Enable(EnableCap.DepthTest);
                 }
                 else
                 {
-                    _skShaderEntry.SkShader.SetUniform("fogDistance", 0.5f);
+                    _silkThreeD.SetFogDistance(0.5f);
                     _gl.Disable(EnableCap.DepthTest);
                 }
 
@@ -244,7 +241,7 @@ namespace Splash.Silk
                 _v3dSize = vDesiredSize;
                 _gl.Viewport((int)ul.X, (int)(_vViewSize.Y-vDesiredSize.Y-ul.Y),
                     (uint)(vDesiredSize.X), (uint)(vDesiredSize.Y));
-                _silkThreeD.CheckError($"glViewport {_v3dSize}");
+                CheckError(_gl, $"glViewport {_v3dSize}");
                 _vLastGlSize = _v3dSize;
             }
         }
@@ -252,20 +249,18 @@ namespace Splash.Silk
 
         public void RenderFrame(in RenderFrame renderFrame)
         {
+            _silkThreeD.LoadFrame(renderFrame);
             _gl = _silkThreeD.GetGL();
             
             /*
              * Switch to the main viewport.
              */
             _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
-            _silkThreeD.CheckError("glBindFramebuffer");
+            CheckError(_gl, "glBindFramebuffer");
             _nailViewport(true, true);
-            _skShaderEntry = _silkThreeD.GetInstanceShaderEntry();
-            _skShaderEntry.SkShader.Use();
-            _lightManager.ApplyLights(renderFrame, _skShaderEntry);
-            // _gl.UseProgram(0);
             _renderParts(renderFrame.RenderParts);
             _nailViewport(false, true);
+            _silkThreeD.UnloadAfterFrame();
         }
 
 
@@ -281,7 +276,6 @@ namespace Splash.Silk
         public SilkRenderer()
         {
             _engine = I.Get<Engine>();
-            _lightManager = I.Get<LightManager>();
             _textureManager = I.Get<TextureManager>();
             _threeD = I.Get<IThreeD>();
             _silkThreeD = _threeD as SilkThreeD;

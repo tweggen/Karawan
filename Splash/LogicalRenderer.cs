@@ -14,7 +14,6 @@ public class LogicalRenderer
     private readonly engine.Engine _engine;
 
     private readonly IThreeD _threeD;
-    private readonly LightManager _lightManager;
     
     private readonly systems.CreatePfInstanceSystem _createPfInstanceSystem;
     private readonly systems.CreatePfRenderbufferSystem _createPfRenderbufferSystem;
@@ -134,10 +133,7 @@ public class LogicalRenderer
             /*
              * Create/upload all resources that haven't been uploaded.
              */
-            lock (_lightManager)
-            {
-                _lightManager.CollectLights(renderFrame);
-            }
+            renderFrame.LightCollector.CollectLights();
             _logicalRenderFrame(scene, renderFrame);
             lock(_lo)
             {
@@ -165,8 +161,7 @@ public class LogicalRenderer
     {
         _engine = I.Get<Engine>();
         _threeD = I.Get<IThreeD>();
-        _lightManager = I.Get<LightManager>();
-
+ 
         _createPfInstanceSystem = new();
         _createPfRenderbufferSystem = new();
         _drawInstancesSystem = new();

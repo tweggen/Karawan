@@ -10,8 +10,20 @@ namespace engine.joyce
 {
     public class Material
     {
+        /**
+         * Specify the fragment shader to use.
+         * If null, use the default fragment shader.
+         */
+        public AnyShader FragmentShader = null;
+        /**
+         * Specify the vertex shader to use.
+         * If null, use the default vertex shader.
+         */
+        public AnyShader VertexShader = null;
+        
         public Texture Texture { get; set; } = null;
         public Texture EmissiveTexture { get; set; } = null;
+        
         public uint AlbedoColor = 0x00000000;
         public uint EmissiveColor = 0x00000000;
         public uint EmissiveFactors = 0xffffffff;

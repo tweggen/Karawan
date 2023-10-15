@@ -23,4 +23,8 @@
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.17.1" />
+  </ItemGroup>
+
 </Project>

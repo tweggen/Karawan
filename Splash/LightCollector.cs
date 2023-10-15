@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Numerics;
 using engine;
@@ -6,7 +8,7 @@ using static engine.Logger;
 
 namespace Splash
 {
-    public class LightManager
+    public class LightCollector
     {
         private object _lo = new();
 
@@ -20,6 +22,11 @@ namespace Splash
 
         private int _lightsCount;
 
+        public Light[] Lights {
+            get => _lights; 
+        }
+        public Vector4 ColAmbient;
+        
 
         private void _addLightEntry(in LightType type,
             in Vector3 position, in Vector3 target,
@@ -45,7 +52,7 @@ namespace Splash
         }
 
 
-        private void _collectAmbientLights(in RenderFrame renderFrame)
+        private void _collectAmbientLights()
         {
             var listAmbientLights = _engine.GetEcsWorld().GetEntities()
                 .With<engine.joyce.components.AmbientLight>()
@@ -55,11 +62,11 @@ namespace Splash
             {
                 colAmbient += eLight.Get<engine.joyce.components.AmbientLight>().Color;
             }
-            renderFrame.ColAmbient = colAmbient;
+            ColAmbient = colAmbient;
         }
 
 
-        private void _collectDirectionalLights(in RenderFrame renderFrame)
+        private void _collectDirectionalLights()
         {
             /*
              * Collect all lights.
@@ -86,7 +93,7 @@ namespace Splash
         }
         
 
-        private void _collectPointLights(in RenderFrame renderFrame)
+        private void _collectPointLights()
         {
             /*
              * Collect all lights.
@@ -120,29 +127,23 @@ namespace Splash
         /**
          * Find all appropriate light entities and collect the most important.
          */
-        public void CollectLights(in RenderFrame renderFrame)
+        public void CollectLights()
         {
-            for(int i=0; i<_lightsCount; i++)
+            lock (_lo)
             {
-                _lights[i].enabled = false;
+                for (int i = 0; i < _lightsCount; i++)
+                {
+                    _lights[i].enabled = false;
+                }
+
+                _lightsCount = 0;
+                _collectDirectionalLights();
+                _collectPointLights();
+                _collectAmbientLights();
             }
-            _lightsCount = 0;
-            _collectDirectionalLights(renderFrame);
-            _collectPointLights(renderFrame);
-            _collectAmbientLights(renderFrame);
         }
 
-        /**
-         * Find all appropriate light entities and collect the most important.
-         */
-        public void ApplyLights(in RenderFrame renderFrame, in AShaderEntry aShaderEntry)
-        {
-            _threeD.ApplyAmbientLights(renderFrame.ColAmbient, aShaderEntry);
-            _threeD.ApplyAllLights(_lights, aShaderEntry);
-        }
-
-
-        public LightManager() 
+        public LightCollector() 
         {
             _engine = I.Get<Engine>();
             _threeD = I.Get<IThreeD>();

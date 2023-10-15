@@ -20,7 +20,7 @@ public class ObjectFactory<K, T> where T : class?
     private Dictionary<K, ObjectEntry<K, T> > _mapObjects = new();
 
 
-    protected T FindAdd(K key, T referenceObject)
+    public T FindAdd(K key, T referenceObject)
     {
         lock (_lo)
         {
@@ -29,6 +29,29 @@ public class ObjectFactory<K, T> where T : class?
                 return me.Instance;
             }
 
+            ObjectEntry<K, T> instanceEntry = new()
+            {
+                Lock = new(),
+                Name = key, //referenceObject.Name,
+                FactoryFunction = null,
+                Instance = referenceObject
+            };
+            _mapObjects[key] = instanceEntry;
+            return referenceObject;
+        }
+    }
+
+
+    public T FindAdd(K key, Func<K, T> referenceObjectFactory)
+    {
+        lock (_lo)
+        {
+            if (_mapObjects.TryGetValue(key, out var me))
+            {
+                return me.Instance;
+            }
+
+            T referenceObject = referenceObjectFactory(key);
             ObjectEntry<K, T> instanceEntry = new()
             {
                 Lock = new(),

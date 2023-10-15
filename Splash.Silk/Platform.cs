@@ -33,7 +33,6 @@ namespace Splash.Silk
         private SilkThreeD _silkThreeD;
         private InstanceManager _instanceManager;
         private CameraManager _cameraManager;
-        private LightManager _lightManager;
         private SilkRenderer _renderer;
         private bool _isRunning = true;
 
@@ -584,7 +583,6 @@ namespace Splash.Silk
             _instanceManager.Manage(_engine.GetEcsWorld());
             _cameraManager = I.Get<CameraManager>();
             _cameraManager.Manage(_engine.GetEcsWorld());
-            _lightManager = I.Get<LightManager>();
             
             /*
              * Create the main screen renderer.

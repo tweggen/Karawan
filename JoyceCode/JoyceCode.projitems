@@ -98,7 +98,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NewParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\OldParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Parent.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\FragmentShader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\AnyShader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\systems\NewParentSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IAssetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IBehavior.cs" />
@@ -134,6 +134,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TransformApi.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\VertexShader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\BuildExecTree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecApplyParallelNode.cs" />

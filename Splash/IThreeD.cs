@@ -25,8 +25,6 @@ public interface IThreeD
     public void UploadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
     public void UnloadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
     
-    public void ApplyAllLights(in IList<Light> listLights, in AShaderEntry aShaderEntry);
-    public void ApplyAmbientLights(in Vector4 colAmbient, in AShaderEntry aShaderEntry);
     public void SetCameraPos(in Vector3 vCamera);
     
     public void DrawMeshInstanced(

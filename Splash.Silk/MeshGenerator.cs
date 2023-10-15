@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Numerics;
+using Silk.NET.OpenGL;
 using static engine.Logger;
 
 namespace Splash.Silk
 {
     public class MeshGenerator
     {
-        public static void CreateSilkMesh( in engine.joyce.Mesh mesh, out SkMeshEntry skMeshEntry )
+        public static void CreateSilkMesh(GL gl, in engine.joyce.Mesh mesh, out SkMeshEntry skMeshEntry )
         {
             if( null==mesh.Normals )
             {
                 mesh.GenerateCCWNormals();
             }
-            skMeshEntry = new(mesh);
+            skMeshEntry = new(gl, mesh);
 
             var nVertices = mesh.Vertices.Count;
             var nIndices = mesh.Indices.Count;
