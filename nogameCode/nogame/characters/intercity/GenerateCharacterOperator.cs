@@ -79,7 +79,7 @@ public class GenerateCharacterOperator : IWorldOperator
             eTarget.Set(new engine.audio.components.MovingSound(
                 nogame.characters.tram.GenerateCharacterOperator.GetTramSound(), 
                 300f));
-#if true
+#if false
             eTarget.Set(new engine.draw.components.OSDText(
                 new Vector2(0, 30f),
                 new Vector2(160f, 18f),
