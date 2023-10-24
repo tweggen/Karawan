@@ -24,6 +24,8 @@ public class Scene : engine.IScene, engine.IInputPart
     private DefaultEcs.Entity _eLightMain;
     private DefaultEcs.Entity _eLightBack;
     private DefaultEcs.Entity _eAmbientLight;
+    
+    private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
     private engine.world.Loader _worldLoader;
     private engine.world.MetaGen _worldMetaGen;
