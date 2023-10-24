@@ -127,6 +127,5 @@ public class Module : engine.AModule
         
         _setupOSD();
         _renderOSDSystem.SetFramebuffer(_framebuffer);
-        // _updateFramebuffer();
     }
 }

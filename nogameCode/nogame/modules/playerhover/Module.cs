@@ -39,19 +39,6 @@ namespace nogame.modules.playerhover
         private BepuPhysics.BodyReference _prefShip;
 
         /**
-         * Display the current pling score.
-         */
-        private DefaultEcs.Entity _eScoreDisplay;
-        /**
-         * Display the current polytope score.
-         */
-        private DefaultEcs.Entity _ePolytopeDisplay;
-        /**
-         * Display the current polytope score.
-         */
-        private DefaultEcs.Entity _eHealthDisplay;
-
-        /**
          * Display the current cluster name.
          */
         private DefaultEcs.Entity _eClusterDisplay;
@@ -319,33 +306,6 @@ namespace nogame.modules.playerhover
 
             var gameState = I.Get<GameState>();
 
-            _eScoreDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(786f-64f-32f, 48f),
-                new Vector2(64f, 40f),
-                $"{gameState.NumberCubes}",
-                32,
-                0xff22aaee,
-                0x00000000,
-                HAlign.Right
-            ));
-            _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(786f-64f-32f-48f, 48f),
-                new Vector2(64f, 40f),
-                $"{gameState.NumberPolytopes}",
-                32,
-                0xff999922,
-                0x00000000,
-                HAlign.Right
-            ));
-            _eHealthDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(786f-64f-32f-48f, 48f+48f),
-                new Vector2(64f+48f, 40f),
-                $"{gameState.Health}",
-                32,
-                0xff448822,
-                0x00000000,
-                HAlign.Right
-            ));
         }
 
 
@@ -500,9 +460,6 @@ namespace nogame.modules.playerhover
                 _eShip.Set(new engine.behave.components.Behavior(new Behavior(MassShip)));
             }
 
-            _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
-            _ePolytopeDisplay = _engine.CreateEntity("OsdPolytopeDisplay");
-            _eHealthDisplay = _engine.CreateEntity("OsdHealthDisplay");
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
             _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
             

@@ -43,6 +43,7 @@ public class Scene : engine.IScene, engine.IInputPart
     private builtin.controllers.InputController _moduleInputController;
     
     private nogame.modules.osd.Module _moduleOsd;
+    private nogame.modules.osd.Scores _moduleOsdScores;
     private nogame.modules.playerhover.Module _modulePlayerhover;
     private nogame.modules.skybox.Module _moduleSkybox;
     private builtin.modules.ScreenComposer _moduleScreenComposer; 
@@ -260,16 +261,18 @@ public class Scene : engine.IScene, engine.IInputPart
         
         _moduleInputController.ModuleDeactivate();
         
-        _modulePlayerhover.ModuleDeactivate();
+        _modulePlayerhover?.ModuleDeactivate();
         _modulePlayerhover = null;
-        _moduleSkybox.ModuleDeactivate();
+        _moduleOsdScores?.ModuleDeactivate();
+        _moduleOsdScores = null;
+        _moduleSkybox?.ModuleDeactivate();
         _moduleSkybox = null;
         if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false")
         {
-            _moduleOsd.ModuleDeactivate();
+            _moduleOsd?.ModuleDeactivate();
             _moduleOsd = null;
         }
-        _ctrlFollowCamera.DeactivateController();
+        _ctrlFollowCamera?.DeactivateController();
         _ctrlFollowCamera = null;
 
         /*
@@ -423,6 +426,9 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleOsd = new();
             _moduleOsd.ModuleActivate(_engine);
         }
+
+        _moduleOsdScores = new();
+        _moduleOsdScores.ModuleActivate(_engine);
 
         if (engine.GlobalSettings.Get("nogame.CreateMap") != "false") { 
             _moduleMap = new();
