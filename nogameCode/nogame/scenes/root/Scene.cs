@@ -1,15 +1,8 @@
 ﻿using engine.joyce.components;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 using engine;
-using engine.behave.systems;
 using engine.joyce;
-using engine.meta;
 using engine.news;
 using engine.world;
 using static engine.Logger;
@@ -177,6 +170,7 @@ public class Scene : engine.IScene, engine.IInputPart
             _ctrlFollowCamera.ForcePreviousZoomDistance(150f);
             _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
+            _moduleOsdCamera.ModuleActivate(_engine);
             _engine.SuggestEndLoading();
         });        
     }
@@ -351,7 +345,6 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleOsdDisplay = new();
             _moduleOsdDisplay.ModuleActivate(_engine);
             _moduleOsdCamera = new();
-            _moduleOsdCamera.ModuleActivate(_engine);
         }
 
         _moduleOsdScores = new();
