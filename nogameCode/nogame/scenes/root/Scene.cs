@@ -25,14 +25,11 @@ public class Scene : engine.IScene, engine.IInputPart
     
     private engine.Engine _engine;
 
-    private DefaultEcs.World _ecsWorld;
-
     private engine.joyce.TransformApi _aTransform;
 
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
     private DefaultEcs.Entity _eCamScene;
-    private DefaultEcs.Entity _eCamOSD;
     private DefaultEcs.Entity _eLightMain;
     private DefaultEcs.Entity _eLightBack;
     private DefaultEcs.Entity _eAmbientLight;
@@ -42,7 +39,8 @@ public class Scene : engine.IScene, engine.IInputPart
 
     private builtin.controllers.InputController _moduleInputController;
     
-    private nogame.modules.osd.Module _moduleOsd;
+    private nogame.modules.osd.Display _moduleOsdDisplay;
+    private nogame.modules.osd.Camera _moduleOsdCamera;
     private nogame.modules.osd.Scores _moduleOsdScores;
     private nogame.modules.playerhover.Module _modulePlayerhover;
     private nogame.modules.skybox.Module _moduleSkybox;
@@ -57,8 +55,6 @@ public class Scene : engine.IScene, engine.IInputPart
     private modules.menu.Module _moduleUi = null;
     private bool _isUIShown = false;
 
-    private ClickableHandler _clickableHandler;
-    
     private void _togglePauseMenu()
     {
         if (null == _moduleUi)
@@ -88,7 +84,7 @@ public class Scene : engine.IScene, engine.IInputPart
     }
     
     
-    private void _toggleMap()
+    private void _toggleMap(Event ev)
     {
         bool isMapShown; 
         lock (_lo)
@@ -120,53 +116,6 @@ public class Scene : engine.IScene, engine.IInputPart
     }
 
 
-    private void _testClickable(Event ev)
-    {
-        var eFound = _clickableHandler.OnClick(ev);
-        // TXWTODO: This is a hack, we really should delegate this to the entity.
-        if (eFound.IsAlive)
-        {
-            _toggleMap();
-        }
-    }
-
-
-    private void _onTouchPress(Event ev)
-    {
-        if (GlobalSettings.Get("Android") == "true")
-        {
-            _testClickable(ev);
-        }
-#if false   
-        bool _callToggleMap = false;
-
-        // TXWTODO: Separater touch from click ui input
-        if (GlobalSettings.Get("Android") == "true")
-        {
-            lock (_lo)
-            {
-                // TXWTODO: Compute a relative position depending on view size.
-                if (ev.Position.X < 150 && ev.Position.Y < 150)
-                {
-                    _callToggleMap = true;
-                }
-            }
-
-            if (_callToggleMap)
-            {
-                _toggleMap();
-            }
-        }
-#endif
-    }
-
-
-    private void _onMousePress(Event ev)
-    {
-        _testClickable(ev);
-    }
-    
-    
     public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type != Event.INPUT_KEY_PRESSED)
@@ -178,7 +127,7 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             case "(tab)":
                 ev.IsHandled = true;
-                _toggleMap();
+                _toggleMap(ev);
                 break;
             case "(escape)":
                 ev.IsHandled = true;
@@ -228,8 +177,6 @@ public class Scene : engine.IScene, engine.IInputPart
             _ctrlFollowCamera.ForcePreviousZoomDistance(150f);
             _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
-            _eCamOSD.Get<engine.joyce.components.Camera3>().CameraFlags &=
-                ~engine.joyce.components.Camera3.Flags.PreloadOnly;
             _engine.SuggestEndLoading();
         });        
     }
@@ -255,10 +202,9 @@ public class Scene : engine.IScene, engine.IInputPart
     public void SceneDeactivate()
     {
         I.Get<InputEventPipeline>().RemoveInputPart(this);
-
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        // Implementations.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
         
+        I.Get<SubscriptionManager>().Unsubscribe("nogame.minimap.toggleMap", _toggleMap);
+
         _moduleInputController.ModuleDeactivate();
         
         _modulePlayerhover?.ModuleDeactivate();
@@ -269,8 +215,10 @@ public class Scene : engine.IScene, engine.IInputPart
         _moduleSkybox = null;
         if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false")
         {
-            _moduleOsd?.ModuleDeactivate();
-            _moduleOsd = null;
+            _moduleOsdCamera?.ModuleDeactivate();
+            _moduleOsdCamera = null;
+            _moduleOsdDisplay?.ModuleDeactivate();
+            _moduleOsdDisplay = null;
         }
         _ctrlFollowCamera?.DeactivateController();
         _ctrlFollowCamera = null;
@@ -280,7 +228,6 @@ public class Scene : engine.IScene, engine.IInputPart
          */
         _engine.SceneSequencer.RemoveScene(this);
 
-        _ecsWorld = null;
         _aTransform = null;
         _engine = null;
     }
@@ -317,7 +264,6 @@ public class Scene : engine.IScene, engine.IInputPart
         /*
          * Some local shortcuts
          */
-        _ecsWorld = _engine.GetEcsWorld();
         _aTransform = I.Get<engine.joyce.TransformApi>();
 
         /*
@@ -378,27 +324,6 @@ public class Scene : engine.IScene, engine.IInputPart
                 I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d"));
             
         }
-        /*
-         * Create an osd camera
-         */
-        {
-            _eCamOSD = _engine.CreateEntity("RootScene.OSDCamera");
-            var cCamOSD = new engine.joyce.components.Camera3();
-            cCamOSD.Angle = 0f; //60.0f;
-            cCamOSD.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
-            cCamOSD.FarFrustum = 100f;  
-            cCamOSD.CameraMask = 0x00010000;
-            cCamOSD.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
-            _eCamOSD.Set(cCamOSD);
-            _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));
-        }
-
-        /*
-         * Setup osd interaction handler
-         */
-        {
-            _clickableHandler = new(_engine, _eCamOSD);
-        }
 
         if (true)
         {
@@ -423,8 +348,10 @@ public class Scene : engine.IScene, engine.IInputPart
         }
 
         if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
-            _moduleOsd = new();
-            _moduleOsd.ModuleActivate(_engine);
+            _moduleOsdDisplay = new();
+            _moduleOsdDisplay.ModuleActivate(_engine);
+            _moduleOsdCamera = new();
+            _moduleOsdCamera.ModuleActivate(_engine);
         }
 
         _moduleOsdScores = new();
@@ -439,8 +366,6 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleMiniMap.ModuleActivate(_engine);
         }
 
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        // Implementations.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
 
         _moduleInputController = I.Get<builtin.controllers.InputController>();
         _moduleInputController.ModuleActivate(_engine);
@@ -462,6 +387,8 @@ public class Scene : engine.IScene, engine.IInputPart
             nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
 
+        I.Get<SubscriptionManager>().Subscribe("nogame.minimap.toggleMap", _toggleMap);
+        
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         lock (_lo)

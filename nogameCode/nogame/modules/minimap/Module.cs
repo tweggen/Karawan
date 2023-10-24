@@ -5,6 +5,7 @@ using DefaultEcs;
 using engine;
 using engine.behave.systems;
 using engine.joyce;
+using engine.news;
 using engine.ross;
 using engine.world;
 
@@ -60,7 +61,10 @@ public class Module : AModule
                 new Quaternion(0f, 0f, 0f, 0f),
                 new Vector3(-1f+0.15f, 9f/16f-0.24f, -1f));
 
-            _eMiniMap.Set(new engine.behave.components.Clickable());
+            _eMiniMap.Set(new engine.behave.components.Clickable()
+            {
+                ClickEventFactory = (e) => new Event("nogame.minimap.toggleMap", null)
+            });
         }
     }
 

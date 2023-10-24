@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using engine.joyce.components;
+using engine.news;
 using static engine.Logger;
 
 namespace engine.behave.systems;
@@ -105,7 +106,17 @@ public class ClickableHandler
         }
 
         Vector2 pos = ev.Position;
-        _findAt(pos, out var eFound);
+        if (_findAt(pos, out var eFound))
+        {
+            var cClickable = eFound.Get<engine.behave.components.Clickable>();
+            var factory = cClickable.ClickEventFactory;
+            if (factory != null)
+            {
+                var cev = factory(eFound);
+                I.Get<EventQueue>().Push(cev);
+            }
+        }
+
         return eFound;
     }
 

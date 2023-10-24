@@ -62,7 +62,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Clickable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\BehaviorSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\ClickableScanner.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\WiperSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ConsoleLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ControllerState.cs" />

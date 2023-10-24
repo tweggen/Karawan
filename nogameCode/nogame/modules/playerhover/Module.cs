@@ -1,12 +1,8 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using engine;
 using engine.draw;
 using engine.gongzuo;
@@ -21,11 +17,10 @@ namespace nogame.modules.playerhover
     {
         static public readonly string PhysicsName = "nogame.playerhover";
         
-        private readonly object _lo = new object();
+        private readonly object _lo = new();
 
         private engine.Engine _engine;
 
-        private DefaultEcs.World _ecsWorld;
         private engine.joyce.TransformApi _aTransform;
 
         private DefaultEcs.Entity _eCamera;
@@ -358,12 +353,8 @@ namespace nogame.modules.playerhover
 
         public void ModuleActivate(engine.Engine engine0)
         {
-            lock (_lo)
-            {
-                _engine = engine0;
-                _ecsWorld = _engine.GetEcsWorld();
-                _aTransform = I.Get<engine.joyce.TransformApi>();
-            }
+            _engine = engine0;
+            _aTransform = I.Get<engine.joyce.TransformApi>();
 
             if (null == _soundCrash)
             {
@@ -483,11 +474,6 @@ namespace nogame.modules.playerhover
                 _polyballSound.Volume = 0.1f;
             }
             
-        }
-
-        
-        public Module()
-        {
         }
     }
 }
