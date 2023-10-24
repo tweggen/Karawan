@@ -20,8 +20,6 @@ public class Scene : engine.IScene, engine.IInputPart
 
     private engine.joyce.TransformApi _aTransform;
 
-    private builtin.controllers.FollowCameraController _ctrlFollowCamera;
-
     private DefaultEcs.Entity _eCamScene;
     private DefaultEcs.Entity _eLightMain;
     private DefaultEcs.Entity _eLightBack;
@@ -43,7 +41,6 @@ public class Scene : engine.IScene, engine.IInputPart
     private nogame.modules.minimap.Module _moduleMiniMap;
 
     private bool _isMapShown = false;
-    private int _isSettingUp = 0;
 
     private modules.menu.Module _moduleUi = null;
     private bool _isUIShown = false;
@@ -134,11 +131,6 @@ public class Scene : engine.IScene, engine.IInputPart
     
     private void _triggerLoadWorld()
     {
-        lock (_lo)
-        {
-            ++_isSettingUp;
-        }
-        
         Vector3 vMe;
         if (!_eCamScene.Has<Transform3ToWorld>())
         {
@@ -154,11 +146,6 @@ public class Scene : engine.IScene, engine.IInputPart
                 ErrorThrow("WorldLoader is null here?", m => new InvalidOperationException(m));
             }
             _worldLoader.WorldLoaderProvideFragments(vMe);
-        }
-
-        lock (_lo)
-        {
-            --_isSettingUp;
         }
     }
 
@@ -235,11 +222,6 @@ public class Scene : engine.IScene, engine.IInputPart
                 368, 207
                 //480,270
                 ));
-        
-        lock (_lo)
-        {
-            ++_isSettingUp;
-        }
         
         _engine = engine0;
         _engine.SuggestBeginLoading();
@@ -358,8 +340,7 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleMiniMap = new();
             _moduleMiniMap.ModuleActivate(_engine);
         }
-
-
+        
         _moduleInputController = I.Get<builtin.controllers.InputController>();
         _moduleInputController.ModuleActivate(_engine);
         
@@ -383,10 +364,5 @@ public class Scene : engine.IScene, engine.IInputPart
         I.Get<SubscriptionManager>().Subscribe("nogame.minimap.toggleMap", _toggleMap);
         
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-        
-        lock (_lo)
-        {
-            --_isSettingUp;
-        }
     }
 }

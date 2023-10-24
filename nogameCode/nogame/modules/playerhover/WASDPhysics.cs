@@ -263,11 +263,6 @@ namespace nogame.modules.playerhover
         }
 
 
-        public void Dispose()
-        {
-        }
-        
-
         public WASDPhysics(
             in DefaultEcs.Entity eTarget,
             in float massShip)

@@ -15,13 +15,13 @@ public abstract class AModule : IModule
     }
 
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         // Do not dispose the dependant modules.
     }
     
 
-    public void ModuleDeactivate()
+    public virtual void ModuleDeactivate()
     {
         foreach (var module in _activatedModules)
         {
@@ -30,7 +30,7 @@ public abstract class AModule : IModule
     }
 
 
-    public void ModuleActivate(engine.Engine engine)
+    public virtual void ModuleActivate(engine.Engine engine)
     {
         foreach (var moduleDependency in _moduleDependencies)
         {

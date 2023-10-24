@@ -321,14 +321,14 @@ namespace nogame.modules.playerhover
 
 
 
-        public void Dispose()
+        public override void Dispose()
         {
             _soundCrash.Dispose();
             _soundCrash = null;
         }
         
 
-        public void ModuleDeactivate()
+        public override void ModuleDeactivate()
         {
             _engine.OnLogicalFrame -= _onLogicalFrame;
             _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
@@ -351,7 +351,7 @@ namespace nogame.modules.playerhover
         }
 
 
-        public void ModuleActivate(engine.Engine engine0)
+        public override void ModuleActivate(engine.Engine engine0)
         {
             _engine = engine0;
             _aTransform = I.Get<engine.joyce.TransformApi>();
