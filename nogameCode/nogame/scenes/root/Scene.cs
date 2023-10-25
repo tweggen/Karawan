@@ -23,18 +23,6 @@ public class Scene : engine.IScene, engine.IInputPart
     
     private engine.Engine _engine;
 
-    private engine.joyce.TransformApi _aTransform;
-
-    private DefaultEcs.Entity _eCamScene;
-    private DefaultEcs.Entity _eLightMain;
-    private DefaultEcs.Entity _eLightBack;
-    private DefaultEcs.Entity _eAmbientLight;
-    
-    //private builtin.controllers.FollowCameraController _ctrlFollowCamera;
-
-    private engine.world.Loader _worldLoader;
-    private engine.world.MetaGen _worldMetaGen;
-
     private builtin.controllers.InputController _moduleInputController;
     
     private nogame.modules.osd.Display _moduleOsdDisplay;
@@ -43,6 +31,7 @@ public class Scene : engine.IScene, engine.IInputPart
     private nogame.modules.playerhover.Module _modulePlayerhover;
     private nogame.modules.Gameplay _moduleGameplay;
     private nogame.modules.skybox.Module _moduleSkybox;
+    private nogame.modules.World _moduleWorld;
     private builtin.modules.ScreenComposer _moduleScreenComposer; 
 
     private modules.map.Module _moduleMap;
@@ -137,27 +126,6 @@ public class Scene : engine.IScene, engine.IInputPart
     }
 
     
-    private void _triggerLoadWorld()
-    {
-        Vector3 vMe;
-        if (!_eCamScene.Has<Transform3ToWorld>())
-        {
-            return;
-        }
-        
-        vMe = _eCamScene.Get<Transform3ToWorld>().Matrix.Translation;
-        // TXWTODO: We don't precisely know when we have the first valid position 
-        if (vMe != Vector3.Zero)
-        {
-            if (_worldLoader == null)
-            {
-                ErrorThrow("WorldLoader is null here?", m => new InvalidOperationException(m));
-            }
-            _worldLoader.WorldLoaderProvideFragments(vMe);
-        }
-    }
-
-
     private void _kickoffScene()
     {
         I.Get<EventQueue>().Push(new Event("nogame.scenes.root.Scene.kickoff", "now"));
@@ -167,9 +135,6 @@ public class Scene : engine.IScene, engine.IInputPart
          */
         _engine.QueueMainThreadAction(() =>
         {
-            // _ctrlFollowCamera.ForcePreviousZoomDistance(150f);
-            _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
-                ~engine.joyce.components.Camera3.Flags.PreloadOnly;
             _moduleOsdCamera.ModuleActivate(_engine);
             _engine.SuggestEndLoading();
         });        
@@ -178,9 +143,6 @@ public class Scene : engine.IScene, engine.IInputPart
     
     public void SceneOnLogicalFrame(float dt)
     {
-        _triggerLoadWorld();
-        
-        
         /*
          * Find out of we are supposed to react on the analog controls.
          */
@@ -224,14 +186,15 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleOsdDisplay?.ModuleDeactivate();
             _moduleOsdDisplay = null;
         }
-        
+
+        _moduleWorld?.ModuleDeactivate();
+        _moduleWorld = null;
 
         /*
          * Null out everything we don't need when the scene is unloaded.
          */
         _engine.SceneSequencer.RemoveScene(this);
 
-        _aTransform = null;
         _engine = null;
     }
     
@@ -250,65 +213,10 @@ public class Scene : engine.IScene, engine.IInputPart
 
         string keyScene = "abx";
 
-        _worldMetaGen = MetaGen.Instance();
-        _worldLoader = _worldMetaGen.Loader;
-
-        /*
-         * trigger generating the world at the starting point.
-         */ 
-        _triggerLoadWorld();
-
-
-        /*
-         * Some local shortcuts
-         */
-        _aTransform = I.Get<engine.joyce.TransformApi>();
-
-        /*
-         * Global objects.
-         */
-        
-        /*
-         * Directional light
-         */
+        if (true)
         {
-            _eLightMain = _engine.CreateEntity("RootScene.DirectionalLight");
-            _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.7f, 0.8f, 0.9f, 0.0f)));
-            _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
-        }
-        {
-            _eLightBack = _engine.CreateEntity("RootScene.OtherLight");
-            _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.2f, 0.2f, 0.0f, 0.0f)));
-            _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
-        }
-        
-        /*
-         * Ambient light
-         */
-        {
-            _eAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
-            _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
-        }
-
-        /*
-         * Create a scene camera.
-         * Keep it invisible.
-         */
-        {
-            _eCamScene = _engine.CreateEntity("RootScene.SceneCamera");
-            var cCamScene = new engine.joyce.components.Camera3();
-            cCamScene.Angle = 60.0f;
-            cCamScene.NearFrustum = 1f;
-            cCamScene.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
-
-            /*
-             * We need to be as far away as the skycube is. Plus a bonus.
-             */
-            cCamScene.FarFrustum = (float)Math.Sqrt(3) * 1000f + 100f;
-            cCamScene.Renderbuffer = I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d");
-            cCamScene.CameraMask = 0x00000001;
-            _eCamScene.Set(cCamScene);
-            // No set position, done by controller
+            _moduleWorld = new();
+            _moduleWorld.ModuleActivate(_engine);
         }
 
         /*
@@ -367,7 +275,6 @@ public class Scene : engine.IScene, engine.IInputPart
          */
         _engine.SceneSequencer.AddScene(0, this);
 
-        _engine.SetCameraEntity(_eCamScene);
         _engine.SetPlayerEntity(_modulePlayerhover.GetShipEntity());
 
         /*
