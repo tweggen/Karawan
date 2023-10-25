@@ -34,6 +34,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\MapFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapTerrainProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\demo\Flyalong.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\Gameplay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\map\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\minimap\Module.cs" />

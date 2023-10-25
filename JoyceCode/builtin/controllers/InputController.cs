@@ -36,6 +36,8 @@ public class InputController : engine.AModule, engine.IInputPart
 
     private void _onKeyDown(Event ev)
     {
+        _controllerState.LastInput = DateTime.UtcNow;
+        
         switch (ev.Code)
         {
             case "(shiftleft)":
@@ -67,6 +69,8 @@ public class InputController : engine.AModule, engine.IInputPart
 
     private void _onKeyUp(Event ev)
     {
+        _controllerState.LastInput = DateTime.UtcNow;
+
         switch (ev.Code)
         {
             case "(shiftleft)":
@@ -109,6 +113,8 @@ public class InputController : engine.AModule, engine.IInputPart
              */
             if (vPress.X <= 0.5)
             {
+                _controllerState.LastInput = DateTime.UtcNow;
+
                 if (vRel.Y < -ControllerYTolerance)
                 {
                     /*

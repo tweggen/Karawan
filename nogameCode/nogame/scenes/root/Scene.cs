@@ -13,6 +13,11 @@ public class Scene : engine.IScene, engine.IInputPart
 {
     private object _lo = new();
 
+    enum SceneMode
+    {
+        Gameplay,
+        Demo,
+    };
 
     private static float MY_Z_ORDER = 20f;
     
@@ -25,7 +30,7 @@ public class Scene : engine.IScene, engine.IInputPart
     private DefaultEcs.Entity _eLightBack;
     private DefaultEcs.Entity _eAmbientLight;
     
-    private builtin.controllers.FollowCameraController _ctrlFollowCamera;
+    //private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
     private engine.world.Loader _worldLoader;
     private engine.world.MetaGen _worldMetaGen;
@@ -36,6 +41,7 @@ public class Scene : engine.IScene, engine.IInputPart
     private nogame.modules.osd.Camera _moduleOsdCamera;
     private nogame.modules.osd.Scores _moduleOsdScores;
     private nogame.modules.playerhover.Module _modulePlayerhover;
+    private nogame.modules.Gameplay _moduleGameplay;
     private nogame.modules.skybox.Module _moduleSkybox;
     private builtin.modules.ScreenComposer _moduleScreenComposer; 
 
@@ -154,9 +160,14 @@ public class Scene : engine.IScene, engine.IInputPart
 
     private void _kickoffScene()
     {
+        I.Get<EventQueue>().Push(new Event("nogame.scenes.root.Scene.kickoff", "now"));
+        
+        /*
+         * Force a zoom from further away into the player. 
+         */
         _engine.QueueMainThreadAction(() =>
         {
-            _ctrlFollowCamera.ForcePreviousZoomDistance(150f);
+            // _ctrlFollowCamera.ForcePreviousZoomDistance(150f);
             _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
             _moduleOsdCamera.ModuleActivate(_engine);
@@ -168,7 +179,13 @@ public class Scene : engine.IScene, engine.IInputPart
     public void SceneOnLogicalFrame(float dt)
     {
         _triggerLoadWorld();
-                    
+        
+        
+        /*
+         * Find out of we are supposed to react on the analog controls.
+         */
+        
+        #if false
         // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
         var frontZ = I.Get<InputEventPipeline>().GetFrontZ();
         if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
@@ -179,6 +196,8 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _ctrlFollowCamera.EnableInput(true);
         }
+        #endif
+        
     }
 
 
@@ -190,6 +209,8 @@ public class Scene : engine.IScene, engine.IInputPart
 
         _moduleInputController.ModuleDeactivate();
         
+        _moduleGameplay?.ModuleDeactivate();
+        _moduleGameplay = null;
         _modulePlayerhover?.ModuleDeactivate();
         _modulePlayerhover = null;
         _moduleOsdScores?.ModuleDeactivate();
@@ -203,8 +224,7 @@ public class Scene : engine.IScene, engine.IInputPart
             _moduleOsdDisplay?.ModuleDeactivate();
             _moduleOsdDisplay = null;
         }
-        _ctrlFollowCamera?.DeactivateController();
-        _ctrlFollowCamera = null;
+        
 
         /*
          * Null out everything we don't need when the scene is unloaded.
@@ -307,14 +327,10 @@ public class Scene : engine.IScene, engine.IInputPart
         {
             _modulePlayerhover = new();
             _modulePlayerhover.ModuleActivate(_engine);
-        }
 
-        /*
-         * Create a camera controller that directly controls the camera with wasd,
-         * requires the playerhover.
-         */
-        _ctrlFollowCamera = new(_engine, _eCamScene, _modulePlayerhover.GetShipEntity());
-        _ctrlFollowCamera.ActivateController();
+            _moduleGameplay = new();
+            _moduleGameplay.ModuleActivate(_engine);
+        }
 
         if (engine.GlobalSettings.Get("nogame.CreateUI") != "false") { 
             _moduleUi = new();

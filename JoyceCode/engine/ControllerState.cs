@@ -6,6 +6,7 @@ namespace engine
 {
     public class ControllerState
     {
+        public DateTime LastInput;
         public int FrontMotion { 
             get {
                 int frontMotion = WalkForward - WalkBackward;
