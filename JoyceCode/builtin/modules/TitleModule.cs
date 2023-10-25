@@ -24,8 +24,6 @@ class ActiveCardEntry
  */
 public class TitleModule : engine.AModule
 {
-    private object _lo = new();
-    private engine.Engine _engine;
     private List<TitleCard> _cards = new();
     private Dictionary<TitleCard, ActiveCardEntry> _dictCards = new();
 
@@ -149,15 +147,16 @@ public class TitleModule : engine.AModule
         }
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
+        base.ModuleDeactivate();
     }
 
 
     /**
      * Immediately after activation, the timepoints are registered.
      */
-    public void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
 
         _engine.AddModule(this);
 
@@ -172,13 +171,7 @@ public class TitleModule : engine.AModule
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 
-
-    public void Dispose()
-    {
-        
-    }
     
-
     public void Add(TitleCard card)
     {
         lock (_lo)

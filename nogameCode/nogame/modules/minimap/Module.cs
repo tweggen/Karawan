@@ -21,10 +21,6 @@ namespace nogame.modules.minimap;
  */
 public class Module : AModule
 {
-    private object _lo = new();
-
-    private engine.Engine _engine;
-    
     private bool _createdResources = false;
     
     private DefaultEcs.Entity _eMiniMap;
@@ -162,22 +158,25 @@ public class Module : AModule
     }
 
 
-    public void Dispose()
+    public override void Dispose()
     {
         _destroyResources();
+        base.Dispose();
     }
+    
 
-    public new void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.OnPlayerEntityChanged -= _onPlayerEntityChanged;
         _engine.RemoveModule(this);
+        base.ModuleDeactivate();
     }
 
     
-    public new void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
         _needResources();
         _createNewMiniMap();
         _engine.AddModule(this);

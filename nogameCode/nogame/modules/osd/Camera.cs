@@ -9,8 +9,6 @@ namespace nogame.modules.osd;
 
 public class Camera : AModule
 {
-    private Engine _engine;
-
     private TransformApi _aTransform = I.Get<TransformApi>();
     
     private DefaultEcs.Entity _eCamOSD;
@@ -44,15 +42,15 @@ public class Camera : AModule
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
 
         _engine.RemoveModule(this);
-        _engine = null;
         
         _eCamOSD.Dispose();
+        base.ModuleDeactivate();
     }
     
     
-    public void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
         _engine.AddModule(this);
         
         /*

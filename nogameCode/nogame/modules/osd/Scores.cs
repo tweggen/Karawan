@@ -10,12 +10,6 @@ namespace nogame.modules.osd;
  */
 public class Scores : engine.AModule
 {
-    private readonly object _lo = new();
-
-    private Engine _engine;
-    private DefaultEcs.World _ecsWorld;
-
-    
     /**
      * Display the current pling score.
      */
@@ -64,7 +58,7 @@ public class Scores : engine.AModule
     }
     
     
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogical;
@@ -72,13 +66,13 @@ public class Scores : engine.AModule
         _eScoreDisplay.Dispose();
         _ePolytopeDisplay.Dispose();
         _eHealthDisplay.Dispose();
+        base.ModuleDeactivate();
     }
     
     
-    public void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
-        _ecsWorld = _engine.GetEcsWorld();
+        base.ModuleActivate(engine0);
         _engine.AddModule(this);
 
         _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");

@@ -10,9 +10,6 @@ namespace engine.news;
 
 public class InputEventPipeline : engine.AModule
 {
-    private object _lo = new();
-    private Engine _engine;
-
     private SortedDictionary<float, IInputPart> _dictParts = new();
     
     
@@ -101,20 +98,16 @@ public class InputEventPipeline : engine.AModule
     }
     
     
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe("input.", _onInputEvent);
+        base.ModuleDeactivate();
     }
 
     
-    public void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate(engine.Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
         I.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
-    }
-
-    
-    public void Dispose()
-    {
     }
 }

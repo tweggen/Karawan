@@ -54,10 +54,6 @@ public class Module : AModule, IInputPart
 {
     private static float MY_Z_ORDER = 500f;
     
-    private object _lo = new();
-
-    private engine.Engine _engine;
-    
     private bool _createdResources = false;
     
     private DefaultEcs.Entity _eMap;
@@ -274,7 +270,7 @@ public class Module : AModule, IInputPart
     }
     
     
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         lock(_lo) {
             _requestedMapParams.IsVisible = false;
@@ -284,12 +280,13 @@ public class Module : AModule, IInputPart
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.RemoveModule(this);
+        base.ModuleDeactivate();
     }
 
     
-    public void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
 
         _needResources();
         _engine.AddModule(this);

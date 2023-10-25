@@ -6,6 +6,8 @@ namespace engine;
 
 public abstract class AModule : IModule
 {
+    protected object _lo = new();
+    protected Engine _engine;
     protected List<ModuleDependency> _moduleDependencies = new();
     private List<IModule> _activatedModules = new();
     
@@ -27,11 +29,14 @@ public abstract class AModule : IModule
         {
             module.ModuleDeactivate();
         }
+
+        _engine = null;
     }
 
 
     public virtual void ModuleActivate(engine.Engine engine)
     {
+        _engine = engine;
         foreach (var moduleDependency in _moduleDependencies)
         {
             try

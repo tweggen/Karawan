@@ -6,8 +6,6 @@ namespace nogame.modules;
 
 public class Gameplay : AModule
 {
-    private object _lo = new();
-    private Engine _engine;
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
     private Entity _eCamera;
     private Entity _ePlayer;
@@ -102,12 +100,13 @@ public class Gameplay : AModule
         I.Get<SubscriptionManager>().Unsubscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
         _engine.RemoveModule(this);
         _killOldCameraController();
+        base.ModuleDeactivate();
     }
     
     
     public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
         _engine.AddModule(this);
 
         {

@@ -46,6 +46,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlingPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WASDPhysics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\skybox\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\logos\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\KeyHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\Scene.cs" />

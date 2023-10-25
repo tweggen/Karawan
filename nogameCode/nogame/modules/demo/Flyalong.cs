@@ -12,8 +12,6 @@ namespace nogame.modules.demo;
 
 public class Flyalong : AModule
 {
-    private Engine _engine;
-
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
     private Timer _selectNewTimer;
@@ -71,16 +69,17 @@ public class Flyalong : AModule
     }
     
     
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         _detachSubject();
         _engine.RemoveModule(this);
+        base.ModuleDeactivate();
     }
     
     
-    public void ModuleActivate(Engine engine)
+    public void ModuleActivate(Engine engine0)
     {
-        _engine = engine;
+        base.ModuleActivate(engine0);
         _engine.AddModule(this);
         _selectNewTimer = new(10000);
         _selectNewTimer.Elapsed += _attachNewSubject;

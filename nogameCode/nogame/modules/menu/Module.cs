@@ -15,10 +15,6 @@ namespace nogame.modules.menu;
  */
 public class Module : AModule
 {
-    private object _lo = new();
-
-    private engine.Engine _engine;
-
     // For now, let it use the OSD camera.
     public uint MenuCameraMask = 0x00010000;
 
@@ -29,22 +25,18 @@ public class Module : AModule
     }
     
 
-    public void Dispose()
-    {
-    }
-
-
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
         _engine.OnImGuiRender -= _onImGuiRender;
         _engine.DisableEntityIds();
+        base.ModuleDeactivate();
     }
 
     
-    public void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
         _engine.AddModule(this);
         _engine.OnImGuiRender += _onImGuiRender;
         _engine.EnableEntityIds();

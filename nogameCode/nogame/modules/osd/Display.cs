@@ -8,9 +8,6 @@ namespace nogame.modules.osd;
 
 public class Display : engine.AModule
 {
-    private readonly object _lo = new();
-    private engine.Engine _engine = null;
-
     private engine.joyce.TransformApi _aTransform;
 
     /**
@@ -92,28 +89,20 @@ public class Display : engine.AModule
     }
 
     
-    public void Dispose()
-    {
-        // renderosdsystem already was disposed in deactivate.
-    }
-    
-    
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogical;
         _renderOSDSystem.Dispose();
         _renderOSDSystem = null;
+        base.ModuleDeactivate();
     }
 
     
-    public void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        lock (_lo)
-        {
-            _engine = engine0;
-        }
-
+        base.ModuleActivate(engine0);
+ 
         /*
          * local shortcuts.
          */

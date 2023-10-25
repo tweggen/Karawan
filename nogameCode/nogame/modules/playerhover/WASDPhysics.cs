@@ -11,7 +11,6 @@ namespace nogame.modules.playerhover
     internal class WASDPhysics : AModule, IInputPart
     {
         public static float MY_Z_ORDER = 25f;
-        private engine.Engine _engine;
         private DefaultEcs.Entity _eTarget;
         private engine.joyce.TransformApi _aTransform;
 
@@ -235,18 +234,18 @@ namespace nogame.modules.playerhover
         }
 
 
-        public void ModuleDeactivate()
+        public override void ModuleDeactivate()
         {
             _engine.RemoveModule(this);
             _engine.OnLogicalFrame -= _onLogicalFrame;
             I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
-
+            base.ModuleDeactivate();
         }
 
 
-        public void ModuleActivate(engine.Engine engine)
+        public override void ModuleActivate(engine.Engine engine0)
         {
-            _engine = engine;
+            base.ModuleActivate(engine0);
             _aTransform = I.Get<engine.joyce.TransformApi>();
             _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 

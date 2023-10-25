@@ -28,9 +28,6 @@ internal class ScreenLayer
  */
 public class ScreenComposer : AModule
 {
-    private object _lo = new();
-    private engine.Engine _engine;
-    
     private Entity _eCamera;
 
 
@@ -96,9 +93,10 @@ public class ScreenComposer : AModule
     }
     
 
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
+        base.ModuleDeactivate();
     }
 
 
@@ -126,9 +124,9 @@ public class ScreenComposer : AModule
     }
     
     
-    public void ModuleActivate(Engine engine0)
+    public override void ModuleActivate(Engine engine0)
     {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
 
         _engine.AddModule(this);
 

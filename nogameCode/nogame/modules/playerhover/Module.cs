@@ -17,10 +17,6 @@ namespace nogame.modules.playerhover
     {
         static public readonly string PhysicsName = "nogame.playerhover";
         
-        private readonly object _lo = new();
-
-        private engine.Engine _engine;
-
         private engine.joyce.TransformApi _aTransform;
 
         private DefaultEcs.Entity _eCamera;
@@ -344,16 +340,14 @@ namespace nogame.modules.playerhover
 
             _engine.RemoveModule(this);
 
-            lock (_lo)
-            {
-                _engine = null;
-            }
+            base.ModuleDeactivate();
         }
 
 
         public override void ModuleActivate(engine.Engine engine0)
         {
-            _engine = engine0;
+            base.ModuleActivate(engine0);
+            
             _aTransform = I.Get<engine.joyce.TransformApi>();
 
             if (null == _soundCrash)

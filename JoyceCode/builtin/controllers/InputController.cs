@@ -15,10 +15,6 @@ namespace builtin.controllers;
  */
 public class InputController : engine.AModule, engine.IInputPart
 {
-    private object _lo = new();
-    
-    private engine.Engine _engine;
-
     private Vector2 _vViewSize = Vector2.Zero;
     private Vector2 _vMouseMove = Vector2.Zero;
     private Vector2 _mousePressPosition = Vector2.Zero;
@@ -497,18 +493,13 @@ public class InputController : engine.AModule, engine.IInputPart
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         I.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         _engine.RemoveModule(this);
+        base.ModuleDeactivate();
     }
 
 
-    public void Dispose()
+    public override void ModuleActivate(Engine engine0)
     {
-        
-    }
-    
-
-    public void ModuleActivate(Engine engine0)
-    {
-        _engine = engine0;
+        base.ModuleActivate(engine0);
         I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         I.Get<InputEventPipeline>().AddInputPart(0f, this);
         _refreshViewSize();
