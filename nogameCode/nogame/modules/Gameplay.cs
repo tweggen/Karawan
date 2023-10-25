@@ -26,6 +26,21 @@ public class Gameplay : AModule
     }
 
 
+    private void _onLogicalFrame(object? sender, float dt)
+    {
+        // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
+        var frontZ = I.Get<InputEventPipeline>().GetFrontZ();
+        if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
+        {
+            _ctrlFollowCamera.EnableInput(false);
+        }
+        else
+        {
+            _ctrlFollowCamera.EnableInput(true);
+        }
+    }
+    
+
     private void _killOldCameraController()
     {
         _ctrlFollowCamera?.DeactivateController();
@@ -94,6 +109,7 @@ public class Gameplay : AModule
 
     public override void ModuleDeactivate()
     {
+        _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.OnCameraEntityChanged -= _onNewCamera;
         _engine.OnPlayerEntityChanged -= _onNewPlayer;
         
@@ -124,5 +140,6 @@ public class Gameplay : AModule
         I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
         _engine.OnCameraEntityChanged += _onNewCamera;
         _engine.OnPlayerEntityChanged += _onNewPlayer;
+        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

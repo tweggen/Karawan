@@ -35,7 +35,7 @@ public class Camera : AModule
     {
         _testClickable(ev);
     }
-    
+
 
     public void ModuleDeactivate()
     {

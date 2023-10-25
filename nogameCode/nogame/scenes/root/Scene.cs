@@ -143,23 +143,6 @@ public class Scene : engine.IScene, engine.IInputPart
     
     public void SceneOnLogicalFrame(float dt)
     {
-        /*
-         * Find out of we are supposed to react on the analog controls.
-         */
-        
-        #if false
-        // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
-        var frontZ = I.Get<InputEventPipeline>().GetFrontZ();
-        if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
-        {
-            _ctrlFollowCamera.EnableInput(false);
-        }
-        else
-        {
-            _ctrlFollowCamera.EnableInput(true);
-        }
-        #endif
-        
     }
 
 
