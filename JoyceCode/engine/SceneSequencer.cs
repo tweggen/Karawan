@@ -51,7 +51,7 @@ public class SceneSequencer : IDisposable
         }
         if (oldScene != null)
         {
-            oldScene.SceneDeactivate();
+            oldScene.ModuleDeactivate();
         }
         
         // TXWTODO: Wait for old scene to be done? No? Fadeouts??
@@ -62,7 +62,7 @@ public class SceneSequencer : IDisposable
         }
         if (scene != null)
         {
-            scene.SceneActivate(_engine);
+            scene.ModuleActivate(_engine);
         }
 
     }

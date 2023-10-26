@@ -12,13 +12,8 @@ using static engine.Logger;
 
 namespace nogame.scenes.logos;
 
-public class Scene : engine.IScene
+public class Scene : AModule, IScene 
 {
-    private object _lo = new();
-    engine.Engine _engine;
-
-    private DefaultEcs.World _ecsWorld;
-
     private engine.joyce.TransformApi _aTransform;
 
     private DefaultEcs.Entity _eCamera;
@@ -100,10 +95,16 @@ public class Scene : engine.IScene
                 );
         });
     }
+
+
+    public void SceneKickoff()
+    {
+    }
     
 
     public void SceneDeactivate()
     {
+        _engine.RemoveModule(this);
         _modTitle.ModuleDeactivate();
 
         /*
@@ -116,7 +117,6 @@ public class Scene : engine.IScene
         {
             engine = _engine;
             _engine = null;
-            _ecsWorld = null;
             _aTransform = null;
         }
 
@@ -192,16 +192,14 @@ public class Scene : engine.IScene
     }
     
     
-    public void SceneActivate(engine.Engine engine0)
+    public override void ModuleActivate(engine.Engine engine0)
     {
+        base.ModuleActivate(engine0);
         lock(_lo)
         {
-            _engine = engine0;
-
             /*
              * Some local shortcuts
              */
-            _ecsWorld = _engine.GetEcsWorld();
             _aTransform = I.Get<engine.joyce.TransformApi>();
 
         }
@@ -221,7 +219,6 @@ public class Scene : engine.IScene
          * Moving light
          */
         {
-#if true
             _eLight = _engine.CreateEntity("LogosScene.PointLight");
             _eLight.Set(new engine.joyce.components.PointLight(
                 new Vector4(1f, 0.95f, 0.9f, 1.0f), 15.0f));
@@ -229,15 +226,6 @@ public class Scene : engine.IScene
                 Quaternion.CreateFromAxisAngle(
                     new Vector3(0f, 1f, 0f), Single.Pi/2f));
             _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
-#else
-            _eLight = _engine.CreateEntity("LogosScene.DirectionalLight");
-            _eLight.Set(new engine.joyce.components.DirectionalLight(
-                new Vector4(1f, 1f, 1f, 1.0f)));
-            _aTransform.SetRotation(_eLight, 
-                Quaternion.CreateFromAxisAngle(
-                    new Vector3(0f, 1f, 0f), Single.Pi/2f));
-            _aTransform.SetPosition(_eLight, new Vector3(0f, /*-10f + 3f * t*/ 0f, 25f));
-#endif
         }
 
         /*
@@ -261,6 +249,6 @@ public class Scene : engine.IScene
 
         _engine.SceneSequencer.AddScene(5, this);
         _modTitle = new();
-        
+        _engine.AddModule(this);
     }
 }

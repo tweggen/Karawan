@@ -147,8 +147,14 @@ public class Scene : AModule, IScene, IInputPart
     }
 
 
-    public void SceneDeactivate()
+    public void SceneKickoff()
     {
+    }
+
+
+    public override void ModuleDeactivate()
+    {
+        _engine.RemoveModule(this);
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         
         I.Get<SubscriptionManager>().Unsubscribe("nogame.minimap.toggleMap", _toggleMap);
@@ -179,12 +185,14 @@ public class Scene : AModule, IScene, IInputPart
          */
         _engine.SceneSequencer.RemoveScene(this);
 
-        _engine = null;
+        base.ModuleDeactivate();
     }
     
 
-    public void SceneActivate(engine.Engine engine0)
+    public override void ModuleActivate(engine.Engine engine0)
     {
+        base.ModuleActivate(engine0);
+        
         I.Get<ObjectRegistry<Renderbuffer>>().RegisterFactory(
             "rootscene_3d", 
             name => new Renderbuffer(name,
@@ -192,7 +200,6 @@ public class Scene : AModule, IScene, IInputPart
                 //480,270
                 ));
         
-        _engine = engine0;
         _engine.SuggestBeginLoading();
 
         string keyScene = "abx";
@@ -273,19 +280,8 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<SubscriptionManager>().Subscribe("nogame.minimap.toggleMap", _toggleMap);
         
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-    }
-
-
-    public override void ModuleDeactivate()
-    {
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
-    }
-
-
-    public override void ModuleActivate(Engine engine0)
-    {
-        base.ModuleActivate(engine0);
+        
         _engine.AddModule(this);
     }
+
 }
