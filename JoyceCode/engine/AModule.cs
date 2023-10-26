@@ -8,10 +8,14 @@ public abstract class AModule : IModule
 {
     protected object _lo = new();
     protected Engine _engine;
-    protected List<ModuleDependency> _moduleDependencies = new();
+    protected IEnumerable<ModuleDependency> _moduleDependencies = null;
     private List<IModule> _activatedModules = new();
+
+
+    protected virtual IEnumerable<ModuleDependency> ModuleDepends() => new List<ModuleDependency>();
     
-    public IEnumerable<ModuleDependency> ModuleRequires()
+    
+    public virtual IEnumerable<ModuleDependency> ModuleRequires()
     {
         return new List<ModuleDependency>(_moduleDependencies);
     }
@@ -37,6 +41,7 @@ public abstract class AModule : IModule
     public virtual void ModuleActivate(engine.Engine engine)
     {
         _engine = engine;
+        _moduleDependencies = ModuleDepends();
         foreach (var moduleDependency in _moduleDependencies)
         {
             try

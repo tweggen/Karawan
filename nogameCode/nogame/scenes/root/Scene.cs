@@ -1,5 +1,6 @@
 ﻿using engine.joyce.components;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using engine;
 using engine.joyce;
@@ -9,10 +10,8 @@ using static engine.Logger;
 
 namespace nogame.scenes.root;
 
-public class Scene : engine.IScene, engine.IInputPart
+public class Scene : AModule, IScene, IInputPart
 {
-    private object _lo = new();
-
     enum SceneMode
     {
         Gameplay,
@@ -20,9 +19,11 @@ public class Scene : engine.IScene, engine.IInputPart
     };
 
     private static float MY_Z_ORDER = 20f;
-    
-    private engine.Engine _engine;
 
+    protected override IEnumerable<ModuleDependency> ModuleDepends() => new List<ModuleDependency>()
+    {
+    };
+    
     private builtin.controllers.InputController _moduleInputController;
     
     private nogame.modules.osd.Display _moduleOsdDisplay;
@@ -272,5 +273,19 @@ public class Scene : engine.IScene, engine.IInputPart
         I.Get<SubscriptionManager>().Subscribe("nogame.minimap.toggleMap", _toggleMap);
         
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+    }
+
+
+    public override void ModuleDeactivate()
+    {
+        _engine.RemoveModule(this);
+        base.ModuleDeactivate();
+    }
+
+
+    public override void ModuleActivate(Engine engine0)
+    {
+        base.ModuleActivate(engine0);
+        _engine.AddModule(this);
     }
 }
