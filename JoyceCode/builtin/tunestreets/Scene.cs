@@ -7,17 +7,18 @@ using static engine.Logger;
 
 namespace builtin.tunestreets;
 
-public class Scene : IScene, IInputPart
+public class Scene : AModule, IScene, IInputPart
 {
-    private object _lo = new();
-    
-    private Engine _engine;
-
     private static float MY_Z_ORDER = 20f;
     
     private engine.world.ClusterDesc _clusterDesc;
 
     private bool _shallGenerate = true;
+
+
+    public void SceneKickoff()
+    {
+    }
     
     
     public void SceneOnLogicalFrame(float dt)
@@ -43,7 +44,7 @@ public class Scene : IScene, IInputPart
             switch (ev.Code)
             {
                 case "(escape)":
-                    SceneDeactivate();
+                    ModuleDeactivate();
                     ev.IsHandled = true;
                     break;
                 default:
@@ -53,18 +54,20 @@ public class Scene : IScene, IInputPart
     }
 
 
-    public void SceneDeactivate()
+    public override void ModuleDeactivate()
     {
+        _engine.RemoveModule(this);
         _shallGenerate = false;
         _engine.SceneSequencer.RemoveScene(this);
         I.Get<InputEventPipeline>().RemoveInputPart(this);
+        base.ModuleDeactivate();
     }
     
 
-    public void SceneActivate(Engine engine)
+    public override void ModuleActivate(Engine engine)
     {
-        _engine = engine;
-
+        base.ModuleActivate(engine);
+        
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.SceneSequencer.AddScene(5, this);
         Task.Run(() =>
@@ -94,6 +97,6 @@ public class Scene : IScene, IInputPart
                 }
             }
         });
+        _engine.AddModule(this);
     }
-
 }

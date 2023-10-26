@@ -13,10 +13,16 @@ profile:
 #  - name: <SomeEnabledInspectionId>
 
 #Disable inspections
-#exclude:
-#  - name: <SomeDisabledInspectionId>
-#    paths:
-#      - <path/where/not/run/inspection>
+exclude:
+  - name: BepuPhysics
+    paths:
+      - ../bepuphysics2
+  - name: ObjLoader
+    paths:
+      - ../ObjLoader
+  - name: DefaultEcs
+    paths:
+      - ../DefaultEcs
 
 #Execute shell command before Qodana execution (Applied in CI/CD pipeline)
 #bootstrap: sh ./prepare-qodana.sh

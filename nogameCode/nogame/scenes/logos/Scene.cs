@@ -102,7 +102,7 @@ public class Scene : AModule, IScene
     }
     
 
-    public void SceneDeactivate()
+    public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
         _modTitle.ModuleDeactivate();
