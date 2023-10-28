@@ -67,7 +67,7 @@ public class Module : AModule, IInputPart
 
     
     // For now, let it use the OSD camera.
-    public uint MapCameraMask = 0x00010000;
+    public uint MapCameraMask = 0x01000000;
 
 
     private void _updateMapParams()

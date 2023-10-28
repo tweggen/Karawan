@@ -9,6 +9,7 @@ public class Gameplay : AModule
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
     private Entity _eCamera;
     private Entity _ePlayer;
+    private bool _wasEnabled = true;
 
 
     private void _onRootKickoff(Event ev)
@@ -30,13 +31,20 @@ public class Gameplay : AModule
     {
         // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
         var frontZ = I.Get<InputEventPipeline>().GetFrontZ();
+        bool shallBeEnabled;
         if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
         {
-            _ctrlFollowCamera.EnableInput(false);
+            shallBeEnabled = false;
         }
         else
         {
-            _ctrlFollowCamera.EnableInput(true);
+            shallBeEnabled = true;
+        }
+
+        if (_wasEnabled != shallBeEnabled)
+        {
+            _ctrlFollowCamera.EnableInput(shallBeEnabled);
+            _wasEnabled = shallBeEnabled;
         }
     }
     

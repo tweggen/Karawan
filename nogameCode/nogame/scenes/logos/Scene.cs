@@ -160,9 +160,9 @@ public class Scene : AModule, IScene
             AlbedoTexture = new Texture("logos.joyce.albedo-joyce-engine.png"),
             EmissiveTexture = new Texture("logos.joyce.emissive-joyce-engine.png"),
             StartTransform =  new engine.joyce.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, Vector3.Zero),
+                true, 0x01000000, Quaternion.Identity, Vector3.Zero),
             EndTransform =  new engine.joyce.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, Vector3.Zero),
+                true, 0x01000000, Quaternion.Identity, Vector3.Zero),
         });
 
         _modTitle.Add(new TitleCard()
@@ -175,9 +175,9 @@ public class Scene : AModule, IScene
             Size = new(40f, 40f/1280f*400f),
             EmissiveTexture = new Texture("titlelogo.png"),
             StartTransform =  new engine.joyce.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f)),
             EndTransform =  new engine.joyce.components.Transform3(
-                true, 0x00010000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
         });
         
         _modTitle.ModuleActivate(_engine);
@@ -241,7 +241,7 @@ public class Scene : AModule, IScene
              * We need to be as far away as the skycube is. Plus a bonus.
              */
             cCamera.FarFrustum = (float)100f;
-            cCamera.CameraMask = 0x00010000;
+            cCamera.CameraMask = 0x01000000;
             _eCamera.Set(cCamera);
             _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
         }

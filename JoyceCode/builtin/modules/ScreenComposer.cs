@@ -34,7 +34,7 @@ public class ScreenComposer : AModule
     private SortedDictionary<string, ScreenLayer> _mapLayers = new();
     private List<ScreenLayer> _listLayers = new();
 
-    public uint CameraMask { get; set; } = 0x80000000;
+    public uint CameraMask { get; set; } = 0x00400000;
 
     
     private void _createLayer(ScreenLayer l)

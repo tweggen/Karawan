@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using engine;
 using Splash.components;
 using static engine.Logger;
@@ -31,7 +32,7 @@ public class LogicalRenderer
         var listCameras = _engine.GetEcsWorld().GetEntities()
             .With<engine.joyce.components.Camera3>()
             .With<engine.joyce.components.Transform3ToWorld>()
-            .AsEnumerable();
+            .AsEnumerable().OrderBy(e => e.Get<engine.joyce.components.Camera3>().CameraMask);
 
         bool haveSkyboxPosition = false;
 
@@ -90,6 +91,9 @@ public class LogicalRenderer
             }
         }
 
+        /*
+         * This way we first render to the buffers, then directly to the screen.
+         */
         foreach (var renderPart in listDirectRenders)
         {
             renderFrame.RenderParts.Add(renderPart);

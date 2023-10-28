@@ -37,7 +37,7 @@ public class Camera : AModule
     }
 
 
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
 
@@ -62,7 +62,7 @@ public class Camera : AModule
             cCamOSD.Angle = 0f;
             cCamOSD.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
             cCamOSD.FarFrustum = 100f;  
-            cCamOSD.CameraMask = 0x00010000;
+            cCamOSD.CameraMask = 0x01000000;
             cCamOSD.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamOSD.Set(cCamOSD);
             _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));

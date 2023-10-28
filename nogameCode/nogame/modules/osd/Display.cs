@@ -63,7 +63,7 @@ public class Display : engine.AModule
             _eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             
             _aTransform.SetTransforms(
-                _eFramebuffer, true, 0x00010000,
+                _eFramebuffer, true, 0x01000000,
                 new Quaternion(0f,0f,0f,1f),
                 new Vector3(0f, 0f, 0f));
         }

@@ -22,7 +22,6 @@ public class Scene : AModule, IScene, IInputPart
     {
         new(typeof( nogame.modules.World)),
         new(typeof(builtin.modules.ScreenComposer)),
-        new(typeof(builtin.controllers.InputController)),
         new(typeof(nogame.modules.playerhover.Module)),
         new(typeof(nogame.modules.Gameplay)),
         new("nogame.CreateUI", typeof(modules.menu.Module)) { ActivateAsModule = false },
@@ -32,6 +31,7 @@ public class Scene : AModule, IScene, IInputPart
         new(typeof(nogame.modules.osd.Scores)),
         new("nogame.CreateMap", typeof(modules.map.Module)) { ActivateAsModule = false},
         new("nogame.CreateMiniMap", typeof(nogame.modules.minimap.Module)),
+        new(typeof(builtin.controllers.InputController)),
     };
     
     //private nogame.modules.World _moduleWorld;
