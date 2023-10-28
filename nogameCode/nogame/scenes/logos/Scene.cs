@@ -95,14 +95,14 @@ public class Scene : AModule, IScene
                 );
         });
     }
-
+    
 
     public void SceneKickoff()
     {
     }
     
-
-    public override void ModuleDeactivate()
+    
+    public void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
         _modTitle.ModuleDeactivate();
@@ -116,7 +116,6 @@ public class Scene : AModule, IScene
         lock (_lo)
         {
             engine = _engine;
-            _engine = null;
             _aTransform = null;
         }
 
@@ -124,6 +123,7 @@ public class Scene : AModule, IScene
          * Null out everything we don't need when the scene is unloaded.
          */
         engine.SceneSequencer.RemoveScene(this);
+        base.ModuleDeactivate();
     }
 
     
@@ -194,7 +194,6 @@ public class Scene : AModule, IScene
     
     public override void ModuleActivate(engine.Engine engine0)
     {
-        base.ModuleActivate(engine0);
         lock(_lo)
         {
             /*
@@ -247,8 +246,9 @@ public class Scene : AModule, IScene
         }
 
 
+        _engine.AddModule(this);
         _engine.SceneSequencer.AddScene(5, this);
         _modTitle = new();
-        _engine.AddModule(this);
+        
     }
 }

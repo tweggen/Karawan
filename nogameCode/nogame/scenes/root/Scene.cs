@@ -1,12 +1,10 @@
-﻿using engine.joyce.components;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using builtin.modules;
 using engine;
 using engine.joyce;
 using engine.news;
-using engine.world;
-using static engine.Logger;
 
 namespace nogame.scenes.root;
 
@@ -22,30 +20,43 @@ public class Scene : AModule, IScene, IInputPart
 
     protected override IEnumerable<ModuleDependency> ModuleDepends() => new List<ModuleDependency>()
     {
+        new(typeof( nogame.modules.World)),
+        new(typeof(builtin.modules.ScreenComposer)),
+        new(typeof(builtin.controllers.InputController)),
+        new(typeof(nogame.modules.playerhover.Module)),
+        new(typeof(nogame.modules.Gameplay)),
+        new("nogame.CreateUI", typeof(modules.menu.Module)) { ActivateAsModule = false },
+        new("nogame.CreateSkybox", typeof(nogame.modules.skybox.Module)),
+        new("nogame.CreateOSD", typeof(nogame.modules.osd.Display)),
+        new("nogame.CreateOSD", typeof(nogame.modules.osd.Camera)) { ActivateAsModule = false },
+        new(typeof(nogame.modules.osd.Scores)),
+        new("nogame.CreateMap", typeof(modules.map.Module)) { ActivateAsModule = false},
+        new("nogame.CreateMiniMap", typeof(nogame.modules.minimap.Module)),
+        new(typeof(builtin.controllers.InputController)),
     };
     
-    private builtin.controllers.InputController _moduleInputController;
+    //private nogame.modules.World _moduleWorld;
+    // private builtin.modules.ScreenComposer _moduleScreenComposer; 
+    //private nogame.modules.playerhover.Module _modulePlayerhover;
+    //private nogame.modules.Gameplay _moduleGameplay;
+    //private modules.menu.Module _moduleUi = null;
+    // private nogame.modules.skybox.Module _moduleSkybox;
+    //private nogame.modules.osd.Display _moduleOsdDisplay;
+    // private nogame.modules.osd.Camera _moduleOsdCamera;
+    //private nogame.modules.osd.Scores _moduleOsdScores;
+    //private modules.map.Module _moduleMap;
+    //private nogame.modules.minimap.Module _moduleMiniMap;
+    //private builtin.controllers.InputController _moduleInputController;
     
-    private nogame.modules.osd.Display _moduleOsdDisplay;
-    private nogame.modules.osd.Camera _moduleOsdCamera;
-    private nogame.modules.osd.Scores _moduleOsdScores;
-    private nogame.modules.playerhover.Module _modulePlayerhover;
-    private nogame.modules.Gameplay _moduleGameplay;
-    private nogame.modules.skybox.Module _moduleSkybox;
-    private nogame.modules.World _moduleWorld;
-    private builtin.modules.ScreenComposer _moduleScreenComposer; 
-
-    private modules.map.Module _moduleMap;
-    private nogame.modules.minimap.Module _moduleMiniMap;
 
     private bool _isMapShown = false;
 
-    private modules.menu.Module _moduleUi = null;
     private bool _isUIShown = false;
 
     private void _togglePauseMenu()
     {
-        if (null == _moduleUi)
+        var mUI = M<modules.menu.Module>();
+        if (null == mUI)
         {
             return;
         }
@@ -60,14 +71,14 @@ public class Scene : AModule, IScene, IInputPart
         if (isUIShown)
         {
             _engine.SetViewRectangle(Vector2.Zero, Vector2.Zero );
-            _moduleUi.ModuleDeactivate();
+            mUI.ModuleDeactivate();
             _engine.DisableMouse();
         }
         else
         {
             _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
             _engine.EnableMouse();
-            _moduleUi.ModuleActivate(_engine);
+            mUI.ModuleActivate(_engine);
         }
     }
     
@@ -88,8 +99,8 @@ public class Scene : AModule, IScene, IInputPart
              *
              * TXWTODO: Remove the map part.
              */
-            _moduleMap.ModuleDeactivate();
-            _moduleMiniMap.ModuleActivate(_engine);
+            M<modules.map.Module>().ModuleDeactivate();
+            M<modules.minimap.Module>().ModuleActivate(_engine);
         }
         else
         {
@@ -98,8 +109,8 @@ public class Scene : AModule, IScene, IInputPart
              *
              * TXWTODO: Add the map part.
              */
-            _moduleMap.ModuleActivate(_engine);
-            _moduleMiniMap.ModuleDeactivate();
+            M<modules.map.Module>().ModuleActivate(_engine);
+            M<modules.minimap.Module>().ModuleDeactivate();
         }
     }
 
@@ -136,7 +147,7 @@ public class Scene : AModule, IScene, IInputPart
          */
         _engine.QueueMainThreadAction(() =>
         {
-            _moduleOsdCamera.ModuleActivate(_engine);
+            M<modules.osd.Camera>().ModuleActivate(_engine);
             _engine.SuggestEndLoading();
         });        
     }
@@ -158,27 +169,6 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         
         I.Get<SubscriptionManager>().Unsubscribe("nogame.minimap.toggleMap", _toggleMap);
-
-        _moduleInputController.ModuleDeactivate();
-        
-        _moduleGameplay?.ModuleDeactivate();
-        _moduleGameplay = null;
-        _modulePlayerhover?.ModuleDeactivate();
-        _modulePlayerhover = null;
-        _moduleOsdScores?.ModuleDeactivate();
-        _moduleOsdScores = null;
-        _moduleSkybox?.ModuleDeactivate();
-        _moduleSkybox = null;
-        if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false")
-        {
-            _moduleOsdCamera?.ModuleDeactivate();
-            _moduleOsdCamera = null;
-            _moduleOsdDisplay?.ModuleDeactivate();
-            _moduleOsdDisplay = null;
-        }
-
-        _moduleWorld?.ModuleDeactivate();
-        _moduleWorld = null;
 
         /*
          * Null out everything we don't need when the scene is unloaded.
@@ -204,69 +194,20 @@ public class Scene : AModule, IScene, IInputPart
 
         string keyScene = "abx";
 
-        if (true)
-        {
-            _moduleWorld = new();
-            _moduleWorld.ModuleActivate(_engine);
-        }
-
         /*
          * Create the screen composer
          */
         {
-            _moduleScreenComposer = new();
-            _moduleScreenComposer.ModuleActivate(_engine);
-            _moduleScreenComposer.AddLayer(
+            M<ScreenComposer>().AddLayer(
                 "rootscene_3d", 0,
                 I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d"));
             
         }
 
-        if (true)
-        {
-            _modulePlayerhover = new();
-            _modulePlayerhover.ModuleActivate(_engine);
-
-            _moduleGameplay = new();
-            _moduleGameplay.ModuleActivate(_engine);
-        }
-
-        if (engine.GlobalSettings.Get("nogame.CreateUI") != "false") { 
-            _moduleUi = new();
-        }
-
-        if (engine.GlobalSettings.Get("nogame.CreateSkybox") != "false") {
-            _moduleSkybox = new();
-            _moduleSkybox.ModuleActivate(_engine);
-        }
-
-        if (engine.GlobalSettings.Get("nogame.CreateOSD") != "false") { 
-            _moduleOsdDisplay = new();
-            _moduleOsdDisplay.ModuleActivate(_engine);
-            _moduleOsdCamera = new();
-        }
-
-        _moduleOsdScores = new();
-        _moduleOsdScores.ModuleActivate(_engine);
-
-        if (engine.GlobalSettings.Get("nogame.CreateMap") != "false") { 
-            _moduleMap = new();
-        }
-        
-        if (engine.GlobalSettings.Get("nogame.CreateMiniMap") != "false") { 
-            _moduleMiniMap = new();
-            _moduleMiniMap.ModuleActivate(_engine);
-        }
-        
-        _moduleInputController = I.Get<builtin.controllers.InputController>();
-        _moduleInputController.ModuleActivate(_engine);
-        
         /*
          * Now, that everything has been created, add the scene.
          */
         _engine.SceneSequencer.AddScene(0, this);
-
-        _engine.SetPlayerEntity(_modulePlayerhover.GetShipEntity());
 
         /*
          * Finally, set the timeline trigger for unblanking the cameras and starting the show.

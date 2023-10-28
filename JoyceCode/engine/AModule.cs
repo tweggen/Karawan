@@ -9,10 +9,24 @@ public abstract class AModule : IModule
     protected object _lo = new();
     protected Engine _engine;
     protected IEnumerable<ModuleDependency> _moduleDependencies = null;
+    
     private List<IModule> _activatedModules = new();
+    private Dictionary<Type, IModule> _mapModules = new();
 
-
+    
     protected virtual IEnumerable<ModuleDependency> ModuleDepends() => new List<ModuleDependency>();
+
+    protected T M<T>() where T : class
+    {
+        if (_mapModules.TryGetValue(typeof(T), out var mod))
+        {
+            return mod as T;
+        }
+        else
+        {
+            return null;
+        }
+    }
     
     
     public virtual IEnumerable<ModuleDependency> ModuleRequires()
@@ -34,6 +48,8 @@ public abstract class AModule : IModule
             module.ModuleDeactivate();
         }
 
+        _mapModules.Clear();
+        _activatedModules.Clear();
         _engine = null;
     }
 
@@ -44,25 +60,34 @@ public abstract class AModule : IModule
         _moduleDependencies = ModuleDepends();
         foreach (var moduleDependency in _moduleDependencies)
         {
+            bool condition = true;
+            if (moduleDependency.Condition != null)
+            {
+                condition = moduleDependency.Condition();
+            }
+
+            if (!condition) continue;
+            
             try
             {
-                Object implementation = I.Instance.GetInstance(moduleDependency.TypeName);
+                Object implementation = Activator.CreateInstance(moduleDependency.ModuleType);
                 moduleDependency.Implementation = implementation;
                 if (moduleDependency.ActivateAsModule)
                 {
                     var module = implementation as IModule;
                     if (module == null)
                     {
-                        ErrorThrow($"Dependency {moduleDependency.TypeName} is not an IModule.", (m) => new InvalidCastException(m));
+                        ErrorThrow($"Dependency {moduleDependency.ModuleType.FullName} is not an IModule.", (m) => new InvalidCastException(m));
                     }
                         
                     module.ModuleActivate(engine);
                     _activatedModules.Add(module);
+                    _mapModules.Add(moduleDependency.ModuleType, module);
                 }
             }
             catch (Exception e)
             {
-                Error($"Unable to resolve dependency ${moduleDependency.TypeName}: {e}.");
+                Error($"Unable to resolve dependency ${moduleDependency.ModuleType.FullName} : {e}.");
             }
         }
     }

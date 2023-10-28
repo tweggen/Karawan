@@ -468,6 +468,7 @@ namespace nogame.modules.playerhover
                 _polyballSound.Volume = 0.1f;
             }
             
+            _engine.SetPlayerEntity(GetShipEntity());
         }
     }
 }
