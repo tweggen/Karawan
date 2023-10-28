@@ -32,7 +32,6 @@ public class Scene : AModule, IScene, IInputPart
         new(typeof(nogame.modules.osd.Scores)),
         new("nogame.CreateMap", typeof(modules.map.Module)) { ActivateAsModule = false},
         new("nogame.CreateMiniMap", typeof(nogame.modules.minimap.Module)),
-        new(typeof(builtin.controllers.InputController)),
     };
     
     //private nogame.modules.World _moduleWorld;
@@ -181,14 +180,15 @@ public class Scene : AModule, IScene, IInputPart
 
     public override void ModuleActivate(engine.Engine engine0)
     {
-        base.ModuleActivate(engine0);
-        
+        // FIXME: We need to register the renderbuffer before we reference it in the world module. This is not beatiful. Anyway, setting up the renderer doesn't belong here.
         I.Get<ObjectRegistry<Renderbuffer>>().RegisterFactory(
             "rootscene_3d", 
             name => new Renderbuffer(name,
                 368, 207
                 //480,270
-                ));
+            ));
+
+        base.ModuleActivate(engine0);
         
         _engine.SuggestBeginLoading();
 

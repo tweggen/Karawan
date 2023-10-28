@@ -194,6 +194,7 @@ public class Scene : AModule, IScene
     
     public override void ModuleActivate(engine.Engine engine0)
     {
+        base.ModuleActivate(engine0);
         lock(_lo)
         {
             /*

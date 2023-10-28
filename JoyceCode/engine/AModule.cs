@@ -70,24 +70,27 @@ public abstract class AModule : IModule
             
             try
             {
-                Object implementation = Activator.CreateInstance(moduleDependency.ModuleType);
+                Type newType = moduleDependency.ModuleType;
+                Object implementation = Activator.CreateInstance(newType);
                 moduleDependency.Implementation = implementation;
+
+                var module = implementation as IModule;
+                if (module == null)
+                {
+                    ErrorThrow($"Dependency {moduleDependency.ModuleType.FullName} is not an IModule.",
+                        (m) => new InvalidCastException(m));
+                }
+                _mapModules.Add(moduleDependency.ModuleType, module);
                 if (moduleDependency.ActivateAsModule)
                 {
-                    var module = implementation as IModule;
-                    if (module == null)
-                    {
-                        ErrorThrow($"Dependency {moduleDependency.ModuleType.FullName} is not an IModule.", (m) => new InvalidCastException(m));
-                    }
-                        
+
                     module.ModuleActivate(engine);
                     _activatedModules.Add(module);
-                    _mapModules.Add(moduleDependency.ModuleType, module);
                 }
             }
             catch (Exception e)
             {
-                Error($"Unable to resolve dependency ${moduleDependency.ModuleType.FullName} : {e}.");
+                Error($"Unable to resolve dependency {moduleDependency.ModuleType.FullName} : {e}.");
             }
         }
     }

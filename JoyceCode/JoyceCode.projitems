@@ -52,6 +52,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ABehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Assets.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Attributes\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\MovingSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\Music.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\Music.cs" />
