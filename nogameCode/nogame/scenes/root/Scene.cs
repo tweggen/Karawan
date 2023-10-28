@@ -18,20 +18,20 @@ public class Scene : AModule, IScene, IInputPart
 
     private static float MY_Z_ORDER = 20f;
 
-    protected override IEnumerable<ModuleDependency> ModuleDepends() => new List<ModuleDependency>()
+    protected override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new(typeof( nogame.modules.World)),
-        new(typeof(builtin.modules.ScreenComposer)),
-        new(typeof(nogame.modules.playerhover.Module)),
-        new(typeof(nogame.modules.Gameplay)),
-        new("nogame.CreateUI", typeof(modules.menu.Module)) { ActivateAsModule = false },
-        new("nogame.CreateSkybox", typeof(nogame.modules.skybox.Module)),
-        new("nogame.CreateOSD", typeof(nogame.modules.osd.Display)),
-        new("nogame.CreateOSD", typeof(nogame.modules.osd.Camera)) { ActivateAsModule = false },
-        new(typeof(nogame.modules.osd.Scores)),
-        new("nogame.CreateMap", typeof(modules.map.Module)) { ActivateAsModule = false},
-        new("nogame.CreateMiniMap", typeof(nogame.modules.minimap.Module)),
-        new(typeof(builtin.controllers.InputController)),
+        new MyModule<nogame.modules.World>(),
+        new MyModule<builtin.modules.ScreenComposer>(),
+        new MyModule<nogame.modules.playerhover.Module>(),
+        new MyModule<nogame.modules.Gameplay>(),
+        new MyModule<modules.menu.Module>("nogame.CreateUI") { Activate = false },
+        new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
+        new MyModule<nogame.modules.osd.Display>("nogame.CreateOSD"),
+        new MyModule<nogame.modules.osd.Camera>("nogame.CreateOSD") { Activate = false },
+        new MyModule<nogame.modules.osd.Scores>(),
+        new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false},
+        new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
+        new SharedModule<builtin.controllers.InputController>(),
     };
     
     //private nogame.modules.World _moduleWorld;

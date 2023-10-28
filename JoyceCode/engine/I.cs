@@ -81,26 +81,33 @@ public sealed class I
     }
     
     
-    public T GetInstance<T>()
+    public object GetInstance(Type t)
     {
         InstanceEntry instanceEntry;
         lock (_lo)
         {
-            if (!_mapInstances.TryGetValue(typeof(T), out instanceEntry))
+            if (!_mapInstances.TryGetValue(t, out instanceEntry))
             {
-                ErrorThrow($"Requested unknown type {typeof(T).FullName}", (m)=>new ArgumentException(m));
+                ErrorThrow($"Requested unknown type {t.FullName}", (m)=>new ArgumentException(m));
             }
 
             if (null == instanceEntry)
             {
-                ErrorThrow($"Instance entry for type {typeof(T).FullName} was null.", (m)=>new InvalidOperationException(m));
+                ErrorThrow($"Instance entry for type {t.FullName} was null.", (m)=>new InvalidOperationException(m));
             }
         }
 
-        return (T)_getInstance(instanceEntry);
+        return _getInstance(instanceEntry);
     }
 
 
+    public T GetInstance<T>()
+    {
+        return (T)GetInstance(typeof(T));
+    }
+
+
+    #if false
     public Object GetInstance(string typeName)
     {
         InstanceEntry ie = null;
@@ -122,6 +129,7 @@ public sealed class I
 
         return _getInstance(ie);
     }
+    #endif
 
 
     public static T Get<T>()
