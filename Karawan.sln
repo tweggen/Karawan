@@ -34,9 +34,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DefaultEcs", "..\DefaultEcs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CjClutter.ObjLoader.Loader", "..\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj", "{BCAE7440-ED91-48CF-8B67-84028C9349FD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\bepuphysics2\BepuPhysics\BepuPhysics.csproj", "{EEC28B9D-0F57-4895-B3E5-EFAE158C4B83}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuPhysics", "..\BepuPhysics2\BepuPhysics\BepuPhysics.csproj", "{EEC28B9D-0F57-4895-B3E5-EFAE158C4B83}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\bepuphysics2\BepuUtilities\BepuUtilities.csproj", "{9E7A3BCC-2A85-4009-A124-876753FF6269}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\BepuPhysics2\BepuUtilities\BepuUtilities.csproj", "{9E7A3BCC-2A85-4009-A124-876753FF6269}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.OpenAL", "Boom.OpenAL\Boom.OpenAL.csproj", "{DE9315AF-6633-4916-A589-34A4BAD9C966}"
 EndProject
