@@ -81,15 +81,17 @@ public class API
         }
 
         ulong collHash = ((ulong)bhandle << 32) | (ulong)ahandle;
-        if (_previousCollisions.TryGetValue(collHash, out uint lastFrameId))
+        bool havePreviousCollision = false;
+        lock (_lo)
         {
-            // We already know this collision, ignore it, updating the frame id.
-            lock (_lo)
-            {
-                _previousCollisions[collHash] = _frameId;
-            }
+            havePreviousCollision = _previousCollisions.TryGetValue(collHash, out uint lastFrameId);
+            /*
+             * Regardless, if we had a collision or not, update the frameId.
+             */
+            _previousCollisions[collHash] = _frameId;
         }
-        else
+        
+        if (!havePreviousCollision)
         {
             /*
              * We deliver collisions by calling the contact event handler of the behavior.
@@ -153,10 +155,6 @@ public class API
                     }
                 });
             }
-            lock (_lo)
-            {
-                _previousCollisions[collHash] = _frameId;
-            }
         }
 
     }
@@ -194,7 +192,7 @@ public class API
     public void Update(float dt)
     {
         _refreshCollisions();
-        Simulation.Timestep(dt);
+        Simulation.Timestep(dt,_physicsThreadDispatcher);
     }
 
 
