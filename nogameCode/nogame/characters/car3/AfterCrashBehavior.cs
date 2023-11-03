@@ -111,9 +111,10 @@ public class AfterCrashBehavior : ABehavior
         {
             if (null != _oldBehavior)
             {
+                entity.Get<engine.physics.components.Body>().Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
                 var cCarDynamic = entity.Get<engine.physics.components.Body>();
-                cCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
-                entity.Set(cCarDynamic);
+                //cCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
+                //entity.Set(cCarDynamic);
                 entity.Remove<engine.physics.components.Body>();
 
                 lock (_engine.Simulation)
