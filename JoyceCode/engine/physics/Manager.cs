@@ -95,10 +95,9 @@ internal class Manager
     {
         if (0 == (cBody.Flags & components.Body.DONT_FREE_PHYSICS))
         {
+            _aPhysics.RemoveContactListener(entity, cBody.Reference);
             _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
         }
-
-        _aPhysics.RemoveContactListener(entity, cBody.Reference);
     }
 
 
