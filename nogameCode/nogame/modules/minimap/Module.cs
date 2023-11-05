@@ -84,6 +84,7 @@ public class Module : AModule
     private int _updateMinimapFrameCount = 0;
     private readonly int _updateMinimapCount = 4;
 
+    
     private void _createNewMiniMap()
     {
         DefaultEcs.Entity ePlayerEntity;
@@ -135,7 +136,7 @@ public class Module : AModule
     private void _onLogicalFrame(object? sender, float dt)
     {
         ++_updateMinimapFrameCount;
-        if (_updateMinimapFrameCount != _updateMinimapCount)
+        if (_updateMinimapFrameCount < _updateMinimapCount)
         {
             return;
         }
@@ -182,5 +183,6 @@ public class Module : AModule
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
         _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
+        _onPlayerEntityChanged(this, _engine.GetPlayerEntity());
     }
 }
