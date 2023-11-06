@@ -18,10 +18,10 @@ namespace builtin.controllers
         DefaultEcs.Entity _eTarget;
         DefaultEcs.Entity _eCarrot;
         engine.joyce.TransformApi _aTransform;
+        
         private Vector3 _vPreviousCameraPos;
-
-        Quaternion _qLastPerfectCameraRotation;
-        Vector2 _vMouseOffset;
+        private Quaternion _qLastPerfectCameraRotation;
+        private Vector2 _vMouseOffset;
         float _lastMouseMove = 0f;
         private bool _firstFrame = true;
         private bool _isInputEnabled = true;
@@ -109,6 +109,12 @@ namespace builtin.controllers
             
         }
 
+        
+        /**
+         * Compute the desired camera position.
+         *
+         * Note, the orientation is included just for historic reasons.
+         */
         private void _computePlainCameraPos(
             float dt,
             out Vector3 vPerfectCameraPos,
@@ -119,18 +125,52 @@ namespace builtin.controllers
         {
             var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
             var cCarrotTransform3 = _eCarrot.Get<engine.joyce.components.Transform3>();
+            var vCarrotPos = cToParent.Matrix.Translation;
 
+
+            
+            /*
+             * First compute the desired direction of the camera.
+             * 
+             * If we have physics, we compute front/right from velocity.
+             * If the velocity is too small, we do not move.
+             *
+             * If we do not have physics, we compute it from the orientation of the target.
+             */
+            
+            
+            bool haveFront = false;
+            Vector3 vFront;
+            Vector3 vUp;
+            
+            /*
+             */
+            if (_prefPlayer.Exists)
+            {
+                var vVelocity = _prefPlayer.Velocity.Linear;
+                float velocity = vVelocity.Length();
+                if (velocity > 3f / 3.6f)
+                {
+                    
+                }
+                else
+                {
+                    vPerfectCameraPos = _vPreviousCameraPos;
+                }
+            else
+            {
+                
+            }
+            
             /*
              * We cheat a bit, reading the matrix for the direction matrix,
              * applying the position change to the transform parameters,
              * applying rotation directly to the transform parameters.
              */
-            var vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
-            var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
+            vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
+            vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
             vPerfectCameraRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
             
-            var vCarrotPos = cToParent.Matrix.Translation;
-
             float zoomDistance;
             if (_isInputEnabled)
             {
@@ -164,7 +204,8 @@ namespace builtin.controllers
                 _vPreviousCameraPos = vPerfectCameraPos;
             }
 
-            var qRotation = Quaternion.Slerp(_qLastPerfectCameraRotation, cCarrotTransform3.Rotation, ORIENTATION_SLERP_AMOUNT);
+            var qCarrotOrientation = cCarrotTransform3.Rotation; 
+            var qRotation = Quaternion.Slerp(_qLastPerfectCameraRotation, qCarrotOrientation, ORIENTATION_SLERP_AMOUNT);
             _qLastPerfectCameraRotation = qRotation;
             qPerfectCameraOrientation = qRotation;
         }
