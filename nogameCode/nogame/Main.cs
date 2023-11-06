@@ -127,6 +127,13 @@ public class Main
                 gameState = new GameState();
                 I.Get<DBStorage>().SaveGameState(gameState);
             }
+            else
+            {
+                if (!gameState.IsValid())
+                {
+                    gameState.Fix();
+                }
+            }
             /*
              * Global Data structures
              */

@@ -12,4 +12,23 @@ public class GameState
     public int NumberCubes { get; set; } = 0;
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
+
+    public bool IsValid()
+    {
+        if (!engine.world.MetaGen.AABB.Contains(PlayerPosition))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public void Fix()
+    {
+        if (!engine.world.MetaGen.AABB.Contains(PlayerPosition))
+        {
+            PlayerPosition = new Vector3(0f, 100f, 0f);
+        }
+    }
 }

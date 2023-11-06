@@ -135,6 +135,15 @@ public struct AABB
 
         return Vector3.Dot(vc,plane.Normal) + plane.D;
     }
+
+
+    public bool Contains(in Vector3 pos)
+    {
+        return
+            pos.X >= AA.X && pos.X <= BB.X &&
+            pos.Y >= AA.Y && pos.Y <= BB.Y &&
+            pos.Z >= AA.Z && pos.Z <= BB.Z;
+    }
     
     
     public void Reset()

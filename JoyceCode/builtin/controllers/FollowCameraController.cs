@@ -19,7 +19,8 @@ namespace builtin.controllers
         DefaultEcs.Entity _eCarrot;
         engine.joyce.TransformApi _aTransform;
         
-        private Vector3 _vPreviousCameraPos;
+        private Vector3 _vPreviousCameraPosition;
+        private Vector3 _vPreviusCameraDirection;
         private Quaternion _qLastPerfectCameraRotation;
         private Vector2 _vMouseOffset;
         float _lastMouseMove = 0f;
@@ -114,63 +115,90 @@ namespace builtin.controllers
          * Compute the desired camera position.
          *
          * Note, the orientation is included just for historic reasons.
+         *
+         * The desired position is input to the physics system as a goal to reach.
+         * However, buildings, object etc. might obstruct the path so we do not
+         * reach it.
          */
         private void _computePlainCameraPos(
-            float dt,
+            in Matrix4x4 cToParentMatrix,
             out Vector3 vPerfectCameraPos,
             out Vector3 vPerfectCameraDirection,
             out Vector3 vPerfectCameraFront,
-            out Vector3 vPerfectCameraRight,
-            out Quaternion qPerfectCameraOrientation)
+            out Vector3 vPerfectCameraRight)
         {
-            var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
-            var cCarrotTransform3 = _eCarrot.Get<engine.joyce.components.Transform3>();
-            var vCarrotPos = cToParent.Matrix.Translation;
+            var vCarrotPos = cToParentMatrix.Translation;
 
 
             
             /*
-             * First compute the desired direction of the camera.
+             * First compute the desired direction of the camera. The camera is position up
+             * and backward with respect to the direction to the subject (the carrot).
              * 
-             * If we have physics, we compute front/right from velocity.
-             * If the velocity is too small, we do not move.
+             * If we have physics, we take the velocity of the carrot as direction.
+             * 
+             * If the velocity is too small, we do not change the direction.
              *
              * If we do not have physics, we compute it from the orientation of the target.
+             *
+             * If the direction has not been initialised before, we derive the direction from
+             * the orientation of the target.
+             *
+             * The "right" vector is computed by assuming the up vector is the y axis.
+             * The correct up vector is computed from the front and from the right vector.
              */
             
             
             bool haveFront = false;
-            Vector3 vFront;
+            Vector3 vFront = new(0f, 0f, -1f);
             Vector3 vUp;
-            
-            /*
-             */
-            if (_prefPlayer.Exists)
+
+            if (!haveFront && _prefPlayer.Exists)
             {
                 var vVelocity = _prefPlayer.Velocity.Linear;
                 float velocity = vVelocity.Length();
                 if (velocity > 3f / 3.6f)
                 {
-                    
+                    vFront = vVelocity / velocity;
+                    haveFront = true;
                 }
-                else
-                {
-                    vPerfectCameraPos = _vPreviousCameraPos;
-                }
-            else
-            {
-                
             }
+
+            if (!haveFront && _vPreviusCameraDirection != default)
+            {
+                float l = _vPreviusCameraDirection.Length();
+                if (l > 0.5)
+                {
+                    vFront = _vPreviusCameraDirection / l;
+                    haveFront = true;
+                }
+            }
+
+            if (!haveFront)
+            {
+                vFront = new Vector3(-cToParentMatrix.M31, -cToParentMatrix.M32, -cToParentMatrix.M33);
+                haveFront = true;
+            }
+
+            if (!haveFront)
+            {
+                ErrorThrow($"No camera front information available.", m => new InvalidOperationException(m));
+            }
+
+            /*
+             * Derive right from front and the Y vector, up is straight up,
+             * real front then again from -(richt x up) 
+             */
+            vUp = new Vector3(0f, 1f, 0f);
+            vPerfectCameraRight = Vector3.Cross(vFront, vUp);
+            vPerfectCameraFront = -Vector3.Cross(vPerfectCameraRight, vUp);
             
             /*
-             * We cheat a bit, reading the matrix for the direction matrix,
-             * applying the position change to the transform parameters,
-             * applying rotation directly to the transform parameters.
+             * Now we have a camera corrdinate system.
+             * Front (i.e. -z) facing the carrot, up and right as we want it.
+             *
+             * Now let's move the camera back to where we want it to be.
              */
-            vFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
-            vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
-            vPerfectCameraRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
-            
             float zoomDistance;
             if (_isInputEnabled)
             {
@@ -197,17 +225,68 @@ namespace builtin.controllers
             vPerfectCameraDirection = zoomDistance * vPerfectCameraFront - zoomDistance/4f * vUp;
   
             vPerfectCameraPos = vCarrotPos - vPerfectCameraDirection;
+            
+        }
+
+
+        /**
+         * The real camera transformation is defined by the positon of the physical camera object
+         * and a direction that we want to determine.
+         */
+        private void _computeCameraDirection(
+            in Vector3 vRealCameraPosition,
+            in Vector3 vCarrotPos,
+            out Vector3 vRealCameraFront,
+            out Vector3 vRealCameraRight,
+            out Vector3 vRealCameraUp,
+            out Quaternion qRealCameraOrientation
+        )
+        {
+            vRealCameraFront = vRealCameraPosition - vCarrotPos;
+            float l = vRealCameraFront.Length();
+            if (l < 0.5f)
+            {
+                vRealCameraFront = _vPreviusCameraDirection;
+            }
+            else
+            {
+                vRealCameraFront /= l;
+            }
+            
+            /*
+             * Derive
+             * - right from front and the Y vector
+             * - up from (right x front)
+             */
+            
+            vRealCameraRight = Vector3.Cross(vRealCameraFront, new Vector3(0f, 1f, 0f));
+            vRealCameraUp = Vector3.Cross(vRealCameraRight, vRealCameraFront);
+
+            /*
+             * Compute camera orientation from the coordinate system.
+             */
+            var qCarrotOrientation = Quaternion.CreateFromRotationMatrix(
+                Matrix4x4.CreateWorld(
+                    Vector3.Zero,
+                    vRealCameraFront,
+                    vRealCameraUp)
+            );
+
+            var qOrientation = Quaternion.Slerp(_qLastPerfectCameraRotation, qCarrotOrientation, ORIENTATION_SLERP_AMOUNT);
+            _qLastPerfectCameraRotation = qOrientation;
+            qRealCameraOrientation = qOrientation;
+        }
+
+        private void _computeCameraVelocity(float dt, Vector3 vRealCameraPos)
+        {
+            /*
+             * Compute camera object velocity for audio effects etc.
+             */
             if (!_firstFrame)
             {
-                var vCameraVelocity = (vPerfectCameraPos - _vPreviousCameraPos) / dt;
+                var vCameraVelocity = (vRealCameraPos - _vPreviousCameraPosition) / dt;
                 _eTarget.Set(new engine.joyce.components.Motion(vCameraVelocity));
-                _vPreviousCameraPos = vPerfectCameraPos;
             }
-
-            var qCarrotOrientation = cCarrotTransform3.Rotation; 
-            var qRotation = Quaternion.Slerp(_qLastPerfectCameraRotation, qCarrotOrientation, ORIENTATION_SLERP_AMOUNT);
-            _qLastPerfectCameraRotation = qRotation;
-            qPerfectCameraOrientation = qRotation;
         }
         
         
@@ -224,13 +303,34 @@ namespace builtin.controllers
             {
                 return;
             }
+            
+            var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
+            var vCarrotPos = cToParent.Matrix.Translation;
 
-            _computePlainCameraPos(dt,
+            _computePlainCameraPos(
+                cToParent.Matrix,
                 out var vPerfectCameraPos, 
                 out var vPerfectCameraDirection, 
-                out var vPerfectCameraFront, 
-                out var vPerfectCameraRight,
-                out var qPerfectCameraOrientation);
+                out var _, 
+                out var _);
+
+            Vector3 vRealCameraPosition = _prefCameraBall.Pose.Position;
+            _computeCameraDirection(
+                vRealCameraPosition,
+                vCarrotPos,                
+                out var vRealCameraFront,
+                out var vRealCameraRight,
+                out var vRealCameraUp,
+                out var qRealCameraOrientation
+                );
+
+            /*
+             * Compute real camera object velocity for audio. 
+             */
+            _computeCameraVelocity(dt, vRealCameraPosition);
+
+            float cameraDist = (vRealCameraPosition - vCarrotPos).Length();
+            Trace($"cameraDist = {cameraDist}");
             
             /*
              * We allow the user to move the cam.
@@ -262,24 +362,27 @@ namespace builtin.controllers
             var angleX = -_vMouseOffset.Y * (float)Math.PI / 180f;
             var angleY = -_vMouseOffset.X * (float)Math.PI / 180f;
             var vUserCameraFront = 
-                vPerfectCameraFront * (float)Math.Cos(-angleY)
-                + vPerfectCameraRight * (float)Math.Sin(-angleY);
+                vRealCameraFront * (float)Math.Cos(-angleY)
+                + vRealCameraRight * (float)Math.Sin(-angleY);
+            
+            _vPreviusCameraDirection = vPerfectCameraDirection;
+            _vPreviousCameraPosition = vRealCameraPosition;
 
             /*
              * Apply relative mouse movement
              */
             var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), angleX);
             var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), angleY);
-            qPerfectCameraOrientation *= rotRight;
-            qPerfectCameraOrientation *= rotUp;
-            //_aTransform.SetTransform(_eTarget, qPerfectCameraOrientation, vPerfectCameraPos );
+            var qUserCameraOrientation = qRealCameraOrientation;
+            qUserCameraOrientation *= rotRight;
+            qUserCameraOrientation *= rotUp;
 
             /*
              * Now we have computed the position we want to target the camera object to.
              */
             lock (_engine.Simulation)
             {
-                _prefCameraBall.Pose.Orientation = qPerfectCameraOrientation;
+                _prefCameraBall.Pose.Orientation = qUserCameraOrientation;
                 _engine.Simulation.Solver.ApplyDescription(
                     _chandleCameraServo,
                     new OneBodyLinearServo()

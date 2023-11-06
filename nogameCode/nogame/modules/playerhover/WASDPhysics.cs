@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Numerics;
 using engine;
 using engine.draw;
+using engine.geom;
+using engine.world;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover
@@ -43,6 +45,21 @@ namespace nogame.modules.playerhover
              * an impulse to accelerate against gravity.
              */
             Vector3 vTargetPos = _prefTarget.Pose.Position;
+            
+            /*
+             * Keep player in bounds.
+             */
+            if (!MetaGen.AABB.Contains(vTargetPos))
+            {
+                vTargetPos = _prefTarget.Pose.Position = Vector3.Zero;
+                _prefTarget.Pose.Orientation = Quaternion.Identity;
+                _prefTarget.Velocity.Angular = Vector3.Zero;
+                _prefTarget.Velocity.Linear = Vector3.Zero;
+                _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
+                return;
+            }
+
+
             Vector3 vTargetVelocity = _prefTarget.Velocity.Linear;
             Vector3 vTargetAngularVelocity = _prefTarget.Velocity.Angular;
             float heightAtTarget = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(vTargetPos);
@@ -71,6 +88,7 @@ namespace nogame.modules.playerhover
              * Apply controls
              */
             var cTransform3 = _eTarget.Get<engine.joyce.components.Transform3>();
+            
             var cToParent = _eTarget.Get<engine.joyce.components.Transform3ToParent>();
 
             /*
