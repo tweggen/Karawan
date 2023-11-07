@@ -148,9 +148,24 @@ namespace builtin.controllers
             
             
             bool haveFront = false;
+            float l;
             Vector3 vFront = new(0f, 0f, -1f);
             Vector3 vUp;
+            Vector3 vOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
+            {
+                l = vOrientationFront.Length();
+                if (l < 0.3f)
+                {
+                    vOrientationFront = new(0f, 0f, -1f);
+                }
+                else
+                {
+                    vOrientationFront /= l;
+                }
+            }
 
+            bool isBackward = false;
+            
             if (!haveFront && _prefPlayer.Exists)
             {
                 var vVelocity = _prefPlayer.Velocity.Linear;
@@ -160,6 +175,17 @@ namespace builtin.controllers
                 {
                     var vFront2 = vVelocity2 / velocity;
                     vFront = new Vector3(vFront2.X, 0f, vFront2.Y);
+                    
+                    /*
+                     * Also check, if we are riding forward or backward
+                     */
+                    float dir = Vector3.Dot(vFront, vOrientationFront);
+                    if (dir < 0) isBackward = true;
+
+                    if (isBackward)
+                    {
+                        vFront = -vFront;
+                    }
                     haveFront = true;
                 }
             }
@@ -167,7 +193,7 @@ namespace builtin.controllers
             if (!haveFront && _vPreviousCameraOffset != default)
             {
                 Vector2 vVelocity2 = new(_vPreviousCameraOffset.X, _vPreviousCameraOffset.Z);
-                float l = vVelocity2.Length();
+                l = vVelocity2.Length();
                 if (l > 0.5)
                 {
                     var vFront2 = vVelocity2 / l;
@@ -179,7 +205,7 @@ namespace builtin.controllers
             if (!haveFront)
             {
                 vFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
-                float l = vFront.Length();
+                l = vFront.Length();
                 if (l < 0.3f)
                 {
                     vFront = new(0f, 0f, -1f);
