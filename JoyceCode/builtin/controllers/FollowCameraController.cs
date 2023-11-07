@@ -20,7 +20,7 @@ namespace builtin.controllers
         engine.joyce.TransformApi _aTransform;
         
         private Vector3 _vPreviousCameraPosition;
-        private Vector3 _vPreviusCameraDirection;
+        private Vector3 _vPreviousCameraOffset;
         private Quaternion _qLastPerfectCameraRotation;
         private Vector2 _vMouseOffset;
         float _lastMouseMove = 0f;
@@ -123,9 +123,7 @@ namespace builtin.controllers
         private void _computePlainCameraPos(
             in Matrix4x4 cToParentMatrix,
             out Vector3 vPerfectCameraPos,
-            out Vector3 vPerfectCameraDirection,
-            out Vector3 vPerfectCameraFront,
-            out Vector3 vPerfectCameraRight)
+            out Vector3 vPerfectCameraOffset)
         {
             var vCarrotPos = cToParentMatrix.Translation;
 
@@ -156,27 +154,40 @@ namespace builtin.controllers
             if (!haveFront && _prefPlayer.Exists)
             {
                 var vVelocity = _prefPlayer.Velocity.Linear;
-                float velocity = vVelocity.Length();
+                Vector2 vVelocity2 = new(vVelocity.X, vVelocity.Z);
+                float velocity = vVelocity2.Length();
                 if (velocity > 3f / 3.6f)
                 {
-                    vFront = vVelocity / velocity;
+                    var vFront2 = vVelocity2 / velocity;
+                    vFront = new Vector3(vFront2.X, 0f, vFront2.Y);
                     haveFront = true;
                 }
             }
 
-            if (!haveFront && _vPreviusCameraDirection != default)
+            if (!haveFront && _vPreviousCameraOffset != default)
             {
-                float l = _vPreviusCameraDirection.Length();
+                Vector2 vVelocity2 = new(_vPreviousCameraOffset.X, _vPreviousCameraOffset.Z);
+                float l = vVelocity2.Length();
                 if (l > 0.5)
                 {
-                    vFront = _vPreviusCameraDirection / l;
+                    var vFront2 = vVelocity2 / l;
+                    vFront = new Vector3(vFront2.X, 0f, vFront2.Y);
                     haveFront = true;
                 }
             }
 
             if (!haveFront)
             {
-                vFront = new Vector3(-cToParentMatrix.M31, -cToParentMatrix.M32, -cToParentMatrix.M33);
+                vFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
+                float l = vFront.Length();
+                if (l < 0.3f)
+                {
+                    vFront = new(0f, 0f, -1f);
+                }
+                else
+                {
+                    vFront /= vFront.Length();
+                }
                 haveFront = true;
             }
 
@@ -190,8 +201,8 @@ namespace builtin.controllers
              * real front then again from -(richt x up) 
              */
             vUp = new Vector3(0f, 1f, 0f);
-            vPerfectCameraRight = Vector3.Cross(vFront, vUp);
-            vPerfectCameraFront = -Vector3.Cross(vPerfectCameraRight, vUp);
+            var vPerfectCameraRight = Vector3.Cross(vFront, vUp);
+            var vPerfectCameraFront = -Vector3.Cross(vPerfectCameraRight, vUp);
             
             /*
              * Now we have a camera corrdinate system.
@@ -222,9 +233,9 @@ namespace builtin.controllers
             }
 
             vPerfectCameraFront = vFront;
-            vPerfectCameraDirection = zoomDistance * vPerfectCameraFront - zoomDistance/4f * vUp;
+            vPerfectCameraOffset = zoomDistance * vPerfectCameraFront - zoomDistance/4f * vUp;
   
-            vPerfectCameraPos = vCarrotPos - vPerfectCameraDirection;
+            vPerfectCameraPos = vCarrotPos - vPerfectCameraOffset;
             
         }
 
@@ -236,21 +247,30 @@ namespace builtin.controllers
         private void _computeCameraDirection(
             in Vector3 vRealCameraPosition,
             in Vector3 vCarrotPos,
-            out Vector3 vRealCameraFront,
+            out Vector3 vRealCameraOffset,
             out Vector3 vRealCameraRight,
             out Vector3 vRealCameraUp,
             out Quaternion qRealCameraOrientation
         )
         {
-            vRealCameraFront = vRealCameraPosition - vCarrotPos;
-            float l = vRealCameraFront.Length();
+            vRealCameraOffset = vCarrotPos -vRealCameraPosition;
+            float l = vRealCameraOffset.Length();
             if (l < 0.5f)
             {
-                vRealCameraFront = _vPreviusCameraDirection;
+                vRealCameraOffset = _vPreviousCameraOffset;
+                l = vRealCameraOffset.Length();
+                if (l < 0.5f)
+                {
+                    vRealCameraOffset = new Vector3(0f, 0f, 1f);
+                }
+                else
+                {
+                    vRealCameraOffset /= l;
+                }
             }
             else
             {
-                vRealCameraFront /= l;
+                vRealCameraOffset /= l;
             }
             
             /*
@@ -259,8 +279,8 @@ namespace builtin.controllers
              * - up from (right x front)
              */
             
-            vRealCameraRight = Vector3.Cross(vRealCameraFront, new Vector3(0f, 1f, 0f));
-            vRealCameraUp = Vector3.Cross(vRealCameraRight, vRealCameraFront);
+            vRealCameraRight = Vector3.Cross(vRealCameraOffset, new Vector3(0f, 1f, 0f));
+            vRealCameraUp = Vector3.Cross(vRealCameraRight, vRealCameraOffset);
 
             /*
              * Compute camera orientation from the coordinate system.
@@ -268,7 +288,7 @@ namespace builtin.controllers
             var qCarrotOrientation = Quaternion.CreateFromRotationMatrix(
                 Matrix4x4.CreateWorld(
                     Vector3.Zero,
-                    vRealCameraFront,
+                    vRealCameraOffset,
                     vRealCameraUp)
             );
 
@@ -277,6 +297,7 @@ namespace builtin.controllers
             qRealCameraOrientation = qOrientation;
         }
 
+        
         private void _computeCameraVelocity(float dt, Vector3 vRealCameraPos)
         {
             /*
@@ -310,9 +331,7 @@ namespace builtin.controllers
             _computePlainCameraPos(
                 cToParent.Matrix,
                 out var vPerfectCameraPos, 
-                out var vPerfectCameraDirection, 
-                out var _, 
-                out var _);
+                out var vPerfectCameraOffset);
 
             Vector3 vRealCameraPosition = _prefCameraBall.Pose.Position;
             _computeCameraDirection(
@@ -361,11 +380,11 @@ namespace builtin.controllers
 
             var angleX = -_vMouseOffset.Y * (float)Math.PI / 180f;
             var angleY = -_vMouseOffset.X * (float)Math.PI / 180f;
-            var vUserCameraFront = 
-                vRealCameraFront * (float)Math.Cos(-angleY)
-                + vRealCameraRight * (float)Math.Sin(-angleY);
+            //var vUserCameraFront = 
+            //    vRealCameraFront * (float)Math.Cos(-angleY)
+            //    + vRealCameraRight * (float)Math.Sin(-angleY);
             
-            _vPreviusCameraDirection = vPerfectCameraDirection;
+            _vPreviousCameraOffset = vPerfectCameraOffset;
             _vPreviousCameraPosition = vRealCameraPosition;
 
             /*
