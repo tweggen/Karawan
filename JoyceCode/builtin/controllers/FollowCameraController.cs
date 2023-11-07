@@ -6,6 +6,7 @@ using System.Text;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.Constraints;
+using engine;
 using engine.physics;
 using SkiaSharp;
 using static engine.Logger;
@@ -171,7 +172,7 @@ namespace builtin.controllers
                 var vVelocity = _prefPlayer.Velocity.Linear;
                 Vector2 vVelocity2 = new(vVelocity.X, vVelocity.Z);
                 float velocity = vVelocity2.Length();
-                if (velocity > 3f / 3.6f)
+                if (velocity > 10f / 3.6f)
                 {
                     var vFront2 = vVelocity2 / velocity;
                     vFront = new Vector3(vFront2.X, 0f, vFront2.Y);
@@ -196,6 +197,7 @@ namespace builtin.controllers
                 l = vVelocity2.Length();
                 if (l > 0.5)
                 {
+
                     var vFront2 = vVelocity2 / l;
                     vFront = new Vector3(vFront2.X, 0f, vFront2.Y);
                     haveFront = true;
@@ -375,7 +377,6 @@ namespace builtin.controllers
             _computeCameraVelocity(dt, vRealCameraPosition);
 
             float cameraDist = (vRealCameraPosition - vCarrotPos).Length();
-            Trace($"cameraDist = {cameraDist}");
             
             /*
              * We allow the user to move the cam.
@@ -427,6 +428,8 @@ namespace builtin.controllers
              */
             lock (_engine.Simulation)
             {
+                Vector3 vCarrotSpeed = _prefPlayer.Velocity.Linear;
+                
                 _prefCameraBall.Pose.Orientation = qUserCameraOrientation;
                 _engine.Simulation.Solver.ApplyDescription(
                     _chandleCameraServo,
@@ -437,6 +440,11 @@ namespace builtin.controllers
                         SpringSettings = _cameraSpringSettings,
                         ServoSettings = _cameraServoSettings
                     });
+                if (vCarrotSpeed.Length() < 1.0f)
+                {
+                    _prefCameraBall.Velocity.Linear /= 3f;
+                }                   
+                    
             }
 
             /*
