@@ -298,7 +298,7 @@ namespace builtin.controllers
                     else
                     {
                         // TXWTODO: Slerp this basedon the quaternions.
-                        // vFront = vuOrientationFront;
+                        vFront = vuOrientationFront;
                     }
                 }
                 else

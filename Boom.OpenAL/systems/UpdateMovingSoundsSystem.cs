@@ -216,9 +216,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         /*
          * We use the direction from the camera but the position of the ship.
          */
-        var vFront = new Vector3(-_cameraMatrix.M31, -_cameraMatrix.M32, -_cameraMatrix.M33);
-        var vUp = new Vector3(_cameraMatrix.M21, _cameraMatrix.M22, _cameraMatrix.M23);
-        // var vRight = new Vector3(_cameraMatrix.M11, _cameraMatrix.M12, _cameraMatrix.M13);
+        engine.geom.Camera.VectorsFromMatrix(_cameraMatrix, out var vFront, out var vUp, out var _);
 
         _arrFloatOrientation[0] = vFront.X;
         _arrFloatOrientation[1] = vFront.Y;

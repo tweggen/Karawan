@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using SkiaSharp;
 
 namespace builtin.controllers
 {
@@ -28,9 +29,7 @@ namespace builtin.controllers
              * applying the position change to the transform parameters,
              * applying rotation directly to the transform parameters.
              */
-            var vFront = new Vector3( -cToParent.Matrix.M13, -cToParent.Matrix.M23, -cToParent.Matrix.M33);
-            var vUp = new Vector3(cToParent.Matrix.M12, cToParent.Matrix.M22, cToParent.Matrix.M32);
-            var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M21, cToParent.Matrix.M31);
+            engine.geom.Camera.VectorsFromMatrix(cToParent.Matrix, out var vFront, out var vUp, out var vRight);
             bool haveChange = false;
             /*
              * If we are moving to front/back with the controller, just change the translation.
