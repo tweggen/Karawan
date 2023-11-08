@@ -279,12 +279,10 @@ namespace builtin.controllers
             {
                 if (vuMovingToFront != default)
                 {
-                    Trace("vuMovingToFront");
                     qFront = Quaternion.Slerp(qOrientationFront, qMovingToFront, 0.5f);
                 }
                 else
                 {
-                    Trace("Orientation");
                     qFront = qOrientationFront;
                 }
             }
@@ -294,19 +292,16 @@ namespace builtin.controllers
                 {
                     if (_dtStopped < 2.0f)
                     {
-                        Trace("vuPreviousFront");
                         qFront = qPreviousFront;
                     }
                     else
                     {
-                        Trace("Slerping previous to orientation");
                         // TXWTODO: Slerp this basedon the quaternions.
                         qFront = Quaternion.Slerp(qPreviousFront, qOrientationFront, CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT);
                     }
                 }
                 else
                 {
-                    Trace( "vuOrientationFront");
                     qFront = qOrientationFront;
                 }
             }
@@ -459,34 +454,41 @@ namespace builtin.controllers
             SortedDictionary<float, Vector3> mapCollisions = new();
             var aPhysics = I.Get<engine.physics.API>();
             Vector3 vDiff = vCameraPos - vCarrotPosition;
+            float l = vDiff.Length();
             float maxLength = vDiff.Length();
-            aPhysics.RayCastSync(vCarrotPosition, vCameraPos, maxLength,
-                (CollidableReference cRef, CollisionProperties props, float t, Vector3 vCollision) =>
-                {
-                    bool wasTheCam = false;
-                    switch (cRef.Mobility)
+            lock (_engine.Simulation)
+            {
+                aPhysics.RayCastSync(vCarrotPosition, vCameraPos, maxLength,
+                    (CollidableReference cRef, CollisionProperties props, float t, Vector3 vCollision) =>
                     {
-                        case CollidableMobility.Dynamic:
-                            if (cRef.BodyHandle == _prefCameraBall.Handle)
-                            {
-                                wasTheCam = true;
-                            }
-                            break;
-                        default:
-                        case CollidableMobility.Kinematic:
-                        case CollidableMobility.Static:
-                            break;
-                    }
+                        bool wasTheCam = false;
+                        switch (cRef.Mobility)
+                        {
+                            case CollidableMobility.Dynamic:
+                                if (cRef.BodyHandle == _prefCameraBall.Handle
+                                    || cRef.BodyHandle == _prefPlayer.Handle)
+                                {
+                                    wasTheCam = true;
+                                }
 
-                    if (!wasTheCam)
-                    {
-                        Vector3 vHit = vCarrotPosition + t * vDiff;
-                        mapCollisions[t] = vHit;
-                    }
-                });
+                                break;
+                            default:
+                            case CollidableMobility.Kinematic:
+                            case CollidableMobility.Static:
+                                break;
+                        }
+
+                        if (!wasTheCam)
+                        {
+                            Vector3 vHit = vCarrotPosition + l * t * vDiff;
+                            mapCollisions[t] = vHit;
+                        }
+                    });
+            }
             Vector3 vClosestCameraPos = vCameraPos;
             if (mapCollisions.Count > 0)
             {
+                Trace($"Found {mapCollisions.Keys.First()*l}");
                 vClosestCameraPos = mapCollisions.Values.First();
             }
             else
@@ -501,7 +503,8 @@ namespace builtin.controllers
         private void _setRaycastCameraBody(in Vector3 vCarrotPos, in Vector3 vRealCameraPosition, in Vector3 vPerfectCameraPos, in Quaternion qUserCameraOrientation)
         {
             Vector3 vFinalCameraPos = vPerfectCameraPos;
-            _findClosestView(vCarrotPos, vFinalCameraPos, out var vVisibleCameraPos);
+            Vector3 vVisibleCameraPos;
+            //_findClosestView(vCarrotPos, vFinalCameraPos, out vVisibleCameraPos);
             vVisibleCameraPos = vFinalCameraPos;
             lock (_engine.Simulation)
             {
