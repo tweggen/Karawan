@@ -87,6 +87,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\GameLoader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\AABB.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Angles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Camera.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Line.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Rect2.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\GlobalSettings.cs" />

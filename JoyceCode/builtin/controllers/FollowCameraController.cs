@@ -57,6 +57,7 @@ namespace builtin.controllers
         private BodyReference _prefPlayer;
 
         private float _dtMoving = 0f;
+        private float _dtStopped = 0f;
 
         private void _buildPhysics()
         {
@@ -135,6 +136,7 @@ namespace builtin.controllers
              * Count the time we are moving.
              */
             _dtMoving += dt;
+            _dtStopped += dt;
 
             
             /*
@@ -149,7 +151,6 @@ namespace builtin.controllers
                 l = vOrientationFront.Length();
                 if (l < 0.3f)
                 {
-                    _dtMoving = 0f;
                     vOrientationFront = new(0f, 0f, -1f);
                 }
                 else
@@ -205,6 +206,7 @@ namespace builtin.controllers
                     {
                         vuMovingToFront = -vuMovingToFront;
                     }
+                    _dtStopped = 0f;
                     haveFront = true;
                 }
                 else
@@ -232,7 +234,6 @@ namespace builtin.controllers
                 }
                 else
                 {
-                    _dtMoving = 0f;
                 }
             } 
 
@@ -246,7 +247,6 @@ namespace builtin.controllers
                 if (l < 0.3f)
                 {
                     vuOrientationFront = new(0f, 0f, -1f);
-                    _dtMoving = 0f;
                 }
                 else
                 {
@@ -266,7 +266,8 @@ namespace builtin.controllers
              * Basically:
              * - if we are moving we want to quickly turn to the object and follow it.
              *   However, we want to wait for a short time for the movement to settle.
-             * - if we are standing still we want to keep the perspective.
+             * - if we are standing still we want to keep the perspective. If we are standing for longer than
+             *   two seconds, we slowly adapt the perspective to the orientation of the carrot.
              *
              * Note, that physics will pull the camera pretty fast and linear to the desired position, so
              * any smooth camera movements should be implemented here.
@@ -289,8 +290,16 @@ namespace builtin.controllers
             {
                 if (vuPreviousFront != default)
                 {
-                    Trace("vuPreviousFront");
-                    vFront = vuPreviousFront;
+                    if (_dtStopped < 2.0f)
+                    {
+                        Trace("vuPreviousFront");
+                        vFront = vuPreviousFront;
+                    }
+                    else
+                    {
+                        // TXWTODO: Slerp this basedon the quaternions.
+                        // vFront = vuOrientationFront;
+                    }
                 }
                 else
                 {
