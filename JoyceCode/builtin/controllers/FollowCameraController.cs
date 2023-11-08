@@ -56,6 +56,8 @@ namespace builtin.controllers
         private ServoSettings _cameraServoSettings;
         private BodyReference _prefPlayer;
 
+        private float _dtMoving = 0f;
+
         private void _buildPhysics()
         {
 
@@ -122,20 +124,46 @@ namespace builtin.controllers
          * reach it.
          */
         private void _computePlainCameraPos(
+            float dt,
             in Matrix4x4 cToParentMatrix,
             out Vector3 vPerfectCameraPos,
             out Vector3 vPerfectCameraOffset)
         {
             var vCarrotPos = cToParentMatrix.Translation;
 
+            /*
+             * Count the time we are moving.
+             */
+            _dtMoving += dt;
 
             
             /*
+             * Prepare by computing the front orientation of the carrot matrix.
+             */
+            bool haveFront = false;
+            float l;
+            //Vector3 vFront = new(0f, 0f, -1f);
+            Vector3 vUp;
+            Vector3 vOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
+            {
+                l = vOrientationFront.Length();
+                if (l < 0.3f)
+                {
+                    _dtMoving = 0f;
+                    vOrientationFront = new(0f, 0f, -1f);
+                }
+                else
+                {
+                    vOrientationFront /= l;
+                }
+            }
+
+            /*
              * First compute the desired direction of the camera. The camera is position up
              * and backward with respect to the direction to the subject (the carrot).
-             * 
+             *
              * If we have physics, we take the velocity of the carrot as direction.
-             * 
+             *
              * If the velocity is too small, we do not change the direction.
              *
              * If we do not have physics, we compute it from the orientation of the target.
@@ -146,28 +174,18 @@ namespace builtin.controllers
              * The "right" vector is computed by assuming the up vector is the y axis.
              * The correct up vector is computed from the front and from the right vector.
              */
-            
-            
-            bool haveFront = false;
-            float l;
-            Vector3 vFront = new(0f, 0f, -1f);
-            Vector3 vUp;
-            Vector3 vOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
-            {
-                l = vOrientationFront.Length();
-                if (l < 0.3f)
-                {
-                    vOrientationFront = new(0f, 0f, -1f);
-                }
-                else
-                {
-                    vOrientationFront /= l;
-                }
-            }
 
             bool isBackward = false;
+
+            Vector3 vuMovingToFront = default;
+            Vector3 vuPreviousFront = default;
+            Vector3 vuOrientationFront = default;
             
-            if (!haveFront && _prefPlayer.Exists)
+            /*
+             * If we are a physics object that does have linear velocity, we use the
+             * linear velocity as a strong motivation to align our view.
+             */
+            if (_prefPlayer.Exists)
             {
                 var vVelocity = _prefPlayer.Velocity.Linear;
                 Vector2 vVelocity2 = new(vVelocity.X, vVelocity.Z);
@@ -175,23 +193,30 @@ namespace builtin.controllers
                 if (velocity > 10f / 3.6f)
                 {
                     var vFront2 = vVelocity2 / velocity;
-                    vFront = new Vector3(vFront2.X, 0f, vFront2.Y);
+                    vuMovingToFront = new Vector3(vFront2.X, 0f, vFront2.Y);
                     
                     /*
                      * Also check, if we are riding forward or backward
                      */
-                    float dir = Vector3.Dot(vFront, vOrientationFront);
+                    float dir = Vector3.Dot(vuMovingToFront, vOrientationFront);
                     if (dir < 0) isBackward = true;
 
                     if (isBackward)
                     {
-                        vFront = -vFront;
+                        vuMovingToFront = -vuMovingToFront;
                     }
                     haveFront = true;
                 }
+                else
+                {
+                    _dtMoving = 0f;
+                }
             }
 
-            if (!haveFront && _vPreviousCameraOffset != default)
+            /*
+             * This case applies if we do not have a considerable velocity.
+             */
+            if (_vPreviousCameraOffset != default)
             {
                 /*
                  * We do not have considerable velocity.
@@ -201,24 +226,31 @@ namespace builtin.controllers
                 l = vVelocity2.Length();
                 if (l > 0.5)
                 {
-
                     var vFront2 = vVelocity2 / l;
-                    vFront = new Vector3(vFront2.X, 0f, vFront2.Y);
+                    vuPreviousFront = new Vector3(vFront2.X, 0f, vFront2.Y);
                     haveFront = true;
-                }
-            }
-
-            if (!haveFront)
-            {
-                vFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
-                l = vFront.Length();
-                if (l < 0.3f)
-                {
-                    vFront = new(0f, 0f, -1f);
                 }
                 else
                 {
-                    vFront /= vFront.Length();
+                    _dtMoving = 0f;
+                }
+            } 
+
+            /*
+             * Fallback: Use the front according to the transformation matrix.
+             */
+            if (true)
+            {
+                vuOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
+                l = vuOrientationFront.Length();
+                if (l < 0.3f)
+                {
+                    vuOrientationFront = new(0f, 0f, -1f);
+                    _dtMoving = 0f;
+                }
+                else
+                {
+                    vuOrientationFront /= vuOrientationFront.Length();
                 }
                 haveFront = true;
             }
@@ -228,6 +260,45 @@ namespace builtin.controllers
                 ErrorThrow($"No camera front information available.", m => new InvalidOperationException(m));
             }
 
+            /*
+             * Now let's use the information we have to compute the desired target camera position.
+             *
+             * Basically:
+             * - if we are moving we want to quickly turn to the object and follow it.
+             *   However, we want to wait for a short time for the movement to settle.
+             * - if we are standing still we want to keep the perspective.
+             *
+             * Note, that physics will pull the camera pretty fast and linear to the desired position, so
+             * any smooth camera movements should be implemented here.
+             */
+            Vector3 vFront;
+            if (_dtMoving > 0.8f)
+            {
+                if (vuMovingToFront != default)
+                {
+                    Trace("vuMovingToFront");
+                    vFront = vuMovingToFront;
+                }
+                else
+                {
+                    Trace("Orientation");
+                    vFront = vuOrientationFront;
+                }
+            }
+            else
+            {
+                if (vuPreviousFront != default)
+                {
+                    Trace("vuPreviousFront");
+                    vFront = vuPreviousFront;
+                }
+                else
+                {
+                    Trace( "vuOrientationFront");
+                    vFront = vuOrientationFront;
+                }
+            }
+            
             /*
              * Derive right from front and the Y vector, up is straight up,
              * real front then again from -(richt x up) 
@@ -361,6 +432,7 @@ namespace builtin.controllers
             var vCarrotPos = cToParent.Matrix.Translation;
 
             _computePlainCameraPos(
+                dt,
                 cToParent.Matrix,
                 out var vPerfectCameraPos, 
                 out var vPerfectCameraOffset);
