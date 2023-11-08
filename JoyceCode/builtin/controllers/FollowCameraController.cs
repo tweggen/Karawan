@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using BepuPhysics;
 using BepuPhysics.Collidables;
@@ -426,6 +428,98 @@ namespace builtin.controllers
                 _eTarget.Set(new engine.joyce.components.Motion(vCameraVelocity));
             }
         }
+
+
+        private void _servePhysicalCameraBody(in Vector3 vRealCameraPosition, in Vector3 vPerfectCameraPos, in Quaternion qUserCameraOrientation)
+        {
+            lock (_engine.Simulation)
+            {
+                Vector3 vCarrotSpeed = _prefPlayer.Velocity.Linear;
+
+                _prefCameraBall.Pose.Orientation = qUserCameraOrientation;
+                _engine.Simulation.Solver.ApplyDescription(
+                    _chandleCameraServo,
+                    new OneBodyLinearServo()
+                    {
+                        LocalOffset = Vector3.Zero,
+                        Target = vPerfectCameraPos,
+                        SpringSettings = _cameraSpringSettings,
+                        ServoSettings = _cameraServoSettings
+                    });
+                if (vCarrotSpeed.Length() < 1.0f)
+                {
+                    _prefCameraBall.Velocity.Linear /= 3f;
+                }
+            }
+        }
+
+
+        private void _findClosestView(Vector3 vCarrotPosition, in Vector3 vCameraPos, out Vector3 vVisibleCameraPos)
+        {
+            SortedDictionary<float, Vector3> mapCollisions = new();
+            var aPhysics = I.Get<engine.physics.API>();
+            Vector3 vDiff = vCameraPos - vCarrotPosition;
+            float maxLength = vDiff.Length();
+            aPhysics.RayCastSync(vCarrotPosition, vCameraPos, maxLength,
+                (CollidableReference cRef, CollisionProperties props, float t, Vector3 vCollision) =>
+                {
+                    bool wasTheCam = false;
+                    switch (cRef.Mobility)
+                    {
+                        case CollidableMobility.Dynamic:
+                            if (cRef.BodyHandle == _prefCameraBall.Handle)
+                            {
+                                wasTheCam = true;
+                            }
+                            break;
+                        default:
+                        case CollidableMobility.Kinematic:
+                        case CollidableMobility.Static:
+                            break;
+                    }
+
+                    if (!wasTheCam)
+                    {
+                        Vector3 vHit = vCarrotPosition + t * vDiff;
+                        mapCollisions[t] = vHit;
+                    }
+                });
+            Vector3 vClosestCameraPos = vCameraPos;
+            if (mapCollisions.Count > 0)
+            {
+                vClosestCameraPos = mapCollisions.Values.First();
+            }
+            else
+            {
+                vClosestCameraPos = vCameraPos;
+            }
+
+            vVisibleCameraPos = vClosestCameraPos;
+        }
+
+        
+        private void _setRaycastCameraBody(in Vector3 vCarrotPos, in Vector3 vRealCameraPosition, in Vector3 vPerfectCameraPos, in Quaternion qUserCameraOrientation)
+        {
+            Vector3 vFinalCameraPos = vPerfectCameraPos;
+            _findClosestView(vCarrotPos, vFinalCameraPos, out var vVisibleCameraPos);
+            vVisibleCameraPos = vFinalCameraPos;
+            lock (_engine.Simulation)
+            {
+                _prefCameraBall.Pose.Orientation = qUserCameraOrientation;
+                _prefCameraBall.Pose.Position = vVisibleCameraPos;
+                _prefCameraBall.Velocity.Linear = Vector3.Zero;
+            }
+        }
+        
+
+        /**
+         * Apply the idea of the perfect camera position to the real camera.
+         */
+        private void _applyRealCamera(in Vector3 vCarrotPos, in Vector3 vRealCameraPosition, in Vector3 vPerfectCameraPos, in Quaternion qUserCameraOrientation)
+        {
+            //_servePhysicalCameraBody(vRealCameraPosition, vPerfectCameraPos, qUserCameraOrientation);
+            _setRaycastCameraBody(vCarrotPos, vRealCameraPosition, vPerfectCameraPos, qUserCameraOrientation);
+        }
         
         
         private void _onLogicalFrame(object sender, float dt)
@@ -465,9 +559,7 @@ namespace builtin.controllers
              * Compute real camera object velocity for audio. 
              */
             _computeCameraVelocity(dt, vRealCameraPosition);
-
-            float cameraDist = (vRealCameraPosition - vCarrotPos).Length();
-            
+           
             /*
              * We allow the user to move the cam.
              */
@@ -516,26 +608,7 @@ namespace builtin.controllers
             /*
              * Now we have computed the position we want to target the camera object to.
              */
-            lock (_engine.Simulation)
-            {
-                Vector3 vCarrotSpeed = _prefPlayer.Velocity.Linear;
-                
-                _prefCameraBall.Pose.Orientation = qUserCameraOrientation;
-                _engine.Simulation.Solver.ApplyDescription(
-                    _chandleCameraServo,
-                    new OneBodyLinearServo()
-                    {
-                        LocalOffset = Vector3.Zero,
-                        Target = vPerfectCameraPos,
-                        SpringSettings = _cameraSpringSettings,
-                        ServoSettings = _cameraServoSettings
-                    });
-                if (vCarrotSpeed.Length() < 1.0f)
-                {
-                    _prefCameraBall.Velocity.Linear /= 3f;
-                }                   
-                    
-            }
+            _applyRealCamera(vCarrotPos, vRealCameraPosition, vPerfectCameraPos, qUserCameraOrientation);
 
             /*
              * ramp down mouse offset after 1.5s of inactivity.

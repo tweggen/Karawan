@@ -196,15 +196,21 @@ public class API
     }
 
 
-    public void RayCast(Vector3 origin, Vector3 target, float length, 
-        Action<CollidableReference, CollisionProperties, Vector3> action)
+    public void RayCastSync(Vector3 origin, Vector3 target, float length,
+        Action<CollidableReference, CollisionProperties, float, Vector3> action)
     {
-        _engine.QueueMainThreadAction(() =>
+        lock (_engine.Simulation)
         {
             DefaultRayHitHandler drh = new(this, action);
             Simulation.RayCast(origin, target, length, ref drh, drh.GetRayHitId());
-        });
-        
+        }
+    }
+    
+    
+    public void RayCast(Vector3 origin, Vector3 target, float length, 
+        Action<CollidableReference, CollisionProperties, float, Vector3> action)
+    {
+        _engine.QueueMainThreadAction(() => RayCastSync(origin, target, length, action));
     }
     
     

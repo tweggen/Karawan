@@ -13,7 +13,7 @@ public class DefaultRayHitHandler : IRayHitHandler
 
     private physics.API _api;
     private int _rayHitId;
-    private Action<CollidableReference, CollisionProperties, Vector3> _action;
+    private Action<CollidableReference, CollisionProperties, float, Vector3> _action;
 
 
     public int GetRayHitId()
@@ -76,11 +76,11 @@ public class DefaultRayHitHandler : IRayHitHandler
                 break;
         }
 
-        _action(collidable, collisionProperties, normal);
+        _action(collidable, collisionProperties, t, normal);
     }
     
 
-    public DefaultRayHitHandler(physics.API api, Action<CollidableReference, CollisionProperties, Vector3> action)
+    public DefaultRayHitHandler(physics.API api, Action<CollidableReference, CollisionProperties, float, Vector3> action)
     {
         lock (_classLock)
         {

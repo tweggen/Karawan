@@ -156,6 +156,7 @@ namespace nogame.modules.playerhover
         private void _onCenterRayHit(
             CollidableReference collidableReference,
             CollisionProperties collisionProperties,
+            float t,
             Vector3 vNormal)
         {
             if (null != collisionProperties)
