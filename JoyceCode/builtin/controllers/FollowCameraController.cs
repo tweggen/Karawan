@@ -193,6 +193,10 @@ namespace builtin.controllers
 
             if (!haveFront && _vPreviousCameraOffset != default)
             {
+                /*
+                 * We do not have considerable velocity.
+                 * TODO: Slowly move towards the orientation of the ship.
+                 */
                 Vector2 vVelocity2 = new(_vPreviousCameraOffset.X, _vPreviousCameraOffset.Z);
                 l = vVelocity2.Length();
                 if (l > 0.5)
