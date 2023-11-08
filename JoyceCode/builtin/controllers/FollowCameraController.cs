@@ -31,6 +31,7 @@ namespace builtin.controllers
         private float _previousZoomDistance = 33f;
 
         private float ORIENTATION_SLERP_AMOUNT = 0.07f;
+        private float CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT = 0.004f;
         private float ZOOM_SLERP_AMOUNT = 0.05f;
         private float MOUSE_RELATIVE_AMOUNT = 0.03f;
         private float MOUSE_RETURN_SLERP = 0.98f;
@@ -59,6 +60,8 @@ namespace builtin.controllers
         private float _dtMoving = 0f;
         private float _dtStopped = 0f;
 
+        private static Vector3 _vuUp = new(0f, 1f, 0f);
+        
         private void _buildPhysics()
         {
 
@@ -142,10 +145,7 @@ namespace builtin.controllers
             /*
              * Prepare by computing the front orientation of the carrot matrix.
              */
-            bool haveFront = false;
             float l;
-            //Vector3 vFront = new(0f, 0f, -1f);
-            Vector3 vUp;
             Vector3 vOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
             {
                 l = vOrientationFront.Length();
@@ -179,8 +179,11 @@ namespace builtin.controllers
             bool isBackward = false;
 
             Vector3 vuMovingToFront = default;
+            Quaternion qMovingToFront = default;
             Vector3 vuPreviousFront = default;
+            Quaternion qPreviousFront = default;
             Vector3 vuOrientationFront = default;
+            Quaternion qOrientationFront = default;
             
             /*
              * If we are a physics object that does have linear velocity, we use the
@@ -206,8 +209,9 @@ namespace builtin.controllers
                     {
                         vuMovingToFront = -vuMovingToFront;
                     }
+
+                    qMovingToFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuMovingToFront);
                     _dtStopped = 0f;
-                    haveFront = true;
                 }
                 else
                 {
@@ -230,7 +234,7 @@ namespace builtin.controllers
                 {
                     var vFront2 = vVelocity2 / l;
                     vuPreviousFront = new Vector3(vFront2.X, 0f, vFront2.Y);
-                    haveFront = true;
+                    qPreviousFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuPreviousFront);
                 }
                 else
                 {
@@ -240,7 +244,6 @@ namespace builtin.controllers
             /*
              * Fallback: Use the front according to the transformation matrix.
              */
-            if (true)
             {
                 vuOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
                 l = vuOrientationFront.Length();
@@ -252,14 +255,11 @@ namespace builtin.controllers
                 {
                     vuOrientationFront /= vuOrientationFront.Length();
                 }
-                haveFront = true;
+
+                qOrientationFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuOrientationFront);
             }
 
-            if (!haveFront)
-            {
-                ErrorThrow($"No camera front information available.", m => new InvalidOperationException(m));
-            }
-
+            
             /*
              * Now let's use the information we have to compute the desired target camera position.
              *
@@ -272,18 +272,18 @@ namespace builtin.controllers
              * Note, that physics will pull the camera pretty fast and linear to the desired position, so
              * any smooth camera movements should be implemented here.
              */
-            Vector3 vFront;
+            Quaternion qFront;
             if (_dtMoving > 0.8f)
             {
                 if (vuMovingToFront != default)
                 {
                     Trace("vuMovingToFront");
-                    vFront = vuMovingToFront;
+                    qFront = Quaternion.Slerp(qOrientationFront, qMovingToFront, 0.5f);
                 }
                 else
                 {
                     Trace("Orientation");
-                    vFront = vuOrientationFront;
+                    qFront = qOrientationFront;
                 }
             }
             else
@@ -293,28 +293,33 @@ namespace builtin.controllers
                     if (_dtStopped < 2.0f)
                     {
                         Trace("vuPreviousFront");
-                        vFront = vuPreviousFront;
+                        qFront = qPreviousFront;
                     }
                     else
                     {
+                        Trace("Slerping previous to orientation");
                         // TXWTODO: Slerp this basedon the quaternions.
-                        vFront = vuOrientationFront;
+                        qFront = Quaternion.Slerp(qPreviousFront, qOrientationFront, CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT);
                     }
                 }
                 else
                 {
                     Trace( "vuOrientationFront");
-                    vFront = vuOrientationFront;
+                    qFront = qOrientationFront;
                 }
             }
+            
+            /*
+             * Derive front vector from Quaternion.
+             */
+            Vector3 vFront = Vector3.Transform(new Vector3(0f, 0f, -1f), qFront);
             
             /*
              * Derive right from front and the Y vector, up is straight up,
              * real front then again from -(richt x up) 
              */
-            vUp = new Vector3(0f, 1f, 0f);
-            var vPerfectCameraRight = Vector3.Cross(vFront, vUp);
-            var vPerfectCameraFront = -Vector3.Cross(vPerfectCameraRight, vUp);
+            engine.geom.Camera.CreateVectorsFromPlaneFront(vFront,
+                out var vPerfectCameraFront, out var vPerfectCameraRight);
             
             /*
              * Now we have a camera corrdinate system.
@@ -345,7 +350,7 @@ namespace builtin.controllers
             }
 
             vPerfectCameraFront = vFront;
-            vPerfectCameraOffset = zoomDistance * vPerfectCameraFront - zoomDistance/4f * vUp;
+            vPerfectCameraOffset = zoomDistance * vPerfectCameraFront - zoomDistance/4f * _vuUp;
   
             vPerfectCameraPos = vCarrotPos - vPerfectCameraOffset;
             

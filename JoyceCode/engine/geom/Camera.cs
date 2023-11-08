@@ -4,18 +4,22 @@ namespace engine.geom;
 
 public static class Camera
 {
+    static private Vector3 _vuUp = new(0f, 1f, 0f);
+    public static void CreateVectorsFromPlaneFront(in Vector3 vFront, out Vector3 vuFront, out Vector3 vuRight)
+    {
+        var vuTmpFront = vFront / vFront.Length();
+        vuRight = Vector3.Cross(vuTmpFront, _vuUp);
+        vuFront = -Vector3.Cross(vuRight, _vuUp);
+    }    
+    
     /*
      * Given a front vector, try to figure out a rotation matrix representing a look into that
      * direction, assuming that "up" should be (0,1,0)-ish.
      */
     public static Matrix4x4 CreateMatrixFromPlaneFront(in Vector3 vFront)
     {
-        var vuFront = vFront / vFront.Length();
-        Vector3 vuUp = new Vector3(0f, 1f, 0f);
-        var vuPerfectRight = Vector3.Cross(vuFront, vuUp);
-        var vuPerfectFront = -Vector3.Cross(vuPerfectRight, vuUp);
-        return Matrix4x4.CreateWorld(
-            Vector3.Zero, vuPerfectFront, vuUp);
+        CreateVectorsFromPlaneFront(vFront, out var vuFront, out var _);
+        return Matrix4x4.CreateWorld(Vector3.Zero, vuFront, _vuUp);
     }
 
 
