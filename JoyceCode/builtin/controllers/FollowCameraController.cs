@@ -67,16 +67,16 @@ namespace builtin.controllers
         private void _buildPhysics()
         {
 
-            Vector3 posShip = _prefPlayer.Pose.Position;
-            Quaternion rotShip = _prefPlayer.Pose.Orientation;
-
-            _cameraSpringSettings = new(5, 2);
-            _cameraServoSettings = ServoSettings.Default;
-            
-            _pbodyCameraSphere = new(CameraRadius);
-            _pinertiaCameraSphere = _pbodyCameraSphere.ComputeInertia(CameraMass);
             lock (_engine.Simulation)
             {
+                Vector3 posShip = _prefPlayer.Pose.Position;
+                Quaternion rotShip = _prefPlayer.Pose.Orientation;
+
+                _cameraSpringSettings = new(5, 2);
+                _cameraServoSettings = ServoSettings.Default;
+                
+                _pbodyCameraSphere = new(CameraRadius);
+                _pinertiaCameraSphere = _pbodyCameraSphere.ComputeInertia(CameraMass);
                 _pshapeCameraSphere = _engine.Simulation.Shapes.Add(_pbodyCameraSphere);
                 _phandleCameraSphere = _engine.Simulation.Bodies.Add(
                     BodyDescription.CreateDynamic(
@@ -461,24 +461,17 @@ namespace builtin.controllers
                 aPhysics.RayCastSync(vCarrotPosition, vCameraPos, maxLength,
                     (CollidableReference cRef, CollisionProperties props, float t, Vector3 vCollision) =>
                     {
-                        bool wasTheCam = false;
+                        bool isRelevant = false;
                         switch (cRef.Mobility)
                         {
                             case CollidableMobility.Dynamic:
-                                if (cRef.BodyHandle == _prefCameraBall.Handle
-                                    || cRef.BodyHandle == _prefPlayer.Handle)
-                                {
-                                    wasTheCam = true;
-                                }
-
-                                break;
-                            default:
                             case CollidableMobility.Kinematic:
                             case CollidableMobility.Static:
+                                isRelevant = true;
                                 break;
                         }
 
-                        if (!wasTheCam)
+                        if (isRelevant)
                         {
                             Vector3 vHit = vCarrotPosition + l * t * vDiff;
                             mapCollisions[t] = vHit;
@@ -504,13 +497,14 @@ namespace builtin.controllers
         {
             Vector3 vFinalCameraPos = vPerfectCameraPos;
             Vector3 vVisibleCameraPos;
-            //_findClosestView(vCarrotPos, vFinalCameraPos, out vVisibleCameraPos);
-            vVisibleCameraPos = vFinalCameraPos;
+            _findClosestView(vCarrotPos, vFinalCameraPos, out vVisibleCameraPos);
+            //vVisibleCameraPos = vFinalCameraPos;
             lock (_engine.Simulation)
             {
                 _prefCameraBall.Pose.Orientation = qUserCameraOrientation;
                 _prefCameraBall.Pose.Position = vVisibleCameraPos;
                 _prefCameraBall.Velocity.Linear = Vector3.Zero;
+                _prefCameraBall.Velocity.Angular = Vector3.Zero;
             }
         }
         
@@ -548,7 +542,12 @@ namespace builtin.controllers
                 out var vPerfectCameraPos, 
                 out var vPerfectCameraOffset);
 
-            Vector3 vRealCameraPosition = _prefCameraBall.Pose.Position;
+            Vector3 vRealCameraPosition;
+            lock (_engine.Simulation)
+            {
+                vRealCameraPosition = _prefCameraBall.Pose.Position;
+            }
+
             _computeCameraDirection(
                 vRealCameraPosition,
                 vCarrotPos,                
