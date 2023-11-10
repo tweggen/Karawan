@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using engine;
 using engine.elevation;
 using engine.joyce;
+using engine.physics;
 using static engine.Logger;
 
 
@@ -90,9 +91,15 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
         }
 
+        CollisionProperties props = new(){
+            Flags = 
+                CollisionProperties.CollisionFlags.IsTangible 
+                | CollisionProperties.CollisionFlags.IsDetectable,
+            Name = $"house-{p[0]+worldFragment.Position}",
+        };
         try
         {
-            var fCreatePhysics = opExtrudePoly.BuildStaticPhys(worldFragment);
+            var fCreatePhysics = opExtrudePoly.BuildStaticPhys(worldFragment, props);
             listCreatePhysics.Add(fCreatePhysics);
         }
         catch (Exception e)

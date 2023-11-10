@@ -119,6 +119,31 @@ namespace builtin.controllers
             
         }
 
+
+        private float _zoomDistance()
+        {            
+            if (_isInputEnabled)
+            {
+                engine.I.Get<builtin.controllers.InputController>()
+                    .GetControllerState(out var controllerState);
+
+                /*
+                 * Compute a distance from the zoom state.
+                 * TXWTODO: Remove the magic numbers.
+                 */
+                var zoomFactor = controllerState.ZoomState < 0
+                    ? controllerState.ZoomState
+                    : controllerState.ZoomState * 2f;
+                float zoomDistance = (36f - (float)zoomFactor) / 2f;
+                zoomDistance = (1f - ZOOM_SLERP_AMOUNT) * _previousZoomDistance + zoomDistance * ZOOM_SLERP_AMOUNT;
+                return zoomDistance;
+            }
+            else
+            {
+                return _previousZoomDistance;
+            }
+        }
+
         
         /**
          * Compute the desired camera position.
@@ -324,27 +349,7 @@ namespace builtin.controllers
              *
              * Now let's move the camera back to where we want it to be.
              */
-            float zoomDistance;
-            if (_isInputEnabled)
-            {
-                engine.I.Get<builtin.controllers.InputController>()
-                    .GetControllerState(out var controllerState);
-
-                /*
-                 * Compute a distance from the zoom state.
-                 * TXWTODO: Remove the magic numbers.
-                 */
-                var zoomFactor = controllerState.ZoomState < 0
-                    ? controllerState.ZoomState
-                    : controllerState.ZoomState * 2f;
-                zoomDistance = (36f - (float)zoomFactor) / 2f;
-                zoomDistance = (1f - ZOOM_SLERP_AMOUNT) * _previousZoomDistance + zoomDistance * ZOOM_SLERP_AMOUNT;
-                _previousZoomDistance = zoomDistance;
-            }
-            else
-            {
-                zoomDistance = _previousZoomDistance;
-            }
+            float zoomDistance = _zoomDistance();
 
             vPerfectCameraFront = vFront;
             vPerfectCameraOffset = zoomDistance * vPerfectCameraFront - zoomDistance/4f * _vuUp;
@@ -361,13 +366,10 @@ namespace builtin.controllers
         private void _computeCameraDirection(
             in Vector3 vRealCameraPosition,
             in Vector3 vCarrotPos,
-            out Vector3 vRealCameraOffset,
-            out Vector3 vRealCameraRight,
-            out Vector3 vRealCameraUp,
             out Quaternion qRealCameraOrientation
         )
         {
-            vRealCameraOffset = vCarrotPos -vRealCameraPosition;
+            var vRealCameraOffset = vCarrotPos -vRealCameraPosition;
             float l = vRealCameraOffset.Length();
             if (l < 0.5f)
             {
@@ -392,9 +394,8 @@ namespace builtin.controllers
              * - right from front and the Y vector
              * - up from (right x front)
              */
-            
-            vRealCameraRight = Vector3.Cross(vRealCameraOffset, new Vector3(0f, 1f, 0f));
-            vRealCameraUp = Vector3.Cross(vRealCameraRight, vRealCameraOffset);
+            var vRealCameraRight = Vector3.Cross(vRealCameraOffset, new Vector3(0f, 1f, 0f));
+            var vRealCameraUp = Vector3.Cross(vRealCameraRight, vRealCameraOffset);
 
             /*
              * Compute camera orientation from the coordinate system.
@@ -447,25 +448,38 @@ namespace builtin.controllers
                 }
             }
         }
+        
+        
+        /**
+         * We have a camera position that is too close to our subject.
+         * Go and create another angle that is most likely not obstructed (i.e. from the above).
+         */
+        private void _computeNotTooClose(Vector3 vClose, out Vector3 vNotTooClose)
+        {
+            vNotTooClose = vClose;
+            vClose.Y += _zoomDistance();
+        }
 
 
         private void _findClosestView(Vector3 vCarrotPosition, in Vector3 vCameraPos, out Vector3 vVisibleCameraPos)
         {
-            SortedDictionary<float, Vector3> mapCollisions = new();
+            SortedDictionary<float, CollisionProperties> mapCollisions = new();
             var aPhysics = I.Get<engine.physics.API>();
             Vector3 vDiff = vCameraPos - vCarrotPosition;
             float l = vDiff.Length();
             float maxLength = vDiff.Length();
             lock (_engine.Simulation)
             {
-                aPhysics.RayCastSync(vCarrotPosition, vCameraPos, maxLength,
+                aPhysics.RayCastSync(vCarrotPosition, vDiff, 1f,
                     (CollidableReference cRef, CollisionProperties props, float t, Vector3 vCollision) =>
                     {
                         bool isRelevant = false;
                         switch (cRef.Mobility)
                         {
                             case CollidableMobility.Dynamic:
+                                break;
                             case CollidableMobility.Kinematic:
+                                break;
                             case CollidableMobility.Static:
                                 isRelevant = true;
                                 break;
@@ -473,16 +487,35 @@ namespace builtin.controllers
 
                         if (isRelevant)
                         {
-                            Vector3 vHit = vCarrotPosition + l * t * vDiff;
-                            mapCollisions[t] = vHit;
+                            mapCollisions[t] = props;
                         }
                     });
             }
             Vector3 vClosestCameraPos = vCameraPos;
             if (mapCollisions.Count > 0)
             {
-                Trace($"Found {mapCollisions.Keys.First()*l}");
-                vClosestCameraPos = mapCollisions.Values.First();
+                float l0 = mapCollisions.Keys.First();
+                CollisionProperties props = mapCollisions.Values.First();
+
+                if (null != props)
+                {
+                    Trace($"Found {l0}: {props.Name}, {props.DebugInfo}");
+                }
+                else
+                {
+                    Trace($"Found {l0}, no propsws");
+                }
+
+                Vector3 vHit = vCarrotPosition + l0 * vDiff;
+                if (l0 < 2f)
+                {
+                    _computeNotTooClose(vHit, out var vNotTooClose);
+                    vClosestCameraPos = vNotTooClose;
+                }
+                else
+                {
+                    vClosestCameraPos = vHit;
+                }
             }
             else
             {
@@ -493,6 +526,9 @@ namespace builtin.controllers
         }
 
         
+        /**
+         * Actually setup the camera to the position and direction requested.
+         */
         private void _setRaycastCameraBody(in Vector3 vCarrotPos, in Vector3 vRealCameraPosition, in Vector3 vPerfectCameraPos, in Quaternion qUserCameraOrientation)
         {
             Vector3 vFinalCameraPos = vPerfectCameraPos;
@@ -517,6 +553,14 @@ namespace builtin.controllers
             //_servePhysicalCameraBody(vRealCameraPosition, vPerfectCameraPos, qUserCameraOrientation);
             _setRaycastCameraBody(vCarrotPos, vRealCameraPosition, vPerfectCameraPos, qUserCameraOrientation);
         }
+
+
+        private void _transitionFromRealCameraPos(
+            in Vector3 vPerfectCameraPos, in Vector3 vLastRealCameraPos, out Vector3 vDesiredCameraPos)
+        {
+            // TXWTODO: Slerp or something
+            vDesiredCameraPos = vPerfectCameraPos;
+        }
         
         
         private void _onLogicalFrame(object sender, float dt)
@@ -536,26 +580,33 @@ namespace builtin.controllers
             var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
             var vCarrotPos = cToParent.Matrix.Translation;
 
+            /*
+             * First compute the desired camera position (vPerfectCameraPos).
+             * Then transition the real camera to the perfect pos (previous pos + perfect pos => desiredCameraPos)
+             * The find a visible, unobstructed place, starting with the desired pos.
+             */
+            
             _computePlainCameraPos(
                 dt,
                 cToParent.Matrix,
                 out var vPerfectCameraPos, 
                 out var vPerfectCameraOffset);
 
-            Vector3 vRealCameraPosition;
-            lock (_engine.Simulation)
+            Vector3 vDesiredCameraPos;
+            if (_vPreviousCameraPosition != default)
             {
-                vRealCameraPosition = _prefCameraBall.Pose.Position;
+                _transitionFromRealCameraPos(vPerfectCameraPos, _vPreviousCameraPosition, out vDesiredCameraPos);
+            }
+            else
+            {
+                vDesiredCameraPos = vPerfectCameraPos;
             }
 
-            _computeCameraDirection(
-                vRealCameraPosition,
-                vCarrotPos,                
-                out var vRealCameraFront,
-                out var vRealCameraRight,
-                out var vRealCameraUp,
-                out var qRealCameraOrientation
-                );
+            _findClosestView(vCarrotPos, vDesiredCameraPos, out var vVisibleCameraPos);
+
+            var vRealCameraPosition = vVisibleCameraPos;
+            
+            _computeCameraDirection(vRealCameraPosition, vCarrotPos, out var qRealCameraOrientation);
 
             /*
              * Compute real camera object velocity for audio. 
@@ -597,6 +648,7 @@ namespace builtin.controllers
             
             _vPreviousCameraOffset = vPerfectCameraOffset;
             _vPreviousCameraPosition = vRealCameraPosition;
+            _previousZoomDistance = _zoomDistance();
 
             /*
              * Apply relative mouse movement

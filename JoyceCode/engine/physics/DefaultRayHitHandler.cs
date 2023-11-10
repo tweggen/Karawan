@@ -44,8 +44,7 @@ public class DefaultRayHitHandler : IRayHitHandler
                 _api.GetCollisionProperties(collidable.BodyHandle, out collisionProperties);
                 break;
             case CollidableMobility.Static:
-                // Don't have that yet.
-                // _api.GetCollisionProperties(collidable.StaticHandle, out collisionProperties);
+                _api.GetCollisionProperties(collidable.StaticHandle, out collisionProperties);
                 break;
         }
 
@@ -71,8 +70,7 @@ public class DefaultRayHitHandler : IRayHitHandler
                 _api.GetCollisionProperties(collidable.BodyHandle, out collisionProperties);
                 break;
             case CollidableMobility.Static:
-                // Don't have that yet.
-                // _api.GetCollisionProperties(collidable.StaticHandle, out collisionProperties);
+                _api.GetCollisionProperties(collidable.StaticHandle, out collisionProperties);
                 break;
         }
 

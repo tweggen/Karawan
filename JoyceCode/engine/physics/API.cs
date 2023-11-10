@@ -25,7 +25,8 @@ public class API
     
     private Engine _engine;
 
-    private SortedDictionary<int, CollisionProperties> _mapCollisionProperties = new();
+    private SortedDictionary<int, CollisionProperties> _mapNonstaticCollisionProperties = new();
+    private SortedDictionary<int, CollisionProperties> _mapStaticCollisionProperties = new();
 
     private SortedDictionary<ulong, uint> _previousCollisions = new();
     
@@ -57,7 +58,7 @@ public class API
             {
                 case CollidableMobility.Dynamic:
                 case CollidableMobility.Kinematic:
-                    _mapCollisionProperties.TryGetValue(pair.A.BodyHandle.Value, out propsA);
+                    _mapNonstaticCollisionProperties.TryGetValue(pair.A.BodyHandle.Value, out propsA);
                     ahandle = (uint) pair.A.BodyHandle.Value;
                     break;
                 case CollidableMobility.Static:
@@ -70,7 +71,7 @@ public class API
             {
                 case CollidableMobility.Dynamic:
                 case CollidableMobility.Kinematic:
-                    _mapCollisionProperties.TryGetValue(pair.B.BodyHandle.Value, out propsB);
+                    _mapNonstaticCollisionProperties.TryGetValue(pair.B.BodyHandle.Value, out propsB);
                     bhandle = (uint) pair.B.BodyHandle.Value;
                     break;
                 case CollidableMobility.Static:
@@ -240,11 +241,44 @@ public class API
     }
     
     
+    public bool GetCollisionProperties(in StaticHandle staticHandle, out CollisionProperties collisionProperties)
+    {
+        lock (_lo)
+        {
+            return _mapStaticCollisionProperties.TryGetValue(staticHandle.Value, out collisionProperties);
+        }
+    }
+    
+    
+    /**
+     * Add a record of collision properties for the given body
+     */
+    public void AddCollisionEntry(in StaticHandle staticHandle, CollisionProperties collisionProperties)
+    {
+        lock (_lo)
+        {
+            _mapStaticCollisionProperties[staticHandle.Value] = collisionProperties;
+        }
+    }
+
+    
+    /**
+     * Remove a record of collision properties for the given body.
+     */
+    public void RemoveCollisionEntry(in StaticHandle staticHandle)
+    {
+        lock (_lo)
+        {
+            _mapStaticCollisionProperties.Remove(staticHandle.Value);
+        }
+    }
+
+
     public bool GetCollisionProperties(in BodyHandle bodyHandle, out CollisionProperties collisionProperties)
     {
         lock (_lo)
         {
-            return _mapCollisionProperties.TryGetValue(bodyHandle.Value, out collisionProperties);
+            return _mapNonstaticCollisionProperties.TryGetValue(bodyHandle.Value, out collisionProperties);
         }
     }
     
@@ -256,7 +290,7 @@ public class API
     {
         lock (_lo)
         {
-            _mapCollisionProperties[bodyHandle.Value] = collisionProperties;
+            _mapNonstaticCollisionProperties[bodyHandle.Value] = collisionProperties;
         }
     }
 
@@ -268,7 +302,7 @@ public class API
     {
         lock (_lo)
         {
-            _mapCollisionProperties.Remove(bodyHandle.Value);
+            _mapNonstaticCollisionProperties.Remove(bodyHandle.Value);
         }
     }
 

@@ -220,7 +220,9 @@ namespace builtin.tools
         /**
          * Return a StaticDescription and a dtor for the shapes used within.
          */
-        public Func<IList<StaticHandle>, Action> BuildStaticPhys(engine.world.Fragment worldFragment)
+        public Func<IList<StaticHandle>, Action> BuildStaticPhys(
+            engine.world.Fragment worldFragment,
+            engine.physics.CollisionProperties? collisionProperties = null)
         {
             var vh = _path[0];
             if (null == _poly)
@@ -272,7 +274,12 @@ namespace builtin.tools
                 var shapeIndex = simulation.Shapes.Add(pshapeCompound);
                 var staticDescription = new StaticDescription(vCompoundCenter, shapeIndex);
 
-                staticHandles.Add(simulation.Statics.Add(staticDescription));
+                var staticHandle = simulation.Statics.Add(staticDescription);
+                staticHandles.Add(staticHandle);
+                if (null != collisionProperties)
+                {
+                    _aPhysics.AddCollisionEntry(staticHandle, collisionProperties);
+                }
 
                 // Return release shapes function.
                 return new Action(() =>
@@ -289,6 +296,8 @@ namespace builtin.tools
                     {
                         convexHull.Dispose(bufferPool);
                     }
+                    
+                    _aPhysics.RemoveCollisionEntry(staticHandle);
                 });
             });
 
