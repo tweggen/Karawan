@@ -63,6 +63,18 @@ namespace builtin.controllers
         private float _dtStopped = 0f;
 
         private static Vector3 _vuUp = new(0f, 1f, 0f);
+        private Quaternion _qPreviousCameraFront;
+
+        private enum CameraAngle
+        {
+            MiddleBetweenOrientationAndMoving,
+            Orientation,
+            PreviousFront,
+            SlerpBackToOrientation
+        };
+
+        private CameraAngle _cameraAngle;
+        private CameraAngle _previousCameraAngle;
         
         private void _buildPhysics()
         {
@@ -144,24 +156,12 @@ namespace builtin.controllers
             }
         }
 
-        
-        /**
-         * Compute the desired camera position.
-         *
-         * Note, the orientation is included just for historic reasons.
-         *
-         * The desired position is input to the physics system as a goal to reach.
-         * However, buildings, object etc. might obstruct the path so we do not
-         * reach it.
-         */
-        private void _computePlainCameraPos(
+
+        private void _computePerfectCameraOrientation(
             float dt,
             in Matrix4x4 cToParentMatrix,
-            out Vector3 vPerfectCameraPos,
-            out Vector3 vPerfectCameraOffset)
+            out Quaternion qPerfectCameraOrientation)
         {
-            var vCarrotPos = cToParentMatrix.Translation;
-
             /*
              * Count the time we are moving.
              */
@@ -205,11 +205,11 @@ namespace builtin.controllers
 
             bool isBackward = false;
 
-            Vector3 vuMovingToFront = default;
+            //Vector3 vuMovingToFront = default;
             Quaternion qMovingToFront = default;
-            Vector3 vuPreviousFront = default;
+            //Vector3 vuPreviousFront = default;
             Quaternion qPreviousFront = default;
-            Vector3 vuOrientationFront = default;
+            //Vector3 vuOrientationFront = default;
             Quaternion qOrientationFront = default;
             
             /*
@@ -224,7 +224,7 @@ namespace builtin.controllers
                 if (velocity > 10f / 3.6f)
                 {
                     var vFront2 = vVelocity2 / velocity;
-                    vuMovingToFront = new Vector3(vFront2.X, 0f, vFront2.Y);
+                    Vector3 vuMovingToFront = new Vector3(vFront2.X, 0f, vFront2.Y);
                     
                     /*
                      * Also check, if we are riding forward or backward
@@ -249,6 +249,7 @@ namespace builtin.controllers
             /*
              * This case applies if we do not have a considerable velocity.
              */
+#if false
             if (_vPreviousCameraOffset != default)
             {
                 /*
@@ -266,13 +267,16 @@ namespace builtin.controllers
                 else
                 {
                 }
-            } 
+            }
+ #else
+            qPreviousFront = _qPreviousCameraFront;
+#endif
 
             /*
              * Fallback: Use the front according to the transformation matrix.
              */
             {
-                vuOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
+                var vuOrientationFront = new Vector3(-cToParentMatrix.M31, 0f, -cToParentMatrix.M33);
                 l = vuOrientationFront.Length();
                 if (l < 0.3f)
                 {
@@ -302,35 +306,59 @@ namespace builtin.controllers
             Quaternion qFront;
             if (_dtMoving > 0.8f)
             {
-                if (vuMovingToFront != default)
+                if (qMovingToFront != default)
                 {
+                    _cameraAngle = CameraAngle.MiddleBetweenOrientationAndMoving;
                     qFront = Quaternion.Slerp(qOrientationFront, qMovingToFront, 0.5f);
                 }
                 else
                 {
+                    _cameraAngle = CameraAngle.Orientation;
                     qFront = qOrientationFront;
                 }
             }
             else
             {
-                if (vuPreviousFront != default)
+                if (qPreviousFront != default)
                 {
                     if (_dtStopped < 2.0f)
                     {
+                        _cameraAngle = CameraAngle.PreviousFront;
                         qFront = qPreviousFront;
                     }
                     else
                     {
-                        // TXWTODO: Slerp this basedon the quaternions.
+                        _cameraAngle = CameraAngle.SlerpBackToOrientation;
                         qFront = Quaternion.Slerp(qPreviousFront, qOrientationFront, CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT);
                     }
                 }
                 else
                 {
+                    _cameraAngle = CameraAngle.Orientation;
                     qFront = qOrientationFront;
                 }
             }
-            
+
+            qPerfectCameraOrientation = qFront;
+
+        }
+        
+        /**
+         * Compute the desired camera position.
+         *
+         * Note, the orientation is included just for historic reasons.
+         *
+         * The desired position is input to the physics system as a goal to reach.
+         * However, buildings, object etc. might obstruct the path so we do not
+         * reach it.
+         */
+        private void _computePlainCameraPos(
+            in Vector3 vCarrotPos,
+            in Quaternion qFront,
+            out Vector3 vPerfectCameraPos,
+            out Vector3 vPerfectCameraOffset)
+        {
+
             /*
              * Derive front vector from Quaternion.
              */
@@ -351,7 +379,7 @@ namespace builtin.controllers
              */
             float zoomDistance = _zoomDistance();
 
-            vPerfectCameraFront = vFront;
+            //vPerfectCameraFront = vFront;
             vPerfectCameraOffset = zoomDistance * vPerfectCameraFront - zoomDistance/4f * _vuUp;
   
             vPerfectCameraPos = vCarrotPos - vPerfectCameraOffset;
@@ -363,13 +391,13 @@ namespace builtin.controllers
          * The real camera transformation is defined by the positon of the physical camera object
          * and a direction that we want to determine.
          */
-        private void _computeCameraDirection(
+        private void _computeRealCameraDirection(
             in Vector3 vRealCameraPosition,
             in Vector3 vCarrotPos,
             out Quaternion qRealCameraOrientation
         )
         {
-            var vRealCameraOffset = vCarrotPos -vRealCameraPosition;
+            var vRealCameraOffset = vCarrotPos - vRealCameraPosition;
             float l = vRealCameraOffset.Length();
             if (l < 0.5f)
             {
@@ -400,16 +428,16 @@ namespace builtin.controllers
             /*
              * Compute camera orientation from the coordinate system.
              */
-            var qCarrotOrientation = Quaternion.CreateFromRotationMatrix(
+            var qOrientationToCarrot = Quaternion.CreateFromRotationMatrix(
                 Matrix4x4.CreateWorld(
                     Vector3.Zero,
                     vRealCameraOffset,
                     vRealCameraUp)
             );
 
-            var qOrientation = Quaternion.Slerp(_qLastPerfectCameraRotation, qCarrotOrientation, ORIENTATION_SLERP_AMOUNT);
-            _qLastPerfectCameraRotation = qOrientation;
-            qRealCameraOrientation = qOrientation;
+            //var qOrientation = Quaternion.Slerp(_qLastPerfectCameraRotation, qCarrotOrientation, ORIENTATION_SLERP_AMOUNT);
+            //_qLastPerfectCameraRotation = qOrientation;
+            qRealCameraOrientation = qOrientationToCarrot;
         }
 
         
@@ -497,6 +525,7 @@ namespace builtin.controllers
                 float l0 = mapCollisions.Keys.First();
                 CollisionProperties props = mapCollisions.Values.First();
 
+                #if false
                 if (null != props)
                 {
                     Trace($"Found {l0}: {props.Name}, {props.DebugInfo}");
@@ -505,8 +534,12 @@ namespace builtin.controllers
                 {
                     Trace($"Found {l0}, no propsws");
                 }
-
-                Vector3 vHit = vCarrotPosition + l0 * vDiff;
+                #endif
+                
+                /*
+                 * Use the intersection point offset by 0.5m for the new camera.
+                 */
+                Vector3 vHit = vCarrotPosition + (l0-0.5f/l) * vDiff;
                 if (l0 < 2f)
                 {
                     _computeNotTooClose(vHit, out var vNotTooClose);
@@ -559,7 +592,8 @@ namespace builtin.controllers
             in Vector3 vPerfectCameraPos, in Vector3 vLastRealCameraPos, out Vector3 vDesiredCameraPos)
         {
             // TXWTODO: Slerp or something
-            vDesiredCameraPos = vPerfectCameraPos;
+            vDesiredCameraPos = 0.9f * vLastRealCameraPos + 0.1f * vPerfectCameraPos;
+            // vDesiredCameraPos = vPerfectCameraPos;
         }
         
         
@@ -585,15 +619,24 @@ namespace builtin.controllers
              * Then transition the real camera to the perfect pos (previous pos + perfect pos => desiredCameraPos)
              * The find a visible, unobstructed place, starting with the desired pos.
              */
-            
+            _computePerfectCameraOrientation(dt, cToParent.Matrix, out var qFront);
+ 
+            /*
+             * smoothen camera movement. 
+             */
+            qFront = Quaternion.Slerp(_qPreviousCameraFront, qFront, 0.07f);
+           
+            /*
+             * Derive the perfect camera position from the angle.
+             */
             _computePlainCameraPos(
-                dt,
-                cToParent.Matrix,
+                vCarrotPos,
+                qFront,
                 out var vPerfectCameraPos, 
                 out var vPerfectCameraOffset);
 
             Vector3 vDesiredCameraPos;
-            if (_vPreviousCameraPosition != default)
+            if (false && _vPreviousCameraPosition != default)
             {
                 _transitionFromRealCameraPos(vPerfectCameraPos, _vPreviousCameraPosition, out vDesiredCameraPos);
             }
@@ -606,7 +649,7 @@ namespace builtin.controllers
 
             var vRealCameraPosition = vVisibleCameraPos;
             
-            _computeCameraDirection(vRealCameraPosition, vCarrotPos, out var qRealCameraOrientation);
+            _computeRealCameraDirection(vRealCameraPosition, vCarrotPos, out var qRealCameraOrientation);
 
             /*
              * Compute real camera object velocity for audio. 
@@ -647,8 +690,10 @@ namespace builtin.controllers
             //    + vRealCameraRight * (float)Math.Sin(-angleY);
             
             _vPreviousCameraOffset = vPerfectCameraOffset;
+            _qPreviousCameraFront = qFront;
             _vPreviousCameraPosition = vRealCameraPosition;
             _previousZoomDistance = _zoomDistance();
+            _previousCameraAngle = _cameraAngle;
 
             /*
              * Apply relative mouse movement
