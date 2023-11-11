@@ -240,7 +240,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.behave.components.Behavior(
                             new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                             { 
-                                Speed = (40f + _rnd.GetFloat() * 30f + (float)carIdx * 20f) / 3.6f
+                                Speed = (30f + _rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
                             })
                         {
                             MaxDistance = propMaxDistance
