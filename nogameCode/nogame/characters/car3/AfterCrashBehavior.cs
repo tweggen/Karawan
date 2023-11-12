@@ -46,7 +46,6 @@ public class AfterCrashBehavior : ABehavior
     
     public override void Behave(in Entity entity, float dt)
     {
-        var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
         if (t < LIFETIME)
         {
             t += dt;
@@ -60,49 +59,53 @@ public class AfterCrashBehavior : ABehavior
             float LevelUpThrust = 16f;
             float LevelDownThrust = 16f;
 
-            Vector3 vTargetPos = prefTarget.Pose.Position;
-            Vector3 vTargetVelocity = prefTarget.Velocity.Linear;
-            float heightAtTarget = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(vTargetPos);
-            {
-                var properDeltaY = 0;
-                var deltaY = vTargetPos.Y - (heightAtTarget+properDeltaY);
-                const float threshDiff = 0.01f;
-
-                Vector3 impulse;
-                float properVelocity = 0f;
-                if ( deltaY < -threshDiff )
-                {
-                    properVelocity = LevelUpThrust; // 1ms-1 up.
-                }
-                else if( deltaY > threshDiff )
-                {
-                    properVelocity = -LevelDownThrust; // 1ms-1 down.
-                }
-                float deltaVelocity = properVelocity - vTargetVelocity.Y;
-                float fireRate = deltaVelocity;
-                impulse = new Vector3(0f, fireRate, 0f);
-                vTotalImpulse += impulse;
-            }
-            
-            
-            /*
-             * Clip at bottom
-             */
-            if( vTargetPos.Y < heightAtTarget )
-            {
-                vTargetPos.Y = heightAtTarget;
-                prefTarget.Pose.Position = vTargetPos;
-                vTotalImpulse += new Vector3(0f, 10f, 0f);
-            }
-
-            /*
-             * This is the same as the physics creation in playerhover.
-             * TXWTODO: Deduplicate and consolidate.
-             */
-            float massShip = 500f;
-            entity.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
             lock (_engine.Simulation)
             {
+                var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
+
+                Vector3 vTargetPos = prefTarget.Pose.Position;
+                Vector3 vTargetVelocity = prefTarget.Velocity.Linear;
+                float heightAtTarget = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(vTargetPos);
+                {
+                    var properDeltaY = 0;
+                    var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
+                    const float threshDiff = 0.01f;
+
+                    Vector3 impulse;
+                    float properVelocity = 0f;
+                    if (deltaY < -threshDiff)
+                    {
+                        properVelocity = LevelUpThrust; // 1ms-1 up.
+                    }
+                    else if (deltaY > threshDiff)
+                    {
+                        properVelocity = -LevelDownThrust; // 1ms-1 down.
+                    }
+
+                    float deltaVelocity = properVelocity - vTargetVelocity.Y;
+                    float fireRate = deltaVelocity;
+                    impulse = new Vector3(0f, fireRate, 0f);
+                    vTotalImpulse += impulse;
+                }
+
+
+                /*
+                 * Clip at bottom
+                 */
+                if (vTargetPos.Y < heightAtTarget)
+                {
+                    vTargetPos.Y = heightAtTarget;
+                    prefTarget.Pose.Position = vTargetPos;
+                    vTotalImpulse += new Vector3(0f, 10f, 0f);
+                }
+
+                /*
+                 * This is the same as the physics creation in playerhover.
+                 * TXWTODO: Deduplicate and consolidate.
+                 */
+                float massShip = 500f;
+                entity.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
+
                 prefTarget.ApplyImpulse(vTotalImpulse * dt * massShip, new Vector3(0f, 0f, 0f));
                 prefTarget.Awake = true;
             }
@@ -120,6 +123,7 @@ public class AfterCrashBehavior : ABehavior
 
                 lock (_engine.Simulation)
                 {
+                    var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
                     prefTarget.Awake = false;
                     prefTarget.BecomeKinematic();
                 }
