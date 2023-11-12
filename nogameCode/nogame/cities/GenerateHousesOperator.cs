@@ -26,7 +26,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * We do assume that a texture contains a integer number of stories.
      */
     private static float _storiesPerTexture = 32f;
-    private static float _metersPerTexture = 4f * _storiesPerTexture;
+    private static float _metersPerTexture = 3f * _storiesPerTexture;
 
 
     public string FragmentOperatorGetPath()

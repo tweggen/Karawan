@@ -188,7 +188,7 @@ public class StreetNavigationController : INavigator
                 float streetWidth = _currentStroke.StreetWidth();
                 float rightLane;
 
-                if (streetWidth >= 8f)
+                if (streetWidth >= 16f)
                 {
                     /*
                      * On larger streets, select lane according to speed.
@@ -198,14 +198,14 @@ public class StreetNavigationController : INavigator
                         /*
                          * fast? Drive on the Left hand side.
                          */
-                        rightLane = streetWidth / 2f - 6f;
+                        rightLane = streetWidth / 2f - 5f;
                     }
                     else
                     {
                         /*
                          * Slow? Drive on the right hand side.
                          */
-                        rightLane = streetWidth / 2f - 3f;
+                        rightLane = streetWidth / 2f - 2f;
                     }
                 }
                 else

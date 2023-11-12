@@ -38,6 +38,9 @@ namespace builtin.controllers
         private float MOUSE_RELATIVE_AMOUNT = 0.03f;
         private float MOUSE_RETURN_SLERP = 0.98f;
         private float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT = 1.6f;
+        public float FOLLOW_AFTER_MOVING_FOR = 0.8f;
+        public float ADJUST_AFTER_STOPPING_FOR = 0.5f;
+        public float CONSIDER_ORIENTATION_WHILE_DRIVING = 1.1f;
 
         private long _frame = 0;
 
@@ -304,12 +307,12 @@ namespace builtin.controllers
              * any smooth camera movements should be implemented here.
              */
             Quaternion qFront;
-            if (_dtMoving > 0.8f)
+            if (_dtMoving > FOLLOW_AFTER_MOVING_FOR)
             {
                 if (qMovingToFront != default)
                 {
                     _cameraAngle = CameraAngle.MiddleBetweenOrientationAndMoving;
-                    qFront = Quaternion.Slerp(qOrientationFront, qMovingToFront, 0.5f);
+                    qFront = Quaternion.Slerp(qMovingToFront, qOrientationFront, CONSIDER_ORIENTATION_WHILE_DRIVING);
                 }
                 else
                 {
@@ -321,7 +324,7 @@ namespace builtin.controllers
             {
                 if (qPreviousFront != default)
                 {
-                    if (_dtStopped < 2.0f)
+                    if (_dtStopped < ADJUST_AFTER_STOPPING_FOR)
                     {
                         _cameraAngle = CameraAngle.PreviousFront;
                         qFront = qPreviousFront;
