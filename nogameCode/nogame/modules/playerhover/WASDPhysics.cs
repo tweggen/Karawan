@@ -23,12 +23,13 @@ namespace nogame.modules.playerhover
         private DefaultEcs.Entity _ePhysDisplay;
 
         public float LinearThrust { get; set; } = 180f;
-        public float AngularThrust { get; set; } = 40.0f;
+        public float AngularThrust { get; set; } = 40f; //80.0f;
+        
         public float MaxLinearVelocity { get; set; } = 50f;
         public float MaxAngularVelocity { get; set; } = 0.8f;
         public float LevelUpThrust { get; set; } = 16f;
         public float LevelDownThrust { get; set; } = 16f;
-        public float NoseDownWhileAcceleration { get; set; } = 16f;
+        public float NoseDownWhileAcceleration { get; set; } = 12f;
         public float WingsDownWhileTurning { get; set; } = 4f;
         
         private void _onLogicalFrame(object sender, float dt)
@@ -51,11 +52,15 @@ namespace nogame.modules.playerhover
              */
             if (!MetaGen.AABB.Contains(vTargetPos))
             {
-                vTargetPos = _prefTarget.Pose.Position = Vector3.Zero;
-                _prefTarget.Pose.Orientation = Quaternion.Identity;
-                _prefTarget.Velocity.Angular = Vector3.Zero;
-                _prefTarget.Velocity.Linear = Vector3.Zero;
-                _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
+                lock (_engine.Simulation)
+                {
+                    vTargetPos = _prefTarget.Pose.Position = Vector3.Zero;
+                    _prefTarget.Pose.Orientation = Quaternion.Identity;
+                    _prefTarget.Velocity.Angular = Vector3.Zero;
+                    _prefTarget.Velocity.Linear = Vector3.Zero;
+                    _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
+                }
+
                 return;
             }
 
@@ -87,7 +92,7 @@ namespace nogame.modules.playerhover
             /*
              * Apply controls
              */
-            var cTransform3 = _eTarget.Get<engine.joyce.components.Transform3>();
+            // var cTransform3 = _eTarget.Get<engine.joyce.components.Transform3>();
             
             var cToParent = _eTarget.Get<engine.joyce.components.Transform3ToParent>();
 
@@ -143,6 +148,7 @@ namespace nogame.modules.playerhover
                      */
                     vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
 
+                    //vTotalImpulse += vTotalImpulse * (-0.3f*Single.Abs(turnMotion / 256f));
                 }
             }
 
@@ -193,7 +199,11 @@ namespace nogame.modules.playerhover
                 }
 
                 vTargetPos.Y = heightAtTarget;
-                _prefTarget.Pose.Position = vTargetPos;
+                lock (_engine.Simulation)
+                {
+                    _prefTarget.Pose.Position = vTargetPos;
+                }
+
                 vTotalImpulse += new Vector3(0f, 10f, 0f);
             }
 
@@ -227,9 +237,12 @@ namespace nogame.modules.playerhover
              * TXWTODO: (or would that be the previous one?)
              */
             _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
-            
-            _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
-            _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
+
+            lock (_engine.Simulation)
+            {
+                _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
+                _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
+            }
 
             _ePhysDisplay.Set(new engine.draw.components.OSDText(
                 new Vector2(20f, 370f),

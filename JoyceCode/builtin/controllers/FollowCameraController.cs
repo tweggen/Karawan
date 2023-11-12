@@ -33,14 +33,14 @@ namespace builtin.controllers
         private float _previousZoomDistance = 33f;
 
         private float ORIENTATION_SLERP_AMOUNT = 0.07f;
-        private float CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT = 0.004f;
+        private float CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT = 0.01f;
         private float ZOOM_SLERP_AMOUNT = 0.05f;
         private float MOUSE_RELATIVE_AMOUNT = 0.03f;
         private float MOUSE_RETURN_SLERP = 0.98f;
         private float MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT = 1.6f;
         public float FOLLOW_AFTER_MOVING_FOR = 0.8f;
         public float ADJUST_AFTER_STOPPING_FOR = 0.5f;
-        public float CONSIDER_ORIENTATION_WHILE_DRIVING = 1.1f;
+        public float CONSIDER_ORIENTATION_WHILE_DRIVING = 0.9f;
 
         private long _frame = 0;
 
