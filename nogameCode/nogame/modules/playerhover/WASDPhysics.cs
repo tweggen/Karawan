@@ -135,7 +135,7 @@ namespace nogame.modules.playerhover
                 if (turnMotion != 0f)
                 {
                     float fullThresh = 0.5f;
-                    float damp = 1f; //Single.Clamp(vTargetAngularVelocity.LengthSquared(), 0.1f, fullThresh) / fullThresh;
+                    float damp = 1f; //(Single.Clamp(vTargetAngularVelocity.LengthSquared(), 0.1f, fullThresh) / fullThresh);
                     turnMotion *= damp;
                     
                     /*

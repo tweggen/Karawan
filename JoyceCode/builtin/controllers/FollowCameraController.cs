@@ -224,7 +224,7 @@ namespace builtin.controllers
                 var vVelocity = _prefPlayer.Velocity.Linear;
                 Vector2 vVelocity2 = new(vVelocity.X, vVelocity.Z);
                 float velocity = vVelocity2.Length();
-                if (velocity > 10f / 3.6f)
+                if (velocity > 5f / 3.6f)
                 {
                     var vFront2 = vVelocity2 / velocity;
                     Vector3 vuMovingToFront = new Vector3(vFront2.X, 0f, vFront2.Y);
