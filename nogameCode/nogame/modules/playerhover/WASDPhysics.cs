@@ -22,14 +22,14 @@ namespace nogame.modules.playerhover
 
         private DefaultEcs.Entity _ePhysDisplay;
 
-        public float LinearThrust { get; set; } = 180f;
-        public float AngularThrust { get; set; } = 40f; //80.0f;
+        public float LinearThrust { get; set; } = 150f;
+        public float AngularThrust { get; set; } = 80.0f;
         
-        public float MaxLinearVelocity { get; set; } = 50f;
+        public float MaxLinearVelocity { get; set; } = 150f;
         public float MaxAngularVelocity { get; set; } = 0.8f;
         public float LevelUpThrust { get; set; } = 16f;
         public float LevelDownThrust { get; set; } = 16f;
-        public float NoseDownWhileAcceleration { get; set; } = 12f;
+        public float NoseDownWhileAcceleration { get; set; } = 1f;
         public float WingsDownWhileTurning { get; set; } = 4f;
         
         private void _onLogicalFrame(object sender, float dt)
@@ -124,7 +124,7 @@ namespace nogame.modules.playerhover
                     /*
                      * Move nose down when accelerating and vice versa.
                      */
-                    vTotalAngular += vRight * (-AngularThrust * frontMotion / (256f * NoseDownWhileAcceleration));
+                    vTotalAngular += vRight * (-frontMotion / 256f * NoseDownWhileAcceleration);
                 }
 
                 if (upMotion != 0f)
@@ -135,20 +135,20 @@ namespace nogame.modules.playerhover
                 if (turnMotion != 0f)
                 {
                     float fullThresh = 0.5f;
-                    float damp = Single.Clamp(vTargetAngularVelocity.LengthSquared(), 0.1f, fullThresh) / fullThresh;
+                    float damp = 1f; //Single.Clamp(vTargetAngularVelocity.LengthSquared(), 0.1f, fullThresh) / fullThresh;
                     turnMotion *= damp;
                     
                     /*
                      * gently lean to the right iof turning right.
                      */
-                    vTotalAngular += vFront * (AngularThrust * turnMotion / (256f*WingsDownWhileTurning));
+                    vTotalAngular += vFront * (turnMotion / 256f*WingsDownWhileTurning);
 
                     /*
                      * And finally turn
                      */
                     vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
 
-                    //vTotalImpulse += vTotalImpulse * (-0.3f*Single.Abs(turnMotion / 256f));
+                    vTotalImpulse += vTotalImpulse * (-0.3f*Single.Abs(turnMotion / 256f));
                 }
             }
 
