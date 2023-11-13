@@ -15,6 +15,7 @@ namespace engine.joyce
          * If null, use the default fragment shader.
          */
         public AnyShader FragmentShader = null;
+        
         /**
          * Specify the vertex shader to use.
          * If null, use the default vertex shader.
@@ -36,6 +37,8 @@ namespace engine.joyce
         public bool IsSameAs(in Material other)
         {
             return true
+                   && FragmentShader == other.FragmentShader
+                   && VertexShader == other.VertexShader
                    && Texture == other.Texture
                    && EmissiveTexture == other.EmissiveTexture
                    && AlbedoColor == other.AlbedoColor

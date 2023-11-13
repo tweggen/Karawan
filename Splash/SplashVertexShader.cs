@@ -1,3 +1,4 @@
+#if false
 using ObjLoader.Loader.Common;
 
 namespace Splash;
@@ -11,3 +12,4 @@ public class SplashVertexShader : engine.joyce.VertexShader
         return !Source.IsNullOrEmpty();
     }
 }
+#endif

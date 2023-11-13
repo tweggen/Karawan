@@ -1,3 +1,4 @@
+#if false
 using ObjLoader.Loader.Common;
 
 namespace Splash;
@@ -11,3 +12,4 @@ public class SplashFragmentShader : engine.joyce.AnyShader
         return !Source.IsNullOrEmpty();
     }
 }
+#endif

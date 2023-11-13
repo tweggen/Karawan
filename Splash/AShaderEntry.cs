@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if false
+using System;
 
 namespace Splash;
 
@@ -14,3 +15,4 @@ public abstract class AShaderEntry : IDisposable
         FragmentShader = fragmentShader;
     }
 }
+#endif
