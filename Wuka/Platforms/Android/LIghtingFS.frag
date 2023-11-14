@@ -134,6 +134,7 @@ void main()
 
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
+        applyLight(lights[i], col3TotalLight);    
     }
     
     vec4 col4DiffuseTotal = col4TexelDiffuse + col4Diffuse;

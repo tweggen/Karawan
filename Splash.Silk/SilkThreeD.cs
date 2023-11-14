@@ -508,7 +508,7 @@ public class SilkThreeD : IThreeD
 
             skMaterialEntry.SkFragmentShader = ((SkSingleShaderEntry)aFragmentShaderEntry);
 
-            engine.joyce.AnyShader vertexShader = jMaterial.FragmentShader;
+            engine.joyce.AnyShader vertexShader = jMaterial.VertexShader;
             if (vertexShader == null || !vertexShader.IsValid())
             {
                 vertexShader = _defaultVertexShader;
