@@ -13,6 +13,7 @@ uniform mat4 mvp;
 
 // Output vertex attributes (to fragment shader)
 out vec4 fragPosition;
+flat out vec4 fragFlatPosition;
 out vec2 fragTexCoord;
 out vec2 fragTexCoord2;
 out vec4 fragColor;
@@ -32,6 +33,7 @@ void main()
 
     // Send vertex attributes to fragment shader
     fragPosition = instanceTransform * vertex;
+    fragFlatPosition = instanceTransform * vertex;
     fragTexCoord = vertexTexCoord;
     fragTexCoord2 = vertexTexCoord2;
     fragColor = vertexColor;

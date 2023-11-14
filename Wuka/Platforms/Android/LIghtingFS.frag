@@ -2,6 +2,7 @@ precision highp float;
 
 // (from vertex shader)
 in vec4 fragPosition;
+flat in vec4 fragFlatPosition;
 in vec2 fragTexCoord;
 in vec2 fragTexCoord2;
 in vec4 fragColor;
@@ -138,7 +139,10 @@ vec3 v3RelFragPosition;
 void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 col4Emissive)
 {
     float room_height = 3.0;
-    float room_size = 4.0;
+    float room_width = 4.0;
+    float room_depth = 4.0;
+            
+    float base_height = fragFlatPosition.y;
             
     Ray surfaceToCamera;
     surfaceToCamera.direction = normalize(v3RelFragPosition);
@@ -146,57 +150,80 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     surfaceToCamera.origin += surfaceToCamera.direction * 0.0001;
 
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
-    
+        
+    int ix = int(ceil(surfaceToCamera.origin.x / room_width));
+    int iy = int(ceil((surfaceToCamera.origin.y/*-base_height*/) / room_height));
+    int iz = int(ceil(surfaceToCamera.origin.z / room_depth));
+    int isOn = (ix*ix*ix+iy*iy+iz*iz*iz*iz) & 1;    
+    float fix = float(ix);
+    float fiy = float(iy);
+    float fiz = float(iz);
     if (dot(fragUp, surfaceToCamera.direction) > 0) {
         Plane ceiling;
-        ceiling.position = (ceil(surfaceToCamera.origin.y / room_height) * room_height) * fragUp;
+        ceiling.position = (fiy * room_height) * fragUp;
         ceiling.normal = fragUp;
-        ceiling.color = vec3(1.0, 0.0, 0.0);
+        ceiling.color = vec3(0.1, 0.1, 0.1);
         
         zBuffer = checkVisibility(surfaceToCamera, ceiling, zBuffer);
     } else {
         Plane floor;
-        floor.position = ((ceil(surfaceToCamera.origin.y / room_height) - 1.0) * room_height) * fragUp;
+        floor.position = ((fiy - 1.0) * room_height) * fragUp;
         floor.normal = -fragUp;
-        floor.color = vec3(0.0, 1.0, 0.0);
+        floor.color = vec3(0.2, 0.2, 0.2);
         
         zBuffer = checkVisibility(surfaceToCamera, floor, zBuffer);
     }
     if (dot(fragRight, surfaceToCamera.direction) > 0) {
         Plane wall;
-        wall.position = (ceil(surfaceToCamera.origin.x / room_size) * room_size) * fragRight;
+        wall.position = (fix * room_width) * fragRight;
         wall.normal = fragRight;
-        wall.color = vec3(0.0, 0.0, 1.0);
+        wall.color = vec3(0.26, 0.2, 0.2);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
         
     } else {
         Plane wall;
-        wall.position = ((ceil(surfaceToCamera.origin.x / room_size) - 1.0) * room_size) * fragRight;
+        wall.position = ((fix - 1.0) * room_width) * fragRight;
         wall.normal = -fragRight;
-        wall.color = vec3(1.0, 0.1, 1.0);
+        wall.color = vec3(0.3, 0.2, 0.3);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     }
 
     if (dot(fragFront, surfaceToCamera.direction) > 0) {
         Plane wall;
-        wall.position = (ceil(surfaceToCamera.origin.z / room_size) * room_size) * fragFront;
+        wall.position = (fiz * room_depth) * fragFront;
         wall.normal = fragFront;
-        wall.color = vec3(0.0, 1.0, 1.0);
+        wall.color = vec3(0.15, 0.15, 0.15);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
         
     } else {
         Plane wall;
-        wall.position = ((ceil(surfaceToCamera.origin.z / room_size) - 1.0) * room_size) * fragFront;
+        wall.position = ((fiz - 1.0) * room_depth) * fragFront;
         wall.normal = -fragFront;
-        wall.color = vec3(0.0, 0.0, 0.0);
+        wall.color = vec3(0.1, 0.1, 0.1);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
-    } 
-    col4Diffuse = vec4(0.0, 0.0, 0.0, 1.0); 
-    col4Emissive = vec4(zBuffer.rgb, 1.0);
+    }
+    vec4 col4TexDiffuse = texture(texture0, fragTexCoord);
+    if (col4TexDiffuse.a == 0.0)
+    {
+        float light;
+        if(isOn==0)
+        {
+            light = 0.8;
+        } else
+        {
+            light = 0.35;
+        }
+        col4Diffuse = vec4(zBuffer.rgb * light, 1.0);
+    }
+    else
+    {
+        col4Diffuse = col4TexDiffuse;
+    }   
+    col4Emissive = vec4(0.0, 0.0, 0.0, 1.0); 
 }
 
 
