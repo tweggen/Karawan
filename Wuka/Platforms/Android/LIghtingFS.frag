@@ -1,26 +1,3 @@
-﻿using System;
-using static engine.Logger;
-
-namespace Splash.shadercode
-{
-    public class LightingFS
-    {
-        public static string GetShaderCode()
-        {
-            string api = engine.GlobalSettings.Get("platform.threeD.API");
-            if (api== "OpenGL")
-            {
-                return "#version 330\n\n" + _shaderCodeCommon;
-            } else if (api == "OpenGLES")
-            {
-                return "#version 300 es\n\n" + _shaderCodeCommon;
-            } 
-            ErrorThrow($"Invalid graphics API setup in global config \"platform.threeD.API\": \"{api}\".",
-                m => new InvalidOperationException(m));
-            return "";
-        }
-
-        static private string _shaderCodeCommon = @"
 precision highp float;
 
 // (from vertex shader)
@@ -39,6 +16,8 @@ uniform vec4 col4EmissiveFactors;
 uniform vec4 col4Ambient;
 
 uniform float fogDistance;
+
+uniform int materialFlags;
 
 // Output fragment color
 out vec4 finalColor;
@@ -71,6 +50,72 @@ uniform Light lights[MAX_LIGHTS];
 
 uniform vec3 v3AbsPosView;
 
+
+struct Plane {
+        vec3 position;
+        vec3 normal;
+        vec3 color;
+};
+
+
+struct Ray {
+        vec3 direction;
+        vec3 origin;
+};
+
+
+vec4 checkVisibility(Ray ray, Plane plane, vec4 zBuffer) {
+    float distance = dot(plane.position - ray.origin, plane.normal) / dot(plane.normal, ray.direction);
+    if (distance < zBuffer.w) {
+        zBuffer.w = distance;
+        zBuffer.rgb = plane.color;
+    }
+    return zBuffer;
+}
+
+
+void applyLightDirectional(in Light light, inout vec3 col3TotalLight)
+{
+    vec3 v3nDirLight = -normalize(light.target - light.position);
+    float dotNormalLight = max(dot(fragNormal, v3nDirLight), 0.0);
+    col3TotalLight += light.color.rgb*dotNormalLight;
+}
+
+
+void applyLight(in Light light, inout vec3 col3TotalLight)
+{
+    if (light.enabled == 0) return;
+
+    if (light.type == LIGHT_DIRECTIONAL)
+    {
+        applyLightDirectional(light, col3TotalLight);
+    }
+
+    if (light.type == LIGHT_POINT)
+    {
+        vec3 v3DirFragLight = light.position - vec3(fragPosition);
+        float lengthFragLight = length(v3DirFragLight);
+        vec3 v3nDirLight = v3DirFragLight / lengthFragLight;
+
+        if (light.param1 > -1.0)
+        {
+            // This is a directional v3nDirLight, consider the target.
+            // Minus, because we care about the angle at t he v3nDirLight.
+            float dotTarget = -dot(light.target,v3nDirLight);
+            if (dotTarget > light.param1)
+            {
+                float dotNormalLight = max(dot(fragNormal, v3nDirLight), 0.0);
+                col3TotalLight += (light.color.rgb*dotNormalLight) / lengthFragLight;
+            }
+        } else
+        {
+            float dotNormalLight = max(dot(fragNormal, v3nDirLight), 0.0);
+            col3TotalLight += (light.color.rgb*dotNormalLight) / lengthFragLight;
+        }
+    }
+}
+
+
 void main()
 {
     vec3 v3RelFragPosition = vec3(fragPosition)-v3AbsPosView;
@@ -79,7 +124,6 @@ void main()
     vec4 col4TexelDiffuse = texture(texture0, fragTexCoord);
     vec4 col4TexelEmissive = texture(texture2, fragTexCoord2);
     vec3 col3TotalLight = vec3(0.0);
-    vec3 v3nNormal = normalize(fragNormal);
 
     // Is it all too transparent?
     if ((col4TexelEmissive.a+col4TexelDiffuse.a) < 0.01) {
@@ -90,41 +134,6 @@ void main()
 
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
-        if (lights[i].enabled != 0)
-        {
-            vec3 v3nDirLight = vec3(0.0);
-
-            if (lights[i].type == LIGHT_DIRECTIONAL)
-            {
-                v3nDirLight = -normalize(lights[i].target - lights[i].position);
-                float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
-                col3TotalLight += lights[i].color.rgb*dotNormalLight;
-            }
-
-            if (lights[i].type == LIGHT_POINT)
-            {
-                vec3 v3DirFragLight = lights[i].position - vec3(fragPosition);
-                float lengthFragLight = length(v3DirFragLight);
-                v3nDirLight = v3DirFragLight / lengthFragLight;
-
-                if (lights[i].param1 > -1.0)
-                {
-                    // This is a directional v3nDirLight, consider the target.
-                    // Minus, because we care about the angle at t he v3nDirLight.
-                    float dotTarget = -dot(lights[i].target,v3nDirLight);
-                    if (dotTarget > lights[i].param1)
-                    {
-                        float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
-                        col3TotalLight += (lights[i].color.rgb*dotNormalLight) / lengthFragLight;
-                    }
-                } else
-                {
-                    float dotNormalLight = max(dot(v3nNormal, v3nDirLight), 0.0);
-                    col3TotalLight += (lights[i].color.rgb*dotNormalLight) / lengthFragLight;
-                }
-            }
-
-        }
     }
     
     vec4 col4DiffuseTotal = col4TexelDiffuse + col4Diffuse;
@@ -155,9 +164,4 @@ void main()
 
     // Gamma correction
     // finalColor = pow(finalColor, vec4(1.0/2.2));
-}
-
-";
-
-    }
 }

@@ -471,15 +471,15 @@ public class SilkThreeD : IThreeD
     }
 
 
-    static private engine.joyce.AnyShader _defaultFragmentShader = new SplashAnyShader()
+    private static readonly engine.joyce.AnyShader _defaultFragmentShader = new SplashAnyShader()
     {
-        Source = Splash.shadercode.LightingFS.GetShaderCode()
+        Source = (I.Get<Resources>().Get("shaders/default.frag") as engine.Resource.ShaderSource).ShaderCode
     };
 
 
-    static private engine.joyce.AnyShader _defaultVertexShader = new SplashAnyShader()
+    private static readonly engine.joyce.AnyShader _defaultVertexShader = new SplashAnyShader()
     {
-        Source = Splash.shadercode.LightingVS.GetShaderCode()
+        Source = (I.Get<Resources>().Get("shaders/default.vert") as engine.Resource.ShaderSource).ShaderCode
     };
 
 

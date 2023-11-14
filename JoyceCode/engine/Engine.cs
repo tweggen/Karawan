@@ -14,6 +14,7 @@ using BepuPhysics;
 using DefaultEcs;
 using engine.behave.components;
 using engine.news;
+using engine.Resource;
 using engine.world;
 using static engine.Logger;
 using Trace = System.Diagnostics.Trace;
@@ -944,12 +945,36 @@ namespace engine
                 _requireEntityIdArrays--;
             }
         }
+
+
+        /**
+         * Load default resources into the resource cache.
+         * These might be required ot be availabel even if the
+         * platform still is loading.
+         */
+        private void _loadDefaultResources()
+        {
+            /*
+             * Load some default resources.
+             */
+            try
+            {
+                Trace("Loading default resources...");
+                I.Get<Resources>().FindAdd("shaders/default.vert", (string _) => new ShaderSource("LightingVS.vert"));
+                I.Get<Resources>().FindAdd("shaders/default.frag", (string _) => new ShaderSource("LightingFS.frag"));
+                Trace("Loading default resources done.");
+            }
+            catch (Exception e)
+            {
+                Error($"Unable to load engine default resources: {e}");
+            }
+        }
         
         
         public void PlatformSetupDone()
         {
             State = EngineState.Running;
-
+            
             /*
              * Start the reality as soon the platform also is set up.
              */
@@ -991,8 +1016,11 @@ namespace engine
             I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi(this));
             I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
             I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
+            I.Register<engine.Resources>(() => new Resources());
             
             State = EngineState.Starting;
+            
+            _loadDefaultResources();
         }
     }
 }
