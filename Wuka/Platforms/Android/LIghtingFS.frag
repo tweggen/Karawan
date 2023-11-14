@@ -8,6 +8,7 @@ in vec4 fragColor;
 in vec3 fragNormal;
 in vec3 fragUp;
 in vec3 fragRight;
+in vec3 fragFront;
 
 // Input uniform values
 uniform sampler2D texture0;
@@ -178,18 +179,18 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     }
 
-    if (dot(fragNormal, surfaceToCamera.direction) > 0) {
+    if (dot(fragFront, surfaceToCamera.direction) > 0) {
         Plane wall;
-        wall.position = (ceil(surfaceToCamera.origin.z / room_size) * room_size) * fragNormal;
-        wall.normal = fragNormal;
+        wall.position = (ceil(surfaceToCamera.origin.z / room_size) * room_size) * fragFront;
+        wall.normal = fragFront;
         wall.color = vec3(0.0, 1.0, 1.0);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
         
     } else {
         Plane wall;
-        wall.position = ((ceil(surfaceToCamera.origin.z / room_size) - 1.0) * room_size) * fragNormal;
-        wall.normal = -fragNormal;
+        wall.position = ((ceil(surfaceToCamera.origin.z / room_size) - 1.0) * room_size) * fragFront;
+        wall.normal = -fragFront;
         wall.color = vec3(0.0, 0.0, 0.0);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);

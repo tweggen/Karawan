@@ -19,6 +19,7 @@ out vec4 fragColor;
 out vec3 fragNormal;
 out vec3 fragUp;
 out vec3 fragRight;
+out vec3 fragFront;
 
 // NOTE: Add here your custom variables
 
@@ -37,7 +38,8 @@ void main()
     fragNormal = normalize(vec3(instanceTransform * vec4(vertexNormal, 0.0)));
 
     fragUp = vec3(0.0, 1.0, 0.0);
-    fragRight = cross(fragUp, fragNormal);
+    fragRight = vec3(1.0, 0.0, 0.0); //cross(fragUp, fragNormal);
+    fragFront = vec3(0.0, 0.0, 1.0);
     // Calculate final vertex position
     gl_Position = mvpi*vertex;
 }
