@@ -441,6 +441,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     ? 0x00000000
                     : 0xff333333,
                 Texture = new engine.joyce.Texture("buildingdiffuse.png"),
+                AddInterior = true,
                 // TXWTODO: Why the hell is the ambient texture just a blurry yellow mess?
                 //EmissiveTexture = new engine.joyce.Texture("buildingsambient.png")
             });

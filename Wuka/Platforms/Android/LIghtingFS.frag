@@ -6,6 +6,8 @@ in vec2 fragTexCoord;
 in vec2 fragTexCoord2;
 in vec4 fragColor;
 in vec3 fragNormal;
+in vec3 fragUp;
+in vec3 fragRight;
 
 // Input uniform values
 uniform sampler2D texture0;
@@ -126,11 +128,74 @@ void applyLight(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
 
 vec3 v3RelFragPosition;
         
+        
 /**
  * Perform interior mapping.
+ * We rely on the vertex shader having computed "up", "right" and "forward"
+ * vectors for the surface.
  */
 void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 col4Emissive)
 {
+    float room_height = 3.0;
+    float room_size = 4.0;
+            
+    Ray surfaceToCamera;
+    surfaceToCamera.direction = normalize(v3RelFragPosition);
+    surfaceToCamera.origin = vec3(fragPosition);
+    surfaceToCamera.origin += surfaceToCamera.direction * 0.0001;
+
+    vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
+    
+    if (dot(fragUp, surfaceToCamera.direction) > 0) {
+        Plane ceiling;
+        ceiling.position = (ceil(surfaceToCamera.origin.y / room_height) * room_height) * fragUp;
+        ceiling.normal = fragUp;
+        ceiling.color = vec3(1.0, 0.0, 0.0);
+        
+        zBuffer = checkVisibility(surfaceToCamera, ceiling, zBuffer);
+    } else {
+        Plane floor;
+        floor.position = ((ceil(surfaceToCamera.origin.y / room_height) - 1.0) * room_height) * fragUp;
+        floor.normal = -fragUp;
+        floor.color = vec3(0.0, 1.0, 0.0);
+        
+        zBuffer = checkVisibility(surfaceToCamera, floor, zBuffer);
+    }
+    if (dot(fragRight, surfaceToCamera.direction) > 0) {
+        Plane wall;
+        wall.position = (ceil(surfaceToCamera.origin.x / room_size) * room_size) * fragRight;
+        wall.normal = fragRight;
+        wall.color = vec3(0.0, 0.0, 1.0);
+        
+        zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
+        
+    } else {
+        Plane wall;
+        wall.position = ((ceil(surfaceToCamera.origin.x / room_size) - 1.0) * room_size) * fragRight;
+        wall.normal = -fragRight;
+        wall.color = vec3(1.0, 0.1, 1.0);
+        
+        zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
+    }
+
+    if (dot(fragNormal, surfaceToCamera.direction) > 0) {
+        Plane wall;
+        wall.position = (ceil(surfaceToCamera.origin.z / room_size) * room_size) * fragNormal;
+        wall.normal = fragNormal;
+        wall.color = vec3(0.0, 1.0, 1.0);
+        
+        zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
+        
+    } else {
+        Plane wall;
+        wall.position = ((ceil(surfaceToCamera.origin.z / room_size) - 1.0) * room_size) * fragNormal;
+        wall.normal = -fragNormal;
+        wall.color = vec3(0.0, 0.0, 0.0);
+        
+        zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
+    } 
+    col4Diffuse = vec4(0.0, 0.0, 0.0, 1.0); 
+    col4Emissive = vec4(zBuffer.rgb, 1.0);
 }
 
 
