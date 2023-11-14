@@ -132,6 +132,13 @@ public class SilkThreeD : IThreeD
             // sh.SetUniform("ambient", new Vector4(.2f, .2f, .2f, 0.0f));
             sh.SetUniform("texture0", 0);
             sh.SetUniform("texture2", 2);
+
+            Material.Flags materialFlags = 0;
+            if (jMaterial.AddInterior)
+            {
+                materialFlags |= Material.Flags.RenderInterior;
+            }
+            sh.SetUniform("materialFlags", (int) materialFlags);
         }
         catch (Exception e)
         {

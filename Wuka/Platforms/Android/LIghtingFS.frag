@@ -24,9 +24,11 @@ out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
-#define     MAX_LIGHTS              4
-#define     LIGHT_DIRECTIONAL       0
-#define     LIGHT_POINT             1
+#define MATERIAL_FLAGS_RENDER_INTERIOR 0x00000001
+
+#define MAX_LIGHTS              4
+#define LIGHT_DIRECTIONAL       0
+#define LIGHT_POINT             1
 
 struct MaterialProperty
 {
@@ -52,15 +54,15 @@ uniform vec3 v3AbsPosView;
 
 
 struct Plane {
-        vec3 position;
-        vec3 normal;
-        vec3 color;
+    vec3 position;
+    vec3 normal;
+    vec3 color;
 };
 
 
 struct Ray {
-        vec3 direction;
-        vec3 origin;
+    vec3 direction;
+    vec3 origin;
 };
 
 
@@ -74,67 +76,101 @@ vec4 checkVisibility(Ray ray, Plane plane, vec4 zBuffer) {
 }
 
 
-void applyLightDirectional(in Light light, inout vec3 col3TotalLight)
+void applyLightDirectional(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
 {
     vec3 v3nDirLight = -normalize(light.target - light.position);
-    float dotNormalLight = max(dot(fragNormal, v3nDirLight), 0.0);
+    float dotNormalLight = max(dot(v3Normal, v3nDirLight), 0.0);
     col3TotalLight += light.color.rgb*dotNormalLight;
 }
 
 
-void applyLight(in Light light, inout vec3 col3TotalLight)
+void applyLightPoint(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
+{
+    vec3 v3DirFragLight = light.position - vec3(fragPosition);
+    float lengthFragLight = length(v3DirFragLight);
+    vec3 v3nDirLight = v3DirFragLight / lengthFragLight;
+    
+    if (light.param1 > -1.0)
+    {
+        // This is a directional v3nDirLight, consider the target.
+        // Minus, because we care about the angle at t he v3nDirLight.
+        float dotTarget = -dot(light.target,v3nDirLight);
+        if (dotTarget > light.param1)
+        {
+            float dotNormalLight = max(dot(v3Normal, v3nDirLight), 0.0);
+            col3TotalLight += (light.color.rgb*dotNormalLight) / lengthFragLight;
+        }
+    } else
+    {
+        float dotNormalLight = max(dot(v3Normal, v3nDirLight), 0.0);
+        col3TotalLight += (light.color.rgb*dotNormalLight) / lengthFragLight;
+    }
+}
+
+
+void applyLight(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
 {
     if (light.enabled == 0) return;
 
     if (light.type == LIGHT_DIRECTIONAL)
     {
-        applyLightDirectional(light, col3TotalLight);
+        applyLightDirectional(v3Normal, light, col3TotalLight);
     }
 
     if (light.type == LIGHT_POINT)
     {
-        vec3 v3DirFragLight = light.position - vec3(fragPosition);
-        float lengthFragLight = length(v3DirFragLight);
-        vec3 v3nDirLight = v3DirFragLight / lengthFragLight;
-
-        if (light.param1 > -1.0)
-        {
-            // This is a directional v3nDirLight, consider the target.
-            // Minus, because we care about the angle at t he v3nDirLight.
-            float dotTarget = -dot(light.target,v3nDirLight);
-            if (dotTarget > light.param1)
-            {
-                float dotNormalLight = max(dot(fragNormal, v3nDirLight), 0.0);
-                col3TotalLight += (light.color.rgb*dotNormalLight) / lengthFragLight;
-            }
-        } else
-        {
-            float dotNormalLight = max(dot(fragNormal, v3nDirLight), 0.0);
-            col3TotalLight += (light.color.rgb*dotNormalLight) / lengthFragLight;
-        }
+        applyLightPoint(v3Normal, light, col3TotalLight);    
     }
+}
+        
+
+vec3 v3RelFragPosition;
+        
+/**
+ * Perform interior mapping.
+ */
+void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 col4Emissive)
+{
+}
+
+
+/**
+ * Render a completely basic texture.
+ */
+void renderStandard(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 col4Emissive)
+{
+    col4Diffuse = texture(texture0, fragTexCoord);
+    col4Emissive = texture(texture2, fragTexCoord2);
 }
 
 
 void main()
 {
-    vec3 v3RelFragPosition = vec3(fragPosition)-v3AbsPosView;
+    /*
+     * Update the relative position of the fragment pixel to the camera.
+     * We need that for lighting and some FX shaders.
+     */
+    v3RelFragPosition = vec3(fragPosition)-v3AbsPosView;
 
-    // Texel color fetching from texture sampler
-    vec4 col4TexelDiffuse = texture(texture0, fragTexCoord);
-    vec4 col4TexelEmissive = texture(texture2, fragTexCoord2);
+    /*
+     * Collect the pixel diffuse/emissive color and normal 
+     * to render.
+     */
+    vec4 col4TexelDiffuse;
+    vec4 col4TexelEmissive;
+    vec3 v3Normal = fragNormal;    
+    if (0 != (materialFlags & MATERIAL_FLAGS_RENDER_INTERIOR))
+    {
+        renderInterior(v3Normal, col4TexelDiffuse, col4TexelEmissive);    
+    } else
+    {
+        renderStandard(v3Normal, col4TexelDiffuse, col4TexelEmissive);
+    }
+
     vec3 col3TotalLight = vec3(0.0);
-
-    // Is it all too transparent?
-    if ((col4TexelEmissive.a+col4TexelDiffuse.a) < 0.01) {
-        //discard;
-        //finalColor = vec4(1.0,1.0,0.0,0.0);
-        // return;
-    } 
-
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
-        applyLight(lights[i], col3TotalLight);    
+        applyLight(v3Normal, lights[i], col3TotalLight);    
     }
     
     vec4 col4DiffuseTotal = col4TexelDiffuse + col4Diffuse;

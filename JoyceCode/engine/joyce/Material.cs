@@ -11,6 +11,14 @@ namespace engine.joyce
     public class Material
     {
         /**
+         * These flags are used in the shader.
+         */
+        public enum Flags
+        {
+            RenderInterior = 0x00000001
+        }
+        
+        /**
          * Specify the fragment shader to use.
          * If null, use the default fragment shader.
          */
@@ -28,41 +36,19 @@ namespace engine.joyce
         public uint AlbedoColor = 0x00000000;
         public uint EmissiveColor = 0x00000000;
         public uint EmissiveFactors = 0xffffffff;
-        public bool HasTransparency = false;
+        public bool AddInterior = false;
+        
         public bool IsBillboardTransform = false;
+        
+        public bool HasTransparency = false;
         public bool UploadImmediately = false;
 
         public string Name = "(unnamed)";
 
-        public bool IsSameAs(in Material other)
-        {
-            return true
-                   && FragmentShader == other.FragmentShader
-                   && VertexShader == other.VertexShader
-                   && Texture == other.Texture
-                   && EmissiveTexture == other.EmissiveTexture
-                   && AlbedoColor == other.AlbedoColor
-                   && EmissiveColor == other.EmissiveColor
-                   && EmissiveFactors == other.EmissiveFactors
-                   && HasTransparency == other.HasTransparency
-                   && IsBillboardTransform == other.IsBillboardTransform
-                   && UploadImmediately == other.UploadImmediately;
-        }
-
         public override string ToString()
         {
             return
-                $"Texture: {{ {Texture} }}, EmissiveTexture: {{ {EmissiveTexture} }}, AlbedoColor: {AlbedoColor}, EmissiveColor: {EmissiveColor}, EmissiveFactors: {EmissiveFactors}, HasTransparency: {HasTransparency}, IsBillboardTransform: {IsBillboardTransform}";
-        }
-        
-        
-        public Material(in Texture texture) 
-        { 
-            Texture = texture;
-        }
-
-        public Material()
-        {
+                $"Texture: {{ {Texture} }}, EmissiveTexture: {{ {EmissiveTexture} }}, AlbedoColor: {AlbedoColor}, EmissiveColor: {EmissiveColor}, EmissiveFactors: {EmissiveFactors}, HasTransparency: {HasTransparency}, IsBillboardTransform: {IsBillboardTransform}, AddInterior: {AddInterior}";
         }
     }
 }
