@@ -686,8 +686,8 @@ namespace builtin.controllers
             }
 
 
-            var angleX = -_vMouseOffset.Y * (float)Math.PI / 180f;
-            var angleY = -_vMouseOffset.X * (float)Math.PI / 180f;
+            var angleX = -(_vMouseOffset.Y-15f) * (float)Math.PI / 180f;
+            var angleY = -(_vMouseOffset.X) * (float)Math.PI / 180f;
             //var vUserCameraFront = 
             //    vRealCameraFront * (float)Math.Cos(-angleY)
             //    + vRealCameraRight * (float)Math.Sin(-angleY);

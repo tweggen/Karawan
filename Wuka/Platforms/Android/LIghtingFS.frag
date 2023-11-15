@@ -144,8 +144,8 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     float room_width = 5.0;
     float room_depth = 5.0;
             
-    float base_height = room_height - (fragFlatPosition.y - floor(fragFlatPosition.y/room_height)*room_height);
-            
+    float base_height = fragFlatPosition.y - floor(fragFlatPosition.y/room_height)*room_height;
+        
     Ray surfaceToCamera;
     surfaceToCamera.direction = normalize(v3RelFragPosition);
     surfaceToCamera.origin = vec3(fragPosition);
@@ -154,26 +154,26 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
         
     int ix = int(ceil(dot(fragRight,surfaceToCamera.origin) / room_width));
-    int iy = int(ceil((dot(fragUp,surfaceToCamera.origin)/*-base_height */) / room_height)); // consider base_height
+    int iy = int(ceil((dot(fragUp,surfaceToCamera.origin)-base_height) / room_height)); // consider base_height
     int iz = int(ceil(dot(fragFront,surfaceToCamera.origin) / room_depth));
     
     int houseSeed = int(dot(v3One, fragFlatPosition.xyz));
     int windowSeed = ix*ix+iy*iy*iy+ix*iy*iz;
-    int timeSeed = (frameNo/(200+ix+iy+((ix*iy*54321)&15)))*511232941;
-    int isOn = 0xffffffff ^^ (timeSeed & windowSeed & houseSeed);
+    int timeSeed = ((frameNo+98765)/(2000+ix+iy+((ix*iy*54321)&15)))*511232941;
+    int isOn = timeSeed & windowSeed & houseSeed;
     float fix = float(ix);
     float fiy = float(iy);
     float fiz = float(iz);
     if (dot(fragUp, surfaceToCamera.direction) > 0) {
         Plane ceiling;
-        ceiling.position = (fiy * room_height) * fragUp;
+        ceiling.position = (fiy * room_height + base_height) * fragUp;
         ceiling.normal = fragUp;
         ceiling.color = vec3(1.0,0.0,0.0); //vec3(0.1, 0.1, 0.1);
         
         zBuffer = checkVisibility(surfaceToCamera, ceiling, zBuffer);
     } else {
         Plane floor;
-        floor.position = ((fiy - 1.0) * room_height) * fragUp;
+        floor.position = ((fiy - 1.0) * room_height + base_height) * fragUp;
         floor.normal = -fragUp;
         floor.color = vec3(0.0,1.0,0.0); // vec3(0.2, 0.2, 0.2);
         
@@ -186,7 +186,6 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         wall.color = vec3(1.0,1.0,0.0); //vec3(0.26, 0.2, 0.2);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
-        
     } else {
         Plane wall;
         wall.position = ((fix - 1.0) * room_width) * fragRight;
@@ -203,7 +202,6 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         wall.color = vec3(1.0,0.0,1.0); //vec3(0.15, 0.15, 0.15);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
-        
     } else {
         Plane wall;
         wall.position = ((fiz - 1.0) * room_depth) * fragFront;
@@ -216,14 +214,22 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     if (col4TexDiffuse.a == 0.0)
     {
         float light;
-        if(isOn==0)
+        if((isOn & 0x88888888) != 0)
         {
-            light = 0.1;
-            col4Emissive = vec4(0.0, 0.0, 0.0, 1.0);
-        } else
+            light = 0.3;
+            col4Emissive = vec4(0.1, 0.1, 0.15, 1.0);
+        } else if ((isOn & 0x44444444) != 0)
         {
-            light = 0.6;
-            col4Emissive = vec4(0.2, 0.2, 0.1, 1.0);
+            light = 0.3;
+            col4Emissive = vec4(0.2, 0.2, 0.175, 1.0);
+        } else if ((isOn & 0x22222222) != 0)
+        {
+            light = 0.5;
+            col4Emissive = vec4(0.15, 0.15, 0.15, 1.0);
+        } else if ((isOn & 0x11111111) != 0)
+        {
+            light = 0.5;
+            col4Emissive = vec4(0.15, 0.15, 0.1, 1.0);
         }
         col4Diffuse = vec4(zBuffer.rgb * light, 1.0);
     }
