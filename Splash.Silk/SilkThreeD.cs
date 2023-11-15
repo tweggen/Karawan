@@ -209,6 +209,7 @@ public class SilkThreeD : IThreeD
         }
 
         _currentRenderFrame = null;
+        _frameno++;
     }
 
     private static readonly  bool _useInstanceRendering = true;
@@ -489,6 +490,8 @@ public class SilkThreeD : IThreeD
         Source = (I.Get<Resources>().Get("shaders/default.vert") as engine.Resource.ShaderSource).ShaderCode
     };
 
+    private int _frameno;
+
 
     private SkSingleShaderEntry _compileSingleShader(SplashAnyShader splashAnyShader, ShaderType shaderType)
     {
@@ -609,6 +612,7 @@ public class SilkThreeD : IThreeD
         }
         shader.SetUniform("fogDistance", _fogDistance);
         shader.SetUniform("v3AbsPosView", _vCamera);
+        shader.SetUniform("frameNo", _frameno);
     }
     
     
