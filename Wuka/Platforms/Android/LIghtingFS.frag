@@ -139,8 +139,8 @@ vec3 v3RelFragPosition;
 void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 col4Emissive)
 {
     float room_height = 3.0;
-    float room_width = 4.0;
-    float room_depth = 4.0;
+    float room_width = 9.0;
+    float room_depth = 7.0;
             
     float base_height = fragFlatPosition.y;
             
@@ -151,10 +151,10 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
 
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
         
-    int ix = int(ceil(surfaceToCamera.origin.x / room_width));
-    int iy = int(ceil((surfaceToCamera.origin.y/*-base_height*/) / room_height));
-    int iz = int(ceil(surfaceToCamera.origin.z / room_depth));
-    int isOn = (ix*ix*ix+iy*iy+iz*iz*iz*iz) & 1;    
+    int ix = int(ceil(dot(fragRight,surfaceToCamera.origin) / room_width));
+    int iy = int(ceil((dot(fragUp,surfaceToCamera.origin)-base_height) / room_height)); // consider base_height
+    int iz = int(ceil(dot(fragFront,surfaceToCamera.origin) / room_depth));
+    int isOn = (ix*ix*ix+iy*iy+iz*iz*iz*iz) & 8;    
     float fix = float(ix);
     float fiy = float(iy);
     float fiz = float(iz);
