@@ -40,8 +40,8 @@ void main()
     fragNormal = normalize(vec3(instanceTransform * vec4(vertexNormal, 0.0)));
 
     fragUp = vec3(0.0, 1.0, 0.0);
-    fragRight = vec3(1.0, 0.0, 0.0); //cross(fragUp, fragNormal);
-    fragFront = vec3(0.0, 0.0, 1.0);
+    fragRight = vec3(1.0,0.0,0.0); //cross(fragNormal, fragUp);
+    fragFront = vec3(0.0,0.0,1.0); //fragNormal;
     // Calculate final vertex position
     gl_Position = mvpi*vertex;
 }

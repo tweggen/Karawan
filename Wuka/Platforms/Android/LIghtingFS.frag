@@ -144,7 +144,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     float room_width = 5.0;
     float room_depth = 5.0;
             
-    float base_height = fragFlatPosition.y;
+    float base_height = room_height - (fragFlatPosition.y - floor(fragFlatPosition.y/room_height)*room_height);
             
     Ray surfaceToCamera;
     surfaceToCamera.direction = normalize(v3RelFragPosition);
@@ -154,13 +154,13 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
         
     int ix = int(ceil(dot(fragRight,surfaceToCamera.origin) / room_width));
-    int iy = int(ceil((dot(fragUp,surfaceToCamera.origin)/*-base_height*/) / room_height)); // consider base_height
+    int iy = int(ceil((dot(fragUp,surfaceToCamera.origin)/*-base_height */) / room_height)); // consider base_height
     int iz = int(ceil(dot(fragFront,surfaceToCamera.origin) / room_depth));
     
     int houseSeed = int(dot(v3One, fragFlatPosition.xyz));
     int windowSeed = ix*ix+iy*iy*iy+ix*iy*iz;
     int timeSeed = (frameNo/(200+ix+iy+((ix*iy*54321)&15)))*511232941;
-    int isOn = timeSeed & windowSeed & houseSeed;
+    int isOn = 0xffffffff ^^ (timeSeed & windowSeed & houseSeed);
     float fix = float(ix);
     float fiy = float(iy);
     float fiz = float(iz);
