@@ -115,6 +115,8 @@
 	  <None Remove="Platforms\Android\libopenal.so" />
 	  <None Remove="Platforms\Android\libs\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\libs\armeabi-v7a\libopenal.so" />
+	  <None Remove="Platforms\Android\LIghtingFS.frag" />
+	  <None Remove="Platforms\Android\LIghtingVS.vert" />
 	  <None Remove="Platforms\Android\lorem.png" />
 	  <None Remove="Platforms\Android\lvl-1-01c.ogg" />
 	  <None Remove="Platforms\Android\lvl-6.ogg" />
@@ -223,6 +225,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\gridlines1.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\LIghtingFS.frag">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\LIghtingVS.vert">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\logos.joyce.albedo-joyce-engine.png">

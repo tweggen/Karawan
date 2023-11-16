@@ -164,7 +164,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     float fix = float(ix);
     float fiy = float(iy);
     float fiz = float(iz);
-    if (dot(fragUp, surfaceToCamera.direction) > 0) {
+    if (dot(fragUp, surfaceToCamera.direction) > 0.0) {
         Plane ceiling;
         ceiling.position = (fiy * room_height + base_height) * fragUp;
         ceiling.normal = fragUp;
@@ -179,7 +179,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         
         zBuffer = checkVisibility(surfaceToCamera, floor, zBuffer);
     }
-    if (dot(fragRight, surfaceToCamera.direction) > 0) {
+    if (dot(fragRight, surfaceToCamera.direction) > 0.0) {
         Plane wall;
         wall.position = (fix * room_width) * fragRight;
         wall.normal = fragRight;
@@ -195,7 +195,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     }
 
-    if (dot(fragFront, surfaceToCamera.direction) > 0) {
+    if (dot(fragFront, surfaceToCamera.direction) > 0.0) {
         Plane wall;
         wall.position = (fiz * room_depth) * fragFront;
         wall.normal = fragFront;
