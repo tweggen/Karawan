@@ -149,7 +149,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     Ray surfaceToCamera;
     surfaceToCamera.direction = normalize(v3RelFragPosition);
     surfaceToCamera.origin = vec3(fragPosition);
-    surfaceToCamera.origin += surfaceToCamera.direction * 0.0001;
+    surfaceToCamera.origin += surfaceToCamera.direction * 0.001;
 
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
         
@@ -157,10 +157,10 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     int iy = int(ceil((dot(fragUp,surfaceToCamera.origin)-base_height) / room_height)); // consider base_height
     int iz = int(ceil(dot(fragFront,surfaceToCamera.origin) / room_depth));
     
-    int houseSeed = int(dot(v3One, fragFlatPosition.xyz));
-    int windowSeed = ix*ix+iy*iy*iy+ix*iy*iz;
-    int timeSeed = ((frameNo+98765)/(2000+ix+iy+((ix*iy*54321)&15)))*511232941;
-    int isOn = timeSeed & windowSeed & houseSeed;
+    uint houseSeed = uint(dot(v3One, fragFlatPosition.xyz));
+    uint windowSeed = uint(ix*ix+iy*iy*iy+ix*iy*iz);
+    uint timeSeed = ((uint(frameNo)+98765u)/(2000u+uint(ix+iy+((ix*iy*54321)&15))))*511232941u;
+    uint isOn = timeSeed & windowSeed & houseSeed;
     float fix = float(ix);
     float fiy = float(iy);
     float fiz = float(iz);
@@ -214,19 +214,19 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     if (col4TexDiffuse.a == 0.0)
     {
         float light;
-        if((isOn & 0x88888888) != 0)
+        if((isOn & 0x88888888u) != 0u)
         {
             light = 0.3;
             col4Emissive = vec4(0.1, 0.1, 0.15, 1.0);
-        } else if ((isOn & 0x44444444) != 0)
+        } else if ((isOn & 0x44444444u) != 0u)
         {
             light = 0.3;
             col4Emissive = vec4(0.2, 0.2, 0.175, 1.0);
-        } else if ((isOn & 0x22222222) != 0)
+        } else if ((isOn & 0x22222222u) != 0u)
         {
             light = 0.5;
             col4Emissive = vec4(0.15, 0.15, 0.15, 1.0);
-        } else if ((isOn & 0x11111111) != 0)
+        } else if ((isOn & 0x11111111u) != 0u)
         {
             light = 0.5;
             col4Emissive = vec4(0.15, 0.15, 0.1, 1.0);
