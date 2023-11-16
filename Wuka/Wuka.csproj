@@ -91,6 +91,7 @@
 
 	<ItemGroup>
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
+	  <None Remove="Platforms\Android\buildingalphadiffuse.png" />
 	  <None Remove="Platforms\Android\buildingambient.png" />
 	  <None Remove="Platforms\Android\buildingdiffuse.png" />
 	  <None Remove="Platforms\Android\car-collision.ogg" />
@@ -169,6 +170,9 @@
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\buildingdiffuse.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\buildingalphadiffuse.png">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\car-collision.ogg">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
