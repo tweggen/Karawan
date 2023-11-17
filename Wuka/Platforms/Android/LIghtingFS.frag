@@ -1,15 +1,16 @@
 precision highp float;
 
 // (from vertex shader)
-in vec4 fragPosition;
-flat in vec4 fragFlatPosition;
+in vec4 v4FragPosition;
+flat in vec4 v4FragFlatPosition;
+flat in vec4 v4InstancePosition;
 in vec2 fragTexCoord;
 in vec2 fragTexCoord2;
 in vec4 fragColor;
-in vec3 fragNormal;
-in vec3 fragUp;
-in vec3 fragRight;
-in vec3 fragFront;
+in vec3 v3FragNormal;
+in vec3 v3FragUp;
+in vec3 v3FragRight;
+in vec3 v3FragFront;
 
 // Input uniform values
 uniform sampler2D texture0;
@@ -71,16 +72,6 @@ struct Ray {
 };
 
 
-vec4 checkVisibility(Ray ray, Plane plane, vec4 zBuffer) {
-    float distance = dot(plane.position - ray.origin, plane.normal) / dot(plane.normal, ray.direction);
-    if (distance < zBuffer.w) {
-        zBuffer.w = distance;
-        zBuffer.rgb = plane.color;
-    }
-    return zBuffer;
-}
-
-
 void applyLightDirectional(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
 {
     vec3 v3nDirLight = -normalize(light.target - light.position);
@@ -91,7 +82,7 @@ void applyLightDirectional(in vec3 v3Normal, in Light light, inout vec3 col3Tota
 
 void applyLightPoint(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
 {
-    vec3 v3DirFragLight = light.position - vec3(fragPosition);
+    vec3 v3DirFragLight = light.position - vec3(v4FragPosition);
     float lengthFragLight = length(v3DirFragLight);
     vec3 v3nDirLight = v3DirFragLight / lengthFragLight;
     
@@ -131,8 +122,19 @@ void applyLight(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
 
 vec3 v3RelFragPosition;
 vec3 v3One;
-        
-        
+
+
+vec4 checkVisibility(Ray ray, Plane plane, vec4 zBuffer)
+{
+    float distance = dot(plane.position - ray.origin, plane.normal) / dot(plane.normal, ray.direction);
+    if (distance < zBuffer.w) {
+        zBuffer.w = distance;
+        zBuffer.rgb = plane.color;
+    }
+    return zBuffer;
+}
+
+
 /**
  * Perform interior mapping.
  * We rely on the vertex shader having computed "up", "right" and "forward"
@@ -144,74 +146,82 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     float room_width = 5.0;
     float room_depth = 5.0;
             
-    float base_height = fragFlatPosition.y - floor(fragFlatPosition.y/room_height)*room_height;
+    vec3 v3Reference = (v4FragFlatPosition - v4InstancePosition).xyz;
+            
+    float base_height = v4FragFlatPosition.y - floor(v4FragFlatPosition.y/room_height)*room_height;
         
+    /*
+     * We create a Ray and a Plane to test for intersection.
+     * To enhance precision, we use positions relative to the instance position.
+     * The instance position usually is either the fragment position or even the
+     * actual object's position.
+     */
     Ray surfaceToCamera;
     surfaceToCamera.direction = normalize(v3RelFragPosition);
-    surfaceToCamera.origin = vec3(fragPosition);
+    surfaceToCamera.origin = vec3(v4FragPosition);
     surfaceToCamera.origin += surfaceToCamera.direction * 0.001;
 
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
         
-    int ix = int(ceil(dot(fragRight,surfaceToCamera.origin) / room_width));
-    int iy = int(ceil((dot(fragUp,surfaceToCamera.origin)-base_height) / room_height)); // consider base_height
-    int iz = int(ceil(dot(fragFront,surfaceToCamera.origin) / room_depth));
+    int ix = int(ceil( dot(v3FragRight,surfaceToCamera.origin) / room_width));
+    int iy = int(ceil((dot(v3FragUp,surfaceToCamera.origin)-base_height) / room_height)); // consider base_height
+    int iz = int(ceil( dot(v3FragFront,surfaceToCamera.origin) / room_depth));
     
-    uint houseSeed = uint(dot(v3One, fragFlatPosition.xyz));
+    uint houseSeed = uint(dot(v3One, v4FragFlatPosition.xyz));
     uint windowSeed = uint(ix*ix+iy*iy*iy+ix*iy*iz);
     uint timeSeed = ((uint(frameNo)+98765u)/(2000u+uint(ix+iy+((ix*iy*54321)&15))))*511232941u;
     uint isOn = timeSeed & windowSeed & houseSeed;
     float fix = float(ix);
     float fiy = float(iy);
     float fiz = float(iz);
-    if (dot(fragUp, surfaceToCamera.direction) > 0.0) {
+    if (dot(v3FragUp, surfaceToCamera.direction) > 0.0) {
         Plane ceiling;
-        ceiling.position = (fiy * room_height + base_height) * fragUp;
-        ceiling.normal = fragUp;
+        ceiling.position = (fiy * room_height + base_height) * v3FragUp;
+        ceiling.normal = v3FragUp;
         ceiling.color = vec3(1.0,0.0,0.0); //vec3(0.1, 0.1, 0.1);
         
         zBuffer = checkVisibility(surfaceToCamera, ceiling, zBuffer);
     } else {
         Plane floor;
-        floor.position = ((fiy - 1.0) * room_height + base_height) * fragUp;
-        floor.normal = -fragUp;
+        floor.position = ((fiy - 1.0) * room_height + base_height) * v3FragUp;
+        floor.normal = -v3FragUp;
         floor.color = vec3(0.0,1.0,0.0); // vec3(0.2, 0.2, 0.2);
         
         zBuffer = checkVisibility(surfaceToCamera, floor, zBuffer);
     }
-    if (dot(fragRight, surfaceToCamera.direction) > 0.0) {
+    if (dot(v3FragRight, surfaceToCamera.direction) > 0.0) {
         Plane wall;
-        wall.position = (fix * room_width) * fragRight;
-        wall.normal = fragRight;
+        wall.position = (fix * room_width) * v3FragRight;
+        wall.normal = v3FragRight;
         wall.color = vec3(1.0,1.0,0.0); //vec3(0.26, 0.2, 0.2);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     } else {
         Plane wall;
-        wall.position = ((fix - 1.0) * room_width) * fragRight;
-        wall.normal = -fragRight;
+        wall.position = ((fix - 1.0) * room_width) * v3FragRight;
+        wall.normal = -v3FragRight;
         wall.color = vec3(0.0,0.0,1.0); // vec3(0.3, 0.2, 0.3);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     }
 
-    if (dot(fragFront, surfaceToCamera.direction) > 0.0) {
+    if (dot(v3FragFront, surfaceToCamera.direction) > 0.0) {
         Plane wall;
-        wall.position = (fiz * room_depth) * fragFront;
-        wall.normal = fragFront;
+        wall.position = (fiz * room_depth) * v3FragFront;
+        wall.normal = v3FragFront;
         wall.color = vec3(1.0,0.0,1.0); //vec3(0.15, 0.15, 0.15);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     } else {
         Plane wall;
-        wall.position = ((fiz - 1.0) * room_depth) * fragFront;
-        wall.normal = -fragFront;
+        wall.position = ((fiz - 1.0) * room_depth) * v3FragFront;
+        wall.normal = -v3FragFront;
         wall.color = vec3(0.0,1.0,1.0); //vec3(0.1, 0.1, 0.1);
         
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     }
     vec4 col4TexDiffuse = texture(texture0, fragTexCoord);
-    if (col4TexDiffuse.a == 0.0)
+    if (true || col4TexDiffuse.a == 0.0)
     {
         float light;
         if((isOn & 0x88888888u) != 0u)
@@ -230,6 +240,9 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         {
             light = 0.5;
             col4Emissive = vec4(0.15, 0.15, 0.1, 1.0);
+        } else
+        {
+            light = 0.5;
         }
         col4Diffuse = vec4(zBuffer.rgb * light, 1.0);
     }
@@ -257,7 +270,7 @@ void main()
      * Update the relative position of the fragment pixel to the camera.
      * We need that for lighting and some FX shaders.
      */
-    v3RelFragPosition = vec3(fragPosition)-v3AbsPosView;
+    v3RelFragPosition = vec3(v4FragPosition)-v3AbsPosView;
     v3One = vec3(1.0, 1.0, 1.0);
 
     /*
@@ -266,7 +279,7 @@ void main()
      */
     vec4 col4TexelDiffuse;
     vec4 col4TexelEmissive;
-    vec3 v3Normal = fragNormal;    
+    vec3 v3Normal = v3FragNormal;    
     if (0 != (materialFlags & MATERIAL_FLAGS_RENDER_INTERIOR))
     {
         renderInterior(v3Normal, col4TexelDiffuse, col4TexelEmissive);    
