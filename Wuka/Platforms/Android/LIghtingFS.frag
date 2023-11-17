@@ -146,7 +146,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     float room_width = 5.0;
     float room_depth = 5.0;
             
-    vec3 v3Reference = (v4FragFlatPosition - v4InstancePosition).xyz;
+    vec3 v3Reference = v4InstancePosition.xyz;
             
     float base_height = v4FragFlatPosition.y - floor(v4FragFlatPosition.y/room_height)*room_height;
         
