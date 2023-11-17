@@ -704,8 +704,8 @@ namespace builtin.controllers
             var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), angleX);
             var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), angleY);
             var qUserCameraOrientation = qRealCameraOrientation;
-            qUserCameraOrientation *= rotRight;
             qUserCameraOrientation *= rotUp;
+            qUserCameraOrientation *= rotRight;
 
             /*
              * Now we have computed the position we want to target the camera object to.
