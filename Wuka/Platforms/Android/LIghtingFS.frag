@@ -158,13 +158,13 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
      */
     Ray surfaceToCamera;
     surfaceToCamera.direction = normalize(v3RelFragPosition);
-    surfaceToCamera.origin = vec3(v4FragPosition);
+    surfaceToCamera.origin = vec3(v4FragPosition)-v3Reference;
     surfaceToCamera.origin += surfaceToCamera.direction * 0.001;
 
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
         
     int ix = int(ceil( dot(v3FragRight,surfaceToCamera.origin) / room_width));
-    int iy = int(ceil((dot(v3FragUp,surfaceToCamera.origin)-base_height) / room_height)); // consider base_height
+    int iy = int(ceil((dot(v3FragUp,   surfaceToCamera.origin)-base_height) / room_height));
     int iz = int(ceil( dot(v3FragFront,surfaceToCamera.origin) / room_depth));
     
     uint houseSeed = uint(dot(v3One, v4FragFlatPosition.xyz));
