@@ -21,7 +21,6 @@ public class AfterCrashBehavior : ABehavior
     public override void OnCollision(ContactEvent cev)
     {
         var me = cev.ContactInfo.PropertiesA;
-        engine.physics.components.Kinetic cCarKinetic;
 
         if (me.Entity.Has<engine.physics.components.Body>())
         {
