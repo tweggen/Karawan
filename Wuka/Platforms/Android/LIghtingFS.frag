@@ -167,10 +167,10 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     int iy = int(ceil((dot(v3FragUp,   surfaceToCamera.origin)-base_height) / room_height));
     int iz = int(ceil( dot(v3FragFront,surfaceToCamera.origin) / room_depth));
     
-    uint houseSeed = uint(dot(v3One, v4FragFlatPosition.xyz));
+    uint houseSeed = uint(dot(v3One, surfaceToCamera.origin));
     uint windowSeed = uint(ix*ix+iy*iy*iy+ix*iy*iz);
     uint timeSeed = ((uint(frameNo)+98765u)/(2000u+uint(ix+iy+((ix*iy*54321)&15))))*511232941u;
-    uint isOn = timeSeed & windowSeed & houseSeed;
+    uint isOn = timeSeed & windowSeed /* & houseSeed */;
     float fix = float(ix);
     float fiy = float(iy);
     float fiz = float(iz);
