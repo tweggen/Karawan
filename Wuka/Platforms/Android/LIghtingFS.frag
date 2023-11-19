@@ -221,7 +221,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         zBuffer = checkVisibility(surfaceToCamera, wall, zBuffer);
     }
     vec4 col4TexDiffuse = texture(texture0, fragTexCoord);
-    if (true || col4TexDiffuse.a == 0.0)
+    if (col4TexDiffuse.a == 0.0)
     {
         float light;
         if((isOn & 0x88888888u) != 0u)
@@ -242,7 +242,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
             col4Emissive = vec4(0.15, 0.15, 0.1, 1.0);
         } else
         {
-            light = 0.5;
+            light = 0.2;
         }
         col4Diffuse = vec4(zBuffer.rgb * light, 1.0);
     }
