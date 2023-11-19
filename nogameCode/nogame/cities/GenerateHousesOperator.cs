@@ -1,6 +1,7 @@
 ﻿using BepuPhysics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine;
@@ -78,9 +79,24 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         path.Add(vh);
 
         /*
+         * To generate real surfaces, we need to create a poly with consecutive pairs of vertices
+         * that form a wall each.
+         */
+        List<Vector3> listWalls = new();
+        int l = p.Count;
+        for (int i = 0; i < l; ++i)
+        {
+            listWalls.Add(p[i]);
+            listWalls.Add(p[(i + 1) % l]);
+        }
+        
+        /*
          * 27 is the magical number we currently use to identify buildings in collisions.
          */
-        var opExtrudePoly = new builtin.tools.ExtrudePoly(p, path, 27, _metersPerTexture, false, false, true);
+        var opExtrudePoly = new builtin.tools.ExtrudePoly(listWalls, path, 27, _metersPerTexture, false, false, true)
+        {
+            PairedNormals = true
+        };
         try
         {
             opExtrudePoly.BuildGeom(meshHouse);

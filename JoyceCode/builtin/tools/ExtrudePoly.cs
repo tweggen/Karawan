@@ -20,12 +20,15 @@ namespace builtin.tools
         private readonly bool _inverseTexture;
         private readonly bool _addFloor;
         private readonly bool _addCeiling;
+        public bool PairedNormals { get; set; } = false;
 
         private engine.physics.API _aPhysics;
     
         public void BuildGeom(
             in engine.joyce.Mesh g)
         {
+
+            if (null == g.Normals) g.Normals = new List<Vector3>();
             var vh = _path[0];
             var p = _poly;
 
@@ -117,10 +120,24 @@ namespace builtin.tools
              * for p.length+1 columns.
              */
             float currU = 0f;
-            for (int j=0; j<p.Count+1; j++ )
+            int pathLen = p.Count;
+            for (int j=0; j<pathLen+1; j++ )
             {
                 int i = j % p.Count;
                 Vector3 vc = p[i];
+
+                Vector3 vnPairNormal = default;
+                if (PairedNormals)
+                {
+                    /*
+                     * The pair normal is the cross product between the difference between
+                     * this point of pairs and the up vector.
+                     */
+                    Vector3 vuTangent = p[((j%pathLen) & (~1)) + 1] - p[((j%pathLen) & (~1)) + 0];
+                    vuTangent /= vuTangent.Length();
+                    vnPairNormal = Vector3.Cross(vu, vuTangent);
+                    g.N(vnPairNormal);
+                }
 
                 /*
                  * Bottom ring
