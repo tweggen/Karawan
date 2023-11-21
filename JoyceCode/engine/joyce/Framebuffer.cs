@@ -1,4 +1,5 @@
-﻿namespace engine.joyce;
+﻿#if false
+namespace engine.joyce;
 
 
 /**
@@ -19,3 +20,4 @@ public class Framebuffer
         Height = height;
     }
 }
+#endif
