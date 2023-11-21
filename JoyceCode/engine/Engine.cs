@@ -998,8 +998,8 @@ namespace engine
         
         public Engine( engine.IPlatform platform )
         {
-            SubscriptionManager.Unit();
-            
+            using (engine.Unit u = new()) u.RunStartupTest();
+           
             _nextId = 0;
             _platform = platform;
             _ecsWorld = new DefaultEcs.World();

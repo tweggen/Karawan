@@ -17,6 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\FindLights.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\ModelProperties.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Obj.cs" />
@@ -196,6 +197,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\StrokeStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Timeline.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Skybox.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Unit.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\WorkerQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterList.cs" />
