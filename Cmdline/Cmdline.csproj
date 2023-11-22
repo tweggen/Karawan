@@ -7,6 +7,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <AssemblyName>joycecmd</AssemblyName>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="UkooLabs.FbxSharpie" Version="1.0.99" />
     </ItemGroup>

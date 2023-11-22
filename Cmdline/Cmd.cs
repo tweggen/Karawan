@@ -4,6 +4,7 @@ class Cmd
 {
     static int Main(string[] args)
     {
+        Console.Error.WriteLine("joycecmd: Processing.");
         if (args.Length < 1)
         {
             Console.Error.WriteLine("joycecmd requires at least one argument.");
