@@ -4,8 +4,11 @@ class Cmd
 {
     static int Main(string[] args)
     {
-        Console.Error.WriteLine($"joycecmd invoked with arguemnts {args}");
-        Console.Error.WriteLine("joycecmd: Processing.");
+        Console.Error.WriteLine($"joycecmd: Processing. had {args.Length} arguments.");
+        foreach (var str in args)
+        {
+            Console.Error.WriteLine($"arg: {str}");
+        }
         if (args.Length < 1)
         {
             Console.Error.WriteLine("joycecmd requires at least one argument.");
@@ -21,7 +24,6 @@ class Cmd
                 result = new CmdLine.Fbx2Ascii(args).Execute();
                 break;
             default:
-                Console.Error.WriteLine($"Unsupported command {args[0]}.");
                 result = new CmdLine.Help(args).Execute();
                 break;
         }

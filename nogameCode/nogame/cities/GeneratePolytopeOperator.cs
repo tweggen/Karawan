@@ -34,7 +34,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             BepuPhysics.Collidables.Sphere pbodySphere = new(radius); 
             lock (engine.Simulation)
             {
-                pshapeSphere = engine.Simulation.Shapes.Add(pbodySphere);
+                 pshapeSphere = engine.Simulation.Shapes.Add(pbodySphere);
             }
 
             _mapPbodySphere[radius] = pbodySphere;
@@ -43,9 +43,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             return pshapeSphere;
         }
     }
-
-
-
+    
 
     public string FragmentOperatorGetPath()
     {

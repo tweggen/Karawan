@@ -1,5 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  
+
+  <UsingTask TaskName="CmdLine.Fbx2AsciiTask"
+             AssemblyFile="..\CmdLine\bin\Debug\net7.0\joycecmd.dll"/>
+
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>disable</Nullable>
@@ -8,15 +11,25 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Boom\Boom.csproj" />
-    <ProjectReference Include="..\Cmdline\Cmdline.csproj"/>
+    <ProjectReference Include="..\Cmdline\Cmdline.csproj">
+      <PrivateAssets>runtime</PrivateAssets>
+    </ProjectReference>
+      <!--
+      <PrivateAssets>runtime</PrivateAssets>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Targets>Build;DebugSymbolsProjectOutputGroup</Targets>
+    </ProjectReference> -->
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
+
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec ToolPath="$(MSBuildProjectDirectory)\$(OutputPath)" ToolExe="joycecmd.exe" 
-          Command="fbx2ascii ..\models\models\u\U5.fbx ..\Wuka\Platforms\Android\u.fbx" />
+  <Target Name="ConvertFbx" BeforeTargets="Compile">
+    <Message Text="Converting fbx" />
+    <Fbx2AsciiTask SourceFbx="..\models\models\u\U5.fbx" DestinationFbx="..\Wuka\Platforms\Android\u.fbx"/>
   </Target>
 
 </Project>
