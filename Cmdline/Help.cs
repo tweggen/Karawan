@@ -1,12 +1,13 @@
-namespace Cmdline;
+namespace CmdLine;
 
 public class Help
 {
-    public void Execute()
+    public int Execute()
     {
+        return 0;
     }
 
-    public Help(string args[])
+    public Help(string[] args)
     {
         
     }

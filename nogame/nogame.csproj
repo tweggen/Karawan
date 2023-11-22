@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Boom\Boom.csproj" />
+    <ProjectReference Include="..\Cmdline\Cmdline.csproj" />
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 

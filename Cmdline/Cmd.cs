@@ -1,8 +1,8 @@
 ﻿using Console = System.Console;
 
-class CmdLine
+class Cmd
 {
-    static void Main(string[] args)
+    static int Main(string[] args)
     {
         if (args.Length < 1)
         {
@@ -11,15 +11,19 @@ class CmdLine
 
         }
 
+        int result = 0;
+
         switch (args[0])
         {
             case "fbx2ascii":
-                new Fbx2Ascii(args).Execute();
+                result = new CmdLine.Fbx2Ascii(args).Execute();
                 break;
             default:
                 Console.Error.WriteLine("Unsupported command {args[0]}.");
-                new Help(args).Execute();
+                result = new CmdLine.Help(args).Execute();
                 break;
         }
+
+        return result;
     }
 }
