@@ -25,7 +25,7 @@
     <ProjectReference Include="..\..\..\github\BepuPhysics2\BepuUtilities\BepuUtilities.csproj" />
     <ProjectReference Include="..\..\DefaultEcs\source\DefaultEcs\DefaultEcs.csproj" />
     <ProjectReference Include="..\..\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj" />
-    <ProjectReference Include="..\FbxSharp\FbxSharp.csproj" />
+    <ProjectReference Include="..\..\FbxSharp\FbxSharp.csproj" />
   </ItemGroup>
 
   <Import Project="..\JoyceCode\JoyceCode.projitems" Label="Shared" />
