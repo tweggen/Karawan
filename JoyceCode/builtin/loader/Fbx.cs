@@ -20,10 +20,10 @@ public class Fbx
 
         modelInfo = new();
 
-        var fbxImporter = new FbxSharp.Importer();
+        var fbxImporter = new FbxSharp.FbxImporter();
 
         var fileStream = Assets.Open(url);
-        FbxSharp.Scene? fbxScene = null;
+        FbxSharp.FbxScene? fbxScene = null;
         try
         {
             using (StreamReader input = new StreamReader(fileStream))
