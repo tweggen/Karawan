@@ -19,6 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\FindLights.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\GlTF.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\ModelProperties.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Obj.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\components\MapFragmentId.cs" />

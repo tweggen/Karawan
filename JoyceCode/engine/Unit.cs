@@ -13,6 +13,7 @@ public class Unit : IDisposable
         Trace("Running startup unit tests...");
         engine.news.SubscriptionManager.Unit();
         builtin.loader.Fbx.Unit();
+        builtin.loader.GlTF.Unit();
         Trace("Startup unit tests passed.");
     }
 }

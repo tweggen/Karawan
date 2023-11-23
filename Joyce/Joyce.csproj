@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="clipper.NetStandard2" Version="6.4.2" />
+    <PackageReference Include="glTF2Loader" Version="1.0.0" />
     <PackageReference Include="ImGui.NET" Version="1.88.0" />
     <PackageReference Include="LibTessDotNet" Version="1.1.15" />
     <PackageReference Include="LiteDB" Version="5.0.15" />

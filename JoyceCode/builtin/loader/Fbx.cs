@@ -30,18 +30,18 @@ public class Fbx
             {
                 fbxScene = new FbxSharp.Converter().ConvertScene(
                     new FbxSharp.Parser(
-                        new FbxSharp.Tokenizer((TextReader)input)).ReadFile());
+                        new FbxSharp.Tokenizer((TextReader)input))
+                        {  AutoExpandArray = true }.ReadFile());
             }
         }
         catch (Exception e)
         {
             Error($"Unable to load fbx from url {url}: {e}.");
         }
-
         
-        foreach (var node in fbxScene.Nodes)
+        if (fbxScene != null)
         {
-            
+            Trace("Successfully loaded model.");
         }
     }
 
