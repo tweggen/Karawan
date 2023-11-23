@@ -12,7 +12,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Boom\Boom.csproj" />
     <ProjectReference Include="..\Cmdline\Cmdline.csproj">
-      <PrivateAssets>runtime</PrivateAssets>
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
       <!--
       <PrivateAssets>runtime</PrivateAssets>

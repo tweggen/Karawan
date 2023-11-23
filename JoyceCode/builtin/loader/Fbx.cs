@@ -47,7 +47,7 @@ public class Fbx
 
     public static void Unit()
     {
-        LoadModelInstanceSync("U5.fbx", 
+        LoadModelInstanceSync("u.fbx", 
             new ModelProperties()
             , out var _, out var _);
     }
