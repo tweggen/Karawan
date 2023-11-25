@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using engine.joyce;
 using glTFLoader;
@@ -23,6 +24,7 @@ public class GlTF
         modelInfo = new();
 
         Gltf? model = null;
+        byte[]? binary = null;
         using (var fileStream = engine.Assets.Open(url))
         {
             try
@@ -31,7 +33,19 @@ public class GlTF
             }
             catch (Exception e)
             {
-                Error($"Unable to load gltf file: Exception: {e}");
+                Error($"Unable to load json from gltf file: Exception: {e}");
+            }
+        }
+
+        using (var fileStream = engine.Assets.Open(url))
+        {
+            try
+            {
+                binary = Interface.LoadBinaryBuffer(fileStream);
+            }
+            catch (Exception e)
+            {
+                Error($"Unable to load binaries from gltf file: Exception: {e}");
             }
         }
 
