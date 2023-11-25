@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using engine.joyce;
 using glTFLoader;
 using glTFLoader.Schema;
@@ -11,55 +13,151 @@ namespace builtin.loader;
 
 public class GlTF
 {
-    static public void LoadModelInstanceSync(string url,
-        ModelProperties modelProperties,
-        out engine.joyce.InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
+    private Gltf _model;
+    private byte[] _binary;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readVector2(int ofs, out Vector2 v2)
     {
-        instanceDesc = new(
-            new List<engine.joyce.Mesh>(),
-            new List<int>(),
-            new List<engine.joyce.Material>(),
-            400f);
+        v2.X = BitConverter.ToSingle(_binary, ofs);
+        v2.Y = BitConverter.ToSingle(_binary, ofs + sizeof(float));
+    }
+    
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readVector3(int ofs, out Vector3 v3)
+    {
+        v3.X = BitConverter.ToSingle(_binary, ofs);
+        v3.Y = BitConverter.ToSingle(_binary, ofs + sizeof(float));
+        v3.Z = BitConverter.ToSingle(_binary, ofs + 2*sizeof(float));
+    }
 
-        modelInfo = new();
-
-        Gltf? model = null;
-        byte[]? binary = null;
-        using (var fileStream = engine.Assets.Open(url))
+    private void _readVector3Array(int ofs, int length, ref IList<Vector3> arr)
+    {
+        for (int j = 0; j < length; ++j)
         {
-            try
+            _readVector3(ofs+j*3*sizeof(float), out var v3);
+            arr.Add(v3);
+        }
+    }
+
+    
+    private void _readVector2Array(int ofs, int length, ref IList<Vector2> arr)
+    {
+        for (int j = 0; j < length; ++j)
+        {
+            _readVector2(ofs+j*2*sizeof(float), out var v2);
+            arr.Add(v2);
+        }
+    }
+
+
+    private void _readTri32Array(int ofs, int length, ref IList<uint> arr)
+    {
+        int l = (length / 3) * 3;
+        for (int j = 0; j < l; ++j)
+        {
+            arr.Add((uint)BitConverter.ToInt32(_binary, ofs + j * sizeof(int)));
+        }        
+    }
+
+
+    private void _readVertices(Accessor acc, engine.joyce.Mesh jMesh)
+    {
+        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+
+        if (acc.Type == Accessor.TypeEnum.VEC3)
+        {
+            if (acc.ComponentType == Accessor.ComponentTypeEnum.FLOAT)
             {
-                model = Interface.LoadModel(fileStream);
+                _readVector3Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Vertices);
             }
-            catch (Exception e)
+            else
             {
-                Error($"Unable to load json from gltf file: Exception: {e}");
+                ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
             }
         }
-
-        using (var fileStream = engine.Assets.Open(url))
+        else
         {
-            try
+            ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
+        }
+    }
+
+
+    private void _readNormals(Accessor acc, engine.joyce.Mesh jMesh)
+    {
+        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+
+        if (acc.Type == Accessor.TypeEnum.VEC3)
+        {
+            if (acc.ComponentType == Accessor.ComponentTypeEnum.FLOAT)
             {
-                binary = Interface.LoadBinaryBuffer(fileStream);
+                _readVector3Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Normals);
             }
-            catch (Exception e)
+            else
             {
-                Error($"Unable to load binaries from gltf file: Exception: {e}");
+                ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
             }
         }
-
-        if (model == null)
+        else
         {
-            Warning($"Error loading model {url}.");
+            ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
         }
-        
-        /*
+    }
+
+
+    private void _readTexcoords0(Accessor acc, engine.joyce.Mesh jMesh)
+    {
+        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+
+        if (acc.Type == Accessor.TypeEnum.VEC2)
+        {
+            if (acc.ComponentType == Accessor.ComponentTypeEnum.FLOAT)
+            {
+                _readVector2Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.UVs);
+            }
+            else
+            {
+                ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+            }
+        }
+        else
+        {
+            ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
+        }
+    }
+    
+    
+    private void _readTriangles(Accessor acc, engine.joyce.Mesh jMesh)
+    {
+        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+
+        if (acc.Type == Accessor.TypeEnum.SCALAR)
+        {
+            if (acc.ComponentType == Accessor.ComponentTypeEnum.UNSIGNED_SHORT)
+            {
+                _readTri32Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Indices);
+            }
+            else
+            {
+                ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+            }
+        }
+        else
+        {
+            ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
+        }
+    }
+    
+    
+    private void _read()
+    {
+                /*
          * Simple approach, try to extract all the meshses.
          * Unfortunately, we have to push the optimized gltf data structures into
          * our generic ones before actually uploading them to GL.
          */
-        foreach (var fbxMesh in model.Meshes)
+        foreach (var fbxMesh in _model.Meshes)
         {
             foreach (var fbxMeshPrimitive in fbxMesh.Primitives)
             {
@@ -108,23 +206,78 @@ public class GlTF
                  * Now let's iterate through the vertex positions, adding normals and
                  * texcoords, if we have any.
                  */
-                var accVertices = model.Accessors[idxPosition];
-                var accNormals = model.Accessors[idxNormal];
-                var accTexcoord0 = model.Accessors[idxTexcoord0];
-                var accIndices = model.Accessors[fbxMeshPrimitive.Indices.Value];
-
-                var bvwVertices = model.BufferViews[accVertices.BufferView.Value];
-                var bvwNormals = model.BufferViews[accNormals.BufferView.Value];
-                var bvwTexcoord0 = model.BufferViews[accTexcoord0.BufferView.Value];
-                var bvwIndices = model.BufferViews[accIndices.BufferView.Value];
-
-                
-                /*
-                 * Now first let's translate the vertices, then let's convert/add the indices.
-                 */
                 engine.joyce.Mesh jMesh = new("gltf", new List<Vector3>(), new List<uint>(), new List<Vector2>());
+                _readVertices(_model.Accessors[idxPosition], jMesh);
+                if (idxNormal != -1)
+                {
+                    jMesh.Normals = new List<Vector3>();
+                    _readNormals(_model.Accessors[idxNormal], jMesh);
+                }
+
+                if (idxTexcoord0 != -1)
+                {
+                    _readTexcoords0(_model.Accessors[idxTexcoord0], jMesh);
+                }
+
+                _readTriangles(_model.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
             }
         }
+
+    }
+    
+    
+    static public void LoadModelInstanceSync(string url,
+        ModelProperties modelProperties,
+        out engine.joyce.InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
+    {
+        instanceDesc = new(
+            new List<engine.joyce.Mesh>(),
+            new List<int>(),
+            new List<engine.joyce.Material>(),
+            400f);
+
+        modelInfo = new();
+
+        Gltf? model = null;
+        byte[]? binary = null;
+        using (var fileStream = engine.Assets.Open(url))
+        {
+            try
+            {
+                model = Interface.LoadModel(fileStream);
+            }
+            catch (Exception e)
+            {
+                Error($"Unable to load json from gltf file: Exception: {e}");
+            }
+        }
+
+        using (var fileStream = engine.Assets.Open(url))
+        {
+            try
+            {
+                binary = Interface.LoadBinaryBuffer(fileStream);
+            }
+            catch (Exception e)
+            {
+                Error($"Unable to load binaries from gltf file: Exception: {e}");
+            }
+        }
+
+        if (model == null)
+        {
+            Warning($"Error loading model {url}.");
+        }
+
+        var g = new GlTF(model, binary);
+        g._read();
+    }
+
+
+    public GlTF(Gltf model, byte[] binary)
+    {
+        _model = model;
+        _binary = binary;
     }
     
     
