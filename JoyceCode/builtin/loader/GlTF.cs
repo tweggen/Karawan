@@ -13,6 +13,7 @@ namespace builtin.loader;
 
 public class GlTF
 {
+    private engine.Engine _engine;
     private Gltf _model;
     private byte[] _binary;
     
@@ -148,8 +149,88 @@ public class GlTF
             ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
         }
     }
-    
-    
+
+
+    private void _readMesh(glTFLoader.Schema.Mesh fbxMesh, out engine.joyce.Mesh jMesh)
+    { 
+        jMesh = new("gltf", new List<Vector3>(), new List<uint>(), new List<Vector2>());
+        jMesh.Normals = new List<Vector3>();
+
+        foreach (var fbxMeshPrimitive in fbxMesh.Primitives)
+        {
+            int idxPosition = -1;
+            int idxNormal = -1;
+            int idxTexcoord0 = -1;
+
+            /*
+             * Collect the attributes
+             */
+            foreach (var fbxAttr in fbxMeshPrimitive.Attributes)
+            {
+                switch (fbxAttr.Key)
+                {
+                    case "POSITION":
+                        idxPosition = fbxAttr.Value;
+                        break;
+                    case "NORMAL":
+                        idxNormal = fbxAttr.Value;
+                        break;
+                    case "TEXCOORD_0":
+                        idxTexcoord0 = fbxAttr.Value;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if (idxPosition == -1)
+            {
+                /*
+                 * A mesh without vertex positions is pointless.
+                 */
+                continue;
+            }
+
+            if (null == fbxMeshPrimitive.Indices)
+            {
+                /*
+                 * Also, without an index we do not need to access this mesh.
+                 */
+                continue;
+            }
+
+            /*
+             * Now let's iterate through the vertex positions, adding normals and
+             * texcoords, if we have any.
+             */
+            _readVertices(_model.Accessors[idxPosition], jMesh);
+            if (idxNormal != -1)
+            {
+                _readNormals(_model.Accessors[idxNormal], jMesh);
+            }
+
+            if (idxTexcoord0 != -1)
+            {
+                _readTexcoords0(_model.Accessors[idxTexcoord0], jMesh);
+            }
+
+            _readTriangles(_model.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
+        }
+    }
+
+
+    /**
+     * Read one node from the gltf. One node translates to one entity. 
+     */
+    private void _readNode(glTFLoader.Schema.Node gltfNode, out DefaultEcs.Entity eNode)
+    {
+        /*
+         * First, create the 
+         */
+    }
+
+
+
     private void _read()
     {
                 /*
@@ -157,76 +238,17 @@ public class GlTF
          * Unfortunately, we have to push the optimized gltf data structures into
          * our generic ones before actually uploading them to GL.
          */
-        foreach (var fbxMesh in _model.Meshes)
+        foreach (var gtlfMesh in _model.Meshes)
         {
-            foreach (var fbxMeshPrimitive in fbxMesh.Primitives)
-            {
-                int idxPosition = -1;
-                int idxNormal = -1;
-                int idxTexcoord0 = -1;
-
-                /*
-                 * Collect the attributes
-                 */
-                foreach (var fbxAttr in fbxMeshPrimitive.Attributes)
-                {
-                    switch (fbxAttr.Key)
-                    {
-                        case "POSITION":
-                            idxPosition = fbxAttr.Value;
-                            break;
-                        case "NORMAL":
-                            idxNormal = fbxAttr.Value;
-                            break;
-                        case "TEXCOORD_0":
-                            idxTexcoord0 = fbxAttr.Value;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                if (idxPosition == -1)
-                {
-                    /*
-                     * A mesh without vertex positions is pointless.
-                     */
-                    continue;
-                }
-
-                if (null == fbxMeshPrimitive.Indices)
-                {
-                    /*
-                     * Also, without an index we do not need to access this mesh.
-                     */
-                    continue;
-                }
-
-                /*
-                 * Now let's iterate through the vertex positions, adding normals and
-                 * texcoords, if we have any.
-                 */
-                engine.joyce.Mesh jMesh = new("gltf", new List<Vector3>(), new List<uint>(), new List<Vector2>());
-                _readVertices(_model.Accessors[idxPosition], jMesh);
-                if (idxNormal != -1)
-                {
-                    jMesh.Normals = new List<Vector3>();
-                    _readNormals(_model.Accessors[idxNormal], jMesh);
-                }
-
-                if (idxTexcoord0 != -1)
-                {
-                    _readTexcoords0(_model.Accessors[idxTexcoord0], jMesh);
-                }
-
-                _readTriangles(_model.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
-            }
+            _readMesh(gtlfMesh, out var jMesh);
         }
 
     }
     
     
-    static public void LoadModelInstanceSync(string url,
+    static public void LoadModelInstanceSync(
+        engine.Engine engine0,
+        string url,
         ModelProperties modelProperties,
         out engine.joyce.InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
     {
@@ -269,21 +291,23 @@ public class GlTF
             Warning($"Error loading model {url}.");
         }
 
-        var g = new GlTF(model, binary);
+        var g = new GlTF(engine0, model, binary);
         g._read();
     }
 
 
-    public GlTF(Gltf model, byte[] binary)
+    public GlTF(engine.Engine engine, Gltf model, byte[] binary)
     {
+        _engine = engine;
         _model = model;
         _binary = binary;
     }
     
     
-    public static void Unit()
+    public static void Unit(engine.Engine engine0)
     {
-        LoadModelInstanceSync("u.glb", 
+        LoadModelInstanceSync(engine0,
+            "u.glb", 
             new ModelProperties()
             , out var _, out var _);
     }
