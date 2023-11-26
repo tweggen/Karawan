@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using engine;
 using engine.joyce;
 using glTFLoader;
 using glTFLoader.Schema;
@@ -225,27 +226,48 @@ public class GlTF
     private void _readNode(glTFLoader.Schema.Node gltfNode, out DefaultEcs.Entity eNode)
     {
         /*
-         * First, create the 
+         * First, create the entity
          */
-    }
-
-
-
-    private void _read()
-    {
-                /*
-         * Simple approach, try to extract all the meshses.
-         * Unfortunately, we have to push the optimized gltf data structures into
-         * our generic ones before actually uploading them to GL.
+        eNode = _engine.CreateEntity("gltfnode");
+        
+        /*
+         * Then read the mesh for this node.
          */
-        foreach (var gtlfMesh in _model.Meshes)
+        if (gltfNode.Mesh != null)
         {
-            _readMesh(gtlfMesh, out var jMesh);
+            _readMesh(_model.Meshes[gltfNode.Mesh.Value], out var jMesh);
         }
 
+        /*
+         * Finally, recurse to children nodes.
+         */
+        foreach (var idxChildNode in gltfNode.Children)
+        {
+            var nChild = _model.Nodes[idxChildNode];
+            _readNode(nChild, out var eChild);
+            I.Get<HierarchyApi>().SetParent(eChild, eNode); 
+        }
+    }
+    
+
+    private void _readScene(glTFLoader.Schema.Scene scene)
+    {
+        foreach (var idxOneRootNode in scene.Nodes)
+        {
+            _readNode(_model.Nodes[idxOneRootNode], out var eNode);
+        }
     }
     
     
+    private void _read()
+    {
+        if (null != _model.Scene)
+        {
+            _readScene(_model.Scenes[_model.Scene.Value]);
+        }
+    }
+
+
     static public void LoadModelInstanceSync(
         engine.Engine engine0,
         string url,
@@ -288,11 +310,19 @@ public class GlTF
 
         if (model == null)
         {
-            Warning($"Error loading model {url}.");
+            Warning($"Error load6ing model {url}.");
         }
 
         var g = new GlTF(engine0, model, binary);
-        g._read();
+
+        try
+        {
+            g._read();
+        }
+        catch (Exception e)
+        {
+            Error($"Error while loading gltf scene from {url}: {e}.");
+        }
     }
 
 

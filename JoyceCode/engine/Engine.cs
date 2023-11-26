@@ -998,7 +998,10 @@ namespace engine
         
         public Engine( engine.IPlatform platform )
         {
-            using (engine.Unit u = new()) u.RunStartupTest();
+            engine.Unit u = new();
+           
+            u.RunStartupTest();
+
            
             _nextId = 0;
             _platform = platform;
@@ -1019,6 +1022,8 @@ namespace engine
             I.Register<engine.Resources>(() => new Resources());
             
             State = EngineState.Starting;
+
+            u.RunEngineTest(this);
             
             _loadDefaultResources();
         }
