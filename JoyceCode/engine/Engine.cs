@@ -1015,8 +1015,8 @@ namespace engine
             I.Register<engine.news.EventQueue>(() => new EventQueue());
             I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
             I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi(this));
-            I.Register<engine.physics.API>(() => new physics.API(this));
             I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi(this));
+            I.Register<engine.physics.API>(() => new physics.API(this));
             I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
             I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
             I.Register<engine.Resources>(() => new Resources());

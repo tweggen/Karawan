@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using engine;
 using engine.joyce;
+using engine.joyce.components;
 using glTFLoader;
 using glTFLoader.Schema;
 using static engine.Logger;
@@ -152,11 +153,9 @@ public class GlTF
     }
 
 
-    private void _readMesh(glTFLoader.Schema.Mesh fbxMesh, out engine.joyce.Mesh jMesh)
-    { 
-        jMesh = new("gltf", new List<Vector3>(), new List<uint>(), new List<Vector2>());
-        jMesh.Normals = new List<Vector3>();
-
+    private void _readMesh(glTFLoader.Schema.Mesh fbxMesh, out MatMesh matMesh)
+    {
+        matMesh = new();
         foreach (var fbxMeshPrimitive in fbxMesh.Primitives)
         {
             int idxPosition = -1;
@@ -200,6 +199,9 @@ public class GlTF
                 continue;
             }
 
+            engine.joyce.Mesh jMesh = new("gltf", new List<Vector3>(), new List<uint>(), new List<Vector2>());
+            jMesh.Normals = new List<Vector3>();
+            
             /*
              * Now let's iterate through the vertex positions, adding normals and
              * texcoords, if we have any.
@@ -216,12 +218,14 @@ public class GlTF
             }
 
             _readTriangles(_model.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
+            
+            matMesh.Add(new(), jMesh);
         }
     }
 
 
     /**
-     * Read one node from the gltf. One node translates to one entity. 
+     * Read one node from the gltf. One node translates to one entity.
      */
     private void _readNode(glTFLoader.Schema.Node gltfNode, out DefaultEcs.Entity eNode)
     {
@@ -229,23 +233,36 @@ public class GlTF
          * First, create the entity
          */
         eNode = _engine.CreateEntity("gltfnode");
+
+        var m = gltfNode.Matrix;
+        Matrix4x4 mInversePose = new(
+            m[0], m[1], m[2], m[3],
+            m[4], m[5], m[6], m[7],
+            m[8], m[9], m[10], m[11],
+            m[12], m[13], m[14], m[14]
+        );
+        eNode.Set(new Transform3ToParent(true, 0x00000001, mInversePose));
         
         /*
-         * Then read the mesh for this node.
-         */
+        * Then read the mesh for this node.
+        */
         if (gltfNode.Mesh != null)
         {
-            _readMesh(_model.Meshes[gltfNode.Mesh.Value], out var jMesh);
+            _readMesh(_model.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
+            eNode.Set(new Instance3(InstanceDesc.CreateFromMatMesh(matMesh, 200f)));
         }
-
+        
         /*
          * Finally, recurse to children nodes.
          */
-        foreach (var idxChildNode in gltfNode.Children)
+        if (gltfNode.Children != null)
         {
-            var nChild = _model.Nodes[idxChildNode];
-            _readNode(nChild, out var eChild);
-            I.Get<HierarchyApi>().SetParent(eChild, eNode); 
+            foreach (var idxChildNode in gltfNode.Children)
+            {
+                var nChild = _model.Nodes[idxChildNode];
+                _readNode(nChild, out var eChild);
+                I.Get<HierarchyApi>().SetParent(eChild, eNode);
+            }
         }
     }
     
@@ -333,6 +350,16 @@ public class GlTF
         _binary = binary;
     }
     
+    
+    static public Task<(engine.joyce.InstanceDesc InstanceDesc, engine.ModelInfo ModelInfo)> 
+        LoadModelInstance(string url, ModelProperties modelProperties)
+    {
+        return Task.Run(() =>
+        {
+            LoadModelInstanceSync(url, modelProperties, out var instanceDesc, out var modelInfo);
+            return (instanceDesc, modelInfo);
+        });
+    }   
     
     public static void Unit(engine.Engine engine0)
     {
