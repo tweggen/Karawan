@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace engine.world
 {
@@ -9,6 +10,6 @@ namespace engine.world
     {
         public string WorldOperatorGetPath();
 
-        public void WorldOperatorApply(world.MetaGen worldMetaGen);
+        public System.Func<Task> WorldOperatorApply(world.MetaGen worldMetaGen);
     }
 }

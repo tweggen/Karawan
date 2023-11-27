@@ -27,13 +27,6 @@ public class LuaScriptManager : IDisposable
     private readonly object _lo;
     private readonly Dictionary<LuaScriptEntry, Resource<LuaScriptEntry>> _luaScriptResources;
 
-    /**
-     * Well, removing PfInstance from within Remove Instance3 seems correct,
-     * however, when deleting the entity, this triggers RemoveInstance3 twice.
-     * So keep track.
-     */
-    private int _inRemoveInstance3 = 0;
-
     private void _unload(in LuaScriptEntry luaScriptEntry)
     {
         luaScriptEntry.Dispose();

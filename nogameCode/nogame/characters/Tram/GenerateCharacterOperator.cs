@@ -33,7 +33,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         }
     }
     
-    
+ 
+#if false
     private static engine.joyce.InstanceDesc[] _jInstancesTram;
     public static engine.joyce.InstanceDesc GetTramMesh(int i)
     {
@@ -74,6 +75,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return _pshapeSphere;
         }
     }
+#endif
 
 
     private ClusterDesc _clusterDesc;
@@ -193,9 +195,17 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    int tramIdx = 0;
-                    engine.joyce.InstanceDesc jInstanceDesc = GetTramMesh(tramIdx);
-
+                    Model model = await ModelCache.Instance().Instantiate(
+                        "tram1.obj", null, new InstantiateModelParams()
+                        {
+                            GeomFlags = 0
+                                        | InstantiateModelParams.CENTER_X
+                                        | InstantiateModelParams.CENTER_Z
+                                        | InstantiateModelParams.ROTATE_Y180,
+                            MaxDistance = 1000f,
+                        });
+                    engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
+ 
                     var wf = worldFragment;
 
                     int fragmentId = worldFragment.NumericalId;
@@ -210,35 +220,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                 .SetHeight(10f))
                             { MaxDistance = propMaxDistance }
                         );
-#if false
-                        eTarget.Set(new engine.draw.components.OSDText(
-                            new Vector2(0, 30f),
-                            new Vector2(160f, 18f),
-                            "hi-tram",
-                            12,
-                            0x88226622,
-                            0x00000000,
-                            engine.draw.HAlign.Left));
-#endif
-#if false
-
-                        BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
-                            BodyDescrLoadeription.CreateKinematic(
-                                new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                                new BepuPhysics.Collidables.CollidableDescription(
-                                    _getSphereShape(wf.Engine),
-                                    0.1f),
-                                new BodyActivityDescription(0.01f)
-                            )
-                        );
-                        BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        eTarget.Set(new engine.physics.components.Kinetic(
-                                prefSphere,
-                                //new engine.physics.CollisionProperties { Name = "nogame.characters.tram", IsTangible = false }
-                                null
-                            )
-                        );
-#endif
                         eTarget.Set(new engine.audio.components.MovingSound(GetTramSound(), 150f));
                     });
 

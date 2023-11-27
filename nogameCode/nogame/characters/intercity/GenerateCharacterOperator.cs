@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using engine;
 using engine.elevation;
 using engine.world;
@@ -25,7 +26,7 @@ public class GenerateCharacterOperator : IWorldOperator
      * Create the actual route of the intercity. This right now will follow
      * the direct connection from A to B, we only compute the height required.
      */
-    private void _createIntercity(Vector3 caPos, Vector3 cbPos, float relpos)
+    private async void _createIntercity(Vector3 caPos, Vector3 cbPos, float relpos)
     {
         /*
          * Read all data we need to scale our drawing.
@@ -60,9 +61,17 @@ public class GenerateCharacterOperator : IWorldOperator
             Speed = 60f
         };
         
-        int tramIdx = 0;
-        engine.joyce.InstanceDesc jInstanceDesc = 
-            characters.tram.GenerateCharacterOperator.GetTramMesh(tramIdx);
+        Model model = await ModelCache.Instance().Instantiate(
+            "tram1.obj", null, new InstantiateModelParams()
+            {
+                GeomFlags = 0
+                            | InstantiateModelParams.CENTER_X
+                            | InstantiateModelParams.CENTER_Z
+                            | InstantiateModelParams.ROTATE_Y180,
+                MaxDistance = 1000f,
+            });
+        engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
+
 
         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
         {
@@ -99,8 +108,8 @@ public class GenerateCharacterOperator : IWorldOperator
         _engine.QueueEntitySetupAction("nogame.characters.intercity", tSetupEntity);
     }
 
-    
-    public void WorldOperatorApply(MetaGen worldMetaGen)
+
+    public Func<Task> WorldOperatorApply(MetaGen worldMetaGen) => new(async () =>
     {
         var network = I.Get<nogame.intercity.Network>();
         var lines = network.Lines;
@@ -122,14 +131,14 @@ public class GenerateCharacterOperator : IWorldOperator
                 }
             }
         }
-        
+
         foreach (var line in lines)
         {
             Vector3 caPos = line.StationA.Position with { Y = line.ClusterA.AverageHeight + 20f };
             Vector3 cbPos = line.StationB.Position with { Y = line.ClusterB.AverageHeight + 20f };
             _createIntercity(caPos, cbPos, 0.5f);
         }
-    }
+    });
 
     
     public GenerateCharacterOperator(engine.Engine engine0)

@@ -236,22 +236,27 @@ public class MetaGen
     private void _applyWorldOperators()
     {
         Trace("WorldMetaGen: Calling world operators...");
-        foreach (var o in _worldOperators)
+        Task applyTask = new Task(async () =>
         {
-            try
+            foreach (var o in _worldOperators)
             {
-                var oppath = o.WorldOperatorGetPath();
-                Trace($"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
-                // var t0 = Sys.time();
-                o.WorldOperatorApply(this);
-                // var dt = Sys.time() - t0;
-                // trace( 'WorldMetaGen.applyWorldOperators(): Applying operator "$oppath" took $dt.');
+                try
+                {
+                    var oppath = o.WorldOperatorGetPath();
+                    Trace($"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
+                    // var t0 = Sys.time();
+                    await o.WorldOperatorApply(this)();
+                    // var dt = Sys.time() - t0;
+                    // trace( 'WorldMetaGen.applyWorldOperators(): Applying operator "$oppath" took $dt.');
+                }
+                catch (Exception e)
+                {
+                    Warning($"WorldMetaGen.applyWorldOperators(): Unknown exception applying world operator: {e}");
+                }
             }
-            catch (Exception e)
-            {
-                Warning($"WorldMetaGen.applyWorldOperators(): Unknown exception applying world operator: {e}");
-            }
-        }
+        });
+        applyTask.RunSynchronously();
+
         Trace("WorldMetaGen: Done calling world operators.");
     }
 
@@ -266,6 +271,7 @@ public class MetaGen
          * One time operations: Apply all world operators.
          */
         _applyWorldOperators();
+        //Task.Run(async () => await _applyWorldOperators());
     }
 
 

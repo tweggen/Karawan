@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using System.Threading.Tasks;
 using static engine.Logger;
 
 namespace engine.world;
@@ -32,23 +33,23 @@ public class GenerateClustersOperator : world.IWorldOperator
     /**
      * Create the actual cities.
      *
-     * Clusters/cities are the objects in the void which may be 
+     * Clusters/cities are the objects in the void which may be
      * interconnected by roads/trains .
      *
      * The actual generation function shall be replaced by a reference
-     * to an [global] operator doing the actual work. This function shall just 
-     * manage the actual extents. However, since this is once per world, we 
+     * to an [global] operator doing the actual work. This function shall just
+     * manage the actual extents. However, since this is once per world, we
      * currently keep it in the world metagen.
      * That way, the actual cluster operator working on the fragments can just
      * refer to this data.
      */
-    public void WorldOperatorApply(world.MetaGen worldMetaGen)
+    public System.Func<Task> WorldOperatorApply(world.MetaGen worldMetaGen) => new(async () =>
     {
         tools.NameGenerator nameGenerator = tools.NameGenerator.Instance();
 
         int nClusters = 0;
 
-        /* 
+        /*
          *
          * This is 100 cities in 50 by 50 kilometers max.
          * Remember the cities might become merged.
@@ -85,7 +86,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         }
 
         /*
-         * Now generate a couple of further clusters. 
+         * Now generate a couple of further clusters.
          * Currently, they should not exceed a fragment size in size.
          */
         while (nClusters < nMaxClusters)
@@ -106,8 +107,8 @@ public class GenerateClustersOperator : world.IWorldOperator
         }
 
         /*
-         * Use a trivial approach: 
-         * for each cluster that is not merged, iterate through all other 
+         * Use a trivial approach:
+         * for each cluster that is not merged, iterate through all other
          * clusters that are not merged. If any of them overlaps, delete
          * both of them and create a merged cluster. Append it to the list.
          * This terminates worst case with a single cluster.
@@ -296,7 +297,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         }
 
         Trace("GenerateClustersOperator: Done.");
-    }
+    });
 
     public GenerateClustersOperator(string strKey)
     {
