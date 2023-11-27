@@ -225,7 +225,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                     | InstantiateModelParams.ROTATE_Y180,
                         MaxDistance = propMaxDistance
                     });
-                    InstanceDesc jInstanceDesc = model.InstanceDesc;
+                    InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
                     ModelInfo modelInfo = model.ModelInfo;
                     
                     var wf = worldFragment;

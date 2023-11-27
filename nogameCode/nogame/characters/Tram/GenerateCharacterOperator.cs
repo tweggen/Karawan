@@ -42,7 +42,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             if( null==_jInstancesTram)
             {
                 _jInstancesTram = new engine.joyce.InstanceDesc[1];
-                builtin.loader.Obj.LoadModelInstanceSync("tram1.obj", null, out _jInstancesTram[0], out _);
+                builtin.loader.Obj.LoadModelInstanceSync("tram1.obj", null, out var model);
+                _jInstancesTram[0] = model.RootNode.InstanceDesc;
                 foreach (var ji in _jInstancesTram)
                 {
                     /*

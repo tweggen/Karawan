@@ -306,6 +306,7 @@ public class GlTF
         ModelProperties modelProperties,
         out Model jModel)
     {
+
         Gltf? gModel = null;
         byte[]? binary = null;
         using (var fileStream = engine.Assets.Open(url))
@@ -345,7 +346,8 @@ public class GlTF
         }
         catch (Exception e)
         {
-            Error($"Error while loading gltf scene from {url}: {e}.");
+            ErrorThrow($"Error while loading gltf scene from {url}: {e}.", m => new InvalidOperationException(m));
+            jModel = new Model();
         }
     }
 

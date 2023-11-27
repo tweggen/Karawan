@@ -391,7 +391,7 @@ namespace nogame.modules.playerhover
                     })).GetAwaiter().GetResult();
 
                 ModelInfo modelInfo = model.ModelInfo;
-                engine.joyce.InstanceDesc jInstanceDesc = model.InstanceDesc;
+                engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
                 Trace($"Player ship modelInfo {modelInfo}");
                 
                 _eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));

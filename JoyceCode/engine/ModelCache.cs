@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using builtin.loader;
 using engine;
 using engine.joyce;
+using static engine.Logger;
 
 namespace engine;
 
@@ -38,6 +39,61 @@ public class ModelCache
     }
 
 
+    private void _applyModelParamMatrix(ModelInfo modelInfo, InstantiateModelParams p, ref Matrix4x4 m)
+    {
+        /*
+         * Now, according to the instantiateModelParams, modify the data we loaded.
+         */
+        Vector3 vReCenter = new(
+            (p.GeomFlags & InstantiateModelParams.CENTER_X) != 0
+                ? (
+                    (p.GeomFlags & InstantiateModelParams.CENTER_X_POINTS) != 0
+                        ? modelInfo.Center.X
+                        : modelInfo.AABB.Center.X)
+                : 0f,
+            (p.GeomFlags & InstantiateModelParams.CENTER_Y) != 0
+                ? (
+                    (p.GeomFlags & InstantiateModelParams.CENTER_Y_POINTS) != 0
+                        ? modelInfo.Center.Y
+                        : modelInfo.AABB.Center.Y)
+                : 0f,
+            (p.GeomFlags & InstantiateModelParams.CENTER_Z) != 0
+                ? (
+                    (p.GeomFlags & InstantiateModelParams.CENTER_Z_POINTS) != 0
+                        ? modelInfo.Center.Z
+                        : modelInfo.AABB.Center.Z)
+                : 0f
+        );
+
+        if (vReCenter != Vector3.Zero)
+        {
+            m = m * Matrix4x4.CreateTranslation(-vReCenter);
+        }
+
+        int rotX = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X90)) ? 1 : 0) +
+                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X180)) ? 2 : 0);
+        int rotY = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y90)) ? 1 : 0) +
+                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y180)) ? 2 : 0);
+        int rotZ = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z90)) ? 1 : 0) +
+                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z180)) ? 2 : 0);
+
+        if (0 != rotX)
+        {
+            m = m * Matrix4x4.CreateRotationX(Single.Pi * rotX / 2f);
+        }
+
+        if (0 != rotY)
+        {
+            m = m * Matrix4x4.CreateRotationY(Single.Pi * rotY / 2f);
+        }
+
+        if (0 != rotZ)
+        {
+            m = m * Matrix4x4.CreateRotationZ(Single.Pi * rotZ / 2f);
+        }
+    }
+    
+
     private Task<Model> _instantiateModelParams(
         Model model,
         ModelProperties modelProperties,
@@ -46,61 +102,13 @@ public class ModelCache
         return Task.Run(() =>
         {
             var modelInfo = model.ModelInfo;
-            /*
-             * Now, according to the instantiateModelParams, modify the data we loaded.
-             */
-            Vector3 vReCenter = new(
-                (p.GeomFlags & InstantiateModelParams.CENTER_X) != 0
-                    ? (
-                        (p.GeomFlags & InstantiateModelParams.CENTER_X_POINTS) != 0
-                            ? modelInfo.Center.X
-                            : modelInfo.AABB.Center.X)
-                    : 0f,
-                (p.GeomFlags & InstantiateModelParams.CENTER_Y) != 0
-                    ? (
-                        (p.GeomFlags & InstantiateModelParams.CENTER_Y_POINTS) != 0
-                            ? modelInfo.Center.Y
-                            : modelInfo.AABB.Center.Y)
-                    : 0f,
-                (p.GeomFlags & InstantiateModelParams.CENTER_Z) != 0
-                    ? (
-                        (p.GeomFlags & InstantiateModelParams.CENTER_Z_POINTS) != 0
-                            ? modelInfo.Center.Z
-                            : modelInfo.AABB.Center.Z)
-                    : 0f
-            );
 
             Matrix4x4 m = Matrix4x4.Identity;
-
-            if (vReCenter != Vector3.Zero)
-            {
-                m = m * Matrix4x4.CreateTranslation(-vReCenter);
-            }
-
-            int rotX = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X90)) ? 1 : 0) +
-                       ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X180)) ? 2 : 0);
-            int rotY = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y90)) ? 1 : 0) +
-                       ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y180)) ? 2 : 0);
-            int rotZ = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z90)) ? 1 : 0) +
-                       ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z180)) ? 2 : 0);
-
-            if (0 != rotX)
-            {
-                m = m * Matrix4x4.CreateRotationX(Single.Pi * rotX / 2f);
-            }
-
-            if (0 != rotY)
-            {
-                m = m * Matrix4x4.CreateRotationY(Single.Pi * rotY / 2f);
-            }
-
-            if (0 != rotZ)
-            {
-                m = m * Matrix4x4.CreateRotationZ(Single.Pi * rotZ / 2f);
-            }
+            _applyModelParamMatrix(modelInfo, p, ref m);
 
             modelInfo.AABB.Reset();
-            foreach (Mesh mesh in model.InstanceDesc.Meshes)
+            // TXWTODO: Rework this before introducing hierarchies of nodes.
+            foreach (Mesh mesh in model.RootNode.InstanceDesc.Meshes)
             {
                 mesh.Transform(m);
                 modelInfo.AABB.Add(mesh.AABB);
@@ -128,6 +136,11 @@ public class ModelCache
         } else if (url.EndsWith(".glb"))
         {
             return GlTF.LoadModelInstance(url, modelProperties);
+        }
+        else
+        {
+            ErrorThrow($"Unsupported file format for url {url}.", m => new ArgumentException(m));
+            return Task.Run(() => new Model());
         }
     }
 
