@@ -47,9 +47,8 @@ public class FindLights
     static private object _lock = new();
     
 
-    private static void _addLightToModel(engine.Model model, Vector3 p)
+    private static void _addLightToModel(engine.joyce.InstanceDesc instanceDesc, Vector3 p)
     {
-        InstanceDesc instanceDesc = model.InstanceDesc;
         int il = instanceDesc.FindMaterial(
             I.Get<ObjectRegistry<Material>>().Get("builtin.loader.materials.standardlight"));
         /*
@@ -59,26 +58,17 @@ public class FindLights
         m.Move(p);
         instanceDesc.AddMesh(m, il);
     }
-    
-        
-    public static engine.Model Process(engine.Model model)
-    {
-        I.Get<ObjectRegistry<Material>>().RegisterFactory("builtin.loader.materials.standardlight",
-            name => new Material()
-            {
-                EmissiveColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
-                    ? 0x00000000 : 0xccffffcc,
-                EmissiveTexture = new engine.joyce.Texture("standardlight.png"),
-                HasTransparency = true,
-                IsBillboardTransform = true
 
-            });
-        
-        InstanceDesc instanceDesc = model.InstanceDesc;
+    
+    /**
+     * One lights to one of the instanceDesc objects in the model.
+     */
+    private static void _processInstanceDesc(InstanceDesc instanceDesc)
+    {
         if (null == instanceDesc.MeshMaterials || null == instanceDesc.Materials)
         {
             Trace("No mesh materials.");
-            return model;
+            return;
         }
         
         /*
@@ -92,7 +82,7 @@ public class FindLights
         if (instanceDesc.MeshMaterials.Count < nm)
         {
             Trace($"Too little mesh materials: {instanceDesc.MeshMaterials.Count} < {nm}");
-            return model;
+            return;
         }
         for (int i = 0; i < nm; ++i)
         {
@@ -158,8 +148,44 @@ public class FindLights
          */
         foreach (var c in listLights)
         {
-            _addLightToModel(model, c.Center);
+            _addLightToModel(instanceDesc, c.Center);
         }
+        
+    }
+
+
+    public static void _processNode(engine.ModelNode mn)
+    {
+        if (mn.InstanceDesc != null)
+        {
+            _processInstanceDesc(mn.InstanceDesc);
+        }
+
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                _processNode(mnChild);
+            }
+        }
+    }
+    
+        
+    public static engine.Model Process(engine.Model model)
+    {
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("builtin.loader.materials.standardlight",
+            name => new Material()
+            {
+                EmissiveColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
+                    ? 0x00000000 : 0xccffffcc,
+                EmissiveTexture = new engine.joyce.Texture("standardlight.png"),
+                HasTransparency = true,
+                IsBillboardTransform = true
+
+            });
+        
+        ModelNode mnRoot = model.RootNode;
+        _processNode(mnRoot);
         
         return model;
     }

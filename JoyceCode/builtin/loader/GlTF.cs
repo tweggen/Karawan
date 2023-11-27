@@ -15,24 +15,24 @@ namespace builtin.loader;
 
 public class GlTF
 {
-    private engine.Engine _engine;
-    private Gltf _model;
-    private byte[] _binary;
+    private Gltf _gltfModel;
+    private byte[] _gltfBinary;
+    
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void _readVector2(int ofs, out Vector2 v2)
     {
-        v2.X = BitConverter.ToSingle(_binary, ofs);
-        v2.Y = BitConverter.ToSingle(_binary, ofs + sizeof(float));
+        v2.X = BitConverter.ToSingle(_gltfBinary, ofs);
+        v2.Y = BitConverter.ToSingle(_gltfBinary, ofs + sizeof(float));
     }
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void _readVector3(int ofs, out Vector3 v3)
     {
-        v3.X = BitConverter.ToSingle(_binary, ofs);
-        v3.Y = BitConverter.ToSingle(_binary, ofs + sizeof(float));
-        v3.Z = BitConverter.ToSingle(_binary, ofs + 2*sizeof(float));
+        v3.X = BitConverter.ToSingle(_gltfBinary, ofs);
+        v3.Y = BitConverter.ToSingle(_gltfBinary, ofs + sizeof(float));
+        v3.Z = BitConverter.ToSingle(_gltfBinary, ofs + 2*sizeof(float));
     }
 
     private void _readVector3Array(int ofs, int length, ref IList<Vector3> arr)
@@ -60,14 +60,14 @@ public class GlTF
         int l = (length / 3) * 3;
         for (int j = 0; j < l; ++j)
         {
-            arr.Add((uint)BitConverter.ToInt32(_binary, ofs + j * sizeof(int)));
+            arr.Add((uint)BitConverter.ToInt32(_gltfBinary, ofs + j * sizeof(int)));
         }        
     }
 
 
     private void _readVertices(Accessor acc, engine.joyce.Mesh jMesh)
     {
-        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+        BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
 
         if (acc.Type == Accessor.TypeEnum.VEC3)
         {
@@ -89,7 +89,7 @@ public class GlTF
 
     private void _readNormals(Accessor acc, engine.joyce.Mesh jMesh)
     {
-        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+        BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
 
         if (acc.Type == Accessor.TypeEnum.VEC3)
         {
@@ -111,7 +111,7 @@ public class GlTF
 
     private void _readTexcoords0(Accessor acc, engine.joyce.Mesh jMesh)
     {
-        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+        BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
 
         if (acc.Type == Accessor.TypeEnum.VEC2)
         {
@@ -133,7 +133,7 @@ public class GlTF
     
     private void _readTriangles(Accessor acc, engine.joyce.Mesh jMesh)
     {
-        BufferView bvwVertices = _model.BufferViews[acc.BufferView.Value];
+        BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
 
         if (acc.Type == Accessor.TypeEnum.SCALAR)
         {
@@ -206,18 +206,18 @@ public class GlTF
              * Now let's iterate through the vertex positions, adding normals and
              * texcoords, if we have any.
              */
-            _readVertices(_model.Accessors[idxPosition], jMesh);
+            _readVertices(_gltfModel.Accessors[idxPosition], jMesh);
             if (idxNormal != -1)
             {
-                _readNormals(_model.Accessors[idxNormal], jMesh);
+                _readNormals(_gltfModel.Accessors[idxNormal], jMesh);
             }
 
             if (idxTexcoord0 != -1)
             {
-                _readTexcoords0(_model.Accessors[idxTexcoord0], jMesh);
+                _readTexcoords0(_gltfModel.Accessors[idxTexcoord0], jMesh);
             }
 
-            _readTriangles(_model.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
+            _readTriangles(_gltfModel.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
             
             matMesh.Add(new(), jMesh);
         }
@@ -227,29 +227,26 @@ public class GlTF
     /**
      * Read one node from the gltf. One node translates to one entity.
      */
-    private void _readNode(glTFLoader.Schema.Node gltfNode, out DefaultEcs.Entity eNode)
+    private void _readNode(glTFLoader.Schema.Node gltfNode, out ModelNode mn)
     {
-        /*
-         * First, create the entity
-         */
-        eNode = _engine.CreateEntity("gltfnode");
-
         var m = gltfNode.Matrix;
-        Matrix4x4 mInversePose = new(
-            m[0], m[1], m[2], m[3],
-            m[4], m[5], m[6], m[7],
-            m[8], m[9], m[10], m[11],
-            m[12], m[13], m[14], m[14]
-        );
-        eNode.Set(new Transform3ToParent(true, 0x00000001, mInversePose));
+        mn = new();
+        mn.Transform = new Transform3ToParent(
+            true, 0xffffffff,
+            new(
+                m[0], m[1], m[2], m[3],
+                m[4], m[5], m[6], m[7],
+                m[8], m[9], m[10], m[11],
+                m[12], m[13], m[14], m[14]
+            ));
         
         /*
         * Then read the mesh for this node.
         */
         if (gltfNode.Mesh != null)
         {
-            _readMesh(_model.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
-            eNode.Set(new Instance3(InstanceDesc.CreateFromMatMesh(matMesh, 200f)));
+            _readMesh(_gltfModel.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
+            mn.InstanceDesc = InstanceDesc.CreateFromMatMesh(matMesh, 200f);
         }
         
         /*
@@ -257,55 +254,65 @@ public class GlTF
          */
         if (gltfNode.Children != null)
         {
+            mn.Children = new List<ModelNode>();
             foreach (var idxChildNode in gltfNode.Children)
             {
-                var nChild = _model.Nodes[idxChildNode];
-                _readNode(nChild, out var eChild);
-                I.Get<HierarchyApi>().SetParent(eChild, eNode);
+                var nChild = _gltfModel.Nodes[idxChildNode];
+                _readNode(nChild, out var mnChild);
+                mn.Children.Add(mnChild);
             }
         }
     }
     
 
-    private void _readScene(glTFLoader.Schema.Scene scene)
+    private void _readScene(glTFLoader.Schema.Scene scene, out engine.Model jModel)
     {
+        List<ModelNode> rootNodes = new();
         foreach (var idxOneRootNode in scene.Nodes)
         {
-            _readNode(_model.Nodes[idxOneRootNode], out var eNode);
+            _readNode(_gltfModel.Nodes[idxOneRootNode], out var mnNode);
+            rootNodes.Add(mnNode);
+        }
+
+        jModel = new();
+        if (rootNodes.Count == 1)
+        {
+            jModel.RootNode = rootNodes[0];
+        } else if (rootNodes.Count > 0)
+        {
+            ModelNode mnRoot = new() 
+                { Children = rootNodes };
+        }
+        else
+        {
         }
     }
     
     
-    private void _read()
+    private engine.Model? _read()
     {
-        if (null != _model.Scene)
+        if (null != _gltfModel.Scene)
         {
-            _readScene(_model.Scenes[_model.Scene.Value]);
+            _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], out var jModel);
+            return jModel;
         }
+
+        return null;
     }
 
 
     static public void LoadModelInstanceSync(
-        engine.Engine engine0,
         string url,
         ModelProperties modelProperties,
-        out engine.joyce.InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
+        out Model jModel)
     {
-        instanceDesc = new(
-            new List<engine.joyce.Mesh>(),
-            new List<int>(),
-            new List<engine.joyce.Material>(),
-            400f);
-
-        modelInfo = new();
-
-        Gltf? model = null;
+        Gltf? gModel = null;
         byte[]? binary = null;
         using (var fileStream = engine.Assets.Open(url))
         {
             try
             {
-                model = Interface.LoadModel(fileStream);
+                gModel = Interface.LoadModel(fileStream);
             }
             catch (Exception e)
             {
@@ -325,16 +332,16 @@ public class GlTF
             }
         }
 
-        if (model == null)
+        if (gModel == null)
         {
             Warning($"Error load6ing model {url}.");
         }
 
-        var g = new GlTF(engine0, model, binary);
+        var g = new GlTF(gModel, binary);
 
         try
         {
-            g._read();
+            jModel = g._read();
         }
         catch (Exception e)
         {
@@ -343,29 +350,26 @@ public class GlTF
     }
 
 
-    public GlTF(engine.Engine engine, Gltf model, byte[] binary)
+    public GlTF(Gltf gltfModel, byte[] gltfBinary)
     {
-        _engine = engine;
-        _model = model;
-        _binary = binary;
+        _gltfModel = gltfModel;
+        _gltfBinary = gltfBinary;
     }
     
     
-    static public Task<(engine.joyce.InstanceDesc InstanceDesc, engine.ModelInfo ModelInfo)> 
+    static public Task<engine.Model> 
         LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return Task.Run(() =>
         {
-            LoadModelInstanceSync(url, modelProperties, out var instanceDesc, out var modelInfo);
-            return (instanceDesc, modelInfo);
+            LoadModelInstanceSync(url, modelProperties, out var model);
+            return model;
         });
     }   
     
-    public static void Unit(engine.Engine engine0)
+    
+    public static void Unit()
     {
-        LoadModelInstanceSync(engine0,
-            "u.glb", 
-            new ModelProperties()
-            , out var _, out var _);
+        LoadModelInstanceSync("u.glb", new ModelProperties(), out var _);
     }
 }

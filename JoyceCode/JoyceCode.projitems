@@ -153,6 +153,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\Model.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModelInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ModelNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\Event.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\EventQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\InputEventPipeline.cs" />

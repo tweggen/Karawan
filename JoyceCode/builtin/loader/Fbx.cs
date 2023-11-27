@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using engine;
 using static engine.Logger;
 
@@ -10,15 +11,15 @@ public class Fbx
 {
     static public void LoadModelInstanceSync(string url,
         ModelProperties modelProperties,
-        out engine.joyce.InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
+        out engine.Model model)
     {
-        instanceDesc = new(
+        engine.joyce.InstanceDesc instanceDesc = new(
             new List<engine.joyce.Mesh>(), 
             new List<int>(), 
             new List<engine.joyce.Material>(),
             400f);
 
-        modelInfo = new();
+        engine.ModelInfo modelInfo = new();
 
         var fbxImporter = new FbxSharp.FbxImporter();
 
@@ -43,12 +44,23 @@ public class Fbx
         {
             Trace("Successfully loaded model.");
         }
+
+        model = new Model(instanceDesc, modelInfo);
     }
 
+
+    static public Task<Model> LoadModelInstance(string url, ModelProperties modelProperties)
+    {
+        return Task.Run(() => 
+        {
+            LoadModelInstanceSync(url, modelProperties, out var model);
+            return model;
+        });
+    }
+
+        
     public static void Unit()
     {
-        LoadModelInstanceSync("u.fbx", 
-            new ModelProperties()
-            , out var _, out var _);
+        LoadModelInstanceSync("u.fbx", new ModelProperties(), out var _);
     }
 }

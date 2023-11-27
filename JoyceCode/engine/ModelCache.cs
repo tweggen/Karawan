@@ -116,23 +116,27 @@ public class ModelCache
     }
     
 
-    private Task<(InstanceDesc InstanceDesc, ModelInfo ModelInfo)> _fromFile(
+    private Task<Model> _fromFile(
         string url, ModelProperties modelProperties)
     {
-        return Obj.LoadModelInstance(url, modelProperties);
+        if (url.EndsWith(".obj"))
+        {
+            return Obj.LoadModelInstance(url, modelProperties);
+        } else if (url.EndsWith(".fbx"))
+        {
+            return Fbx.LoadModelInstance(url, modelProperties);
+        } else if (url.EndsWith(".glb"))
+        {
+            return GlTF.LoadModelInstance(url, modelProperties);
+        }
     }
 
 
     private async Task<Model> _obtain(
         string url, ModelProperties modelProperties, InstantiateModelParams p)
     {
-        var resultFromFile =
-            await _fromFile(url, modelProperties);
+        var model = await _fromFile(url, modelProperties);
 
-        Model model = new Model();
-        model.InstanceDesc = resultFromFile.InstanceDesc;
-        model.ModelInfo = resultFromFile.ModelInfo;
-        
         model = await _instantiateModelParams(model, modelProperties, p);
 
         model = FindLights.Process(model);

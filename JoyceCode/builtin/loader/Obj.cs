@@ -58,7 +58,7 @@ public class Obj
 
     static public void LoadModelInstanceSync(string url,
         ModelProperties modelProperties,
-        out InstanceDesc instanceDesc, out engine.ModelInfo modelInfo)
+        out engine.Model model)
     {
         var objLoader = _objLoaderFactory.Create(_materialStreamProvider);
         var fileStream = engine.Assets.Open(url);
@@ -238,20 +238,27 @@ public class Obj
             meshMaterials.Add(idxMaterial);
         }
 
-        instanceDesc = new(meshes, meshMaterials, materials, 100f);
-        modelInfo = new();
-        modelInfo.AABB = aabb;
-        modelInfo.Center = vCenter / nVertices;
+        /*
+         * finally, wrap it up in a model data structure.
+         */
+        
+        // TXWTODO: read the maximal distance from some properties
+        InstanceDesc instanceDesc = new(meshes, meshMaterials, materials, 100f);
+        ModelInfo modelInfo = new()
+        {
+            AABB = aabb,
+            Center = vCenter / nVertices
+        };
+        model = new Model(instanceDesc, modelInfo);
     }
     
     
-    static public Task<(engine.joyce.InstanceDesc InstanceDesc, engine.ModelInfo ModelInfo)> 
-        LoadModelInstance(string url, ModelProperties modelProperties)
+    static public Task<engine.Model> LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return Task.Run(() =>
         {
-            LoadModelInstanceSync(url, modelProperties, out var instanceDesc, out var modelInfo);
-            return (instanceDesc, modelInfo);
+            LoadModelInstanceSync(url, modelProperties, out var model);
+            return model;
         });
-    }   
+    }
 }

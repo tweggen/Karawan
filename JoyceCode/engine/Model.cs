@@ -1,5 +1,5 @@
-
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using builtin.loader;
@@ -35,9 +35,32 @@ public class InstantiateModelParams
 
 /**
  * Represent a loaded or generated model.
+ *
+ * This contains
+ * - general information about the model.
+ * - a hierarchy of InstanceDescs.
  */
 public class Model
 {
-    public InstanceDesc InstanceDesc;
     public ModelInfo ModelInfo;
+    public ModelNode RootNode;
+
+
+    /**
+     * Convenience method to create a model from a single InstanceDesc
+     */
+    public Model(InstanceDesc instanceDesc, ModelInfo modelInfo)
+    {
+        ModelNode mnRoot = new()
+        {
+            InstanceDesc = instanceDesc
+        };
+        RootNode = mnRoot;
+        ModelInfo = modelInfo;
+    }
+    
+    
+    public Model()
+    {
+    }
 }
