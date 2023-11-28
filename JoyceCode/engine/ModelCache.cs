@@ -41,6 +41,12 @@ public class ModelCache
 
     private void _applyModelParamMatrix(ModelInfo modelInfo, InstantiateModelParams p, ref Matrix4x4 m)
     {
+        if (modelInfo == null)
+        {
+            Error("modelInfo is null.");
+            return;
+        }
+        
         /*
          * Now, according to the instantiateModelParams, modify the data we loaded.
          */
@@ -108,10 +114,16 @@ public class ModelCache
 
             modelInfo.AABB.Reset();
             // TXWTODO: Rework this before introducing hierarchies of nodes.
-            foreach (Mesh mesh in model.RootNode.InstanceDesc.Meshes)
+            if (model.RootNode != null)
             {
-                mesh.Transform(m);
-                modelInfo.AABB.Add(mesh.AABB);
+                if (model.RootNode.InstanceDesc != null)
+                {
+                    foreach (Mesh mesh in model.RootNode.InstanceDesc.Meshes)
+                    {
+                        mesh.Transform(m);
+                        modelInfo.AABB.Add(mesh.AABB);
+                    }
+                }
             }
 
             /*

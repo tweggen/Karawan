@@ -44,6 +44,7 @@ namespace nogame.modules.playerhover
         private Boom.ISound _polyballSound;
 
         public float MassShip { get; set; } = 500f;
+        public string ModelUrl { get; set; } = "u.glb"; // "car6.obj"; 
 
 
         private ClusterDesc _currentCluster = null;
@@ -379,8 +380,7 @@ namespace nogame.modules.playerhover
                  * Heck, why are we async here?
                  */
                 Model model = Task.Run(() => ModelCache.Instance().Instantiate(
-                    "car6.obj",
-                    // "cardbot1.obj",
+                    ModelUrl,
                     null,
                     new InstantiateModelParams()
                     {
@@ -391,13 +391,12 @@ namespace nogame.modules.playerhover
                     })).GetAwaiter().GetResult();
 
                 ModelInfo modelInfo = model.ModelInfo;
-                builtin.tools.ModelBuilder modelBuilder = new(_engine, model);
-                modelBuilder.BuildEntity(_eShip);
-                
-                //engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
+                {
+                    builtin.tools.ModelBuilder modelBuilder = new(_engine, model);
+                    modelBuilder.BuildEntity(_eShip);
+                }
+
                 Trace($"Player ship modelInfo {modelInfo}");
-                
-                //_eShip.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                 
                 _eShip.Set(new engine.joyce.components.PointLight(
                     new Vector3(0f, 0f, -1f),

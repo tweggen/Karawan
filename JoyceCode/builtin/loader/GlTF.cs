@@ -274,14 +274,21 @@ public class GlTF
             rootNodes.Add(mnNode);
         }
 
-        jModel = new();
+        jModel = new()
+        {
+            ModelInfo = new() 
+            
+        };
         if (rootNodes.Count == 1)
         {
             jModel.RootNode = rootNodes[0];
-        } else if (rootNodes.Count > 0)
+        }
+        else if (rootNodes.Count > 0)
         {
-            ModelNode mnRoot = new() 
-                { Children = rootNodes };
+            ModelNode mnRoot = new()
+            {
+                Children = rootNodes
+            };
         }
         else
         {
