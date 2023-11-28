@@ -34,6 +34,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\FPSMonitor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ModelBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\RandomSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\RunningAverageComputer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Lindenmayer\AlphaInterpreter.cs" />

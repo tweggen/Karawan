@@ -44,6 +44,7 @@ public class Model
 {
     public ModelInfo ModelInfo;
     public ModelNode RootNode;
+    public string Name;
 
 
     /**
