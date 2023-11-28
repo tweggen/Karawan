@@ -2,7 +2,7 @@ using engine;
 using engine.joyce;
 using engine.joyce.components;
 
-namespace Joyce.builtin.tools;
+namespace builtin.tools;
 
 public class ModelBuilder
 {
