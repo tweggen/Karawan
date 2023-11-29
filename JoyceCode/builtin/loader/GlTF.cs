@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using engine;
+using engine.geom;
 using engine.joyce;
 using engine.joyce.components;
 using glTFLoader;
@@ -276,7 +277,10 @@ public class GlTF
 
         jModel = new()
         {
-            ModelInfo = new() 
+            ModelInfo = new()
+            {
+                Center = Vector3.Zero
+            }
             
         };
         if (rootNodes.Count == 1)
@@ -289,10 +293,14 @@ public class GlTF
             {
                 Children = rootNodes
             };
+            jModel.RootNode = mnRoot;
         }
         else
         {
+            ErrorThrow($"Root node has no children!?", m => new InvalidOperationException(m));
         }
+        jModel.ComputeAABB(out var aabb);
+        jModel.ModelInfo.AABB = aabb;
     }
     
     

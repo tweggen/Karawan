@@ -47,6 +47,39 @@ public class Model
     public string Name;
 
 
+    private void _computeInstanceDescAABB(InstanceDesc id, ref AABB aabb)
+    {
+        aabb.Add(id.Aabb);
+    }
+    
+
+    private void _computeNodeAABB(ModelNode mn, ref AABB aabb)
+    {
+        if (mn.InstanceDesc != null)
+        {
+            _computeInstanceDescAABB(mn.InstanceDesc, ref aabb);
+        }
+
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                _computeNodeAABB(mnChild, ref aabb);
+            }
+        }
+    }
+    
+    
+    public void ComputeAABB(out AABB aabb)
+    {
+        aabb = new();
+        if (RootNode != null)
+        {
+            _computeNodeAABB(RootNode, ref aabb);
+        }
+    }
+
+    
     /**
      * Convenience method to create a model from a single InstanceDesc
      */

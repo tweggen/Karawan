@@ -112,20 +112,9 @@ public class ModelCache
             Matrix4x4 m = Matrix4x4.Identity;
             _applyModelParamMatrix(modelInfo, p, ref m);
 
-            modelInfo.AABB.Reset();
-            // TXWTODO: Rework this before introducing hierarchies of nodes.
-            if (model.RootNode != null)
-            {
-                if (model.RootNode.InstanceDesc != null)
-                {
-                    foreach (Mesh mesh in model.RootNode.InstanceDesc.Meshes)
-                    {
-                        mesh.Transform(m);
-                        modelInfo.AABB.Add(mesh.AABB);
-                    }
-                }
-            }
-
+            model.ComputeAABB(out var aabb);
+            modelInfo.AABB = aabb;
+            
             /*
              * Keep in mind we need to adjust both the mesh and the model info.
              */
@@ -204,6 +193,7 @@ public class ModelCache
 
         return model;
     }
+    
 
     public static ModelCache Instance()
     {
