@@ -52,7 +52,7 @@ namespace Splash.Silk
                 var index = mesh.Indices[i];
                 if (index > 65535)
                 {
-                    Error("Invalid mesh index {index}.");
+                    Error($"Invalid mesh index {index}.");
                 }
 
                 skMeshEntry.Indices[i] = (ushort)index;

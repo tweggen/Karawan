@@ -56,12 +56,22 @@ public class GlTF
     }
 
 
+    private void _readTri16Array(int ofs, int length, ref IList<uint> arr)
+    {
+        int l = (length / 3) * 3;
+        for (int j = 0; j < l; ++j)
+        {
+            arr.Add((uint)BitConverter.ToUInt16(_gltfBinary, ofs + j * sizeof(ushort)));
+        }        
+    }
+
+
     private void _readTri32Array(int ofs, int length, ref IList<uint> arr)
     {
         int l = (length / 3) * 3;
         for (int j = 0; j < l; ++j)
         {
-            arr.Add((uint)BitConverter.ToInt32(_gltfBinary, ofs + j * sizeof(int)));
+            arr.Add(BitConverter.ToUInt32(_gltfBinary, ofs + j * sizeof(uint)));
         }        
     }
 
@@ -138,13 +148,17 @@ public class GlTF
 
         if (acc.Type == Accessor.TypeEnum.SCALAR)
         {
-            if (acc.ComponentType == Accessor.ComponentTypeEnum.UNSIGNED_SHORT)
+            switch (acc.ComponentType)
             {
-                _readTri32Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Indices);
-            }
-            else
-            {
-                ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+                case Accessor.ComponentTypeEnum.UNSIGNED_SHORT:
+                    _readTri16Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Indices);
+                    break;
+                case Accessor.ComponentTypeEnum.UNSIGNED_INT:
+                    _readTri32Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Indices);
+                    break;
+                default:
+                    ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+                    break;
             }
         }
         else
