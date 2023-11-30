@@ -44,7 +44,7 @@ namespace nogame.modules.playerhover
         private Boom.ISound _polyballSound;
 
         public float MassShip { get; set; } = 500f;
-        public string ModelUrl { get; set; } = "car6.obj"; 
+        public string ModelUrl { get; set; } = "u.glb"; // "car6.obj"; 
 
 
         private ClusterDesc _currentCluster = null;

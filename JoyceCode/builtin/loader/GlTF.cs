@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using engine;
 using engine.geom;
@@ -200,6 +201,7 @@ public class GlTF
 
             if (idxPosition == -1)
             {
+                Warning("Found mesh without indices (no index).");
                 /*
                  * A mesh without vertex positions is pointless.
                  */
@@ -208,6 +210,7 @@ public class GlTF
 
             if (null == fbxMeshPrimitive.Indices)
             {
+                Warning("Found mesh without indices (null pointer).");
                 /*
                  * Also, without an index we do not need to access this mesh.
                  */
@@ -252,7 +255,7 @@ public class GlTF
                 m[0], m[1], m[2], m[3],
                 m[4], m[5], m[6], m[7],
                 m[8], m[9], m[10], m[11],
-                m[12], m[13], m[14], m[14]
+                m[12], m[13], m[14], m[15]
             ));
         
         /*
@@ -260,8 +263,13 @@ public class GlTF
         */
         if (gltfNode.Mesh != null)
         {
+            Trace("Reading a mesh.");
             _readMesh(_gltfModel.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
             mn.InstanceDesc = InstanceDesc.CreateFromMatMesh(matMesh, 200f);
+        }
+        else
+        {
+            Trace("Encountered node without mesh.");
         }
         
         /*
