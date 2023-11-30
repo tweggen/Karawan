@@ -247,16 +247,27 @@ public class GlTF
      */
     private void _readNode(glTFLoader.Schema.Node gltfNode, out ModelNode mn)
     {
-        var m = gltfNode.Matrix;
+        var mf = gltfNode.Matrix;
+        Matrix4x4 m = new(
+            mf[0], mf[1], mf[2], mf[3],
+            mf[4], mf[5], mf[6], mf[7],
+            mf[8], mf[9], mf[10], mf[11],
+            mf[12], mf[13], mf[14], mf[15]
+        );
+        /*
+         * Now apply the explicit transformation etc.
+         */
+        m *= Matrix4x4.CreateScale(gltfNode.Scale[0], gltfNode.Scale[1], gltfNode.Scale[2]);
+        m *= Matrix4x4.CreateFromQuaternion(
+            new Quaternion(
+                gltfNode.Rotation[0], gltfNode.Rotation[1],
+                gltfNode.Rotation[2], gltfNode.Rotation[3]));
+        m *= Matrix4x4.CreateTranslation(
+            gltfNode.Translation[0], gltfNode.Translation[1], gltfNode.Translation[2]);
         mn = new();
         mn.Transform = new Transform3ToParent(
-            true, 0xffffffff,
-            new(
-                m[0], m[1], m[2], m[3],
-                m[4], m[5], m[6], m[7],
-                m[8], m[9], m[10], m[11],
-                m[12], m[13], m[14], m[15]
-            ));
+            true, 0xffffffff, m
+            );
         
         /*
         * Then read the mesh for this node.
