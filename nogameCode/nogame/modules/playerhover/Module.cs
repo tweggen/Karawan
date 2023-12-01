@@ -44,7 +44,17 @@ namespace nogame.modules.playerhover
         private Boom.ISound _polyballSound;
 
         public float MassShip { get; set; } = 500f;
-        public string ModelUrl { get; set; } = "u.glb"; // "car6.obj"; 
+        
+#if true
+        public string ModelUrl { get; set; } = "u.glb";
+        public int ModelGeomFlags { get; set; } = 0;
+#else
+        public string ModelUrl { get; set; } = "car6.obj";
+        public int ModelGeomFlags { get; set; } = 0
+                                                  | InstantiateModelParams.CENTER_X
+                                                  | InstantiateModelParams.CENTER_Z
+                                                  | InstantiateModelParams.ROTATE_Y180;
+#endif
 
 
         private ClusterDesc _currentCluster = null;
@@ -384,10 +394,7 @@ namespace nogame.modules.playerhover
                     null,
                     new InstantiateModelParams()
                     {
-                        GeomFlags = 0 
-                        | InstantiateModelParams.CENTER_X
-                        | InstantiateModelParams.CENTER_Z
-                        | InstantiateModelParams.ROTATE_Y180
+                        GeomFlags = ModelGeomFlags 
                     })).GetAwaiter().GetResult();
 
                 ModelInfo modelInfo = model.ModelInfo;
