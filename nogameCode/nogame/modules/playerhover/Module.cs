@@ -45,7 +45,7 @@ namespace nogame.modules.playerhover
 
         public float MassShip { get; set; } = 500f;
         
-#if true
+#if false
         public string ModelUrl { get; set; } = "u.glb";
         public int ModelGeomFlags { get; set; } = 0;
 #else
