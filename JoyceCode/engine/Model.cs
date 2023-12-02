@@ -33,6 +33,25 @@ public class InstantiateModelParams
 }
 
 
+public class Joint
+{
+    /**
+     * The node this joint controls
+     */
+    public IList<ModelNode> ControlledNodes;
+    public Matrix4x4 InverseBindMatrix;
+}
+
+
+public class Skin
+{
+    public string Name;
+    public IList<Joint> Joints;
+
+    
+}
+
+
 /**
  * Represent a loaded or generated model.
  *
@@ -44,9 +63,8 @@ public class Model
 {
     public ModelInfo ModelInfo;
     public ModelNode RootNode;
-    public string Name;
-
-
+    public string Name; 
+    
     private void _computeInstanceDescAABB(InstanceDesc id, ref AABB aabb)
     {
         aabb.Add(id.Aabb);

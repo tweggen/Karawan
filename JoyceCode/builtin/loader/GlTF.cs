@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -19,6 +20,7 @@ public class GlTF
 {
     private Gltf _gltfModel;
     private byte[] _gltfBinary;
+    private SortedDictionary<int, ModelNode> _dictNodes;
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,6 +39,24 @@ public class GlTF
         v3.Z = BitConverter.ToSingle(_gltfBinary, ofs + 2*sizeof(float));
     }
 
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readMatrix4x4(int ofs, out Matrix4x4 m)
+    {
+        float[] f = new float[16];
+        for (int i = 0; i < 16; ++i)
+        {
+            f[i] = BitConverter.ToSingle(_gltfBinary, ofs + i * sizeof(float));
+        }
+
+        m = new(
+            f[0], f[1], f[2], f[3],
+            f[4], f[5], f[6], f[7],
+            f[8], f[9], f[10], f[11],
+            f[12], f[13], f[14], f[15]);
+    }
+
+    
     private void _readVector3Array(int ofs, int length, ref IList<Vector3> arr)
     {
         for (int j = 0; j < length; ++j)
@@ -45,7 +65,7 @@ public class GlTF
             arr.Add(v3);
         }
     }
-
+    
     
     private void _readVector2Array(int ofs, int length, ref IList<Vector2> arr)
     {
@@ -139,6 +159,29 @@ public class GlTF
         else
         {
             ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
+        }
+    }
+
+
+    private void _readMatrixFromArray(Accessor acc, out Matrix4x4 m)
+    {
+        BufferView bvwMatrices = _gltfModel.BufferViews[acc.BufferView.Value];
+        if (acc.Type == Accessor.TypeEnum.MAT4)
+        {
+            if (acc.ComponentType == Accessor.ComponentTypeEnum.FLOAT)
+            {
+                _readMatrix4x4(bvwMatrices.ByteOffset, out m);
+            }
+            else
+            {
+                ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+                m = new();
+            }
+        }
+        else
+        {
+            ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
+            m = new();
         }
     }
     
@@ -297,16 +340,68 @@ public class GlTF
             }
         }
     }
-    
 
+
+    private void _readSkin(glTFLoader.Schema.Skin gltfSkin, out engine.Skin jSkin)
+    {
+        jSkin = new();
+        jSkin.Joints = new List<Joint>();
+
+        int idxMatrix = 0;
+
+        Accessor? accMatrix = null;
+        if (gltfSkin.InverseBindMatrices != null)
+        {
+            accMatrix = _gltfModel.Accessors[gltfSkin.InverseBindMatrices.Value];
+        }
+
+        /*
+         * The joints are store a bit while spread
+         */
+        foreach (var idxJoint in gltfSkin.Joints)
+        {
+            /*
+             * joint info also is stored inside the nodes we already read.
+             * So we just need to use the references.
+             */
+            var nJoint = _gltfModel.Nodes[idxJoint];
+            Joint joint = new();
+            jSkin.Joints.Add(joint);
+            if (accMatrix != null)
+            {
+                _readMatrixFromArray(accMatrix, out joint.InverseBindMatrix);
+            }
+            ModelNode mnJoint = _dictNodes[idxJoint];
+            foreach (int idxControlled in nJoint.Children)
+            {
+                var nControlled = _gltfModel.Nodes[idxControlled];
+                var mnControlled = _dictNodes[idxControlled];
+                joint.ControlledNodes.Add(mnControlled);
+            }
+            ++idxMatrix;
+        }
+    }
+    
+    
     private void _readScene(glTFLoader.Schema.Scene scene, out engine.Model jModel)
     {
+        _dictNodes = new();
+        
+        /*
+         * First read the actual model's nodes.
+         */
         List<ModelNode> rootNodes = new();
-        foreach (var idxOneRootNode in scene.Nodes)
+        foreach (var idxRootNode in scene.Nodes)
         {
-            _readNode(_gltfModel.Nodes[idxOneRootNode], out var mnNode);
+            _readNode(_gltfModel.Nodes[idxRootNode], out var mnNode);
+            _dictNodes[idxRootNode] = mnNode;
             rootNodes.Add(mnNode);
         }
+        
+        /*
+         * Check, if we read all the nodes
+         */
+        // TXWTODO: do it
 
         jModel = new()
         {
