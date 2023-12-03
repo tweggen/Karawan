@@ -1,40 +1,56 @@
 ﻿using System;
 using System.Numerics;
 
-namespace engine.joyce.components
+namespace engine.joyce.components;
+
+
+/**
+ * Keeps user definable parameters for the current transformation
+ * state of an object.
+ *
+ * This is used if you transform an object manually by means of the
+ * transform API. Every time you change a property here, the matrix
+ * in Transform3ToParent will be updated.
+ *
+ * After the run of the PropagateTranmslationSystem, the Transform3ToParent
+ * will be merged into the Transform3ToWorld components.
+ *
+ * That means, to be totally efficient, you should avoid to manually
+ * set the positiions using the API. I mean, if you're in the thousands
+ * of entities.
+ */
+public struct Transform3
 {
-    public struct Transform3
+    public bool IsVisible;
+    public uint CameraMask;
+    public Quaternion Rotation;
+    public Vector3 Position;
+    public Vector3 Scale;
+
+
+    public override string ToString()
     {
-        public bool IsVisible;
-        public uint CameraMask;
-        public Quaternion Rotation;
-        public Vector3 Position;
-        public Vector3 Scale;
+        return
+            $"IsVisible={IsVisible}, CameraMask={CameraMask:X}, Rotation={Rotation}, Scale={Scale}, Position={Position}";
+    }
 
-        
-        public override string ToString()
-        {
-            return $"IsVisible={IsVisible}, CameraMask={CameraMask:X}, Rotation={Rotation}, Scale={Scale}, Position={Position}";
-        }
-        
-        
-        public Transform3(bool isVisible, uint cameraMask, in Quaternion rotation, in Vector3 position)
-        {
-            IsVisible = isVisible;
-            CameraMask = cameraMask;
-            Rotation = rotation;
-            Position = position;
-            Scale = Vector3.One;
-        }
 
-        
-        public Transform3(bool isVisible, uint cameraMask, in Quaternion rotation, in Vector3 position, in Vector3 scale)
-        {
-            IsVisible = isVisible;
-            CameraMask = cameraMask;
-            Rotation = rotation;
-            Position = position;
-            Scale = scale;
-        }
+    public Transform3(bool isVisible, uint cameraMask, in Quaternion rotation, in Vector3 position)
+    {
+        IsVisible = isVisible;
+        CameraMask = cameraMask;
+        Rotation = rotation;
+        Position = position;
+        Scale = Vector3.One;
+    }
+
+
+    public Transform3(bool isVisible, uint cameraMask, in Quaternion rotation, in Vector3 position, in Vector3 scale)
+    {
+        IsVisible = isVisible;
+        CameraMask = cameraMask;
+        Rotation = rotation;
+        Position = position;
+        Scale = scale;
     }
 }
