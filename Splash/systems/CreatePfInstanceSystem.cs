@@ -2,6 +2,7 @@
 using DefaultEcs.Resource;
 using System;
 using System.Linq;
+using System.Numerics;
 using engine;
 using static engine.Logger;
 
@@ -56,8 +57,13 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
             /*
              * Create the platform entity. It will be filled by the instance manager.
              */
+#if true
+            entity.Set(new components.PfInstance(
+                id, Matrix4x4.Identity));
+#else
             entity.Set(new components.PfInstance(
                 id, id.ModelTransform));
+#endif
         }
     }
 

@@ -43,6 +43,9 @@ public class MatMesh
                 Tree[id.Materials[id.MeshMaterials[i]]] = meshlist;
             }
 
+#if true
+            meshlist.Add(id.Meshes[i]);
+#else
             if (id.ModelTransform.IsIdentity)
             {
                 meshlist.Add(id.Meshes[i]);
@@ -53,6 +56,7 @@ public class MatMesh
                 tm.Transform(id.ModelTransform);
                 meshlist.Add(tm);
             }
+#endif
         }
     }
 

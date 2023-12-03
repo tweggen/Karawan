@@ -111,6 +111,12 @@ public class ModelCache
 
             Matrix4x4 m = Matrix4x4.Identity;
             _applyModelParamMatrix(modelInfo, p, ref m);
+            
+            /*
+             * Now apply the matrix computed by the model params
+             * to the top level model matrix.
+             */
+            model.RootNode.Transform.Matrix *= m;
 
             model.ComputeAABB(out var aabb);
             modelInfo.AABB = aabb;
