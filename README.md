@@ -1,4 +1,4 @@
-x# project Karawan
+# project Karawan
 This project consists of 
 - joyce game engine
 - silicon desert 2 game
@@ -15,3 +15,53 @@ Check out this repo to any directory. Directly next to this directory, check out
 
 Current builds actively supported are Windows 11 x64 and ARM64 Android 13 . Windows 10
 and other Android versions also work.
+
+
+## About models and transformations
+
+### Introduction
+
+Internally, joyce is working strictly entity-component-system. 
+However, there are some things that strictly are hierarchial, like
+models containing parent-child relations. To map that, the hierarchy
+API is used together with the transform API: The Hierarchy API adds a
+parent reference component, the transform API adds a Transformation
+relative to parent component.
+
+### Influences on the transform of a model
+
+In real life, several things might influence the transform matrix
+of a model.
+
+- In terms of gameplay, the model might have a transform matrix.
+  This matrix might be either derived from an attached physics component
+  or defined directly by a gameloop, usually using the behaviour component
+  of that entity.
+- The author might want to use one pre-configured matrix to be applied 
+  to the model they loaded: To e.g. make up for a difference in scale,
+  rotation or orientation, or to simply offset the object.
+- The model itself comes with a top level matrix, representing the 
+  transformations to be done to the root level of the model.
+
+In reality, we want to minimize the amount of work requried to render
+a certain model/character/entity. Let's therefore analyse the most common 
+use case, a model controlled by a behaviour by setting its position etc. 
+directly. Still, this model would come with a "adjustment" matrix, fitting the
+model geometry into the game. However, let's assume this model is not hierarchial, i.e. consists just
+of one layer of geometry.
+
+#### Non-hierarchial model
+
+To keep execution fast, the recommended way is:
+- bake model adjustment matrix into the InstanceDesc of the object.
+- directly set TransformToWorld matrix, or let physics do that.
+
+#### Hierarchial model
+
+If the model itself is hierarchial, you cannot use the instancedesc
+transform matrix to adjust the model. Instead, it is recommended to
+bake the adjustment into the top-level "ToParent" component of the model.
+This does, however, not solve the problem of how to set the object's position.
+We do recommmend to insert an additional entity here. It contain any sort
+of transformation component (ToWorld or ToParent). That component can
+be updated by physics or by behavior.

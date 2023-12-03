@@ -4,6 +4,20 @@ using engine.joyce.components;
 
 namespace builtin.tools;
 
+
+
+/**
+ * Create entities from a previously loaded model.
+ *
+ * Models are trees of nodes representing
+ * - the geometry of the thing.
+ * - the materials for the thing.
+ * - the bones / skin for animation
+ *
+ * As models are hierarchial, they are decomposed into entities related
+ * to each other using the Hierary API.
+ * The geometry is added using Instance3 components.
+ */
 public class ModelBuilder
 {
     private readonly Model _jModel;
