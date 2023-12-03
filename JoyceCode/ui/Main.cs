@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Numerics;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using engine;
 using engine.gongzuo;
 using engine.world;
@@ -335,13 +337,15 @@ public class Main
                 ImGui.Text($"Total {entities.Length} entities.");
                 ImGui.Text($"{_engine.Simulation.Statics.Count} statics, {_engine.Simulation.Bodies.ActiveSet.Count} active bodies.");
 
-
+                byte[] abText = new byte[128];
+                ImGui.InputText("Filter", abText, 128);
+                string utfString = Encoding.UTF8.GetString(abText, 0, abText.Length).TrimEnd((Char)0);
+                
                 if (ImGui.BeginListBox("Entities"))
                 {
                     foreach (var entity in entities)
                     {
                         var id = entity.GetId();
-                        ImGui.PushID(id);
                         
                         bool isSelected = _currentEntityId == id;
                         string entityString;
@@ -364,6 +368,17 @@ public class Main
                         {
                             entityString = entity.ToString();
                         }
+
+
+                        if (abText[0] != 0 && !entityString.Contains(utfString))
+                        {
+                            continue;
+                        }
+                        
+                        ImGui.PushID(id);
+
+                        
+                        
                         if (ImGui.Selectable(entityString, isSelected))
                         {
                             _currentEntityId = entity.GetId();
