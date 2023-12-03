@@ -67,7 +67,8 @@ public class GenerateCharacterOperator : IWorldOperator
                 GeomFlags = 0
                             | InstantiateModelParams.CENTER_X
                             | InstantiateModelParams.CENTER_Z
-                            | InstantiateModelParams.ROTATE_Y180,
+                            | InstantiateModelParams.ROTATE_Y180
+                            | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                 MaxDistance = 1000f,
             });
         engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;

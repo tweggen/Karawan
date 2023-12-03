@@ -89,6 +89,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 GeomFlags = 0
                             | InstantiateModelParams.CENTER_X
                             | InstantiateModelParams.CENTER_Z
+                            | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                 //| InstantiateModelParams.ROTATE_Y180
                 ,
                 MaxDistance = 800f
@@ -100,8 +101,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
          */
         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
         {
-            ModelInfo modelInfo = modelBall.ModelInfo;
-            
+            var jInstanceDesc = modelBall.RootNode.InstanceDesc;
             eTarget.Set(new engine.world.components.FragmentId(worldFragment.NumericalId));
             eTarget.Set(new engine.joyce.components.Instance3(modelBall.RootNode.InstanceDesc));
             
@@ -119,7 +119,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 BodyDescription.CreateKinematic(
                     new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                     new BepuPhysics.Collidables.CollidableDescription(
-                        _getSphereShape(modelInfo.AABB.Radius, worldFragment.Engine),
+                        _getSphereShape(jInstanceDesc.AABB.Radius, worldFragment.Engine),
                         0.1f),
                     new BodyActivityDescription(0.01f)
                 )

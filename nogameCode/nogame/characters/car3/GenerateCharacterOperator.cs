@@ -222,11 +222,11 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         GeomFlags = 0
                                     | InstantiateModelParams.CENTER_X
                                     | InstantiateModelParams.CENTER_Z
-                                    | InstantiateModelParams.ROTATE_Y180,
+                                    | InstantiateModelParams.ROTATE_Y180
+                                    | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                         MaxDistance = propMaxDistance
                     });
                     InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
-                    ModelInfo modelInfo = model.ModelInfo;
                     
                     var wf = worldFragment;
 
@@ -254,11 +254,12 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             BodyDescription.CreateKinematic(
                                 new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                                 new BepuPhysics.Collidables.CollidableDescription(
-                                    GetSphereShape(modelInfo.AABB.Radius, wf.Engine),
+                                    GetSphereShape(jInstanceDesc.AABB.Radius, wf.Engine),
                                     0.1f),
                                 new BodyActivityDescription(0.01f)
                             )
                         );
+                        
                         BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties

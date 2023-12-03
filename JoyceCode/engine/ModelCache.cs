@@ -32,73 +32,13 @@ public class ModelCache
     
     private string _hash(string url,
         ModelProperties modelProperties,
-        in InstantiateModelParams p)
+        in InstantiateModelParams? p)
     {
         string mpHash = (modelProperties != null) ? modelProperties.ToString() : "null";
-        return $"FromFile('{url}'),{mpHash},{p.Hash()}";
+        string pHash = (p != null) ? p.Hash() : "null";
+        return $"FromFile('{url}'),{mpHash},{pHash}";
     }
 
-
-    private void _applyModelParamMatrix(ModelInfo modelInfo, InstantiateModelParams p, ref Matrix4x4 m)
-    {
-        if (modelInfo == null)
-        {
-            Error("modelInfo is null.");
-            return;
-        }
-        
-        /*
-         * Now, according to the instantiateModelParams, modify the data we loaded.
-         */
-        Vector3 vReCenter = new(
-            (p.GeomFlags & InstantiateModelParams.CENTER_X) != 0
-                ? (
-                    (p.GeomFlags & InstantiateModelParams.CENTER_X_POINTS) != 0
-                        ? modelInfo.Center.X
-                        : modelInfo.AABB.Center.X)
-                : 0f,
-            (p.GeomFlags & InstantiateModelParams.CENTER_Y) != 0
-                ? (
-                    (p.GeomFlags & InstantiateModelParams.CENTER_Y_POINTS) != 0
-                        ? modelInfo.Center.Y
-                        : modelInfo.AABB.Center.Y)
-                : 0f,
-            (p.GeomFlags & InstantiateModelParams.CENTER_Z) != 0
-                ? (
-                    (p.GeomFlags & InstantiateModelParams.CENTER_Z_POINTS) != 0
-                        ? modelInfo.Center.Z
-                        : modelInfo.AABB.Center.Z)
-                : 0f
-        );
-
-        if (vReCenter != Vector3.Zero)
-        {
-            m = m * Matrix4x4.CreateTranslation(-vReCenter);
-        }
-
-        int rotX = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X90)) ? 1 : 0) +
-                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X180)) ? 2 : 0);
-        int rotY = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y90)) ? 1 : 0) +
-                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y180)) ? 2 : 0);
-        int rotZ = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z90)) ? 1 : 0) +
-                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z180)) ? 2 : 0);
-
-        if (0 != rotX)
-        {
-            m = m * Matrix4x4.CreateRotationX(Single.Pi * rotX / 2f);
-        }
-
-        if (0 != rotY)
-        {
-            m = m * Matrix4x4.CreateRotationY(Single.Pi * rotY / 2f);
-        }
-
-        if (0 != rotZ)
-        {
-            m = m * Matrix4x4.CreateRotationZ(Single.Pi * rotZ / 2f);
-        }
-    }
-    
 
     private Task<Model> _instantiateModelParams(
         Model model,
@@ -107,11 +47,21 @@ public class ModelCache
     {
         return Task.Run(() =>
         {
-            var modelInfo = model.ModelInfo;
-
             Matrix4x4 m = Matrix4x4.Identity;
-            _applyModelParamMatrix(modelInfo, p, ref m);
             
+
+    /*
+     * We don't modify the mesh any more on loading,
+     * we need to have it original to smothly implement
+     * the animations.
+     */
+#if true
+#else
+            /*
+             * Compute the model adjustment matrix from the modelinfo
+             */
+            modelInfo.ComputeAdjustMatrix(p, ref m);
+
             /*
              * Now apply the matrix computed by the model params
              * to the top level model matrix.
@@ -125,6 +75,7 @@ public class ModelCache
              * Keep in mind we need to adjust both the mesh and the model info.
              */
             modelInfo.Center = Vector3.Transform(modelInfo.Center, m);
+#endif
 
             return model;
         });
@@ -157,6 +108,14 @@ public class ModelCache
     {
         var model = await _fromFile(url, modelProperties);
 
+        if ((p.GeomFlags & InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC) != 0)
+        {
+            if (null == model.RootNode || null == model.RootNode.InstanceDesc)
+            {
+                ErrorThrow($"Reading url {url} model does not have a root model instance defined.", m => new ArgumentException(m));
+            }
+        }
+
         model = await _instantiateModelParams(model, modelProperties, p);
 
         model = FindLights.Process(model);
@@ -172,7 +131,7 @@ public class ModelCache
      * from memory.
      */
     public async Task<Model> Instantiate(
-        string url, ModelProperties modelProperties, InstantiateModelParams p)
+        string url, ModelProperties modelProperties, InstantiateModelParams? p = null)
     {
         string hash = _hash(url, modelProperties, p);
         Model model;

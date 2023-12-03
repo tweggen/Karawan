@@ -47,13 +47,15 @@ namespace nogame.modules.playerhover
         
 #if false
         public string ModelUrl { get; set; } = "u.glb";
-        public int ModelGeomFlags { get; set; } = 0;
+        public int ModelGeomFlags { get; set; } = 0
+                                        | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC;
 #else
         public string ModelUrl { get; set; } = "car6.obj";
         public int ModelGeomFlags { get; set; } = 0
                                                   | InstantiateModelParams.CENTER_X
                                                   | InstantiateModelParams.CENTER_Z
-                                                  | InstantiateModelParams.ROTATE_Y180;
+                                                  | InstantiateModelParams.ROTATE_Y180
+                                                  | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC;
 #endif
 
 
@@ -387,7 +389,7 @@ namespace nogame.modules.playerhover
                 _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
                 /*
-                 * Heck, why are we async here?
+                 * Async because of potential file operations.
                  */
                 Model model = Task.Run(() => ModelCache.Instance().Instantiate(
                     ModelUrl,
@@ -397,14 +399,11 @@ namespace nogame.modules.playerhover
                         GeomFlags = ModelGeomFlags 
                     })).GetAwaiter().GetResult();
 
-                ModelInfo modelInfo = model.ModelInfo;
                 {
                     builtin.tools.ModelBuilder modelBuilder = new(_engine, model);
                     modelBuilder.BuildEntity(_eShip);
                 }
 
-                Trace($"Player ship modelInfo {modelInfo}");
-                
                 _eShip.Set(new engine.joyce.components.PointLight(
                     new Vector3(0f, 0f, -1f),
                     new Vector4(1.0f, 0.95f, 0.9f, 1f),
@@ -423,7 +422,7 @@ namespace nogame.modules.playerhover
                  * thing bounces away to nirvana very soon.
                  * Therefore we set the previously hard coded 1.4 as a lower limit.
                  */
-                var pbodySphere = new BepuPhysics.Collidables.Sphere(Single.Max(1.4f, modelInfo.AABB.Radius));
+                var pbodySphere = new BepuPhysics.Collidables.Sphere(Single.Max(1.4f, model.RootNode.InstanceDesc.AABB.Radius));
                 var pinertiaSphere = pbodySphere.ComputeInertia(MassShip);
 
                 lock (_engine.Simulation)

@@ -22,7 +22,8 @@ public class InstantiateModelParams
     public static int ROTATE_X180 = 0x1000;
     public static int ROTATE_Y180 = 0x2000;
     public static int ROTATE_Z180 = 0x4000;
-
+    public static int REQUIRE_ROOT_INSTANCEDESC = 0x10000;
+    
     public int GeomFlags = 0;
     public float MaxDistance = 10f;
 
@@ -61,54 +62,19 @@ public class Skin
  */
 public class Model
 {
-    public ModelInfo ModelInfo;
     public ModelNode RootNode;
     public string Name; 
-    
-    private void _computeInstanceDescAABB(InstanceDesc id, ref AABB aabb)
-    {
-        aabb.Add(id.Aabb);
-    }
-    
-
-    private void _computeNodeAABB(ModelNode mn, ref AABB aabb)
-    {
-        if (mn.InstanceDesc != null)
-        {
-            _computeInstanceDescAABB(mn.InstanceDesc, ref aabb);
-        }
-
-        if (mn.Children != null)
-        {
-            foreach (var mnChild in mn.Children)
-            {
-                _computeNodeAABB(mnChild, ref aabb);
-            }
-        }
-    }
-    
-    
-    public void ComputeAABB(out AABB aabb)
-    {
-        aabb = new();
-        if (RootNode != null)
-        {
-            _computeNodeAABB(RootNode, ref aabb);
-        }
-    }
-
     
     /**
      * Convenience method to create a model from a single InstanceDesc
      */
-    public Model(InstanceDesc instanceDesc, ModelInfo modelInfo)
+    public Model(InstanceDesc instanceDesc)
     {
         ModelNode mnRoot = new()
         {
             InstanceDesc = instanceDesc
         };
         RootNode = mnRoot;
-        ModelInfo = modelInfo;
     }
     
     

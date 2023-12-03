@@ -41,8 +41,25 @@ public class InstanceDesc
     private IList<engine.joyce.Material> _materials;
     public ReadOnlyCollection<Material> Materials;
 
+    private bool _haveCenter = false;
     private bool _haveAABBMerged = true;
     private bool _haveAABBTransformed = false;
+
+
+    private Vector3 _vCenter;
+    public Vector3 Center
+    {
+        get
+        {
+            if (!_haveCenter)
+            {
+                _computeCenter();
+                _haveCenter = true;
+            }
+
+            return _vCenter;
+        }
+    }
     
     
     private AABB _aabbMerged;
@@ -68,7 +85,7 @@ public class InstanceDesc
     }
 
     private AABB _aabbTransformed;
-    public AABB Aabb
+    public AABB AABB
     {
         get
         {
@@ -103,6 +120,28 @@ public class InstanceDesc
         _aabbTransformed = _aabbMerged;
         _aabbTransformed.Transform(_m);
         _haveAABBTransformed = true;
+    }
+
+
+    private void _computeCenter()
+    {
+        _vCenter = Vector3.Zero;
+        int n = 0;
+        foreach (var jm in Meshes)
+        {
+            int nv = jm.Vertices.Count;
+            for (int iv = 0; iv < nv; ++iv)
+            {
+                _vCenter += jm.Vertices[iv];
+            }
+
+            n += nv;
+        }
+
+        if (0 != n)
+        {
+            _vCenter /= n;
+        }
     }
     
 
@@ -214,7 +253,71 @@ public class InstanceDesc
         id._m = _m * m;
         return id;
     }
+    
+    
+    /**
+     * Compute a model adjustment matrix based on the model info
+     * and thge InstantiateModelParams
+     */
+    public void ComputeAdjustMatrix(InstantiateModelParams? p, ref Matrix4x4 m)
+    {
+        if (p == null)
+        {
+            return;
+        }
+        
+        /*
+         * Now, according to the instantiateModelParams, modify the data we loaded.
+         */
+        Vector3 vReCenter = new(
+            (p.GeomFlags & InstantiateModelParams.CENTER_X) != 0
+                ? (
+                    (p.GeomFlags & InstantiateModelParams.CENTER_X_POINTS) != 0
+                        ? this.Center.X
+                        : this.AABB.Center.X)
+                : 0f,
+            (p.GeomFlags & InstantiateModelParams.CENTER_Y) != 0
+                ? (
+                    (p.GeomFlags & InstantiateModelParams.CENTER_Y_POINTS) != 0
+                        ? this.Center.Y
+                        : this.AABB.Center.Y)
+                : 0f,
+            (p.GeomFlags & InstantiateModelParams.CENTER_Z) != 0
+                ? (
+                    (p.GeomFlags & InstantiateModelParams.CENTER_Z_POINTS) != 0
+                        ? this.Center.Z
+                        : this.AABB.Center.Z)
+                : 0f
+        );
 
+        if (vReCenter != Vector3.Zero)
+        {
+            m = m * Matrix4x4.CreateTranslation(-vReCenter);
+        }
+
+        int rotX = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X90)) ? 1 : 0) +
+                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_X180)) ? 2 : 0);
+        int rotY = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y90)) ? 1 : 0) +
+                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Y180)) ? 2 : 0);
+        int rotZ = ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z90)) ? 1 : 0) +
+                   ((0 != (p.GeomFlags & InstantiateModelParams.ROTATE_Z180)) ? 2 : 0);
+
+        if (0 != rotX)
+        {
+            m *= Matrix4x4.CreateRotationX(Single.Pi * rotX / 2f);
+        }
+
+        if (0 != rotY)
+        {
+            m *= Matrix4x4.CreateRotationY(Single.Pi * rotY / 2f);
+        }
+
+        if (0 != rotZ)
+        {
+            m *= Matrix4x4.CreateRotationZ(Single.Pi * rotZ / 2f);
+        }
+    }
+        
     
     public InstanceDesc(
         in IList<engine.joyce.Mesh> meshes,

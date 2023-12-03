@@ -76,7 +76,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                      *
                      * The AABB is in instance local coordinates.
                      */
-                    AABB aabb = id.Aabb;
+                    AABB aabb = id.AABB;
                     aabb.Transform(transform3ToWorld.Matrix);
                     if (aabb.SignedDistance(_nearFrustum) < 0) continue;
                     if (aabb.SignedDistance(_farFrustum) < 0) continue;

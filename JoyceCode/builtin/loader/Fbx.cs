@@ -19,8 +19,6 @@ public class Fbx
             new List<engine.joyce.Material>(),
             400f);
 
-        engine.ModelInfo modelInfo = new();
-
         var fbxImporter = new FbxSharp.FbxImporter();
 
         var fileStream = Assets.Open(url);
@@ -45,7 +43,7 @@ public class Fbx
             Trace("Successfully loaded model.");
         }
 
-        model = new Model(instanceDesc, modelInfo);
+        model = new Model(instanceDesc);
     }
 
 

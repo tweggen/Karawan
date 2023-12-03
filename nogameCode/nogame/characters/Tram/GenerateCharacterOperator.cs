@@ -34,50 +34,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
     
  
-#if false
-    private static engine.joyce.InstanceDesc[] _jInstancesTram;
-    public static engine.joyce.InstanceDesc GetTramMesh(int i)
-    {
-        lock(_classLock)
-        {
-            if( null==_jInstancesTram)
-            {
-                _jInstancesTram = new engine.joyce.InstanceDesc[1];
-                builtin.loader.Obj.LoadModelInstanceSync("tram1.obj", null, out var model);
-                _jInstancesTram[0] = model.RootNode.InstanceDesc;
-                foreach (var ji in _jInstancesTram)
-                {
-                    /*
-                     * Our models are 180 degree wrong.
-                     */
-                    ji.ModelTransform = Matrix4x4.CreateRotationY((float)Math.PI);
-                    ji.MaxDistance = 1000f;
-                }
-            }
-            return _jInstancesTram[i];
-        }
-    }
-
-    private static BepuPhysics.Collidables.TypedIndex _pshapeSphere;
-    private static BepuPhysics.Collidables.Sphere _pbodySphere;
-    public static BepuPhysics.Collidables.TypedIndex GetSphereShape(in Engine engine)
-    {
-        lock(_classLock)
-        {
-            if( !_pshapeSphere.Exists )
-            {
-                _pbodySphere = new(0.5f);
-                lock (engine.Simulation)
-                {
-                    _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
-                }
-            }
-            return _pshapeSphere;
-        }
-    }
-#endif
-
-
     private ClusterDesc _clusterDesc;
     private builtin.tools.RandomSource _rnd;
     private string _myKey;
@@ -201,7 +157,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             GeomFlags = 0
                                         | InstantiateModelParams.CENTER_X
                                         | InstantiateModelParams.CENTER_Z
-                                        | InstantiateModelParams.ROTATE_Y180,
+                                        | InstantiateModelParams.ROTATE_Y180
+                                        | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                             MaxDistance = 1000f,
                         });
                     engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;

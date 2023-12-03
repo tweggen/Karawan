@@ -244,12 +244,7 @@ public class Obj
         
         // TXWTODO: read the maximal distance from some properties
         InstanceDesc instanceDesc = new(meshes, meshMaterials, materials, 100f);
-        ModelInfo modelInfo = new()
-        {
-            AABB = aabb,
-            Center = vCenter / nVertices
-        };
-        model = new Model(instanceDesc, modelInfo);
+        model = new Model(instanceDesc);
     }
     
     

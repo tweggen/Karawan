@@ -403,14 +403,7 @@ public class GlTF
          */
         // TXWTODO: do it
 
-        jModel = new()
-        {
-            ModelInfo = new()
-            {
-                Center = Vector3.Zero
-            }
-            
-        };
+        jModel = new();
         if (rootNodes.Count == 1)
         {
             jModel.RootNode = rootNodes[0];
@@ -427,8 +420,6 @@ public class GlTF
         {
             ErrorThrow($"Root node has no children!?", m => new InvalidOperationException(m));
         }
-        jModel.ComputeAABB(out var aabb);
-        jModel.ModelInfo.AABB = aabb;
     }
     
     

@@ -17,6 +17,36 @@ Current builds actively supported are Windows 11 x64 and ARM64 Android 13 . Wind
 and other Android versions also work.
 
 
+## About models and instances
+
+When rendering content, joyce tries to use instance rendering as
+much as possible. As such, loaded models and generated geometries
+essentially are broken down into "InstanceDesc" objects: They group 
+a couple of meshes with their materials. If the rendering engine
+encounters different instances of, well an instancedesc in the 
+same scene, they are rendered using a single render call.
+
+When working with models, even more hierarchial models, this
+becomes a bit more confusing: each node of a hierarchial model
+is represented using a single entity of its. If the node carries
+mesh information, the mesh and the materials are represented using
+a InstanceDesc object.
+
+If, in the end, several similar objects are in the scene, the individual
+parts will be rendered with a single drawinstance call.
+
+To make this work, a model that we load from disk must be interpreted
+multiple times, it may only once be converted into a mesh. This would
+be desirable anyway. Therefore we use the to ModelCache to access 
+any given model file. If we don't, we end up in having the geometry
+data stored multiple times. Note that we don't auto-merge geometry
+just as we auto-merge models.
+
+Note that the model builder will use the InstanceDesc objects as they
+are, it will not modify them, it rather just assembles a tree of entities
+with the appropriate components from a model tree.
+
+
 ## About models and transformations
 
 ### Introduction
