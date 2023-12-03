@@ -49,34 +49,7 @@ public class ModelCache
         {
             Matrix4x4 m = Matrix4x4.Identity;
             
-
-    /*
-     * We don't modify the mesh any more on loading,
-     * we need to have it original to smothly implement
-     * the animations.
-     */
-#if true
-#else
-            /*
-             * Compute the model adjustment matrix from the modelinfo
-             */
-            modelInfo.ComputeAdjustMatrix(p, ref m);
-
-            /*
-             * Now apply the matrix computed by the model params
-             * to the top level model matrix.
-             */
-            model.RootNode.Transform.Matrix *= m;
-
-            model.ComputeAABB(out var aabb);
-            modelInfo.AABB = aabb;
-            
-            /*
-             * Keep in mind we need to adjust both the mesh and the model info.
-             */
-            modelInfo.Center = Vector3.Transform(modelInfo.Center, m);
-#endif
-
+            // TXWTODO: Reinvestigate if we really need this step.
             return model;
         });
     }

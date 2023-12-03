@@ -18,7 +18,6 @@ public class InstanceDesc
 {
     private Matrix4x4 _m;
 
-    #if false
     public Matrix4x4 ModelTransform
     {
         get => _m;
@@ -28,7 +27,6 @@ public class InstanceDesc
             _m = value;
         }
     }
-    #endif
 
     public float MaxDistance = 200f;
     

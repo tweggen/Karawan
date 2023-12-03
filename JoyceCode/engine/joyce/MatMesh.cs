@@ -43,7 +43,7 @@ public class MatMesh
                 Tree[id.Materials[id.MeshMaterials[i]]] = meshlist;
             }
 
-#if true
+#if false
             meshlist.Add(id.Meshes[i]);
 #else
             if (id.ModelTransform.IsIdentity)

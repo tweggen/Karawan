@@ -388,19 +388,14 @@ namespace nogame.modules.playerhover
                 _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
                 _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
-                /*
-                 * Async because of potential file operations.
-                 */
+                InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags };
+
                 Model model = Task.Run(() => ModelCache.Instance().Instantiate(
                     ModelUrl,
-                    null,
-                    new InstantiateModelParams()
-                    {
-                        GeomFlags = ModelGeomFlags 
-                    })).GetAwaiter().GetResult();
+                    null, instantiateModelParams)).GetAwaiter().GetResult();
 
                 {
-                    builtin.tools.ModelBuilder modelBuilder = new(_engine, model);
+                    builtin.tools.ModelBuilder modelBuilder = new(_engine, model, instantiateModelParams);
                     modelBuilder.BuildEntity(_eShip);
                 }
 

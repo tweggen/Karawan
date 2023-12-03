@@ -45,7 +45,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 _nInstancesConsidered++;
 
                 Vector3 vTranslate = transform3ToWorld.Matrix.Translation;
-#if true
+#if false
                 Vector3 vInstancePos = Vector3.Zero;
 #else
                 Vector3 vInstancePos = id.ModelTransform.Translation;
