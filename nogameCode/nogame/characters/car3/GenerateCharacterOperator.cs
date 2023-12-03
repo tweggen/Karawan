@@ -119,6 +119,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
     {
+       
         var aPhysics = I.Get<engine.physics.API>();
 
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
@@ -216,8 +217,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     {
                         ["primarycolor"] = _primarycolors[colorIdx],
                     };
-                    Model model = await ModelCache.Instance().Instantiate(
-                        _carFileName(carIdx), props, new InstantiateModelParams()
+                    InstantiateModelParams instantiateModelParams = new()
                     {
                         GeomFlags = 0
                                     | InstantiateModelParams.CENTER_X
@@ -225,7 +225,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                     | InstantiateModelParams.ROTATE_Y180
                                     | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                         MaxDistance = propMaxDistance
-                    });
+                    }; 
+                        
+                    Model model = await ModelCache.Instance().Instantiate(
+                        _carFileName(carIdx), props, instantiateModelParams);
                     InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
                     
                     var wf = worldFragment;
@@ -235,7 +238,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
                         eTarget.Set(new engine.world.components.FragmentId(fragmentId));
-                        eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                        {
+                            builtin.tools.ModelBuilder modelBuilder = new(worldFragment.Engine, model, instantiateModelParams);
+                            modelBuilder.BuildEntity(eTarget);
+                        }
 
                         eTarget.Set(new engine.behave.components.Behavior(
                             new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
