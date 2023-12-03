@@ -47,8 +47,7 @@ namespace nogame.modules.playerhover
         
 #if false
         public string ModelUrl { get; set; } = "u.glb";
-        public int ModelGeomFlags { get; set; } = 0
-                                        | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC;
+        public int ModelGeomFlags { get; set; } = 0;
 #else
         public string ModelUrl { get; set; } = "car6.obj";
         public int ModelGeomFlags { get; set; } = 0
@@ -417,7 +416,8 @@ namespace nogame.modules.playerhover
                  * thing bounces away to nirvana very soon.
                  * Therefore we set the previously hard coded 1.4 as a lower limit.
                  */
-                var pbodySphere = new BepuPhysics.Collidables.Sphere(Single.Max(1.4f, model.RootNode.InstanceDesc.AABB.Radius));
+                float bodyRadius = model.RootNode.InstanceDesc != null ? model.RootNode.InstanceDesc.AABB.Radius : 1.4f;
+                var pbodySphere = new BepuPhysics.Collidables.Sphere(Single.Max(1.4f, bodyRadius));
                 var pinertiaSphere = pbodySphere.ComputeInertia(MassShip);
 
                 lock (_engine.Simulation)
