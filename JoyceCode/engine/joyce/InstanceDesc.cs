@@ -86,7 +86,7 @@ public class InstanceDesc
     }
 
     private AABB _aabbTransformed;
-    public AABB AABB
+    public AABB AABBTransformed
     {
         get
         {
@@ -275,19 +275,19 @@ public class InstanceDesc
                 ? (
                     (p.GeomFlags & InstantiateModelParams.CENTER_X_POINTS) != 0
                         ? this.Center.X
-                        : this.AABB.Center.X)
+                        : this.AABBTransformed.Center.X)
                 : 0f,
             (p.GeomFlags & InstantiateModelParams.CENTER_Y) != 0
                 ? (
                     (p.GeomFlags & InstantiateModelParams.CENTER_Y_POINTS) != 0
                         ? this.Center.Y
-                        : this.AABB.Center.Y)
+                        : this.AABBTransformed.Center.Y)
                 : 0f,
             (p.GeomFlags & InstantiateModelParams.CENTER_Z) != 0
                 ? (
                     (p.GeomFlags & InstantiateModelParams.CENTER_Z_POINTS) != 0
                         ? this.Center.Z
-                        : this.AABB.Center.Z)
+                        : this.AABBTransformed.Center.Z)
                 : 0f
         );
 

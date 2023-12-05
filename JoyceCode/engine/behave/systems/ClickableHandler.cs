@@ -46,8 +46,8 @@ public class ClickableHandler
              */
 
             joyce.InstanceDesc id = entity.Get<Instance3>().InstanceDesc;
-            Vector4 vAA4 = Vector4.Transform(id.AABB.AA, cTransform.Matrix * _mView * _mProjection);
-            Vector4 vBB4 = Vector4.Transform(id.AABB.BB, cTransform.Matrix * _mView * _mProjection);
+            Vector4 vAA4 = Vector4.Transform(id.AABBTransformed.AA, cTransform.Matrix * _mView * _mProjection);
+            Vector4 vBB4 = Vector4.Transform(id.AABBTransformed.BB, cTransform.Matrix * _mView * _mProjection);
             Vector2 vAA2 = new(
                 (vAA4.X / vAA4.W + 1f) * _vViewSize.X / 2f, 
                 (-vAA4.Y / vAA4.W + 1f) * _vViewSize.Y / 2f);

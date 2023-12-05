@@ -49,15 +49,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                     var a = 1;
                 }
                 Matrix4x4 mModelTotalTransform = id.ModelTransform * transform3ToWorld.Matrix; 
-                //Vector3 vTranslate = transform3ToWorld.Matrix.Translation;
-#if false
-                Vector3 vInstancePos = Vector3.Zero;
-#else
-                //Vector3 vInstancePos = id.ModelTransform.Translation;
-#endif
-
-
-                //Vector3 vPos = vTranslate + vInstancePos;
                 Vector3 vPos = mModelTotalTransform.Translation;
                 
                 /*
@@ -82,7 +73,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                      *
                      * The AABB is in instance local coordinates.
                      */
-                    AABB aabb = id.AABB;
+                    AABB aabb = id.AABBMerged;
                     aabb.Transform(mModelTotalTransform);
                     if (aabb.SignedDistance(_nearFrustum) < 0) continue;
                     if (aabb.SignedDistance(_farFrustum) < 0) continue;
@@ -93,7 +84,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 }
 
                 _nInstancesAppended++;
-                cameraOutput.AppendInstance(pfInstance, mModelTotalTransform);
+                cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix);
             }
         }
     }

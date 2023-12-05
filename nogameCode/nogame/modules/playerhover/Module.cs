@@ -416,7 +416,7 @@ namespace nogame.modules.playerhover
                  * thing bounces away to nirvana very soon.
                  * Therefore we set the previously hard coded 1.4 as a lower limit.
                  */
-                float bodyRadius = model.RootNode.InstanceDesc != null ? model.RootNode.InstanceDesc.AABB.Radius : 1.4f;
+                float bodyRadius = model.RootNode.InstanceDesc != null ? model.RootNode.InstanceDesc.AABBTransformed.Radius : 1.4f;
                 var pbodySphere = new BepuPhysics.Collidables.Sphere(Single.Max(1.4f, bodyRadius));
                 var pinertiaSphere = pbodySphere.ComputeInertia(MassShip);
 

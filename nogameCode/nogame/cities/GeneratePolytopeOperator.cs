@@ -119,7 +119,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 BodyDescription.CreateKinematic(
                     new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                     new BepuPhysics.Collidables.CollidableDescription(
-                        _getSphereShape(jInstanceDesc.AABB.Radius, worldFragment.Engine),
+                        _getSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
                         0.1f),
                     new BodyActivityDescription(0.01f)
                 )
