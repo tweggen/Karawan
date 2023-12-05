@@ -36,12 +36,22 @@ public class ModelBuilder
     
     private void _buildNodeInto(in DefaultEcs.Entity eNode, in ModelNode mn)
     {
+        if (_jModel.RootNode.Children != null && _jModel.RootNode.Children.Count > 0)
+        {
+            eNode.Set(mn.Transform);
+        }
+        else
+        {
+            if (mn.InstanceDesc != null)
+            {
+                mn.InstanceDesc.ModelTransform = mn.Transform.Matrix;
+            }
+        }
+
         if (mn.InstanceDesc != null)
         {
             _buildInstanceDescInto(eNode, mn.InstanceDesc);
         }
-
-        eNode.Set(mn.Transform);
 
         if (mn.Children != null)
         {
@@ -91,7 +101,7 @@ public class ModelBuilder
                     /*
                      * If we do not have children, let's just bake it into InstanceDesc.
                      */
-                    mnRoot.InstanceDesc.ModelTransform = mAdjust;
+                    mnRoot.InstanceDesc.ModelTransform *= mAdjust;
                 }
             }
         }

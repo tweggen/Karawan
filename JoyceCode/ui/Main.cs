@@ -21,6 +21,7 @@ public class Main
 
     private int _currentEntityId = -1;
     private string _currentClusterId = "";
+    private byte[] _currentEntityFilterBytes = new byte[128];
 
 
     private void _setColorScheme()
@@ -337,9 +338,9 @@ public class Main
                 ImGui.Text($"Total {entities.Length} entities.");
                 ImGui.Text($"{_engine.Simulation.Statics.Count} statics, {_engine.Simulation.Bodies.ActiveSet.Count} active bodies.");
 
-                byte[] abText = new byte[128];
-                ImGui.InputText("Filter", abText, 128);
-                string utfString = Encoding.UTF8.GetString(abText, 0, abText.Length).TrimEnd((Char)0);
+                
+                ImGui.InputText("Filter", _currentEntityFilterBytes, (uint) _currentEntityFilterBytes.Length);
+                string utfString = Encoding.UTF8.GetString(_currentEntityFilterBytes, 0, _currentEntityFilterBytes.Length).TrimEnd((Char)0);
                 
                 if (ImGui.BeginListBox("Entities"))
                 {
@@ -370,7 +371,7 @@ public class Main
                         }
 
 
-                        if (abText[0] != 0 && !entityString.Contains(utfString))
+                        if (_currentEntityFilterBytes[0] != 0 && !entityString.Contains(utfString))
                         {
                             continue;
                         }

@@ -44,15 +44,17 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 var id = pfInstance.InstanceDesc;
                 _nInstancesConsidered++;
 
-                Vector3 vTranslate = transform3ToWorld.Matrix.Translation;
+                Matrix4x4 mModelTotalTransform = id.ModelTransform * transform3ToWorld.Matrix; 
+                //Vector3 vTranslate = transform3ToWorld.Matrix.Translation;
 #if false
                 Vector3 vInstancePos = Vector3.Zero;
 #else
-                Vector3 vInstancePos = id.ModelTransform.Translation;
+                //Vector3 vInstancePos = id.ModelTransform.Translation;
 #endif
 
 
-                Vector3 vPos = vTranslate + vInstancePos;
+                //Vector3 vPos = vTranslate + vInstancePos;
+                Vector3 vPos = mModelTotalTransform.Translation;
                 
                 /*
                  * Per instance lod test
@@ -87,7 +89,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 }
 
                 _nInstancesAppended++;
-                cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix);
+                cameraOutput.AppendInstance(pfInstance, mModelTotalTransform);
             }
         }
     }

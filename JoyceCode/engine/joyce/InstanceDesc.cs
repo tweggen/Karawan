@@ -16,15 +16,18 @@ namespace engine.joyce;
  */
 public class InstanceDesc
 {
-    private Matrix4x4 _m;
+    private Matrix4x4 _m = Matrix4x4.Identity;
 
     public Matrix4x4 ModelTransform
     {
         get => _m;
         set
         {
-            _haveAABBTransformed = false;
-            _m = value;
+            if (_m != value)
+            {
+                _haveAABBTransformed = false;
+                _m = value;
+            }
         }
     }
 
