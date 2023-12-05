@@ -44,6 +44,10 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 var id = pfInstance.InstanceDesc;
                 _nInstancesConsidered++;
 
+                if (!id.ModelTransform.IsIdentity)
+                {
+                    var a = 1;
+                }
                 Matrix4x4 mModelTotalTransform = id.ModelTransform * transform3ToWorld.Matrix; 
                 //Vector3 vTranslate = transform3ToWorld.Matrix.Translation;
 #if false
@@ -79,7 +83,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                      * The AABB is in instance local coordinates.
                      */
                     AABB aabb = id.AABB;
-                    aabb.Transform(transform3ToWorld.Matrix);
+                    aabb.Transform(mModelTotalTransform);
                     if (aabb.SignedDistance(_nearFrustum) < 0) continue;
                     if (aabb.SignedDistance(_farFrustum) < 0) continue;
                     if (aabb.SignedDistance(_leftFrustum) < 0) continue;

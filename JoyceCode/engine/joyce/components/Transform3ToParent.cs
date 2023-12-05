@@ -48,5 +48,6 @@ namespace engine.joyce.components
             CameraMask = cameraMask;
             Matrix = matrix;
         }
+
     }
 }

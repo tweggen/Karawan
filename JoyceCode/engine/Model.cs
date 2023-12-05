@@ -72,7 +72,8 @@ public class Model
     {
         ModelNode mnRoot = new()
         {
-            InstanceDesc = instanceDesc
+            InstanceDesc = instanceDesc,
+            Transform = new(true, 0xffff, Matrix4x4.Identity)
         };
         RootNode = mnRoot;
     }
