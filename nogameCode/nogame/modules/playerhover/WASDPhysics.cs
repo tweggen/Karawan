@@ -14,7 +14,6 @@ namespace nogame.modules.playerhover
     {
         public static float MY_Z_ORDER = 25f;
         private DefaultEcs.Entity _eTarget;
-        private engine.joyce.TransformApi _aTransform;
 
         private BepuPhysics.BodyReference _prefTarget;
 
@@ -31,6 +30,13 @@ namespace nogame.modules.playerhover
         public float LevelDownThrust { get; set; } = 16f;
         public float NoseDownWhileAcceleration { get; set; } = 1f;
         public float WingsDownWhileTurning { get; set; } = 4f;
+
+        public float InputTurnThreshold { get; set; } = 50f;
+        public float FirstInputTurnThreshold { get; set; } = 10f;
+
+
+        private float _lastTurnMotion = 0f;
+        
         
         private void _onLogicalFrame(object sender, float dt)
         {
@@ -114,8 +120,30 @@ namespace nogame.modules.playerhover
 
                 var frontMotion = controllerState.FrontMotion;
                 var upMotion = controllerState.UpMotion;
-                float turnMotion = controllerState.TurnRight - controllerState.TurnLeft;
+                float turnMotion;
+                {
+                    float inputTurnMotion = controllerState.TurnRight - controllerState.TurnLeft;
+                    float maxThreshold;
+                    if (_lastTurnMotion == 0)
+                    {
+                        maxThreshold = FirstInputTurnThreshold;
+                    }
+                    else
+                    {
+                        maxThreshold = InputTurnThreshold;                    }
+                    float diff = inputTurnMotion - _lastTurnMotion;
+                    if (Single.Abs(diff) > maxThreshold)
+                    {
+                        turnMotion = _lastTurnMotion + Single.Sign(diff) * maxThreshold;
+                    }
+                    else
+                    {
+                        turnMotion = inputTurnMotion;
+                    }
 
+                    _lastTurnMotion = turnMotion;
+                }
+                
                 if (frontMotion != 0f)
                 {
                     // The acceleration looks wrong when combined with rotation.
@@ -147,7 +175,6 @@ namespace nogame.modules.playerhover
                      * And finally turn
                      */
                     vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
-
                     vTotalImpulse += vTotalImpulse * (-0.3f*Single.Abs(turnMotion / 256f));
                 }
             }
@@ -277,7 +304,6 @@ namespace nogame.modules.playerhover
         public override void ModuleActivate(engine.Engine engine0)
         {
             base.ModuleActivate(engine0);
-            _aTransform = I.Get<engine.joyce.TransformApi>();
             _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
