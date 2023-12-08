@@ -24,6 +24,14 @@ public class InstantiateModelParams
     public static int ROTATE_Z180 = 0x4000;
     public static int REQUIRE_ROOT_INSTANCEDESC = 0x10000;
     
+    /**
+     * With this flag the model builder omits creation of an
+     * additional root aentity to ensure a transform component
+     * can be added to the entity to have it
+     * conttrolled.
+     */
+    public static int NO_CONTROLLABLE_ROOT = 0x20000;
+    
     public int GeomFlags = 0;
     public float MaxDistance = 10f;
 

@@ -48,7 +48,8 @@ namespace nogame.modules.playerhover
 #if true
         public string ModelUrl { get; set; } = "u.glb";
         public int ModelGeomFlags { get; set; } = 0
-                                                  | InstantiateModelParams.ROTATE_Y180;
+            | InstantiateModelParams.ROTATE_X90
+            | InstantiateModelParams.ROTATE_Z180;
 #else
         public string ModelUrl { get; set; } = "car6.obj";
         public int ModelGeomFlags { get; set; } = 0

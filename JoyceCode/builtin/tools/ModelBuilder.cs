@@ -26,6 +26,7 @@ public class ModelBuilder
     private readonly Engine _engine;
     private readonly HierarchyApi _aHierarchy;
     private readonly InstantiateModelParams _instantiateModelParams;
+    private readonly bool _isHierarchical;
 
 
     private void _buildInstanceDescInto(in DefaultEcs.Entity eNode, in InstanceDesc id)
@@ -36,7 +37,7 @@ public class ModelBuilder
     
     private void _buildNodeInto(in DefaultEcs.Entity eNode, in ModelNode mn)
     {
-        if (_jModel.RootNode.Children != null && _jModel.RootNode.Children.Count > 0)
+        if (_isHierarchical)
         {
             eNode.Set(mn.Transform);
         }
@@ -71,30 +72,53 @@ public class ModelBuilder
      * gets baked directly into that entity, where as a hierarchical model
      * becomes an additional hierarchy of, well hierarchical nodes.
      */
-    public DefaultEcs.Entity BuildEntity(DefaultEcs.Entity? eRoot)
+    public DefaultEcs.Entity BuildEntity(DefaultEcs.Entity? eUserRoot)
     {
-        if (null == eRoot)
+        if (null == eUserRoot)
         {
-            eRoot = _engine.CreateEntity($"br {_jModel.Name}");
+            eUserRoot = _engine.CreateEntity($"br {_jModel.Name}");
+        }
+
+        DefaultEcs.Entity eRoot;
+        
+        /*
+         * if we are hierarchical, we possibly need to create a root node
+         * to enable separate.
+         */
+        if (_isHierarchical)
+        {
+            if (0 != (_instantiateModelParams.GeomFlags & InstantiateModelParams.NO_CONTROLLABLE_ROOT))
+            {
+                eRoot = eUserRoot.Value;
+            }
+            else
+            {
+                eRoot = _engine.CreateEntity($"ba {_jModel.Name}");
+                _aHierarchy.SetParent(eRoot, eUserRoot);
+            }
+        }
+        else
+        {
+            eRoot = eUserRoot.Value;
         }
 
         var mnRoot = _jModel.RootNode;
         if (mnRoot != null)
         {
-            _buildNodeInto(eRoot.Value, mnRoot);
+            _buildNodeInto(eRoot, mnRoot);
 
             if (mnRoot.InstanceDesc != null)
             {
                 Matrix4x4 mAdjust = Matrix4x4.Identity;
                 mnRoot.InstanceDesc.ComputeAdjustMatrix(_instantiateModelParams, ref mAdjust);
-                if (mnRoot.Children?.Count > 0)
+                if (_isHierarchical)
                 {
                     /*
                      * If we have children, we bake it (now) into the top hierarchy node.
                      */
-                    var cTransformToParent = eRoot.Value.Get<Transform3ToParent>();
+                    var cTransformToParent = eRoot.Get<Transform3ToParent>();
                     cTransformToParent.Matrix *= mAdjust;
-                    eRoot.Value.Set(cTransformToParent);
+                    eRoot.Set(cTransformToParent);
                 }
                 else
                 {
@@ -106,7 +130,7 @@ public class ModelBuilder
             }
         }
         
-        return eRoot.Value;
+        return eUserRoot.Value;
     }
     
     
@@ -116,5 +140,6 @@ public class ModelBuilder
         _jModel = jModel;
         _instantiateModelParams = instantiateModelParams;
         _aHierarchy = I.Get<HierarchyApi>();
+        _isHierarchical = (_jModel.RootNode.Children != null && _jModel.RootNode.Children.Count > 0);
     }
 }
