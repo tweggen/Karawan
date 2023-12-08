@@ -45,9 +45,10 @@ namespace nogame.modules.playerhover
 
         public float MassShip { get; set; } = 500f;
         
-#if false
+#if true
         public string ModelUrl { get; set; } = "u.glb";
-        public int ModelGeomFlags { get; set; } = 0;
+        public int ModelGeomFlags { get; set; } = 0
+                                                  | InstantiateModelParams.ROTATE_Y180;
 #else
         public string ModelUrl { get; set; } = "car6.obj";
         public int ModelGeomFlags { get; set; } = 0
