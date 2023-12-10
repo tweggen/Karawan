@@ -129,20 +129,6 @@ public class Module : AModule, IInputPart
     }
 
 
-    private void _applyZoomState(sbyte zoomState)
-    {
-        lock (_lo)
-        {
-            float newZoomState = //(((float)-zoomState) + 32f)
-                (((float)zoomState) + 128f)
-                * (DisplayMapParams.MAX_ZOOM_STATE - DisplayMapParams.MIN_ZOOM_STATE)
-                / (128f + 32f) + DisplayMapParams.MIN_ZOOM_STATE;
-            newZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE, Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, (int) newZoomState));
-            _requestedMapParams.CurrentZoomState = (float) newZoomState;
-        }
-    }
-    
-
     private void _handleMouseWheel(Event ev)
     {
         /*

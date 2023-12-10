@@ -12,6 +12,7 @@ public class DefaultMapProvider : IMapProvider
     private readonly object _lo = new();
     private readonly SortedDictionary<string, IWorldMapProvider> _worldMapLayers = new();
 
+    
     public void AddWorldMapLayer(string layerKey, IWorldMapProvider worldMapProvider)
     {
         lock (_lo)
@@ -81,6 +82,7 @@ public class DefaultMapProvider : IMapProvider
          */
     }
 
+    
     public DefaultMapProvider()
     {
     }

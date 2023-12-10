@@ -11,6 +11,10 @@ using static engine.Logger;
 
 namespace nogame.map;
 
+
+/**
+ * Create an pixel image of the entire world.
+ */
 public class WorldMapTerrainProvider : IWorldMapProvider
 {
     public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
@@ -282,9 +286,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         target.EndModification();
     }
     
-    /**
-     * We just render the terrain height.
-     */
+    
     public void WorldMapCreateBitmap(IFramebuffer target)
     {
         try
