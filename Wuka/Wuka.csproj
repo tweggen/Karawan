@@ -160,6 +160,8 @@
 	  <None Remove="Platforms\Android\tram1.mtl" />
 	  <None Remove="Platforms\Android\tram1.obj" />
 	  <None Remove="Platforms\Android\tramnoise.ogg" />
+	  <None Remove="Platforms\Android\u.fbx" />
+	  <None Remove="Platforms\Android\u.glb" />
 	  <None Remove="Platforms\Android\yellowwindows.png" />
 	  <None Remove="Resources\Splash\splash_nassau.svg" />
 	</ItemGroup>
@@ -364,6 +366,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\tramnoise.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\u.fbx">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\u.glb">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\yellowwindows.png">

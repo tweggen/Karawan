@@ -28,9 +28,9 @@
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
-  <Target Name="ConvertFbx" BeforeTargets="Compile">
+	<!-- Target Name="ConvertFbx" BeforeTargets="Compile">
     <Message Text="Converting fbx" />
     <Fbx2AsciiTask SourceFbx="..\models\models\u\U5.fbx" DestinationFbx="..\Wuka\Platforms\Android\u.fbx"/>
-  </Target>
+  </Target-->
 
 </Project>

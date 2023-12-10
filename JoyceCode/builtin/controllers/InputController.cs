@@ -216,7 +216,7 @@ public class InputController : engine.AModule, engine.IInputPart
 
                 if (_mousePressPosition.X >= (viewSize.X - viewSize.X/25f))
                 {
-                    float zoomWay = relY / ControllerTouchZoomFull * (16+128);
+                    float zoomWay = relY / ControllerTouchZoomFull * (8);
                     
                     I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
                     {
