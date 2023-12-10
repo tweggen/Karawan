@@ -162,37 +162,30 @@ public class ModelBuilder
 
         _buildNodeInto(eRoot, mnRoot);
 
-        if (_isHierarchical)
+        if (mnAdjust != null)
         {
-            /*
-             * If we are hierarchical, we need to find the first root node to compute
-             * the adjustment from.
-             */
-            /*
-             * If we have children, we add the adjustment to one additional layer.
-             */
-            var cTransformToParent = eRoot.Get<Transform3ToParent>();
-            cTransformToParent.Matrix *= mAdjust;
-            eRoot.Set(cTransformToParent);
-        }
-        else
-        {
-            if (mnRoot.InstanceDesc != null)
+            if (_isHierarchical)
+            {
+                /*
+                 * If we are hierarchical, we need to find the first root node to compute
+                 * the adjustment from.
+                 */
+                /*
+                 * If we have children, we add the adjustment to one additional layer.
+                 */
+                var cTransformToParent = eRoot.Get<Transform3ToParent>();
+                cTransformToParent.Matrix *= mAdjust;
+                eRoot.Set(cTransformToParent);
+            }
+            else
             {
                 /*
                  * If we do not have children, let's just bake it into InstanceDesc.
                  */
                 mnRoot.InstanceDesc.ModelTransform *= mAdjust;
             }
-            else
-            {
-                /*
-                 * Well, if we don't have any instance, we obviously don't need
-                 * any adjustment.
-                 */
-            }
         }
-        
+
         return eUserRoot.Value;
     }
     
