@@ -224,20 +224,6 @@ namespace Splash
             meshBatch.Matrices.Add(matrix);
             _nInstances++;
         }
-
-
-#if false
-        public void AppendInstance(
-            in AMeshEntry aMeshEntry,
-            in AMaterialEntry aMaterialEntry,
-            in Matrix4x4 matrix)
-        {
-            lock (_lo)
-            {
-                _appendInstanceNoLock(aMeshEntry, aMaterialEntry, matrix);
-            }
-        }
-#endif
         
 
         public void AppendInstance(in Splash.components.PfInstance pfInstance, Matrix4x4 transform3ToWorld)
@@ -293,7 +279,7 @@ namespace Splash
                     if (!aMaterialEntry.JMaterial.IsBillboardTransform)
                     {
                         _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
-                            pfInstance.ModelTransform * transform3ToWorld);
+                            id.ModelTransform * transform3ToWorld);
                     }
                     else
                     {
@@ -327,7 +313,7 @@ namespace Splash
                             vc /= l;
                         }
 
-                        Matrix4x4 mTrans = pfInstance.ModelTransform * transform3ToWorld;
+                        Matrix4x4 mTrans = id.ModelTransform * transform3ToWorld;
                         Matrix4x4 mInvRot = Matrix4x4.Identity;
                         GetRotation(ref mInvRot, mTrans);
                         mInvRot = Matrix4x4.Transpose(mInvRot);

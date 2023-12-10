@@ -337,26 +337,5 @@ public class InstanceDesc
         _haveAABBMerged = false;
         _haveAABBTransformed = false;
     }
-
-
-    /**
-     * Create a new InstanceDesc, merged from the source listInstances as much
-     * as possible.
-     *
-     * This will create one mesh per different material, adding every single
-     * vertex from all of the source instances.
-     *
-     * (we do not merge vertex points)
-     */
-    public static InstanceDesc CreateMergedFrom(IList<InstanceDesc> listInstances, float maxDistance)
-    {
-        MatMesh mm = new();
-        foreach (var instanceDesc in listInstances)
-        {
-            mm.Add(instanceDesc);
-        }
-        MatMesh mmmerged = MatMesh.CreateMerged(mm);
-        return CreateFromMatMesh(mmmerged, maxDistance);
-    }
 }
     

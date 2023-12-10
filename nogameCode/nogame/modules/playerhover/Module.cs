@@ -181,7 +181,7 @@ namespace nogame.modules.playerhover
                     if (_cpFacingObject != collisionProperties)
                     {
                         _cpFacingObject = collisionProperties;
-                        _strFacingObject = $"{collisionProperties.Name} ({collisionProperties.DebugInfo})";
+                        _strFacingObject = $"{collisionProperties.Entity} {collisionProperties.Name} ({collisionProperties.DebugInfo})";
                     }
                 }
             }

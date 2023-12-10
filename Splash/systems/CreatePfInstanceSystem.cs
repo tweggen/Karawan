@@ -58,7 +58,7 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
              * Create the platform entity. It will be filled by the instance manager.
              */
             entity.Set(new components.PfInstance(
-                id, id.ModelTransform));
+                id /*, id.ModelTransform*/));
         }
     }
 

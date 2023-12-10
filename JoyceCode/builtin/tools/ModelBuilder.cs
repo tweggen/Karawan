@@ -45,10 +45,10 @@ public class ModelBuilder
         }
         else
         {
-            if (mn.InstanceDesc != null)
-            {
-                mn.InstanceDesc.ModelTransform = mn.Transform.Matrix;
-            }
+            //if (mn.InstanceDesc != null)
+            //{
+            //    mn.InstanceDesc.ModelTransform = mn.Transform.Matrix;
+            //}
         }
 
         if (mn.InstanceDesc != null)
@@ -115,7 +115,6 @@ public class ModelBuilder
             return eUserRoot.Value;
         }
 
-
         DefaultEcs.Entity eRoot;
 
         /*
@@ -126,19 +125,13 @@ public class ModelBuilder
         {
             mnAdjust = _findFirstInstanceDesc(mnRoot);
         }
-        else
-        {
-            mnAdjust = mnRoot;
-        }
-
         
         Matrix4x4 mAdjust = Matrix4x4.Identity;
-        if (mnAdjust?.InstanceDesc != null)
+        if (mnAdjust != null && mnAdjust.InstanceDesc != null)
         {
             mnAdjust.InstanceDesc.ComputeAdjustMatrix(_instantiateModelParams, ref mAdjust);
         }
         
-
         /*
          * if we are hierarchical, we possibly need to create a root node
          * to enable separate.
@@ -180,9 +173,8 @@ public class ModelBuilder
             else
             {
                 /*
-                 * If we do not have children, let's just bake it into InstanceDesc.
+                 * If we do not have children, we assume it's already inside the InstanceDesc.
                  */
-                mnRoot.InstanceDesc.ModelTransform *= mAdjust;
             }
         }
 

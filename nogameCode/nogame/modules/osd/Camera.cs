@@ -31,12 +31,6 @@ public class Camera : AModule
     }
 
 
-    private void _onMousePress(Event ev)
-    {
-        _testClickable(ev);
-    }
-
-
     public override void ModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);

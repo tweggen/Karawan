@@ -49,6 +49,7 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
                 // TXWTODO: This is a bit hard coded. 
                 BepuPhysics.Collidables.Sphere pbodySphere = new(GenerateCharacterOperator.PhysicsRadius);
                 var pinertiaSphere = pbodySphere.ComputeInertia(GenerateCharacterOperator.PhysicsMass);
+                
                 /*
                  * We need to call Simulation.Bodies.SetLocalInertia to remove the kinematic from a
                  * couple of lists. 

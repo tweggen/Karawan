@@ -47,9 +47,21 @@ public class ModelCache
     {
         return Task.Run(() =>
         {
-            Matrix4x4 m = Matrix4x4.Identity;
-            
-            // TXWTODO: Reinvestigate if we really need this step.
+            /*
+             * If this is an non-hjierarchical model, we bake the model params
+             * directly into the instancedesc.
+             */
+            var mnRoot = model.RootNode;
+            if (mnRoot != null)
+            {
+                var id = mnRoot.InstanceDesc;
+                if (id != null && (mnRoot.Children == null || mnRoot.Children.Count == 0))
+                {
+                    Matrix4x4 m = Matrix4x4.Identity;
+                    id.ComputeAdjustMatrix(p, ref m);
+                    id.ModelTransform *= m;
+                }
+            }
             return model;
         });
     }
