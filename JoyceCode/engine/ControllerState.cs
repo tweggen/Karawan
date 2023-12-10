@@ -51,8 +51,6 @@ namespace engine
         public int TurnLeft;
         public int TurnRight;
 
-        public sbyte ZoomState;
-
         public void Reset()
         {
             WalkFast = false;

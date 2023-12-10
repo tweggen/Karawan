@@ -57,6 +57,9 @@ public class Module : AModule, IInputPart
     private bool _createdResources = false;
     
     private DefaultEcs.Entity _eMap;
+    
+    private float _zoomState = 0.2f; 
+    public float ZOOM_STEP_FRACTION { get; set; } = 60f;
    
 
     /*
@@ -145,13 +148,16 @@ public class Module : AModule, IInputPart
         /*
          *  Translate mouse wheel to zooming in/out. 
          */
-        var y = ev.Position.Y;
+        /*
+         * size y contains the delta.
+         */
+        int y = (int)ev.Position.Y;
         lock (_lo)
         {
             int currentZoomState = (int) _requestedMapParams.CurrentZoomState;
-            currentZoomState += (int)y;
+            currentZoomState += y;
             currentZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE, Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, currentZoomState));
-            _requestedMapParams.CurrentZoomState = (float) currentZoomState;
+            _requestedMapParams.CurrentZoomState = currentZoomState;
         }
 
         ev.IsHandled = true;
@@ -229,7 +235,7 @@ public class Module : AModule, IInputPart
     {
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
-        // if (ev.Type.StartsWith(Event.INPUT_MOUSE_WHEEL)) _handleMouseWheel(ev);
+        if (ev.Type.StartsWith(Event.INPUT_MOUSE_WHEEL)) _handleMouseWheel(ev);
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
         // if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _handleKeyDown(ev);
         // if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _handleKeyUp(ev);
@@ -247,9 +253,6 @@ public class Module : AModule, IInputPart
         vDelta.Y -= (float)controllerState.WalkBackward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
 
         _applyDeltaMove(vDelta);
-
-        sbyte zoomState = controllerState.ZoomState;
-        _applyZoomState(zoomState);
     }
 
 

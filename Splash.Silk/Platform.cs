@@ -1,21 +1,13 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.Numerics;
-using builtin.tools.Lindenmayer;
+﻿using System.Numerics;
 using engine;
 using engine.news;
-using ImGuiNET;
-using Microsoft.Win32.SafeHandles;
 using static engine.Logger;
 
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
-using Silk.NET.Input.Sdl;
 using Silk.NET.OpenGL.Extensions.ImGui;
-using Trace = System.Diagnostics.Trace;
 
 namespace Splash.Silk
 {
@@ -65,30 +57,6 @@ namespace Splash.Silk
             }
         }
         
-
-        private void _physFrameReadKeyEvents()
-        {
-#if false
-            /*
-             * Read input devices.
-             * #2 Key events
-             */
-            while (true)
-            {
-                var keyCode = Raylib_CsLo.Raylib.GetKeyPressed();
-                if (0 == keyCode)
-                {
-                    break;
-                }
-                if (keyCode == 65)
-                {
-                    // TXWTODO: Forward 
-                }
-            }
-#endif
-        }
-        
-
 
         private void _toggleFullscreen()
         {
@@ -391,7 +359,7 @@ namespace Splash.Silk
         {
             while (true)
             {
-                _physFrameReadKeyEvents();
+                // _physFrameReadKeyEvents();
 
                 Engine.EngineState engineState = _engine.State;
                 RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();

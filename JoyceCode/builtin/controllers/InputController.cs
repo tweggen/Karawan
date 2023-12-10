@@ -217,8 +217,11 @@ public class InputController : engine.AModule, engine.IInputPart
                 if (_mousePressPosition.X >= (viewSize.X - viewSize.X/25f))
                 {
                     float zoomWay = relY / ControllerTouchZoomFull * (16+128);
-                    float newZoom = (float)_zoomAtPress-zoomWay;
-                    _controllerState.ZoomState = (sbyte)Single.Min(16, Single.Max(-128, newZoom));
+                    
+                    I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
+                    {
+                        Position = new Vector2(0f, zoomWay)
+                    });
                 }
                 else
                 {
@@ -265,24 +268,6 @@ public class InputController : engine.AModule, engine.IInputPart
                 }
                 _lastMousePosition = _currentMousePosition;
             }
-        }
-    }
-
-
-    private void _handleMouseWheel(Event ev)
-    {
-        
-        /*
-         *  Translate mouse wheel to zooming in/out. 
-         */
-        var y = ev.Position.Y;
-        lock (_lo)
-        {
-            int currentZoomState = _controllerState.ZoomState;
-            currentZoomState += (int) y;
-            currentZoomState = Int32.Max(-128, currentZoomState);
-            currentZoomState = Int32.Min(16, currentZoomState);
-            _controllerState.ZoomState = (sbyte) currentZoomState;
         }
     }
 
@@ -377,11 +362,6 @@ public class InputController : engine.AModule, engine.IInputPart
 
     private void _handleAdditionalTouchPressed(Event ev)
     {
-        lock (_lo)
-        {
-            _zoomAtPress = _controllerState.ZoomState;
-        }
-
         _touchCheckDebugClick(ev);
     }
     
@@ -480,7 +460,6 @@ public class InputController : engine.AModule, engine.IInputPart
     {
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
-        if (ev.Type.StartsWith(Event.INPUT_MOUSE_WHEEL)) _handleMouseWheel(ev);
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _onKeyUp(ev);
