@@ -1,8 +1,10 @@
+using System.ComponentModel;
 using System.Numerics;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
 using engine.meta;
+using static engine.Logger;
 
 namespace builtin.tools;
 
@@ -64,6 +66,33 @@ public class ModelBuilder
             }
         }
     }
+
+
+    private ModelNode _findFirstInstanceDesc(ModelNode mnRoot)
+    {
+        if (null != mnRoot.InstanceDesc)
+        {
+            return mnRoot;
+        }
+
+
+        if (null == mnRoot.Children)
+        {
+            return null;
+        }
+
+        foreach (var mnChild in mnRoot.Children)
+        {
+            var mnFirst = _findFirstInstanceDesc(mnChild);
+            if (null != mnFirst)
+            {
+                return mnFirst;
+            }
+        }
+
+        return null;
+    }
+    
     
 
     /**
@@ -78,9 +107,38 @@ public class ModelBuilder
         {
             eUserRoot = _engine.CreateEntity($"br {_jModel.Name}");
         }
+        
+        var mnRoot = _jModel.RootNode;
+        if (mnRoot == null)
+        {
+            Warning("Model has no resulting in an empty instance.");
+            return eUserRoot.Value;
+        }
+
 
         DefaultEcs.Entity eRoot;
+
+        /*
+         * Now find the first instance desc that we compute our adjustment from.
+         */
+        ModelNode mnAdjust = null;
+        if (_isHierarchical)
+        {
+            mnAdjust = _findFirstInstanceDesc(mnRoot);
+        }
+        else
+        {
+            mnAdjust = mnRoot;
+        }
+
         
+        Matrix4x4 mAdjust = Matrix4x4.Identity;
+        if (mnAdjust?.InstanceDesc != null)
+        {
+            mnAdjust.InstanceDesc.ComputeAdjustMatrix(_instantiateModelParams, ref mAdjust);
+        }
+        
+
         /*
          * if we are hierarchical, we possibly need to create a root node
          * to enable separate.
@@ -102,31 +160,36 @@ public class ModelBuilder
             eRoot = eUserRoot.Value;
         }
 
-        var mnRoot = _jModel.RootNode;
-        if (mnRoot != null)
-        {
-            _buildNodeInto(eRoot, mnRoot);
+        _buildNodeInto(eRoot, mnRoot);
 
+        if (_isHierarchical)
+        {
+            /*
+             * If we are hierarchical, we need to find the first root node to compute
+             * the adjustment from.
+             */
+            /*
+             * If we have children, we add the adjustment to one additional layer.
+             */
+            var cTransformToParent = eRoot.Get<Transform3ToParent>();
+            cTransformToParent.Matrix *= mAdjust;
+            eRoot.Set(cTransformToParent);
+        }
+        else
+        {
             if (mnRoot.InstanceDesc != null)
             {
-                Matrix4x4 mAdjust = Matrix4x4.Identity;
-                mnRoot.InstanceDesc.ComputeAdjustMatrix(_instantiateModelParams, ref mAdjust);
-                if (_isHierarchical)
-                {
-                    /*
-                     * If we have children, we bake it (now) into the top hierarchy node.
-                     */
-                    var cTransformToParent = eRoot.Get<Transform3ToParent>();
-                    cTransformToParent.Matrix *= mAdjust;
-                    eRoot.Set(cTransformToParent);
-                }
-                else
-                {
-                    /*
-                     * If we do not have children, let's just bake it into InstanceDesc.
-                     */
-                    mnRoot.InstanceDesc.ModelTransform *= mAdjust;
-                }
+                /*
+                 * If we do not have children, let's just bake it into InstanceDesc.
+                 */
+                mnRoot.InstanceDesc.ModelTransform *= mAdjust;
+            }
+            else
+            {
+                /*
+                 * Well, if we don't have any instance, we obviously don't need
+                 * any adjustment.
+                 */
             }
         }
         
