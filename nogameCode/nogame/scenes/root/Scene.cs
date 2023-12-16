@@ -28,6 +28,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
         new MyModule<nogame.modules.osd.Display>("nogame.CreateOSD"),
         new MyModule<nogame.modules.osd.Camera>("nogame.CreateOSD") { Activate = false },
+        new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false},
         new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),

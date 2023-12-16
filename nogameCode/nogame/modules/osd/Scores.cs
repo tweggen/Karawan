@@ -14,10 +14,12 @@ public class Scores : engine.AModule
      * Display the current pling score.
      */
     private DefaultEcs.Entity _eScoreDisplay;
+    
     /**
      * Display the current polytope score.
      */
     private DefaultEcs.Entity _ePolytopeDisplay;
+    
     /**
      * Display the current polytope score.
      */
