@@ -158,7 +158,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
      * Read the covering building texture.
      */
     vec4 col4TexDiffuse = texture(texture0, fragTexCoord);
-    if (col4TexDiffuse.a > 0.0)
+    if (col4TexDiffuse.a > 0.5)
     {
         /*
          * We have a wall here and do not need tzo compute the interior.

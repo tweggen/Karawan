@@ -60,7 +60,9 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
     )
     {
-        engine.joyce.Material materialHouse = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.materials.houses");
+        if (p.Count < 1) return;
+        uint matIdx = (((uint)(p[0].X + p[0].Z * 123.0)) % 3) + 1;
+        engine.joyce.Material materialHouse = I.Get<ObjectRegistry<Material>>().Get($"nogame.cities.houses.materials.houses.win{matIdx}");
         engine.joyce.Mesh meshHouse = new($"{worldFragment.GetId()}-housessubgeo");
 
 
@@ -450,16 +452,32 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         _myKey = strKey;
         _rnd = new builtin.tools.RandomSource(strKey);
 
-        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses",
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win1",
             (name) => new engine.joyce.Material()
             {
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000
                     : 0xff333333,
-                Texture = new engine.joyce.Texture("buildingalphadiffuse.png"),//new engine.joyce.Texture("buildingdiffuse.png"),
+                Texture = new engine.joyce.Texture("buildingalphadiffuse.png"),
                 AddInterior = true,
-                // TXWTODO: Why the hell is the ambient texture just a blurry yellow mess?
-                //EmissiveTexture = new engine.joyce.Texture("buildingsambient.png")
+            });
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win2",
+            (name) => new engine.joyce.Material()
+            {
+                AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
+                    ? 0x00000000
+                    : 0xff333333,
+                Texture = new engine.joyce.Texture("buildingalphadiffuse2.png"),
+                AddInterior = true,
+            });
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win3",
+            (name) => new engine.joyce.Material()
+            {
+                AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
+                    ? 0x00000000
+                    : 0xff333333,
+                Texture = new engine.joyce.Texture("buildingalphadiffuse3.png"),
+                AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.neon",
             (name) => new engine.joyce.Material()
