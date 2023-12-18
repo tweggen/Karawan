@@ -158,7 +158,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
      * Read the covering building texture.
      */
     vec4 col4TexDiffuse = texture(texture0, fragTexCoord);
-    if (col4TexDiffuse.a > 0.5)
+    if (col4TexDiffuse.a > 0.8)
     {
         /*
          * We have a wall here and do not need tzo compute the interior.
@@ -176,7 +176,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     /* 
      * optimized representation of room size to make use of component wise computation.
      */
-    vec3 v3RoomSize = vec3(5.0, 3.0, 5.0);
+    vec3 v3RoomSize = vec3(10.0, 3.0, 9.0);
 
     /*
      * This is the coordinate we say to be the origin of the building.
@@ -345,6 +345,12 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         col4Diffuse.x = v2UV.x;
         col4Diffuse.y = v2UV.y;
     }
+
+    /*
+     * There still might be some alpha blending from the texture above.
+     */
+    col4Diffuse = vec4(col4TexDiffuse.a * col4TexDiffuse.xyz + (1.0-col4TexDiffuse.a)*col4Diffuse.xyz, 1.0);
+    col4Emissive *= (1.0-col4TexDiffuse.a);
 }
 
 
