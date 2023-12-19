@@ -38,6 +38,8 @@ public class Main
             _mapProvider = new();
         }
         _mapProvider.AddWorldMapLayer("0100/terrain", new WorldMapTerrainProvider());
+        _mapProvider.AddWorldMapLayer("0110/transport", new WorldMapIntercityProvider());
+        _mapProvider.AddWorldMapLayer("0120/cluster", new WorldMapClusterProvider());
 
         return _mapProvider;
     }
