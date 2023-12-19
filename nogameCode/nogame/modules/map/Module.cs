@@ -57,6 +57,7 @@ public class Module : AModule, IInputPart
     private bool _createdResources = false;
     
     private DefaultEcs.Entity _eMap;
+    private DefaultEcs.Entity _eCamMap;
     
     private float _zoomState = 0.2f; 
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
@@ -69,8 +70,7 @@ public class Module : AModule, IInputPart
     private DisplayMapParams _visibleMapParams = new();
 
     
-    // For now, let it use the OSD camera.
-    public uint MapCameraMask = 0x01000000;
+    public uint MapCameraMask = 0x00800000;
 
 
     private void _updateMapParams()
@@ -106,7 +106,25 @@ public class Module : AModule, IInputPart
 
             _createdResources = true;
         }
-
+        
+        /*
+         * Create a map camera
+         */
+        {
+            _eCamMap = _engine.CreateEntity("RootScene.MapCamera");
+            var cCamMap = new engine.joyce.components.Camera3();
+            cCamMap.Angle = 0f;
+            cCamMap.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
+            cCamMap.FarFrustum = 100f;  
+            cCamMap.CameraMask = MapCameraMask;
+            cCamMap.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
+            _eCamMap.Set(cCamMap);
+            I.Get<TransformApi>().SetPosition(_eCamMap, new Vector3(0f, 0f, 14f));
+            
+            _eCamMap.Get<engine.joyce.components.Camera3>().CameraFlags &=
+                ~engine.joyce.components.Camera3.Flags.PreloadOnly;
+        }
+        
         engine.joyce.Mesh meshFramebuffer = 
             engine.joyce.mesh.Tools.CreatePlaneMesh(
                 "mapmesh",
