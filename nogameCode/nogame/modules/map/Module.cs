@@ -86,11 +86,11 @@ public class Module : AModule, IInputPart
 
         I.Get<engine.joyce.TransformApi>().SetTransforms(
             _eMap, dmp.IsVisible, MapCameraMask,
-            new Quaternion(0f,0f,0f,1f),
+            Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
             new Vector3(
-                dmp.Position.X * effectiveSize - effectiveSize/2f, 
-                dmp.Position.Y * effectiveSize - effectiveSize/2f,
-                -1f),
+                dmp.Position.X * effectiveSize - effectiveSize/2f,
+                -1,
+                dmp.Position.Y * effectiveSize - effectiveSize/2f),
             effectiveSize * Vector3.One);
     }
     
@@ -119,7 +119,9 @@ public class Module : AModule, IInputPart
             cCamMap.CameraMask = MapCameraMask;
             cCamMap.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamMap.Set(cCamMap);
-            I.Get<TransformApi>().SetPosition(_eCamMap, new Vector3(0f, 0f, 14f));
+            I.Get<TransformApi>().SetTransform(_eCamMap,
+                Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
+                new Vector3(0f, 14f, 0f));
             
             _eCamMap.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
@@ -146,7 +148,7 @@ public class Module : AModule, IInputPart
             engine.joyce.Material materialFramebuffer = new();
             materialFramebuffer.UploadImmediately = true;
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
-            materialFramebuffer.HasTransparency = false;
+            materialFramebuffer.HasTransparency = true;
 
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 50000f);
             _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
