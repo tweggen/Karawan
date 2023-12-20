@@ -460,9 +460,14 @@ public class Main
                                         {
                                             if (typeAttr == typeof(engine.gongzuo.LuaScriptEntry))
                                             {
-                                                strValue = (fieldInfo.GetValue(componentInfo.Value) as LuaScriptEntry).LuaScript;
+                                                strValue = (fieldInfo.GetValue(componentInfo.Value) as LuaScriptEntry)
+                                                    .LuaScript;
                                             }
-                                            else
+                                            else if (typeAttr == typeof(Matrix4x4))
+                                            {
+                                                Matrix4x4 m = (Matrix4x4) (fieldInfo.GetValue(componentInfo.Value));
+                                                strValue = $"{m.M11} {m.M12} {m.M13} {m.M14}\n{m.M21} {m.M22} {m.M23} {m.M24}\n{m.M31} {m.M32} {m.M33} {m.M34}\n{m.M41} {m.M42} {m.M43} {m.M44}\n";
+                                            } else
                                             {
                                                 strValue = fieldInfo.GetValue(componentInfo.Value).ToString();
                                             }

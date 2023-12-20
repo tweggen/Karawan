@@ -7,6 +7,7 @@ using DefaultEcs;
 using engine;
 using engine.draw;
 using engine.gongzuo;
+using engine.joyce;
 using engine.joyce.components;
 using engine.news;
 using engine.physics;
@@ -399,7 +400,7 @@ namespace nogame.modules.playerhover
                 Model model = Task.Run(() => ModelCache.Instance().Instantiate(
                     ModelUrl,
                     null, instantiateModelParams)).GetAwaiter().GetResult();
-
+    
                 {
                     builtin.tools.ModelBuilder modelBuilder = new(_engine, model, instantiateModelParams);
                     modelBuilder.BuildEntity(_eShip);
@@ -458,10 +459,9 @@ namespace nogame.modules.playerhover
                  * Now add an entity as a child that will display in the map
                  */
                 _eMapShip = _engine.CreateEntity("RootScene.playership.map");
-                _eMapShip.Set(
-                    new Transform3ToParent(true, 
-                        nogame.modules.map.Module.MapCameraMask,
-                        Matrix4x4.Identity));
+                I.Get<HierarchyApi>().SetParent(_eMapShip, _eShip);
+                I.Get<TransformApi>().SetTransforms(_eMapShip, true, nogame.modules.map.Module.MapCameraMask,
+                    Quaternion.Identity, Vector3.Zero);
                 _eMapShip.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Player0 });
             }
