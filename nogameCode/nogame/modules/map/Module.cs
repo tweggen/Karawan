@@ -115,7 +115,8 @@ public class Module : AModule, IInputPart
             var cCamMap = new engine.joyce.components.Camera3();
             cCamMap.Angle = 0f;
             cCamMap.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
-            cCamMap.FarFrustum = 100f;  
+            cCamMap.FarFrustum = 100f;
+            cCamMap.Scale = 1f/engine.world.MetaGen.MaxHeight;
             cCamMap.CameraMask = MapCameraMask;
             cCamMap.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamMap.Set(cCamMap);
@@ -138,7 +139,7 @@ public class Module : AModule, IInputPart
          */
         engine.joyce.Mesh meshFramebuffer =
             engine.joyce.mesh.Tools.CreatePlaneMesh(
-                "mapmesh", Vector2.One /*, engine.world.MetaGen.MaxSize */);
+                "mapmesh", engine.world.MetaGen.MaxSize);
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
             I.Get<nogame.map.MapFramebuffer>().Texture;
