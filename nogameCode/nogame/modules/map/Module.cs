@@ -114,15 +114,18 @@ public class Module : AModule, IInputPart
             _eCamMap = _engine.CreateEntity("RootScene.MapCamera");
             var cCamMap = new engine.joyce.components.Camera3();
             cCamMap.Angle = 0f;
-            cCamMap.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
-            cCamMap.FarFrustum = 100f;
+            cCamMap.NearFrustum = 10f;
+            cCamMap.FarFrustum = 600f;
             cCamMap.Scale = 1f/engine.world.MetaGen.MaxHeight;
             cCamMap.CameraMask = MapCameraMask;
             cCamMap.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamMap.Set(cCamMap);
+            /*
+             * Let the camera be well over every object
+             */
             I.Get<TransformApi>().SetTransform(_eCamMap,
                 Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
-                new Vector3(0f, 14f, 0f));
+                new Vector3(0f, 500f, 0f));
             
             _eCamMap.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;

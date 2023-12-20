@@ -62,7 +62,7 @@ public class LogicalRenderer
             var renderPartTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
             CameraOutput cameraOutput = new(scene, _threeD, renderPartTransform3ToWorld.Matrix, renderPartCamera3);
             renderPart.CameraOutput = cameraOutput;
-
+            
             /*
              * Now look, what kind of content comes from this camera.
              * Do we need to render meshes with this camera?

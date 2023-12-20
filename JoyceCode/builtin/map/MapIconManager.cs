@@ -58,8 +58,9 @@ public class MapIconManager : IDisposable
             ((float)(idx%MapIconsHoriz))/(float)MapIconsHoriz,
             ((float)(idx/MapIconsVert))/(float)MapIconsVert
             );
-        var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
-            $"mapIcon{jMapIcon}", 5000f*Vector2.One,
+        var jMesh = Mesh.CreateArrayListInstance($"mapIcon{jMapIcon}");
+        engine.joyce.mesh.Tools.AddQuadXYUV(jMesh,
+            -2500f*new Vector3(-1f, 0f, -1f), 2500*Vector3.UnitX, 2500*Vector3.UnitZ,
             v2Pos, new Vector2(1f / MapIconsHoriz, 0f), new Vector2(0f, 1f / MapIconsVert)
             );
         var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(
@@ -192,7 +193,7 @@ public class MapIconManager : IDisposable
             (name) => new engine.joyce.Material()
             {
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
-                    ? 0x00000000
+                    ? 0xff000000
                     : 0xff333333,
                 Texture = new engine.joyce.Texture(MapIconsTexture),
                 HasTransparency = true
