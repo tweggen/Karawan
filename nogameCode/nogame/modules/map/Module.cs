@@ -125,10 +125,18 @@ public class Module : AModule, IInputPart
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
         }
         
-        engine.joyce.Mesh meshFramebuffer = 
+        
+        /*
+         * The map plane is exactly there where the real world is:
+         * We are looking at the real world from a top-down perspective.
+         * This way we can attach map icons to real world objects.
+         *
+         * Note, that the current scope of the map however might be
+         * limited.
+         */
+        engine.joyce.Mesh meshFramebuffer =
             engine.joyce.mesh.Tools.CreatePlaneMesh(
-                "mapmesh",
-                new Vector2(1f, 1f));
+                "mapmesh", Vector2.One /*, engine.world.MetaGen.MaxSize */);
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
             I.Get<nogame.map.MapFramebuffer>().Texture;

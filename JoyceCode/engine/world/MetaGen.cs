@@ -20,6 +20,7 @@ public class MetaGen
     public static Vector3 FragmentSize3 = new(FragmentSize, FragmentSize, FragmentSize);
     public static float MaxWidth = 90000f;
     public static float MaxHeight = 90000f;
+    public static Vector2 MaxSize = new(MaxWidth, MaxHeight);
 
     public static readonly geom.AABB AABB = new(
         new Vector3(-MaxWidth, -10000, -MaxHeight),

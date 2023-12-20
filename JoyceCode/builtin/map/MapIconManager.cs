@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using DefaultEcs;
+using engine;
 using engine.joyce;
 using static engine.Logger;
 
-namespace Splash;
+namespace builtin.map;
 
 /**
  * Compile and destroy meshes from MapIcon components.
@@ -29,51 +31,73 @@ public class MapIconManager : IDisposable
 
 
     private readonly object _lo;
-    private readonly Dictionary<engine.world.components.MapIcon, Resource<InstanceDesc>> _instanceDescResources;
+    private readonly Dictionary<engine.world.components.MapIcon.IconCode, Resource<InstanceDesc>> _instanceDescResources;
 
 
-    private void _unloadInstanceDesc(engine.world.components.MapIcon mapIcon, Resource<InstanceDesc> instanceDescEntry)
+    public int MapIconsHoriz { get; set; } = 4;
+    public int MapIconsVert { get; set; } = 4;
+    public string MapIconsTexture { get; set; } = "mapicons.png";
+    
+
+    private void _unloadInstanceDesc(engine.world.components.MapIcon.IconCode mapIcon, Resource<InstanceDesc> instanceDescEntry)
     {
-        // TXWTODO: Do me.
+        // Currently, we don't seriosly unload anything.
     }
 
 
-    private InstanceDesc _loadInstanceDesc(in engine.world.components.MapIcon jMapIcon)
+    /**
+     * Create an instance desc from a given map icon.
+     * Creating meshes from map icons is simple, we just create a rectangular mesh referencing
+     * the icon texture.
+     */
+    private InstanceDesc _createInstanceDesc(in engine.world.components.MapIcon.IconCode jMapIcon)
     {
-        // TXWTODO: Write me
-        return null;
+        int idx = (int)jMapIcon;
+
+        Vector2 v2Pos = new(
+            ((float)(idx%MapIconsHoriz))/(float)MapIconsHoriz,
+            ((float)(idx/MapIconsVert))/(float)MapIconsVert
+            );
+        var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
+            $"mapIcon{jMapIcon}", Vector2.One,
+            v2Pos, new Vector2(1f / MapIconsHoriz, 0f), new Vector2(0f, 1f / MapIconsVert)
+            );
+        var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(
+            I.Get<ObjectRegistry<Material>>().Get("builtin.map.mapicons"),
+            jMesh), Single.MaxValue);
+        return jInstanceDesc;
     }
 
 
-    private void _onAdded(in Entity entity, in engine.world.components.MapIcon value)
+    private void _onAdded(in Entity entity, in engine.world.components.MapIcon.IconCode value)
     {
         _add(entity, value);
     }
 
 
     private void _onChanged(in Entity entity,
-        in engine.world.components.MapIcon oldValue,
-        in engine.world.components.MapIcon newValue)
+        in engine.world.components.MapIcon.IconCode oldValue,
+        in engine.world.components.MapIcon.IconCode newValue)
     {
         _remove(entity, oldValue);
         _add(entity, newValue);
     }
 
-    private void _onRemoved(in Entity entity, in engine.world.components.MapIcon value)
+    private void _onRemoved(in Entity entity, in engine.world.components.MapIcon.IconCode value)
     {
         _remove(entity, value);
     }
 
 
-    private void _add(in Entity entity, in engine.world.components.MapIcon value)
+    private void _add(in Entity entity, in engine.world.components.MapIcon.IconCode value)
     {
         Resource<InstanceDesc> instanceDescResource;
-        engine.world.components.MapIcon mapIcon = value;
+        engine.world.components.MapIcon.IconCode mapIcon = value;
         if (!_instanceDescResources.TryGetValue(mapIcon, out instanceDescResource))
         {
             try
             {
-                InstanceDesc jInstanceDesc = _loadInstanceDesc(mapIcon);
+                InstanceDesc jInstanceDesc = _createInstanceDesc(mapIcon);
                 instanceDescResource = new Resource<InstanceDesc>(jInstanceDesc);
                 _instanceDescResources.Add(mapIcon, instanceDescResource);
             }
@@ -91,7 +115,7 @@ public class MapIconManager : IDisposable
     }
 
 
-    private void _remove(in Entity entity, in engine.world.components.MapIcon value)
+    private void _remove(in Entity entity, in engine.world.components.MapIcon.IconCode value)
     {
         Resource<InstanceDesc> instanceDescResource;
         if (!_instanceDescResources.TryGetValue(value, out instanceDescResource))
@@ -124,9 +148,9 @@ public class MapIconManager : IDisposable
     {
         IEnumerable<IDisposable> GetSubscriptions(World w)
         {
-            yield return w.SubscribeEntityComponentAdded<engine.world.components.MapIcon>(_onAdded);
-            yield return w.SubscribeEntityComponentChanged<engine.world.components.MapIcon>(_onChanged);
-            yield return w.SubscribeEntityComponentRemoved<engine.world.components.MapIcon>(_onRemoved);
+            yield return w.SubscribeEntityComponentAdded<engine.world.components.MapIcon.IconCode>(_onAdded);
+            yield return w.SubscribeEntityComponentChanged<engine.world.components.MapIcon.IconCode>(_onChanged);
+            yield return w.SubscribeEntityComponentRemoved<engine.world.components.MapIcon.IconCode>(_onRemoved);
         }
 
         if (null == world)
@@ -135,10 +159,10 @@ public class MapIconManager : IDisposable
         }
         
         int nInitialEntites = 0;
-        var entities = world.GetEntities().With<engine.world.components.MapIcon>().AsEnumerable();
+        var entities = world.GetEntities().With<engine.world.components.MapIcon.IconCode>().AsEnumerable();
         foreach (DefaultEcs.Entity entity in entities)
         {
-            _onAdded(entity, entity.Get<engine.world.components.MapIcon>());
+            _onAdded(entity, entity.Get<engine.world.components.MapIcon.IconCode>());
             ++nInitialEntites;
         }
         
@@ -150,7 +174,7 @@ public class MapIconManager : IDisposable
     {
         GC.SuppressFinalize(this);
 
-        foreach (KeyValuePair<engine.world.components.MapIcon, Resource<InstanceDesc>> pair in _instanceDescResources)
+        foreach (KeyValuePair<engine.world.components.MapIcon.IconCode, Resource<InstanceDesc>> pair in _instanceDescResources)
         {
             _unloadInstanceDesc(pair.Key, pair.Value);
         }
@@ -162,6 +186,16 @@ public class MapIconManager : IDisposable
     public MapIconManager()
     {
         _lo = new object();
-        _instanceDescResources = new Dictionary<engine.world.components.MapIcon, Resource<InstanceDesc>>();
+        _instanceDescResources = new Dictionary<engine.world.components.MapIcon.IconCode, Resource<InstanceDesc>>();
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("builtin.map.mapicons",
+            (name) => new engine.joyce.Material()
+            {
+                AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
+                    ? 0x00000000
+                    : 0xff333333,
+                Texture = new engine.joyce.Texture(MapIconsTexture),
+                HasTransparency = true
+            });
+
     }
 }
