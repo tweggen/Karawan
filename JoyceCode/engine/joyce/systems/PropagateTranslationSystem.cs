@@ -32,7 +32,7 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
         /*
          * New mode of operation: Child's camera is not affected by parents or children, just left as is.
          */
-        cChildTransform3ToWorld.CameraMask = cTransform3.CameraMask;
+        cChildTransform3ToWorld.CameraMask = cTransform3.IsVisible?cTransform3.CameraMask:0;
 #else
             /*
              * Child's world camera mask is parent's camera mask and its own combinied with its visibility.

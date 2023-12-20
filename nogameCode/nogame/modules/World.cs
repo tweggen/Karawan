@@ -128,6 +128,7 @@ public class World : AModule
             cCamScene.Renderbuffer = I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d");
             cCamScene.CameraMask = 0x00000001;
             _eCamScene.Set(cCamScene);
+            I.Get<TransformApi>().SetCameraMask(_eCamScene, 0x00000001);
             // No set position, done by controller
         }
         _engine.SetCameraEntity(_eCamScene);

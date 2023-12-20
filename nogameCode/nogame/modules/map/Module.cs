@@ -3,6 +3,7 @@ using System.Numerics;
 using builtin.controllers;
 using engine;
 using engine.joyce;
+using engine.joyce.components;
 using engine.news;
 
 
@@ -61,7 +62,6 @@ public class Module : AModule, IInputPart
     
     private float _zoomState = 0.2f; 
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
-   
 
     /*
      * Map display parameters
@@ -84,8 +84,9 @@ public class Module : AModule, IInputPart
 
         float effectiveSize = Single.Exp2(dmp.CurrentZoomState / 4f);
 
+        
         I.Get<engine.joyce.TransformApi>().SetTransforms(
-            _eMap, dmp.IsVisible, MapCameraMask,
+            _eMap, false && dmp.IsVisible, MapCameraMask,
             Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
             new Vector3(
                 dmp.Position.X * effectiveSize - effectiveSize/2f,

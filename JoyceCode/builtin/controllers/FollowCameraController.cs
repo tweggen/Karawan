@@ -23,7 +23,6 @@ public class FollowCameraController : IInputPart
     engine.Engine _engine;
     DefaultEcs.Entity _eTarget;
     DefaultEcs.Entity _eCarrot;
-    engine.joyce.TransformApi _aTransform;
 
     private Vector3 _vPreviousCameraPosition;
     private Vector3 _vPreviousCameraOffset;
@@ -799,7 +798,5 @@ public class FollowCameraController : IInputPart
         {
             ErrorThrow($"Entity {eTarget} already has physics attached.", m => new InvalidOperationException(m));
         }
-
-        _aTransform = engine.I.Get<engine.joyce.TransformApi>();
     }
 }
