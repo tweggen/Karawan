@@ -85,6 +85,7 @@ namespace engine
         
         private physics.Manager _managerPhysics;
         private gongzuo.LuaScriptManager _managerLuaScript;
+        private builtin.map.MapIconManager _managerMapIcons;
         private behave.Manager _managerBehavior;
         public readonly SceneSequencer SceneSequencer;        
         
@@ -869,6 +870,8 @@ namespace engine
             _managerBehavior.Manage(this);
             _managerLuaScript = new ();
             _managerLuaScript.Manage(_ecsWorld);
+            _managerMapIcons = new();
+            _managerMapIcons.Manage(_ecsWorld);
 
             _logicalThread = new Thread(_logicalThreadFunction);
             _logicalThread.Priority = ThreadPriority.AboveNormal;

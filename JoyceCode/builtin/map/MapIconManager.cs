@@ -59,33 +59,13 @@ public class MapIconManager : IDisposable
             ((float)(idx/MapIconsVert))/(float)MapIconsVert
             );
         var jMesh = engine.joyce.mesh.Tools.CreatePlaneMesh(
-            $"mapIcon{jMapIcon}", Vector2.One,
+            $"mapIcon{jMapIcon}", 5000f*Vector2.One,
             v2Pos, new Vector2(1f / MapIconsHoriz, 0f), new Vector2(0f, 1f / MapIconsVert)
             );
         var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(
             I.Get<ObjectRegistry<Material>>().Get("builtin.map.mapicons"),
             jMesh), Single.MaxValue);
         return jInstanceDesc;
-    }
-
-
-    private void _onAdded(in Entity entity, in engine.world.components.MapIcon.IconCode value)
-    {
-        _add(entity, value);
-    }
-
-
-    private void _onChanged(in Entity entity,
-        in engine.world.components.MapIcon.IconCode oldValue,
-        in engine.world.components.MapIcon.IconCode newValue)
-    {
-        _remove(entity, oldValue);
-        _add(entity, newValue);
-    }
-
-    private void _onRemoved(in Entity entity, in engine.world.components.MapIcon.IconCode value)
-    {
-        _remove(entity, value);
     }
 
 
@@ -143,14 +123,35 @@ public class MapIconManager : IDisposable
         }
     }
 
+    
+    private void _onAdded(in Entity entity, in engine.world.components.MapIcon value)
+    {
+        _add(entity, value.Code);
+    }
+
+
+    private void _onChanged(in Entity entity,
+        in engine.world.components.MapIcon oldValue,
+        in engine.world.components.MapIcon newValue)
+    {
+        _remove(entity, oldValue.Code);
+        _add(entity, newValue.Code);
+    }
+    
+
+    private void _onRemoved(in Entity entity, in engine.world.components.MapIcon value)
+    {
+        _remove(entity, value.Code);
+    }
+    
 
     public IDisposable Manage(World world)
     {
         IEnumerable<IDisposable> GetSubscriptions(World w)
         {
-            yield return w.SubscribeEntityComponentAdded<engine.world.components.MapIcon.IconCode>(_onAdded);
-            yield return w.SubscribeEntityComponentChanged<engine.world.components.MapIcon.IconCode>(_onChanged);
-            yield return w.SubscribeEntityComponentRemoved<engine.world.components.MapIcon.IconCode>(_onRemoved);
+            yield return w.SubscribeEntityComponentAdded<engine.world.components.MapIcon>(_onAdded);
+            yield return w.SubscribeEntityComponentChanged<engine.world.components.MapIcon>(_onChanged);
+            yield return w.SubscribeEntityComponentRemoved<engine.world.components.MapIcon>(_onRemoved);
         }
 
         if (null == world)
@@ -159,10 +160,10 @@ public class MapIconManager : IDisposable
         }
         
         int nInitialEntites = 0;
-        var entities = world.GetEntities().With<engine.world.components.MapIcon.IconCode>().AsEnumerable();
+        var entities = world.GetEntities().With<engine.world.components.MapIcon>().AsEnumerable();
         foreach (DefaultEcs.Entity entity in entities)
         {
-            _onAdded(entity, entity.Get<engine.world.components.MapIcon.IconCode>());
+            _onAdded(entity, entity.Get<engine.world.components.MapIcon>());
             ++nInitialEntites;
         }
         

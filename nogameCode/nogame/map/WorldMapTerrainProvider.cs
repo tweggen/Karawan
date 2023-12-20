@@ -223,66 +223,6 @@ public class WorldMapTerrainProvider : IWorldMapProvider
             }
         }
         
-        /*
-         * Draw the clusters.
-         */
-        Matrix3x2 m2fb = Matrix3x2.CreateScale(
-            new Vector2(
-                fbWidth / MetaGen.MaxWidth,
-                fbHeight / MetaGen.MaxHeight));
-        m2fb *= Matrix3x2.CreateTranslation(
-            fbWidth/2f, fbHeight/2f);
-        
-        Vector2 worldMin = new(-MetaGen.MaxWidth / 2f, -MetaGen.MaxHeight / 2f);
-
-
-        _drawIntercityLines(target, m2fb);
-
-        var clusterList = engine.world.ClusterList.Instance();
-        foreach (var clusterDesc in clusterList.GetClusterList())
-        {
-            _drawClusterBase(target, clusterDesc, m2fb);
-            _drawClusterText(target, clusterDesc, m2fb);
-
-#if false
-            StrokeStore strokeStore = null;            
-            try
-            {
-                strokeStore = clusterDesc.StrokeStore();
-            }
-            catch (Exception e)
-            {
-                Error($"Exception while retrieving description of stroke store for cluster {clusterDesc.Name}: {e}");
-            }
-
-            if (strokeStore != null)
-            {
-                foreach (var stroke in strokeStore.GetStrokes())
-                {
-                    float weight = stroke.Weight;
-                    //float weight = 4f; 
-                    bool isPrimary = stroke.IsPrimary;
-
-                    Vector2 posA = stroke.A.Pos + clusterDesc.Pos2;
-                    Vector2 posB = stroke.B.Pos + clusterDesc.Pos2;
-                    Vector2 u = posB - posA;
-                    u /= u.Length();
-                    Vector2 v = new(u.Y, -u.X);
-                    Vector2 vw2 = v * weight / 2f;
-                    streetPoly[0] = posA - vw2;
-                    streetPoly[1] = posB - vw2;
-                    streetPoly[2] = posB + vw2;
-                    streetPoly[3] = posA + vw2;
-                    for (int i = 0; i < streetPoly.Length; ++i)
-                    {
-                        streetPoly[i] = Vector2.Transform(streetPoly[i], m2fb);
-                    }
-                    target.DrawPoly(dcStreets, streetPoly);
-                }
-            }
-#endif
-        }
-        
         target.EndModification();
     }
     
