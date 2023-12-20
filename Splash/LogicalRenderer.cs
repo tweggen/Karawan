@@ -63,9 +63,20 @@ public class LogicalRenderer
             CameraOutput cameraOutput = new(scene, _threeD, renderPartTransform3ToWorld.Matrix, renderPartCamera3);
             renderPart.CameraOutput = cameraOutput;
 
-            _drawInstancesSystem.Update(cameraOutput);
+            /*
+             * Now look, what kind of content comes from this camera.
+             * Do we need to render meshes with this camera?
+             */
 
-            if (0 != (renderPartCamera3.CameraMask & 0x0000ffff))
+            if (0 == (renderPartCamera3.CameraFlags & engine.joyce.components.Camera3.Flags.DontRenderInstances))
+            {
+                _drawInstancesSystem.Update(cameraOutput);
+            }
+
+            /*
+             * Are we supposed to render skyboxes? 
+             */
+            if (0 != (renderPartCamera3.CameraFlags & engine.joyce.components.Camera3.Flags.RenderSkyboxes))
             {
                 if (!haveSkyboxPosition)
                 {

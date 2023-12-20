@@ -3,12 +3,15 @@ using BepuPhysics.Collidables;
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
+using DefaultEcs;
 using engine;
 using engine.draw;
 using engine.gongzuo;
+using engine.joyce.components;
 using engine.news;
 using engine.physics;
 using engine.world;
+using engine.world.components;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover
@@ -28,6 +31,8 @@ namespace nogame.modules.playerhover
         private DefaultEcs.Entity _eShip;
         private BepuPhysics.BodyHandle _phandleShip;
         private BepuPhysics.BodyReference _prefShip;
+        private Entity _eMapShip;
+
 
         /**
          * Display the current cluster name.
@@ -63,8 +68,8 @@ namespace nogame.modules.playerhover
         private ClusterDesc _currentCluster = null;
         
         private Boom.ISound _soundCrash = null;
-
         
+
         private string _getClusterSound(ClusterDesc clusterDesc)
         {
             if (null == clusterDesc)
@@ -404,9 +409,7 @@ namespace nogame.modules.playerhover
                     new Vector3(0f, 0f, -1f),
                     new Vector4(1.0f, 0.95f, 0.9f, 1f),
                     10f, 0.9f));
-                _eShip.Set(new engine.world.components.MapIcon()
-                    { Code = engine.world.components.MapIcon.IconCode.Player0 });
-                _eShip.Set(
+               _eShip.Set(
                     new engine.gongzuo.components.LuaScript(
                         new LuaScriptEntry()
                         {
@@ -450,6 +453,17 @@ namespace nogame.modules.playerhover
                 I.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
                 _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
                 _eShip.Set(new engine.behave.components.Behavior(new Behavior(MassShip)));
+                
+                /*
+                 * Now add an entity as a child that will display in the map
+                 */
+                _eMapShip = _engine.CreateEntity("RootScene.playership.map");
+                _eMapShip.Set(
+                    new Transform3ToParent(true, 
+                        nogame.modules.map.Module.MapCameraMask,
+                        Matrix4x4.Identity));
+                _eMapShip.Set(new engine.world.components.MapIcon()
+                    { Code = engine.world.components.MapIcon.IconCode.Player0 });
             }
 
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");

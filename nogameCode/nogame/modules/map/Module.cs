@@ -70,7 +70,7 @@ public class Module : AModule, IInputPart
     private DisplayMapParams _visibleMapParams = new();
 
     
-    public uint MapCameraMask = 0x00800000;
+    static public uint MapCameraMask = 0x00800000;
 
 
     private void _updateMapParams()

@@ -8,7 +8,10 @@ namespace engine.joyce.components
     {
         public enum Flags
         {
-            PreloadOnly = 0x00000001
+            PreloadOnly = 0x00000001,
+            RenderSkyboxes = 0x00000008,
+            DontRenderInstances = 0x00000010,
+            RenderMapIcons = 0x00000020,
         };
             
         public float Angle;
