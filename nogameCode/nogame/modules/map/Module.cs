@@ -62,7 +62,7 @@ public class Module : AModule, IInputPart
     
     private float _zoomState = 0.2f; 
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
-    public float CameraY { get; set; }= 500f;
+    public float CameraY { get; set; } = 5000f;
 
     /*
      * Map display parameters
@@ -97,7 +97,7 @@ public class Module : AModule, IInputPart
                 dmp.Position.Y * effectiveSize - effectiveSize/2f),
             effectiveSize * Vector3.One);
 #else
-        I.Get<TransformApi>().SetVisible(_eMap, false);
+        I.Get<TransformApi>().SetVisible(_eMap, true);
         I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
         
         I.Get<TransformApi>().SetTransforms(_eCamMap,
@@ -129,8 +129,8 @@ public class Module : AModule, IInputPart
             var cCamMap = new engine.joyce.components.Camera3();
             cCamMap.Angle = 0f;
             cCamMap.NearFrustum = 10f;
-            cCamMap.FarFrustum = 600f;
-            cCamMap.Scale = 1f/engine.world.MetaGen.MaxHeight;
+            cCamMap.FarFrustum = 1000f;
+            cCamMap.Scale = 2f/engine.world.MetaGen.MaxHeight;
             cCamMap.CameraMask = MapCameraMask;
             cCamMap.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamMap.Set(cCamMap);
@@ -173,7 +173,7 @@ public class Module : AModule, IInputPart
             I.Get<TransformApi>().SetTransforms(_eMap,
                 true, MapCameraMask,
                 Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f*Single.Pi/2f),
-                0f * Vector3.UnitY);
+                3000f * Vector3.UnitY);
             _updateMapParams();
         }
     }

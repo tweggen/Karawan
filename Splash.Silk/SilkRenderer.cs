@@ -137,17 +137,23 @@ namespace Splash.Silk
 
                 var cCameraParams = renderPart.CameraOutput.Camera3;
 
-                /*
-                 * We enable depth test only for the lower 16 bit camera masks.
-                 */
-                if ((cCameraParams.CameraMask & 0xffff) != 0)
+                if ((cCameraParams.CameraFlags & engine.joyce.components.Camera3.Flags.EnableFog) != 0)
                 {
                     _silkThreeD.SetFogDistance(200f);
-                    _gl.Enable(EnableCap.DepthTest);
                 }
                 else
                 {
                     _silkThreeD.SetFogDistance(0.5f);
+                }
+                /*
+                 * We enable depth test only for the lower 16 bit camera masks.
+                 */
+                if ((cCameraParams.CameraFlags & engine.joyce.components.Camera3.Flags.DisableDepthTest) == 0)
+                {
+                    _gl.Enable(EnableCap.DepthTest);
+                }
+                else
+                {
                     _gl.Disable(EnableCap.DepthTest);
                 }
 

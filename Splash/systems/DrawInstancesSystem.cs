@@ -35,6 +35,10 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
         in ReadOnlySpan<DefaultEcs.Entity> entities
     )
     {
+        if (cameraOutput.CameraMask == 0x00800000)
+        {
+            int a = 1;
+        }
         foreach (var entity in entities)
         {
             var transform3ToWorld = entity.Get<engine.joyce.components.Transform3ToWorld>();

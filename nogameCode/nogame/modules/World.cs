@@ -119,7 +119,8 @@ public class World : AModule
             cCamScene.NearFrustum = 1f;
             cCamScene.CameraFlags = 
                 engine.joyce.components.Camera3.Flags.PreloadOnly
-                | engine.joyce.components.Camera3.Flags.RenderSkyboxes;
+                | engine.joyce.components.Camera3.Flags.RenderSkyboxes
+                | engine.joyce.components.Camera3.Flags.EnableFog;
 
             /*
              * We need to be as far away as the skycube is. Plus a bonus.

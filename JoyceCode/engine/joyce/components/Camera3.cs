@@ -12,6 +12,8 @@ public struct Camera3
         RenderSkyboxes = 0x00000008,
         DontRenderInstances = 0x00000010,
         RenderMapIcons = 0x00000020,
+        DisableDepthTest = 0x00000040,
+        EnableFog = 0x00000080
     };
 
     public float Angle = 60f;
@@ -112,7 +114,7 @@ public struct Camera3
             );
 
             // TXWTODO: We need a smarter way to fix that to the view.
-            Matrix4x4 mScaleToViewWindow = Matrix4x4.CreateScale(Scale);
+            Matrix4x4 mScaleToViewWindow = Matrix4x4.CreateScale(new Vector3(Scale, Scale, 1f));
 
             /*
              * Transpose this matrix to have it in c# convention, i.e.

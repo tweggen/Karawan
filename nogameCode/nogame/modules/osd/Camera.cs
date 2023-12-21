@@ -57,7 +57,9 @@ public class Camera : AModule
             cCamOSD.NearFrustum = 1 / Single.Tan(30f * Single.Pi / 180f);
             cCamOSD.FarFrustum = 100f;  
             cCamOSD.CameraMask = 0x01000000;
-            cCamOSD.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
+            cCamOSD.CameraFlags =
+                engine.joyce.components.Camera3.Flags.PreloadOnly
+                | engine.joyce.components.Camera3.Flags.DisableDepthTest;
             _eCamOSD.Set(cCamOSD);
             _aTransform.SetTransforms(_eCamOSD,
                 true, 0x01000000,
