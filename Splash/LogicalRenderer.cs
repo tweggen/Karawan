@@ -60,9 +60,9 @@ public class LogicalRenderer
             }
 
             var renderPartTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
-            if (renderPartTransform3ToWorld.CameraMask == 0)
+            if (renderPartTransform3ToWorld.CameraMask == 0 || !renderPartTransform3ToWorld.IsVisible)
             {
-                //continue;
+                continue;
             }
             CameraOutput cameraOutput = new(scene, _threeD, renderPartTransform3ToWorld.Matrix, renderPartCamera3);
             renderPart.CameraOutput = cameraOutput;

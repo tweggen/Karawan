@@ -53,7 +53,10 @@ public class ScreenComposer : AModule
             };
             l.Instance = InstanceDesc.CreateFromMatMesh(new MatMesh(material, mesh), 1000f);
             e.Set(new engine.joyce.components.Instance3(l.Instance));
-            e.Set(new engine.joyce.components.Transform3ToWorld(CameraMask, l.Transformation));
+            e.Set(new engine.joyce.components.Transform3ToWorld(
+                CameraMask, 
+                engine.joyce.components.Transform3ToWorld.Visible, 
+                l.Transformation));
         });
     }
 
@@ -146,6 +149,8 @@ public class ScreenComposer : AModule
              */
             Renderbuffer = null
         });
-        I.Get<engine.joyce.TransformApi>().SetPosition(_eCamera, new Vector3(0f, 0f, 14f));
+        I.Get<engine.joyce.TransformApi>().SetTransforms(_eCamera, 
+            true, this.CameraMask,
+            Quaternion.Identity, new Vector3(0f, 0f, 14f));
     }
 }

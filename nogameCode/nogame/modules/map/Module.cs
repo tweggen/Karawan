@@ -62,6 +62,7 @@ public class Module : AModule, IInputPart
     
     private float _zoomState = 0.2f; 
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
+    public float CameraY { get; set; }= 500f;
 
     /*
      * Map display parameters
@@ -85,14 +86,26 @@ public class Module : AModule, IInputPart
         float effectiveSize = Single.Exp2(dmp.CurrentZoomState / 4f);
 
         
-        I.Get<engine.joyce.TransformApi>().SetTransforms(
-            _eMap, false && dmp.IsVisible, MapCameraMask,
+        I.Get<TransformApi>().SetVisible(_eCamMap, dmp.IsVisible);
+#if false
+        I.Get<TransformApi>().SetTransforms(
+            _eMap, false, MapCameraMask,
             Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
             new Vector3(
                 dmp.Position.X * effectiveSize - effectiveSize/2f,
-                -1,
+                -100,
                 dmp.Position.Y * effectiveSize - effectiveSize/2f),
             effectiveSize * Vector3.One);
+#else
+        I.Get<TransformApi>().SetVisible(_eMap, false);
+        I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
+        
+        I.Get<TransformApi>().SetTransforms(_eCamMap,
+            dmp.IsVisible, MapCameraMask, 
+            Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f), 
+            new Vector3(dmp.Position.X, CameraY, dmp.Position.Y));
+        _eCamMap.Get<Camera3>().Scale = (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
+#endif
     }
     
     
@@ -124,9 +137,9 @@ public class Module : AModule, IInputPart
             /*
              * Let the camera be well over every object
              */
-            I.Get<TransformApi>().SetTransform(_eCamMap,
+            I.Get<TransformApi>().SetTransforms(_eCamMap, false, MapCameraMask,
                 Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
-                new Vector3(0f, 500f, 0f));
+                new Vector3(0f, CameraY, 0f));
             
             _eCamMap.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
@@ -157,6 +170,10 @@ public class Module : AModule, IInputPart
 
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 50000f);
             _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+            I.Get<TransformApi>().SetTransforms(_eMap,
+                true, MapCameraMask,
+                Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f*Single.Pi/2f),
+                0f * Vector3.UnitY);
             _updateMapParams();
         }
     }

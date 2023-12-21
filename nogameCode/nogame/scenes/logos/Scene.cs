@@ -243,6 +243,8 @@ public class Scene : AModule, IScene
             cCamera.FarFrustum = (float)100f;
             cCamera.CameraMask = 0x01000000;
             _eCamera.Set(cCamera);
+            _aTransform.SetVisible(_eCamera, true);
+            _aTransform.SetCameraMask(_eCamera, 0x01000000);
             _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
         }
 

@@ -38,7 +38,7 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
         foreach (var entity in entities)
         {
             var transform3ToWorld = entity.Get<engine.joyce.components.Transform3ToWorld>();
-            if (0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
+            if (transform3ToWorld.IsVisible && 0 != (transform3ToWorld.CameraMask & cameraOutput.CameraMask))
             {
                 var pfInstance = entity.Get<Splash.components.PfInstance>();
                 var id = pfInstance.InstanceDesc;

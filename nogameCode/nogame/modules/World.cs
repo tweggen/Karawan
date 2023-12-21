@@ -129,6 +129,7 @@ public class World : AModule
             cCamScene.CameraMask = 0x00000001;
             _eCamScene.Set(cCamScene);
             I.Get<TransformApi>().SetCameraMask(_eCamScene, 0x00000001);
+            I.Get<TransformApi>().SetVisible(_eCamScene, true);
             // No set position, done by controller
         }
         _engine.SetCameraEntity(_eCamScene);

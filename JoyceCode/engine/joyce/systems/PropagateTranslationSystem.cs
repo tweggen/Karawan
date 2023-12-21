@@ -32,7 +32,8 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
         /*
          * New mode of operation: Child's camera is not affected by parents or children, just left as is.
          */
-        cChildTransform3ToWorld.CameraMask = cTransform3.IsVisible?cTransform3.CameraMask:0;
+        cChildTransform3ToWorld.CameraMask = cTransform3.CameraMask;
+        cChildTransform3ToWorld.IsVisible = cTransform3.IsVisible; 
 #else
             /*
              * Child's world camera mask is parent's camera mask and its own combinied with its visibility.
@@ -69,7 +70,7 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
 
     protected override void Update(Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
-        var cRootTransform3World = new components.Transform3ToWorld(0xffffffff, Matrix4x4.Identity);
+        var cRootTransform3World = new components.Transform3ToWorld(0xffffffff, Transform3ToWorld.Visible, Matrix4x4.Identity);
 
         /*
          * We are iterating through all of the root objects with children

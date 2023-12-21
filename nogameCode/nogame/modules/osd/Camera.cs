@@ -59,8 +59,9 @@ public class Camera : AModule
             cCamOSD.CameraMask = 0x01000000;
             cCamOSD.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamOSD.Set(cCamOSD);
-            _aTransform.SetPosition(_eCamOSD, new Vector3(0f, 0f, 14f));
-            
+            _aTransform.SetTransforms(_eCamOSD,
+                true, 0x01000000,
+                Quaternion.Identity, new Vector3(0f, 0f, 14f));
             _eCamOSD.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
         }
