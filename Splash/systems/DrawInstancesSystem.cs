@@ -130,7 +130,11 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
 
     protected override void PostUpdate(CameraOutput cameraOutput)
     {
-        //Trace($"Camera {cameraOutput.CameraMask}: appended {_nInstancesAppended} out of considered {_nInstancesConsidered}");
+        /*
+         * Now that we computed a single frame, we need to do some post processing,
+         * that is sorting the batches for transparent rendering.
+         */
+        cameraOutput.ComputeAfterAppend();
     }
 
 
