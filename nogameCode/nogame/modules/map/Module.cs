@@ -62,7 +62,7 @@ public class Module : AModule, IInputPart
     
     private float _zoomState = 0.2f; 
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
-    public float CameraY { get; set; } = 5000f;
+    public float CameraY { get; set; } = 500f;
 
     /*
      * Map display parameters
@@ -173,7 +173,7 @@ public class Module : AModule, IInputPart
             I.Get<TransformApi>().SetTransforms(_eMap,
                 true, MapCameraMask,
                 Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f*Single.Pi/2f),
-                3000f * Vector3.UnitY);
+                -100f * Vector3.UnitY);
             _updateMapParams();
         }
     }

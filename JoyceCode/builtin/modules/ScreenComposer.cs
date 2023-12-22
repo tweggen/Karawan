@@ -4,6 +4,7 @@ using System.Numerics;
 using DefaultEcs;
 using engine;
 using engine.joyce;
+using engine.joyce.components;
 
 namespace builtin.modules;
 
@@ -144,6 +145,7 @@ public class ScreenComposer : AModule
             NearFrustum = 1f / Single.Tan(30f * Single.Pi / 180f), 
             FarFrustum = 100f,
             CameraMask = this.CameraMask,
+            CameraFlags = Camera3.Flags.DisableDepthTest,
             /*
              * Render directly on screen
              */
