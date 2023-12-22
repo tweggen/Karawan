@@ -92,6 +92,8 @@
 	<ItemGroup>
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\buildingalphadiffuse.png" />
+	  <None Remove="Platforms\Android\buildingalphadiffuse2.png" />
+	  <None Remove="Platforms\Android\buildingalphadiffuse3.png" />
 	  <None Remove="Platforms\Android\buildingambient.png" />
 	  <None Remove="Platforms\Android\buildingdiffuse.png" />
 	  <None Remove="Platforms\Android\car-collision.ogg" />
@@ -121,6 +123,7 @@
 	  <None Remove="Platforms\Android\lorem.png" />
 	  <None Remove="Platforms\Android\lvl-1-01c.ogg" />
 	  <None Remove="Platforms\Android\lvl-6.ogg" />
+	  <None Remove="Platforms\Android\mapicons.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon.png" />
 	  <None Remove="Platforms\Android\plentomatic-small.png" />
 	  <None Remove="Platforms\Android\plentomatic.png" />
@@ -167,6 +170,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <AndroidAsset Include="Platforms\Android\buildingalphadiffuse2.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\buildingalphadiffuse3.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\buildingambient.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
@@ -252,6 +261,9 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\lvl-6.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\mapicons.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\plentomatic-small.png">

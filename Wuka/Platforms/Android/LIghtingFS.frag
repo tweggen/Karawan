@@ -228,7 +228,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
      */
     vec4 zBuffer = vec4(1.0, 1.0, 1.0, 1000000.0);
     Plane surfaceClosest;
-    surfaceClosest.normal.x = 12345;
+    surfaceClosest.normal.x = 12345.0;
         
     float testUp = dot(v3FragUp, rayFromCamera.direction);     
     if (testUp > 0.001) {
@@ -237,7 +237,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         ceiling.normal = v3FragUp;
         ceiling.v3U = v3FragRight / v3RoomSize.x;
         ceiling.v3V = v3FragFront / v3RoomSize.z;
-        ceiling.color = vec3(1.0,0.0,0.0); //vec3(0.1, 0.1, 0.1);
+        ceiling.color = vec3(1.0,1.0,1.0); //vec3(0.1, 0.1, 0.1);
         
         zBuffer = checkVisibility(rayFromCamera, ceiling, zBuffer, surfaceClosest);
     } else if (testUp < -0.001) {
