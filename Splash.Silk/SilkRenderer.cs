@@ -49,9 +49,6 @@ namespace Splash.Silk
          */
         private void _renderParts(in IList<RenderPart> renderParts)
         {
-            int nSkipped = 0;
-            int nTotal = 0;
-
             bool isFirstPart = true;
 
             int y0Stats = 30;
@@ -208,12 +205,6 @@ namespace Splash.Silk
                 _gl.Disable(EnableCap.Blend);
                 _gl.Enable(EnableCap.CullFace);
                 y0Stats += 20;
-
-                {
-                    renderPart.CameraOutput.GetRenderStats(out int skippedNow, out int totalNow);
-                    nSkipped += skippedNow;
-                    nTotal += totalNow;
-                }
             }
 
         }

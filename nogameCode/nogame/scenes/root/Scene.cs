@@ -32,6 +32,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<nogame.modules.osd.Scores>(),
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false},
         new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
+        new MyModule<builtin.modules.Stats>(),
         new SharedModule<builtin.controllers.InputController>(),
     };
     

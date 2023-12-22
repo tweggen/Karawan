@@ -13,8 +13,10 @@ public class Event
     public const string INPUT_MOUSE_MOVED = "input.mouse.moved";
     public const string INPUT_MOUSE_WHEEL = "input.mouse.wheel";
 
-    public static readonly string VIEW_SIZE_CHANGED = "view.size.changed";
-    
+    public const string VIEW_SIZE_CHANGED = "view.size.changed";
+
+    public const string RENDER_STATS = "render.stats";
+
     private bool _isHandled = false;
     public bool IsHandled
     {

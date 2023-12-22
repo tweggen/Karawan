@@ -64,7 +64,10 @@ public class LogicalRenderer
             {
                 continue;
             }
-            CameraOutput cameraOutput = new(scene, _threeD, renderPartTransform3ToWorld.Matrix, renderPartCamera3);
+            CameraOutput cameraOutput = new(
+                scene, _threeD, 
+                renderPartTransform3ToWorld.Matrix,
+                renderPartCamera3, renderFrame.FrameStats);
             renderPart.CameraOutput = cameraOutput;
             
             /*

@@ -19,8 +19,6 @@ namespace nogame.modules.playerhover
 
         private float _massShip;
 
-        private DefaultEcs.Entity _ePhysDisplay;
-
         public float LinearThrust { get; set; } = 150f;
         public float AngularThrust { get; set; } = 80.0f;
         
@@ -271,18 +269,6 @@ namespace nogame.modules.playerhover
                 _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
             }
 
-            _ePhysDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(20f, 370f),
-                new Vector2(400, 54),
-                $"@{vTargetPos}"
-                //+$"v: {vTargetVelocity.Length()}, "
-                //+$"a: {vTargetAngularVelocity.Length()}"
-                ,
-                9,
-                0xff22aaee,
-                0x00000000,
-                HAlign.Left
-            ));
             {
                 var gameState = I.Get<GameState>();
                 gameState.PlayerPosition = vTargetPos;
@@ -304,7 +290,6 @@ namespace nogame.modules.playerhover
         public override void ModuleActivate(engine.Engine engine0)
         {
             base.ModuleActivate(engine0);
-            _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
             _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
             

@@ -26,6 +26,7 @@ namespace Splash.Silk
         private InstanceManager _instanceManager;
         private CameraManager _cameraManager;
         private SilkRenderer _renderer;
+        private RenderStats _renderStats = new();
         private bool _isRunning = true;
 
         private LogicalRenderer _logicalRenderer;
@@ -382,6 +383,8 @@ namespace Splash.Silk
                 }
 
                 _renderer.RenderFrame(renderFrame);
+                _renderStats.PushFrame(renderFrame.FrameStats);
+                I.Get<EventQueue>().Push(new Event(Event.RENDER_STATS, _renderStats.GetAverage().ToString()));
 
                 if (null != _imGuiController)
                 {

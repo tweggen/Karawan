@@ -34,7 +34,6 @@ namespace nogame.modules.playerhover
         private BepuPhysics.BodyReference _prefShip;
         private Entity _eMapShip;
 
-
         /**
          * Display the current cluster name.
          */
@@ -477,7 +476,6 @@ namespace nogame.modules.playerhover
                 Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
             I.Get<SubscriptionManager>().Subscribe(
                 Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
-            
             _engine.AddModule(this);
             _engine.OnLogicalFrame += _onLogicalFrame;
             _onCameraEntityChanged(this, _engine.GetCameraEntity());
@@ -486,7 +484,7 @@ namespace nogame.modules.playerhover
             {
                 var api = I.Get<Boom.ISoundAPI>();
                 _polyballSound = api.FindSound($"polyball.ogg");
-                _polyballSound.Volume = 0.1f;
+                _polyballSound.Volume = 0.03f;
             }
             
             _engine.SetPlayerEntity(GetShipEntity());

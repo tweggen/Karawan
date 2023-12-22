@@ -30,12 +30,7 @@ public class CameraOutput
     private Vector3 _v3CameraPos;
 
 
-    private int _nEntities = 0;
-    private int _nMeshes = 0;
-    private int _nMaterials = 0;
-    private int _nInstances = 0;
-    private int _nSkippedMeshes = 0;
-    private int _nSkippedMaterials = 0;
+    private FrameStats _frameStats;
 
     private Dictionary<AMaterialEntry, MaterialBatch> _materialBatches = new();
     private Dictionary<AMaterialEntry, MaterialBatch> _transparentMaterialBatches = new();
@@ -139,7 +134,7 @@ public class CameraOutput
                 }
                 else
                 {
-                    ++_nSkippedMaterials;
+                    ++_frameStats.NSkippedMaterials;
                     continue;
                 }
             }
@@ -165,7 +160,7 @@ public class CameraOutput
                     }
                     else
                     {
-                        ++_nSkippedMeshes;
+                        ++_frameStats.NSkippedMeshes;
                         continue;
                     }
                 }
@@ -182,6 +177,7 @@ public class CameraOutput
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
                     threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, spanMatrices, nMatrices);
+                    _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
                 }
                 else
                 {
@@ -198,7 +194,7 @@ public class CameraOutput
         in AMaterialEntry aMaterialEntry,
         in Matrix4x4 matrix)
     {
-        _nEntities++;
+        _frameStats.NEntities++;
         bool trackPositions;
 
         /*
@@ -222,7 +218,7 @@ public class CameraOutput
         {
             materialBatch = new MaterialBatch(aMaterialEntry);
             mbs[aMaterialEntry] = materialBatch;
-            _nMaterials++;
+            _frameStats.NMaterials++;
         }
 
         /*
@@ -234,7 +230,7 @@ public class CameraOutput
         {
             meshBatch = new MeshBatch(aMeshEntry);
             materialBatch.MeshBatches[aMeshEntry] = meshBatch;
-            _nMeshes++;
+            _frameStats.NMeshes++;
         }
 
         /*
@@ -246,7 +242,7 @@ public class CameraOutput
          * In particular when rendering transparency, we need to have average
          * distances to sort the draw instance calls.
          */
-        _nInstances++;
+        _frameStats.NInstances++;
         if (trackPositions)
         {
             Vector3 pos = matrix.Translation + aMeshEntry.JMesh.AABB.Center;
@@ -441,38 +437,20 @@ public class CameraOutput
         }
     }
 
-
-    public void GetRenderStats(out int skipped, out int total)
-    {
-        lock (_lo)
-        {
-            skipped = _nSkippedMeshes + _nSkippedMaterials;
-            total = _nMeshes + _nMaterials;
-        }
-    }
-
-
-    public string GetDebugInfo()
-    {
-        lock (_lo)
-        {
-            return
-                $"BatchCollector: {_nEntities} entities, {_nMaterials} materials, {_nMeshes} meshes, {_nInstances} instances, 1 shaders.";
-        }
-    }
-
-
+    
     public CameraOutput(
         IScene scene,
         in IThreeD threeD,
         in Matrix4x4 mTransformToWorld,
-        in engine.joyce.components.Camera3 camera3)
+        in engine.joyce.components.Camera3 camera3,
+        FrameStats frameStats)
     {
         _scene = scene;
         TransformToWorld = mTransformToWorld;
         _camera3 = camera3;
         _v3CameraPos = mTransformToWorld.Translation;
         _threeD = threeD;
+        _frameStats = frameStats;
         GetRotation(ref _mInverseCameraRotation, in mTransformToWorld);
     }
 }
