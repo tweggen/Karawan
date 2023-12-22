@@ -24,7 +24,7 @@ public class MaterialBatch
         if (MeshBatches != null && MeshBatches.Count > 0)
         {
             ListMeshBatches = new(MeshBatches.Values);
-            ListMeshBatches.Sort((a, b) =>
+            ListMeshBatches.Sort((b, a) =>
             {
                 float da = (a.AveragePosition - v3CameraPos).LengthSquared();
                 float db = (b.AveragePosition - v3CameraPos).LengthSquared();

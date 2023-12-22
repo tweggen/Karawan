@@ -27,7 +27,7 @@ namespace Splash
         {
             if (Matrices != null && Matrices.Count > 0)
             {
-                Matrices.Sort((a, b) =>
+                Matrices.Sort((b, a) =>
                 {
                     float da = (a.Translation - v3CameraPos).LengthSquared();
                     float db = (b.Translation - v3CameraPos).LengthSquared();

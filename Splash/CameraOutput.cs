@@ -404,7 +404,7 @@ public class CameraOutput
             if (_transparentMaterialBatches != null && _transparentMaterialBatches.Count > 0)
             {
                 _transparentMaterialList = new(_transparentMaterialBatches.Values);
-                _transparentMaterialList.Sort((a, b) =>
+                _transparentMaterialList.Sort((b, a) =>
                 {
                     float da = (a.AveragePosition - _v3CameraPos).LengthSquared();
                     float db = (b.AveragePosition - _v3CameraPos).LengthSquared();
