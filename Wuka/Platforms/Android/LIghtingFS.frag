@@ -246,7 +246,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         floor.normal = -v3FragUp;
         floor.v3U = v3FragRight / v3RoomSize.x;
         floor.v3V = v3FragFront / v3RoomSize.z;
-        floor.color = vec3(0.4,0.4,0.4); // vec3(0.2, 0.2, 0.2);
+        floor.color = vec3(0.2,0.3,0.2); // vec3(0.2, 0.2, 0.2);
         
         zBuffer = checkVisibility(rayFromCamera, floor, zBuffer, surfaceClosest);
     }
@@ -256,7 +256,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         Plane wall;
         wall.position = v3BuildingBase + (fix * v3RoomSize.x) * v3FragRight;
         wall.normal = v3FragRight;
-        wall.color = vec3(0.6,0.6,0.3); //vec3(0.26, 0.2, 0.2);
+        wall.color = vec3(0.4,0.4,0.3); //vec3(0.26, 0.2, 0.2);
         wall.v3U = v3FragFront / v3RoomSize.z;
         wall.v3V = v3FragUp / v3RoomSize.y;
         
@@ -265,7 +265,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         Plane wall;
         wall.position = v3BuildingBase + ((fix - 1.0) * v3RoomSize.x) * v3FragRight;
         wall.normal = -v3FragRight;
-        wall.color = vec3(0.6,0.6,0.3); // vec3(0.3, 0.2, 0.3);
+        wall.color = vec3(0.4,0.4,0.3); // vec3(0.3, 0.2, 0.3);
         wall.v3U = v3FragFront / v3RoomSize.z;
         wall.v3V = v3FragUp / v3RoomSize.y;
         
@@ -277,7 +277,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         Plane wall;
         wall.position = v3BuildingBase + (fiz * v3RoomSize.z) * v3FragFront;
         wall.normal = v3FragFront;
-        wall.color = vec3(0.6,0.6,0.3); //vec3(0.15, 0.15, 0.15);
+        wall.color = vec3(0.4,0.4,0.3); //vec3(0.15, 0.15, 0.15);
         wall.v3U = v3FragRight / v3RoomSize.x;
         wall.v3V = v3FragUp / v3RoomSize.y;
         
@@ -286,7 +286,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
         Plane wall;
         wall.position = v3BuildingBase + ((fiz - 1.0) * v3RoomSize.z) * v3FragFront;
         wall.normal = -v3FragFront;
-        wall.color = vec3(0.6,0.6,0.3); //vec3(0.1, 0.1, 0.1);
+        wall.color = vec3(0.4,0.4,0.3); //vec3(0.1, 0.1, 0.1);
         wall.v3U = v3FragRight / v3RoomSize.x;
         wall.v3V = v3FragUp / v3RoomSize.y;
         
@@ -318,23 +318,24 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
     float light;
     if((isOn & 0x88888888u) != 0u)
     {
-        light = 0.2;
+        light = 0.1;
         col4Emissive = vec4(0.1, 0.1, 0.15, 1.0);
     } else if ((isOn & 0x44444444u) != 0u)
     {
-        light = 0.2;
+        light = 0.1;
         col4Emissive = vec4(0.1, 0.1, 0.175, 1.0);
     } else if ((isOn & 0x22222222u) != 0u)
     {
         light = 0.8;
-        col4Emissive = vec4(0.60, 0.60, 0.75, 1.0);
+        col4Emissive = vec4(0.45, 0.45, 0.50, 1.0);
     } else if ((isOn & 0x11111111u) != 0u)
     {
         light = 0.8;
-        col4Emissive = vec4(0.75, 0.75, 0.6, 1.0);
+        col4Emissive = vec4(0.50, 0.50, 0.45, 1.0);
     } else
     {
         light = 0.1;
+        col4Emissive = vec4(0.05, 0.05, 0.05 ,1.0);
     }
     col4Diffuse = vec4(zBuffer.rgb * light, 1.0);
      
@@ -342,9 +343,9 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
      * As a test, directly use the uv as a color.
      */
     {
-        col4Diffuse.x += v2UV.x*0.1;
-        col4Diffuse.y += v2UV.y*0.1;
-        col4Diffuse.z += v2UV.y*0.1;
+        col4Diffuse.x -= v2UV.x*0.1;
+        col4Diffuse.y -= v2UV.y*0.1;
+        col4Diffuse.z -= v2UV.y*0.1;
     }
 
     /*
