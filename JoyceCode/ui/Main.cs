@@ -336,9 +336,12 @@ public class Main
             {
                 var entities = _engine.Entities;
                 ImGui.Text($"Total {entities.Length} entities.");
-                ImGui.Text($"{_engine.Simulation.Statics.Count} statics, {_engine.Simulation.Bodies.ActiveSet.Count} active bodies.");
+                lock (_engine.Simulation)
+                {
+                    ImGui.Text(
+                        $"{_engine.Simulation.Statics.Count} statics, {_engine.Simulation.Bodies.ActiveSet.Count} active bodies.");
+                }
 
-                
                 ImGui.InputText("Filter", _currentEntityFilterBytes, (uint) _currentEntityFilterBytes.Length);
                 string utfString = Encoding.UTF8.GetString(_currentEntityFilterBytes, 0, _currentEntityFilterBytes.Length).TrimEnd((Char)0);
                 

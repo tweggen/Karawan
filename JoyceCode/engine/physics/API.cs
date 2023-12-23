@@ -193,7 +193,10 @@ public class API
     public void Update(float dt)
     {
         _refreshCollisions();
-        Simulation.Timestep(dt,_physicsThreadDispatcher);
+        lock (_engine.Simulation)
+        {
+            Simulation.Timestep(dt, _physicsThreadDispatcher);
+        }
     }
 
 

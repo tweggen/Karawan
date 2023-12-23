@@ -209,16 +209,21 @@ namespace nogame.characters.cubes
                                 _rnd.GetFloat() * 2f - 1f),
                             _rnd.GetFloat() * 2f * (float)Math.PI / 180f)));
 #endif
-                        BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
-                            BodyDescription.CreateKinematic(
-                                new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                                new BepuPhysics.Collidables.CollidableDescription(
-                                    _getSphereShape(wf.Engine),
-                                    0.1f),
-                                new BodyActivityDescription(0.01f)
-                            )
-                        );
-                        BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                        BodyReference prefSphere;
+                        lock (wf.Engine.Simulation)
+                        {
+                            BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
+                                BodyDescription.CreateKinematic(
+                                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
+                                    new BepuPhysics.Collidables.CollidableDescription(
+                                        _getSphereShape(wf.Engine),
+                                        0.1f),
+                                    new BodyActivityDescription(0.01f)
+                                )
+                            );
+                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                        }
+
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
                             {

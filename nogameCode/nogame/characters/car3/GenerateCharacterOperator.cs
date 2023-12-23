@@ -255,18 +255,21 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCar3Sound(carIdx), 150f));
 
-
-                        BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
-                            BodyDescription.CreateKinematic(
-                                new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                                new BepuPhysics.Collidables.CollidableDescription(
-                                    GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
-                                    0.1f),
-                                new BodyActivityDescription(0.01f)
-                            )
-                        );
+                        BodyReference prefSphere;
+                        lock (wf.Engine.Simulation)
+                        {
+                            BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
+                                BodyDescription.CreateKinematic(
+                                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
+                                    new BepuPhysics.Collidables.CollidableDescription(
+                                        GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
+                                        0.1f),
+                                    new BodyActivityDescription(0.01f)
+                                )
+                            );
+                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+                        }
                         
-                        BodyReference prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
                             {
@@ -283,8 +286,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
-
-
                 }
             }
             else

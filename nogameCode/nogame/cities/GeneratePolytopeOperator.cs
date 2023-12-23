@@ -113,18 +113,22 @@ public class GeneratePolytopeOperator : IFragmentOperator
             eTarget.Set(cTransform3);
             engine.joyce.TransformApi.CreateTransform3ToParent(cTransform3, out var mat);
             eTarget.Set(new engine.joyce.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
-            
 
-            BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(
-                BodyDescription.CreateKinematic(
-                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                    new BepuPhysics.Collidables.CollidableDescription(
-                        _getSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
-                        0.1f),
-                    new BodyActivityDescription(0.01f)
-                )
-            );
-            BodyReference prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+            BodyReference prefSphere;
+            lock (worldFragment.Engine.Simulation)
+            {
+                BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(
+                        BodyDescription.CreateKinematic(
+                            new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
+                            new BepuPhysics.Collidables.CollidableDescription(
+                                _getSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
+                                0.1f),
+                            new BodyActivityDescription(0.01f)
+                        )
+                    );
+                prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
+            }
+
             engine.physics.CollisionProperties collisionProperties =
                 new engine.physics.CollisionProperties
                     { 

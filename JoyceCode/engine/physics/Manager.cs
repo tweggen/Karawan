@@ -19,7 +19,7 @@ internal class Manager
     
     private IDisposable? _subscriptions;
 
-    private void _removeStatics(in components.Statics statics)
+    private void _removeStaticsNoLock(in components.Statics statics)
     {
         if (statics.Handles != null)
         {
@@ -39,7 +39,7 @@ internal class Manager
     }
 
 
-    private void _removeKinetic(in components.Kinetic cKinetic)
+    private void _removeKineticNoLock(in components.Kinetic cKinetic)
     {
         if (0 == (cKinetic.Flags & components.Kinetic.DONT_FREE_PHYSICS))
         {
@@ -63,35 +63,47 @@ internal class Manager
     private void _onStaticsChanged(in Entity entity, in components.Statics cOldStatics,
         in components.Statics cNewStatics)
     {
-        // We need to assume the user added the new entity.
-        _removeStatics(cOldStatics);
+        lock (_engine.Simulation)
+        {
+            // We need to assume the user added the new entity.
+            _removeStaticsNoLock(cOldStatics);
+        }
     }
 
 
     private void _onStaticsRemoved(in Entity entity, in components.Statics cStatics)
     {
-        _removeStatics(cStatics);
+        lock (_engine.Simulation)
+        {
+            _removeStaticsNoLock(cStatics);
+        }
     }
 
 
     private void _onKineticChanged(in Entity entity, in components.Kinetic cOldKinetic,
         in components.Kinetic cNewKinetic)
     {
-        if (cOldKinetic.Reference.Handle.Value != cNewKinetic.Reference.Handle.Value)
+        lock (_engine.Simulation)
         {
-            // We need to assume the user added the new entity.
-            _removeKinetic(cOldKinetic);
+            if (cOldKinetic.Reference.Handle.Value != cNewKinetic.Reference.Handle.Value)
+            {
+                // We need to assume the user added the new entity.
+                _removeKineticNoLock(cOldKinetic);
+            }
         }
     }
 
 
     private void _onKineticRemoved(in Entity entity, in components.Kinetic cKinetic)
     {
-        _removeKinetic(cKinetic);
+        lock (_engine.Simulation)
+        {
+            _removeKineticNoLock(cKinetic);
+        }
     }
 
 
-    private void _removeDynamic(in Entity entity, in components.Body cBody)
+    private void _removeDynamicNoLock(in Entity entity, in components.Body cBody)
     {
         if (0 == (cBody.Flags & components.Body.DONT_FREE_PHYSICS))
         {
@@ -101,7 +113,7 @@ internal class Manager
     }
 
 
-    private void _addDynamic(in Entity entity, in components.Body cBody)
+    private void _addDynamicNoLock(in Entity entity, in components.Body cBody)
     {
         /*
          * Activate collision detection for that entity.
@@ -112,23 +124,32 @@ internal class Manager
 
     private void _onBodyChanged(in Entity entity, in components.Body cOldBody, in components.Body cNewBody)
     {
-        if (cOldBody.Reference.Handle.Value != cNewBody.Reference.Handle.Value)
+        lock (_engine.Simulation)
         {
-            _removeDynamic(entity, cOldBody);
-            _addDynamic(entity, cNewBody);
+            if (cOldBody.Reference.Handle.Value != cNewBody.Reference.Handle.Value)
+            {
+                _removeDynamicNoLock(entity, cOldBody);
+                _addDynamicNoLock(entity, cNewBody);
+            }
         }
     }
 
 
     private void _onBodyRemoved(in Entity entity, in components.Body cBody)
     {
-        _removeDynamic(entity, cBody);
+        lock (_engine.Simulation)
+        {
+            _removeDynamicNoLock(entity, cBody);
+        }
     }
 
 
     private void _onBodyAdded(in Entity entity, in components.Body cBody)
     {
-        _addDynamic(entity, cBody);
+        lock (_engine.Simulation)
+        {
+            _addDynamicNoLock(entity, cBody);
+        }
     }
 
     
