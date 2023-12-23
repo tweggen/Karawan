@@ -44,6 +44,7 @@ public class CameraOutput
     private float _defaultUploadMeshPerFrame = 1f;
 
     private IScene _scene;
+    private readonly Vector3 _v3CameraZ;
 
 
     public void GetRotation(ref Matrix4x4 mOut, in Matrix4x4 mIn)
@@ -402,8 +403,18 @@ public class CameraOutput
                 _transparentMaterialList = new(_transparentMaterialBatches.Values);
                 _transparentMaterialList.Sort((b, a) =>
                 {
-                    float da = (a.AveragePosition - _v3CameraPos).LengthSquared();
-                    float db = (b.AveragePosition - _v3CameraPos).LengthSquared();
+                    float da;
+                    float db;
+                    if (_camera3.Angle != 0f)
+                    {
+                        da = (a.AveragePosition - _v3CameraPos).LengthSquared();
+                        db = (b.AveragePosition - _v3CameraPos).LengthSquared();
+                    }
+                    else
+                    {
+                        da = Vector3.Dot(a.AveragePosition - _v3CameraPos, _v3CameraZ);
+                        db = Vector3.Dot(b.AveragePosition - _v3CameraPos, _v3CameraZ);
+                    }
                     if (da < db)
                     {
                         return -1;
@@ -447,6 +458,7 @@ public class CameraOutput
     {
         _scene = scene;
         TransformToWorld = mTransformToWorld;
+        _v3CameraZ = new Vector3(-TransformToWorld.M31, -TransformToWorld.M32, -TransformToWorld.M33);
         _camera3 = camera3;
         _v3CameraPos = mTransformToWorld.Translation;
         _threeD = threeD;
