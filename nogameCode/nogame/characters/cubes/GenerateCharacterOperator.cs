@@ -55,11 +55,11 @@ namespace nogame.characters.cubes
         {
             lock(_classLock)
             {
-                if( !_pshapeSphere.Exists )
+                lock (engine.Simulation)
                 {
-                    _pbodySphere = new(_cubeSize/1.4f);
-                    lock (engine.Simulation)
+                    if( !_pshapeSphere.Exists )
                     {
+                        _pbodySphere = new(_cubeSize/1.4f);
                         _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
                     }
                 }
