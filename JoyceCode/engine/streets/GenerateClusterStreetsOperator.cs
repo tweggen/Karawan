@@ -21,7 +21,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"5001/GenerateClusterStreetsOperator/{_myKey}/{_clusterDesc.Id}";
+        return $"5001/GenerateClusterStreetsOperator/{_myKey}/{_clusterDesc.IdString}";
     }
 
 
@@ -684,7 +684,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             }
         }
 
-        if (_traceStreets) Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+        if (_traceStreets) Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
         if (_traceStreets) Trace("Obtaining streets.");
         var strokeStore = _clusterDesc.StrokeStore();
         if (_traceStreets) Trace("Have streets.");
@@ -692,7 +692,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         if (_traceStreets)
             Trace($"In terrain '{worldFragment.GetId()}' operator. "
                   + $"Fragment @{worldFragment.Position}. "
-                  + $"Cluster '{_clusterDesc.Id}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
+                  + $"Cluster '{_clusterDesc.IdString}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
 
         /*
          * We need the coordinates of the cluster relative to the fragment to translate

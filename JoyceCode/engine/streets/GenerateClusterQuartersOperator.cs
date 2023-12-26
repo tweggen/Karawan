@@ -18,7 +18,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"5010/GenerateClusterQuartersOperator/{_myKey}/{_clusterDesc.Id}";
+        return $"5010/GenerateClusterQuartersOperator/{_myKey}/{_clusterDesc.IdString}";
     }
 
 
@@ -114,7 +114,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
             }
         }
 
-        if (_traceQuarters) Trace($"Cluster '{_clusterDesc.Name}' ({_clusterDesc.Id}) in range");
+        if (_traceQuarters) Trace($"Cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
 
         MatMesh matmesh = new();
 

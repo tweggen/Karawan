@@ -47,7 +47,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"8012/GeneratePolytopeOperator/{_myKey}/{_clusterDesc.Id}";
+        return $"8012/GeneratePolytopeOperator/{_myKey}/{_clusterDesc.IdString}";
     }
 
 

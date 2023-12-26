@@ -75,6 +75,21 @@ public class DBStorage : IDisposable
     }
 
 
+    private void _writeCollection<ObjType>(IEnumerable<ObjType> c) where ObjType : class
+    {
+        if (c == null)
+        {
+            ErrorThrow($"The collection we store {c.GetType()} os null.", m => new ArgumentException(m));
+            return;
+        }
+
+        var col = _db.GetCollection<ObjType>();
+        col.DeleteAll();
+        col.Insert(c);
+        _db.Commit();
+    }
+    
+
     public void Close()
     {
         if (null != _db)
@@ -152,19 +167,32 @@ public class DBStorage : IDisposable
     }
     
     
-    public bool TryStore<ObjType>(ObjType obj) where ObjType : class
+    public bool StoreCollection<ObjType>(IEnumerable<ObjType> obj) where ObjType : class
     {
         lock (_lo)
         {
-            if (obj == null)
+            try
             {
-                ErrorThrow("obj is null", m => new ArgumentNullException(m));
+                Open();
+                try
+                {
+                    _writeCollection<ObjType>(obj);
+                }
+                catch (Exception e)
+                {
+                    Error($"Unable to write collection of {obj.GetType()}: {e}");
+                }
+
+                Close();
+                return true;
             }
-            var col = _db.GetCollection<ObjType>();
-            col.Upsert(obj);
-            _db.Commit();
+            catch (Exception e)
+            {
+                Error($"Unable to open/close database: {e}");
+            }
         }
-        return true;
+
+        return false;
     }
     
 

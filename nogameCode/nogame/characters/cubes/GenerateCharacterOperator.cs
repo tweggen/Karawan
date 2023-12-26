@@ -78,7 +78,7 @@ namespace nogame.characters.cubes
 
         public string FragmentOperatorGetPath()
         {
-            return $"7001/GenerateCubeCharacterOperatar/{_myKey}/{_clusterDesc.Id}";
+            return $"7001/GenerateCubeCharacterOperatar/{_myKey}/{_clusterDesc.IdString}";
         }
         
         
@@ -116,7 +116,7 @@ namespace nogame.characters.cubes
                 }
             }
 
-            if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+            if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
             _rnd.Clear();
 
             float propMaxDistance = (float) engine.Props.Get("nogame.characters.cube.maxDistance", 400f); 

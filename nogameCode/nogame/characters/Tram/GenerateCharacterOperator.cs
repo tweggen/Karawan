@@ -44,7 +44,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"7020/GenerateTramCharacterOperator/{_myKey}/{_clusterDesc.Id}";
+        return $"7020/GenerateTramCharacterOperator/{_myKey}/{_clusterDesc.IdString}";
     }
     
     
@@ -81,7 +81,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             }
         }
 
-        if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+        if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
         _rnd.Clear();
 
 

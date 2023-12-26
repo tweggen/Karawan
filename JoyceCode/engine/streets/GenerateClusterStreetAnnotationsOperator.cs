@@ -22,7 +22,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"5002/GenerateClusterStreetAnnotationsOperator/{_myKey}/{_clusterDesc.Id}";
+        return $"5002/GenerateClusterStreetAnnotationsOperator/{_myKey}/{_clusterDesc.IdString}";
     }
 
 
@@ -102,7 +102,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
         if (_traceStreets)
             Trace($"In terrain '{worldFragment.GetId()}' operator. "
                   + $"Fragment @{worldFragment.Position}. "
-                  + $"Cluster '{_clusterDesc.Id}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
+                  + $"Cluster '{_clusterDesc.IdString}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
 
         _createStreetPointAnnotations(worldFragment, strokeStore);
     });

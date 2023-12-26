@@ -218,6 +218,18 @@ public class GenerateClustersOperator : world.IWorldOperator
          * Remove merged clusters.
          */
         acd.RemoveAll(c => c.Merged);
+        
+        /*
+         * Before serializing, we need to remember the cluster's index.
+         */
+        for (int i = 0; i < acd.Count; i++)
+        {
+            acd[i].Index = i;
+            /*
+             * Generate a meaningful database id.
+             */
+            acd[i].Id = i + 1;
+        }
         nClusters = acd.Count;
         
         Trace("GenerateClustersOperator: Merged " + nMerges + " clusters to " + (nClusters - nMerges * 2));
@@ -271,7 +283,7 @@ public class GenerateClustersOperator : world.IWorldOperator
                     newKey
                 );
                 elevationCache.ElevationCacheRegisterElevationOperator(
-                    engine.elevation.Cache.LAYER_BASE + $"/000100/flattenCluster/{newKey}-{cl1.Id}",
+                    engine.elevation.Cache.LAYER_BASE + $"/000100/flattenCluster/{newKey}-{cl1.IdString}",
                     clusterElevationOperator
                 );
             }
@@ -302,6 +314,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         _generateClusterList(worldMetaGen, acd);
         _fillClusters(worldMetaGen, acd);
         _useClusters(worldMetaGen, acd);
+        _saveClusters(acd);
     }
 
 
@@ -310,9 +323,9 @@ public class GenerateClustersOperator : world.IWorldOperator
     }
 
 
-    private void _saveClusters()
+    private void _saveClusters(IList<ClusterDesc> clusterList)
     {
-        
+        I.Get<DBStorage>().StoreCollection(clusterList);
     }
     
     

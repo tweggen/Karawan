@@ -17,7 +17,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"8001/GenerateTreesOperator/{_myKey}/{_clusterDesc.Id}";
+        return $"8001/GenerateTreesOperator/{_myKey}/{_clusterDesc.IdString}";
     }
 
 

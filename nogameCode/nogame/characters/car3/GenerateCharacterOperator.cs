@@ -101,7 +101,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     public string FragmentOperatorGetPath()
     {
-        return $"7020/GenerateCar3CharacterOperatar/{_myKey}/{_clusterDesc.Id}";
+        return $"7020/GenerateCar3CharacterOperatar/{_myKey}/{_clusterDesc.IdString}";
     }
     
     
@@ -148,7 +148,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
         float propMaxDistance = (float) engine.Props.Get("nogame.characters.car3.maxDistance", 800f); 
         
-        if (_trace) Trace($"cluster '{_clusterDesc.Id}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
+        if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
         _rnd.Clear();
 
         /*

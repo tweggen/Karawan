@@ -259,7 +259,7 @@ public class Main
                     clusterList.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
                     foreach (var clusterDesc in clusterList)
                     {
-                        var id = clusterDesc.Id;
+                        var id = clusterDesc.IdString;
                         ImGui.PushID(id);
 
                         bool isSelected = _currentClusterId == id;

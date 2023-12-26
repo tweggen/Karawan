@@ -15,8 +15,8 @@ public class LineDescription
 
     public string Hash()
     {
-        string idA = ClusterA.Id;
-        string idB = ClusterB.Id;
+        string idA = ClusterA.IdString;
+        string idB = ClusterB.IdString;
         if (string.CompareOrdinal(idA, idB) < 0)
         {
             return $"{idA}-{idB}";
@@ -48,7 +48,7 @@ public class Line
 
     public string ToString()
     {
-        return $"{ClusterA.Id}-{ClusterB.Id}";
+        return $"{ClusterA.IdString}-{ClusterB.IdString}";
     }
 }
 

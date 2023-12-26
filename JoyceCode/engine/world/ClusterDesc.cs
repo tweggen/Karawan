@@ -5,14 +5,24 @@ using static engine.Logger;
 
 namespace engine.world;
 
+
+/**
+ * Describe a cluster.
+ *
+ * Note that all clusters will be serialized out to cache.
+ */
 public class ClusterDesc
 {
+    [LiteDB.BsonId]
+    public int Id { get; set; } = 0;
+    
     /**
      * To protect me, especially generating streets
      */
     private object _lo = new();
 
-    public string Id;
+    public string IdString;
+    
     public bool Merged;
 
     private Vector3 _pos;
@@ -22,12 +32,14 @@ public class ClusterDesc
         set => _setPos(value);
     }
 
+    [LiteDB.BsonIgnore]
     public Vector2 Pos2
     {
         get => new Vector2(Pos.X, Pos.Z);
     }
 
     private engine.geom.Rect2 _rect2;
+    [LiteDB.BsonIgnore]
     public engine.geom.Rect2 Rect2
     {
         get => _rect2;
@@ -39,9 +51,15 @@ public class ClusterDesc
         get => _size;
         set => _setSize(value);
     }
-    
-    public string Name = "Unnamed";
 
+    public int Index { get; set; } = -1;
+    
+    public string Name { get; set; } = "Unnamed";
+
+    
+    /*
+     * This will not be serialized out, we generate that automatically.
+     */
     public float AverageHeight = 0f;
 
     private ClusterDesc[] _arrCloseCities;
@@ -121,6 +139,7 @@ public class ClusterDesc
         }
     }
 
+    [LiteDB.BsonIgnore]
     public engine.geom.AABB AABB
     {
         get => _aabb; 
@@ -385,7 +404,7 @@ public class ClusterDesc
     
     public ClusterDesc(string strKey)
     {
-        Id = _strKey = strKey;
+        IdString = _strKey = strKey;
         _rnd = new builtin.tools.RandomSource(_strKey);
         _arrCloseCities = new ClusterDesc[_maxClosest];
         _nClosest = 0;
