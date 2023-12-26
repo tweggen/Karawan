@@ -75,6 +75,45 @@ public class DBStorage : IDisposable
     }
 
 
+    private bool _readCollection<ObjType>(out IEnumerable<ObjType> c) where ObjType : class
+    {
+        bool haveIt = false;
+        c = null;
+        try
+        {
+            var col = _db.GetCollection<ObjType>();
+            
+            Trace($"Collection has {col.Count()}: {col}");
+            if (0 == col.Count())
+            {
+                Trace($"No collection found for {typeof(ObjType)}");
+                return false;
+            }
+
+            try
+            {
+                var allObjects = col.FindAll();
+                c = new List<ObjType>(allObjects);
+                haveIt = true;
+            }
+            catch (Exception e)
+            {
+                /*
+                 * If we have an exception here we better delete this collection.
+                 */
+                _db.DropCollection(typeof(ObjType).Name);
+                _db.Commit();
+            }
+        }
+        catch (Exception e)
+        {
+            Error($"Unable to load collection {c.GetType()}: {e}");
+        }
+
+        return haveIt;
+    }
+    
+
     private void _writeCollection<ObjType>(IEnumerable<ObjType> c) where ObjType : class
     {
         if (c == null)
@@ -90,7 +129,7 @@ public class DBStorage : IDisposable
     }
     
 
-    public void Close()
+    private void _close()
     {
         if (null != _db)
         {
@@ -101,8 +140,12 @@ public class DBStorage : IDisposable
     }
     
     
-    public void Open()
+    private void _open()
     {
+        if (null != _db)
+        {
+            ErrorThrow($"I did not expect db to be open here.", m => new InvalidOperationException(m));
+        }
         string path = GlobalSettings.Get("Engine.RWPath");
         string dbname = "gamestate.db";
 
@@ -117,7 +160,7 @@ public class DBStorage : IDisposable
         {
             try
             {
-                Open();
+                _open();
                 try
                 {
                     _writeGameState(gameState);
@@ -127,7 +170,7 @@ public class DBStorage : IDisposable
                     Error($"Unable to write gameState: {e}");
                 }
 
-                Close();
+                _close();
             }
             catch (Exception e)
             {
@@ -145,7 +188,7 @@ public class DBStorage : IDisposable
             gameState = null;
             try
             {
-                Open();
+                _open();
                 try
                 {
                     haveIt = _readGameState(out gameState);
@@ -155,7 +198,7 @@ public class DBStorage : IDisposable
                     Error($"Unable to write gameState: {e}");
                 }
 
-                Close();
+                _close();
             }
             catch (Exception e)
             {
@@ -173,7 +216,7 @@ public class DBStorage : IDisposable
         {
             try
             {
-                Open();
+                _open();
                 try
                 {
                     _writeCollection<ObjType>(obj);
@@ -183,7 +226,7 @@ public class DBStorage : IDisposable
                     Error($"Unable to write collection of {obj.GetType()}: {e}");
                 }
 
-                Close();
+                _close();
                 return true;
             }
             catch (Exception e)
@@ -196,9 +239,39 @@ public class DBStorage : IDisposable
     }
     
 
+    public bool LoadCollection<ObjType>(out IEnumerable<ObjType> o) where ObjType : class
+    {
+        bool haveIt = false;
+        lock (_lo)
+        {
+            o = null;
+            try
+            {
+                _open();
+                try
+                {
+                    haveIt = _readCollection(out o);
+                }
+                catch (Exception e)
+                {
+                    Error($"Unable to write {o.GetType()}: {e}");
+                }
+
+                _close();
+            }
+            catch (Exception e)
+            {
+                Error($"Unable to open/close database: {e}");
+            }
+        }
+
+        return haveIt;
+    }
+    
+    
     public void Dispose()
     {
-        Close();
+        _close();
     }
 
 

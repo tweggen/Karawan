@@ -21,9 +21,17 @@ public class ClusterDesc
      */
     private object _lo = new();
 
-    public string IdString;
-    
-    public bool Merged;
+    public string IdString
+    {
+        get => _strKey;
+        set
+        {
+            _strKey = value;
+            _rnd = new builtin.tools.RandomSource(_strKey);
+        }
+    }
+
+    public bool Merged = false;
 
     private Vector3 _pos;
     public Vector3 Pos
@@ -62,9 +70,10 @@ public class ClusterDesc
      */
     public float AverageHeight = 0f;
 
-    private ClusterDesc[] _arrCloseCities;
-    private int _nClosest;
-    private int _maxClosest = 5;
+    private const int _maxClosest = 5;
+
+    private ClusterDesc[] _arrCloseCities = new ClusterDesc[_maxClosest];
+    private int _nClosest = 0;
     private string _strKey;
     private builtin.tools.RandomSource _rnd;
     private engine.geom.AABB _aabb;
@@ -399,16 +408,5 @@ public class ClusterDesc
             }
         }
         return (Pos+vOffset) with { Y = AverageHeight + 3f };
-    }
-    
-    
-    public ClusterDesc(string strKey)
-    {
-        IdString = _strKey = strKey;
-        _rnd = new builtin.tools.RandomSource(_strKey);
-        _arrCloseCities = new ClusterDesc[_maxClosest];
-        _nClosest = 0;
-        Merged = false;
-        // Street generator will be initialized on demand.
     }
 }

@@ -112,9 +112,17 @@ public class SceneSequencer : IDisposable
         }
     }
 
-    
-    public void SetMainScene(in string name)
+
+    /**
+     * Workaround for a race condition before loading main scene
+     */
+    private bool _checkedMainScene(string name)
     {
+        if ("logos"!=name && null == engine.world.MetaGen.Instance().Loader)
+        {
+            return false;
+        }
+
         Func<IScene> factoryFunction = null;
         lock(_lo)
         {
@@ -122,6 +130,16 @@ public class SceneSequencer : IDisposable
         }
         IScene scene = factoryFunction();
         SetMainScene(scene);
+        return true;
+    }
+    
+    
+    public void SetMainScene(string name)
+    {
+        I.Get<Timeline>().RunAt("", TimeSpan.Zero, () =>
+        {
+             return _checkedMainScene(name);
+        });
     }
     
     

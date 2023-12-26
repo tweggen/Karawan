@@ -38,8 +38,10 @@ public class GenerateClustersOperator : world.IWorldOperator
      * @param acd
      *      This list of clusters will be filled with new clusterDEsc.
      */
-    private void _generateClusterList(MetaGen worldMetaGen, List<ClusterDesc> acd)
+    private void _generateClusterList(MetaGen worldMetaGen, out IList<ClusterDesc> clusterList)
     {
+        var acd = new List<ClusterDesc>();
+        clusterList = acd;
         tools.NameGenerator nameGenerator = tools.NameGenerator.Instance();
 
         int nClusters = 0;
@@ -57,7 +59,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         Trace("GenerateClustersOperator: Generating cluster list...");
 
         {
-            var clusterDesc = new ClusterDesc("cluster-" + _strKey + "-" + idxCluster);
+            var clusterDesc = new ClusterDesc() { IdString = "cluster-" + _strKey + "-" + idxCluster};
 
             clusterDesc.Pos = new Vector3(-10f * _rnd.GetFloat(), 0f, 10f);
             clusterDesc.Size = 1000f;
@@ -73,7 +75,7 @@ public class GenerateClustersOperator : world.IWorldOperator
          */
         while (nClusters < nMaxClusters)
         {
-            var clusterDesc = new ClusterDesc("cluster-" + _strKey + "-" + idxCluster);
+            var clusterDesc = new ClusterDesc() { IdString = "cluster-" + _strKey + "-" + idxCluster};
             ++idxCluster;
 
             clusterDesc.Size = _randomClusterSize(_rnd);
@@ -191,7 +193,7 @@ public class GenerateClustersOperator : world.IWorldOperator
                 //    +" but more than "+(larger.size-smaller.size) );
 
                 // Merge them.
-                ClusterDesc newClusterDesc = new ClusterDesc("cluster-" + _strKey + "-" + idxCluster);
+                ClusterDesc newClusterDesc = new ClusterDesc() { IdString = "cluster-" + _strKey + "-" + idxCluster};
                 ++idxCluster;
                 newClusterDesc.Size = minDist;
                 newClusterDesc.Pos = (candClusterDesc.Pos + testClusterDesc.Pos)
@@ -240,7 +242,7 @@ public class GenerateClustersOperator : world.IWorldOperator
      * Generate the per cluster information.
      * This also calls the cluster operators.
      */
-    private void _fillClusters(MetaGen worldMetaGen, List<ClusterDesc> acd)
+    private void _fillClusters(MetaGen worldMetaGen, IList<ClusterDesc> acd)
     {
         int nClusters = acd.Count;
         Trace($"Filling {nClusters} clusters.");
@@ -297,7 +299,7 @@ public class GenerateClustersOperator : world.IWorldOperator
     /**
     * Make the clusters available in internal data structures.
     */
-    private void _useClusters(MetaGen worldMetaGen, List<ClusterDesc> acd)
+    private void _useClusters(MetaGen worldMetaGen, IList<ClusterDesc> acd)
     {
         /*
          * Create the cluster list. The cluster list will make itself a global
@@ -305,16 +307,6 @@ public class GenerateClustersOperator : world.IWorldOperator
          */
         var clusterList = ClusterList.Instance();
         clusterList.SetFrom(acd);
-    }
-
-
-    private void _generateClusters(MetaGen worldMetaGen)
-    {
-        List<ClusterDesc> acd = new();
-        _generateClusterList(worldMetaGen, acd);
-        _fillClusters(worldMetaGen, acd);
-        _useClusters(worldMetaGen, acd);
-        _saveClusters(acd);
     }
 
 
@@ -332,9 +324,32 @@ public class GenerateClustersOperator : world.IWorldOperator
     /**
      * Load or compute the clusters.
      */
-    private void _findClusters(MetaGen worldMetaGen)
+    private void _findClusters(MetaGen worldMetaGen, out IList<ClusterDesc> clusterList)
     {
-        _generateClusters(worldMetaGen);
+        clusterList = null;
+        try
+        {
+            System.Collections.Generic.IEnumerable<ClusterDesc> enumClusterDesc;
+            bool haveIt = I.Get<DBStorage>().LoadCollection(out enumClusterDesc);
+            if (!haveIt)
+            {
+                clusterList = null;
+            }
+            else
+            {
+                Trace("Retrieved previously generated clusters.");
+                clusterList = new List<ClusterDesc>(enumClusterDesc);
+            }
+        }
+        catch (System.Exception e)
+        {
+        }
+
+        if (null == clusterList)
+        {
+            Trace("Newly generating clusters.");
+            _generateClusterList(worldMetaGen, out clusterList);
+        }
     }
     
     
@@ -354,7 +369,10 @@ public class GenerateClustersOperator : world.IWorldOperator
     public System.Func<Task> WorldOperatorApply(world.MetaGen worldMetaGen) => new(async () =>
     {
         Trace("GenerateClustersOperator: Done.");
-        _findClusters(worldMetaGen);
+        _findClusters(worldMetaGen, out var acd);
+        _fillClusters(worldMetaGen, acd);
+        _useClusters(worldMetaGen, acd);
+        _saveClusters(acd);
     });
     
 

@@ -164,5 +164,6 @@ public class Timeline : IDisposable
         _timer = new();
         _timer.AutoReset = false;
         _timer.Elapsed += _onTimerTriggered;
+        SetMarker("", DateTime.MinValue);
     }
 }

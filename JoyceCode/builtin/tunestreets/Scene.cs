@@ -29,7 +29,7 @@ public class Scene : AModule, IScene, IInputPart
     private engine.world.ClusterDesc _createDefaultCluster()
     {
         builtin.tools.RandomSource rnd = new("clusters-mydear");
-        var clusterDesc =  new engine.world.ClusterDesc("cluster-clusters-mydear-0");
+        var clusterDesc =  new engine.world.ClusterDesc() { IdString = "cluster-clusters-mydear-0"};
         clusterDesc.Pos = new Vector3(-10f * rnd.GetFloat(), 0f, 10f);
         clusterDesc.Size = 1000f;
         clusterDesc.Name = engine.tools.NameGenerator.Instance().CreateWord(rnd);
