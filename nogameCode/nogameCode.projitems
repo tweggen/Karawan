@@ -16,11 +16,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\CubeVanishBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\GenerateCharacterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\intercity\GenerateCharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\intercity\GenerateTracksOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\Tram\GenerateCharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHouseDescriptionsOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHousesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GeneratePolytopeOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateTreesOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\HouseDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\HouseInstanceGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\PolytopeVanishBehaviour.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />

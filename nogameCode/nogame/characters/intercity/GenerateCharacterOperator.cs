@@ -115,24 +115,6 @@ public class GenerateCharacterOperator : IWorldOperator
         var network = I.Get<nogame.intercity.Network>();
         var lines = network.Lines;
 
-        /*
-         * TXWTODO: We should put this code into an intercity module, which we previously load.
-         */
-        {
-            foreach (var line in lines)
-            {
-                string newkey = line.ToString();
-                {
-                    var elevationCache = engine.elevation.Cache.Instance();
-                    var intercityTrailOperator = new nogame.intercity.IntercityTrackElevationOperator(line, newkey);
-                    elevationCache.ElevationCacheRegisterElevationOperator(
-                        engine.elevation.Cache.LAYER_BASE + $"/000200/intercityTrails/{newkey}",
-                        intercityTrailOperator
-                    );
-                }
-            }
-        }
-
         foreach (var line in lines)
         {
             Vector3 caPos = line.StationA.Position with { Y = line.ClusterA.AverageHeight + 20f };

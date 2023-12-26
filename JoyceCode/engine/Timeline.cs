@@ -10,13 +10,13 @@ public class Timeline : IDisposable
 {
     private object _lo = new();
     private SortedDictionary<string, DateTime> _mapTimeline = new();
-    private SortedDictionary<DateTime, Action> _mapActions = new();
+    private SortedDictionary<DateTime, Func<bool>> _mapActions = new();
     private System.Timers.Timer _timer = new();
     
 
     private void _checkExpiredActions(DateTime now)
     {
-        List<Action> listActions = new();
+        List<Func<bool>> listActions = new();
         List<DateTime> listDelete = new();
 
         DateTime newFirst = DateTime.MaxValue;
@@ -55,10 +55,26 @@ public class Timeline : IDisposable
             /*
              * Async trigger off task.
              */
-            Task.Run(action);
+            Task.Run(() =>
+            {
+                bool success = action();
+                if (!success)
+                {
+                    this._reschedule(action);
+                }
+            });
         }
     }
 
+
+    private void _reschedule(Func<bool> action)
+    {
+        lock (_lo)
+        {
+            _mapActions[DateTime.UtcNow] = action;
+        }
+    }
+    
 
     /**
      * Check, if a timer has been set up to trigger at the given point.
@@ -116,7 +132,7 @@ public class Timeline : IDisposable
     }
 
     
-    public void RunAt(string key, TimeSpan offset, Action action)
+    public void RunAt(string key, TimeSpan offset, Func<bool> action)
     {
         DateTime tsTarget;
         DateTime now = DateTime.Now;

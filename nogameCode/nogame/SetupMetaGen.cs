@@ -128,6 +128,7 @@ public class SetupMetaGen
         _worldMetaGen.SetupComplete();
 
         _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
+        
         {
             var elevationCache = engine.elevation.Cache.Instance();
             var elevationBaseFactory = new terrain.ElevationBaseFactory();
@@ -135,6 +136,8 @@ public class SetupMetaGen
                 engine.elevation.Cache.LAYER_BASE + "/000002/fillGrid",
                 elevationBaseFactory);
         }
+
+        _worldMetaGen.Populate();
     }
 
 

@@ -164,8 +164,14 @@ public class TitleModule : engine.AModule
 
         foreach (var card in _cards)
         {
-            timeline.RunAt(card.StartReference, card.StartOffset, () => { _onCardStart(card); });
-            timeline.RunAt(card.EndReference, card.EndOffset, () => { _onCardStop(card); });
+            timeline.RunAt(card.StartReference, card.StartOffset, () => {
+                _onCardStart(card);
+                return true; 
+            });
+            timeline.RunAt(card.EndReference, card.EndOffset, () => {
+                _onCardStop(card);
+                return true;
+            });
         }
 
         _engine.OnLogicalFrame += _onLogicalFrame;

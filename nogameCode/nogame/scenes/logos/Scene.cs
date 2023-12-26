@@ -72,13 +72,14 @@ public class Scene : AModule, IScene
     }
 
 
-    private void _hideTitle()
+    private bool _hideTitle()
     {
         _shallHideTitle = true;
+        return true;
     }
 
 
-    private void _preload()
+    private bool _preload()
     {
         /*
          * Start preloading in the background.
@@ -94,6 +95,8 @@ public class Scene : AModule, IScene
                 //Vector3.Zero
                 );
         });
+
+        return true;
     }
     
 

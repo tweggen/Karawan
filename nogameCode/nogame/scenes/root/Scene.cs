@@ -5,6 +5,7 @@ using builtin.modules;
 using engine;
 using engine.joyce;
 using engine.news;
+using static engine.Logger;
 
 namespace nogame.scenes.root;
 
@@ -35,19 +36,6 @@ public class Scene : AModule, IScene, IInputPart
         //new MyModule<builtin.modules.Stats>(),
         new SharedModule<builtin.controllers.InputController>(),
     };
-    
-    //private nogame.modules.World _moduleWorld;
-    // private builtin.modules.ScreenComposer _moduleScreenComposer; 
-    //private nogame.modules.playerhover.Module _modulePlayerhover;
-    //private nogame.modules.Gameplay _moduleGameplay;
-    //private modules.menu.Module _moduleUi = null;
-    // private nogame.modules.skybox.Module _moduleSkybox;
-    //private nogame.modules.osd.Display _moduleOsdDisplay;
-    // private nogame.modules.osd.Camera _moduleOsdCamera;
-    //private nogame.modules.osd.Scores _moduleOsdScores;
-    //private modules.map.Module _moduleMap;
-    //private nogame.modules.minimap.Module _moduleMiniMap;
-    //private builtin.controllers.InputController _moduleInputController;
     
 
     private bool _isMapShown = false;
@@ -139,8 +127,21 @@ public class Scene : AModule, IScene, IInputPart
     }
 
     
-    private void _kickoffScene()
+    private bool _kickoffScene()
     {
+        /*
+         * First check, if the world loader already is available. If not,
+         * we need to postpone this scene's start.
+         */
+        if (engine.world.MetaGen.Instance().Loader == null)
+        {
+            Warning("Unable to start main scene, no world loader available.");
+            return false;
+        }
+        
+        /*
+         * Inform the rest of the world that the main scene has started. 
+         */
         I.Get<EventQueue>().Push(new Event("nogame.scenes.root.Scene.kickoff", "now"));
         
         /*
@@ -150,7 +151,9 @@ public class Scene : AModule, IScene, IInputPart
         {
             M<modules.osd.Camera>().ModuleActivate(_engine);
             _engine.SuggestEndLoading();
-        });        
+        });
+        
+        return true;
     }
     
     

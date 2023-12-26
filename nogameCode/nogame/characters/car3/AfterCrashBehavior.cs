@@ -117,11 +117,9 @@ public class AfterCrashBehavior : ABehavior
                 lock (_engine.Simulation)
                 {
                     var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
-                    // TXWTODO: Why isn't this working? Isn't that the idea of ref ?
-                    // entity.Get<engine.physics.components.Body>().Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
-                    cCarDynamic = entity.Get<engine.physics.components.Body>();
-                    cCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
-                    entity.Set(cCarDynamic);
+                    ref engine.physics.components.Body refCCarDynamic = ref entity.Get<engine.physics.components.Body>();
+                    refCCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
+                    cCarDynamic = refCCarDynamic;
                     entity.Remove<engine.physics.components.Body>();
 
                     prefTarget.Awake = false;

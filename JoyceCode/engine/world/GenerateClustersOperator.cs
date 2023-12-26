@@ -30,20 +30,15 @@ public class GenerateClustersOperator : world.IWorldOperator
         return size;
     }
 
+
     /**
-     * Create the actual cities.
+     * Generate a list of outlines for the clusters that make sense.
+     * After this functions, the clusters are not entirely filled yet.
      *
-     * Clusters/cities are the objects in the void which may be
-     * interconnected by roads/trains .
-     *
-     * The actual generation function shall be replaced by a reference
-     * to an [global] operator doing the actual work. This function shall just
-     * manage the actual extents. However, since this is once per world, we
-     * currently keep it in the world metagen.
-     * That way, the actual cluster operator working on the fragments can just
-     * refer to this data.
+     * @param acd
+     *      This list of clusters will be filled with new clusterDEsc.
      */
-    public System.Func<Task> WorldOperatorApply(world.MetaGen worldMetaGen) => new(async () =>
+    private void _generateClusterList(MetaGen worldMetaGen, List<ClusterDesc> acd)
     {
         tools.NameGenerator nameGenerator = tools.NameGenerator.Instance();
 
@@ -57,19 +52,6 @@ public class GenerateClustersOperator : world.IWorldOperator
         int nMaxClusters = (int)((world.MetaGen.MaxWidth / 1000f) * (world.MetaGen.MaxHeight / 1000f) / 5f);
         Trace($"Generating a maximum of {nMaxClusters} cluster.");
 
-
-        /*
-         * Array of clusters (cities).
-         * Clusters are somehow centered around these points.
-         * One point is guaranteed to be at 0.
-         */
-        List<ClusterDesc> acd = new();
-
-        /*
-         * Create the cluster list. The cluster list will make itself a global
-         * entity available in the catalogue.
-         */
-        var clusterList = ClusterList.Instance();
 
         int idxCluster = 0;
         Trace("GenerateClustersOperator: Generating cluster list...");
@@ -235,12 +217,22 @@ public class GenerateClustersOperator : world.IWorldOperator
         /*
          * Remove merged clusters.
          */
-        acd = acd.FindAll(c => !c.Merged);
+        acd.RemoveAll(c => c.Merged);
         nClusters = acd.Count;
-
+        
         Trace("GenerateClustersOperator: Merged " + nMerges + " clusters to " + (nClusters - nMerges * 2));
-        Trace("GenerateClustersOperator: Computing data highways...");
+    }
+    
 
+    /**
+     * Generate the per cluster information.
+     * This also calls the cluster operators.
+     */
+    private void _fillClusters(MetaGen worldMetaGen, List<ClusterDesc> acd)
+    {
+        int nClusters = acd.Count;
+        Trace($"Filling {nClusters} clusters.");
+        
         /*
          * Now generate per cluster info.
          */
@@ -287,17 +279,71 @@ public class GenerateClustersOperator : world.IWorldOperator
 
             worldMetaGen.GenerateFragmentOperatorsForCluster(newKey, cl1);
         }
+    }
 
+    
+    /**
+    * Make the clusters available in internal data structures.
+    */
+    private void _useClusters(MetaGen worldMetaGen, List<ClusterDesc> acd)
+    {
         /*
-         * Now add the clusters to the clusterList and thus to the catalogue.
+         * Create the cluster list. The cluster list will make itself a global
+         * entity available in the catalogue.
          */
-        foreach (var clusterDesc in acd)
-        {
-            clusterList.AddCluster(clusterDesc);
-        }
+        var clusterList = ClusterList.Instance();
+        clusterList.SetFrom(acd);
+    }
 
+
+    private void _generateClusters(MetaGen worldMetaGen)
+    {
+        List<ClusterDesc> acd = new();
+        _generateClusterList(worldMetaGen, acd);
+        _fillClusters(worldMetaGen, acd);
+        _useClusters(worldMetaGen, acd);
+    }
+
+
+    private void _loadClusters()
+    {
+    }
+
+
+    private void _saveClusters()
+    {
+        
+    }
+    
+    
+    /**
+     * Load or compute the clusters.
+     */
+    private void _findClusters(MetaGen worldMetaGen)
+    {
+        _generateClusters(worldMetaGen);
+    }
+    
+    
+    /**
+     * Create the actual cities.
+     *
+     * Clusters/cities are the objects in the void which may be
+     * interconnected by roads/trains .
+     *
+     * The actual generation function shall be replaced by a reference
+     * to an [global] operator doing the actual work. This function shall just
+     * manage the actual extents. However, since this is once per world, we
+     * currently keep it in the world metagen.
+     * That way, the actual cluster operator working on the fragments can just
+     * refer to this data.
+     */
+    public System.Func<Task> WorldOperatorApply(world.MetaGen worldMetaGen) => new(async () =>
+    {
         Trace("GenerateClustersOperator: Done.");
+        _findClusters(worldMetaGen);
     });
+    
 
     public GenerateClustersOperator(string strKey)
     {

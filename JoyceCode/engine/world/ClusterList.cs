@@ -72,6 +72,19 @@ namespace engine.world
             }
         }
 
+
+        private void _addClusterNoLock(ClusterDesc clusterDesc)
+        {
+            _listClusters.Add(clusterDesc);
+            _octreeClusters.Add(clusterDesc,
+                new BoundingBox(
+                    clusterDesc.Pos,
+                    new Vector3(1f, 1f, 1f) * clusterDesc.Size
+                )
+            );
+        }
+        
+        
         /**
          * Add a new cluster to the list of cluster. 
          * To keep everything consistent, this method is responsible for adding
@@ -81,15 +94,25 @@ namespace engine.world
         {
             lock (_lo)
             {
-                _listClusters.Add(clusterDesc);
-                _octreeClusters.Add(clusterDesc,
-                    new BoundingBox(
-                        clusterDesc.Pos,
-                        new Vector3(1f, 1f, 1f) * clusterDesc.Size
-                    )
-                );
+                _addClusterNoLock(clusterDesc);
             }
         }
+
+
+        /**
+         * Use the clusters given in this clusterList atomically.
+         */
+        public void SetFrom(IList<ClusterDesc> clusterList)
+        {
+            lock (_lo)
+            {
+                foreach (var clusterDesc in clusterList)
+                {
+                    _addClusterNoLock(clusterDesc);
+                }
+            }
+        }
+        
 
         private ClusterList() 
         {
@@ -97,6 +120,7 @@ namespace engine.world
             _octreeClusters = new( MetaGen.MaxWidth, Vector3.Zero, 100f, 1.2f);
         }
 
+        
         public static ClusterList Instance()
         {
             lock( _lockObject)

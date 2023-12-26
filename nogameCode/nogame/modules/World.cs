@@ -73,6 +73,11 @@ public class World : AModule
         
         _worldMetaGen = MetaGen.Instance();
         _worldLoader = _worldMetaGen.Loader;
+        if (null == _worldLoader)
+        {
+            ErrorThrow("_worldLoader is not supposed to be null here.", m => new InvalidOperationException(m));
+            return;
+        }
 
        
         /*

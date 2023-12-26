@@ -61,7 +61,8 @@ public class Main
 
     private void _setupMetaGen()
     {
-        MetaGen.Instance().WorldOperatorAdd(new nogame.characters.intercity.GenerateCharacterOperator(_e));
+        MetaGen.Instance().WorldBuildingOperatorAdd(new nogame.characters.intercity.GenerateTracksOperator(_e));
+        MetaGen.Instance().WorldPopulatingOperatorAdd(new nogame.characters.intercity.GenerateCharacterOperator(_e));
     }
 
     

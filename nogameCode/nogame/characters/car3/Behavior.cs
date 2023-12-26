@@ -34,14 +34,14 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
             /*
              * Get a copy of the original.
              */
-            cCarKinetic = me.Entity.Get<engine.physics.components.Kinetic>();
-            var bodyHandle = cCarKinetic.Reference.Handle;
-            cCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
-
+            ref engine.physics.components.Kinetic refCCarKinetic = ref me.Entity.Get<engine.physics.components.Kinetic>();
+            var bodyHandle = refCCarKinetic.Reference.Handle;
             /*
              * Prevent value from automatic removal, patching it in place.
              */
-            me.Entity.Set(cCarKinetic);
+            refCCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
+            cCarKinetic = refCCarKinetic;
+
             me.Entity.Remove<engine.physics.components.Kinetic>();
 
             lock (_engine.Simulation)

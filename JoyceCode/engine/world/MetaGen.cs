@@ -63,9 +63,10 @@ public class MetaGen
 
     private object _lo = new();
 
-    private List<engine.world.IWorldOperator> _worldOperators;
-    private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators;
-    private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList;
+    private List<engine.world.IWorldOperator> _worldBuildingOperators = new();
+    private List<engine.world.IWorldOperator> _worldPopulatingOperators = new();
+    private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators = new();
+    private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList = new();
 
     private meta.ExecDesc _edRoot;
     private meta.AExecNode _enRoot;
@@ -234,12 +235,12 @@ public class MetaGen
      * Execute all world operators for this metagen.
      * This can be terrain generatation, cluster generation etc. .
      */
-    private void _applyWorldOperators()
+    private void _applyOperators(IList<IWorldOperator> operators)
     {
-        Trace("WorldMetaGen: Calling world operators...");
+        Trace("WorldMetaGen: Calling operators...");
         Task applyTask = new Task(async () =>
         {
-            foreach (var o in _worldOperators)
+            foreach (var o in operators)
             {
                 try
                 {
@@ -265,16 +266,26 @@ public class MetaGen
 
     /**
      * Call this after you added all of the modules.
+     * This invokes all the world-building operators. Calling this might be
+     * required to create vital infrastructure.
+     * They may not call the world loader.-
      */
     public void SetupComplete()
     {
-        /*
-         * One time operations: Apply all world operators.
-         */
-        _applyWorldOperators();
-        //Task.Run(async () => await _applyWorldOperators());
+        _applyOperators(_worldBuildingOperators);
     }
 
+
+    /**
+     * Call this after the world has been globally initialised.
+     * It initializes global, non-per-fragment characters and objects.
+     * They already may use the world loader.
+     */
+    public void Populate()
+    {
+        _applyOperators(_worldPopulatingOperators);
+    }
+    
 
     private void _unitExecDesc()
     {
@@ -331,34 +342,29 @@ public class MetaGen
         MaxPos = new Vector3(MaxWidth / 2f - 1f, 0f, MaxHeight / 2f - 1f);
         MinPos = new Vector3(-MaxWidth / 2f + 1f, 0f, -MaxWidth / 2f + 1f);
 
-        _worldOperators = new();
-        _fragmentOperators = new();
-        _clusterFragmentOperatorFactoryList = new();
-
         _unitExecDesc();
 
-        _worldOperators.Add(new engine.world.GenerateClustersOperator(_myKey));
-
-#if false
-            if (engine.GlobalSettings.Get("world.CreateStreetAnnotations") != "false")
-            {
-                AddClusterFragmentOperatorFactory(
-                    (string newKey, ClusterDesc clusterDesc) =>
-                        new engine.streets.GenerateClusterStreetAnnotationsOperator(clusterDesc, newKey)
-                );
-            } 
-#endif
+        _worldBuildingOperators.Add(new engine.world.GenerateClustersOperator(_myKey));
     }
 
 
-    public void WorldOperatorAdd(IWorldOperator worldOperator)
+    public void WorldBuildingOperatorAdd(IWorldOperator worldOperator)
     {
         lock (_lo)
         {
-            _worldOperators.Add(worldOperator);
+            _worldBuildingOperators.Add(worldOperator);
         }
     }
 
+
+    public void WorldPopulatingOperatorAdd(IWorldOperator worldOperator)
+    {
+        lock (_lo)
+        {
+            _worldPopulatingOperators.Add(worldOperator);
+        }
+    }
+    
 
     public void SetLoader(in world.Loader loader)
     {

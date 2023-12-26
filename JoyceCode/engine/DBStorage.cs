@@ -151,6 +151,22 @@ public class DBStorage : IDisposable
         return haveIt;
     }
     
+    
+    public bool TryStore<ObjType>(ObjType obj) where ObjType : class
+    {
+        lock (_lo)
+        {
+            if (obj == null)
+            {
+                ErrorThrow("obj is null", m => new ArgumentNullException(m));
+            }
+            var col = _db.GetCollection<ObjType>();
+            col.Upsert(obj);
+            _db.Commit();
+        }
+        return true;
+    }
+    
 
     public void Dispose()
     {

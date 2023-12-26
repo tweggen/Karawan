@@ -63,11 +63,6 @@ public class ClusterDesc
     private streets.StrokeStore _strokeStore;
 
     /**
-     * Street generator will be initialized on demand.
-     */
-    private streets.Generator _streetGenerator;
-
-    /**
      * In addition, each cluster has a lot generator associated.
      */
     private streets.QuarterGenerator _quarterGenerator;
@@ -229,7 +224,7 @@ public class ClusterDesc
      * Using the information about the next cities, create seed points for 
      * the map based on the interconnecting stations.
      */
-    private void _addHighwayTriggers()
+    private void _addHighwayTriggers(Generator streetGenerator)
     {
         _initialOuterStreetLength =
             Single.Max(35f, Single.Min(1000f, Size) / 18f);
@@ -249,7 +244,7 @@ public class ClusterDesc
             var newB = new engine.streets.StreetPoint();
             var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 
                 _initialInnerStreetLength, true, _initialInnerStreetWeight );
-            _streetGenerator.AddStartingStroke(stroke);
+            streetGenerator.AddStartingStroke(stroke);
         }
 #if true
         /*
@@ -261,7 +256,7 @@ public class ClusterDesc
             var newB = new StreetPoint();
             var stroke = Stroke.CreateByAngleFrom( newA, newB, (float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            _streetGenerator.AddStartingStroke(stroke);
+            streetGenerator.AddStartingStroke(stroke);
         }
         {
             var newA = new StreetPoint();
@@ -269,7 +264,7 @@ public class ClusterDesc
             var newB = new StreetPoint();
             var stroke = Stroke.CreateByAngleFrom( newA, newB, 3f*(float)Math.PI*0.25f,
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            _streetGenerator.AddStartingStroke(stroke);
+            streetGenerator.AddStartingStroke(stroke);
         }
         {
             var newA = new StreetPoint();
@@ -277,7 +272,7 @@ public class ClusterDesc
             var newB = new StreetPoint();
             var stroke = Stroke.CreateByAngleFrom( newA, newB, -(float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            _streetGenerator.AddStartingStroke(stroke);
+            streetGenerator.AddStartingStroke(stroke);
         }
         {
             var newA = new StreetPoint();
@@ -285,40 +280,67 @@ public class ClusterDesc
             var newB = new StreetPoint();
             var stroke = Stroke.CreateByAngleFrom( newA, newB, -3.0f*(float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
-            _streetGenerator.AddStartingStroke(stroke);
+            streetGenerator.AddStartingStroke(stroke);
         }
 #endif
     }
 
 
+    private void _findStrokes()
+    {
+        /*
+         * First, generate the actual streets.
+         */
+        _strokeStore = new streets.StrokeStore(Size);
+
+        Generator streetGenerator = new Generator();
+        streetGenerator.SetAnnotation($"Cluster {Name}");
+        streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
+        streetGenerator.SetBounds(-Size / 2f, -Size / 2f, Size / 2f, Size / 2f);
+        _addHighwayTriggers(streetGenerator);
+        streetGenerator.Generate();
+        streetGenerator = null;
+    }
+
+
+    private void _processStrokes()
+    {
+        /*
+         * Unfortunately, we also need to generate the sections at this point.
+         */
+        foreach (var sp in _strokeStore.GetStreetPoints())
+        {
+            sp.GetSectionArray();
+        }
+
+    }
+
+
+    private void _findQuarters()
+    {
+        /*
+         * Now compute the quarters from the streets.
+         */
+        _quarterStore = new streets.QuarterStore();
+        _quarterGenerator = new streets.QuarterGenerator();
+        _quarterGenerator.Reset("quarters-" + _strKey, _quarterStore, _strokeStore);
+        _quarterGenerator.Generate();
+    }
+    
+
+    /**
+     * Load or compute the streets of this city.
+     */
     private void _triggerStreets()
     {
         lock (_lo)
         {
-            if (null == _streetGenerator)
+            if (null == _strokeStore)
             {
-                _strokeStore = new streets.StrokeStore(Size);
-                _streetGenerator = new streets.Generator();
-                _quarterStore = new streets.QuarterStore();
-                _quarterGenerator = new streets.QuarterGenerator();
-
-                _streetGenerator.SetAnnotation($"Cluster {Name}");
-                _streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
-                _streetGenerator.SetBounds(-Size / 2f, -Size / 2f, Size / 2f, Size / 2f);
-                _addHighwayTriggers();
-                _streetGenerator.Generate();
-
-                /*
-                 * Unfortunately, we also need to generate the sections at this point.
-                 */
-                foreach (var sp in _strokeStore.GetStreetPoints())
-                {
-                    sp.GetSectionArray();
-                }
-
-                _quarterGenerator.Reset("quarters-" + _strKey, _quarterStore, _strokeStore);
-                _quarterGenerator.Generate();
-
+                _findStrokes();
+                _processStrokes();
+                _findQuarters();
+                
                 Trace(
                     $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
                     );
@@ -369,6 +391,5 @@ public class ClusterDesc
         _nClosest = 0;
         Merged = false;
         // Street generator will be initialized on demand.
-        _streetGenerator = null;
     }
 }
