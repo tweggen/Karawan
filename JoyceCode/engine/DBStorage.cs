@@ -14,9 +14,17 @@ namespace engine;
 public class DBStorage : IDisposable
 {
     private object _lo = new();
-    private LiteDatabase _db;
+
+    private Dictionary<string, LiteDatabase> _mapDBs = new();
+
     private BsonMapper _mappers;
 
+
+    private const string DbFileSuffix = ".db";
+    private const string DbGameState = "gamestate"; 
+    private const string DbWorldCache = "worldcache"; 
+    
+    
     private BsonMapper _createMappers()
     {
         BsonMapper m = new();
@@ -38,16 +46,20 @@ public class DBStorage : IDisposable
         return m;
     }
     
-    private bool _readGameState<GS>(out GS gameState) where GS : class
+    
+    
+    
+    
+    private bool _readObject<ObjType>(LiteDatabase db, out ObjType gameState) where ObjType : class
     {
         bool haveIt = false;
         gameState = null;
         try
         {
-            var col = _db.GetCollection<GS>();
+            var col = db.GetCollection<ObjType>();
             Trace($"Collection has {col.Count()}: {col}");
             var allGameStates = col.FindAll();
-            GS? foundGameState = col.FindById(1);
+            ObjType? foundGameState = col.FindById(1);
             if (foundGameState != null)
             {
                 gameState = foundGameState;
@@ -63,25 +75,27 @@ public class DBStorage : IDisposable
     }
     
 
-    private void _writeGameState<GS>(GS gameState) where GS : class
+    private void _writeObject<ObjType>(LiteDatabase db, ObjType gameState) where ObjType : class
     {
         if (gameState == null)
         {
             ErrorThrow("GameState is null", m => new ArgumentNullException(m));
         }
-        var col = _db.GetCollection<GS>();
+        var col = db.GetCollection<ObjType>();
         col.Upsert(gameState);
-        _db.Commit();
+        db.Commit();
     }
+    
 
-
-    private bool _readCollection<ObjType>(out IEnumerable<ObjType> c) where ObjType : class
+    private bool _readCollection<ObjType>(
+        LiteDatabase db,
+        out IEnumerable<ObjType> c) where ObjType : class
     {
         bool haveIt = false;
         c = null;
         try
         {
-            var col = _db.GetCollection<ObjType>();
+            var col = db.GetCollection<ObjType>();
             
             Trace($"Collection has {col.Count()}: {col}");
             if (0 == col.Count())
@@ -101,8 +115,8 @@ public class DBStorage : IDisposable
                 /*
                  * If we have an exception here we better delete this collection.
                  */
-                _db.DropCollection(typeof(ObjType).Name);
-                _db.Commit();
+                db.DropCollection(typeof(ObjType).Name);
+                db.Commit();
             }
         }
         catch (Exception e)
@@ -114,7 +128,9 @@ public class DBStorage : IDisposable
     }
     
 
-    private void _writeCollection<ObjType>(IEnumerable<ObjType> c) where ObjType : class
+    private void _writeCollection<ObjType>(
+        LiteDatabase db,
+        IEnumerable<ObjType> c) where ObjType : class
     {
         if (c == null)
         {
@@ -122,34 +138,43 @@ public class DBStorage : IDisposable
             return;
         }
 
-        var col = _db.GetCollection<ObjType>();
+        var col = db.GetCollection<ObjType>();
         col.DeleteAll();
         col.Insert(c);
-        _db.Commit();
+        db.Commit();
     }
     
 
-    private void _close()
+    private void _close(string dbName)
     {
-        if (null != _db)
+        LiteDatabase db = _mapDBs[dbName];
+        if (null != db)
         {
-            _db.Commit();
-            _db.Dispose();
-            _db = null;
+            db.Commit();
+            db.Dispose();
+            db = null;
+            _mapDBs[dbName] = null;
         }
     }
     
     
-    private void _open()
+    private LiteDatabase _open(string dbName)
     {
-        if (null != _db)
+        LiteDatabase db;
+        if (_mapDBs.TryGetValue(dbName, out db)) 
         {
-            ErrorThrow($"I did not expect db to be open here.", m => new InvalidOperationException(m));
+            if (db != null)
+            {
+                ErrorThrow($"I did not expect db to be open here.", m => new InvalidOperationException(m));
+                return null;
+            }
         }
         string path = GlobalSettings.Get("Engine.RWPath");
-        string dbname = "gamestate.db";
+        string dbFileName = dbName + DbFileSuffix;
 
-        _db = new LiteDatabase(Path.Combine(path, dbname), _mappers);
+        db = new LiteDatabase(Path.Combine(path, dbFileName), _mappers);
+        _mapDBs[dbName] = db;
+        return db;
     }
 
 
@@ -160,17 +185,17 @@ public class DBStorage : IDisposable
         {
             try
             {
-                _open();
+                LiteDatabase db = _open(DbGameState);
                 try
                 {
-                    _writeGameState(gameState);
+                    _writeObject(db, gameState);
                 }
                 catch (Exception e)
                 {
                     Error($"Unable to write gameState: {e}");
                 }
 
-                _close();
+                _close("gamestate");
             }
             catch (Exception e)
             {
@@ -188,17 +213,17 @@ public class DBStorage : IDisposable
             gameState = null;
             try
             {
-                _open();
+                LiteDatabase db = _open(DbGameState);
                 try
                 {
-                    haveIt = _readGameState(out gameState);
+                    haveIt = _readObject(db, out gameState);
                 }
                 catch (Exception e)
                 {
                     Error($"Unable to write gameState: {e}");
                 }
 
-                _close();
+                _close(DbGameState);
             }
             catch (Exception e)
             {
@@ -216,17 +241,17 @@ public class DBStorage : IDisposable
         {
             try
             {
-                _open();
+                LiteDatabase db = _open(DbWorldCache);
                 try
                 {
-                    _writeCollection<ObjType>(obj);
+                    _writeCollection<ObjType>(db, obj);
                 }
                 catch (Exception e)
                 {
                     Error($"Unable to write collection of {obj.GetType()}: {e}");
                 }
 
-                _close();
+                _close(DbWorldCache);
                 return true;
             }
             catch (Exception e)
@@ -247,17 +272,17 @@ public class DBStorage : IDisposable
             o = null;
             try
             {
-                _open();
+                LiteDatabase db = _open(DbWorldCache);
                 try
                 {
-                    haveIt = _readCollection(out o);
+                    haveIt = _readCollection(db, out o);
                 }
                 catch (Exception e)
                 {
                     Error($"Unable to write {o.GetType()}: {e}");
                 }
 
-                _close();
+                _close(DbWorldCache);
             }
             catch (Exception e)
             {
@@ -271,7 +296,14 @@ public class DBStorage : IDisposable
     
     public void Dispose()
     {
-        _close();
+        foreach (var dbName in _mapDBs.Keys)
+        {
+            LiteDatabase db = _mapDBs[dbName];
+            if (null != db)
+            {
+                _close(dbName);
+            }
+        }
     }
 
 
