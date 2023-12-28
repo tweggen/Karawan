@@ -125,6 +125,7 @@ public class AfterCrashBehavior : ABehavior
                     prefTarget.BecomeKinematic();
                 }
 
+                entity.Disable<engine.physics.components.Body>();
                 entity.Enable<engine.physics.components.Kinetic>();
                 entity.Get<engine.behave.components.Behavior>().Provider = _oldBehavior;
                 _oldBehavior.Sync(entity);
