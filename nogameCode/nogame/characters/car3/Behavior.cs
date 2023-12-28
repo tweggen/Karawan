@@ -34,15 +34,9 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
             /*
              * Get a copy of the original.
              */
-            ref engine.physics.components.Kinetic refCCarKinetic = ref me.Entity.Get<engine.physics.components.Kinetic>();
-            var bodyHandle = refCCarKinetic.Reference.Handle;
-            /*
-             * Prevent value from automatic removal, patching it in place.
-             */
-            refCCarKinetic.Flags |= engine.physics.components.Kinetic.DONT_FREE_PHYSICS;
-            cCarKinetic = refCCarKinetic;
+            cCarKinetic = me.Entity.Get<engine.physics.components.Kinetic>();
 
-            me.Entity.Remove<engine.physics.components.Kinetic>();
+            me.Entity.Disable<engine.physics.components.Kinetic>();
 
             lock (_engine.Simulation)
             {
@@ -54,7 +48,7 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
                  * We need to call Simulation.Bodies.SetLocalInertia to remove the kinematic from a
                  * couple of lists. 
                  */
-                _engine.Simulation.Bodies.SetLocalInertia(bodyHandle, pinertiaSphere);
+                _engine.Simulation.Bodies.SetLocalInertia(cCarKinetic.Reference.Handle, pinertiaSphere);
             }
 
             me.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, me));

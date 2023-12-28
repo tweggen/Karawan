@@ -117,19 +117,15 @@ public class AfterCrashBehavior : ABehavior
                 lock (_engine.Simulation)
                 {
                     var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
-                    ref engine.physics.components.Body refCCarDynamic = ref entity.Get<engine.physics.components.Body>();
-                    refCCarDynamic.Flags |= engine.physics.components.Body.DONT_FREE_PHYSICS;
-                    cCarDynamic = refCCarDynamic;
-                    entity.Remove<engine.physics.components.Body>();
+                    cCarDynamic = entity.Get<engine.physics.components.Body>();
+
+                    entity.Disable<engine.physics.components.Body>();
 
                     prefTarget.Awake = false;
                     prefTarget.BecomeKinematic();
                 }
 
-                entity.Set(
-                    new engine.physics.components.Kinetic(
-                        cCarDynamic.Reference, 
-                        cCarDynamic.CollisionProperties));
+                entity.Enable<engine.physics.components.Kinetic>();
                 entity.Get<engine.behave.components.Behavior>().Provider = _oldBehavior;
                 _oldBehavior.Sync(entity);
             }
