@@ -111,12 +111,32 @@ public class LightShaderUseCase : IShaderUseCase
     {
         LightShaderUseCaseLocs l = new();
         l.Pos = new LightShaderPos[LightCollector.MAX_LIGHTS];
-        for (int i = 0; i < LightCollector.MAX_LIGHTS; ++i)
+        
+        /*
+         * Don't force setting the lights, if the shader doies not use light, dont set it.
+         */
+        try
         {
-            l.Pos[i] = new();
-            _compileLight(l.Pos[i], i, sh);
+            for (int i = 0; i < LightCollector.MAX_LIGHTS; ++i)
+            {
+                l.Pos[i] = new();
+                _compileLight(l.Pos[i], i, sh);
+            }
+
         }
-        l.AmbientLoc = (int)sh.GetUniform("col4Ambient");
+        catch (Exception e)
+        {
+            
+        }
+        try
+        {
+            l.AmbientLoc = (int)sh.GetUniform("col4Ambient");
+        }
+        catch (Exception e)
+        {
+            
+        }
+
         return l;
     }
 }

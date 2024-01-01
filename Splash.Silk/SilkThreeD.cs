@@ -502,15 +502,22 @@ public class SilkThreeD : IThreeD
     public void FillMaterialEntry(in AMaterialEntry aMaterialEntry)
     {
         SkMaterialEntry skMaterialEntry = (SkMaterialEntry) aMaterialEntry;
+        
         engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
 
         {
-            engine.joyce.AnyShader fragmentShader = jMaterial.FragmentShader;
-            if (fragmentShader == null || !fragmentShader.IsValid())
+            string fragmentShaderName = jMaterial.FragmentShader;
+            if (String.IsNullOrEmpty(fragmentShaderName))
             {
-                fragmentShader = _defaultFragmentShader;
+                fragmentShaderName = "shaders/default.frag";
             }
-
+            engine.Resource.ShaderSource? fragmentShaderSource = (I.Get<Resources>().Get(fragmentShaderName)) as engine.Resource.ShaderSource;
+            if (fragmentShaderSource == null)
+            {
+                ErrorThrow("Internal error: Even the default fragment shader is not valid.", m => new InvalidOperationException(m));
+                return;
+            }
+            engine.joyce.AnyShader? fragmentShader = new SplashAnyShader() { Source = fragmentShaderSource.ShaderCode };
             ASingleShaderEntry? aFragmentShaderEntry = _shaderManager.FindAdd(
                 fragmentShader,
                 (anyShader) => new SkSingleShaderEntry(
@@ -518,12 +525,18 @@ public class SilkThreeD : IThreeD
 
             skMaterialEntry.SkFragmentShader = ((SkSingleShaderEntry)aFragmentShaderEntry);
 
-            engine.joyce.AnyShader vertexShader = jMaterial.VertexShader;
-            if (vertexShader == null || !vertexShader.IsValid())
+            string vertexShaderName = jMaterial.VertexShader;
+            if (String.IsNullOrEmpty(vertexShaderName))
             {
-                vertexShader = _defaultVertexShader;
+                vertexShaderName = "shaders/default.vert";
             }
-
+            engine.Resource.ShaderSource? vertexShaderSource = (I.Get<Resources>().Get(vertexShaderName)) as engine.Resource.ShaderSource;
+            if (vertexShaderSource == null)
+            {
+                ErrorThrow("Internal error: Even the default vertex shader is not valid.", m => new InvalidOperationException(m));
+                return;
+            }
+            engine.joyce.AnyShader? vertexShader = new SplashAnyShader() { Source = vertexShaderSource.ShaderCode };
             ASingleShaderEntry? aVertexShaderEntry = _shaderManager.FindAdd(
                 vertexShader, 
                 (anyShader) => new SkSingleShaderEntry(
@@ -611,6 +624,7 @@ public class SilkThreeD : IThreeD
             uc.Apply(_getGL(), shader, _currentRenderFrame.LightCollector);
         }
         shader.SetUniform("fogDistance", _fogDistance);
+
         shader.SetUniform("v3AbsPosView", _vCamera);
         shader.SetUniform("frameNo", _frameno);
     }

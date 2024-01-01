@@ -965,6 +965,7 @@ namespace engine
                 Trace("Loading default resources...");
                 I.Get<Resources>().FindAdd("shaders/default.vert", (string _) => new ShaderSource("LIghtingVS.vert"));
                 I.Get<Resources>().FindAdd("shaders/default.frag", (string _) => new ShaderSource("LIghtingFS.frag"));
+                I.Get<Resources>().FindAdd("shaders/screen.frag", (string _) => new ShaderSource("ScreenFS.frag")); 
                 Trace("Loading default resources done.");
             }
             catch (Exception e)

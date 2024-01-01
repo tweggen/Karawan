@@ -10,6 +10,7 @@ public class SkProgramEntry : IDisposable
 {
     public SkSingleShaderEntry SkVertexShader;
     public SkSingleShaderEntry SkFragmentShader;
+    private bool _traceShader = false;
 
     private GL _gl;
     public uint Handle = 0xffffffff;
@@ -22,7 +23,7 @@ public class SkProgramEntry : IDisposable
         var err = _gl.GetError();
         if (err != GLEnum.NoError)
         {
-            Error($"Error setting uniform {location}: {err}");
+            if (_traceShader) Error($"Error setting uniform {location}: {err}");
         }
     }
 
@@ -32,7 +33,7 @@ public class SkProgramEntry : IDisposable
         var err = _gl.GetError();
         if (err != GLEnum.NoError)
         {
-            Error($"Error setting uniform {location}: {err}");
+            if (_traceShader) Error($"Error setting uniform {location}: {err}");
         }
     }
     
@@ -43,13 +44,14 @@ public class SkProgramEntry : IDisposable
         int location = _gl.GetUniformLocation(Handle, name);
         if (location == -1) //If GetUniformLocation returns -1 the uniform is not found.
         {
-            ErrorThrow($"{name} uniform not found on shader.", (m) => new InvalidOperationException(m));
+            if (_traceShader) Error($"{name} uniform not found on shader.");
+            return;
         }
         _gl.Uniform1(location, value);
         var err = _gl.GetError();
         if (err != GLEnum.NoError)
         {
-            Error($"Error setting uniform {name}: {err}");
+            if (_traceShader) Error($"Error setting uniform {name}: {err}");
         }
     }
 
@@ -58,13 +60,14 @@ public class SkProgramEntry : IDisposable
         int location = _gl.GetUniformLocation(Handle, name);
         if (location == -1)
         {
-            ErrorThrow($"{name} uniform not found on shader.", (m) => new InvalidOperationException(m));
+            if (_traceShader) Error($"{name} uniform not found on shader.");
+            return;
         }
         _gl.Uniform1(location, value);
         var err = _gl.GetError();
         if (err != GLEnum.NoError)
         {
-            Error($"Error setting uniform {name}: {err}");
+            if (_traceShader) Error($"Error setting uniform {name}: {err}");
         }
     }
 
@@ -73,7 +76,8 @@ public class SkProgramEntry : IDisposable
         int location = _gl.GetUniformLocation(Handle, name);
         if (location == -1)
         {
-            ErrorThrow($"{name} uniform not found on shader.", (m) => new InvalidOperationException(m));
+            if (_traceShader) Error($"{name} uniform not found on shader.");
+            return 0;
         }
 
         return (uint) location;
@@ -85,7 +89,8 @@ public class SkProgramEntry : IDisposable
         int location = _gl.GetAttribLocation(Handle, name);
         if (location == -1)
         {
-            ErrorThrow($"{name} attribute not found on shader.", (m) => new InvalidOperationException(m));
+            if (_traceShader) Error($"{name} attribute not found on shader.");
+            return 0;
         }
 
         return (uint) location;
@@ -96,7 +101,8 @@ public class SkProgramEntry : IDisposable
         int location = _gl.GetUniformLocation(Handle, name);
         if (location == -1)
         {
-            ErrorThrow($"{name} uniform not found on shader.", (m) => new InvalidOperationException(m));
+            if (_traceShader) Error($"{name} uniform not found on shader.");
+            return;
         }
         _gl.Uniform4(location, v.X, v.Y, v.Z, v.W);
     }
@@ -124,13 +130,15 @@ public class SkProgramEntry : IDisposable
     {
         _gl.Uniform3(location, value.X, value.Y, value.Z);
     }
+
     
     public void SetUniform(string name, Vector3 value)
     {
         int location = _gl.GetUniformLocation(Handle, name);
         if (location == -1)
         {
-            throw new Exception($"{name} uniform not found on shader.");
+            if (_traceShader) Error($"Unable to find uniform {name}");
+            return;
         }
         _gl.Uniform3(location, value.X, value.Y, value.Z);
     }
@@ -139,7 +147,11 @@ public class SkProgramEntry : IDisposable
     public void Use()
     {
         _gl.UseProgram(Handle);
-        CheckError(_gl, $"Error using program {Handle}.");
+        var err = _gl.GetError();
+        if (err != GLEnum.NoError)
+        {
+            if (_traceShader) Error($"Error using program {Handle}: {err}.");
+        }
     }
     
     

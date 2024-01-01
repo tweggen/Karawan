@@ -47,10 +47,9 @@ public class ScreenComposer : AModule
                 $"ScreenLayer_{l.Name}", 
                 new(2f, 2f * (float)l.Renderbuffer.Height / (float) l.Renderbuffer.Width));
             var material = new Material(){
+                FragmentShader = "shaders/screen.frag",
                 HasTransparency = true,
                 EmissiveTexture = new Texture(l.Renderbuffer.TextureName)
-                //AlbedoColor = 0xffffffff,
-                //EmissiveColor = 0xffffffff
             };
             l.Instance = InstanceDesc.CreateFromMatMesh(new MatMesh(material, mesh), 1000f);
             e.Set(new engine.joyce.components.Instance3(l.Instance));

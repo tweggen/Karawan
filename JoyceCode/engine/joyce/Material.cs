@@ -22,13 +22,13 @@ namespace engine.joyce
          * Specify the fragment shader to use.
          * If null, use the default fragment shader.
          */
-        public AnyShader FragmentShader = null;
+        public string FragmentShader = null;
         
         /**
          * Specify the vertex shader to use.
          * If null, use the default vertex shader.
          */
-        public AnyShader VertexShader = null;
+        public string VertexShader = null;
         
         public Texture Texture { get; set; } = null;
         public Texture EmissiveTexture { get; set; } = null;
