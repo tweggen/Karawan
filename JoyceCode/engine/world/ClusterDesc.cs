@@ -354,6 +354,12 @@ public class ClusterDesc
         _quarterGenerator.Reset("quarters-" + _strKey, _quarterStore, _strokeStore);
         _quarterGenerator.Generate();
     }
+
+
+    private void _saveStrokes()
+    {
+        I.Get<DBStorage>().StoreCollection(_strokeStore.GetStrokes());
+    }
     
 
     /**
@@ -372,6 +378,8 @@ public class ClusterDesc
                 Trace(
                     $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
                     );
+
+                _saveStrokes();
             }
         }
     }

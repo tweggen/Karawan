@@ -10,7 +10,10 @@ namespace engine.streets
         static private object _classLock = new();
         static private int _nextId = 10000;
 
-        public int Sid;
+        [LiteDB.BsonId]
+        public int Sid { get; set; }
+        
+        public int ClusterId { get; set; }
 
         public StrokeStore? Store;
 
@@ -23,20 +26,20 @@ namespace engine.streets
          * The weight of this stroke: Import streets will have a higher weight, 
          * some side alleys will have lower weight.
          */
-        public float Weight;
-
-
+        public float Weight { get; set; }
+        
         /**
          * Wether this one goes in primary or secondary direction.
          */
-        public bool IsPrimary;
+        public bool IsPrimary { get; set; }
 
-
+        
         /**
          * The point this stroke is coming from.
          */
         private StreetPoint _a;
-        public StreetPoint A 
+        [LiteDB.BsonIgnore]
+        public StreetPoint A
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _a;
@@ -48,7 +51,7 @@ namespace engine.streets
          * The point this stroke is going to.
          */
         private StreetPoint _b;
-
+        [LiteDB.BsonIgnore]
         public StreetPoint B
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
