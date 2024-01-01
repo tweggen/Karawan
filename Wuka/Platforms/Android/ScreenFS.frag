@@ -45,7 +45,7 @@ void main()
      */
     vec4 col4TexelEmissive;
     vec3 v3Normal = v3FragNormal;
-    vec4 v4PrevPoint = texture(texture2, vec2(fragTexCoord2.x-2, fragTexCoord2.y));
+    vec4 v4PrevPoint = texture(texture2, vec2(fragTexCoord2.x-1.0/256.0, fragTexCoord2.y));
     vec4 v4CurrPoint = texture(texture2, fragTexCoord2);
     col4TexelEmissive = vec4((v4CurrPoint.r+v4PrevPoint.r)/2.0, v4PrevPoint.g, v4CurrPoint.b, v4CurrPoint.a);
             

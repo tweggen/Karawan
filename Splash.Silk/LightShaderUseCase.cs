@@ -27,7 +27,7 @@ public class LightShaderUseCaseLocs : ShaderLocs
         try
         {
             var lightShaderPos = Pos[index];
-            bool checkLights = true;
+            bool checkLights = false;
 
             // Send to shader light enabled state and type
             sh.SetUniform(lightShaderPos.EnabledLoc, (light.enabled ? 1 : 0));
