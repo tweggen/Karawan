@@ -133,6 +133,9 @@ namespace Splash.Silk
                 case Key.Escape:
                     code = "(escape)";
                     break;
+                case Key.F10:
+                    code = "(F10)";
+                    break;
                 case Key.F11:
                     code = "(F11)";
                     _toggleFullscreen();
@@ -179,6 +182,9 @@ namespace Splash.Silk
                     break;  
                 case Key.Escape:
                     code = "(escape)";
+                    break;
+                case Key.F10:
+                    code = "(F10)";
                     break;
                 case Key.F11:
                     code = "(F11)";

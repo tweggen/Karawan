@@ -48,6 +48,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Display.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Scores.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\Behavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\DemoBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlingPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WASDPhysics.cs" />

@@ -1,17 +1,30 @@
-﻿using DefaultEcs;
+﻿using System;
+using System.Collections.Generic;
+using DefaultEcs;
 using engine;
 using engine.news;
 
 namespace nogame.modules;
 
-public class Gameplay : AModule
+public class Gameplay : AModule, IInputPart
 {
+    public static float MY_Z_ORDER = 24f;
+
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
-    private Entity _eCamera;
-    private Entity _ePlayer;
+
+    private Entity _eCurrentCamera;
+    private Entity _eCurrentTarget;
+    
+    private Entity _eDesiredCamera;
+    private Entity _eDesiredTarget;
+
+    private Entity _eLatestCamera;
+    private Entity _eCurrentPlayer;
+    
     private bool _wasEnabled = true;
+    private bool _isDemoActive = false;
 
-
+    
     private void _onRootKickoff(Event ev)
     {
         builtin.controllers.FollowCameraController fcc;
@@ -56,10 +69,8 @@ public class Gameplay : AModule
     }
     
 
-    private void _onCreateNewCameraController(Entity eCamera, Entity ePlayer)
+    private void _createFollowCameraController(Entity eCamera, Entity ePlayer)
     {
-        _killOldCameraController();
-
         if (!eCamera.IsAlive || !ePlayer.IsAlive)
         {
             return;
@@ -71,50 +82,159 @@ public class Gameplay : AModule
          */
         _ctrlFollowCamera = new(_engine, eCamera, ePlayer);
         _ctrlFollowCamera.ActivateController();
-
     }
 
 
-    private void _onNewCamera(object? sender, Entity eNewCamera)
+    private void _createDesiredCameraController()
     {
-        Entity eCurrentCamera;
-        Entity eCurrentPlayer;
+        Entity eDesiredCamera;
+        Entity eDesiredTarget;
+
         lock (_lo)
         {
-            if (_eCamera == eNewCamera)
+            eDesiredCamera = _eDesiredCamera;
+            eDesiredTarget = _eDesiredTarget;
+            
+            if (!eDesiredCamera.IsAlive || !eDesiredTarget.IsAlive)
             {
                 return;
             }
 
-            eCurrentCamera = _eCamera;
-            eCurrentPlayer = _ePlayer;
-            _eCamera = eNewCamera;
+            _eCurrentCamera = _eDesiredCamera;
+            _eCurrentTarget = _eDesiredTarget;
         }
-        
-        _onCreateNewCameraController(eNewCamera, eCurrentPlayer);
+
+
+        _createFollowCameraController(eDesiredCamera, eDesiredTarget);
+    }
+
+
+    private bool _computeDesiredCamera()
+    {
+        /*
+         * Currently, we unconditionally take the current camera and player as desired
+         * camera.
+         */
+        lock (_lo)
+        {
+            Entity eDesiredCamera;
+            Entity eDesiredTarget;
+            if (_isDemoActive)
+            {
+                eDesiredCamera = _eLatestCamera;
+                try
+                {
+                    IEnumerator<Entity> enumKinematic =
+                        _engine.GetEcsWorld().GetEntities()
+                            .With<engine.behave.components.Behavior>()
+                            .With<engine.audio.components.MovingSound>()
+                            .With<engine.physics.components.Kinetic>()
+                            .AsEnumerable().GetEnumerator();
+                    if (enumKinematic.MoveNext())
+                    {
+                        eDesiredTarget = enumKinematic.Current;
+                    }
+                    else
+                    {
+                        eDesiredTarget = _eCurrentPlayer;
+                    }
+                }
+                catch (Exception e)
+                {
+                    eDesiredTarget = _eCurrentPlayer;
+                }
+            }
+            else
+            {
+                eDesiredCamera = _eLatestCamera;
+                eDesiredTarget = _eCurrentPlayer;
+            }
+            
+            if (!eDesiredCamera.IsAlive || !eDesiredTarget.IsAlive)
+            {
+                return false;
+            }
+
+            _eDesiredCamera = eDesiredCamera;
+            _eDesiredTarget = eDesiredTarget;
+
+            if (_eCurrentCamera != _eDesiredCamera || _eDesiredTarget != _eCurrentTarget)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    private void _reviewShot()
+    {
+        if (_computeDesiredCamera())
+        {
+            _killOldCameraController();
+            _createDesiredCameraController();
+        }
+    }
+    
+    
+    private void _onNewCamera(object? sender, Entity eNewCamera)
+    {
+        lock (_lo)
+        {
+            if (_eLatestCamera == eNewCamera)
+            {
+                return;
+            }
+
+            _eLatestCamera = eNewCamera;
+        }
+
+        _reviewShot();
     }
 
 
     private void _onNewPlayer(object? sender, Entity eNewPlayer)
     {
-        Entity eCurrentCamera;
-        Entity eCurrentPlayer;
         lock (_lo)
         {
-            if (_ePlayer == eNewPlayer)
+            if (_eCurrentPlayer== eNewPlayer)
             {
                 return;
             }
-
-            eCurrentCamera = _eCamera;
-            eCurrentPlayer = _ePlayer;
-            _ePlayer = eNewPlayer;
+            _eCurrentPlayer = eNewPlayer;
         }
-        
-        _onCreateNewCameraController(eCurrentCamera, eNewPlayer);
+
+        _reviewShot();
+    }
+
+
+    private void _toggleDemo()
+    {
+        lock (_lo)
+        {
+            _isDemoActive = !_isDemoActive;
+        }
+        _reviewShot();
     }
     
+    
+    public void InputPartOnInputEvent(engine.news.Event ev)
+    {
+        if (ev.Type == Event.INPUT_KEY_PRESSED)
+        {
+            switch (ev.Code)
+            {
+                case "(F10)":
+                    _toggleDemo();
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 
+    
     public override void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
@@ -123,6 +243,7 @@ public class Gameplay : AModule
         
         I.Get<SubscriptionManager>().Unsubscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
         _engine.RemoveModule(this);
+        I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
         _killOldCameraController();
         base.ModuleDeactivate();
     }
@@ -131,6 +252,7 @@ public class Gameplay : AModule
     public override void ModuleActivate(Engine engine0)
     {
         base.ModuleActivate(engine0);
+        I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.AddModule(this);
 
         {
@@ -139,10 +261,11 @@ public class Gameplay : AModule
 
             lock (_lo)
             {
-                _eCamera = eCamera;
-                _ePlayer = ePlayer;
+                _eLatestCamera = eCamera;
+                _eCurrentPlayer = ePlayer;
             }
-            _onCreateNewCameraController(eCamera, ePlayer);
+
+            _reviewShot();
         }
 
         I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
