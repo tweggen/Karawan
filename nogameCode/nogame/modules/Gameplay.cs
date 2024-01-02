@@ -66,6 +66,8 @@ public class Gameplay : AModule, IInputPart
     {
         _ctrlFollowCamera?.DeactivateController();
         _ctrlFollowCamera = null;
+        _eCurrentTarget = default;
+        _eCurrentCamera = default;
     }
     
 

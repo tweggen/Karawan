@@ -90,7 +90,6 @@ public class FollowCameraController : IInputPart
 
     private void _buildPhysics()
     {
-
         lock (_engine.Simulation)
         {
             Vector3 posShip = _prefPlayer.Pose.Position;
@@ -132,7 +131,27 @@ public class FollowCameraController : IInputPart
                         CollisionProperties.CollisionFlags.IsTangible
                         | CollisionProperties.CollisionFlags.IsDetectable,
                     Name = CameraPhysicsName
-                }));
+                })
+                {
+                    ReleaseActions = {
+                        () =>
+                        {
+                            if (_chandleCameraServo.Value != 0)
+                            {
+                                _engine.Simulation.Solver.Remove(_chandleCameraServo);
+                                _chandleCameraServo = default;
+                            }
+
+                            if (_pshapeCameraSphere.Index != 0)
+                            {
+                                _engine.Simulation.Shapes.Remove(_pshapeCameraSphere);
+                                _pshapeCameraSphere = default;
+                            }
+                        }
+                        
+                    }
+                }
+            );
         }
 
     }
@@ -140,7 +159,10 @@ public class FollowCameraController : IInputPart
 
     private void _destroyPhysics()
     {
-
+        lock (_engine.Simulation)
+        {
+            _eTarget.Remove<engine.physics.components.Body>();
+        }
     }
 
 
