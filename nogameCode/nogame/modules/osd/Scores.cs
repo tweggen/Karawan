@@ -40,7 +40,7 @@ public class Scores : engine.AModule
             HAlign.Right
         ));
         _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
-            new Vector2(786f-64f-32f-64f, 48f),
+            new Vector2(786f-64f-32f-96f, 48f),
             new Vector2(64f, 40f),
             $"{gameState.NumberPolytopes}",
             32,

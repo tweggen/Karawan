@@ -55,7 +55,7 @@ public class Module : AModule
             I.Get<engine.joyce.TransformApi>().SetTransforms(
                 _eMiniMap, true, MapCameraMask,
                 new Quaternion(0f, 0f, 0f, 0f),
-                new Vector3(-1f+0.15f, 9f/16f-0.24f, -1f));
+                new Vector3(-1f+0.15f, 9f/16f-0.22f, -1f));
 
             _eMiniMap.Set(new engine.behave.components.Clickable()
             {

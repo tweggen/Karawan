@@ -285,7 +285,7 @@ public class Module : engine.AModule
             displayName = "void";
         }
 
-        {
+        if (false) {
             string strFacingObject;
             lock (_lo)
             {
