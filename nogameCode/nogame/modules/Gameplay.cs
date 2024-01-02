@@ -130,16 +130,20 @@ public class Gameplay : AModule, IInputPart
                         _engine.GetEcsWorld().GetEntities()
                             .With<engine.behave.components.Behavior>()
                             .With<engine.audio.components.MovingSound>()
+                            .With<engine.joyce.components.EntityName>()
                             .With<engine.joyce.components.Transform3ToWorld>()
                             .With<engine.physics.components.Kinetic>()
                             .AsEnumerable();
                     DefaultEcs.Entity ePossibleHike = default;
                     foreach (var entity in enumKinematic)
                     {
-                        if (entity.Get<engine.joyce.components.Transform3ToWorld>().IsVisible)
+                        if (entity.Get<engine.joyce.components.EntityName>().Name.Contains("car"))
                         {
-                            ePossibleHike = entity;
-                            break;
+                            if (entity.Get<engine.joyce.components.Transform3ToWorld>().IsVisible)
+                            {
+                                ePossibleHike = entity;
+                                break;
+                            }
                         }
                     }
                     if (ePossibleHike == default)
