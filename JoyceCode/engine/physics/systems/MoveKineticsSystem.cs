@@ -1,11 +1,5 @@
-﻿using BepuPhysics;
-using System;
+﻿using System;
 using System.Numerics;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using DefaultEcs;
 using static engine.Logger;
 
 namespace engine.physics.systems;
@@ -33,22 +27,29 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
         foreach (var entity in entities)
         {
-            var cKinetic = entity.Get<physics.components.Kinetic>();
-            var oldPos = cKinetic.LastPosition;
+            ref physics.components.Kinetic cRefKinetic = ref entity.Get<physics.components.Kinetic>();
+            var oldPos = cRefKinetic.LastPosition;
             var newPos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
 
-            bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <= cKinetic.MaxDistance * cKinetic.MaxDistance; 
-            bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= cKinetic.MaxDistance * cKinetic.MaxDistance; 
+            float maxDistance = cRefKinetic.MaxDistance;
+            bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <=  maxDistance * maxDistance; 
+            bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= maxDistance * maxDistance; 
 
-            var bodyReference = cKinetic.Reference;
+            var bodyReference = cRefKinetic.Reference;
 
             if (isInside)
             {
+                if (entity.Has<engine.joyce.components.EntityName>() &&
+                    entity.Get<engine.joyce.components.EntityName>().Name.Contains("car"))
+                {
+                    int a = 1;
+                }
+            
                 // TXWTODO: Can we write that more efficiently?
                 if (oldPos != newPos)
                 {
                     bodyReference.Pose.Position = newPos;
-                    entity.Get<physics.components.Kinetic>().LastPosition = newPos;
+                    cRefKinetic.LastPosition = newPos;
                     if (oldPos != Vector3.Zero)
                     {
                         Vector3 vel = (newPos - oldPos) / dt;

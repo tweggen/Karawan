@@ -52,7 +52,7 @@ public class FollowCameraController : IInputPart
     public float CameraRadius { get; set; } = 0.5f;
     public float CameraMass { get; set; } = 0.5f;
 
-    public float CameraDistance { get; set; } = 10.0f;
+    public float CameraDistance { get; set; } = 0.0f;
     public float CameraMinDistance { get; set; } = 2.0f;
 
     public string CameraPhysicsName { get; set; } = "CameraPhysics";
@@ -191,6 +191,37 @@ public class FollowCameraController : IInputPart
     }
 
 
+    /**
+     * Read the carrot's velocity.
+     *
+     * Entities with physics may have exact velocity attached. However, for optimization, physics
+     * only are maintained for objects close to the player. For camera targets without valid physics,
+     * we might want to consult different sources of information.
+     */
+    private void _readEntityVelocity(out Vector3 vVelocity)
+    {
+        bool haveVelocity = false;
+        vVelocity = Vector3.Zero;
+        if (_prefPlayer.Exists)
+        {
+            if (_prefPlayer.Pose.Position != Vector3.Zero
+                && _prefPlayer.Pose.Orientation != Quaternion.Identity)
+            {
+                vVelocity = _prefPlayer.Velocity.Linear;
+                haveVelocity = true;
+            }
+        }
+
+        if (!haveVelocity)
+        {
+            if (_eCarrot.IsAlive && _eCarrot.Has<engine.joyce.components.Motion>())
+            {
+                vVelocity = _eCarrot.Get<engine.joyce.components.Motion>().Velocity;
+                haveVelocity = true;
+            }
+        }
+    }
+
     private void _computePerfectCameraOrientation(
         float dt,
         in Matrix4x4 cToParentMatrix,
@@ -246,13 +277,13 @@ public class FollowCameraController : IInputPart
         //Vector3 vuOrientationFront = default;
         Quaternion qOrientationFront = default;
 
+
         /*
          * If we are a physics object that does have linear velocity, we use the
          * linear velocity as a strong motivation to align our view.
          */
-        if (_prefPlayer.Exists)
         {
-            var vVelocity = _prefPlayer.Velocity.Linear;
+            _readEntityVelocity(out var vVelocity);
             Vector2 vVelocity2 = new(vVelocity.X, vVelocity.Z);
             float velocity = vVelocity2.Length();
             if (velocity > 5f / 3.6f)
@@ -799,6 +830,7 @@ public class FollowCameraController : IInputPart
 
     public void ActivateController()
     {
+        _zoomState = CameraDistance;
         _buildPhysics();
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.OnLogicalFrame += _onLogicalFrame;

@@ -83,6 +83,10 @@ public class Gameplay : AModule, IInputPart
          * requires the playerhover.
          */
         _ctrlFollowCamera = new(_engine, eCamera, ePlayer);
+        if (_isDemoActive)
+        {
+            _ctrlFollowCamera.CameraDistance = 0.3f;
+        }
         _ctrlFollowCamera.ActivateController();
     }
 
