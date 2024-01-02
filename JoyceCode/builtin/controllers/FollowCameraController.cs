@@ -133,7 +133,7 @@ public class FollowCameraController : IInputPart
                     Name = CameraPhysicsName
                 })
                 {
-                    ReleaseActions = {
+                    ReleaseActions = new List<Action> {
                         () =>
                         {
                             if (_chandleCameraServo.Value != 0)
