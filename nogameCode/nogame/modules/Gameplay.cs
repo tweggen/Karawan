@@ -126,19 +126,29 @@ public class Gameplay : AModule, IInputPart
                 eDesiredCamera = _eLatestCamera;
                 try
                 {
-                    IEnumerator<Entity> enumKinematic =
+                    IEnumerable<Entity> enumKinematic =
                         _engine.GetEcsWorld().GetEntities()
                             .With<engine.behave.components.Behavior>()
                             .With<engine.audio.components.MovingSound>()
+                            .With<engine.joyce.components.Transform3ToWorld>()
                             .With<engine.physics.components.Kinetic>()
-                            .AsEnumerable().GetEnumerator();
-                    if (enumKinematic.MoveNext())
+                            .AsEnumerable();
+                    DefaultEcs.Entity ePossibleHike = default;
+                    foreach (var entity in enumKinematic)
                     {
-                        eDesiredTarget = enumKinematic.Current;
+                        if (entity.Get<engine.joyce.components.Transform3ToWorld>().IsVisible)
+                        {
+                            ePossibleHike = entity;
+                            break;
+                        }
+                    }
+                    if (ePossibleHike == default)
+                    {
+                        eDesiredTarget = _eCurrentPlayer;
                     }
                     else
                     {
-                        eDesiredTarget = _eCurrentPlayer;
+                        eDesiredTarget = ePossibleHike;
                     }
                 }
                 catch (Exception e)

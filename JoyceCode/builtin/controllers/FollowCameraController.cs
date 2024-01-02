@@ -489,6 +489,7 @@ public class FollowCameraController : IInputPart
     }
 
 
+#if false
     private void _servePhysicalCameraBody(in Vector3 vRealCameraPosition, in Vector3 vPerfectCameraPos,
         in Quaternion qUserCameraOrientation)
     {
@@ -512,6 +513,7 @@ public class FollowCameraController : IInputPart
             }
         }
     }
+#endif
 
 
     /**
@@ -808,13 +810,21 @@ public class FollowCameraController : IInputPart
         _engine = engine0;
         _eTarget = eTarget;
         _eCarrot = eCarrot;
-        if (!_eCarrot.Has<engine.physics.components.Body>())
+
+        if (_eCarrot.Has<engine.physics.components.Body>())
+        {
+            _prefPlayer = _eCarrot.Get<engine.physics.components.Body>().Reference;
+        }
+        else if (_eCarrot.Has<engine.physics.components.Kinetic>())
+        {
+            _prefPlayer = _eCarrot.Get<engine.physics.components.Kinetic>().Reference;
+        }
+        else
         {
             ErrorThrow($"Entity {eCarrot} does not have physics attached.", m => new InvalidOperationException(m));
             return;
         }
 
-        _prefPlayer = _eCarrot.Get<engine.physics.components.Body>().Reference;
 
         if (_eTarget.Has<engine.physics.components.Body>())
         {
