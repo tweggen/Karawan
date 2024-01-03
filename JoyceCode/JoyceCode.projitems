@@ -187,6 +187,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\SkiaSharpFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\SceneSequencer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Building.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\streets\ClusterStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\Estate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterQuartersOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterStreetAnnotationsOperator.cs" />

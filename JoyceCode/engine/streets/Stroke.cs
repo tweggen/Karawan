@@ -38,7 +38,7 @@ namespace engine.streets
          * The point this stroke is coming from.
          */
         private StreetPoint _a;
-        [LiteDB.BsonIgnore]
+        [LiteDB.BsonRef("StreetPoint")]
         public StreetPoint A
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,7 +51,7 @@ namespace engine.streets
          * The point this stroke is going to.
          */
         private StreetPoint _b;
-        [LiteDB.BsonIgnore]
+        [LiteDB.BsonRef("StreetPoint")]
         public StreetPoint B
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

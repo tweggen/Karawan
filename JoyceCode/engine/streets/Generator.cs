@@ -380,7 +380,7 @@ namespace engine.streets
                          * Otherwise, curr simply stops at the intersection point.
                          */
 
-                        var intersectionStreetPoint = new StreetPoint();
+                        var intersectionStreetPoint = new StreetPoint() { ClusterId = _clusterDesc.Id };
                         var intersectingStroke = intersection.StrokeExists;
                         intersectionStreetPoint.SetPos( intersection.Pos );
                         intersectionStreetPoint.PushCreator("intersection");
@@ -617,7 +617,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                 }
 
                 if( doForward ) {
-                    StreetPoint newB = new StreetPoint();
+                    StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var forward = Stroke.CreateByAngleFrom(
                         curr.B,
                         newB,
@@ -631,7 +631,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     _addStrokeToDo(forward);
                 }
                 if( doRight ) {
-                    var newB = new StreetPoint();
+                    var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var right = Stroke.CreateByAngleFrom(
                         curr.B,
                         newB,
@@ -645,7 +645,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     _addStrokeToDo(right);
                 }
                 if( doLeft ) {
-                    var newB = new StreetPoint();
+                    var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var left = Stroke.CreateByAngleFrom(
                         curr.B,
                         newB,
@@ -659,7 +659,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     _addStrokeToDo(left);
                 }
                 if( doRandomDirection ) {
-                    var newB = new StreetPoint();
+                    var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var randStroke = Stroke.CreateByAngleFrom(
                         curr.B,
                         newB,

@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Numerics;
-using System.Runtime.InteropServices.JavaScript;
 using engine;
 using LiteDB;
 using static engine.Logger;
@@ -36,6 +35,12 @@ public class DBStorage : IDisposable
                 (float)value.AsArray[2].AsDouble)
         );
         m.RegisterType(
+            vector => new BsonArray(new BsonValue[] { vector.X, vector.Y }),
+            value => new Vector2(
+                (float)value.AsArray[0].AsDouble,
+                (float)value.AsArray[1].AsDouble)
+        );
+        m.RegisterType(
             quat => new BsonArray(new BsonValue[] { quat.X, quat.Y, quat.Z, quat.W }),
             value => new Quaternion(
                     (float)value.AsArray[0].AsDouble,
@@ -45,9 +50,6 @@ public class DBStorage : IDisposable
         );
         return m;
     }
-    
-    
-    
     
     
     private bool _readObject<ObjType>(LiteDatabase db, out ObjType gameState) where ObjType : class
@@ -89,6 +91,7 @@ public class DBStorage : IDisposable
 
     private bool _readCollection<ObjType>(
         LiteDatabase db,
+        Expression<Func<ObjType, bool>>? predicate,
         out IEnumerable<ObjType> c) where ObjType : class
     {
         bool haveIt = false;
@@ -96,8 +99,6 @@ public class DBStorage : IDisposable
         try
         {
             var col = db.GetCollection<ObjType>();
-            
-            Trace($"Collection has {col.Count()}: {col}");
             if (0 == col.Count())
             {
                 Trace($"No collection found for {typeof(ObjType)}");
@@ -106,7 +107,15 @@ public class DBStorage : IDisposable
 
             try
             {
-                var allObjects = col.FindAll();
+                IEnumerable<ObjType> allObjects;
+                if (null == predicate)
+                {
+                    allObjects = col.FindAll();
+                }
+                else
+                {
+                    allObjects = col.Find(predicate);
+                }
                 c = new List<ObjType>(allObjects);
                 haveIt = true;
             }
@@ -130,6 +139,7 @@ public class DBStorage : IDisposable
 
     private void _writeCollection<ObjType>(
         LiteDatabase db,
+        Action<ILiteCollection<ObjType>>? actionPrepare,
         IEnumerable<ObjType> c) where ObjType : class
     {
         if (c == null)
@@ -137,9 +147,11 @@ public class DBStorage : IDisposable
             ErrorThrow($"The collection we store {c.GetType()} os null.", m => new ArgumentException(m));
             return;
         }
-
         var col = db.GetCollection<ObjType>();
-        col.DeleteAll();
+        if (actionPrepare != null)
+        {
+            actionPrepare(col);
+        }
         col.Insert(c);
         db.Commit();
     }
@@ -176,82 +188,25 @@ public class DBStorage : IDisposable
         _mapDBs[dbName] = db;
         return db;
     }
+    
 
-
-
-    public void SaveGameState<GS>(GS gameState) where GS : class
+    private bool _withOpen(string dbName, Action<LiteDatabase> action)
     {
         lock (_lo)
         {
             try
             {
-                LiteDatabase db = _open(DbGameState);
+                LiteDatabase db = _open(dbName);
                 try
                 {
-                    _writeObject(db, gameState);
+                    action(db);
                 }
                 catch (Exception e)
                 {
-                    Error($"Unable to write gameState: {e}");
+                    Error($"Unable to execute action: {e}");
                 }
 
-                _close("gamestate");
-            }
-            catch (Exception e)
-            {
-                Error($"Unable to open/close database: {e}");
-            }
-        }
-    }
-    
-
-    public bool LoadGameState<GS>(out GS gameState) where GS : class
-    {
-        bool haveIt = false;
-        lock (_lo)
-        {
-            gameState = null;
-            try
-            {
-                LiteDatabase db = _open(DbGameState);
-                try
-                {
-                    haveIt = _readObject(db, out gameState);
-                }
-                catch (Exception e)
-                {
-                    Error($"Unable to write gameState: {e}");
-                }
-
-                _close(DbGameState);
-            }
-            catch (Exception e)
-            {
-                Error($"Unable to open/close database: {e}");
-            }
-        }
-
-        return haveIt;
-    }
-    
-    
-    public bool StoreCollection<ObjType>(IEnumerable<ObjType> obj) where ObjType : class
-    {
-        lock (_lo)
-        {
-            try
-            {
-                LiteDatabase db = _open(DbWorldCache);
-                try
-                {
-                    _writeCollection<ObjType>(db, obj);
-                }
-                catch (Exception e)
-                {
-                    Error($"Unable to write collection of {obj.GetType()}: {e}");
-                }
-
-                _close(DbWorldCache);
+                _close(dbName);
                 return true;
             }
             catch (Exception e)
@@ -262,35 +217,65 @@ public class DBStorage : IDisposable
 
         return false;
     }
+
     
+    public void SaveGameState<GS>(GS gameState) where GS : class
+    {
+        _withOpen(DbGameState, db => _writeObject(db, gameState));
+    }
+    
+
+    public bool LoadGameState<GS>(out GS gameState) where GS : class
+    {
+        bool haveIt = false;
+        GS resultData = null;
+        _withOpen(DbGameState, db =>
+        {
+            haveIt = _readObject(db, out resultData);
+        });
+        gameState = resultData;
+        return haveIt;
+    }
+    
+
+    /**
+     * Update parts of the collection using the input objects given.
+     */
+    public bool UpdateCollection<ObjType>(IEnumerable<ObjType> obj,
+        Action<ILiteCollection<ObjType>> actionPrepare) where ObjType : class
+    {
+        return _withOpen(DbWorldCache, db =>
+        {
+            _writeCollection(db, actionPrepare, obj);
+        });
+    }
+    
+    
+    public bool StoreCollection<ObjType>(IEnumerable<ObjType> obj) where ObjType : class
+    {
+        return _withOpen(DbWorldCache, db =>
+        {
+            _writeCollection(db, col => col.DeleteAll(), obj);
+        });
+    }
+    
+
+    public bool LoadCollection<ObjType>(Expression<Func<ObjType,bool>>? predicate, out IEnumerable<ObjType> o) where ObjType : class
+    {
+        bool haveIt = false;
+        IEnumerable<ObjType> resultData = null;
+        _withOpen(DbWorldCache, db =>
+        {
+            haveIt = _readCollection(db, predicate, out resultData);
+        });
+        o = resultData;
+        return haveIt;
+    }
+
 
     public bool LoadCollection<ObjType>(out IEnumerable<ObjType> o) where ObjType : class
     {
-        bool haveIt = false;
-        lock (_lo)
-        {
-            o = null;
-            try
-            {
-                LiteDatabase db = _open(DbWorldCache);
-                try
-                {
-                    haveIt = _readCollection(db, out o);
-                }
-                catch (Exception e)
-                {
-                    Error($"Unable to write {o.GetType()}: {e}");
-                }
-
-                _close(DbWorldCache);
-            }
-            catch (Exception e)
-            {
-                Error($"Unable to open/close database: {e}");
-            }
-        }
-
-        return haveIt;
+        return LoadCollection(null, out o);
     }
     
     

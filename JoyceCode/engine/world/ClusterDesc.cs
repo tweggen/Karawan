@@ -264,12 +264,12 @@ public class ClusterDesc
          */
         var nSeeds = (_rnd.Get8()>>5)+1;
         for( int i=0; i<nSeeds; ++i ) {
-            engine.streets.StreetPoint newA = new engine.streets.StreetPoint();
+            engine.streets.StreetPoint newA = new engine.streets.StreetPoint() { ClusterId = this.Id };
             float x = _rnd.Get8()*((2f*Size)/3f)/256f-Size/3f;
             float y = _rnd.Get8()*((2f*Size)/3f)/256f-Size/3f;
             newA.SetPos( x, y );
             float dir = _rnd.Get8()*(float)Math.PI/128f;
-            var newB = new engine.streets.StreetPoint();
+            var newB = new engine.streets.StreetPoint() { ClusterId = this.Id };
             var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 
                 _initialInnerStreetLength, true, _initialInnerStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
@@ -279,33 +279,33 @@ public class ClusterDesc
          * Plus the four corners.
          */
         {
-            var newA = new StreetPoint();
+            var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( -Size/2.2f, -Size/2.2f );
-            var newB = new StreetPoint();
+            var newB = new StreetPoint() { ClusterId = this.Id };
             var stroke = Stroke.CreateByAngleFrom( newA, newB, (float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }
         {
-            var newA = new StreetPoint();
+            var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( Size/2.1f, -Size/2.1f );
-            var newB = new StreetPoint();
+            var newB = new StreetPoint() { ClusterId = this.Id };
             var stroke = Stroke.CreateByAngleFrom( newA, newB, 3f*(float)Math.PI*0.25f,
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }
         {
-            var newA = new StreetPoint();
+            var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( -Size/2.2f, Size/2.2f );
-            var newB = new StreetPoint();
+            var newB = new StreetPoint() { ClusterId = this.Id };
             var stroke = Stroke.CreateByAngleFrom( newA, newB, -(float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }
         {
-            var newA = new StreetPoint();
+            var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( Size/2.15f, Size/2.2f );
-            var newB = new StreetPoint();
+            var newB = new StreetPoint() { ClusterId = this.Id };
             var stroke = Stroke.CreateByAngleFrom( newA, newB, -3.0f*(float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
@@ -356,12 +356,6 @@ public class ClusterDesc
     }
 
 
-    private void _saveStrokes()
-    {
-        I.Get<DBStorage>().StoreCollection(_strokeStore.GetStrokes());
-    }
-    
-
     /**
      * Load or compute the streets of this city.
      */
@@ -371,15 +365,23 @@ public class ClusterDesc
         {
             if (null == _strokeStore)
             {
-                _findStrokes();
-                _processStrokes();
-                _findQuarters();
+                if (false && ClusterStorage.TryLoadClusterStreets(this))
+                {
+                    
+                }
+                else
+                {
+                    _findStrokes();
+                    _processStrokes();
+                    _findQuarters();
                 
-                Trace(
-                    $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
+                    Trace(
+                        $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
                     );
 
-                _saveStrokes();
+                    ClusterStorage.StoreClusterStreetPoints(this);
+                    ClusterStorage.StoreClusterStrokes(this);
+                }
             }
         }
     }

@@ -21,6 +21,8 @@ public class StreetPoint
         set;
     }
 
+    public required int ClusterId { get; set; }
+    
     public Vector2 Pos
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
