@@ -280,14 +280,20 @@ namespace engine.world
         }
 
         private int _meshesInFragment = 0;
+        
+        /**
+         * Add a static mesh to this fragment.
+         *
+         * @param listCreatePhysics
+         *     A list of functios creating the physics for these meshes, each returning a function
+         *     to destroy physics.
+         */
         public void AddStaticInstance(
             string staticName,
             engine.joyce.InstanceDesc jInstanceDesc,
             Vector3 vPosition, Quaternion qRotation,
             IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
         {
-            var worldRecord = Engine.GetEcsWorldRecord();
-
             /*
              * Schedule execution of entity setup in the logical thread.
              */
@@ -318,6 +324,7 @@ namespace engine.world
                  */
                 entity.Set(new engine.world.components.FragmentId(_id));
             });
+
             _meshesInFragment += jInstanceDesc.Meshes.Count;
             // Trace($"Fragment {_myKey} now has {_meshesInFragment} static meshes.");
         }
