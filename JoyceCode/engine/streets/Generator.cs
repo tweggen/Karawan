@@ -619,6 +619,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                 if( doForward ) {
                     StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var forward = Stroke.CreateByAngleFrom(
+                        _clusterDesc,
                         curr.B,
                         newB,
                         newAngle,
@@ -633,6 +634,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                 if( doRight ) {
                     var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var right = Stroke.CreateByAngleFrom(
+                        _clusterDesc,
                         curr.B,
                         newB,
                         newAngle-(float)Math.PI/2f,
@@ -647,6 +649,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                 if( doLeft ) {
                     var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var left = Stroke.CreateByAngleFrom(
+                        _clusterDesc,
                         curr.B,
                         newB,
                         newAngle+(float)Math.PI/2f,
@@ -661,6 +664,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                 if( doRandomDirection ) {
                     var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
                     var randStroke = Stroke.CreateByAngleFrom(
+                        _clusterDesc,
                         curr.B,
                         newB,
                         _rnd.GetFloat()*(float)Math.PI*2f,

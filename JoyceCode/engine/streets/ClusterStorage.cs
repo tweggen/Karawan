@@ -10,12 +10,16 @@ public class ClusterStorage
 
     static public bool TryLoadClusterStreets(ClusterDesc clusterDesc)
     {
-        IEnumerable<Stroke> strokes = null; 
+        IEnumerable<Stroke> strokes = null;
 
-        bool haveStrokes = I.Get<DBStorage>().WithOpen(DbWorldCache, db =>
+        bool haveStrokes = false;
+        I.Get<DBStorage>().WithOpen(DbWorldCache, db =>
         {
+            if (!db.CollectionExists("Stroke") || !db.CollectionExists("StreetPoint")) return;
             var col = db.GetCollection<Stroke>().Include("StreetPoint");
-            strokes = new List<Stroke>(col.Find(stroke => stroke.ClusterId == clusterDesc.Id));
+            var enumStroke = col.Find(stroke => stroke.ClusterId == clusterDesc.Id);
+            strokes = new List<Stroke>(enumStroke);
+            haveStrokes = true;
         });
         if (!haveStrokes) return false;
 

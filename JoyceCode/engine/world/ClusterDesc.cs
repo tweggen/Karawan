@@ -270,7 +270,8 @@ public class ClusterDesc
             newA.SetPos( x, y );
             float dir = _rnd.Get8()*(float)Math.PI/128f;
             var newB = new engine.streets.StreetPoint() { ClusterId = this.Id };
-            var stroke = engine.streets.Stroke.CreateByAngleFrom( newA, newB, dir, 
+            var stroke = engine.streets.Stroke.CreateByAngleFrom( this, 
+                newA, newB, dir, 
                 _initialInnerStreetLength, true, _initialInnerStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }
@@ -282,7 +283,8 @@ public class ClusterDesc
             var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( -Size/2.2f, -Size/2.2f );
             var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, (float)Math.PI*0.25f, 
+            var stroke = Stroke.CreateByAngleFrom( this,
+                newA, newB, (float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }
@@ -290,7 +292,8 @@ public class ClusterDesc
             var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( Size/2.1f, -Size/2.1f );
             var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, 3f*(float)Math.PI*0.25f,
+            var stroke = Stroke.CreateByAngleFrom( this,
+                newA, newB, 3f*(float)Math.PI*0.25f,
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }
@@ -298,7 +301,8 @@ public class ClusterDesc
             var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( -Size/2.2f, Size/2.2f );
             var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, -(float)Math.PI*0.25f, 
+            var stroke = Stroke.CreateByAngleFrom( this, 
+                newA, newB, -(float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }
@@ -306,7 +310,8 @@ public class ClusterDesc
             var newA = new StreetPoint() { ClusterId = this.Id };
             newA.SetPos( Size/2.15f, Size/2.2f );
             var newB = new StreetPoint() { ClusterId = this.Id };
-            var stroke = Stroke.CreateByAngleFrom( newA, newB, -3.0f*(float)Math.PI*0.25f, 
+            var stroke = Stroke.CreateByAngleFrom( this,
+                newA, newB, -3.0f*(float)Math.PI*0.25f, 
                 _initialOuterStreetLength, true, _initialOuterStreetWeight );
             streetGenerator.AddStartingStroke(stroke);
         }

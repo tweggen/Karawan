@@ -393,7 +393,8 @@ namespace engine.streets
          */
         public Stroke CreateUnattachedCopy()
         {
-            var stroke = new Stroke();
+            var templateClusterId = ClusterId;
+            var stroke = new Stroke() { ClusterId = templateClusterId };
             stroke.A = A;
             stroke.B = B;
             stroke._copyMetaFrom(this);
@@ -406,6 +407,7 @@ namespace engine.streets
          * Compute the coordinates for the target streetpoint.
          */
         public static Stroke CreateByAngleFrom(
+            engine.world.ClusterDesc clusterDesc,
             in StreetPoint a0,
             in StreetPoint b0,
             float angle0,
@@ -428,7 +430,7 @@ namespace engine.streets
                 }
                 angle0 = angle0int * Single.Pi / 180f;
             }
-            var stroke = new Stroke();
+            var stroke = new Stroke() { ClusterId = clusterDesc.Id };
 
             b0.SetPos(
                 a0.Pos.X + Single.Cos(angle0) * length0,

@@ -229,6 +229,7 @@ public class DBStorage : IDisposable
         {
             Trace($"Unable to use collection {typeof(ObjType).Name}, exception {e}, dropping and re-creating");
             db.DropCollection(typeof(ObjType).Name);
+            db.Commit();
             try
             {
                 col = db.GetCollection<ObjType>();
