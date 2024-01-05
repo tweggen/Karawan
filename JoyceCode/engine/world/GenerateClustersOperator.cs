@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Threading.Tasks;
+using engine.streets;
 using static engine.Logger;
 
 namespace engine.world;
@@ -317,7 +318,7 @@ public class GenerateClustersOperator : world.IWorldOperator
 
     private void _saveClusters(IList<ClusterDesc> clusterList)
     {
-        I.Get<DBStorage>().StoreCollection(clusterList);
+        I.Get<DBStorage>().StoreCollection(engine.streets.ClusterStorage.DbWorldCache, clusterList);
     }
     
     
@@ -330,7 +331,8 @@ public class GenerateClustersOperator : world.IWorldOperator
         try
         {
             System.Collections.Generic.IEnumerable<ClusterDesc> enumClusterDesc;
-            bool haveIt = I.Get<DBStorage>().LoadCollection(out enumClusterDesc);
+            bool haveIt = I.Get<DBStorage>().LoadCollection<ClusterDesc>(
+                engine.streets.ClusterStorage.DbWorldCache, out enumClusterDesc);
             if (!haveIt)
             {
                 clusterList = null;

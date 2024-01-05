@@ -314,13 +314,8 @@ public class ClusterDesc
     }
 
 
-    private void _findStrokes()
+    private void _generateStrokes()
     {
-        /*
-         * First, generate the actual streets.
-         */
-        _strokeStore = new streets.StrokeStore(Size);
-
         Generator streetGenerator = new Generator();
         streetGenerator.SetAnnotation($"Cluster {Name}");
         streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
@@ -330,6 +325,25 @@ public class ClusterDesc
         streetGenerator = null;
     }
 
+
+    private void _findStrokes()
+    {
+        bool haveStoredStreets = ClusterStorage.TryLoadClusterStreets(this);
+        if (haveStoredStreets)
+        {
+            /*
+             * Nothing to do here yet.
+             */
+            Trace($"Loaded streets for {this.Name} from cache.");
+        }
+        else
+        {
+            Trace($"Generating streets for {this.Name}.");
+            _generateStrokes();
+            ClusterStorage.StoreClusterStreetPoints(this);
+            ClusterStorage.StoreClusterStrokes(this);
+        }
+    }
 
     private void _processStrokes()
     {
@@ -349,7 +363,6 @@ public class ClusterDesc
         /*
          * Now compute the quarters from the streets.
          */
-        _quarterStore = new streets.QuarterStore();
         _quarterGenerator = new streets.QuarterGenerator();
         _quarterGenerator.Reset("quarters-" + _strKey, _quarterStore, _strokeStore);
         _quarterGenerator.Generate();
@@ -365,23 +378,21 @@ public class ClusterDesc
         {
             if (null == _strokeStore)
             {
-                if (false && ClusterStorage.TryLoadClusterStreets(this))
-                {
-                    
-                }
-                else
-                {
-                    _findStrokes();
-                    _processStrokes();
-                    _findQuarters();
-                
-                    Trace(
-                        $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
-                    );
+                /*
+                 * First, generate the actual streets.
+                 */
+                _strokeStore = new streets.StrokeStore(Size);
+                _quarterStore = new streets.QuarterStore();
 
-                    ClusterStorage.StoreClusterStreetPoints(this);
-                    ClusterStorage.StoreClusterStrokes(this);
-                }
+                _findStrokes();
+
+                _processStrokes();
+                _findQuarters();
+                
+                Trace(
+                    $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
+                );
+
             }
         }
     }

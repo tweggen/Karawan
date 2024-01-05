@@ -43,7 +43,7 @@ public class FPSMonitor
 
         if (0f != fps)
         {
-            Trace($"{_name} #fps {fps}");
+            //Trace($"{_name} #fps {fps}");
         }
     }
 

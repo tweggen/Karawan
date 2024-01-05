@@ -21,7 +21,6 @@ public class DBStorage : IDisposable
 
     private const string DbFileSuffix = ".db";
     private const string DbGameState = "gamestate"; 
-    private const string DbWorldCache = "worldcache"; 
     
     
     private BsonMapper _createMappers()
@@ -190,7 +189,7 @@ public class DBStorage : IDisposable
     }
     
 
-    private bool _withOpen(string dbName, Action<LiteDatabase> action)
+    public bool WithOpen(string dbName, Action<LiteDatabase> action)
     {
         lock (_lo)
         {
@@ -218,10 +217,50 @@ public class DBStorage : IDisposable
         return false;
     }
 
+
+    public void WithCollection<ObjType>(ILiteDatabase db, Action<ILiteCollection<ObjType>> action) where ObjType : class
+    {
+        ILiteCollection<ObjType> col;
+        try
+        {
+            col = db.GetCollection<ObjType>();
+        }
+        catch (Exception e)
+        {
+            Trace($"Unable to use collection {typeof(ObjType).Name}, exception {e}, dropping and re-creating");
+            db.DropCollection(typeof(ObjType).Name);
+            try
+            {
+                col = db.GetCollection<ObjType>();
+            }
+            catch (Exception f)
+            {
+                ErrorThrow($"Unable to re-create collection {typeof(ObjType).Name}, exception {f} giving up.", m => new InvalidOperationException(m));
+                return;
+            }
+        }
+
+        if (null == col)
+        {
+            ErrorThrow($"Unable to open collection {typeof(ObjType).Name}, giving up.", m=>new InvalidOperationException(m));
+            return;
+        }
+
+        try
+        {
+            action(col);
+        }
+        catch (Exception e)
+        {
+            ErrorThrow( $"Exception {e} running action on collection {typeof(ObjType).Name} ", m => new InvalidOperationException(m));
+            return;
+        }
+    }
+
     
     public void SaveGameState<GS>(GS gameState) where GS : class
     {
-        _withOpen(DbGameState, db => _writeObject(db, gameState));
+        WithOpen(DbGameState, db => _writeObject(db, gameState));
     }
     
 
@@ -229,7 +268,7 @@ public class DBStorage : IDisposable
     {
         bool haveIt = false;
         GS resultData = null;
-        _withOpen(DbGameState, db =>
+        WithOpen(DbGameState, db =>
         {
             haveIt = _readObject(db, out resultData);
         });
@@ -238,33 +277,20 @@ public class DBStorage : IDisposable
     }
     
 
-    /**
-     * Update parts of the collection using the input objects given.
-     */
-    public bool UpdateCollection<ObjType>(IEnumerable<ObjType> obj,
-        Action<ILiteCollection<ObjType>> actionPrepare) where ObjType : class
+   public bool StoreCollection<ObjType>(string dbName, IEnumerable<ObjType> obj) where ObjType : class
     {
-        return _withOpen(DbWorldCache, db =>
-        {
-            _writeCollection(db, actionPrepare, obj);
-        });
-    }
-    
-    
-    public bool StoreCollection<ObjType>(IEnumerable<ObjType> obj) where ObjType : class
-    {
-        return _withOpen(DbWorldCache, db =>
+        return WithOpen(dbName, db =>
         {
             _writeCollection(db, col => col.DeleteAll(), obj);
         });
     }
     
 
-    public bool LoadCollection<ObjType>(Expression<Func<ObjType,bool>>? predicate, out IEnumerable<ObjType> o) where ObjType : class
+    public bool LoadCollection<ObjType>(string dbName, Expression<Func<ObjType,bool>>? predicate, out IEnumerable<ObjType> o) where ObjType : class
     {
         bool haveIt = false;
         IEnumerable<ObjType> resultData = null;
-        _withOpen(DbWorldCache, db =>
+        WithOpen(dbName, db =>
         {
             haveIt = _readCollection(db, predicate, out resultData);
         });
@@ -273,9 +299,9 @@ public class DBStorage : IDisposable
     }
 
 
-    public bool LoadCollection<ObjType>(out IEnumerable<ObjType> o) where ObjType : class
+    public bool LoadCollection<ObjType>(string dbName, out IEnumerable<ObjType> o) where ObjType : class
     {
-        return LoadCollection(null, out o);
+        return LoadCollection(dbName,null, out o);
     }
     
     

@@ -6,42 +6,67 @@ namespace engine.streets;
 
 public class ClusterStorage
 {
+    public const string DbWorldCache = "worldcache"; 
+
     static public bool TryLoadClusterStreets(ClusterDesc clusterDesc)
     {
-        var dbStorage = I.Get<DBStorage>();
-        IEnumerable<StreetPoint> streetPoints = null; 
-        bool haveIt = dbStorage.LoadCollection(
-            streetPoint => streetPoint.ClusterId == clusterDesc.Id,
-            out streetPoints);
-        if (!haveIt) return false;
+        IEnumerable<Stroke> strokes = null; 
+
+        bool haveStrokes = I.Get<DBStorage>().WithOpen(DbWorldCache, db =>
+        {
+            var col = db.GetCollection<Stroke>().Include("StreetPoint");
+            strokes = new List<Stroke>(col.Find(stroke => stroke.ClusterId == clusterDesc.Id));
+        });
+        if (!haveStrokes) return false;
+
+        StrokeStore strokeStore = clusterDesc.StrokeStore();
+        foreach (var stroke in strokes)
+        {
+            strokeStore.AddStroke(stroke);
+        }
+        
         return true;
     }
     
     
     static public void StoreClusterStreetPoints(ClusterDesc clusterDesc)
     {
+        var dbs = I.Get<DBStorage>(); 
         var streetPoints = clusterDesc.StrokeStore().GetStreetPoints();
-        I.Get<DBStorage>().UpdateCollection(streetPoints, col =>
-        {
-            /*
-             * Before adding the new items, delete the previous ones.
-             */
-            col.EnsureIndex(x => x.ClusterId);
-            col.DeleteMany(streetPoint => streetPoint.ClusterId == clusterDesc.Id);
-        });
+        dbs.WithOpen(DbWorldCache,
+            db =>
+            {
+                dbs.WithCollection<StreetPoint>(db, col =>
+                {
+                    /*
+                     * Before adding the new items, delete the previous ones.
+                     */
+                    col.EnsureIndex(x => x.ClusterId);
+                    col.DeleteMany(streetPoint => streetPoint.ClusterId == clusterDesc.Id);
+                    col.Insert(streetPoints);
+                });
+                db.Commit();
+            });
     }
     
     
     static public void StoreClusterStrokes(ClusterDesc clusterDesc)
     {
+        var dbs = I.Get<DBStorage>(); 
         var strokes = clusterDesc.StrokeStore().GetStrokes();
-        I.Get<DBStorage>().UpdateCollection(strokes, col =>
-        {
-            /*
-             * Before adding the new items, delete the previous ones.
-             */
-            col.EnsureIndex(x => x.ClusterId);
-            col.DeleteMany(stroke => stroke.ClusterId == clusterDesc.Id);
-        });
+        dbs.WithOpen(DbWorldCache,
+            db =>
+            {
+                dbs.WithCollection<Stroke>(db, col =>
+                {
+                    /*
+                     * Before adding the new items, delete the previous ones.
+                     */
+                    col.EnsureIndex(x => x.ClusterId);
+                    col.DeleteMany(stroke => stroke.ClusterId == clusterDesc.Id);
+                    col.Insert(strokes);
+                });
+                db.Commit();
+            });
     }
 }
