@@ -58,7 +58,11 @@ namespace engine.streets
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _a;
-            set { _setA(value); }
+            set
+            {
+                // Trace("Setting A");
+                _setA(value);
+            }
         }
 
 
@@ -71,7 +75,11 @@ namespace engine.streets
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _b;
-            set { _setB(value); }
+            set
+            {
+                // Trace("Setting B");
+                _setB(value);
+            }
         }
 
 
@@ -134,8 +142,14 @@ namespace engine.streets
             }
             set
             {
+                // Trace("Setting length");
                 _length = value;
-                _isLengthValid = true;
+                if (_a != null && _b != null)
+                {
+                    _vAB = _b.Pos - _a.Pos;
+                    _length2 = value*value;
+                    _isLengthValid = true;
+                }
             }
         }
 
