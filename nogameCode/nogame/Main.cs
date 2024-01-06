@@ -48,6 +48,7 @@ public class Main
     private void _setupImplementations()
     {
         I.Register<DBStorage>(() => new DBStorage());
+        I.Register<engine.streets.ClusterStorage>(() => new engine.streets.ClusterStorage());
 
         I.Register<IMapProvider>(() => _setupMapProvider());
         I.Register<MapFramebuffer>(() => new MapFramebuffer());

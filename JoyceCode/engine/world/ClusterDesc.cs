@@ -333,7 +333,7 @@ public class ClusterDesc
 
     private void _findStrokes()
     {
-        bool haveStoredStreets = ClusterStorage.TryLoadClusterStreets(this);
+        bool haveStoredStreets = I.Get<ClusterStorage>().TryLoadClusterStreets(this);
         if (haveStoredStreets)
         {
             /*
@@ -345,10 +345,11 @@ public class ClusterDesc
         {
             Trace($"Generating streets for {this.Name}.");
             _generateStrokes();
-            ClusterStorage.StoreClusterStreetPoints(this);
-            ClusterStorage.StoreClusterStrokes(this);
+            I.Get<ClusterStorage>().StoreClusterStreetPoints(this);
+            I.Get<ClusterStorage>().StoreClusterStrokes(this);
         }
     }
+    
 
     private void _processStrokes()
     {

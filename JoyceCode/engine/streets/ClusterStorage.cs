@@ -6,22 +6,27 @@ namespace engine.streets;
 
 public class ClusterStorage
 {
-    public const string DbWorldCache = "worldcache"; 
+    private object _lo = new();
+    
+    private engine.EntityMap<engine.streets.StreetPoint> _mapStreetPoints = new();
+    
+    public const string DbWorldCache = "worldcache";
 
-    static public bool TryLoadClusterStreets(ClusterDesc clusterDesc)
+    public bool TryLoadClusterStreets(ClusterDesc clusterDesc)
     {
-        IEnumerable<Stroke> strokes = null;
+        List<Stroke> strokes = null;
 
         bool haveStrokes = false;
         I.Get<DBStorage>().WithOpen(DbWorldCache, db =>
         {
             if (!db.CollectionExists("Stroke") || !db.CollectionExists("StreetPoint")) return;
-            var col = db.GetCollection<Stroke>().Include("StreetPoint");
+            var col = db.GetCollection<Stroke>().Include(x => x.A).Include(x => x.B);
             var enumStroke = col.Find(stroke => stroke.ClusterId == clusterDesc.Id);
             strokes = new List<Stroke>(enumStroke);
             haveStrokes = true;
         });
         if (!haveStrokes) return false;
+        if (null == strokes ||0 == strokes.Count) return false;
 
         StrokeStore strokeStore = clusterDesc.StrokeStore();
         foreach (var stroke in strokes)
@@ -33,7 +38,7 @@ public class ClusterStorage
     }
     
     
-    static public void StoreClusterStreetPoints(ClusterDesc clusterDesc)
+    public void StoreClusterStreetPoints(ClusterDesc clusterDesc)
     {
         var dbs = I.Get<DBStorage>(); 
         var streetPoints = clusterDesc.StrokeStore().GetStreetPoints();
@@ -54,7 +59,7 @@ public class ClusterStorage
     }
     
     
-    static public void StoreClusterStrokes(ClusterDesc clusterDesc)
+    public void StoreClusterStrokes(ClusterDesc clusterDesc)
     {
         var dbs = I.Get<DBStorage>(); 
         var strokes = clusterDesc.StrokeStore().GetStrokes();
@@ -72,5 +77,21 @@ public class ClusterStorage
                 });
                 db.Commit();
             });
+    }
+
+
+    public StreetPoint _createStreetPoint(BsonDocument doc)
+    {
+        int streetPointId = doc["_id"].AsInt32;
+        var streetPoint = _mapStreetPoints.Find(streetPointId);
+        streetPoint.Id = streetPointId;
+        streetPoint.ClusterId = doc["ClusterId"].AsInt32;
+        return streetPoint;
+    }
+
+
+    public ClusterStorage()
+    {
+        I.Get<DBStorage>().Mapper.Entity<StreetPoint>().Ctor(_createStreetPoint);
     }
 }

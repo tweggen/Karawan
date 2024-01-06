@@ -16,7 +16,7 @@ public class DBStorage : IDisposable
 
     private Dictionary<string, LiteDatabase> _mapDBs = new();
 
-    private BsonMapper _mappers;
+    public BsonMapper Mapper;
 
 
     private const string DbFileSuffix = ".db";
@@ -183,7 +183,7 @@ public class DBStorage : IDisposable
         string path = GlobalSettings.Get("Engine.RWPath");
         string dbFileName = dbName + DbFileSuffix;
 
-        db = new LiteDatabase(Path.Combine(path, dbFileName), _mappers);
+        db = new LiteDatabase(Path.Combine(path, dbFileName), Mapper);
         _mapDBs[dbName] = db;
         return db;
     }
@@ -321,6 +321,6 @@ public class DBStorage : IDisposable
 
     public DBStorage()
     {
-        _mappers = _createMappers();
+        Mapper = _createMappers();
     }
 }

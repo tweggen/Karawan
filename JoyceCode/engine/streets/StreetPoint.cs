@@ -9,10 +9,11 @@ namespace engine.streets;
 public class StreetPoint
 {
     private static object _classLo = new();
-    static private int _nextId;
+    static private int _nextId = 1;
 
     private object _lo = new();
 
+    
     [LiteDB.BsonId]
     public int Id
     {
@@ -21,8 +22,20 @@ public class StreetPoint
         set;
     }
 
-    public required int ClusterId { get; set; }
     
+    private int _clusterId = -1;
+    public  int ClusterId
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _clusterId;
+        set
+        {
+            _clusterId = value;
+            Id = (_clusterId<<16) | (Id & 0xffff);
+        }
+    }
+
+
     public Vector2 Pos
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -30,12 +43,14 @@ public class StreetPoint
         private set;
     }
 
+    
     [LiteDB.BsonIgnore]
     public Vector3 Pos3
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => new Vector3(Pos.X, 0f, Pos.Y);
     }
+    
 
     public string Creator { get; private set; }
 

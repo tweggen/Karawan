@@ -90,6 +90,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\elevation\Tools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Engine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityComponentTypeReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\EntityMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\GameLoader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\AABB.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\Angles.cs" />

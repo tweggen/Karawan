@@ -11,9 +11,24 @@ namespace engine.streets
         static private int _nextId = 10000;
 
         [LiteDB.BsonId]
-        public int Sid { get; set; }
-        
-        public int ClusterId { get; set; }
+        public int Sid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get; 
+            set;
+        }
+
+        private int _clusterId = -1;
+        public int ClusterId
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _clusterId;
+            set
+            {
+                _clusterId = value;
+                Sid = (_clusterId<<16) | (Sid & 0xffff);
+            }
+        }
 
         public StrokeStore? Store;
 
@@ -29,7 +44,7 @@ namespace engine.streets
         public float Weight { get; set; }
         
         /**
-         * Wether this one goes in primary or secondary direction.
+         * Whether this one goes in primary or secondary direction.
          */
         public bool IsPrimary { get; set; }
 
@@ -493,7 +508,7 @@ namespace engine.streets
         }
 
 
-        private Stroke()
+        public Stroke()
         {
             lock (_classLock)
             {
