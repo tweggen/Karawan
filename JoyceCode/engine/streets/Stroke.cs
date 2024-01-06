@@ -110,6 +110,11 @@ namespace engine.streets
                 if (!_isAngleValid) _updateAngle();
                 return _angle;
             }
+            set
+            {
+                _angle = value;
+                _isAngleValid = true;
+            }
         }
 
 
@@ -127,6 +132,11 @@ namespace engine.streets
                 if (!_isLengthValid) _updateLength();
                 return _length;
             }
+            set
+            {
+                _length = value;
+                _isLengthValid = true;
+            }
         }
 
 
@@ -135,6 +145,7 @@ namespace engine.streets
          * from a to b.
          */
         private Vector2 _normal;
+        [LiteDB.BsonIgnore]
         public Vector2 Normal
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -149,6 +160,7 @@ namespace engine.streets
          * The unit vector for this stroke
          */
         private Vector2 _unit;
+        [LiteDB.BsonIgnore]
         public Vector2 Unit 
         { 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
