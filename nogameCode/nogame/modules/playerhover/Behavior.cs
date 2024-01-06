@@ -53,6 +53,7 @@ public class Behavior : engine.IBehavior
         }
     }
 
+    
     public void Sync(in Entity entity)
     {
         /*

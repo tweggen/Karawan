@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)builtin\map\systems\" />
-    <Folder Include="$(MSBuildThisFileDirectory)engine\lights\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
@@ -58,7 +57,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ABehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Assets.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\Attributes\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\MovingSound.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\Music.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\Music.cs" />
@@ -128,8 +126,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3ToParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Transform3ToWorld.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Container3.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Framebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\MaterialCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\MatMesh.cs" />
@@ -143,7 +139,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\NameGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TransformApi.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\VertexShader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Logger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\BuildExecTree.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\meta\ExecApplyParallelNode.cs" />
@@ -220,7 +215,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\MetaGen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\TerrainKnitter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\xray\RootScene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ui\Main.cs" />
   </ItemGroup>
 </Project>
