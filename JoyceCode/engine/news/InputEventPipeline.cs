@@ -49,7 +49,7 @@ public class InputEventPipeline : engine.AModule
 
             if (ev.IsHandled)
             {
-                Trace($"Key event {ev} was handled by part {part}.");
+                //Trace($"Key event {ev} was handled by part {part}.");
                 break;
             }
         }
