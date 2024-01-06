@@ -5,8 +5,8 @@ using static engine.Logger;
 namespace engine.physics.systems;
 
 /**
-     * Read the world transform position of the entities and set it to the kinetics.
-     */
+ * Read the world transform position of the entities and set it to the kinetics.
+ */
 [DefaultEcs.System.With(typeof(engine.joyce.components.Transform3ToWorld))]
 [DefaultEcs.System.With(typeof(engine.physics.components.Kinetic))]
 internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
@@ -28,62 +28,66 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
         foreach (var entity in entities)
         {
             ref physics.components.Kinetic cRefKinetic = ref entity.Get<physics.components.Kinetic>();
-            var oldPos = cRefKinetic.LastPosition;
-            var newPos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
 
-            float maxDistance = cRefKinetic.MaxDistance;
-            bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <=  maxDistance * maxDistance; 
-            bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= maxDistance * maxDistance; 
-
-            var bodyReference = cRefKinetic.Reference;
-
-            if (isInside)
+            lock (_engine.Simulation)
             {
-                if (entity.Has<engine.joyce.components.EntityName>() &&
-                    entity.Get<engine.joyce.components.EntityName>().Name.Contains("car"))
+                var oldPos = cRefKinetic.LastPosition;
+                var newPos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
+
+                float maxDistance = cRefKinetic.MaxDistance;
+                bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <= maxDistance * maxDistance;
+                bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= maxDistance * maxDistance;
+
+                var bodyReference = cRefKinetic.Reference;
+
+                if (isInside)
                 {
-                    int a = 1;
-                }
-            
-                // TXWTODO: Can we write that more efficiently?
-                if (oldPos != newPos)
-                {
-                    bodyReference.Pose.Position = newPos;
-                    cRefKinetic.LastPosition = newPos;
-                    if (oldPos != Vector3.Zero)
+                    if (entity.Has<engine.joyce.components.EntityName>() &&
+                        entity.Get<engine.joyce.components.EntityName>().Name.Contains("car"))
                     {
-                        Vector3 vel = (newPos - oldPos) / dt;
-                        bodyReference.Velocity.Linear = vel;
+                        int a = 1;
                     }
-                    else
+
+                    // TXWTODO: Can we write that more efficiently?
+                    if (oldPos != newPos)
                     {
+                        bodyReference.Pose.Position = newPos;
+                        cRefKinetic.LastPosition = newPos;
+                        if (oldPos != Vector3.Zero)
+                        {
+                            Vector3 vel = (newPos - oldPos) / dt;
+                            bodyReference.Velocity.Linear = vel;
+                        }
+                        else
+                        {
+                            bodyReference.Velocity.Linear = Vector3.Zero;
+                        }
+
+                        if (!bodyReference.Awake)
+                        {
+                            bodyReference.Awake = true;
+                        }
+                    }
+                }
+                else
+                {
+                    if (wasInside || true == bodyReference.Awake)
+                    {
+                        /*
+                         * If it previously was inside, reposition it to nowehere
+                         * and make it passive. effectively setting it to standby.
+                         */
+                        bodyReference.Pose.Position = _vOffPosition;
+                        bodyReference.Pose.Orientation = Quaternion.Identity;
                         bodyReference.Velocity.Linear = Vector3.Zero;
+                        bodyReference.Velocity.Angular = Vector3.Zero;
+                        bodyReference.Awake = false;
                     }
 
-                    if (!bodyReference.Awake)
-                    {
-                        bodyReference.Awake = true;
-                    }
-                }
-            }
-            else
-            {
-                if (wasInside || true==bodyReference.Awake)
-                {
                     /*
-                     * If it previously was inside, reposition it to nowehere
-                     * and make it passive. effectively setting it to standby.
+                     * And if it already was outside, we do not need to touch it in any way.
                      */
-                    bodyReference.Pose.Position = _vOffPosition;
-                    bodyReference.Pose.Orientation = Quaternion.Identity;
-                    bodyReference.Velocity.Linear = Vector3.Zero;
-                    bodyReference.Velocity.Angular = Vector3.Zero;
-                    bodyReference.Awake = false;
                 }
-                
-                /*
-                 * And if it already was outside, we do not need to touch it in any way. 
-                 */
             }
         }
     }

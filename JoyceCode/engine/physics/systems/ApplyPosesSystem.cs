@@ -16,13 +16,15 @@ namespace engine.physics.systems
         {
             foreach (var entity in entities)
             {
+                Vector3 vPosition;
+                Quaternion qOrientation;
+                lock (_engine.Simulation)
                 {
                     BodyReference pref = entity.Get<components.Body>().Reference;
-                    var position = pref.Pose.Position;
-                    //var orientation = Quaternion.Inverse(pref.Pose.Orientation);
-                    var orientation = pref.Pose.Orientation;
-                    _aTransform.SetTransform(entity, orientation, position);
+                    vPosition = pref.Pose.Position;
+                    qOrientation = pref.Pose.Orientation;
                 }
+                _aTransform.SetTransform(entity, qOrientation, vPosition);
             }
         }
 
@@ -37,6 +39,7 @@ namespace engine.physics.systems
             _aTransform = I.Get<engine.joyce.TransformApi>();
         }
 
+        
         public ApplyPosesSystem(in engine.Engine engine)
                 : base(engine.GetEcsWorld())
         {

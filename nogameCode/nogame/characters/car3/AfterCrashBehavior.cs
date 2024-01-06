@@ -29,7 +29,7 @@ public class AfterCrashBehavior : ABehavior
              */
             t = LIFETIME - (builtin.tools.RandomSource.Instance.GetFloat() + 0.5f);
             
-            Trace("Another collision with me, a dynamic being.");
+            // Trace("Another collision with me, a dynamic being.");
         }
         else
         {
@@ -37,6 +37,7 @@ public class AfterCrashBehavior : ABehavior
             return;
         }
     }
+    
 
     public override void Sync(in DefaultEcs.Entity entity)
     {

@@ -71,10 +71,13 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
         base.Sync(entity);
         if (entity.Has<engine.physics.components.Kinetic>())
         {
-            var prefTarget = entity.Get<engine.physics.components.Kinetic>().Reference;
-            Vector3 vPos3 = prefTarget.Pose.Position;
-            Quaternion qRotation = prefTarget.Pose.Orientation;
-            _snc.NavigatorSetTransformation(vPos3, qRotation);
+            lock (_engine.Simulation)
+            {
+                var prefTarget = entity.Get<engine.physics.components.Kinetic>().Reference;
+                Vector3 vPos3 = prefTarget.Pose.Position;
+                Quaternion qRotation = prefTarget.Pose.Orientation;
+                _snc.NavigatorSetTransformation(vPos3, qRotation);
+            }
         }
 
     }

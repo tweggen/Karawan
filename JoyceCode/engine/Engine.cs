@@ -209,9 +209,12 @@ namespace engine
 
         public void BeamTo(Vector3 vPos)
         {
-            var pref = _playerEntity.Get<engine.physics.components.Body>().Reference;
-            pref.Pose.Position = vPos;
-            pref.Pose.Orientation = Quaternion.Identity;
+            lock (_lo)
+            {
+                var pref = _playerEntity.Get<engine.physics.components.Body>().Reference;
+                pref.Pose.Position = vPos;
+                pref.Pose.Orientation = Quaternion.Identity;
+            }
         }
         
         

@@ -202,13 +202,16 @@ public class FollowCameraController : IInputPart
     {
         bool haveVelocity = false;
         vVelocity = Vector3.Zero;
-        if (_prefPlayer.Exists)
+        lock (_engine.Simulation)
         {
-            if (_prefPlayer.Pose.Position != Vector3.Zero
-                && _prefPlayer.Pose.Orientation != Quaternion.Identity)
+            if (_prefPlayer.Exists)
             {
-                vVelocity = _prefPlayer.Velocity.Linear;
-                haveVelocity = true;
+                if (_prefPlayer.Pose.Position != Vector3.Zero
+                    && _prefPlayer.Pose.Orientation != Quaternion.Identity)
+                {
+                    vVelocity = _prefPlayer.Velocity.Linear;
+                    haveVelocity = true;
+                }
             }
         }
 
