@@ -87,13 +87,11 @@ public class Scene : AModule, IScene
         Task.Run(() =>
         {
             I.Get<SetupMetaGen>().PrepareMetaGen(_engine);
+            
             /*
-             * We just wrote down this position from the current seed.
+             * Preload the player position from the current gamestate.
              */
-            I.Get<SetupMetaGen>().Preload(
-                new Vector3(292f,29f,314f)
-                //Vector3.Zero
-                );
+            I.Get<SetupMetaGen>().Preload(I.Get<GameState>().PlayerPosition);
         });
 
         return true;

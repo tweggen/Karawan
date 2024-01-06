@@ -159,10 +159,7 @@ public class FollowCameraController : IInputPart
 
     private void _destroyPhysics()
     {
-        lock (_engine.Simulation)
-        {
-            _eTarget.Remove<engine.physics.components.Body>();
-        }
+        _eTarget.Remove<engine.physics.components.Body>();
     }
 
 

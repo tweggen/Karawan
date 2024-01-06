@@ -43,11 +43,15 @@ internal class Manager
     {
         if (0 == (cKinetic.Flags & components.Kinetic.DONT_FREE_PHYSICS))
         {
-            _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
-        }
-        else
-        {
-            Trace("Hit me.");
+            ref var location = ref cKinetic.Reference.Bodies.HandleToLocation[cKinetic.Reference.Handle.Value];
+            if (location.SetIndex < 0 || location.Index < 0)
+            {
+                Trace("Hit me");
+            }
+            else
+            {
+                _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
+            }
         }
 
         if (cKinetic.ReleaseActions != null)
@@ -107,7 +111,16 @@ internal class Manager
     {
         if (0 == (cBody.Flags & components.Body.DONT_FREE_PHYSICS))
         {
-            _engine.Simulation.Bodies.Remove(cBody.Reference.Handle);
+            ref var location = ref cBody.Reference.Bodies.HandleToLocation[cBody.Reference.Handle.Value];
+            if (location.SetIndex < 0 || location.Index < 0)
+            {
+                Trace("Hit me");
+            }
+            else
+            {
+                _engine.Simulation.Bodies.Remove(cBody.Reference.Handle); 
+            }
+
         }
         _aPhysics.RemoveContactListener(entity, cBody.Reference);
     }
