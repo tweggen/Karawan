@@ -333,20 +333,23 @@ public class ClusterDesc
 
     private void _findStrokes()
     {
-        bool haveStoredStreets = I.Get<ClusterStorage>().TryLoadClusterStreets(this);
-        if (haveStoredStreets)
+        using (new builtin.tools.SectionMeter("ClusterDesc._findStrokes"))
         {
-            /*
-             * Nothing to do here yet.
-             */
-            Trace($"Loaded streets for {this.Name} from cache.");
-        }
-        else
-        {
-            Trace($"Generating streets for {this.Name}.");
-            _generateStrokes();
-            I.Get<ClusterStorage>().StoreClusterStreetPoints(this);
-            I.Get<ClusterStorage>().StoreClusterStrokes(this);
+            bool haveStoredStreets = I.Get<ClusterStorage>().TryLoadClusterStreets(this);
+            if (haveStoredStreets)
+            {
+                /*
+                 * Nothing to do here yet.
+                 */
+                Trace($"Loaded streets for {this.Name} from cache.");
+            }
+            else
+            {
+                Trace($"Generating streets for {this.Name}.");
+                _generateStrokes();
+                I.Get<ClusterStorage>().StoreClusterStreetPoints(this);
+                I.Get<ClusterStorage>().StoreClusterStrokes(this);
+            }
         }
     }
     

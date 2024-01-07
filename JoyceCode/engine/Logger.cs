@@ -57,7 +57,7 @@ namespace engine
 
             StackFrame stackFrame = new StackFrame(2);
             var fileName = stackFrame.GetFileName();
-            if (null == fileName) fileName = "[null file name]";
+            if (null == fileName) fileName = "";
             var lineNumber = stackFrame.GetFileLineNumber();
             string type = "(null type name)";
             string methodName = "(null method name)";
