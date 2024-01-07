@@ -33,8 +33,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleCard.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Object.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\AreaEnteredBehavior.cs" />
+    <Folder Include="$(MSBuildThisFileDirectory)builtin\tools\components\" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\FPSMonitor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ModelBuilder.cs" />

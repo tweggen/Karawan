@@ -52,6 +52,7 @@ internal class Manager
             {
                 _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
             }
+            
         }
 
         if (cKinetic.ReleaseActions != null)

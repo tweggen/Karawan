@@ -235,12 +235,12 @@ public class API
      */
     public void RemoveContactListener(
         in DefaultEcs.Entity entity, 
-        in BepuPhysics.BodyReference bodyReference)
+        in BepuPhysics.BodyHandle bodyHandle)
     {
         _contactEvents.UnregisterListener(
             new CollidableReference(
                 CollidableMobility.Dynamic,
-                bodyReference.Handle));
+                bodyHandle));
     }
     
     

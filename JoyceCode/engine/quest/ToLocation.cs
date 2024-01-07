@@ -1,3 +1,5 @@
+using SharpNav.Geometry;
+
 namespace engine.quest;
 
 
@@ -12,5 +14,7 @@ namespace engine.quest;
  */
 public class ToLocation
 {
+    public Vector3 TargetLocation { get; set; }
+    
     
 }
