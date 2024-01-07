@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using engine;
 using engine.elevation;
+using engine.joyce;
 using engine.world;
 using Joyce.builtin.tools;
 

@@ -2,6 +2,7 @@ using System.Net.NetworkInformation;
 using System.Numerics;
 using DefaultEcs;
 using engine;
+using engine.behave;
 using engine.physics;
 using static engine.Logger;
 

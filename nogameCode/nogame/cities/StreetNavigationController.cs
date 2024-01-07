@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 using engine;
+using engine.behave;
 using engine.world;
 using engine.streets;
 using static engine.Logger;

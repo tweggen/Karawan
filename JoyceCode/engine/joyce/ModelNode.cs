@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using engine.joyce;
 
-namespace engine;
+namespace engine.joyce;
 
 /**
  * Represents one part of a loaded model.

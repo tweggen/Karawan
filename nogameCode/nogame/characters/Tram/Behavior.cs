@@ -1,12 +1,13 @@
 ﻿using System;
 using nogame.cities;
 using System.Numerics;
+using engine.behave;
 using engine.physics;
 using engine.world;
 
 namespace nogame.characters.tram;
 
-internal class Behavior : engine.ABehavior
+internal class Behavior : ABehavior
 {
     private readonly engine.Engine _engine;
     private readonly engine.world.ClusterDesc _clusterDesc;

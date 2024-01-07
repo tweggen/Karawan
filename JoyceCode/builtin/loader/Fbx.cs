@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using engine;
+using engine.joyce;
 using static engine.Logger;
 
 namespace builtin.loader;
@@ -11,7 +12,7 @@ public class Fbx
 {
     static public void LoadModelInstanceSync(string url,
         ModelProperties modelProperties,
-        out engine.Model model)
+        out Model model)
     {
         engine.joyce.InstanceDesc instanceDesc = new(
             new List<engine.joyce.Mesh>(), 

@@ -7,10 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using builtin.loader;
 using engine;
-using engine.joyce;
 using static engine.Logger;
 
-namespace engine;
+namespace engine.joyce;
 
 public class ModelCache
 {

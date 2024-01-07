@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine;
+using engine.behave;
 using static engine.Logger;
 
 namespace Joyce.builtin.tools;

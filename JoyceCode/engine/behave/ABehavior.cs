@@ -1,7 +1,7 @@
 using DefaultEcs;
 using engine.physics;
 
-namespace engine;
+namespace engine.behave;
 
 public class ABehavior : IBehavior
 {

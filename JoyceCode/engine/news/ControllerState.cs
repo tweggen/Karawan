@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace engine
+namespace engine.news
 {
     public class ControllerState
     {

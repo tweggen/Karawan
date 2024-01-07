@@ -13,6 +13,7 @@ using engine.joyce.components;
 using glTFLoader;
 using glTFLoader.Schema;
 using static engine.Logger;
+using Skin = engine.joyce.Skin;
 
 namespace builtin.loader;
 
@@ -342,7 +343,7 @@ public class GlTF
     }
 
 
-    private void _readSkin(glTFLoader.Schema.Skin gltfSkin, out engine.Skin jSkin)
+    private void _readSkin(glTFLoader.Schema.Skin gltfSkin, out Skin jSkin)
     {
         jSkin = new();
         jSkin.Joints = new List<Joint>();
@@ -383,7 +384,7 @@ public class GlTF
     }
     
     
-    private void _readScene(glTFLoader.Schema.Scene scene, out engine.Model jModel)
+    private void _readScene(glTFLoader.Schema.Scene scene, out Model jModel)
     {
         _dictNodes = new();
         
@@ -423,7 +424,7 @@ public class GlTF
     }
     
     
-    private engine.Model? _read()
+    private Model? _read()
     {
         if (null != _gltfModel.Scene)
         {
@@ -493,7 +494,7 @@ public class GlTF
     }
     
     
-    static public Task<engine.Model> 
+    static public Task<Model> 
         LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return Task.Run(() =>

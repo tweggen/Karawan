@@ -1,5 +1,6 @@
 using System.Numerics;
 using engine;
+using engine.behave;
 using engine.behave.components;
 using engine.physics;
 using engine.world;
@@ -7,7 +8,7 @@ using static engine.Logger;
 
 namespace builtin.tools;
 
-public class SimpleNavigationBehavior : engine.ABehavior
+public class SimpleNavigationBehavior : ABehavior
 {
     engine.Engine _engine;
     engine.world.ClusterDesc _clusterDesc;

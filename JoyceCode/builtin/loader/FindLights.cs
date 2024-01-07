@@ -154,7 +154,7 @@ public class FindLights
     }
 
 
-    public static void _processNode(engine.ModelNode mn)
+    public static void _processNode(ModelNode mn)
     {
         if (mn.InstanceDesc != null)
         {
@@ -171,7 +171,7 @@ public class FindLights
     }
     
         
-    public static engine.Model Process(engine.Model model)
+    public static Model Process(Model model)
     {
         I.Get<ObjectRegistry<Material>>().RegisterFactory("builtin.loader.materials.standardlight",
             name => new Material()

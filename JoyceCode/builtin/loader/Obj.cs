@@ -58,7 +58,7 @@ public class Obj
 
     static public void LoadModelInstanceSync(string url,
         ModelProperties modelProperties,
-        out engine.Model model)
+        out Model model)
     {
         var objLoader = _objLoaderFactory.Create(_materialStreamProvider);
         var fileStream = engine.Assets.Open(url);
@@ -248,7 +248,7 @@ public class Obj
     }
     
     
-    static public Task<engine.Model> LoadModelInstance(string url, ModelProperties modelProperties)
+    static public Task<Model> LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return Task.Run(() =>
         {

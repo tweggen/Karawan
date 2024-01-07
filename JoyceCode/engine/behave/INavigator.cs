@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace engine;
+namespace engine.behave;
 
 public interface INavigator
 {

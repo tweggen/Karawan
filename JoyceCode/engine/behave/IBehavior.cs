@@ -1,5 +1,5 @@
 ﻿
-namespace engine
+namespace engine.behave
 {
     public interface IBehavior
     {

@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using DefaultEcs;
 using engine;
+using engine.behave;
 using engine.physics;
 
 namespace nogame.cities;

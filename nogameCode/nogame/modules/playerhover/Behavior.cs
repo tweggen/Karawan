@@ -1,11 +1,12 @@
 using DefaultEcs;
 using engine;
+using engine.behave;
 using engine.news;
 using engine.physics;
 
 namespace nogame.modules.playerhover;
 
-public class Behavior : engine.IBehavior
+public class Behavior : IBehavior
 {
     public static string PLAYER_COLLISION_ANONYMOUS = "nogame.playerhover.collision.anonymous";
     public static string PLAYER_COLLISION_CUBE = "nogame.playerhover.collision.cube";
