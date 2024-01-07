@@ -287,10 +287,12 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                     | CollisionProperties.CollisionFlags.TriggersCallbacks,
                                 Name = PhysicsName,
                             };
-                        aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.physics.components.Body(
-                            new engine.physics.Object(eTarget, prefSphere.Handle),
-                            prefSphere, collisionProperties));
+                            new engine.physics.Object(eTarget, prefSphere.Handle)
+                            {
+                                CollisionProperties = collisionProperties
+                            },
+                            prefSphere));
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);

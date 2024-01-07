@@ -21,7 +21,8 @@ public class Object : IDisposable
     public DefaultEcs.Entity Entity;
     public uint Flags = 0;
     public int IntHandle = -1;
-    public IList<Action> ReleaseActions = null;
+    public IList<Action>? ReleaseActions = null;
+    public CollisionProperties? CollisionProperties = null;
     
     /**
      * Used to compute velocity.
@@ -71,11 +72,21 @@ public class Object : IDisposable
                 _doAddContactListenerNoLock();
             }
         }
+        if (CollisionProperties != null)
+        {
+            BodyHandle bh = new(IntHandle);
+            I.Get<engine.physics.API>().AddCollisionEntry(bh, CollisionProperties);
+        }
     }
     
     
     public void Dispose()
     {
+        if (CollisionProperties != null)
+        {
+            BodyHandle bh = new(IntHandle);
+            I.Get<engine.physics.API>().RemoveCollisionEntry(bh);
+        }
         lock (Engine.Simulation)
         {
             if ((Flags & (DontFree|IsReleased)) != 0)

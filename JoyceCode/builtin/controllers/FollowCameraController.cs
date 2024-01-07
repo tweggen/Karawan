@@ -141,17 +141,19 @@ public class FollowCameraController : IInputPart
                             }
                         }
                         
+                    },
+#if false
+                    CollisionProperties = new engine.physics.CollisionProperties()
+                    {
+                        Entity = _eTarget,
+                        Flags =
+                            CollisionProperties.CollisionFlags.IsTangible
+                            | CollisionProperties.CollisionFlags.IsDetectable,
+                        Name = CameraPhysicsName
                     }
+#endif
                 }.AddContactListener(),
-                _prefCameraBall,
-                new engine.physics.CollisionProperties()
-                {
-                    Entity = _eTarget,
-                    Flags =
-                        CollisionProperties.CollisionFlags.IsTangible
-                        | CollisionProperties.CollisionFlags.IsDetectable,
-                    Name = CameraPhysicsName
-                })
+                _prefCameraBall)
             );
         }
 

@@ -232,12 +232,14 @@ namespace nogame.characters.cubes
                                 Flags = CollisionProperties.CollisionFlags.IsDetectable,
                                 Name = "nogame.characters.cube",
                             };
-                        aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCubeSound(), 150f));
                         eTarget.Set(new engine.physics.components.Body(
-                            new engine.physics.Object(eTarget, prefSphere.Handle),
-                            prefSphere, collisionProperties)
+                            new engine.physics.Object(eTarget, prefSphere.Handle)
+                            {
+                                CollisionProperties = collisionProperties
+                            },
+                            prefSphere)
                         );
                     });
 
