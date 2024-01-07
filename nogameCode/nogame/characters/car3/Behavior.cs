@@ -27,16 +27,12 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
     {
         base.OnCollision(cev);
         var me = cev.ContactInfo.PropertiesA;
-        engine.physics.components.Body cCarBody;
-
-        /*
-         * Get a copy of the original.
-         */
-        cCarBody = me.Entity.Get<engine.physics.components.Body>();
+        ref engine.physics.components.Body cCarBody = ref me.Entity.Get<engine.physics.components.Body>();
 
         /*
          * Become a dynamic thing with the proper inertia.
          */
+        cCarBody.PhysicsObject.AddContactListener();
         lock (_engine.Simulation)
         {
             /*

@@ -104,13 +104,15 @@ public class AfterCrashBehavior : ABehavior
         else
         {
             /*
-             * Swith back to previous behavior, making the car kinematic.
+             * Switch back to previous behavior, making the car kinematic.
              */
             if (null != _oldBehavior)
             {
+                ref engine.physics.components.Body cCarBody = ref entity.Get<engine.physics.components.Body>();
+                cCarBody.PhysicsObject.RemoveContactListener();
                 lock (_engine.Simulation)
                 {
-                    var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
+                    var prefTarget = cCarBody.Reference;
                     prefTarget.Awake = false;
                     prefTarget.BecomeKinematic();
                 }
