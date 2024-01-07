@@ -232,23 +232,27 @@ namespace engine.world
 
         public void WorldFragmentRemove()
         {
-            /*
-             * Create an action of removing all entities with this fragment id.
-             */
-            // TXWTODO: As long we don't create after this step we're good.
-
-            var enumDoomedEntities = Engine.GetEcsWorld().GetEntities()
-                .With<engine.world.components.FragmentId>()
-                .AsEnumerable();
-            List<DefaultEcs.Entity> listDoomedEntities = new();
-            foreach(var entity in enumDoomedEntities)
+            Engine.QueueMainThreadAction(() =>
             {
-                if (entity.Get<engine.world.components.FragmentId>().Id == _id)
+                /*
+                 * Create an action of removing all entities with this fragment id.
+                 */
+                // TXWTODO: As long we don't create after this step we're good.
+
+                var enumDoomedEntities = Engine.GetEcsWorld().GetEntities()
+                    .With<engine.world.components.FragmentId>()
+                    .AsEnumerable();
+                List<DefaultEcs.Entity> listDoomedEntities = new();
+                foreach (var entity in enumDoomedEntities)
                 {
-                    listDoomedEntities.Add(entity);
+                    if (entity.Get<engine.world.components.FragmentId>().Id == _id)
+                    {
+                        listDoomedEntities.Add(entity);
+                    }
                 }
-            }
-            Engine.AddDoomedEntities(listDoomedEntities);
+
+                Engine.AddDoomedEntities(listDoomedEntities);
+            });
         }
 
 
