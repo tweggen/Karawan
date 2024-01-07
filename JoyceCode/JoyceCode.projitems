@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)builtin\map\systems\" />
+    <Folder Include="$(MSBuildThisFileDirectory)engine\quest\components\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +178,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\systems\MoveKineticsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\PropertyEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Props.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ToLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resources.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Resource\ShaderSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\ImageSharpFramebuffer.cs" />

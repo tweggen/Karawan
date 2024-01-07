@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using engine.geom;
 using engine.joyce;
 using static engine.Logger;
 
@@ -259,7 +260,7 @@ namespace engine.world
                         _fragCurrent.Position.Y + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize,
                         _fragCurrent.Position.Z + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize
                         );
-                    List<Vector3> aabb = new();
+                    AABB aabb = new();
                     aabb.Add(vAA); 
                     aabb.Add(vBB);
                     _engine.QueueCleanupAction( () => _wiperSystem.Update(aabb));
