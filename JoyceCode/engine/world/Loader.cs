@@ -252,12 +252,12 @@ namespace engine.world
                      */
                     Vector3 vAA = new(
                         _fragCurrent.Position.X - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize,
-                        _fragCurrent.Position.Y - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize,
+                        -10000,
                         _fragCurrent.Position.Z - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize
                         );
                     Vector3 vBB = new(
                         _fragCurrent.Position.X + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize,
-                        _fragCurrent.Position.Y + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize,
+                        10000,
                         _fragCurrent.Position.Z + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize
                         );
                     AABB aabb = new();
