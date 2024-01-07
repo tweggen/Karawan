@@ -36,8 +36,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
             {
                 continue;
             }
-                    
-
+            
             lock (_engine.Simulation)
             {
                 var oldPos = po.LastPosition;

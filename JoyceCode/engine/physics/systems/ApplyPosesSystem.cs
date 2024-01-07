@@ -16,11 +16,21 @@ namespace engine.physics.systems
         {
             foreach (var entity in entities)
             {
+                ref physics.components.Body cRefBody = ref entity.Get<physics.components.Body>();
+                var po = cRefBody.PhysicsObject;
+                if (po == null) continue;
+            
+                // TXWTODO: This is a workaround for addressing only the former kinematic objects.
+                if ((po.Flags & (physics.Object.HaveContactListener|physics.Object.IsStatic)) != physics.Object.HaveContactListener)
+                {
+                    continue;
+                }
+            
                 Vector3 vPosition;
                 Quaternion qOrientation;
                 lock (_engine.Simulation)
                 {
-                    BodyReference pref = entity.Get<components.Body>().Reference;
+                    BodyReference pref = cRefBody.Reference;
                     vPosition = pref.Pose.Position;
                     qOrientation = pref.Pose.Orientation;
                 }
