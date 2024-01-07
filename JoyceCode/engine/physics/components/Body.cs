@@ -1,6 +1,4 @@
 ﻿using BepuPhysics;
-using System;
-using System.Collections.Generic;
 
 namespace engine.physics.components;
 

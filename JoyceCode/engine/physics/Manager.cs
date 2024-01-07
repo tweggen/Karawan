@@ -39,32 +39,6 @@ internal class Manager
     }
 
 
-    private void _removeKineticNoLock(in components.Kinetic cKinetic)
-    {
-        if (0 == (cKinetic.Flags & components.Kinetic.DONT_FREE_PHYSICS))
-        {
-            ref var location = ref cKinetic.Reference.Bodies.HandleToLocation[cKinetic.Reference.Handle.Value];
-            if (location.SetIndex < 0 || location.Index < 0)
-            {
-                Trace("Hit me");
-            }
-            else
-            {
-                _engine.Simulation.Bodies.Remove(cKinetic.Reference.Handle);
-            }
-            
-        }
-
-        if (cKinetic.ReleaseActions != null)
-        {
-            foreach (var releaseAction in cKinetic.ReleaseActions)
-            {
-                releaseAction();
-            }
-        }
-    }
-
-
     private void _onStaticsChanged(in Entity entity, in components.Statics cOldStatics,
         in components.Statics cNewStatics)
     {
@@ -85,54 +59,21 @@ internal class Manager
     }
 
 
-    private void _onKineticChanged(in Entity entity, in components.Kinetic cOldKinetic,
-        in components.Kinetic cNewKinetic)
+    private void _removeBodyNoLock(in Entity entity, in components.Body cBody)
     {
-        lock (_engine.Simulation)
+        if (cBody.PhysicsObject != null)
         {
-            if (cOldKinetic.Reference.Handle.Value != cNewKinetic.Reference.Handle.Value)
-            {
-                // We need to assume the user added the new entity.
-                _removeKineticNoLock(cOldKinetic);
-            }
+            cBody.PhysicsObject.Dispose();
         }
     }
 
 
-    private void _onKineticRemoved(in Entity entity, in components.Kinetic cKinetic)
+    private void _addBodyNoLock(in Entity entity, in components.Body cBody)
     {
-        lock (_engine.Simulation)
+        if (cBody.PhysicsObject != null)
         {
-            _removeKineticNoLock(cKinetic);
+            cBody.PhysicsObject.Activate();
         }
-    }
-
-
-    private void _removeDynamicNoLock(in Entity entity, in components.Body cBody)
-    {
-        if (0 == (cBody.Flags & components.Body.DONT_FREE_PHYSICS))
-        {
-            ref var location = ref cBody.Reference.Bodies.HandleToLocation[cBody.Reference.Handle.Value];
-            if (location.SetIndex < 0 || location.Index < 0)
-            {
-                Trace("Hit me");
-            }
-            else
-            {
-                _engine.Simulation.Bodies.Remove(cBody.Reference.Handle); 
-            }
-
-        }
-        _aPhysics.RemoveContactListener(entity, cBody.Reference);
-    }
-
-
-    private void _addDynamicNoLock(in Entity entity, in components.Body cBody)
-    {
-        /*
-         * Activate collision detection for that entity.
-         */
-        _aPhysics.AddContactListener(entity);
     }
 
 
@@ -140,10 +81,10 @@ internal class Manager
     {
         lock (_engine.Simulation)
         {
-            if (cOldBody.Reference.Handle.Value != cNewBody.Reference.Handle.Value)
+            if (cOldBody.PhysicsObject != cNewBody.PhysicsObject)
             {
-                _removeDynamicNoLock(entity, cOldBody);
-                _addDynamicNoLock(entity, cNewBody);
+                _removeBodyNoLock(entity, cOldBody);
+                _addBodyNoLock(entity, cNewBody);
             }
         }
     }
@@ -153,7 +94,7 @@ internal class Manager
     {
         lock (_engine.Simulation)
         {
-            _removeDynamicNoLock(entity, cBody);
+            _removeBodyNoLock(entity, cBody);
         }
     }
 
@@ -162,7 +103,7 @@ internal class Manager
     {
         lock (_engine.Simulation)
         {
-            _addDynamicNoLock(entity, cBody);
+            _addBodyNoLock(entity, cBody);
         }
     }
 
@@ -187,8 +128,6 @@ internal class Manager
             yield return w.SubscribeEntityComponentAdded<components.Body>(_onBodyAdded);
             yield return w.SubscribeEntityComponentChanged<components.Body>(_onBodyChanged);
             yield return w.SubscribeEntityComponentRemoved<components.Body>(_onBodyRemoved);
-            yield return w.SubscribeEntityComponentChanged<components.Kinetic>(_onKineticChanged);
-            yield return w.SubscribeEntityComponentRemoved<components.Kinetic>(_onKineticRemoved);
             yield return w.SubscribeEntityComponentChanged<components.Statics>(_onStaticsChanged);
             yield return w.SubscribeEntityComponentRemoved<components.Statics>(_onStaticsRemoved);
         }

@@ -123,15 +123,7 @@ public class FollowCameraController : IInputPart
             _prefCameraBall = _engine.Simulation.Bodies.GetBodyReference(_phandleCameraSphere);
 
             _eTarget.Set(new engine.physics.components.Body(
-                _prefCameraBall,
-                new engine.physics.CollisionProperties()
-                {
-                    Entity = _eTarget,
-                    Flags =
-                        CollisionProperties.CollisionFlags.IsTangible
-                        | CollisionProperties.CollisionFlags.IsDetectable,
-                    Name = CameraPhysicsName
-                })
+                new engine.physics.Object(_eTarget, _prefCameraBall.Handle)
                 {
                     ReleaseActions = new List<Action> {
                         () =>
@@ -150,7 +142,16 @@ public class FollowCameraController : IInputPart
                         }
                         
                     }
-                }
+                }.AddContactListener(),
+                _prefCameraBall,
+                new engine.physics.CollisionProperties()
+                {
+                    Entity = _eTarget,
+                    Flags =
+                        CollisionProperties.CollisionFlags.IsTangible
+                        | CollisionProperties.CollisionFlags.IsDetectable,
+                    Name = CameraPhysicsName
+                })
             );
         }
 
@@ -847,9 +848,9 @@ public class FollowCameraController : IInputPart
         {
             _prefPlayer = _eCarrot.Get<engine.physics.components.Body>().Reference;
         }
-        else if (_eCarrot.Has<engine.physics.components.Kinetic>())
+        else if (_eCarrot.Has<engine.physics.components.Body>())
         {
-            _prefPlayer = _eCarrot.Get<engine.physics.components.Kinetic>().Reference;
+            _prefPlayer = _eCarrot.Get<engine.physics.components.Body>().Reference;
         }
         else
         {

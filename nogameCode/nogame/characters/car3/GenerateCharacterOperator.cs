@@ -18,9 +18,13 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
 
     static public readonly string PhysicsName = "nogame.characters.car3";
-    static public readonly float PhysicsMass = 500f;
-    static public readonly float PhysicsRadius = 5f;
-    
+    static private readonly float PhysicsMass = 500f;
+    static private readonly float PhysicsRadius = 5f;
+    static public BodyInertia PInertiaSphere =
+        new BepuPhysics.Collidables.Sphere(
+            GenerateCharacterOperator.PhysicsRadius)
+        .ComputeInertia(GenerateCharacterOperator.PhysicsMass);
+
     private static object _classLock = new();
 
     private static engine.audio.Sound[] _jCar3Sound;
@@ -258,6 +262,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         BodyReference prefSphere;
                         lock (wf.Engine.Simulation)
                         {
+                            {
+                            }
+
                             BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                                 BodyDescription.CreateKinematic(
                                     new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
@@ -281,7 +288,8 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                 Name = PhysicsName,
                             };
                         aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
-                        eTarget.Set(new engine.physics.components.Kinetic(
+                        eTarget.Set(new engine.physics.components.Body(
+                            new engine.physics.Object(eTarget, prefSphere.Handle),
                             prefSphere, collisionProperties));
                     });
 
@@ -295,7 +303,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         }
     });
 
-
+    
     public GenerateCharacterOperator(
         in ClusterDesc clusterDesc, in string strKey)
     {

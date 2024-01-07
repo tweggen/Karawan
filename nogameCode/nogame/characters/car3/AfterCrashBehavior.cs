@@ -23,20 +23,10 @@ public class AfterCrashBehavior : ABehavior
     {
         var me = cev.ContactInfo.PropertiesA;
 
-        if (me.Entity.Has<engine.physics.components.Body>())
-        {
-            /*
-             * I collided again with something, so increase my timer. 
-             */
-            t = LIFETIME - (builtin.tools.RandomSource.Instance.GetFloat() + 0.5f);
-            
-            // Trace("Another collision with me, a dynamic being.");
-        }
-        else
-        {
-            Trace("I wasn't expecting to be a kinematic physics object here.");
-            return;
-        }
+        /*
+         * I collided again with something, so increase my timer. 
+         */
+        t = LIFETIME - (builtin.tools.RandomSource.Instance.GetFloat() + 0.5f);
     }
     
 
@@ -113,22 +103,18 @@ public class AfterCrashBehavior : ABehavior
         }
         else
         {
+            /*
+             * Swith back to previous behavior, making the car kinematic.
+             */
             if (null != _oldBehavior)
             {
-                engine.physics.components.Body cCarDynamic;
                 lock (_engine.Simulation)
                 {
                     var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
-                    cCarDynamic = entity.Get<engine.physics.components.Body>();
-
-                    entity.Disable<engine.physics.components.Body>();
-
                     prefTarget.Awake = false;
                     prefTarget.BecomeKinematic();
                 }
 
-                entity.Disable<engine.physics.components.Body>();
-                entity.Enable<engine.physics.components.Kinetic>();
                 entity.Get<engine.behave.components.Behavior>().Provider = _oldBehavior;
                 _oldBehavior.Sync(entity);
             }

@@ -459,7 +459,10 @@ public class Module : engine.AModule
                     Name = PhysicsName,
                 };
             I.Get<engine.physics.API>().AddCollisionEntry(_prefShip.Handle, collisionProperties);
-            _eShip.Set(new engine.physics.components.Body(_prefShip, collisionProperties));
+            _eShip.Set(new engine.physics.components.Body(
+                new engine.physics.Object(_eShip, _prefShip.Handle).AddContactListener(),
+                _prefShip, 
+                collisionProperties));
             _eShip.Set(new engine.behave.components.Behavior(new Behavior(MassShip)));
 
             /*

@@ -8,6 +8,7 @@ using engine;
 using engine.joyce;
 using engine.physics;
 using engine.world;
+using nogame.modules.playerhover;
 using static engine.Logger; 
 
 namespace nogame.cities;
@@ -137,7 +138,8 @@ public class GeneratePolytopeOperator : IFragmentOperator
                         Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable
                     };
             aPhysics.AddCollisionEntry(prefSphere.Handle, collisionProperties);
-            eTarget.Set(new engine.physics.components.Kinetic(
+            eTarget.Set(new engine.physics.components.Body(
+                new engine.physics.Object(eTarget, prefSphere.Handle),
                 prefSphere, collisionProperties));
             eTarget.Set(new engine.draw.components.OSDText(
                 new Vector2(0, 30f),

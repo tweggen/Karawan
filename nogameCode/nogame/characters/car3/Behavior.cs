@@ -27,59 +27,51 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
     {
         base.OnCollision(cev);
         var me = cev.ContactInfo.PropertiesA;
-        engine.physics.components.Kinetic cCarKinetic;
+        engine.physics.components.Body cCarBody;
 
-        if (me.Entity.Has<engine.physics.components.Kinetic>())
+        /*
+         * Get a copy of the original.
+         */
+        cCarBody = me.Entity.Get<engine.physics.components.Body>();
+
+        /*
+         * Become a dynamic thing with the proper inertia.
+         */
+        lock (_engine.Simulation)
         {
             /*
-             * Get a copy of the original.
+             * We need to call Simulation.Bodies.SetLocalInertia to remove the kinematic from a
+             * couple of lists. 
              */
-            cCarKinetic = me.Entity.Get<engine.physics.components.Kinetic>();
-
-            me.Entity.Disable<engine.physics.components.Kinetic>();
-
-            lock (_engine.Simulation)
-            {
-                // TXWTODO: This is a bit hard coded. 
-                BepuPhysics.Collidables.Sphere pbodySphere = new(GenerateCharacterOperator.PhysicsRadius);
-                var pinertiaSphere = pbodySphere.ComputeInertia(GenerateCharacterOperator.PhysicsMass);
-                
-                /*
-                 * We need to call Simulation.Bodies.SetLocalInertia to remove the kinematic from a
-                 * couple of lists. 
-                 */
-                _engine.Simulation.Bodies.SetLocalInertia(cCarKinetic.Reference.Handle, pinertiaSphere);
-            }
-
-            me.Entity.Set(new engine.physics.components.Body(cCarKinetic.Reference, me));
-
-            /*
-             * Replace the previous behavior with the after crash behavior.
-             */
-            me.Entity.Get<engine.behave.components.Behavior>().Provider =
-                new nogame.characters.car3.AfterCrashBehavior(_engine, me.Entity);
+            _engine.Simulation.Bodies.SetLocalInertia(
+                cCarBody.Reference.Handle,
+                GenerateCharacterOperator.PInertiaSphere);
         }
-        else
-        {
-            Trace("I wasn't expecting to be a kinematic dynamic object here.");
-        }
+
+        /*
+         * Replace the previous behavior with the after crash behavior.
+         */
+        me.Entity.Get<engine.behave.components.Behavior>().Provider =
+            new nogame.characters.car3.AfterCrashBehavior(_engine, me.Entity);
     }
 
     
     public override void Sync(in DefaultEcs.Entity entity)
     {
         base.Sync(entity);
-        if (entity.Has<engine.physics.components.Kinetic>())
+        if (!entity.Has<engine.physics.components.Body>())
         {
-            lock (_engine.Simulation)
-            {
-                var prefTarget = entity.Get<engine.physics.components.Kinetic>().Reference;
-                Vector3 vPos3 = prefTarget.Pose.Position;
-                Quaternion qRotation = prefTarget.Pose.Orientation;
-                _snc.NavigatorSetTransformation(vPos3, qRotation);
-            }
+            ErrorThrow($"I was expecting that {entity} has  no body component.", m => new InvalidOperationException(m));
+            return;
         }
 
+        lock (_engine.Simulation)
+        {
+            var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
+            Vector3 vPos3 = prefTarget.Pose.Position;
+            Quaternion qRotation = prefTarget.Pose.Orientation;
+            _snc.NavigatorSetTransformation(vPos3, qRotation);
+        }
     }
 
 

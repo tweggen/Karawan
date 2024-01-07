@@ -136,7 +136,7 @@ public class Gameplay : AModule, IInputPart
                             .With<engine.audio.components.MovingSound>()
                             .With<engine.joyce.components.EntityName>()
                             .With<engine.joyce.components.Transform3ToWorld>()
-                            .With<engine.physics.components.Kinetic>()
+                            .With<engine.physics.components.Body>()
                             .AsEnumerable();
                     DefaultEcs.Entity ePossibleHike = default;
                     foreach (var entity in enumKinematic)

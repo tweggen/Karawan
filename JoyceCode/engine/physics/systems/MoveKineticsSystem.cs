@@ -8,7 +8,7 @@ namespace engine.physics.systems;
  * Read the world transform position of the entities and set it to the kinetics.
  */
 [DefaultEcs.System.With(typeof(engine.joyce.components.Transform3ToWorld))]
-[DefaultEcs.System.With(typeof(engine.physics.components.Kinetic))]
+[DefaultEcs.System.With(typeof(engine.physics.components.Body))]
 internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
     private engine.Engine _engine;
@@ -27,32 +27,35 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
         foreach (var entity in entities)
         {
-            ref physics.components.Kinetic cRefKinetic = ref entity.Get<physics.components.Kinetic>();
+            ref physics.components.Body cRefKinetic = ref entity.Get<physics.components.Body>();
+            var po = cRefKinetic.PhysicsObject;
+            if (po == null) continue;
+            
+            // TXWTODO: This is a workaround for addressing only the former kinematic objects.
+            if ((po.Flags & (physics.Object.HaveContactListener|physics.Object.IsStatic)) != 0)
+            {
+                continue;
+            }
+                    
 
             lock (_engine.Simulation)
             {
-                var oldPos = cRefKinetic.LastPosition;
+                var oldPos = po.LastPosition;
                 var newPos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
 
-                float maxDistance = cRefKinetic.MaxDistance;
-                bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <= maxDistance * maxDistance;
-                bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= maxDistance * maxDistance;
+                float maxDistance2 = po.MaxDistance * po.MaxDistance;
+                bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <= maxDistance2;
+                bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= maxDistance2;
 
                 var bodyReference = cRefKinetic.Reference;
 
                 if (isInside)
                 {
-                    if (entity.Has<engine.joyce.components.EntityName>() &&
-                        entity.Get<engine.joyce.components.EntityName>().Name.Contains("car"))
-                    {
-                        int a = 1;
-                    }
-
                     // TXWTODO: Can we write that more efficiently?
                     if (oldPos != newPos)
                     {
                         bodyReference.Pose.Position = newPos;
-                        cRefKinetic.LastPosition = newPos;
+                        po.LastPosition = newPos;
                         if (oldPos != Vector3.Zero)
                         {
                             Vector3 vel = (newPos - oldPos) / dt;
