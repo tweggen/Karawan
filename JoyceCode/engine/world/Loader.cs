@@ -102,8 +102,7 @@ namespace engine.world
          * This function triggers application of all operators required for
          * that specific world fragment.
          *
-         * TODO:
-         * - we also should incremental loading (for LoD or networked connections),
+         * This function must be called in the logical thread only!
          */
         public void WorldLoaderProvideFragments(in Vector3 pos0)
         {

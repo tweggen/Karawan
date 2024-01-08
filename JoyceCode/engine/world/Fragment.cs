@@ -229,30 +229,27 @@ namespace engine.world
             return 0;
         }
 
-
+        
         public void WorldFragmentRemove()
         {
-            Engine.QueueMainThreadAction(() =>
+           /*
+             * Create an action of removing all entities with this fragment id.
+             */
+            // TXWTODO: As long we don't create after this step we're good.
+
+            var enumDoomedEntities = Engine.GetEcsWorld().GetEntities()
+                .With<engine.world.components.FragmentId>()
+                .AsEnumerable();
+            List<DefaultEcs.Entity> listDoomedEntities = new();
+            foreach (var entity in enumDoomedEntities)
             {
-                /*
-                 * Create an action of removing all entities with this fragment id.
-                 */
-                // TXWTODO: As long we don't create after this step we're good.
-
-                var enumDoomedEntities = Engine.GetEcsWorld().GetEntities()
-                    .With<engine.world.components.FragmentId>()
-                    .AsEnumerable();
-                List<DefaultEcs.Entity> listDoomedEntities = new();
-                foreach (var entity in enumDoomedEntities)
+                if (entity.Get<engine.world.components.FragmentId>().Id == _id)
                 {
-                    if (entity.Get<engine.world.components.FragmentId>().Id == _id)
-                    {
-                        listDoomedEntities.Add(entity);
-                    }
+                    listDoomedEntities.Add(entity);
                 }
+            }
 
-                Engine.AddDoomedEntities(listDoomedEntities);
-            });
+            Engine.AddDoomedEntities(listDoomedEntities);
         }
 
 
