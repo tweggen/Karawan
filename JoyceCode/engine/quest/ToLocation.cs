@@ -18,6 +18,8 @@ public class ToLocation : AModule
     public Vector3 TargetLocation { get; set; }
 
     private BodyReference _prefCylinder;
+    private engine.physics.Object _poCylinder;
+    private DefaultEcs.Entity _entity;
 
     public override void ModuleDeactivate()
     {
@@ -42,7 +44,9 @@ public class ToLocation : AModule
                     new BodyActivityDescription(0.01f)
                 )
             );
+            _poCylinder = new engine.physics.Object(
             _prefCylinder = _engine.Simulation.Bodies.GetBodyReference(phandleCylinder);
+            _prefCylinder.Pose.Position = TargetLocation;
         }
     }
 }
