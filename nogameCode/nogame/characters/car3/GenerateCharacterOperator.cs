@@ -69,32 +69,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
     
     
-    private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
-    private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
-    public static BepuPhysics.Collidables.TypedIndex GetSphereShape(float radius, in Engine engine)
-    {
-        lock(_classLock)
-        {
-            BepuPhysics.Collidables.TypedIndex pshapeSphere;
-            if (_mapPshapeSphere.TryGetValue(radius, out pshapeSphere))
-            {
-                return pshapeSphere;
-            }
-
-            BepuPhysics.Collidables.Sphere pbodySphere = new(radius); 
-            lock (engine.Simulation)
-            {
-                pshapeSphere = engine.Simulation.Shapes.Add(pbodySphere);
-            }
-
-            _mapPbodySphere[radius] = pbodySphere;
-            _mapPshapeSphere[radius] = pshapeSphere;
-            
-            return pshapeSphere;
-        }
-    }
-
-
     private ClusterDesc _clusterDesc;
     private builtin.tools.RandomSource _rnd;
     private string _myKey;
@@ -269,7 +243,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                 BodyDescription.CreateKinematic(
                                     new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
                                     new BepuPhysics.Collidables.CollidableDescription(
-                                        GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
+                                        ShapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
                                         0.1f),
                                     new BodyActivityDescription(0.01f)
                                 )
