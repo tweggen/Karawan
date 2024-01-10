@@ -1,11 +1,14 @@
 ﻿using System;
-
+using System.ComponentModel;
 using System.IO;
 using System.Threading;
 using System.Reflection;
 using engine;
+using Silk.NET.Core;
 using Silk.NET.Windowing;
 using Silk.NET.Maths;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Karawan;
 
@@ -96,11 +99,31 @@ public class DesktopMain
             options.ShouldSwapAutomatically = false;
             options.WindowState = WindowState.Normal;
             iWindow = Window.Create(options);
+
             iWindow.Size = new Vector2D<int>(1280, 720);
+
+
         }
 
         var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
         e.SetFullscreen(startFullscreen);
+
+        iWindow.Initialize();
+        try
+        {
+            System.IO.Stream streamImage = engine.Assets.Open("appicon.png");
+            using (var img = Image.Load<Rgba32>(streamImage))
+            {
+                byte[] pixelArray = new byte[img.Width * img.Height * 4];
+                img.CopyPixelDataTo(pixelArray);
+                RawImage rawImage = new RawImage(img.Width, img.Height, pixelArray.AsMemory());
+                iWindow.SetWindowIcon(ref rawImage);
+            }
+        }
+        catch (Exception)
+        {
+            // Unable to set icon
+        }
 
         {
             engine.ConsoleLogger logger = new(e);

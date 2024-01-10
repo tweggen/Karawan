@@ -474,7 +474,6 @@ namespace Splash.Silk
              * we run the same thing explicitely. That way we can inject calls.
              */
             IView iView = _iView;
-            iView.Initialize();
             iView.Run(delegate
             {
                 iView.DoEvents();
