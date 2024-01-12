@@ -82,7 +82,9 @@ public class ToLocation
             CollisionProperties = new CollisionProperties()
             {
                 Entity = eGoal, 
-                Flags = engine.physics.CollisionProperties.CollisionFlags.IsDetectable,
+                Flags = 
+                    engine.physics.CollisionProperties.CollisionFlags.IsDetectable
+                    |engine.physics.CollisionProperties.CollisionFlags.TriggersCallbacks,
                 Name = Name,
             }, 
             OnCollision = _onCollision
