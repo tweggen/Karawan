@@ -1,6 +1,10 @@
+using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics;
+using engine.joyce.components;
 using engine.physics;
+using engine.physics.components;
+using static engine.Logger;
 
 namespace engine.quest;
 
@@ -42,6 +46,7 @@ public class ToLocation
             /*
              * At this point we can call whatever has been reached.
              */
+            Trace("Called onCollision of ToLocation.");
         }
     }
     
@@ -82,5 +87,8 @@ public class ToLocation
             }, 
             OnCollision = _onCollision
         };
+
+        eGoal.Set(new Body(poCylinder, prefCylinder));
+        I.Get<joyce.TransformApi>().SetPosition(eGoal, RelativePosition);
     }
 }

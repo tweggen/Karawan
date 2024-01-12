@@ -226,7 +226,17 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<SubscriptionManager>().Subscribe("nogame.minimap.toggleMap", _toggleMap);
         
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-        
+
+        /*
+         * Test code to add a destination.
+         */
+        var newQuestTarget = new engine.quest.ToLocation()
+        {
+            RelativePosition = new Vector3(-407f, 30f, 396f),
+            SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+        };
+        newQuestTarget.OperatorApply(_engine);
+
         _engine.AddModule(this);
     }
 
