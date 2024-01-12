@@ -8,8 +8,13 @@ namespace engine.physics;
 
 public class Object : IDisposable
 {
-    Engine Engine = I.Get<Engine>();
+    /*
+     * Still not happy with the design. All of the
+     * following is instance specific.
+     */
 
+    Engine Engine = I.Get<Engine>();
+    
     public const uint IsReleased = 1;
     public const uint IsStatic = 2;
     public const uint DontFree = 4;
@@ -22,12 +27,18 @@ public class Object : IDisposable
     public uint Flags = 0;
     public int IntHandle = -1;
     public IList<Action>? ReleaseActions = null;
-    public CollisionProperties? CollisionProperties = null;
-    
+    public CollisionProperties? CollisionProperties { get; set; } = null;
+
     /**
      * Used to compute velocity.
      */
     public Vector3 LastPosition;
+    
+    /*
+     * Whereas this is more class specific.
+     */
+    
+    public Action<ContactEvent>? OnCollision { get; set; } = null;
     
     /**
      * The maximal distance to the player where these objects actually should be

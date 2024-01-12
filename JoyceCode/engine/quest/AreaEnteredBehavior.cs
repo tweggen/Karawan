@@ -27,7 +27,7 @@ public class AreaEnteredBehavior : IBehavior
 
     public void OnCollision(ContactEvent cev)
     {
-        
+        Trace("Something collided with me.");
     }
 
     public void Behave(in Entity entity, float dt)
@@ -44,26 +44,5 @@ public class AreaEnteredBehavior : IBehavior
 
     public void OnAttach(in Engine engine0, in Entity entity)
     {
-        BodyHandle phandleCylinder;
-        
-        lock (_engine.Simulation)
-        {
-            phandleCylinder = _engine.Simulation.Bodies.Add(
-                BodyDescription.CreateKinematic(
-                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                    new BepuPhysics.Collidables.CollidableDescription(
-                        engine.physics.ShapeFactory.GetCylinderShape(3f, _engine),
-                        0.1f),
-                    new BodyActivityDescription(0.01f)
-                )
-            );
-            
-            _prefCylinder = _engine.Simulation.Bodies.GetBodyReference(phandleCylinder);
-            /*
-             * Position will be set by setup kinetics system.
-             */
-        }
-        _poCylinder = new engine.physics.Object(_eGoal, phandleCylinder);
-
     }
 }

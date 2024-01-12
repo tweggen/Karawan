@@ -107,22 +107,32 @@ public class API
                     DefaultEcs.Entity entity = propsA.Entity;
                     if (entity.IsAlive && entity.IsEnabled())
                     {
+                        /*
+                         * Send the proper event
+                         */
+                        physics.ContactInfo contactInfo = new(eventSource,
+                            new CollidablePair(pair.A, pair.B),
+                            vContactOffset, vContactNormal, depth)
+                        {
+                            PropertiesA =  propsA, PropertiesB = propsB
+                        };
+                        var cev = new ContactEvent(contactInfo);
+
+                        if ((ahandle & 0x80000000) == 0)
+                        {
+                            if (entity.Has<engine.physics.components.Body>())
+                            {
+                                var cBody = entity.Get<engine.physics.components.Body>();
+                                cBody.PhysicsObject?.OnCollision?.Invoke(cev);
+                            }
+                        }
                         if (entity.Has<engine.behave.components.Behavior>())
                         {
                             var cBehavior = entity.Get<engine.behave.components.Behavior>();
                             var iBehaviorProvider = cBehavior.Provider;
                             if (iBehaviorProvider != null)
                             {
-                                /*
-                                 * Send the proper event
-                                 */
-                                physics.ContactInfo contactInfo = new(eventSource,
-                                    new CollidablePair(pair.A, pair.B),
-                                    vContactOffset, vContactNormal, depth)
-                                {
-                                    PropertiesA =  propsA, PropertiesB = propsB
-                                };
-                                iBehaviorProvider.OnCollision(new ContactEvent(contactInfo));
+                                iBehaviorProvider.OnCollision(cev);
                             }
                         }
                     }
@@ -135,22 +145,32 @@ public class API
                     DefaultEcs.Entity entity = propsB.Entity;
                     if (entity.IsAlive && entity.IsEnabled())
                     {
+                        /*
+                         * Send the proper event
+                         */
+                        physics.ContactInfo contactInfo = new(eventSource,
+                            new CollidablePair(pair.B, pair.A),
+                            vContactOffset, vContactNormal, depth)
+                        {
+                            PropertiesA =  propsB, PropertiesB = propsA
+                        };
+                        var cev = new ContactEvent(contactInfo);
+                        
+                        if ((bhandle & 0x80000000) == 0)
+                        {
+                            if (entity.Has<engine.physics.components.Body>())
+                            {
+                                var cBody = entity.Get<engine.physics.components.Body>();
+                                cBody.PhysicsObject?.OnCollision?.Invoke(cev);
+                            }
+                        }
                         if (entity.Has<engine.behave.components.Behavior>())
                         {
                             var cBehavior = entity.Get<engine.behave.components.Behavior>();
                             var iBehaviorProvider = cBehavior.Provider;
                             if (iBehaviorProvider != null)
                             {
-                                /*
-                                 * Send the proper event
-                                 */
-                                physics.ContactInfo contactInfo = new(eventSource,
-                                    new CollidablePair(pair.B, pair.A),
-                                    vContactOffset, vContactNormal, depth)
-                                {
-                                    PropertiesA =  propsB, PropertiesB = propsA
-                                };
-                                iBehaviorProvider.OnCollision(new ContactEvent(contactInfo));
+                                iBehaviorProvider.OnCollision(cev);
                             }
                         }
                     }
