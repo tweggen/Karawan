@@ -37,6 +37,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Object.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\AreaEnteredBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerSpinBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TargetInstance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOperator.cs" />
     <Folder Include="$(MSBuildThisFileDirectory)builtin\tools\components\" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />

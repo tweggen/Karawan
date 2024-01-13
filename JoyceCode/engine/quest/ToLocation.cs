@@ -1,6 +1,8 @@
+using System;
 using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics;
+using engine.joyce;
 using engine.joyce.components;
 using engine.physics;
 using engine.physics.components;
@@ -39,6 +41,25 @@ public class ToLocation : engine.world.IOperator
     public string SensitivePhysicsName { get; set; } = "";
 
 
+    /**
+     * If I am supposed to create a visible target for this one.
+     */
+    public bool DoCreateVisibleTarget { get; set; } = true;
+
+
+    private static Lazy<engine.joyce.InstanceDesc> _jMeshGoal = new(
+        () => InstanceDesc.CreateFromMatMesh(
+            new MatMesh(
+                new Material() { AlbedoColor = 0xff4444cc },
+                engine.joyce.mesh.Tools.CreateCubeMesh($"goal mesh", 3f)
+            ),
+            400f
+        )
+    );
+
+    private static Lazy<GoalMarkerSpinBehavior> _goalMarkerSpinBehavior = new(() => new GoalMarkerSpinBehavior());
+    
+
     private void _onCollision(ContactEvent cev)
     {
         if (cev.ContactInfo.PropertiesB?.Name?.StartsWith(SensitivePhysicsName) ?? false)
@@ -48,6 +69,19 @@ public class ToLocation : engine.world.IOperator
              */
             Trace("Called onCollision of ToLocation.");
         }
+    }
+
+
+    /**
+     * Create the default target marker
+     */
+    private void _createTargetInstance(engine.Engine e, DefaultEcs.Entity eParent)
+    {
+        DefaultEcs.Entity eMarker = e.CreateEntity("quest.goal {Name} marker");
+        eMarker.Set(_jMeshGoal.Value);
+        I.Get<TransformApi>().SetTransforms(eMarker, true, 0x000000ff, Quaternion.Identity, Vector3.Zero);
+        I.Get<HierarchyApi>().SetParent(eMarker, eParent);
+        eMarker.Set(_goalMarkerSpinBehavior.Value);
     }
     
     
@@ -92,5 +126,10 @@ public class ToLocation : engine.world.IOperator
 
         eGoal.Set(new Body(poCylinder, prefCylinder));
         I.Get<joyce.TransformApi>().SetPosition(eGoal, RelativePosition);
+
+        if (DoCreateVisibleTarget)
+        {
+            _createTargetInstance(e, eGoal);
+        }
     }
 }
