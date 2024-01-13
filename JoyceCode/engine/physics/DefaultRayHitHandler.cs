@@ -56,7 +56,7 @@ public class DefaultRayHitHandler : IRayHitHandler
         return true;
     }
 
-    public void OnRayHit(in RayData ray, ref float maximumT, float t, Vector3 normal, CollidableReference collidable,
+    public void OnRayHit(in RayData ray, ref float maximumT, float t, in Vector3 normal, CollidableReference collidable,
         int childIndex)
     {
         CollisionProperties collisionProperties = null;

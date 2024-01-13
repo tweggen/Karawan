@@ -57,6 +57,11 @@ namespace engine.physics
             listeners = new QuickDictionary<CollidableReference, QuickList<PreviousCollisionData>, CollidableReferenceComparer>(initialListenerCapacity, pool);
         }
 
+        BufferPool GetPoolForWorker(int workerIndex)
+        {
+            return threadDispatcher == null ? pool : threadDispatcher.GetThreadMemoryPool(workerIndex);
+        }
+
         public void Initialize(Bodies bodies)
         {
             this.bodies = bodies;
@@ -161,7 +166,7 @@ namespace engine.physics
                     //There was no collision previously.
                     ref var addsforWorker = ref pendingWorkerAdds[workerIndex];
                     //EnsureCapacity will create the list if it doesn't already exist.
-                    addsforWorker.EnsureCapacity(Math.Max(addsforWorker.Count + 1, 64), threadDispatcher != null ? threadDispatcher.WorkerPools[workerIndex] : pool);
+                    addsforWorker.EnsureCapacity(Math.Max(addsforWorker.Count + 1, 64), GetPoolForWorker(workerIndex));
                     ref var pendingAdd = ref addsforWorker.AllocateUnsafely();
                     pendingAdd.ListenerIndex = listenerIndex;
                     pendingAdd.Collision.Collidable = other;
@@ -233,7 +238,7 @@ namespace engine.physics
                     collisions.AllocateUnsafely() = pendingAdds[j].Collision;
                 }
                 if (pendingAdds.Span.Allocated)
-                    pendingAdds.Dispose(threadDispatcher == null ? pool : threadDispatcher.WorkerPools[i]);
+                    pendingAdds.Dispose(GetPoolForWorker(i));
                 //We rely on zeroing out the count for lazy initialization.
                 pendingAdds = default;
             }
