@@ -14,7 +14,7 @@ namespace engine.quest;
  *
  * Encapsulates the actions to create the entities involved
  */
-public class ToLocation
+public class ToLocation : engine.world.IOperator
 {
     /**
      * An internal name for the goal
