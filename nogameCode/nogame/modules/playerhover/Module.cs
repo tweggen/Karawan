@@ -470,8 +470,9 @@ public class Module : engine.AModule
              */
             _eMapShip = _engine.CreateEntity("RootScene.playership.map");
             I.Get<HierarchyApi>().SetParent(_eMapShip, _eShip);
-            I.Get<TransformApi>().SetTransforms(_eMapShip, true, nogame.modules.map.Module.MapCameraMask,
-                Quaternion.Identity, Vector3.Zero);
+            I.Get<TransformApi>().SetTransforms(_eMapShip, true,
+                nogame.modules.map.Module.MapCameraMask,
+                Quaternion.Identity, new Vector3(0f, 200f, 0f));
             _eMapShip.Set(new engine.world.components.MapIcon()
                 { Code = engine.world.components.MapIcon.IconCode.Player0 });
         }

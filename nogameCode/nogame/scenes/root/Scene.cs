@@ -234,6 +234,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             RelativePosition = new Vector3(-407f, 30f, 396f),
             SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+            MapCameraMask = nogame.modules.map.Module.MapCameraMask
         };
         newQuestTarget.OperatorApply(_engine);
 

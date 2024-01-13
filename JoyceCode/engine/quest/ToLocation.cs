@@ -40,6 +40,11 @@ public class ToLocation : engine.world.IOperator
      */
     public string SensitivePhysicsName { get; set; } = "";
 
+    /**
+     * The map we shall render on
+     */
+    public uint MapCameraMask { get; set; } = 0x00800000;
+
 
     /**
      * If I am supposed to create a visible target for this one.
@@ -58,7 +63,7 @@ public class ToLocation : engine.world.IOperator
     );
 
     private static Lazy<GoalMarkerSpinBehavior> _goalMarkerSpinBehavior = new(() => new GoalMarkerSpinBehavior());
-    
+
 
     private void _onCollision(ContactEvent cev)
     {
@@ -86,6 +91,15 @@ public class ToLocation : engine.world.IOperator
             {
                 MaxDistance = 2000f
             });
+        DefaultEcs.Entity eMapMarker = e.CreateEntity($"quest goal {Name} map marker");
+        I.Get<HierarchyApi>().SetParent(eMapMarker, eMarker); 
+        I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
+            MapCameraMask, Quaternion.Identity, Vector3.Zero);
+
+
+        eMapMarker.Set(new engine.world.components.MapIcon()
+            { Code = engine.world.components.MapIcon.IconCode.Target0 });
+
     }
     
     
