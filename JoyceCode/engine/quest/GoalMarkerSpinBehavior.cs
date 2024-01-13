@@ -9,7 +9,7 @@ namespace engine.quest;
 
 public class GoalMarkerSpinBehavior : ABehavior
 {
-    static Quaternion _qRotateBy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 5f*Single.Pi/180f);
+    static Quaternion _qRotateBy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 2f*Single.Pi/180f);
 
     public override void Behave(in Entity entity, float dt)
     {
