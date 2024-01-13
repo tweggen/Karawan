@@ -50,7 +50,7 @@ public class ToLocation : engine.world.IOperator
     private static Lazy<engine.joyce.InstanceDesc> _jMeshGoal = new(
         () => InstanceDesc.CreateFromMatMesh(
             new MatMesh(
-                new Material() { EmissiveColor = 0xff888822, AlbedoColor = 0xff0000ff},
+                new Material() { EmissiveColor = 0xff888822, AlbedoColor = 0xff0000ff },
                 engine.joyce.mesh.Tools.CreateCubeMesh($"goal mesh", 3f)
             ),
             400f
