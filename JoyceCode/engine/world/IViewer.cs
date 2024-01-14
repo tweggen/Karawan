@@ -13,11 +13,27 @@ public struct FragmentVisibility
         return ((uint)I & 0xffffu) | ((uint)K) << 16;
     }
 
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public engine.joyce.Index3 Pos() 
     {
         return new Index3(this.I, 0, this.K);
     }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator ==(FragmentVisibility a, FragmentVisibility b)
+    {
+        return a.I == b.I && a.K == b.K && a.How == b.How;
+    }
+
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator !=(FragmentVisibility a, FragmentVisibility b)
+    {
+        return a.I != b.I || a.K != b.K || a.How != b.How;
+    }
+    
     
     private class _posComparer : IComparer<FragmentVisibility>
     {
@@ -26,6 +42,7 @@ public struct FragmentVisibility
             return (int)a.PosKey() - (int)b.PosKey();
         }
     }
+    
     
     public static readonly byte Visible3dNow = 1;
     public static readonly byte Visible3dPredicted = 2;

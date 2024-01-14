@@ -160,7 +160,7 @@ namespace engine.world
              */
             try
             {
-                world.MetaGen.Instance().ApplyFragmentOperators(fragment);
+                fragment.EnsureVisibility(visib);
             }
             catch (Exception e)
             {
