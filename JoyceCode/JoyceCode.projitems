@@ -29,6 +29,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IFragmentMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapFragment.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapIconManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\menu\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\menu\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ScreenComposer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\Stats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
@@ -41,6 +43,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerSpinBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TargetInstance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\IViewer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />
     <Folder Include="$(MSBuildThisFileDirectory)builtin\tools\components\" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\FPSMonitor.cs" />

@@ -34,6 +34,8 @@ public class Module : engine.AModule
     private BepuPhysics.BodyReference _prefShip;
     private Entity _eMapShip;
 
+    private PlayerViewer _playerViewer;
+    
     /**
      * Display the current cluster name.
      */
@@ -350,6 +352,10 @@ public class Module : engine.AModule
 
     public override void ModuleDeactivate()
     {
+        // TXWTODO: Deactivate player entity. But we don't remove the player entity at all...
+        // _engine.SetPlayerEntity(new DefaultEcs.Entity());
+        MetaGen.Instance().Loader.RemoveViewer(_playerViewer);
+        
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
 
@@ -502,5 +508,7 @@ public class Module : engine.AModule
 
         _engine.SetPlayerEntity(GetShipEntity());
 
+        _playerViewer = new(_engine);
+        MetaGen.Instance().Loader.AddViewer(_playerViewer);
     }
 }

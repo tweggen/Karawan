@@ -15,7 +15,7 @@ namespace engine.world
 
         public engine.Engine Engine { get; }
         public world.Loader Loader { get; }
-
+        
         private string _myKey;
         private int _id;
         public int NumericalId { get => _id; }
@@ -36,6 +36,14 @@ namespace engine.world
         private int _groundResolution;
         private int _groundNElevations;
 
+
+        public FragmentVisibility Visibility { get; set; }
+        public uint PosKey
+        {
+            get => Visibility.PosKey();
+        }
+
+        public string Key(in Index3 i3Pos) => $"fragxy-{i3Pos.I}_{i3Pos.J}_{i3Pos.K}";
         
         /**
          * Test, wether the given world coordinate is inside the cluster.
@@ -330,23 +338,25 @@ namespace engine.world
         public Fragment(
             in engine.Engine engine0,
             in world.Loader loader,
-            in string strKey,
-            in Index3 idxFragment0,
-            in Vector3 position0)
+            in FragmentVisibility visib)
         {
             Engine = engine0;
             _id = Engine.GetNextId();
+
             Loader = loader;
+            Visibility = visib;
+            
             // _listCharacters = null;
             _groundResolution = world.MetaGen.GroundResolution;
             _groundNElevations = _groundResolution + 1;
-            _myKey = strKey;
-            Position = position0;
+            IdxFragment = visib.Pos();
+            _myKey = Key(IdxFragment);
+            Position = IdxFragment.AsVector3()*MetaGen.FragmentSize;
+            
             {
                 Vector3 sh = new(MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f, MetaGen.FragmentSize / 2f);
                 AABB = new geom.AABB(Position, MetaGen.FragmentSize);
             }
-            IdxFragment = idxFragment0;
             LoadedAt = DateTime.Now;
 
             // Create an initial elevation array that still is zeroed.

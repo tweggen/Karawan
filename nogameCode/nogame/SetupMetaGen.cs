@@ -143,6 +143,7 @@ public class SetupMetaGen
 
     public void Preload(Vector3 pos)
     {
-        _worldLoader.WorldLoaderProvideFragments(pos);
+        Trace("Trying to preload...");
+        _worldLoader.WorldLoaderProvideFragments();
     }
 }

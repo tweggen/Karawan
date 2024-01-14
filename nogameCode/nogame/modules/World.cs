@@ -38,7 +38,7 @@ public class World : AModule
             {
                 ErrorThrow("WorldLoader is null here?", m => new InvalidOperationException(m));
             }
-            _worldLoader.WorldLoaderProvideFragments(vMe);
+            _worldLoader.WorldLoaderProvideFragments();
         }
     }
     

@@ -37,43 +37,52 @@ namespace engine.world
 
         private world.MetaGen _worldMetaGen = null;
 
-        private world.Fragment _fragCurrent = null;
-
-        private string _strLastLoaded = "";
         private int _lastLoadedIteration = 0;
+
+        /**
+         * Keep all fragments we created by their PosKey.
+         */
+        private SortedDictionary<uint, world.Fragment> _mapFrags = new();
         
-        private Dictionary<string,world.Fragment> _mapFrags;
-        // TXWTODO: Use that lru.
-        private List<world.Fragment> _lruFrags = new();
-
-        private static int WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS = 2;
-
+        /**
+         * Keep all visibility requests we have right now, keyed by PosKey.
+         */
+        private SortedSet<FragmentVisibility> _setVisib = new(FragmentVisibility.PosComparer);
+        
         private engine.behave.systems.WiperSystem _wiperSystem;
 
+        
         /*
          * We keep a fragment at least as long it takes to drive through it wiht 60 km/h.
          */
         public readonly float KeepFragmentMinTime = MetaGen.FragmentSize / (60*1000/3600);
-
         
-        private void _releaseFragmentListNoLock(IList<string> eraseList )
+        
+        private void _releaseFragmentList(IList<uint> eraseList )
         {
-            // TXWTODO: MOtex
-            foreach (var strKey in eraseList )
+            List<Fragment> fragList = new();
+
+            lock (_lo)
             {
-                if (_mapFrags.TryGetValue(strKey, out var frag))
+                foreach (var posKey in eraseList)
                 {
-                    if (strKey==_strLastLoaded)
+                    if (_mapFrags.TryGetValue(posKey, out var frag))
                     {
-                        _strLastLoaded = "";
+                        if (world.MetaGen.TRACE_WORLD_LOADER)
+                        {
+                            Trace($"WorldLoader.releaseFragmentList(): Discarding fragment {frag.GetId()}");
+                        }
+
+                        fragList.Add(frag);
+                        _mapFrags.Remove(posKey);
                     }
-                    if (world.MetaGen.TRACE_WORLD_LOADER)
-                        Trace($"WorldLoader.releaseFragmentList(): Discarding fragment {strKey}");
-                    frag.WorldFragmentRemove();
-                    frag.Dispose();
-                    frag = null;
-                    _mapFrags.Remove(strKey);
                 }
+            }
+
+            foreach (var frag in fragList)
+            {
+                frag.WorldFragmentRemove();
+                frag.Dispose();
             }
         }
 
@@ -83,20 +92,249 @@ namespace engine.world
          */
         public void WorldLoaderReleaseFragments()
         {
-            List<string> fragments = new();
+            List<uint> fragments = new();
             lock (_lo)
             {
                 foreach (var kvp in _mapFrags)
                 {
                     fragments.Add(kvp.Key);
                 }
-                _releaseFragmentListNoLock(fragments);
+                _releaseFragmentList(fragments);
             }
         }
 
 
+        private List<IViewer> _listViewers = new();
+        
+        
         /**
-         * Load the fragments required for a given position into the 
+         * Add this viewer to this list of viewers that shall be rendered.
+         */
+        public void AddViewer(IViewer iViewer)
+        {
+            lock (_lo)
+            {
+                _listViewers.Add(iViewer);
+            }
+        }
+
+
+        public void RemoveViewer(IViewer iViewer)
+        {
+            lock (_lo)
+            {
+                _listViewers.Remove(iViewer);
+            }
+        }
+
+
+        private void _findFragment(FragmentVisibility visib)
+        {
+            /*
+             * Look, whether the corresponding fragment still is in the
+             * cache, or whether we need to load (i.e. generate) it.
+             */
+            Fragment fragment;
+            lock (_lo)
+            {
+                if (_mapFrags.TryGetValue(visib.PosKey(), out fragment))
+                {
+                    // Mark as used.
+                    if (world.MetaGen.TRACE_WORLD_LOADER)
+                    {
+                        Trace($"Using existing version of {visib}");
+                    }
+
+                    fragment.LastIteration = _lastLoadedIteration;
+                    return;
+                }
+            }
+
+            /*
+             * This creates a new world fragment.
+             *
+             * World fragments are the containers for everything that
+             * comes on that please of the world. When they are created,
+             * they basically contains a canvas, in which the world is
+             * created.
+             */
+            fragment = new Fragment(_engine, this, visib) { LastIteration = _lastLoadedIteration};
+
+
+            lock (_lo)
+            {
+                /*
+                 * The following operators already might want to access this client.
+                 */
+                _mapFrags.Add(visib.PosKey(), fragment);
+            }
+
+            /*
+             * Apply all fragment operators.
+             */
+            try
+            {
+                world.MetaGen.Instance().ApplyFragmentOperators(fragment);
+            }
+            catch (Exception e)
+            {
+                Trace($"Exception calling applyFragmentOperators(): {e}");
+            }
+        }
+
+
+        private void _purgeFragments()
+        {
+            /*
+             * Describe an AABB of things not to be deleted.
+             */
+            AABB aabb = new();
+
+            /*
+             * We do some timeout tests to avoid constant reloading.
+             * So let's take the current time.
+             */
+            DateTime now = DateTime.Now;
+            
+            /*
+             * Now create a list of fragments that may be deleted.
+             */
+            var eraseList = new List<uint>();
+            lock (_lo)
+            {
+                /*
+                 * Find out the list of fragments we do not need any more.
+                 *
+                 * Keep the fragments in memory for a time.
+                 */
+                foreach (KeyValuePair<uint, Fragment> kvp in _mapFrags)
+                {
+                    var frag = kvp.Value;
+
+                    /*
+                     * Is there a visibility request for this fragment?
+                     */
+                    if (_setVisib.TryGetValue(frag.Visibility, out var visib))
+                    {
+                        /*
+                         * We are supposed to be visible in some way.
+                         */
+
+                        /*
+                         * Remember the aabb inside of which we want to keep all
+                         * [character]entites.
+                         */
+                        if (0 != (frag.Visibility.How & FragmentVisibility.Visible3dAny))
+                        {
+                            aabb.Add(frag.AABB);
+                        }
+
+                        if (false)
+                        {
+                            /*
+                             * If visibility has been requested, do not remove it.
+                             */
+                            if ((frag.Visibility.How & FragmentVisibility.VisibleAny) == 0)
+                            {
+                                Error("visibility set without visibility request.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /*
+                         * We are not required to be visible any more.
+                         */
+
+                        /*
+                         * Do not delete any fragment to soon.
+                         */
+                        if ((now - frag.LoadedAt).TotalSeconds < KeepFragmentMinTime)
+                        {
+                            continue;
+                        }
+
+                        /*
+                         * Well, not required, not loaded to soon, so purge it.
+                         */
+                        if (frag.LastIteration < _lastLoadedIteration)
+                        {
+                            eraseList.Add(kvp.Key);
+                        }
+                    }
+                }
+            }
+
+
+            if (eraseList.Count > 0)
+            {
+                /*
+                 * Remove behaviors outside aabb.
+                 */
+                _engine.QueueCleanupAction(() => _wiperSystem.Update(aabb));
+
+                /*
+                 * Actually do release the list of fragments we do not need anymore.
+                 */
+                _releaseFragmentList(eraseList);
+            }
+        }
+
+
+        private new SortedSet<FragmentVisibility> _updateSetVisib()
+        {
+            List<IViewer> lsViewers;
+            lock (_lo)
+            {
+                lsViewers = new (_listViewers);
+            }
+
+            /*
+             * Collect the requests.
+             */
+            IList<FragmentVisibility> lsVisib = new List<FragmentVisibility>();
+            foreach (var iViewer in lsViewers)
+            {
+                iViewer.GetVisibleFragments(ref lsVisib);
+            }
+
+            /*
+             * Merge the visibility requests of the current iteration.
+             */
+            SortedSet<FragmentVisibility> setVisib = new(FragmentVisibility.PosComparer);
+            foreach (var visib in lsVisib)
+            {
+                if (setVisib.TryGetValue(visib, out var oldVisib))
+                {
+                    byte newHow = (byte) (visib.How | oldVisib.How);
+                    if (newHow < oldVisib.How)
+                    {
+                        oldVisib.How = newHow;
+                        setVisib.Add(oldVisib);
+                    }
+                }
+                else
+                {
+                    setVisib.Add(visib);
+                }
+            }
+            
+            lock (_lo)
+            {
+                /*
+                 * Update the current generation.
+                 */
+                ++_lastLoadedIteration;
+
+                _setVisib = new SortedSet<FragmentVisibility>(setVisib, FragmentVisibility.PosComparer);
+            }
+
+            return setVisib;
+        }
+        
+
+        /**
+         * Load the fragments required for a given position into the
          * current world.
          *
          * This function triggers application of all operators required for
@@ -104,176 +342,23 @@ namespace engine.world
          *
          * This function must be called in the logical thread only!
          */
-        public void WorldLoaderProvideFragments(in Vector3 pos0)
+        public void WorldLoaderProvideFragments()
         {
-            Vector3 pos = (pos0+MetaGen.FragmentSize3 / 2f) / world.MetaGen.FragmentSize;
-
-            // Rest y to 0, we don't use heights now.
-            pos.Y = 0;
-
-            int i = (int) Math.Floor(pos.X);
-            int j = (int) Math.Floor(pos.Y);
-            int k = (int) Math.Floor(pos.Z);
-
-            //Trace( [x, y, z] );
-            //trace( [i, j, k ] );
-
-            var strCurr = "fragxy-" + i + "_" + j + "_" + k;
-
+            var setVisib = _updateSetVisib();
+            
             /*
-             * Short circuit.
-             * TXWTODO: Do we really need this.
+             * Now we need to trigger actions
+             * - load / modify fragment if it shall be visible.
+             *   This is reflected by our local setVisib state.
+             * - have everything purged that is not supposed to
+             *   be visible.
              */
-            lock (_lo)
+            foreach (var visib in setVisib)
             {
-                if (_strLastLoaded == strCurr)
-                {
-                    // No need to load something new.
-                    return;
-                }
-
-                _strLastLoaded = strCurr;
-                ++_lastLoadedIteration;
+                _findFragment(visib);                
             }
 
-            if (world.MetaGen.TRACE_WORLD_LOADER) Trace($"Entered new terrain {strCurr}, loading.");
-            for (int dz=-WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; dz<= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS; ++dz )
-            {
-                for (int dx = -WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS;
-                     dx <= WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS;
-                     ++dx)
-                {
-                    int i1 = i + dx;
-                    int j1 = j;
-                    int k1 = k + dz;
-                    var strKey = "fragxy-" + i1 + "_" + j1 + "_" + k1;
-                    if (world.MetaGen.TRACE_WORLD_LOADER)
-                        Trace($"WorldMetaGen.worldLoaderProvideFragments(): Loading {strKey}");
-
-                    /*
-                     * Look, wether the corresponding fragment still is in the
-                     * cache, or wether we need to load (i.e. generate) it.
-                     */
-                    Fragment fragment;
-                    lock (_lo)
-                    {
-                        _mapFrags.TryGetValue(strKey, out fragment);
-                        if (null != fragment)
-                        {
-                            // Mark as used.
-                            if (world.MetaGen.TRACE_WORLD_LOADER)
-                                Trace($"Using existing version of {strKey}");
-                            fragment.LastIteration = _lastLoadedIteration;
-                            continue;
-                        }
-                    }
-
-                    /*
-                     * This creates a new world fragment.
-                     *
-                     * World fragments are the containers for everything that
-                     * comes on that please of the world. When they are created,
-                     * they basically contains a canvas, in which the world is
-                     * created.
-                     */
-                    fragment = new Fragment(
-                        _engine,
-                        this,
-                        strKey,
-                        new Index3(i1, j1, k1),
-                        new Vector3(
-                            world.MetaGen.FragmentSize * i1,
-                            world.MetaGen.FragmentSize * j1,
-                            world.MetaGen.FragmentSize * k1)
-                    );
-                    fragment.LastIteration = _lastLoadedIteration;
-                    
-                    /*
-                     * The following operators already might want to access this client. 
-                     */
-                    _mapFrags.Add(strKey, fragment);
-
-                    /*
-                     * Apply all fragment operators.
-                     */
-                    try
-                    {
-                        world.MetaGen.Instance().ApplyFragmentOperators(fragment);
-                    }
-                    catch (Exception e)
-                    {
-                        Trace(
-                            $"WorldLoader.worldLoaderProvideFragments(): Unknown exception calling applyFragmentOperators(): {e}");
-                    }
-
-                    lock (_lo)
-                    {
-                        _mapFrags[strKey] = fragment;
-                    }
-                }
-            }
-
-            lock (_lo)
-            {
-                _fragCurrent = _mapFrags[strCurr];
-            }
-
-            {
-                var eraseList = new List<string>();
-                DateTime now = DateTime.Now;
-                
-                lock (_lo)
-                {
-                    /*
-                     * Find out the list of fragments we do not need any more.
-                     *
-                     * Keep the fragments in memory for a time.
-                     */
-                    foreach (KeyValuePair<string, Fragment> kvp in _mapFrags)
-                    {
-                        var frag = kvp.Value;
-                        if ((now - frag.LoadedAt).TotalSeconds < KeepFragmentMinTime)
-                        {
-                            continue;
-                        }
-                        if (frag.LastIteration < _lastLoadedIteration)
-                        {
-                            eraseList.Add(kvp.Key);
-                        }
-                    }
-                }
-
-
-                if (eraseList.Count > 0)
-                {
-                    /*
-                     * Remove behaviors outside aabb.
-                     */
-                    Vector3 vAA = new(
-                        _fragCurrent.Position.X - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize,
-                        -10000,
-                        _fragCurrent.Position.Z - WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS * world.MetaGen.FragmentSize
-                        );
-                    Vector3 vBB = new(
-                        _fragCurrent.Position.X + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize,
-                        10000,
-                        _fragCurrent.Position.Z + (WORLD_LOADER_PRELOAD_N_SURROUNDING_FRAGMENTS+1) * world.MetaGen.FragmentSize
-                        );
-                    AABB aabb = new();
-                    aabb.Add(vAA); 
-                    aabb.Add(vBB);
-                    _engine.QueueCleanupAction( () => _wiperSystem.Update(aabb));
-
-                    lock (_lo)
-                    {
-                        /*
-                         * Actually do release the list of fragments we do not need anymore.
-                         */
-                        _releaseFragmentListNoLock(eraseList);
-                    }
-                }
-            }
-
+            _purgeFragments();
         }
 
 
@@ -298,13 +383,7 @@ namespace engine.world
             }
         }
 
-        
-        public Vector3 ApplyNavigationHeight(in Vector3 position, float heightOffset=0)
-        {
-            return new Vector3(position.X, heightOffset + GetNavigationHeightAt(position), position.Z);
-        }
 
-        
         /**
          * Return the default walking height for this position.
          * Return the height at the given position of the world.
@@ -354,14 +433,6 @@ namespace engine.world
             return GetElevationPixelAt(x0, z0, layer).Height;
         }
 
-        /**
-         * Global initialise function
-         */
-        private void _init()
-        {
-            _mapFrags = new();
-        }
-
 
         /**
          * Constructor
@@ -375,7 +446,6 @@ namespace engine.world
             _wiperSystem = new(engine);
             _worldMetaGen = worldMetaGen;
             _worldMetaGen.SetLoader(this);
-            _init();
         }
     }
 }
