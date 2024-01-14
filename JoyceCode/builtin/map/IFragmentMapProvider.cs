@@ -8,6 +8,5 @@ public interface IFragmentMapProvider
      */
     public void FragmentMapCreateEntities(
         engine.world.Fragment worldFragment,
-        DefaultEcs.Entity parentEntity,
         uint cameraMask);
 }

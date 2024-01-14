@@ -40,7 +40,7 @@ namespace engine.world
              * Create geometry from the elevations stored in the fragment.
              */
             {
-                worldFragment.WorldFragmentLoadGround();
+                worldFragment.LoadFragmentGround();
             }
         });
 

@@ -56,7 +56,7 @@ namespace engine.world
                 elevation.ElevationSegment elevationSegment = elevationCache.ElevationCacheGetRectBelow(
                     rect2, elevation.Cache.TOP_LAYER
                 );
-                worldFragment.WorldFragmentSetGroundArray(
+                worldFragment.SetFragmentGroundArray(
                     elevationSegment.Elevations,
                     world.MetaGen.GroundResolution,
                     0, 0, world.MetaGen.GroundResolution, world.MetaGen.GroundResolution,

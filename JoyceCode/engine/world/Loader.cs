@@ -62,7 +62,7 @@ namespace engine.world
 
             foreach (var frag in fragList)
             {
-                frag.WorldFragmentRemove();
+                frag.RemoveFragmentEntities();
                 frag.Dispose();
             }
         }

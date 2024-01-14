@@ -75,7 +75,7 @@ public class DefaultMapProvider : IMapProvider
     }
     
 
-    public void FragmentMapCreateEntities(Fragment worldFragment, Entity parentEntity, uint cameraMask)
+    public void FragmentMapCreateEntities(Fragment worldFragment, uint cameraMask)
     {
         /*
          * Do not create any specific entities.

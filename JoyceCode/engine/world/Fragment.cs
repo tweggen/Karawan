@@ -117,7 +117,7 @@ public class Fragment : IDisposable
      * @param dy
      *     top index in fragment elevation
      */
-    public void WorldFragmentSetGroundArray(
+    public void SetFragmentGroundArray(
         in engine.elevation.ElevationPixel[,] groundArray,
         int groundResolution,
         int ax, int ay, int bx, int by,
@@ -245,7 +245,7 @@ public class Fragment : IDisposable
      *
      * @return Int
      */
-    public int WorldFragmentLoadGround()
+    public int LoadFragmentGround()
     {
         _createGround();
 
@@ -253,7 +253,7 @@ public class Fragment : IDisposable
     }
 
 
-    public void WorldFragmentRemove()
+    public void RemoveFragmentEntities()
     {
         /*
          * Create an action of removing all entities with this fragment id.
@@ -384,7 +384,10 @@ public class Fragment : IDisposable
 
         if ((visibToLoad & FragmentVisibility.Visible2dAny) != 0)
         {
-            // TXWTODO: Trigger loading 2d.
+            // TXWTODO: Have this association configurable.
+            builtin.map.IMapProvider mapProvider = I.Get<builtin.map.IMapProvider>();
+            // TXWTODO: Remove this hard coded camera mask.
+            mapProvider.FragmentMapCreateEntities(this, 0x00800000u);
         }
     }
 
