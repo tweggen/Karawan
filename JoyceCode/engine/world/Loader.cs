@@ -1,41 +1,22 @@
-﻿using DefaultEcs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine.geom;
-using engine.joyce;
 using static engine.Logger;
 
 namespace engine.world
 {
     /*
-     * This class takes care the world is loaded in a given range of coordinates.
+     * This class takes care the world is loaded according to the ranges defined by
+     * viewer objects registered here.
      *
-     * TODO: The name of this class is misleading. We really should rename it.
-     *
-     * This might be the class to apply all operators to a virgin void world.
-     * It should have the standard "behave" interface. However, when provide fragments
-     * is called, it should propage the call to the individual operators.
-     *
-     * The terrain container keeps references to the world meta generator
-     * and the actual 3d scene.
-     *
-     * TODO:
-     * This data structure needs to keep the actual objects and global data structures
-     + of the world scene. We need to define what compoonents this data structure is made
-     * of, e.g.:
-     * - terrain heights
-     * - objects lists
-     * - cluster lists
-     * - behavioural objects
+     * TXWTODO: Maybe terrain generation is a bit too interweaved into this class.
      */
     public class Loader
     {
         private object _lo = new();
         
         private Engine _engine;
-
-        private world.MetaGen _worldMetaGen = null;
 
         private int _lastLoadedIteration = 0;
 
@@ -450,15 +431,10 @@ namespace engine.world
         /**
          * Constructor
          */
-        public Loader(
-            Engine engine,
-            world.MetaGen worldMetaGen
-        )
+        public Loader(Engine engine)
         {
             _engine = engine;
             _wiperSystem = new(engine);
-            _worldMetaGen = worldMetaGen;
-            _worldMetaGen.SetLoader(this);
         }
     }
 }

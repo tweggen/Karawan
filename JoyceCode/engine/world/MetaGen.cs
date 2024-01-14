@@ -38,7 +38,7 @@ public class MetaGen
     public static int GroundResolution = 20;
 
     public static bool TRACE_CHARACTER_MIGRATION = false;
-    public static bool TRACE_WORLD_LOADER = true;
+    public static bool TRACE_WORLD_LOADER = false;
     public static bool TRACE_LOAD_AUDIO_BUFFER = false;
     public static bool TRACE_LOAD_BITMAP = false;
     public static bool TRACE_LOAD_FONT = false;

@@ -128,7 +128,8 @@ public class SetupMetaGen
 
         _worldMetaGen.SetupComplete();
 
-        _worldLoader = new engine.world.Loader(_engine, _worldMetaGen);
+        _worldLoader = new engine.world.Loader(_engine);
+        _worldMetaGen.SetLoader(_worldLoader);
         
         {
             var elevationCache = engine.elevation.Cache.Instance();
