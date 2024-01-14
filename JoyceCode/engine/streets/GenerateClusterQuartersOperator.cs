@@ -7,6 +7,9 @@ using static engine.Logger;
 
 namespace engine.streets;
 
+/**
+ * Create the 3d geometry for cluster floors.
+ */
 public class GenerateClusterQuartersOperator : world.IFragmentOperator
 {
     static private object _lock = new();

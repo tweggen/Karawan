@@ -8,6 +8,9 @@ using static engine.Logger;
 
 namespace engine.streets;
 
+/**
+ * Create the 3d street geometry.
+ */
 public class GenerateClusterStreetsOperator : world.IFragmentOperator
 {
     static private object _lock = new();

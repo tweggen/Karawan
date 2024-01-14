@@ -14,6 +14,9 @@ using static engine.Logger;
 namespace nogame.cities;
 
 
+/**
+ * Create the 3d geometry for houses.
+ */
 public class GenerateHousesOperator : engine.world.IFragmentOperator
 {
     static private object _lo = new();
@@ -444,14 +447,8 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     });
 
 
-    public GenerateHousesOperator(
-        engine.world.ClusterDesc clusterDesc,
-        string strKey)
+    private void _registerMaterials()
     {
-        _clusterDesc = clusterDesc;
-        _myKey = strKey;
-        _rnd = new builtin.tools.RandomSource(strKey);
-
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win1",
             (name) => new engine.joyce.Material()
             {
@@ -504,6 +501,18 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 EmissiveFactors = 0x77ffffff,
                 EmissiveTexture = new engine.joyce.Texture("plentomatic.png")
             });
+    }
+    
+
+    public GenerateHousesOperator(
+        engine.world.ClusterDesc clusterDesc,
+        string strKey)
+    {
+        _clusterDesc = clusterDesc;
+        _myKey = strKey;
+        _rnd = new builtin.tools.RandomSource(strKey);
+
+        _registerMaterials();
     }
 
 

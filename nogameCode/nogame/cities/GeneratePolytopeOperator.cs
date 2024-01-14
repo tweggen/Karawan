@@ -13,6 +13,9 @@ using static engine.Logger;
 
 namespace nogame.cities;
 
+/**
+ * Create the list of polytopes and the 3d geometry.
+ */
 public class GeneratePolytopeOperator : IFragmentOperator
 {
     private static object _classLock = new();
