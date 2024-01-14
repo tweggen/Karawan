@@ -33,7 +33,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\intercity\IntercityTrackElevationOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\intercity\Network.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\Main.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\map\AllRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\MapFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapClusterProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapIntercityProvider.cs" />

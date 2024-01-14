@@ -336,8 +336,8 @@ public class Fragment : IDisposable
                 true, cameraMask, qRotation, Position + vPosition);
             entity.Set(cTransform3);
             engine.joyce.TransformApi.CreateTransform3ToParent(cTransform3, out var mat);
-            entity.Set(new engine.joyce.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask,
-                mat));
+            entity.Set(new engine.joyce.components.Transform3ToParent(
+                cTransform3.IsVisible, cTransform3.CameraMask, mat));
 
             if (listCreatePhysics != null)
             {

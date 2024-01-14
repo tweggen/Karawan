@@ -72,11 +72,6 @@ public class WorldMapClusterProvider : IWorldMapProvider
          * We have a grid of height sample in our skeleton map.
          * While drawing this layer of terrain, 
          */
-        /*
-         * We scale the map to fit the framebuffer
-         */
-        float worldMinX = -MetaGen.MaxWidth/2f;
-        float worldMinZ = -MetaGen.MaxHeight/2f;
         
         /*
          * Read all data we need to scale our drawing.
@@ -103,44 +98,6 @@ public class WorldMapClusterProvider : IWorldMapProvider
         {
             _drawClusterBase(target, clusterDesc, m2fb);
             _drawClusterText(target, clusterDesc, m2fb);
-
-#if false
-            StrokeStore strokeStore = null;            
-            try
-            {
-                strokeStore = clusterDesc.StrokeStore();
-            }
-            catch (Exception e)
-            {
-                Error($"Exception while retrieving description of stroke store for cluster {clusterDesc.Name}: {e}");
-            }
-
-            if (strokeStore != null)
-            {
-                foreach (var stroke in strokeStore.GetStrokes())
-                {
-                    float weight = stroke.Weight;
-                    //float weight = 4f; 
-                    bool isPrimary = stroke.IsPrimary;
-
-                    Vector2 posA = stroke.A.Pos + clusterDesc.Pos2;
-                    Vector2 posB = stroke.B.Pos + clusterDesc.Pos2;
-                    Vector2 u = posB - posA;
-                    u /= u.Length();
-                    Vector2 v = new(u.Y, -u.X);
-                    Vector2 vw2 = v * weight / 2f;
-                    streetPoly[0] = posA - vw2;
-                    streetPoly[1] = posB - vw2;
-                    streetPoly[2] = posB + vw2;
-                    streetPoly[3] = posA + vw2;
-                    for (int i = 0; i < streetPoly.Length; ++i)
-                    {
-                        streetPoly[i] = Vector2.Transform(streetPoly[i], m2fb);
-                    }
-                    target.DrawPoly(dcStreets, streetPoly);
-                }
-            }
-#endif
         }
         
         target.EndModification();
