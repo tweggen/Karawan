@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using engine.meta;
+using engine.world;
 using static engine.Logger;
 
 namespace nogame;
@@ -144,6 +145,11 @@ public class SetupMetaGen
     public void Preload(Vector3 pos)
     {
         Trace("Trying to preload...");
+
+        var fixedPosViewer = new FixedPosViewer(_engine) { Position = pos };
+        
+        _worldLoader.AddViewer(fixedPosViewer);
         _worldLoader.WorldLoaderProvideFragments();
+        _worldLoader.RemoveViewer(fixedPosViewer);
     }
 }

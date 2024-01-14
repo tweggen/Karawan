@@ -70,7 +70,7 @@ namespace engine.world
                     {
                         if (world.MetaGen.TRACE_WORLD_LOADER)
                         {
-                            Trace($"WorldLoader.releaseFragmentList(): Discarding fragment {frag.GetId()}");
+                            Trace($"Discarding fragment {frag.GetId()}");
                         }
 
                         fragList.Add(frag);
@@ -148,6 +148,11 @@ namespace engine.world
                     fragment.LastIteration = _lastLoadedIteration;
                     return;
                 }
+            }
+
+            if (world.MetaGen.TRACE_WORLD_LOADER)
+            {
+                Trace($"Creating fragment {visib}");
             }
 
             /*
@@ -286,6 +291,14 @@ namespace engine.world
             List<IViewer> lsViewers;
             lock (_lo)
             {
+                /*
+                 * If we have no viewers installed, just return the previous
+                 * set of visibility requests.
+                 */
+                if (0 == _listViewers.Count)
+                {
+                    return _setVisib;
+                }
                 lsViewers = new (_listViewers);
             }
 

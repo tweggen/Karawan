@@ -52,7 +52,7 @@ public class PlayerViewer : IViewer
         /*
          * And if we move, we predict in the direction of our velocity
          */
-        ref Vector3 v3MyVelo = ref cBody.Reference.Velocity.Linear;
+        // ref Vector3 v3MyVelo = ref cBody.Reference.Velocity.Linear;
     }
 
     public PlayerViewer(Engine engine0)

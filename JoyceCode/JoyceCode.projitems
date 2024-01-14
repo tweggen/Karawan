@@ -42,6 +42,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\AreaEnteredBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerSpinBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TargetInstance.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\FixedPosViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />
