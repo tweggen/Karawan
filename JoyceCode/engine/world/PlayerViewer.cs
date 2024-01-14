@@ -43,8 +43,8 @@ public class PlayerViewer : IViewer
                 lsVisib.Add(new ()
                 {
                     How = FragmentVisibility.Visible3dNow,
-                    I = (short) i3MyFrag.I,
-                    K = (short) i3MyFrag.K
+                    I = (short) (i3MyFrag.I + dx),
+                    K = (short) (i3MyFrag.K + dz)
                 });        
             }
         }

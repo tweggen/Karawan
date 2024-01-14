@@ -142,7 +142,7 @@ namespace engine.world
                     // Mark as used.
                     if (world.MetaGen.TRACE_WORLD_LOADER)
                     {
-                        Trace($"Using existing version of {visib}");
+                        // Trace($"Using existing version of {visib}");
                     }
 
                     fragment.LastIteration = _lastLoadedIteration;
