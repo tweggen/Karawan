@@ -218,6 +218,7 @@ public class MetaGen
                         return null;
                     }
                 });
+                fragment.Visibility.How |= visib.How;
             });
 
         }

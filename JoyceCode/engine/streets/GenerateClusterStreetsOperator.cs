@@ -724,7 +724,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         // TXWTODO: This is too inefficient. We should also use a factory here.
         var matmesh = new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), g);
         engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 600f);
-        worldFragment.AddStaticInstance("engine.streets.streets", instanceDesc);
+        worldFragment.AddStaticInstance(0x00800001, "engine.streets.streets", instanceDesc);
     }
 
     
@@ -733,6 +733,14 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
      */
     public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
+        /*
+         * Special case for this operator: We only generate once for 3d and 2d, not separately 
+         */
+        if (0 != (worldFragment.Visibility.How & FragmentVisibility.VisibleAny))
+        {
+            return;
+        }
+        
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 

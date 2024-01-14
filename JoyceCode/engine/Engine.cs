@@ -19,566 +19,486 @@ using engine.world;
 using static engine.Logger;
 using Trace = System.Diagnostics.Trace;
 
-namespace engine
+namespace engine;
+
+class EntitySetupAction
 {
+    public string EntityName;
+    public Action<DefaultEcs.Entity> SetupAction;
+}
 
-    class EntitySetupAction
+public class Engine
+{
+    private object _lo = new();
+
+    private int _nextId = 0;
+
+    private DefaultEcs.World _ecsWorld;
+
+    private engine.physics.API _aPhysics;
+    private engine.joyce.TransformApi _aTransform;
+    private engine.joyce.HierarchyApi _aHierarchy;
+
+    private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
+    private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
+
+
+    private int _requireEntityIdArrays = 0;
+    private DefaultEcs.Entity[] _arrayEntityIds = new DefaultEcs.Entity[0];
+
+    public DefaultEcs.Entity[] Entities
     {
-        public string EntityName;
-        public Action<DefaultEcs.Entity> SetupAction;
+        get
+        {
+            lock (_lo)
+            {
+                return _arrayEntityIds;
+            }
+        }
     }
-    
-    public class Engine
+
+    private IPlatform _platform;
+
+    private behave.systems.BehaviorSystem _systemBehave;
+    private physics.systems.ApplyPosesSystem _systemApplyPoses;
+    private physics.systems.MoveKineticsSystem _systemMoveKinetics;
+    private audio.systems.MovingSoundsSystem _systemMovingSounds;
+
+    private List<IModule> _listModules = new();
+
+    public IEnumerable<IModule> GetModules()
     {
-        private object _lo = new();
-
-        private int _nextId = 0;
-
-        private DefaultEcs.World _ecsWorld;
-        
-        private engine.physics.API _aPhysics;
-        private engine.joyce.TransformApi _aTransform;
-        private engine.joyce.HierarchyApi _aHierarchy;
-        
-        private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
-        private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
-
-
-        private int _requireEntityIdArrays = 0;
-        private DefaultEcs.Entity[] _arrayEntityIds = new DefaultEcs.Entity[0];
-        
-        public DefaultEcs.Entity[] Entities
+        lock (_lo)
         {
-            get {
-                lock (_lo)
-                {
-                    return _arrayEntityIds;
-                }
-            }
+            return new List<IModule>(_listModules);
         }
-        
-        private IPlatform _platform;
+    }
 
-        private behave.systems.BehaviorSystem _systemBehave;
-        private physics.systems.ApplyPosesSystem _systemApplyPoses;
-        private physics.systems.MoveKineticsSystem _systemMoveKinetics;
-        private audio.systems.MovingSoundsSystem _systemMovingSounds;
+    private readonly Queue<EntitySetupAction> _queueEntitySetupActions = new();
 
-        private List<IModule> _listModules = new();
-        public IEnumerable<IModule> GetModules()
+    private Thread _logicalThread;
+    private readonly Stopwatch _queueStopwatch = new();
+
+    private readonly WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
+    private readonly WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
+
+    private bool _isFullscreen = false;
+
+    private physics.Manager _managerPhysics;
+    private gongzuo.LuaScriptManager _managerLuaScript;
+    private builtin.map.MapIconManager _managerMapIcons;
+    private behave.Manager _managerBehavior;
+    public readonly SceneSequencer SceneSequencer;
+
+    public event EventHandler<float> OnLogicalFrame;
+    public event EventHandler<float> OnPhysicalFrame;
+
+    public event EventHandler<float> OnImGuiRender;
+
+    private Entity _cameraEntity;
+    public event EventHandler<DefaultEcs.Entity> OnCameraEntityChanged;
+    private Entity _playerEntity;
+    public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
+
+
+    private builtin.tools.FPSMonitor _fpsPhysicalMonitor = new("physical");
+    private builtin.tools.FPSMonitor _fpsLogicalMonitor = new("logical");
+
+    public int NFrameDurations = 200;
+
+    private Queue<float> _frameDurationQueue = new();
+
+    public float[] FrameDurations
+    {
+        get
         {
             lock (_lo)
             {
-                return new List<IModule>(_listModules);
+                return _frameDurationQueue.ToArray();
             }
         }
-        
-        private readonly Queue<EntitySetupAction> _queueEntitySetupActions = new();
-        
-        private Thread _logicalThread;
-        private readonly Stopwatch _queueStopwatch = new();
-
-        private readonly WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
-        private readonly WorkerQueue _workerMainThreadActions = new("engine.Engine.MainThread");
-
-        private bool _isFullscreen = false;
-        
-        private physics.Manager _managerPhysics;
-        private gongzuo.LuaScriptManager _managerLuaScript;
-        private builtin.map.MapIconManager _managerMapIcons;
-        private behave.Manager _managerBehavior;
-        public readonly SceneSequencer SceneSequencer;        
-        
-        public event EventHandler<float> OnLogicalFrame;
-        public event EventHandler<float> OnPhysicalFrame;
-
-        public event EventHandler<float> OnImGuiRender;
-        
-        private Entity _cameraEntity;
-        public event EventHandler<DefaultEcs.Entity> OnCameraEntityChanged;
-        private Entity _playerEntity;
-        public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
+    }
 
 
-        private builtin.tools.FPSMonitor _fpsPhysicalMonitor = new("physical");
-        private builtin.tools.FPSMonitor _fpsLogicalMonitor = new("logical");
-        
-        public int NFrameDurations = 200;
+    private bool _platformIsAvailable = false;
+    private bool _isRunning = true;
 
-        private Queue<float> _frameDurationQueue = new();
-        public float[] FrameDurations
+    public BepuPhysics.Simulation Simulation
+    {
+        get => _aPhysics.Simulation;
+    }
+
+    public enum EngineState
+    {
+        Initialized,
+        Starting,
+        Running,
+        Stopping,
+        Stopped
+    };
+
+    public EngineState State { get; private set; }
+    public event EventHandler<EngineState> EngineStateChanged;
+
+    public void SetEngineState(in EngineState newState)
+    {
+        bool isChanged = false;
+        lock (_lo)
         {
-            get
+            if (newState != State)
             {
-                lock (_lo)
-                {
-                    return _frameDurationQueue.ToArray();
-                }
+                State = newState;
+                isChanged = true;
             }
         }
 
-
-        private bool _platformIsAvailable = false;
-        private bool _isRunning = true;
-
-        public BepuPhysics.Simulation Simulation
+        if (isChanged)
         {
-            get => _aPhysics.Simulation;
+            EngineStateChanged?.Invoke(this, newState);
         }
+    }
 
-        public enum EngineState {
-            Initialized,
-            Starting,
-            Running,
-            Stopping,
-            Stopped
-        };
-        
-        public EngineState State { get; private set; }
-        public event EventHandler<EngineState> EngineStateChanged;
 
-        public void SetEngineState( in EngineState newState )
+    Vector2 _vViewUl = Vector2.Zero;
+    Vector2 _vViewLr = Vector2.Zero;
+
+
+    private int _isLoading = 0;
+
+    public void SuggestBeginLoading()
+    {
+        lock (_lo)
         {
-            bool isChanged = false;
-            lock(_lo)
+            ++_isLoading;
+        }
+    }
+
+    public void SuggestEndLoading()
+    {
+        lock (_lo)
+        {
+            --_isLoading;
+        }
+    }
+
+
+    public void Suspend()
+    {
+        I.Get<EventQueue>().Push(new Event("lifecycle.suspend", ""));
+    }
+
+
+    public void Resume()
+    {
+        I.Get<EventQueue>().Push(new Event("lifecycle.suspend", "user call"));
+    }
+
+
+    public Entity GetCameraEntity()
+    {
+        lock (_lo)
+        {
+            return _cameraEntity;
+        }
+    }
+
+
+    public Entity GetPlayerEntity()
+    {
+        lock (_lo)
+        {
+            return _playerEntity;
+        }
+    }
+
+
+    public void BeamTo(Vector3 vPos)
+    {
+        lock (_lo)
+        {
+            var pref = _playerEntity.Get<engine.physics.components.Body>().Reference;
+            pref.Pose.Position = vPos;
+            pref.Pose.Orientation = Quaternion.Identity;
+        }
+    }
+
+
+    public void SetCameraEntity(in DefaultEcs.Entity entity)
+    {
+        bool entityChanged = false;
+        lock (_lo)
+        {
+            if (_cameraEntity != entity)
             {
-                if (newState != State)
-                {
-                    State = newState;
-                    isChanged = true;
-                }
+                entityChanged = true;
+                _cameraEntity = entity;
             }
-            if (isChanged)
+        }
+
+        if (entityChanged)
+        {
+            OnCameraEntityChanged?.Invoke(this, entity);
+        }
+    }
+
+
+    public void SetPlayerEntity(in DefaultEcs.Entity entity)
+    {
+        bool entityChanged = false;
+        lock (_lo)
+        {
+            if (_playerEntity != entity)
             {
-                EngineStateChanged?.Invoke(this, newState);
+                entityChanged = true;
+                _playerEntity = entity;
             }
         }
 
-        
-        Vector2 _vViewUl = Vector2.Zero;
-        Vector2 _vViewLr = Vector2.Zero; 
-        
-
-        private int _isLoading = 0;
-        public void SuggestBeginLoading()
+        if (entityChanged)
         {
-            lock (_lo)
-            {
-                ++_isLoading;
-            }
+            OnPlayerEntityChanged?.Invoke(this, entity);
         }
+    }
 
-        public void SuggestEndLoading()
+
+    public int GetNextId()
+    {
+        lock (_lo)
         {
-            lock (_lo)
-            {
-                --_isLoading;
-            }
+            return ++_nextId;
         }
+    }
 
 
-        public void Suspend()
+    public DefaultEcs.World GetEcsWorld()
+    {
+        return _ecsWorld;
+    }
+
+
+    public DefaultEcs.Command.WorldRecord GetEcsWorldRecord()
+    {
+        return _entityCommandRecorder.Record(_ecsWorld);
+    }
+
+
+    public void ApplyEcsRecorder(in DefaultEcs.Command.EntityCommandRecorder recorder)
+    {
+        recorder.Execute();
+    }
+
+
+    private void _commitWorldRecord()
+    {
+        _entityCommandRecorder.Execute();
+    }
+
+
+    private void _executeDoomedEntities()
+    {
+        List<IList<DefaultEcs.Entity>> listList;
+        lock (_lo)
         {
-            I.Get<EventQueue>().Push(new Event("lifecycle.suspend", ""));
-        }
-
-
-        public void Resume()
-        {
-            I.Get<EventQueue>().Push(new Event("lifecycle.suspend", "user call"));
-        }
-
-
-        public Entity GetCameraEntity()
-        {
-            lock (_lo)
-            {
-                return _cameraEntity;
-            }
-        }
-
-
-        public Entity GetPlayerEntity()
-        {
-            lock (_lo)
-            {
-                return _playerEntity;
-            }
-        }
-
-
-        public void BeamTo(Vector3 vPos)
-        {
-            lock (_lo)
-            {
-                var pref = _playerEntity.Get<engine.physics.components.Body>().Reference;
-                pref.Pose.Position = vPos;
-                pref.Pose.Orientation = Quaternion.Identity;
-            }
-        }
-        
-        
-        public void SetCameraEntity(in DefaultEcs.Entity entity)
-        {
-            bool entityChanged = false;
-            lock (_lo)
-            {
-                if (_cameraEntity != entity)
-                {
-                    entityChanged = true;
-                    _cameraEntity = entity;
-                }
-            }
-
-            if (entityChanged)
-            {
-                OnCameraEntityChanged?.Invoke(this, entity);
-            }
-        }
-
-        
-        public void SetPlayerEntity(in DefaultEcs.Entity entity)
-        {
-            bool entityChanged = false;
-            lock (_lo)
-            {
-                if (_playerEntity != entity)
-                {
-                    entityChanged = true;
-                    _playerEntity = entity;
-                }
-            }
-
-            if (entityChanged)
-            {
-                OnPlayerEntityChanged?.Invoke(this, entity);
-            }
-        }
-
-        
-        public int GetNextId()
-        {
-            lock(_lo)
-            {
-                return ++_nextId;
-            }
-        }
-        
-
-        public DefaultEcs.World GetEcsWorld()
-        {
-            return _ecsWorld;
-        }
-
-        
-        public DefaultEcs.Command.WorldRecord GetEcsWorldRecord()
-        {
-            return _entityCommandRecorder.Record(_ecsWorld);
-        }
-
-        
-        public void ApplyEcsRecorder(in DefaultEcs.Command.EntityCommandRecorder recorder)
-        {
-            recorder.Execute();
-        }
-        
-
-        private void _commitWorldRecord()
-        {
-            _entityCommandRecorder.Execute();
-        }
-
-        
-        private void _executeDoomedEntities()
-        {
-            List<IList<DefaultEcs.Entity>> listList;
-            lock (_lo)
-            {
-                if (_listDoomedEntityLists.Count == 0) 
-                { 
-                    return;
-                }
-                listList = _listDoomedEntityLists;
-                _listDoomedEntityLists = new();
-            }
-            if( null==listList )
-            {
-                return;
-            }
-            foreach(var list in listList)
-            {
-                foreach(var entity in list)
-                {
-                    entity.Dispose();
-                }
-            }
-        }
-
-
-        public void AddDoomedEntities(in IList<DefaultEcs.Entity> listDoomedEntities)
-        {
-            lock (_lo)
-            {
-                _listDoomedEntityLists.Add(listDoomedEntities);
-            }
-        }
-
-
-        public void AddDoomedEntity(DefaultEcs.Entity entity)
-        {
-            lock (_lo)
-            {
-                List<Entity> listEntity = new List<Entity>();
-                listEntity.Add(entity);
-                _listDoomedEntityLists.Add(listEntity);
-            }
-        }
-
-
-        public DefaultEcs.Entity CreateEntity(string name)
-        {
-            DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
-            entity.Set(new joyce.components.EntityName(name));
-            return entity;
-        }
-
-
-        private void _executeEntitySetupActions(float matTime)
-        {
-            _queueStopwatch.Reset();
-            _queueStopwatch.Start();
-            while(_queueStopwatch.Elapsed.TotalMilliseconds < matTime*1000f)
-            {
-                EntitySetupAction entitySetupAction;
-                lock (_lo)
-                {
-                    if( _queueEntitySetupActions.Count==0)
-                    {
-                        break;
-                    }
-                    entitySetupAction = _queueEntitySetupActions.Dequeue();
-                }
-
-                DefaultEcs.Entity entity = CreateEntity(entitySetupAction.EntityName);
-                try {                    
-                    entitySetupAction.SetupAction(entity);
-                } catch( Exception e )
-                {
-                    Warning($"Error executing entity setup action: {e}.");
-                    entity.Dispose();
-                }
-            }
-            _queueStopwatch.Stop();
-
-            int queueLeft;
-            lock (_lo)
-            {
-                queueLeft = _queueEntitySetupActions.Count;
-            }
-
-            if (0 < queueLeft)
-            {
-                Trace( $"Left {queueLeft} items in setup actions queue.");
-            }
-
-        }
-
-
-        public void QueueEntitySetupAction(
-            string entityName, Action<DefaultEcs.Entity> setupAction)
-        {
-            lock (_lo)
-            {
-                _queueEntitySetupActions.Enqueue(
-                    new EntitySetupAction
-                    {
-                        EntityName = entityName,
-                        SetupAction = setupAction
-                    }
-                );
-            }
-        }
-
-
-        public void QueueCleanupAction(Action action)
-        {
-            _workerCleanupActions.Enqueue(action);
-        }
-        
-
-        public void QueueMainThreadAction(Action action)
-        {
-            _workerMainThreadActions.Enqueue(action);
-        }
-
-
-        /**
-         * Called by the platform on a new physical frame.
-         */
-        public void CallOnPhysicalFrame(float dt)
-        {
-            OnPhysicalFrame?.Invoke(this, dt);
-
-            lock (_lo)
-            {
-                /*
-                 * Compute a running average of fps.
-                 */
-                _fpsPhysicalMonitor.OnFrame(dt);
-                while (_frameDurationQueue.Count >= NFrameDurations)
-                {
-                    _frameDurationQueue.Dequeue();
-                }
-
-                _frameDurationQueue.Enqueue(dt);
-            }
-        }
-
-
-        /**
-         * Called by the platform as soon we believe the
-         * platform APIs are available.
-         */
-        public void CallOnPlatformAvailable()
-        {
-            lock (_lo)
-            {
-                _platformIsAvailable = true;
-            }
-        }
-        
-        
-        private bool _firstTime = true;
-
-        /**
-         * Control, which camera is the source for audio information.
-         * This takes the position and direction of the first camera
-         * that is found to be active.
-         */
-        private uint _audioCameraMask = 0xffffffff;
-
-        private void _onLogicalFrame(float dt)
-        {
-            EngineState engineState;
-            _fpsLogicalMonitor.OnFrame(dt);
-            
-            lock (_lo)
-            {
-                engineState = State;
-            }
-
-            /*
-             * If the engine is stopped, do not do any logical frame stuff.
-             */
-            if (engineState == EngineState.Stopped)
+            if (_listDoomedEntityLists.Count == 0)
             {
                 return;
             }
 
-            /*
-             * Before rendering the first time and calling user handlers the first time,
-             * we need to read physics to transforms, update hierarchy and transforms.
-             * That way user handlers have the transform2world available.
-             */
-            if( _firstTime )
+            listList = _listDoomedEntityLists;
+            _listDoomedEntityLists = new();
+        }
+
+        if (null == listList)
+        {
+            return;
+        }
+
+        foreach (var list in listList)
+        {
+            foreach (var entity in list)
             {
-                _firstTime = false;
-
-                /*
-                 * Apply poses needs input from simulation
-                 */
-                _systemApplyPoses.Update(dt);
-
-                /*
-                 * hierarchy needs
-                 * - input from user handlers
-                 */
-                _aHierarchy.Update();
-
-                /*
-                 * transform system needs
-                 * - updated hierarchy system
-                 * - input from user handlers
-                 * - input from physics
-                 */
-                _aTransform.Update();
-
-                /*
-                 * Move kinetics re quires 
-                 * - input from user, already processed by Transform System
-                 */
-                _systemMoveKinetics.Update(dt);
+                entity.Dispose();
             }
+        }
+    }
 
-            /*
-             * Goal: shortest latency from user input to screen.
-             */
-            
-            /*
-             * First collect and execute all events, so that they can
-             * affect behaviours.
-             */
+
+    public void AddDoomedEntities(in IList<DefaultEcs.Entity> listDoomedEntities)
+    {
+        lock (_lo)
+        {
+            _listDoomedEntityLists.Add(listDoomedEntities);
+        }
+    }
+
+
+    public void AddDoomedEntity(DefaultEcs.Entity entity)
+    {
+        lock (_lo)
+        {
+            List<Entity> listEntity = new List<Entity>();
+            listEntity.Add(entity);
+            _listDoomedEntityLists.Add(listEntity);
+        }
+    }
+
+
+    public DefaultEcs.Entity CreateEntity(string name)
+    {
+        DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
+        entity.Set(new joyce.components.EntityName(name));
+        return entity;
+    }
+
+
+    private void _executeEntitySetupActions(float matTime)
+    {
+        _queueStopwatch.Reset();
+        _queueStopwatch.Start();
+        while (_queueStopwatch.Elapsed.TotalMilliseconds < matTime * 1000f)
+        {
+            EntitySetupAction entitySetupAction;
+            lock (_lo)
             {
-                var eq = I.Get<EventQueue>();
-                var sm = I.Get<SubscriptionManager>();
-                while (!eq.IsEmpty())
+                if (_queueEntitySetupActions.Count == 0)
                 {
-                    sm.Handle(eq.Pop());
+                    break;
                 }
+
+                entitySetupAction = _queueEntitySetupActions.Dequeue();
             }
 
-            /*
-             * Call the various ways of user behavior and/or controllers.
-             * They will read world position and modify physics and or positions
-             * 
-             * Require: Previously computed world transforms.
-             */
-            _systemBehave.Update(dt);
-
-            OnLogicalFrame?.Invoke(this, dt);
-
-            /*
-             * After everything has behaved, read the camera(s) to get
-             * the camera positions for further processing.
-             */
-            var vCameraPosition = new Vector3(0f, 0f, 0f);
-            var vCameraRight = new Vector3(1f, 1f, 0f);
-            var listCameras = GetEcsWorld().GetEntities()
-                .With<engine.joyce.components.Camera3>()
-                .With<engine.joyce.components.Transform3ToWorld>()
-                .AsEnumerable();
-            foreach (var eCamera in listCameras)
+            DefaultEcs.Entity entity = CreateEntity(entitySetupAction.EntityName);
+            try
             {
-                var cCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
-                var cTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
-                var mToWorld = cTransform3ToWorld.Matrix;
-                
-                vCameraPosition = cTransform3ToWorld.Matrix.Translation;
-                vCameraRight = new Vector3(mToWorld.M11, mToWorld.M12, mToWorld.M13);
-
-                _systemMovingSounds.SetListenerPosRight(vCameraPosition, vCameraRight);
-                
-                break;
+                entitySetupAction.SetupAction(entity);
             }
-
-            /*
-             * We can update moving sounds only after the behaviour has defined
-             * the velocities.
-             */
-            _systemMovingSounds.Update(dt);
-
-
-            //if (0 == _isLoading)
+            catch (Exception e)
             {
-                /*
-                 * Advance physics, based on new user input and/or gravitation.
-                 */
-                _aPhysics.Update(dt);
+                Warning($"Error executing entity setup action: {e}.");
+                entity.Dispose();
             }
+        }
+
+        _queueStopwatch.Stop();
+
+        int queueLeft;
+        lock (_lo)
+        {
+            queueLeft = _queueEntitySetupActions.Count;
+        }
+
+        if (0 < queueLeft)
+        {
+            Trace($"Left {queueLeft} items in setup actions queue.");
+        }
+
+    }
+
+
+    public void QueueEntitySetupAction(
+        string entityName, Action<DefaultEcs.Entity> setupAction)
+    {
+        lock (_lo)
+        {
+            _queueEntitySetupActions.Enqueue(
+                new EntitySetupAction
+                {
+                    EntityName = entityName,
+                    SetupAction = setupAction
+                }
+            );
+        }
+    }
+
+
+    public void QueueCleanupAction(Action action)
+    {
+        _workerCleanupActions.Enqueue(action);
+    }
+
+
+    public void QueueMainThreadAction(Action action)
+    {
+        _workerMainThreadActions.Enqueue(action);
+    }
+
+
+    /**
+     * Called by the platform on a new physical frame.
+     */
+    public void CallOnPhysicalFrame(float dt)
+    {
+        OnPhysicalFrame?.Invoke(this, dt);
+
+        lock (_lo)
+        {
+            /*
+             * Compute a running average of fps.
+             */
+            _fpsPhysicalMonitor.OnFrame(dt);
+            while (_frameDurationQueue.Count >= NFrameDurations)
+            {
+                _frameDurationQueue.Dequeue();
+            }
+
+            _frameDurationQueue.Enqueue(dt);
+        }
+    }
+
+
+    /**
+     * Called by the platform as soon we believe the
+     * platform APIs are available.
+     */
+    public void CallOnPlatformAvailable()
+    {
+        lock (_lo)
+        {
+            _platformIsAvailable = true;
+        }
+    }
+
+
+    private bool _firstTime = true;
+
+    /**
+     * Control, which camera is the source for audio information.
+     * This takes the position and direction of the first camera
+     * that is found to be active.
+     */
+    private uint _audioCameraMask = 0xffffffff;
+
+    private void _onLogicalFrame(float dt)
+    {
+        EngineState engineState;
+        _fpsLogicalMonitor.OnFrame(dt);
+
+        lock (_lo)
+        {
+            engineState = State;
+        }
+
+        /*
+         * If the engine is stopped, do not do any logical frame stuff.
+         */
+        if (engineState == EngineState.Stopped)
+        {
+            return;
+        }
+
+        /*
+         * Before rendering the first time and calling user handlers the first time,
+         * we need to read physics to transforms, update hierarchy and transforms.
+         * That way user handlers have the transform2world available.
+         */
+        if (_firstTime)
+        {
+            _firstTime = false;
 
             /*
              * Apply poses needs input from simulation
-             */ 
+             */
             _systemApplyPoses.Update(dt);
 
             /*
@@ -596,444 +516,541 @@ namespace engine
             _aTransform.Update();
 
             /*
-             * Move kinetics requires 
+             * Move kinetics re quires
              * - input from user, already processed by Transform System
              */
             _systemMoveKinetics.Update(dt);
-
-            /*
-             * Write back all entity modifications to the objects.
-             */
-            _commitWorldRecord();
-
-            /*
-             * If no new frame has been created, read all geom entities for rendering
-             * into data structures.
-             */
-            if (null != SceneSequencer.MainScene)
-            {
-                _platform.CollectRenderData(SceneSequencer.MainScene);
-            }
-            else
-            {
-                // ErrorThrow("Null scene", (m) => new InvalidOperationException(m));
-            }
-
-            // TXWTODO: Measure the time of all actions.
-            /*
-             * Async delete any entities that shall be deleted 
-             */
-            _executeDoomedEntities();
-            
-            /*
-             * Async create / setup new entities.
-             */
-            _executeEntitySetupActions(
-                (_isLoading>0)
-                    ? 0.024f
-                    : 0.001f
-                );
-            _workerMainThreadActions.RunPart(
-                (_isLoading>0)
-                    ? 0.004f
-                    : 0.001f
-            );
-            _workerCleanupActions.RunPart(0.001f);
         }
 
-
-        private double _timeLeft;
-        private int _fpsLogical = 60;
-        
-
-        public void AddModule(in IModule module)
-        {
-            lock (_lo)
-            {
-                _listModules.Add(module);
-            }
-        }
-
-
-        public void RemoveModule(in IModule module)
-        {
-            lock (_lo)
-            {
-                _listModules.Remove(module);
-            }
-        }
-
-
-        public void GetControllerState(out ControllerState controllerState)
-        {
-            I.Get<builtin.controllers.InputController>().GetControllerState(out controllerState);
-        }
-        
-
-        public void GetMouseMove(out Vector2 vMouseMove)
-        {
-            I.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
-        }
-        
-
-        public void CallOnImGuiRender(float dt)
-        {
-            OnImGuiRender?.Invoke(this, dt);
-        }
-
-        public void Execute()
-        {
-            _platform.Execute();
-        }
-
-
-        public bool IsFullscreen()
-        {
-            lock (_lo)
-            {
-                return _isFullscreen;
-            }
-        }
-
-
-        public void SetFullscreen(bool isFullscreen)
-        {
-            IPlatform platform = null;
-            lock (_lo)
-            {
-                _isFullscreen = isFullscreen;
-                platform = _platform;
-            }
-
-            if (null != platform)
-            {
-                platform.SetFullscreen(isFullscreen);
-            }
-        }
-
-        
-        private int _entityUpdateRate = 6;
-        private int _entityUpdateCount = 0;
-        private void _checkUpdateEntityArray()
-        {
-            lock (_lo)
-            {
-                if (_requireEntityIdArrays > 0)
-                {
-                    if (_entityUpdateCount <= 0)
-                    {
-                        _entityUpdateCount = _entityUpdateRate;
-                        var entities = GetEcsWorld().GetEntities().AsEnumerable();
-                        _arrayEntityIds = new DefaultEcs.Entity[entities.Count()];
-                        int idx = 0;
-                        foreach (var entity in GetEcsWorld().GetEntities().AsEnumerable())
-                        {
-                            _arrayEntityIds[idx] = entity;
-                            idx++;
-                        }
-                    }
-                    else
-                    {
-                        _entityUpdateCount--;
-                    }
-                }
-            }
-        }
-
-
-        private void _logicalThreadFunction()
-        {
-            float invFps = 1f / 60f;
-            float totalTime = 0f;
-
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            while (_platform.IsRunning())
-            {
-                EngineState engineState;
-
-                /*
-                 * Wait for the next frame or rock it.
-                 */
-                stopWatch.Stop();
-                {
-                    float elapsed = (float)stopWatch.Elapsed.TotalSeconds;
-                    totalTime += elapsed;
-                    // Trace($"elapsed {elapsed} totalTime {totalTime}");
-                }
-                stopWatch.Reset();
-
-                /*
-                 * keep times in range
-                 */
-                while (totalTime > 1f)
-                {
-                    totalTime -= 1f;
-                }
-
-
-                if (totalTime < invFps)
-                {
-                    // Trace("Sleeping.");
-                    stopWatch.Start();
-                    lock (_lo)
-                    {
-                        engineState = State;
-                    }
-                    if (engineState <= EngineState.Running)
-                    {
-                        Thread.Sleep(1);
-                    } else
-                    {
-                        Thread.Sleep(50);
-                    }
-                    continue;
-                }
-
-                stopWatch.Start();
-                int nLogical = 0;
-                /*
-                 * Run as many logical frames as have been elapsed.
-                 */
-                while (totalTime > invFps)
-                {
-                    lock (_lo)
-                    {
-                        engineState = State;
-                        if (engineState > EngineState.Running)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (_platformIsAvailable)
-                    {
-                        _onLogicalFrame(invFps);
-                        ++nLogical;
-                    }
-
-                    totalTime -= invFps;
-                }
-                
-                stopWatch.Stop();
-                float processedTime = (float)stopWatch.Elapsed.TotalSeconds;
-                stopWatch.Reset();
-
-                totalTime += processedTime;
-
-                /*
-                 * Now, depending on the remaining time, sleep a bit.
-                 */
-                stopWatch.Start();
-
-#if false
-                if (0 < nLogical)
-                {
-                    float eachFrame = processedTime / (float)nLogical;
-                    for (int i = 0; i < nLogical; ++i)
-                    {
-                        _fpsLogicalMonitor.OnFrame(eachFrame);
-                    }
-                }
-#endif
-
-                _fpsPhysicalMonitor.Update();
-                _fpsLogicalMonitor.Update();
-                _checkUpdateEntityArray();
-            }
-
-        }
-
-
-        public void Exit()
-        {
-            lock (_lo)
-            {
-                _isRunning = false;
-            }
-        }
-        
-        
-        /**
-         * Call after all dependencies are set.
+        /*
+         * Goal: shortest latency from user input to screen.
          */
-        public void SetupDone()
-        {
-            _aPhysics = I.Get<engine.physics.API>();
-            _aTransform = I.Get<engine.joyce.TransformApi>();
-            _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
- 
-            _systemBehave = new(this);
-            _systemApplyPoses = new(this);
-            _systemMoveKinetics = new(this);
-            _systemMovingSounds = new(this);
-            _managerPhysics = new physics.Manager();
-            _managerPhysics.Manage(this);
-            _managerBehavior = new behave.Manager();
-            _managerBehavior.Manage(this);
-            _managerLuaScript = new ();
-            _managerLuaScript.Manage(_ecsWorld);
-            _managerMapIcons = new();
-            _managerMapIcons.Manage(_ecsWorld);
 
-            _logicalThread = new Thread(_logicalThreadFunction);
-            _logicalThread.Priority = ThreadPriority.AboveNormal;
-            I.Get<InputEventPipeline>().ModuleActivate(this);
-        }
-
-
-        public bool IsRunning()
-        {
-            bool platformIsRunning = _platform.IsRunning();
-            lock (_lo)
-            {
-                return _isRunning && platformIsRunning;
-            }
-        }
-
-
-        private int _enableMouseCounter = 0;
-        public void EnableMouse()
-        {
-            bool doEnable = false;
-            lock (_lo)
-            {
-                ++_enableMouseCounter;
-                if (1 == _enableMouseCounter)
-                {
-                    doEnable = true;
-                }
-            }
-
-            if (doEnable)
-            {
-                _platform.MouseEnabled = true;
-            }
-        }
-
-        
-        public void DisableMouse()
-        {
-            bool doDisable = false;
-            lock (_lo)
-            {
-                if (0 == _enableMouseCounter)
-                {
-                    ErrorThrow("Mismatch disabling mouse.", (m) => new InvalidOperationException(m));
-                }
-                if (1 == _enableMouseCounter)
-                {
-                    doDisable = true;
-                }
-                --_enableMouseCounter;
-            }
-
-            if (doDisable)
-            {
-                _platform.MouseEnabled = false;
-            }
-        }
-        
-
-        public void EnableEntityIds()
-        {
-            lock (_lo)
-            {
-                _requireEntityIdArrays++;
-            }
-        }
-
-
-        public void DisableEntityIds()
-        {
-            lock (_lo)
-            {
-                _requireEntityIdArrays--;
-            }
-        }
-
-
-        /**
-         * Load default resources into the resource cache.
-         * These might be required ot be availabel even if the
-         * platform still is loading.
+        /*
+         * First collect and execute all events, so that they can
+         * affect behaviours.
          */
-        private void _loadDefaultResources()
         {
-            /*
-             * Load some default resources.
-             */
-            try
+            var eq = I.Get<EventQueue>();
+            var sm = I.Get<SubscriptionManager>();
+            while (!eq.IsEmpty())
             {
-                Trace("Loading default resources...");
-                I.Get<Resources>().FindAdd("shaders/default.vert", (string _) => new ShaderSource("LIghtingVS.vert"));
-                I.Get<Resources>().FindAdd("shaders/default.frag", (string _) => new ShaderSource("LIghtingFS.frag"));
-                I.Get<Resources>().FindAdd("shaders/screen.frag", (string _) => new ShaderSource("ScreenFS.frag")); 
-                Trace("Loading default resources done.");
-            }
-            catch (Exception e)
-            {
-                Error($"Unable to load engine default resources: {e}");
+                sm.Handle(eq.Pop());
             }
         }
-        
-        
-        public void PlatformSetupDone()
+
+        /*
+         * Call the various ways of user behavior and/or controllers.
+         * They will read world position and modify physics and or positions
+         *
+         * Require: Previously computed world transforms.
+         */
+        _systemBehave.Update(dt);
+
+        OnLogicalFrame?.Invoke(this, dt);
+
+        /*
+         * After everything has behaved, read the camera(s) to get
+         * the camera positions for further processing.
+         */
+        var vCameraPosition = new Vector3(0f, 0f, 0f);
+        var vCameraRight = new Vector3(1f, 1f, 0f);
+        var listCameras = GetEcsWorld().GetEntities()
+            .With<engine.joyce.components.Camera3>()
+            .With<engine.joyce.components.Transform3ToWorld>()
+            .AsEnumerable();
+        foreach (var eCamera in listCameras)
         {
-            State = EngineState.Running;
-            
+            var cCamera3 = eCamera.Get<engine.joyce.components.Camera3>();
+            var cTransform3ToWorld = eCamera.Get<engine.joyce.components.Transform3ToWorld>();
+            var mToWorld = cTransform3ToWorld.Matrix;
+
+            vCameraPosition = cTransform3ToWorld.Matrix.Translation;
+            vCameraRight = new Vector3(mToWorld.M11, mToWorld.M12, mToWorld.M13);
+
+            _systemMovingSounds.SetListenerPosRight(vCameraPosition, vCameraRight);
+
+            break;
+        }
+
+        /*
+         * We can update moving sounds only after the behaviour has defined
+         * the velocities.
+         */
+        _systemMovingSounds.Update(dt);
+
+
+        //if (0 == _isLoading)
+        {
             /*
-             * Start the reality as soon the platform also is set up.
+             * Advance physics, based on new user input and/or gravitation.
              */
-            _logicalThread.Start();
+            _aPhysics.Update(dt);
         }
 
+        /*
+         * Apply poses needs input from simulation
+         */
+        _systemApplyPoses.Update(dt);
 
-        public void SetViewRectangle(Vector2 ul, Vector2 lr)
+        /*
+         * hierarchy needs
+         * - input from user handlers
+         */
+        _aHierarchy.Update();
+
+        /*
+         * transform system needs
+         * - updated hierarchy system
+         * - input from user handlers
+         * - input from physics
+         */
+        _aTransform.Update();
+
+        /*
+         * Move kinetics requires
+         * - input from user, already processed by Transform System
+         */
+        _systemMoveKinetics.Update(dt);
+
+        /*
+         * Write back all entity modifications to the objects.
+         */
+        _commitWorldRecord();
+
+        /*
+         * If no new frame has been created, read all geom entities for rendering
+         * into data structures.
+         */
+        if (null != SceneSequencer.MainScene)
         {
-            _vViewUl = ul;
-            _vViewLr = lr;
+            _platform.CollectRenderData(SceneSequencer.MainScene);
+        }
+        else
+        {
+            // ErrorThrow("Null scene", (m) => new InvalidOperationException(m));
         }
 
+        // TXWTODO: Measure the time of all actions.
+        /*
+         * Async delete any entities that shall be deleted
+         */
+        _executeDoomedEntities();
 
-        public void GetViewRectangle(out Vector2 ul, out Vector2 lr)
+        /*
+         * Async create / setup new entities.
+         */
+        _executeEntitySetupActions(
+            (_isLoading > 0)
+                ? 0.024f
+                : 0.001f
+        );
+        _workerMainThreadActions.RunPart(
+            (_isLoading > 0)
+                ? 0.004f
+                : 0.001f
+        );
+        _workerCleanupActions.RunPart(0.001f);
+    }
+
+
+    private double _timeLeft;
+    private int _fpsLogical = 60;
+
+
+    public void AddModule(in IModule module)
+    {
+        lock (_lo)
         {
-            ul = _vViewUl;
-            lr = _vViewLr;
-        }
-        
-        
-        public Engine( engine.IPlatform platform )
-        {
-            engine.Unit u = new();
-           
-            u.RunStartupTest();
-
-           
-            _nextId = 0;
-            _platform = platform;
-            _ecsWorld = new DefaultEcs.World();
-            _entityCommandRecorder = new(4096, 1024*1024);
-            
-            SceneSequencer = new(this);
-
-            I.Register<engine.Timeline>(() => new engine.Timeline());
-            I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
-            I.Register<engine.news.EventQueue>(() => new EventQueue());
-            I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
-            I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi(this));
-            I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi(this));
-            I.Register<engine.physics.API>(() => new physics.API(this));
-            I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
-            I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
-            I.Register<engine.Resources>(() => new Resources());
-            
-            State = EngineState.Starting;
-
-            u.RunEngineTest(this);
-            
-            _loadDefaultResources();
+            _listModules.Add(module);
         }
     }
+
+
+    public void RemoveModule(in IModule module)
+    {
+        lock (_lo)
+        {
+            _listModules.Remove(module);
+        }
+    }
+
+
+    public void GetControllerState(out ControllerState controllerState)
+    {
+        I.Get<builtin.controllers.InputController>().GetControllerState(out controllerState);
+    }
+
+
+    public void GetMouseMove(out Vector2 vMouseMove)
+    {
+        I.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
+    }
+
+
+    public void CallOnImGuiRender(float dt)
+    {
+        OnImGuiRender?.Invoke(this, dt);
+    }
+
+    public void Execute()
+    {
+        _platform.Execute();
+    }
+
+
+    public bool IsFullscreen()
+    {
+        lock (_lo)
+        {
+            return _isFullscreen;
+        }
+    }
+
+
+    public void SetFullscreen(bool isFullscreen)
+    {
+        IPlatform platform = null;
+        lock (_lo)
+        {
+            _isFullscreen = isFullscreen;
+            platform = _platform;
+        }
+
+        if (null != platform)
+        {
+            platform.SetFullscreen(isFullscreen);
+        }
+    }
+
+
+    private int _entityUpdateRate = 6;
+    private int _entityUpdateCount = 0;
+
+    private void _checkUpdateEntityArray()
+    {
+        lock (_lo)
+        {
+            if (_requireEntityIdArrays > 0)
+            {
+                if (_entityUpdateCount <= 0)
+                {
+                    _entityUpdateCount = _entityUpdateRate;
+                    var entities = GetEcsWorld().GetEntities().AsEnumerable();
+                    _arrayEntityIds = new DefaultEcs.Entity[entities.Count()];
+                    int idx = 0;
+                    foreach (var entity in GetEcsWorld().GetEntities().AsEnumerable())
+                    {
+                        _arrayEntityIds[idx] = entity;
+                        idx++;
+                    }
+                }
+                else
+                {
+                    _entityUpdateCount--;
+                }
+            }
+        }
+    }
+
+
+    private void _logicalThreadFunction()
+    {
+        float invFps = 1f / 60f;
+        float totalTime = 0f;
+
+        Stopwatch stopWatch = new Stopwatch();
+        stopWatch.Start();
+        while (_platform.IsRunning())
+        {
+            EngineState engineState;
+
+            /*
+             * Wait for the next frame or rock it.
+             */
+            stopWatch.Stop();
+            {
+                float elapsed = (float)stopWatch.Elapsed.TotalSeconds;
+                totalTime += elapsed;
+                // Trace($"elapsed {elapsed} totalTime {totalTime}");
+            }
+            stopWatch.Reset();
+
+            /*
+             * keep times in range
+             */
+            while (totalTime > 1f)
+            {
+                totalTime -= 1f;
+            }
+
+
+            if (totalTime < invFps)
+            {
+                // Trace("Sleeping.");
+                stopWatch.Start();
+                lock (_lo)
+                {
+                    engineState = State;
+                }
+
+                if (engineState <= EngineState.Running)
+                {
+                    Thread.Sleep(1);
+                }
+                else
+                {
+                    Thread.Sleep(50);
+                }
+
+                continue;
+            }
+
+            stopWatch.Start();
+            int nLogical = 0;
+            /*
+             * Run as many logical frames as have been elapsed.
+             */
+            while (totalTime > invFps)
+            {
+                lock (_lo)
+                {
+                    engineState = State;
+                    if (engineState > EngineState.Running)
+                    {
+                        break;
+                    }
+                }
+
+                if (_platformIsAvailable)
+                {
+                    _onLogicalFrame(invFps);
+                    ++nLogical;
+                }
+
+                totalTime -= invFps;
+            }
+
+            stopWatch.Stop();
+            float processedTime = (float)stopWatch.Elapsed.TotalSeconds;
+            stopWatch.Reset();
+
+            totalTime += processedTime;
+
+            /*
+             * Now, depending on the remaining time, sleep a bit.
+             */
+            stopWatch.Start();
+
+#if false
+            if (0 < nLogical)
+            {
+                float eachFrame = processedTime / (float)nLogical;
+                for (int i = 0; i < nLogical; ++i)
+                {
+                    _fpsLogicalMonitor.OnFrame(eachFrame);
+                }
+            }
+#endif
+
+            _fpsPhysicalMonitor.Update();
+            _fpsLogicalMonitor.Update();
+            _checkUpdateEntityArray();
+        }
+
+    }
+
+
+    public void Exit()
+    {
+        lock (_lo)
+        {
+            _isRunning = false;
+        }
+    }
+
+
+    /**
+     * Call after all dependencies are set.
+     */
+    public void SetupDone()
+    {
+        _aPhysics = I.Get<engine.physics.API>();
+        _aTransform = I.Get<engine.joyce.TransformApi>();
+        _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
+
+        _systemBehave = new(this);
+        _systemApplyPoses = new(this);
+        _systemMoveKinetics = new(this);
+        _systemMovingSounds = new(this);
+        _managerPhysics = new physics.Manager();
+        _managerPhysics.Manage(this);
+        _managerBehavior = new behave.Manager();
+        _managerBehavior.Manage(this);
+        _managerLuaScript = new();
+        _managerLuaScript.Manage(_ecsWorld);
+        _managerMapIcons = new();
+        _managerMapIcons.Manage(_ecsWorld);
+
+        _logicalThread = new Thread(_logicalThreadFunction);
+        _logicalThread.Priority = ThreadPriority.AboveNormal;
+        I.Get<InputEventPipeline>().ModuleActivate(this);
+    }
+
+
+    public bool IsRunning()
+    {
+        bool platformIsRunning = _platform.IsRunning();
+        lock (_lo)
+        {
+            return _isRunning && platformIsRunning;
+        }
+    }
+
+
+    private int _enableMouseCounter = 0;
+
+    public void EnableMouse()
+    {
+        bool doEnable = false;
+        lock (_lo)
+        {
+            ++_enableMouseCounter;
+            if (1 == _enableMouseCounter)
+            {
+                doEnable = true;
+            }
+        }
+
+        if (doEnable)
+        {
+            _platform.MouseEnabled = true;
+        }
+    }
+
+
+    public void DisableMouse()
+    {
+        bool doDisable = false;
+        lock (_lo)
+        {
+            if (0 == _enableMouseCounter)
+            {
+                ErrorThrow("Mismatch disabling mouse.", (m) => new InvalidOperationException(m));
+            }
+
+            if (1 == _enableMouseCounter)
+            {
+                doDisable = true;
+            }
+
+            --_enableMouseCounter;
+        }
+
+        if (doDisable)
+        {
+            _platform.MouseEnabled = false;
+        }
+    }
+
+
+    public void EnableEntityIds()
+    {
+        lock (_lo)
+        {
+            _requireEntityIdArrays++;
+        }
+    }
+
+
+    public void DisableEntityIds()
+    {
+        lock (_lo)
+        {
+            _requireEntityIdArrays--;
+        }
+    }
+
+
+    /**
+     * Load default resources into the resource cache.
+     * These might be required ot be availabel even if the
+     * platform still is loading.
+     */
+    private void _loadDefaultResources()
+    {
+        /*
+         * Load some default resources.
+         */
+        try
+        {
+            Trace("Loading default resources...");
+            I.Get<Resources>().FindAdd("shaders/default.vert", (string _) => new ShaderSource("LIghtingVS.vert"));
+            I.Get<Resources>().FindAdd("shaders/default.frag", (string _) => new ShaderSource("LIghtingFS.frag"));
+            I.Get<Resources>().FindAdd("shaders/screen.frag", (string _) => new ShaderSource("ScreenFS.frag"));
+            Trace("Loading default resources done.");
+        }
+        catch (Exception e)
+        {
+            Error($"Unable to load engine default resources: {e}");
+        }
+    }
+
+
+    public void PlatformSetupDone()
+    {
+        State = EngineState.Running;
+
+        /*
+         * Start the reality as soon the platform also is set up.
+         */
+        _logicalThread.Start();
+    }
+
+
+    public void SetViewRectangle(Vector2 ul, Vector2 lr)
+    {
+        _vViewUl = ul;
+        _vViewLr = lr;
+    }
+
+
+    public void GetViewRectangle(out Vector2 ul, out Vector2 lr)
+    {
+        ul = _vViewUl;
+        lr = _vViewLr;
+    }
+
+
+    public Engine(engine.IPlatform platform)
+    {
+        engine.Unit u = new();
+
+        u.RunStartupTest();
+
+
+        _nextId = 0;
+        _platform = platform;
+        _ecsWorld = new DefaultEcs.World();
+        _entityCommandRecorder = new(4096, 1024 * 1024);
+
+        SceneSequencer = new(this);
+
+        I.Register<engine.Timeline>(() => new engine.Timeline());
+        I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
+        I.Register<engine.news.EventQueue>(() => new EventQueue());
+        I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
+        I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi(this));
+        I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi(this));
+        I.Register<engine.physics.API>(() => new physics.API(this));
+        I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
+        I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
+        I.Register<engine.Resources>(() => new Resources());
+
+        State = EngineState.Starting;
+
+        u.RunEngineTest(this);
+
+        _loadDefaultResources();
+    }
 }
- 

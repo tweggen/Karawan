@@ -82,6 +82,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             (_clusterDesc.Pos - worldFragment.Position +
             estate.GetCenter()) with { Y = _clusterDesc.AverageHeight + 2.5f };
         worldFragment.AddStaticInstance(
+            0x00000001,
             "nogame.furniture.polytopeStand", modelStand.RootNode.InstanceDesc,
                 vPos, Quaternion.Identity, null);
         Trace($"in frag {worldFragment.GetId()} Placing polytope @{worldFragment.Position+vPos}");

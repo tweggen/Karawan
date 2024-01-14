@@ -295,12 +295,19 @@ public class Fragment : IDisposable
         AddStaticInstance(staticName, jInstanceDesc, null);
     }
 
+    
+    public void AddStaticInstance(uint cameraMask, string staticName, in engine.joyce.InstanceDesc jInstanceDesc)
+    {
+        AddStaticInstance(cameraMask, staticName, jInstanceDesc, Vector3.Zero, Quaternion.Identity, null);
+    }
+
+    
     public void AddStaticInstance(
         string staticName,
         engine.joyce.InstanceDesc jInstanceDesc,
         IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
     {
-        AddStaticInstance(staticName, jInstanceDesc, Vector3.Zero, Quaternion.Identity, listCreatePhysics);
+        AddStaticInstance(0x00000001, staticName, jInstanceDesc, Vector3.Zero, Quaternion.Identity, listCreatePhysics);
     }
 
     private int _meshesInFragment = 0;
@@ -313,6 +320,7 @@ public class Fragment : IDisposable
      *     to destroy physics.
      */
     public void AddStaticInstance(
+        uint cameraMask,
         string staticName,
         engine.joyce.InstanceDesc jInstanceDesc,
         Vector3 vPosition, Quaternion qRotation,
@@ -325,7 +333,7 @@ public class Fragment : IDisposable
         {
             entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             engine.joyce.components.Transform3 cTransform3 = new(
-                true, 0x00000001, qRotation, Position + vPosition);
+                true, cameraMask, qRotation, Position + vPosition);
             entity.Set(cTransform3);
             engine.joyce.TransformApi.CreateTransform3ToParent(cTransform3, out var mat);
             entity.Set(new engine.joyce.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask,
