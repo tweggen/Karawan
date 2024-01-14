@@ -82,7 +82,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
     /**
      * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
      */
-    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment) => new (async () =>
+    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, engine.world.FragmentVisibility visib) => new (async () =>
     {
         _rnd = new builtin.tools.RandomSource(_myKey);
 

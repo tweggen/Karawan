@@ -37,14 +37,8 @@ public class MetaGen
      */
     public static int GroundResolution = 20;
 
-    public static bool TRACE_CHARACTER_MIGRATION = false;
-    public static bool TRACE_WORLD_LOADER = false;
-    public static bool TRACE_LOAD_AUDIO_BUFFER = false;
-    public static bool TRACE_LOAD_BITMAP = false;
-    public static bool TRACE_LOAD_FONT = false;
-    public static bool TRACE_LOAD_BYTES = false;
-    public static bool TRACE_PLATFORM_MOLECULE_ADDING = true;
-    public static bool TRACE_FRAGMENT_OPEARTORS = false;
+    public static bool TRACE_WORLD_LOADER = true;
+    public static bool TRACE_FRAGMENT_OPEARTORS = true;
 
     public static float CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0f;
 
@@ -185,7 +179,7 @@ public class MetaGen
      * at all. And if there are too much, we offload the task creation to a task
      * of its own.
      */
-    public void ApplyFragmentOperators(world.Fragment fragment)
+    public void ApplyFragmentOperators(world.Fragment fragment, engine.world.FragmentVisibility visib)
     {
         if (null == fragment)
         {
@@ -214,9 +208,9 @@ public class MetaGen
                             return null;
                         }
 
-                        // Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
+                        Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
 
-                        return Task.Run(op.FragmentOperatorApply(fragment));
+                        return Task.Run(op.FragmentOperatorApply(fragment, visib));
                     }
                     else
                     {

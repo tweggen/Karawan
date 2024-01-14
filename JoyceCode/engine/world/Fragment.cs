@@ -45,7 +45,7 @@ public class Fragment : IDisposable
     private readonly int _groundNElevations;
 
 
-    public FragmentVisibility Visibility { get; set; }
+    public FragmentVisibility Visibility;
 
     public uint PosKey
     {
@@ -379,7 +379,7 @@ public class Fragment : IDisposable
         byte visibToLoad = (byte)(visibChanges & visibNow);
         if ((visibToLoad & FragmentVisibility.Visible3dAny) != 0)
         {
-            world.MetaGen.Instance().ApplyFragmentOperators(this);
+            world.MetaGen.Instance().ApplyFragmentOperators(this, visib);
         }
 
         if ((visibToLoad & FragmentVisibility.Visible2dAny) != 0)
@@ -402,6 +402,7 @@ public class Fragment : IDisposable
 
         Loader = loader;
         Visibility = visib;
+        Visibility.How = 0;
 
         // _listCharacters = null;
         _groundResolution = world.MetaGen.GroundResolution;

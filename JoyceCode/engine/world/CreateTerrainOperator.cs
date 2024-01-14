@@ -31,7 +31,7 @@ namespace engine.world
          * Load the final elevation table from the elevation cache and
          * apply it to the world fragment.
          */
-        public Func<Task> FragmentOperatorApply(world.Fragment worldFragment) => new (async () =>
+        public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
         {
             /*
              * Load the final elevation for that fragment from the elevation cache.

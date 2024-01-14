@@ -27,8 +27,13 @@ namespace engine.world
          * This operator shall be stateless. That means, for a certain world
          * fragment in a given state and a certain configuratino, it shall generate
          * the same output.
+         *
+         * @param worldFragment
+         *     The fragment to load into
+         * @param visib
+         *     The desired visibility.
          */
-        public System.Func<Task> FragmentOperatorApply(world.Fragment worldFragment);
+        public System.Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib);
 
     }
 }

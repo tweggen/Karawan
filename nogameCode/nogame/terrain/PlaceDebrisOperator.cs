@@ -26,7 +26,7 @@ public class PlaceDebrisOperator : IFragmentOperator
         return $"5100/PlaceDebrisOperator/{_myKey}";
     }
 
-    public Func<Task> FragmentOperatorApply(Fragment worldFragment) => new (async () =>
+    public Func<Task> FragmentOperatorApply(Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
         builtin.tools.RandomSource rnd = new(_myKey+worldFragment.GetId());
         AABB aabbFragment = worldFragment.AABB;

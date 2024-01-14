@@ -160,7 +160,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
     }
     
 
-    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new (async () =>
+    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
         _rnd.Clear();
  

@@ -31,7 +31,7 @@ public class GenerateHouseDescriptionsOperator : engine.world.IFragmentOperator
     }
 
 
-    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment) => new(async () =>
+    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new(async () =>
     {
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;

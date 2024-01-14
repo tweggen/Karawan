@@ -69,7 +69,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
     }
 
 
-    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment) => new (async () =>
+    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
         // Perform clipping until we have bounding boxes
 
