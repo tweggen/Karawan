@@ -120,13 +120,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
     /**
      * Generate the streets between any junctions.
-     *
-     * @param v
-     *     A array of vertices
-     * @param u
-     *     A array of u/v values per vertex
-     * @param i
-     *     The indices of the polygons
      */
     private bool _generateStreetRun(
         world.Fragment worldFragment,
@@ -654,48 +647,31 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         }
         return true;
     }
+    
 
-
-    /**
-     * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
-     */
-    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
+    private void _apply2d(Fragment worldFragment)
     {
-        // Perform clipping until we have bounding boxes
-
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
-        /*
-         * We don't apply the operator if the fragment completely is
-         * outside our boundary box (the cluster)
-         */
-        {
-            {
-                float csh = _clusterDesc.Size / 2.0f;
-                float fsh = world.MetaGen.FragmentSize / 2.0f;
-                if (
-                    (cx - csh) > (fsh)
-                    || (cx + csh) < (-fsh)
-                    || (cz - csh) > (fsh)
-                    || (cz + csh) < (-fsh)
-                )
-                {
-                    if (_traceStreets) Trace("Too far away: x=" + _clusterDesc.Pos.X + ", z=" + _clusterDesc.Pos.Z);
-                    return;
-                }
-            }
-        }
+    }
+    
 
-        if (_traceStreets) Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
+    public void _apply3d(Fragment worldFragment)
+    {
+        float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
+        float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
+
         if (_traceStreets) Trace("Obtaining streets.");
         var strokeStore = _clusterDesc.StrokeStore();
         if (_traceStreets) Trace("Have streets.");
 
         if (_traceStreets)
+        {
             Trace($"In terrain '{worldFragment.GetId()}' operator. "
                   + $"Fragment @{worldFragment.Position}. "
                   + $"Cluster '{_clusterDesc.IdString}' @{cx}, {cz}, R:{_clusterDesc.Size}.");
+        }
 
         /*
          * We need the coordinates of the cluster relative to the fragment to translate
@@ -712,8 +688,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         foreach (var stroke in strokeStore.GetStrokes())
         {
             var didCreateStreetRun = _generateStreetRun(
-                worldFragment, cx, cz, stroke,
-                g);
+                worldFragment, cx, cz, stroke, g);
             if (didCreateStreetRun)
             {
                 nIgnoredStrokes++;
@@ -750,6 +725,49 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         var matmesh = new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), g);
         engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 600f);
         worldFragment.AddStaticInstance("engine.streets.streets", instanceDesc);
+    }
+
+    
+    /**
+     * Create meshes for all street strokes with their "A" StreetPoint in this fragment.
+     */
+    public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
+    {
+        float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
+        float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
+
+        /*
+         * We don't apply the operator if the fragment completely is
+         * outside our boundary box (the cluster)
+         */
+        {
+            {
+                float csh = _clusterDesc.Size / 2.0f;
+                float fsh = world.MetaGen.FragmentSize / 2.0f;
+                if (
+                    (cx - csh) > (fsh)
+                    || (cx + csh) < (-fsh)
+                    || (cz - csh) > (fsh)
+                    || (cz + csh) < (-fsh)
+                )
+                {
+                    if (_traceStreets) Trace("Too far away: x=" + _clusterDesc.Pos.X + ", z=" + _clusterDesc.Pos.Z);
+                    return;
+                }
+            }
+        }
+
+        if (_traceStreets) Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
+
+        if ((visib.How & FragmentVisibility.Visible2dAny) != 0)
+        {
+            _apply2d(worldFragment);
+        }
+        if ((visib.How & FragmentVisibility.Visible3dAny) != 0)
+        {
+            _apply3d(worldFragment);
+        }
+        
     });
 
 
