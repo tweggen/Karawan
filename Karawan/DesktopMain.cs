@@ -111,7 +111,7 @@ public class DesktopMain
         iWindow.Initialize();
         try
         {
-            System.IO.Stream streamImage = engine.Assets.Open("appicon.png");
+            System.IO.Stream streamImage = engine.Assets.Open("appiconpng.png");
             using (var img = Image.Load<Rgba32>(streamImage))
             {
                 byte[] pixelArray = new byte[img.Width * img.Height * 4];

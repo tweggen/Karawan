@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net7.0-android33.0</TargetFrameworks>
+		<TargetFrameworks>net8.0-android34.0</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-maccatalyst</TargetFrameworks> -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
@@ -71,14 +71,14 @@
 	<ItemGroup>
 		<!-- App Icon -->
 		<!-- MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" / -->
-		<MauiIcon Include="Resources\mipmap\appicon.png" Color="#080800" />
+		<!-- MauiIcon Include="Resources\mipmap\appicon.png" Color="#080800" / -->
 		<MauiSplashScreen Include="Resources\Splash\splash_nassau.svg" Color="#000000" BaseSize="144, 144" />
 
 		<Resource Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Include="Resources\Images\dotnet_bot.svg" />
+		<!-- MauiImage Include="Resources\Images\dotnet_bot.svg" / -->
 		<MauiImage Include="Resources\mipmap\appicon.png" />
 		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
 
@@ -124,7 +124,7 @@
 	  <None Remove="Platforms\Android\lvl-1-01c.ogg" />
 	  <None Remove="Platforms\Android\lvl-6.ogg" />
 	  <None Remove="Platforms\Android\mapicons.png" />
-	  <None Remove="Platforms\Android\mipmap\appicon.png" />
+	  <None Remove="Platforms\Android\mipmap\appicon_android.png" />
 	  <None Remove="Platforms\Android\plentomatic-small.png" />
 	  <None Remove="Platforms\Android\plentomatic.png" />
 	  <None Remove="Platforms\Android\pling01.ogg" />
@@ -408,7 +408,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <AndroidResource Include="Platforms\Android\mipmap\appicon.png" />
+	  <AndroidResource Include="Platforms\Android\mipmap\appicon_android.png" />
 	  <AndroidResource Include="Resources\mipmap\appicon.png" />
 	</ItemGroup>
 

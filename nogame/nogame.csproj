@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <UsingTask TaskName="CmdLine.Fbx2AsciiTask"
-             AssemblyFile="..\CmdLine\bin\Debug\net7.0\joycecmd.dll"/>
+  <UsingTask TaskName="CmdLine.Fbx2AsciiTask" AssemblyFile="..\CmdLine\bin\Debug\net7.0\joycecmd.dll" />
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>disable</Nullable>
     <CustomBuildAfterTargets />
   </PropertyGroup>
