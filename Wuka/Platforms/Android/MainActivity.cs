@@ -31,6 +31,23 @@ namespace Wuka
         private Silk.NET.Windowing.IView _iView;
         private engine.Engine _engine;
 
+        public static int REQUEST_P0STNOTIFICATIONS = 10023;
+        string[] reqestPermission={ "android.permission.POST_NOTIFICATIONS" };
+        private void RequestPostNotificationsPermission()
+        { 
+            if (ActivityCompat.ShouldShowRequestPermissionRationale(this, "android.permission.POST_NOTIFICATIONS");)
+            {
+                // Provide an additional rationale to the user if the permission was not granted
+                // and the user would benefit from additional context for the use of the permission.
+                // For example if the user has previously denied the permission.
+                ActivityCompat.RequestPermissions(this, reqestPermission, REQUEST_P0STNOTIFICATIONS);
+            }
+            else
+            {
+                //P0STNOTIFICATIONS permission has not been granted yet. Request it directly.
+                ActivityCompat.RequestPermissions(this, reqestPermission, REQUEST_P0STNOTIFICATIONS);
+            }
+        }
         private async void _requestBluetoothPermission()
         {
             try
@@ -40,6 +57,20 @@ namespace Wuka
             catch (Exception ex)
             {
                 throw ex;
+            }
+        }
+
+
+        private bool _checkPermissionGranted(string Permissions)
+        {
+            // Check if the permission is already available.
+            if (ActivityCompat.CheckSelfPermission(this, Permissions) != Permission.Granted)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
 
@@ -60,7 +91,14 @@ namespace Wuka
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            _requestBluetoothPermission();
+
+            if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            {
+                if (!(CheckPermissionGranted(Manifest.Permission.BluetoothConnect)))
+                {
+                    _requestBluetoothPermission();
+                }
+            }
         }
 
         protected override void OnRestart()
