@@ -31,12 +31,13 @@ namespace Wuka
         ScreenOrientation = ScreenOrientation.Landscape,
         Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
     )]
-    public class MainActivity : Silk.NET.Windowing.Sdl.Android.SilkActivity, ActivityCompat.IOnRequestPermissionsResultCallback
+    public class MainActivity : Activity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
-        internal static AssetManager AssetManager;
+        private object _lo = new();
+        private bool _havePermissions = false;
+        private bool _isRequestingPermissions = false;
+        private bool _triggeredGame = false;
         
-        private Silk.NET.Windowing.IView _iView;
-        private engine.Engine _engine;
 
         public static int REQUEST_BLUETOOTH_CONNECT = 10023;
         private static string _permissionBluetoothConnect = "android.permission.BLUETOOTH_CONNECT";
@@ -45,6 +46,7 @@ namespace Wuka
         { 
             if (ActivityCompat.ShouldShowRequestPermissionRationale(this, _permissionBluetoothConnect))
             {
+                _isRequestingPermissions = true;
                 // Provide an additional rationale to the user if the permission was not granted
                 // and the user would benefit from additional context for the use of the permission.
                 // For example if the user has previously denied the permission.
@@ -52,7 +54,8 @@ namespace Wuka
             }
             else
             {
-                //P0STNOTIFICATIONS permission has not been granted yet. Request it directly.
+                _isRequestingPermissions = true;
+                //REQUEST_BLUETOOTH_CONNECT permission has not been granted yet. Request it directly.
                 ActivityCompat.RequestPermissions(this, reqestPermission, REQUEST_BLUETOOTH_CONNECT);
             }
         }
@@ -63,15 +66,21 @@ namespace Wuka
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
             if (requestCode == REQUEST_BLUETOOTH_CONNECT)
             {
+                _isRequestingPermissions = false;
                 if (grantResults.Length <= 0)
                 {
                     // If user interaction was interrupted, the permission request is cancelled and you 
                     // receive empty arrays.
                     Log.Info("error", "User interaction was cancelled.");
+                    _requestBluetoothPermission();
                 }
                 else if (grantResults[0] == PermissionChecker.PermissionGranted)
                 {
-                    // Permission was granted.
+                    lock (_lo)
+                    {
+                        _havePermissions = true;
+                    }
+                    _triggerGame();
                 }
                 else
                 {
@@ -80,20 +89,6 @@ namespace Wuka
                 }
             }
         }
-        #if false
-        private async void _requestBluetoothPermission()
-        {
-            try
-            {
-                var permissionStatus = await Permissions.RequestAsync<MyBluetoothPermission>();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        #endif
-    
 
         private bool _checkPermissionGranted(string Permissions)
         {
@@ -112,84 +107,63 @@ namespace Wuka
         protected override void OnStop()
         {
             /*
-             * Try to save a backup copy
+             * It might just set permissions
              */
-            I.Get<engine.DBStorage>().SaveGameState(I.Get<GameState>());
-
-            //_engine.Suspend();
             base.OnStop();
-            _engine.Exit();
         }
 
-        
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
+            base.OnCreate(savedInstanceState);
+
+            bool doTrigger = false;
             if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
             {
                 if (!(_checkPermissionGranted(Manifest.Permission.BluetoothConnect)))
                 {
                     _requestBluetoothPermission();
                 }
+                else
+                {
+                    lock (_lo)
+                    {
+                        _havePermissions = true;
+                        doTrigger = true;
+                    }
+                }
             }
-            base.OnCreate(savedInstanceState);
+
+            if (doTrigger)
+            {
+                _triggerGame();
+            }
         }
 
 
         protected override void OnRestart()
         {
-            //_engine.Resume();
             base.OnRestart();
+
+            if (_isRequestingPermissions)
+            {
+                return;
+            }
+
+            if (_havePermissions)
+            {
+                /*
+                 * If we did not yet trigger the game activity, trigger it now.
+                 */
+                _triggerGame();
+            }
         }
 
-        protected override void OnRun()
+
+        void _triggerGame()
         {
-
-            /*
-             * setup framework dependencies.
-             */
-            SdlWindowing.RegisterPlatform();
-            SdlInput.RegisterPlatform();
-            
-            /*
-             * Setup singletons and statics
-             */
-            var assetManagerImplementation = new Wuka.AssetImplementation(Assets);
-            engine.Assets.SetAssetImplementation(assetManagerImplementation);
-
-            var options = ViewOptions.Default;
-            options.API = new GraphicsAPI(ContextAPI.OpenGLES, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 0));
-            options.FramesPerSecond = 60;
-            options.VSync = false;
-            options.ShouldSwapAutomatically = false;
-            _iView = Silk.NET.Windowing.Window.GetView(options); // note also GetView, instead of Window.Create.
-
-            engine.GlobalSettings.Set("nogame.CreateOSD", "true");
-            engine.GlobalSettings.Set("platform.threeD.API", "OpenGLES");
-            engine.GlobalSettings.Set("platform.threeD.API.version", "300");
-            engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
-            engine.GlobalSettings.Set("Engine.ResourcePath", "./");
-            engine.GlobalSettings.Set("splash.touchControls", "true");
-            engine.GlobalSettings.Set("Android", "true");
-            engine.GlobalSettings.Set("platform.initialZoomState", "-16");
-            engine.GlobalSettings.Set("nogame.CreateUI", "false");
-            engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
-            engine.GlobalSettings.Set("Engine.RWPath", System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData));
-
-            _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
-            _iView.Initialize();
-
-            I.Register<Boom.ISoundAPI>(() =>
-            {
-                var api = new Boom.OpenAL.API(_engine);
-                return api;
-            });
-            
-            nogame.Main.Start(_engine);
-
-            _engine.Execute();
-
-            I.Get<Boom.ISoundAPI>().Dispose();
-
+            // Switch to GameActivity
+            StartActivity(typeof(GameActivity));
         }
     }
 }
