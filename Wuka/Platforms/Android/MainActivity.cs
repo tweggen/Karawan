@@ -86,6 +86,11 @@ namespace Wuka
                 {
                     // Permission denied.
                     Toast.MakeText(this, " REQUEST_P0STNOTIFICATIONS Permission Denied", ToastLength.Long).Show();
+                    lock (_lo)
+                    {
+                        _havePermissions = true;
+                    }
+                    _triggerGame();
                 }
             }
         }
