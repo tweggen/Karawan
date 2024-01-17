@@ -13,6 +13,13 @@ using Android.Media;
 using Wuka.Platforms.Android;
 using Java.Util;
 using System.Numerics;
+using Android;
+using Android.Runtime;
+using Android.Util;
+using Android.Widget;
+using AndroidX.Core.App;
+using AndroidX.Core.Content;
+using Xamarin.Essentials;
 using nogame;
 using GameState = Android.App.GameState;
 
@@ -24,30 +31,56 @@ namespace Wuka
         ScreenOrientation = ScreenOrientation.Landscape,
         Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
     )]
-    public class MainActivity : Silk.NET.Windowing.Sdl.Android.SilkActivity
+    public class MainActivity : Silk.NET.Windowing.Sdl.Android.SilkActivity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
         internal static AssetManager AssetManager;
         
         private Silk.NET.Windowing.IView _iView;
         private engine.Engine _engine;
 
-        public static int REQUEST_P0STNOTIFICATIONS = 10023;
-        string[] reqestPermission={ "android.permission.POST_NOTIFICATIONS" };
-        private void RequestPostNotificationsPermission()
+        public static int REQUEST_BLUETOOTH_CONNECT = 10023;
+        private static string _permissionBluetoothConnect = "android.permission.BLUETOOTH_CONNECT";
+        string[] reqestPermission={ _permissionBluetoothConnect };
+        private void _requestBluetoothPermission()
         { 
-            if (ActivityCompat.ShouldShowRequestPermissionRationale(this, "android.permission.POST_NOTIFICATIONS");)
+            if (ActivityCompat.ShouldShowRequestPermissionRationale(this, _permissionBluetoothConnect))
             {
                 // Provide an additional rationale to the user if the permission was not granted
                 // and the user would benefit from additional context for the use of the permission.
                 // For example if the user has previously denied the permission.
-                ActivityCompat.RequestPermissions(this, reqestPermission, REQUEST_P0STNOTIFICATIONS);
+                ActivityCompat.RequestPermissions(this, reqestPermission, REQUEST_BLUETOOTH_CONNECT);
             }
             else
             {
                 //P0STNOTIFICATIONS permission has not been granted yet. Request it directly.
-                ActivityCompat.RequestPermissions(this, reqestPermission, REQUEST_P0STNOTIFICATIONS);
+                ActivityCompat.RequestPermissions(this, reqestPermission, REQUEST_BLUETOOTH_CONNECT);
             }
         }
+        
+        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
+        {
+            //Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            if (requestCode == REQUEST_BLUETOOTH_CONNECT)
+            {
+                if (grantResults.Length <= 0)
+                {
+                    // If user interaction was interrupted, the permission request is cancelled and you 
+                    // receive empty arrays.
+                    Log.Info("error", "User interaction was cancelled.");
+                }
+                else if (grantResults[0] == PermissionChecker.PermissionGranted)
+                {
+                    // Permission was granted.
+                }
+                else
+                {
+                    // Permission denied.
+                    Toast.MakeText(this, " REQUEST_P0STNOTIFICATIONS Permission Denied", ToastLength.Long).Show();
+                }
+            }
+        }
+        #if false
         private async void _requestBluetoothPermission()
         {
             try
@@ -59,7 +92,8 @@ namespace Wuka
                 throw ex;
             }
         }
-
+        #endif
+    
 
         private bool _checkPermissionGranted(string Permissions)
         {
@@ -74,8 +108,7 @@ namespace Wuka
             }
         }
 
-
-
+        
         protected override void OnStop()
         {
             /*
@@ -88,18 +121,19 @@ namespace Wuka
             _engine.Exit();
         }
 
+        
         protected override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate(savedInstanceState);
-
             if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
             {
-                if (!(CheckPermissionGranted(Manifest.Permission.BluetoothConnect)))
+                if (!(_checkPermissionGranted(Manifest.Permission.BluetoothConnect)))
                 {
                     _requestBluetoothPermission();
                 }
             }
+            base.OnCreate(savedInstanceState);
         }
+
 
         protected override void OnRestart()
         {
@@ -128,7 +162,6 @@ namespace Wuka
             options.VSync = false;
             options.ShouldSwapAutomatically = false;
             _iView = Silk.NET.Windowing.Window.GetView(options); // note also GetView, instead of Window.Create.
-            _iView.Initialize();
 
             engine.GlobalSettings.Set("nogame.CreateOSD", "true");
             engine.GlobalSettings.Set("platform.threeD.API", "OpenGLES");
@@ -143,11 +176,7 @@ namespace Wuka
             engine.GlobalSettings.Set("Engine.RWPath", System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData));
 
             _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
-#if false
-            {
-                WireServer.API aWireServer = new(e, 9001);
-            }
-#endif
+            _iView.Initialize();
 
             I.Register<Boom.ISoundAPI>(() =>
             {

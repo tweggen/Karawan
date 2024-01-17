@@ -419,6 +419,7 @@
 		<PackageReference Include="Silk.NET.SDL" Version="2.17.1" />
 		<PackageReference Include="Silk.NET.Windowing" Version="2.17.1" />
 		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.17.1" />
+		<PackageReference Include="Xamarin.Essentials" Version="1.8.1" />
 	</ItemGroup>
 
 	<ItemGroup>

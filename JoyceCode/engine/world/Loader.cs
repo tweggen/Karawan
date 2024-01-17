@@ -162,7 +162,7 @@ namespace engine.world
             {
                 fragment.EnsureVisibility(visib);
             }
-            catch (Exception e)M
+            catch (Exception e)
             {
                 Trace($"Exception calling applyFragmentOperators(): {e}");
             }
