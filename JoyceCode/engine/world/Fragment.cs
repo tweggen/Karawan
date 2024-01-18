@@ -47,6 +47,33 @@ public class Fragment : IDisposable
 
     public FragmentVisibility Visibility;
 
+    private SortedDictionary<string, object> _operatorData = new();
+
+    public T? GetOperatorData<T>(string op) where T: class
+    {
+        lock (_lo)
+        {
+            if (_operatorData.TryGetValue(op, out var data))
+            {
+                return data as T;
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+    
+
+    public void SetOperatorData<T>(string op, T data) where T: class
+    {
+        lock (_lo)
+        {
+            _operatorData[op] = data;
+        }
+    }
+    
+
     public uint PosKey
     {
         get => Visibility.PosKey();
@@ -381,7 +408,6 @@ public class Fragment : IDisposable
 
             visibChanges = (byte)(visib.How ^ Visibility.How);
             visibNow = visib.How;
-            Visibility = visib;
         }
 
         byte visibToLoad = (byte)(visibChanges & visibNow);
