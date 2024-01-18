@@ -736,10 +736,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         /*
          * Special case for this operator: We only generate once for 3d and 2d, not separately 
          */
-        if (0 != (worldFragment.Visibility.How & FragmentVisibility.VisibleAny))
+        if (null != worldFragment.GetOperatorData<object>(FragmentOperatorGetPath()))
         {
             return;
         }
+        worldFragment.SetOperatorData(FragmentOperatorGetPath(), new object());
         
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
