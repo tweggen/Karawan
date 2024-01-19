@@ -13,6 +13,16 @@ public struct AABB
     public Vector3 BB;
 
     
+    public static bool operator ==(in AABB a, in AABB b)
+    {
+        return a.AA == b.AA && a.BB == b.BB;
+    }
+    
+    public static bool operator !=(in AABB a, in AABB b)
+    {
+        return a.AA != b.AA || a.BB != b.BB;
+    }
+    
     public Vector3 Center
     {
         get => (AA + BB) / 2f;
@@ -143,6 +153,13 @@ public struct AABB
             pos.X >= AA.X && pos.X <= BB.X &&
             pos.Y >= AA.Y && pos.Y <= BB.Y &&
             pos.Z >= AA.Z && pos.Z <= BB.Z;
+    }
+
+
+    public bool IsEmpty()
+    {
+        return AA.X == Single.MaxValue && AA.Y == Single.MaxValue && AA.Z == Single.MaxValue
+               && BB.X == Single.MinValue && BB.Y == Single.MinValue && BB.Z == Single.MinValue;
     }
     
     

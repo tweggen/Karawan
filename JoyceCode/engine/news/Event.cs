@@ -14,6 +14,7 @@ public class Event
     public const string INPUT_MOUSE_WHEEL = "input.mouse.wheel";
 
     public const string VIEW_SIZE_CHANGED = "view.size.changed";
+    public const string MAP_RANGE_EVENT = "map.range";
 
     public const string RENDER_STATS = "render.stats";
 

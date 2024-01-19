@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using builtin.controllers;
 using engine;
@@ -7,6 +8,7 @@ using engine.joyce.components;
 using engine.news;
 using engine.world;
 
+using static engine.Logger;
 
 namespace nogame.modules.map;
 
@@ -71,6 +73,12 @@ public class Module : AModule, IInputPart
     private DisplayMapParams _requestedMapParams = new();
     private DisplayMapParams _visibleMapParams = new();
 
+    private engine.geom.AABB _aabbMap = new();
+
+    // TXWTODO: This is a guesstimate. Compute it properly.
+    private float _viewHeight = 3f;
+    private float _viewWidth = 3f * 16f / 9f;
+    
     
     static public uint MapCameraMask = 0x00800000;
 
@@ -84,20 +92,7 @@ public class Module : AModule, IInputPart
             dmp = _visibleMapParams;
         }
 
-        float effectiveSize = Single.Exp2(dmp.CurrentZoomState / 4f);
-
-        
         I.Get<TransformApi>().SetVisible(_eCamMap, dmp.IsVisible);
-#if false
-        I.Get<TransformApi>().SetTransforms(
-            _eMap, false, MapCameraMask,
-            Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
-            new Vector3(
-                dmp.Position.X * effectiveSize - effectiveSize/2f,
-                -100,
-                dmp.Position.Y * effectiveSize - effectiveSize/2f),
-            effectiveSize * Vector3.One);
-#else
         I.Get<TransformApi>().SetVisible(_eMap, true);
         I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
         
@@ -113,8 +108,9 @@ public class Module : AModule, IInputPart
             Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f), 
             vCamPos
             );
-        _eCamMap.Get<Camera3>().Scale = (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
-#endif
+        float scale =  (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
+        Trace($"Map scale is {scale}");
+        _eCamMap.Get<Camera3>().Scale = scale;
     }
     
     
@@ -185,6 +181,52 @@ public class Module : AModule, IInputPart
                 -100f * Vector3.UnitY);
             _updateMapParams();
         }
+    }
+
+
+    private void _computeAABB()
+    {
+        DisplayMapParams dmp;
+
+        lock (_lo)
+        {
+            dmp = _visibleMapParams;
+        }
+        Vector3 vCamPos = new(
+            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X/2f), 
+            0f, 
+            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y/2f)
+        );
+        
+        float scale = (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
+
+        float halfY = (_viewHeight / 2f) / scale;
+        float halfX = (_viewWidth / 2f) / scale;
+
+        engine.geom.AABB aabb = new();
+        aabb.AA = new Vector3(vCamPos.X - halfX, -10000f, vCamPos.Z - halfY);
+        aabb.BB = new Vector3(vCamPos.X + halfX, +10000f, vCamPos.Z + halfY);
+        lock (_lo)
+        {
+            if (aabb != _aabbMap)
+            {
+                _notifyAABB();
+            }
+        }
+    }
+    
+
+    private void _notifyAABB()
+    {
+        engine.geom.AABB aabb;
+        lock (_lo) {
+            aabb = _aabbMap;   
+        }
+        I.Get<EventQueue>().Push(
+            new MapRangeEvent("mainmap")
+            {
+                AABB = aabb
+            });
     }
 
 
@@ -327,6 +369,16 @@ public class Module : AModule, IInputPart
 
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
+        
+        /*
+         * Also reset the currently active map area.
+         */
+        lock (_lo)
+        {
+            _aabbMap.Reset();
+        }
+        _notifyAABB();
+        
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -345,5 +397,6 @@ public class Module : AModule, IInputPart
         }
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        _computeAABB();
     }
 }

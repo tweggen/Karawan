@@ -29,6 +29,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\IFragmentMapProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapFragment.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapIconManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapRangeEvent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\menu\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\menu\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ScreenComposer.cs" />

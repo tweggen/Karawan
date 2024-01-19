@@ -185,11 +185,17 @@ public class Scene : AModule, IScene, IInputPart
 
     public override void ModuleActivate(engine.Engine engine0)
     {
+        uint fbWidth, fbHeight;
+        {
+            var split = engine.GlobalSettings.Get("nogame.framebuffer.resolution").Split("x");
+            fbWidth = uint.Parse(split[0]);
+            fbHeight = uint.Parse(split[1]);
+        }
         // FIXME: We need to register the renderbuffer before we reference it in the world module. This is not beatiful. Anyway, setting up the renderer doesn't belong here.
         I.Get<ObjectRegistry<Renderbuffer>>().RegisterFactory(
             "rootscene_3d", 
             name => new Renderbuffer(name,
-                368, 207
+                fbWidth, fbHeight
                 //480,270
             ));
 

@@ -101,6 +101,7 @@ public class Main
     {
         Main main = new(e);
 
+        engine.GlobalSettings.Set("nogame.framebuffer.resolution", "368x207");
         engine.GlobalSettings.Set("nogame.CreateOSD", "true");
         engine.GlobalSettings.Set("nogame.CreateMap", "true");
         engine.GlobalSettings.Set("nogame.CreateMiniMap", "true");

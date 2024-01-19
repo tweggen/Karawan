@@ -1,19 +1,12 @@
 using System.Collections.Generic;
 using System.Numerics;
 using DefaultEcs;
-using engine.world;
 
 namespace engine.world;
 
 public class PlayerViewer : IViewer
 {
     private Engine _engine;
-    
-    /**
-     * Keeping the current visibility status of fragments.
-     */
-    private List<FragmentVisibility> _listFragmentVisibility = new();
-    
     
     private static readonly int LoadNSurroundingFragments = 2;
 
