@@ -35,7 +35,7 @@ public class InputEventPipeline : engine.AModule
         }
 
 
-        // TXWTODO: That's the wrong part order, isn't it?
+        
         foreach (var part in listParts)
         {
             try

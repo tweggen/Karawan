@@ -730,7 +730,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         // var mol = new engine.SimpleMolecule( [g] );
         // TXWTODO: This is too inefficient. We should also use a factory here.
         var matmesh = new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), g);
-        engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 600f);
+        engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 1000f);
         worldFragment.AddStaticInstance(0x00800001, "engine.streets.streets", instanceDesc);
     }
 

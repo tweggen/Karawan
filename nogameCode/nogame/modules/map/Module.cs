@@ -5,6 +5,7 @@ using engine;
 using engine.joyce;
 using engine.joyce.components;
 using engine.news;
+using engine.world;
 
 
 namespace nogame.modules.map;
@@ -100,10 +101,18 @@ public class Module : AModule, IInputPart
         I.Get<TransformApi>().SetVisible(_eMap, true);
         I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
         
+        // TXWTODO: We better should consider the zoom state.
+        Vector3 vCamPos = new(
+            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X/2f), 
+            CameraY, 
+            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y/2f)
+            );
+        
         I.Get<TransformApi>().SetTransforms(_eCamMap,
             dmp.IsVisible, MapCameraMask, 
             Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f), 
-            new Vector3(dmp.Position.X, CameraY, dmp.Position.Y));
+            vCamPos
+            );
         _eCamMap.Get<Camera3>().Scale = (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
 #endif
     }
@@ -273,7 +282,7 @@ public class Module : AModule, IInputPart
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_WHEEL)) _handleMouseWheel(ev);
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
-        // if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _handleKeyDown(ev);
+        //if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _handleKeyDown(ev);
         // if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _handleKeyUp(ev);
     }
 
@@ -285,8 +294,8 @@ public class Module : AModule, IInputPart
         Vector2 vDelta = Vector2.Zero;
         vDelta.X += (float)controllerState.TurnRight / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
         vDelta.X -= (float)controllerState.TurnLeft / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
-        vDelta.Y += (float)controllerState.WalkForward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
-        vDelta.Y -= (float)controllerState.WalkBackward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+        vDelta.Y -= (float)controllerState.WalkForward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
+        vDelta.Y += (float)controllerState.WalkBackward / 200f * DisplayMapParams.MAP_MOVE_PER_FRAME;
 
         _applyDeltaMove(vDelta);
     }

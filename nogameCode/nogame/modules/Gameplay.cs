@@ -247,6 +247,7 @@ public class Gameplay : AModule, IInputPart
             {
                 case "(F10)":
                     _toggleDemo();
+                    ev.IsHandled = true;
                     break;
                 default:
                     break;

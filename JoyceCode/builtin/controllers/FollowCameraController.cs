@@ -806,6 +806,8 @@ public class FollowCameraController : IInputPart
     {
         if (ev.Type != Event.INPUT_MOUSE_WHEEL) return;
 
+        ev.IsHandled = true;
+        
         /*
          * size y contains the delta.
          */
