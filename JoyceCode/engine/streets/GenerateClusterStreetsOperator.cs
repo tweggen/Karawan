@@ -658,9 +658,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
     private void _apply2d(Fragment worldFragment)
     {
-        float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
-        float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
-
+        /*
+         * We're cheating and using the same on.
+         */
+        _apply3d(worldFragment);
     }
     
 
