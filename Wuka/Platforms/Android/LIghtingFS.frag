@@ -122,8 +122,8 @@ void applyLight(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight)
 }
         
 
-vec3 v3RelFragPosition;
-vec3 v3One;
+vec3 v3RelFragPosition = vec3(0);
+vec3 v3One = vec3(0);
 
 
 vec4 checkVisibility(in Ray ray, in Plane plane, inout vec4 zBuffer, inout Plane closest)
@@ -379,8 +379,8 @@ void main()
      * Collect the pixel diffuse/emissive color and normal 
      * to render.
      */
-    vec4 col4TexelDiffuse;
-    vec4 col4TexelEmissive;
+    vec4 col4TexelDiffuse = vec4(0);
+    vec4 col4TexelEmissive = vec4(0);
     vec3 v3Normal = v3FragNormal;    
     if (0 != (materialFlags & MATERIAL_FLAGS_RENDER_INTERIOR))
     {
