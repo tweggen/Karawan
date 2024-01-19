@@ -28,6 +28,11 @@ public class PlaceDebrisOperator : IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
+        if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
+        {
+            return;
+        }
+        
         builtin.tools.RandomSource rnd = new(_myKey+worldFragment.GetId());
         AABB aabbFragment = worldFragment.AABB;
         MatMesh matmesh = new();

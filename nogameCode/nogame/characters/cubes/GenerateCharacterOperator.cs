@@ -90,6 +90,11 @@ namespace nogame.characters.cubes
 
         public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
         {
+            if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
+            {
+                return;
+            }
+        
             var aPhysics = I.Get<engine.physics.API>();
 
             float cx = _clusterDesc.Pos.X - worldFragment.Position.X;

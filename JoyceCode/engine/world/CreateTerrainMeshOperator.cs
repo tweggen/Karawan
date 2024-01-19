@@ -36,6 +36,11 @@ namespace engine.world
          */
         public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
         {
+            if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
+            {
+                return;
+            }
+        
             /*
              * Create geometry from the elevations stored in the fragment.
              */

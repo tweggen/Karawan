@@ -84,6 +84,11 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
      */
     public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, engine.world.FragmentVisibility visib) => new (async () =>
     {
+        if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
+        {
+            return;
+        }
+        
         _rnd = new builtin.tools.RandomSource(_myKey);
 
         // Perform clipping until we have bounding boxes

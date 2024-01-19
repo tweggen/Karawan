@@ -163,6 +163,11 @@ public class GeneratePolytopeOperator : IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
+        if (0 == (visib.How & FragmentVisibility.Visible3dAny))
+        {
+            return;
+        }
+        
         _rnd.Clear();
  
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;

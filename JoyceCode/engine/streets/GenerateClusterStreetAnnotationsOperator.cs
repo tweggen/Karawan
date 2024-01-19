@@ -71,6 +71,11 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
+        if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
+        {
+            return;
+        }
+        
         // Perform clipping until we have bounding boxes
 
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;

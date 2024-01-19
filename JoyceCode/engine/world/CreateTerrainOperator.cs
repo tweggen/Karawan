@@ -33,6 +33,11 @@ namespace engine.world
          */
         public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
         {
+            if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
+            {
+                return;
+            }
+        
             /*
              * Load the final elevation for that fragment from the elevation cache.
              * If not done before, this will trigger computing the elevation levels.
