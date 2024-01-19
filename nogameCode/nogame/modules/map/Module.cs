@@ -109,8 +109,9 @@ public class Module : AModule, IInputPart
             vCamPos
             );
         float scale =  (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
-        Trace($"Map scale is {scale}");
+        
         _eCamMap.Get<Camera3>().Scale = scale;
+        _computeAABB();
     }
     
     
@@ -210,6 +211,7 @@ public class Module : AModule, IInputPart
         {
             if (aabb != _aabbMap)
             {
+                _aabbMap = aabb;
                 _notifyAABB();
             }
         }
@@ -223,7 +225,7 @@ public class Module : AModule, IInputPart
             aabb = _aabbMap;   
         }
         I.Get<EventQueue>().Push(
-            new MapRangeEvent("mainmap")
+            new builtin.map.MapRangeEvent("mainmap")
             {
                 AABB = aabb
             });

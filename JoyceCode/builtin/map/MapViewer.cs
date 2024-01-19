@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using engine;
 using engine.world;
-using DefaultEcs;
 using engine.news;
+using static engine.Logger;
 
 namespace builtin.map;
 
@@ -38,6 +39,7 @@ public class MapViewer : AModule, IViewer
             foreach (var kvp in _mapRanges)
             {
                 engine.geom.AABB aabb = kvp.Value;
+                //Trace($"Found {kvp.Value}");
 
                 var v3Min = aabb.AA / MetaGen.FragmentSize;
                 var v3Max = aabb.BB / MetaGen.FragmentSize;
@@ -47,7 +49,7 @@ public class MapViewer : AModule, IViewer
                 int zmax = (int) Single.Floor(v3Max.Z + 0.5f);
                 for (int z = zmin; z <= zmax; ++z)
                 {
-                    for (int x = xmin; x <= xmin; ++x)
+                    for (int x = xmin; x <= xmax; ++x)
                     {
                         lsVisib.Add(new ()
                         {
@@ -86,6 +88,7 @@ public class MapViewer : AModule, IViewer
 
     public override void ModuleDeactivate()
     {
+        engine.world.MetaGen.Instance().Loader.RemoveViewer(this);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -97,5 +100,7 @@ public class MapViewer : AModule, IViewer
         
         I.Get<SubscriptionManager>().Subscribe(Event.MAP_RANGE_EVENT, _handleMapRange);
         _engine.AddModule(this);
+
+        engine.world.MetaGen.Instance().Loader.AddViewer(this);
     }
 }
