@@ -76,8 +76,8 @@ public class Module : AModule, IInputPart
     private engine.geom.AABB _aabbMap = new();
 
     // TXWTODO: This is a guesstimate. Compute it properly.
-    private float _viewHeight = 3f;
-    private float _viewWidth = 3f * 16f / 9f;
+    private float _viewHeight = 6f;
+    private float _viewWidth = 6f * 16f / 9f;
     
     
     static public uint MapCameraMask = 0x00800000;
