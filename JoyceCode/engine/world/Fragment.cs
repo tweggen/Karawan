@@ -49,6 +49,23 @@ public class Fragment : IDisposable
 
     private SortedDictionary<string, object> _operatorData = new();
 
+
+    public T FindOperatorData<T>(string op) where T : class, new()
+    {
+        T? data = GetOperatorData<T>(op);
+        if (null == data)
+        {
+            data = new T();
+            lock (_lo)
+            {
+                _operatorData[op] = data;
+            }
+        }
+
+        return data;
+    }
+    
+    
     public T? GetOperatorData<T>(string op) where T: class
     {
         lock (_lo)

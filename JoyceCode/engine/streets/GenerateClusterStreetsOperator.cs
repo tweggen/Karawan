@@ -8,12 +8,19 @@ using static engine.Logger;
 
 namespace engine.streets;
 
+
+internal class ClusterStreetsData
+{
+    public FragmentVisibility Visibility = new();
+}
+
+
 /**
  * Create the 3d street geometry.
  */
 public class GenerateClusterStreetsOperator : world.IFragmentOperator
 {
-    static private object _lock = new();
+    static private object _lo = new();
 
     private ClusterDesc _clusterDesc;
 
@@ -733,14 +740,17 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
      */
     public Func<Task> FragmentOperatorApply(world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
+        var csd = worldFragment.FindOperatorData<ClusterStreetsData>(FragmentOperatorGetPath()); 
+
         /*
-         * Special case for this operator: We only generate once for 3d and 2d, not separately 
+         * Special case for this operator: We only generate once for 3d and 2d, not separately
          */
-        if (null != worldFragment.GetOperatorData<object>(FragmentOperatorGetPath()))
+        if ((csd.Visibility.How & FragmentVisibility.VisibleAny) != 0)
         {
             return;
         }
-        worldFragment.SetOperatorData(FragmentOperatorGetPath(), new object());
+
+        csd.Visibility.How |= (byte)(FragmentVisibility.Visible3dNow | FragmentVisibility.Visible2dNow);
         
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
