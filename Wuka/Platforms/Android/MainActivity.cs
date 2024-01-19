@@ -122,19 +122,19 @@ namespace Wuka
         {
             base.OnCreate(savedInstanceState);
 
-            bool doTrigger = false;
+            bool doTrigger = true;
             if (Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
             {
                 if (!(_checkPermissionGranted(Manifest.Permission.BluetoothConnect)))
                 {
                     _requestBluetoothPermission();
+                    doTrigger = false;
                 }
                 else
                 {
                     lock (_lo)
                     {
                         _havePermissions = true;
-                        doTrigger = true;
                     }
                 }
             }
