@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
     <ApplicationIcon>appicon.ico</ApplicationIcon>
     <StartupObject>Karawan.DesktopMain</StartupObject>
     <Nullable>disable</Nullable>
