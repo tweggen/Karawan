@@ -20,6 +20,7 @@
 
   <PropertyGroup>
     <SourceRevisionId>build$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss:fffZ"))</SourceRevisionId>
+    <PublishAot>False</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
