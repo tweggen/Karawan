@@ -98,9 +98,9 @@ public class Module : AModule, IInputPart
         
         // TXWTODO: We better should consider the zoom state.
         Vector3 vCamPos = new(
-            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X/2f), 
+            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X), 
             CameraY, 
-            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y/2f)
+            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y)
             );
         
         I.Get<TransformApi>().SetTransforms(_eCamMap,
@@ -194,9 +194,9 @@ public class Module : AModule, IInputPart
             dmp = _visibleMapParams;
         }
         Vector3 vCamPos = new(
-            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X/2f), 
+            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X), 
             0f, 
-            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y/2f)
+            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y)
         );
         
         float scale = (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
