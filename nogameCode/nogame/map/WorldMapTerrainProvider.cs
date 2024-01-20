@@ -24,7 +24,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
 
 
     static private float MapColorMinHeight = -64f; 
-    static private float MapColorMaxHeight = 192f; 
+    static private float MapColorMaxHeight = 600f; 
     private uint _heightColor(float height)
     {
         float normalizedHeight = (height - MapColorMinHeight) / (MapColorMaxHeight - MapColorMinHeight);

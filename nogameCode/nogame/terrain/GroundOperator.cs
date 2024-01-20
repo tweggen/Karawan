@@ -30,8 +30,8 @@ namespace nogame.terrain
             return _instance;
         }
 
-        public const float MinElevation = -20f;
-        public const float MaxElevation = 200f;
+        public const float MinElevation = -10f;
+        public const float MaxElevation = 100f;
 
         private int _skeletonWidth;
         private int _skeletonHeight;

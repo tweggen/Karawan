@@ -20,7 +20,7 @@ public class Tools
         a += x;
         b += y;
         int ri = (((a * 1307 + b * 11) * (a * 3 + b * 16383) * (a * 401 + b * 19)) & 0xffffff0) >> 4;
-        float rf = ri / (32f * 1024f * 1024f) - 1.0f;
+        float rf = (ri / (16f * 1024f * 1024f) - 0.5f) * 2.0f;
         return rf;
     }
 
@@ -45,7 +45,8 @@ public class Tools
         int xm = (int)((x0 + x1) / 2);
         int ym = (int)((y0 + y1) / 2);
         float amplitude = maxElevation - minElevation;
-        float bias = (maxElevation-minElevation)/2f;
+        float halfamp = amplitude / 2f;
+        float bias = minElevation + halfamp;
         float weightNeighbours;
         float weightNew;
         float damping;
@@ -72,10 +73,10 @@ public class Tools
         //newMinElevation = bias - amplitude * damping / 2f;
         //newMaxElevation = bias + amplitude * damping / 2f;
 
-        float halfamp = amplitude / 2f;
+        float newhalfamp = halfamp * damping;
 
-        var fMidtotal = (float midNeighbours) =>  weightNeighbours * midNeighbours
-                                                                  + (weightNew - weightNeighbours) * bias;
+        var fMidtotal = (float midNeighbours) =>
+            (weightNeighbours * midNeighbours + (weightNew - weightNeighbours) * bias);
             
         /*
          * Special case: Only one column width?
@@ -88,14 +89,7 @@ public class Tools
             }
 
             v2Size.Y *= 0.5f;
-
-            float midNeighbours = (elevationArray[y0, x0] + elevationArray[y1, x0]) / 2f;
-            float midTotal =
-                + weightNeighbours * midNeighbours
-                + (weightNew - weightNeighbours) * bias;
-            
-            float newhalfamp = halfamp * damping;
-            
+            float midTotal = fMidtotal((elevationArray[y0, x0] + elevationArray[y1, x0]) / 2f);
             elevationArray[ym, x0] = midTotal + _nrand(i, k, x0, ym) * halfamp;
             
             RefineSkeletonElevation(i, k, elevationArray,
@@ -118,14 +112,13 @@ public class Tools
             }
 
             v2Size.X *= 0.5f;
-            elevationArray[y0, xm] =
-                (elevationArray[y0, x0] + elevationArray[y0, x1]) / 2f
-                + _nrand(i, k, xm, y0) * amplitude + bias;
+            float midTotal = fMidtotal((elevationArray[y0, x0] + elevationArray[y0, x1]) / 2f);
+            elevationArray[y0, xm] = midTotal + _nrand(i, k, xm, y0) * halfamp;
             RefineSkeletonElevation(i, k, elevationArray,
-                newMinElevation, newMaxElevation,
+                midTotal-newhalfamp, midTotal+newhalfamp,
                 x0, y0, xm, y0, v2Size);
             RefineSkeletonElevation(i, k, elevationArray,
-                newMinElevation, newMaxElevation,
+                midTotal-newhalfamp, midTotal+newhalfamp,
                 xm, y0, x1, y0, v2Size);
             return;
         }
@@ -133,39 +126,60 @@ public class Tools
         /*
          * Standard case, we can half the partition.
          */
-        elevationArray[y0, xm] =
-            (elevationArray[y0, x0] + elevationArray[y0, x1]) / 2f
-            + _nrand(i, k, xm, y0) * amplitude + bias;
-        elevationArray[ym, x0] =
-            (elevationArray[y0, x0] + elevationArray[y1, x0]) / 2f
-            + _nrand(i, k, x0, ym) * amplitude + bias;
-        elevationArray[ym, x1] =
-            (elevationArray[y0, x1] + elevationArray[y1, x1]) / 2f
-            + _nrand(i, k, x1, ym) * amplitude + bias;
-        elevationArray[y1, xm] =
-            (elevationArray[y1, x0] + elevationArray[y1, x1]) / 2f
-            + _nrand(i, k, xm, y1) * amplitude + bias;
-        elevationArray[ym, xm] =
-            (elevationArray[y0, xm] + elevationArray[y1, xm]
-                                    + elevationArray[ym, x0] + elevationArray[ym, x1]) / 4f;
+        {
+            float midTotalUpper = fMidtotal((elevationArray[y0, x0] + elevationArray[y0, x1]) / 2f);
+            elevationArray[y0, xm] = midTotalUpper + _nrand(i, k, xm, y0) * halfamp;
+            float midTotalLeft = fMidtotal((elevationArray[y0, x0] + elevationArray[y1, x0]) / 2f);
+            elevationArray[ym, x0] = midTotalLeft + _nrand(i, k, x0, ym) * halfamp;
+            float midTotalRight = fMidtotal((elevationArray[y0, x1] + elevationArray[y1, x1]) / 2f);
+            elevationArray[ym, x1] = midTotalRight + _nrand(i, k, x1, ym) * halfamp;
+            float midTotalBottom = fMidtotal((elevationArray[y1, x0] + elevationArray[y1, x1]) / 2f);
+            elevationArray[y1, xm] = midTotalBottom + _nrand(i, k, xm, y1) * halfamp;
+            float midTotalCenter = fMidtotal(
+                (elevationArray[y0, xm]
+                 + elevationArray[y1, xm]
+                 + elevationArray[ym, x0]
+                 + elevationArray[ym, x1]) / 4f);
+            elevationArray[ym, xm] = midTotalCenter + _nrand(i, k, xm, ym) * halfamp;
 
-        /*
-         * And generate subdivisions.
-         */
-        v2Size *= 0.5f;
-        RefineSkeletonElevation(i, k, elevationArray,
-            newMinElevation, newMaxElevation,
-            x0, y0, xm, ym, v2Size);
-        RefineSkeletonElevation(i, k, elevationArray,
-            newMinElevation, newMaxElevation,
-            xm, y0, x1, ym, v2Size);
-        RefineSkeletonElevation(i, k, elevationArray,
-            newMinElevation, newMaxElevation,
-            x0, ym, xm, y1, v2Size);
-        RefineSkeletonElevation(i, k, elevationArray,
-            newMinElevation, newMaxElevation,
-            xm, ym, x1, y1, v2Size);
+            /*
+             * And generate subdivisions.
+             */
+            v2Size *= 0.5f;
+            float midTotalUL = fMidtotal(
+                (elevationArray[y0, x0] 
+                 + elevationArray[y0, xm]
+                 + elevationArray[ym, x0] 
+                 + elevationArray[ym, xm]) / 4f);
+            RefineSkeletonElevation(i, k, elevationArray,
+                midTotalUL-newhalfamp, midTotalUL+newhalfamp,
+                x0, y0, xm, ym, v2Size);
+            float midTotalUR = fMidtotal(
+                (elevationArray[y0, xm] 
+                 + elevationArray[y0, x1]
+                 + elevationArray[ym, xm] 
+                 + elevationArray[ym, x1]) / 4f);
+            RefineSkeletonElevation(i, k, elevationArray,
+                midTotalUR-newhalfamp, midTotalUR+newhalfamp,
+                xm, y0, x1, ym, v2Size);
+            float midTotalLL = fMidtotal(
+                (elevationArray[ym, x0] 
+                 + elevationArray[ym, xm]
+                 + elevationArray[y1, x0] 
+                 + elevationArray[y1, xm]) / 4f);
+            RefineSkeletonElevation(i, k, elevationArray,
+                midTotalLL-newhalfamp, midTotalLL+newhalfamp,
+                x0, ym, xm, y1, v2Size);
+            float midTotalLR = fMidtotal(
+                (elevationArray[ym, xm] 
+                 + elevationArray[ym, x1]
+                 + elevationArray[y1, xm] 
+                 + elevationArray[y1, x1]) / 4f);
+            RefineSkeletonElevation(i, k, elevationArray,
+                midTotalLR-newhalfamp, midTotalLR+newhalfamp,
+                xm, ym, x1, y1, v2Size);
 
-        // That's it.
+            // That's it.
+        }
     }
 }
