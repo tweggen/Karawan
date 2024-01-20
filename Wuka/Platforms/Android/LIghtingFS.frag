@@ -422,9 +422,9 @@ void main()
         finalColor = col4Unfogged;
     }
 
-    // finalColor.y = gl_FragCoord.z;
-    // finalColor.x = gl_FragCoord.z;
-    // finalColor.z = finalColor.z*0.0002;
+    finalColor.y = gl_FragCoord.z;
+    finalColor.x = gl_FragCoord.z;
+    finalColor.z = finalColor.z*0.0002;
     
     // Gamma correction
     // finalColor = pow(finalColor, vec4(1.0/2.2));

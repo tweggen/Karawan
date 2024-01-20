@@ -114,7 +114,7 @@ public class Module : AModule, IInputPart
         _eCamMap.Get<Camera3>().Scale = scale;
         _computeAABB();
 
-        {
+        if (false) {
             var cCamera3 = _eCamMap.Get<Camera3>();
             var mCamToWorld = _eCamMap.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
             //Trace($"mCamToWorld {mCamToWorld}");
@@ -178,7 +178,7 @@ public class Module : AModule, IInputPart
          */
         engine.joyce.Mesh meshFramebuffer =
             engine.joyce.mesh.Tools.CreatePlaneMesh(
-                "mapmesh", /* new Vector2(500f, 500f) */ engine.world.MetaGen.MaxSize);
+                "mapmesh", new Vector2(500f, 500f) /* engine.world.MetaGen.MaxSize*/);
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
             I.Get<nogame.map.MapFramebuffer>().Texture;
