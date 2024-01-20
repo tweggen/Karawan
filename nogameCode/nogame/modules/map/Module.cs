@@ -65,7 +65,8 @@ public class Module : AModule, IInputPart
     
     private float _zoomState = 0.2f; 
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
-    public float CameraY { get; set; } = 500f;
+    public float CameraY { get; set; } = 700f;
+    public float MapY { get; set; } = -100f;
 
     /*
      * Map display parameters
@@ -93,7 +94,7 @@ public class Module : AModule, IInputPart
         }
 
         I.Get<TransformApi>().SetVisible(_eCamMap, dmp.IsVisible);
-        I.Get<TransformApi>().SetVisible(_eMap, false);
+        I.Get<TransformApi>().SetVisible(_eMap, true);
         I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
         
         // TXWTODO: We better should consider the zoom state.
@@ -112,6 +113,19 @@ public class Module : AModule, IInputPart
         
         _eCamMap.Get<Camera3>().Scale = scale;
         _computeAABB();
+
+        {
+            var cCamera3 = _eCamMap.Get<Camera3>();
+            cCamera3.GetViewMatrix(out var mModelView,
+                _eCamMap.Get<engine.joyce.components.Transform3ToWorld>().Matrix);
+            cCamera3.GetProjectionMatrix(out var mProj, new Vector2(1920, 1080));
+            Vector3 v3ProjCamPos = Vector3.Transform(vCamPos, mModelView * mProj);
+            Vector3 v3ProjPlanePos = Vector3.Transform(new Vector3(0f, 40f, 0f), mModelView * mProj);
+            Vector3 v3ProjMapPos = Vector3.Transform(MapY * Vector3.UnitY, mModelView * mProj);
+            Trace($"{v3ProjCamPos}, ${v3ProjPlanePos}, ${v3ProjMapPos}");
+            int a = 1;
+        }
+        
     }
     
     
@@ -134,7 +148,7 @@ public class Module : AModule, IInputPart
             _eCamMap = _engine.CreateEntity("RootScene.MapCamera");
             var cCamMap = new engine.joyce.components.Camera3();
             cCamMap.Angle = 0f;
-            cCamMap.NearFrustum = 10f;
+            cCamMap.NearFrustum = 5f;
             cCamMap.FarFrustum = 1000f;
             cCamMap.Scale = 2f/engine.world.MetaGen.MaxHeight;
             cCamMap.CameraMask = MapCameraMask;
@@ -174,14 +188,14 @@ public class Module : AModule, IInputPart
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
             materialFramebuffer.HasTransparency = false;
 
-            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 50000f);
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 100000f);
             _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             I.Get<TransformApi>().SetTransforms(_eMap,
                 true, MapCameraMask,
                 Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f*Single.Pi/2f),
-                -400f * Vector3.UnitY);
-            _updateMapParams();
+                -MapY * Vector3.UnitY);
         }
+        _updateMapParams();
     }
 
 

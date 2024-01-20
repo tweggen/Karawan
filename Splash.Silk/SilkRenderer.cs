@@ -1,17 +1,10 @@
-﻿using System;
+﻿
 using System.Numerics;
 
-using System.Threading.Tasks;
-using DefaultEcs;
-using BepuUtilities;
-using System.Collections.Generic;
-using System.ComponentModel;
 using engine;
 using static engine.Logger;
 
 using Silk.NET.OpenGL;
-using Silk.NET.SDL;
-using Splash.components;
 using Renderbuffer = engine.joyce.Renderbuffer;
 using static Splash.Silk.GLCheck;
 

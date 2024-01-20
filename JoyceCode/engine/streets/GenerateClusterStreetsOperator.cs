@@ -734,7 +734,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         /*
          * We use an incredibly large distance due to the map camera.
          */
-        engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 10000f);
+        engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 100000f);
         worldFragment.AddStaticInstance(0x00800001, "engine.streets.streets", instanceDesc);
     }
 

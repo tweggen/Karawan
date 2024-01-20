@@ -51,7 +51,8 @@ public struct Camera3
         Vector3 vZ = new Vector3(-mCameraToWorld.M31, -mCameraToWorld.M32, -mCameraToWorld.M33);
         Vector3 vFront = -vZ;
         Vector3 vTarget = vCameraPosition + vFront;
-        matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition + vZ, vUp);
+        Matrix4x4 mScaleToViewWindow = Matrix4x4.CreateScale(new Vector3(Scale, Scale, 1f));
+        matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition + vZ, vUp) * mScaleToViewWindow;
     }
 
 
@@ -95,7 +96,7 @@ public struct Camera3
              * Transpose this matrix to have it in c# convention, i.e.
              * result = v * m.
              */
-            matProjection = Matrix4x4.Transpose(m * mScaleToViewWindow);
+            matProjection = Matrix4x4.Transpose(m);
         }
         else if (Angle == 0f)
         {
@@ -120,7 +121,7 @@ public struct Camera3
              * Transpose this matrix to have it in c# convention, i.e.
              * result = v * m.
              */
-            matProjection = Matrix4x4.Transpose(m * mScaleToViewWindow);
+            matProjection = Matrix4x4.Transpose(m);
         }
         else
         {
