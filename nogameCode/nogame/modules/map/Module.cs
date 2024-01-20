@@ -116,8 +116,9 @@ public class Module : AModule, IInputPart
 
         {
             var cCamera3 = _eCamMap.Get<Camera3>();
-            cCamera3.GetViewMatrix(out var mModelView,
-                _eCamMap.Get<engine.joyce.components.Transform3ToWorld>().Matrix);
+            var mCamToWorld = _eCamMap.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
+            Trace($"mCamToWorld {mCamToWorld}");
+            cCamera3.GetViewMatrix(out var mModelView, mCamToWorld);
             cCamera3.GetProjectionMatrix(out var mProj, new Vector2(1920, 1080));
             Vector3 v3ProjCamPos = Vector3.Transform(vCamPos, mModelView * mProj);
             Vector3 v3ProjPlanePos = Vector3.Transform(new Vector3(0f, 40f, 0f), mModelView * mProj);
@@ -176,7 +177,7 @@ public class Module : AModule, IInputPart
          */
         engine.joyce.Mesh meshFramebuffer =
             engine.joyce.mesh.Tools.CreatePlaneMesh(
-                "mapmesh", engine.world.MetaGen.MaxSize);
+                "mapmesh", new Vector2(500f, 500f) /*engine.world.MetaGen.MaxSize*/);
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
             I.Get<nogame.map.MapFramebuffer>().Texture;
