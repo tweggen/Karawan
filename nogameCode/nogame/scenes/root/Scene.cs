@@ -34,7 +34,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.map.MapViewer>(),
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
         new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
-        //new MyModule<builtin.modules.Stats>(),
+        new MyModule<builtin.modules.Stats>(),
         new SharedModule<builtin.controllers.InputController>(),
     };
     

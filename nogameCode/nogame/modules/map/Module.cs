@@ -93,7 +93,7 @@ public class Module : AModule, IInputPart
         }
 
         I.Get<TransformApi>().SetVisible(_eCamMap, dmp.IsVisible);
-        I.Get<TransformApi>().SetVisible(_eMap, true);
+        I.Get<TransformApi>().SetVisible(_eMap, false);
         I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
         
         // TXWTODO: We better should consider the zoom state.
@@ -172,14 +172,14 @@ public class Module : AModule, IInputPart
             engine.joyce.Material materialFramebuffer = new();
             materialFramebuffer.UploadImmediately = true;
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
-            materialFramebuffer.HasTransparency = true;
+            materialFramebuffer.HasTransparency = false;
 
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 50000f);
             _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             I.Get<TransformApi>().SetTransforms(_eMap,
                 true, MapCameraMask,
                 Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f*Single.Pi/2f),
-                -100f * Vector3.UnitY);
+                -400f * Vector3.UnitY);
             _updateMapParams();
         }
     }
