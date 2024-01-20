@@ -203,7 +203,7 @@ public class Module : AModule, IInputPart
         /*
          * Limit the map details to a view of max 3km * 3km
          */
-        if (halfX*halfY > 2.25f)
+        if (halfX*halfY > 2250000f)
         {
             aabb.Reset();
         }
