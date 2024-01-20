@@ -203,20 +203,22 @@ public class Module : AModule, IInputPart
         /*
          * Limit the map details to a view of max 3km * 3km
          */
-        if (halfX*halfY > 2.5)
+        if (halfX*halfY > 2.25f)
         {
+            aabb.Reset();
         }
-        else 
-        {                          
+        else
+        {
             Vector3 vCamPos = new(
-            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X), 
-            0f, 
-            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y)
-        );
-        
-        aabb.AA = new Vector3(vCamPos.X - halfX, -10000f, vCamPos.Z - halfY);
-        aabb.BB = new Vector3(vCamPos.X + halfX, +10000f, vCamPos.Z + halfY);
-     }
+                (dmp.Position.X - 0.5f) * (MetaGen.MaxSize.X),
+                0f,
+                (dmp.Position.Y - 0.5f) * (MetaGen.MaxSize.Y)
+            );
+
+            aabb.AA = new Vector3(vCamPos.X - halfX, -10000f, vCamPos.Z - halfY);
+            aabb.BB = new Vector3(vCamPos.X + halfX, +10000f, vCamPos.Z + halfY);
+        }
+
         lock (_lo)
         {
             if (aabb != _aabbMap)
