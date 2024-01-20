@@ -8,7 +8,7 @@ public class Tools
     private static float _damping = 0.4f;
 
     /**
-     * Compute a reproducable random number for the given
+     * Compute a reproducable random number from -1...1 for the given
      * grid position.
      */
     private static float _nrand(int i, int k, int x, int y)
@@ -20,7 +20,7 @@ public class Tools
         a += x;
         b += y;
         int ri = (((a * 1307 + b * 11) * (a * 3 + b * 16383) * (a * 401 + b * 19)) & 0xffffff0) >> 4;
-        float rf = ri / (16f * 1024f * 1024f);
+        float rf = ri / (32f * 1024f * 1024f) - 1.0f;
         return rf;
     }
 
@@ -45,20 +45,38 @@ public class Tools
         int xm = (int)((x0 + x1) / 2);
         int ym = (int)((y0 + y1) / 2);
         float amplitude = maxElevation - minElevation;
-        float bias;
+        float bias = (maxElevation-minElevation)/2f;
+        float weightNeighbours;
+        float weightNew;
         float damping;
+        float newMinElevation;
+        float newMaxElevation;
 
         if (v2Size.X > IndependentTopologyDistance)
         {
-            bias = 0f;
-            damping = 1f;
+           damping = 1f;
+           weightNeighbours = 0f;
+           weightNew = 1f;
         }
         else
         {
-            bias = (maxElevation - minElevation) / 2f;
             damping = _damping;
+            weightNeighbours = 1f;
+            weightNew = 1f;
         }
+        
+        /*
+         * Compute the new limits. If damping is zero, this exactly is the
+         * same as the old limits.
+         */
+        //newMinElevation = bias - amplitude * damping / 2f;
+        //newMaxElevation = bias + amplitude * damping / 2f;
 
+        float halfamp = amplitude / 2f;
+
+        var fMidtotal = (float midNeighbours) =>  weightNeighbours * midNeighbours
+                                                                  + (weightNew - weightNeighbours) * bias;
+            
         /*
          * Special case: Only one column width?
          */
@@ -70,16 +88,21 @@ public class Tools
             }
 
             v2Size.Y *= 0.5f;
-            elevationArray[ym, x0] =
-                (elevationArray[y0, x0] + elevationArray[y1, x0]) / 2f
-                + _nrand(i, k, x0, ym) * amplitude + bias;
+
+            float midNeighbours = (elevationArray[y0, x0] + elevationArray[y1, x0]) / 2f;
+            float midTotal =
+                + weightNeighbours * midNeighbours
+                + (weightNew - weightNeighbours) * bias;
+            
+            float newhalfamp = halfamp * damping;
+            
+            elevationArray[ym, x0] = midTotal + _nrand(i, k, x0, ym) * halfamp;
+            
             RefineSkeletonElevation(i, k, elevationArray,
-                minElevation * damping,
-                maxElevation * damping,
+                midTotal-newhalfamp, midTotal+newhalfamp,
                 x0, y0, x1, ym, v2Size);
             RefineSkeletonElevation(i, k, elevationArray,
-                minElevation * damping,
-                maxElevation * damping,
+                midTotal-newhalfamp, midTotal+newhalfamp,
                 x0, ym, x1, y1, v2Size);
             return;
         }
@@ -99,12 +122,10 @@ public class Tools
                 (elevationArray[y0, x0] + elevationArray[y0, x1]) / 2f
                 + _nrand(i, k, xm, y0) * amplitude + bias;
             RefineSkeletonElevation(i, k, elevationArray,
-                minElevation * damping,
-                maxElevation * damping,
+                newMinElevation, newMaxElevation,
                 x0, y0, xm, y0, v2Size);
             RefineSkeletonElevation(i, k, elevationArray,
-                minElevation * damping,
-                maxElevation * damping,
+                newMinElevation, newMaxElevation,
                 xm, y0, x1, y0, v2Size);
             return;
         }
@@ -133,20 +154,16 @@ public class Tools
          */
         v2Size *= 0.5f;
         RefineSkeletonElevation(i, k, elevationArray,
-            minElevation * damping,
-            maxElevation * damping,
+            newMinElevation, newMaxElevation,
             x0, y0, xm, ym, v2Size);
         RefineSkeletonElevation(i, k, elevationArray,
-            minElevation * damping,
-            maxElevation * damping,
+            newMinElevation, newMaxElevation,
             xm, y0, x1, ym, v2Size);
         RefineSkeletonElevation(i, k, elevationArray,
-            minElevation * damping,
-            maxElevation * damping,
+            newMinElevation, newMaxElevation,
             x0, ym, xm, y1, v2Size);
         RefineSkeletonElevation(i, k, elevationArray,
-            minElevation * damping,
-            maxElevation * damping,
+            newMinElevation, newMaxElevation,
             xm, ym, x1, y1, v2Size);
 
         // That's it.
