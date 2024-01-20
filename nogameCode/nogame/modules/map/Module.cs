@@ -66,7 +66,7 @@ public class Module : AModule, IInputPart
     private float _zoomState = 0.2f; 
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
     public float CameraY { get; set; } = 700f;
-    public float MapY { get; set; } = -100f;
+    public float MapY { get; set; } = 200f;
 
     /*
      * Map display parameters
@@ -117,13 +117,14 @@ public class Module : AModule, IInputPart
         {
             var cCamera3 = _eCamMap.Get<Camera3>();
             var mCamToWorld = _eCamMap.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
-            Trace($"mCamToWorld {mCamToWorld}");
+            //Trace($"mCamToWorld {mCamToWorld}");
             cCamera3.GetViewMatrix(out var mModelView, mCamToWorld);
             cCamera3.GetProjectionMatrix(out var mProj, new Vector2(1920, 1080));
+            //var mProj = Matrix4x4.Identity;
             Vector3 v3ProjCamPos = Vector3.Transform(vCamPos, mModelView * mProj);
             Vector3 v3ProjPlanePos = Vector3.Transform(new Vector3(0f, 40f, 0f), mModelView * mProj);
             Vector3 v3ProjMapPos = Vector3.Transform(MapY * Vector3.UnitY, mModelView * mProj);
-            Trace($"{v3ProjCamPos}, ${v3ProjPlanePos}, ${v3ProjMapPos}");
+            //Trace($"{v3ProjCamPos}, ${v3ProjPlanePos}, ${v3ProjMapPos}");
             int a = 1;
         }
         
@@ -177,7 +178,7 @@ public class Module : AModule, IInputPart
          */
         engine.joyce.Mesh meshFramebuffer =
             engine.joyce.mesh.Tools.CreatePlaneMesh(
-                "mapmesh", new Vector2(500f, 500f) /*engine.world.MetaGen.MaxSize*/);
+                "mapmesh", /* new Vector2(500f, 500f) */ engine.world.MetaGen.MaxSize);
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
             I.Get<nogame.map.MapFramebuffer>().Texture;

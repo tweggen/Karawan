@@ -63,6 +63,11 @@ namespace Splash.Silk
                 bool clearDepthBuffer = false;
                 bool clearAll = false;
 
+                if (renderPart.CameraOutput.Camera3.CameraMask == 0x00800000)
+                {
+                    int a = 1;
+                }
+                
                 Renderbuffer renderbuffer = renderPart.PfRenderbuffer.Renderbuffer;
                 SkRenderbufferEntry skRenderbufferEntry = renderPart.PfRenderbuffer.RenderbufferEntry as SkRenderbufferEntry;
                 
