@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using engine.world;
 
 namespace nogame.terrain
 {
@@ -29,8 +30,8 @@ namespace nogame.terrain
             return _instance;
         }
 
-        public const float MinElevation = 100f;
-        public const float MaxElevation = -10f;
+        public const float MinElevation = 200f;
+        public const float MaxElevation = -20f;
 
         private int _skeletonWidth;
         private int _skeletonHeight;
@@ -58,9 +59,9 @@ namespace nogame.terrain
             _skeletonElevations = new float[_skeletonHeight,_skeletonWidth];
 
             /*
-                * Now recursively generate.
-                * First generate corner heights, then recursively refine.
-                */
+             * Now recursively generate.
+             * First generate corner heights, then recursively refine.
+             */
             int x0 = 0;
             int x1 = _skeletonWidth - 1;
             int y0 = 0;
@@ -79,7 +80,8 @@ namespace nogame.terrain
                 _skeletonElevations,
                 MinElevation,
                 MaxElevation,
-                x0, y0, x1, y1);
+                x0, y0, x1, y1,
+                MetaGen.MaxSize);
         }
 
         public float[,] GetSkeleton()

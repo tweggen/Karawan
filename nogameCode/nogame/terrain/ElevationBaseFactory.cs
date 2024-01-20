@@ -27,6 +27,8 @@ namespace nogame.terrain
 
         /**
          * Compute the actual elevation array for a given grid entry.
+         *
+         * I believe this is essentially the content for a single fragment.
          */
         private void _createElevationCacheEntry(
             int i, int k,
@@ -127,7 +129,8 @@ namespace nogame.terrain
                 localElevations,
                 GroundOperator.MinElevation,
                 GroundOperator.MaxElevation,
-                x0, y0, x1, y1);
+                x0, y0, x1, y1,
+                engine.world.MetaGen.FragmentSize2);
 
             /*
              * Create the entire default ElevationPixel info from the local array.

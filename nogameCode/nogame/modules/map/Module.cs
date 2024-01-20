@@ -193,20 +193,30 @@ public class Module : AModule, IInputPart
         {
             dmp = _visibleMapParams;
         }
-        Vector3 vCamPos = new(
-            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X), 
-            0f, 
-            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y)
-        );
-        
+
         float scale = (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
 
         float halfY = (_viewHeight / 2f) / scale;
         float halfX = (_viewWidth / 2f) / scale;
 
         engine.geom.AABB aabb = new();
+        /*
+         * Limit the map details to a view of max 3km * 3km
+         */
+        if (halfX*halfY > 2.5)
+        {
+        }
+        else 
+        {                          
+            Vector3 vCamPos = new(
+            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X), 
+            0f, 
+            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y)
+        );
+        
         aabb.AA = new Vector3(vCamPos.X - halfX, -10000f, vCamPos.Z - halfY);
         aabb.BB = new Vector3(vCamPos.X + halfX, +10000f, vCamPos.Z + halfY);
+     }
         lock (_lo)
         {
             if (aabb != _aabbMap)
