@@ -98,6 +98,7 @@ public class DesktopMain
             options.VSync = false;
             options.ShouldSwapAutomatically = false;
             options.WindowState = WindowState.Normal;
+            options.PreferredDepthBufferBits = 16;
             iWindow = Window.Create(options);
 
             iWindow.Size = new Vector2D<int>(1280, 720);

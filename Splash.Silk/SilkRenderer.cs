@@ -119,6 +119,7 @@ namespace Splash.Silk
                 
                 if (clearDepthBuffer)
                 {
+                    _gl.ClearDepth(1.0f);
                     _gl.Clear(ClearBufferMask.DepthBufferBit);
                 }
 
