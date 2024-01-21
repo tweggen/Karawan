@@ -84,6 +84,11 @@ public class Module : AModule, IInputPart
     static public uint MapCameraMask = 0x00800000;
 
 
+    private float _scaleF(in DisplayMapParams dmp)
+    {
+        return (4 * dmp.CurrentZoomState + ) / (engine.world.MetaGen.MaxHeight);
+    }
+
     private void _updateMapParams()
     {
         DisplayMapParams dmp;
@@ -109,7 +114,7 @@ public class Module : AModule, IInputPart
             Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f), 
             vCamPos
             );
-        float scale =  (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
+        float scale = _scaleF(dmp);
         
         _eCamMap.Get<Camera3>().Scale = scale;
         _computeAABB();
@@ -210,7 +215,7 @@ public class Module : AModule, IInputPart
             dmp = _visibleMapParams;
         }
 
-        float scale = (16*dmp.CurrentZoomState+16)/(engine.world.MetaGen.MaxHeight);
+        float scale = _scaleF(dmp);
 
         float halfY = (_viewHeight / 2f) / scale;
         float halfX = (_viewWidth / 2f) / scale;
