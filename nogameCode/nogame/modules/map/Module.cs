@@ -15,7 +15,7 @@ namespace nogame.modules.map;
 
 struct DisplayMapParams
 {
-    static public float MAX_ZOOM_STATE = 32f;
+    static public float MAX_ZOOM_STATE = 128f;
     static public float MIN_ZOOM_STATE = 0f;
     static public float MAP_STEP_SIZE = (1f / 8f);
     public float CurrentZoomState = 16f;
@@ -86,7 +86,9 @@ public class Module : AModule, IInputPart
 
     private float _scaleF(in DisplayMapParams dmp)
     {
-        return (4 * dmp.CurrentZoomState + ) / (engine.world.MetaGen.MaxHeight);
+        float x = (dmp.CurrentZoomState-DisplayMapParams.MIN_ZOOM_STATE) 
+            / DisplayMapParams.MAX_ZOOM_STATE-DisplayMapParams.MIN_ZOOM_STATE;
+        return (1024f * (x*x*x) + 3) / (engine.world.MetaGen.MaxHeight);
     }
 
     private void _updateMapParams()
@@ -300,7 +302,7 @@ public class Module : AModule, IInputPart
          */
         lock (_lo)
         {
-            vDelta *= DisplayMapParams.MAP_STEP_SIZE / Single.Exp2(_visibleMapParams.CurrentZoomState / 4f);
+            vDelta *= 0.00001f / _scaleF(_visibleMapParams);
             _requestedMapParams.Position = 
                 Vector2.Min(Vector2.One,
                     Vector2.Max(Vector2.Zero,
