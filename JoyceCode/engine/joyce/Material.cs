@@ -39,6 +39,7 @@ namespace engine.joyce
         public bool AddInterior = false;
         
         public bool IsBillboardTransform = false;
+        public bool IsUnscalable = false;
         
         public bool HasTransparency = false;
         public bool UploadImmediately = false;

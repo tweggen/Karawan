@@ -279,6 +279,10 @@ namespace Splash.Silk
         private void _setMouseEnabled(bool value)
         {
             if (GlobalSettings.Get("Android") == "true") return;
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+            {
+                value = true;
+            }
             
             _mouseEnabled = value;
             var maxMice = _iInputContext.Mice.Count;
@@ -550,7 +554,10 @@ namespace Splash.Silk
             I.Register<IThreeD>(() => new SilkThreeD());
             _silkThreeD = I.Get<IThreeD>() as SilkThreeD;
             _silkThreeD.SetupDone();
-            
+
+#if  DEBUG
+            _setMouseEnabled(true);
+#endif
 
             /*
              * Internal helpers managing various entities.

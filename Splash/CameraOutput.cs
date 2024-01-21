@@ -48,6 +48,11 @@ public class CameraOutput
     private IScene _scene;
     private readonly Vector3 _v3CameraZ;
 
+    /**
+     * Inverse the effect of camera scaling to implement unscalable
+     * materials.
+     */
+    private Matrix4x4 _mUnscale;
 
     public void GetRotation(ref Matrix4x4 mOut, in Matrix4x4 mIn)
     {
@@ -323,8 +328,16 @@ public class CameraOutput
                  */
                 if (!aMaterialEntry.JMaterial.IsBillboardTransform)
                 {
-                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
-                        id.ModelTransform * transform3ToWorld);
+                    if (!aMaterialEntry.JMaterial.IsUnscalable)
+                    {
+                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
+                            id.ModelTransform * transform3ToWorld);
+                    }
+                    else
+                    {
+                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
+                            id.ModelTransform * transform3ToWorld * _mUnscale);
+                    }
                 }
                 else
                 {
@@ -370,6 +383,11 @@ public class CameraOutput
                             * Matrix4x4.CreateTranslation(vc)
                             * mTrans
                         ;
+
+                    if (aMaterialEntry.JMaterial.IsUnscalable)
+                    {
+                        m = _mUnscale * m;
+                    }
 
                     _appendInstanceNoLock(aMeshEntry, aMaterialEntry, m);
                 }
@@ -480,6 +498,7 @@ public class CameraOutput
         _v3CameraPos = mTransformToWorld.Translation;
         _threeD = threeD;
         _frameStats = frameStats;
+        _mUnscale = Matrix4x4.CreateScale(1f / camera3.Scale);
         GetRotation(ref _mInverseCameraRotation, in mTransformToWorld);
     }
 }
