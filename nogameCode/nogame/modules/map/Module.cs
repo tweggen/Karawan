@@ -178,7 +178,7 @@ public class Module : AModule, IInputPart
          */
         engine.joyce.Mesh meshFramebuffer =
             engine.joyce.mesh.Tools.CreatePlaneMesh(
-                "mapmesh", new Vector2(500f, 500f) /* engine.world.MetaGen.MaxSize*/);
+                "mapmesh", /* new Vector2(500f, 500f) */ engine.world.MetaGen.MaxSize);
         meshFramebuffer.UploadImmediately = true;
         engine.joyce.Texture textureFramebuffer = 
             I.Get<nogame.map.MapFramebuffer>().Texture;
