@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using engine;
+using engine.joyce;
 using static engine.Logger;
 
 namespace Splash;
@@ -120,6 +122,21 @@ public class CameraOutput
         var msUploadMaterialPerFrame = _msUploadMaterialPerFrame(_scene);
         var msUploadMeshPerFrame = _msUploadMeshPerFrame(_scene);
 
+#if false
+        /*
+         * Test code for Z Buffer issues: Invert drawing order of different materials.
+         */
+        IEnumerable<MaterialBatch> testMB;
+        if (CameraMask == 0x00800000)
+        {
+            testMB = mb.Reverse();
+        }
+        else
+        {
+            testMB = mb;
+        }
+#endif
+        
         foreach (var materialItem in mb)
         {
             var aMaterialEntry = materialItem.AMaterialEntry;
