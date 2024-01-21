@@ -336,7 +336,7 @@ public class CameraOutput
                     else
                     {
                         _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
-                            id.ModelTransform * transform3ToWorld * _mUnscale);
+                            _mUnscale * id.ModelTransform * transform3ToWorld);
                     }
                 }
                 else

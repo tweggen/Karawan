@@ -346,9 +346,10 @@ namespace Splash.Silk
             
             _hadFocus = true;
             
+#if  DEBUG
+            _setMouseEnabled(true);
+#endif
             _engine.CallOnPlatformAvailable();
-
-            // _createTestTexture();
         }
 
 
@@ -554,10 +555,6 @@ namespace Splash.Silk
             I.Register<IThreeD>(() => new SilkThreeD());
             _silkThreeD = I.Get<IThreeD>() as SilkThreeD;
             _silkThreeD.SetupDone();
-
-#if  DEBUG
-            _setMouseEnabled(true);
-#endif
 
             /*
              * Internal helpers managing various entities.

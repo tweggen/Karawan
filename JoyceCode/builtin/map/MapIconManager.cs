@@ -38,7 +38,7 @@ public class MapIconManager : IDisposable
     public int MapIconsVert { get; set; } = 4;
     public string MapIconsTexture { get; set; } = "mapicons.png";
 
-    public Vector2 MapIconSize { get; set; } = new(4f, 4f);
+    public Vector2 MapIconSize { get; set; } = new(0.2f, 0.2f);
     
 
     private void _unloadInstanceDesc(engine.world.components.MapIcon.IconCode mapIcon, Resource<InstanceDesc> instanceDescEntry)
@@ -62,7 +62,7 @@ public class MapIconManager : IDisposable
             );
         var jMesh = Mesh.CreateArrayListInstance($"mapIcon{jMapIcon}");
         engine.joyce.mesh.Tools.AddQuadXYUV(jMesh,
-            new Vector3(-MapIconSize.X, 0f, -MapIconSize.Y), MapIconSize.X*Vector3.UnitX, MapIconSize.Y*Vector3.UnitZ,
+            new Vector3(-MapIconSize.X/2f, 0f, -MapIconSize.Y/2f), MapIconSize.X*Vector3.UnitX, MapIconSize.Y*Vector3.UnitZ,
             v2Pos, new Vector2(1f / MapIconsHoriz, 0f), new Vector2(0f, 1f / MapIconsVert)
             );
         var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(

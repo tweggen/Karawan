@@ -28,9 +28,9 @@ namespace Splash.Silk
             vao = new VertexArrayObject(_gl, this);
             if (_traceMesh) Trace($"Uploaded Mesh vaoId={vao.Handle}");
             ++_nMeshes;
-            if (_nMeshes > 2000)
+            if (_nMeshes > 5000)
             {
-                Warning($"Uploaded more than 2000 meshes.");
+                Warning($"Uploaded {_nMeshes} more than 2000 meshes.");
             }
 
             _isUploaded = true;
