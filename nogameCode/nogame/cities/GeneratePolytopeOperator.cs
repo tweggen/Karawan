@@ -148,7 +148,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 },
                 prefSphere));
             eTarget.Set(new engine.draw.components.OSDText(
-                new Vector2(0, 30f),
+                new Vector2(0, -30f),
                 new Vector2(160f, 18f),
                 $"polytope {worldFragment.NumericalId}",
                 12,

@@ -116,10 +116,10 @@ public class Tools
             elevationArray[y0, xm] = midTotal + _nrand(i, k, xm, y0) * halfamp;
             RefineSkeletonElevation(i, k, elevationArray,
                 midTotal-newhalfamp, midTotal+newhalfamp,
-                x0, y0, xm, y0, v2Size);
+                x0, y0, xm, y1, v2Size);
             RefineSkeletonElevation(i, k, elevationArray,
                 midTotal-newhalfamp, midTotal+newhalfamp,
-                xm, y0, x1, y0, v2Size);
+                xm, y0, x1, y1, v2Size);
             return;
         }
 
