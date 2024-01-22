@@ -140,6 +140,30 @@ public class Engine
     public EngineState State { get; private set; }
     public event EventHandler<EngineState> EngineStateChanged;
 
+
+    public static object? LoadClass(string dllPath, string fullClassName)
+    {
+        try
+        {
+            Assembly asm = Assembly.LoadFrom(dllPath);
+            if (null != asm)
+            {
+                Type type = asm.GetType(fullClassName);
+                if (null != type)
+                {
+                    object instance = Activator.CreateInstance(type);
+                    return instance;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Unable to load class {fullClassName} from assembly {dllPath}.");
+        }
+
+        return null;
+    }
+    
     public void SetEngineState(in EngineState newState)
     {
         bool isChanged = false;
