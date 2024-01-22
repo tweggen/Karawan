@@ -89,14 +89,14 @@ public class Main
     private void _registerScenes()
     {
         _sceneSequencer = I.Get<SceneSequencer>();
+#if false
         _sceneSequencer.AddFrom(JsonDocument.Parse(jsonScenes, new()
         {
             AllowTrailingCommas = true
         }).RootElement);
-        //_sceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
-        //_sceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
-        //_e.SceneSequencer.AddSceneFactory("tunestreets", () => new builtin.tunestreets.Scene());
-        //_e.SceneSequencer.SetMainScene("tunestreets");
+#endif
+        _sceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
+        _sceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
     }
 
     private void _startScenes()
