@@ -1,13 +1,24 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Numerics;
-using BepuPhysics.CollisionDetection;
+using BepuUtilities;
 using engine.draw.components;
 using engine.joyce.components;
 using engine.world;
 using static engine.Logger;
 
 namespace engine.draw.systems;
+
+
+internal class CameraEntry
+{
+    public Camera3 CCamera;
+    public Transform3ToWorld CCamTransform;
+    public Vector3 V3CamPosition;
+    public Matrix4x4 MCameraToWorld;
+    public Matrix4x4 MView;
+    public Matrix4x4 MProjection;
+}
 
 /**
  * Straightforward implementation that renders every frame entirely without any optimization.
@@ -26,6 +37,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
     private bool _clearWholeScreen = true;
 
+#if false
     private DefaultEcs.Entity _eCamera;
     private bool _haveCamera;
     private Matrix4x4 _mCameraToWorld;
@@ -34,6 +46,13 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
     private Vector3 _vCamPosition;
     private Matrix4x4 _mView;
     private Matrix4x4 _mProjection;
+#endif
+
+    /**
+     * This is a dictionary of the current cameras we have.
+     * TXWTODO: Keep this camera set globally, check if faster.
+     */
+    private SortedDictionary<uint, CameraEntry> _mapCameras;
 
     protected override void Update(double dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
@@ -52,17 +71,15 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             
             if (entity.Has<Transform3ToWorld>())
             {
-                if (!_haveCamera)
+                var cEntityTransform = entity.Get<Transform3ToWorld>();
+
+                CameraEntry ce = null;
+                if (!_mapCameras.TryGetValue(cEntityTransform.CameraMask, out ce))
                 {
                     continue;
                 }
 
-                
-                var cEntityTransform = entity.Get<Transform3ToWorld>();
-                //Matrix4x4 mModel = cEntityTransform.Matrix;
                 Vector3 vModel = cEntityTransform.Matrix.Translation;
-                // Vector4 vModel = new(0f, 35f, 0f, 1f);
-                
 
                 /*
                  * Render 3d label with position relative to the projected
@@ -71,7 +88,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                  * So first, transform the thing we render to world coordinates.
                  * Then use the world and the view matrices to convert to screen space.
                  */
-                Vector4 vWorldPos4 = Vector4.Transform(vModel, _mView);
+                Vector4 vWorldPos4 = Vector4.Transform(vModel, ce.MView);
 #if true
                 if (vWorldPos4.Z*vWorldPos4.W > 0)
                 {
@@ -80,14 +97,14 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 }
 #endif
 
-                distance = Vector3.Distance(_vCamPosition, vModel);
+                distance = Vector3.Distance(ce.V3CamPosition, vModel);
                 if (distance > osdText.MaxDistance)
                 {
                     continue;
                 }
 
                 
-                Vector4 vScreenPos4 = Vector4.Transform(vWorldPos4, _mProjection);
+                Vector4 vScreenPos4 = Vector4.Transform(vWorldPos4, ce.MProjection);
                 vScreenPos = new(
                     (vScreenPos4.X/vScreenPos4.W+1f) * (_vOSDViewSize.X/2f),
                     (-vScreenPos4.Y/vScreenPos4.W+1f) * (_vOSDViewSize.Y/2f));
@@ -134,28 +151,6 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         }
     }
     
-    
-    private void _onCameraEntityChanged(object? _, DefaultEcs.Entity entity)
-    {
-        bool isChanged = false;
-        lock (_lo)
-        {
-            if (_eCamera != entity)
-            {
-                _eCamera = entity;
-                isChanged = true;
-            }
-        }
-
-        if (isChanged)
-        {
-            /*
-             * We do not update the AL listener, instead we assume the listener to be
-             * at the origin. Instead, we wait for everything else to update.
-             */
-        }
-        
-    }
 
     protected override void PreUpdate(double dt)
     {
@@ -164,27 +159,30 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             return;
         }
 
+        _mapCameras = new();
+
+        //TXWTODO: We need to have a per-camera resolution.
         _vOSDViewSize = new Vector2(_framebuffer.Width, _framebuffer.Height);
-        _haveCamera = false;
-        _mCameraToWorld = Matrix4x4.Identity;
-        _cCamera = new();
-        
-        if (_eCamera.IsAlive)
+
+        IEnumerable<DefaultEcs.Entity> listCameras = 
+            _engine.GetEcsWorld().GetEntities().With<Camera3>().With<Transform3ToWorld>()
+            .AsEnumerable();
+        foreach (var eCamera in listCameras)
         {
-            if (_eCamera.Has<Transform3ToWorld>() && _eCamera.Has<Camera3>())
+            if (eCamera.Has<Transform3ToWorld>() && eCamera.Has<Camera3>())
             {
-                _cCamTransform = _eCamera.Get<Transform3ToWorld>();
-                _cCamera = _eCamera.Get<Camera3>();
-                _mCameraToWorld = _cCamTransform.Matrix;
-                _vCamPosition = _mCameraToWorld.Translation;
+                CameraEntry ce = new();
 
-                _cCamera.GetViewMatrix(out _mView, _mCameraToWorld);
-                _cCamera.GetProjectionMatrix(out _mProjection, _vOSDViewSize);
+                ce.CCamTransform = eCamera.Get<Transform3ToWorld>();
+                ce.CCamera = eCamera.Get<Camera3>();
+                ce.MCameraToWorld = ce.CCamTransform.Matrix;
+                ce.V3CamPosition = ce.MCameraToWorld.Translation;
 
-                _haveCamera = true;
+                ce.CCamera.GetViewMatrix(out ce.MView, ce.MCameraToWorld);
+                ce.CCamera.GetProjectionMatrix(out ce.MProjection, _vOSDViewSize);
+                _mapCameras[ce.CCamera.CameraMask] = ce;
             }
         }
-
 
         _framebuffer.BeginModification();
 

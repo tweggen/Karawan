@@ -184,7 +184,7 @@ public class MetaGen
     {
         if (null == fragment)
         {
-            throw new ArgumentException($"WorldMetaGen.applyFragmentOperators(): fragment is null.");
+            throw new System.ArgumentException($"WorldMetaGen.applyFragmentOperators(): fragment is null.");
         }
 
         if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
@@ -209,7 +209,7 @@ public class MetaGen
                             return null;
                         }
 
-                        Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
+                        if (TRACE_FRAGMENT_OPEARTORS) Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
 
                         return Task.Run(op.FragmentOperatorApply(fragment, visib));
                     }
