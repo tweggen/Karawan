@@ -52,7 +52,6 @@ public class DesktopMain
         /*
          * Setup globals and statics
          */
-        engine.GlobalSettings.Set("nogame.CreateOSD", "true");
         engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
         engine.GlobalSettings.Set("platform.threeD.API.version", "330");
         engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
@@ -66,10 +65,7 @@ public class DesktopMain
         }
         engine.GlobalSettings.Set("Engine.RWPath", "./");
         
-        engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
         engine.GlobalSettings.Set("splash.touchControls", "false");
-        engine.Props.Set("nogame.CreateHouses", "true");
-        engine.Props.Set("nogame.CreateTrees", "true");
         engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
         engine.GlobalSettings.Set("platform.initialZoomState", "0");
 
@@ -93,6 +89,7 @@ public class DesktopMain
              * Even if we don't start up fullscreen, we need to setup a size anyway.  
              */
             options.Size = new Vector2D<int>(1280, 720);
+            // TXWTODO: This is game specific
             options.Title = "codename Karawan";
             options.FramesPerSecond = 60;
             options.VSync = false;
@@ -112,6 +109,7 @@ public class DesktopMain
         iWindow.Initialize();
         try
         {
+            // TXWTODO: This also is game specific.
             System.IO.Stream streamImage = engine.Assets.Open("appiconpng.png");
             using (var img = Image.Load<Rgba32>(streamImage))
             {
@@ -137,12 +135,9 @@ public class DesktopMain
             return api;
         });
 
-        // Add the engine web service to the host.
-        // app.MapGrpcService<GreeterService>();
-        // app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client.
-        // To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-
-        // nogame.Main.Start(e);
+        /*
+         * Load the default game for this engine.
+         */
         LoadGame(e, "nogame.dll", "nogame.Main", "Start");
 
         e.Execute();

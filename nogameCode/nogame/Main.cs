@@ -101,10 +101,12 @@ public class Main
     {
         Main main = new(e);
 
+        engine.GlobalSettings.Set("nogame.CreateOSD", "true");
         engine.GlobalSettings.Set("nogame.framebuffer.resolution", "368x207");
         engine.GlobalSettings.Set("nogame.CreateOSD", "true");
         engine.GlobalSettings.Set("nogame.CreateMap", "true");
         engine.GlobalSettings.Set("nogame.CreateMiniMap", "true");
+        engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
 
         engine.Props.Set("world.CreateStreetAnnotations", false);
         engine.Props.Set("nogame.CreateTrees", true);
@@ -114,6 +116,10 @@ public class Main
         engine.Props.Set("world.CreateTramCharacters", true);
         engine.Props.Set("world.CreateStreets", true);
         engine.Props.Set("world.CreateClusterQuarters", true);
+
+        engine.Props.Set("nogame.CreateHouses", "true");
+        engine.Props.Set("nogame.CreateTrees", "true");
+
 
         engine.Props.Set("debug.options.flatshading", false);
         engine.Props.Set("nogame.characters.cube.maxDistance", 400f);
