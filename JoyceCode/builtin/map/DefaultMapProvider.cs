@@ -11,7 +11,8 @@ public class DefaultMapProvider : IMapProvider
 {
     private readonly object _lo = new();
     private readonly SortedDictionary<string, IWorldMapProvider> _worldMapLayers = new();
-
+    private bool _haveWorldEntities = false;
+    private bool _haveWorldBitmap = false;
     
     public void AddWorldMapLayer(string layerKey, IWorldMapProvider worldMapProvider)
     {
@@ -57,20 +58,40 @@ public class DefaultMapProvider : IMapProvider
     }
 
     
-    public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
+    public void WorldMapCreateEntities(engine.Engine engine0, Entity parentEntity, uint cameraMask)
     {
+        lock (_lo)
+        {
+            if (_haveWorldEntities)
+            {
+                return;
+            }
+
+            _haveWorldEntities = true;
+        }
+
         _callWorldMapProviders((worldMapProvider) =>
         {
-            worldMapProvider.WorldMapCreateEntities(parentEntity, cameraMask);
+            worldMapProvider.WorldMapCreateEntities(engine0, parentEntity, cameraMask);
         });
     }
 
     
-    public void WorldMapCreateBitmap(IFramebuffer target)
+    public void WorldMapCreateBitmap(engine.Engine engine0, IFramebuffer target)
     {
+        lock (_lo)
+        {
+            if (_haveWorldBitmap)
+            {
+                return;
+            }
+
+            _haveWorldBitmap = true;
+        }
+
         _callWorldMapProviders((worldMapProvider) =>
         {
-            worldMapProvider.WorldMapCreateBitmap(target);
+            worldMapProvider.WorldMapCreateBitmap(engine0, target);
         });
     }
     
@@ -80,10 +101,5 @@ public class DefaultMapProvider : IMapProvider
         /*
          * Do not create any specific entities.
          */
-    }
-
-    
-    public DefaultMapProvider()
-    {
     }
 }

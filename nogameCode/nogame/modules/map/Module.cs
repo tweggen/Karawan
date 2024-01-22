@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Numerics;
 using builtin.controllers;
+using builtin.map;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -425,6 +426,9 @@ public class Module : AModule, IInputPart
     {
         base.ModuleActivate(engine0);
 
+        DefaultEcs.Entity eEmpty = default;
+        I.Get<IMapProvider>().WorldMapCreateEntities(engine0, eEmpty, MapCameraMask);
+        
         _needResources();
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;

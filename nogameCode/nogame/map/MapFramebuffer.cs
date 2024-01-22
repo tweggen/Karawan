@@ -11,6 +11,7 @@ public class MapFramebuffer
     private engine.joyce.Texture _jTexture;
     public uint MapWidth = 1024;
     public uint MapHeight = 1024;
+    public required engine.Engine Engine { get; set; }
 
     public IFramebuffer Framebuffer
     {
@@ -44,7 +45,7 @@ public class MapFramebuffer
             /*
              * Render the actual map data.
              */
-            engine.I.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_framebuffer);
+            engine.I.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(Engine, _framebuffer);
             
             _jTexture = new(_framebuffer);
             _jTexture.DoFilter = false;

@@ -17,9 +17,9 @@ namespace nogame.map;
  */
 public class WorldMapTerrainProvider : IWorldMapProvider
 {
-    public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
+    public void WorldMapCreateEntities(engine.Engine engine0, Entity parentEntity, uint cameraMask)
     {
-        throw new System.NotImplementedException();
+        
     }
 
 
@@ -227,7 +227,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
     }
     
     
-    public void WorldMapCreateBitmap(IFramebuffer target)
+    public void WorldMapCreateBitmap(engine.Engine engine0, IFramebuffer target)
     {
         try
         {

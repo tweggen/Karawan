@@ -229,7 +229,6 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         : base(engine.GetEcsWorld())
     {
         _engine = engine;
-        _engine.OnCameraEntityChanged += _onCameraEntityChanged;
         _dc = new();
     }
 }

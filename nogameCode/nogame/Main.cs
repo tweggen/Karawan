@@ -51,7 +51,7 @@ public class Main
         I.Register<engine.streets.ClusterStorage>(() => new engine.streets.ClusterStorage());
 
         I.Register<IMapProvider>(() => _setupMapProvider());
-        I.Register<MapFramebuffer>(() => new MapFramebuffer());
+        I.Register<MapFramebuffer>(() => new MapFramebuffer() {Engine = _e });
         I.Register<Boom.Jukebox>(() => new Boom.Jukebox());
         I.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
         I.Register<builtin.controllers.InputController>(() => new InputController());

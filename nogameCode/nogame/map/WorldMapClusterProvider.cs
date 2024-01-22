@@ -6,6 +6,7 @@ using engine.draw;
 using engine.world;
 using builtin.map;
 using engine;
+using engine.joyce;
 using engine.streets;
 using static engine.Logger;
 
@@ -17,9 +18,29 @@ namespace nogame.map;
  */
 public class WorldMapClusterProvider : IWorldMapProvider
 {
-    public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
+    public float ClusterNameY { get; set; } = 250f;
+    public void WorldMapCreateEntities(engine.Engine engine0, Entity parentEntity, uint cameraMask)
     {
-        throw new System.NotImplementedException();
+        var clusterList = engine.world.ClusterList.Instance();
+        foreach (var clusterDesc in clusterList.GetClusterList())
+        {
+            float width = 240f;
+            DefaultEcs.Entity eCity = engine0.CreateEntity($"nogame.map.city {clusterDesc.Name}");
+            I.Get<TransformApi>().SetTransforms(eCity, true, 0x00800000, 
+                Quaternion.Identity, clusterDesc.Pos with { Y = ClusterNameY });
+            eCity.Set(new engine.draw.components.OSDText(
+                new Vector2(0f , 0f),
+                new Vector2(width, 18f),
+                $"{clusterDesc.Name}",
+                10,
+                0xffeeaa22,
+                0x00000000,
+                HAlign.Left)
+            {
+                MaxDistance = 100000f
+            });
+        }
+        
     }
 
 
@@ -104,7 +125,7 @@ public class WorldMapClusterProvider : IWorldMapProvider
     }
     
     
-    public void WorldMapCreateBitmap(IFramebuffer target)
+    public void WorldMapCreateBitmap(engine.Engine engine0, IFramebuffer target)
     {
         try
         {
