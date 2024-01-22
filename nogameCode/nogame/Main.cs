@@ -66,18 +66,20 @@ public class Main
         MetaGen.Instance().WorldPopulatingOperatorAdd(new nogame.characters.intercity.GenerateCharacterOperator(_e));
     }
 
+    private SceneSequencer _sceneSequencer;
     
     private void _registerScenes()
     {
-        _e.SceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
-        _e.SceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
+        _sceneSequencer = I.Get<SceneSequencer>();
+        _sceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
+        _sceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
         //_e.SceneSequencer.AddSceneFactory("tunestreets", () => new builtin.tunestreets.Scene());
         //_e.SceneSequencer.SetMainScene("tunestreets");
     }
 
     private void _startScenes()
     {
-        _e.SceneSequencer.SetMainScene("logos");
+        _sceneSequencer.SetMainScene("logos");
     }
 
 

@@ -178,7 +178,7 @@ public class Scene : AModule, IScene, IInputPart
         /*
          * Null out everything we don't need when the scene is unloaded.
          */
-        _engine.SceneSequencer.RemoveScene(this);
+        I.Get<SceneSequencer>().RemoveScene(this);
 
         base.ModuleDeactivate();
     }
@@ -219,7 +219,7 @@ public class Scene : AModule, IScene, IInputPart
         /*
          * Now, that everything has been created, add the scene.
          */
-        _engine.SceneSequencer.AddScene(0, this);
+        I.Get<SceneSequencer>().AddScene(0, this);
 
         /*
          * Finally, set the timeline trigger for unblanking the cameras and starting the show.

@@ -244,7 +244,7 @@ public class Main
 
             if (ImGui.CollapsingHeader("Scenes"))
             {
-                var sceneKeys = _engine.SceneSequencer.GetAvailableScenes();
+                var sceneKeys = I.Get<SceneSequencer>().GetAvailableScenes();
                 foreach (var sceneKey in sceneKeys)
                 {
                     ImGui.Text(sceneKey);

@@ -404,19 +404,24 @@ public class Module : AModule, IInputPart
         lock(_lo) {
             _requestedMapParams.IsVisible = false;
         }
-        _engine.QueueMainThreadAction(_updateMapParams);
+        _engine.QueueMainThreadAction( () =>
+        {
+            
+            _updateMapParams();
+            
+            /*
+             * Also reset the currently active map area.
+             */
+            lock (_lo)
+            {
+                _aabbMap.Reset();
+            }
+            _notifyAABB();
+        
+        });
 
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        
-        /*
-         * Also reset the currently active map area.
-         */
-        lock (_lo)
-        {
-            _aabbMap.Reset();
-        }
-        _notifyAABB();
         
         _engine.RemoveModule(this);
         base.ModuleDeactivate();

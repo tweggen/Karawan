@@ -88,7 +88,7 @@ public class Engine
     private gongzuo.LuaScriptManager _managerLuaScript;
     private builtin.map.MapIconManager _managerMapIcons;
     private behave.Manager _managerBehavior;
-    public readonly SceneSequencer SceneSequencer;
+    private SceneSequencer _sceneSequencer;
 
     public event EventHandler<float> OnLogicalFrame;
     public event EventHandler<float> OnPhysicalFrame;
@@ -622,9 +622,9 @@ public class Engine
          * If no new frame has been created, read all geom entities for rendering
          * into data structures.
          */
-        if (null != SceneSequencer.MainScene)
+        if (null != _sceneSequencer.MainScene)
         {
-            _platform.CollectRenderData(SceneSequencer.MainScene);
+            _platform.CollectRenderData(_sceneSequencer.MainScene);
         }
         else
         {
@@ -999,6 +999,7 @@ public class Engine
 
     public void PlatformSetupDone()
     {
+        _sceneSequencer = I.Get<SceneSequencer>();
         State = EngineState.Running;
 
         /*
@@ -1034,8 +1035,6 @@ public class Engine
         _ecsWorld = new DefaultEcs.World();
         _entityCommandRecorder = new(4096, 1024 * 1024);
 
-        SceneSequencer = new(this);
-
         I.Register<engine.Timeline>(() => new engine.Timeline());
         I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
         I.Register<engine.news.EventQueue>(() => new EventQueue());
@@ -1046,7 +1045,8 @@ public class Engine
         I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
         I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());
         I.Register<engine.Resources>(() => new Resources());
-
+        I.Register<engine.SceneSequencer>(() => new SceneSequencer(this));
+        
         State = EngineState.Starting;
 
         u.RunEngineTest(this);

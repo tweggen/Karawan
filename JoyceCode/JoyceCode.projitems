@@ -70,7 +70,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SimpleNavigationBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\tunestreets\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Assets.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\MovingSound.cs" />
