@@ -107,6 +107,14 @@ public struct AABB
     }
 
 
+    public void Extend(float f)
+    {
+        Vector3 fMore = new(f, f, f);
+        AA -= fMore;
+        BB += fMore;
+    }
+
+
     public void Add(in Vector3 v)
     {
         AA.X = Single.Min(AA.X, v.X);

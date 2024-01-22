@@ -39,6 +39,11 @@ public class MapViewer : AModule, IViewer
             foreach (var kvp in _mapRanges)
             {
                 engine.geom.AABB aabb = kvp.Value;
+                
+                /*
+                 * Generate requests one fragment in excess. 
+                 */
+                aabb.Extend(MetaGen.FragmentSize);
                 //Trace($"Found {kvp.Value}");
 
                 var v3Min = aabb.AA / MetaGen.FragmentSize;
