@@ -15,14 +15,16 @@ namespace builtin.controllers;
  */
 public class InputController : engine.AModule, engine.IInputPart
 {
+    private object _lo = new();
+    
     private Vector2 _vViewSize = Vector2.Zero;
     private Vector2 _vMouseMove = Vector2.Zero;
     private Vector2 _mousePressPosition = Vector2.Zero;
     private Vector2 _currentMousePosition = Vector2.Zero;
     private bool _isMouseButtonClicked = false;
     private Vector2 _lastMousePosition;
-
-
+    private bool _isKeyboardFast = false;
+    
     public ControllerState _controllerState = new();
 
 
@@ -30,35 +32,68 @@ public class InputController : engine.AModule, engine.IInputPart
     public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
 
+    public float ControllerWalkForwardNormal { get; set; } = 184f;
+    public float ControllerWalkBackwardNormal { get; set; } = 184f;
+    public float ControllerWalkForwardFast { get; set; } = 255f;
+    public float ControllerWalkBackwardFast { get; set; } = 255f;
+    public float ControllerFlyUpNormal { get; set; } = 255f;
+    public float ControllerFlyDownNormal { get; set; } = 255f;
+    public float ControllerTurnLeftRight { get; set; } = 255f;
+
+
+    public float ControllerYMax { get; set; } = 0.2f;
+    public float ControllerYTolerance { get; set; } = 0.05f;
+    public float ControllerXMax { get; set; } = 0.2f;
+    public float ControllerXTolerance { get; set; } = 0.05f;
+
+
+    public int KeyboardAnalogMax { get; set; } = 255;
+    public int TouchAnalogMax { get; set; } = 255;
+
+    private void _toggleSpeedNoLock()
+    {
+        _isKeyboardFast = !_isKeyboardFast;
+    }
+    
+
     private void _onKeyDown(Event ev)
     {
-        _controllerState.LastInput = DateTime.UtcNow;
-        
-        switch (ev.Code)
+        lock (_lo)
         {
-            case "(shiftleft)":
-                _controllerState.WalkFast = true;
-                break;
-            case "Q":
-                _controllerState.FlyUp = (int) ControllerFlyUpNormal;
-                break;
-            case "Z":
-                _controllerState.FlyDown = (int)ControllerFlyDownNormal;
-                break;
-            case "W":
-                _controllerState.WalkForward = _controllerState.WalkFast?(int)ControllerWalkForwardFast:(int)ControllerWalkForwardNormal;
-                break;
-            case "S":
-                _controllerState.WalkBackward = _controllerState.WalkFast?(int)ControllerWalkBackwardFast:(int)ControllerWalkBackwardNormal;
-                break;
-            case "A":
-                _controllerState.TurnLeft = Int32.Min((int)(_controllerState.TurnLeft + ControllerTurnLeftRight / 3), (int)ControllerTurnLeftRight); 
-                break;
-            case "D":
-                _controllerState.TurnRight = Int32.Min((int)(_controllerState.TurnRight + ControllerTurnLeftRight / 3), (int)ControllerTurnLeftRight); 
-                break;
-            default:
-                break;
+            _controllerState.LastInput = DateTime.UtcNow;
+
+            switch (ev.Code)
+            {
+                case "(shiftleft)":
+                    _toggleSpeedNoLock();
+                    break;
+                case "Q":
+                    _controllerState.AnalogUp = KeyboardAnalogMax; 
+                    _controllerState.FlyUp = (int)ControllerFlyUpNormal;
+                    break;
+                case "Z":
+                    _controllerState.AnalogDown = KeyboardAnalogMax;
+                    _controllerState.FlyDown = (int)ControllerFlyDownNormal;
+                    break;
+                case "W":
+                    _controllerState.AnalogForward = KeyboardAnalogMax;
+                    _controllerState.WalkForward = _isKeyboardFast?(int)ControllerWalkForwardFast:(int)ControllerWalkForwardNormal;
+                    break;
+                case "S":
+                    _controllerState.AnalogBackward = KeyboardAnalogMax;
+                    _controllerState.WalkBackward = _isKeyboardFast?(int)ControllerWalkBackwardFast:(int)ControllerWalkBackwardNormal;
+                    break;
+                case "A":
+                    _controllerState.AnalogLeft = KeyboardAnalogMax;
+                    _controllerState.TurnLeft = (int)ControllerTurnLeftRight;
+                    break;
+                case "D":
+                    _controllerState.AnalogRight = KeyboardAnalogMax;
+                    _controllerState.TurnRight = (int)ControllerTurnLeftRight;
+                    break;
+                default:
+                    break;
+            }
         }
     }
     
@@ -69,25 +104,28 @@ public class InputController : engine.AModule, engine.IInputPart
 
         switch (ev.Code)
         {
-            case "(shiftleft)":
-                _controllerState.WalkFast = false;
-                break;
             case "Q":
+                _controllerState.AnalogUp = 0;
                 _controllerState.FlyUp = 0;
                 break;
             case "Z":
+                _controllerState.AnalogDown = 0;
                 _controllerState.FlyDown = 0;
                 break;
             case "W":
+                _controllerState.AnalogForward = 0;
                 _controllerState.WalkForward = 0;
                 break;
             case "S":
+                _controllerState.AnalogBackward = 0;
                 _controllerState.WalkBackward = 0;
                 break;
             case "A":
+                _controllerState.AnalogBackward = 0;
                 _controllerState.TurnLeft = 0;
                 break;
             case "D":
+                _controllerState.AnalogRight = 0;
                 _controllerState.TurnRight = 0;
                 break;
             default:
@@ -116,29 +154,31 @@ public class InputController : engine.AModule, engine.IInputPart
                     /*
                      * The user dragged up compare to the press position
                      */
-                    _controllerState.WalkForward = (int)(Single.Min(ControllerYMax, -vRel.Y-ControllerYTolerance) / ControllerYMax *
-                                                         ControllerWalkForwardFast);
-                    _controllerState.WalkBackward = 0;
+                    _controllerState.AnalogForward = (int)(Single.Min(ControllerYMax, -vRel.Y-ControllerYTolerance)
+                        / ControllerYMax * TouchAnalogMax);
+                    _controllerState.AnalogBackward = 0;
                 }
                 else if (vRel.Y > ControllerYTolerance)
                 {
                     /*
                      * The user dragged down compared to the press position.
                      */
-                    _controllerState.WalkBackward = (int)(Single.Min(ControllerYMax, vRel.Y-ControllerYTolerance) / ControllerYMax *
-                                                          ControllerWalkBackwardFast);
-                    _controllerState.WalkForward = 0;
+                    _controllerState.AnalogBackward = (int)(Single.Min(ControllerYMax, vRel.Y-ControllerYTolerance) 
+                        / ControllerYMax * TouchAnalogMax);
+                    _controllerState.AnalogForward = 0;
                 }
 
                 if (vRel.X < -ControllerXTolerance)
                 {
-                    _controllerState.TurnLeft = (int)(Single.Min(ControllerXMax, -vRel.X-ControllerXTolerance) / ControllerXMax * ControllerTurnLeftRight);
-                    _controllerState.TurnRight = 0;
+                    _controllerState.AnalogLeft = (int)(Single.Min(ControllerXMax, -vRel.X-ControllerXTolerance) 
+                        / ControllerXMax * TouchAnalogMax);
+                    _controllerState.AnalogRight = 0;
                 }
                 else if (vRel.X > ControllerXTolerance)
                 {
-                    _controllerState.TurnRight = (int)(Single.Min(ControllerXMax, vRel.X-ControllerXTolerance) / ControllerXMax * ControllerTurnLeftRight);
-                    _controllerState.TurnLeft = 0;
+                    _controllerState.AnalogRight = (int)(Single.Min(ControllerXMax, vRel.X-ControllerXTolerance) 
+                        / ControllerXMax * TouchAnalogMax);
+                    _controllerState.AnalogLeft = 0;
                 }
             }
             else
@@ -155,21 +195,6 @@ public class InputController : engine.AModule, engine.IInputPart
         }
     }
     
-    
-    public float ControllerWalkForwardFast { get; set; } = 255f;
-    public float ControllerWalkBackwardFast { get; set; } = 255f;
-    public float ControllerWalkForwardNormal { get; set; } = 200f;
-    public float ControllerWalkBackwardNormal { get; set; } = 200f;
-    public float ControllerFlyUpNormal { get; set; } = 200f;
-    public float ControllerFlyDownNormal { get; set; } = 200f;
-    public float ControllerTurnLeftRight { get; set; } = 200f;
-
-
-    public float ControllerYMax { get; set; } = 0.2f;
-    public float ControllerYTolerance { get; set; } = 0.05f;
-    public float ControllerXMax { get; set; } = 0.15f;
-    public float ControllerXTolerance { get; set; } = 0.05f;
-
     
     /*
      * Vars to implement zoom emulation on touch
@@ -240,10 +265,19 @@ public class InputController : engine.AModule, engine.IInputPart
                 /*
                  * on any release, reset all controller movements.
                  */
+                _controllerState.AnalogForward = 0;
+                _controllerState.AnalogBackward = 0;
+                _controllerState.AnalogRight = 0;
+                _controllerState.AnalogLeft = 0;
+                _controllerState.AnalogUp = 0;
+                _controllerState.AnalogDown = 0;
+                
                 _controllerState.WalkForward = 0;
                 _controllerState.WalkBackward = 0;
                 _controllerState.TurnRight = 0;
                 _controllerState.TurnLeft = 0;
+                _controllerState.FlyUp = 0;
+                _controllerState.FlyDown = 0; 
 
                 _lastTouchPosition = default;
             }
