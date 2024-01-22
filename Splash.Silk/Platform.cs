@@ -279,10 +279,12 @@ namespace Splash.Silk
         private void _setMouseEnabled(bool value)
         {
             if (GlobalSettings.Get("Android") == "true") return;
+#if DEBUG
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
                 value = true;
             }
+#endif
             
             _mouseEnabled = value;
             var maxMice = _iInputContext.Mice.Count;
@@ -347,7 +349,11 @@ namespace Splash.Silk
             _hadFocus = true;
             
 #if  DEBUG
-            _setMouseEnabled(true);
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                    System.Runtime.InteropServices.OSPlatform.Linux))
+            {
+                _setMouseEnabled(true);
+            }
 #endif
             _engine.CallOnPlatformAvailable();
         }

@@ -19,6 +19,7 @@ struct DisplayMapParams
     static public float MAX_ZOOM_STATE = 128f;
     static public float MIN_ZOOM_STATE = 0f;
     static public float MAP_STEP_SIZE = (1f / 8f);
+    static public int ZOOM_STEPS = 3;
     public float CurrentZoomState = 16f;
 
     static public float MAP_MOVE_PER_FRAME = (0.16f);
@@ -280,7 +281,7 @@ public class Module : AModule, IInputPart
         lock (_lo)
         {
             int currentZoomState = (int) _requestedMapParams.CurrentZoomState;
-            currentZoomState += y;
+            currentZoomState += DisplayMapParams.ZOOM_STEPS * y;
             currentZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE, Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, currentZoomState));
             _requestedMapParams.CurrentZoomState = currentZoomState;
         }
