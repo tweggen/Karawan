@@ -180,6 +180,13 @@ public class InputController : engine.AModule, engine.IInputPart
                         / ControllerXMax * TouchAnalogMax);
                     _controllerState.AnalogLeft = 0;
                 }
+
+                _controllerState.WalkForward = _controllerState.AnalogForward;
+                _controllerState.WalkBackward = _controllerState.AnalogBackward;
+                _controllerState.TurnLeft = _controllerState.AnalogLeft;
+                _controllerState.TurnRight = _controllerState.AnalogRight;
+                _controllerState.FlyUp = _controllerState.AnalogUp;
+                _controllerState.FlyDown = _controllerState.AnalogDown;
             }
             else
             {
