@@ -1,5 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Net;
+using System.Text.Json;
+
+using static engine.Logger;
 
 namespace engine;
 
@@ -159,6 +164,47 @@ public class SceneSequencer : IDisposable
             _dictSceneFactories.Add(name, factoryFunction);
         }
     }
+
+
+    public void AddFrom(JsonElement je)
+    {
+        try
+        {
+            var jeScenes = je.GetProperty("scenes");
+            foreach (var pair in jeScenes.EnumerateObject())
+            {
+                var jeClassDesc = pair.Value;
+                AddSceneFactory(pair.Name, () =>
+                {
+                    var className = jeClassDesc.GetProperty("className").GetString();
+                    if (String.IsNullOrWhiteSpace(className))
+                    {
+                        Warning($"Encountered null classname for {pair}.");
+                    }
+                    try
+                    {
+                        IScene scene = engine.Engine.LoadClass("nogame.dll", className) as IScene;
+                        return scene;
+                    }
+                    catch (Exception e)
+                    {
+                        Warning($"Unable to load scene {pair.Name}: {e}");
+                    }
+
+                    return null;
+                });
+            }
+
+            var jeStartScene = je.GetProperty("startScene");
+            string strStartSceneName = jeStartScene.GetProperty("name").GetString();
+            SetMainScene(strStartSceneName);
+        }
+        catch (Exception e)
+        {
+            Warning($"No scenes found to add or error in declaration.");
+        }
+    }
+    
 
 
     public void Dispose()

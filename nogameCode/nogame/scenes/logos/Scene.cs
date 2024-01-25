@@ -45,7 +45,7 @@ public class Scene : AModule, IScene
             /*
              * Immediately trigger main scene. It will setup loading.
              */
-            _engine.SceneSequencer.SetMainScene("root");
+            I.Get<SceneSequencer>().SetMainScene("root");
         }
         else
         {
@@ -123,7 +123,7 @@ public class Scene : AModule, IScene
         /*
          * Null out everything we don't need when the scene is unloaded.
          */
-        engine.SceneSequencer.RemoveScene(this);
+        I.Get<SceneSequencer>().RemoveScene(this);
         base.ModuleDeactivate();
     }
 
@@ -251,7 +251,7 @@ public class Scene : AModule, IScene
 
 
         _engine.AddModule(this);
-        _engine.SceneSequencer.AddScene(5, this);
+        I.Get<SceneSequencer>().AddScene(5, this);
         _modTitle = new();
         
     }

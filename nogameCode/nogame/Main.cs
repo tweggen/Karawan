@@ -1,9 +1,11 @@
 
+using System.Text.Json;
 using System.Timers;
 using builtin.controllers;
 using builtin.map;
 using engine;
 using engine.world;
+using Newtonsoft.Json.Linq;
 using nogame.map;
 using static engine.Logger;
 
@@ -66,18 +68,40 @@ public class Main
         MetaGen.Instance().WorldPopulatingOperatorAdd(new nogame.characters.intercity.GenerateCharacterOperator(_e));
     }
 
+    private string jsonScenes = @"
+{
+    ""scenes"": {
+        ""root"": {
+            ""className"": ""nogame.scenes.root.Scene"",
+        },
+        ""logos"": {
+            ""className"": ""nogame.scenes.logos.Scene"",
+        }
+    },
+    ""startScene"": {
+        ""name"": ""logos""
+    }
+}
+";
+    
+    private SceneSequencer _sceneSequencer;
     
     private void _registerScenes()
     {
-        _e.SceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
-        _e.SceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
-        //_e.SceneSequencer.AddSceneFactory("tunestreets", () => new builtin.tunestreets.Scene());
-        //_e.SceneSequencer.SetMainScene("tunestreets");
+        _sceneSequencer = I.Get<SceneSequencer>();
+#if false
+        _sceneSequencer.AddFrom(JsonDocument.Parse(jsonScenes, new()
+        {
+            AllowTrailingCommas = true
+        }).RootElement);
+#endif
+        _sceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
+        _sceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
     }
 
     private void _startScenes()
     {
-        _e.SceneSequencer.SetMainScene("logos");
+        _sceneSequencer.SetMainScene("logos");
     }
 
 

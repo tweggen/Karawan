@@ -171,10 +171,17 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         {
             if (eCamera.Has<Transform3ToWorld>() && eCamera.Has<Camera3>())
             {
-                CameraEntry ce = new();
 
-                ce.CCamTransform = eCamera.Get<Transform3ToWorld>();
+                var cCamTransform = eCamera.Get<Transform3ToWorld>();
+                if (!cCamTransform.IsVisible)
+                {
+                    continue;
+                }
+                CameraEntry ce = new();
+                ce.CCamTransform = cCamTransform;
                 ce.CCamera = eCamera.Get<Camera3>();
+                
+
                 ce.MCameraToWorld = ce.CCamTransform.Matrix;
                 ce.V3CamPosition = ce.MCameraToWorld.Translation;
 

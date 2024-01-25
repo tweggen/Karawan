@@ -39,6 +39,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleCard.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\AutoRemoveBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Object.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />
@@ -70,7 +71,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SimpleNavigationBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\Triangulate.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\UVProjector.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\tunestreets\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Assets.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\MovingSound.cs" />
