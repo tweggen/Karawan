@@ -89,14 +89,15 @@ public class Main
     private void _registerScenes()
     {
         _sceneSequencer = I.Get<SceneSequencer>();
-#if false
+#if true
         _sceneSequencer.AddFrom(JsonDocument.Parse(jsonScenes, new()
         {
             AllowTrailingCommas = true
         }).RootElement);
-#endif
+#else
         _sceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
         _sceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
+#endif
     }
 
     private void _startScenes()

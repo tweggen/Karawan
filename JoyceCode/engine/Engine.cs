@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -145,15 +146,54 @@ public class Engine
     {
         try
         {
-            Assembly asm = Assembly.LoadFrom(dllPath);
-            if (null != asm)
+            bool foundDll = true;
+            var execDirectoryPath = 
+                Path.GetDirectoryName(
+                    System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
+                    .Replace("file:/", "");
+                    //.Replace(".__override__", "");
+            if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
             {
-                Type type = asm.GetType(fullClassName);
-                if (null != type)
+                execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
+                if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
                 {
-                    object instance = Activator.CreateInstance(type);
-                    return instance;
+                    Error($"Unable to find {dllPath}.");
+                    foundDll = false;
                 }
+                else
+                {
+                }
+            }
+
+            Type type = null;
+            if (!foundDll)
+            {
+                System.Reflection.Assembly[] allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+                foreach (var asmCurr in allAssemblies)
+                {
+                    type = asmCurr.GetType(fullClassName);
+                    if (null != type)
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (null == type)
+                {
+                    Assembly asm = Assembly.LoadFrom(Path.Combine(execDirectoryPath, dllPath));
+                    if (null != asm)
+                    {
+                        type = asm.GetType(fullClassName);
+                    }
+                }
+            }
+
+            if (null != type)
+            {
+                object instance = Activator.CreateInstance(type);
+                return instance;
             }
         }
         catch (Exception e)
