@@ -24,6 +24,10 @@
     <ProjectReference Include="..\Joyce\Joyce.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Inkle.Ink.Engine" Version="0.7.4" />
+  </ItemGroup>
+
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
