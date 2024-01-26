@@ -200,7 +200,13 @@ namespace Splash.Silk
             }
         }
 
-        
+
+        /**
+         * Caution:
+         * - on Windows, with raw mouse, position is just an accumulated sum of the delta moves
+         * - on Windows, using Teamviewer, the coordinates are insanely high.
+         * - on Android, I didn't quite understand the math yet.
+         */
         private void _onMouseMove(IMouse mouse, Vector2 position)
         {
             I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
@@ -239,6 +245,8 @@ namespace Splash.Silk
         {
             _fullToViewPosition(mouse.Position, out var pos, out var size);
 
+            Trace($"Position is {mouse.Position}");
+            
             I.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
                 {
@@ -278,7 +286,11 @@ namespace Splash.Silk
 
         private void _setMouseEnabled(bool value)
         {
+            /*
+             * We better not set the mouse to raw on android. 
+             */
             if (GlobalSettings.Get("Android") == "true") return;
+            
 #if DEBUG
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
