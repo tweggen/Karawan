@@ -198,14 +198,53 @@ public class SkiaSharpFramebuffer : IFramebuffer
                 x = lr.X;
                 break;
         }
-
-        if (fontSize > 20)
+        
+        /*
+         * To compute vAlign, we need to count the number of linefeed.
+         * The number of lines is the number of line feeds + one.
+         */
+        int nLines = 0;
         {
-            string foo;
-            foo = "2";
+            int l = text.Length;
+            while (l > 0)
+            {
+                if (text[l - 1] == '\n')
+                {
+                    --l;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            for (int i = 0; i < l; ++i)
+            {
+                if (text[i] == '\n')
+                {
+                    nLines++;
+                }
+            }
         }
-        // float y = ul.Y + fontSize; //lr.Y - ul.Y
-        float y = ul.Y - metrics.Ascent; //lr.Y - ul.Y
+
+        var heightOffset = (metrics.Leading + metrics.Descent - metrics.Ascent) * (nLines);
+        
+        float y = ul.Y - metrics.Ascent;
+
+        switch (context.VAlign)
+        {
+            default:
+            case VAlign.Top:
+                // Leave y as is.
+                break;
+            case VAlign.Bottom:
+                y -= heightOffset;
+                break;
+            case VAlign.Center:
+                y -= heightOffset / 2;
+                break;
+        }
+        
         string remainingText = text;
         lock (_lo)
         {

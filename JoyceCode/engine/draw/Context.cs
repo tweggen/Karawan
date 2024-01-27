@@ -6,6 +6,13 @@ public enum HAlign {
     Right
 }
 
+public enum VAlign
+{
+    Top,
+    Center,
+    Bottom
+}
+
 public class Context
 {
     public uint Color;
@@ -13,4 +20,5 @@ public class Context
     public uint TextColor;
     public uint ClearColor;
     public HAlign HAlign;
+    public VAlign VAlign;
 }

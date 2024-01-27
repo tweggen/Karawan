@@ -12,6 +12,7 @@ public struct OSDText
     public uint FillColor;
     public Vector2 Position, Size;
     public HAlign HAlign;
+    public VAlign VAlign;
     public uint OSDTextFlags = 0;
     public float MaxDistance = 200f;
 
@@ -28,7 +29,8 @@ public struct OSDText
         uint fontSize,
         uint textColor,
         uint fillColor,
-        HAlign hAlign)
+        HAlign hAlign,
+        VAlign vAlign = VAlign.Top)
     {
         Position = position;
         Size = size;
@@ -37,5 +39,6 @@ public struct OSDText
         TextColor = textColor;
         FillColor = fillColor;
         HAlign = hAlign;
+        VAlign = vAlign;
     }
 }

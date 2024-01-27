@@ -11,7 +11,7 @@ namespace engine.news;
 public class InputEventPipeline : engine.AModule
 {
     private SortedDictionary<float, IInputPart> _dictParts = new();
-    
+ 
     
     void _onInputEvent(engine.news.Event ev)
     {

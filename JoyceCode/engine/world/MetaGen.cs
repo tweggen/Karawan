@@ -38,7 +38,7 @@ public class MetaGen
      */
     public static int GroundResolution = 20;
 
-    public static bool TRACE_WORLD_LOADER = false;
+    public static bool TRACE_WORLD_LOADER = true;
     public static bool TRACE_FRAGMENT_OPEARTORS = false;
 
     public static float CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0f;

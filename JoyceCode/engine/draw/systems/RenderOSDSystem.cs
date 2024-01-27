@@ -146,6 +146,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             
             _dc.TextColor = textColor;
             _dc.HAlign = osdText.HAlign;
+            _dc.VAlign = osdText.VAlign;
             _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
 
         }

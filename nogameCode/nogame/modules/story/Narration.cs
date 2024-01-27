@@ -4,27 +4,31 @@ using System.Numerics;
 using System.Text;
 using engine;
 using engine.draw;
-using engine.joyce;
 using engine.news;
 using Ink.Runtime;
 using nogame.modules.osd;
+using ObjLoader.Loader.Common;
 using static engine.Logger;
 
 namespace nogame.modules.story;
+
 
 public class Narration : AModule, IInputPart
 {
     private Story? _currentStory = null;
     private string _currentString = "";
+    private int _currentNChoices = 0;
 
     private DefaultEcs.Entity _eSentence = default;
 
-    public float MY_Z_ORDER { get; set; } = 50f;
+    public float MY_Z_ORDER { get; set; } = 24.5f;
+    
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new MyModule<nogame.modules.osd.Display>(),
     };
+    
 
     private void _prepareEntity()
     {
@@ -38,7 +42,8 @@ public class Narration : AModule, IInputPart
             16,
             0xffcccccc,
             0x00000000,
-            HAlign.Center));
+            HAlign.Center,
+            VAlign.Bottom));
         _eSentence.Set(new engine.behave.components.Clickable()
         {
             ClickEventFactory = (e) => new Event("nogame.modules.story.sentence.onClick", null)
@@ -56,33 +61,71 @@ public class Narration : AModule, IInputPart
     private void _displayNextSentence()
     {
         _prepareEntity();
-        _eSentence.Get<engine.draw.components.OSDText>().Text = _currentString;
+
+        
+        string strDisplay = "";
+
+        lock (_lo)
+        {
+            strDisplay = _currentString;
+
+            int index = 1;
+            _currentNChoices = 0;
+            if (_currentStory.currentChoices.Count > 0)
+            {
+                int nChoices = _currentStory.currentChoices.Count;
+                for (int i = 0; i < nChoices; ++i)
+                {
+                    ++_currentNChoices;
+                    strDisplay += $"\n{i+1}: {_currentStory.currentChoices[i].text}";
+                }
+            }
+        }
+
+        _eSentence.Get<engine.draw.components.OSDText>().Text = strDisplay;
     }
     
     
     private void _advanceStory()
     {
-        if (_currentStory.canContinue)
+        bool dismiss = false;
+        lock (_lo)
         {
-            _currentString = _currentStory.Continue();
-            _displayNextSentence();
+            if (null == _currentStory)
+            {
+                return;
+            }
             
-            /*
-             * Display story item.
-             */
-            Trace($"story: {_currentString}");
+            if (!_currentStory.canContinue)
+            {
+                dismiss = true;
+                _currentStory = null;
+            }
         }
-        else
+        if (dismiss)
         {
             _dismissSentence();
-            _currentStory = null;
+            return;
         }
-#if false
-        foreach (var choice in _currentStory.currentChoices)
+
+        lock (_lo)
         {
-            Trace($"story.choice: {choice.text}");
-        }
+            /*
+             * If we have a current string, display it.
+             */
+            _currentString = _currentStory.Continue();
+            /*
+             * But also, if there are choices, display them.
+             */
+#if false
+            if (_currentStory.currentChoices.Count > 0)
+            {
+                
+            }
 #endif
+        }
+            
+        _displayNextSentence();
     }
     
     
@@ -91,7 +134,10 @@ public class Narration : AModule, IInputPart
         var stream = engine.Assets.Open("story1.json");
         using var sr = new StreamReader(stream, Encoding.UTF8);
         string jsonStory = sr.ReadToEnd();
-        _currentStory = new Story(jsonStory);
+        lock (_lo)
+        {
+            _currentStory = new Story(jsonStory);
+        }
 
         _advanceStory();
     }
@@ -111,6 +157,20 @@ public class Narration : AModule, IInputPart
 
     public void InputPartOnInputEvent(engine.news.Event ev)
     {
+        int nChoices = 0;
+        bool haveStory = false;
+        lock (_lo)
+        {
+            if (_currentStory != null)
+            {
+                if (!_currentString.IsNullOrEmpty())
+                {
+                    haveStory = true;
+                }
+
+                nChoices = _currentStory.currentChoices.Count;
+            }
+        }
         if (ev.Type == Event.INPUT_KEY_PRESSED)
         {
             switch (ev.Code)
@@ -124,6 +184,24 @@ public class Narration : AModule, IInputPart
 
                     break;
                 default:
+                    if (ev.Code.CompareTo("0") >= 0
+                        && ev.Code.CompareTo("9") <= 0)
+                    {
+                        int number = ev.Code[0] - '0';
+                        if (0 == number) number = 10;                            
+                        if (nChoices > 0)
+                        {
+                            if (number <= nChoices)
+                            {
+                                ev.IsHandled = true;
+                                lock (_lo)
+                                {
+                                    _currentStory.ChooseChoiceIndex(number-1);
+                                }
+                                _advanceStory();
+                            }
+                        }
+                    }
                     break;
             }
         }

@@ -41,6 +41,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\AutoRemoveBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Object.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\AreaEnteredBehavior.cs" />

@@ -112,6 +112,36 @@ namespace Splash.Silk
                 case Key.Space:
                     code = "(action)";
                     break;
+                case Key.Number0:
+                    code = "0";
+                    break;
+                case Key.Number1:
+                    code = "1";
+                    break;
+                case Key.Number2:
+                    code = "2";
+                    break;
+                case Key.Number3:
+                    code = "3";
+                    break;
+                case Key.Number4:
+                    code = "4";
+                    break;
+                case Key.Number5:
+                    code = "5";
+                    break;
+                case Key.Number6:
+                    code = "6";
+                    break;
+                case Key.Number7:
+                    code = "7";
+                    break;
+                case Key.Number8:
+                    code = "8";
+                    break;
+                case Key.Number9:
+                    code = "9";
+                    break;
                 case Key.Q:
                     code = "Q";
                     break;
@@ -173,6 +203,36 @@ namespace Splash.Silk
                     break;
                 case Key.Space:
                     code = "(action)";
+                    break;
+                case Key.Number0:
+                    code = "0";
+                    break;
+                case Key.Number1:
+                    code = "1";
+                    break;
+                case Key.Number2:
+                    code = "2";
+                    break;
+                case Key.Number3:
+                    code = "3";
+                    break;
+                case Key.Number4:
+                    code = "4";
+                    break;
+                case Key.Number5:
+                    code = "5";
+                    break;
+                case Key.Number6:
+                    code = "6";
+                    break;
+                case Key.Number7:
+                    code = "7";
+                    break;
+                case Key.Number8:
+                    code = "8";
+                    break;
+                case Key.Number9:
+                    code = "9";
                     break;
                 case Key.Q:
                     code = "Q";
