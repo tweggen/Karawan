@@ -19,6 +19,8 @@ public class Narration : AModule, IInputPart
     private string _currentString = "";
     private int _currentNChoices = 0;
 
+    private Boom.ISound _soundTty = null;
+    
     private DefaultEcs.Entity _eSentence = default;
 
     public float MY_Z_ORDER { get; set; } = 24.5f;
@@ -83,6 +85,10 @@ public class Narration : AModule, IInputPart
         }
 
         _eSentence.Get<engine.draw.components.OSDText>().Text = strDisplay;
+
+        _soundTty.Stop();
+        _soundTty.Volume = 0.02f;
+        _soundTty.Play();
     }
     
     
@@ -221,6 +227,11 @@ public class Narration : AModule, IInputPart
     {
         base.ModuleActivate(engine0);
         engine0.AddModule(this);
+
+        if (null == _soundTty)
+        {
+            _soundTty = I.Get<Boom.ISoundAPI>().FindSound("terminal.ogg");
+        }
         I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
         _triggerNextStory();

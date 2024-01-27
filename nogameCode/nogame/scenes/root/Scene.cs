@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using builtin.modules;
 using engine;
 using engine.joyce;
@@ -35,7 +36,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
         new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
         new MyModule<builtin.modules.Stats>() { Activate = false },
-        new SharedModule<nogame.modules.story.Narration>(),
+        new SharedModule<nogame.modules.story.Narration>() { Activate = false },
         new SharedModule<builtin.controllers.InputController>(),
     };
     
@@ -177,6 +178,14 @@ public class Scene : AModule, IScene, IInputPart
         {
             M<modules.osd.Camera>().ModuleActivate(_engine);
             _engine.SuggestEndLoading();
+        });
+        
+        Task.Delay(5000).ContinueWith(t =>
+        {
+            _engine.QueueMainThreadAction(() =>
+            {
+                M<nogame.modules.story.Narration>().ModuleActivate(_engine);
+            });
         });
         
         return true;
