@@ -85,7 +85,7 @@ public class SharedModule<T> : AModuleDependency where T: class
 
 public interface IModule : IDisposable
 {
-    public IEnumerable<IModuleDependency> ModuleRequires();
+    public IEnumerable<IModuleDependency> ModuleDepends();
     
     public void ModuleActivate(engine.Engine engine);
     public void ModuleDeactivate();

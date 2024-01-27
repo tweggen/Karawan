@@ -14,7 +14,7 @@ public abstract class AModule : IModule
     private Dictionary<Type, IModule> _mapModules = new();
 
     
-    protected virtual IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
+    public virtual IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
 
     protected T M<T>() where T : class
     {
@@ -26,12 +26,6 @@ public abstract class AModule : IModule
         {
             return null;
         }
-    }
-    
-    
-    public virtual IEnumerable<IModuleDependency> ModuleRequires()
-    {
-        return new List<IModuleDependency>(_moduleDependencies);
     }
 
 

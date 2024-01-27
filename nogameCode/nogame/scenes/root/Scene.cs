@@ -19,7 +19,7 @@ public class Scene : AModule, IScene, IInputPart
 
     private static float MY_Z_ORDER = 20f;
 
-    protected override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new MyModule<nogame.modules.World>(),
         new MyModule<builtin.modules.ScreenComposer>(),
@@ -35,6 +35,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
         new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
         new MyModule<builtin.modules.Stats>(),
+        new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<builtin.controllers.InputController>(),
     };
     

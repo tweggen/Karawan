@@ -33,7 +33,17 @@ public class Display : engine.AModule
     private uint _fbpos = 0;
 
     private readonly uint _width = 768;
+    public uint Width
+    {
+        get => _width;
+    }
+    
     private readonly uint _height = 768*9/16;
+
+    public uint Height
+    {
+        get => _height;
+    }
 
     
     private void _setupOSD()
