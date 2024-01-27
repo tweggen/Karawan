@@ -301,7 +301,7 @@ namespace engine.world
                 if (setVisib.TryGetValue(visib, out var oldVisib))
                 {
                     byte newHow = (byte) (visib.How | oldVisib.How);
-                    if (newHow < oldVisib.How)
+                    if (newHow > oldVisib.How)
                     {
                         oldVisib.How = newHow;
                         setVisib.Add(oldVisib);
