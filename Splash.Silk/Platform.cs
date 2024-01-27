@@ -109,6 +109,9 @@ namespace Splash.Silk
                 case Key.ShiftLeft:
                     code = "(shiftleft)";
                     break;
+                case Key.Space:
+                    code = "(action)";
+                    break;
                 case Key.Q:
                     code = "Q";
                     break;
@@ -133,12 +136,21 @@ namespace Splash.Silk
                 case Key.Escape:
                     code = "(escape)";
                     break;
+                case Key.F8:
+                    code = "(F8)";
+                    break;
+                case Key.F9:
+                    code = "(F9)";
+                    break;
                 case Key.F10:
                     code = "(F10)";
                     break;
                 case Key.F11:
                     code = "(F11)";
                     _toggleFullscreen();
+                    break;
+                case Key.F12:
+                    code = "(F12)";
                     break;
                 default:
                     break;
@@ -158,6 +170,9 @@ namespace Splash.Silk
             {
                 case Key.ShiftLeft:
                     code = "(shiftleft)";
+                    break;
+                case Key.Space:
+                    code = "(action)";
                     break;
                 case Key.Q:
                     code = "Q";
@@ -183,11 +198,20 @@ namespace Splash.Silk
                 case Key.Escape:
                     code = "(escape)";
                     break;
+                case Key.F8:
+                    code = "(F8)";
+                    break;
+                case Key.F9:
+                    code = "(F9)";
+                    break;
                 case Key.F10:
                     code = "(F10)";
                     break;
                 case Key.F11:
                     code = "(F11)";
+                    break;
+                case Key.F12:
+                    code = "(F12)";
                     break;
                 default:
                     break;

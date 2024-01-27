@@ -59,6 +59,7 @@ public class Main
         I.Register<builtin.controllers.InputController>(() => new InputController());
         I.Register<SetupMetaGen>(() => new SetupMetaGen());
         I.Register<nogame.intercity.Network>(() => new nogame.intercity.Network());
+        I.Register<nogame.modules.story.Narration>(() => new nogame.modules.story.Narration());
     }
 
 

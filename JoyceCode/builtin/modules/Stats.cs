@@ -52,7 +52,7 @@ public class Stats : engine.AModule
             new Vector2(400, 54),
             displayData,
             9,
-            0xff22aaee,
+            0x8822aaee,
             0x00000000,
             HAlign.Left
         ));

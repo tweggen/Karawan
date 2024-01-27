@@ -19,6 +19,8 @@ public class Narration : AModule, IInputPart
 
     private DefaultEcs.Entity _eSentence = default;
 
+    public float MY_Z_ORDER { get; set; } = 50f;
+    
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new MyModule<nogame.modules.osd.Display>(),
@@ -28,12 +30,12 @@ public class Narration : AModule, IInputPart
     {
         if (_eSentence.IsAlive) return;
         var mDisplay = M<nogame.modules.osd.Display>();
-        DefaultEcs.Entity eCity = _engine.CreateEntity($"nogame.modules.story sentence");
+        _eSentence = _engine.CreateEntity($"nogame.modules.story sentence");
         _eSentence.Set(new engine.draw.components.OSDText(
-            new Vector2(mDisplay.Width/2f , mDisplay.Height - 50f),
-            new Vector2(mDisplay.Width-20f, 40),
+            new Vector2((mDisplay.Width-500f)/2f , 360f),
+            new Vector2(500f, 40),
             "",
-            14,
+            16,
             0xffcccccc,
             0x00000000,
             HAlign.Center));
@@ -120,6 +122,7 @@ public class Narration : AModule, IInputPart
     
     public override void ModuleDeactivate()
     {
+        I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -129,6 +132,7 @@ public class Narration : AModule, IInputPart
     {
         base.ModuleActivate(engine0);
         engine0.AddModule(this);
+        I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         _triggerNextStory();
     }

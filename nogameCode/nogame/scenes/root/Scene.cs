@@ -34,14 +34,14 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.map.MapViewer>(),
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
         new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
-        new MyModule<builtin.modules.Stats>(),
+        new MyModule<builtin.modules.Stats>() { Activate = false },
         new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<builtin.controllers.InputController>(),
     };
     
 
     private bool _isMapShown = false;
-
+    private bool _areStatsShown = false;
     private bool _isUIShown = false;
 
     private void _togglePauseMenu()
@@ -106,6 +106,26 @@ public class Scene : AModule, IScene, IInputPart
     }
 
 
+    private void _toggleStats()
+    {
+        bool areStatsShown;
+        lock (_lo)
+        {
+            areStatsShown = !_areStatsShown;
+            _areStatsShown = areStatsShown;
+        }
+
+        if (areStatsShown)
+        {
+            M<builtin.modules.Stats>().ModuleActivate(_engine);
+        }
+        else
+        {
+            M<builtin.modules.Stats>().ModuleDeactivate();
+        }
+    }
+
+
     public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type != Event.INPUT_KEY_PRESSED)
@@ -119,9 +139,13 @@ public class Scene : AModule, IScene, IInputPart
                 ev.IsHandled = true;
                 _toggleMap(ev);
                 break;
-            case "(escape)":
+            case "(F12)":
                 ev.IsHandled = true;
                 _togglePauseMenu();
+                break;
+            case "(F8)":
+                ev.IsHandled = true;
+                _toggleStats();
                 break;
             default:
                 break;
