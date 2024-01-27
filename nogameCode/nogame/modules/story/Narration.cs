@@ -39,6 +39,10 @@ public class Narration : AModule, IInputPart
             0xffcccccc,
             0x00000000,
             HAlign.Center));
+        _eSentence.Set(new engine.behave.components.Clickable()
+        {
+            ClickEventFactory = (e) => new Event("nogame.modules.story.sentence.onClick", null)
+        });
     }
 
 
@@ -97,6 +101,12 @@ public class Narration : AModule, IInputPart
     {
         _advanceStory();
     }
+
+
+    private void _onClickSentence(engine.news.Event ev)
+    {
+        _advanceStory();
+    }
     
 
     public void InputPartOnInputEvent(engine.news.Event ev)
@@ -122,6 +132,7 @@ public class Narration : AModule, IInputPart
     
     public override void ModuleDeactivate()
     {
+        I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
         I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
@@ -133,7 +144,7 @@ public class Narration : AModule, IInputPart
         base.ModuleActivate(engine0);
         engine0.AddModule(this);
         I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-
+        I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
         _triggerNextStory();
     }
 }
