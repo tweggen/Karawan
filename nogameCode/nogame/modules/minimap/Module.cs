@@ -59,7 +59,7 @@ public class Module : AModule
 
             _eMiniMap.Set(new engine.behave.components.Clickable()
             {
-                ClickEventFactory = (e) => new Event("nogame.minimap.toggleMap", null)
+                ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.minimap.toggleMap", null)
             });
         }
     }

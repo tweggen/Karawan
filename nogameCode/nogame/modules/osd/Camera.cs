@@ -15,6 +15,7 @@ public class Camera : AModule
     
     private ClickableHandler _clickableHandler;
 
+    private bool _debugTouchOnDesktop = true;
 
     private void _testClickable(Event ev)
     {
@@ -24,7 +25,7 @@ public class Camera : AModule
 
     private void _onTouchPress(Event ev)
     {
-        if (GlobalSettings.Get("Android") == "true")
+        if (_debugTouchOnDesktop || GlobalSettings.Get("Android") == "true")
         {
             _testClickable(ev);
         }
@@ -34,6 +35,10 @@ public class Camera : AModule
     public override void ModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        if (_debugTouchOnDesktop)
+        {
+            I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onTouchPress);
+        }
 
         _engine.RemoveModule(this);
         
@@ -76,5 +81,9 @@ public class Camera : AModule
         }
         
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        if (_debugTouchOnDesktop)
+        {
+            I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onTouchPress);
+        }
     }
 }

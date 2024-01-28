@@ -3,6 +3,7 @@ using engine;
 using engine.behave.components;
 using engine.draw.systems;
 using engine.joyce;
+using static engine.Logger;
 
 namespace nogame.modules.osd;
 
@@ -45,7 +46,40 @@ public class Display : engine.AModule
         get => _height;
     }
 
-    
+
+    private engine.news.Event _osdClickEventFactory(
+        DefaultEcs.Entity e, 
+        engine.news.Event cev, 
+        Vector2 v2RelPos)
+    {
+        var clickableEntities = _engine.GetEcsWorld().GetEntities()
+            .With<Clickable>()
+            .With<engine.draw.components.OSDText>()
+            .AsEnumerable();
+        Vector2 v2OSDPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
+
+        Trace($"Handling relative click {v2OSDPos}");
+        foreach (var eCand in clickableEntities)
+        {
+            var cOSDText = eCand.Get<engine.draw.components.OSDText>();
+
+            Trace($"found clickable {cOSDText.Position} + {cOSDText.Size}");
+            if (v2OSDPos.X >= cOSDText.Position.X
+                && v2OSDPos.Y >= cOSDText.Position.Y
+                && v2OSDPos.X < (cOSDText.Position.X + cOSDText.Size.X)
+                && v2OSDPos.Y < (cOSDText.Position.Y + cOSDText.Size.Y))
+            {
+                Trace("Hit clickable.");
+            }
+        }
+        
+        return new engine.news.Event("nogame.modules.osd.click", "")
+        {
+            Position = v2OSDPos
+        };
+    }
+
+
     private void _setupOSD()
     {
             
@@ -71,7 +105,10 @@ public class Display : engine.AModule
 
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 100f);
             _eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-            
+            _eFramebuffer.Set(new engine.behave.components.Clickable()
+            {
+                ClickEventFactory = _osdClickEventFactory
+            });
             _aTransform.SetTransforms(
                 _eFramebuffer, true, 0x01000000,
                 new Quaternion(0f,0f,0f,1f),

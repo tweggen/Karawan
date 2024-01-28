@@ -48,7 +48,7 @@ public class Narration : AModule, IInputPart
             VAlign.Bottom));
         _eSentence.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e) => new Event("nogame.modules.story.sentence.onClick", null)
+            ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", null)
         });
     }
 
@@ -143,6 +143,9 @@ public class Narration : AModule, IInputPart
         lock (_lo)
         {
             _currentStory = new Story(jsonStory);
+            _currentStory.BindExternalFunction ("triggerQuest", (string questName) => {
+                Trace($"Trigger quest {questName}");
+            });
         }
 
         _advanceStory();

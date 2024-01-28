@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 
 namespace engine.behave.components;
 
@@ -9,5 +10,5 @@ public struct Clickable
      */
     public byte CameraLayer;
 
-    public Func<DefaultEcs.Entity, engine.news.Event> ClickEventFactory;
+    public Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event> ClickEventFactory;
 }

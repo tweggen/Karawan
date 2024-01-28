@@ -20,10 +20,18 @@ public class ClickableHandler
     private Matrix4x4 _mProjection;
     private Matrix4x4 _mView;
 
-    private bool _findAt(in Vector2 pos, out DefaultEcs.Entity resultingEntity)
+    private bool _findAt(in Vector2 pos, out DefaultEcs.Entity resultingEntity, out Vector2 v2RelPos)
     {
         /*
-         * Iterate through all clickables that also have
+         * We have two different version of Clickables: Those from 3d space
+         * including camera mask etc. and those purely based on OSD text.
+         * We handle the ones from 3d space.
+         *
+         * However, the framebuffer also is a surface in 3d space. It has a dedicated handler
+         * attached that will have an event emitted.
+         */
+        /*
+         * Iterate through all Clickables that also have
          * - a transform2world to get the camera mask from
          * - an Instance3 to get the aabb from.
          */
@@ -65,6 +73,8 @@ public class ClickableHandler
             {
                 continue;
             }
+
+            v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
             
             /*
              * This is a hit.
@@ -74,6 +84,7 @@ public class ClickableHandler
             return true;
         }
 
+        v2RelPos = default;
         resultingEntity = default;
         return false;
     }
@@ -106,13 +117,13 @@ public class ClickableHandler
         }
 
         Vector2 pos = ev.Position;
-        if (_findAt(pos, out var eFound))
+        if (_findAt(pos, out var eFound, out var v2RelPos))
         {
             var cClickable = eFound.Get<engine.behave.components.Clickable>();
             var factory = cClickable.ClickEventFactory;
             if (factory != null)
             {
-                var cev = factory(eFound);
+                var cev = factory(eFound, ev, v2RelPos);
                 I.Get<EventQueue>().Push(cev);
             }
         }
