@@ -329,7 +329,7 @@ namespace Splash.Silk
         {
             _fullToViewPosition(mouse.Position, out var pos, out var size);
 
-            Trace($"Position is {mouse.Position}");
+            // Trace($"Position is {mouse.Position}");
             
             I.Get<EventQueue>().Push(
                 new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")

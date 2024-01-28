@@ -22,7 +22,7 @@ public class Camera : AModule
     
     private void _testClickable(Event ev)
     {
-        Trace("Called");
+        // Trace("Called");
         var eFound = _clickableHandler.OnClick(ev);
     }
 
