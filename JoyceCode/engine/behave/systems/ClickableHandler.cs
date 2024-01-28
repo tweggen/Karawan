@@ -65,7 +65,7 @@ public class ClickableHandler
             Vector2 ul = Vector2.Min(vAA2, vBB2);
             Vector2 lr = Vector2.Max(vAA2, vBB2);
             
-            Trace($"pos is {pos} Transformed position is ul={ul}, lr={lr}");
+            // Trace($"pos is {pos} Transformed position is ul={ul}, lr={lr}");
 
             if (!
                 (pos.X >= ul.X && pos.X < lr.X 
@@ -124,7 +124,10 @@ public class ClickableHandler
             if (factory != null)
             {
                 var cev = factory(eFound, ev, v2RelPos);
-                I.Get<EventQueue>().Push(cev);
+                if (cev != null)
+                {
+                    I.Get<EventQueue>().Push(cev);
+                }
             }
         }
 

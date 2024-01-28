@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics;
 using engine;
 using engine.joyce;
 using System.Numerics;
 using engine.behave.systems;
 using engine.news;
+using static engine.Logger;
 
 namespace nogame.modules.osd;
 
@@ -17,15 +19,26 @@ public class Camera : AModule
 
     private bool _debugTouchOnDesktop = true;
 
+    
     private void _testClickable(Event ev)
     {
+        Trace("Called");
         var eFound = _clickableHandler.OnClick(ev);
     }
 
 
+    private void _onMousePress(Event ev)
+    {
+        if (GlobalSettings.Get("Android") != "true")
+        {
+            _testClickable(ev);
+        }
+    }
+    
+
     private void _onTouchPress(Event ev)
     {
-        if (_debugTouchOnDesktop || GlobalSettings.Get("Android") == "true")
+        if (GlobalSettings.Get("Android") == "true")
         {
             _testClickable(ev);
         }
@@ -35,10 +48,7 @@ public class Camera : AModule
     public override void ModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        if (_debugTouchOnDesktop)
-        {
-            I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onTouchPress);
-        }
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
 
         _engine.RemoveModule(this);
         
@@ -81,9 +91,6 @@ public class Camera : AModule
         }
         
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        if (_debugTouchOnDesktop)
-        {
-            I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onTouchPress);
-        }
+        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
     }
 }
