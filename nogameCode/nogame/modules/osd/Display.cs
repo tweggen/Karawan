@@ -113,7 +113,7 @@ public class Display : engine.AModule
             _aTransform.SetTransforms(
                 _eFramebuffer, true, 0x01000000,
                 new Quaternion(0f,0f,0f,1f),
-                new Vector3(0f, 0f, 0f));
+                new Vector3(0f, 0f, 1f));
         }
     }
     

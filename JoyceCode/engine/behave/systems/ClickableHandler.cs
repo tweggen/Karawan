@@ -40,9 +40,16 @@ public class ClickableHandler
             .With<joyce.components.Transform3ToWorld>()
             .With<joyce.components.Instance3>()
             .AsEnumerable();
+
+        float minZ = Single.MaxValue;
+        resultingEntity = default;
+        v2RelPos = default;
+        
         foreach (var entity in clickableEntities)
         {
             var cTransform = entity.Get<joyce.components.Transform3ToWorld>();
+            if (cTransform.Matrix.Translation.Z >= minZ) continue;
+            minZ = cTransform.Matrix.Translation.Z;
             
             /*
              * Is it visible by the camera we are looking for?
@@ -81,11 +88,13 @@ public class ClickableHandler
              */
             // Trace($"Clickable {entity} was clicked.");
             resultingEntity = entity;
-            return true;
         }
 
-        v2RelPos = default;
-        resultingEntity = default;
+        if (resultingEntity != default)
+        {
+            return true;
+        }
+        
         return false;
     }
 
