@@ -54,6 +54,17 @@ public class InputController : engine.AModule, engine.IInputPart
     {
         _isKeyboardFast = !_isKeyboardFast;
     }
+
+
+    private void _analogToWalkControllerNoLock()
+    {
+        _controllerState.WalkForward = _controllerState.AnalogForward;
+        _controllerState.WalkBackward = _controllerState.AnalogBackward;
+        _controllerState.TurnLeft = _controllerState.AnalogLeft;
+        _controllerState.TurnRight = _controllerState.AnalogRight;
+        _controllerState.FlyUp = _controllerState.AnalogUp;
+        _controllerState.FlyDown = _controllerState.AnalogDown;
+    }
     
 
     private void _onKeyDown(Event ev)
@@ -100,36 +111,35 @@ public class InputController : engine.AModule, engine.IInputPart
 
     private void _onKeyUp(Event ev)
     {
-        _controllerState.LastInput = DateTime.UtcNow;
-
-        switch (ev.Code)
+        lock (_lo)
         {
-            case "Q":
-                _controllerState.AnalogUp = 0;
-                _controllerState.FlyUp = 0;
-                break;
-            case "Z":
-                _controllerState.AnalogDown = 0;
-                _controllerState.FlyDown = 0;
-                break;
-            case "W":
-                _controllerState.AnalogForward = 0;
-                _controllerState.WalkForward = 0;
-                break;
-            case "S":
-                _controllerState.AnalogBackward = 0;
-                _controllerState.WalkBackward = 0;
-                break;
-            case "A":
-                _controllerState.AnalogBackward = 0;
-                _controllerState.TurnLeft = 0;
-                break;
-            case "D":
-                _controllerState.AnalogRight = 0;
-                _controllerState.TurnRight = 0;
-                break;
-            default:
-                break;
+            _controllerState.LastInput = DateTime.UtcNow;
+
+            switch (ev.Code)
+            {
+                case "Q":
+                    _controllerState.AnalogUp = 0;
+                    break;
+                case "Z":
+                    _controllerState.AnalogDown = 0;
+                    break;
+                case "W":
+                    _controllerState.AnalogForward = 0;
+                    break;
+                case "S":
+                    _controllerState.AnalogBackward = 0;
+                    break;
+                case "A":
+                    _controllerState.AnalogLeft = 0;
+                    break;
+                case "D":
+                    _controllerState.AnalogRight = 0;
+                    break;
+                default:
+                    break;
+            }
+
+            _analogToWalkControllerNoLock();
         }
     }
 
@@ -180,13 +190,9 @@ public class InputController : engine.AModule, engine.IInputPart
                         / ControllerXMax * TouchAnalogMax);
                     _controllerState.AnalogLeft = 0;
                 }
+                
+                _analogToWalkControllerNoLock();
 
-                _controllerState.WalkForward = _controllerState.AnalogForward;
-                _controllerState.WalkBackward = _controllerState.AnalogBackward;
-                _controllerState.TurnLeft = _controllerState.AnalogLeft;
-                _controllerState.TurnRight = _controllerState.AnalogRight;
-                _controllerState.FlyUp = _controllerState.AnalogUp;
-                _controllerState.FlyDown = _controllerState.AnalogDown;
             }
             else
             {
@@ -279,12 +285,7 @@ public class InputController : engine.AModule, engine.IInputPart
                 _controllerState.AnalogUp = 0;
                 _controllerState.AnalogDown = 0;
                 
-                _controllerState.WalkForward = 0;
-                _controllerState.WalkBackward = 0;
-                _controllerState.TurnRight = 0;
-                _controllerState.TurnLeft = 0;
-                _controllerState.FlyUp = 0;
-                _controllerState.FlyDown = 0; 
+                _analogToWalkControllerNoLock();
 
                 _lastTouchPosition = default;
             }
@@ -467,7 +468,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     private void _onLogicalFrame(object? sender, float dt)
     {
-        if (engine.GlobalSettings.Get("splash.touchControls") != "false")
+        if (true || engine.GlobalSettings.Get("splash.touchControls") != "false")
         {
             _touchMouseController();
         }
