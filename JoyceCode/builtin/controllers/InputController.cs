@@ -468,7 +468,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     private void _onLogicalFrame(object? sender, float dt)
     {
-        if (true || engine.GlobalSettings.Get("splash.touchControls") != "false")
+        if (engine.GlobalSettings.Get("splash.touchControls") != "false")
         {
             _touchMouseController();
         }
