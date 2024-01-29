@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using BepuUtilities;
 using engine.joyce.components;
 using ObjLoader.Loader.Common;
@@ -9,6 +10,7 @@ namespace engine.news;
 
 class SubscriberEntry : IComparable<SubscriberEntry>
 {
+    public string Path;
     public List<string> SubscriptionPath;
     public Action<Event> Handler;
     public int SerialNumber;
@@ -45,7 +47,7 @@ class PathNode
     public SortedDictionary<string, PathNode> Children = new();
     public List<SubscriberEntry>? Subscribers = null;
 
-    public SubscriberEntry AddChild(List<string> listPath)
+    public void AddChild(List<string> listPath, SubscriberEntry se)
     {
         int l = listPath.Count;
         PathNode currNode = this;
@@ -69,12 +71,43 @@ class PathNode
                 };
                 currNode.Children.Add(path, childNode);
             }
+            
             /*
              * The parent node carrying the reference to the child node has an additional reference.
              */
             currNode.References++;
             currNode = childNode;
         }
+        
+        currNode.Subscribers.Add(se);
+    }
+
+
+    public void RemoveChild(List<string> listPath, SubscriberEntry seRef)
+    {
+        int l = listPath.Count;
+        PathNode currNode = this;
+        PathNode childNode = null;
+
+        for (int i = 0; i < l; i++)
+        {
+            string path = listPath[i];
+            if (!currNode.Children.TryGetValue(path, out childNode))
+            {
+                ErrorThrow($"Invalid tree unsubscribing {listPath}", m => new InvalidOperationException(m));
+                return;
+            }
+
+            currNode = childNode;
+            /*
+             * The parent node carrying the reference to the child node has an additional reference.
+             */
+            --currNode.References;
+
+            // TXWTODO: We might clean up unused nodes.
+        }
+        
+        currNode.Subscribers.RemoveAll(se => se.Path == seRef.Path && se.Handler == seRef.Handler);
     }
 }
 
@@ -83,7 +116,8 @@ public class SubscriptionManager
     private object _lo = new();
     private int _nextSerial = 1000;
 
-    private SortedList<SubscriberEntry, SubscriberEntry> _subscriberList = new();
+    //private SortedList<SubscriberEntry, SubscriberEntry> _subscriberList = new();
+    private PathNode _root = new() { Path = "", References = 1};
 
 #if true
     private int _findFirstSubscriber(List<string> listPath)
@@ -214,6 +248,7 @@ public class SubscriptionManager
         }
         SubscriberEntry se = new()
         {
+            Path = path,
             SubscriptionPath = listPath,
             Handler = handler,
             SerialNumber = 0
@@ -221,7 +256,7 @@ public class SubscriptionManager
         lock (_lo)
         {
             se.SerialNumber = _nextSerial++;
-            _subscriberList.Add(se, se);
+            _root.AddChild(listPath, se);
         }
     }
 
@@ -235,21 +270,21 @@ public class SubscriptionManager
         }
         SubscriberEntry seRef = new()
         {
+            Path = path,
             SubscriptionPath = listPath,
             Handler = handler,
             SerialNumber = 0
         };
         lock (_lo)
         {
-            int idx = _subscriberList.IndexOfKey(seRef);
-            if (-1 == idx)
-            {
-                Wonder($"Unable to find subscription path for \"{path}\".");
-                return;
-            }
-
-            _subscriberList.RemoveAt(idx);
+            _root.RemoveChild(listPath, seRef);
         }
+    }
+
+
+    private void _findSubscribers(List<string> pathListEvent, ref List<Action<Event>> listActions)
+    {
+        
     }
 
 
@@ -271,6 +306,7 @@ public class SubscriptionManager
         List<Action<Event>> listActions;
         lock (_lo)
         {
+#if false
             int idx = _findFirstSubscriber(ev.Type);
             if (idx < 0)
             {
@@ -289,6 +325,11 @@ public class SubscriptionManager
                 listActions.Add(sub.Handler);
                 idx++;
             }
+#else
+            var pathListEvent = _createList(ev.Type);
+            listActions = new();
+            _findSubscribers(pathListEvent, ref listActions)
+#endif
         }
 
         foreach (var action in listActions)
