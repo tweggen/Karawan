@@ -28,18 +28,6 @@ public class EventQueue
     {
         lock (_lo)
         {
-            if (ev.Type == Event.INPUT_MOUSE_RELEASED || ev.Type == Event.INPUT_TOUCH_RELEASED)
-            {
-                int a = 1;
-            }
-            if (ev.Type == Event.INPUT_MOUSE_PRESSED || ev.Type == Event.INPUT_TOUCH_PRESSED)
-            {
-                int a = 1;
-            }
-            if (ev.Type == Event.INPUT_MOUSE_MOVED)
-            {
-                int a = 1;
-            }
             _queue.Enqueue(ev);
         }
     }

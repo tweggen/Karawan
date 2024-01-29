@@ -376,7 +376,7 @@ namespace Splash.Silk
             if (GlobalSettings.Get("Android") == "true") return;
             
 #if DEBUG
-            if (true || System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
                 value = true;
             }
