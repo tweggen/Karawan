@@ -23,6 +23,10 @@ public class InputEventPipeline : engine.AModule
         {
             int a = 1;
         }
+        if (ev.Code == Event.INPUT_MOUSE_MOVED)
+        {
+            int a = 1;
+        }
         /*
          * We need to propagate the event through all of the parts z order.
          */

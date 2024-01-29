@@ -599,7 +599,21 @@ public class Engine
             var sm = I.Get<SubscriptionManager>();
             while (!eq.IsEmpty())
             {
-                sm.Handle(eq.Pop());
+                Event ev = eq.Pop();
+                if (ev.Code == Event.INPUT_MOUSE_RELEASED || ev.Code == Event.INPUT_TOUCH_RELEASED)
+                {
+                    int a = 1;
+                }
+                if (ev.Code == Event.INPUT_MOUSE_PRESSED || ev.Code == Event.INPUT_TOUCH_PRESSED)
+                {
+                    int a = 1;
+                }
+                if (ev.Code == Event.INPUT_MOUSE_MOVED)
+                {
+                    int a = 1;
+                }
+
+                sm.Handle(ev);
             }
         }
 
