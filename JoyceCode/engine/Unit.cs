@@ -1,4 +1,6 @@
 using System;
+using engine.news;
+
 namespace engine;
 using static engine.Logger;
 
@@ -22,6 +24,7 @@ public class Unit : IDisposable
         engine.news.SubscriptionManager.Unit();
         builtin.loader.Fbx.Unit();
         builtin.loader.GlTF.Unit();
+        SubscriptionManager.Unit();
         Trace("Startup unit tests passed.");
     }
 }

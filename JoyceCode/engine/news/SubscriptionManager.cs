@@ -1,25 +1,79 @@
 using System;
 using System.Collections.Generic;
+using BepuUtilities;
+using engine.joyce.components;
+using ObjLoader.Loader.Common;
 using static engine.Logger;
 
 namespace engine.news;
 
 class SubscriberEntry : IComparable<SubscriberEntry>
 {
-    public string SubscriptionPath;
+    public List<string> SubscriptionPath;
     public Action<Event> Handler;
     public int SerialNumber;
     
     public int CompareTo(SubscriberEntry other)
     {
-        int result = string.CompareOrdinal(SubscriptionPath, other.SubscriptionPath);
-        if (result != 0)
+        int thisLength = this.SubscriptionPath.Count;
+        int otherLength = other.SubscriptionPath.Count;
+        int l = Int32.Min(thisLength, otherLength);
+        for (int i = 0; i < l; ++i)
         {
-            return result;
+            int res = this.SubscriptionPath[i].CompareTo(other.SubscriptionPath[i]);
+            if (0 != res)
+            {
+                return res;
+            }
+        }
+
+        if (thisLength != otherLength)
+        {
+            return thisLength - otherLength;
         }
         else
         {
             return SerialNumber - other.SerialNumber;
+        }
+    }
+}
+
+class PathNode
+{
+    public required string Path;
+    public int References = 0;
+    public SortedDictionary<string, PathNode> Children = new();
+    public List<SubscriberEntry>? Subscribers = null;
+
+    public SubscriberEntry AddChild(List<string> listPath)
+    {
+        int l = listPath.Count;
+        PathNode currNode = this;
+        PathNode childNode = null;
+
+        for (int i = 0; i < l; i++)
+        {
+            string path = listPath[i];
+            if (currNode.Children.TryGetValue(path, out childNode))
+            {
+            }
+            else
+            {
+                /*
+                 * Child node for this part of the path, with one reference for this part.
+                 */
+                childNode = new PathNode()
+                {
+                    Path = listPath[i],
+                    References = 1
+                };
+                currNode.Children.Add(path, childNode);
+            }
+            /*
+             * The parent node carrying the reference to the child node has an additional reference.
+             */
+            currNode.References++;
+            currNode = childNode;
         }
     }
 }
@@ -31,7 +85,11 @@ public class SubscriptionManager
 
     private SortedList<SubscriberEntry, SubscriberEntry> _subscriberList = new();
 
-
+#if true
+    private int _findFirstSubscriber(List<string> listPath)
+    {
+    }
+#else
     /*
      * Return the index of the first entry greater or equal than path.
      */
@@ -125,13 +183,38 @@ public class SubscriptionManager
             return i0;
         }
     }
+#endif
     
     
+    private List<string> _createList(string path)
+    {
+        string[] arrParts = path.Split('.');
+        int l = arrParts.Length;
+        while (l > 0)
+        {
+            if (arrParts[l - 1].IsNullOrEmpty())
+            {
+                --l;
+                arrParts.Resize(l);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    
+
     public void Subscribe(string path, Action<Event> handler)
     {
+        var listPath = _createList(path);
+        if (null == listPath)
+        {
+            ErrorThrow($"Invalid path {path}", m => new ArgumentException(m));
+        }
         SubscriberEntry se = new()
         {
-            SubscriptionPath = path,
+            SubscriptionPath = listPath,
             Handler = handler,
             SerialNumber = 0
         };
@@ -142,12 +225,17 @@ public class SubscriptionManager
         }
     }
 
-
+    
     public void Unsubscribe(string path, Action<Event> handler)
     {
+        var listPath = _createList(path);
+        if (null == listPath)
+        {
+            ErrorThrow($"Invalid path {path}", m => new ArgumentException(m));
+        }
         SubscriberEntry seRef = new()
         {
-            SubscriptionPath = path,
+            SubscriptionPath = listPath,
             Handler = handler,
             SerialNumber = 0
         };
@@ -159,7 +247,8 @@ public class SubscriptionManager
                 Wonder($"Unable to find subscription path for \"{path}\".");
                 return;
             }
-            
+
+            _subscriberList.RemoveAt(idx);
         }
     }
 
@@ -220,30 +309,59 @@ public class SubscriptionManager
     static public int Unit()
     {
         int result = 0;
-        var subman = new SubscriptionManager();
-
-        subman.Subscribe("event.key.up", ev => {});
-        subman.Subscribe("event.key.down", ev => {});
-        subman.Subscribe("event", ev => {});
-        subman.Subscribe("event.collision", ev => {});
-        subman.Subscribe("absolutely.nothing", ev => {});
-        subman.Subscribe("freely.speaking", ev => {});
-
-        lock (subman._lo)
         {
-            int res = subman._findFirstSubscriber("event.key");
-            if (res != 1)
+            var subman = new SubscriptionManager();
+
+            subman.Subscribe("event.key.up", ev => { });
+            subman.Subscribe("event.key.down", ev => { });
+            subman.Subscribe("event", ev => { });
+            subman.Subscribe("event.collision", ev => { });
+            subman.Subscribe("absolutely.nothing", ev => { });
+            subman.Subscribe("freely.speaking", ev => { });
+
+            lock (subman._lo)
             {
-                Error("Wrong result.");
-                result -= 1;
+                int res = subman._findFirstSubscriber("event.key");
+                if (res != 1)
+                {
+                    Error("Wrong result.");
+                    result -= 1;
+                }
             }
         }
-
         if (0 != result)
         {
             ErrorThrow("Unit test failed.", (m) => new InvalidOperationException(m));
         }
 
+        {
+            var subman = new SubscriptionManager();
+
+            subman.Subscribe("input.", ev => { });
+            subman.Subscribe("input.mouse.pressed", ev => { });
+            subman.Subscribe("input.touch.pressed", ev => { });
+            subman.Subscribe("lifecycle.resume", ev => { });
+            subman.Subscribe("lifecycle.suspend", ev => { });
+            subman.Subscribe("map.range", ev => { });
+            subman.Subscribe("nogame.minimap.toggleMap", ev => { });
+            subman.Subscribe("nogame.playerhover.collision.anonymous", ev => { });
+            subman.Subscribe("nogame.playerhover.collision.car3", ev => { });
+            subman.Subscribe("nogame.playerhover.collision.cube", ev => { });
+            subman.Subscribe("nogame.playerhover.collision.polytope", ev => { });
+            subman.Subscribe("nogame.scenes.root.Scene.kickoff", ev => { });
+            subman.Subscribe("nogame.scenes.root.Scene.kickoff", ev => { });
+            subman.Subscribe("view.size.changed", ev => { });
+
+            lock (subman._lo)
+            {
+                int res = subman._findFirstSubscriber("input.mouse.released");
+                if (res != 0)
+                {
+                    Error("Wrong result.");
+                    result -= 1;
+                }
+            }
+        }
         return result;
     }
 }
