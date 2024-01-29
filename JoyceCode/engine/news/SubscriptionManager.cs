@@ -282,9 +282,36 @@ public class SubscriptionManager
     }
 
 
-    private void _findSubscribers(List<string> pathListEvent, ref List<Action<Event>> listActions)
+    private void _findSubscribers(PathNode nodeCurr, List<string> pathListEvent, int pathIndex, ref List<Action<Event>> listActions)
     {
-        
+        int l = pathListEvent.Count;
+        string path = pathListEvent[pathIndex];
+
+        /*
+         * nodeCurr is a match. It's subscribers can be added to the list of actions.
+         */
+        if (null != nodeCurr.Subscribers)
+        {
+            foreach (var sub in nodeCurr.Subscribers)
+            {
+                listActions.Add(sub);
+            }
+        }
+
+        /*
+         * Look, if we can recurse into more specific subscriber pathes.
+         */
+        if (nodeCurr.Children.TryGetValue(path, out var nodeChild))
+        {
+            ++pathIndex;
+            if (pathIndex == l)
+            {
+                /*
+                 * No further recursion possible, no leaf in the tree.
+                 */
+                return;
+            }
+        }
     }
 
 
@@ -328,7 +355,7 @@ public class SubscriptionManager
 #else
             var pathListEvent = _createList(ev.Type);
             listActions = new();
-            _findSubscribers(pathListEvent, ref listActions)
+            _findSubscribers(_root, pathListEvent, 0, ref listActions)
 #endif
         }
 
