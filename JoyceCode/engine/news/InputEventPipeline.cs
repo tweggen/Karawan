@@ -15,15 +15,15 @@ public class InputEventPipeline : engine.AModule
     
     void _onInputEvent(engine.news.Event ev)
     {
-        if (ev.Code == Event.INPUT_MOUSE_RELEASED || ev.Code == Event.INPUT_TOUCH_RELEASED)
+        if (ev.Type == Event.INPUT_MOUSE_RELEASED || ev.Type == Event.INPUT_TOUCH_RELEASED)
         {
             int a = 1;
         }
-        if (ev.Code == Event.INPUT_MOUSE_PRESSED || ev.Code == Event.INPUT_TOUCH_PRESSED)
+        if (ev.Type == Event.INPUT_MOUSE_PRESSED || ev.Type == Event.INPUT_TOUCH_PRESSED)
         {
             int a = 1;
         }
-        if (ev.Code == Event.INPUT_MOUSE_MOVED)
+        if (ev.Type == Event.INPUT_MOUSE_MOVED)
         {
             int a = 1;
         }
