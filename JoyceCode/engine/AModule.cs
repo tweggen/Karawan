@@ -48,9 +48,9 @@ public abstract class AModule : IModule
     }
 
 
-    public virtual void ModuleActivate(engine.Engine engine)
+    public virtual void ModuleActivate(engine.Engine engine0)
     {
-        _engine = engine;
+        _engine = engine0;
         _moduleDependencies = ModuleDepends();
         foreach (var moduleDependency in _moduleDependencies)
         {
@@ -61,6 +61,10 @@ public abstract class AModule : IModule
             }
 
             if (!condition) continue;
+            if (moduleDependency.ModuleType == typeof(engine.quest.Manager))
+            {
+                int a = 1;
+            }
             var module = moduleDependency.Implementation;
             if (module == null)
             {
@@ -72,7 +76,7 @@ public abstract class AModule : IModule
             if (moduleDependency.Activate)
             {
 
-                module.ModuleActivate(engine);
+                module.ModuleActivate(_engine);
                 _activatedModules.Add(module);
             }
             

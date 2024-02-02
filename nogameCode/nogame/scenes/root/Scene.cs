@@ -37,8 +37,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
         new MyModule<builtin.modules.Stats>() { Activate = false },
         new SharedModule<nogame.modules.story.Narration>() { Activate = false },
-        new SharedModule<builtin.controllers.InputController>(),
-        new SharedModule<engine.quest.Manager>(),
+        new SharedModule<builtin.controllers.InputController>()
     };
     
 
@@ -271,7 +270,7 @@ public class Scene : AModule, IScene, IInputPart
 
         _engine.AddModule(this);
         
-        M<engine.quest.Manager>().Get("nogame.quests.VisitAgentTwelve.Quest").ModuleActivate(_engine);
+        I.Get<engine.quest.Manager>().Get("nogame.quests.VisitAgentTwelve.Quest").ModuleActivate(_engine);
     }
 
 }
