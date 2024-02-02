@@ -1,22 +1,18 @@
 namespace engine.quest;
 
-public interface IQuest
+public class Description
 {
-    string GetTitle();
-    string GetDescription();
+    public string Title { get; set; }
+    public string ShortDescription { get; set; }
+    public string LongDescription { get; set; }
+}
+
+public interface IQuest : IModule
+{
+    Description GetDescription();
 
     /**
      * Is the quest active right now?
      */
     bool IsActive();
-    
-    /**
-     * Trigger the quest to be actually active.
-     */
-    void QuestActivate();
-    
-    /**
-     * Deactivate the quest.
-     */
-    void QuestDeactivate();
 }

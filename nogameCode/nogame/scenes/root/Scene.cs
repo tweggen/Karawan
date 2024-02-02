@@ -268,17 +268,6 @@ public class Scene : AModule, IScene, IInputPart
         
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
-        /*
-         * Test code to add a destination.
-         */
-        var newQuestTarget = new engine.quest.ToLocation()
-        {
-            RelativePosition = new Vector3(-407f, 100f, 396f),
-            SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-            MapCameraMask = nogame.modules.map.Module.MapCameraMask
-        };
-        newQuestTarget.OperatorApply(_engine);
-
         _engine.AddModule(this);
     }
 

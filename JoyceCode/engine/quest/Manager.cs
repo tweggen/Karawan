@@ -1,11 +1,10 @@
-#if false
+
 using System.Collections.Generic;
 
 namespace engine.quest;
 
-public class Manager
+public class Manager : ObjectFactory<string, IQuest>
 {
-    SortedDictionary<string, IQuest>
+    
 }
 
-#endif
