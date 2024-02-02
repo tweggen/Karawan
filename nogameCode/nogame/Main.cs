@@ -59,7 +59,13 @@ public class Main
         I.Register<builtin.controllers.InputController>(() => new InputController());
         I.Register<SetupMetaGen>(() => new SetupMetaGen());
         I.Register<nogame.intercity.Network>(() => new nogame.intercity.Network());
+
+        I.Register<engine.quest.Manager>(
+            () => new engine.quest.Manager()
+            );
+        
         I.Register<nogame.modules.story.Narration>(() => new nogame.modules.story.Narration());
+        
     }
 
 
@@ -132,6 +138,7 @@ public class Main
         engine.GlobalSettings.Set("nogame.CreateOSD", "true");
         engine.GlobalSettings.Set("nogame.CreateMap", "true");
         engine.GlobalSettings.Set("nogame.CreateMiniMap", "true");
+        // TXWTODO: Setting this to false crashes.
         engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
 
         engine.Props.Set("world.CreateStreetAnnotations", false);
@@ -155,6 +162,14 @@ public class Main
         main._setupImplementations();
         main._setupMetaGen();
         main._registerScenes();
+
+        /*
+         * Register the quests
+         */
+        // TXWTODO: Can't we do that in json?
+        I.Get<engine.quest.Manager>().RegisterFactory("nogame.quests.VisitAgentTwelve.Quest",
+            (_) => new nogame.quests.VisitAgentTwelve.Quest());
+        
         main._startScenes();
 
         {

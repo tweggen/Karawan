@@ -38,6 +38,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.modules.Stats>() { Activate = false },
         new SharedModule<nogame.modules.story.Narration>() { Activate = false },
         new SharedModule<builtin.controllers.InputController>(),
+        new SharedModule<engine.quest.Manager>(),
     };
     
 
@@ -256,7 +257,7 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<SceneSequencer>().AddScene(0, this);
 
         /*
-         * Finally, set the timeline trigger for unblanking the cameras and starting the show.
+         * Finally, set the timeline trigger for un-blanking the cameras and starting the show.
          *
          * Kick off 2 frames before nominal start.
          */
@@ -269,6 +270,8 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         _engine.AddModule(this);
+        
+        M<engine.quest.Manager>().Get("nogame.quests.VisitAgentTwelve.Quest").ModuleActivate(_engine);
     }
 
 }

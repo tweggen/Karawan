@@ -4,7 +4,7 @@ using engine.quest;
 
 namespace nogame.quests.VisitAgentTwelve;
 
-public class VisitAgentTwelve : AModule, IQuest
+public class Quest : AModule, IQuest
 {
     private bool _isActive = false;
     
@@ -29,7 +29,7 @@ public class VisitAgentTwelve : AModule, IQuest
     }
 
 
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         // TXWTODO: Create the quest id as a marker for deletion.
         _engine.RemoveModule(this);
@@ -38,7 +38,7 @@ public class VisitAgentTwelve : AModule, IQuest
     }
 
 
-    public void ModuleActive(engine.Engine engine0)
+    public override void ModuleActivate(engine.Engine engine0)
     {
         base.ModuleActivate(engine0);
         _isActive = true;
