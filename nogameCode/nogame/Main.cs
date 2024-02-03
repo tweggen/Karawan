@@ -81,19 +81,31 @@ public class Main
             var jeImplementations = je.GetProperty("implementations");
             foreach (var pair in jeImplementations.EnumerateObject())
             {
-                var className = pair.Value.GetProperty("className").GetString();
-                if (String.IsNullOrWhiteSpace(className))
+                string interfaceName = pair.Name;
+                string implementationName = null;
+                if (pair.Value.ValueKind == JsonValueKind.Object)
+                {
+                    implementationName = pair.Value.GetProperty("className").GetString();
+                }
+                if (String.IsNullOrWhiteSpace(implementationName))
                 {
                     /*
                      * Use the key as the className
                      */
-                    className = pair.Name;
+                    implementationName = interfaceName;
                 }
 
                 try
                 {
-                    Type type = engine.Engine.LoadType("nogame.dll", className);
-                    I.Instance.RegisterFactory(type, () => { return Activator.CreateInstance(type); });
+                    Type type = engine.Engine.LoadType("nogame.dll", interfaceName);
+                    if (interfaceName == implementationName)
+                    {
+                        I.Instance.RegisterFactory(type, () => { return Activator.CreateInstance(type); });
+                    }
+                    else
+                    {
+                        I.Instance.RegisterFactory(type, () => { return engine.Engine.LoadClass("nogame.dll",implementationName); });
+                    }
                 }
                 catch (Exception e)
                 {
