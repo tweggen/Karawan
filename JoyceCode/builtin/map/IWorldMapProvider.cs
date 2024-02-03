@@ -19,7 +19,6 @@ public interface IWorldMapProvider
      * game scale, i.e. 1 represents 1 meter.
      */
     public void WorldMapCreateEntities(
-        engine.Engine engine0,
         DefaultEcs.Entity parentEntity,
         uint cameraMask);
     
@@ -29,5 +28,5 @@ public interface IWorldMapProvider
      * The implementation is free not to render anything at all.
      * In that case, only the entities created on top will be rendered.
      */
-    public void WorldMapCreateBitmap(engine.Engine engine0, IFramebuffer target);
+    public void WorldMapCreateBitmap(IFramebuffer target);
 }

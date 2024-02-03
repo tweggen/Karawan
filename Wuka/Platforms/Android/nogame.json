@@ -1,0 +1,56 @@
+{
+  "globalSettings": 
+  {
+    "nogame.CreateOSD": "true",
+    "nogame.framebuffer.resolution": "368x207",
+    "nogame.CreateOSD": "true",
+    "nogame.CreateMap": "true",
+    "nogame.CreateMiniMap": "true",
+    "nogame.LogosScene.PlayTitleMusic": "true",
+  },
+  "mapProviders":
+  {
+    "0100/terrain":
+    {
+      "className": "nogame.map.WorldMapTerrainProvider",
+    },
+    "0110/transport":
+    {
+      "className": "nogame.map.WorldMapIntercityProvider",
+    },
+    "0120/cluster": 
+    {
+      "className": "nogame.map.WorldMapClusterProvider",
+    },
+  },
+  "properties":
+  {
+    "world.CreateStreetAnnotations": false,
+    "nogame.CreateTrees": true,
+    "nogame.CreateHouses": true,
+    "world.CreateCubeCharacters": true,
+    "world.CreateCar3Characters": true,
+    "world.CreateTramCharacters": true,
+    "world.CreateStreets": true,
+    "world.CreateClusterQuarters": true,
+    "debug.options.flatshading": false,
+    "nogame.characters.cube.maxDistance": 400.0,
+    "nogame.characters.car3.maxDistance": 800.0,
+    "nogame.characters.tram.maxDistance": 1600.0,
+  },
+  "scenes":
+  {
+    "root": 
+    {
+      "className": "nogame.scenes.root.Scene",
+    },
+    "logos": 
+    {
+      "className": "nogame.scenes.logos.Scene",
+    }
+  },
+  "startScene": 
+  {
+    "name": "logos"
+  }
+}

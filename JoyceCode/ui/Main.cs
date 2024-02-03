@@ -529,9 +529,9 @@ public class Main
         ImGui.End();
     }
 
-    public Main(Engine engine0)
+    public Main()
     {
-        _engine = engine0;
+        _engine = I.Get<engine.Engine>();
 
 #if false
         var io = ImGui.GetIO();

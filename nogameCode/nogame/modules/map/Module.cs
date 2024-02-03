@@ -433,7 +433,7 @@ public class Module : AModule, IInputPart
         base.ModuleActivate(engine0);
 
         DefaultEcs.Entity eEmpty = default;
-        I.Get<IMapProvider>().WorldMapCreateEntities(engine0, eEmpty, MapCameraMask);
+        I.Get<IMapProvider>().WorldMapCreateEntities(eEmpty, MapCameraMask);
         
         _needResources();
         _engine.AddModule(this);

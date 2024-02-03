@@ -1,4 +1,5 @@
 
+using System;
 using System.Text.Json;
 using System.Timers;
 using builtin.controllers;
@@ -23,9 +24,10 @@ public class Main
     
     private engine.Engine _e;
     
-    private DefaultMapProvider _mapProvider;
-
     private System.Timers.Timer _saveTimer;
+
+    private JsonDocument _jdocGame;
+    private JsonElement _jsonRoot;
 
     private void _onSaveTimer(object sender, ElapsedEventArgs e)
     {
@@ -33,17 +35,42 @@ public class Main
     }
     
     
-    private IMapProvider _setupMapProvider()
+    private void _setupMapProvider(JsonElement je)
     {
-        lock (_lo)
+        var mapProvider = I.Get<IMapProvider>();
+        try
         {
-            _mapProvider = new();
+            var jeMapProviders = je.GetProperty("mapProviders");
+            foreach (var pair in jeMapProviders.EnumerateObject())
+            {
+                try
+                {
+                    var className = pair.Value.GetProperty("className").GetString();
+                    if (String.IsNullOrWhiteSpace(className))
+                    {
+                        Warning($"Encountered null classname for {pair}.");
+                    }
+                    try
+                    {
+                        IWorldMapProvider wmp = engine.Engine.LoadClass("nogame.dll", className) as IWorldMapProvider;
+                        mapProvider.AddWorldMapLayer(pair.Name, wmp);
+                    }
+                    catch (Exception e)
+                    {
+                        Warning($"Unable to load world map layer {pair.Name}: {e}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Warning($"Error setting map provider {pair.Name}: {e}");
+                }
+            }
         }
-        _mapProvider.AddWorldMapLayer("0100/terrain", new WorldMapTerrainProvider());
-        _mapProvider.AddWorldMapLayer("0110/transport", new WorldMapIntercityProvider());
-        _mapProvider.AddWorldMapLayer("0120/cluster", new WorldMapClusterProvider());
+        catch (Exception e)
+        {
+            Warning($"Error reading map provider: {e}");
+        }
 
-        return _mapProvider;
     }
     
 
@@ -52,10 +79,10 @@ public class Main
         I.Register<DBStorage>(() => new DBStorage());
         I.Register<engine.streets.ClusterStorage>(() => new engine.streets.ClusterStorage());
 
-        I.Register<IMapProvider>(() => _setupMapProvider());
-        I.Register<MapFramebuffer>(() => new MapFramebuffer() {Engine = _e });
+        I.Register<IMapProvider>(() => new DefaultMapProvider());
+        I.Register<MapFramebuffer>(() => new MapFramebuffer());
         I.Register<Boom.Jukebox>(() => new Boom.Jukebox());
-        I.Register<joyce.ui.Main>(() => new joyce.ui.Main(_e));
+        I.Register<joyce.ui.Main>(() => new joyce.ui.Main());
         I.Register<builtin.controllers.InputController>(() => new InputController());
         I.Register<SetupMetaGen>(() => new SetupMetaGen());
         I.Register<nogame.intercity.Network>(() => new nogame.intercity.Network());
@@ -75,41 +102,25 @@ public class Main
         MetaGen.Instance().WorldPopulatingOperatorAdd(new nogame.characters.intercity.GenerateCharacterOperator(_e));
     }
 
-    private string jsonScenes = @"
-{
-    ""scenes"": {
-        ""root"": {
-            ""className"": ""nogame.scenes.root.Scene"",
-        },
-        ""logos"": {
-            ""className"": ""nogame.scenes.logos.Scene"",
-        }
-    },
-    ""startScene"": {
-        ""name"": ""logos""
-    }
-}
-";
-    
+   
     private SceneSequencer _sceneSequencer;
     
     private void _registerScenes()
     {
         _sceneSequencer = I.Get<SceneSequencer>();
-#if true
-        _sceneSequencer.AddFrom(JsonDocument.Parse(jsonScenes, new()
-        {
-            AllowTrailingCommas = true
-        }).RootElement);
-#else
-        _sceneSequencer.AddSceneFactory("root", () => new nogame.scenes.root.Scene());
-        _sceneSequencer.AddSceneFactory("logos", () => new nogame.scenes.logos.Scene());
-#endif
+        _sceneSequencer.AddFrom(_jsonRoot);
     }
 
     private void _startScenes()
     {
-        _sceneSequencer.SetMainScene("logos");
+        try
+        {
+            _sceneSequencer.SetMainScene(_jsonRoot.GetProperty("startScene").GetProperty("name").GetString());
+        }
+        catch (Exception e)
+        {
+            Warning($"Unable to set start scene from json.");
+        }
     }
 
 
@@ -123,46 +134,103 @@ public class Main
     }
 
 
+    private void _readGlobalSettings(JsonElement je)
+    {
+        try
+        {
+            var jeGlobalSettings = je.GetProperty("globalSettings");
+            foreach (var pair in jeGlobalSettings.EnumerateObject())
+            {
+                try
+                {
+                    engine.GlobalSettings.Set(pair.Name, pair.Value.GetString());
+                }
+                catch (Exception e)
+                {
+                    Warning($"Error setting properties {pair.Name}: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading properties: {e}");
+        }
+    }
+
+
+    private void _readProperties(JsonElement je)
+    {
+        try
+        {
+            var jeProperties = je.GetProperty("properties");
+            foreach (var pair in jeProperties.EnumerateObject())
+            {
+                try
+                {
+                    switch (pair.Value.ValueKind)
+                    {
+                        case JsonValueKind.False:
+                            engine.Props.Set(pair.Name, false);
+                           break;
+                        case JsonValueKind.String:
+                            engine.Props.Set(pair.Name, pair.Value.GetString());
+                            break;
+                        case JsonValueKind.True:
+                            engine.Props.Set(pair.Name, true);
+                            break;
+                        case JsonValueKind.Undefined:
+                        case JsonValueKind.Number:
+                            engine.Props.Set(pair.Name, pair.Value.GetSingle());
+                            break;
+                        case JsonValueKind.Object:
+                        case JsonValueKind.Null:
+                        case JsonValueKind.Array:
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Warning($"Error setting global setting {pair.Name}: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading global settings: {e}");
+        }
+    }
+
+
+    private void _setupMapProviders(JsonElement je)
+    {
+        
+    }
+    
+
     public Main(engine.Engine e)
     {
         _e = e;
+
+        _jdocGame = JsonDocument.Parse(engine.Assets.Open("nogame.json"), new()
+        {
+            AllowTrailingCommas = true
+        });
+        _jsonRoot = _jdocGame.RootElement;
+        
+        _readGlobalSettings(_jsonRoot);
+        _readProperties(_jsonRoot);
+        
+        _setupImplementations();
+        _setupMapProvider(_jsonRoot);
+        _setupMetaGen();
+        _registerScenes();
     }
     
     
     public static void Start(engine.Engine e)
     {
         Main main = new(e);
-
-        engine.GlobalSettings.Set("nogame.CreateOSD", "true");
-        engine.GlobalSettings.Set("nogame.framebuffer.resolution", "368x207");
-        engine.GlobalSettings.Set("nogame.CreateOSD", "true");
-        engine.GlobalSettings.Set("nogame.CreateMap", "true");
-        engine.GlobalSettings.Set("nogame.CreateMiniMap", "true");
-        // TXWTODO: Setting this to false crashes.
-        engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
-
-        engine.Props.Set("world.CreateStreetAnnotations", false);
-        engine.Props.Set("nogame.CreateTrees", true);
-        engine.Props.Set("nogame.CreateHouses", true);
-        engine.Props.Set("world.CreateCubeCharacters", true);
-        engine.Props.Set("world.CreateCar3Characters", true);
-        engine.Props.Set("world.CreateTramCharacters", true);
-        engine.Props.Set("world.CreateStreets", true);
-        engine.Props.Set("world.CreateClusterQuarters", true);
-
-        engine.Props.Set("nogame.CreateHouses", "true");
-        engine.Props.Set("nogame.CreateTrees", "true");
-
-
-        engine.Props.Set("debug.options.flatshading", false);
-        engine.Props.Set("nogame.characters.cube.maxDistance", 400f);
-        engine.Props.Set("nogame.characters.car3.maxDistance", 800f);
-        engine.Props.Set("nogame.characters.tram.maxDistance", 1600f);
         
-        main._setupImplementations();
-        main._setupMetaGen();
-        main._registerScenes();
-
         /*
          * Register the quests
          */

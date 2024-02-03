@@ -58,7 +58,7 @@ public class DefaultMapProvider : IMapProvider
     }
 
     
-    public void WorldMapCreateEntities(engine.Engine engine0, Entity parentEntity, uint cameraMask)
+    public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
     {
         lock (_lo)
         {
@@ -72,12 +72,12 @@ public class DefaultMapProvider : IMapProvider
 
         _callWorldMapProviders((worldMapProvider) =>
         {
-            worldMapProvider.WorldMapCreateEntities(engine0, parentEntity, cameraMask);
+            worldMapProvider.WorldMapCreateEntities(parentEntity, cameraMask);
         });
     }
 
     
-    public void WorldMapCreateBitmap(engine.Engine engine0, IFramebuffer target)
+    public void WorldMapCreateBitmap(IFramebuffer target)
     {
         lock (_lo)
         {
@@ -91,7 +91,7 @@ public class DefaultMapProvider : IMapProvider
 
         _callWorldMapProviders((worldMapProvider) =>
         {
-            worldMapProvider.WorldMapCreateBitmap(engine0, target);
+            worldMapProvider.WorldMapCreateBitmap(target);
         });
     }
     

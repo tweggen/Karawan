@@ -19,13 +19,14 @@ namespace nogame.map;
 public class WorldMapClusterProvider : IWorldMapProvider
 {
     public float ClusterNameY { get; set; } = 250f;
-    public void WorldMapCreateEntities(engine.Engine engine0, Entity parentEntity, uint cameraMask)
+    public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
     {
+        var e = I.Get<engine.Engine>();
         var clusterList = engine.world.ClusterList.Instance();
         foreach (var clusterDesc in clusterList.GetClusterList())
         {
             float width = 240f;
-            DefaultEcs.Entity eCity = engine0.CreateEntity($"nogame.map.city {clusterDesc.Name}");
+            DefaultEcs.Entity eCity = e.CreateEntity($"nogame.map.city {clusterDesc.Name}");
             I.Get<TransformApi>().SetTransforms(eCity, true, 0x00800000, 
                 Quaternion.Identity, clusterDesc.Pos with { Y = ClusterNameY });
             eCity.Set(new engine.draw.components.OSDText(
@@ -102,7 +103,7 @@ public class WorldMapClusterProvider : IWorldMapProvider
     }
     
     
-    public void WorldMapCreateBitmap(engine.Engine engine0, IFramebuffer target)
+    public void WorldMapCreateBitmap(IFramebuffer target)
     {
         try
         {

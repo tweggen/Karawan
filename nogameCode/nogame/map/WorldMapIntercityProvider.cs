@@ -17,7 +17,7 @@ namespace nogame.map;
  */
 public class WorldMapIntercityProvider : IWorldMapProvider
 {
-    public void WorldMapCreateEntities(engine.Engine engine0, Entity parentEntity, uint cameraMask)
+    public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
     {
         
     }
@@ -114,7 +114,7 @@ public class WorldMapIntercityProvider : IWorldMapProvider
     }
     
     
-    public void WorldMapCreateBitmap(engine.Engine engine0, IFramebuffer target)
+    public void WorldMapCreateBitmap(IFramebuffer target)
     {
         try
         {
