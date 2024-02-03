@@ -120,19 +120,76 @@ public class Main
     }
 
 
-    private void _setupMetaGen()
+    private void _setupBuildingOperators(JsonElement je)
     {
-        MetaGen.Instance().WorldBuildingOperatorAdd(new nogame.characters.intercity.GenerateTracksOperator(_e));
-        MetaGen.Instance().WorldPopulatingOperatorAdd(new nogame.characters.intercity.GenerateCharacterOperator(_e));
+        try
+        {
+            foreach (var jeOp in je.EnumerateArray())
+            {
+                string className = jeOp.GetProperty("className").GetString();
+                try
+                {
+                    IWorldOperator wop = engine.Engine.LoadClass("nogame.dll", className) as IWorldOperator;
+                    MetaGen.Instance().WorldBuildingOperatorAdd(wop);
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to instantiate world building operator {className}: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading implementations: {e}");
+        }
+    }
+
+
+    private void _setupPopulatingOperators(JsonElement je)
+    {
+        try
+        {
+            foreach (var jeOp in je.EnumerateArray())
+            {
+                string className = jeOp.GetProperty("className").GetString();
+                try
+                {
+                    IWorldOperator wop = engine.Engine.LoadClass("nogame.dll", className) as IWorldOperator;
+                    MetaGen.Instance().WorldPopulatingOperatorAdd(wop);
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to instantiate world populating operator {className}: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading implementations: {e}");
+        }
+    }
+
+
+    private void _setupMetaGen(JsonElement je)
+    {
+        try
+        {
+            _setupBuildingOperators(je.GetProperty("metaGen").GetProperty("buildingOperators"));
+            _setupPopulatingOperators(je.GetProperty("metaGen").GetProperty("populatingOperators"));
+        }
+        catch (Exception e)
+        {
+            Warning($"Unable to setup metagen: {e}");
+        }
     }
 
    
     private SceneSequencer _sceneSequencer;
     
-    private void _registerScenes()
+    private void _registerScenes(JsonElement je)
     {
         _sceneSequencer = I.Get<SceneSequencer>();
-        _sceneSequencer.AddFrom(_jsonRoot);
+        _sceneSequencer.AddFrom(je);
     }
 
     private void _startScenes()
@@ -246,8 +303,8 @@ public class Main
         
         _setupImplementations(_jsonRoot);
         _setupMapProvider(_jsonRoot);
-        _setupMetaGen();
-        _registerScenes();
+        _setupMetaGen(_jsonRoot);
+        _registerScenes(_jsonRoot);
     }
     
     
@@ -284,6 +341,7 @@ public class Main
             I.Register<GameState>(() => gameState);
         }
 
+        // TXWTODO: How can we remove this call?
         I.Get<Boom.ISoundAPI>().SetupDone();
 
         main._startAutoSave();

@@ -40,6 +40,21 @@
       "className": "nogame.map.WorldMapClusterProvider",
     },
   },
+  "metaGen":
+  {
+    "buildingOperators":
+    [
+      {
+        "className": "nogame.characters.intercity.GenerateTracksOperator",
+      } 
+    ],
+    "populatingOperators":
+    [
+      {
+        "className": "nogame.characters.intercity.GenerateCharacterOperator",
+      }      
+    ]
+  },
   "properties":
   {
     "world.CreateStreetAnnotations": false,
