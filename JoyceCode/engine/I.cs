@@ -33,24 +33,31 @@ public sealed class I
         }
     }
 
-    public void RegisterFactory<T>(Func<Object> factory)
+
+    public void RegisterFactory(Type type, Func<Object> factory)
     {
         lock (_lo)
         {
-            if (_mapInstances.TryGetValue(typeof(T), out _))
+            if (_mapInstances.TryGetValue(type, out _))
             {
-                ErrorThrow($"Already registered {typeof(T).FullName}.", (m) => throw new InvalidOperationException(m));
+                ErrorThrow($"Already registered {type.FullName}.", (m) => throw new InvalidOperationException(m));
             }
             InstanceEntry instanceEntry = new()
             {
                 Lock = new(),
-                InterfaceType = typeof(T),
+                InterfaceType = type,
                 FactoryFunction = factory,
                 Instance = null
             };
 
-            _mapInstances[typeof(T)] = instanceEntry;
+            _mapInstances[type] = instanceEntry;
         }
+    }
+    
+    
+    public void RegisterFactory<T>(Func<Object> factory)
+    {
+        RegisterFactory(typeof(T), factory);
     }
 
 
@@ -106,30 +113,6 @@ public sealed class I
         return (T)GetInstance(typeof(T));
     }
 
-
-    #if false
-    public Object GetInstance(string typeName)
-    {
-        InstanceEntry ie = null;
-        lock (_lo)
-        {
-            foreach (var kvp in _mapInstances)
-            {
-                if (kvp.Key.ToString() == typeName)
-                {
-                    ie = kvp.Value;
-                }
-            }
-        }
-
-        if (null == ie)
-        {
-            ErrorThrow($"Requested unknown instance type {typeName}.", (m) => new ArgumentException(m));
-        }
-
-        return _getInstance(ie);
-    }
-    #endif
 
 
     public static T Get<T>()

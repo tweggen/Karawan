@@ -142,16 +142,16 @@ public class Engine
     public event EventHandler<EngineState> EngineStateChanged;
 
 
-    public static object? LoadClass(string dllPath, string fullClassName)
+    public static Type LoadType(string dllPath, string fullClassName)
     {
         try
         {
             bool foundDll = true;
             var execDirectoryPath = 
                 Path.GetDirectoryName(
-                    System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
+                        System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
                     .Replace("file:/", "");
-                    //.Replace(".__override__", "");
+            
             if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
             {
                 execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
@@ -190,6 +190,22 @@ public class Engine
                 }
             }
 
+            return type;
+        }
+        catch (Exception e)
+        {
+            Warning($"Unable to load class {fullClassName} from assembly {dllPath}.");
+        }
+
+        return null;
+
+    }
+
+    public static object? LoadClass(string dllPath, string fullClassName)
+    {
+        try
+        {
+            Type type = LoadType(dllPath, fullClassName); 
             if (null != type)
             {
                 object instance = Activator.CreateInstance(type);

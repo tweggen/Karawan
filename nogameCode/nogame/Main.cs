@@ -74,25 +74,37 @@ public class Main
     }
     
 
-    private void _setupImplementations()
+    private void _setupImplementations(JsonElement je)
     {
-        I.Register<DBStorage>(() => new DBStorage());
-        I.Register<engine.streets.ClusterStorage>(() => new engine.streets.ClusterStorage());
+        try
+        {
+            var jeImplementations = je.GetProperty("implementations");
+            foreach (var pair in jeImplementations.EnumerateObject())
+            {
+                var className = pair.Value.GetProperty("className").GetString();
+                if (String.IsNullOrWhiteSpace(className))
+                {
+                    /*
+                     * Use the key as the className
+                     */
+                    className = pair.Name;
+                }
 
-        I.Register<IMapProvider>(() => new DefaultMapProvider());
-        I.Register<MapFramebuffer>(() => new MapFramebuffer());
-        I.Register<Boom.Jukebox>(() => new Boom.Jukebox());
-        I.Register<joyce.ui.Main>(() => new joyce.ui.Main());
-        I.Register<builtin.controllers.InputController>(() => new InputController());
-        I.Register<SetupMetaGen>(() => new SetupMetaGen());
-        I.Register<nogame.intercity.Network>(() => new nogame.intercity.Network());
-
-        I.Register<engine.quest.Manager>(
-            () => new engine.quest.Manager()
-            );
-        
-        I.Register<nogame.modules.story.Narration>(() => new nogame.modules.story.Narration());
-        
+                try
+                {
+                    Type type = engine.Engine.LoadType("nogame.dll", className);
+                    I.Instance.RegisterFactory(type, () => { return Activator.CreateInstance(type); });
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to load implementation type {pair.Name}: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading implementations: {e}");
+        }
     }
 
 
@@ -220,7 +232,7 @@ public class Main
         _readGlobalSettings(_jsonRoot);
         _readProperties(_jsonRoot);
         
-        _setupImplementations();
+        _setupImplementations(_jsonRoot);
         _setupMapProvider(_jsonRoot);
         _setupMetaGen();
         _registerScenes();

@@ -8,6 +8,23 @@
     "nogame.CreateMiniMap": "true",
     "nogame.LogosScene.PlayTitleMusic": "true",
   },
+  "implementations":
+  {
+    "engine.DBStorage": null,
+    "engine.streets.ClusterStorage": null,
+    "builtin.map.IMapProvider":
+    {
+      "className": "builtin.map.DefaultMapProvider",
+    },
+    "nogame.map.MapFramebuffer": null,
+    "Boom.Jukebox": null,
+    "joyce.ui.Main": null,
+    "builtin.controllers.InputController": null,
+    "nogame.SetupMetaGen": null,
+    "nogame.intercity.Network": null,
+    "engine.quest.Manager": null,
+    "nogame.modules.story.Narration": null
+  },
   "mapProviders":
   {
     "0100/terrain":
