@@ -125,6 +125,7 @@
 	  <None Remove="Platforms\Android\lvl-6.ogg" />
 	  <None Remove="Platforms\Android\mapicons.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon_android.png" />
+	  <None Remove="Platforms\Android\nogame.json" />
 	  <None Remove="Platforms\Android\plentomatic-small.png" />
 	  <None Remove="Platforms\Android\plentomatic.png" />
 	  <None Remove="Platforms\Android\pling01.ogg" />
@@ -268,6 +269,9 @@
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\mapicons.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\nogame.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\plentomatic-small.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
