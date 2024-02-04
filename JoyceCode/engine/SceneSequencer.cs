@@ -166,11 +166,10 @@ public class SceneSequencer : IDisposable
     }
 
 
-    public void AddFrom(JsonElement je)
+    public void AddFrom(JsonElement jeScenes)
     {
         try
         {
-            var jeScenes = je.GetProperty("scenes");
             foreach (var pair in jeScenes.EnumerateObject())
             {
                 var jeClassDesc = pair.Value;
@@ -195,7 +194,7 @@ public class SceneSequencer : IDisposable
                 });
             }
 
-            var jeStartScene = je.GetProperty("startScene");
+            var jeStartScene = jeScenes.GetProperty("startScene");
             string strStartSceneName = jeStartScene.GetProperty("name").GetString();
             SetMainScene(strStartSceneName);
         }

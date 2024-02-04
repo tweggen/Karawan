@@ -132,6 +132,14 @@ namespace engine
         }
         
 
+        public static void ErrorThrow<E>(in string msg) where E : new()
+        {
+            var logEntry = _createLogEntry(Level.Error, msg);
+            Log(Level.Error, logEntry);
+            throw (System.Exception) Activator.CreateInstance(typeof(E),msg);
+        }
+        
+
         public static void Fatal(in string module, in string msg)
         {
             var logEntry = _createLogEntry(Level.Error, (msg!=null)?msg:"[no message provided]");

@@ -122,8 +122,8 @@ namespace Wuka
                 return api;
             });
 
-            nogame.Main.Start(_engine);
-
+            engine.casette.Loader.LoadStartGame(_engine, "nogame.json");
+            
             _engine.Execute();
 
             I.Get<Boom.ISoundAPI>().Dispose();

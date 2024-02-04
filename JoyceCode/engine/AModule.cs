@@ -61,10 +61,6 @@ public abstract class AModule : IModule
             }
 
             if (!condition) continue;
-            if (moduleDependency.ModuleType == typeof(engine.quest.Manager))
-            {
-                int a = 1;
-            }
             var module = moduleDependency.Implementation;
             if (module == null)
             {
@@ -75,11 +71,16 @@ public abstract class AModule : IModule
             _mapModules.Add(moduleDependency.ModuleType, module);
             if (moduleDependency.Activate)
             {
-
-                module.ModuleActivate(_engine);
+                /*
+                 * Only activate the module if it hasn't been activated yet. 
+                 */
+                // TXWTODO: This basically is a workaround.
+                if (!_engine.HasModule(module))
+                {
+                    module.ModuleActivate(_engine);
+                }
                 _activatedModules.Add(module);
             }
-            
         }
     }
 

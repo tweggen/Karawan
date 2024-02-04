@@ -1,16 +1,17 @@
 {
   "globalSettings": 
   {
-    "nogame.CreateOSD": "true",
+    "nogame.CreateOSD": true,
     "nogame.framebuffer.resolution": "368x207",
-    "nogame.CreateOSD": "true",
-    "nogame.CreateMap": "true",
-    "nogame.CreateMiniMap": "true",
-    "nogame.LogosScene.PlayTitleMusic": "true",
+    "nogame.CreateOSD": true,
+    "nogame.CreateMap": true,
+    "nogame.CreateMiniMap": true,
+    "nogame.LogosScene.PlayTitleMusic": true,
   },
   "implementations":
   {
     "engine.DBStorage": null,
+    "nogame.modules.AutoSave": null,
     "engine.streets.ClusterStorage": null,
     "builtin.map.IMapProvider":
     {
@@ -55,6 +56,13 @@
       }      
     ]
   },
+  "modules":
+  {
+    "root": 
+    {
+      "className": "nogame.Main"  
+    }
+  },
   "properties":
   {
     "world.CreateStreetAnnotations": false,
@@ -69,6 +77,10 @@
     "nogame.characters.cube.maxDistance": 400.0,
     "nogame.characters.car3.maxDistance": 800.0,
     "nogame.characters.tram.maxDistance": 1600.0,
+  },
+  "quests":
+  {
+    "nogame.quests.VisitAgentTwelve.Quest": null,
   },
   "scenes":
   {

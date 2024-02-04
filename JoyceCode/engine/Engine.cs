@@ -150,7 +150,9 @@ public class Engine
             var execDirectoryPath = 
                 Path.GetDirectoryName(
                         System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
-                    .Replace("file:/", "");
+                    .Replace("file:/", "")
+                    .Replace("file:\\", "")
+                ;
             
             if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
             {
@@ -166,7 +168,15 @@ public class Engine
             }
 
             Type type = null;
-            if (!foundDll)
+            if (foundDll)
+            {
+                Assembly asm = Assembly.LoadFrom(Path.Combine(execDirectoryPath, dllPath));
+                if (null != asm)
+                {
+                    type = asm.GetType(fullClassName);
+                }
+            }
+            if (null == type)
             {
                 System.Reflection.Assembly[] allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
                 foreach (var asmCurr in allAssemblies)
@@ -178,18 +188,7 @@ public class Engine
                     }
                 }
             }
-            else
-            {
-                if (null == type)
-                {
-                    Assembly asm = Assembly.LoadFrom(Path.Combine(execDirectoryPath, dllPath));
-                    if (null != asm)
-                    {
-                        type = asm.GetType(fullClassName);
-                    }
-                }
-            }
-
+    
             return type;
         }
         catch (Exception e)
@@ -738,6 +737,16 @@ public class Engine
     private double _timeLeft;
     private int _fpsLogical = 60;
 
+
+
+    public bool HasModule(in IModule module)
+    {
+        lock (_lo)
+        {
+            return _listModules.Contains(module);
+        }
+    }
+    
 
     public void AddModule(in IModule module)
     {

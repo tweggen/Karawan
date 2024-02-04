@@ -135,11 +135,8 @@ public class DesktopMain
             return api;
         });
 
-        /*
-         * Load the default game for this engine.
-         */
-        LoadGame(e, "nogame.dll", "nogame.Main", "Start");
-
+        engine.casette.Loader.LoadStartGame(e, "nogame.json");
+        
         e.Execute();
 
         // Add Call to remove an implementations.
