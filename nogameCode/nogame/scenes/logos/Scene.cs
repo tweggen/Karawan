@@ -150,6 +150,7 @@ public class Scene : AModule, IScene
             TimeSpan.FromMilliseconds(800),
             _preload);
 
+        #if false
         _modTitle.Add(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
@@ -180,6 +181,38 @@ public class Scene : AModule, IScene
             EndTransform =  new engine.joyce.components.Transform3(
                 true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0.1f, -1f)),
         });
+        #else
+        _modTitle.Add(new TitleCard()
+        {
+            StartReference = TimepointTitlesongStarted,
+            StartOffset = TimeSpan.FromMilliseconds(500),
+            EndReference = TimepointTitlesongStarted,
+            EndOffset = TimeSpan.FromMilliseconds(1200),
+            Duration = 700,
+            Size = new(64f, 64f/1280f*400f),
+            AlbedoTexture = new Texture("titlelogo2_albedo.png"),
+            EmissiveTexture = new Texture("titlelogo2_emissive.png"),
+            StartTransform =  new engine.joyce.components.Transform3(
+                true, 0x01000000, Quaternion.Identity, new Vector3(2f, -10f, 0f), Vector3.One * 1.3f),
+            EndTransform =  new engine.joyce.components.Transform3(
+                true, 0x01000000, Quaternion.Identity, new Vector3(2f, -10f, 0f), Vector3.One * 1.3f)
+        });
+        _modTitle.Add(new TitleCard()
+        {
+            StartReference = TimepointTitlesongStarted,
+            StartOffset = TimeSpan.FromMilliseconds(2000),
+            EndReference = TimepointTitlesongStarted,
+            EndOffset = TimeSpan.FromMilliseconds(4000),
+            Duration = 2000,
+            Size = new(64f, 64f/1280f*400f),
+            AlbedoTexture = new Texture("titlelogo2_albedo.png"),
+            EmissiveTexture = new Texture("titlelogo2_emissive.png"),
+            StartTransform =  new engine.joyce.components.Transform3(
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -5f, -7f), Vector3.One * 0.65f),
+            EndTransform =  new engine.joyce.components.Transform3(
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.8f, -7f), Vector3.One * 0.64f)
+        });
+        #endif
         
         _modTitle.ModuleActivate(_engine);
     }

@@ -36,7 +36,9 @@ public class TitleModule : engine.AModule
                 card.StartTransform.Rotation, card.EndTransform.Rotation,
                 (float)t),
             card.StartTransform.Position +
-            (card.EndTransform.Position - card.StartTransform.Position) * ((float)t/1000f)
+            (card.EndTransform.Position - card.StartTransform.Position) * ((float)t/1000f),
+            card.StartTransform.Scale+
+            (card.EndTransform.Scale-card.StartTransform.Scale) * ((float)t/1000f)
         );
     }
 
@@ -70,7 +72,7 @@ public class TitleModule : engine.AModule
         _engine.QueueEntitySetupAction("titlecard", (DefaultEcs.Entity entity) =>
         {
             ace.Entity = entity;
-            I.Get<engine.joyce.TransformApi>().SetTransforms(entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
+            I.Get<engine.joyce.TransformApi>().SetTransforms(entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position, t3.Scale);
             entity.Set(new engine.joyce.components.Instance3(ace.InstanceDesc));
             lock (_lo)
             {
@@ -113,7 +115,7 @@ public class TitleModule : engine.AModule
         {
             float t = (float)(now- ace.StartTime).TotalMilliseconds;
             _computeTransformAt(ace.Card, t, out engine.joyce.components.Transform3 t3);
-            I.Get<engine.joyce.TransformApi>().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position);
+            I.Get<engine.joyce.TransformApi>().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position, t3.Scale);
 #if false
             {
                 float inFadeOut = t - ((float)ace.Card.Duration - ace.Card.FadeOutTime*1000f);

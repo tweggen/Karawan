@@ -252,12 +252,6 @@
 	  <AndroidAsset Include="Platforms\Android\LIghtingVS.vert">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
-	  <AndroidAsset Include="Platforms\Android\logos.joyce.albedo-joyce-engine.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidAsset>
-	  <AndroidAsset Include="Platforms\Android\logos.joyce.emissive-joyce-engine.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\lorem.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
@@ -382,9 +376,6 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\terminal.ogg">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidAsset>
-	  <AndroidAsset Include="Platforms\Android\titlelogo.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\tram1.mtl">
