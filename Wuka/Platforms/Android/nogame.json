@@ -6,7 +6,7 @@
     "nogame.CreateOSD": true,
     "nogame.CreateMap": true,
     "nogame.CreateMiniMap": true,
-    "nogame.LogosScene.PlayTitleMusic": true,
+    "nogame.LogosScene.PlayTitleMusic": true
   },
   "implementations":
   {
@@ -15,7 +15,7 @@
     "engine.streets.ClusterStorage": null,
     "builtin.map.IMapProvider":
     {
-      "className": "builtin.map.DefaultMapProvider",
+      "className": "builtin.map.DefaultMapProvider"
     },
     "nogame.map.MapFramebuffer": null,
     "Boom.Jukebox": null,
@@ -30,29 +30,29 @@
   {
     "0100/terrain":
     {
-      "className": "nogame.map.WorldMapTerrainProvider",
+      "className": "nogame.map.WorldMapTerrainProvider"
     },
     "0110/transport":
     {
-      "className": "nogame.map.WorldMapIntercityProvider",
+      "className": "nogame.map.WorldMapIntercityProvider"
     },
     "0120/cluster": 
     {
-      "className": "nogame.map.WorldMapClusterProvider",
-    },
+      "className": "nogame.map.WorldMapClusterProvider"
+    }
   },
   "metaGen":
   {
     "buildingOperators":
     [
       {
-        "className": "nogame.characters.intercity.GenerateTracksOperator",
+        "className": "nogame.characters.intercity.GenerateTracksOperator"
       } 
     ],
     "populatingOperators":
     [
       {
-        "className": "nogame.characters.intercity.GenerateCharacterOperator",
+        "className": "nogame.characters.intercity.GenerateCharacterOperator"
       }      
     ]
   },
@@ -76,25 +76,22 @@
     "debug.options.flatshading": false,
     "nogame.characters.cube.maxDistance": 400.0,
     "nogame.characters.car3.maxDistance": 800.0,
-    "nogame.characters.tram.maxDistance": 1600.0,
+    "nogame.characters.tram.maxDistance": 1600.0
   },
   "quests":
   {
-    "nogame.quests.VisitAgentTwelve.Quest": null,
+    "nogame.quests.VisitAgentTwelve.Quest": null
   },
   "scenes":
   {
-    "root": 
-    {
-      "className": "nogame.scenes.root.Scene",
+    "catalogue": {
+    "root": {
+      "className": "nogame.scenes.root.Scene"
     },
-    "logos": 
-    {
-      "className": "nogame.scenes.logos.Scene",
-    }
+      "logos": {
+        "className": "nogame.scenes.logos.Scene"
+      }
+    },
+    "startup": "logos"
   },
-  "startScene": 
-  {
-    "name": "logos"
-  }
 }
