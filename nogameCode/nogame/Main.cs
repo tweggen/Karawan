@@ -1,24 +1,12 @@
-
-using System;
 using System.Collections.Generic;
-using System.IO.Pipes;
-using System.Text.Json;
-using System.Timers;
-using builtin.controllers;
-using builtin.map;
 using engine;
-using engine.world;
-using Newtonsoft.Json.Linq;
-using nogame.map;
-using static engine.Logger;
 
 namespace nogame;
 
 /**
- * This is the game implementation main class.
- * It should
- * - setup te scenes in a way that a start set is or will be set
- * - setup all dependencies
+ * This is the main game module.
+ * It triggers all other modules required by this game and can
+ * handle custom startup code.
  */
 public class Main : AModule
 {
