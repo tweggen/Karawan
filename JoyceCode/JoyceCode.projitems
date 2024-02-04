@@ -47,6 +47,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\AreaEnteredBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerSpinBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerVanishBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\IQuest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\FixedPosViewer.cs" />

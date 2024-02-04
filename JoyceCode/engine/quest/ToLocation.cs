@@ -52,6 +52,8 @@ public class ToLocation : engine.world.IOperator
     public bool DoCreateVisibleTarget { get; set; } = true;
 
 
+    private DefaultEcs.Entity _eMarker; 
+        
     private static Lazy<engine.joyce.InstanceDesc> _jMeshGoal = new(
         () => InstanceDesc.CreateFromMatMesh(
             new MatMesh(
@@ -73,6 +75,7 @@ public class ToLocation : engine.world.IOperator
              * At this point we can call whatever has been reached.
              */
             Trace("Called onCollision of ToLocation.");
+            _eMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
         }
     }
 
@@ -82,17 +85,17 @@ public class ToLocation : engine.world.IOperator
      */
     private void _createTargetInstance(engine.Engine e, DefaultEcs.Entity eParent)
     {
-        DefaultEcs.Entity eMarker = e.CreateEntity($"quest.goal {Name} marker");
-        eMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
-        I.Get<TransformApi>().SetTransforms(eMarker, true, 0x0000ffff, Quaternion.Identity, Vector3.Zero);
-        I.Get<HierarchyApi>().SetParent(eMarker, eParent);
-        eMarker.Set(
+        _eMarker = e.CreateEntity($"quest.goal {Name} marker");
+        _eMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
+        I.Get<TransformApi>().SetTransforms(_eMarker, true, 0x0000ffff, Quaternion.Identity, Vector3.Zero);
+        I.Get<HierarchyApi>().SetParent(_eMarker, eParent);
+        _eMarker.Set(
             new engine.behave.components.Behavior(_goalMarkerSpinBehavior.Value)
             {
                 MaxDistance = 2000f
             });
         DefaultEcs.Entity eMapMarker = e.CreateEntity($"quest goal {Name} map marker");
-        I.Get<HierarchyApi>().SetParent(eMapMarker, eMarker); 
+        I.Get<HierarchyApi>().SetParent(eMapMarker, _eMarker); 
         I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
             MapCameraMask, Quaternion.Identity, Vector3.Zero);
 

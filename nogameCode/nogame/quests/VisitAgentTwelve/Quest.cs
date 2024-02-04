@@ -49,7 +49,7 @@ public class Quest : AModule, IQuest
          */
         var newQuestTarget = new engine.quest.ToLocation()
         {
-            RelativePosition = new Vector3(-440f, 80f, 389f),
+            RelativePosition = new Vector3(-440f, 40f, 389f),
             SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask
         };

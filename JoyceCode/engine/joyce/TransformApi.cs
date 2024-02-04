@@ -118,6 +118,12 @@ namespace engine.joyce
             }
             return ref entity.Get<Transform3>();
         }
+
+
+        public ref Transform3 GetTransform(in Entity entity)
+        {
+            return ref _findT3(entity);
+        }
         
 
         public void SetVisible(Entity entity, bool isVisible)
