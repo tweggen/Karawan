@@ -35,7 +35,7 @@ public class Main
     }
     
     
-    private void _setupMapProvider(JsonElement je)
+    private void _setupMapProviders(JsonElement je)
     {
         var mapProvider = I.Get<IMapProvider>();
         try
@@ -239,6 +239,31 @@ public class Main
     }
 
 
+    private void SetJsonElement(in JsonElement je, Action<object> action)
+    {
+        switch (je.ValueKind)
+        {
+            case JsonValueKind.False:
+                action(false);
+                break;
+            case JsonValueKind.String:
+                action(je.GetString());
+                break;
+            case JsonValueKind.True:
+                action(true);
+                break;
+            case JsonValueKind.Number:
+                action(je.GetSingle());
+                break;
+            case JsonValueKind.Undefined:
+            case JsonValueKind.Object:
+            case JsonValueKind.Null:
+            case JsonValueKind.Array:
+                break;
+        }
+    }
+    
+
     private void _readProperties(JsonElement je)
     {
         try
@@ -248,26 +273,7 @@ public class Main
             {
                 try
                 {
-                    switch (pair.Value.ValueKind)
-                    {
-                        case JsonValueKind.False:
-                            engine.Props.Set(pair.Name, false);
-                           break;
-                        case JsonValueKind.String:
-                            engine.Props.Set(pair.Name, pair.Value.GetString());
-                            break;
-                        case JsonValueKind.True:
-                            engine.Props.Set(pair.Name, true);
-                            break;
-                        case JsonValueKind.Undefined:
-                        case JsonValueKind.Number:
-                            engine.Props.Set(pair.Name, pair.Value.GetSingle());
-                            break;
-                        case JsonValueKind.Object:
-                        case JsonValueKind.Null:
-                        case JsonValueKind.Array:
-                            break;
-                    }
+                    SetJsonElement(je, o => engine.Props.Set(pair.Name, o));
                 }
                 catch (Exception e)
                 {
@@ -281,12 +287,6 @@ public class Main
         }
     }
 
-
-    private void _setupMapProviders(JsonElement je)
-    {
-        
-    }
-    
 
     public Main(engine.Engine e)
     {
@@ -302,7 +302,7 @@ public class Main
         _readProperties(_jsonRoot);
         
         _setupImplementations(_jsonRoot);
-        _setupMapProvider(_jsonRoot);
+        _setupMapProviders(_jsonRoot);
         _setupMetaGen(_jsonRoot);
         _registerScenes(_jsonRoot);
     }
