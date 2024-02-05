@@ -1,4 +1,9 @@
 {
+  "defaults": {
+    "loader": {
+      "assembly": "nogame.dll"
+    }
+  },
   "globalSettings": 
   {
     "nogame.CreateOSD": true,

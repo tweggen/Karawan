@@ -9,6 +9,7 @@ namespace engine.casette;
 public class Loader
 {
     private JsonElement _jeRoot;
+    private string strDefaultLoaderAssembly = "";
     
     static public void SetJsonElement(in JsonElement je, Action<object> action)
     {
@@ -35,7 +36,7 @@ public class Loader
     }
     
 
-    static public void LoadMapProviders(JsonElement jeMapProviders)
+    public void LoadMapProviders(JsonElement jeMapProviders)
     {
         var mapProvider = I.Get<IMapProvider>();
         try
@@ -51,7 +52,7 @@ public class Loader
                     }
                     try
                     {
-                        IWorldMapProvider wmp = engine.Engine.LoadClass("nogame.dll", className) as IWorldMapProvider;
+                        IWorldMapProvider wmp = engine.Engine.LoadClass(strDefaultLoaderAssembly, className) as IWorldMapProvider;
                         mapProvider.AddWorldMapLayer(pair.Name, wmp);
                     }
                     catch (Exception e)
@@ -73,7 +74,7 @@ public class Loader
     }
 
 
-    static public void LoadImplementations(JsonElement jeImplementations)
+    public void LoadImplementations(JsonElement jeImplementations)
     {
         try
         {
@@ -95,14 +96,14 @@ public class Loader
 
                 try
                 {
-                    Type type = engine.Engine.LoadType("nogame.dll", interfaceName);
+                    Type type = engine.Engine.LoadType(strDefaultLoaderAssembly, interfaceName);
                     if (interfaceName == implementationName)
                     {
                         I.Instance.RegisterFactory(type, () => { return Activator.CreateInstance(type); });
                     }
                     else
                     {
-                        I.Instance.RegisterFactory(type, () => { return engine.Engine.LoadClass("nogame.dll",implementationName); });
+                        I.Instance.RegisterFactory(type, () => { return engine.Engine.LoadClass(strDefaultLoaderAssembly,implementationName); });
                     }
                 }
                 catch (Exception e)
@@ -118,7 +119,7 @@ public class Loader
     }
 
 
-    static public void LoadBuildingOperators(JsonElement je)
+    public void LoadBuildingOperators(JsonElement je)
     {
         try
         {
@@ -127,7 +128,7 @@ public class Loader
                 string className = jeOp.GetProperty("className").GetString();
                 try
                 {
-                    IWorldOperator wop = engine.Engine.LoadClass("nogame.dll", className) as IWorldOperator;
+                    IWorldOperator wop = engine.Engine.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
                     MetaGen.Instance().WorldBuildingOperatorAdd(wop);
                 }
                 catch (Exception e)
@@ -143,7 +144,7 @@ public class Loader
     }
 
 
-    static public void LoadPopulatingOperators(JsonElement je)
+    public void LoadPopulatingOperators(JsonElement je)
     {
         try
         {
@@ -152,7 +153,7 @@ public class Loader
                 string className = jeOp.GetProperty("className").GetString();
                 try
                 {
-                    IWorldOperator wop = engine.Engine.LoadClass("nogame.dll", className) as IWorldOperator;
+                    IWorldOperator wop = engine.Engine.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
                     MetaGen.Instance().WorldPopulatingOperatorAdd(wop);
                 }
                 catch (Exception e)
@@ -168,7 +169,7 @@ public class Loader
     }
 
 
-    static public void LoadMetaGen(JsonElement je)
+    public void LoadMetaGen(JsonElement je)
     {
         try
         {
@@ -189,7 +190,7 @@ public class Loader
     }
 
    
-    static private void LoadGlobalSettings(JsonElement jeGlobalSettings)
+    private void LoadGlobalSettings(JsonElement jeGlobalSettings)
     {
         try
         {
@@ -212,7 +213,7 @@ public class Loader
     }
 
 
-    static private void LoadProperties(JsonElement jeProperties)
+    private void LoadProperties(JsonElement jeProperties)
     {
         try
         {
@@ -235,7 +236,7 @@ public class Loader
     }
 
 
-    static public void LoadQuests(JsonElement jeQuests)
+    public void LoadQuests(JsonElement jeQuests)
     {
         try
         {
@@ -254,7 +255,7 @@ public class Loader
                         implementationName = questName;
                     }
                     
-                    I.Get<engine.quest.Manager>().RegisterFactory(questName, (_) => engine.Engine.LoadClass("nogame.dll", implementationName) as engine.quest.IQuest);
+                    I.Get<engine.quest.Manager>().RegisterFactory(questName, (_) => engine.Engine.LoadClass(strDefaultLoaderAssembly, implementationName) as engine.quest.IQuest);
                 }
                 catch (Exception e)
                 {
@@ -269,7 +270,7 @@ public class Loader
     }
     
     
-    static public void LoadScenes(JsonElement je)
+    public void LoadScenes(JsonElement je)
     {
         var sceneSequencer = I.Get<SceneSequencer>();
         if (je.TryGetProperty("catalogue", out var jeCatalogue))
@@ -280,7 +281,7 @@ public class Loader
     }
 
 
-    static public void LoadGameConfig(JsonElement je)
+    public void LoadGameConfig(JsonElement je)
     {
         if (je.TryGetProperty("globalSettings", out var jeGlobalSettings))
         {
@@ -318,6 +319,7 @@ public class Loader
         }
     }
 
+    
     public IModule LoadRootModule()
     {
         try
@@ -328,7 +330,7 @@ public class Loader
                 {
                     if (jeRootModule.TryGetProperty("className", out var jeClassName))
                     {
-                        IModule mRoot = engine.Engine.LoadClass("nogame.dll", jeClassName.GetString()) as IModule;
+                        IModule mRoot = engine.Engine.LoadClass(strDefaultLoaderAssembly, jeClassName.GetString()) as IModule;
                         return mRoot;
                     }
                 }
@@ -343,6 +345,20 @@ public class Loader
     }
 
 
+    private void _loadDefaults(JsonElement jeDefaults)
+    {
+        try
+        {
+            strDefaultLoaderAssembly = jeDefaults.GetProperty("loader").GetProperty("assembly")
+                .GetString();
+        }
+        catch (Exception e)
+        {
+            //
+        }
+    }
+    
+
     private void _loadGameConfigFile(string jsonPath)
     {
         JsonDocument jdocGame = JsonDocument.Parse(engine.Assets.Open(jsonPath), new()
@@ -350,7 +366,11 @@ public class Loader
             AllowTrailingCommas = true
         });
         _jeRoot = jdocGame.RootElement;
-        engine.casette.Loader.LoadGameConfig(_jeRoot);
+        if (_jeRoot.TryGetProperty("defaults", out var jeDefaults))
+        {
+            _loadDefaults(jeDefaults);
+        }
+        LoadGameConfig(_jeRoot);
     }
 
 
@@ -358,6 +378,7 @@ public class Loader
     {
         _loadGameConfigFile(jsonPath);
     }
+    
 
     static public void LoadStartGame(engine.Engine e, string jsonPath)
     {

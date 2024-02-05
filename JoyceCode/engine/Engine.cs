@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using BepuPhysics;
 using DefaultEcs;
 using engine.behave.components;
+using engine.elevation;
 using engine.news;
 using engine.Resource;
 using engine.world;
@@ -142,118 +143,6 @@ public class Engine
     public event EventHandler<EngineState> EngineStateChanged;
 
 
-    public static System.Reflection.Assembly[] GetAllAssemblies()
-    {
-        var visited = new SortedDictionary<string, Assembly>();
-        var queue = new Queue<Assembly>();
-
-        queue.Enqueue(Assembly.GetEntryAssembly());
-        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            queue.Enqueue(asm);
-        }
-        foreach (var asm in queue)
-        {
-            Trace($"Starting with {asm.FullName}");
-        }
-
-
-        while (queue.Any())
-        {
-            var asm = queue.Dequeue();
-            visited.Add(asm.GetName().FullName, asm);
-
-            var references = asm.GetReferencedAssemblies();
-            foreach (var anRef in references)
-            {
-                if (!visited.ContainsKey(anRef.FullName))
-                {
-                    queue.Enqueue(Assembly.Load(anRef));
-                    Trace($"Added dll {anRef.FullName}");
-                }
-            }
-        }
-        return visited.Values.ToArray();
-    }
-
-
-    public static Type LoadType(string dllPath, string fullClassName)
-    {
-        try
-        {
-            bool foundDll = true;
-            var execDirectoryPath = 
-                Path.GetDirectoryName(
-                        System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
-                    .Replace("file:/", "")
-                    .Replace("file:\\", "")
-                ;
-            
-            if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
-            {
-                execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
-                if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
-                {
-                    Error($"Unable to find {dllPath}.");
-                    foundDll = false;
-                }
-                else
-                {
-                }
-            }
-
-            Type type = null;
-            if (foundDll)
-            {
-                Assembly asm = Assembly.LoadFrom(Path.Combine(execDirectoryPath, dllPath));
-                if (null != asm)
-                {
-                    type = asm.GetType(fullClassName);
-                }
-            }
-            if (null == type)
-            {
-                System.Reflection.Assembly[] allAssemblies = GetAllAssemblies();
-                foreach (var asmCurr in allAssemblies)
-                {
-                    type = asmCurr.GetType(fullClassName);
-                    if (null != type)
-                    {
-                        break;
-                    }
-                }
-            }
-    
-            return type;
-        }
-        catch (Exception e)
-        {
-            Warning($"Unable to load class {fullClassName} from assembly {dllPath}.");
-        }
-
-        return null;
-
-    }
-
-    public static object? LoadClass(string dllPath, string fullClassName)
-    {
-        try
-        {
-            Type type = LoadType(dllPath, fullClassName); 
-            if (null != type)
-            {
-                object instance = Activator.CreateInstance(type);
-                return instance;
-            }
-        }
-        catch (Exception e)
-        {
-            Warning($"Unable to load class {fullClassName} from assembly {dllPath}.");
-        }
-
-        return null;
-    }
-    
     public void SetEngineState(in EngineState newState)
     {
         bool isChanged = false;

@@ -122,6 +122,10 @@ namespace Wuka
                 return api;
             });
 
+            /*
+             * We need to explicitly reference the game.
+             */
+            var rootType = typeof(nogame.Main);
             engine.casette.Loader.LoadStartGame(_engine, "nogame.json");
             
             _engine.Execute();
