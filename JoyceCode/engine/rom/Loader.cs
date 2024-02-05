@@ -74,16 +74,23 @@ public class Loader
         var visited = new SortedDictionary<string, Assembly>();
         var queue = new Queue<Assembly>();
         
-        
         /*
          * Load the given assembly if not yet done.
          */
         try
         {
-            var asmGiven = TryLoadDll(dllPath);
-            if (null != asmGiven)
+            if (!_mapAlreadyLoaded.ContainsKey(dllPath))
             {
-                queue.Enqueue(asmGiven);
+                /*
+                 * Add both the user name and the real name.
+                 */
+                var asmGiven = TryLoadDll(dllPath);
+                if (null != asmGiven)
+                {
+                    _mapAlreadyLoaded.Add(asmGiven.GetName().Name, asmGiven);
+                    _mapAlreadyLoaded.Add(dllPath, asmGiven);
+                    queue.Enqueue(asmGiven);
+                }
             }
         }
         catch (Exception e)
@@ -94,15 +101,23 @@ public class Loader
         /*
          * In addition, queue the entry assmebly...
          */
-        queue.Enqueue(Assembly.GetEntryAssembly());
+        Assembly asmEntry = Assembly.GetEntryAssembly();
+        if (!_mapAlreadyLoaded.ContainsKey(asmEntry.GetName().Name))
+        {
+            _mapAlreadyLoaded.Add(asmEntry.GetName().Name, asmEntry);
+            queue.Enqueue(asmEntry);
+        }
 
         /*
          * ... and all other known assemblies.
          */
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
-            _mapAlreadyLoaded.Add(asm.GetName().Name, asm);
-            queue.Enqueue(asm);
+            if (!_mapAlreadyLoaded.ContainsKey(asm.GetName().Name))
+            {
+                _mapAlreadyLoaded.Add(asm.GetName().Name, asm);
+                queue.Enqueue(asm);
+            }
         }
         
         /*
@@ -110,7 +125,7 @@ public class Loader
          */
         foreach (var asm in queue)
         {
-            Trace($"Starting with {asm.GetName().Name}");
+            Trace($"Starting resolve with {asm.GetName().Name}");
         }
 
         /*
@@ -167,7 +182,11 @@ public class Loader
                 }
             }
         }
-        return visited.Values.ToArray();
+        
+        /*
+         * Finally, return everything that has been loaded.
+         */
+        return _mapAlreadyLoaded.Values.ToArray();
     }
 
 
