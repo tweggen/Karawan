@@ -15,20 +15,28 @@ public class Loader
 
     public static Assembly TryLoadDll(string dllPath)
     {
+        Trace($"dllPath = {dllPath}");
         try
         {
             bool foundDll = false;
-            
-            /*
-             * Remove the url type head from the name. This considers both linux and windows
-             * type of names.
-             */
-            var execDirectoryPath =
-                    Path.GetDirectoryName(
-                            System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
-                        .Replace("file:/", "")
-                        .Replace("file:\\", "")
-                ;
+
+            var orgExecPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
+            Trace($"orgExecPath = {orgExecPath}");
+            string execDirectoryPath = "";
+            if (null == orgExecPath)
+            {
+                orgExecPath = "";
+            }
+            else
+            {
+                /*
+                 * Remove the url type head from the name. This considers both linux and windows
+                 * type of names.
+                 */
+                execDirectoryPath = orgExecPath.Replace("file:/", "").Replace("file:\\", "");
+            }
+            Trace($"execDirectoryPath = {execDirectoryPath}");
+
 
             /*
              * If we couldn't find it by its given name, look in the debug override path
@@ -38,6 +46,7 @@ public class Loader
             {
                 execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
             }
+            Trace($"execDirectoryPath = {execDirectoryPath}");
 
             /*
              * Test first, if we can find the file.

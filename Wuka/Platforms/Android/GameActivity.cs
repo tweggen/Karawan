@@ -125,7 +125,10 @@ namespace Wuka
             /*
              * We need to explicitly reference the game.
              */
-            var rootType = typeof(nogame.Main);
+            {
+                var rootDepends = new nogame.GameState();
+                System.Console.WriteLine("DOTNET silicon desert "+rootDepends);
+            }
             engine.casette.Loader.LoadStartGame(_engine, "nogame.json");
             
             _engine.Execute();
