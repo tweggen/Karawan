@@ -11,6 +11,62 @@ public class Loader
 {
     static private SortedDictionary<string, Assembly> _mapAlreadyLoaded = new SortedDictionary<string, Assembly>();
     static private SortedSet<string> _setLoadFailed = new SortedSet<string>();
+
+
+    public static Assembly TryLoadDll(string dllPath)
+    {
+        try
+        {
+            bool foundDll = false;
+            
+            /*
+             * Remove the url type head from the name. This considers both linux and windows
+             * type of names.
+             */
+            var execDirectoryPath =
+                    Path.GetDirectoryName(
+                            System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
+                        .Replace("file:/", "")
+                        .Replace("file:\\", "")
+                ;
+
+            /*
+             * If we couldn't find it by its given name, look in the debug override path
+             * (for android).
+             */
+            if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
+            {
+                execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
+            }
+
+            /*
+             * Test first, if we can find the file.
+             */
+            string pathToLookFirst = Path.Combine(execDirectoryPath, dllPath); 
+            if (File.Exists(pathToLookFirst))
+            {
+                foundDll = true;
+            }
+            else
+            {
+                Error($"Unable to find {dllPath} in {pathToLookFirst}.");
+                
+                /*
+                 * Even though, let the OS loader decide whether it really can't be found.
+                 */
+            }
+
+            Assembly asm = Assembly.LoadFrom(pathToLookFirst);
+            
+            return asm;
+        }
+        catch (Exception e)
+        {
+            Trace($"Unable to load dll {dllPath}: {e}");
+        }
+
+        return null;
+    }
     
     
     public static System.Reflection.Assembly[] GetAllAssemblies(string dllPath)
@@ -24,24 +80,38 @@ public class Loader
          */
         try
         {
-            var asmGiven = Assembly.Load(dllPath);
-            queue.Enqueue(asmGiven);
+            var asmGiven = TryLoadDll(dllPath);
+            if (null != asmGiven)
+            {
+                queue.Enqueue(asmGiven);
+            }
         }
         catch (Exception e)
         {
             Trace($"Unable to load the given assembly {dllPath} into the desired context: {e}");
         }
+
+        /*
+         * In addition, queue the entry assmebly...
+         */
         queue.Enqueue(Assembly.GetEntryAssembly());
+
+        /*
+         * ... and all other known assemblies.
+         */
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
-            _mapAlreadyLoaded.Add(asm.FullName, asm);
+            _mapAlreadyLoaded.Add(asm.GetName().Name, asm);
             queue.Enqueue(asm);
         }
+        
+        /*
+         * Finally, dump all the assemblies we use to find the target.
+         */
         foreach (var asm in queue)
         {
-            Trace($"Starting with {asm.FullName}");
+            Trace($"Starting with {asm.GetName().Name}");
         }
-
 
         /*
          * Iterate through all dlls we should load and check.
@@ -53,17 +123,17 @@ public class Loader
             /*
              * If we already traced its dependencies, ignore it.
              */
-            if (visited.ContainsKey(asm.FullName))
+            if (visited.ContainsKey(asm.GetName().Name))
             {
                 continue;
             }
 
-            Trace($"Adding dll {asm.FullName}");
-            visited.Add(asm.GetName().FullName, asm);
+            Trace($"Adding dll {asm.GetName().Name}");
+            visited.Add(asm.GetName().Name, asm);
             var references = asm.GetReferencedAssemblies();
             foreach (var anRef in references)
             {
-                if (_setLoadFailed.Contains(anRef.FullName))
+                if (_setLoadFailed.Contains(anRef.Name))
                 {
                     /*
                      * Skip re-load of already failed load.
@@ -74,24 +144,24 @@ public class Loader
                 /*
                  * Try to load the assembly if not yet loaded.
                  */
-                if (!_mapAlreadyLoaded.ContainsKey(anRef.FullName))
+                if (!_mapAlreadyLoaded.ContainsKey(anRef.Name))
                 {
                     try
                     {
                         var asmRef = Assembly.Load(anRef);
-                        _mapAlreadyLoaded.Add(anRef.FullName, asmRef);
+                        _mapAlreadyLoaded.Add(anRef.Name, asmRef);
                     }
                     catch (Exception ex)
                     {
-                        Trace($"Failed to load {anRef.FullName}: {ex}");
-                        _setLoadFailed.Add(anRef.FullName);
+                        Trace($"Failed to load {anRef.Name}: {ex}");
+                        _setLoadFailed.Add(anRef.Name);
                     }
                 }
 
                 /*
                  * If we could load it, queue it's dependencies to be analysed.
                  */
-                if (_mapAlreadyLoaded.ContainsKey(anRef.FullName))
+                if (_mapAlreadyLoaded.ContainsKey(anRef.Name))
                 {
                     queue.Enqueue(Assembly.Load(anRef));
                 }
@@ -101,40 +171,23 @@ public class Loader
     }
 
 
+    /**
+     * Return the given type that is supposed to be in the given dll.
+     *
+     * First we check if we can find the dll by various attempts.
+     */
     public static Type LoadType(string dllPath, string fullClassName)
     {
+        Type type = null;
         try
         {
-            bool foundDll = false;
-            var execDirectoryPath = 
-                Path.GetDirectoryName(
-                        System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase)?
-                    .Replace("file:/", "")
-                    .Replace("file:\\", "")
-                ;
+            Assembly asm = TryLoadDll(dllPath);
             
-            if (!File.Exists(Path.Combine(execDirectoryPath, dllPath)))
+            if (null != asm)
             {
-                execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
+                type = asm.GetType(fullClassName);
             }
 
-            if (false && File.Exists(Path.Combine(execDirectoryPath, dllPath)))
-            {
-                foundDll = true;
-            } else
-            {
-                Error($"Unable to find {dllPath}.");
-            }
-
-            Type type = null;
-            if (foundDll)
-            {
-                Assembly asm = Assembly.LoadFrom(Path.Combine(execDirectoryPath, dllPath));
-                if (null != asm)
-                {
-                    type = asm.GetType(fullClassName);
-                }
-            }
             if (null == type)
             {
                 System.Reflection.Assembly[] allAssemblies = GetAllAssemblies(dllPath);

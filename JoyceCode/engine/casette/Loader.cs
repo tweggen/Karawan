@@ -52,7 +52,7 @@ public class Loader
                     }
                     try
                     {
-                        IWorldMapProvider wmp = engine.Engine.LoadClass(strDefaultLoaderAssembly, className) as IWorldMapProvider;
+                        IWorldMapProvider wmp = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldMapProvider;
                         mapProvider.AddWorldMapLayer(pair.Name, wmp);
                     }
                     catch (Exception e)
@@ -96,14 +96,14 @@ public class Loader
 
                 try
                 {
-                    Type type = engine.Engine.LoadType(strDefaultLoaderAssembly, interfaceName);
+                    Type type = engine.rom.Loader.LoadType(strDefaultLoaderAssembly, interfaceName);
                     if (interfaceName == implementationName)
                     {
                         I.Instance.RegisterFactory(type, () => { return Activator.CreateInstance(type); });
                     }
                     else
                     {
-                        I.Instance.RegisterFactory(type, () => { return engine.Engine.LoadClass(strDefaultLoaderAssembly,implementationName); });
+                        I.Instance.RegisterFactory(type, () => { return engine.rom.Loader.LoadClass(strDefaultLoaderAssembly,implementationName); });
                     }
                 }
                 catch (Exception e)
@@ -128,7 +128,7 @@ public class Loader
                 string className = jeOp.GetProperty("className").GetString();
                 try
                 {
-                    IWorldOperator wop = engine.Engine.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
+                    IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
                     MetaGen.Instance().WorldBuildingOperatorAdd(wop);
                 }
                 catch (Exception e)
@@ -153,7 +153,7 @@ public class Loader
                 string className = jeOp.GetProperty("className").GetString();
                 try
                 {
-                    IWorldOperator wop = engine.Engine.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
+                    IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
                     MetaGen.Instance().WorldPopulatingOperatorAdd(wop);
                 }
                 catch (Exception e)
@@ -255,7 +255,7 @@ public class Loader
                         implementationName = questName;
                     }
                     
-                    I.Get<engine.quest.Manager>().RegisterFactory(questName, (_) => engine.Engine.LoadClass(strDefaultLoaderAssembly, implementationName) as engine.quest.IQuest);
+                    I.Get<engine.quest.Manager>().RegisterFactory(questName, (_) => engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName) as engine.quest.IQuest);
                 }
                 catch (Exception e)
                 {
@@ -330,7 +330,7 @@ public class Loader
                 {
                     if (jeRootModule.TryGetProperty("className", out var jeClassName))
                     {
-                        IModule mRoot = engine.Engine.LoadClass(strDefaultLoaderAssembly, jeClassName.GetString()) as IModule;
+                        IModule mRoot = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, jeClassName.GetString()) as IModule;
                         return mRoot;
                     }
                 }
