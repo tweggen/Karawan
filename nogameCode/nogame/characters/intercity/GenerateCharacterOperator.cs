@@ -125,9 +125,9 @@ public class GenerateCharacterOperator : IWorldOperator
     });
 
     
-    public GenerateCharacterOperator(engine.Engine engine0)
+    public GenerateCharacterOperator()
     {
-        _engine = engine0;
+        _engine = I.Get<engine.Engine>();
     }
     
 }

@@ -41,8 +41,8 @@ public class GenerateTracksOperator : IWorldOperator
     });
 
     
-    public GenerateTracksOperator(engine.Engine engine0)
+    public GenerateTracksOperator()
     {
-        _engine = engine0;
+        _engine = I.Get<engine.Engine>();
     }
 }

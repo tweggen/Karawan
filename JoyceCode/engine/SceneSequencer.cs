@@ -193,10 +193,7 @@ public class SceneSequencer : IDisposable
                     return null;
                 });
             }
-
-            var jeStartScene = jeScenes.GetProperty("startScene");
-            string strStartSceneName = jeStartScene.GetProperty("name").GetString();
-            SetMainScene(strStartSceneName);
+            // TXWTODO: Also get start scene here.
         }
         catch (Exception e)
         {

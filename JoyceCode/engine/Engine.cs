@@ -142,6 +142,41 @@ public class Engine
     public event EventHandler<EngineState> EngineStateChanged;
 
 
+    public static System.Reflection.Assembly[] GetAllAssemblies()
+    {
+        var visited = new SortedDictionary<string, Assembly>();
+        var queue = new Queue<Assembly>();
+
+        queue.Enqueue(Assembly.GetEntryAssembly());
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            queue.Enqueue(asm);
+        }
+        foreach (var asm in queue)
+        {
+            Trace($"Starting with {asm.FullName}");
+        }
+
+
+        while (queue.Any())
+        {
+            var asm = queue.Dequeue();
+            visited.Add(asm.GetName().FullName, asm);
+
+            var references = asm.GetReferencedAssemblies();
+            foreach (var anRef in references)
+            {
+                if (!visited.ContainsKey(anRef.FullName))
+                {
+                    queue.Enqueue(Assembly.Load(anRef));
+                    Trace($"Added dll {anRef.FullName}");
+                }
+            }
+        }
+        return visited.Values.ToArray();
+    }
+
+
     public static Type LoadType(string dllPath, string fullClassName)
     {
         try
@@ -178,7 +213,7 @@ public class Engine
             }
             if (null == type)
             {
-                System.Reflection.Assembly[] allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+                System.Reflection.Assembly[] allAssemblies = GetAllAssemblies();
                 foreach (var asmCurr in allAssemblies)
                 {
                     type = asmCurr.GetType(fullClassName);

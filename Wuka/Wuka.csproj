@@ -164,6 +164,8 @@
 	  <None Remove="Platforms\Android\streets1to4.png" />
 	  <None Remove="Platforms\Android\terminal.ogg" />
 	  <None Remove="Platforms\Android\titlelogo.png" />
+	  <None Remove="Platforms\Android\titlelogo2_albedo.png" />
+	  <None Remove="Platforms\Android\titlelogo2_emissive.png" />
 	  <None Remove="Platforms\Android\tram1.mtl" />
 	  <None Remove="Platforms\Android\tram1.obj" />
 	  <None Remove="Platforms\Android\tramnoise.ogg" />
@@ -376,6 +378,12 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\terminal.ogg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\titlelogo2_albedo.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\titlelogo2_emissive.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\tram1.mtl">

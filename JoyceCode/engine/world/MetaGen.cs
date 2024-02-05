@@ -346,6 +346,11 @@ public class MetaGen
 
     public void WorldBuildingOperatorAdd(IWorldOperator worldOperator)
     {
+        if (null == worldOperator)
+        {
+            ErrorThrow<ArgumentException>("Called with null operator.");
+            return;
+        }
         lock (_lo)
         {
             _worldBuildingOperators.Add(worldOperator);
@@ -355,6 +360,11 @@ public class MetaGen
 
     public void WorldPopulatingOperatorAdd(IWorldOperator worldOperator)
     {
+        if (null == worldOperator)
+        {
+            ErrorThrow<ArgumentException>("Called with null operator.");
+            return;
+        }
         lock (_lo)
         {
             _worldPopulatingOperators.Add(worldOperator);
