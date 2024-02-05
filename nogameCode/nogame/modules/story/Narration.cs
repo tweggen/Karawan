@@ -143,8 +143,13 @@ public class Narration : AModule, IInputPart
         lock (_lo)
         {
             _currentStory = new Story(jsonStory);
-            _currentStory.BindExternalFunction ("triggerQuest", (string questName) => {
-                Trace($"Trigger quest {questName}");
+            _currentStory.BindExternalFunction ("triggerQuest", (string questName) =>
+            {
+                engine.quest.IQuest quest = I.Get<engine.quest.Manager>().Get(questName);
+                if (null != quest)
+                {
+                    quest.ModuleActivate(_engine);
+                }
             });
         }
 

@@ -269,8 +269,6 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         _engine.AddModule(this);
-        
-        I.Get<engine.quest.Manager>().Get("nogame.quests.VisitAgentTwelve.Quest").ModuleActivate(_engine);
     }
 
 }
