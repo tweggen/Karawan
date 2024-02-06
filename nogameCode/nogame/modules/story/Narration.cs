@@ -47,7 +47,7 @@ public class Narration : AModule, IInputPart
         _eSentence = _engine.CreateEntity($"nogame.modules.story sentence");
         _eSentence.Set(new engine.draw.components.OSDText(
             new Vector2((mDisplay.Width-500f)/2f , BottomY-LineHeight),
-            new Vector2(500f, 40),
+            new Vector2(500f, LineHeight),
             "",
             16,
             TextColor,
@@ -67,7 +67,7 @@ public class Narration : AModule, IInputPart
         DefaultEcs.Entity eOption = _engine.CreateEntity($"nogame.modules.story option {idx}");
         eOption.Set(new engine.draw.components.OSDText(
             new Vector2((mDisplay.Width-500f)/2f , y),
-            new Vector2(500f, 16),
+            new Vector2(500f, LineHeight),
             text,
             16,
             ChoiceColor,
@@ -124,8 +124,23 @@ public class Narration : AModule, IInputPart
     private int _countLF(string str)
     {
         int count = 0;
-        foreach (char c in str)
+        int length = str.Length;
+
+        while (length > 0)
         {
+            if (str[length - 1] == '\n')
+            {
+                --length;
+            }
+            else
+            {
+                break;
+            }
+        }
+        
+        for (int i=0; i<length; ++i)
+        {
+            char c = str[i];
             if (c == '\n') count++;
         }
 
@@ -171,6 +186,7 @@ public class Narration : AModule, IInputPart
         ref var cSentenceOSDText = ref _eSentence.Get<engine.draw.components.OSDText>();
         cSentenceOSDText.Text = strDisplay;
         cSentenceOSDText.Position.Y = ytop;
+        cSentenceOSDText.Size.Y = _countLF(strDisplay)*LineHeight;
 
         _soundTty.Stop();
         _soundTty.Volume = 0.02f;
@@ -255,17 +271,15 @@ public class Narration : AModule, IInputPart
     private void _advanceChoice(int number)
     {
         int nChoices = 0;
-        bool haveStory = false;
         lock (_lo)
         {
             if (_currentStory != null)
             {
                 if (!_currentString.IsNullOrEmpty())
                 {
-                    haveStory = true;
+                    nChoices = _currentStory.currentChoices.Count;
                 }
 
-                nChoices = _currentStory.currentChoices.Count;
                 if (number > 1 && number <= nChoices)
                 {
                     _currentStory.ChooseChoiceIndex(number - 1);
@@ -295,17 +309,14 @@ public class Narration : AModule, IInputPart
     public void InputPartOnInputEvent(engine.news.Event ev)
     {
         int nChoices = 0;
-        bool haveStory = false;
         lock (_lo)
         {
             if (_currentStory != null)
             {
                 if (!_currentString.IsNullOrEmpty())
                 {
-                    haveStory = true;
+                    nChoices = _currentStory.currentChoices.Count;
                 }
-
-                nChoices = _currentStory.currentChoices.Count;
             }
         }
 
