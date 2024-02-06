@@ -22,9 +22,12 @@ public class Narration : AModule, IInputPart
     private Boom.ISound _soundTty = null;
     
     private DefaultEcs.Entity _eSentence = default;
+    private List<DefaultEcs.Entity> _listEOptions;
 
     public float MY_Z_ORDER { get; set; } = 24.5f;
-    
+
+    public float BottomY { get; set; } = 400f;
+    public float LineHeight { get; set; } = 16f;
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -38,14 +41,14 @@ public class Narration : AModule, IInputPart
         var mDisplay = M<nogame.modules.osd.Display>();
         _eSentence = _engine.CreateEntity($"nogame.modules.story sentence");
         _eSentence.Set(new engine.draw.components.OSDText(
-            new Vector2((mDisplay.Width-500f)/2f , 360f),
+            new Vector2((mDisplay.Width-500f)/2f , BottomY-LineHeight),
             new Vector2(500f, 40),
             "",
             16,
             0xffcccccc,
             0x00000000,
             HAlign.Center,
-            VAlign.Bottom));
+            VAlign.Top));
         _eSentence.Set(new engine.behave.components.Clickable()
         {
             ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", null)
@@ -53,10 +56,42 @@ public class Narration : AModule, IInputPart
     }
 
 
+    private DefaultEcs.Entity _createOptionEntity(int idx, int y, string text)
+    {
+        var mDisplay = M<nogame.modules.osd.Display>();
+        _eSentence = _engine.CreateEntity($"nogame.modules.story option {idx}");
+        _eSentence.Set(new engine.draw.components.OSDText(
+            new Vector2((mDisplay.Width-500f)/2f , y),
+            new Vector2(500f, 16),
+            "",
+            16,
+            0xffddddbb,
+            0x00000000,
+            HAlign.Center,
+            VAlign.Top));
+        _eSentence.Set(new engine.behave.components.Clickable()
+        {
+            ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", $"{idx}")
+        });
+        return _eSentence;
+    }
+
+
     private void _dismissSentence()
     {
         _prepareEntity();
         _eSentence.Get<engine.draw.components.OSDText>().Text = "";
+    }
+
+    private int _countLF(string str)
+    {
+        int count = 0;
+        foreach (char c in str)
+        {
+            if (c == '\n') count++;
+        }
+
+        return count;
     }
     
 
@@ -66,10 +101,12 @@ public class Narration : AModule, IInputPart
 
         
         string strDisplay = "";
+        int nLFs = 0;
 
         lock (_lo)
         {
             strDisplay = _currentString;
+            nLFs = _countLF(_currentString);
 
             int index = 1;
             _currentNChoices = 0;
@@ -84,7 +121,9 @@ public class Narration : AModule, IInputPart
             }
         }
 
-        _eSentence.Get<engine.draw.components.OSDText>().Text = strDisplay;
+        ref var cSentenceOSDText = ref _eSentence.Get<engine.draw.components.OSDText>();
+        cSentenceOSDText.Text = strDisplay;
+        cSentenceOSDText.Position.Y = 500f - LineHeight * (nLFs + 1) - 32f;
 
         _soundTty.Stop();
         _soundTty.Volume = 0.02f;
