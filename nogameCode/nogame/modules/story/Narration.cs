@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text;
 using engine;
 using engine.draw;
+using engine.geom;
 using engine.news;
 using Ink.Runtime;
 using nogame.modules.osd;
@@ -37,6 +38,8 @@ public class Narration : AModule, IInputPart
 
     private void _prepareEntity()
     {
+        _listEOptions = new();
+        
         if (_eSentence.IsAlive) return;
         var mDisplay = M<nogame.modules.osd.Display>();
         _eSentence = _engine.CreateEntity($"nogame.modules.story sentence");
@@ -56,11 +59,11 @@ public class Narration : AModule, IInputPart
     }
 
 
-    private DefaultEcs.Entity _createOptionEntity(int idx, int y, string text)
+    private DefaultEcs.Entity _createOptionEntity(int idx, float y, string text)
     {
         var mDisplay = M<nogame.modules.osd.Display>();
-        _eSentence = _engine.CreateEntity($"nogame.modules.story option {idx}");
-        _eSentence.Set(new engine.draw.components.OSDText(
+        DefaultEcs.Entity eOption = _engine.CreateEntity($"nogame.modules.story option {idx}");
+        eOption.Set(new engine.draw.components.OSDText(
             new Vector2((mDisplay.Width-500f)/2f , y),
             new Vector2(500f, 16),
             "",
@@ -69,11 +72,11 @@ public class Narration : AModule, IInputPart
             0x00000000,
             HAlign.Center,
             VAlign.Top));
-        _eSentence.Set(new engine.behave.components.Clickable()
+        eOption.Set(new engine.behave.components.Clickable()
         {
             ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", $"{idx}")
         });
-        return _eSentence;
+        return eOption;
     }
 
 
@@ -81,6 +84,15 @@ public class Narration : AModule, IInputPart
     {
         _prepareEntity();
         _eSentence.Get<engine.draw.components.OSDText>().Text = "";
+
+        lock (_lo)
+        {
+            if (null != _listEOptions)
+            {
+                _engine.AddDoomedEntities(_listEOptions);
+                _listEOptions = null;
+            }
+        }
     }
 
     private int _countLF(string str)
@@ -103,27 +115,35 @@ public class Narration : AModule, IInputPart
         string strDisplay = "";
         int nLFs = 0;
 
+        float ytop;
         lock (_lo)
         {
             strDisplay = _currentString;
             nLFs = _countLF(_currentString);
 
+            ytop = BottomY - LineHeight * (nLFs + 1) - 32f;
+
             int index = 1;
             _currentNChoices = 0;
             if (_currentStory.currentChoices.Count > 0)
             {
+                _listEOptions = new();
                 int nChoices = _currentStory.currentChoices.Count;
                 for (int i = 0; i < nChoices; ++i)
                 {
+                    var eChoice = _createOptionEntity(i,  ytop + LineHeight * ((float)(i+1)), _currentStory.currentChoices[i].text);
+                    _listEOptions.Add(eChoice);
                     ++_currentNChoices;
-                    strDisplay += $"\n{i+1}: {_currentStory.currentChoices[i].text}";
                 }
+            }
+            else
+            {
             }
         }
 
         ref var cSentenceOSDText = ref _eSentence.Get<engine.draw.components.OSDText>();
         cSentenceOSDText.Text = strDisplay;
-        cSentenceOSDText.Position.Y = BottomY - LineHeight * (nLFs + 1) - 32f;
+        cSentenceOSDText.Position.Y = ytop;
 
         _soundTty.Stop();
         _soundTty.Volume = 0.02f;

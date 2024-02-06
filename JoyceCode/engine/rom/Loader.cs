@@ -225,7 +225,7 @@ public class Loader
         try
         {
             Assembly asm = TryLoadDll(dllPath);
-            
+
             if (null != asm)
             {
                 type = asm.GetType(fullClassName);
@@ -243,7 +243,7 @@ public class Loader
                     }
                 }
             }
-    
+
             return type;
         }
         catch (Exception e)
@@ -252,8 +252,9 @@ public class Loader
         }
 
         return null;
+    }
+    
 
-+
     public static object? LoadClass(string dllPath, string fullClassName)
     {
         try
