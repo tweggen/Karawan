@@ -123,7 +123,7 @@ public class Narration : AModule, IInputPart
 
         ref var cSentenceOSDText = ref _eSentence.Get<engine.draw.components.OSDText>();
         cSentenceOSDText.Text = strDisplay;
-        cSentenceOSDText.Position.Y = 500f - LineHeight * (nLFs + 1) - 32f;
+        cSentenceOSDText.Position.Y = BottomY - LineHeight * (nLFs + 1) - 32f;
 
         _soundTty.Stop();
         _soundTty.Volume = 0.02f;

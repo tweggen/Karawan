@@ -253,8 +253,7 @@ public class Loader
 
         return null;
 
-    }
-
++
     public static object? LoadClass(string dllPath, string fullClassName)
     {
         try
