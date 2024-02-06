@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
@@ -75,7 +76,7 @@ public class Narration : AModule, IInputPart
             VAlign.Top));
         eOption.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", $"{idx}")
+            ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", $"{idx+1}")
         });
         return eOption;
     }
@@ -251,9 +252,43 @@ public class Narration : AModule, IInputPart
     }
 
 
+    private void _advanceChoice(int number)
+    {
+        int nChoices = 0;
+        bool haveStory = false;
+        lock (_lo)
+        {
+            if (_currentStory != null)
+            {
+                if (!_currentString.IsNullOrEmpty())
+                {
+                    haveStory = true;
+                }
+
+                nChoices = _currentStory.currentChoices.Count;
+                if (number > 1 && number <= nChoices)
+                {
+                    _currentStory.ChooseChoiceIndex(number - 1);
+                }
+            }
+        }
+        _advanceStory();
+    }
+
+    
     private void _onClickSentence(engine.news.Event ev)
     {
-        _advanceStory();
+        if (ev.Code != null)
+        {
+            if (Int32.TryParse(ev.Code, out var number))
+            {
+                _advanceChoice(number);
+            }
+        }
+        else
+        {
+            _advanceStory();
+        }
     }
     
 
@@ -273,6 +308,7 @@ public class Narration : AModule, IInputPart
                 nChoices = _currentStory.currentChoices.Count;
             }
         }
+
         if (ev.Type == Event.INPUT_KEY_PRESSED)
         {
             switch (ev.Code)
@@ -290,17 +326,13 @@ public class Narration : AModule, IInputPart
                         && ev.Code.CompareTo("9") <= 0)
                     {
                         int number = ev.Code[0] - '0';
-                        if (0 == number) number = 10;                            
+                        if (0 == number) number = 10;     
                         if (nChoices > 0)
                         {
                             if (number <= nChoices)
                             {
                                 ev.IsHandled = true;
-                                lock (_lo)
-                                {
-                                    _currentStory.ChooseChoiceIndex(number-1);
-                                }
-                                _advanceStory();
+                                _advanceChoice(number);
                             }
                         }
                     }
