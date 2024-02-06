@@ -29,6 +29,9 @@ public class Narration : AModule, IInputPart
 
     public float BottomY { get; set; } = 400f;
     public float LineHeight { get; set; } = 16f;
+
+    public uint TextColor { get; set; } = 0xffcccccc;
+    public uint ChoiceColor { get; set; } = 0xffbbdddd;
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -36,10 +39,8 @@ public class Narration : AModule, IInputPart
     };
     
 
-    private void _prepareEntity()
+    private void _prepareSentence()
     {
-        _listEOptions = new();
-        
         if (_eSentence.IsAlive) return;
         var mDisplay = M<nogame.modules.osd.Display>();
         _eSentence = _engine.CreateEntity($"nogame.modules.story sentence");
@@ -48,7 +49,7 @@ public class Narration : AModule, IInputPart
             new Vector2(500f, 40),
             "",
             16,
-            0xffcccccc,
+            TextColor,
             0x00000000,
             HAlign.Center,
             VAlign.Top));
@@ -66,9 +67,9 @@ public class Narration : AModule, IInputPart
         eOption.Set(new engine.draw.components.OSDText(
             new Vector2((mDisplay.Width-500f)/2f , y),
             new Vector2(500f, 16),
-            "",
+            text,
             16,
-            0xffddddbb,
+            ChoiceColor,
             0x00000000,
             HAlign.Center,
             VAlign.Top));
@@ -79,12 +80,19 @@ public class Narration : AModule, IInputPart
         return eOption;
     }
 
-
-    private void _dismissSentence()
+    private void _prepareChoices()
     {
-        _prepareEntity();
-        _eSentence.Get<engine.draw.components.OSDText>().Text = "";
+        _listEOptions = new();
+    }
+    
+    private void _prepareDisplay()
+    {
+        _prepareSentence();
+    }
 
+
+    private void _dismissChoices()
+    {
         lock (_lo)
         {
             if (null != _listEOptions)
@@ -94,6 +102,23 @@ public class Narration : AModule, IInputPart
             }
         }
     }
+
+
+    private void _dismissSentence()
+    {
+        if (_eSentence.IsAlive)
+        {
+            _eSentence.Get<engine.draw.components.OSDText>().Text = "";
+        }
+    }
+    
+
+    private void _dismissDisplay()
+    {
+        _dismissSentence();
+        _dismissChoices();
+    }
+    
 
     private int _countLF(string str)
     {
@@ -109,7 +134,7 @@ public class Narration : AModule, IInputPart
 
     private void _displayNextSentence()
     {
-        _prepareEntity();
+        _prepareSentence();
 
         
         string strDisplay = "";
@@ -127,17 +152,18 @@ public class Narration : AModule, IInputPart
             _currentNChoices = 0;
             if (_currentStory.currentChoices.Count > 0)
             {
-                _listEOptions = new();
+                _prepareChoices();
                 int nChoices = _currentStory.currentChoices.Count;
                 for (int i = 0; i < nChoices; ++i)
                 {
-                    var eChoice = _createOptionEntity(i,  ytop + LineHeight * ((float)(i+1)), _currentStory.currentChoices[i].text);
+                    var eChoice = _createOptionEntity(i,  ytop + LineHeight * (i+1f), $"{i+1}) " + _currentStory.currentChoices[i].text);
                     _listEOptions.Add(eChoice);
                     ++_currentNChoices;
                 }
             }
             else
             {
+                _dismissChoices();
             }
         }
 
@@ -153,7 +179,11 @@ public class Narration : AModule, IInputPart
     
     private void _advanceStory()
     {
-        bool dismiss = false;
+        
+        /*
+         * Look for the next thing coming from the narration engine.
+         */
+        bool dismissAll = false;
         lock (_lo)
         {
             if (null == _currentStory)
@@ -163,31 +193,30 @@ public class Narration : AModule, IInputPart
             
             if (!_currentStory.canContinue)
             {
-                dismiss = true;
+                dismissAll = true;
                 _currentStory = null;
             }
         }
-        if (dismiss)
+        
+        /*
+         * If the story won't continue, just remove the display.
+         */
+        if (dismissAll)
         {
-            _dismissSentence();
+            _dismissDisplay();
             return;
         }
 
+        /*
+         * We should display something. So read it from the engine and bring
+         * it to the display.
+         */
         lock (_lo)
         {
             /*
              * If we have a current string, display it.
              */
             _currentString = _currentStory.Continue();
-            /*
-             * But also, if there are choices, display them.
-             */
-#if false
-            if (_currentStory.currentChoices.Count > 0)
-            {
-                
-            }
-#endif
         }
             
         _displayNextSentence();
