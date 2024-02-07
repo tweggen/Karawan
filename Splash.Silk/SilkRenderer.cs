@@ -62,8 +62,10 @@ namespace Splash.Silk
                  */
                 bool clearDepthBuffer = false;
                 bool clearAll = false;
+                
+                var cCameraParams = renderPart.CameraOutput.Camera3;
 
-                if (renderPart.CameraOutput.Camera3.CameraMask == 0x00800000)
+                if (cCameraParams.CameraMask == 0x00800000)
                 {
                     int a = 1;
                 }
@@ -108,13 +110,13 @@ namespace Splash.Silk
                     {
                         skRenderbufferEntry.Upload(_gl, _textureManager);
                     }
-                    skRenderbufferEntry.Use(_gl);
+                    skRenderbufferEntry.Use(_gl, cCameraParams.UL, cCameraParams.LR);
                     // _gl.Viewport(0, 0, renderbuffer.Width, renderbuffer.Height);
                 }
                 else
                 {
                     _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
-                    _nailViewport(true, true);
+                    _nailViewport(true, cCameraParams.UL,cCameraParams.LR, true);
                 }
                 
                 if (clearDepthBuffer)
@@ -130,8 +132,6 @@ namespace Splash.Silk
                      */
                     _gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                 }
-
-                var cCameraParams = renderPart.CameraOutput.Camera3;
 
                 if ((cCameraParams.CameraFlags & engine.joyce.components.Camera3.Flags.EnableFog) != 0)
                 {
@@ -210,9 +210,14 @@ namespace Splash.Silk
         }
 
 
-        private void _nailViewport(bool useViewRectangle, bool force = false)
+        private void _nailRenderbufferViewport(in Vector2 v2CamUl, in Vector2 v2CamLr)
         {
-            Vector2 vDesiredSize;
+            
+        }
+
+        private void _nailViewport(bool useViewRectangle, in Vector2 v2CamUl, in Vector2 v2CamLr, bool force = false)
+        {
+            Vector2 v2DesiredSize;
             Vector2 ul;
             if (useViewRectangle)
             {
@@ -227,26 +232,38 @@ namespace Splash.Silk
                      * Shall the entire view entent to the lower right?
                      */
                     lr = _vViewSize - Vector2.One;
-                    vDesiredSize = _vViewSize - ul;
+                    v2DesiredSize = _vViewSize - ul;
                 }
                 else
                 {
-                    vDesiredSize = lr - ul + Vector2.One;
+                    v2DesiredSize = lr - ul + Vector2.One;
                 }
             }
             else
             {
                 ul = Vector2.Zero;
-                vDesiredSize =  _vViewSize;
+                v2DesiredSize =  _vViewSize;
             }
+
+            Vector2 v2ClippedUl, v2ClippedLr;
+            Vector2 v2ClippedSize;
             
             // Now compute the actual gl size, considering the relative clipping.
+            //Vector2 v2InSize = v2CamLr - v2CamUl;
+            v2ClippedUl.X = ul.X + v2DesiredSize.X * v2CamUl.X;
+            v2ClippedUl.Y = ul.Y + v2DesiredSize.Y * v2CamUl.Y;
+            
+            v2ClippedLr.X = ul.X + v2DesiredSize.X * v2CamLr.X;
+            v2ClippedLr.Y = ul.Y + v2DesiredSize.Y * v2CamLr.Y;
 
-            if (null != _gl && (force || _vLastGlSize != vDesiredSize))
+            v2ClippedSize = v2ClippedLr - v2ClippedUl;
+            
+            // TXWTODO: Also check ul
+            if (null != _gl && (force || _vLastGlSize != v2ClippedSize))
             {
-                _v3dSize = vDesiredSize;
-                _gl.Viewport((int)ul.X, (int)(_vViewSize.Y-vDesiredSize.Y-ul.Y),
-                    (uint)(vDesiredSize.X), (uint)(vDesiredSize.Y));
+                _v3dSize = v2ClippedSize;
+                _gl.Viewport((int)v2ClippedUl.X, (int)(_vViewSize.Y-v2ClippedSize.Y-v2ClippedUl.Y),
+                    (uint)(v2ClippedSize.X), (uint)(v2ClippedSize.Y));
                 CheckError(_gl, $"glViewport {_v3dSize}");
                 _vLastGlSize = _v3dSize;
             }
@@ -263,9 +280,9 @@ namespace Splash.Silk
              */
             _gl.BindFramebuffer(GLEnum.Framebuffer, 0);
             CheckError(_gl, "glBindFramebuffer");
-            _nailViewport(true, true);
+            _nailViewport(true, Vector2.Zero, Vector2.One, true);
             _renderParts(renderFrame.RenderParts);
-            _nailViewport(false, true);
+            _nailViewport(false, Vector2.Zero, Vector2.One, true);
             _silkThreeD.UnloadAfterFrame();
         }
 

@@ -192,7 +192,7 @@ public class Module : AModule, IInputPart
                 cCamera3.LR = Vector2.One;
                 break;
             case Modes.MapMini:
-                cCamera3.Scale = 3f / MetaGen.MaxHeight;
+                cCamera3.Scale = (1024f+3f) / MetaGen.MaxHeight;
                 cCamera3.UL = new Vector2(0.05f, 0.05f);
                 cCamera3.LR = new Vector2(0.15f, 0.15f);
                 // TXWTODO: center it on the player.
@@ -487,16 +487,34 @@ public class Module : AModule, IInputPart
 
     private void _changeModeTo(Modes oldMode, Modes newMode)
     {
-        switch (newMode)
+        switch (oldMode)
         {
             case Modes.MapNone:
-                _changeModeToNone();
+                switch (newMode)
+                {
+                    case Modes.MapMini:
+                    case Modes.MapFullscreen:
+                        _changeModeToFullscreen();
+                        break;
+                    default:
+                        break;
+                }
+
                 break;
-            case Modes.MapMini:
             case Modes.MapFullscreen:
-                _changeModeToFullscreen();
+            case Modes.MapMini:
+                switch (newMode)
+                {
+                    case Modes.MapNone:
+                        _changeModeToNone();
+                        break;
+                    default:
+                        break;
+                }
+
                 break;
         }
+
     }
     
 

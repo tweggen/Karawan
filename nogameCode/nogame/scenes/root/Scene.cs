@@ -35,7 +35,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<nogame.modules.osd.Scores>(),
         new MyModule<builtin.map.MapViewer>(),
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
-        new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
+        // new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
         new MyModule<builtin.modules.Stats>() { Activate = false },
         new SharedModule<nogame.modules.story.Narration>() { Activate = false },
         new SharedModule<builtin.controllers.InputController>()
@@ -92,8 +92,8 @@ public class Scene : AModule, IScene, IInputPart
              *
              * TXWTODO: Remove the map part.
              */
-            M<modules.map.Module>().Mode = Module.Modes.MapNone;
-            M<modules.minimap.Module>().ModuleActivate(_engine);
+            M<modules.map.Module>().Mode = Module.Modes.MapMini;
+            // M<modules.minimap.Module>().ModuleActivate(_engine);
         }
         else
         {
@@ -103,7 +103,7 @@ public class Scene : AModule, IScene, IInputPart
              * TXWTODO: Add the map part.
              */
             M<modules.map.Module>().Mode = Module.Modes.MapFullscreen;
-            M<modules.minimap.Module>().ModuleDeactivate();
+            // M<modules.minimap.Module>().ModuleDeactivate();
         }
     }
 
@@ -208,7 +208,7 @@ public class Scene : AModule, IScene, IInputPart
         _engine.RemoveModule(this);
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         
-        I.Get<SubscriptionManager>().Unsubscribe("nogame.minimap.toggleMap", _toggleMap);
+        //I.Get<SubscriptionManager>().Unsubscribe("nogame.minimap.toggleMap", _toggleMap);
 
         /*
          * Null out everything we don't need when the scene is unloaded.
@@ -265,13 +265,14 @@ public class Scene : AModule, IScene, IInputPart
             nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
 
-        I.Get<SubscriptionManager>().Subscribe("nogame.minimap.toggleMap", _toggleMap);
+        //I.Get<SubscriptionManager>().Subscribe("nogame.minimap.toggleMap", _toggleMap);
         
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         _engine.AddModule(this);
 
         M<modules.map.Module>().ModuleActivate(_engine);
+        M<modules.map.Module>().Mode = Module.Modes.MapMini;
     }
 
 }

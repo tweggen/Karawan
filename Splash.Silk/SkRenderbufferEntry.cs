@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿using System.Numerics;
+using Silk.NET.OpenGL;
 using static engine.Logger;
 
 namespace Splash.Silk;
@@ -41,12 +42,20 @@ public class SkRenderbufferEntry : ARenderbufferEntry
     }
 
 
-    public void Use(GL gl)
+    public void Use(GL gl, Vector2 ul, Vector2 lr)
     {
         _gl = gl;
         gl.BindFramebuffer(GLEnum.Framebuffer, _handleFramebuffer);
         CheckError("SkRenderbuffer BindFramebuffer");
-        gl.Viewport(0, 0, JRenderbuffer.Width, JRenderbuffer.Height);
+
+        Vector2 v2Ul = ul;
+        Vector2 v2Lr = lr;
+        v2Ul.X *= JRenderbuffer.Width;
+        v2Ul.Y *= JRenderbuffer.Height;
+        v2Lr.X *= JRenderbuffer.Width;
+        v2Lr.Y *= JRenderbuffer.Height;
+        Vector2 v2Size = v2Lr - v2Ul;
+        gl.Viewport((int)v2Ul.X, (int)v2Ul.Y, (uint)v2Size.X, (uint)v2Size.Y);
         CheckError("SkRenderbuffer Viewport");
     }
     
