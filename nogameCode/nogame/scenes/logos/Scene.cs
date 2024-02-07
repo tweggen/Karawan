@@ -168,10 +168,11 @@ public class Scene : AModule, IScene
         _modTitle.Add(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
-            StartOffset = TimeSpan.FromMilliseconds(2000),
+            StartOffset = TimeSpan.FromMilliseconds(1400),
             EndReference = TimepointTitlesongStarted,
             EndOffset = TimeSpan.FromMilliseconds(4000),
             Duration = 2000,
+            Flags = (uint) TitleCard.F.JitterEnd,
             Size = new(64f, 64f/1280f*400f),
             AlbedoTexture = new Texture("titlelogo2_albedo.png"),
             EmissiveTexture = new Texture("titlelogo2_emissive.png"),

@@ -189,6 +189,8 @@ public class Scene : AModule, IScene, IInputPart
             });
         });
         
+        M<modules.map.Module>().Mode = Module.Modes.MapMini;
+
         return true;
     }
     
@@ -272,7 +274,6 @@ public class Scene : AModule, IScene, IInputPart
         _engine.AddModule(this);
 
         M<modules.map.Module>().ModuleActivate(_engine);
-        M<modules.map.Module>().Mode = Module.Modes.MapMini;
     }
 
 }

@@ -27,6 +27,7 @@ public class TitleModule : engine.AModule
     private List<TitleCard> _cards = new();
     private Dictionary<TitleCard, ActiveCardEntry> _dictCards = new();
 
+    private Random _rnd = new();
 
     private void _computeTransformAt(TitleCard card, double t, out engine.joyce.components.Transform3 t3)
     {
@@ -116,6 +117,20 @@ public class TitleModule : engine.AModule
             float t = (float)(now- ace.StartTime).TotalMilliseconds;
             _computeTransformAt(ace.Card, t, out engine.joyce.components.Transform3 t3);
             I.Get<engine.joyce.TransformApi>().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position, t3.Scale);
+            {
+                float relTime = t / (float)ace.Card.Duration;
+                if (0 != (ace.Card.Flags & (uint)TitleCard.F.JitterEnd))
+                {
+                    if (_rnd.NextDouble() < relTime)
+                    {
+                        ace.InstanceDesc.Materials[0].EmissiveFactors = 0;
+                    }
+                    else
+                    {
+                        ace.InstanceDesc.Materials[0].EmissiveFactors = 0xffffffff;
+                    }
+                }
+            }
 #if false
             {
                 float inFadeOut = t - ((float)ace.Card.Duration - ace.Card.FadeOutTime*1000f);

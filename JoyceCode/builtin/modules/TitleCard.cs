@@ -7,11 +7,17 @@ namespace builtin.parts;
 
 public class TitleCard
 {
+    public enum F
+    {
+        JitterEnd = 1
+    };
     public string StartReference;
     public TimeSpan StartOffset;
     public string EndReference;
     public TimeSpan EndOffset;
     public double Duration;
+
+    public uint Flags;
 
     // public float FadeOutTime = 1.2f;
 
