@@ -29,7 +29,7 @@ public class Narration : AModule, IInputPart
     public float MY_Z_ORDER { get; set; } = 24.5f;
 
     public float BottomY { get; set; } = (400f-24f);
-    public float LineHeight { get; set; } = 16f;
+    public float LineHeight { get; set; } = 16f+4f;
 
     public uint TextColor { get; set; } = 0xffcccccc;
     public uint TextFill { get; set; } = 0xff336633;

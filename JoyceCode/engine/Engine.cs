@@ -1030,6 +1030,11 @@ public class Engine
     }
 
 
+    /**
+     * Return the rectangle the entire view should be rendered in.
+     * This size is defined and set to a smaller rectangle if the game
+     * shall be rendered in a windowed context next to e.g. the debugging UI.
+     */
     public void GetViewRectangle(out Vector2 ul, out Vector2 lr)
     {
         ul = _vViewUl;

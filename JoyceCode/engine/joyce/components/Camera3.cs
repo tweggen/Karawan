@@ -19,6 +19,18 @@ public struct Camera3
     public float Angle = 60f;
     public float NearFrustum = 10f;
     public float FarFrustum = 1000f;
+    
+    /**
+     * The upper left position on screen this one shall be rendered in.
+     * 0,0 is upper left, 1,1 is lower right
+     */
+    public Vector2 UL = Vector2.Zero;
+    
+    /**
+     * The lower right position on screen this one shall be rendered in.
+     * 0,0 is upper left, 1,1 is lower right
+     */
+    public Vector2 LR = Vector2.One;
 
     /**
      * Scale the camera output. Values larger than one enlarging, values smaller

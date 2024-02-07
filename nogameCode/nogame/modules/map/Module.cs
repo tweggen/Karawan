@@ -59,13 +59,13 @@ struct DisplayMapParams
 public class Module : AModule, IInputPart
 {
     private static float MY_Z_ORDER = 500f;
-    
+
     private bool _createdResources = false;
-    
+
     private DefaultEcs.Entity _eMap;
     private DefaultEcs.Entity _eCamMap;
-    
-    private float _zoomState = 0.2f; 
+
+    private float _zoomState = 0.2f;
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
     public float CameraY { get; set; } = 700f;
     public float MapY { get; set; } = 200f;
@@ -81,16 +81,16 @@ public class Module : AModule, IInputPart
     // TXWTODO: This is a guesstimate. Compute it properly.
     private float _viewHeight = 6f;
     private float _viewWidth = 6f * 16f / 9f;
-    
-    
+
+
     static public uint MapCameraMask = 0x00800000;
 
 
     private float _scaleF(in DisplayMapParams dmp)
     {
-        float x = (dmp.CurrentZoomState-DisplayMapParams.MIN_ZOOM_STATE) 
-            / DisplayMapParams.MAX_ZOOM_STATE-DisplayMapParams.MIN_ZOOM_STATE;
-        return (1024f * (x*x*x) + 3) / (engine.world.MetaGen.MaxHeight);
+        float x = (dmp.CurrentZoomState - DisplayMapParams.MIN_ZOOM_STATE)
+            / DisplayMapParams.MAX_ZOOM_STATE - DisplayMapParams.MIN_ZOOM_STATE;
+        return (1024f * (x * x * x) + 3) / (engine.world.MetaGen.MaxHeight);
     }
 
     private void _updateMapParams()
@@ -105,25 +105,26 @@ public class Module : AModule, IInputPart
         I.Get<TransformApi>().SetVisible(_eCamMap, dmp.IsVisible);
         I.Get<TransformApi>().SetVisible(_eMap, true);
         I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
-        
+
         // TXWTODO: We better should consider the zoom state.
         Vector3 vCamPos = new(
-            (dmp.Position.X-0.5f) * (MetaGen.MaxSize.X), 
-            CameraY, 
-            (dmp.Position.Y-0.5f) * (MetaGen.MaxSize.Y)
-            );
-        
+            (dmp.Position.X - 0.5f) * (MetaGen.MaxSize.X),
+            CameraY,
+            (dmp.Position.Y - 0.5f) * (MetaGen.MaxSize.Y)
+        );
+
         I.Get<TransformApi>().SetTransforms(_eCamMap,
-            dmp.IsVisible, MapCameraMask, 
-            Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f), 
+            dmp.IsVisible, MapCameraMask,
+            Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f * Single.Pi / 2f),
             vCamPos
-            );
+        );
         float scale = _scaleF(dmp);
-        
+
         _eCamMap.Get<Camera3>().Scale = scale;
         _computeAABB();
 
-        if (false) {
+        if (false)
+        {
             var cCamera3 = _eCamMap.Get<Camera3>();
             var mCamToWorld = _eCamMap.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
             //Trace($"mCamToWorld {mCamToWorld}");
@@ -136,10 +137,10 @@ public class Module : AModule, IInputPart
             //Trace($"{v3ProjCamPos}, ${v3ProjPlanePos}, ${v3ProjMapPos}");
             int a = 1;
         }
-        
+
     }
-    
-    
+
+
     private void _needResources()
     {
         lock (_lo)
@@ -151,7 +152,7 @@ public class Module : AModule, IInputPart
 
             _createdResources = true;
         }
-        
+
         /*
          * Create a map camera
          */
@@ -161,7 +162,7 @@ public class Module : AModule, IInputPart
             cCamMap.Angle = 0f;
             cCamMap.NearFrustum = 5f;
             cCamMap.FarFrustum = 1000f;
-            cCamMap.Scale = 2f/engine.world.MetaGen.MaxHeight;
+            cCamMap.Scale = 2f / engine.world.MetaGen.MaxHeight;
             cCamMap.CameraMask = MapCameraMask;
             cCamMap.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
             _eCamMap.Set(cCamMap);
@@ -169,14 +170,14 @@ public class Module : AModule, IInputPart
              * Let the camera be well over every object
              */
             I.Get<TransformApi>().SetTransforms(_eCamMap, false, MapCameraMask,
-                Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f*Single.Pi/2f),
+                Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f * Single.Pi / 2f),
                 new Vector3(0f, CameraY, 0f));
-            
+
             _eCamMap.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
         }
-        
-        
+
+
         /*
          * The map plane is exactly there where the real world is:
          * We are looking at the real world from a top-down perspective.
@@ -189,7 +190,7 @@ public class Module : AModule, IInputPart
             engine.joyce.mesh.Tools.CreatePlaneMesh(
                 "mapmesh", /* new Vector2(500f, 500f) */ engine.world.MetaGen.MaxSize);
         meshFramebuffer.UploadImmediately = true;
-        engine.joyce.Texture textureFramebuffer = 
+        engine.joyce.Texture textureFramebuffer =
             I.Get<nogame.map.MapFramebuffer>().Texture;
 
         {
@@ -199,11 +200,12 @@ public class Module : AModule, IInputPart
             materialFramebuffer.EmissiveTexture = textureFramebuffer;
             materialFramebuffer.HasTransparency = false;
 
-            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 100000f);
+            var jInstanceDesc =
+                InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 100000f);
             _eMap.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             I.Get<TransformApi>().SetTransforms(_eMap,
                 true, MapCameraMask,
-                Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f*Single.Pi/2f),
+                Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f * Single.Pi / 2f),
                 -MapY * Vector3.UnitY);
         }
         _updateMapParams();
@@ -228,7 +230,7 @@ public class Module : AModule, IInputPart
         /*
          * Limit the map details to a view of max 3km * 3km
          */
-        if (halfX*halfY > 9000000f)
+        if (halfX * halfY > 9000000f)
         {
             aabb.Reset();
         }
@@ -253,14 +255,16 @@ public class Module : AModule, IInputPart
             }
         }
     }
-    
+
 
     private void _notifyAABB()
     {
         engine.geom.AABB aabb;
-        lock (_lo) {
-            aabb = _aabbMap;   
+        lock (_lo)
+        {
+            aabb = _aabbMap;
         }
+
         I.Get<EventQueue>().Push(
             new builtin.map.MapRangeEvent("mainmap")
             {
@@ -272,7 +276,7 @@ public class Module : AModule, IInputPart
     private void _handleMouseWheel(Event ev)
     {
         /*
-         *  Translate mouse wheel to zooming in/out. 
+         *  Translate mouse wheel to zooming in/out.
          */
         /*
          * size y contains the delta.
@@ -280,9 +284,10 @@ public class Module : AModule, IInputPart
         int y = (int)ev.Position.Y;
         lock (_lo)
         {
-            int currentZoomState = (int) _requestedMapParams.CurrentZoomState;
+            int currentZoomState = (int)_requestedMapParams.CurrentZoomState;
             currentZoomState += DisplayMapParams.ZOOM_STEPS * y;
-            currentZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE, Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, currentZoomState));
+            currentZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE,
+                Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, currentZoomState));
             _requestedMapParams.CurrentZoomState = currentZoomState;
         }
 
@@ -305,58 +310,14 @@ public class Module : AModule, IInputPart
         lock (_lo)
         {
             vDelta *= 0.00001f / _scaleF(_visibleMapParams);
-            _requestedMapParams.Position = 
+            _requestedMapParams.Position =
                 Vector2.Min(Vector2.One,
                     Vector2.Max(Vector2.Zero,
                         _requestedMapParams.Position + vDelta));
         }
     }
-    
 
-    private void _handleKeyDown(Event ev)
-    {
-        lock (_lo)
-        {
-            DisplayMapParams dmp = _requestedMapParams;
-            bool haveChange = false;
-            Vector2 vDelta = Vector2.Zero;
-            
-            switch (ev.Code)
-            {
-                case "W":
-                    vDelta.Y = 1f;
-                    haveChange = true;
-                    break;
-                case "A":
-                    vDelta.X = 1f;
-                    haveChange = true;
-                    break;
-                case "S":
-                    vDelta.Y = -1f;
-                    haveChange = true;
-                    break;
-                case "D":
-                    vDelta.X = -1f;
-                    haveChange = true;
-                    break;
-                default:
-                    break;
-            }
 
-            if (haveChange)
-            {
-                _applyDeltaMove(vDelta);
-                ev.IsHandled = true;
-            }
-        }
-    }
-
-    
-    private void _handleKeyUp(Event ev)
-    {
-    }
-
-    
     public void InputPartOnInputEvent(Event ev)
     {
         // if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
@@ -367,7 +328,7 @@ public class Module : AModule, IInputPart
         // if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _handleKeyUp(ev);
     }
 
-    
+
     private void _handleController()
     {
         I.Get<InputController>().GetControllerState(out var controllerState);
@@ -388,14 +349,50 @@ public class Module : AModule, IInputPart
         {
             _handleController();
         }
+
         _updateMapParams();
     }
-    
+
 
     public void Dispose()
     {
         _eMap.Dispose();
         _createdResources = false;
+    }
+
+
+    /**
+     * Identifiers of the desired map modes.
+     * The mop modes actually differ in the way the map camera is windowed.
+     * When displayed as a fullscreen map, the map is displayed full screen, when
+     * displayed as a minimap, the map is windowed.
+     */
+    public enum Mode {
+        /**
+         * The map is completely visible, usually at a small scale.
+         * The map is not clipped at all.
+         */
+        MapFullscreen,
+        
+        /**
+         * A small windowed view on the map is shown, usually at a detailed scale.-
+         * The map is clipped and may be rotated.
+         */
+        MapMini,
+    };
+
+
+    private Mode _mode = Mode.MapFullscreen;
+    
+    public void SetMapMode(Mode mode)
+    {
+        lock (_lo)
+        {
+            if (mode == _mode)
+            {
+                return;
+            }
+        }
     }
     
     

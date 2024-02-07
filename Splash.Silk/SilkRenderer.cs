@@ -216,9 +216,16 @@ namespace Splash.Silk
             Vector2 ul;
             if (useViewRectangle)
             {
+                /*
+                 * Compute the size and the upper left edge, keep it in ul and vDesiredSize
+                 */
                 _engine.GetViewRectangle(out ul, out var lr);
+                
                 if (Vector2.Zero == lr)
                 {
+                    /*
+                     * Shall the entire view entent to the lower right?
+                     */
                     lr = _vViewSize - Vector2.One;
                     vDesiredSize = _vViewSize - ul;
                 }
@@ -232,6 +239,8 @@ namespace Splash.Silk
                 ul = Vector2.Zero;
                 vDesiredSize =  _vViewSize;
             }
+            
+            // Now compute the actual gl size, considering the relative clipping.
 
             if (null != _gl && (force || _vLastGlSize != vDesiredSize))
             {
