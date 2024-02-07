@@ -6,6 +6,7 @@ using builtin.modules;
 using engine;
 using engine.joyce;
 using engine.news;
+using nogame.modules.map;
 using static engine.Logger;
 
 namespace nogame.scenes.root;
@@ -91,7 +92,7 @@ public class Scene : AModule, IScene, IInputPart
              *
              * TXWTODO: Remove the map part.
              */
-            M<modules.map.Module>().ModuleDeactivate();
+            M<modules.map.Module>().Mode = Module.Modes.MapNone;
             M<modules.minimap.Module>().ModuleActivate(_engine);
         }
         else
@@ -101,7 +102,7 @@ public class Scene : AModule, IScene, IInputPart
              *
              * TXWTODO: Add the map part.
              */
-            M<modules.map.Module>().ModuleActivate(_engine);
+            M<modules.map.Module>().Mode = Module.Modes.MapFullscreen;
             M<modules.minimap.Module>().ModuleDeactivate();
         }
     }
@@ -269,6 +270,8 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         _engine.AddModule(this);
+
+        M<modules.map.Module>().ModuleActivate(_engine);
     }
 
 }

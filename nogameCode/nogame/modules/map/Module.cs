@@ -82,24 +82,84 @@ public class Module : AModule, IInputPart
     private float _viewHeight = 6f;
     private float _viewWidth = 6f * 16f / 9f;
 
-
+    
     static public uint MapCameraMask = 0x00800000;
 
 
+    /**
+     * Identifiers of the desired map modes.
+     * The mop modes actually differ in the way the map camera is windowed.
+     * When displayed as a fullscreen map, the map is displayed full screen, when
+     * displayed as a minimap, the map is windowed.
+     */
+    public enum Modes {
+        /**
+         * No map is displayed at all.
+         */
+        MapNone,
+        
+        /**
+         * The map is completely visible, usually at a small scale.
+         * The map is not clipped at all.
+         */
+        MapFullscreen,
+        
+        /**
+         * A small windowed view on the map is shown, usually at a detailed scale.-
+         * The map is clipped and may be rotated.
+         */
+        MapMini,
+    };
+
+
+    private Modes _mode = Modes.MapNone;
+    public Modes Mode
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _mode;
+            }
+        }
+        set
+        {
+            Modes oldMode;
+            lock (_lo)
+            {
+                if (_mode == value)
+                {
+                    return;
+                }
+
+                oldMode = _mode;
+
+                _mode = value;
+            }
+
+            _changeModeTo(oldMode, value);
+        }
+    }
+    
+
+    
     private float _scaleF(in DisplayMapParams dmp)
     {
         float x = (dmp.CurrentZoomState - DisplayMapParams.MIN_ZOOM_STATE)
             / DisplayMapParams.MAX_ZOOM_STATE - DisplayMapParams.MIN_ZOOM_STATE;
         return (1024f * (x * x * x) + 3) / (engine.world.MetaGen.MaxHeight);
     }
+    
 
     private void _updateMapParams()
     {
         DisplayMapParams dmp;
+        Modes mode;
         lock (_lo)
         {
             _visibleMapParams.Slerp(_requestedMapParams, 0.2f);
             dmp = _visibleMapParams;
+            mode = _mode;
         }
 
         I.Get<TransformApi>().SetVisible(_eCamMap, dmp.IsVisible);
@@ -118,26 +178,27 @@ public class Module : AModule, IInputPart
             Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f * Single.Pi / 2f),
             vCamPos
         );
-        float scale = _scaleF(dmp);
 
-        _eCamMap.Get<Camera3>().Scale = scale;
-        _computeAABB();
-
-        if (false)
+        ref var cCamera3 = ref _eCamMap.Get<Camera3>();
+        /*
+         * Now, depending on the mode, setup the camera.
+         */
+        switch (mode)
         {
-            var cCamera3 = _eCamMap.Get<Camera3>();
-            var mCamToWorld = _eCamMap.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
-            //Trace($"mCamToWorld {mCamToWorld}");
-            cCamera3.GetViewMatrix(out var mModelView, mCamToWorld);
-            cCamera3.GetProjectionMatrix(out var mProj, new Vector2(1920, 1080));
-            //var mProj = Matrix4x4.Identity;
-            Vector3 v3ProjCamPos = Vector3.Transform(vCamPos, mModelView * mProj);
-            Vector3 v3ProjPlanePos = Vector3.Transform(new Vector3(0f, 40f, 0f), mModelView * mProj);
-            Vector3 v3ProjMapPos = Vector3.Transform(MapY * Vector3.UnitY, mModelView * mProj);
-            //Trace($"{v3ProjCamPos}, ${v3ProjPlanePos}, ${v3ProjMapPos}");
-            int a = 1;
+            case Modes.MapFullscreen:
+                float scale = _scaleF(dmp);
+                cCamera3.Scale = scale;
+                cCamera3.UL = Vector2.Zero;
+                cCamera3.LR = Vector2.One;
+                break;
+            case Modes.MapMini:
+                cCamera3.Scale = 3f / MetaGen.MaxHeight;
+                cCamera3.UL = new Vector2(0.05f, 0.05f);
+                cCamera3.LR = new Vector2(0.15f, 0.15f);
+                // TXWTODO: center it on the player.
+                break;
         }
-
+        _computeAABB();
     }
 
 
@@ -272,9 +333,20 @@ public class Module : AModule, IInputPart
             });
     }
 
-
+    
     private void _handleMouseWheel(Event ev)
     {
+        Modes mode;
+        lock (_lo)
+        {
+            mode = _mode;
+        }
+
+        if (mode != Modes.MapFullscreen)
+        {
+            return;
+        }
+        
         /*
          *  Translate mouse wheel to zooming in/out.
          */
@@ -331,6 +403,18 @@ public class Module : AModule, IInputPart
 
     private void _handleController()
     {
+        Modes mode;
+        lock (_lo)
+        {
+            mode = _mode;
+        }
+
+        if (mode != Modes.MapFullscreen)
+        {
+            return;
+        }
+
+
         I.Get<InputController>().GetControllerState(out var controllerState);
 
         Vector2 vDelta = Vector2.Zero;
@@ -354,49 +438,8 @@ public class Module : AModule, IInputPart
     }
 
 
-    public void Dispose()
-    {
-        _eMap.Dispose();
-        _createdResources = false;
-    }
 
-
-    /**
-     * Identifiers of the desired map modes.
-     * The mop modes actually differ in the way the map camera is windowed.
-     * When displayed as a fullscreen map, the map is displayed full screen, when
-     * displayed as a minimap, the map is windowed.
-     */
-    public enum Mode {
-        /**
-         * The map is completely visible, usually at a small scale.
-         * The map is not clipped at all.
-         */
-        MapFullscreen,
-        
-        /**
-         * A small windowed view on the map is shown, usually at a detailed scale.-
-         * The map is clipped and may be rotated.
-         */
-        MapMini,
-    };
-
-
-    private Mode _mode = Mode.MapFullscreen;
-    
-    public void SetMapMode(Mode mode)
-    {
-        lock (_lo)
-        {
-            if (mode == _mode)
-            {
-                return;
-            }
-        }
-    }
-    
-    
-    public override void ModuleDeactivate()
+    private void _changeModeToNone()
     {
         lock(_lo) {
             _requestedMapParams.IsVisible = false;
@@ -419,21 +462,18 @@ public class Module : AModule, IInputPart
 
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
-    
-    public override void ModuleActivate(Engine engine0)
-    {
-        base.ModuleActivate(engine0);
 
+    private void _changeModeToFullscreen()
+    {
         DefaultEcs.Entity eEmpty = default;
+        /*
+         * Trigger creation of world map entities if not created yet.
+         */
         I.Get<IMapProvider>().WorldMapCreateEntities(eEmpty, MapCameraMask);
         
         _needResources();
-        _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
 
         lock(_lo) {
@@ -442,5 +482,41 @@ public class Module : AModule, IInputPart
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _computeAABB();
+    }
+    
+
+    private void _changeModeTo(Modes oldMode, Modes newMode)
+    {
+        switch (newMode)
+        {
+            case Modes.MapNone:
+                _changeModeToNone();
+                break;
+            case Modes.MapMini:
+            case Modes.MapFullscreen:
+                _changeModeToFullscreen();
+                break;
+        }
+    }
+    
+
+    public void Dispose()
+    {
+        _eMap.Dispose();
+        _createdResources = false;
+    }
+    
+    
+    public override void ModuleDeactivate()
+    {
+        _engine.RemoveModule(this);
+        base.ModuleDeactivate();
+    }
+
+    
+    public override void ModuleActivate(Engine engine0)
+    {
+        base.ModuleActivate(engine0);
+        _engine.AddModule(this);
     }
 }
