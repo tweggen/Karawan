@@ -498,7 +498,7 @@ public class CameraOutput
         _v3CameraPos = mTransformToWorld.Translation;
         _threeD = threeD;
         _frameStats = frameStats;
-        _mUnscale = Matrix4x4.CreateScale(1f / camera3.Scale);
+        _mUnscale = Matrix4x4.CreateScale(1f / camera3.Scale / (camera3.LR.X-camera3.UL.X));
         GetRotation(ref _mInverseCameraRotation, in mTransformToWorld);
     }
 }
