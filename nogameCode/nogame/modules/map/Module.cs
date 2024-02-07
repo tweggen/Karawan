@@ -167,17 +167,7 @@ public class Module : AModule, IInputPart
         I.Get<TransformApi>().SetCameraMask(_eMap, MapCameraMask);
 
         // TXWTODO: We better should consider the zoom state.
-        Vector3 vCamPos = new(
-            (dmp.Position.X - 0.5f) * (MetaGen.MaxSize.X),
-            CameraY,
-            (dmp.Position.Y - 0.5f) * (MetaGen.MaxSize.Y)
-        );
-
-        I.Get<TransformApi>().SetTransforms(_eCamMap,
-            dmp.IsVisible, MapCameraMask,
-            Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f * Single.Pi / 2f),
-            vCamPos
-        );
+        Vector3 v3CamPos = Vector3.Zero;
 
         ref var cCamera3 = ref _eCamMap.Get<Camera3>();
         /*
@@ -190,14 +180,34 @@ public class Module : AModule, IInputPart
                 cCamera3.Scale = scale;
                 cCamera3.UL = Vector2.Zero;
                 cCamera3.LR = Vector2.One;
+                v3CamPos = new(
+                    (dmp.Position.X - 0.5f) * (MetaGen.MaxSize.X),
+                    CameraY,
+                    (dmp.Position.Y - 0.5f) * (MetaGen.MaxSize.Y)
+                );
                 break;
             case Modes.MapMini:
-                cCamera3.Scale = (1024f+3f) / MetaGen.MaxHeight;
+            {
+                var ePlayer = _engine.GetPlayerEntity();
+                if (ePlayer.IsAlive && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+                {
+                    ref var t3 = ref ePlayer.Get<engine.joyce.components.Transform3ToWorld> ();
+                    v3CamPos = t3.Matrix.Translation with { Y = CameraY };
+                }
+
+                cCamera3.Scale = (1024f + 3f) / MetaGen.MaxHeight;
                 cCamera3.UL = new Vector2(0.05f, 0.05f);
-                cCamera3.LR = new Vector2(0.15f, 0.05f+0.1f*16f/9f);
-                // TXWTODO: center it on the player.
+                cCamera3.LR = new Vector2(0.15f, 0.05f + 0.1f * 16f / 9f);
+            }
                 break;
         }
+
+        I.Get<TransformApi>().SetTransforms(_eCamMap,
+            dmp.IsVisible, MapCameraMask,
+            Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), 3f * Single.Pi / 2f),
+            v3CamPos
+        );
+
         _computeAABB();
     }
 
