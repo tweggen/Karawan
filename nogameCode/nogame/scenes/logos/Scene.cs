@@ -208,7 +208,7 @@ public class Scene : AModule, IScene
         if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false")
         {
             engine.I.Get<Boom.Jukebox>().LoadThenPlaySong(
-                "shaklengokhsi.ogg", 0.05f, false,
+                "shaklengokhsi.ogg", 0f* 0.05f, false,
                 _onTitleSongStarted, _onTitleSongStopped);
         }
         else

@@ -40,6 +40,7 @@ public class Jukebox
                 _soundCurrentSong = sound;
                 _soundCurrentSong.Volume = volume;
                 _soundCurrentSong.IsLooped = isLooped;
+                _soundCurrentSong.SoundMask = 0x00010000;
 
                 _soundCurrentSong.Play();
                 try

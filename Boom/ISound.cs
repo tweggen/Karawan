@@ -9,6 +9,8 @@ public interface ISound : IDisposable
     public bool IsLooped { get; set; }
     public float Volume { get; set; }
     public float Speed { get; set; }
+
+    public uint SoundMask { get; set; }
     public void Play();
     public void Stop();
 }

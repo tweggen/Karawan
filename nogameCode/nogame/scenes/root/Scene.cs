@@ -190,6 +190,7 @@ public class Scene : AModule, IScene, IInputPart
         });
         
         M<modules.map.Module>().Mode = Module.Modes.MapMini;
+        I.Get<Boom.ISoundAPI>().SoundMask = 0xffffffff;
 
         return true;
     }
@@ -273,6 +274,7 @@ public class Scene : AModule, IScene, IInputPart
 
         _engine.AddModule(this);
 
+        I.Get<Boom.ISoundAPI>().SoundMask = 0xffff0000;
         M<modules.map.Module>().ModuleActivate(_engine);
     }
 

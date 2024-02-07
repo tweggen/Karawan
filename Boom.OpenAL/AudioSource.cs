@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics.Constraints;
+using engine;
 using Silk.NET.OpenAL;
 using static engine.Logger;
 
@@ -13,6 +14,7 @@ public class AudioSource : Boom.ISound
     private uint _alBuffer = 0xffffffff;
     private uint _alSource = 0xffffffff;
     private bool _haveSetupDistanceModel = false;
+    private ISoundAPI _api;
 
     private bool _traceAudio = false;
 
@@ -43,7 +45,7 @@ public class AudioSource : Boom.ISound
         set => _isLooped = value;
     }
 
-    private float _volume = 1f;
+    private float _volume = -0.01f;
     public float Volume
     {
         get => _volume;
@@ -56,6 +58,17 @@ public class AudioSource : Boom.ISound
     {
         get => _speed;
         set => _setSpeed(value);
+    }
+
+    private uint _soundMask = 0x00000001;
+    public uint SoundMask
+    {
+        get => _soundMask;
+        set
+        {
+            _soundMask = value;
+            _setVolume(value);
+        }
     }
 
     private void _whc()
@@ -115,18 +128,27 @@ public class AudioSource : Boom.ISound
     }
 
 
-    private void _setVolume(float volume)
+    private void _setVolumeNoLock(float requestedVolume)
+    {
+        float volume;
+        
+        bool isActive = (_api.SoundMask & _soundMask) != 0;
+        volume = isActive ? requestedVolume : 0f;
+        if (volume != _volume)
+        {
+            if (_isValidNoLock())
+            {
+                _al.SetSourceProperty(_alSource, SourceFloat.Gain, volume);
+                _volume = volume;
+            }
+        }
+    }
+
+    private void _setVolume(float requestedVolume)
     {
         lock (_lo)
         {
-            if (volume != _volume)
-            {
-                if (_isValidNoLock())
-                {
-                    _al.SetSourceProperty(_alSource, SourceFloat.Gain, volume);
-                    _volume = volume;
-                }
-            }
+            _setVolumeNoLock(requestedVolume);
         }
     }
 
@@ -201,6 +223,7 @@ public class AudioSource : Boom.ISound
     
     public AudioSource(AL al, uint alBuffer)
     {
+        _api = I.Get<ISoundAPI>();
         _al = al;
         _alBuffer = alBuffer;
         _alSource = _al.GenSource();

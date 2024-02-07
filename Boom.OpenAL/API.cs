@@ -20,6 +20,9 @@ unsafe public class API : Boom.ISoundAPI
     private SortedDictionary<string, OGGSound> _mapSounds = new();
 
 
+    private uint _soundMask = 0xffff0000;
+    public uint SoundMask { get => _soundMask; set => _soundMask = value; }
+
     public AL AL
     {
         get => _al;
