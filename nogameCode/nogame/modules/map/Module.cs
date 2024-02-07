@@ -194,7 +194,7 @@ public class Module : AModule, IInputPart
             case Modes.MapMini:
                 cCamera3.Scale = (1024f+3f) / MetaGen.MaxHeight;
                 cCamera3.UL = new Vector2(0.05f, 0.05f);
-                cCamera3.LR = new Vector2(0.15f, 0.15f);
+                cCamera3.LR = new Vector2(0.15f, 0.05f+0.1f*16f/9f);
                 // TXWTODO: center it on the player.
                 break;
         }
