@@ -28,11 +28,13 @@ public class Narration : AModule, IInputPart
 
     public float MY_Z_ORDER { get; set; } = 24.5f;
 
-    public float BottomY { get; set; } = 400f;
+    public float BottomY { get; set; } = (400f-24f);
     public float LineHeight { get; set; } = 16f;
 
     public uint TextColor { get; set; } = 0xffcccccc;
+    public uint TextFill { get; set; } = 0xff336633;
     public uint ChoiceColor { get; set; } = 0xffbbdddd;
+    public uint ChoiceFill { get; set; } = 0xff663333;
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -51,7 +53,7 @@ public class Narration : AModule, IInputPart
             "",
             16,
             TextColor,
-            0x00000000,
+            TextFill,
             HAlign.Center,
             VAlign.Top));
         _eSentence.Set(new engine.behave.components.Clickable()
@@ -71,7 +73,7 @@ public class Narration : AModule, IInputPart
             text,
             16,
             ChoiceColor,
-            0x00000000,
+            ChoiceFill,
             HAlign.Center,
             VAlign.Top));
         eOption.Set(new engine.behave.components.Clickable()
@@ -162,7 +164,7 @@ public class Narration : AModule, IInputPart
             strDisplay = _currentString;
             nLFs = _countLF(_currentString);
 
-            ytop = BottomY - LineHeight * (nLFs + 1) - 32f;
+            ytop = BottomY - LineHeight * (nLFs + 1);
 
             int index = 1;
             _currentNChoices = 0;
@@ -186,7 +188,7 @@ public class Narration : AModule, IInputPart
         ref var cSentenceOSDText = ref _eSentence.Get<engine.draw.components.OSDText>();
         cSentenceOSDText.Text = strDisplay;
         cSentenceOSDText.Position.Y = ytop;
-        cSentenceOSDText.Size.Y = _countLF(strDisplay)*LineHeight;
+        cSentenceOSDText.Size.Y = (nLFs+1)*LineHeight;
 
         _soundTty.Stop();
         _soundTty.Volume = 0.02f;
@@ -280,7 +282,7 @@ public class Narration : AModule, IInputPart
                     nChoices = _currentStory.currentChoices.Count;
                 }
 
-                if (number > 1 && number <= nChoices)
+                if (number >= 1 && number <= nChoices)
                 {
                     _currentStory.ChooseChoiceIndex(number - 1);
                 }

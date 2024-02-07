@@ -61,17 +61,24 @@ public class Display : engine.AModule
         Vector2 v2OSDPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
         //List<Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event>> listClickables = new();
 
-        // Trace($"Handling relative click {v2OSDPos}");
         foreach (var eCand in clickableEntities)
         {
             var cOSDText = eCand.Get<engine.draw.components.OSDText>();
 
-            // Trace($"found clickable {cOSDText.Position} + {cOSDText.Size}");
+            Trace($"have clickable {cOSDText.Position} + {cOSDText.Size}: cOSDText");
+        }
+
+        Trace($"Handling relative click {v2OSDPos}");
+        foreach (var eCand in clickableEntities)
+        {
+            var cOSDText = eCand.Get<engine.draw.components.OSDText>();
+
             if (v2OSDPos.X >= cOSDText.Position.X
                 && v2OSDPos.Y >= cOSDText.Position.Y
                 && v2OSDPos.X < (cOSDText.Position.X + cOSDText.Size.X)
                 && v2OSDPos.Y < (cOSDText.Position.Y + cOSDText.Size.Y))
             {
+                Trace($"matching {cOSDText.Position} + {cOSDText.Size}: cOSDText");
                 //listClickables.Add(eCand.Get<Clickable>().ClickEventFactory);
                 return eCand.Get<Clickable>().ClickEventFactory(e, cev, v2OSDPos);
             }
