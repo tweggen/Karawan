@@ -164,19 +164,18 @@ public class Narration : AModule, IInputPart
             strDisplay = _currentString;
             nLFs = _countLF(_currentString);
 
-            ytop = BottomY - LineHeight * (nLFs + 1);
+            
 
+            _currentNChoices = _currentStory.currentChoices.Count;
             int index = 1;
-            _currentNChoices = 0;
-            if (_currentStory.currentChoices.Count > 0)
+            ytop = BottomY - LineHeight * (nLFs + _currentNChoices + 1);
+            if (_currentNChoices > 0)
             {
                 _prepareChoices();
-                int nChoices = _currentStory.currentChoices.Count;
-                for (int i = 0; i < nChoices; ++i)
+                for (int i = 0; i < _currentNChoices; ++i)
                 {
                     var eChoice = _createOptionEntity(i,  ytop + LineHeight * (i+1f), $"{i+1}) " + _currentStory.currentChoices[i].text);
                     _listEOptions.Add(eChoice);
-                    ++_currentNChoices;
                 }
             }
             else
