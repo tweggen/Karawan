@@ -439,7 +439,16 @@ public class Module : AModule, IInputPart
 
     public void _onLogicalFrame(object? sender, float dt)
     {
-        if (MY_Z_ORDER == I.Get<InputEventPipeline>().GetFrontZ())
+        bool shallHandleController = false;
+
+        lock (_lo)
+        {
+            if (_mode == Modes.MapFullscreen)
+            {
+                shallHandleController = true;
+            }
+        }
+        if (shallHandleController)
         {
             _handleController();
         }
@@ -448,8 +457,31 @@ public class Module : AModule, IInputPart
     }
 
 
+    private bool _haveInputPart = false;
 
-    private void _changeModeToNone()
+    private void _noInputPart()
+    {
+        lock (_lo)
+        {
+            if (!_haveInputPart) return;
+            _haveInputPart = false;
+            I.Get<InputEventPipeline>().RemoveInputPart(this);
+        }
+    }
+
+
+    private void _needInputPart()
+    {
+        lock (_lo)
+        {
+            if (_haveInputPart) return;
+            _haveInputPart = true;
+            I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        }
+    }
+
+    
+    private void _changeModeToNone(Modes oldMode, Modes newMode)
     {
         lock(_lo) {
             _requestedMapParams.IsVisible = false;
@@ -470,12 +502,12 @@ public class Module : AModule, IInputPart
         
         });
 
-        I.Get<InputEventPipeline>().RemoveInputPart(this);
+        _noInputPart();
         _engine.OnLogicalFrame -= _onLogicalFrame;
     }
 
 
-    private void _changeModeToFullscreen()
+    private void _changeModeToFullscreen(Modes oldMode, Modes newMode)
     {
         DefaultEcs.Entity eEmpty = default;
         /*
@@ -490,7 +522,15 @@ public class Module : AModule, IInputPart
             _requestedMapParams.IsVisible = true;
         }
 
-        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        if (newMode == Modes.MapFullscreen)
+        {
+            _needInputPart();
+        }
+        else
+        {
+            _noInputPart();
+        }
+
         _computeAABB();
     }
     
@@ -504,7 +544,7 @@ public class Module : AModule, IInputPart
                 {
                     case Modes.MapMini:
                     case Modes.MapFullscreen:
-                        _changeModeToFullscreen();
+                        _changeModeToFullscreen(oldMode, newMode);
                         break;
                     default:
                         break;
@@ -516,7 +556,7 @@ public class Module : AModule, IInputPart
                 switch (newMode)
                 {
                     case Modes.MapNone:
-                        _changeModeToNone();
+                        _changeModeToNone(oldMode, newMode);
                         break;
                     default:
                         break;
