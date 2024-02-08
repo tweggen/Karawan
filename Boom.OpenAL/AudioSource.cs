@@ -45,10 +45,11 @@ public class AudioSource : Boom.ISound
         set => _isLooped = value;
     }
 
-    private float _volume = -0.01f;
+    private float _effectiveVolume = -0.01f;
+    private float _userVolume = 0.5f;
     public float Volume
     {
-        get => _volume;
+        get => _userVolume;
         set => _setVolume(value);
     }
 
@@ -67,7 +68,7 @@ public class AudioSource : Boom.ISound
         set
         {
             _soundMask = value;
-            _setVolume(value);
+            _setVolume(_userVolume);
         }
     }
 
@@ -132,14 +133,19 @@ public class AudioSource : Boom.ISound
     {
         float volume;
         
+        // TXWTODO: Optimize the call.
+        if (_userVolume != requestedVolume)
+        {
+            _userVolume = requestedVolume;
+        }
         bool isActive = (_api.SoundMask & _soundMask) != 0;
-        volume = isActive ? requestedVolume : 0f;
-        if (volume != _volume)
+        float newVolume = isActive ? requestedVolume : 0f;
+        if (newVolume != _effectiveVolume)
         {
             if (_isValidNoLock())
             {
-                _al.SetSourceProperty(_alSource, SourceFloat.Gain, volume);
-                _volume = volume;
+                _al.SetSourceProperty(_alSource, SourceFloat.Gain, newVolume);
+                _effectiveVolume = newVolume;
             }
         }
     }
@@ -180,6 +186,7 @@ public class AudioSource : Boom.ISound
             }
 
             _setupDistanceStuffNoLock();
+            _setVolumeNoLock(_userVolume);
             _al.SetSourceProperty(_alSource, SourceBoolean.Looping, _isLooped);
             _trace($"SetSourceProperty _isLooped returned {_al.GetError().ToString()}");
             _al.SourcePlay(_alSource);
