@@ -115,7 +115,7 @@ namespace engine.world
              * Look, whether the corresponding fragment still is in the
              * cache, or whether we need to load (i.e. generate) it.
              */
-            Fragment fragment;
+            Fragment fragment = null;
             lock (_lo)
             {
                 if (_mapFrags.TryGetValue(visib.PosKey(), out fragment))
@@ -123,39 +123,44 @@ namespace engine.world
                     // Mark as used.
                     if (world.MetaGen.TRACE_WORLD_LOADER)
                     {
-                        // Trace($"Using existing version of {visib}");
+                        Trace($"Using existing version of {visib}");
                     }
 
                     fragment.LastIteration = _lastLoadedIteration;
-                    return;
                 }
             }
 
-            if (world.MetaGen.TRACE_WORLD_LOADER)
+            if (null == fragment)
             {
-                Trace($"Creating fragment {visib}");
-            }
 
-            /*
-             * This creates a new world fragment.
-             *
-             * World fragments are the containers for everything that
-             * comes on that please of the world. When they are created,
-             * they basically contains a canvas, in which the world is
-             * created.
-             */
-            fragment = new Fragment(_engine, this, visib) { LastIteration = _lastLoadedIteration};
+                if (world.MetaGen.TRACE_WORLD_LOADER)
+                {
+                    Trace($"Creating fragment {visib}");
+                }
 
-
-            lock (_lo)
-            {
                 /*
-                 * The following operators already might want to access this client.
+                 * This creates a new world fragment.
+                 *
+                 * World fragments are the containers for everything that
+                 * comes on that please of the world. When they are created,
+                 * they basically contains a canvas, in which the world is
+                 * created.
                  */
-                _mapFrags.Add(visib.PosKey(), fragment);
+                fragment = new Fragment(_engine, this, visib) { LastIteration = _lastLoadedIteration };
+
+
+                lock (_lo)
+                {
+                    /*
+                     * The following operators already might want to access this client.
+                     */
+                    _mapFrags.Add(visib.PosKey(), fragment);
+                }
             }
 
             /*
+             * No matter, if newly created or just found again, we need to have all requested
+             * aspects of the fragment visible.
              * Apply all fragment operators.
              */
             try
@@ -169,6 +174,14 @@ namespace engine.world
         }
 
 
+        /**
+         * Unload fragments that are not required any more.
+         *
+         * We are using different criteria to unload
+         * - if a fragment is required by the current set of visible items, we keep it.
+         * - if a fragment is younger than KeepFragmentMinTime seconds, we keep it.
+         * - if a fragment has been loaded in just this iteration, we keep it.
+         */
         private void _purgeFragments()
         {
             /*
