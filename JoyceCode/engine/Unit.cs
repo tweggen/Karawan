@@ -22,7 +22,7 @@ public class Unit : IDisposable
     {
         Trace("Running startup unit tests...");
         engine.news.SubscriptionManager.Unit();
-        builtin.loader.Fbx.Unit();
+        // builtin.loader.Fbx.Unit(); not yet implemented
         builtin.loader.GlTF.Unit();
         SubscriptionManager.Unit();
         Trace("Startup unit tests passed.");

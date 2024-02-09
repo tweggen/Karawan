@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Newtonsoft.Json.Serialization;
 using static engine.Logger;
 
 namespace engine.rom;
@@ -12,16 +13,16 @@ public class Loader
     static private SortedDictionary<string, Assembly> _mapAlreadyLoaded = new SortedDictionary<string, Assembly>();
     static private SortedSet<string> _setLoadFailed = new SortedSet<string>();
 
-
+    static private bool _traceLoad = false;
     public static Assembly TryLoadDll(string dllPath)
     {
-        Trace($"dllPath = {dllPath}");
+        if (_traceLoad) Trace($"dllPath = {dllPath}");
         try
         {
             bool foundDll = false;
 
             var orgExecPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
-            Trace($"orgExecPath = {orgExecPath}");
+            if (_traceLoad) Trace($"orgExecPath = {orgExecPath}");
             string execDirectoryPath = "";
             if (null == orgExecPath)
             {
@@ -35,7 +36,7 @@ public class Loader
                  */
                 execDirectoryPath = orgExecPath.Replace("file:/", "").Replace("file:\\", "");
             }
-            Trace($"execDirectoryPath = {execDirectoryPath}");
+            if (_traceLoad) Trace($"execDirectoryPath = {execDirectoryPath}");
 
 
             /*
@@ -46,7 +47,7 @@ public class Loader
             {
                 execDirectoryPath = execDirectoryPath?.Replace(".__override__", "");
             }
-            Trace($"execDirectoryPath = {execDirectoryPath}");
+            if (_traceLoad) Trace($"execDirectoryPath = {execDirectoryPath}");
 
             /*
              * Test first, if we can find the file.
@@ -142,7 +143,7 @@ public class Loader
              */
             foreach (var asm in queue)
             {
-                Trace($"Starting resolve with {asm.GetName().Name}");
+                if (_traceLoad) Trace($"Starting resolve with {asm.GetName().Name}");
             }
 
             /*
@@ -160,7 +161,7 @@ public class Loader
                     continue;
                 }
 
-                Trace($"Adding dll {asm.GetName().Name}");
+                if (_traceLoad) Trace($"Adding dll {asm.GetName().Name}");
                 visited.Add(asm.GetName().Name, asm);
                 var references = asm.GetReferencedAssemblies();
                 foreach (var anRef in references)
