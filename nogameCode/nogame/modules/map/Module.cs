@@ -70,6 +70,8 @@ public class Module : AModule, IInputPart
     public float CameraY { get; set; } = 700f;
     public float MapY { get; set; } = 200f;
 
+    public float MiniMapSize { get; set; } = 0.12f;
+
     /*
      * Map display parameters
      */
@@ -195,9 +197,9 @@ public class Module : AModule, IInputPart
                     v3CamPos = t3.Matrix.Translation with { Y = CameraY };
                 }
 
-                cCamera3.Scale = (1024f + 3f) / MetaGen.MaxHeight;
+                cCamera3.Scale = (2f * 1024f + 3f) / MetaGen.MaxHeight;
                 cCamera3.UL = new Vector2(0.05f, 0.05f);
-                cCamera3.LR = new Vector2(0.15f, 0.05f + 0.1f * 16f / 9f);
+                cCamera3.LR = new Vector2(0.05f + MiniMapSize, 0.05f + MiniMapSize * 16f / 9f);
             }
                 break;
         }
@@ -516,6 +518,7 @@ public class Module : AModule, IInputPart
         I.Get<IMapProvider>().WorldMapCreateEntities(eEmpty, MapCameraMask);
         
         _needResources();
+
         _engine.OnLogicalFrame += _onLogicalFrame;
 
         lock(_lo) {
@@ -531,6 +534,20 @@ public class Module : AModule, IInputPart
             _noInputPart();
         }
 
+        _computeAABB();
+    }
+
+
+    private void _changeMiniToFull(Modes oldMode, Modes newMode)
+    {
+        _needInputPart();   
+        _computeAABB();
+    }
+
+
+    private void _changeFullToMini(Modes oldMode, Modes newMode)
+    {
+        _noInputPart();
         _computeAABB();
     }
     
@@ -557,6 +574,12 @@ public class Module : AModule, IInputPart
                 {
                     case Modes.MapNone:
                         _changeModeToNone(oldMode, newMode);
+                        break;
+                    case Modes.MapFullscreen:
+                        _changeMiniToFull(oldMode, newMode);
+                        break;
+                    case Modes.MapMini:
+                        _changeFullToMini(oldMode, newMode);
                         break;
                     default:
                         break;
