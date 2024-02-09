@@ -8,6 +8,8 @@ namespace Joyce.builtin.jt;
 
 public interface IWidgetImplementation
 {
+    public void OnPropertyChanged(string key, object oldValue, object newValue);
+    public void Unrealize();
 }
 
 
@@ -46,15 +48,61 @@ public interface Layout
 
 public class Widget : IDisposable
 {
-    public required Implementation Implementation;
+    public required Factory Factory;
     
     private object _lo = new();
-    
+    private SortedDictionary<string, object>? _properties = null;
+
+    public object this[string key]
+    {
+        get
+        {
+            lock (_lo)
+            {
+                if (null != _properties)
+                {
+                    if (_properties.TryGetValue(key, out object value))
+                    {
+                        return value;
+                    }
+                }
+
+                ErrorThrow<KeyNotFoundException>($"Unable to find key {key} in widget.");
+            }
+        }
+        set
+        {
+            object oldValue = null, newValue = value;
+            IWidgetImplementation impl;
+            lock (_lo)
+            {
+                if (null == _properties)
+                {
+                    _properties = new();
+                }
+                else
+                {
+                    _properties.TryGetValue(key, out oldValue);
+                    _properties[key] = value;
+                }
+
+                impl = _impl;
+            }
+
+            if (null != impl)
+            {
+                impl.OnPropertyChanged(key, oldValue, newValue);
+            }
+        }
+    }
+
     public FocusStates FocusState { get; set; } = FocusStates.Unfocussable;
     public SelectionStates SelectionState { get; set; } = SelectionStates.Unselectable;
 
+    
     public bool IsFocussed;
     public bool IsSelected;
+    
     
     protected bool _isVisible;
     public bool IsVisible
@@ -176,6 +224,62 @@ public class Widget : IDisposable
     }
 
 
+    public Widget NextWidget()
+    {
+        lock (_lo)
+        {
+            if (null == _parent)
+            {
+                return null;
+            }
+
+            if (null == _parent._children)
+            {
+                ErrorThrow<InvalidOperationException>($"Invalid internal structure: My parent has no children list.");
+                return null;
+            }
+
+            int idx = _parent._children.IndexOf(this);
+            if (-1 == idx)
+            {
+                ErrorThrow<InvalidOperationException>($"Invalid internal structure: I am not in my parnet's list.");
+                return null;
+            }
+
+            int l = _parent._children.Count;
+            return _parent._children[(idx + 1) % l];
+        }
+    }
+
+
+    public Widget PreviousWidget()
+    {
+        lock (_lo)
+        {
+            if (null == _parent)
+            {
+                return null;
+            }
+
+            if (null == _parent._children)
+            {
+                ErrorThrow<InvalidOperationException>($"Invalid internal structure: My parent has no children list.");
+                return null;
+            }
+
+            int idx = _parent._children.IndexOf(this);
+            if (-1 == idx)
+            {
+                ErrorThrow<InvalidOperationException>($"Invalid internal structure: I am not in my parnet's list.");
+                return null;
+            }
+
+            int l = _parent._children.Count;
+            return _parent._children[(idx + l - 1) % l];
+        }
+    }
+    
+
     protected void Realize()
     {
         RealizationStates realizationState;
@@ -195,7 +299,7 @@ public class Widget : IDisposable
             
             try
             {
-                impl = Implementation.Realize(this);
+                impl = Factory.Realize(this);
                 if (null == impl)
                 {
                     ErrorThrow<InvalidOperationException>($"Creating an implementation returned null.");
@@ -239,14 +343,17 @@ public class Widget : IDisposable
                 RealizationState = RealizationStates.Unrealizing;
             }
 
-            try
+            if (impl != null)
             {
-                Implementation.Unrealize(this, impl);
-            }
-            catch (Exception e)
-            {
-                ErrorThrow<InvalidOperationException>($"Unable to unrealize implementation: {e}.");
-                return;
+                try
+                {
+                    impl.Unrealize();
+                }
+                catch (Exception e)
+                {
+                    ErrorThrow<InvalidOperationException>($"Unable to unrealize implementation: {e}.");
+                    return;
+                }
             }
 
             lock (_lo)

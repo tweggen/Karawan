@@ -1,6 +1,6 @@
 namespace Joyce.builtin.jt;
 
-public class Implementation
+public class Factory
 {
     public void Unrealize(Widget widget, IWidgetImplementation impl)
     {
