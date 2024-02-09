@@ -2,6 +2,7 @@ using System.Numerics;
 using engine;
 using engine.draw;
 using engine.news;
+using engine.world;
 
 namespace builtin.modules;
 
@@ -45,6 +46,11 @@ public class Stats : engine.AModule
             }
 
             displayData += physData + "\n";
+        }
+
+        {
+            var loader = engine.world.MetaGen.Instance().Loader;
+            displayData += $"{loader.NFragments} frags, {loader.NViewers} viewers.";
         }
         
         _ePhysDisplay.Set(new engine.draw.components.OSDText(

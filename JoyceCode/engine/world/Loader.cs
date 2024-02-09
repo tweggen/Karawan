@@ -32,7 +32,30 @@ namespace engine.world
         
         private engine.behave.systems.WiperSystem _wiperSystem;
 
-        
+        public int NFragments
+        {
+            get
+            {
+                lock (_lo)
+                {
+                    return _setVisib.Count;
+                }
+            }
+        }
+
+
+        public int NViewers
+        {
+            get
+            {
+                lock (_lo)
+                {
+                    return _listViewers.Count;
+                }
+            }
+        }
+
+
         /*
          * We keep a fragment at least as long it takes to drive through it wiht 60 km/h.
          */
