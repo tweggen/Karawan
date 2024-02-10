@@ -33,10 +33,10 @@ public class Parser
                 ParentType = null,
                 TemplateProperties = new()
                 {
-                    { "x", 0 },
-                    { "y", 0 },
-                    { "width", 0 },
-                    { "height", 0 }
+                    { "x", 0f },
+                    { "y", 0f },
+                    { "width", 0f },
+                    { "height", 0f }
                 } 
             }
         },
@@ -118,8 +118,8 @@ public class Parser
         /*
          * First create the widget including all of the attributes.
          */
-        Widget w = new() { Factory = factory, Type = strType };
-
+        Widget w = new Widget() { Type = strType };
+        
         ApplyTemplate(w, tdesc);
 
         /*
@@ -182,7 +182,7 @@ public class Parser
                     break;
             }
         }
-
+        
         return w;
     }
     
@@ -194,9 +194,13 @@ public class Parser
      */
     public Widget Build(Factory factory)
     {
-        XmlElement xRoot = _xDoc.GetElementsByTagName("Root")[0] as XmlElement;
+        XmlElement xWidget = _xDoc.GetElementsByTagName("Widget")[0] as XmlElement;
+        if (null == xWidget)
+        {
+            ErrorThrow<ArgumentException>("No widget found.");
+        }
 
-        return BuildWidget(factory, xRoot);
+        return BuildWidget(factory, xWidget);
     }
         
     
@@ -209,12 +213,12 @@ public class Parser
     static public void Unit()
     {
         string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Root>
+<Widget>
     <Flex direction=""vertical"">
         <Text>Item 1</Text>
         <Text>Item 2</Text>
     </Flex>
-</Root>
+</Widget>
 ";
 
         Factory f = new();

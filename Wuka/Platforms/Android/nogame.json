@@ -26,6 +26,7 @@
     "Boom.Jukebox": null,
     "joyce.ui.Main": null,
     "builtin.controllers.InputController": null,
+    "builtin.jt.Factory": null,
     "nogame.SetupMetaGen": null,
     "nogame.intercity.Network": null,
     "engine.quest.Manager": null,

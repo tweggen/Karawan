@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading;
 using static engine.Logger;
 
 namespace builtin.jt;
@@ -47,10 +48,8 @@ public interface Layout
 
 
 public class Widget : IDisposable
-{
-    public required Factory Factory;
-    
-    private object _lo = new();
+{   
+    protected object _lo = new();
     public required string Type;
     private SortedDictionary<string, object>? _properties = null;
 
@@ -85,8 +84,8 @@ public class Widget : IDisposable
                 else
                 {
                     _properties.TryGetValue(key, out oldValue);
-                    _properties[key] = value;
                 }
+                _properties[key] = value;
 
                 impl = _impl;
             }
@@ -102,11 +101,11 @@ public class Widget : IDisposable
     public SelectionStates SelectionState { get; set; } = SelectionStates.Unselectable;
 
     
-    public bool IsFocussed;
-    public bool IsSelected;
+    public bool IsFocussed = false;
+    public bool IsSelected = false;
     
     
-    protected bool _isVisible;
+    protected bool _isVisible = true;
     public bool IsVisible
     {
         get
@@ -120,10 +119,11 @@ public class Widget : IDisposable
         set
         {
             /*
-             * What we are right now.
+             * Collect current data, short circuit if everything is
+             * done.
              */
-            bool isVisible;
             IReadOnlyList<Widget>? children;
+            RootWidget root;
             lock (_lo)
             {
                 if (_isVisible == value)
@@ -134,37 +134,32 @@ public class Widget : IDisposable
                     return;
                 }
 
-                isVisible = _isVisible;
                 children = _immutableChildrenNL();
+                root = _root;
             }
 
             if (value)
             {
                 /*
-                 * We shall become visible
+                 * We shall be visible. This means, we need to realize
+                 * everybody of my children who is visible.
                  */
-                foreach (var child in children)
-                {
-                    child.Realize();
-                }
-
                 lock (_lo)
                 {
                     _isVisible = true;
                 }
 
-                foreach (var child in children)
+                if (null != root)
                 {
-                    child.IsVisible = true;
+                    Realize(root);
                 }
             }
             else
             {
-                foreach (var child in children)
-                {
-                    child.IsVisible = false;
-                }
-
+                /*
+                 * We shall become invisible. 
+                 */
+                // TXWTODO: How we manage to effectively make all children invisible as well?
                 lock (_lo)
                 {
                     _isVisible = false;
@@ -177,8 +172,66 @@ public class Widget : IDisposable
     protected RealizationStates RealizationState = RealizationStates.Unrealized;
 
     private engine.geom.Rect2 _rectangle;
-    private Widget? _parent;
     
+    
+    private RootWidget? _root = null;
+
+    public RootWidget? Root
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _root;
+            }
+        }
+        set
+        {
+            Widget? oldRoot = null;
+            bool isVisible = false;
+            IReadOnlyList<Widget> children = null;
+            RootWidget root = value;
+            
+            /*
+             * Adding this widget to the root widget enforces realization of the
+             * widget as soon it is visible.
+             */
+            lock (_lo)
+            {
+                if (_root == value)
+                {
+                    return;
+                }
+                
+                oldRoot = _root;
+                _root = value;
+                children = _immutableChildrenNL();
+                isVisible = _isVisible;
+            }
+            
+            /*
+             * Realize myself, if I am visible, so that children can
+             * realize themselves.
+             */
+            if (isVisible)
+            {
+                RealizeSelf(root);
+            }
+
+            /*
+             * Propagate the root to its children.
+             */
+            if (children != null)
+            {
+                foreach (var child in children)
+                {
+                    child.Root = value;
+                }
+            }
+        }
+    }
+
+    private Widget? _parent;
     private List<Widget>? _children;
 
     private IReadOnlyList<Widget>? _immutableChildren;
@@ -284,7 +337,7 @@ public class Widget : IDisposable
     }
     
 
-    protected void Realize()
+    protected void RealizeSelf(RootWidget root)
     {
         RealizationStates realizationState;
         lock (_lo)
@@ -303,10 +356,13 @@ public class Widget : IDisposable
             
             try
             {
-                impl = Factory.Realize(this);
+                impl = root.Factory.Realize(this);
                 if (null == impl)
                 {
-                    ErrorThrow<InvalidOperationException>($"Creating an implementation returned null.");
+                    /*
+                     * Null is a perfectly valid result, in case no native resources are
+                     * required for this widget.
+                     */
                 }
             }
             catch (Exception e)
@@ -330,7 +386,7 @@ public class Widget : IDisposable
     }
 
 
-    protected void Unrealize()
+    protected void UnrealizeSelf()
     {
         RealizationStates realizationState;
         IWidgetImplementation impl;
@@ -373,6 +429,71 @@ public class Widget : IDisposable
                 ErrorThrow<InvalidOperationException>("Called in wrong state.");
             }
         }
+    }
+
+
+    public void UnrealizeChildren()
+    {
+        IReadOnlyList<Widget> children;
+        lock (_lo)
+        {
+            children = _immutableChildrenNL();
+        }
+        if (null != children)
+        {
+            /*
+             * We shall become visible
+             */
+            foreach (var child in children)
+            {
+                child.Unrealize();
+            }
+        }
+    }
+    
+
+    public void Unrealize()
+    {
+        UnrealizeSelf();
+        UnrealizeChildren();
+    }
+
+
+    public void RealizeChildren(RootWidget root)
+    {
+        IReadOnlyList<Widget> children;
+        lock (_lo)
+        {
+            children = _immutableChildrenNL();
+        }
+        if (null != children)
+        {
+            /*
+             * We shall become visible. So realize all children who are visible.
+             */
+            foreach (var child in children)
+            {
+                if (child.IsVisible)
+                {
+                    child.Realize(root);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Realize this widget, including its visible children.
+     */
+    public void Realize(RootWidget root)
+    {
+        if (null == root)
+        {
+            ErrorThrow<ArgumentException>("Called with null root widget.");
+        }
+
+        RealizeSelf(root);
+        RealizeChildren(root);
     }
 
 

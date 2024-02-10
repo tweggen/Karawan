@@ -42,6 +42,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\Gameplay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\map\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Camera.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Compass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Display.cs" />

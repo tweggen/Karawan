@@ -2,12 +2,19 @@ namespace builtin.jt;
 
 public class Factory
 {
+    private readonly RootWidget _wRoot;
+    
     public void Unrealize(Widget widget, IWidgetImplementation impl)
     {
         
     }
-    
-    
+
+
+    public RootWidget FindRootWidget()
+    {
+        return _wRoot;
+    }
+
     /**
      * Create the platform specific implementation for the widget.
      * This implementation may be null.
@@ -30,5 +37,10 @@ public class Factory
         }
 
         return null;
+    }
+
+    public Factory()
+    {
+        _wRoot = new RootWidget() { Factory = this, Type = "Root" };
     }
 }

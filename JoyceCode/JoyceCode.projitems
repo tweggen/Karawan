@@ -20,6 +20,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Factory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Parser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\RootWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\TextWidgetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Widget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />

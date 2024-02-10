@@ -34,6 +34,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),
         new MyModule<builtin.map.MapViewer>(),
+        new MyModule<modules.menu.Module>() { Activate = false },
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
         // new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
         new MyModule<builtin.modules.Stats>() { Activate = false },
@@ -45,8 +46,9 @@ public class Scene : AModule, IScene, IInputPart
     private bool _isMapShown = false;
     private bool _areStatsShown = false;
     private bool _isUIShown = false;
+    private bool _isMenuShown = false;
 
-    private void _togglePauseMenu()
+    private void _toggleDebugger()
     {
         var mUI = M<modules.debugger.Module>();
         if (null == mUI)
@@ -72,6 +74,26 @@ public class Scene : AModule, IScene, IInputPart
             _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
             _engine.EnableMouse();
             mUI.ModuleActivate(_engine);
+        }
+    }
+
+
+    private void _togglePauseMenu()
+    {
+        bool isMenuShown;
+        lock (_lo)
+        {
+            isMenuShown = _isMenuShown;
+            _isMenuShown = !isMenuShown;
+        }
+
+        if (!isMenuShown)
+        {
+            M<modules.menu.Module>().ModuleActivate(_engine);
+        }
+        else
+        {
+            M<modules.menu.Module>().ModuleDeactivate();
         }
     }
     
@@ -143,11 +165,15 @@ public class Scene : AModule, IScene, IInputPart
                 break;
             case "(F12)":
                 ev.IsHandled = true;
-                _togglePauseMenu();
+                _toggleDebugger();
                 break;
             case "(F8)":
                 ev.IsHandled = true;
                 _toggleStats();
+                break;
+            case "(escape)":
+                ev.IsHandled = true;
+                _togglePauseMenu();
                 break;
             default:
                 break;
