@@ -51,6 +51,7 @@ public class Widget : IDisposable
     public required Factory Factory;
     
     private object _lo = new();
+    public required string Type;
     private SortedDictionary<string, object>? _properties = null;
 
     public object this[string key]
