@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using static engine.Logger;
 
-namespace Joyce.builtin.jt;
+namespace builtin.jt;
 
 
 public interface IWidgetImplementation
@@ -69,6 +69,7 @@ public class Widget : IDisposable
                 }
 
                 ErrorThrow<KeyNotFoundException>($"Unable to find key {key} in widget.");
+                return null;
             }
         }
         set
@@ -209,6 +210,7 @@ public class Widget : IDisposable
     {
         lock (_lo)
         {
+            if (null == _children) _children = new();
             _children.Add(child);
             _immutableChildren = null;
         }
@@ -219,6 +221,7 @@ public class Widget : IDisposable
     {
         lock (_lo)
         {
+            if (null == _children) return;
             _children.Remove(child);
             _immutableChildren = null;
         }
@@ -321,7 +324,7 @@ public class Widget : IDisposable
         {
             if (realizationState != RealizationStates.Realized)
             {
-                ErrorThrow<InvalidOperationException>("Called in wrong state.")
+                ErrorThrow<InvalidOperationException>("Called in wrong state.");
             }
         }
     }
@@ -367,7 +370,7 @@ public class Widget : IDisposable
         {
             if (realizationState != RealizationStates.Unrealized)
             {
-                ErrorThrow<InvalidOperationException>("Called in wrong state.")
+                ErrorThrow<InvalidOperationException>("Called in wrong state.");
             }
         }
     }

@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Xml;
 using static engine.Logger;
 
-namespace Joyce.builtin.jt;
+namespace builtin.jt;
 
 
 /**
@@ -15,27 +15,25 @@ namespace Joyce.builtin.jt;
  */
 internal class TypeDescriptor
 {
-    public readonly SortedDictionary<string, object> TemplateProperties;
+    public SortedDictionary<string, object>? TemplateProperties;
 }
 
 
 public class Parser
 {
     private XmlDocument _xDoc;
-    private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
+    private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new SortedDictionary<string, TypeDescriptor>
     {
+        {
+            "Root", new()
+        },
         { 
-            "Text", new() 
-            { 
-                TemplateProperties = 
-                {
-                } 
-            }
+            "Text", new()
         },
         {
             "Grid", new()  
             { 
-                TemplateProperties = 
+                TemplateProperties = new SortedDictionary<string, object>
                 {
                     { "nColumns", 1 },
                     { "nRows", 1 }
@@ -45,7 +43,7 @@ public class Parser
         {
             "Flex", new()
             {
-                TemplateProperties = 
+                TemplateProperties = new SortedDictionary<string, object>
                 {
                     { "direction", "vertical" }
                 } 
@@ -75,15 +73,18 @@ public class Parser
          * First create the widget including all of the attributes.
          */
         Widget w = new() { Factory = factory, Type = strType };
-        
-        /*
-         * First, the attributes from the template.
-         */
-        foreach (var kvp in tdesc.TemplateProperties)
+
+        if (tdesc.TemplateProperties != null)
         {
-            w[kvp.Key] = kvp.Value;
+            /*
+             * First, the attributes from the template.
+             */
+            foreach (var kvp in tdesc.TemplateProperties)
+            {
+                w[kvp.Key] = kvp.Value;
+            }
         }
-        
+
         /*
          * Then, the attributes from the xml.
          */
@@ -133,6 +134,8 @@ public class Parser
                     break;
             }
         }
+
+        return w;
     }
     
     
@@ -143,7 +146,7 @@ public class Parser
      */
     public Widget Build(Factory factory)
     {
-        XmlElement xRoot = _xDoc.GetElementsByTagName("root")[0] as XmlElement;
+        XmlElement xRoot = _xDoc.GetElementsByTagName("Root")[0] as XmlElement;
 
         return BuildWidget(factory, xRoot);
     }
@@ -152,5 +155,24 @@ public class Parser
     public Parser(XmlDocument xDoc)
     {
         _xDoc = xDoc;
+    }
+
+
+    static public void Unit()
+    {
+        string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Root>
+    <Flex direction=""vertical"">
+        <Text>Item 1</Text>
+        <Text>Item 2</Text>
+    </Flex>
+</Root>
+";
+
+        Factory f = new();
+        XmlDocument xDoc = new XmlDocument();
+        xDoc.LoadXml(xml);
+        Parser p = new(xDoc);
+        Widget w = p.Build(f);
     }
 }

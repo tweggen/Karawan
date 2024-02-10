@@ -1,4 +1,4 @@
-namespace Joyce.builtin.jt;
+namespace builtin.jt;
 
 public class Factory
 {
