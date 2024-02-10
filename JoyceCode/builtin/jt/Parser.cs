@@ -117,6 +117,7 @@ public class Parser
         }
     }
 
+    
     public Widget BuildSelfWidget(Factory factory, XmlElement xWidget)
     {
         string strType = xWidget.LocalName;

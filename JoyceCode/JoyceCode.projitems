@@ -18,7 +18,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ALaoyoutItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Factory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ALayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Parser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\RootWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\TextWidgetImplementation.cs" />
