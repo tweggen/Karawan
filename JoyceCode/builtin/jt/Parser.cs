@@ -13,8 +13,9 @@ namespace builtin.jt;
  * Contains default attributes and behavior for a certain widget
  * type.
  */
-internal class TypeDescriptor
+public class TypeDescriptor
 {
+    public string ParentType;
     public SortedDictionary<string, object>? TemplateProperties;
 }
 
@@ -22,18 +23,38 @@ internal class TypeDescriptor
 public class Parser
 {
     private XmlDocument _xDoc;
-    private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new SortedDictionary<string, TypeDescriptor>
+    private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
     {
         {
+            "Widget", new()
+            {
+                ParentType = null,
+                TemplateProperties = new()
+                {
+                    { "x", 0 },
+                    { "y", 0 },
+                    { "width", 0 },
+                    { "height", 0 }
+                } 
+            }
+        },
+        {
             "Root", new()
+            {
+                ParentType = "Widget"
+            }
         },
         { 
             "Text", new()
+            {
+                ParentType = "Widget"
+            }
         },
         {
             "Grid", new()  
             { 
-                TemplateProperties = new SortedDictionary<string, object>
+                ParentType = "Widget",
+                TemplateProperties = new()
                 {
                     { "nColumns", 1 },
                     { "nRows", 1 }
@@ -43,7 +64,8 @@ public class Parser
         {
             "Flex", new()
             {
-                TemplateProperties = new SortedDictionary<string, object>
+                ParentType = "Widget",
+                TemplateProperties = new()
                 {
                     { "direction", "vertical" }
                 } 
@@ -57,6 +79,28 @@ public class Parser
         return _mapTypes.ContainsKey(strType);
     }
 
+
+    public void ApplyTemplate(Widget w, TypeDescriptor tdesc)
+    {
+        if (tdesc.TemplateProperties != null)
+        {
+            /*
+             * First, the attributes from the template.
+             */
+            foreach (var kvp in tdesc.TemplateProperties)
+            {
+                w[kvp.Key] = kvp.Value;
+            }
+        }
+
+        if (tdesc.ParentType != null)
+        {
+            if (_mapTypes.TryGetValue(tdesc.ParentType, out var ptdesc))
+            {
+                ApplyTemplate(w, ptdesc);
+            }
+        }
+    }
 
     public Widget BuildSelfWidget(Factory factory, XmlElement xWidget)
     {
@@ -74,16 +118,7 @@ public class Parser
          */
         Widget w = new() { Factory = factory, Type = strType };
 
-        if (tdesc.TemplateProperties != null)
-        {
-            /*
-             * First, the attributes from the template.
-             */
-            foreach (var kvp in tdesc.TemplateProperties)
-            {
-                w[kvp.Key] = kvp.Value;
-            }
-        }
+        ApplyTemplate(w, tdesc);
 
         /*
          * Then, the attributes from the xml.
