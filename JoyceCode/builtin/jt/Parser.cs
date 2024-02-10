@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Xml;
+using ObjLoader.Loader.Common;
 using static engine.Logger;
 
 namespace builtin.jt;
@@ -23,6 +24,7 @@ public class TypeDescriptor
 public class Parser
 {
     private XmlDocument _xDoc;
+
     private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
     {
         {
@@ -130,6 +132,16 @@ public class Parser
             w[attr.LocalName] = attr.Value;
         }
 
+        /*
+         * Then, the special text attribute
+         */
+        {
+            string text = xWidget.InnerText;
+            if (!text.IsNullOrEmpty())
+            {
+                w["text"] = text;
+            }
+        }
         return w;
     }
 
@@ -164,8 +176,9 @@ public class Parser
                 case XmlNodeType.Attribute:
                     break;
                 case XmlNodeType.Text:
-                    Widget wTextElement = BuildText(factory, xnChild as XmlText);
-                    // w.AddChild(wTextElement);
+                    /*
+                     * Plain text is added to the text property of the parent widget.
+                     */
                     break;
             }
         }
