@@ -7,7 +7,7 @@ public class ALayout
     private object _lo = new();
     
     private Widget _wParent;
-    public Widget Parent
+    public Widget? Parent
     {
         get
         {
@@ -30,13 +30,12 @@ public class ALayout
                 _wParent = value;
             }
 
-            value.Layout = this;
-
-            /*
-             * Trigger relayout if required. 
-             */
             if (null != value)
             {
+                /*
+                 * Trigger relayout if required.
+                 */
+                value.Layout = this;
                 Activate();
             }
         }
