@@ -42,11 +42,6 @@ public interface IFocussable
 }
 
 
-public interface Layout
-{
-}
-
-
 public class Widget : IDisposable
 {   
     protected object _lo = new();
@@ -97,9 +92,36 @@ public class Widget : IDisposable
         }
     }
 
+
+    private ALayout _layout;
+
+    public ALayout Layout
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _layout;
+            }
+        }
+
+        set
+        {
+            ALayout oldLayout;
+            lock (_lo)
+            {
+                if (_layout == value) return;
+                oldLayout = _layout;
+            }
+
+            value.Parent = this;
+        }
+    }
+
+
     public FocusStates FocusState { get; set; } = FocusStates.Unfocussable;
     public SelectionStates SelectionState { get; set; } = SelectionStates.Unselectable;
-
+    
     
     public bool IsFocussed = false;
     public bool IsSelected = false;
@@ -250,9 +272,7 @@ public class Widget : IDisposable
         return _immutableChildren;
     }
     
-    private Layout? _layout;
-    
-    
+
     /**
      * The actual implementation creating entities or resources of some sort.
      */

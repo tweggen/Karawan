@@ -29,31 +29,42 @@ public class ALayout
                 wOldParent = _wParent;
                 _wParent = value;
             }
-            
-            // TXWTODO: Trigger relayout if set up.
+
+            value.Layout = this;
+
+            /*
+             * Trigger relayout if required. 
+             */
+            if (null != value)
+            {
+                Activate();
+            }
         }
     }
 
 
-    private List<ALayoutItem> _listLayoutItems = new();
+    private readonly List<ALayoutItem> _listLayoutItems = new();
 
 
-    abstract protected ALayoutItem _addItem(Widget wChild)
+    protected virtual void _removeItem(ALayoutItem wChild)
     {
-        
+        lock (_lo)
+        {
+            _listLayoutItems.Remove(wChild);
+        }
     }
+    
 
-    public void Activate()
+    protected virtual void _addItem(ALayoutItem wChild)
     {
+        lock (_lo)
+        {
+            _listLayoutItems.Add(wChild);
+        }
     }
+    
 
-
-    public void AddWidget(Widget wChild)
-    {
-    }
-
-
-    public void RemoveWidget(Widget wChild)
+    public virtual void Activate()
     {
     }
 }
