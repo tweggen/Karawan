@@ -27,7 +27,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.modules.ScreenComposer>(),
         new MyModule<nogame.modules.playerhover.Module>(),
         new MyModule<nogame.modules.Gameplay>(),
-        new MyModule<modules.debug.Module>("nogame.CreateUI") { Activate = false },
+        new MyModule<modules.debugger.Module>("nogame.CreateUI") { Activate = false },
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
         new MyModule<nogame.modules.osd.Display>("nogame.CreateOSD"),
         new MyModule<nogame.modules.osd.Camera>("nogame.CreateOSD") { Activate = false },
@@ -48,7 +48,7 @@ public class Scene : AModule, IScene, IInputPart
 
     private void _togglePauseMenu()
     {
-        var mUI = M<modules.debug.Module>();
+        var mUI = M<modules.debugger.Module>();
         if (null == mUI)
         {
             return;
