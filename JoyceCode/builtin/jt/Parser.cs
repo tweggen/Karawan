@@ -25,6 +25,19 @@ public class Parser
 {
     private XmlDocument _xDoc;
 
+
+    private readonly SortedDictionary<string, Type> _mapAttributeTypes = new()
+    {
+        { "x", typeof(float) },
+        { "y", typeof(float) },
+        { "width", typeof(float) },
+        { "height", typeof(float) },
+        { "text", typeof(string) },
+        { "nColumns", typeof(uint) },
+        { "nRows", typeof(uint) },
+        { "direction", typeof(string) }
+    };
+    
     private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
     {
         {
@@ -129,7 +142,38 @@ public class Parser
         for (int i=0; i<l; ++i)
         {
             var attr = xWidget.Attributes[i];
-            w[attr.LocalName] = attr.Value;
+            Type typeAttr;
+            if (_mapAttributeTypes.TryGetValue(attr.LocalName, out typeAttr))
+            {
+                try
+                {
+                    if (typeAttr == typeof(float))
+                    {
+                        w[attr.LocalName] = Single.Parse(attr.Value);
+                    }
+                    else if (typeAttr == typeof(string))
+                    {
+                        w[attr.LocalName] = attr.Value;
+                    }
+                    else if (typeAttr == typeof(int))
+                    {
+                        w[attr.LocalName] = Int32.Parse(attr.Value);
+                    }
+                    else if (typeAttr == typeof(uint))
+                    {
+                        w[attr.LocalName] = UInt32.Parse(attr.Value);
+                    }
+                }
+                catch (Exception e)
+                {
+                    ErrorThrow<ArgumentException>(
+                        $"Unable to cast attribute value for attribute {attr.Name} from {attr.Value} to type {typeAttr.FullName}");
+                }
+            }
+            else
+            {
+                w[attr.LocalName] = attr.Value.ToString();
+            }
         }
 
         /*

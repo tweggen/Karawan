@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Widget>
     <Flex direction="vertical">
-        <Text>Continue</Text>
-        <Text>Exit...</Text>
+        <Text y="0" width="200">Continue</Text>
+        <Text y="16" width="200">Exit...</Text>
     </Flex>
 </Widget>
