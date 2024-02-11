@@ -24,6 +24,7 @@ public class BoxLayout : ALayout
     {
         _addItem(new BoxLayoutItem()
         {
+            Widget = w,
             Flex = w.GetAttr("flex", 1.0f)
         });
     }
@@ -44,15 +45,15 @@ public class BoxLayout : ALayout
         {
             strOrthoExtent = "height";
             strAxisExtent = "width";
-            strOrthoPos = "Y";
-            strAxisPos = "X";
+            strOrthoPos = "y";
+            strAxisPos = "x";
         }
         else
         {
             strOrthoExtent = "width";
             strAxisExtent = "height";
-            strOrthoPos = "X";
-            strAxisPos = "Y";
+            strOrthoPos = "x";
+            strAxisPos = "y";
         }
         
         /*
@@ -80,6 +81,8 @@ public class BoxLayout : ALayout
             w[strAxisExtent] = nextAxisPos - currAxisPos;
             w[strOrthoPos] = currOrthoPos;
             w[strOrthoExtent] = maxExtent;
+
+            currAxisPos = nextAxisPos;
         }
     }
 }

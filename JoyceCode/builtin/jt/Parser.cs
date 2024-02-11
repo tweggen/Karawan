@@ -56,7 +56,16 @@ public class Parser
 
     private static void _setupAnyBox(Widget w, XmlElement xWidget)
     {
-        w.Layout = new BoxLayout() { Parent = w };
+        var boxLayout = new BoxLayout() { Parent = w };
+        w.Layout = boxLayout;
+        var children = w.Children;
+        if (null != children)
+        {
+            foreach (var child in children)
+            {
+                boxLayout.AddWidget(child, 1f);
+            }
+        }
     }
 
 
@@ -179,11 +188,10 @@ public class Parser
     }
 
     
-    public Widget BuildSelfWidget(Factory factory, XmlElement xWidget)
+    public Widget BuildSelfWidget(Factory factory, XmlElement xWidget, out TypeDescriptor tdesc)
     {
         string strType = xWidget.LocalName;
         
-        TypeDescriptor tdesc;
         if (!_mapTypes.TryGetValue(strType, out tdesc))
         {
             ErrorThrow<ArgumentException>($"Invalid type {strType}.");
@@ -249,11 +257,6 @@ public class Parser
             }
         }
         
-        /*
-         * Finally, the type specific operator.
-         */
-        ApplyTypeSetup(w, tdesc, xWidget);
-        
         return w;
     }
 
@@ -269,7 +272,7 @@ public class Parser
         /*
          * Create the widget on its own
          */
-        Widget w = BuildSelfWidget(factory, xWidget);
+        Widget w = BuildSelfWidget(factory, xWidget, out var tdesc);
         
         /*
          * Then iterate through its children.
@@ -294,6 +297,12 @@ public class Parser
                     break;
             }
         }
+        
+        /*
+         * Finally, the type specific operator, after all children and attributes
+         * are setup.
+         */
+        ApplyTypeSetup(w, tdesc, xWidget);
         
         return w;
     }

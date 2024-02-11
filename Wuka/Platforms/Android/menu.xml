@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <view>
     <vbox x="200" y="200" direction="vertical">
-        <text color="#888888" width="250">Continue</text>
-        <text color="#f00" width="250">Exit...</text>
+        <text color="#888888" width="250" height="20">Continue</text>
+        <text color="#f00" width="250" height="20">Exit...</text>
     </vbox>
 </view>

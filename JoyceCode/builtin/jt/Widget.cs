@@ -150,6 +150,7 @@ public class Widget : IDisposable
             {
                 if (_layout == value) return;
                 oldLayout = _layout;
+                _layout = value;
             }
 
             value.Parent = this;
@@ -251,6 +252,7 @@ public class Widget : IDisposable
             bool isVisible = false;
             IReadOnlyList<Widget> children = null;
             RootWidget root = value;
+            ALayout layout = null;
             
             /*
              * Adding this widget to the root widget enforces realization of the
@@ -267,6 +269,7 @@ public class Widget : IDisposable
                 _root = value;
                 children = _immutableChildrenNL();
                 isVisible = _isVisible;
+                layout = _layout;
             }
             
             /*
@@ -275,6 +278,15 @@ public class Widget : IDisposable
              */
             if (isVisible)
             {
+            
+                /*
+                 * Finally, layout myself.
+                 */
+                if (layout != null)
+                {
+                    layout.Activate();
+                }
+
                 RealizeSelf(root);
             }
 
@@ -309,8 +321,19 @@ public class Widget : IDisposable
 
         return _immutableChildren;
     }
-    
-    
+
+    public IReadOnlyList<Widget>? Children
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _immutableChildrenNL();
+            }
+        }
+    }
+
+
     /**
      * The actual implementation creating entities or resources of some sort.
      */

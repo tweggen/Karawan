@@ -205,6 +205,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             M<modules.osd.Camera>().ModuleActivate(_engine);
             _engine.SuggestEndLoading();
+            M<modules.map.Module>().Mode = Module.Modes.MapMini;
         });
         
         Task.Delay(5000).ContinueWith(t =>
@@ -215,7 +216,6 @@ public class Scene : AModule, IScene, IInputPart
             });
         });
         
-        M<modules.map.Module>().Mode = Module.Modes.MapMini;
         I.Get<Boom.ISoundAPI>().SoundMask = 0xffffffff;
 
         return true;
