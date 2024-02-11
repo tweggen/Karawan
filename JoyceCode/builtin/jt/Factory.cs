@@ -23,7 +23,7 @@ public class Factory
     {
         switch (w.Type)
         {
-            case "Text":
+            case "text":
                 /*
                  * Text is interpreted as an OSDText entity.
                  */
