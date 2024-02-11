@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Widget>
-    <Flex direction="vertical">
-        <Text y="0" width="200">Continue</Text>
-        <Text y="16" width="200">Exit...</Text>
-    </Flex>
-</Widget>
+<view>
+    <vbox x="200" y="200" direction="vertical">
+        <text color="#888888" width="250">Continue</text>
+        <text color="#f00" width="250">Exit...</text>
+    </vbox>
+</view>

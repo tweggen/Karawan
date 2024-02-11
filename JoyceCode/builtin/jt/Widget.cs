@@ -48,6 +48,7 @@ public class Widget : IDisposable
     public required string Type;
     private SortedDictionary<string, object>? _properties = null;
 
+
     public object this[string key]
     {
         get
@@ -88,6 +89,43 @@ public class Widget : IDisposable
             if (null != impl)
             {
                 impl.OnPropertyChanged(key, oldValue, newValue);
+            }
+        }
+    }
+
+
+    static public T GetTypedAttribute<T>(object value)
+    {
+        Type typeAttr = typeof(T);
+        try
+        {
+            return (T)value;
+        }
+        catch (Exception e)
+        {
+            ErrorThrow<ArgumentException>(
+                $"Unable to cast attribute value for attribute to {typeof(T).Name}");
+            return default;
+        }
+    }
+    
+    
+    public T GetAttr<T>(string name, T defaultValue)
+    {
+        lock (_lo)
+        {
+            if (null == _properties)
+            {
+                return defaultValue;
+            }
+
+            if (_properties.TryGetValue(name, out var objValue))
+            {
+                return GetTypedAttribute<T>(objValue);
+            }
+            else
+            {
+                return defaultValue;
             }
         }
     }
@@ -272,7 +310,7 @@ public class Widget : IDisposable
         return _immutableChildren;
     }
     
-
+    
     /**
      * The actual implementation creating entities or resources of some sort.
      */

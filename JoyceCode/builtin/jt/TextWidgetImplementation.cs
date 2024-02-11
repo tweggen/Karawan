@@ -1,13 +1,106 @@
+using System.Globalization;
 using System.Numerics;
 using engine;
 using engine.draw;
 using engine.draw.components;
+using ObjLoader.Loader.Common;
 
 namespace builtin.jt;
 
 public class TextWidgetImplementation : IWidgetImplementation
 {
     private DefaultEcs.Entity eText;
+
+
+    public HAlign _hAlign(string strAlign)
+    {
+        if (null == strAlign)
+        {
+            return HAlign.Left;
+        }
+        switch (strAlign)
+        {
+            default:
+            case "left": return HAlign.Left;
+            case "center":
+            case "middle": return HAlign.Center;
+            case "right": return HAlign.Right;
+        }
+    }
+    
+    
+    public VAlign _vAlign(string strAlign)
+    {
+        if (null == strAlign)
+        {
+            return VAlign.Top;
+        }
+        switch (strAlign)
+        {
+            default:
+            case "top": return VAlign.Top;
+            case "center":
+            case "middle": return VAlign.Center;
+            case "bottom": return VAlign.Bottom;
+        }
+    }
+
+
+    public uint _color(string strColor)
+    {
+        if (strColor.IsNullOrEmpty()) return 0xff000000;
+        if (strColor[0] == '#')
+        {
+            if (uint.TryParse(
+                    strColor.Substring(1),
+                    NumberStyles.HexNumber,
+                    CultureInfo.InvariantCulture,
+                    out var color))
+            {
+                if (strColor.Length <= 5)
+                {
+                    /*
+                     * 12 / 16 bit color
+                     */
+
+                    if (strColor.Length < 5)
+                    {
+                        /*
+                         * Set full alpha if not specified.
+                         */
+                        color |= 0xf000;
+                    }
+                    
+                    /*
+                     * make 24/32 bit from 12/16bit 
+                     */
+                    return 0u
+                           | ((color & 0xf000) << 16)
+                           | ((color & 0xf000) << 12)
+                           | ((color & 0x0f00) << 12)
+                           | ((color & 0x0f00) << 8)
+                           | ((color & 0x00f0) << 8)
+                           | ((color & 0x00f0) << 4)
+                           | ((color & 0x000f) << 4)
+                           | ((color & 0x000f));
+                }
+                else
+                {
+                    /*
+                     * 24/32bit color
+                     */
+                    if (strColor.Length <= 7)
+                    {
+                        color |= 0xff000000;
+                    }
+
+                    return color;
+                }
+            }
+        }
+
+        return 0xff000000;
+    }
     
     
     public void OnPropertyChanged(string key, object oldValue, object newValue)
@@ -25,6 +118,18 @@ public class TextWidgetImplementation : IWidgetImplementation
                 break;
             case "height":
                 eText.Get<OSDText>().Size.Y = (float) newValue;
+                break;
+            case "hAlign":
+                eText.Get<OSDText>().HAlign = _hAlign((string)newValue);
+                break;
+            case "vAlign":
+                eText.Get<OSDText>().VAlign = _vAlign((string)newValue);
+                break;
+            case "fillColor":
+                eText.Get<OSDText>().FillColor = _color((string)newValue);
+                break;
+            case "color":
+                eText.Get<OSDText>().TextColor = _color((string)newValue);
                 break;
             default:
                 break;

@@ -16,8 +16,20 @@ namespace builtin.jt;
  */
 public class TypeDescriptor
 {
+    /**
+     * The xml tag type this type inherits.
+     */
     public string ParentType;
+    
+    /**
+     * Properties to predefine for a certain xml tag.
+     */
     public SortedDictionary<string, object>? TemplateProperties;
+    
+    /**
+     * Type specific setup action for a certain xml tag.
+     */
+    public Action<Widget, XmlElement> TypeSetup;
 }
 
 
@@ -35,13 +47,23 @@ public class Parser
         { "text", typeof(string) },
         { "nColumns", typeof(uint) },
         { "nRows", typeof(uint) },
-        { "direction", typeof(string) }
+        { "direction", typeof(string) },
+        { "flex", typeof(float) },
+        { "vAlign", typeof(string) },
+        { "hAlign", typeof(string) }
     };
-    
+
+
+    private static void _setupAnyBox(Widget w, XmlElement xWidget)
+    {
+        w.Layout = new BoxLayout() { Parent = w };
+    }
+
+
     private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
     {
         {
-            "Widget", new()
+            "view", new()
             {
                 ParentType = null,
                 TemplateProperties = new()
@@ -49,26 +71,25 @@ public class Parser
                     { "x", 0f },
                     { "y", 0f },
                     { "width", 0f },
-                    { "height", 0f }
+                    { "height", 0f },
+                    { "hAlign", "left" },
+                    { "vAlign", "top" }
+                } 
+            }
+        },
+        { 
+            "text", new()
+            {
+                ParentType = "view",
+                TemplateProperties = new()
+                {
                 } 
             }
         },
         {
-            "Root", new()
-            {
-                ParentType = "Widget"
-            }
-        },
-        { 
-            "Text", new()
-            {
-                ParentType = "Widget"
-            }
-        },
-        {
-            "Grid", new()  
+            "grid", new()  
             { 
-                ParentType = "Widget",
+                ParentType = "view",
                 TemplateProperties = new()
                 {
                     { "nColumns", 1 },
@@ -77,13 +98,36 @@ public class Parser
             }
         },
         {
-            "Flex", new()
+            "box", new ()
             {
-                ParentType = "Widget",
+                ParentType = "view",
                 TemplateProperties = new()
                 {
                     { "direction", "vertical" }
-                } 
+                }, 
+                TypeSetup = _setupAnyBox
+            }
+        },
+        {
+            "vbox", new()
+            {
+                ParentType = "view",
+                TemplateProperties = new()
+                {
+                    { "direction", "vertical" }
+                },
+                TypeSetup = _setupAnyBox
+            }
+        },
+        {
+            "hbox", new()
+            {
+                ParentType = "view",
+                TemplateProperties = new()
+                {
+                    { "direction", "horizontal" }
+                }, 
+                TypeSetup = _setupAnyBox
             }
         }
     };
@@ -113,6 +157,23 @@ public class Parser
             if (_mapTypes.TryGetValue(tdesc.ParentType, out var ptdesc))
             {
                 ApplyTemplate(w, ptdesc);
+            }
+        }
+    }
+
+
+    public void ApplyTypeSetup(Widget w, TypeDescriptor tdesc, XmlElement xWidget)
+    {
+        if (null != tdesc.TypeSetup)
+        {
+            tdesc.TypeSetup(w, xWidget);
+        }
+
+        if (tdesc.ParentType != null)
+        {
+            if (_mapTypes.TryGetValue(tdesc.ParentType, out var ptdesc))
+            {
+                ApplyTypeSetup(w, ptdesc, xWidget);
             }
         }
     }
@@ -187,6 +248,12 @@ public class Parser
                 w["text"] = text;
             }
         }
+        
+        /*
+         * Finally, the type specific operator.
+         */
+        ApplyTypeSetup(w, tdesc, xWidget);
+        
         return w;
     }
 
@@ -239,7 +306,7 @@ public class Parser
      */
     public Widget Build(Factory factory)
     {
-        XmlElement xWidget = _xDoc.GetElementsByTagName("Widget")[0] as XmlElement;
+        XmlElement xWidget = _xDoc.GetElementsByTagName("view")[0] as XmlElement;
         if (null == xWidget)
         {
             ErrorThrow<ArgumentException>("No widget found.");
@@ -258,12 +325,12 @@ public class Parser
     static public void Unit()
     {
         string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Widget>
-    <Flex direction=""vertical"">
-        <Text>Item 1</Text>
-        <Text>Item 2</Text>
-    </Flex>
-</Widget>
+<view>
+    <vbox direction=""vertical"">
+        <text>Item 1</text>
+        <text>Item 2</text>
+    </vbox>
+</view>
 ";
 
         Factory f = new();
