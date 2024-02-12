@@ -58,6 +58,8 @@ public class Module : AModule, IInputPart
             _wMenu = null;
         }
 
+        _engine.GamePlayState = GamePlayStates.Running;
+        
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -67,6 +69,9 @@ public class Module : AModule, IInputPart
     {
         base.ModuleActivate(engine0);
         _engine.AddModule(this);
+
+        _engine.GamePlayState = GamePlayStates.Paused;
+        
         _factory = I.Get<builtin.jt.Factory>();
         
         XmlDocument xDoc = new XmlDocument();
