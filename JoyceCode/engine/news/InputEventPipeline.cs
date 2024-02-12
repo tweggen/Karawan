@@ -64,11 +64,12 @@ public class InputEventPipeline : engine.AModule
             {
                 if (kvp.Value == part)
                 {
-                    _dictParts.Remove(-kvp.Key);
+                    _dictParts.Remove(kvp.Key);
                     return;
                 }
             }
         }
+        ErrorThrow<ArgumentException>($"Warning: input part not found.");
     }
 
 

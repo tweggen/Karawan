@@ -462,7 +462,6 @@ public class Widget : IDisposable
             {
                 if (child.FocusState == FocusStates.Focussable)
                 {
-                    _wFocussedChild = child;
                     doFocusChild = true;
                 }
             }
