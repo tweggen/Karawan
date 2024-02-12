@@ -443,7 +443,6 @@ public class Widget : IDisposable
         lock (_lo)
         {
             if (null == _children) return;
-            wWasFocussed = _wFocussedChild;
             
             _children.Remove(child);
             _immutableChildren = null;
