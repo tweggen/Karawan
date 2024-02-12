@@ -117,12 +117,69 @@ class PathNode
 
 public class SubscriptionManager
 {
+    enum Commands
+    {
+        Subscribe,
+        Unsubscribe
+    }
+        
+    class CommandEntry
+    {
+        public required Commands Command;
+        public required string Path;
+        public SubscriberEntry se;
+        public required Action<Event> Handler;
+    }
+    
+    
     private object _lo = new();
     private int _nextSerial = 1000;
 
     private PathNode _root = new() { Path = "", References = 1};
 
-   
+    /**
+     * Set to true while I am handling an event. In that case, commands are queued.
+     */
+    private bool _inHandle = false;
+
+    private Queue<CommandEntry> _queueCommands = new();
+    
+
+    void _handleCommandNL(CommandEntry ce)
+    {
+        switch (ce.Command)
+        {
+            case Commands.Subscribe:
+                _root.AddChild(ce.se.SubscriptionPath, ce.se);
+                break;
+            case Commands.Unsubscribe:
+                _root.RemoveChild(ce.se.SubscriptionPath, ce.se);
+                break;
+            
+        }
+    }
+    
+
+    void _queueAndTryCommand(CommandEntry ce)
+    {
+        lock (_lo)
+        {
+            /*
+             * It's not really serious if we are 
+             */
+            if (_inHandle)
+            {
+                _queueCommands.Enqueue(ce);
+            }
+            else
+            {
+                _handleCommandNL(ce); 
+            }
+        }
+        
+    }
+    
+    
     private static List<string> _createList(string path)
     {
         string[] arrParts = path.Split('.');
@@ -161,8 +218,15 @@ public class SubscriptionManager
         lock (_lo)
         {
             se.SerialNumber = _nextSerial++;
-            _root.AddChild(listPath, se);
         }
+        CommandEntry ce = new()
+        {
+            Command = Commands.Subscribe,
+            Handler = handler,
+            Path = path,
+            se = se
+        };
+        _queueAndTryCommand(ce);
     }
 
     
@@ -180,10 +244,14 @@ public class SubscriptionManager
             Handler = handler,
             SerialNumber = 0
         };
-        lock (_lo)
+        CommandEntry ce = new()
         {
-            _root.RemoveChild(listPath, seRef);
-        }
+            Command = Commands.Unsubscribe,
+            Handler = handler,
+            Path = path,
+            se = seRef
+        };
+        _queueAndTryCommand(ce);
     }
 
 
@@ -230,9 +298,15 @@ public class SubscriptionManager
         List<Action<Event>> listActions;
         lock (_lo)
         {
+            while (_queueCommands.Count > 0)
+            {
+                var ce = _queueCommands.Dequeue();
+                _handleCommandNL(ce);
+            }
             var pathListEvent = _createList(ev.Type);
             listActions = new();
             _findSubscribers(_root, pathListEvent, 0, listActions);
+            _inHandle = true;
         }
 
         foreach (var action in listActions)
@@ -246,6 +320,11 @@ public class SubscriptionManager
             {
                 Warning($"Caught exception while handling event {ev}: {e}");
             }
+        }
+
+        lock (_lo)
+        {
+            _inHandle = false;
         }
     }
 

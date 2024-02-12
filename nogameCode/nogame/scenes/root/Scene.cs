@@ -78,16 +78,9 @@ public class Scene : AModule, IScene, IInputPart
     }
 
 
-    private void _togglePauseMenu()
+    private void _triggerPauseMenu()
     {
-        bool isMenuShown;
-        lock (_lo)
-        {
-            isMenuShown = _isMenuShown;
-            _isMenuShown = !isMenuShown;
-        }
-
-        if (!isMenuShown)
+        if (!_engine.HasModule(M<modules.menu.Module>()))
         {
             M<modules.menu.Module>().ModuleActivate(_engine);
         }
@@ -172,8 +165,7 @@ public class Scene : AModule, IScene, IInputPart
                 _toggleStats();
                 break;
             case "(escape)":
-                ev.IsHandled = true;
-                _togglePauseMenu();
+                _triggerPauseMenu();
                 break;
             default:
                 break;

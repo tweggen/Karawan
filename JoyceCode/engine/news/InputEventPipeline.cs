@@ -21,7 +21,7 @@ public class InputEventPipeline : engine.AModule
         IEnumerable<IInputPart> listParts;
         lock (_lo)
         {
-            listParts = _dictParts.Values;
+            listParts = new List<IInputPart>(_dictParts.Values);
         }
 
         /*
