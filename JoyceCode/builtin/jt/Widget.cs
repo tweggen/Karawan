@@ -364,10 +364,17 @@ public class Widget : IDisposable
 
         set
         {
+            Widget wOldParent;
             lock (_lo)
             {
-                // TXWTODO: What to do upon reparenting 
+                if (value == _parent) return;
+                wOldParent = _parent;
                 _parent = value;
+            }
+
+            if (null != wOldParent)
+            {
+                wOldParent.RemoveChild(this);
             }
         }
     }
@@ -907,7 +914,26 @@ public class Widget : IDisposable
 
     public void Dispose()
     {
+#if false
+        /*
+         * If we are removed, we need to removed ourselves from the hierarchy.
+         */
+        Root = null;
         Parent?.RemoveChild(this);
+        IEnumerable<Widget>? children;
+        lock (_lo)
+        {
+            children = _immutableChildrenNL();
+        }
+
+        if (null != children)
+        {
+            foreach (var child in children)
+            {
+                child.Parent = null;
+            }
+        }
+#endif
         Unrealize();
     }
 }
