@@ -422,6 +422,7 @@ public class Widget : IDisposable
             if (wNewFocus == _wFocussedChild) return;
             
             wOldFocus = _wFocussedChild;
+            _wFocussedChild = wNewFocus;
         }
 
         if (wOldFocus != null)
@@ -729,7 +730,7 @@ public class Widget : IDisposable
     }
 
 
-    private void _focusOffsettedChild(int ofs)
+    private void _focusOffsetChild(int ofs)
     {
         Widget wNewFocus;
         lock (_lo)
@@ -763,13 +764,13 @@ public class Widget : IDisposable
      */
     public void FocusPreviousChild()
     {
-        _focusOffsettedChild(-1);
+        _focusOffsetChild(-1);
     }
     
 
     public void FocusNextChild()
     {
-        _focusOffsettedChild(1);
+        _focusOffsetChild(1);
     }
 
 
