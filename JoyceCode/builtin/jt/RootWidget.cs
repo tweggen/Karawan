@@ -23,4 +23,10 @@ public class RootWidget : Widget
             }
         }
     }
+
+    /**
+     * When handling input events, where in the hierarchy of input handlers is
+     * this one?
+     */
+    public required float ZOrder { get; set; } = 500f;
 }

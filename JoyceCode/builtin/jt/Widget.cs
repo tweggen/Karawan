@@ -160,6 +160,28 @@ public class Widget : IDisposable
 
     public FocusStates FocusState { get; set; } = FocusStates.Unfocussable;
     public SelectionStates SelectionState { get; set; } = SelectionStates.Unselectable;
+
+    private Widget _wFocussedChild = null;
+    /**
+     * The child widget of us thatz currently focussed.
+     * By default, the first focussable child becomes focussed.
+     */
+    public Widget? FocussedChild {
+        get
+        {
+            lock (_lo)
+            {
+                return _wFocussedChild;
+            }
+        }
+        set
+        {
+            lock (_lo)
+            {
+                _wFocussedChild = value;
+            }
+        } 
+    }
     
     
     public bool IsFocussed = false;
@@ -284,7 +306,7 @@ public class Widget : IDisposable
                  */
                 if (layout != null)
                 {
-                    layout.Activate();
+                     layout.Activate();
                 }
 
                 RealizeSelf(root);
@@ -303,7 +325,27 @@ public class Widget : IDisposable
         }
     }
 
-    private Widget? _parent;
+    private Widget? _parent = null;
+    public Widget? Parent
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _parent;
+            }
+        }
+
+        set
+        {
+            lock (_lo)
+            {
+                // TXWTODO: What to do upon reparenting 
+                _parent = value;
+            }
+        }
+    }
+    
     private List<Widget>? _children;
 
     private IReadOnlyList<Widget>? _immutableChildren;
@@ -345,19 +387,44 @@ public class Widget : IDisposable
         lock (_lo)
         {
             if (null == _children) _children = new();
+
             _children.Add(child);
+
+            /*
+             * If we didn't have a focussed child yet, try to find some.
+             */
+            if (null == _wFocussedChild)
+            {
+                if (child.FocusState == FocusStates.Focussable)
+                {
+                    _wFocussedChild = child;
+                }
+            }
             _immutableChildren = null;
         }
+
+        child.Parent = this;
     }
 
     
     public void RemoveChild(Widget child)
     {
+        child.Parent = null;
+        Widget wWasFocussed;
+        
         lock (_lo)
         {
             if (null == _children) return;
+            wWasFocussed = _wFocussedChild;
+            
             _children.Remove(child);
             _immutableChildren = null;
+
+            if (_wFocussedChild == child)
+            {
+                // TXWTODO: There are better ways to find a good follow-up focus than just taking the first child.
+                _wFocussedChild = _firstFocussableOwnChildNL();
+            }
         }
     }
 
@@ -550,7 +617,7 @@ public class Widget : IDisposable
         if (null != children)
         {
             /*
-             * We shall become visible. So realize all children who are visible.
+             * We_ shall become visible. So realize all children who are visible.
              */
             foreach (var child in children)
             {
@@ -577,6 +644,67 @@ public class Widget : IDisposable
         RealizeChildren(root);
     }
 
+
+    protected Widget? _firstFocussableOwnChildNL()
+    {
+        Widget? wFirst = null;
+        if (null != _children)
+        {
+            wFirst = _children.Find(w => w.FocusState == FocusStates.Focussable);
+        }
+        
+        return wFirst;
+    }
+
+
+    protected virtual void _handleSelfInputEvent(engine.news.Event ev)
+    {
+        
+    }
+    
+    
+    /**
+     * Try to handle the given event. If you are not able to handle it,
+     * pass it up again.
+     */
+    public void HandleInputEvent(engine.news.Event ev)
+    {
+        if (ev.IsHandled == true)
+        {
+            return;
+        }
+        _handleSelfInputEvent(ev);
+        if (ev.IsHandled == true)
+        {
+            return;
+        }
+
+        Parent?.HandleInputEvent(ev);
+    }
+
+    
+    /**
+     * Propoagate the input event to the currently focussed widget.
+     * The leaf widget that is focussed will call the handle chain bottom-up.
+     */
+    public void PropagateInputEvent(engine.news.Event ev)
+    {
+        Widget wFocussedChild;
+        lock (_lo)
+        {
+            wFocussedChild = _wFocussedChild;
+        }
+
+        if (null == wFocussedChild)
+        {
+            HandleInputEvent(ev);
+        }
+        else
+        {
+            wFocussedChild.PropagateInputEvent(ev);
+        }
+    }
+    
 
     public void Dispose()
     {
