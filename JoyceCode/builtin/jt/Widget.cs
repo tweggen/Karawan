@@ -37,11 +37,6 @@ public enum RealizationStates
 }
 
 
-public interface IFocussable
-{
-}
-
-
 public class Widget : IDisposable
 {   
     protected object _lo = new();
@@ -182,9 +177,31 @@ public class Widget : IDisposable
             }
         } 
     }
+
+
+    public event EventHandler<bool> OnFocusChanged;
     
+    private bool _isFocussed = false;
+    public bool IsFocussed
+    {
+        get {
+            lock (_lo)
+            {
+                return _isFocussed;
+            }
+        }
+        set
+        {
+            lock (_lo)
+            {
+                if (_isFocussed == value) return;
+                _isFocussed = value;
+            }
+            
+            OnFocusChanged?.Invoke(this, value);
+        }
+    }
     
-    public bool IsFocussed = false;
     public bool IsSelected = false;
     
     
@@ -324,6 +341,7 @@ public class Widget : IDisposable
             }
         }
     }
+    
 
     private Widget? _parent = null;
     public Widget? Parent
@@ -345,6 +363,7 @@ public class Widget : IDisposable
             }
         }
     }
+    
     
     private List<Widget>? _children;
 
@@ -384,6 +403,8 @@ public class Widget : IDisposable
     
     public void AddChild(Widget child)
     {
+        bool doFocusChild = false;
+        
         lock (_lo)
         {
             if (null == _children) _children = new();
@@ -398,19 +419,26 @@ public class Widget : IDisposable
                 if (child.FocusState == FocusStates.Focussable)
                 {
                     _wFocussedChild = child;
+                    doFocusChild = true;
                 }
             }
             _immutableChildren = null;
         }
 
         child.Parent = this;
+
+        if (doFocusChild)
+        {
+            child.IsFocussed = true;
+        }
     }
 
     
     public void RemoveChild(Widget child)
     {
         child.Parent = null;
-        Widget wWasFocussed;
+        bool doUnfocusChild = false;
+        Widget wNewFocus = null; 
         
         lock (_lo)
         {
@@ -424,7 +452,19 @@ public class Widget : IDisposable
             {
                 // TXWTODO: There are better ways to find a good follow-up focus than just taking the first child.
                 _wFocussedChild = _firstFocussableOwnChildNL();
+                wNewFocus = _wFocussedChild;
+                doUnfocusChild = true;
             }
+        }
+
+        if (doUnfocusChild)
+        {
+            child.IsFocussed = false;
+        }
+
+        if (null != wNewFocus)
+        {
+            wNewFocus.IsFocussed = true;
         }
     }
 
