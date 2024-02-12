@@ -10,7 +10,7 @@ namespace builtin.jt;
 public class TextWidgetImplementation : IWidgetImplementation
 {
     private DefaultEcs.Entity eText;
-
+    private Widget _widget;
 
     public HAlign _hAlign(string strAlign)
     {
@@ -101,6 +101,16 @@ public class TextWidgetImplementation : IWidgetImplementation
 
         return 0xff000000;
     }
+
+    
+    private void _updateColor()
+    {
+        string strColor = _widget.GetAttr("color", "#ff000000");
+        uint color = _color(strColor);
+
+        uint finalColor = _widget.IsFocussed ? 0xffffffff : _widget.IsSelected ? 0xffffff00 : color;
+        eText.Get<OSDText>().TextColor = finalColor;
+    }
     
     
     public void OnPropertyChanged(string key, object oldValue, object newValue)
@@ -129,7 +139,9 @@ public class TextWidgetImplementation : IWidgetImplementation
                 eText.Get<OSDText>().FillColor = _color((string)newValue);
                 break;
             case "color":
-                eText.Get<OSDText>().TextColor = _color((string)newValue);
+            case "focussed":
+            case "selected":
+                _updateColor();
                 break;
             default:
                 break;
@@ -145,6 +157,7 @@ public class TextWidgetImplementation : IWidgetImplementation
     
     public TextWidgetImplementation(Widget w)
     {
+        _widget = w;
         eText = I.Get<Engine>().CreateEntity("widget");
         eText.Set(new OSDText()
         {

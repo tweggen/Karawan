@@ -24,9 +24,16 @@ public class RootWidget : Widget
         }
     }
 
-    /**
-     * When handling input events, where in the hierarchy of input handlers is
-     * this one?
-     */
-    public required float ZOrder { get; set; } = 500f;
+
+    public override void RemoveChild(Widget child)
+    {
+        base.RemoveChild(child);
+    }
+    
+
+    public override void AddChild(Widget child)
+    {
+        child.Root = this;
+        base.AddChild(child);
+    }
 }

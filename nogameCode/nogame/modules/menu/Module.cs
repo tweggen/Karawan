@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace nogame.modules.menu;
 
+
 public class Module : AModule, IInputPart
 {
     public float MY_Z_ORDER = 1000f;
@@ -38,15 +39,25 @@ public class Module : AModule, IInputPart
 
         if (!ev.IsHandled)
         {
-            _wMenu.Root.PropagateInputEvent(ev);
+            if (null != _wMenu)
+            {
+                _wMenu.Root.PropagateInputEvent(ev);
+            }
         }
     }
     
 
     public override void ModuleDeactivate()
     {
-        _wMenu.IsVisible = false;
-        _wMenu.Dispose();
+        I.Get<InputEventPipeline>().RemoveInputPart(this);
+
+        if (null != _wMenu)
+        {
+            _wMenu.IsVisible = false;
+            _wMenu.Dispose();
+            _wMenu = null;
+        }
+
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -62,6 +73,11 @@ public class Module : AModule, IInputPart
         xDoc.Load(engine.Assets.Open("menu.xml"));
         builtin.jt.Parser jtParser = new Parser(xDoc);
         _wMenu = jtParser.Build(_factory);
-        _wMenu.Root = _factory.FindRootWidget();
+        if (null != _wMenu)
+        {
+            _factory.FindRootWidget().AddChild(_wMenu);
+        }
+
+        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
     }
 }

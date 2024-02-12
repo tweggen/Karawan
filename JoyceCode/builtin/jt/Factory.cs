@@ -41,6 +41,6 @@ public class Factory
 
     public Factory()
     {
-        _wRoot = new RootWidget() { Factory = this, Type = "Root" };
+        _wRoot = new RootWidget() { Factory = this, Type = "Root"};
     }
 }

@@ -154,7 +154,7 @@ public class Widget : IDisposable
     }
 
 
-    public FocusStates FocusState { get; set; } = FocusStates.Unfocussable;
+    public FocusStates FocusState { get; set; } = FocusStates.Focussable;
     public SelectionStates SelectionState { get; set; } = SelectionStates.Unselectable;
 
     private Widget _wFocussedChild = null;
@@ -202,13 +202,13 @@ public class Widget : IDisposable
                 _isFocussed = value;
             }
 
-            this["isFocussed"] = value;
+            this["focussed"] = value;
             OnFocusChanged?.Invoke(this, value);
         }
     }
     
-    public bool IsSelected = false;
     
+    public bool IsSelected = false;
     
     protected bool _isVisible = true;
     public bool IsVisible
@@ -272,7 +272,7 @@ public class Widget : IDisposable
 
             }
             
-            this["isVisible"] = value;
+            this["visible"] = value;
         }
     }
     
@@ -444,7 +444,7 @@ public class Widget : IDisposable
     private IWidgetImplementation? _impl;
     
     
-    public void AddChild(Widget child)
+    public virtual void AddChild(Widget child)
     {
         bool doFocusChild = false;
         
@@ -477,7 +477,7 @@ public class Widget : IDisposable
     }
 
     
-    public void RemoveChild(Widget child)
+    public virtual void RemoveChild(Widget child)
     {
         child.Parent = null;
         Widget wNewFocus = null; 
