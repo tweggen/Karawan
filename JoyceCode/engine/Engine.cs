@@ -23,11 +23,20 @@ using Trace = System.Diagnostics.Trace;
 
 namespace engine;
 
+
 class EntitySetupAction
 {
     public string EntityName;
     public Action<DefaultEcs.Entity> SetupAction;
 }
+
+
+public enum GamePlayStates
+{
+    Running,
+    Paused
+}
+
 
 public class Engine
 {
@@ -110,6 +119,7 @@ public class Engine
 
     private Queue<float> _frameDurationQueue = new();
 
+    
     public float[] FrameDurations
     {
         get
@@ -121,7 +131,7 @@ public class Engine
         }
     }
 
-
+    
     private bool _platformIsAvailable = false;
     private bool _isRunning = true;
 
@@ -141,6 +151,30 @@ public class Engine
 
     public EngineState State { get; private set; }
     public event EventHandler<EngineState> EngineStateChanged;
+
+
+    private GamePlayStates _gamePlayState = GamePlayStates.Running;
+
+    public GamePlayStates GamePlayState
+    {
+        get =>_gamePlayState;
+        set
+        {
+            lock (_lo)
+            {
+                if (_gamePlayState == value)
+                {
+                    return;
+                }
+
+                _gamePlayState = value;
+            }
+
+            OnGamePlayStateChanged?.Invoke(this, value);
+        }
+    }
+
+    public EventHandler<GamePlayStates> OnGamePlayStateChanged;
 
 
     public void SetEngineState(in EngineState newState)
@@ -475,11 +509,13 @@ public class Engine
     private void _onLogicalFrame(float dt)
     {
         EngineState engineState;
+        GamePlayStates gamePlayState;
         _fpsLogicalMonitor.OnFrame(dt);
 
         lock (_lo)
         {
             engineState = State;
+            gamePlayState = _gamePlayState;
         }
 
         /*
@@ -549,7 +585,7 @@ public class Engine
          *
          * Require: Previously computed world transforms.
          */
-        _systemBehave.Update(dt);
+        if (gamePlayState == GamePlayStates.Running) _systemBehave.Update(dt);
 
         OnLogicalFrame?.Invoke(this, dt);
 
@@ -585,7 +621,7 @@ public class Engine
 
 
         //if (0 == _isLoading)
-        {
+        if (gamePlayState == GamePlayStates.Running) {
             /*
              * Advance physics, based on new user input and/or gravitation.
              */
