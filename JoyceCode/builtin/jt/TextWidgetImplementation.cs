@@ -1,24 +1,35 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
+using System.Security.Cryptography;
 using engine;
 using engine.draw;
 using engine.draw.components;
-using ObjLoader.Loader.Common;
 
 namespace builtin.jt;
 
+
 public class TextWidgetImplementation : IWidgetImplementation
 {
+    internal class AttributeEntry
+    {
+        public required string Name;
+        public required object DefaultValue;
+        public required Action<TextWidgetImplementation, AttributeEntry, object> ApplyFunction;
+    }
+
+
     private DefaultEcs.Entity eText;
     private Widget _widget;
 
-    public HAlign _hAlign(string strAlign)
+    private HAlign _hAlign(object oAlign)
     {
-        if (null == strAlign)
+        if (null == oAlign)
         {
             return HAlign.Left;
         }
-        switch (strAlign)
+        switch ((string)oAlign)
         {
             default:
             case "left": return HAlign.Left;
@@ -29,13 +40,13 @@ public class TextWidgetImplementation : IWidgetImplementation
     }
     
     
-    public VAlign _vAlign(string strAlign)
+    public VAlign _vAlign(object oAlign)
     {
-        if (null == strAlign)
+        if (null == oAlign)
         {
             return VAlign.Top;
         }
-        switch (strAlign)
+        switch ((string)oAlign)
         {
             default:
             case "top": return VAlign.Top;
@@ -46,9 +57,11 @@ public class TextWidgetImplementation : IWidgetImplementation
     }
 
 
-    public uint _color(string strColor)
+    public uint _color(object oColor)
     {
-        if (strColor.IsNullOrEmpty()) return 0xff000000;
+        if (null == oColor) return 0xff000000;
+        string strColor = (string)oColor;
+        if (String.IsNullOrEmpty(strColor)) return 0xff000000;
         if (strColor[0] == '#')
         {
             if (uint.TryParse(
@@ -102,6 +115,12 @@ public class TextWidgetImplementation : IWidgetImplementation
         return 0xff000000;
     }
 
+
+    private float _x(object oX) => (float)oX;
+    private float _y(object oY) => (float)oY;
+    private float _width(object oWidth) => (float)oWidth;
+    private float _height(object oHeight) => (float)oHeight;
+
     
     private void _updateColor()
     {
@@ -111,40 +130,120 @@ public class TextWidgetImplementation : IWidgetImplementation
         uint finalColor = _widget.IsFocussed ? 0xffffffff : _widget.IsSelected ? 0xffffff00 : color;
         eText.Get<OSDText>().TextColor = finalColor;
     }
-    
-    
+
+
+    private SortedDictionary<string, AttributeEntry> _mapAttributes = new()
+    {
+        {
+            "x", new()
+            {
+                Name = "x", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
+                {
+                    impl.eText.Get<OSDText>().Position.X = impl._x(o);
+                }
+            }
+        },
+        {
+            "y", new()
+            {
+                Name = "y", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
+                {
+                    impl.eText.Get<OSDText>().Position.Y = impl._y(o);
+                }
+            }
+        },
+        {
+            "width", new()
+            {
+                Name = "width", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
+                {
+                    impl.eText.Get<OSDText>().Size.X = impl._width(o);
+                }
+            }
+        },
+        {
+            "height", new()
+            {
+                Name = "height", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
+                {
+                    impl.eText.Get<OSDText>().Size.X = impl._height(o);
+                }
+            }
+        },
+        {
+            "hAlign", new()
+            {
+                Name = "hAlign", DefaultValue = (object)"left", ApplyFunction = (impl, ae, o) =>
+                {
+                    impl.eText.Get<OSDText>().HAlign = impl._hAlign(o);
+                }
+            }
+        },
+        {
+            "vAlign", new()
+            {
+                Name = "vAlign", DefaultValue = (object)"top", ApplyFunction = (impl, ae, o) =>
+                {
+                    impl.eText.Get<OSDText>().VAlign = impl._vAlign(o);
+                }
+            }
+        },
+        {
+            "fillColor", new()
+            {
+                Name = "fillColor", DefaultValue = (object)"0xff888888", ApplyFunction = (impl, ae, o) =>
+                {
+                    impl.eText.Get<OSDText>().FillColor = impl._color(o);
+                }
+            }
+        },
+        {
+            "color", new()
+            {
+                Name = "color", DefaultValue = (object)"0xffffffff", ApplyFunction = (impl, ae, o) =>
+                {
+                    impl._updateColor();
+                }
+            }
+        },
+        {
+            "focussed", new()
+            {
+                Name = "focussed", DefaultValue = (object) false, ApplyFunction = (impl, ae, o) =>
+                {
+                    impl._updateColor();
+                }
+            }
+        },
+        {
+            "selected", new()
+            {
+                Name = "selected", DefaultValue = (object) false, ApplyFunction = (impl, ae, o) =>
+                {
+                    impl._updateColor();
+                }
+            }
+        },
+        {
+            "visible", new()
+            {
+                Name = "visible", DefaultValue = (object) true, ApplyFunction = (impl, ae, o) =>
+                {
+                }
+            }
+        }
+    };
+
+
     public void OnPropertyChanged(string key, object oldValue, object newValue)
     {
-        switch (key)
+        if (_mapAttributes.TryGetValue(key, out var ae))
         {
-            case "x":
-                eText.Get<OSDText>().Position.X = (float) newValue;
-                break;
-            case "y":
-                eText.Get<OSDText>().Position.Y = (float) newValue;
-                break;
-            case "width":
-                eText.Get<OSDText>().Size.X = (float) newValue;
-                break;
-            case "height":
-                eText.Get<OSDText>().Size.Y = (float) newValue;
-                break;
-            case "hAlign":
-                eText.Get<OSDText>().HAlign = _hAlign((string)newValue);
-                break;
-            case "vAlign":
-                eText.Get<OSDText>().VAlign = _vAlign((string)newValue);
-                break;
-            case "fillColor":
-                eText.Get<OSDText>().FillColor = _color((string)newValue);
-                break;
-            case "color":
-            case "focussed":
-            case "selected":
-                _updateColor();
-                break;
-            default:
-                break;
+            ae.ApplyFunction(this, ae, newValue);
+        }
+        else
+        {
+            // I don't know that property.
         }
     }
 
@@ -170,5 +269,9 @@ public class TextWidgetImplementation : IWidgetImplementation
             TextColor = 0xffffff00,
             FillColor = 0xff0000ff
         });
+        foreach (var kvp in _mapAttributes)
+        {
+            kvp.Value.ApplyFunction(this, kvp.Value, w.GetAttr(kvp.Value.Name, kvp.Value.DefaultValue));
+        }
     }
 }
