@@ -197,7 +197,8 @@ public class Widget : IDisposable
                 if (_isFocussed == value) return;
                 _isFocussed = value;
             }
-            
+
+            this["isFocussed"] = value;
             OnFocusChanged?.Invoke(this, value);
         }
     }
@@ -266,8 +267,11 @@ public class Widget : IDisposable
                 }
 
             }
+            
+            this["isVisible"] = value;
         }
     }
+    
 
     protected RealizationStates RealizationState = RealizationStates.Unrealized;
 
