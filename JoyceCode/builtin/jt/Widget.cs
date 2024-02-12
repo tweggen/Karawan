@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
@@ -186,7 +187,8 @@ public class Widget : IDisposable
     private bool _isFocussed = false;
     public bool IsFocussed
     {
-        get {
+        get
+        {
             lock (_lo)
             {
                 return _isFocussed;
@@ -727,24 +729,47 @@ public class Widget : IDisposable
     }
 
 
+    private void _focusOffsetedChild(int ofs)
+    {
+        Widget wNewFocus;
+        lock (_lo)
+        {
+            if (null == _children)
+            {
+                return;
+            }
+            int l = _children.Count;
+            if (l == 0)
+            {
+                return;
+            }
+            
+            if (null == _wFocussedChild)
+            {
+                wNewFocus = _children[(l + ofs)%l];
+            }
+            else
+            {
+                wNewFocus = _children[(_children.IndexOf(_wFocussedChild) + l + ofs) % l];
+            }
+        }
+        
+        _setNewFocus(wNewFocus);
+    }
+
+
     /**
      * Try to focus the previous widget
      */
     public void FocusPreviousChild()
     {
-        lock (_lo)
-        {
-            
-        }
+        _focusOffsetedChild(-1);
     }
     
 
     public void FocusNextChild()
     {
-        lock (_lo)
-        {
-            
-        }
+        _focusOffsetedChild(1);
     }
 
 
@@ -773,23 +798,43 @@ public class Widget : IDisposable
                 {
                     case "(cursorup)":
                     case "W":
-                        if (haveChildren && !isHorizontal) FocusPreviousChild();
+                        if (haveChildren && !isHorizontal)
+                        {
+                            FocusPreviousChild();
+                            ev.IsHandled = true;
+                        }
                         break;
                     case "(cursordown)":
                     case "S":
-                        if (haveChildren && !isHorizontal) FocusNextChild();
+                        if (haveChildren && !isHorizontal)
+                        {
+                            FocusNextChild();
+                            ev.IsHandled = true;
+                        }
                         break;
                     case "(cursorleft)":
                     case "A":
-                        if (haveChildren && !isHorizontal) FocusPreviousChild();
+                        if (haveChildren && !isHorizontal)
+                        {
+                            FocusPreviousChild();
+                            ev.IsHandled = true;
+                        }
                         break;
                     case "(cursorright)":
                     case "D":
-                        if (haveChildren && !isHorizontal) FocusNextChild();
+                        if (haveChildren && !isHorizontal)
+                        {
+                            FocusNextChild();
+                            ev.IsHandled = true;
+                        }
                         break;
                     case "(space)":
                     case "(E)":
-                        if (!haveChildren) _emitSelected(ev);
+                        if (!haveChildren)
+                        {
+                            _emitSelected(ev);
+                            ev.IsHandled = true;
+                        }
                         break;
                     default:
                         break;
