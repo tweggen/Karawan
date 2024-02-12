@@ -729,9 +729,9 @@ public class Widget : IDisposable
     }
 
 
-    private void _focusOffsetChild(int ofs)
+    private void _focusOffsetChild(int increment)
     {
-        Widget wNewFocus;
+        Widget wNewFocus = null;
         lock (_lo)
         {
             if (null == _children)
@@ -743,18 +743,32 @@ public class Widget : IDisposable
             {
                 return;
             }
-            
+
+            int startIndex;
             if (null == _wFocussedChild)
             {
-                wNewFocus = _children[(l + ofs)%l];
+                startIndex = 0;
             }
             else
             {
-                wNewFocus = _children[(_children.IndexOf(_wFocussedChild) + l + ofs) % l];
+                startIndex = _children.IndexOf(_wFocussedChild);
+            }
+
+            for (int i = 1; i < l; ++i)
+            {
+                startIndex += increment;
+                var wCand =_children[(startIndex + l) % l];
+                if (wCand.FocusState == FocusStates.Focussable)
+                {
+                    wNewFocus = wCand;
+                }
             }
         }
-        
-        _setNewFocus(wNewFocus);
+
+        if (null != wNewFocus)
+        {
+            _setNewFocus(wNewFocus);
+        }
     }
 
 

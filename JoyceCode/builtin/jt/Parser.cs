@@ -50,7 +50,9 @@ public class Parser
         { "direction", typeof(string) },
         { "flex", typeof(float) },
         { "vAlign", typeof(string) },
-        { "hAlign", typeof(string) }
+        { "hAlign", typeof(string) },
+        { "focussable", typeof(bool) },
+        { "selectable", typeof(bool) }
     };
 
 
@@ -232,7 +234,12 @@ public class Parser
                     else if (typeAttr == typeof(uint))
                     {
                         w[attr.LocalName] = UInt32.Parse(attr.Value);
+                    } 
+                    else if (typeAttr == typeof(bool))
+                    {
+                        w[attr.LocalName] = Boolean.Parse(attr.Value);
                     }
+                        
                 }
                 catch (Exception e)
                 {
@@ -246,6 +253,12 @@ public class Parser
             }
         }
 
+        /*
+         * Parse out special attributes that map to native flags
+         */
+        w.FocusState = w.GetAttr("focussable", true) ? FocusStates.Focussable : FocusStates.Unfocussable;
+        w.SelectionState = w.GetAttr("selectable", true) ? SelectionStates.Selectable : SelectionStates.Unselectable;
+        
         /*
          * Then, the special text attribute
          */
