@@ -761,6 +761,7 @@ public class Widget : IDisposable
                 if (wCand.FocusState == FocusStates.Focussable)
                 {
                     wNewFocus = wCand;
+                    break;
                 }
             }
         }
@@ -906,6 +907,7 @@ public class Widget : IDisposable
 
     public void Dispose()
     {
+        Parent?.RemoveChild(this);
         Unrealize();
     }
 }

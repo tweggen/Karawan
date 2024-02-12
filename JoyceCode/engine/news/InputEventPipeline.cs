@@ -77,6 +77,11 @@ public class InputEventPipeline : engine.AModule
     {
         lock (_lo)
         {
+            if (_dictParts.ContainsKey(-zOrder))
+            {
+                ErrorThrow<ArgumentException>($"Handler for zOrder {zOrder} already exists: {part0}");
+                return;
+            }
             /*
              * We use the negative sign because we want to iterate in reverse order.
              */
