@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using engine;
 using engine.news;
+using ObjLoader.Loader.Common;
 using static engine.Logger;
 
 using Silk.NET.Input;
@@ -21,7 +22,7 @@ namespace Splash.Silk
          * Keeps all Splash implementations.
          */
         private Splash.Common _common;
-        
+
         private SilkThreeD _silkThreeD;
         private InstanceManager _instanceManager;
         private CameraManager _cameraManager;
@@ -48,8 +49,8 @@ namespace Splash.Silk
             get => _mouseEnabled;
             set => _platformThreadActions.Enqueue(() => _setMouseEnabled(value));
         }
-        
-        
+
+
         public void SetEngine(engine.Engine engine)
         {
             lock (_lo)
@@ -57,7 +58,7 @@ namespace Splash.Silk
                 _engine = engine;
             }
         }
-        
+
 
         private void _toggleFullscreen()
         {
@@ -99,18 +100,21 @@ namespace Splash.Silk
                 // Setting fullscreeen might fail.
             }
         }
-        
-        
-        private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
+
+
+        private string _convertKeyCodeFromPlatform(Key args)
         {
-            string code = "";
-            switch (arg2)
+            string code = null;
+            switch (args)
             {
                 case Key.ShiftLeft:
                     code = "(shiftleft)";
                     break;
+                case Key.ShiftRight:
+                    code = "(shiftright)";
+                    break;
                 case Key.Space:
-                    code = "(action)";
+                    code = " ";
                     break;
                 case Key.Number0:
                     code = "0";
@@ -142,23 +146,26 @@ namespace Splash.Silk
                 case Key.Number9:
                     code = "9";
                     break;
-                case Key.Q:
-                    code = "Q";
-                    break;
-                case Key.Z:
-                    code = "Z";
-                    break;
-                case Key.W:
-                    code = "W";
-                    break;
-                case Key.S:
-                    code = "S";
-                    break;
                 case Key.A:
                     code = "A";
                     break;
                 case Key.D:
                     code = "D";
+                    break;
+                case Key.E:
+                    code = "E";
+                    break;
+                case Key.S:
+                    code = "S";
+                    break;
+                case Key.Q:
+                    code = "Q";
+                    break;
+                case Key.W:
+                    code = "W";
+                    break;
+                case Key.Z:
+                    code = "Z";
                     break;
                 case Key.Tab:
                     code = "(tab)";
@@ -182,11 +189,30 @@ namespace Splash.Silk
                 case Key.F12:
                     code = "(F12)";
                     break;
+                case Key.Up:
+                    code = "(cursorup)";
+                    break;
+                case Key.Down:
+                    code = "(cursordown)";
+                    break;
+                case Key.Right:
+                    code = "(cursorright)";
+                    break;
+                case Key.Left:
+                    code = "(cursorleft)";
+                    break;
                 default:
                     break;
             }
 
-            if (code.Length != 0)
+            return code;
+        }
+        
+
+        private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
+        {
+            string code = _convertKeyCodeFromPlatform(arg2);
+            if (!code.IsNullOrEmpty())
             {
                 I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
             }
@@ -195,90 +221,8 @@ namespace Splash.Silk
 
         private void _onKeyUp(IKeyboard arg1, Key arg2, int arg3)
         {
-            string code = "";
-            switch (arg2)
-            {
-                case Key.ShiftLeft:
-                    code = "(shiftleft)";
-                    break;
-                case Key.Space:
-                    code = "(action)";
-                    break;
-                case Key.Number0:
-                    code = "0";
-                    break;
-                case Key.Number1:
-                    code = "1";
-                    break;
-                case Key.Number2:
-                    code = "2";
-                    break;
-                case Key.Number3:
-                    code = "3";
-                    break;
-                case Key.Number4:
-                    code = "4";
-                    break;
-                case Key.Number5:
-                    code = "5";
-                    break;
-                case Key.Number6:
-                    code = "6";
-                    break;
-                case Key.Number7:
-                    code = "7";
-                    break;
-                case Key.Number8:
-                    code = "8";
-                    break;
-                case Key.Number9:
-                    code = "9";
-                    break;
-                case Key.Q:
-                    code = "Q";
-                    break;
-                case Key.Z:
-                    code = "Z";
-                    break;
-                case Key.W:
-                    code = "W";
-                    break;
-                case Key.S:
-                    code = "S";
-                    break;
-                case Key.A:
-                    code = "A";
-                    break;
-                case Key.D:
-                    code = "D";
-                    break;
-                case Key.Tab:
-                    code = "(tab)";
-                    break;  
-                case Key.Escape:
-                    code = "(escape)";
-                    break;
-                case Key.F8:
-                    code = "(F8)";
-                    break;
-                case Key.F9:
-                    code = "(F9)";
-                    break;
-                case Key.F10:
-                    code = "(F10)";
-                    break;
-                case Key.F11:
-                    code = "(F11)";
-                    break;
-                case Key.F12:
-                    code = "(F12)";
-                    break;
-                default:
-                    break;
-            }
-            
-
-            if (code.Length != 0)
+            string code = _convertKeyCodeFromPlatform(arg2);
+            if (!code.IsNullOrEmpty())
             {
                 I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
             }

@@ -180,6 +180,8 @@ public class Widget : IDisposable
 
 
     public event EventHandler<bool> OnFocusChanged;
+    public event EventHandler<Widget> OnFocussedChildChanged;
+
     
     private bool _isFocussed = false;
     public bool IsFocussed
@@ -398,6 +400,41 @@ public class Widget : IDisposable
         }
     }
 
+    public bool HasChildren
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _children != null && _children.Count > 0;
+            }
+        }
+    }
+
+
+    protected void _setNewFocus(Widget wNewFocus)
+    {
+        Widget wOldFocus;
+        lock (_lo)
+        {
+            if (wNewFocus == _wFocussedChild) return;
+            
+            wOldFocus = _wFocussedChild;
+        }
+
+        if (wOldFocus != null)
+        {
+            wOldFocus.IsFocussed = false;
+        }
+
+        if (wNewFocus != null)
+        {
+            wNewFocus.IsFocussed = true;
+        }
+        
+        OnFocussedChildChanged?.Invoke(this, wNewFocus);
+    }
+    
 
     /**
      * The actual implementation creating entities or resources of some sort.
@@ -433,7 +470,7 @@ public class Widget : IDisposable
 
         if (doFocusChild)
         {
-            child.IsFocussed = true;
+            _setNewFocus(child);
         }
     }
 
@@ -441,7 +478,6 @@ public class Widget : IDisposable
     public void RemoveChild(Widget child)
     {
         child.Parent = null;
-        bool doUnfocusChild = false;
         Widget wNewFocus = null; 
         
         lock (_lo)
@@ -456,19 +492,10 @@ public class Widget : IDisposable
                 // TXWTODO: There are better ways to find a good follow-up focus than just taking the first child.
                 _wFocussedChild = _firstFocussableOwnChildNL();
                 wNewFocus = _wFocussedChild;
-                doUnfocusChild = true;
             }
         }
 
-        if (doUnfocusChild)
-        {
-            child.IsFocussed = false;
-        }
-
-        if (null != wNewFocus)
-        {
-            wNewFocus.IsFocussed = true;
-        }
+        _setNewFocus(wNewFocus);
     }
 
 
@@ -700,9 +727,78 @@ public class Widget : IDisposable
     }
 
 
+    /**
+     * Try to focus the previous widget
+     */
+    public void FocusPreviousChild()
+    {
+        lock (_lo)
+        {
+            
+        }
+    }
+    
+
+    public void FocusNextChild()
+    {
+        lock (_lo)
+        {
+            
+        }
+    }
+
+
+    protected void _emitSelected(engine.news.Event ev)
+    {
+    }
+    
+
+    /**
+     * Default implementation to handle keyboard events.
+     * Default behaviour:
+     * - If I do not have children
+     *   - space or e selects the current item.
+     * - If I do have children
+     *   - cursor / navigation focusses the next/previous of my children.
+     */
     protected virtual void _handleSelfInputEvent(engine.news.Event ev)
     {
+        bool haveChildren = HasChildren;
+        bool isHorizontal = GetAttr("direction", "vertical") == "horizontal";
         
+        switch (ev.Type)
+        {
+            case engine.news.Event.INPUT_KEY_PRESSED:
+                switch (ev.Code)
+                {
+                    case "(cursorup)":
+                    case "W":
+                        if (haveChildren && !isHorizontal) FocusPreviousChild();
+                        break;
+                    case "(cursordown)":
+                    case "S":
+                        if (haveChildren && !isHorizontal) FocusNextChild();
+                        break;
+                    case "(cursorleft)":
+                    case "A":
+                        if (haveChildren && !isHorizontal) FocusPreviousChild();
+                        break;
+                    case "(cursorright)":
+                    case "D":
+                        if (haveChildren && !isHorizontal) FocusNextChild();
+                        break;
+                    case "(space)":
+                    case "(E)":
+                        if (!haveChildren) _emitSelected(ev);
+                        break;
+                    default:
+                        break;
+                }
+
+                break;
+            default:
+                break;
+        }
     }
     
     

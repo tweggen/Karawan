@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Xml;
 using builtin.jt;
 using engine;
@@ -18,19 +19,26 @@ public class Module : AModule, IInputPart
 
     public void InputPartOnInputEvent(Event ev)
     {
-        if (ev.Type != Event.INPUT_KEY_PRESSED)
+        switch (ev.Type)
         {
-            return;
-        }
-
-        switch (ev.Code)
-        {
-            case "(escape)":
-                ev.IsHandled = true;
-                ModuleDeactivate();
+            case Event.INPUT_KEY_PRESSED:
+                switch (ev.Code)
+                {
+                    case "(escape)":
+                        ev.IsHandled = true;
+                        ModuleDeactivate();
+                        break;
+                    default:
+                        break;
+                }
                 break;
             default:
                 break;
+        }
+
+        if (!ev.IsHandled)
+        {
+            _wMenu.Root.PropagateInputEvent(ev);
         }
     }
     
