@@ -50,6 +50,9 @@ public class ToLocation : engine.world.IOperator
      * If I am supposed to create a visible target for this one.
      */
     public bool DoCreateVisibleTarget { get; set; } = true;
+    
+
+    public Action OnReachTarget = default;
 
 
     private DefaultEcs.Entity _eMarker; 
@@ -76,6 +79,10 @@ public class ToLocation : engine.world.IOperator
              */
             Trace("Called onCollision of ToLocation.");
             _eMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
+            if (OnReachTarget != default)
+            {
+                OnReachTarget();
+            }
         }
     }
 

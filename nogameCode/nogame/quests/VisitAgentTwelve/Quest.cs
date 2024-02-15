@@ -15,8 +15,14 @@ public class Quest : AModule, IQuest
         LongDescription = "Every journey starts with the first step. Reach for the third step" +
                           " to make it an experience."
     };
-    
-   
+
+
+    private void _onReachTarget()
+    {
+        // TXWTODO: Advance the story.
+    }
+
+
     public Description GetDescription()
     {
         return _description;
@@ -51,7 +57,8 @@ public class Quest : AModule, IQuest
         {
             RelativePosition = new Vector3(-440f, 40f, 389f),
             SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-            MapCameraMask = nogame.modules.map.Module.MapCameraMask
+            MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+            OnReachTarget = _onReachTarget
         };
         newQuestTarget.OperatorApply(_engine);
     }
