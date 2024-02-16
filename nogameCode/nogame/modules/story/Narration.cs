@@ -28,7 +28,7 @@ public class Narration : AModule, IInputPart
 
     public float MY_Z_ORDER { get; set; } = 24.5f;
 
-    public float BottomY { get; set; } = (400f-22f);
+    public float BottomY { get; set; } = (400f-21f);
     public float LineHeight { get; set; } = 16f+4f;
 
     public uint TextColor { get; set; } = 0xffcccccc;
@@ -212,7 +212,6 @@ public class Narration : AModule, IInputPart
             if (!_currentStory.canContinue)
             {
                 dismissAll = true;
-                _currentStory = null;
             }
         }
         
@@ -325,7 +324,7 @@ public class Narration : AModule, IInputPart
         {
             switch (ev.Code)
             {
-                case "(action)":
+                case " ":
                     if (_currentStory != null)
                     {
                         _onActionKey();
