@@ -33,3 +33,10 @@ Let's see if navigation can help us.
 
 -> END
 
+== agent12 ==
+
+I can't see agent 12. He usually would be here if a long for a beverage or a meal.
+I would tell me something, you know, get straight to it. 
+Sometimes I wonder if he knows the fishmongers. Though I never dared to ask him.
+
+-> END

@@ -352,6 +352,24 @@ public class Narration : AModule, IInputPart
             }
         }
     }
+
+
+    public void TriggerPath(string strPath)
+    {
+        Story currentStory;
+        lock (_lo)
+        {
+            if (null == _currentStory)
+            {
+                ErrorThrow<InvalidOperationException>($"Requestd story {strPath}, but no story had been loaded.");
+                return;
+            }
+
+            currentStory = _currentStory;
+        }
+
+        currentStory.ChoosePathString(strPath, null);
+    }
     
     
     public override void ModuleDeactivate()

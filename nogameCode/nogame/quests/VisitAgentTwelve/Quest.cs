@@ -20,6 +20,7 @@ public class Quest : AModule, IQuest
     private void _onReachTarget()
     {
         // TXWTODO: Advance the story.
+        I.Get<nogame.modules.story.Narration>().TriggerPath("agent12");
     }
 
 
