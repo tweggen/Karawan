@@ -292,6 +292,17 @@ public class Narration : AModule, IInputPart
     
     private void _onClickSentence(engine.news.Event ev)
     {
+        int nChoices;
+        lock (_lo)
+        {
+            if (null == _currentStory)
+            {
+                return;
+            }
+
+            nChoices = _currentNChoices;
+        }
+        
         if (ev.Code != null)
         {
             if (Int32.TryParse(ev.Code, out var number))
@@ -301,7 +312,10 @@ public class Narration : AModule, IInputPart
         }
         else
         {
-            _advanceStory();
+            if (0 == nChoices)
+            {
+                _advanceStory();
+            }
         }
     }
     
@@ -311,12 +325,13 @@ public class Narration : AModule, IInputPart
         int nChoices = 0;
         lock (_lo)
         {
-            if (_currentStory != null)
+            if (_currentStory == null)
             {
-                if (!_currentString.IsNullOrEmpty())
-                {
-                    nChoices = _currentStory.currentChoices.Count;
-                }
+                return;
+            }
+            if (!_currentString.IsNullOrEmpty())
+            {
+                nChoices = _currentStory.currentChoices.Count;
             }
         }
 
@@ -325,7 +340,10 @@ public class Narration : AModule, IInputPart
             switch (ev.Code)
             {
                 case " ":
-                    if (_currentStory != null)
+                    /*
+                     * If we are not awaiting options and have a story, we can continue.
+                     */
+                    if (0 == nChoices)
                     {
                         _onActionKey();
                         ev.IsHandled = true;

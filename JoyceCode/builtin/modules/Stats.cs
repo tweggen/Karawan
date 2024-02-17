@@ -40,7 +40,7 @@ public class Stats : engine.AModule
             {
                 lock (_engine.Simulation)
                 {
-                    var prefPlayer = _playerEntity.Get<engine.physics.components.Body>().Reference;
+                    ref var prefPlayer = ref _playerEntity.Get<engine.physics.components.Body>().Reference;
                     physData = $"pos: {prefPlayer.Pose.Position}, vel: {prefPlayer.Velocity.Linear}";
                 }
             }
