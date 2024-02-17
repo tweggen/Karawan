@@ -807,7 +807,11 @@ public class Engine
     private void _logicalThreadFunction()
     {
         float invFps = 1f / 60f;
-        float totalTime = 0f;
+        float accumulator = 0f;
+        float slept = 0f;
+        int nSleeps = 0;
+        bool wasWaiting = false;
+        float accuBeforeSleep = 0f;
 
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -819,24 +823,38 @@ public class Engine
              * Wait for the next frame or rock it.
              */
             stopWatch.Stop();
+            
+            float elapsed = (float)stopWatch.Elapsed.TotalSeconds;
+            accumulator += elapsed;
+            if (wasWaiting)
             {
-                float elapsed = (float)stopWatch.Elapsed.TotalSeconds;
-                totalTime += elapsed;
-                // Trace($"elapsed {elapsed} totalTime {totalTime}");
+                slept += elapsed;
             }
-            stopWatch.Reset();
-
+            
             /*
              * keep times in range
              */
-            while (totalTime > 1f)
+            while (accumulator > 1f)
             {
-                totalTime -= 1f;
+                accumulator -= 1f;
             }
-
-
-            if (totalTime < invFps)
+            
+            // Trace($"elapsed {elapsed} totalTime {accumulator}");
+            
+            stopWatch.Reset();
+            
+            /*
+             * Sleep as long we have less than a logical frame on our accumulator.
+             */
+            if (accumulator < invFps)
             {
+                if (0 == nSleeps)
+                {
+                    accuBeforeSleep = accumulator;
+                }
+                
+                wasWaiting = true;
+                ++nSleeps;
                 // Trace("Sleeping.");
                 stopWatch.Start();
                 lock (_lo)
@@ -856,12 +874,20 @@ public class Engine
                 continue;
             }
 
+            Trace($"acc {accumulator} slept {slept} nSleeps {nSleeps} accuBeforeSleep {accuBeforeSleep}");
+
+            wasWaiting = false;
+            slept = 0f;
+            nSleeps = 0;
+            accuBeforeSleep = 0f;
+
             stopWatch.Start();
             int nLogical = 0;
+            
             /*
              * Run as many logical frames as have been elapsed.
              */
-            while (totalTime > invFps)
+            while (accumulator > invFps)
             {
                 lock (_lo)
                 {
@@ -878,19 +904,22 @@ public class Engine
                     ++nLogical;
                 }
 
-                totalTime -= invFps;
+                stopWatch.Stop();
+                float processedTime = (float)stopWatch.Elapsed.TotalSeconds;
+                stopWatch.Reset();
+
+                accumulator += processedTime;
+
+                /*
+                 * Now, depending on the remaining time, sleep a bit.
+                 */
+                stopWatch.Start();
+
+                /*
+                 * And subtract the logical advance.
+                 */
+                accumulator -= invFps;
             }
-
-            stopWatch.Stop();
-            float processedTime = (float)stopWatch.Elapsed.TotalSeconds;
-            stopWatch.Reset();
-
-            totalTime += processedTime;
-
-            /*
-             * Now, depending on the remaining time, sleep a bit.
-             */
-            stopWatch.Start();
 
 #if false
             if (0 < nLogical)
