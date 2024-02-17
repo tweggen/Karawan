@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 using engine;
 using engine.news;
 using ObjLoader.Loader.Common;
@@ -31,17 +32,17 @@ public class Platform : engine.IPlatform
     private bool _isRunning = true;
 
     private LogicalRenderer _logicalRenderer;
+    private readonly Stopwatch _renderStopwatch = new();
+
 
     private IView _iView;
     private IInputContext _iInputContext;
     private GL _gl;
-
-
+    
     private engine.WorkerQueue _platformThreadActions = new("platformThread");
 
     private ImGuiController _imGuiController = null;
-
-
+    
     private bool _mouseEnabled = false;
 
     public bool MouseEnabled
@@ -398,6 +399,7 @@ public class Platform : engine.IPlatform
         }
 #endif
         _engine.CallOnPlatformAvailable();
+        _renderStopwatch.Start();
     }
 
 
@@ -417,52 +419,62 @@ public class Platform : engine.IPlatform
      */
     private void _windowOnRender(double dt)
     {
-        while (true)
+        double msCalled = _renderStopwatch.Elapsed.TotalMilliseconds;
+        
+        Engine.EngineState engineState = _engine.State;
+        RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
+        if (renderFrame == null)
         {
-            // _physFrameReadKeyEvents();
-
-            Engine.EngineState engineState = _engine.State;
-            RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
-            if (renderFrame == null)
+            _silkThreeD.ExecuteGraphicsThreadActions(0.005f);
+            if (engineState <= Engine.EngineState.Running)
             {
-                _silkThreeD.ExecuteGraphicsThreadActions(0.005f);
-                if (engineState <= Engine.EngineState.Running)
-                {
-                    System.Threading.Thread.Sleep(1);
-                }
-                else
-                {
-                    System.Threading.Thread.Sleep(10);
-                }
-
-                break;
+                //System.Threading.Thread.Sleep(1);
+                //Thread.Yield();
+                Trace($"No frame,");
+            }
+            else
+            {
+                System.Threading.Thread.Sleep(10);
             }
 
-            if (_iView.Size.X != 0 && _iView.Size.Y != 0)
-            {
-                _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
-            }
-
-            _renderer.RenderFrame(renderFrame);
-            _renderStats.PushFrame(renderFrame.FrameStats);
-            I.Get<EventQueue>().Push(new Event(Event.RENDER_STATS, _renderStats.GetAverage().ToString()));
-
-            if (null != _imGuiController)
-            {
-                _imGuiController.Update((float)dt);
-                _engine.CallOnImGuiRender((float)dt);
-                _imGuiController.Render();
-            }
-
-            _iView.SwapBuffers();
-            _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
-            ++_frameNo;
-            _engine.CallOnPhysicalFrame((float)dt);
-            _platformThreadActions.RunPart(1000f);
-
-            break;
-
+            return;
         }
+
+        if (_iView.Size.X != 0 && _iView.Size.Y != 0)
+        {
+            _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
+        }
+
+        _renderer.RenderFrame(renderFrame);
+        double msRendered = _renderStopwatch.Elapsed.TotalMilliseconds;
+
+        _renderStats.PushFrame(renderFrame.FrameStats);
+        I.Get<EventQueue>().Push(new Event(Event.RENDER_STATS, _renderStats.GetAverage().ToString()));
+
+        if (null != _imGuiController)
+        {
+            _imGuiController.Update((float)dt);
+            _engine.CallOnImGuiRender((float)dt);
+            _imGuiController.Render();
+        }
+
+        _iView.SwapBuffers();
+        double msSwap = _renderStopwatch.Elapsed.TotalMilliseconds;
+
+        _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
+        double msAfterGraphicsThread = _renderStopwatch.Elapsed.TotalMilliseconds;
+
+        ++_frameNo;
+        _engine.CallOnPhysicalFrame((float)dt);
+
+        _platformThreadActions.RunPart(1000f);
+        double msAfterPlatformThread = _renderStopwatch.Elapsed.TotalMilliseconds;
+
+        _renderStopwatch.Stop();
+        Trace($"Took {_renderStopwatch.Elapsed.TotalSeconds}, called {msCalled} dr {msRendered-msCalled} rendr {msRendered}, aftergfx {msAfterGraphicsThread} afterpf {msAfterPlatformThread} ");
+        _renderStopwatch.Reset();
+        _renderStopwatch.Start();
+
     }
 
     private void _windowOnClose()
@@ -522,6 +534,7 @@ public class Platform : engine.IPlatform
             }
         }
     }
+    
 
     public void Execute()
     {
@@ -555,23 +568,7 @@ public class Platform : engine.IPlatform
         _logicalRenderer.CollectRenderData(scene);
     }
 
-
-#if false
-        /**
-         * For testing purposes, create a rendering target texture.
-         * We later render a thing with it.
-         */
-        private engine.joyce.Renderbuffer _jRenderbuffer;
-        private ARenderbuffer _aRenderbuffer;
-        private void _createTestTexture()
-        {
-            _jRenderbuffer = new engine.joyce.Renderbuffer("mapbuffer", 1024, 1024);
-            _aRenderbuffer = _silkThreeD.CreateRenderbuffer(_jRenderbuffer);
-            SkRenderbuffer skRenderbuffer = _aRenderbuffer as SkRenderbuffer;
-            skRenderbuffer.Upload(_gl,  _silkThreeD.TextureManager );
-        }
-#endif
-
+    
     /**
      * Call this after all dependencies are created.
      */
