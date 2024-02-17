@@ -774,44 +774,12 @@ public class Engine
     }
 
 
-    private int _entityUpdateRate = 6;
-    private int _entityUpdateCount = 0;
-
-    private void _checkUpdateEntityArray()
-    {
-        lock (_lo)
-        {
-            if (_requireEntityIdArrays > 0)
-            {
-                if (_entityUpdateCount <= 0)
-                {
-                    _entityUpdateCount = _entityUpdateRate;
-                    var entities = GetEcsWorld().GetEntities().AsEnumerable();
-                    _arrayEntityIds = new DefaultEcs.Entity[entities.Count()];
-                    int idx = 0;
-                    foreach (var entity in GetEcsWorld().GetEntities().AsEnumerable())
-                    {
-                        _arrayEntityIds[idx] = entity;
-                        idx++;
-                    }
-                }
-                else
-                {
-                    _entityUpdateCount--;
-                }
-            }
-        }
-    }
-
-
     private void _logicalThreadFunction()
     {
         float invFps = 1f / 60f;
         float accumulator = 0f;
-        float slept = 0f;
-        int nSleeps = 0;
-        bool wasWaiting = false;
-        float accuBeforeSleep = 0f;
+
+        float toWait = 0f;
 
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -819,74 +787,21 @@ public class Engine
         {
             EngineState engineState;
 
-            /*
-             * Wait for the next frame or rock it.
-             */
-            stopWatch.Stop();
-            
-            float elapsed = (float)stopWatch.Elapsed.TotalSeconds;
-            accumulator += elapsed;
-            if (wasWaiting)
+            if (toWait > 0f && stopWatch.Elapsed.TotalSeconds < toWait)
             {
-                slept += elapsed;
-            }
-            
-            /*
-             * keep times in range
-             */
-            while (accumulator > 1f)
-            {
-                accumulator -= 1f;
-            }
-            
-            // Trace($"elapsed {elapsed} totalTime {accumulator}");
-            
-            stopWatch.Reset();
-            
-            /*
-             * Sleep as long we have less than a logical frame on our accumulator.
-             */
-            if (accumulator < invFps)
-            {
-                if (0 == nSleeps)
-                {
-                    accuBeforeSleep = accumulator;
-                }
-                
-                wasWaiting = true;
-                ++nSleeps;
-                // Trace("Sleeping.");
-                stopWatch.Start();
-                lock (_lo)
-                {
-                    engineState = State;
-                }
-
-                if (engineState <= EngineState.Running)
-                {
-                    //Thread.Sleep(1);
-                    Thread.Yield();
-                }
-                else
-                {
-                    Thread.Sleep(50);
-                }
-
+                Thread.Yield();
+                // Thread.Sleep(1);
                 continue;
             }
 
-            if (nSleeps > 0)
-            {
-                Trace($"acc {accumulator} slept {slept} nSleeps {nSleeps} accuBeforeSleep {accuBeforeSleep}");
-            }
-
-            wasWaiting = false;
-            slept = 0f;
-            nSleeps = 0;
-            accuBeforeSleep = 0f;
+            stopWatch.Stop();
+            accumulator += (float) stopWatch.Elapsed.TotalSeconds;
+            stopWatch.Reset();
 
             stopWatch.Start();
             int nLogical = 0;
+            
+            Trace($"accu {accumulator}");
             
             /*
              * Run as many logical frames as have been elapsed.
@@ -908,37 +823,26 @@ public class Engine
                     ++nLogical;
                 }
 
-                stopWatch.Stop();
-                float processedTime = (float)stopWatch.Elapsed.TotalSeconds;
-                stopWatch.Reset();
-
-                accumulator += processedTime;
-
-                /*
-                 * Now, depending on the remaining time, sleep a bit.
-                 */
-                stopWatch.Start();
-
                 /*
                  * And subtract the logical advance.
                  */
                 accumulator -= invFps;
             }
 
-#if false
-            if (0 < nLogical)
-            {
-                float eachFrame = processedTime / (float)nLogical;
-                for (int i = 0; i < nLogical; ++i)
-                {
-                    _fpsLogicalMonitor.OnFrame(eachFrame);
-                }
-            }
-#endif
 
             _fpsPhysicalMonitor.Update();
             _fpsLogicalMonitor.Update();
-            _checkUpdateEntityArray();
+ 
+            stopWatch.Stop();
+            float processedTime = (float)stopWatch.Elapsed.TotalSeconds;
+            stopWatch.Reset();
+
+            accumulator += processedTime;
+            
+            toWait = invFps - accumulator;
+            Trace($"toWait {toWait}");
+
+            stopWatch.Start();
         }
 
     }

@@ -422,7 +422,24 @@ public class Platform : engine.IPlatform
         double msCalled = _renderStopwatch.Elapsed.TotalMilliseconds;
         
         Engine.EngineState engineState = _engine.State;
-        RenderFrame renderFrame = _logicalRenderer.DequeueRenderFrame();
+        RenderFrame renderFrame = null;
+
+#if true
+        while (true)
+        {
+            renderFrame = _logicalRenderer.DequeueRenderFrame();
+            if (null == renderFrame)
+            {
+                //Trace($"No frame,");
+                Thread.Yield();
+            }
+            else
+            {
+                break;
+            }
+        }
+#else
+        renderFrame = _logicalRenderer.DequeueRenderFrame();
         if (renderFrame == null)
         {
             _silkThreeD.ExecuteGraphicsThreadActions(0.005f);
@@ -439,6 +456,7 @@ public class Platform : engine.IPlatform
 
             return;
         }
+#endif
 
         if (_iView.Size.X != 0 && _iView.Size.Y != 0)
         {
