@@ -874,7 +874,7 @@ public class Engine
                 continue;
             }
 
-            Trace($"acc {accumulator} slept {slept} nSleeps {nSleeps} accuBeforeSleep {accuBeforeSleep}");
+            // Trace($"acc {accumulator} slept {slept} nSleeps {nSleeps} accuBeforeSleep {accuBeforeSleep}");
 
             wasWaiting = false;
             slept = 0f;
