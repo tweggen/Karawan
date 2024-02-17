@@ -864,7 +864,8 @@ public class Engine
 
                 if (engineState <= EngineState.Running)
                 {
-                    Thread.Sleep(1);
+                    //Thread.Sleep(1);
+                    Thread.Yield();
                 }
                 else
                 {
@@ -874,7 +875,10 @@ public class Engine
                 continue;
             }
 
-            // Trace($"acc {accumulator} slept {slept} nSleeps {nSleeps} accuBeforeSleep {accuBeforeSleep}");
+            if (nSleeps > 0)
+            {
+                Trace($"acc {accumulator} slept {slept} nSleeps {nSleeps} accuBeforeSleep {accuBeforeSleep}");
+            }
 
             wasWaiting = false;
             slept = 0f;
