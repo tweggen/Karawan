@@ -170,16 +170,16 @@ public class Scene : AModule, IScene
             StartReference = TimepointTitlesongStarted,
             StartOffset = TimeSpan.FromMilliseconds(1400),
             EndReference = TimepointTitlesongStarted,
-            EndOffset = TimeSpan.FromMilliseconds(4000),
-            Duration = 2000,
+            EndOffset = TimeSpan.FromMilliseconds(2900),
+            Duration = 1500,
             Flags = (uint) TitleCard.F.JitterEnd,
             Size = new(64f, 64f/1280f*400f),
             AlbedoTexture = new Texture("titlelogo2_albedo.png"),
             EmissiveTexture = new Texture("titlelogo2_emissive.png"),
             StartTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.645f),
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.6405f),
             EndTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.8f, -7f), Vector3.One * 0.64f)
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.895f, -7f), Vector3.One * 0.64f)
         });
         
         _modTitle.ModuleActivate(_engine);
