@@ -829,7 +829,7 @@ public class Engine
                     ++nLogical;
                 }
                 
-                Trace($"accu {accumulator}");
+                // Trace($"accu {accumulator}");
 
                 /*
                  * And subtract the logical advance.
