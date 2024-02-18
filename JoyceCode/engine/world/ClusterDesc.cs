@@ -456,9 +456,43 @@ public class ClusterDesc
     public float GetAttributeIntensity(Vector3 v3Spot, LocationAttributes locAttr)
     {
         // TXWTODO: This all is hard-coded right now.
-        var dist = (_pos - v3Spot).Length();
-        dist = dist / (_size/2f);
-        var gauss = Single.Exp(-(dist * dist));
-        return gauss;
+        switch (locAttr)
+        {
+            case LocationAttributes.Downtown:
+            {
+                /*
+                 * Downtown is quite in the middle of the city.
+                 */
+                var dist = (_pos - v3Spot).Length();
+                dist = dist / (_size / 2f);
+                var gauss = Single.Exp(-(dist * dist));
+                return gauss;
+            }
+
+            case LocationAttributes.Industrial:
+                /*
+                 * 
+                 */
+                break;
+            
+            case LocationAttributes.Living:
+                break;
+
+            case LocationAttributes.Shopping:
+            {
+                var dist = (_pos - v3Spot).Length();
+                /*
+                 * Leave out the very center and the outskirts from shopping
+                 */
+                dist = dist / (_size / 3f) + 0.2f;
+                var gauss = Single.Exp(-(dist * dist));
+                return gauss;
+            }
+        }
+
+        /*
+         * Return the equivalent of I don't know.
+         */
+        return 0.5f;
     }
 }

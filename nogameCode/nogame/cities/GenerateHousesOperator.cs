@@ -30,6 +30,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * We do assume that a texture contains a integer number of stories.
      */
     private static float _storiesPerTexture = 32f;
+    private static float _storyHeight = 3f;
     private static float _metersPerTexture = 3f * _storiesPerTexture;
 
 
@@ -186,13 +187,13 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             mesh,
             fragPoints[idx]
             + Single.Min(15f, height - 2f - 60f) * vUnitUp
-            + _rnd.GetFloat() * (diff.Length() - 15f) * vUnitSide * 3f
+            + _rnd.GetFloat() * (diff.Length() - 15f) * vUnitSide * _storyHeight
             + vUnitOut,
             vUnitSide * 15f,
             vUnitUp * 60f,
-            new Vector2(0f, 0f),
-            new Vector2(0f, 1f),
-            new Vector2(1f, 0f)
+            Vector2.Zero,
+            Vector2.UnitY,
+            Vector2.UnitX
         );
 
         int adIdx = (int)(1f + _rnd.GetFloat() * 1.99f);
@@ -201,6 +202,23 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
     }
 
+
+    private void _createShopFrontsSubGeo(
+        in engine.world.Fragment worldFragment,
+        in engine.joyce.MatMesh matmesh,
+        in engine.streets.ShopFront shopFront)
+    {
+        engine.joyce.Material materialShopFront = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.material.ad1");
+        engine.joyce.Mesh meshShopFront = new($"{worldFragment.GetId()}-shopfrontsubgeo");
+
+        var p = shopFront.GetPoints();
+        var vUp = Vector3.UnitY * (_storyHeight-0.5f);
+        engine.joyce.mesh.Tools.AddQuadXYUV(
+            meshShopFront, p[0], p[1]-p[0], vUp, Vector2.Zero, Vector2.UnitX, Vector2.UnitY
+            );
+        matmesh.Add(materialShopFront, meshShopFront);
+    }
+    
 
     private void _createNeonSignSubGeo(
         in engine.world.Fragment worldFragment,
@@ -427,6 +445,18 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     catch (Exception e)
                     {
                         Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                    }
+
+                    foreach (var shopFront in building.GetShopFronts())
+                    {
+                        try
+                        {
+                            _createShopFrontsSubGeo(worldFragment, matmesh, shopFront);
+                        }
+                        catch (Exception e)
+                        {
+                            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+                        }
                     }
                 }
             }

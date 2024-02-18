@@ -21,6 +21,41 @@ namespace engine.streets
 
         private builtin.tools.RandomSource _rnd;
 
+
+        private void _addShops(Building building)
+        {
+            float minShopWidth = 5f;
+            var p = building.GetPoints();
+            int l = p.Count;
+            for (int i = 0; i < l; ++i)
+            {
+                var pA = p[i];
+                var pB = p[(i + 1) % l];
+                var vAB = pB - pA;
+                var len = (pB - pA).Length();
+
+                int nFronts = (int)Single.Floor(len / minShopWidth);
+                if (0 == nFronts)
+                {
+                    continue;
+                }
+
+                var vuAB = vAB / len;
+                var vNAB = new Vector3(vAB.Z, 0, -vAB.X);
+                var vuNAB = Vector3.Normalize(vNAB);
+
+                float lenBefore = (len - (float)nFronts * minShopWidth) / 2;
+                
+                List<Vector3> frontPoints = new();
+                frontPoints.Add(pA + vuAB * lenBefore + vuNAB*0.1f);
+                frontPoints.Add(pA + vuAB * (lenBefore+len) + vuNAB*0.1f);
+
+                ShopFront shopFront = new();
+                shopFront.AddPoints(frontPoints);
+            }
+        }
+        
+        
         private void _createBuildings(in Quarter quarter, in Estate estate)
         {
             /*
@@ -177,6 +212,18 @@ namespace engine.streets
              * - [sphere on top]
              * - [antenna on top]
              */
+            
+            /*
+             * Now generate shops if we are supposed to have storefronts.
+             * We store shops as a path in front of a building.
+             */
+            if (_rnd.GetFloat() <=
+                _clusterDesc.GetAttributeIntensity(
+                    p[0] + _clusterDesc.Pos, 
+                    ClusterDesc.LocationAttributes.Shopping))
+            {
+                _addShops(building);
+            }
         }
 
 

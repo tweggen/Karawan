@@ -7,13 +7,33 @@ public class Building
 {
     private object _lo = new();
 
-    public required engine.world.ClusterDesc ClusterDesc; 
+    public required engine.world.ClusterDesc ClusterDesc;
+
+    private List<ShopFront> _shopfronts = new();
     
     private List<Vector3> _points = new();
     private bool _haveCenter = false;
     private Vector3 _center;
     private float _height = 1f;
 
+
+    public List<ShopFront> GetShopFronts()
+    {
+        lock (_lo)
+        {
+            return _shopfronts;
+        }
+    }
+
+
+    public void AddShopFront(ShopFront shopFront)
+    {
+        lock (_lo)
+        {
+            _shopfronts.Add(shopFront);
+        }
+    }
+    
 
     public List<Vector3> GetPoints()
     {
@@ -44,6 +64,7 @@ public class Building
         }
     }
 
+    
     public void SetHeight(float height)
     {
         lock (_lo)
