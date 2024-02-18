@@ -22,6 +22,29 @@ public class LogicalRenderer
     private readonly systems.DrawSkyboxesSystem _drawSkyboxesSystem;
 
     private readonly Queue<RenderFrame> _renderQueue = new();
+    private bool _shallQuit;
+    public bool ShallQuit
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _shallQuit;
+            }
+        }
+        set
+        {
+            lock (_lo)
+            {
+                _shallQuit = value;
+                System.Threading.Monitor.Pulse(_lo);
+            }
+            lock (_engine.ShortSleep)
+            {   
+                System.Threading.Monitor.Pulse(_engine.ShortSleep);
+            }
+        }
+    }
 
 
     /**
@@ -170,7 +193,7 @@ public class LogicalRenderer
     {
         lock (_lo)
         {
-            while (true)
+            while (!_shallQuit)
             {
                 if (_renderQueue.Count > 0)
                 {
@@ -179,6 +202,7 @@ public class LogicalRenderer
                 System.Threading.Monitor.Wait(_lo);
             }
         }
+        return null;
     }
     
 

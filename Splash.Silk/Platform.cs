@@ -424,6 +424,8 @@ public class Platform : engine.IPlatform
      */
     private void _windowOnRender(double dt)
     {
+        if (!_isRunning) return;
+        
         TimeSpan tsNow = _frameTimingStopwatch.Elapsed;
         
         RenderFrame renderFrame;
@@ -438,12 +440,17 @@ public class Platform : engine.IPlatform
             if (null == renderFrame)
             {
                 Trace($"No frame,");
+                if (false == _isRunning)
+                {
+                    return;
+                }
             }
             else
             {
                 break;
             }
         }
+
         _renderSingleFrameStopwatch.Reset();
         _renderSingleFrameStopwatch.Start();
         double msGotFrame = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
@@ -524,6 +531,7 @@ public class Platform : engine.IPlatform
         _instanceManager?.Dispose();
         _gl?.Dispose();
         _isRunning = false;
+        _logicalRenderer.ShallQuit = true;
     }
 
 
