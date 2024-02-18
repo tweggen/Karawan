@@ -59,7 +59,7 @@ public class WorldMapClusterProvider : IWorldMapProvider
 
         Vector2 pos = Vector2.Transform(clusterDesc.Pos2, m2fb); 
             
-        dc.FillColor = 0xff441144;
+        dc.FillColor = 0xff222222;
         target.FillRectangle(dc, pos-sizehalf, pos+sizehalf);
     }
     

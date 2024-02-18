@@ -64,8 +64,8 @@ public class WorldMapIntercityProvider : IWorldMapProvider
         var lines = network.Lines;
 
         Context dcHighway = new Context();
-        dcHighway.FillColor = 0xff441144;
-        dcHighway.Color = 0xff441144;
+        dcHighway.FillColor = 0xff222222;
+        dcHighway.Color = 0xff222222;
 
         foreach (var line in lines)
         {
