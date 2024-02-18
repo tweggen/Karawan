@@ -53,7 +53,7 @@ public class Module : AModule, IInputPart
 
         if (null != _wMenu)
         {
-            _wMenu.IsVisible = false;
+            _wMenu.Root = null;
             _wMenu.Dispose();
             _wMenu = null;
         }
@@ -71,18 +71,24 @@ public class Module : AModule, IInputPart
         _engine.AddModule(this);
 
         _engine.GamePlayState = GamePlayStates.Paused;
-        
-        _factory = I.Get<builtin.jt.Factory>();
-        
-        XmlDocument xDoc = new XmlDocument();
-        xDoc.Load(engine.Assets.Open("menu.xml"));
-        builtin.jt.Parser jtParser = new Parser(xDoc);
-        _wMenu = jtParser.Build(_factory);
-        if (null != _wMenu)
+
         {
-            _factory.FindRootWidget().AddChild(_wMenu);
+            XmlDocument xDoc = new XmlDocument();
+            xDoc.Load(engine.Assets.Open("menu.xml"));
+            builtin.jt.Parser jtParser = new Parser(xDoc);
+            _wMenu = jtParser.Build(_factory);
+            if (null != _wMenu)
+            {
+                _factory.FindRootWidget().AddChild(_wMenu);
+            }
         }
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+    }
+
+
+    public Module()
+    {
+        _factory = I.Get<builtin.jt.Factory>();
     }
 }

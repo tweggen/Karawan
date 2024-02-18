@@ -8,7 +8,7 @@ using static engine.Logger;
 namespace builtin.jt;
 
 
-public interface IWidgetImplementation
+public interface IWidgetImplementation : IDisposable
 {
     public void OnPropertyChanged(string key, object oldValue, object newValue);
     public void Unrealize();
@@ -318,23 +318,26 @@ public class Widget : IDisposable
                 isVisible = _isVisible;
                 layout = _layout;
             }
-            
-            /*
-             * Realize myself, if I am visible, so that children can
-             * realize themselves.
-             */
-            if (isVisible)
-            {
-            
-                /*
-                 * Finally, layout myself.
-                 */
-                if (layout != null)
-                {
-                     layout.Activate();
-                }
 
-                RealizeSelf(root);
+            if (null != value)
+            {
+                /*
+                 * Realize myself, if I am visible, so that children can
+                 * realize themselves.
+                 */
+                if (isVisible)
+                {
+
+                    /*
+                     * Finally, layout myself.
+                     */
+                    if (layout != null)
+                    {
+                        layout.Activate();
+                    }
+
+                    RealizeSelf(root);
+                }
             }
 
             /*
@@ -346,6 +349,14 @@ public class Widget : IDisposable
                 {
                     child.Root = value;
                 }
+            }
+
+            /*
+             * Finally, if we do not have a root anymore, unrealize.
+             */
+            if (null == value)
+            {
+                UnrealizeSelf();
             }
         }
     }
@@ -398,6 +409,7 @@ public class Widget : IDisposable
         return _immutableChildren;
     }
 
+    
     public IReadOnlyList<Widget>? Children
     {
         get
@@ -681,8 +693,8 @@ public class Widget : IDisposable
 
     public void Unrealize()
     {
-        UnrealizeSelf();
         UnrealizeChildren();
+        UnrealizeSelf();
     }
 
 
@@ -914,26 +926,8 @@ public class Widget : IDisposable
 
     public void Dispose()
     {
-#if false
-        /*
-         * If we are removed, we need to removed ourselves from the hierarchy.
-         */
-        Root = null;
-        Parent?.RemoveChild(this);
-        IEnumerable<Widget>? children;
-        lock (_lo)
-        {
-            children = _immutableChildrenNL();
-        }
-
-        if (null != children)
-        {
-            foreach (var child in children)
-            {
-                child.Parent = null;
-            }
-        }
-#endif
         Unrealize();
+        // TXWTODO: We know that Unrealize basically is a dispose. Technically, we
+        // would love to have a second dispose iteration.
     }
 }

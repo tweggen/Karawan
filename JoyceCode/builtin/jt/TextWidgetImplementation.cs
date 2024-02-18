@@ -250,7 +250,17 @@ public class TextWidgetImplementation : IWidgetImplementation
     
     public void Unrealize()
     {
-        eText.Dispose();
+        if (eText.IsAlive)
+        {
+            eText.Dispose();
+        }
+    }
+
+
+    public void Dispose()
+    {
+        Unrealize();
+        _widget = null;
     }
 
     

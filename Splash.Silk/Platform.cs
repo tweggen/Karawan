@@ -187,7 +187,6 @@ public class Platform : engine.IPlatform
                 break;
             case Key.F11:
                 code = "(F11)";
-                _toggleFullscreen();
                 break;
             case Key.F12:
                 code = "(F12)";
@@ -217,7 +216,14 @@ public class Platform : engine.IPlatform
         string code = _convertKeyCodeFromPlatform(arg2);
         if (!code.IsNullOrEmpty())
         {
-            I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+            if (code == "(F11)")
+            {
+                _toggleFullscreen();
+            }
+            else
+            {
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+            }
         }
     }
 
