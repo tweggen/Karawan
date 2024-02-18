@@ -157,7 +157,20 @@ namespace engine.streets
 
             quarter.AddDebugTag("haveBuilding", "true");
             estate.AddBuilding(building);
-
+            
+            /*
+             * Generate buildings:
+             * - (if non-industrial area or too corpo) shopfront 3m
+             * - if larger than 2 storeys
+             *
+             * - split if large enough
+             * - if heigher than 30m can be forced
+             *   - round
+             *   - rectangle
+             *   - rect without diagonal
+             * - [sphere on top]
+             * - [antenna on top]
+             */
         }
 
 
