@@ -8,6 +8,8 @@ public class Quarter
 {
     private object _lo = new();
 
+    public required engine.world.ClusterDesc ClusterDesc; 
+    
     private List<QuarterDelim> _delims = new();
     private bool _isInvalid = false;
     private bool _hasDeadEnd = false;

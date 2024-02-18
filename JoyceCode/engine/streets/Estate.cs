@@ -9,6 +9,8 @@ namespace engine.streets
     {
         private object _lo = new();
         
+        public required engine.world.ClusterDesc ClusterDesc; 
+    
         private List<Vector3> _points = new();
         private List<Building> _buildings = new();
         private bool _haveCenter = false;

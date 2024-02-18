@@ -13,6 +13,15 @@ namespace engine.world;
  */
 public class ClusterDesc
 {
+    [Flags]
+    public enum LocationAttributes {
+        Downtown = 0x00000001,
+        Shopping = 0x00000002,
+        Living = 0x00000004,
+        Industrial = 0x00000008
+    };
+    
+    
     [LiteDB.BsonId]
     public int Id { get; set; } = 0;
     
@@ -373,7 +382,7 @@ public class ClusterDesc
          * Now compute the quarters from the streets.
          */
         _quarterGenerator = new streets.QuarterGenerator();
-        _quarterGenerator.Reset("quarters-" + _strKey, _quarterStore, _strokeStore);
+        _quarterGenerator.Reset("quarters-" + _strKey, this, _quarterStore, _strokeStore);
         _quarterGenerator.Generate();
     }
 
@@ -438,5 +447,18 @@ public class ClusterDesc
             }
         }
         return (Pos+vOffset) with { Y = AverageHeight + 3f };
+    }
+
+
+    /**
+     * Return the intensity of that location with respect to the given attribute.
+     */
+    public float GetAttributeIntensity(Vector3 v3Spot, LocationAttributes locAttr)
+    {
+        // TXWTODO: This all is hard-coded right now.
+        var dist = (_pos - v3Spot).Length();
+        dist = dist / (_size/2f);
+        var gauss = Single.Exp(-(dist * dist));
+        return gauss;
     }
 }

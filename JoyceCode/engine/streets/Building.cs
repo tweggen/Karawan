@@ -7,6 +7,8 @@ public class Building
 {
     private object _lo = new();
 
+    public required engine.world.ClusterDesc ClusterDesc; 
+    
     private List<Vector3> _points = new();
     private bool _haveCenter = false;
     private Vector3 _center;

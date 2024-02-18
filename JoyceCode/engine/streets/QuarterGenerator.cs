@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 using ClipperLib;
+using engine.world;
 
 namespace engine.streets
 {
@@ -12,6 +13,7 @@ namespace engine.streets
             Console.WriteLine(message);
         }
 
+        private engine.world.ClusterDesc _clusterDesc;
         private StrokeStore _strokeStore;
         private QuarterStore _quarterStore;
         private bool _traceGenerate = false;
@@ -111,8 +113,8 @@ namespace engine.streets
             }
 
             /*
-                * But do not build everywhere. Trivial: Remove 30% of the buildings.
-                */
+             * But do not build everywhere. Trivial: Remove 30% of the buildings.
+             */
             if (_rnd.GetFloat() > 0.7f)
             {
                 quarter.AddDebugTag("leftWithoutBuilding", "true");
@@ -121,28 +123,32 @@ namespace engine.streets
             p.Reverse();
 
             /*
-                * If there are any points in the solution, then add the single polygon as the estate.
-                * This polygon possibly is concave, but it is describing the entire building.
-                */
+             * If there are any points in the solution, then add the single polygon as the estate.
+             * This polygon possibly is concave, but it is describing the entire building.
+             */
 
             /*
-                * We have the concave polygon, create a collection of convex polygons
-                */
+             * We have the concave polygon, create a collection of convex polygons
+             */
 
             // var convexPolys = geom.Tools.concaveToConvex( p );
 
-            var building = new streets.Building();
+            var building = new streets.Building() { ClusterDesc = _clusterDesc };
             building.AddPoints(p);
-            float maxHeight = 10.0f;
-            if (minHouseSide <= 2.0f)
+            float maxHeight;
+            float downtownness =
+                _clusterDesc.GetAttributeIntensity(
+                    p[0] + _clusterDesc.Pos,
+                    ClusterDesc.LocationAttributes.Downtown);
+            if (minHouseSide <= 2.0f || downtownness < 0.3f)
             {
                 maxHeight = 1f * _storyHeight;
             }
-            else if (minHouseSide <= 5.0f)
+            else if (minHouseSide <= 5.0f || downtownness < 0.5)
             {
                 maxHeight = 2f * _storyHeight;
             }
-            else if (minHouseSide <= 10.0f)
+            else if (minHouseSide <= 10.0f || downtownness < 0.7)
             {
                 maxHeight = 8f * _storyHeight;
             }
@@ -238,7 +244,7 @@ namespace engine.streets
                     var strokeCurrent = stroke;
                     var solestroke = false;
 
-                    var quarter = new Quarter();
+                    var quarter = new Quarter() { ClusterDesc = _clusterDesc };
                     var hasNullSection = false;
                     var hasDeadEnd = false;
                     var nPoints = 0;
@@ -386,7 +392,7 @@ namespace engine.streets
                             /*
                              * Now create the root estate.
                              */
-                            var estate = new Estate();
+                            var estate = new Estate() { ClusterDesc = _clusterDesc };
                             foreach (var delim in quarter.GetDelims())
                             {
                                 estate.AddPoint(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
@@ -417,10 +423,12 @@ namespace engine.streets
 
         public void Reset(
             string seed0,
+            engine.world.ClusterDesc clusterDesc,
             QuarterStore quarterStore,
             StrokeStore strokeStore) 
         {
             _rnd = new builtin.tools.RandomSource(seed0);
+            _clusterDesc = clusterDesc;
             _quarterStore = quarterStore;
             _strokeStore = strokeStore;
         }
