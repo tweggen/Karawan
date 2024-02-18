@@ -205,6 +205,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
     private void _createShopFrontsSubGeo(
         in engine.world.Fragment worldFragment,
+        in Vector3 vOffset,
         in engine.joyce.MatMesh matmesh,
         in engine.streets.ShopFront shopFront)
     {
@@ -213,8 +214,9 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
         var p = shopFront.GetPoints();
         var vUp = Vector3.UnitY * (_storyHeight-0.5f);
+        var vGround = Vector3.UnitY * 2.15f;
         engine.joyce.mesh.Tools.AddQuadXYUV(
-            meshShopFront, p[0], p[1]-p[0], vUp, Vector2.Zero, Vector2.UnitX, Vector2.UnitY
+            meshShopFront, vGround+vOffset+p[0], p[1]-p[0], vUp, Vector2.Zero, Vector2.UnitX, Vector2.UnitY
             );
         matmesh.Add(materialShopFront, meshShopFront);
     }
@@ -309,6 +311,8 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         {
             return;
         }
+
+        Vector3 vC = (_clusterDesc.Pos - worldFragment.Position) with { Y = _clusterDesc.AverageHeight };
         
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
@@ -451,7 +455,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         try
                         {
-                            _createShopFrontsSubGeo(worldFragment, matmesh, shopFront);
+                            _createShopFrontsSubGeo(worldFragment, vC, matmesh, shopFront);
                         }
                         catch (Exception e)
                         {

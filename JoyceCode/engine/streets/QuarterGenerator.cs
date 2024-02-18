@@ -41,7 +41,7 @@ namespace engine.streets
                 }
 
                 var vuAB = vAB / len;
-                var vNAB = new Vector3(vAB.Z, 0, -vAB.X);
+                var vNAB = new Vector3(-vAB.Z, 0, vAB.X);
                 var vuNAB = Vector3.Normalize(vNAB);
 
                 float lenBefore = (len - (float)nFronts * minShopWidth) / 2;
@@ -52,6 +52,7 @@ namespace engine.streets
 
                 ShopFront shopFront = new();
                 shopFront.AddPoints(frontPoints);
+                building.AddShopFront(shopFront);
             }
         }
         
