@@ -53,7 +53,7 @@ public class Module : AModule, IInputPart
 
         if (null != _wMenu)
         {
-            _wMenu.Root = null;
+            _factory.FindRootWidget().RemoveChild(_wMenu);
             _wMenu.Dispose();
             _wMenu = null;
         }

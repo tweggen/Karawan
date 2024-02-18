@@ -28,6 +28,7 @@ public class RootWidget : Widget
     public override void RemoveChild(Widget child)
     {
         base.RemoveChild(child);
+        child.Root = null;
     }
     
 
