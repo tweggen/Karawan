@@ -475,7 +475,7 @@ public class Platform : engine.IPlatform
         double msAfterPlatformThread = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
         _renderSingleFrameStopwatch.Stop();
-        Trace($"after {(tsNow-_prevFrame).TotalMilliseconds} Took {_renderSingleFrameStopwatch.Elapsed.TotalMilliseconds}, got {msGotFrame} dr {msRendered-msGotFrame} aftergfx {msAfterGraphicsThread-msRendered} afterpf {msAfterPlatformThread-msAfterGraphicsThread} ");
+        // Trace($"after {(tsNow-_prevFrame).TotalMilliseconds} Took {_renderSingleFrameStopwatch.Elapsed.TotalMilliseconds}, got {msGotFrame} dr {msRendered-msGotFrame} aftergfx {msAfterGraphicsThread-msRendered} afterpf {msAfterPlatformThread-msAfterGraphicsThread} ");
         _prevFrame = tsNow;
 
     }
