@@ -427,9 +427,13 @@ public class Platform : engine.IPlatform
         TimeSpan tsNow = _frameTimingStopwatch.Elapsed;
         
         RenderFrame renderFrame;
-
         while (true)
         {
+            lock (_engine.ShortSleep)
+            {
+                System.Threading.Monitor.Pulse(_engine.ShortSleep);
+            }
+
             renderFrame = _logicalRenderer.WaitNextRenderFrame();
             if (null == renderFrame)
             {
@@ -449,6 +453,11 @@ public class Platform : engine.IPlatform
             _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
         }
 
+        lock (_engine.ShortSleep)
+        {
+            System.Threading.Monitor.Pulse(_engine.ShortSleep);
+        }
+
         _renderer.RenderFrame(renderFrame);
         double msRendered = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
@@ -462,21 +471,46 @@ public class Platform : engine.IPlatform
             _imGuiController.Render();
         }
 
+        lock (_engine.ShortSleep)
+        {
+            System.Threading.Monitor.Pulse(_engine.ShortSleep);
+        }
+
         _iView.SwapBuffers();
         double msSwap = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
+
+        lock (_engine.ShortSleep)
+        {
+            System.Threading.Monitor.Pulse(_engine.ShortSleep);
+        }
 
         _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
         double msAfterGraphicsThread = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
+        lock (_engine.ShortSleep)
+        {
+            System.Threading.Monitor.Pulse(_engine.ShortSleep);
+        }
+
         ++_frameNo;
         _engine.CallOnPhysicalFrame((float)dt);
 
+        lock (_engine.ShortSleep)
+        {
+            System.Threading.Monitor.Pulse(_engine.ShortSleep);
+        }
+
         _platformThreadActions.RunPart(1000f);
         double msAfterPlatformThread = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
-
+        
         _renderSingleFrameStopwatch.Stop();
         // Trace($"after {(tsNow-_prevFrame).TotalMilliseconds} Took {_renderSingleFrameStopwatch.Elapsed.TotalMilliseconds}, got {msGotFrame} dr {msRendered-msGotFrame} aftergfx {msAfterGraphicsThread-msRendered} afterpf {msAfterPlatformThread-msAfterGraphicsThread} ");
         _prevFrame = tsNow;
+        
+        lock (_engine.ShortSleep)
+        {
+            System.Threading.Monitor.Pulse(_engine.ShortSleep);
+        }
 
     }
 

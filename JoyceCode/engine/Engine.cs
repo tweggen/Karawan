@@ -42,6 +42,8 @@ public class Engine
 {
     private object _lo = new();
 
+    public object ShortSleep = new();
+    
     private int _nextId = 0;
 
     private DefaultEcs.World _ecsWorld;
@@ -780,6 +782,7 @@ public class Engine
         float accumulator = 0f;
 
         float toWait = 0f;
+        int nSleeps = 0;
 
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -789,8 +792,13 @@ public class Engine
 
             if (toWait > 0f && stopWatch.Elapsed.TotalSeconds < toWait)
             {
-                Thread.Yield();
+                //Thread.Yield();
                 // Thread.Sleep(1);
+                lock (ShortSleep)
+                {
+                    System.Threading.Monitor.Wait(ShortSleep);
+                    nSleeps++;
+                }
                 continue;
             }
 
@@ -820,6 +828,8 @@ public class Engine
                     _onLogicalFrame(invFps);
                     ++nLogical;
                 }
+                
+                Trace($"accu {accumulator}");
 
                 /*
                  * And subtract the logical advance.
@@ -836,8 +846,8 @@ public class Engine
             stopWatch.Reset();
 
             accumulator += processedTime;
-            
             toWait = invFps - accumulator;
+            nSleeps = 0;
 
             stopWatch.Start();
         }
