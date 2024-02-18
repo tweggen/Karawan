@@ -49,7 +49,7 @@ unsafe public class API : Boom.ISoundAPI
         }
     }
 
-    private void OnOnLogicalFrame(object sender, float dt)
+    private void OnLogicalFrame(object sender, float dt)
     {
         // _createMusicSystem.Update(dt);
         _updateMovingSoundsSystem.Update(dt);
@@ -66,7 +66,7 @@ unsafe public class API : Boom.ISoundAPI
 
     public void SetupDone()
     {
-        _engine.OnLogicalFrame += OnOnLogicalFrame;
+        _engine.OnLogicalFrame += OnLogicalFrame;
         I.Get<SubscriptionManager>().Subscribe("lifecycle.resume", ResumeOutput);
         I.Get<SubscriptionManager>().Subscribe("lifecycle.suspend", SuspendOutput);
     }

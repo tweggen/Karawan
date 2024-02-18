@@ -160,10 +160,27 @@ public class LogicalRenderer
             lock(_lo)
             {
                 _renderQueue.Enqueue(renderFrame);
+                System.Threading.Monitor.Pulse(_lo);
             }
         }
     }
 
+
+    public RenderFrame WaitNextRenderFrame()
+    {
+        lock (_lo)
+        {
+            while (true)
+            {
+                if (_renderQueue.Count > 0)
+                {
+                    return _renderQueue.Dequeue();
+                }
+                System.Threading.Monitor.Wait(_lo);
+            }
+        }
+    }
+    
 
     public RenderFrame DequeueRenderFrame()
     {

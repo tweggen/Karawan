@@ -801,8 +801,6 @@ public class Engine
             stopWatch.Start();
             int nLogical = 0;
             
-            Trace($"accu {accumulator}");
-            
             /*
              * Run as many logical frames as have been elapsed.
              */
@@ -840,7 +838,6 @@ public class Engine
             accumulator += processedTime;
             
             toWait = invFps - accumulator;
-            Trace($"toWait {toWait}");
 
             stopWatch.Start();
         }

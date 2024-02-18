@@ -32,7 +32,9 @@ public class Platform : engine.IPlatform
     private bool _isRunning = true;
 
     private LogicalRenderer _logicalRenderer;
-    private readonly Stopwatch _renderStopwatch = new();
+    private readonly Stopwatch _frameTimingStopwatch = new();
+    private readonly Stopwatch _renderSingleFrameStopwatch = new();
+    private TimeSpan _prevFrame;
 
 
     private IView _iView;
@@ -340,6 +342,9 @@ public class Platform : engine.IPlatform
 
     private void _windowOnLoad()
     {
+        _frameTimingStopwatch.Start();
+        _prevFrame = _frameTimingStopwatch.Elapsed;
+        
         /*
          * Instead of just instantiating a SdlInput as intended, we create an
          * input class of our own to intercept the touch events.
@@ -399,7 +404,7 @@ public class Platform : engine.IPlatform
         }
 #endif
         _engine.CallOnPlatformAvailable();
-        _renderStopwatch.Start();
+        _renderSingleFrameStopwatch.Start();
     }
 
 
@@ -419,44 +424,25 @@ public class Platform : engine.IPlatform
      */
     private void _windowOnRender(double dt)
     {
-        double msCalled = _renderStopwatch.Elapsed.TotalMilliseconds;
+        TimeSpan tsNow = _frameTimingStopwatch.Elapsed;
         
-        Engine.EngineState engineState = _engine.State;
-        RenderFrame renderFrame = null;
+        RenderFrame renderFrame;
 
-#if true
         while (true)
         {
-            renderFrame = _logicalRenderer.DequeueRenderFrame();
+            renderFrame = _logicalRenderer.WaitNextRenderFrame();
             if (null == renderFrame)
             {
-                //Trace($"No frame,");
-                Thread.Yield();
+                Trace($"No frame,");
             }
             else
             {
                 break;
             }
         }
-#else
-        renderFrame = _logicalRenderer.DequeueRenderFrame();
-        if (renderFrame == null)
-        {
-            _silkThreeD.ExecuteGraphicsThreadActions(0.005f);
-            if (engineState <= Engine.EngineState.Running)
-            {
-                //System.Threading.Thread.Sleep(1);
-                //Thread.Yield();
-                Trace($"No frame,");
-            }
-            else
-            {
-                System.Threading.Thread.Sleep(10);
-            }
-
-            return;
-        }
-#endif
+        _renderSingleFrameStopwatch.Reset();
+        _renderSingleFrameStopwatch.Start();
+        double msGotFrame = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
         if (_iView.Size.X != 0 && _iView.Size.Y != 0)
         {
@@ -464,7 +450,7 @@ public class Platform : engine.IPlatform
         }
 
         _renderer.RenderFrame(renderFrame);
-        double msRendered = _renderStopwatch.Elapsed.TotalMilliseconds;
+        double msRendered = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
         _renderStats.PushFrame(renderFrame.FrameStats);
         I.Get<EventQueue>().Push(new Event(Event.RENDER_STATS, _renderStats.GetAverage().ToString()));
@@ -477,21 +463,20 @@ public class Platform : engine.IPlatform
         }
 
         _iView.SwapBuffers();
-        double msSwap = _renderStopwatch.Elapsed.TotalMilliseconds;
+        double msSwap = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
         _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
-        double msAfterGraphicsThread = _renderStopwatch.Elapsed.TotalMilliseconds;
+        double msAfterGraphicsThread = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
         ++_frameNo;
         _engine.CallOnPhysicalFrame((float)dt);
 
         _platformThreadActions.RunPart(1000f);
-        double msAfterPlatformThread = _renderStopwatch.Elapsed.TotalMilliseconds;
+        double msAfterPlatformThread = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
-        _renderStopwatch.Stop();
-        Trace($"Took {_renderStopwatch.Elapsed.TotalSeconds}, called {msCalled} dr {msRendered-msCalled} rendr {msRendered}, aftergfx {msAfterGraphicsThread} afterpf {msAfterPlatformThread} ");
-        _renderStopwatch.Reset();
-        _renderStopwatch.Start();
+        _renderSingleFrameStopwatch.Stop();
+        Trace($"after {(tsNow-_prevFrame).TotalMilliseconds} Took {_renderSingleFrameStopwatch.Elapsed.TotalMilliseconds}, got {msGotFrame} dr {msRendered-msGotFrame} aftergfx {msAfterGraphicsThread-msRendered} afterpf {msAfterPlatformThread-msAfterGraphicsThread} ");
+        _prevFrame = tsNow;
 
     }
 
