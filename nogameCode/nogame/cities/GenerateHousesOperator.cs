@@ -213,12 +213,16 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         engine.joyce.Mesh meshShopFront = new($"{worldFragment.GetId()}-shopfrontsubgeo");
 
         var p = shopFront.GetPoints();
-        var vUp = Vector3.UnitY * (_storyHeight-0.5f);
-        var vGround = Vector3.UnitY * 2.15f;
-        engine.joyce.mesh.Tools.AddQuadXYUV(
-            meshShopFront, vGround+vOffset+p[0], p[1]-p[0], vUp, Vector2.Zero, Vector2.UnitX, Vector2.UnitY
+        var vUp = Vector3.UnitY * (_storyHeight-0.15f);
+        var vGround = Vector3.UnitY * 2.05f;
+        int l = p.Count;
+        for (int i = 1; i < l; ++i)
+        {
+            engine.joyce.mesh.Tools.AddQuadXYUV(
+                meshShopFront, vGround + vOffset + p[i-1], p[i] - p[i-1], vUp, Vector2.Zero, Vector2.UnitX, Vector2.UnitY
             );
-        matmesh.Add(materialShopFront, meshShopFront);
+            matmesh.Add(materialShopFront, meshShopFront);
+        }
     }
     
 

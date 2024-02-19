@@ -47,8 +47,15 @@ namespace engine.streets
                 float lenBefore = (len - (float)nFronts * minShopWidth) / 2;
                 
                 List<Vector3> frontPoints = new();
-                frontPoints.Add(pA + vuAB * lenBefore + vuNAB*0.1f);
-                frontPoints.Add(pA + vuAB * (lenBefore+len) + vuNAB*0.1f);
+                Vector3 v3Start = pA + vuAB * lenBefore + vuNAB * 0.1f;
+                frontPoints.Add(v3Start);
+                for (int j = 0; j < nFronts; ++j)
+                {
+                    Vector3 v3Next = v3Start + vuAB * minShopWidth;
+                    frontPoints.Add(v3Next);
+                    v3Start = v3Next;
+                }
+                // frontPoints.Add(pA + vuAB * (lenBefore+len) + vuNAB*0.1f);
 
                 ShopFront shopFront = new();
                 shopFront.AddPoints(frontPoints);
