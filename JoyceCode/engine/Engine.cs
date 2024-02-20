@@ -776,6 +776,36 @@ public class Engine
     }
 
 
+    private int _entityUpdateRate = 6;
+    private int _entityUpdateCount = 0;
+
+    private void _checkUpdateEntityArray()
+    {
+        lock (_lo)
+        {
+            if (_requireEntityIdArrays > 0)
+            {
+                if (_entityUpdateCount <= 0)
+                {
+                    _entityUpdateCount = _entityUpdateRate;
+                    var entities = GetEcsWorld().GetEntities().AsEnumerable();
+                    _arrayEntityIds = new DefaultEcs.Entity[entities.Count()];
+                    int idx = 0;
+                    foreach (var entity in GetEcsWorld().GetEntities().AsEnumerable())
+                    {
+                        _arrayEntityIds[idx] = entity;
+                        idx++;
+                    }
+                }
+                else
+                {
+                    _entityUpdateCount--;
+                }
+            }
+        }
+    }
+
+
     private void _logicalThreadFunction()
     {
         float invFps = 1f / 60f;
@@ -849,6 +879,7 @@ public class Engine
             toWait = invFps - accumulator;
             nSleeps = 0;
 
+            _checkUpdateEntityArray();
             stopWatch.Start();
         }
 
