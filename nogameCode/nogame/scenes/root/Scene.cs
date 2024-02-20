@@ -93,6 +93,8 @@ public class Scene : AModule, IScene, IInputPart
     
     private void _toggleMap(Event ev)
     {
+        I.Get<EventQueue>().Push(new engine.news.Event("nogame.modules.map.toggleMap", null));
+#if false
         bool isMapShown; 
         lock (_lo)
         {
@@ -120,6 +122,7 @@ public class Scene : AModule, IScene, IInputPart
             M<modules.map.Module>().Mode = Module.Modes.MapFullscreen;
             // M<modules.minimap.Module>().ModuleDeactivate();
         }
+#endif
     }
 
 

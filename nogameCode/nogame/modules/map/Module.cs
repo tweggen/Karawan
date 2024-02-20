@@ -283,6 +283,11 @@ public class Module : AModule, IInputPart
                 true, MapCameraMask,
                 Quaternion.CreateFromAxisAngle(Vector3.UnitX, 3f * Single.Pi / 2f),
                 -MapY * Vector3.UnitY);
+            _eMap.Set(new engine.behave.components.Clickable()
+            {
+                ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.map.toggleMap", null)
+            });
+
         }
         _updateMapParams();
     }
@@ -594,6 +599,28 @@ public class Module : AModule, IInputPart
     }
     
 
+    private void _onClickMap(engine.news.Event ev)
+    {
+        Modes mode;
+        lock (_lo)
+        {
+            mode = _mode;
+        }
+        switch (mode)
+        {
+            case Modes.MapNone:
+            default:
+                break;
+            case Modes.MapMini:
+                Mode = Modes.MapFullscreen;
+                break;
+            case Modes.MapFullscreen:
+                Mode = Modes.MapMini;
+                break;
+        }
+    }
+
+
     public void Dispose()
     {
         _eMap.Dispose();
@@ -603,6 +630,7 @@ public class Module : AModule, IInputPart
     
     public override void ModuleDeactivate()
     {
+        I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.map.toggleMap", _onClickMap);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -612,5 +640,6 @@ public class Module : AModule, IInputPart
     {
         base.ModuleActivate(engine0);
         _engine.AddModule(this);
+        I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.map.toggleMap", _onClickMap);
     }
 }
