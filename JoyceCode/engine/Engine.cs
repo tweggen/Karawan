@@ -422,7 +422,7 @@ public class Engine
         }
 
         if (0 < queueLeft)
-    *    {
+        {
             Trace($"Left {queueLeft} items in setup actions queue.");
         }
 
