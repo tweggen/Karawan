@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using builtin.controllers;
@@ -61,6 +62,7 @@ public class Module : AModule, IInputPart
     private static float MY_Z_ORDER = 500f;
 
     private bool _createdResources = false;
+    private bool _createdClickHandler = false;
 
     private DefaultEcs.Entity _eMap;
     private DefaultEcs.Entity _eCamMap;
@@ -83,7 +85,6 @@ public class Module : AModule, IInputPart
     // TXWTODO: This is a guesstimate. Compute it properly.
     private float _viewHeight = 6f;
     private float _viewWidth = 6f * 16f / 9f;
-
     
     static public uint MapCameraMask = 0x00800000;
 
@@ -251,6 +252,8 @@ public class Module : AModule, IInputPart
 
             _eCamMap.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
+            
+            _needClickHandler();
         }
 
 
@@ -490,6 +493,16 @@ public class Module : AModule, IInputPart
         }
     }
 
+
+    private void _needClickHandler()
+    {
+        if (_createdClickHandler) return;
+        var clickModule = M<ClickModule>();
+        clickModule.Camera = _eCamMap;
+        clickModule.ModuleActivate(_engine);
+        _createdClickHandler = true;
+    }
+
     
     private void _changeModeToNone(Modes oldMode, Modes newMode)
     {
@@ -628,8 +641,23 @@ public class Module : AModule, IInputPart
     }
     
     
+    public override IEnumerable<IModuleDependency> ModuleDepends()
+    {
+        return new List<IModuleDependency>()
+        {
+            new MyModule<engine.news.ClickModule>() { Activate = false } 
+        };
+    }
+
+    
     public override void ModuleDeactivate()
     {
+        if (_createdClickHandler)
+        {
+            var clickModule = M<ClickModule>();
+            clickModule.ModuleDeactivate();
+        }
+
         I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.map.toggleMap", _onClickMap);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
@@ -640,6 +668,7 @@ public class Module : AModule, IInputPart
     {
         base.ModuleActivate(engine0);
         _engine.AddModule(this);
+        
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.map.toggleMap", _onClickMap);
     }
 }

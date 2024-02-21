@@ -101,6 +101,7 @@ public class ClickableHandler
 
     private void _updateFromCamera()
     {
+        _cCamera3 = _eCamera.Get<Camera3>();
         _cCamTransform = _eCamera.Get<joyce.components.Transform3ToWorld>();
         _cCamera3.GetProjectionMatrix(out _mProjection, _vViewSize);
         _cCamera3.GetViewMatrix(out _mView, _cCamTransform.Matrix);
@@ -153,8 +154,5 @@ public class ClickableHandler
                 m => new ArgumentException(m));
             return;
         }
-
-        _cCamera3 = _eCamera.Get<Camera3>();
-
     }
 }
