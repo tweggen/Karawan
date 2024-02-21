@@ -359,6 +359,7 @@ public class Module : engine.AModule
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
 
+        
         I.Get<SubscriptionManager>().Unsubscribe(
             Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
         I.Get<SubscriptionManager>().Unsubscribe(

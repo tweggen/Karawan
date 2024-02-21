@@ -22,13 +22,14 @@ public class Object : IDisposable
     public const uint HaveContactListener = 16;
     public const uint NeedContactListener = 32;
     public const uint IsActivated = 64;
+    public const uint IsDeleted = 128;
 
     public DefaultEcs.Entity Entity;
     public uint Flags = 0;
     public int IntHandle = -1;
     public IList<Action>? ReleaseActions = null;
     public CollisionProperties? CollisionProperties { get; set; } = null;
-
+    
     /**
      * Used to compute velocity.
      */
@@ -88,11 +89,18 @@ public class Object : IDisposable
             BodyHandle bh = new(IntHandle);
             I.Get<engine.physics.API>().AddCollisionEntry(bh, CollisionProperties);
         }
+        I.Get<engine.physics.ObjectCatalogue>().AddObject(this);
     }
     
     
     public void Dispose()
     {
+        I.Get<engine.physics.ObjectCatalogue>().RemoveObject(this);
+
+        if ((Flags & IsDeleted) == 0)
+        {
+            ErrorThrow<InvalidOperationException>($"Trying to dispose undeleted object");
+        }
         if (CollisionProperties != null)
         {
             BodyHandle bh = new(IntHandle);
@@ -148,6 +156,20 @@ public class Object : IDisposable
         }
     }
 
+
+    public void MarkDeleted()
+    {
+        lock (this.Engine.Simulation)
+        {
+            if ((Flags & IsDeleted) != 0)
+            {
+                ErrorThrow<InvalidOperationException>($"Already deleted {IntHandle}");
+            }
+
+            Flags |= IsDeleted;
+        }
+    }
+    
 
     public Object AddContactListener()
     {

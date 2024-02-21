@@ -26,6 +26,8 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
+        return;
+        
         var me = cev.ContactInfo.PropertiesA;
         ref engine.physics.components.Body cCarBody = ref me.Entity.Get<engine.physics.components.Body>();
 

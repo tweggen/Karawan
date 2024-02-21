@@ -15,8 +15,6 @@ internal class Manager
 {
     private engine.Engine _engine;
 
-    private physics.API _aPhysics;
-    
     private IDisposable? _subscriptions;
 
     private void _removeStaticsNoLock(in components.Statics statics)
@@ -63,6 +61,7 @@ internal class Manager
     {
         if (cBody.PhysicsObject != null)
         {
+            cBody.PhysicsObject.MarkDeleted();
             cBody.PhysicsObject.Dispose();
         }
     }
@@ -153,12 +152,6 @@ internal class Manager
     {
         Stop();
         _engine = null;
-    }
-
-
-    public Manager()
-    {
-        _aPhysics = I.Get<physics.API>();
     }
 }
 

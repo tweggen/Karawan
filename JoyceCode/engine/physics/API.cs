@@ -215,7 +215,18 @@ public class API
         _refreshCollisions();
         lock (_engine.Simulation)
         {
-            Simulation.Timestep(dt, _physicsThreadDispatcher);
+            try
+            {
+                Simulation.Timestep(dt, _physicsThreadDispatcher);
+            }
+            catch (Exception e)
+            {
+                if (e.Data.Contains("Handle"))
+                {
+                    int o = (int) e.Data["Handle"];
+                    I.Get<engine.physics.ObjectCatalogue>().FindObject(o);
+                }
+            }
         }
     }
 
@@ -236,17 +247,27 @@ public class API
     {
         _engine.QueueMainThreadAction(() => RayCastSync(origin, target, length, action));
     }
-    
+
+    private SortedSet<int> _setRegisteredEntities = new();
     
     /**
      * Register a listener who is notified on callbacks.
      */
     public void AddContactListener(in DefaultEcs.Entity entity)
     {
+        var handle = entity.Get<physics.components.Body>().Reference.Handle;
+
+        if (_setRegisteredEntities.Contains(handle.Value))
+        {
+            ErrorThrow<ArgumentException>($"Trying to add a contact that already is registered.");
+        }
+
+        _setRegisteredEntities.Add(handle.Value);
+            
         _contactEvents.RegisterListener(
             new CollidableReference(
                 CollidableMobility.Dynamic, 
-                entity.Get<physics.components.Body>().Reference.Handle));
+                handle));
     }
 
     
@@ -257,6 +278,13 @@ public class API
         in DefaultEcs.Entity entity, 
         in BepuPhysics.BodyHandle bodyHandle)
     {
+        var handle = entity.Get<physics.components.Body>().Reference.Handle;
+
+        if (!_setRegisteredEntities.Contains(handle.Value))
+        {
+            ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
+        }
+
         _contactEvents.UnregisterListener(
             new CollidableReference(
                 CollidableMobility.Dynamic,
@@ -349,6 +377,5 @@ public class API
                 new Vector3(0, -9.81f, 0)),
             new SolveDescription(8, 1)
         );
-
     }
 }
