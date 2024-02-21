@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -77,15 +78,8 @@ public class Engine
     private physics.systems.MoveKineticsSystem _systemMoveKinetics;
     private audio.systems.MovingSoundsSystem _systemMovingSounds;
 
+    private IReadOnlyCollection<IModule> _roListModules = null;
     private List<IModule> _listModules = new();
-
-    public IEnumerable<IModule> GetModules()
-    {
-        lock (_lo)
-        {
-            return new List<IModule>(_listModules);
-        }
-    }
 
     private readonly Queue<EntitySetupAction> _queueEntitySetupActions = new();
 
@@ -700,6 +694,18 @@ public class Engine
     private int _fpsLogical = 60;
 
 
+    public IReadOnlyCollection<IModule> GetModules()
+    {
+        lock (_lo)
+        {
+            if (null == _roListModules)
+            {
+                _roListModules = _listModules.ToImmutableList();
+            }
+            return new List<IModule>(_listModules);
+        }
+    }
+    
 
     public bool HasModule(in IModule module)
     {
@@ -714,6 +720,7 @@ public class Engine
     {
         lock (_lo)
         {
+            _roListModules = null;
             _listModules.Add(module);
         }
     }
@@ -723,20 +730,9 @@ public class Engine
     {
         lock (_lo)
         {
+            _roListModules = null;
             _listModules.Remove(module);
         }
-    }
-
-
-    public void GetControllerState(out ControllerState controllerState)
-    {
-        I.Get<builtin.controllers.InputController>().GetControllerState(out controllerState);
-    }
-
-
-    public void GetMouseMove(out Vector2 vMouseMove)
-    {
-        I.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
     }
 
 
@@ -745,6 +741,7 @@ public class Engine
         OnImGuiRender?.Invoke(this, dt);
     }
 
+    
     public void Execute()
     {
         _platform.Execute();
