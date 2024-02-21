@@ -62,7 +62,6 @@ public class Module : AModule, IInputPart
     private static float MY_Z_ORDER = 500f;
 
     private bool _createdResources = false;
-    private bool _createdClickHandler = false;
 
     private DefaultEcs.Entity _eMap;
     private DefaultEcs.Entity _eCamMap;
@@ -252,8 +251,6 @@ public class Module : AModule, IInputPart
 
             _eCamMap.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
-            
-            _needClickHandler();
         }
 
 
@@ -494,16 +491,6 @@ public class Module : AModule, IInputPart
     }
 
 
-    private void _needClickHandler()
-    {
-        if (_createdClickHandler) return;
-        var clickModule = M<ClickModule>();
-        clickModule.Camera = _eCamMap;
-        clickModule.ModuleActivate(_engine);
-        _createdClickHandler = true;
-    }
-
-    
     private void _changeModeToNone(Modes oldMode, Modes newMode)
     {
         lock(_lo) {
@@ -652,12 +639,6 @@ public class Module : AModule, IInputPart
     
     public override void ModuleDeactivate()
     {
-        if (_createdClickHandler)
-        {
-            var clickModule = M<ClickModule>();
-            clickModule.ModuleDeactivate();
-        }
-
         I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.map.toggleMap", _onClickMap);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();

@@ -2,32 +2,12 @@ using engine.behave.systems;
 
 namespace engine.news;
 
+
 public class ClickModule : AModule
 {
     private object _lo = new();
     
     private ClickableHandler _clickableHandler;
-    private DefaultEcs.Entity _eCamera;
-
-    
-    public DefaultEcs.Entity Camera
-    {
-        get
-        {
-            lock (_lo)
-            {
-                return _eCamera;
-            }
-        }
-
-        set
-        {
-            lock (_lo)
-            {
-                _eCamera = value;
-            }
-        }
-    }
 
     private void _handleClickEvent(Event ev)
     {
