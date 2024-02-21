@@ -1,11 +1,9 @@
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.Xml;
 using builtin.jt;
 using engine;
 using engine.news;
 using engine.streets;
-using Newtonsoft.Json.Linq;
 
 namespace nogame.modules.menu;
 
@@ -15,7 +13,7 @@ public class Module : AModule, IInputPart
     public float MY_Z_ORDER = 1000f;
 
     private builtin.jt.Widget? _wMenu;
-    private builtin.jt.Factory _factory;
+    private builtin.jt.Factory _factory = I.Get<builtin.jt.Factory>();
 
 
     public void InputPartOnInputEvent(Event ev)
@@ -84,11 +82,5 @@ public class Module : AModule, IInputPart
         }
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-    }
-
-
-    public Module()
-    {
-        _factory = I.Get<builtin.jt.Factory>();
     }
 }
