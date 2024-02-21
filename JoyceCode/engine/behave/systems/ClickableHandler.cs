@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Numerics;
 using engine.joyce.components;
 using engine.news;
@@ -61,14 +62,33 @@ public class ClickableHandler
              */
 
             joyce.InstanceDesc id = entity.Get<Instance3>().InstanceDesc;
+            
+            /*
+             * Transform the aabb to screenspace opengl coordinates, i.e. -1 ... 1
+             */
             Vector4 vAA4 = Vector4.Transform(id.AABBTransformed.AA, cTransform.Matrix * _mView * _mProjection);
             Vector4 vBB4 = Vector4.Transform(id.AABBTransformed.BB, cTransform.Matrix * _mView * _mProjection);
-            Vector2 vAA2 = new(
-                (vAA4.X / vAA4.W + 1f) * _vViewSize.X / 2f, 
-                (-vAA4.Y / vAA4.W + 1f) * _vViewSize.Y / 2f);
-            Vector2 vBB2 = new(
-                (vBB4.X / vBB4.W + 1f) * _vViewSize.X / 2f, 
-                (-vBB4.Y / vBB4.W + 1f) * _vViewSize.Y / 2f);
+            // TXWTODO: In addition, consider UL and LR from the actual Camera3 data structure.
+            
+            /*
+             * Scale it up to screen space coordinates.
+             */
+            Vector2 vAA2;
+            Vector2 vBB2;
+
+            {
+                _cCamera3.ScreenExtent(_vViewSize, out var v2ScrUl, out var v2ScrLr);
+                Vector2 size = v2ScrLr-v2ScrUl;
+                size.X *= _vViewSize.X;
+                size.Y *= _vViewSize.Y;
+                vAA2 = v2ScrUl + new Vector2(
+                    (vAA4.X / vAA4.W + 1f) * size.X / 2f,
+                    (-vAA4.Y / vAA4.W + 1f) * size.Y / 2f);
+                vBB2 = v2ScrUl + new Vector2(
+                    (vBB4.X / vBB4.W + 1f) * size.X / 2f,
+                    (-vBB4.Y / vBB4.W + 1f) * size.Y / 2f);
+            }
+
             Vector2 ul = Vector2.Min(vAA2, vBB2);
             Vector2 lr = Vector2.Max(vAA2, vBB2);
             
@@ -127,6 +147,18 @@ public class ClickableHandler
         }
 
         Vector2 pos = ev.Position;
+
+        /*
+         * First check if the camera view is under that position.
+         */
+        if (!_cCamera3.ContainsScreenPosition(_vViewSize, pos))
+        {
+            return default;
+        }
+        
+        /*
+         * Then find the entity somebody would have clicked on.
+         */
         if (_findAt(pos, out var eFound, out var v2RelPos))
         {
             var cClickable = eFound.Get<engine.behave.components.Clickable>();

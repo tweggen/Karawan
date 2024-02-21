@@ -55,6 +55,23 @@ public struct Camera3
     }
 
 
+    public bool ContainsScreenPosition(in Vector2 viewSize, in Vector2 cand)
+    {
+        var v2ScreenUL = new Vector2(viewSize.X * UL.X, viewSize.Y * UL.Y);
+        if (cand.X < v2ScreenUL.X || cand.Y < v2ScreenUL.Y) return false;
+        var v2ScreenLR = new Vector2(viewSize.X * LR.X, viewSize.Y * LR.Y);
+        if (cand.X > v2ScreenLR.X || cand.Y > v2ScreenLR.Y) return false;
+        return true;
+    }
+    
+
+    public void ScreenExtent(in Vector2 viewSize, out Vector2 v2ScreenUL, out Vector2 v2ScreenLR)
+    {
+        v2ScreenUL = new Vector2(viewSize.X * UL.X, viewSize.Y * UL.Y);
+        v2ScreenLR = new Vector2(viewSize.X * LR.X, viewSize.Y * LR.Y);
+    }
+    
+    
     public void GetViewMatrix(out Matrix4x4 matView, in Matrix4x4 mCameraToWorld)
     {
         var vCameraPosition = mCameraToWorld.Translation;
