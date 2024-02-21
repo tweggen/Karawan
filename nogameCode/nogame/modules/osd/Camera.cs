@@ -17,19 +17,8 @@ public class Camera : AModule
     
     private DefaultEcs.Entity _eCamOSD;
 
-    public override IEnumerable<IModuleDependency> ModuleDepends()
-    {
-        return new List<IModuleDependency>()
-        {
-            new MyModule<engine.news.ClickModule>() { Activate = false } 
-        };
-    }
-
     public override void ModuleDeactivate()
     {
-        var clickModule = M<ClickModule>();
-        clickModule.ModuleDeactivate();
-        
         _engine.RemoveModule(this);
         
         _eCamOSD.Dispose();
@@ -62,9 +51,5 @@ public class Camera : AModule
             _eCamOSD.Get<engine.joyce.components.Camera3>().CameraFlags &=
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
         }
-
-        var clickModule = M<ClickModule>();
-        clickModule.Camera = _eCamOSD;
-        clickModule.ModuleActivate(engine0);
     }
 }

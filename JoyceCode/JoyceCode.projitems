@@ -51,6 +51,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Object.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />
@@ -101,7 +102,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\INavigator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\BehaviorSystem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\WiperSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ConsoleLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\DBStorage.cs" />

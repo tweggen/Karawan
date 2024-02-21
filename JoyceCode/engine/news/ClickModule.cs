@@ -31,7 +31,7 @@ public class ClickModule : AModule
 
     private void _handleClickEvent(Event ev)
     {
-        var eFound = _clickableHandler.OnClick(ev);
+        _clickableHandler.OnClick(ev);
     }
 
 
@@ -72,7 +72,7 @@ public class ClickModule : AModule
         /*
          * Setup osd interaction handler
          */
-        _clickableHandler = new(_engine, _eCamera);
+        _clickableHandler = new(_engine);
         
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);

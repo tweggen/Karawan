@@ -39,7 +39,8 @@ public class Scene : AModule, IScene, IInputPart
         // new MyModule<nogame.modules.minimap.Module>("nogame.CreateMiniMap"),
         new MyModule<builtin.modules.Stats>() { Activate = false },
         new SharedModule<nogame.modules.story.Narration>() { Activate = false },
-        new SharedModule<builtin.controllers.InputController>()
+        new SharedModule<builtin.controllers.InputController>(),
+        new SharedModule<engine.news.ClickModule>()
     };
     
 

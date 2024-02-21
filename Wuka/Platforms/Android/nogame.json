@@ -30,7 +30,8 @@
     "nogame.SetupMetaGen": null,
     "nogame.intercity.Network": null,
     "engine.quest.Manager": null,
-    "nogame.modules.story.Narration": null
+    "nogame.modules.story.Narration": null,
+    "engine.news.ClickModule": null
   },
   "mapProviders":
   {

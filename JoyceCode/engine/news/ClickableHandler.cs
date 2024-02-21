@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using engine.joyce.components;
 using engine.news;
 using static engine.Logger;
 
-namespace engine.behave.systems;
+namespace engine.news;
 
 
 /**
@@ -14,13 +15,13 @@ namespace engine.behave.systems;
 public class ClickableHandler
 {
     private engine.Engine _engine;
-    private DefaultEcs.Entity _eCamera;
     private Camera3 _cCamera3;
     private joyce.components.Transform3ToWorld _cCamTransform;
     private Vector2 _vViewSize;
     private Matrix4x4 _mProjection;
     private Matrix4x4 _mView;
 
+    
     private bool _findAt(in Vector2 pos, out DefaultEcs.Entity resultingEntity, out Vector2 v2RelPos)
     {
         /*
@@ -37,7 +38,7 @@ public class ClickableHandler
          * - an Instance3 to get the aabb from.
          */
         var clickableEntities = _engine.GetEcsWorld().GetEntities()
-            .With<components.Clickable>()
+            .With<behave.components.Clickable>()
             .With<joyce.components.Transform3ToWorld>()
             .With<joyce.components.Instance3>()
             .AsEnumerable();
@@ -79,8 +80,6 @@ public class ClickableHandler
             {
                 _cCamera3.ScreenExtent(_vViewSize, out var v2ScrUl, out var v2ScrLr);
                 Vector2 size = v2ScrLr-v2ScrUl;
-                size.X *= _vViewSize.X;
-                size.Y *= _vViewSize.Y;
                 vAA2 = v2ScrUl + new Vector2(
                     (vAA4.X / vAA4.W + 1f) * size.X / 2f,
                     (-vAA4.Y / vAA4.W + 1f) * size.Y / 2f);
@@ -119,19 +118,18 @@ public class ClickableHandler
     }
 
 
-    private void _updateFromCamera()
+    private void _updateFromCamera(DefaultEcs.Entity eCamera)
     {
-        _cCamera3 = _eCamera.Get<Camera3>();
-        _cCamTransform = _eCamera.Get<joyce.components.Transform3ToWorld>();
+        _cCamera3 = eCamera.Get<Camera3>();
+        _cCamTransform = eCamera.Get<joyce.components.Transform3ToWorld>();
         _cCamera3.GetProjectionMatrix(out _mProjection, _vViewSize);
         _cCamera3.GetViewMatrix(out _mView, _cCamTransform.Matrix);
     }
     
     
-    public DefaultEcs.Entity OnClick(engine.news.Event ev)
+    public void OnClick(engine.news.Event ev)
     {
         _vViewSize = ev.Size;
-        _updateFromCamera();
         
         switch (ev.Type)
         {
@@ -142,49 +140,53 @@ public class ClickableHandler
                  */
                 break;
             default:
-                return default;
-                break;
+                return;
         }
 
-        Vector2 pos = ev.Position;
+        /*
+         * Now iterate through all cameras.
+         * We need a copy because event handlers shall be able to create/remove entities.
+         */
+        var cameras = new List<DefaultEcs.Entity>(_engine.GetEcsWorld().GetEntities()
+            .With<Camera3>()
+            .With<joyce.components.Transform3ToWorld>()
+            .AsEnumerable());
+        foreach (var eCamera in cameras)
+        {
+            _updateFromCamera(eCamera);
 
-        /*
-         * First check if the camera view is under that position.
-         */
-        if (!_cCamera3.ContainsScreenPosition(_vViewSize, pos))
-        {
-            return default;
-        }
-        
-        /*
-         * Then find the entity somebody would have clicked on.
-         */
-        if (_findAt(pos, out var eFound, out var v2RelPos))
-        {
-            var cClickable = eFound.Get<engine.behave.components.Clickable>();
-            var factory = cClickable.ClickEventFactory;
-            if (factory != null)
+            Vector2 pos = ev.Position;
+
+            /*
+             * First check if the camera view is under that position.
+             */
+            if (!_cCamera3.ContainsScreenPosition(_vViewSize, pos))
             {
-                var cev = factory(eFound, ev, v2RelPos);
-                if (cev != null)
+                continue;
+            }
+
+            /*
+             * Then find the entity somebody would have clicked on.
+             */
+            if (_findAt(pos, out var eFound, out var v2RelPos))
+            {
+                var cClickable = eFound.Get<engine.behave.components.Clickable>();
+                var factory = cClickable.ClickEventFactory;
+                if (factory != null)
                 {
-                    I.Get<EventQueue>().Push(cev);
+                    var cev = factory(eFound, ev, v2RelPos);
+                    if (cev != null)
+                    {
+                        I.Get<EventQueue>().Push(cev);
+                    }
                 }
             }
         }
-
-        return eFound;
     }
+    
 
-    public ClickableHandler(Engine engine0, DefaultEcs.Entity eCamera)
+    public ClickableHandler(Engine engine0)
     {
         _engine = engine0;
-        _eCamera = eCamera;
-        if (!_eCamera.IsAlive || !_eCamera.Has<Camera3>())
-        {
-            ErrorThrow($"Camera entity {eCamera} is not alive or camera has no camera3 component.",
-                m => new ArgumentException(m));
-            return;
-        }
     }
 }
