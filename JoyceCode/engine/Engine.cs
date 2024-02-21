@@ -422,7 +422,7 @@ public class Engine
         }
 
         if (0 < queueLeft)
-        {
+    *    {
             Trace($"Left {queueLeft} items in setup actions queue.");
         }
 
@@ -493,14 +493,10 @@ public class Engine
     }
 
 
-    private bool _firstTime = true;
-
     /**
-     * Control, which camera is the source for audio information.
-     * This takes the position and direction of the first camera
-     * that is found to be active.
+     * Track, if this is the first call to the onLogicalFrame function.
      */
-    private uint _audioCameraMask = 0xffffffff;
+    private bool _firstTime = true;
 
     private void _onLogicalFrame(float dt)
     {
@@ -616,7 +612,6 @@ public class Engine
         _systemMovingSounds.Update(dt);
 
 
-        //if (0 == _isLoading)
         if (gamePlayState == GamePlayStates.Running) {
             /*
              * Advance physics, based on new user input and/or gravitation.
@@ -688,10 +683,6 @@ public class Engine
         );
         _workerCleanupActions.RunPart(0.001f);
     }
-
-
-    private double _timeLeft;
-    private int _fpsLogical = 60;
 
 
     public IReadOnlyCollection<IModule> GetModules()
@@ -772,8 +763,11 @@ public class Engine
         }
     }
 
-
-    private int _entityUpdateRate = 6;
+    /*
+     * The entity array, if requested, is updated every _entityUpdateRate logical frames.
+     * In the given configuration, it is updated every 20ms.
+     */
+    private int _entityUpdateRate = 12;
     private int _entityUpdateCount = 0;
 
     private void _checkUpdateEntityArray()
