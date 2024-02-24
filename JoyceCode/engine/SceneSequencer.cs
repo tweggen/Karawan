@@ -14,7 +14,10 @@ public class SceneSequencer : IDisposable
     private readonly Engine _engine;
     
     private IScene _sceneNewMain = null;
+    private string _nameNewMainScene = "";
+    
     private IScene _mainScene = null;
+    private string _nameMainScene = "";
 
     private readonly SortedDictionary<string, Func<IScene>> _dictSceneFactories = new();
     private readonly SortedDictionary<float, IScene> _dictScenes = new();
@@ -49,10 +52,13 @@ public class SceneSequencer : IDisposable
             _sceneNewMain = null;
             if (null == scene)
             {
+                _nameNewMainScene = "";
                 return;
             }
             oldScene = _mainScene;
             _mainScene = null;
+            _nameMainScene =_nameNewMainScene;
+            _nameNewMainScene = "";
         }
         if (oldScene != null)
         {
@@ -109,11 +115,16 @@ public class SceneSequencer : IDisposable
     }
 
 
-    public void SetMainScene(in IScene scene)
+    private void SetMainScene(in IScene scene, in string name)
     {
         lock(_lo)
         {
+            if (_nameMainScene == name)
+            {
+                ErrorThrow<ArgumentException>($"Trying to activate scene that already is activated {_nameMainScene}.");
+            }
             _sceneNewMain = scene;
+            _nameNewMainScene = name;
         }
     }
 
@@ -134,13 +145,20 @@ public class SceneSequencer : IDisposable
             factoryFunction = _dictSceneFactories[name];
         }
         IScene scene = factoryFunction();
-        SetMainScene(scene);
+        SetMainScene(scene, name);
         return true;
     }
     
     
     public void SetMainScene(string name)
     {
+        lock (_lo)
+        {
+            if (_nameMainScene == name)
+            {
+                ErrorThrow<ArgumentException>($"Trying to activate scene that already is activated.");
+            }
+        }
         I.Get<Timeline>().RunAt("", TimeSpan.Zero, () =>
         {
              return _checkedMainScene(name);

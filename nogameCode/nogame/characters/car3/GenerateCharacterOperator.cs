@@ -240,9 +240,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         BodyReference prefSphere;
                         lock (wf.Engine.Simulation)
                         {
-                            {
-                            }
-
                             BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
                                 BodyDescription.CreateKinematic(
                                     new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
