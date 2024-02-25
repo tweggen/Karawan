@@ -20,7 +20,7 @@ namespace engine.physics.systems
                 var po = cRefBody.PhysicsObject;
                 if (po == null) continue;
             
-                // TXWTODO: This is a workaround for addressing only the former kinematic objects.
+                // TXWTODO: This is a workaround for addressing only the former dynamic objects.
                 if ((po.Flags & (physics.Object.HaveContactListener|physics.Object.IsStatic)) != physics.Object.HaveContactListener)
                 {
                     continue;

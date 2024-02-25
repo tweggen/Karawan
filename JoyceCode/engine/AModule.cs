@@ -7,6 +7,7 @@ namespace engine;
 public abstract class AModule : IModule
 {
     protected object _lo = new();
+    private bool _isActivated;
     protected Engine _engine;
     protected IEnumerable<IModuleDependency> _moduleDependencies = null;
     
@@ -37,6 +38,16 @@ public abstract class AModule : IModule
 
     public virtual void ModuleDeactivate()
     {
+        lock (_lo)
+        {
+            if (!_isActivated)
+            {
+                ErrorThrow<InvalidOperationException>($"Module was not activated.");
+            }
+
+            _isActivated = false;
+        }
+
         foreach (var module in _activatedModules)
         {
             module.ModuleDeactivate();
@@ -51,7 +62,18 @@ public abstract class AModule : IModule
     public virtual void ModuleActivate(engine.Engine engine0)
     {
         _engine = engine0;
-        _moduleDependencies = ModuleDepends();
+        var deps = ModuleDepends();
+        lock (_lo)
+        {
+            if (_isActivated)
+            {
+                ErrorThrow<InvalidOperationException>($"Module already activated.");
+            }
+
+            _isActivated = true;
+            _moduleDependencies = deps;
+        }
+
         foreach (var moduleDependency in _moduleDependencies)
         {
             bool condition = true;
