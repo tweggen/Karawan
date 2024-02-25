@@ -43,7 +43,7 @@ namespace engine.physics
             _events.Initialize(simulation.Bodies);
         }
 
-        private bool _simpleShallCollide(CollidableReference a, CollidableReference b, bool alsoCollide)
+        private bool _simpleShallDetect(CollidableReference a, CollidableReference b, bool alsoCollide)
         {
             /*
              * Short circuit, only care about collisions with the player (that is the
@@ -141,7 +141,7 @@ namespace engine.physics
 
             //This function also exposes the speculative margin. It can be validly written to, but that is a very rare use case.
             //Most of the time, you can ignore this function's speculativeMargin parameter entirely.
-            return _simpleShallCollide(a, b, false); 
+            return _simpleShallDetect(a, b, false); 
             // a.Mobility == CollidableMobility.Dynamic || b.Mobility == CollidableMobility.Dynamic;
         }
 
@@ -189,11 +189,7 @@ namespace engine.physics
             pairMaterial.MaximumRecoveryVelocity = 10;
             pairMaterial.SpringSettings = new SpringSettings(30, 1);
 
-            //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
-            //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
-            _events.HandleManifold(workerIndex, pair, ref manifold);
-
-            bool shallCollide = _simpleShallCollide(pair.A, pair.B, true);
+            bool shallCollide = _simpleShallDetect(pair.A, pair.B, true);
             
             /*
              * If either one is not collidable, ignore it.
@@ -202,6 +198,10 @@ namespace engine.physics
             {
                 return false;
             }
+
+            //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
+            //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
+            // _events.HandleManifold(workerIndex, pair, ref manifold);
 
             return true;
         }
