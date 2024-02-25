@@ -222,12 +222,16 @@ public class API
             }
             catch (Exception e)
             {
-                Trace($"Exception during physics step: {e}");
                 if (e.Data.Contains("Handle"))
                 {
                     int o = (int) e.Data["Handle"];
-                    I.Get<engine.physics.ObjectCatalogue>().FindObject(o);
+                    if (I.Get<engine.physics.ObjectCatalogue>().FindObject(o, out var po))
+                    {
+                        Trace($"Found problem with physics object of entity {po.Entity}");
+                    }
                 }
+                // Trace($"Exception during physics step: {e}");
+                throw e;
             }
         }
     }

@@ -36,13 +36,18 @@ public class ObjectCatalogue
     }
 
 
-    public void FindObject(int handle)
+    public bool FindObject(int handle, out physics.Object po)
     {
         lock (_lo)
         {
-            if (_mapPhysics.TryGetValue(handle, out var oldpo))
+            if (_mapPhysics.TryGetValue(handle, out po))
             {
-                ErrorThrow<InvalidOperationException>($"Found problem with {handle}.");
+                return true;
+            }
+            else
+            {
+                po = null;
+                return false;
             }
         }
     }

@@ -55,7 +55,7 @@ namespace engine
                 strLevel = $"{(int)level}";
             }
 
-            StackFrame stackFrame = new StackFrame(2);
+            StackFrame stackFrame = new StackFrame(2, true);
             var fileName = stackFrame.GetFileName();
             if (null == fileName) fileName = "";
             var lineNumber = stackFrame.GetFileLineNumber();

@@ -69,6 +69,7 @@ public class Timeline : IDisposable
 
     private void _reschedule(Func<bool> action)
     {
+        Trace($"Rescheduling action due to error {action}");
         lock (_lo)
         {
             _mapActions[DateTime.UtcNow] = action;

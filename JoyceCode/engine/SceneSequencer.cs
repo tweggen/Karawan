@@ -59,6 +59,7 @@ public class SceneSequencer : IDisposable
             _mainScene = null;
             _nameMainScene =_nameNewMainScene;
             _nameNewMainScene = "";
+            _nameNewSceneRequest = "";
         }
         if (oldScene != null)
         {
@@ -148,16 +149,21 @@ public class SceneSequencer : IDisposable
         SetMainScene(scene, name);
         return true;
     }
-    
-    
+
+    private string _nameNewSceneRequest = "";
     public void SetMainScene(string name)
     {
         lock (_lo)
         {
-            if (_nameMainScene == name)
+            System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace(true);
+            Trace($"Called SetMainScene at {t.ToString()}");
+
+            if (_nameNewSceneRequest == name)
             {
-                ErrorThrow<ArgumentException>($"Trying to activate scene that already is activated.");
+                Error($"Trying to activate scene that already is activated.");
+                return;
             }
+            _nameNewSceneRequest = name;
         }
         I.Get<Timeline>().RunAt("", TimeSpan.Zero, () =>
         {
