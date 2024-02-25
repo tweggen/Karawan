@@ -1,8 +1,6 @@
 ﻿using BepuPhysics;
 using System;
 using System.Numerics;
-using System.Collections.Generic;
-using System.Text;
 
 namespace engine.physics.systems
 {

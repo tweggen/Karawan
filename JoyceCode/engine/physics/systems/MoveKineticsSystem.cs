@@ -18,6 +18,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
     private Vector3 _vPlayerPos;
     
     private bool _havePlayerPosition = false;
+    public bool AllowOffPosition { get; set; } = true;
 
     static private Vector3 _vOffPosition = new(0f, -3000f, 0f);
 
@@ -73,7 +74,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                 }
                 else
                 {
-                    if (wasInside || true == bodyReference.Awake)
+                    if (AllowOffPosition && (wasInside || true == bodyReference.Awake))
                     {
                         /*
                          * If it previously was inside, reposition it to nowehere
