@@ -95,8 +95,10 @@ public class FollowCameraController : IInputPart
             Vector3 posShip = _prefPlayer.Pose.Position;
             Quaternion rotShip = _prefPlayer.Pose.Orientation;
 
+#if false
             _cameraSpringSettings = new(5, 2);
             _cameraServoSettings = ServoSettings.Default;
+#endif
 
             _pbodyCameraSphere = new(CameraRadius);
             _pinertiaCameraSphere = _pbodyCameraSphere.ComputeInertia(CameraMass);
@@ -112,6 +114,7 @@ public class FollowCameraController : IInputPart
                     new BodyActivityDescription(0.01f)
                 )
             );
+#if false
             _chandleCameraServo = _engine.Simulation.Solver.Add(_phandleCameraSphere,
                 new OneBodyLinearServo()
                 {
@@ -120,6 +123,7 @@ public class FollowCameraController : IInputPart
                     Target = Vector3.Zero,
                     LocalOffset = Vector3.Zero
                 });
+#endif
             _prefCameraBall = _engine.Simulation.Bodies.GetBodyReference(_phandleCameraSphere);
 
             _eTarget.Set(new engine.physics.components.Body(
@@ -128,11 +132,13 @@ public class FollowCameraController : IInputPart
                     ReleaseActions = new List<Action> {
                         () =>
                         {
+#if false
                             if (_chandleCameraServo.Value != 0)
                             {
                                 _engine.Simulation.Solver.Remove(_chandleCameraServo);
                                 _chandleCameraServo = default;
                             }
+#endif
 
                             if (_pshapeCameraSphere.Index != 0)
                             {
@@ -568,7 +574,7 @@ public class FollowCameraController : IInputPart
         Vector3 vDiff = vCameraPos - vCarrotPosition;
         float l = vDiff.Length();
         float maxLength = vDiff.Length();
-        lock (_engine.Simulation)
+        if (false)lock (_engine.Simulation)
         {
             aPhysics.RayCastSync(vCarrotPosition, vDiff, 1f,
                 (CollidableReference cRef, CollisionProperties props, float t, Vector3 vCollision) =>
