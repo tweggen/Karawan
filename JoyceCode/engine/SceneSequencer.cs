@@ -177,7 +177,10 @@ public class SceneSequencer : IDisposable
      */
     public void AddScene(float zOrder, in IScene scene)
     {
-        _dictScenes.Add(zOrder, scene);
+        lock (_lo)
+        {
+            _dictScenes.Add(zOrder, scene);
+        }
     }
 
     

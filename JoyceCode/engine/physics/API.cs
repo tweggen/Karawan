@@ -380,7 +380,7 @@ public class API
     {
         _engine = engine;
         BufferPool = new BufferPool();
-        _physicsThreadDispatcher = new(4);
+        _physicsThreadDispatcher = new(4); /* Environment.ProcessorCount */
         _contactEvents = new physics.ContactEvents<API>(
             this,
             BufferPool,
