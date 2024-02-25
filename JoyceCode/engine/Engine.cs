@@ -817,7 +817,7 @@ public class Engine
                 // Thread.Sleep(1);
                 lock (ShortSleep)
                 {
-                    System.Threading.Monitor.Wait(ShortSleep);
+                    System.Threading.Monitor.Wait(ShortSleep,1);
                     nSleeps++;
                 }
                 continue;

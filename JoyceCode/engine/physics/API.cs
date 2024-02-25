@@ -218,9 +218,11 @@ public class API
             try
             {
                 Simulation.Timestep(dt, _physicsThreadDispatcher);
+                _contactEvents.Flush();
             }
             catch (Exception e)
             {
+                Trace($"Exception during physics step: {e}");
                 if (e.Data.Contains("Handle"))
                 {
                     int o = (int) e.Data["Handle"];
@@ -257,17 +259,23 @@ public class API
     {
         var handle = entity.Get<physics.components.Body>().Reference.Handle;
 
-        if (_setRegisteredEntities.Contains(handle.Value))
+        lock (_lo)
         {
-            ErrorThrow<ArgumentException>($"Trying to add a contact that already is registered.");
+            if (_setRegisteredEntities.Contains(handle.Value))
+            {
+                ErrorThrow<ArgumentException>($"Trying to add a contact that already is registered.");
+            }
+
+            _setRegisteredEntities.Add(handle.Value);
         }
 
-        _setRegisteredEntities.Add(handle.Value);
-            
-        _contactEvents.RegisterListener(
-            new CollidableReference(
-                CollidableMobility.Dynamic, 
-                handle));
+        lock (_engine.Simulation)
+        {
+            _contactEvents.RegisterListener(
+                new CollidableReference(
+                    CollidableMobility.Dynamic,
+                    handle));
+        }
     }
 
     
@@ -280,15 +288,21 @@ public class API
     {
         var handle = entity.Get<physics.components.Body>().Reference.Handle;
 
-        if (!_setRegisteredEntities.Contains(handle.Value))
+        lock (_lo)
         {
-            ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
+            if (!_setRegisteredEntities.Contains(handle.Value))
+            {
+                ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
+            }
         }
 
-        _contactEvents.UnregisterListener(
-            new CollidableReference(
-                CollidableMobility.Dynamic,
-                bodyHandle));
+        lock (_engine.Simulation)
+        {
+            _contactEvents.UnregisterListener(
+                new CollidableReference(
+                    CollidableMobility.Dynamic,
+                    bodyHandle));
+        }
     }
     
     
