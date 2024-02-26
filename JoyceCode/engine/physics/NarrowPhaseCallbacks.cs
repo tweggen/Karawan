@@ -191,6 +191,10 @@ namespace engine.physics
 
             bool shallCollide = _simpleShallDetect(pair.A, pair.B, true);
             
+            //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
+            //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
+            _events.HandleManifold(workerIndex, pair, ref manifold);
+
             /*
              * If either one is not collidable, ignore it.
              */
@@ -198,10 +202,6 @@ namespace engine.physics
             {
                 return false;
             }
-
-            //The IContactManifold parameter includes functions for accessing contact data regardless of what the underlying type of the manifold is.
-            //If you want to have direct access to the underlying type, you can use the manifold.Convex property and a cast like Unsafe.As<TManifold, ConvexContactManifold or NonconvexContactManifold>(ref manifold).
-            _events.HandleManifold(workerIndex, pair, ref manifold);
 
             return true;
         }
