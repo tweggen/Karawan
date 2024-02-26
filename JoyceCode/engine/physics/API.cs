@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
@@ -228,8 +229,27 @@ public class API
                     if (I.Get<engine.physics.ObjectCatalogue>().FindObject(o, out var po))
                     {
                         BodyReference prefBody = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                        Trace($"Found problem with physics object of entity {po.Entity}");
+                        Trace($"Found problem with physics object of entity {po.Entity} bodyhandle {po.IntHandle}.");
+                        Trace("Body's constraints:");
+                        int nConstraintsOfBody = prefBody.Constraints.Count;
+                        for (int i = 0; i < nConstraintsOfBody; ++i)
+                        {
+                            ref var cref = ref prefBody.Constraints[i];
+                            var conHandle = cref.ConnectingConstraintHandle;
+                            var biMy = cref.BodyIndexInConstraint;
+                            Trace($"Body is in constraint {conHandle} at index {biMy}");
+                        }
+                        Trace("Known constraints:" );
+                        ref var kincons  = ref _engine.Simulation.Solver.ConstrainedKinematicHandles;
+                        int nConstrainedKinematics = kincons.Count;
+                        for (int i = 0; i < nConstrainedKinematics; ++i)
+                        {
+                            ref var cref = ref kincons[i];
+                            Trace($"Kinematic Handle {cref}");
+                        }
+
                         prefBody.GetDescription(out var desc);
+                        System.Threading.Thread.Sleep(200);
                         Trace($"body #{prefBody.Handle}, exists={prefBody.Exists}, isAwake={prefBody.Awake}, Velocity={prefBody.Velocity.Linear}, Pos={prefBody.Pose.Position}, MotionState={prefBody.MotionState}, SolverState={prefBody.SolverState}, Collidable={prefBody.Collidable}, BodyActivity={prefBody.Activity}, NConstraints={prefBody.Constraints.Count}, description={desc.ToString()}");
                     }
                 }

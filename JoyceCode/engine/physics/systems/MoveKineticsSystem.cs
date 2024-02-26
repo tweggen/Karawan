@@ -54,20 +54,27 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                     // TXWTODO: Can we write that more efficiently?
                     if (oldPos != newPos)
                     {
-                        bodyReference.Pose.Position = newPos;
-                        po.LastPosition = newPos;
-                        if (oldPos != Vector3.Zero)
+                        if (bodyReference.Constraints.Count == 0)
                         {
-                            Vector3 vel = (newPos - oldPos) / dt;
-                            bodyReference.Velocity.Linear = vel;
-                            if (!bodyReference.Awake)
+                            bodyReference.Pose.Position = newPos;
+                            po.LastPosition = newPos;
+                            if (oldPos != Vector3.Zero)
                             {
-                                bodyReference.Awake = true;
+                                Vector3 vel = (newPos - oldPos) / dt;
+                                bodyReference.Velocity.Linear = vel;
+                                if (!bodyReference.Awake)
+                                {
+                                    bodyReference.Awake = true;
+                                }
+                            }
+                            else
+                            {
+                                bodyReference.Velocity.Linear = Vector3.Zero;
                             }
                         }
                         else
                         {
-                            bodyReference.Velocity.Linear = Vector3.Zero;
+                            Error($"Avoiding to move body {bodyReference.Handle} while constraints apply.");
                         }
                     }
                 }
@@ -77,6 +84,10 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                     {
                         if (wasInside)
                         {
+                            if (bodyReference.Constraints.Count > 0)
+                            {
+                                Error($"Moving away body with constraints.");
+                            }
                             /*
                              * If it previously was inside, reposition it to nowehere
                              * and make it passive. effectively setting it to standby.
@@ -94,7 +105,14 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                              */
                             if (bodyReference.Awake)
                             {
-                                bodyReference.Awake = false;
+                                if (bodyReference.Constraints.Count == 0)
+                                {
+                                    bodyReference.Awake = false;
+                                }
+                                else
+                                {
+                                    Error($"Would have had a problem before.");
+                                }
                             }
                         }
 
