@@ -20,7 +20,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     static public readonly string PhysicsName = "nogame.characters.car3";
     static private readonly float PhysicsMass = 500f;
     static private readonly float PhysicsRadius = 5f;
-    static public BodyInertia PInertiaSphere =
+    static public BodyInertia PInertiaSphere = 
         new BepuPhysics.Collidables.Sphere(
             GenerateCharacterOperator.PhysicsRadius)
         .ComputeInertia(GenerateCharacterOperator.PhysicsMass);

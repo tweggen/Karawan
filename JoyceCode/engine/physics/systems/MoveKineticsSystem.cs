@@ -60,40 +60,51 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                         {
                             Vector3 vel = (newPos - oldPos) / dt;
                             bodyReference.Velocity.Linear = vel;
+                            if (!bodyReference.Awake)
+                            {
+                                bodyReference.Awake = true;
+                            }
                         }
                         else
                         {
                             bodyReference.Velocity.Linear = Vector3.Zero;
                         }
-
-                        if (!bodyReference.Awake)
-                        {
-                            bodyReference.Awake = true;
-                        }
                     }
                 }
                 else
                 {
-                    if (AllowOffPosition && (wasInside || true == bodyReference.Awake))
+                    if (AllowOffPosition)
                     {
-                        /*
-                         * If it previously was inside, reposition it to nowehere
-                         * and make it passive. effectively setting it to standby.
-                         */
-                        bodyReference.Pose.Position = _vOffPosition;
-                        bodyReference.Pose.Orientation = Quaternion.Identity;
-                        bodyReference.Velocity.Linear = Vector3.Zero;
-                        bodyReference.Velocity.Angular = Vector3.Zero;
-                        bodyReference.Awake = false;
+                        if (wasInside)
+                        {
+                            /*
+                             * If it previously was inside, reposition it to nowehere
+                             * and make it passive. effectively setting it to standby.
+                             */
+                            bodyReference.Pose.Position = _vOffPosition;
+                            bodyReference.Pose.Orientation = Quaternion.Identity;
+                            bodyReference.Velocity.Linear = Vector3.Zero;
+                            bodyReference.Velocity.Angular = Vector3.Zero;
+                        }
+                        else
+                        {
+                            /*
+                             * And if it already was outside, we do not need to touch it in any way.
+                             * Just make sure it sleeps.
+                             */
+                            if (bodyReference.Awake)
+                            {
+                                bodyReference.Awake = false;
+                            }
+                        }
+
                     }
 
-                    /*
-                     * And if it already was outside, we do not need to touch it in any way.
-                     */
                 }
             }
         }
     }
+    
 
     protected override void PostUpdate(float dt)
     {

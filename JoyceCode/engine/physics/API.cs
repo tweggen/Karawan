@@ -227,7 +227,10 @@ public class API
                     int o = (int) e.Data["Handle"];
                     if (I.Get<engine.physics.ObjectCatalogue>().FindObject(o, out var po))
                     {
+                        BodyReference prefBody = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
                         Trace($"Found problem with physics object of entity {po.Entity}");
+                        prefBody.GetDescription(out var desc);
+                        Trace($"body #{prefBody.Handle}, exists={prefBody.Exists}, isAwake={prefBody.Awake}, Velocity={prefBody.Velocity.Linear}, Pos={prefBody.Pose.Position}, MotionState={prefBody.MotionState}, SolverState={prefBody.SolverState}, Collidable={prefBody.Collidable}, BodyActivity={prefBody.Activity}, NConstraints={prefBody.Constraints.Count}, description={desc.ToString()}");
                     }
                 }
                 // Trace($"Exception during physics step: {e}");
