@@ -236,8 +236,10 @@ public class API
                         {
                             ref var cref = ref prefBody.Constraints[i];
                             var conHandle = cref.ConnectingConstraintHandle;
+                            ref var con = ref _engine.Simulation.Solver.HandleToConstraint[conHandle.Value];
                             var biMy = cref.BodyIndexInConstraint;
                             Trace($"Body is in constraint {conHandle} at index {biMy}");
+                            Trace($"Con SetIndex {con.SetIndex}, BatchIndex {con.BatchIndex}, TypeId {con.TypeId}, IndexInTypeBatch {con.IndexInTypeBatch}");
                         }
                         Trace("Known constraints:" );
                         ref var kincons  = ref _engine.Simulation.Solver.ConstrainedKinematicHandles;
@@ -263,7 +265,6 @@ public class API
     public void RayCastSync(Vector3 origin, Vector3 target, float length,
         Action<CollidableReference, CollisionProperties, float, Vector3> action)
     {
-        return;
         lock (_engine.Simulation)
         {
             DefaultRayHitHandler drh = new(this, action);
@@ -275,7 +276,6 @@ public class API
     public void RayCast(Vector3 origin, Vector3 target, float length, 
         Action<CollidableReference, CollisionProperties, float, Vector3> action)
     {
-        return;
         _engine.QueueMainThreadAction(() => RayCastSync(origin, target, length, action));
     }
 

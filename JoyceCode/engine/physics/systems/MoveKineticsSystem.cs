@@ -54,7 +54,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                     // TXWTODO: Can we write that more efficiently?
                     if (oldPos != newPos)
                     {
-                        if (bodyReference.Constraints.Count == 0)
+                        if (true || bodyReference.Constraints.Count == 0)
                         {
                             bodyReference.Pose.Position = newPos;
                             po.LastPosition = newPos;
@@ -86,7 +86,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                         {
                             if (bodyReference.Constraints.Count > 0)
                             {
-                                Error($"Moving away body with constraints.");
+                                // Error($"Moving away body with constraints.");
                             }
                             /*
                              * If it previously was inside, reposition it to nowehere
@@ -111,7 +111,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                                 }
                                 else
                                 {
-                                    Error($"Would have had a problem before.");
+                                    // Error($"Would have had a problem before.");
                                 }
                             }
                         }

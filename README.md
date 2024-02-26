@@ -7,7 +7,7 @@ This project consists of
 ## Build instructions
 
 Check out this repo to any directory. Directly next to this directory, check out the projects 
-- [BepuPhysics2] (https://github.com/bepu/bepuphysics2.git),
+- [BepuPhysics2] (https://github.com/bepu/bepuphysics2.git) Branch v2.4.0,
 - [Default Ecs entity components system] (https://github.com/tweggen/DefaultEcs.git),
 - [3d obj file loader ObjLoader] (https://github.com/tweggen/ObjLoader.git),
 - [fbx model loader] (https://github.com/tweggen/FbxSharp.git) 
