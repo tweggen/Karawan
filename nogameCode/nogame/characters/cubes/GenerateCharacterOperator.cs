@@ -90,7 +90,6 @@ namespace nogame.characters.cubes
 
         public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
         {
-            return;
             if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
             {
                 return;

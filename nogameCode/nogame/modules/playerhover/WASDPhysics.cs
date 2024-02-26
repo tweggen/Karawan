@@ -62,8 +62,8 @@ internal class WASDPhysics : AModule, IInputPart
                 _prefTarget.Pose.Orientation = Quaternion.Identity;
                 _prefTarget.Velocity.Angular = Vector3.Zero;
                 _prefTarget.Velocity.Linear = Vector3.Zero;
-                _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
             }
+            _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
 
             return;
         }

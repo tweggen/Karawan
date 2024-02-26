@@ -88,6 +88,7 @@ public class SetupMetaGen
                                         },
                                         new ()
                                         {
+                                            ConfigCondition = "nogame.CreatePolytopes",
                                             Implementation = "nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator"
                                         },
                                         new () 

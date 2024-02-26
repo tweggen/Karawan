@@ -240,6 +240,7 @@ public class API
     public void RayCastSync(Vector3 origin, Vector3 target, float length,
         Action<CollidableReference, CollisionProperties, float, Vector3> action)
     {
+        return;
         lock (_engine.Simulation)
         {
             DefaultRayHitHandler drh = new(this, action);
@@ -251,6 +252,7 @@ public class API
     public void RayCast(Vector3 origin, Vector3 target, float length, 
         Action<CollidableReference, CollisionProperties, float, Vector3> action)
     {
+        return;
         _engine.QueueMainThreadAction(() => RayCastSync(origin, target, length, action));
     }
 

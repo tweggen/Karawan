@@ -574,7 +574,7 @@ public class FollowCameraController : IInputPart
         Vector3 vDiff = vCameraPos - vCarrotPosition;
         float l = vDiff.Length();
         float maxLength = vDiff.Length();
-        if (false)lock (_engine.Simulation)
+        lock (_engine.Simulation)
         {
             aPhysics.RayCastSync(vCarrotPosition, vDiff, 1f,
                 (CollidableReference cRef, CollisionProperties props, float t, Vector3 vCollision) =>
