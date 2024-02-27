@@ -97,25 +97,22 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                             bodyReference.Velocity.Linear = Vector3.Zero;
                             bodyReference.Velocity.Angular = Vector3.Zero;
                         }
-                        else
+
+                        /*
+                         * And if it already was outside, we do not need to touch it in any way.
+                         * Just make sure it sleeps.
+                         */
+                        if (bodyReference.Awake)
                         {
-                            /*
-                             * And if it already was outside, we do not need to touch it in any way.
-                             * Just make sure it sleeps.
-                             */
-                            if (bodyReference.Awake)
+                            if (bodyReference.Constraints.Count == 0)
                             {
-                                if (bodyReference.Constraints.Count == 0)
-                                {
-                                    bodyReference.Awake = false;
-                                }
-                                else
-                                {
-                                    // Error($"Would have had a problem before.");
-                                }
+                                bodyReference.Awake = false;
+                            }
+                            else
+                            {
+                                // Error($"Would have had a problem before.");
                             }
                         }
-
                     }
 
                 }
