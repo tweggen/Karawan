@@ -826,6 +826,14 @@ public class Engine
             stopWatch.Stop();
             accumulator += (float) stopWatch.Elapsed.TotalSeconds;
             stopWatch.Reset();
+            
+            /*
+             * Throw away anything larger than 200ms from the accumulator
+             */
+            if (accumulator > 0.2f)
+            {
+                accumulator = 0.2f;
+            }
 
             stopWatch.Start();
             int nLogical = 0;
