@@ -36,6 +36,7 @@ public class SilkThreeD : IThreeD
     private Matrix4x4 _matProjection;
     private Vector3 _vCamera;
     private float _fogDistance;
+    private Vector3 _v3FogColor = new(0.2f, 0.18f, 0.2f); 
 
     private int _nUploadedMeshes = 0;
     
@@ -624,6 +625,7 @@ public class SilkThreeD : IThreeD
             uc.Apply(_getGL(), shader, _currentRenderFrame.LightCollector);
         }
         shader.SetUniform("fogDistance", _fogDistance);
+        shader.SetUniform("col3Fog", _v3FogColor);
 
         shader.SetUniform("v3AbsPosView", _vCamera);
         shader.SetUniform("frameNo", _frameno);
@@ -639,6 +641,12 @@ public class SilkThreeD : IThreeD
     public void SetFogDistance(float fogDistance)
     {
         _fogDistance = fogDistance;
+    }
+
+
+    public void SetFogColor(Vector3 fogColor)
+    {
+        _v3FogColor = fogColor;
     }
 
     

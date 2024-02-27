@@ -19,6 +19,7 @@ uniform vec4 col4Diffuse;
 uniform vec4 col4Emissive;
 uniform vec4 col4EmissiveFactors;
 uniform vec4 col4Ambient;
+uniform vec3 col3Fog;
 
 uniform float fogDistance;
 
@@ -409,7 +410,6 @@ void main()
 
     if (fogDistance > 1.0)
     {
-        vec3 col3Fog = vec3(0.2,0.18,0.2); 
         vec3 col3Unfogged = vec3(col4Unfogged.xyz);
         float distance = length(v3RelFragPosition);
         float fogIntensity = clamp(distance, 0.0, fogDistance) / (fogDistance+50.0);
