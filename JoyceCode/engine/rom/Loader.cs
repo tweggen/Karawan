@@ -34,7 +34,14 @@ public class Loader
                  * Remove the url type head from the name. This considers both linux and windows
                  * type of names.
                  */
-                execDirectoryPath = orgExecPath.Replace("file:/", "").Replace("file:\\", "");
+                if (orgExecPath.StartsWith("file:\\"))
+                {
+                    execDirectoryPath = orgExecPath.Substring(6);
+                } else if (orgExecPath.StartsWith("file:/"))
+                {
+                    execDirectoryPath = orgExecPath.Substring(5);
+                }
+                //execDirectoryPath = orgExecPath.Replace("file:/", "").Replace("file:\\", "");
             }
             if (_traceLoad) Trace($"execDirectoryPath = {execDirectoryPath}");
 
