@@ -70,6 +70,11 @@ public class FollowCameraController : IInputPart
     private float _dtMoving = 0f;
     private float _dtStopped = 0f;
 
+    /**
+     * The angles that additionally are applied because of mouse movement
+     */
+    private Vector2 _mouseAngles;
+    
     private static Vector3 _vuUp = new(0f, 1f, 0f);
     private Quaternion _qPreviousCameraFront;
 
@@ -94,12 +99,7 @@ public class FollowCameraController : IInputPart
         {
             Vector3 posShip = _prefPlayer.Pose.Position;
             Quaternion rotShip = _prefPlayer.Pose.Orientation;
-
-#if false
-            _cameraSpringSettings = new(5, 2);
-            _cameraServoSettings = ServoSettings.Default;
-#endif
-
+            
             _pbodyCameraSphere = new(CameraRadius);
             _pinertiaCameraSphere = _pbodyCameraSphere.ComputeInertia(CameraMass);
             _pshapeCameraSphere = _engine.Simulation.Shapes.Add(_pbodyCameraSphere);
@@ -114,16 +114,6 @@ public class FollowCameraController : IInputPart
                     new BodyActivityDescription(0.01f)
                 )
             );
-#if false
-            _chandleCameraServo = _engine.Simulation.Solver.Add(_phandleCameraSphere,
-                new OneBodyLinearServo()
-                {
-                    SpringSettings = _cameraSpringSettings,
-                    ServoSettings = _cameraServoSettings,
-                    Target = Vector3.Zero,
-                    LocalOffset = Vector3.Zero
-                });
-#endif
             _prefCameraBall = _engine.Simulation.Bodies.GetBodyReference(_phandleCameraSphere);
 
             _eTarget.Set(new engine.physics.components.Body(
@@ -132,14 +122,6 @@ public class FollowCameraController : IInputPart
                     ReleaseActions = new List<Action> {
                         () =>
                         {
-#if false
-                            if (_chandleCameraServo.Value != 0)
-                            {
-                                _engine.Simulation.Solver.Remove(_chandleCameraServo);
-                                _chandleCameraServo = default;
-                            }
-#endif
-
                             if (_pshapeCameraSphere.Index != 0)
                             {
                                 _engine.Simulation.Shapes.Remove(_pshapeCameraSphere);
@@ -148,16 +130,6 @@ public class FollowCameraController : IInputPart
                         }
                         
                     },
-#if false
-                    CollisionProperties = new engine.physics.CollisionProperties()
-                    {
-                        Entity = _eTarget,
-                        Flags =
-                            CollisionProperties.CollisionFlags.IsTangible
-                            | CollisionProperties.CollisionFlags.IsDetectable,
-                        Name = CameraPhysicsName
-                    }
-#endif
                 }.AddContactListener(),
                 _prefCameraBall)
             );
@@ -438,6 +410,12 @@ public class FollowCameraController : IInputPart
          * Derive front vector from Quaternion.
          */
         Vector3 vFront = Vector3.Transform(new Vector3(0f, 0f, -1f), qFront);
+        
+        /*
+         * Rotate the front vector by the mouse orientation.
+         */
+        var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
+        vFront = Vector3.Transform(vFront, rotRight);
 
         /*
          * Derive right from front and the Y vector, up is straight up,
@@ -453,9 +431,16 @@ public class FollowCameraController : IInputPart
          * Now let's move the camera back to where we want it to be.
          */
         float zoomDistance = _zoomDistance();
-
-        //vPerfectCameraFront = vFront;
-        vPerfectCameraOffset = zoomDistance * vPerfectCameraFront - zoomDistance / 4f * _vuUp;
+        
+        /*
+         * Set up the vertical camera angle.
+         * Our default is dx = 1 , dy = 0.25, which is about 15 degree (from the horizontal).
+         */
+        float vertAngle = Single.Clamp(_mouseAngles.X,
+            -85f * Single.Pi / 180f, 85f * Single.Pi / 180f);
+        float dy = Single.Sin(vertAngle);
+        float dz = Single.Cos(vertAngle);
+        vPerfectCameraOffset = zoomDistance * vPerfectCameraFront * dz - zoomDistance  * _vuUp * dy;
 
         vPerfectCameraPos = vCarrotPos - vPerfectCameraOffset;
 
@@ -527,34 +512,7 @@ public class FollowCameraController : IInputPart
             _eTarget.Set(new engine.joyce.components.Motion(vCameraVelocity));
         }
     }
-
-
-#if false
-    private void _servePhysicalCameraBody(in Vector3 vRealCameraPosition, in Vector3 vPerfectCameraPos,
-        in Quaternion qUserCameraOrientation)
-    {
-        lock (_engine.Simulation)
-        {
-            Vector3 vCarrotSpeed = _prefPlayer.Velocity.Linear;
-
-            _prefCameraBall.Pose.Orientation = qUserCameraOrientation;
-            _engine.Simulation.Solver.ApplyDescription(
-                _chandleCameraServo,
-                new OneBodyLinearServo()
-                {
-                    LocalOffset = Vector3.Zero,
-                    Target = vPerfectCameraPos,
-                    SpringSettings = _cameraSpringSettings,
-                    ServoSettings = _cameraServoSettings
-                });
-            if (vCarrotSpeed.Length() < 1.0f)
-            {
-                _prefCameraBall.Velocity.Linear /= 3f;
-            }
-        }
-    }
-#endif
-
+    
 
     /**
      * We have a camera position that is too close to our subject.
@@ -691,6 +649,10 @@ public class FollowCameraController : IInputPart
         {
             return;
         }
+        
+        _mouseAngles.X = -(_vMouseOffset.Y - 15f) * (float)Math.PI / 180f;
+        _mouseAngles.Y = -(_vMouseOffset.X) * (float)Math.PI / 180f;
+
 
         var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
         var vCarrotPos = cToParent.Matrix.Translation;
@@ -764,8 +726,6 @@ public class FollowCameraController : IInputPart
         }
 
 
-        var angleX = -(_vMouseOffset.Y - 15f) * (float)Math.PI / 180f;
-        var angleY = -(_vMouseOffset.X) * (float)Math.PI / 180f;
         //var vUserCameraFront = 
         //    vRealCameraFront * (float)Math.Cos(-angleY)
         //    + vRealCameraRight * (float)Math.Sin(-angleY);
@@ -779,12 +739,12 @@ public class FollowCameraController : IInputPart
         /*
          * Apply relative mouse movement
          */
-        var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), angleX);
-        var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), angleY);
+        //var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), _mouseAngles.X);
+        //var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
         var qUserCameraOrientation = qRealCameraOrientation;
-        qUserCameraOrientation *= rotUp;
-        qUserCameraOrientation *= rotRight;
-
+        // qUserCameraOrientation = Quaternion.Concatenate(qUserCameraOrientation, rotRight);
+        //  qUserCameraOrientation = Quaternion.Concatenate(qUserCameraOrientation, rotUp);
+    
         /*
          * Now we have computed the position we want to target the camera object to.
          */
