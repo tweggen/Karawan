@@ -61,6 +61,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerVanishBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\IQuest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\Manager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ToSomewhere.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TrailVehicle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\rom\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\ShopFront.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\FixedPosViewer.cs" />

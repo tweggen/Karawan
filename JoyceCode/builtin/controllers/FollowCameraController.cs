@@ -52,7 +52,7 @@ public class FollowCameraController : IInputPart
     public float CameraRadius { get; set; } = 0.5f;
     public float CameraMass { get; set; } = 0.5f;
 
-    public float CameraDistance { get; set; } = 0.0f;
+    public float CameraDistance { get; set; } = 0.15f;
     public float CameraMinDistance { get; set; } = 2.0f;
 
     public string CameraPhysicsName { get; set; } = "CameraPhysics";
@@ -147,7 +147,7 @@ public class FollowCameraController : IInputPart
     /**
      * We maintain an internal zoom state ranging from zero to one.
      */
-    private float _zoomState = 0f;
+    private float _zoomState = 0.15f;
 
     private float _zoomDistance()
     {
@@ -650,12 +650,16 @@ public class FollowCameraController : IInputPart
             return;
         }
         
-        _mouseAngles.X = -(_vMouseOffset.Y - 15f) * (float)Math.PI / 180f;
+        _mouseAngles.X = (_vMouseOffset.Y + 15f) * (float)Math.PI / 180f;
         _mouseAngles.Y = -(_vMouseOffset.X) * (float)Math.PI / 180f;
 
 
         var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
-        var vCarrotPos = cToParent.Matrix.Translation;
+        
+        /*
+         * Look slightly above the car.
+         */
+        var vCarrotPos = cToParent.Matrix.Translation + Vector3.UnitY*1f;
 
         /*
          * First compute the desired camera position (vPerfectCameraPos).

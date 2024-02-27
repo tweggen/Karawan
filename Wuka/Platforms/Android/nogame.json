@@ -11,7 +11,7 @@
     "nogame.CreateOSD": true,
     "nogame.CreateMap": true,
     "nogame.CreateMiniMap": true,
-    "nogame.LogosScene.PlayTitleMusic": true
+    "nogame.LogosScene.PlayTitleMusic": false
   },
   "implementations":
   {
