@@ -59,7 +59,11 @@ namespace engine.physics
 
         BufferPool GetPoolForWorker(int workerIndex)
         {
+#if false
             return threadDispatcher == null ? pool : threadDispatcher.GetThreadMemoryPool(workerIndex);
+#else
+            return threadDispatcher == null ? pool : threadDispatcher.WorkerPools[workerIndex];
+#endif
         }
 
         public void Initialize(Bodies bodies)

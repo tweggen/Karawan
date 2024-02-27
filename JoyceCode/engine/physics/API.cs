@@ -252,7 +252,7 @@ public class API
 
                         prefBody.GetDescription(out var desc);
                         System.Threading.Thread.Sleep(200);
-                        Trace($"body #{prefBody.Handle}, exists={prefBody.Exists}, isAwake={prefBody.Awake}, Velocity={prefBody.Velocity.Linear}, Pos={prefBody.Pose.Position}, MotionState={prefBody.MotionState}, SolverState={prefBody.SolverState}, Collidable={prefBody.Collidable}, BodyActivity={prefBody.Activity}, NConstraints={prefBody.Constraints.Count}, description={desc.ToString()}");
+                        Trace($"body #{prefBody.Handle}, exists={prefBody.Exists}, isAwake={prefBody.Awake}, Velocity={prefBody.Velocity.Linear}, Pos={prefBody.Pose.Position}, MotionState={prefBody.MotionState}, , Collidable={prefBody.Collidable}, NConstraints={prefBody.Constraints.Count}, description={desc.ToString()}");
                     }
                 }
                 // Trace($"Exception during physics step: {e}");

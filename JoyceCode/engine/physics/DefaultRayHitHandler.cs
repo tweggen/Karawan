@@ -56,9 +56,13 @@ public class DefaultRayHitHandler : IRayHitHandler
         return true;
     }
 
-    public void OnRayHit(in RayData ray, ref float maximumT, float t, in Vector3 normal, CollidableReference collidable,
-        int childIndex)
+#if false
+    public void OnRayHit(in RayData ray, ref float maximumT, float t, in Vector3 normal, CollidableReference collidable, int childIndex)
     {
+#else
+    public void OnRayHit(in RayData ray, ref float maximumT, float t, Vector3 normal, CollidableReference collidable, int childIndex)
+    {
+#endif
         CollisionProperties collisionProperties = null;
         
         switch (collidable.Mobility)
@@ -71,7 +75,7 @@ public class DefaultRayHitHandler : IRayHitHandler
                 break;
             case CollidableMobility.Static:
                 _api.GetCollisionProperties(collidable.StaticHandle, out collisionProperties);
-                break;
+                break;  
         }
 
         _action(collidable, collisionProperties, t, normal);
