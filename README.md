@@ -16,9 +16,8 @@ Check out this repo to any directory. Directly next to this directory, check out
 Then, load the Karawan solution in the Karawan sub-directory of the Karawan repo and build it.
 It references the other projects.
 
-Current builds actively supported are Windows 11 x64 and ARM64 Android 13 . Windows 10
-and other Android versions also work, Linux x64 is currently making some trouble loading 
-DLLs, which should be fixed again soon.
+Current builds actively supported are Windows 11 x64; Linux x86 and ARM64 Android 13 . Windows 10
+and other Android versions also work.
 
 
 ## About models and instances
