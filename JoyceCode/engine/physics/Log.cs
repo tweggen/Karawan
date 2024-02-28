@@ -66,7 +66,7 @@ public class Log
         string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.json";
 
         JsonNode jn = DumpToNode();
-        string jsonString = JsonSerializer.Serialize(jn, new JsonSerializerOptions());
+        string jsonString = JsonSerializer.Serialize(jn, JsonSerializerOptions);
         File.WriteAllText(Path.Combine(path,filename), jsonString);
     }
     

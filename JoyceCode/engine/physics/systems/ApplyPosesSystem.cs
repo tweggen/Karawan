@@ -31,6 +31,11 @@ namespace engine.physics.systems
                     BodyReference pref = cRefBody.Reference;
                     vPosition = pref.Pose.Position;
                     qOrientation = pref.Pose.Orientation;
+                    
+                    /*
+                     * Remember the pose
+                     */
+                    actions.DynamicSnapshot.Execute(_engine.PLog, _engine.Simulation, pref);
                 }
                 _aTransform.SetTransform(entity, qOrientation, vPosition);
             }

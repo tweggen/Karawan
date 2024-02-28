@@ -8,7 +8,7 @@ public class DynamicSnapshot : ABase
     public bool IsAwake;
     public MotionState MotionState;
     
-    public static int Execute(Log? plog, Simulation simulation, ref BodyReference pref)
+    public static int Execute(Log? plog, Simulation simulation, in BodyReference pref)
     {
         if (plog != null)
         {
