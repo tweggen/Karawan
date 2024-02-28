@@ -223,6 +223,10 @@ namespace nogame.characters.cubes
                                     new BepuPhysics.Collidables.CollidableDescription(
                                         _getSphereShape(wf.Engine),
                                         0.1f),
+                                    //ShapeFactory.GetSphereCollidable(_cubeSize/1.4f, wf.Engine),
+                                    //new BepuPhysics.Collidables.CollidableDescription(
+                                    //    ShapeFactory.GetSphereShape(_cubeSize/1.4f, wf.Engine),
+                                    //    0.1f),
                                     new BodyActivityDescription(0.01f)
                                 )
                             );

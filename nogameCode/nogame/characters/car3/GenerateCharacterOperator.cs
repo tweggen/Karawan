@@ -246,6 +246,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                     new BepuPhysics.Collidables.CollidableDescription(
                                         ShapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
                                         0.1f),
+                                    // ShapeFactory.GetSphereCollidable(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
                                     new BodyActivityDescription(0.01f)
                                 )
                             );

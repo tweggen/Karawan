@@ -61,7 +61,6 @@ public class FollowCameraController : IInputPart
     private BepuPhysics.Collidables.Sphere _pbodyCameraSphere;
     private BepuPhysics.Collidables.TypedIndex _pshapeCameraSphere;
     private BodyHandle _phandleCameraSphere;
-    private ConstraintHandle _chandleCameraServo;
     private BodyInertia _pinertiaCameraSphere;
     private SpringSettings _cameraSpringSettings;
     private ServoSettings _cameraServoSettings;
@@ -111,6 +110,7 @@ public class FollowCameraController : IInputPart
                         _pshapeCameraSphere,
                         0.1f
                     ),
+                    //ShapeFactory.GetSphereCollidable(CameraRadius, _engine),
                     new BodyActivityDescription(0.01f)
                 )
             );

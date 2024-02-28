@@ -14,6 +14,7 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
     private engine.streets.StreetPoint _streetPoint;
     private StreetNavigationController _snc;
     private Quaternion _qPrevRotation = Quaternion.Identity;
+    private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
 
 
     /**
@@ -26,6 +27,7 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
     public override void OnCollision(ContactEvent cev)
     {
         base.OnCollision(cev);
+        if (_cutCollisions) return;
         
         var me = cev.ContactInfo.PropertiesA;
         ref engine.physics.components.Body cCarBody = ref me.Entity.Get<engine.physics.components.Body>();

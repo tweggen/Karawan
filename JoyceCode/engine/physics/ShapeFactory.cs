@@ -5,13 +5,14 @@ namespace engine.physics;
 public class ShapeFactory
 {
     private static object _classLock = new();
-    
-    
+
+    private static SortedDictionary<float, BepuPhysics.Collidables.CollidableDescription> _mapSphereCollidables = new();
     private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
     private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
+    
     public static BepuPhysics.Collidables.TypedIndex GetSphereShape(float radius, in Engine engine)
     {
-        lock(_classLock)
+        lock (_classLock)
         {
             BepuPhysics.Collidables.TypedIndex pshapeSphere;
             if (_mapPshapeSphere.TryGetValue(radius, out pshapeSphere))
@@ -36,7 +37,7 @@ public class ShapeFactory
     private static SortedDictionary<float, BepuPhysics.Collidables.Cylinder> _mapPbodyCylinder = new();
     public static BepuPhysics.Collidables.TypedIndex GetCylinderShape(float radius, in Engine engine)
     {
-        lock(_classLock)
+        lock (_classLock)
         {
             BepuPhysics.Collidables.TypedIndex pshapeCylinder;
             if (_mapPshapeCylinder.TryGetValue(radius, out pshapeCylinder))
@@ -57,4 +58,21 @@ public class ShapeFactory
         }
     }
 
+    public static BepuPhysics.Collidables.CollidableDescription GetSphereCollidable(float radius, in Engine engine)
+    {
+        lock (_classLock)
+        {
+            BepuPhysics.Collidables.CollidableDescription coll;
+            if (_mapSphereCollidables.TryGetValue(radius, out coll))
+            {
+                return coll;
+            }
+
+            coll = new BepuPhysics.Collidables.CollidableDescription(
+                GetSphereShape(radius, engine),
+                0.1f);  
+            _mapSphereCollidables.Add(radius, coll);
+            return coll;
+        }
+    }
 }

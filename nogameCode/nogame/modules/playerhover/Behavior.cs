@@ -16,11 +16,13 @@ public class Behavior : IBehavior
     private WASDPhysics _controllerWASDPhysics = null;
     private engine.Engine _engine = null;
     private DefaultEcs.Entity _eShip;
+    private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
 
     private float _massShip;
     
     public void OnCollision(ContactEvent cev)
     {
+        if (_cutCollisions)( return;
         /*
          * If this contact involved us, we store the other contact info in this variable.
          * If the other does not have collision properties, this variable also is empty.

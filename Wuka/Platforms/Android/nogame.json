@@ -84,7 +84,8 @@
     "debug.options.flatshading": false,
     "nogame.characters.cube.maxDistance": 400.0,
     "nogame.characters.car3.maxDistance": 800.0,
-    "nogame.characters.tram.maxDistance": 1600.0
+    "nogame.characters.tram.maxDistance": 1600.0,
+    "nogame.CutCollision": true
   },
   "quests":
   {

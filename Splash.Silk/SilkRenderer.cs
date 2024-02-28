@@ -35,7 +35,7 @@ namespace Splash.Silk
 
         private uint _frameNumber = 0;
 
-        private Vector3 v3FogNight = new(0.1f, 0.07f, 0.01f);
+        private Vector3 v3FogNight = new(0.00f, 0.00f, 0.02f);
         private Vector3 v3FogDawn = new(0.2f, 0.11f, 0.2f); 
         private Vector3 v3FogDay = new(0.4f, 0.3f, 0.3f);
         private Vector3 v3FogDusk = new(0.3f, 0.25f, 0.2f);
