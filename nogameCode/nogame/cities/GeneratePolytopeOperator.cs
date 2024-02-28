@@ -125,9 +125,10 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(
                         BodyDescription.CreateKinematic(
                             new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                            new BepuPhysics.Collidables.CollidableDescription(
-                                _getSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
-                                0.1f),
+                            ShapeFactory.GetSphereCollidable(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
+                            //new BepuPhysics.Collidables.CollidableDescription(
+                            //    _getSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
+                            //    0.1f),
                             new BodyActivityDescription(0.01f)
                         )
                     );

@@ -41,11 +41,12 @@ namespace Splash.Silk
         private Vector3 v3FogDusk = new(0.3f, 0.25f, 0.2f);
 
 
-        private Vector3 _colorBlend(float a, float b, float x, Vector3 va, Vector3 vb)
+        private Vector3 _colorBlend(float a, float b, TimeSpan now, Vector3 va, Vector3 vb)
         {
-            x -= a;
-            x /= b - a;
-            return va * x + vb * (1f - x);
+            float x = (float)now.TotalMilliseconds;
+            x -= a*3600000;
+            x /= b*3600000 - a*3600000;
+            return vb * x + va * (1f - x);
         }
         
         /**
@@ -65,19 +66,19 @@ namespace Splash.Silk
                 }
                 else if (now.Hours < 8f)
                 {
-                    fogColor = _colorBlend(6f, 8f, now.Hours, v3FogNight, v3FogDawn);
+                    fogColor = _colorBlend(6f, 8f, now, v3FogNight, v3FogDawn);
                 }
                 else if (now.Hours < 11f)
                 {
-                    fogColor = _colorBlend(8f, 11f, now.Hours, v3FogDawn, v3FogDay);
+                    fogColor = _colorBlend(8f, 11f, now, v3FogDawn, v3FogDay);
                 }
                 else if (now.Hours < 15f)
                 {
-                    fogColor = _colorBlend(11f, 15f, now.Hours, v3FogDay, v3FogDusk);
+                    fogColor = _colorBlend(11f, 15f, now, v3FogDay, v3FogDusk);
                 }
                 else if (now.Hours < 19f)
                 {
-                    fogColor = _colorBlend(15f, 19f, now.Hours, v3FogDusk, v3FogNight);
+                    fogColor = _colorBlend(15f, 19f, now, v3FogDusk, v3FogNight);
                 }
                 else
                 {

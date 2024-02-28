@@ -59,9 +59,9 @@ namespace engine.physics
 
         BufferPool GetPoolForWorker(int workerIndex)
         {
-#if false
+#if true // Bepu 2.4
             return threadDispatcher == null ? pool : threadDispatcher.GetThreadMemoryPool(workerIndex);
-#else
+#else // Bepu 2.5
             return threadDispatcher == null ? pool : threadDispatcher.WorkerPools[workerIndex];
 #endif
         }

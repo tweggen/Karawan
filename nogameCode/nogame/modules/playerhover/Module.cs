@@ -436,7 +436,7 @@ public class Module : engine.AModule
             float bodyRadius = model.RootNode.InstanceDesc != null
                 ? model.RootNode.InstanceDesc.AABBTransformed.Radius
                 : 1.4f;
-            var pbodySphere = new BepuPhysics.Collidables.Sphere(Single.Max(1.4f, bodyRadius));
+            var pshapeSphere = ShapeFactory.GetSphereShape(Single.Max(1.4f, bodyRadius), _engine, out var pbodySphere);
             var pinertiaSphere = pbodySphere.ComputeInertia(MassShip);
 
             lock (_engine.Simulation)
@@ -446,7 +446,7 @@ public class Module : engine.AModule
                         new RigidPose(posShip, rotShip),
                         pinertiaSphere,
                         new BepuPhysics.Collidables.CollidableDescription(
-                            _engine.Simulation.Shapes.Add(pbodySphere),
+                            pshapeSphere,
                             0.1f
                         ),
                         new BodyActivityDescription(0.01f)

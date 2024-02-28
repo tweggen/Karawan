@@ -22,7 +22,7 @@ public class Behavior : IBehavior
     
     public void OnCollision(ContactEvent cev)
     {
-        if (_cutCollisions)( return;
+        if (_cutCollisions) return;
         /*
          * If this contact involved us, we store the other contact info in this variable.
          * If the other does not have collision properties, this variable also is empty.

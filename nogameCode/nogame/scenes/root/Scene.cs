@@ -36,7 +36,15 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.map.MapViewer>(),
         new MyModule<modules.menu.Module>() { Activate = false },
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
-        new MyModule<builtin.modules.Stats>() { Activate = false },
+        new MyModule<builtin.modules.Stats>()
+        {
+#if DEBUG
+            Activate = true
+#else
+            Activate = false
+#endif
+            
+        },
         new SharedModule<nogame.modules.story.Narration>() { Activate = false },
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<engine.news.ClickModule>()
@@ -44,7 +52,14 @@ public class Scene : AModule, IScene, IInputPart
     
 
     private bool _isMapShown = false;
-    private bool _areStatsShown = false;
+
+    private bool _areStatsShown =
+#if DEBUG
+            true
+#else
+        false
+#endif
+        ;
     private bool _isUIShown = false;
     private bool _isMenuShown = false;
 

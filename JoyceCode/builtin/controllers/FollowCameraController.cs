@@ -58,12 +58,9 @@ public class FollowCameraController : IInputPart
     public string CameraPhysicsName { get; set; } = "CameraPhysics";
 
     private BodyReference _prefCameraBall;
-    private BepuPhysics.Collidables.Sphere _pbodyCameraSphere;
     private BepuPhysics.Collidables.TypedIndex _pshapeCameraSphere;
     private BodyHandle _phandleCameraSphere;
     private BodyInertia _pinertiaCameraSphere;
-    private SpringSettings _cameraSpringSettings;
-    private ServoSettings _cameraServoSettings;
     private BodyReference _prefPlayer;
 
     private float _dtMoving = 0f;
@@ -99,9 +96,8 @@ public class FollowCameraController : IInputPart
             Vector3 posShip = _prefPlayer.Pose.Position;
             Quaternion rotShip = _prefPlayer.Pose.Orientation;
             
-            _pbodyCameraSphere = new(CameraRadius);
-            _pinertiaCameraSphere = _pbodyCameraSphere.ComputeInertia(CameraMass);
-            _pshapeCameraSphere = _engine.Simulation.Shapes.Add(_pbodyCameraSphere);
+            _pshapeCameraSphere = ShapeFactory.GetSphereShape(CameraRadius, _engine, out var pbodyCameraSphere);
+            _pinertiaCameraSphere = pbodyCameraSphere.ComputeInertia(CameraMass);
             _phandleCameraSphere = _engine.Simulation.Bodies.Add(
                 BodyDescription.CreateDynamic(
                     new RigidPose(posShip, rotShip),
@@ -110,7 +106,6 @@ public class FollowCameraController : IInputPart
                         _pshapeCameraSphere,
                         0.1f
                     ),
-                    //ShapeFactory.GetSphereCollidable(CameraRadius, _engine),
                     new BodyActivityDescription(0.01f)
                 )
             );
