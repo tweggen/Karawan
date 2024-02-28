@@ -44,6 +44,15 @@ public class Engine
     private object _lo = new();
 
     public object ShortSleep = new();
+
+    public physics.Log PLog =
+#if DEBUG
+        new()
+#else
+        null
+#endif
+        ;
+    
     
     private int _nextId = 0;
 
@@ -271,6 +280,8 @@ public class Engine
         if (entityChanged)
         {
             OnCameraEntityChanged?.Invoke(this, entity);
+            
+            PLog?.Dump();
         }
     }
 

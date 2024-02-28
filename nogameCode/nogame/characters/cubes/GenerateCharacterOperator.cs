@@ -18,6 +18,8 @@ namespace nogame.characters.cubes
         public static readonly string PhysicsName = "nogame.characters.cube";
         private static object _classLock = new();
 
+        private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
+
         private static engine.audio.Sound _jCubeSound;
 
         private static engine.audio.Sound _getCubeSound()
@@ -48,25 +50,6 @@ namespace nogame.characters.cubes
                 return _jMeshCube;
             }
         }
-
-        private static BepuPhysics.Collidables.TypedIndex _pshapeSphere;
-        private static BepuPhysics.Collidables.Sphere _pbodySphere;
-        private static BepuPhysics.Collidables.TypedIndex _getSphereShape(in Engine engine)
-        {
-            lock(_classLock)
-            {
-                lock (engine.Simulation)
-                {
-                    if( !_pshapeSphere.Exists )
-                    {
-                        _pbodySphere = new(_cubeSize/1.4f);
-                        _pshapeSphere = engine.Simulation.Shapes.Add(_pbodySphere);
-                    }
-                }
-                return _pshapeSphere;
-            }
-        }
-
 
         private ClusterDesc _clusterDesc;
         private builtin.tools.RandomSource _rnd;
@@ -218,7 +201,7 @@ namespace nogame.characters.cubes
                         engine.physics.Object po;
                         lock (wf.Engine.Simulation)
                         {
-                            po = new(wf.Engine, eTarget, ShapeFactory.GetSphereShape(_cubeSize / 1.4f, wf.Engine))
+                            po = new(wf.Engine, eTarget, _shapeFactory.GetSphereShape(_cubeSize / 1.4f))
                             {
                                 CollisionProperties = new engine.physics.CollisionProperties
                                 {

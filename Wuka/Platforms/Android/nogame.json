@@ -16,6 +16,7 @@
   "implementations":
   {
     "engine.DBStorage": null,
+    "engine.physics.ShapeFactory": null,
     "nogame.modules.AutoSave": null,
     "engine.streets.ClusterStorage": null,
     "builtin.map.IMapProvider":

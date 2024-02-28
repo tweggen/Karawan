@@ -228,6 +228,8 @@ public class API
                     int o = (int) e.Data["Handle"];
                     if (I.Get<engine.physics.ObjectCatalogue>().FindObject(o, out var po))
                     {
+                        _engine.PLog.Dump();
+                        
                         BodyReference prefBody = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
                         Trace($"Found problem with physics object of entity {po.Entity} bodyhandle {po.IntHandle}.");
                         Trace("Body's constraints:");

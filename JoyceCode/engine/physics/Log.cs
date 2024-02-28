@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BepuPhysics;
@@ -27,7 +28,7 @@ public class Log
     }
 
 
-    public JsonNode Dump()
+    public JsonNode DumpToNode()
     {
         JsonNode jnRoot = new JsonObject();
         JsonArray jnArray = new JsonArray();
@@ -57,6 +58,17 @@ public class Log
         return jnRoot;
     }
 
+
+    public void Dump()
+    {
+        string path = GlobalSettings.Get("Engine.RWPath");
+        string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}";
+
+        JsonNode jn = DumpToNode();
+        string jsonString = JsonSerializer.Serialize(jn, new JsonSerializerOptions());
+        File.WriteAllText(Path.Combine(path,filename), jsonString);
+    }
+    
 
     public void Replay(Simulation simulation)
     {

@@ -28,6 +28,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     private static object _classLock = new();
 
     private static engine.audio.Sound[] _jCar3Sound;
+    private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
 
     private static List<string> _primarycolors = new List<string>()
     {
@@ -251,7 +252,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         engine.physics.Object po;
                         lock (wf.Engine.Simulation)
                         {
-                            var shape = ShapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine);
+                            var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
                             po = new engine.physics.Object(wf.Engine, eTarget, Vector3.Zero, Quaternion.Identity, shape)
                             {
                                 CollisionProperties = collisionProperties

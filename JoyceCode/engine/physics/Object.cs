@@ -129,12 +129,15 @@ public class Object : IDisposable
             }
             else
             {
-                BepuPhysics.BodyHandle bh = new(IntHandle);
 #if DEBUG
-                BodyReference prefBody = Engine.Simulation.Bodies.GetBodyReference(bh);
-                if (prefBody.Constraints.Count > 0)
                 {
-                    ErrorThrow<InvalidOperationException>($"Rejecting to remove body {IntHandle} from entity {Entity}");
+                    BepuPhysics.BodyHandle bh = new(IntHandle);
+                    BodyReference prefBody = Engine.Simulation.Bodies.GetBodyReference(bh);
+                    if (prefBody.Constraints.Count > 0)
+                    {
+                        ErrorThrow<InvalidOperationException>(
+                            $"Rejecting to remove body {IntHandle} from entity {Entity}");
+                    }
                 }
 #endif              
                 _doRemoveContactListenerNoLock();
@@ -146,7 +149,11 @@ public class Object : IDisposable
                 }
                 else
                 {
-                    Engine.Simulation.Bodies.Remove(bh);
+#if true
+                    actions.RemoveBody.Execute(Engine.PLog, Engine.Simulation, IntHandle);
+#else
+                    Engine.Simulation.Bodies.Remove(new BodyHandle(bh));
+#endif
                 }
             }
 
@@ -253,12 +260,16 @@ public class Object : IDisposable
         BodyInertia inertia, BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
+#if true
+        IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, v3Position, qOrientation, inertia, shape);
+#else
         IntHandle = engine.Simulation.Bodies.Add(
             BodyDescription.CreateDynamic(
                 new RigidPose(v3Position, qOrientation),
                 inertia, new CollidableDescription(shape, 0.1f),
                 new BodyActivityDescription(0.01f)
             )).Value;
+#endif
     }
     
     
@@ -272,12 +283,16 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
+#if true
+        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, v3Position, qOrientation, shape);
+#else
         IntHandle = engine.Simulation.Bodies.Add(
             BodyDescription.CreateKinematic(
                 new RigidPose(v3Position, qOrientation),
                 new CollidableDescription(shape, 0.1f),
                 new BodyActivityDescription(0.01f)
             )).Value;
+#endif
     }
 
     
@@ -290,12 +305,16 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
+#if true
+        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Vector3.Zero, Quaternion.Identity, shape);
+#else
         IntHandle = engine.Simulation.Bodies.Add(
             BodyDescription.CreateKinematic(
                 new RigidPose(Vector3.Zero, Quaternion.Identity),
                 new CollidableDescription(shape, 0.1f),
                 new BodyActivityDescription(0.01f)
             )).Value;
+#endif
     }
 
 }

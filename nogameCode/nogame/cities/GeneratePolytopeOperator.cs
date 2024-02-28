@@ -22,6 +22,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
     private engine.world.ClusterDesc _clusterDesc;
     private builtin.tools.RandomSource _rnd;
     private string _myKey;
+    private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
     
     private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
     private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
@@ -124,7 +125,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             lock (worldFragment.Engine.Simulation)
             {
                 po = new(worldFragment.Engine, eTarget,
-                    ShapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine))
+                    _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius))
                 {
                     CollisionProperties = new engine.physics.CollisionProperties
                     { 

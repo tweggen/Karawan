@@ -118,7 +118,7 @@ public class ToSomewhere : engine.world.IOperator
         engine.physics.Object po;
         lock (e.Simulation)
         {
-            var shape = ShapeFactory.GetCylinderShape(3f, e);
+            var shape = I.Get<ShapeFactory>().GetCylinderShape(3f);
             po = new engine.physics.Object(e, eGoal, shape)
             {
                 CollisionProperties = new CollisionProperties()
