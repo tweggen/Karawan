@@ -120,34 +120,22 @@ public class GeneratePolytopeOperator : IFragmentOperator
             eTarget.Set(new engine.joyce.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));
 
             BodyReference prefSphere;
+            engine.physics.Object po;
             lock (worldFragment.Engine.Simulation)
             {
-                BodyHandle phandleSphere = worldFragment.Engine.Simulation.Bodies.Add(
-                        BodyDescription.CreateKinematic(
-                            new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                            ShapeFactory.GetSphereCollidable(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
-                            //new BepuPhysics.Collidables.CollidableDescription(
-                            //    _getSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine),
-                            //    0.1f),
-                            new BodyActivityDescription(0.01f)
-                        )
-                    );
-                prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-            }
-
-            engine.physics.CollisionProperties collisionProperties =
-                new engine.physics.CollisionProperties
+                po = new(worldFragment.Engine, eTarget,
+                    ShapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius, worldFragment.Engine))
+                {
+                    CollisionProperties = new engine.physics.CollisionProperties
                     { 
                         Entity = eTarget,
                         Name = "nogame.furniture.polytopeBall",
                         Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable
-                    };
-            eTarget.Set(new engine.physics.components.Body(
-                new engine.physics.Object(eTarget, prefSphere.Handle)
-                {
-                    CollisionProperties = collisionProperties
-                },
-                prefSphere));
+                    }
+                };
+                prefSphere = worldFragment.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+            }
+            eTarget.Set(new engine.physics.components.Body(po, prefSphere));
             eTarget.Set(new engine.draw.components.OSDText(
                 new Vector2(0, -30f),
                 new Vector2(160f, 18f),

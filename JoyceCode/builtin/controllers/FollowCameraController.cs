@@ -58,9 +58,6 @@ public class FollowCameraController : IInputPart
     public string CameraPhysicsName { get; set; } = "CameraPhysics";
 
     private BodyReference _prefCameraBall;
-    private BepuPhysics.Collidables.TypedIndex _pshapeCameraSphere;
-    private BodyHandle _phandleCameraSphere;
-    private BodyInertia _pinertiaCameraSphere;
     private BodyReference _prefPlayer;
 
     private float _dtMoving = 0f;
@@ -96,38 +93,12 @@ public class FollowCameraController : IInputPart
             Vector3 posShip = _prefPlayer.Pose.Position;
             Quaternion rotShip = _prefPlayer.Pose.Orientation;
             
-            _pshapeCameraSphere = ShapeFactory.GetSphereShape(CameraRadius, _engine, out var pbodyCameraSphere);
-            _pinertiaCameraSphere = pbodyCameraSphere.ComputeInertia(CameraMass);
-            _phandleCameraSphere = _engine.Simulation.Bodies.Add(
-                BodyDescription.CreateDynamic(
-                    new RigidPose(posShip, rotShip),
-                    _pinertiaCameraSphere,
-                    new CollidableDescription(
-                        _pshapeCameraSphere,
-                        0.1f
-                    ),
-                    new BodyActivityDescription(0.01f)
-                )
-            );
-            _prefCameraBall = _engine.Simulation.Bodies.GetBodyReference(_phandleCameraSphere);
-
-            _eTarget.Set(new engine.physics.components.Body(
-                new engine.physics.Object(_eTarget, _prefCameraBall.Handle)
-                {
-                    ReleaseActions = new List<Action> {
-                        () =>
-                        {
-                            if (_pshapeCameraSphere.Index != 0)
-                            {
-                                _engine.Simulation.Shapes.Remove(_pshapeCameraSphere);
-                                _pshapeCameraSphere = default;
-                            }
-                        }
-                        
-                    },
-                }.AddContactListener(),
-                _prefCameraBall)
-            );
+            var shape = ShapeFactory.GetSphereShape(CameraRadius, _engine, out var pbody);
+            var inertia = pbody.ComputeInertia(CameraMass);
+            var po = new engine.physics.Object(_engine, _eTarget,
+                posShip, rotShip, inertia, shape).AddContactListener();
+            _prefCameraBall = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+            _eTarget.Set(new engine.physics.components.Body(po, _prefCameraBall));
         }
 
     }

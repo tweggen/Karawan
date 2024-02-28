@@ -115,40 +115,26 @@ public class ToSomewhere : engine.world.IOperator
         BodyHandle phandleCylinder;
 
         DefaultEcs.Entity eGoal = e.CreateEntity($"goal {Name}");
-
+        engine.physics.Object po;
         lock (e.Simulation)
         {
-            phandleCylinder = e.Simulation.Bodies.Add(
-                BodyDescription.CreateKinematic(
-                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                    new BepuPhysics.Collidables.CollidableDescription(
-                        physics.ShapeFactory.GetCylinderShape(3f, e),
-                        0.1f),
-                    new BodyActivityDescription(0.01f)
-                )
-            );
-
-            prefCylinder = e.Simulation.Bodies.GetBodyReference(phandleCylinder);
-
-            /*
-             * Position will be set by setup kinetics system.
-             */
+            var shape = ShapeFactory.GetCylinderShape(3f, e);
+            po = new engine.physics.Object(e, eGoal, shape)
+            {
+                CollisionProperties = new CollisionProperties()
+                {
+                    Entity = eGoal,
+                    Flags =
+                        engine.physics.CollisionProperties.CollisionFlags.IsDetectable
+                        | engine.physics.CollisionProperties.CollisionFlags.TriggersCallbacks,
+                    Name = Name,
+                },
+                OnCollision = _onCollision
+            };
+            prefCylinder = e.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
         }
 
-        var poCylinder = new engine.physics.Object(eGoal, phandleCylinder)
-        {
-            CollisionProperties = new CollisionProperties()
-            {
-                Entity = eGoal,
-                Flags =
-                    engine.physics.CollisionProperties.CollisionFlags.IsDetectable
-                    | engine.physics.CollisionProperties.CollisionFlags.TriggersCallbacks,
-                Name = Name,
-            },
-            OnCollision = _onCollision
-        };
-
-        eGoal.Set(new Body(poCylinder, prefCylinder));
+        eGoal.Set(new Body(po, prefCylinder));
 
         var apiTransform = I.Get<joyce.TransformApi>();
         apiTransform.SetTransforms(eGoal, true, 0, Quaternion.Identity, RelativePosition);

@@ -238,21 +238,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             _getCar3Sound(carIdx), 150f));
 
                         BodyReference prefSphere;
-                        lock (wf.Engine.Simulation)
-                        {
-                            BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
-                                BodyDescription.CreateKinematic(
-                                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                                    //new BepuPhysics.Collidables.CollidableDescription(
-                                    //    ShapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
-                                    //    0.1f),
-                                    ShapeFactory.GetSphereCollidable(jInstanceDesc.AABBTransformed.Radius, wf.Engine),
-                                    new BodyActivityDescription(0.01f)
-                                )
-                            );
-                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        }
-                        
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
                             {
@@ -263,12 +248,17 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                     | CollisionProperties.CollisionFlags.TriggersCallbacks,
                                 Name = PhysicsName,
                             };
-                        eTarget.Set(new engine.physics.components.Body(
-                            new engine.physics.Object(eTarget, prefSphere.Handle)
+                        engine.physics.Object po;
+                        lock (wf.Engine.Simulation)
+                        {
+                            var shape = ShapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius, wf.Engine);
+                            po = new engine.physics.Object(wf.Engine, eTarget, Vector3.Zero, Quaternion.Identity, shape)
                             {
                                 CollisionProperties = collisionProperties
-                            },
-                            prefSphere));
+                            };
+                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                        }
+                        eTarget.Set(new engine.physics.components.Body(po, prefSphere));
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);

@@ -215,41 +215,24 @@ namespace nogame.characters.cubes
                             _rnd.GetFloat() * 2f * (float)Math.PI / 180f)));
 #endif
                         BodyReference prefSphere;
+                        engine.physics.Object po;
                         lock (wf.Engine.Simulation)
                         {
-                            BodyHandle phandleSphere = wf.Engine.Simulation.Bodies.Add(
-                                BodyDescription.CreateKinematic(
-                                    new Vector3(0f, 0f, 0f), // infinite mass, this is a kinematic object.
-                                    //new BepuPhysics.Collidables.CollidableDescription(
-                                    //    _getSphereShape(wf.Engine),
-                                    //    0.1f),
-                                    ShapeFactory.GetSphereCollidable(_cubeSize/1.4f, wf.Engine),
-                                    //new BepuPhysics.Collidables.CollidableDescription(
-                                    //    ShapeFactory.GetSphereShape(_cubeSize/1.4f, wf.Engine),
-                                    //    0.1f),
-                                    new BodyActivityDescription(0.01f)
-                                )
-                            );
-                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(phandleSphere);
-                        }
-
-                        engine.physics.CollisionProperties collisionProperties =
-                            new engine.physics.CollisionProperties
+                            po = new(wf.Engine, eTarget, ShapeFactory.GetSphereShape(_cubeSize / 1.4f, wf.Engine))
                             {
-                                DebugInfo = $"_chrIdx {_characterIndex}",
-                                Entity = eTarget, 
-                                Flags = CollisionProperties.CollisionFlags.IsDetectable,
-                                Name = "nogame.characters.cube",
+                                CollisionProperties = new engine.physics.CollisionProperties
+                                {
+                                    DebugInfo = $"_chrIdx {_characterIndex}",
+                                    Entity = eTarget, 
+                                    Flags = CollisionProperties.CollisionFlags.IsDetectable,
+                                    Name = "nogame.characters.cube",
+                                }
                             };
+                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                        }
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCubeSound(), 150f));
-                        eTarget.Set(new engine.physics.components.Body(
-                            new engine.physics.Object(eTarget, prefSphere.Handle)
-                            {
-                                CollisionProperties = collisionProperties
-                            },
-                            prefSphere)
-                        );
+                        eTarget.Set(new engine.physics.components.Body(po, prefSphere));
                     });
 
                     wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);

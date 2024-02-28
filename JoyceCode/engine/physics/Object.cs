@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using BepuPhysics;
+using BepuPhysics.Collidables;
 using static engine.Logger;
 
 namespace engine.physics;
@@ -235,9 +236,66 @@ public class Object : IDisposable
     }
 
     
-    public Object(DefaultEcs.Entity entity, BepuPhysics.BodyHandle sh)
+    public Object(DefaultEcs.Entity entity, BepuPhysics.BodyHandle bh)
     {
         Entity = entity;
-        IntHandle = sh.Value;
+        IntHandle = bh.Value;
     }
+
+
+    /**
+     * Must be called with simulation locked!!
+     */
+    public Object(
+        Engine engine,
+        DefaultEcs.Entity entity,
+        Vector3 v3Position, Quaternion qOrientation,
+        BodyInertia inertia, BepuPhysics.Collidables.TypedIndex shape)
+    {
+        Entity = entity;
+        IntHandle = engine.Simulation.Bodies.Add(
+            BodyDescription.CreateDynamic(
+                new RigidPose(v3Position, qOrientation),
+                inertia, new CollidableDescription(shape, 0.1f),
+                new BodyActivityDescription(0.01f)
+            )).Value;
+    }
+    
+    
+    /**
+     * Must be called with simulation locked!!
+     */
+    public Object(
+        Engine engine,
+        DefaultEcs.Entity entity,
+        Vector3 v3Position, Quaternion qOrientation,
+        BepuPhysics.Collidables.TypedIndex shape)
+    {
+        Entity = entity;
+        IntHandle = engine.Simulation.Bodies.Add(
+            BodyDescription.CreateKinematic(
+                new RigidPose(v3Position, qOrientation),
+                new CollidableDescription(shape, 0.1f),
+                new BodyActivityDescription(0.01f)
+            )).Value;
+    }
+
+    
+    /**
+     * Must be called with simulation locked!!
+     */
+    public Object(
+        Engine engine,
+        DefaultEcs.Entity entity,
+        BepuPhysics.Collidables.TypedIndex shape)
+    {
+        Entity = entity;
+        IntHandle = engine.Simulation.Bodies.Add(
+            BodyDescription.CreateKinematic(
+                new RigidPose(Vector3.Zero, Quaternion.Identity),
+                new CollidableDescription(shape, 0.1f),
+                new BodyActivityDescription(0.01f)
+            )).Value;
+    }
+
 }

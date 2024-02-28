@@ -30,7 +30,6 @@ public class Module : engine.AModule
     private CollisionProperties _cpFacingObject = null;
 
     private DefaultEcs.Entity _eShip;
-    private BepuPhysics.BodyHandle _phandleShip;
     private BepuPhysics.BodyReference _prefShip;
     private Entity _eMapShip;
 
@@ -436,24 +435,6 @@ public class Module : engine.AModule
             float bodyRadius = model.RootNode.InstanceDesc != null
                 ? model.RootNode.InstanceDesc.AABBTransformed.Radius
                 : 1.4f;
-            var pshapeSphere = ShapeFactory.GetSphereShape(Single.Max(1.4f, bodyRadius), _engine, out var pbodySphere);
-            var pinertiaSphere = pbodySphere.ComputeInertia(MassShip);
-
-            lock (_engine.Simulation)
-            {
-                _phandleShip = _engine.Simulation.Bodies.Add(
-                    BodyDescription.CreateDynamic(
-                        new RigidPose(posShip, rotShip),
-                        pinertiaSphere,
-                        new BepuPhysics.Collidables.CollidableDescription(
-                            pshapeSphere,
-                            0.1f
-                        ),
-                        new BodyActivityDescription(0.01f)
-                    )
-                );
-                _prefShip = _engine.Simulation.Bodies.GetBodyReference(_phandleShip);
-            }
 
             engine.physics.CollisionProperties collisionProperties =
                 new engine.physics.CollisionProperties
@@ -465,11 +446,17 @@ public class Module : engine.AModule
                         | CollisionProperties.CollisionFlags.TriggersCallbacks,
                     Name = PhysicsName,
                 };
-            _eShip.Set(new engine.physics.components.Body(
-                new engine.physics.Object(_eShip, _prefShip.Handle) {
-                    CollisionProperties = collisionProperties
-                }.AddContactListener(),
-                _prefShip));
+            engine.physics.Object po;
+            lock (_engine.Simulation)
+            {
+                var shape = ShapeFactory.GetSphereShape(Single.Max(1.4f, bodyRadius), _engine, out var pbody);
+                var inertia = pbody.ComputeInertia(MassShip);
+                po = new engine.physics.Object(_engine, _eShip,
+                    posShip, rotShip, inertia, shape) { CollisionProperties = collisionProperties}.AddContactListener();
+                _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+            }
+
+            _eShip.Set(new engine.physics.components.Body(po, _prefShip));
             _eShip.Set(new engine.behave.components.Behavior(new Behavior(MassShip)));
 
             /*
