@@ -16,7 +16,8 @@ public class Log
 
     public JsonSerializerOptions JsonSerializerOptions = new()
     {
-        IncludeFields = true
+        IncludeFields = true,
+        WriteIndented = true
     };
 
     public void Append(actions.ABase pa)
@@ -62,7 +63,7 @@ public class Log
     public void Dump()
     {
         string path = GlobalSettings.Get("Engine.RWPath");
-        string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}";
+        string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.json";
 
         JsonNode jn = DumpToNode();
         string jsonString = JsonSerializer.Serialize(jn, new JsonSerializerOptions());

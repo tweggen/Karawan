@@ -7,7 +7,7 @@ namespace engine.physics.actions;
 
 public class CreateDynamic : ABase
 {
-    public int ResultIntHandle;
+   public int ResultIntHandle;
     public Vector3 Position;
     public Quaternion Orientation;
     public BodyInertia Inertia;

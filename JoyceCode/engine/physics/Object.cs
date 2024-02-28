@@ -260,16 +260,7 @@ public class Object : IDisposable
         BodyInertia inertia, BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
-#if true
         IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, v3Position, qOrientation, inertia, shape);
-#else
-        IntHandle = engine.Simulation.Bodies.Add(
-            BodyDescription.CreateDynamic(
-                new RigidPose(v3Position, qOrientation),
-                inertia, new CollidableDescription(shape, 0.1f),
-                new BodyActivityDescription(0.01f)
-            )).Value;
-#endif
     }
     
     
@@ -283,16 +274,7 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
-#if true
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, v3Position, qOrientation, shape);
-#else
-        IntHandle = engine.Simulation.Bodies.Add(
-            BodyDescription.CreateKinematic(
-                new RigidPose(v3Position, qOrientation),
-                new CollidableDescription(shape, 0.1f),
-                new BodyActivityDescription(0.01f)
-            )).Value;
-#endif
     }
 
     
@@ -305,16 +287,7 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
-#if true
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Vector3.Zero, Quaternion.Identity, shape);
-#else
-        IntHandle = engine.Simulation.Bodies.Add(
-            BodyDescription.CreateKinematic(
-                new RigidPose(Vector3.Zero, Quaternion.Identity),
-                new CollidableDescription(shape, 0.1f),
-                new BodyActivityDescription(0.01f)
-            )).Value;
-#endif
     }
 
 }

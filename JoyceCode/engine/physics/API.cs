@@ -218,8 +218,8 @@ public class API
         {
             try
             {
-                Simulation.Timestep(dt, _physicsThreadDispatcher);
-                _contactEvents.Flush();
+                actions.Timestep.Execute(_engine.PLog, _engine.Simulation, dt);
+                //Simulation.Timestep(dt, _physicsThreadDispatcher);
             }
             catch (Exception e)
             {
@@ -260,6 +260,8 @@ public class API
                 // Trace($"Exception during physics step: {e}");
                 throw e;
             }
+            _contactEvents.Flush();
+
         }
     }
 

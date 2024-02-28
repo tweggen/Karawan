@@ -56,20 +56,20 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                     {
                         if (true || bodyReference.Constraints.Count == 0)
                         {
-                            bodyReference.Pose.Position = newPos;
+                            actions.SetBodyPosePosition.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, newPos);
                             po.LastPosition = newPos;
                             if (oldPos != Vector3.Zero)
                             {
                                 Vector3 vel = (newPos - oldPos) / dt;
-                                bodyReference.Velocity.Linear = vel;
+                                actions.SetBodyLinearVelocity.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, vel);
                                 if (!bodyReference.Awake)
                                 {
-                                    bodyReference.Awake = true;
+                                    actions.SetBodyAwake.Execute(_engine.PLog, _engine.Simulation, ref bodyReference,true);
                                 }
                             }
                             else
                             {
-                                bodyReference.Velocity.Linear = Vector3.Zero;
+                                actions.SetBodyLinearVelocity.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, Vector3.Zero);
                             }
                         }
                         else
@@ -92,10 +92,10 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                              * If it previously was inside, reposition it to nowehere
                              * and make it passive. effectively setting it to standby.
                              */
-                            bodyReference.Pose.Position = _vOffPosition;
-                            bodyReference.Pose.Orientation = Quaternion.Identity;
-                            bodyReference.Velocity.Linear = Vector3.Zero;
-                            bodyReference.Velocity.Angular = Vector3.Zero;
+                            actions.SetBodyPosePosition.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, _vOffPosition);
+                            actions.SetBodyPoseOrientation.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, Quaternion.Identity);
+                            actions.SetBodyLinearVelocity.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, Vector3.Zero);
+                            actions.SetBodyAngularVelocity.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, Vector3.Zero);
                         }
 
                         /*
@@ -106,7 +106,8 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                         {
                             if (bodyReference.Constraints.Count == 0)
                             {
-                                bodyReference.Awake = false;
+                                // bodyReference.Awake = false;
+                                actions.SetBodyAwake.Execute(_engine.PLog, _engine.Simulation, ref bodyReference,false);
                             }
                             else
                             {

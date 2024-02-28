@@ -16,6 +16,7 @@ public abstract class ABase
     {
         JsonNode jn = JsonSerializer.SerializeToNode(
             this, GetType(), plog.JsonSerializerOptions);
+        jn["type"] = GetType().ToString();
         SelfToJson(jn);
         return jn;
     }
