@@ -22,6 +22,10 @@ public class CreateSphereShape : ABase
                 Radius = radius
             });
         }
+        else
+        {
+            int a = 0;
+        }
 
         return (int) shape.Packed;
     }
