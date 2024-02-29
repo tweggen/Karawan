@@ -58,6 +58,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\CreateKinematic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\CreateSphereShape.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\DynamicSnapshot.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\Log.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\Player.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\RemoveBody.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\SetBodyAngularVelocity.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\SetBodyAwake.cs" />
@@ -65,7 +67,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\SetBodyPoseOrientation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\SetBodyPosePosition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\Timestep.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Log.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Object.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ObjectCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />

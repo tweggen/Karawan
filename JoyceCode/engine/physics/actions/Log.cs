@@ -29,6 +29,8 @@ public class Log
     }
 
 
+
+
     public JsonNode DumpToNode()
     {
         JsonNode jnRoot = new JsonObject();
