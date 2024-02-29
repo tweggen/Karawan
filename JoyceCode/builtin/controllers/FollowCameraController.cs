@@ -92,8 +92,13 @@ public class FollowCameraController : IInputPart
         {
             Vector3 posShip = _prefPlayer.Pose.Position;
             Quaternion rotShip = _prefPlayer.Pose.Orientation;
-            
-            var shape =  I.Get<ShapeFactory>().GetSphereShape(CameraRadius, out var pbody);
+
+            var shape = new TypedIndex()
+            {
+                Packed = (uint)engine.physics.actions.CreateSphereShape.Execute(
+                    _engine.PLog, _engine.Simulation, CameraMass, out var pbody
+                )
+            };  
             var inertia = pbody.ComputeInertia(CameraMass);
             var po = new engine.physics.Object(_engine, _eTarget,
                 posShip, rotShip, inertia, shape).AddContactListener();

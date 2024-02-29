@@ -13,24 +13,24 @@ public class Log
     private object _lo = new();
 
     public string DumpPath { get; set; }
+    public bool Record { get; set; } = true;
     
     private Queue<actions.ABase> _queueActions = new();
 
     public JsonSerializerOptions JsonSerializerOptions = new()
     {
         IncludeFields = true,
-        WriteIndented = true
     };
 
+    
     public void Append(actions.ABase pa)
     {
+        if (!Record) return;
         lock (_lo)
         {
             _queueActions.Enqueue(pa);
         }
     }
-
-
 
 
     public JsonNode DumpToNode()
@@ -47,8 +47,7 @@ public class Log
          */
         lock (_lo)
         {
-            queueActions = _queueActions;
-            _queueActions = new();
+            queueActions = new Queue<actions.ABase>(_queueActions);
         }
         
         /*
@@ -72,8 +71,8 @@ public class Log
         string jsonString = JsonSerializer.Serialize(jn, JsonSerializerOptions);
         File.WriteAllText(Path.Combine(DumpPath, filename), jsonString);
     }
-    
 
+    
     public void Replay(Simulation simulation)
     {
         Queue<actions.ABase> queueActions;

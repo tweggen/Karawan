@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.Numerics;
 using System.Text.Json;
 using BepuPhysics;
@@ -35,9 +37,22 @@ public class CreateKinematic : ABase
     }
 
 
-    public override int Execute(Log? plog, Simulation simulation)
+    public override int Execute(Player player, Simulation simulation)
     {
-        return Execute(plog, simulation, Position, Orientation, new TypedIndex() { Packed = PackedTypeIndex });
+        int loggedHandle = ResultIntHandle;
+        uint currentTypeIndex;
+        try
+        {
+            currentTypeIndex = player.MapperShapes.GetNew(PackedTypeIndex);
+        }
+        catch (Exception e)
+        {
+            // In case we do not have all shapes.
+            currentTypeIndex = 2147483652;
+        }
+        int currentHandle =  Execute(null, simulation, Position, Orientation, new TypedIndex() { Packed = currentTypeIndex });
+        player.MapperBodies.Add(loggedHandle, currentHandle);
+        return currentHandle;
     }
 }
 

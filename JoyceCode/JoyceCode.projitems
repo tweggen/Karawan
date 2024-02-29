@@ -58,6 +58,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\CreateKinematic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\CreateSphereShape.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\DynamicSnapshot.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\HandleMapper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\Log.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\Player.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\RemoveBody.cs" />

@@ -25,9 +25,10 @@ public class SetBodyLinearVelocity : ABase
     }
     
     
-    public override int Execute(Log? plog, Simulation simulation)
+    public override int Execute(Player player, Simulation simulation)
     {
-        BodyReference pref = simulation.Bodies.GetBodyReference(new BodyHandle(IntHandle));
-        return Execute(plog, simulation, ref pref, LinearVelocity);
+        int currentHandle = player.MapperBodies.GetNew(IntHandle);
+        BodyReference pref = simulation.Bodies.GetBodyReference(new BodyHandle(currentHandle));
+        return Execute(null, simulation, ref pref, LinearVelocity);
     }
 }

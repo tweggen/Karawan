@@ -2,6 +2,7 @@
 using BepuPhysics.Collidables;
 using System;
 using System.Numerics;
+using System.Security.AccessControl;
 using System.Threading.Tasks;
 using DefaultEcs;
 using engine;
@@ -449,10 +450,12 @@ public class Module : engine.AModule
             engine.physics.Object po;
             lock (_engine.Simulation)
             {
-                var shape = I.Get<ShapeFactory>().GetSphereShape(Single.Max(1.4f, bodyRadius), out var pbody);
+                uint uintShape = (uint) engine.physics.actions.CreateSphereShape.Execute(
+                    _engine.PLog, _engine.Simulation,
+                    Single.Max(1.4f, bodyRadius), out var pbody); 
                 var inertia = pbody.ComputeInertia(MassShip);
                 po = new engine.physics.Object(_engine, _eShip,
-                    posShip, rotShip, inertia, shape) { CollisionProperties = collisionProperties}.AddContactListener();
+                    posShip, rotShip, inertia, new TypedIndex() { Packed = uintShape }) { CollisionProperties = collisionProperties}.AddContactListener();
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             }
 

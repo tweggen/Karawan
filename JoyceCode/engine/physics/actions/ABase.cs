@@ -21,5 +21,5 @@ public abstract class ABase
         return jn;
     }
 
-    public abstract int Execute(Log? plog, Simulation simulation);
+    public abstract int Execute(Player player, Simulation simulation);
 }

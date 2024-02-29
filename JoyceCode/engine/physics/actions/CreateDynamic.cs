@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using System.Text.Json;
 using BepuPhysics;
@@ -7,7 +8,7 @@ namespace engine.physics.actions;
 
 public class CreateDynamic : ABase
 {
-   public int ResultIntHandle;
+    public int ResultIntHandle;
     public Vector3 Position;
     public Quaternion Orientation;
     public BodyInertia Inertia;
@@ -40,8 +41,12 @@ public class CreateDynamic : ABase
     }
 
 
-    public override int Execute(Log? plog, Simulation simulation)
+    public override int Execute(Player player, Simulation simulation)
     {
-        return Execute(plog, simulation, Position, Orientation, Inertia, new TypedIndex() { Packed = PackedTypeIndex });
+        int loggedHandle = ResultIntHandle;
+        uint currentTypeIndex = player.MapperShapes.GetNew(PackedTypeIndex);
+        int currentHandle = Execute(null, simulation, Position, Orientation, Inertia, new TypedIndex() { Packed = currentTypeIndex });
+        player.MapperBodies.Add(loggedHandle, currentHandle);
+        return currentHandle;
     }
 }

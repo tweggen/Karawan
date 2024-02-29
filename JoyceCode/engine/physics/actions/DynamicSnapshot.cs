@@ -25,9 +25,10 @@ public class DynamicSnapshot : ABase
         return 0;
     }
     
-    public override int Execute(Log plog, Simulation simulation)
+    public override int Execute(Player player, Simulation simulation)
     {
-        BodyReference pref = simulation.Bodies.GetBodyReference(new BodyHandle(IntHandle));
+        int currentHandle = player.MapperBodies.GetNew(IntHandle);
+        BodyReference pref = simulation.Bodies.GetBodyReference(new BodyHandle(currentHandle));
         pref.MotionState = MotionState;
         pref.Awake = IsAwake;
         return 0;

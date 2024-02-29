@@ -14,7 +14,10 @@ public class Player
 
     private int _nextAction = -1;
     private int _nActions = 0;
-
+    
+    public readonly HandleMapper<int> MapperBodies = new();
+    public readonly HandleMapper<uint> MapperShapes = new();
+    
     public JsonSerializerOptions JsonSerializerOptions = new()
     {
         IncludeFields = true,
@@ -46,9 +49,14 @@ public class Player
         {
             bool haveTimestep = false;
             bool foundTimestep = false;
-            for (; _nextAction < _nActions; _nextAction++)
+            while (true)
             {
+                if (_nextAction == _nActions)
+                {
+                    break;
+                }
                 var je = _jd.RootElement.GetProperty("actions")[_nextAction];
+                ++_nextAction;
                 string strType = je.GetProperty("type").ToString();
 
                 if (strType == typeof(Timestep).ToString())
@@ -61,7 +69,7 @@ public class Player
 
                 actions.ABase physAction = je.Deserialize(typeAction, JsonSerializerOptions) as ABase;
 
-                physAction.Execute(null, simulation);
+                physAction.Execute(this, simulation);
             }
         }
     }

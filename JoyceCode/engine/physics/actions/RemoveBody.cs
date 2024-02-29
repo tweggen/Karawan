@@ -19,8 +19,11 @@ public class RemoveBody : ABase
     }
     
     
-    public override int Execute(Log? plog, Simulation simulation)
+    public override int Execute(Player player, Simulation simulation)
     {
-        return Execute(plog, simulation, IntHandle);
+        int currentHandle = player.MapperBodies.GetNew(IntHandle);
+        int result = Execute(null, simulation, currentHandle);
+        player.MapperBodies.Remove(IntHandle);
+        return result;
     }
 }

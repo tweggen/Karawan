@@ -40,8 +40,8 @@ public class Timestep : ABase
     }
     
     
-    public override int Execute(Log? plog, Simulation simulation)
+    public override int Execute(Player player, Simulation simulation)
     {
-        return Execute(plog, simulation, DeltaTime);
+        return Execute(null, simulation, DeltaTime);
     }
 }
