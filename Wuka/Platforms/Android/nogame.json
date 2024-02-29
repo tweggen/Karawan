@@ -75,11 +75,11 @@
   {
     "world.CreateStreetAnnotations": false,
     "nogame.CreateTrees": false,
-    "nogame.CreateHouses": true,
+    "nogame.CreateHouses": false,
     "nogame.CreatePolytopes": false,
     "world.CreateCubeCharacters": false,
     "world.CreateCar3Characters": true,
-    "world.CreateTramCharacters": true,
+    "world.CreateTramCharacters": false,
     "world.CreateStreets": true,
     "world.CreateClusterQuarters": true,
     "debug.options.flatshading": false,

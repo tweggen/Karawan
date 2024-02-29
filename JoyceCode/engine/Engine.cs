@@ -1080,10 +1080,6 @@ public class Engine
         I.Register<engine.SceneSequencer>(() => new SceneSequencer(this));
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
         
-        State = EngineState.Starting;
-
-        u.RunEngineTest(this);
-        
 #if DEBUG
         {
             string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.json";
@@ -1093,6 +1089,10 @@ public class Engine
             };
         }
 #endif
+        
+        State = EngineState.Starting;
+
+        u.RunEngineTest(this);
         
         _loadDefaultResources();
     }

@@ -40,6 +40,7 @@ public class CreateKinematic : ABase
     public override int Execute(Player player, Simulation simulation)
     {
         int loggedHandle = ResultIntHandle;
+        
         uint currentTypeIndex;
         try
         {
@@ -47,8 +48,11 @@ public class CreateKinematic : ABase
         }
         catch (Exception e)
         {
-            // In case we do not have all shapes.
-            currentTypeIndex = 2147483652;
+            /*
+             * If the handle for the shape could not be found, create one.
+             */
+            currentTypeIndex = (uint) CreateSphereShape.Execute(null, simulation, 1.0f, out var _);
+            player.MapperShapes.Add(PackedTypeIndex, currentTypeIndex);
         }
         int currentHandle =  Execute(null, simulation, Position, Orientation, new TypedIndex() { Packed = currentTypeIndex });
         player.MapperBodies.Add(loggedHandle, currentHandle);

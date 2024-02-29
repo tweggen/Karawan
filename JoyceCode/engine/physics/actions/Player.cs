@@ -49,12 +49,8 @@ public class Player
         {
             bool haveTimestep = false;
             bool foundTimestep = false;
-            while (true)
+            while (_nextAction < _nActions)
             {
-                if (_nextAction == _nActions)
-                {
-                    break;
-                }
                 var je = _jd.RootElement.GetProperty("actions")[_nextAction];
                 ++_nextAction;
                 string strType = je.GetProperty("type").ToString();
@@ -69,7 +65,20 @@ public class Player
 
                 actions.ABase physAction = je.Deserialize(typeAction, JsonSerializerOptions) as ABase;
 
-                physAction.Execute(this, simulation);
+                try
+                {
+                    physAction.Execute(this, simulation);
+                    int a = 1;
+                }
+                catch (Exception e)
+                {
+                    // just skip incomplete handles.
+                }
+            }
+            if (_nextAction >= _nActions)
+            {
+                // Simulation is done.
+                int a = 1;
             }
         }
     }
