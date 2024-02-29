@@ -5,13 +5,15 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using BepuPhysics;
 
-namespace engine.physics;
+namespace engine.physics.actions;
 
 
 public class Log
 {
     private object _lo = new();
 
+    public string DumpPath { get; set; }
+    
     private Queue<actions.ABase> _queueActions = new();
 
     public JsonSerializerOptions JsonSerializerOptions = new()
@@ -64,12 +66,11 @@ public class Log
 
     public void Dump()
     {
-        string path = GlobalSettings.Get("Engine.RWPath");
         string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.json";
 
         JsonNode jn = DumpToNode();
         string jsonString = JsonSerializer.Serialize(jn, JsonSerializerOptions);
-        File.WriteAllText(Path.Combine(path,filename), jsonString);
+        File.WriteAllText(Path.Combine(DumpPath, filename), jsonString);
     }
     
 

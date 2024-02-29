@@ -45,13 +45,7 @@ public class Engine
 
     public object ShortSleep = new();
 
-    public physics.Log PLog =
-#if DEBUG
-        new()
-#else
-        null
-#endif
-        ;
+    public physics.actions.Log PLog;
     
     
     private int _nextId = 0;
@@ -1066,9 +1060,7 @@ public class Engine
     public Engine(engine.IPlatform platform)
     {
         engine.Unit u = new();
-
         u.RunStartupTest();
-
 
         _nextId = 0;
         _platform = platform;
@@ -1091,7 +1083,17 @@ public class Engine
         State = EngineState.Starting;
 
         u.RunEngineTest(this);
-
+        
+#if DEBUG
+        {
+            string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.json";
+            PLog = new physics.actions.Log()
+            {
+                DumpPath = GlobalSettings.Get("Engine.RWPath")
+            };
+        }
+#endif
+        
         _loadDefaultResources();
     }
 }
