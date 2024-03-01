@@ -74,19 +74,19 @@
   "properties":
   {
     "world.CreateStreetAnnotations": false,
-    "nogame.CreateTrees": false,
-    "nogame.CreateHouses": false,
+    "nogame.CreateTrees": true,
+    "nogame.CreateHouses": true,
     "nogame.CreatePolytopes": false,
-    "world.CreateCubeCharacters": false,
+    "world.CreateCubeCharacters": true,
     "world.CreateCar3Characters": true,
-    "world.CreateTramCharacters": false,
+    "world.CreateTramCharacters": true,
     "world.CreateStreets": true,
     "world.CreateClusterQuarters": true,
     "debug.options.flatshading": false,
     "nogame.characters.cube.maxDistance": 400.0,
     "nogame.characters.car3.maxDistance": 800.0,
     "nogame.characters.tram.maxDistance": 1600.0,
-    "nogame.CutCollision": true
+    "nogame.CutCollision": false
   },
   "quests":
   {

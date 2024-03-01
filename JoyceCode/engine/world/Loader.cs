@@ -291,7 +291,12 @@ namespace engine.world
             if (eraseList.Count > 0)
             {
                 /*
-                 * Remove behaviors outside aabb.
+                 * Remove behaviors outside aabb, which is the bounding box of fragments loaded.
+                 *
+                 * FIXME: This makes entities vanish over time, because they diffuse away from
+                 * their original world fragment over time which in turn won't produce any new.
+                 * And because the entities in addition have their FragmentId set, they would be
+                 * deleted even if they currently are somewhere else.
                  */
                 _engine.QueueCleanupAction(() => _wiperSystem.Update(aabb));
 
