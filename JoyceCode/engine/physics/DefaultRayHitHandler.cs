@@ -56,7 +56,7 @@ public class DefaultRayHitHandler : IRayHitHandler
         return true;
     }
 
-#if true // Bepu 2.4
+#if false // Bepu 2.4
     public void OnRayHit(in RayData ray, ref float maximumT, float t, in Vector3 normal, CollidableReference collidable, int childIndex)
     {
 #else // Bepu 2.5
