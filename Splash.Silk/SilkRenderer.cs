@@ -35,20 +35,6 @@ namespace Splash.Silk
 
         private uint _frameNumber = 0;
 
-        private Vector3 v3FogNight = new(0.00f, 0.00f, 0.02f);
-        private Vector3 v3FogDawn = new(0.2f, 0.11f, 0.2f); 
-        private Vector3 v3FogDay = new(0.4f, 0.3f, 0.3f);
-        private Vector3 v3FogDusk = new(0.3f, 0.25f, 0.2f);
-
-
-        private Vector3 _colorBlend(float a, float b, TimeSpan now, Vector3 va, Vector3 vb)
-        {
-            float x = (float)now.TotalMilliseconds;
-            x -= a*3600000;
-            x /= b*3600000 - a*3600000;
-            return vb * x + va * (1f - x);
-        }
-        
         /**
          * Render all camera objects.
          * This function is called from a dedicated rendering thread as executed
@@ -56,38 +42,6 @@ namespace Splash.Silk
          */
         private void _renderParts(in IList<RenderPart> renderParts)
         {
-            var now = DateTime.Now.TimeOfDay;
-
-            {
-                Vector3 fogColor;
-                if (now.Hours < 6f || now.Hours > 19f)
-                {
-                    fogColor = v3FogNight;
-                }
-                else if (now.Hours < 8f)
-                {
-                    fogColor = _colorBlend(6f, 8f, now, v3FogNight, v3FogDawn);
-                }
-                else if (now.Hours < 11f)
-                {
-                    fogColor = _colorBlend(8f, 11f, now, v3FogDawn, v3FogDay);
-                }
-                else if (now.Hours < 15f)
-                {
-                    fogColor = _colorBlend(11f, 15f, now, v3FogDay, v3FogDusk);
-                }
-                else if (now.Hours < 19f)
-                {
-                    fogColor = _colorBlend(15f, 19f, now, v3FogDusk, v3FogNight);
-                }
-                else
-                {
-                    fogColor = v3FogNight;
-                }
-
-                _silkThreeD.SetFogColor(fogColor);
-            }
-
             bool isFirstPart = true;
 
             int y0Stats = 30;
@@ -110,6 +64,10 @@ namespace Splash.Silk
                 bool clearAll = false;
                 
                 var cCameraParams = renderPart.CameraOutput.Camera3;
+                if (cCameraParams.Fog != default)
+                {
+                    _silkThreeD.SetFogColor(new Vector3(cCameraParams.Fog.X, cCameraParams.Fog.Y, cCameraParams.Fog.Z));
+                }
 
                 if (cCameraParams.CameraMask == 0x00800000)
                 {

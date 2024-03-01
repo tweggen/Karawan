@@ -45,9 +45,10 @@ public class Scene : AModule, IScene, IInputPart
 #endif
             
         },
+        new MyModule<nogame.modules.daynite.FogColor>(),
         new SharedModule<nogame.modules.story.Narration>() { Activate = false },
         new SharedModule<builtin.controllers.InputController>(),
-        new SharedModule<engine.news.ClickModule>()
+        new SharedModule<engine.news.ClickModule>(),
     };
     
 

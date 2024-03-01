@@ -72,7 +72,7 @@ public class Compass : engine.AModule
         base.ModuleActivate(engine0);
         _engine.AddModule(this);
 
-        _eCompassDisplay = _engine.CreateEntity("OsdCompassDispose");
+        _eCompassDisplay = _engine.CreateEntity("OsdCompassDisplay");
         _engine.OnLogicalFrame += _onLogical;
     }
 }

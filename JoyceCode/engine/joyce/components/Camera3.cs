@@ -41,6 +41,12 @@ public struct Camera3
     public uint CameraMask = 0x00000000;
     public Flags CameraFlags = 0x00000000;
 
+
+    /**
+     * A vector consisting of RGB fog + W distance.
+     */
+    public Vector4 Fog;
+    
     /**
      * The renderbuffer this camera shall be rendered into.
      * If null, we shall use the main screen.

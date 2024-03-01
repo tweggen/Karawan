@@ -18,6 +18,11 @@ public class Event
 
     public const string RENDER_STATS = "render.stats";
 
+    /**
+     * Behavior events can
+     */
+    public const string BEHAVIOR_LOST_CUSTOM_EVENT = "behavior.lost.custom.";
+
     private bool _isHandled = false;
     public bool IsHandled
     {
