@@ -124,7 +124,7 @@ public class SkRenderbufferEntry : ARenderbufferEntry
         /*
          * ... allocate ram ...
          */
-        gl.RenderbufferStorage(GLEnum.Renderbuffer, GLEnum.DepthComponent16, 
+        gl.RenderbufferStorage(GLEnum.Renderbuffer, GLEnum.DepthComponent24, 
             JRenderbuffer.Width, JRenderbuffer.Height);
         CheckError("SkRenderbuffer RenderbufferStorage");
         /*
