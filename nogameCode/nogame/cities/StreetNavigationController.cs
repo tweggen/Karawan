@@ -406,6 +406,7 @@ public class StreetNavigationController : INavigator
 
         _loadStartPoint();
 
+        // TXWTODO: Offload this.
         NavigatorBehave(1f / 60f);
     }
 }

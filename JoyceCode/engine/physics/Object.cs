@@ -25,7 +25,7 @@ public class Object : IDisposable
     public const uint IsActivated = 64;
     public const uint IsDeleted = 128;
 
-    public DefaultEcs.Entity Entity;
+    public DefaultEcs.Entity Entity = default;
     public uint Flags = 0;
     public int IntHandle = -1;
     public IList<Action>? ReleaseActions = null;

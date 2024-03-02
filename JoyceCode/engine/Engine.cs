@@ -897,7 +897,7 @@ public class Engine
                  * So it can decide to do or postpone setup action jobs.
                  */
                 float timeLeft = Single.Max(invFps * 2f - accumulator, 0f); 
-                Trace($"accu {accumulator} timeLeft {timeLeft}");
+                // Trace($"accu {accumulator} timeLeft {timeLeft}");
                 
                 if (_platformIsAvailable)
                 {

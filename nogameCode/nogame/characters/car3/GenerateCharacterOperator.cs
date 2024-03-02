@@ -1,6 +1,7 @@
 ﻿using BepuPhysics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine;
@@ -218,13 +219,34 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                     int fragmentId = worldFragment.NumericalId;
 
+                    /*
+                     * Now, first, from any of the worker threads, prepare the physics.
+                     * There's no contact listeners etc added and they're off, so no worries.
+                     */
+                    engine.physics.Object po;
+                    BodyReference prefSphere;
+                    lock (wf.Engine.Simulation)
+                    {
+                        var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
+                        po = new engine.physics.Object(wf.Engine, default, Vector3.Zero, Quaternion.Identity, shape);
+                        prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                        prefSphere.Awake = false;
+                    }
+                    
+                    /*
+                     * Now, using the prepared physics, add the actual entity components.
+                     */
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
+                        Stopwatch sw = new();
+                        sw.Start();
                         eTarget.Set(new engine.world.components.FragmentId(fragmentId));
+                        float millisAfterFragmentId = (float) sw.Elapsed.TotalMilliseconds;
                         {
                             builtin.tools.ModelBuilder modelBuilder = new(worldFragment.Engine, model, instantiateModelParams);
                             modelBuilder.BuildEntity(eTarget);
                         }
+                        float millisAfterBuild = (float) sw.Elapsed.TotalMilliseconds;
 
                         eTarget.Set(new engine.behave.components.Behavior(
                             new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
@@ -234,11 +256,13 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         {
                             MaxDistance = propMaxDistance
                         });
+                        float millisAfterBehavior = (float) sw.Elapsed.TotalMilliseconds;
 
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCar3Sound(carIdx), 150f));
+                        float millisAfterMovingSound = (float) sw.Elapsed.TotalMilliseconds;
 
-                        BodyReference prefSphere;
+                        
                         engine.physics.CollisionProperties collisionProperties =
                             new engine.physics.CollisionProperties
                             {
@@ -249,21 +273,18 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                     | CollisionProperties.CollisionFlags.TriggersCallbacks,
                                 Name = PhysicsName,
                             };
-                        engine.physics.Object po;
-                        lock (wf.Engine.Simulation)
-                        {
-                            var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
-                            po = new engine.physics.Object(wf.Engine, eTarget, Vector3.Zero, Quaternion.Identity, shape)
-                            {
-                                CollisionProperties = collisionProperties
-                            };
-                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                            prefSphere.Awake = false;
-                        }
+                        po.CollisionProperties = collisionProperties;
+                        po.Entity = eTarget;
                         eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+                        float millisAfterBody = (float) sw.Elapsed.TotalMilliseconds;
+                        sw.Stop();
+                        if (sw.Elapsed.TotalMilliseconds > 3f)
+                        {
+                            int a;
+                        }
                     });
-
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
+                    
                 }
             }
             else
