@@ -258,6 +258,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                 CollisionProperties = collisionProperties
                             };
                             prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                            prefSphere.Awake = false;
                         }
                         eTarget.Set(new engine.physics.components.Body(po, prefSphere));
                     });

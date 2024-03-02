@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using BepuPhysics;
 using engine.joyce;
 using static engine.Logger;
@@ -371,17 +372,16 @@ public class Fragment : IDisposable
         IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
     {
         /*
-         * Schedule execution of entity setup in the logical thread.
+         * Schedule execution of physics setup in any worker thread,
+         * then do the actual entity setup in the logical thread.
+         *
+         * Physics initialization does not require to be in the logical
+         * thread, it just needs to be mutexed with respect to the
+         * simulation.
          */
-        Engine.QueueEntitySetupAction(staticName, (DefaultEcs.Entity entity) =>
+        Task.Run(() =>
         {
-            entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-            engine.joyce.components.Transform3 cTransform3 = new(
-                true, cameraMask, qRotation, Position + vPosition);
-            entity.Set(cTransform3);
-            engine.joyce.TransformApi.CreateTransform3ToParent(cTransform3, out var mat);
-            entity.Set(new engine.joyce.components.Transform3ToParent(
-                cTransform3.IsVisible, cTransform3.CameraMask, mat));
+            engine.physics.components.Statics cStatics = default;
 
             if (listCreatePhysics != null)
             {
@@ -394,13 +394,32 @@ public class Fragment : IDisposable
                     listReleaseActions.Add(action);
                 }
 
-                entity.Set(new engine.physics.components.Statics(listHandles, listReleaseActions));
+                cStatics = new engine.physics.components.Statics(listHandles, listReleaseActions);
             }
 
             /*
-             * Finally, remember the molecule to be able to remove its contents later again.
+             * Schedule execution of entity setup in the logical thread.
              */
-            entity.Set(new engine.world.components.FragmentId(_id));
+            Engine.QueueEntitySetupAction(staticName, (DefaultEcs.Entity entity) =>
+            {
+                entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                engine.joyce.components.Transform3 cTransform3 = new(
+                    true, cameraMask, qRotation, Position + vPosition);
+                entity.Set(cTransform3);
+                engine.joyce.TransformApi.CreateTransform3ToParent(cTransform3, out var mat);
+                entity.Set(new engine.joyce.components.Transform3ToParent(
+                    cTransform3.IsVisible, cTransform3.CameraMask, mat));
+
+                if (listCreatePhysics != null)
+                {
+                    entity.Set(cStatics);
+                }
+
+                /*
+                 * Finally, remember the molecule to be able to remove its contents later again.
+                 */
+                entity.Set(new engine.world.components.FragmentId(_id));
+            });
         });
 
         _meshesInFragment += jInstanceDesc.Meshes.Count;

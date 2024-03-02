@@ -393,7 +393,8 @@ public class Engine
     {
         _queueStopwatch.Reset();
         _queueStopwatch.Start();
-        while (_queueStopwatch.Elapsed.TotalMilliseconds < matTime * 1000f)
+        float totalMillies = (float) _queueStopwatch.Elapsed.TotalMilliseconds;
+        while (totalMillies < matTime * 1000f)
         {
             EntitySetupAction entitySetupAction;
             lock (_lo)
@@ -415,6 +416,14 @@ public class Engine
             {
                 Warning($"Error executing entity setup action: {e}.");
                 entity.Dispose();
+            }
+
+            float lastMillies = totalMillies;
+            totalMillies = (float)_queueStopwatch.Elapsed.TotalMilliseconds;
+            float actionMillies = totalMillies - lastMillies;
+            if (actionMillies > 1000f * matTime)
+            {
+                Trace($"Warning, action took {actionMillies}ms.");
             }
         }
 
@@ -503,7 +512,14 @@ public class Engine
      */
     private bool _firstTime = true;
 
-    private void _onLogicalFrame(float dt)
+    /**
+     * Perform a logical frame.
+     * @param dt
+     *     The logical timespan this frame si supposed to cover
+     * @param timeLeft
+     *     The computing time in total for this frame.
+     */
+    private void _onLogicalFrame(float dt, float timeLeft)
     {
         EngineState engineState;
         GamePlayStates gamePlayState;
@@ -667,26 +683,44 @@ public class Engine
             // ErrorThrow("Null scene", (m) => new InvalidOperationException(m));
         }
 
-        // TXWTODO: Measure the time of all actions.
         /*
-         * Async delete any entities that shall be deleted
+         * Now work on the main thread queues.
          */
-        _executeDoomedEntities();
+        {
+            bool executeCleanups = timeLeft > 0.005;
+            bool executeActions = timeLeft > 0.002;
 
-        /*
-         * Async create / setup new entities.
-         */
-        _executeEntitySetupActions(
-            (_isLoading > 0)
-                ? 0.024f
-                : 0.001f
-        );
-        _workerMainThreadActions.RunPart(
-            (_isLoading > 0)
-                ? 0.004f
-                : 0.001f
-        );
-        _workerCleanupActions.RunPart(0.001f);
+            /*
+             * Async delete any entities that shall be deleted
+             */
+            if (executeCleanups)
+            {
+                _executeDoomedEntities();
+            }
+
+            /*
+             * Async create / setup new entities.
+             */
+            if (executeActions)
+            {
+                _executeEntitySetupActions(
+                    (_isLoading > 0)
+                        ? 0.024f
+                        : 0.001f
+                );
+
+                _workerMainThreadActions.RunPart(
+                    (_isLoading > 0)
+                        ? 0.004f
+                        : 0.001f
+                );
+            }
+
+            if (executeCleanups)
+            {
+                _workerCleanupActions.RunPart(0.001f);
+            }
+        }
     }
 
 
@@ -818,6 +852,7 @@ public class Engine
 
             if (toWait > 0f && stopWatch.Elapsed.TotalSeconds < toWait)
             {
+                Trace($"toWait {toWait}");
                 //Thread.Yield();
                 // Thread.Sleep(1);
                 lock (ShortSleep)
@@ -857,13 +892,19 @@ public class Engine
                     }
                 }
 
+                /*
+                 * Also tell the logical frame how much time there is left.
+                 * So it can decide to do or postpone setup action jobs.
+                 */
+                float timeLeft = Single.Max(invFps * 2f - accumulator, 0f); 
+                Trace($"accu {accumulator} timeLeft {timeLeft}");
+                
                 if (_platformIsAvailable)
                 {
-                    _onLogicalFrame(invFps);
+                    _onLogicalFrame(invFps, timeLeft);
                     ++nLogical;
                 }
                 
-                // Trace($"accu {accumulator}");
 
                 /*
                  * And subtract the logical advance.
