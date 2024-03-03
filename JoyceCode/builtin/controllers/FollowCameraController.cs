@@ -47,6 +47,8 @@ public class FollowCameraController : IInputPart
     public float ADJUST_AFTER_STOPPING_FOR { get; set; } = 0.5f;
     public float CONSIDER_ORIENTATION_WHILE_DRIVING { get; set; } = 0.9f;
 
+    public float YAngleDefault { get; set; } = 2f;
+    
     private long _frame = 0;
 
     public float CameraRadius { get; set; } = 0.5f;
@@ -621,7 +623,7 @@ public class FollowCameraController : IInputPart
             return;
         }
         
-        _mouseAngles.X = (_vMouseOffset.Y + 15f) * (float)Math.PI / 180f;
+        _mouseAngles.X = (_vMouseOffset.Y + YAngleDefault) * (float)Math.PI / 180f;
         _mouseAngles.Y = -(_vMouseOffset.X) * (float)Math.PI / 180f;
 
 
