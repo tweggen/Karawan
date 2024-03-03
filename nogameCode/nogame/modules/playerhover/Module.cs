@@ -6,6 +6,7 @@ using System.Security.AccessControl;
 using System.Threading.Tasks;
 using DefaultEcs;
 using engine;
+using engine.audio;
 using engine.draw;
 using engine.gongzuo;
 using engine.joyce;
@@ -46,8 +47,12 @@ public class Module : engine.AModule
      */
     private DefaultEcs.Entity _eTargetDisplay;
 
+    /**
+     * Sound API
+     */
+    private Boom.ISoundAPI _aSound;
+    
     private PlingPlayer _plingPlayer = new();
-
     private Boom.ISound _polyballSound;
 
     public float MassShip { get; set; } = 500f;
@@ -69,6 +74,7 @@ public class Module : engine.AModule
     private ClusterDesc _currentCluster = null;
 
     private Boom.ISound _soundCrash = null;
+    private Boom.ISound _soundMyEngine = null;
 
 
     private string _getClusterSound(ClusterDesc clusterDesc)
@@ -214,9 +220,44 @@ public class Module : engine.AModule
     }
 
 
+    private bool _isMyEnginePlaying = false;
+    private void _updateSound(in Vector3 velShip)
+    {
+
+        float vel = Single.Clamp(velShip.Length(), 0f, 200f) / 256f;
+        if (vel < 0.05f)
+        {
+            if (_isMyEnginePlaying)
+            {
+                _soundMyEngine.Stop();
+                _isMyEnginePlaying = false;
+            }
+
+            _soundMyEngine.Volume = 0f;
+            _soundMyEngine.Speed = 0.8f;
+        }
+        else
+        {
+            if ((_aSound.SoundMask & 0x00000001) != 0)
+            {
+                _soundMyEngine.Speed = 0.8f + vel * 2.5f;
+                float vol = Single.Clamp(0.1f + vel * 3.0f, 0f, 1f);
+                _soundMyEngine.Volume = 0.2f * vol;
+
+                if (!_isMyEnginePlaying)
+                {
+                    _isMyEnginePlaying = true;
+                    _soundMyEngine.Play();
+                }
+            }
+        }
+    }
+    
+
     private void _onLogicalFrame(object? sender, float dt)
     {
         Matrix4x4 mShip = _eShip.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
+        Vector3 velShip = _prefShip.Velocity.Linear;
         Vector3 posShip = mShip.Translation;
 
         /*
@@ -321,6 +362,11 @@ public class Module : engine.AModule
                 _getClusterSound(_currentCluster), 0.05f, true, () => { }, () => { });
         }
 
+        /*
+         * Adjust the sound pitch.
+         */
+        _updateSound(velShip);
+
         var gameState = I.Get<GameState>();
 
     }
@@ -381,10 +427,10 @@ public class Module : engine.AModule
 
         _aTransform = I.Get<engine.joyce.TransformApi>();
 
+        _aSound = I.Get<Boom.ISoundAPI>();
         if (null == _soundCrash)
         {
-            var soundApi = I.Get<Boom.ISoundAPI>();
-            _soundCrash = soundApi.FindSound($"car-collision.ogg");
+            _soundCrash = _aSound.FindSound($"car-collision.ogg");
         }
 
         /*
@@ -492,9 +538,13 @@ public class Module : engine.AModule
         _engine.OnCameraEntityChanged += _onCameraEntityChanged;
 
         {
-            var api = I.Get<Boom.ISoundAPI>();
-            _polyballSound = api.FindSound($"polyball.ogg");
+            _polyballSound = _aSound.FindSound("polyball.ogg");
             _polyballSound.Volume = 0.03f;
+            _soundMyEngine = _aSound.FindSound("sd_my_engine.ogg");
+            _soundMyEngine.Volume = 0f;
+            _soundMyEngine.IsLooped = true;
+            _soundMyEngine.Speed = 0.81f;
+            _soundMyEngine.SoundMask = 0xffffffff;
         }
 
         _engine.SetPlayerEntity(GetShipEntity());
