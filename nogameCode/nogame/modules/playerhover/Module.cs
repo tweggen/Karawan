@@ -349,11 +349,11 @@ public class Module : engine.AModule
         if (newZone)
         {
             _eClusterDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(786f - 160f - 32f, 360f),
-                new Vector2(160f, 18f),
+                new Vector2(768f/2f - 64f - 48f - 96f, 48f),
+                new Vector2(96f, 18f),
                 $"{displayName}",
-                16,
-                0xff22aaee,
+                10,
+                0xff448822,
                 0x00000000,
                 HAlign.Right));
 

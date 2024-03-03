@@ -32,7 +32,7 @@ public class Compass : engine.AModule
         if (_lastCompass != compass)
         {     
             _eCompassDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2((768-128f)/2f, 48f),
+                new Vector2(768/2f-64f, 48f),
                 new Vector2(128f, 16f),
                 compass,
                 10,

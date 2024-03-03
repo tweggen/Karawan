@@ -10,6 +10,8 @@ namespace nogame.modules.osd;
  */
 public class Scores : engine.AModule
 {
+    public float YOffset { get; set; } = -4.0f;
+    
     /**
      * Display the current pling score.
      */
@@ -31,7 +33,7 @@ public class Scores : engine.AModule
         var gameState = I.Get<GameState>();
 
         _eScoreDisplay.Set(new engine.draw.components.OSDText(
-            new Vector2(786f-64f-32f, 48f),
+            new Vector2(786f-64f-32f, 48f+YOffset),
             new Vector2(64f, 40f),
             $"{gameState.NumberCubes}",
             32,
@@ -40,7 +42,7 @@ public class Scores : engine.AModule
             HAlign.Right
         ));
         _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
-            new Vector2(786f-64f-32f-96f, 48f),
+            new Vector2(786f-64f-32f-96f, 48f+YOffset),
             new Vector2(64f, 40f),
             $"{gameState.NumberPolytopes}",
             32,
@@ -49,7 +51,7 @@ public class Scores : engine.AModule
             HAlign.Right
         ));
         _eHealthDisplay.Set(new engine.draw.components.OSDText(
-            new Vector2(786f-64f-32f-48f, 48f+48f),
+            new Vector2(786f-64f-32f-48f, 48f+48f+YOffset),
             new Vector2(64f+48f, 40f),
             $"{gameState.Health}",
             32,

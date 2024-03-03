@@ -46,13 +46,13 @@ public class Module : AModule
         if (_eClockDisplay.IsAlive)
         {
             _eClockDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2((768 + 144f) / 2f, 48f),
+                new Vector2(768f/2f + 64f + 48f, 48f),
                 new Vector2(128f, 16f),
                 $"{todayGameHours:D2}:{todayGameMinutes:D2}",
                 10,
                 0xff448822,
                 0x00000000,
-                HAlign.Center
+                HAlign.Left
             ));
         }
     }
