@@ -21,7 +21,7 @@ struct DisplayMapParams
     static public float MIN_ZOOM_STATE = 0f;
     static public float MAP_STEP_SIZE = (1f / 8f);
     static public int ZOOM_STEPS = 3;
-    public float CurrentZoomState = 16f;
+    public float CurrentZoomState = 80f;
 
     static public float MAP_MOVE_PER_FRAME = (0.16f);
     
