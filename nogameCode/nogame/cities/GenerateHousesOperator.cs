@@ -278,6 +278,11 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         in IList<Vector3> p,
         float h)
     {
+        if (h < 2.9f * _storyHeight)
+        {
+            return;
+        }
+        
         /*
          * For the neon sign, we each of the corner points, using 1 meter in wall direction to
          * outside to place the rectangle.
