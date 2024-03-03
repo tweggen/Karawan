@@ -73,6 +73,22 @@ public class SkiaSharpFramebuffer : IFramebuffer
     }
 
 
+    public void DrawRectangle(Context context, Vector2 ul, Vector2 lr)
+    {
+        var paint = new SKPaint
+        {
+            Color = context.Color,
+            IsAntialias = false,
+            Style = SKPaintStyle.Stroke
+        };
+        lock (_lo)
+        {
+            _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
+            _applyModified(ul, lr);
+        }
+    }
+
+
     public void FillRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         var paint = new SKPaint

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using engine;
+using engine.editor.components;
 using engine.gongzuo;
 using engine.world;
 using ImGuiNET;
@@ -20,6 +21,8 @@ public class Main
     private Engine _engine;
 
     private int _currentEntityId = -1;
+    private DefaultEcs.Entity _currentEntity = default;
+    private DefaultEcs.Entity _previousEntity = default;
     private string _currentClusterId = "";
     private byte[] _currentEntityFilterBytes = new byte[128];
 
@@ -385,6 +388,7 @@ public class Main
                         
                         if (ImGui.Selectable(entityString, isSelected))
                         {
+                            _currentEntity = entity;
                             _currentEntityId = entity.GetId();
                         }
 
@@ -399,6 +403,27 @@ public class Main
                 ImGui.EndListBox();
             }
 
+            if (_currentEntity != _previousEntity)
+            {
+                if (_previousEntity != default)
+                {
+                    if (_previousEntity.Has<engine.editor.components.Highlight>())
+                    {
+                        _previousEntity.Remove<engine.editor.components.Highlight>();
+                    }
+                }
+
+                if (_currentEntity != default)
+                {
+                    _currentEntity.Set(new engine.editor.components.Highlight()
+                    {
+                        Flags = (byte)Highlight.StateFlags.IsSelected,
+                        Color = 0xff33ffcc
+                    });
+                }
+                _previousEntity = _currentEntity;
+            }
+            
             if (ImGui.CollapsingHeader("Inspector"))
             {
                 if (-1 == _currentEntityId)

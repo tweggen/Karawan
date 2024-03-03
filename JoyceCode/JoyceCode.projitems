@@ -52,6 +52,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SpawnBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\editor\components\Highlight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickModule.cs" />

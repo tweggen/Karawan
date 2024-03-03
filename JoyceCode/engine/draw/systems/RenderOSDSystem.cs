@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using BepuUtilities;
 using engine.draw.components;
+using engine.editor.components;
 using engine.joyce.components;
 using engine.world;
 using static engine.Logger;
@@ -122,16 +123,23 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             vScreenPos += osdText.Position;
             
             /*
-             * Render standard 2d text.
+             * Render standard 2d entities.
              */
             Vector2 ul = vScreenPos;
             Vector2 lr = vScreenPos + osdText.Size - new Vector2(1f, 1f);
+            
+            /*
+             * If we didn't clear the screen before, clear the component's rectangle.
+             */
             if (!_clearWholeScreen)
             {
                 _dc.ClearColor = osdText.FillColor;
                 _framebuffer.ClearRectangle(_dc, ul, lr);
             }
 
+            /*
+             * Render text part.
+             */
             uint textColor;
             if ((osdText.OSDTextFlags & OSDText.ENABLE_DISTANCE_FADE) != 0)
             {
@@ -148,7 +156,28 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             _dc.HAlign = osdText.HAlign;
             _dc.VAlign = osdText.VAlign;
             _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
+            
+            /*
+             * If there is a highlight, render the hightlight.
+             */
+            bool shouldDraw = false;
+            uint color = 0;
 
+            if (entity.Has<Highlight>())
+            {
+                ref var cHighlight = ref entity.Get<Highlight>();
+                if (0 != (cHighlight.Flags & (byte)Highlight.StateFlags.IsSelected))
+                {
+                    shouldDraw = true;
+                    color = cHighlight.Color;
+                }
+            }
+
+            if (shouldDraw)
+            {
+                _dc.Color = color;
+                _framebuffer.DrawRectangle(_dc, ul, lr);
+            }
         }
     }
     
