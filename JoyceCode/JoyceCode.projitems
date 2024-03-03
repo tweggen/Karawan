@@ -50,7 +50,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\AutoRemoveBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SpawnBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\actions\ABase.cs" />
@@ -149,7 +151,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\components\LuaScript.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptEntry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaScriptManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\systems\LuaScriptRunSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\Children.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NewParent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\OldParent.cs" />

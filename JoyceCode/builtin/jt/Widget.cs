@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
+using engine.gongzuo;
+using engine.news;
+using ObjLoader.Loader.Common;
 using static engine.Logger;
 
 namespace builtin.jt;
@@ -42,9 +45,85 @@ public class Widget : IDisposable
 {   
     protected object _lo = new();
     public required string Type;
+    
+    /**
+     * Stores the user accessible property data.
+     */
     private SortedDictionary<string, object>? _properties = null;
+    
+    /**
+     * Contains anything we compile the properties to after user acesses it.
+     */
+    private SortedDictionary<string, IDisposable>? _compiledProperties = null;
 
 
+    private void _invalidateCompiled(string key)
+    {
+        IDisposable? oCompiled = null;
+        lock (_lo)
+        {
+            if (null == _compiledProperties) return;
+            if (_compiledProperties.TryGetValue(key, out oCompiled))
+            {
+                _compiledProperties.Remove(key);
+            }
+        }
+
+        if (oCompiled != null)
+        {
+            oCompiled.Dispose();
+        }
+    }
+
+
+    private void _storeCompiled(string key, IDisposable oCompiled)
+    {
+        IDisposable? oOldCompiled = null;
+        lock (_lo)
+        {
+            if (null == _compiledProperties)
+            {
+                _compiledProperties = new();
+            }
+            if (_compiledProperties.TryGetValue(key, out oOldCompiled))
+            {
+                if (oCompiled == oOldCompiled) return;
+                _compiledProperties.Remove(key);
+            }
+            _compiledProperties[key] = oCompiled;
+        }
+
+        if (oOldCompiled != null)
+        {
+            oOldCompiled.Dispose();
+        }
+    }
+    
+    
+    private void _storeCompiled_nl(string key, IDisposable oCompiled)
+    {
+        if (null == _compiledProperties)
+        {
+            _compiledProperties = new();
+        }
+        _compiledProperties[key] = oCompiled;
+    }
+    
+    
+    public void _invalidateCompiled_nl(string key, out IDisposable? oldCompiled)
+    {
+        if (null == _compiledProperties)
+        {
+            oldCompiled = null;
+            return;
+        }
+        if (_compiledProperties.TryGetValue(key, out oldCompiled))
+        {
+            _compiledProperties.Remove(key);
+        }
+    }
+    
+    
     public object this[string key]
     {
         get
@@ -67,6 +146,8 @@ public class Widget : IDisposable
         {
             object oldValue = null, newValue = value;
             IWidgetImplementation impl;
+            IDisposable? oldCompiled = null;
+
             lock (_lo)
             {
                 if (null == _properties)
@@ -76,10 +157,19 @@ public class Widget : IDisposable
                 else
                 {
                     _properties.TryGetValue(key, out oldValue);
+                    if (oldValue != newValue)
+                    {
+                        _invalidateCompiled_nl(key, out oldCompiled);
+                    }
                 }
                 _properties[key] = value;
 
                 impl = _impl;
+            }
+
+            if (null != oldCompiled)
+            {
+                oldCompiled.Dispose();
             }
 
             if (null != impl)
@@ -122,6 +212,27 @@ public class Widget : IDisposable
             else
             {
                 return defaultValue;
+            }
+        }
+    }
+
+
+    public bool HasAttr(string name)
+    {
+        lock (_lo)
+        {
+            if (null == _properties)
+            {
+                return false;
+            }
+
+            if (_properties.ContainsKey(name))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
     }
@@ -807,8 +918,66 @@ public class Widget : IDisposable
     }
 
 
+    protected void _queueLuaScript(string evType, LuaScriptEntry lse, string script, engine.news.Event ev)
+    {
+        /*
+         * First, compile the script (this compiles only if required, checks for a change, again).
+         */
+        lse.LuaScript = script;
+        
+        /*
+         * Then, execute.
+         */
+        lse.Call();
+    }
+
+
+    protected LuaScriptEntry _findLuaScriptEntry(string evType, string script)
+    {
+        LuaScriptEntry? lse = null;
+        lock (_lo)
+        {
+            if (null != _compiledProperties && _compiledProperties.TryGetValue(evType, out var oCompiled))
+            {
+                lse = oCompiled as LuaScriptEntry;
+            }
+            else
+            {
+                lse = new LuaScriptEntry();
+                _storeCompiled_nl(evType, lse);
+            }
+        }
+
+        return lse;
+    }
+    
+
+    protected void _emitEvent(string evType, engine.news.Event ev)
+    {
+        string script = GetAttr(evType, "");
+        if (script.IsNullOrEmpty()) return;
+
+        LuaScriptEntry? lse;
+        try
+        {
+            lse = _findLuaScriptEntry(evType, script);
+        }
+        catch (Exception e)
+        {
+            Trace($"Exception while compiling lua handler: {e}");
+            return;
+        }
+
+        /*
+         * Finally execute the script.
+         */
+        _queueLuaScript(evType, lse, script, ev);
+    }
+
+
     protected void _emitSelected(engine.news.Event ev)
     {
+        _emitEvent("onClick", ev);
     }
     
 
@@ -862,8 +1031,8 @@ public class Widget : IDisposable
                             ev.IsHandled = true;
                         }
                         break;
-                    case "(space)":
-                    case "(E)":
+                    case " ":
+                    case "E":
                         if (!haveChildren)
                         {
                             _emitSelected(ev);

@@ -16,6 +16,7 @@ public class LuaScriptEntry : IDisposable
     private int _setScriptVersion = 0;
     private int _compiledScriptVersion = 0;
     private Lua _luaState;
+    private LuaFunction _luaFunction;
 
 
     private void _setLuaScript(string luaScript)
@@ -45,8 +46,7 @@ public class LuaScriptEntry : IDisposable
         {
             // TXWTODO: Add prebound script content, kind of global declarations
 
-            var luaFunction = _luaState.LoadString(luaScript, "component lua script");
-            luaFunction.Call();
+            _luaFunction = _luaState.LoadString(luaScript, "component lua script");
             _luaScript = luaScript;
             ++_setScriptVersion;
             _compiledScriptVersion = _setScriptVersion;
@@ -83,8 +83,14 @@ public class LuaScriptEntry : IDisposable
     }
 
 
-    public void Call(string script, string scriptName)
+    public void Call()
     {
-        _luaState.DoString(script, scriptName);
+        if (null == _luaFunction)
+        {
+            ErrorThrow<InvalidOperationException>($"No lua function loaded.");
+            return;
+        }
+
+        _luaFunction.Call();
     }
 }
