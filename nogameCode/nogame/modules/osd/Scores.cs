@@ -10,7 +10,7 @@ namespace nogame.modules.osd;
  */
 public class Scores : engine.AModule
 {
-    public float YOffset { get; set; } = -4.0f;
+    public float YOffset { get; set; } = -5.0f;
     
     /**
      * Display the current pling score.
@@ -37,7 +37,7 @@ public class Scores : engine.AModule
             new Vector2(64f, 40f),
             $"{gameState.NumberCubes}",
             32,
-            0xff22aaee,
+            0xff448822,
             0x00000000,
             HAlign.Right
         ));
@@ -46,7 +46,7 @@ public class Scores : engine.AModule
             new Vector2(64f, 40f),
             $"{gameState.NumberPolytopes}",
             32,
-            0xff999922,
+            0xff448822,
             0x00000000,
             HAlign.Right
         ));

@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Dynamic;
+using System.Numerics;
 using engine.joyce.components;
 using engine.news;
+using ObjLoader.Loader.Common;
 
 namespace engine;
 
@@ -54,6 +57,24 @@ public class GlobalSettings
                 return "";
             }
         }
+    }
+
+
+    public static Vector2 ParseSize(string viewSize)
+    {
+        int x=320, y=200;
+        if (viewSize.IsNullOrEmpty()) viewSize = "320x200";
+
+
+        int xpos = viewSize.IndexOf('x');
+        if (xpos != -1)
+        {
+            string ypart = viewSize.Substring(xpos + 1);
+            if (Int32.TryParse(viewSize.Substring(0, xpos), out x)) {}
+            if (Int32.TryParse(ypart, out y)) {}
+        }
+
+        return new Vector2(x, y);
     }
     
     

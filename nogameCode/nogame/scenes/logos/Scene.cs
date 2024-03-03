@@ -23,7 +23,6 @@ public class Scene : AModule, IScene
     private TitleModule _modTitle;
     
     private bool _isCleared = false;
-
     private bool _shallHideTitle = false;
 
     private float _t;
@@ -42,16 +41,13 @@ public class Scene : AModule, IScene
         
         if (_isCleared)
         {
-            /*
-             * Immediately trigger main scene. It will setup loading.
-             */
-            I.Get<SceneSequencer>().SetMainScene("root");
         }
         else
         {
             if (!_shallHideTitle)
             {
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 20f + _t));
+                float z = float.Floor(3f*t)/3f + t/8f;
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 22f + z/10f));
                 _aTransform.SetPosition(_eLight, new Vector3(0f, -10f + 3f * t, 25f));
             }
             else
@@ -62,6 +58,10 @@ public class Scene : AModule, IScene
                  */
                 _eCamera.Get<engine.joyce.components.Camera3>().CameraMask = 0;
                 _isCleared = true;
+                /*
+                 * Immediately trigger main scene. It will setup loading.
+                 */
+                I.Get<SceneSequencer>().SetMainScene("root");
             }
         }
 
@@ -177,9 +177,9 @@ public class Scene : AModule, IScene
             AlbedoTexture = new Texture("titlelogo2_albedo.png"),
             EmissiveTexture = new Texture("titlelogo2_emissive.png"),
             StartTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.6405f),
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
             EndTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.895f, -7f), Vector3.One * 0.64f)
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
         });
         
         _modTitle.ModuleActivate(_engine);

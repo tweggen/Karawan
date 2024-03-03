@@ -151,6 +151,22 @@ public class Module : AModule, IInputPart
             / DisplayMapParams.MAX_ZOOM_STATE - DisplayMapParams.MIN_ZOOM_STATE;
         return (1024f * (x * x * x) + 3) / (engine.world.MetaGen.MaxHeight);
     }
+
+    private Vector2 _osdToViewport(float x, float y)
+    {
+        float osdWidth = 768f;
+        float osdHeight = osdWidth / 16f * 9f;
+
+        /*
+         * What size of the full height is the part we render in?
+         * TXWTODO: We assume the physical screen is landscape to some extend.
+         */
+        float letterboxHeight = (_viewHeight / _viewWidth) / (9f / 16f);
+
+        return new Vector2(
+            x / osdWidth,
+            (1f - letterboxHeight) / 2f + y / osdHeight * letterboxHeight);
+    }
     
 
     private void _updateMapParams()
@@ -201,8 +217,12 @@ public class Module : AModule, IInputPart
                 }
 
                 cCamera3.Scale = (2f * 1024f + 3f) / MetaGen.MaxHeight;
-                cCamera3.UL = new Vector2(0.05f, 0.05f);
-                cCamera3.LR = new Vector2(0.05f + MiniMapSize, 0.05f + MiniMapSize * 16f / 9f);
+                /*
+                 * Until we have a better scaling:
+                 * The map shall start at x/y position 48, with number of y pixels is 768*9/16
+                 */
+                cCamera3.UL = _osdToViewport(14f, 48f);
+                cCamera3.LR = _osdToViewport(14f+80f, 48f+80f);
             }
                 break;
         }
@@ -468,6 +488,7 @@ public class Module : AModule, IInputPart
 
 
     private bool _haveInputPart = false;
+    private Vector2 _viewSize;
 
     private void _noInputPart()
     {
@@ -651,5 +672,13 @@ public class Module : AModule, IInputPart
         _engine.AddModule(this);
         
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.map.toggleMap", _onClickMap);
+
+        _viewSize = engine.GlobalSettings.ParseSize(engine.GlobalSettings.Get("view.size"));
+        
+        // TXWTODO: we might subscribe. But better waitt until we would have layout managers for this. 
+        //I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
+        //{
+        //    Position = new(size.X, size.Y)
+        //});
     }
 }

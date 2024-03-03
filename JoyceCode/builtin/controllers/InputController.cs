@@ -441,21 +441,10 @@ public class InputController : engine.AModule, engine.IInputPart
     private void _refreshViewSize()
     {
         string viewSize = engine.GlobalSettings.Get("view.size");
-        if (null == viewSize || viewSize == "") viewSize = "320x200";
-
-        int x=320, y=200;
-
-        int xpos = viewSize.IndexOf('x');
-        if (xpos != -1)
-        {
-            string ypart = viewSize.Substring(xpos + 1);
-            if (Int32.TryParse(viewSize.Substring(0, xpos), out x)) {}
-            if (Int32.TryParse(ypart, out y)) {}
-        }
 
         lock (_lo)
         {
-            _vViewSize = new(x,y);
+            _vViewSize = engine.GlobalSettings.ParseSize(viewSize);
         }
     }
     
