@@ -844,8 +844,10 @@ public class Engine
         float toWait = 0f;
         int nSleeps = 0;
 
+
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
+
         while (_platform.IsRunning())
         {
             EngineState engineState;
@@ -853,11 +855,9 @@ public class Engine
             if (toWait > 0f && stopWatch.Elapsed.TotalSeconds < toWait)
             {
                 // Trace($"toWait {toWait}");
-                //Thread.Yield();
-                // Thread.Sleep(1);
                 lock (ShortSleep)
                 {
-                    System.Threading.Monitor.Wait(ShortSleep,1);
+                    bool reaquiredInTime = System.Threading.Monitor.Wait(ShortSleep,1);
                     nSleeps++;
                 }
                 continue;

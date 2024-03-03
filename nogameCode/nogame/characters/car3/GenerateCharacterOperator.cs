@@ -238,10 +238,17 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                      */
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
+                        #if DEBUG
                         Stopwatch sw = new();
                         sw.Start();
+                        #endif
+                        
                         eTarget.Set(new engine.world.components.FragmentId(fragmentId));
+                        
+                        #if DEBUG
                         float millisAfterFragmentId = (float) sw.Elapsed.TotalMilliseconds;
+                        #endif
+                        
                         {
                             builtin.tools.ModelBuilder modelBuilder = new(worldFragment.Engine, model, instantiateModelParams);
                             modelBuilder.BuildEntity(eTarget);
@@ -256,11 +263,17 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         {
                             MaxDistance = propMaxDistance
                         });
+                        
+                        #if DEBUG
                         float millisAfterBehavior = (float) sw.Elapsed.TotalMilliseconds;
+                        #endif
 
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCar3Sound(carIdx), 150f));
+                        
+                        #if DEBUG
                         float millisAfterMovingSound = (float) sw.Elapsed.TotalMilliseconds;
+                        #endif
 
                         
                         engine.physics.CollisionProperties collisionProperties =
@@ -276,12 +289,15 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         po.CollisionProperties = collisionProperties;
                         po.Entity = eTarget;
                         eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+                        
+                        #if DEBUG
                         float millisAfterBody = (float) sw.Elapsed.TotalMilliseconds;
                         sw.Stop();
                         if (sw.Elapsed.TotalMilliseconds > 3f)
                         {
                             int a;
                         }
+                        #endif
                     });
                     wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
                     

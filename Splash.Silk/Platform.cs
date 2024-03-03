@@ -420,6 +420,19 @@ public class Platform : engine.IPlatform
     }
 
 
+    /**
+     * Some platforms (I'm looking at you, windows) lack a reasonably short
+     * system timer, so we have a condition variable that we trigger from time to time.
+     */
+    private void _triggerWaitMonitor()
+    {
+        lock (_engine.ShortSleep)
+        {
+            System.Threading.Monitor.Pulse(_engine.ShortSleep);
+        }
+    }
+
+
     private static int _frameNo = 0;
 
     /**
@@ -437,15 +450,12 @@ public class Platform : engine.IPlatform
         RenderFrame renderFrame;
         while (true)
         {
-            lock (_engine.ShortSleep)
-            {
-                System.Threading.Monitor.Pulse(_engine.ShortSleep);
-            }
+            _triggerWaitMonitor();
 
             renderFrame = _logicalRenderer.WaitNextRenderFrame();
             if (null == renderFrame)
             {
-                Trace($"No frame,");
+                Trace($"No frame.");
                 if (false == _isRunning)
                 {
                     return;
@@ -466,11 +476,6 @@ public class Platform : engine.IPlatform
             _renderer.SetDimension(_iView.Size.X, _iView.Size.Y);
         }
 
-        lock (_engine.ShortSleep)
-        {
-            System.Threading.Monitor.Pulse(_engine.ShortSleep);
-        }
-
         _renderer.RenderFrame(renderFrame);
         double msRendered = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
@@ -479,39 +484,29 @@ public class Platform : engine.IPlatform
 
         if (null != _imGuiController)
         {
+            _triggerWaitMonitor();
+
             _imGuiController.Update((float)dt);
             _engine.CallOnImGuiRender((float)dt);
             _imGuiController.Render();
         }
 
-        lock (_engine.ShortSleep)
-        {
-            System.Threading.Monitor.Pulse(_engine.ShortSleep);
-        }
+        _triggerWaitMonitor();
 
         _iView.SwapBuffers();
         double msSwap = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
-        lock (_engine.ShortSleep)
-        {
-            System.Threading.Monitor.Pulse(_engine.ShortSleep);
-        }
+        _triggerWaitMonitor();
 
         _silkThreeD.ExecuteGraphicsThreadActions(0.001f);
         double msAfterGraphicsThread = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
 
-        lock (_engine.ShortSleep)
-        {
-            System.Threading.Monitor.Pulse(_engine.ShortSleep);
-        }
+        _triggerWaitMonitor();
 
         ++_frameNo;
         _engine.CallOnPhysicalFrame((float)dt);
 
-        lock (_engine.ShortSleep)
-        {
-            System.Threading.Monitor.Pulse(_engine.ShortSleep);
-        }
+        _triggerWaitMonitor();
 
         _platformThreadActions.RunPart(1000f);
         double msAfterPlatformThread = _renderSingleFrameStopwatch.Elapsed.TotalMilliseconds;
@@ -520,11 +515,7 @@ public class Platform : engine.IPlatform
         // Trace($"after {(tsNow-_prevFrame).TotalMilliseconds} Took {_renderSingleFrameStopwatch.Elapsed.TotalMilliseconds}, got {msGotFrame} dr {msRendered-msGotFrame} aftergfx {msAfterGraphicsThread-msRendered} afterpf {msAfterPlatformThread-msAfterGraphicsThread} ");
         _prevFrame = tsNow;
         
-        lock (_engine.ShortSleep)
-        {
-            System.Threading.Monitor.Pulse(_engine.ShortSleep);
-        }
-
+        _triggerWaitMonitor();
     }
 
     private void _windowOnClose()
@@ -596,9 +587,12 @@ public class Platform : engine.IPlatform
         IView iView = _iView;
         iView.Run(delegate
         {
+            _triggerWaitMonitor();
+        
             iView.DoEvents();
             if (!iView.IsClosing)
             {
+                _triggerWaitMonitor();
                 iView.DoUpdate();
             }
 
@@ -608,6 +602,9 @@ public class Platform : engine.IPlatform
             }
         });
         iView.DoEvents();
+        
+        _triggerWaitMonitor();
+        
         iView.Reset();
         iView = null;
         _iView.Dispose();
