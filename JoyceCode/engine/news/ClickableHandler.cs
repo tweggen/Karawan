@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
+using BepuPhysics.Collidables;
 using engine.joyce.components;
 using engine.news;
+using engine.physics;
 using static engine.Logger;
 
 namespace engine.news;
@@ -11,6 +13,11 @@ namespace engine.news;
 
 /**
  * Scan all clickable objects for the object the user might have clicked on.
+ *
+ * There are three types of clickable object
+ * - inside OSD object framebuffer
+ * - 2d isometrically projected (use boundary boxes)
+ * - 3d projected (with physics awareness)
  */
 public class ClickableHandler
 {
@@ -22,10 +29,10 @@ public class ClickableHandler
     private Matrix4x4 _mView;
 
     
-    private bool _findAt(in Vector2 pos, out DefaultEcs.Entity resultingEntity, out Vector2 v2RelPos)
+    private void _findAt(in Vector2 pos, in SortedDictionary<DefaultEcs.Entity, Vector2> mapResultingEntities)
     {
         /*
-         * We have two different version of Clickables: Those from 3d space
+         * We have two (+, see above) different version of Clickables: Those from 3d space
          * including camera mask etc. and those purely based on OSD text.
          * We handle the ones from 3d space.
          *
@@ -44,9 +51,12 @@ public class ClickableHandler
             .AsEnumerable();
 
         float minZ = Single.MaxValue;
-        resultingEntity = default;
-        v2RelPos = default;
         
+        /*
+         * Iterate though all clickable entities by AABB boxes.
+         *
+         * This should catch the framebuffer or similar concepts.
+         */
         foreach (var entity in clickableEntities)
         {
             var cTransform = entity.Get<joyce.components.Transform3ToWorld>();
@@ -93,28 +103,21 @@ public class ClickableHandler
             
             // Trace($"pos is {pos} Transformed position is ul={ul}, lr={lr}");
 
-            if (!
-                (pos.X >= ul.X && pos.X < lr.X 
-                && pos.Y >= ul.Y && pos.Y < lr.Y))
-            {
-                continue;
-            }
-
-            v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
-            
             /*
-             * This is a hit.
+             * Is it within the bounds of the AABB?
+             * Then out and done!
              */
-            // Trace($"Clickable {entity} was clicked.");
-            resultingEntity = entity;
-        }
+            if (pos.X >= ul.X && pos.X < lr.X && pos.Y >= ul.Y && pos.Y < lr.Y)
+            {
+                Vector2 v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
 
-        if (resultingEntity != default)
-        {
-            return true;
+                /*
+                 * This is a hit.
+                 */
+                // Trace($"Clickable {entity} was clicked.");
+                mapResultingEntities[entity] = v2RelPos;
+            }
         }
-        
-        return false;
     }
 
 
@@ -125,8 +128,19 @@ public class ClickableHandler
         _cCamera3.GetProjectionMatrix(out _mProjection, _vViewSize);
         _cCamera3.GetViewMatrix(out _mView, _cCamTransform.Matrix);
     }
-    
-    
+
+
+    private void _onMainCameraRayHit(
+        CollidableReference collidableReference,
+        CollisionProperties collisionProperties,
+        float t,
+        Vector3 vNormal)
+    {
+        if (null != collisionProperties)
+        {
+        }
+    }
+
     public void OnClick(engine.news.Event ev)
     {
         _vViewSize = ev.Size;
@@ -146,6 +160,8 @@ public class ClickableHandler
         /*
          * Now iterate through all cameras.
          * We need a copy because event handlers shall be able to create/remove entities.
+         * TXWTODO: This is at most 32 (plus dup'ped cams), why not sort it? So that we're
+         * having a defined order?
          */
         var cameras = new List<DefaultEcs.Entity>(_engine.GetEcsWorld().GetEntities()
             .With<Camera3>()
@@ -165,11 +181,15 @@ public class ClickableHandler
                 continue;
             }
 
+            SortedDictionary<DefaultEcs.Entity, Vector2> mapClickedEntities = new();
             /*
              * Then find the entity somebody would have clicked on.
              */
-            if (_findAt(pos, out var eFound, out var v2RelPos))
+            _findAt(pos, in mapClickedEntities);
+            foreach (var kvp in mapClickedEntities)
             {
+                var eFound = kvp.Key;
+                var v2RelPos = kvp.Value;
                 var cClickable = eFound.Get<engine.behave.components.Clickable>();
                 var factory = cClickable.ClickEventFactory;
                 if (factory != null)
@@ -181,6 +201,20 @@ public class ClickableHandler
                     }
                 }
             }
+        }
+        
+        /*
+         * Finally, using the real cam (that we just define to be the main view), to do raycasting.
+         */
+        var eMainCamera = _engine.GetCameraEntity();
+        if (eMainCamera.IsAlive)
+        {
+            ref var cCamTransform = ref eMainCamera.Get<engine.joyce.components.Transform3ToWorld>();
+            ref var cCamera = ref eMainCamera.Get<engine.joyce.components.Camera3>();
+            ref var mCameraToWorld = ref cCamTransform.Matrix;
+            Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
+            var vCamPosition = mCameraToWorld.Translation;
+            I.Get<engine.physics.API>().RayCast(vCamPosition, -vZ, 200f, _onMainCameraRayHit);
         }
     }
     

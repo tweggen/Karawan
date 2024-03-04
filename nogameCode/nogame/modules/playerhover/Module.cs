@@ -263,7 +263,7 @@ public class Module : engine.AModule
         /*
          * Look up the object we are facing.
          */
-        {
+        if (false) {
             if (_eCamera.IsAlive)
             {
                 if (_eCamera.Has<engine.joyce.components.Transform3ToWorld>() &&
