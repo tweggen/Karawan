@@ -47,7 +47,7 @@ public class Scene : AModule, IScene
             if (!_shallHideTitle)
             {
                 float z = float.Floor(3f*t)/3f + t/8f;
-                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 22f + z/10f));
+                _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 27f + z/10f));
                 _aTransform.SetPosition(_eLight, new Vector3(0f, -10f + 3f * t, 25f));
             }
             else

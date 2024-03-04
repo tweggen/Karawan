@@ -240,7 +240,7 @@ public class Module : engine.AModule
         {
             if ((_aSound.SoundMask & 0x00000001) != 0)
             {
-                _soundMyEngine.Speed = 0.8f + vel * 2.5f;
+                _soundMyEngine.Speed = 0.1f + vel * 4f;
                 float vol = Single.Clamp(0.1f + vel * 3.0f, 0f, 1f);
                 _soundMyEngine.Volume = 0.2f * vol;
 
