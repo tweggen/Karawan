@@ -155,6 +155,7 @@
 	  <None Remove="Platforms\Android\polytope-stand-only.obj" />
 	  <None Remove="Platforms\Android\Prototype.ttf" />
 	  <None Remove="Platforms\Android\ScreenFS.frag" />
+	  <None Remove="Platforms\Android\sd_my_engine.ogg" />
 	  <None Remove="Platforms\Android\shaklengokhsi.ogg" />
 	  <None Remove="Platforms\Android\skybox2.png" />
 	  <None Remove="Platforms\Android\skybox2noborder.png" />
@@ -355,6 +356,9 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\ScreenFS.frag">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidAsset>
+	  <AndroidAsset Include="Platforms\Android\sd_my_engine.ogg">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\shaklengokhsi.ogg">
