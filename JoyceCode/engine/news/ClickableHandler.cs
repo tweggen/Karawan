@@ -138,6 +138,7 @@ public class ClickableHandler
     {
         if (null != collisionProperties)
         {
+            Trace($"Collision with {collisionProperties.Name}");
         }
     }
 
