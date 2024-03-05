@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Numerics;
 using BepuPhysics.Collidables;
@@ -138,6 +139,7 @@ public class ClickableHandler
     {
         if (null != collisionProperties)
         {
+            int a = 0;
         }
     }
 
@@ -212,9 +214,26 @@ public class ClickableHandler
             ref var cCamTransform = ref eMainCamera.Get<engine.joyce.components.Transform3ToWorld>();
             ref var cCamera = ref eMainCamera.Get<engine.joyce.components.Camera3>();
             ref var mCameraToWorld = ref cCamTransform.Matrix;
+            Vector3 vX = new Vector3(mCameraToWorld.M11, mCameraToWorld.M12, mCameraToWorld.M13);
+            Vector3 vY = new Vector3(mCameraToWorld.M21, mCameraToWorld.M22, mCameraToWorld.M23);
             Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
+            float dist = vZ.Length();
             var vCamPosition = mCameraToWorld.Translation;
-            I.Get<engine.physics.API>().RayCast(vCamPosition, -vZ, 200f, _onMainCameraRayHit);
+            
+            /*
+             * The virtual camera screen is "at" NearFrustum.
+             * However, for raycasting, the actual position (distance to the camera) does not matter,
+             * any direction is ok.
+             *
+             * The extent of the screen is defined by the angle of the projection, 
+             */
+            float xExtent = Single.Tan(cCamera.Angle) * dist;
+            float yExtent = xExtent * 9f / 16f;
+
+            Vector3 v3Target = -vZ 
+                + vX * (xExtent * (ev.Position.X / _vViewSize.X - 0.5f))
+                - vY * (yExtent * (ev.Position.Y / _vViewSize.Y - 0.5f));
+            I.Get<engine.physics.API>().RayCast(vCamPosition, v3Target, cCamera.FarFrustum, _onMainCameraRayHit);
         }
     }
     
