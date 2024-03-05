@@ -1033,6 +1033,7 @@ public class Widget : IDisposable
                         break;
                     case " ":
                     case "E":
+                    case "(enter)":
                         if (!haveChildren)
                         {
                             _emitSelected(ev);

@@ -170,6 +170,9 @@ public class Platform : engine.IPlatform
             case Key.Z:
                 code = "Z";
                 break;
+            case Key.Enter:
+                code = "(enter)";
+                break;
             case Key.Tab:
                 code = "(tab)";
                 break;

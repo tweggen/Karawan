@@ -208,7 +208,7 @@ public class ClickableHandler
          * Finally, using the real cam (that we just define to be the main view), to do raycasting.
          */
         var eMainCamera = _engine.GetCameraEntity();
-        if (eMainCamera.IsAlive)
+        if (false && eMainCamera.IsAlive)
         {
             ref var cCamTransform = ref eMainCamera.Get<engine.joyce.components.Transform3ToWorld>();
             ref var cCamera = ref eMainCamera.Get<engine.joyce.components.Camera3>();
@@ -226,12 +226,14 @@ public class ClickableHandler
              *
              * The extent of the screen is defined by the angle of the projection, 
              */
-            float xExtent = Single.Tan(cCamera.Angle) * dist;
+            float xExtent = 2f * Single.Tan((cCamera.Angle*Single.Pi/180f)/2f) * dist;
             float yExtent = xExtent * 9f / 16f;
+            float mainHeight = _vViewSize.X * 9f / 16f;
+            float mainTop = (_vViewSize.Y - mainHeight) / 2f; 
 
-            Vector3 v3Target = -vZ 
-                + vX * (xExtent * (ev.Position.X / _vViewSize.X - 0.5f))
-                - vY * (yExtent * (ev.Position.Y / _vViewSize.Y - 0.5f));
+            Vector2 v2Pos = new Vector2(ev.Position.X / _vViewSize.X - 0.5f,  (ev.Position.Y-mainTop) / mainHeight - 0.5f);
+            Trace($"v2Pos = {v2Pos}, xExtent = {xExtent}, yExtent = {yExtent}" );
+            Vector3 v3Target = -vZ + vX * xExtent * v2Pos.X - vY * yExtent * v2Pos.Y;
             I.Get<engine.physics.API>().RayCast(vCamPosition, v3Target, cCamera.FarFrustum, _onMainCameraRayHit);
         }
     }
