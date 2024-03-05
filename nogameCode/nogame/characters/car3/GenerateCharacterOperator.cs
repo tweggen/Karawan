@@ -253,7 +253,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             builtin.tools.ModelBuilder modelBuilder = new(worldFragment.Engine, model, instantiateModelParams);
                             modelBuilder.BuildEntity(eTarget);
                         }
+                        #if DEBUG
                         float millisAfterBuild = (float) sw.Elapsed.TotalMilliseconds;
+                        #endif
 
                         eTarget.Set(new engine.behave.components.Behavior(
                             new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)

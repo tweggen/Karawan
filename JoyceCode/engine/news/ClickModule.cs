@@ -3,6 +3,13 @@ using engine.behave.systems;
 namespace engine.news;
 
 
+/**
+ * Once activated, this module subscribes for click/touch events.
+ * Whenever the user clicks/touches, the clickable handler scans
+ * through the clickable objects to find the matching object, calling
+ * it's event factory to create the event desired by the owner of
+ * the object.
+ */
 public class ClickModule : AModule
 {
     private object _lo = new();

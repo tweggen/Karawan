@@ -1,6 +1,7 @@
 using System.Numerics;
 using engine;
 using engine.joyce;
+using engine.news;
 using static engine.Logger;
 
 namespace nogame.modules.debugger;
@@ -19,10 +20,23 @@ public class Module : AModule
     {
         I.Get<joyce.ui.Main>().Render(dt);
     }
+
+
+    private void _onMousePressed(engine.news.Event ev)
+    {
+        /*
+         * Find out what the user clicked on.
+         * Iterate through it from the top camera to the bottom.
+         */
+    }
     
 
     public override void ModuleDeactivate()
     {
+        Props.Set("engine.editor.isOpen", false);
+
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onMousePressed);
+        
         _engine.RemoveModule(this);
         _engine.OnImGuiRender -= _onImGuiRender;
         _engine.DisableEntityIds();
@@ -36,6 +50,10 @@ public class Module : AModule
         _engine.AddModule(this);
         _engine.OnImGuiRender += _onImGuiRender;
         _engine.EnableEntityIds();
+        
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onMousePressed);
+        
+        Props.Set("engine.editor.isOpen", true);
     }
 
 }
