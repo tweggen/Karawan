@@ -33,6 +33,7 @@
     "engine.quest.Manager": null,
     "nogame.modules.story.Narration": null,
     "engine.news.ClickModule": null,
+    "nogame.modules.World": null,
     "nogame.modules.daynite.Module": null
   },
   "mapProviders":

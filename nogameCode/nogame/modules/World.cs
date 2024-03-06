@@ -17,9 +17,9 @@ public class World : AModule
     private engine.joyce.TransformApi _aTransform;
     
     private DefaultEcs.Entity _eCamScene;
-    private DefaultEcs.Entity _eLightMain;
-    private DefaultEcs.Entity _eLightBack;
-    private DefaultEcs.Entity _eAmbientLight;
+    private DefaultEcs.Entity ELightMain;
+    private DefaultEcs.Entity ELightBack;
+    public DefaultEcs.Entity EAmbientLight;
 
 
     private void _triggerLoadWorld()
@@ -95,22 +95,22 @@ public class World : AModule
          * Directional light
          */
         {
-            _eLightMain = _engine.CreateEntity("RootScene.DirectionalLight");
-            _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.7f, 0.8f, 0.9f, 0.0f)));
-            _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
+            ELightMain = _engine.CreateEntity("RootScene.DirectionalLight");
+            ELightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.7f, 0.8f, 0.9f, 0.0f)));
+            _aTransform.SetRotation(ELightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
         }
         {
-            _eLightBack = _engine.CreateEntity("RootScene.OtherLight");
-            _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.2f, 0.2f, 0.0f, 0.0f)));
-            _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
+            ELightBack = _engine.CreateEntity("RootScene.OtherLight");
+            ELightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.2f, 0.2f, 0.0f, 0.0f)));
+            _aTransform.SetRotation(ELightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
         }
         
         /*
          * Ambient light
          */
         {
-            _eAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
-            _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
+            EAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
+            EAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
         }
 
         /*

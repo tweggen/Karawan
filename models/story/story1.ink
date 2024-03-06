@@ -23,7 +23,7 @@ Where can I get some hot and tasty ramen here?
 I guess the navigation should display.
 { triggerQuest("nogame.quests.VisitAgentTwelve.Quest") }
 
--> END
+-> END // continues with agent12 after we reached the target.
 
 == drink1 ==
 
@@ -31,12 +31,14 @@ might be early or late, you never know, surely it's dim. A drink wouldn't hurt.
 Let's see if navigation can help us.
 { triggerQuest("nogame.quests.VisitAgentTwelve.Quest") }
 
--> END
+-> END // continues with agent12 after we reached the target.
 
 === agent12 ===
 
 I can't see agent 12. He usually would be here if I long for a beverage or a meal.
 He would tell me something, you know, get straight to it. 
 Sometimes I wonder if he knows the fishmongers. Though I never dared to ask him.
+{ triggerQuest("nogame.quests.HelloFishmonger.Quest") }
 
--> END
+-> END // continues with HelloFishmonger after we reached the target.
+

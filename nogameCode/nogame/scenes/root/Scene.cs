@@ -23,7 +23,7 @@ public class Scene : AModule, IScene, IInputPart
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new MyModule<nogame.modules.World>(),
+        new SharedModule<nogame.modules.World>(),
         new MyModule<builtin.modules.ScreenComposer>(),
         new MyModule<nogame.modules.playerhover.Module>(),
         new MyModule<nogame.modules.Gameplay>(),
