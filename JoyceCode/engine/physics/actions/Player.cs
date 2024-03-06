@@ -95,6 +95,7 @@ public class Player
 
     private void _addActions()
     {
+        _addAction(typeof(CreateCylinderShape));
         _addAction(typeof(CreateDynamic));
         _addAction(typeof(CreateKinematic));
         _addAction(typeof(CreateSphereShape));

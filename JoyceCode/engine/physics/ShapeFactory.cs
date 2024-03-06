@@ -28,8 +28,7 @@ public class ShapeFactory
                 pshapeSphere = new TypedIndex()
                 {
                     Packed = (uint)engine.physics.actions.CreateSphereShape.Execute(_engine.PLog, _engine.Simulation,
-                        radius,
-                        out pbodySphere)
+                        radius,  out pbodySphere)
                 };
             }
 
@@ -53,16 +52,21 @@ public class ShapeFactory
     {
         lock (_classLock)
         {
+            BepuPhysics.Collidables.Cylinder pbodyCylinder;
             BepuPhysics.Collidables.TypedIndex pshapeCylinder;
             if (_mapPshapeCylinder.TryGetValue(radius, out pshapeCylinder))
             {
                 return pshapeCylinder;
             }
 
-            BepuPhysics.Collidables.Cylinder pbodyCylinder = new(radius, 200.0f); 
             lock (_engine.Simulation)
             {
-                pshapeCylinder = _engine.Simulation.Shapes.Add(pbodyCylinder);
+                pshapeCylinder = new TypedIndex()
+                {
+                    Packed = (uint)engine.physics.actions.CreateCylinderShape.Execute(_engine.PLog, _engine.Simulation,
+                        radius, 1000f, 
+                        out pbodyCylinder)
+                };
             }
 
             _mapPbodyCylinder[radius] = pbodyCylinder;

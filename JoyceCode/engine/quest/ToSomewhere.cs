@@ -99,10 +99,8 @@ public class ToSomewhere : engine.world.IOperator
         I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
             MapCameraMask, Quaternion.Identity, Vector3.Zero);
 
-
         eMapMarker.Set(new engine.world.components.MapIcon()
             { Code = engine.world.components.MapIcon.IconCode.Target0 });
-
     }
 
 
