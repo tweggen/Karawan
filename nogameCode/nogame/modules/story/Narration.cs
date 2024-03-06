@@ -385,7 +385,7 @@ public class Narration : AModule, IInputPart
             currentStory = _currentStory;
         }
 
-        currentStory.ChoosePathString(strPath, null);
+        currentStory.ChoosePathString(strPath, true, null);
         _advanceStory();
     }
     

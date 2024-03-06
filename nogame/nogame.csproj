@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Inkle.Ink.Engine" Version="0.7.4" />
+    <PackageReference Include="Ink.Engine.Runtime-Unofficial" Version="1.0.0-nightly-21091501" />
   </ItemGroup>
 
 
