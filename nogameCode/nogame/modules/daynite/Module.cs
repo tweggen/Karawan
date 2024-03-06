@@ -13,7 +13,7 @@ public class Module : AModule
     public float RealSecondsPerDay { get; set; } = 30f * 60f;
 
     private DateTime _realWorldStart;
-    public DateTime GameStart { get; set; } = new DateTime(1982, 3, 12, 10, 33, 0);
+    public DateTime GameStart { get; set; } = new DateTime(1982, 3, 12, 22, 46, 0);
     
     private DateTime _gameNow;
     public DateTime GameNow

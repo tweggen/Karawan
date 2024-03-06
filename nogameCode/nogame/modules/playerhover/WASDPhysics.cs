@@ -19,8 +19,8 @@ internal class WASDPhysics : AModule, IInputPart
 
     private float _massShip;
 
-    public float LinearThrust { get; set; } = 150f;
-    public float AngularThrust { get; set; } = 80.0f;
+    public float LinearThrust { get; set; } = 70f;
+    public float AngularThrust { get; set; } = 50.0f;
 
     public float MaxLinearVelocity { get; set; } = 150f;
     public float MaxAngularVelocity { get; set; } = 0.8f;
