@@ -143,7 +143,6 @@ public class Module : AModule, IInputPart
         }
     }
     
-
     
     private float _scaleF(in DisplayMapParams dmp)
     {
@@ -152,6 +151,7 @@ public class Module : AModule, IInputPart
         return (1024f * (x * x * x) + 3) / (engine.world.MetaGen.MaxHeight);
     }
 
+    
     private Vector2 _osdToViewport(float x, float y)
     {
         float osdWidth = 768f;
@@ -186,8 +186,20 @@ public class Module : AModule, IInputPart
 
         // TXWTODO: We better should consider the zoom state.
         Vector3 v3CamPos = Vector3.Zero;
-
+        Vector3 v3PlayerPos = default;
         ref var cCamera3 = ref _eCamMap.Get<Camera3>();
+        {
+            var ePlayer = _engine.GetPlayerEntity();
+            if (ePlayer.IsAlive && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+            {
+                lock (_engine.Simulation)
+                {
+                    ref var prefPlayer = ref ePlayer.Get<engine.physics.components.Body>().Reference;
+                    v3PlayerPos = prefPlayer.Pose.Position;
+                }
+            }
+        }
+
         /*
          * Now, depending on the mode, setup the camera.
          */
@@ -198,6 +210,7 @@ public class Module : AModule, IInputPart
                 cCamera3.Scale = scale;
                 cCamera3.UL = Vector2.Zero;
                 cCamera3.LR = Vector2.One;
+                
                 v3CamPos = new(
                     (dmp.Position.X - 0.5f) * (MetaGen.MaxSize.X),
                     CameraY,
@@ -206,14 +219,9 @@ public class Module : AModule, IInputPart
                 break;
             case Modes.MapMini:
             {
-                var ePlayer = _engine.GetPlayerEntity();
-                if (ePlayer.IsAlive && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+                if (v3PlayerPos != default)
                 {
-                    lock (_engine.Simulation)
-                    {
-                        ref var prefPlayer = ref ePlayer.Get<engine.physics.components.Body>().Reference;
-                        v3CamPos = prefPlayer.Pose.Position with { Y = CameraY };
-                    }
+                    v3CamPos = v3PlayerPos with { Y = CameraY };
                 }
 
                 cCamera3.Scale = (2f * 1024f + 3f) / MetaGen.MaxHeight;
@@ -237,6 +245,55 @@ public class Module : AModule, IInputPart
     }
 
 
+    private void _updateToPlayerPosition()
+    {
+        DisplayMapParams dmp;
+        lock (_lo)
+        {
+            dmp = _visibleMapParams;
+        }
+
+        float scale = _scaleF(dmp);
+
+        Vector3 v3PlayerPos = default;
+        ref var cCamera3 = ref _eCamMap.Get<Camera3>();
+        {
+            var ePlayer = _engine.GetPlayerEntity();
+            if (ePlayer.IsAlive && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+            {
+                lock (_engine.Simulation)
+                {
+                    ref var prefPlayer = ref ePlayer.Get<engine.physics.components.Body>().Reference;
+                    v3PlayerPos = prefPlayer.Pose.Position;
+                }
+            }
+        }
+        
+        Vector2 v2LastPos = new(
+            (dmp.Position.X - 0.5f) * (MetaGen.MaxSize.X),
+            (dmp.Position.Y - 0.5f) * (MetaGen.MaxSize.Y)
+        );
+        
+
+        if (v3PlayerPos != default)
+        {
+            float maxDist = 1.5f;
+            Vector2 v2NewPos = new(v3PlayerPos.X, v3PlayerPos.Z);
+            float currDist = (v2NewPos - v2LastPos).Length();
+            Trace($"dist is {currDist} scaled {currDist*scale}");
+            if (currDist*scale > maxDist)
+            {
+                lock (_lo)
+                {
+                    _requestedMapParams.Position.X = (v2NewPos.X + MetaGen.MaxSize.X / 2f) / MetaGen.MaxSize.X;
+                    _requestedMapParams.Position.Y = (v2NewPos.Y + MetaGen.MaxSize.Y / 2f) / MetaGen.MaxSize.Y;
+                }
+            }
+        }
+
+    }
+    
+    
     private void _needResources()
     {
         lock (_lo)
@@ -556,6 +613,7 @@ public class Module : AModule, IInputPart
 
         if (newMode == Modes.MapFullscreen)
         {
+            _updateToPlayerPosition();
             _needInputPart();
         }
         else
@@ -569,6 +627,7 @@ public class Module : AModule, IInputPart
 
     private void _changeMiniToFull(Modes oldMode, Modes newMode)
     {
+        _updateToPlayerPosition();
         _needInputPart();   
         _computeAABB();
     }
