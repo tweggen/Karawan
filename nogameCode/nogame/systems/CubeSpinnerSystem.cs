@@ -1,4 +1,5 @@
 ﻿using System;
+using engine;
 
 
 namespace nogame.systems
@@ -20,8 +21,8 @@ namespace nogame.systems
             }
         }
 
-        public CubeSpinnerSystem(engine.Engine engine0)
-            : base(engine0.GetEcsWorld())
+        public CubeSpinnerSystem()
+            : base(I.Get<Engine>().GetEcsWorld())
         {
             _aTransform = engine.I.Get<engine.joyce.TransformApi>();
         }

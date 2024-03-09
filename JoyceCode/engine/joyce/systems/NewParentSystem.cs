@@ -91,10 +91,10 @@ namespace engine.joyce.systems
         }
 
 
-        public NewParentSystem( engine.Engine engine )
-            : base( engine.GetEcsWorld() )
+        public NewParentSystem()
+            : base( I.Get<Engine>().GetEcsWorld() )
         {
-            _engine = engine;
+            _engine = I.Get<Engine>();
         }
     }
 }

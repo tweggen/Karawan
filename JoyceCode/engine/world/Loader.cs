@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using engine.geom;
+using engine.joyce;
 using static engine.Logger;
 
 namespace engine.world
@@ -438,20 +439,14 @@ namespace engine.world
             /*
              * Convert global  to fragment-local coordinates
              */
-            float x = x0 + world.MetaGen.FragmentSize / 2f;
-            float z = z0 + world.MetaGen.FragmentSize / 2f;
-            x /= world.MetaGen.FragmentSize;
-            z /= world.MetaGen.FragmentSize;
-
-            int i = (int) Math.Floor(x);
-            int k = (int) Math.Floor(z);
+            Index3 idxFragment = Fragment.PosToIndex3(new Vector3(x0, 0f, z0)); 
 
             // TXWTODO: find a more suitable "new" API for this.
             var elevationCache = engine.elevation.Cache.Instance();
-            var entry = elevationCache.ElevationCacheGetBelow(i, k, layer);
+            var entry = elevationCache.ElevationCacheGetBelow(idxFragment.I, idxFragment.K, layer);
 
-            float localX = x0 - (world.MetaGen.FragmentSize) * i;
-            float localZ = z0 - (world.MetaGen.FragmentSize) * k;
+            float localX = x0 - (world.MetaGen.FragmentSize) * idxFragment.I;
+            float localZ = z0 - (world.MetaGen.FragmentSize) * idxFragment.K;
 
             var epx = entry.GetElevationPixelAt(localX, localZ);
 
@@ -472,10 +467,10 @@ namespace engine.world
         /**
          * Constructor
          */
-        public Loader(Engine engine)
+        public Loader()
         {
-            _engine = engine;
-            _wiperSystem = new(engine);
+            _engine = I.Get<Engine>();
+            _wiperSystem = new();
         }
     }
 }

@@ -194,10 +194,10 @@ namespace engine.joyce
         }
 
 
-        public TransformApi(engine.Engine engine)
+        public TransformApi()
         {
-            _engine = engine;
-            _propagateTranslationSystem = new systems.PropagateTranslationSystem(_engine);
+            _engine = I.Get<Engine>();
+            _propagateTranslationSystem = new systems.PropagateTranslationSystem();
         }
     }
 }

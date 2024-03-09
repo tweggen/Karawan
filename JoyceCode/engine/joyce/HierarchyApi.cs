@@ -56,10 +56,10 @@ namespace engine.joyce
             }
         }
 
-        public HierarchyApi( engine.Engine engine )
+        public HierarchyApi()
         {
-            _engine = engine;
-            _newParentSystem = new systems.NewParentSystem(_engine);
+            _engine = I.Get<Engine>();
+            _newParentSystem = new systems.NewParentSystem();
         }
     }
 }

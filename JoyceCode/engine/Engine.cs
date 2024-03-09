@@ -949,10 +949,10 @@ public class Engine
         _aTransform = I.Get<engine.joyce.TransformApi>();
         _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
 
-        _systemBehave = new(this);
-        _systemApplyPoses = new(this);
-        _systemMoveKinetics = new(this);
-        _systemMovingSounds = new(this);
+        _systemBehave = new();
+        _systemApplyPoses = new();
+        _systemMoveKinetics = new();
+        _systemMovingSounds = new();
         _managerPhysics = new physics.Manager();
         _managerPhysics.Manage(this);
         _managerBehavior = new behave.Manager();
@@ -1112,8 +1112,8 @@ public class Engine
         I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
         I.Register<engine.news.EventQueue>(() => new EventQueue());
         I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
-        I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi(this));
-        I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi(this));
+        I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi());
+        I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi());
         I.Register<engine.physics.API>(() => new physics.API(this));
         I.Register<engine.ObjectRegistry<joyce.Material>>(() => new ObjectRegistry<joyce.Material>());
         I.Register<engine.ObjectRegistry<joyce.Renderbuffer>>(() => new ObjectRegistry<joyce.Renderbuffer>());

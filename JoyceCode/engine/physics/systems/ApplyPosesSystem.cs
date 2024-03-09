@@ -53,10 +53,10 @@ namespace engine.physics.systems
         }
 
         
-        public ApplyPosesSystem(in engine.Engine engine)
-                : base(engine.GetEcsWorld())
+        public ApplyPosesSystem()
+                : base(I.Get<Engine>().GetEcsWorld())
         {
-            _engine = engine;
+            _engine = I.Get<Engine>();
         }
     }
 }

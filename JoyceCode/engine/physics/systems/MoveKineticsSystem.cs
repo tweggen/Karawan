@@ -145,9 +145,9 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
     }
 
     
-    public MoveKineticsSystem(in engine.Engine engine)
-        : base(engine.GetEcsWorld())
+    public MoveKineticsSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
+        _engine = I.Get<Engine>();
     }
 }

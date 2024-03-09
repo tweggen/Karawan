@@ -260,10 +260,10 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         
     }
     
-    public RenderOSDSystem(engine.Engine engine)
-        : base(engine.GetEcsWorld())
+    public RenderOSDSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
+        _engine = I.Get<Engine>();
         _dc = new();
     }
 }

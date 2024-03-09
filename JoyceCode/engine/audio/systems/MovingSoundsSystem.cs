@@ -126,10 +126,10 @@ namespace engine.audio.systems
         }
         
         
-        public MovingSoundsSystem(engine.Engine engine)
-            : base(engine.GetEcsWorld())
+        public MovingSoundsSystem()
+            : base(I.Get<Engine>().GetEcsWorld())
         {
-            _engine = engine;
+            _engine = I.Get<Engine>();
         }
     }
 }

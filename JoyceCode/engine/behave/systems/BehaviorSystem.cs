@@ -101,10 +101,10 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
         }
     }
 
-    public BehaviorSystem(in engine.Engine engine)
-        : base(engine.GetEcsWorld())
+    public BehaviorSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
+        _engine = I.Get<Engine>();
     }
 }
 

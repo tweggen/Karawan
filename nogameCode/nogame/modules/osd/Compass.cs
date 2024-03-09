@@ -27,7 +27,7 @@ public class Compass : engine.AModule
         engine.geom.Camera.VectorsFromMatrix(cTransform3ToWorld.Matrix, out var vFront, out var _, out var _);
         float degree = Single.Atan2Pi(-vFront.X, vFront.Z) / 2.0f * _compassCircleLength;
         if (degree < 0f) degree += _compassCircleLength;
-        string compass = _strCompass.Substring((int)(degree + 0.5f)+1, (int)(_compassCircleLength-1));
+        string compass = _strCompass.Substring(((int)(degree + 0.5f))%(int)_compassCircleLength, (int)(_compassCircleLength-1));
 
         if (_lastCompass != compass)
         {     

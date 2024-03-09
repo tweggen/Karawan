@@ -41,9 +41,9 @@ internal class WiperSystem : DefaultEcs.System.AEntitySetSystem<engine.geom.AABB
     }
 
 
-    public WiperSystem(in engine.Engine engine)
-        : base(engine.GetEcsWorld())
+    public WiperSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
+        _engine = I.Get<Engine>();
     }
 }

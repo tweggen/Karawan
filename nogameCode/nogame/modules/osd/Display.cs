@@ -163,7 +163,7 @@ public class Display : engine.AModule
          */
         _aTransform = I.Get<engine.joyce.TransformApi>();
 
-        _renderOSDSystem = new RenderOSDSystem(_engine);
+        _renderOSDSystem = new RenderOSDSystem();
 
         _engine.AddModule(this);
 

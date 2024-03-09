@@ -55,10 +55,10 @@ public class API : Boom.ISoundAPI
     }
 
 
-    public API(Engine engine)
+    public API(E)
     {
-        _engine = engine;
-        _createMusicSystem = new(engine);
-        _updateMovingSoundsSystem = new boom.naudio.systems.UpdateMovingSoundSystem(engine);
+        _engine = I.Get<Engine>();
+        _createMusicSystem = new();
+        _updateMovingSoundsSystem = new boom.naudio.systems.UpdateMovingSoundSystem();
     }
 }

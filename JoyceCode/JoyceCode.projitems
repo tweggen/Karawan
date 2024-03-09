@@ -50,7 +50,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\AutoRemoveBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\SpawnBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\BehaviorStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerBehaviorStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerFragmentStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\SpawnSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\editor\components\Highlight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\API.cs" />

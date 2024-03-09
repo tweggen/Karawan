@@ -45,10 +45,10 @@ sealed public class CreateMusicSystem : DefaultEcs.System.AEntitySetSystem<float
     }
 
 
-    public CreateMusicSystem(engine.Engine engine)
-        : base(engine.GetEcsWorld())
+    public CreateMusicSystem()
+        : base(I.Get<Engine>().GetEcsWorld())
     {
-        _engine = engine;
+        _engine = I.Get<Engine>();
     }
 }
 
