@@ -4,10 +4,12 @@ using System.Numerics;
 using System.Threading.Tasks;
 using builtin.modules;
 using engine;
+using engine.behave.systems;
 using engine.joyce;
 using engine.news;
-using nogame.modules.map;
+using nogame.modules.playerhover;
 using static engine.Logger;
+using Module = nogame.modules.map.Module;
 
 namespace nogame.scenes.root;
 
@@ -50,7 +52,8 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<engine.news.ClickModule>(),
     };
-    
+
+    private SpawnSystem _spawnSystem = new();
 
     private bool _isMapShown = false;
 
@@ -206,6 +209,9 @@ public class Scene : AModule, IScene, IInputPart
     
     public void SceneOnLogicalFrame(float dt)
     {
+        // TXWTODO: We do not want to have that every frame.
+        engine.behave.BehaviorStats behaviorStats = new();
+        _spawnSystem.Update(behaviorStats);
     }
 
 
