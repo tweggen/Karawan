@@ -449,7 +449,7 @@ public class Fragment : IDisposable
         byte visibToLoad = (byte)(visibChanges & visibNow);
         if ((visibToLoad & (FragmentVisibility.Visible3dNow|FragmentVisibility.Visible2dNow)) != 0)
         {
-            world.MetaGen.Instance().ApplyFragmentOperators(this, visib);
+            I.Get<engine.world.MetaGen>().ApplyFragmentOperators(this, visib);
         }
 
         if ((visibToLoad & FragmentVisibility.Visible2dAny) != 0)

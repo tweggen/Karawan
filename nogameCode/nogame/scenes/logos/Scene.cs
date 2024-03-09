@@ -182,7 +182,7 @@ public class Scene : AModule, IScene
                 true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
         });
         
-        _modTitle.ModuleActivate(_engine);
+        _modTitle.ModuleActivate();
     }
 
 
@@ -194,9 +194,9 @@ public class Scene : AModule, IScene
     }
     
     
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         lock(_lo)
         {
             /*

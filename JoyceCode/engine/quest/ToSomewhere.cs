@@ -144,8 +144,9 @@ public class ToSomewhere : engine.world.IOperator
     }
     
     
-    public virtual void OperatorApply(Engine e)
+    public virtual void OperatorApply()
     {
+        var e = I.Get<Engine>();
         e.QueueMainThreadAction(() =>
         {
             _createGoal(e);

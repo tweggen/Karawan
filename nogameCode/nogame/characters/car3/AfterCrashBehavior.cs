@@ -56,7 +56,7 @@ public class AfterCrashBehavior : ABehavior
 
                 Vector3 vTargetPos = prefTarget.Pose.Position;
                 Vector3 vTargetVelocity = prefTarget.Velocity.Linear;
-                float heightAtTarget = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(vTargetPos);
+                float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
                 {
                     var properDeltaY = 0;
                     var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);

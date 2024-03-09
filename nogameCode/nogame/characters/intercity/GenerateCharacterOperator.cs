@@ -111,7 +111,7 @@ public class GenerateCharacterOperator : IWorldOperator
     }
 
 
-    public Func<Task> WorldOperatorApply(MetaGen worldMetaGen) => new(async () =>
+    public Func<Task> WorldOperatorApply() => new(async () =>
     {
         var network = I.Get<nogame.intercity.Network>();
         var lines = network.Lines;

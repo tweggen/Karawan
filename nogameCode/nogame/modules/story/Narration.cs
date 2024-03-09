@@ -253,7 +253,7 @@ public class Narration : AModule, IInputPart
                 engine.quest.IQuest quest = I.Get<engine.quest.Manager>().Get(questName);
                 if (null != quest)
                 {
-                    quest.ModuleActivate(_engine);
+                    quest.ModuleActivate();
                 }
             });
         }
@@ -399,10 +399,10 @@ public class Narration : AModule, IInputPart
     }
     
     
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
-        engine0.AddModule(this);
+        base.ModuleActivate();
+        _engine.AddModule(this);
 
         if (null == _soundTty)
         {

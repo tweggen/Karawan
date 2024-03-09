@@ -17,6 +17,7 @@
   {
     "engine.DBStorage": null,
     "engine.physics.ShapeFactory": null,
+    "engine.world.MetaGen": null,
     "nogame.modules.AutoSave": null,
     "engine.streets.ClusterStorage": null,
     "builtin.map.IMapProvider":

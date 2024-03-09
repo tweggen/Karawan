@@ -74,7 +74,7 @@ public class SceneSequencer : IDisposable
         }
         if (scene != null)
         {
-            scene.ModuleActivate(_engine);
+            scene.ModuleActivate();
         }
 
     }
@@ -135,7 +135,7 @@ public class SceneSequencer : IDisposable
      */
     private bool _checkedMainScene(string name)
     {
-        if ("logos"!=name && null == engine.world.MetaGen.Instance().Loader)
+        if ("logos"!=name && null == I.Get<engine.world.MetaGen>().Loader)
         {
             return false;
         }

@@ -53,7 +53,7 @@ public class PlaceDebrisOperator : IFragmentOperator
                 0f,
                 rnd.GetFloat() * MetaGen.FragmentSize - MetaGen.FragmentSize / 2f);
 
-            var epx = engine.world.MetaGen.Instance().Loader.GetElevationPixelAt(
+            var epx = I.Get<engine.world.MetaGen>().Loader.GetElevationPixelAt(
                 worldFragment.Position.X + vCenter.X, worldFragment.Position.Z + vCenter.Z);
             /*
              * Only place them outside a cluster, not in trails or other things.
@@ -71,7 +71,7 @@ public class PlaceDebrisOperator : IFragmentOperator
                     0f,
                     rnd.GetFloat() * nRocks*2f - nRocks*4f
                 );
-                vRock.Y = engine.world.MetaGen.Instance().Loader.GetHeightAt(
+                vRock.Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(
                               worldFragment.Position.X+vRock.X, 
                               worldFragment.Position.Z+vRock.Z)
                           + debrisSize/3f;

@@ -23,9 +23,9 @@ public class Main : AModule
     }
 
 
-    public override void ModuleActivate(Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         _engine.AddModule(this);
         
         // TXWTODO: Looks a bit out of place, looks more like platform specific.

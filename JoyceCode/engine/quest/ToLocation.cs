@@ -10,8 +10,8 @@ namespace engine.quest;
  */
 public class ToLocation : ToSomewhere
 {
-    public override void OperatorApply(Engine e)
+    public override void OperatorApply()
     {
-        base.OperatorApply(e);
+        base.OperatorApply();
     }
 }

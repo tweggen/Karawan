@@ -361,13 +361,14 @@ public class GenerateClustersOperator : world.IWorldOperator
      * That way, the actual cluster operator working on the fragments can just
      * refer to this data.
      */
-    public System.Func<Task> WorldOperatorApply(world.MetaGen worldMetaGen) => new(async () =>
+    public System.Func<Task> WorldOperatorApply() => new(async () =>
     {
-        Trace("GenerateClustersOperator: Done.");
+        var worldMetaGen = I.Get<MetaGen>();
         _findClusters(worldMetaGen, out var acd);
         _fillClusters(worldMetaGen, acd);
         _useClusters(worldMetaGen, acd);
         _saveClusters(acd);
+        Trace("GenerateClustersOperator: Done.");
     });
     
 

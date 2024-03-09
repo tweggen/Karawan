@@ -964,7 +964,7 @@ public class Engine
 
         _logicalThread = new Thread(_logicalThreadFunction);
         _logicalThread.Priority = ThreadPriority.AboveNormal;
-        I.Get<InputEventPipeline>().ModuleActivate(this);
+        I.Get<InputEventPipeline>().ModuleActivate();
     }
 
 

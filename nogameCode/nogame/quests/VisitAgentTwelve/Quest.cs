@@ -45,9 +45,9 @@ public class Quest : AModule, IQuest
     }
 
 
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         _isActive = true;
         _engine.AddModule(this);
         
@@ -61,6 +61,6 @@ public class Quest : AModule, IQuest
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
             OnReachTarget = _onReachTarget
         };
-        newQuestTarget.OperatorApply(_engine);
+        newQuestTarget.OperatorApply();
     }
 }

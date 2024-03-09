@@ -89,7 +89,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
             _engine.EnableMouse();
-            mUI.ModuleActivate(_engine);
+            mUI.ModuleActivate();
         }
     }
 
@@ -98,7 +98,7 @@ public class Scene : AModule, IScene, IInputPart
     {
         if (!_engine.HasModule(M<modules.menu.Module>()))
         {
-            M<modules.menu.Module>().ModuleActivate(_engine);
+            M<modules.menu.Module>().ModuleActivate();
         }
         else
         {
@@ -124,7 +124,7 @@ public class Scene : AModule, IScene, IInputPart
 
         if (areStatsShown)
         {
-            M<builtin.modules.Stats>().ModuleActivate(_engine);
+            M<builtin.modules.Stats>().ModuleActivate();
         }
         else
         {
@@ -169,7 +169,7 @@ public class Scene : AModule, IScene, IInputPart
          * First check, if the world loader already is available. If not,
          * we need to postpone this scene's start.
          */
-        if (engine.world.MetaGen.Instance().Loader == null)
+        if (I.Get<engine.world.MetaGen>().Loader == null)
         {
             Warning("Unable to start main scene, no world loader available.");
             return false;
@@ -185,7 +185,7 @@ public class Scene : AModule, IScene, IInputPart
          */
         _engine.QueueMainThreadAction(() =>
         {
-            M<modules.osd.Camera>().ModuleActivate(_engine);
+            M<modules.osd.Camera>().ModuleActivate();
             _engine.SuggestEndLoading();
             M<modules.map.Module>().Mode = Module.Modes.MapMini;
         });
@@ -194,7 +194,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             _engine.QueueMainThreadAction(() =>
             {
-                M<nogame.modules.story.Narration>().ModuleActivate(_engine);
+                M<nogame.modules.story.Narration>().ModuleActivate();
             });
         });
         
@@ -228,7 +228,7 @@ public class Scene : AModule, IScene, IInputPart
     }
     
 
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
         uint fbWidth, fbHeight;
         {
@@ -244,7 +244,7 @@ public class Scene : AModule, IScene, IInputPart
                 //480,270
             ));
 
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         
         _engine.SuggestBeginLoading();
 
@@ -278,7 +278,7 @@ public class Scene : AModule, IScene, IInputPart
 
         _engine.AddModule(this);
 
-        M<modules.map.Module>().ModuleActivate(_engine);
+        M<modules.map.Module>().ModuleActivate();
     }
 
 }

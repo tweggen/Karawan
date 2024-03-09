@@ -135,7 +135,7 @@ public class DesktopMain
             return api;
         });
 
-        engine.casette.Loader.LoadStartGame(e, "nogame.json");
+        engine.casette.Loader.LoadStartGame("nogame.json");
         
         e.Execute();
 

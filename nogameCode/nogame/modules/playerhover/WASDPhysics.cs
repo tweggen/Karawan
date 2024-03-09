@@ -71,7 +71,7 @@ internal class WASDPhysics : AModule, IInputPart
 
         Vector3 vTargetVelocity = _prefTarget.Velocity.Linear;
         Vector3 vTargetAngularVelocity = _prefTarget.Velocity.Angular;
-        float heightAtTarget = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(vTargetPos);
+        float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
         {
             var properDeltaY = 0;
             var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
@@ -219,7 +219,7 @@ internal class WASDPhysics : AModule, IInputPart
              * Read the height at our front, or kind of at the front.
              * Give us an impulse accordingly.
              */
-            float heightAtFront = engine.world.MetaGen.Instance().Loader.GetNavigationHeightAt(
+            float heightAtFront = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(
                 vTargetPos + 2f * vFront);
             if (heightAtFront > heightAtTarget)
             {
@@ -293,9 +293,9 @@ internal class WASDPhysics : AModule, IInputPart
     }
 
 
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
 
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 

@@ -270,9 +270,9 @@ public class Gameplay : AModule, IInputPart
     }
     
     
-    public override void ModuleActivate(Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.AddModule(this);
 

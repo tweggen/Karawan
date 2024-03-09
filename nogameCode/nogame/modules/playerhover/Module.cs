@@ -400,7 +400,7 @@ public class Module : engine.AModule
     {
         // TXWTODO: Deactivate player entity. But we don't remove the player entity at all...
         // _engine.SetPlayerEntity(new DefaultEcs.Entity());
-        MetaGen.Instance().Loader.RemoveViewer(_playerViewer);
+        I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
         
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
@@ -421,9 +421,9 @@ public class Module : engine.AModule
     }
 
 
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
 
         _aTransform = I.Get<engine.joyce.TransformApi>();
 
@@ -550,6 +550,6 @@ public class Module : engine.AModule
         _engine.SetPlayerEntity(GetShipEntity());
 
         _playerViewer = new(_engine);
-        MetaGen.Instance().Loader.AddViewer(_playerViewer);
+        I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
     }
 }

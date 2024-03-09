@@ -10,6 +10,6 @@ namespace engine.world
     {
         public string WorldOperatorGetPath();
 
-        public System.Func<Task> WorldOperatorApply(world.MetaGen worldMetaGen);
+        public System.Func<Task> WorldOperatorApply();
     }
 }

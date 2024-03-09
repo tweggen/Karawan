@@ -6,8 +6,8 @@ namespace engine.quest;
 
 public class TrailVehicle : ToSomewhere
 {
-    public override void OperatorApply(Engine e)
+    public override void OperatorApply()
     {
-        base.OperatorApply(e);
+        base.OperatorApply();
     }
 }

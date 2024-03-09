@@ -67,11 +67,11 @@ public class World : AModule
     }
     
     
-    public override void ModuleActivate(Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         
-        _worldMetaGen = MetaGen.Instance();
+        _worldMetaGen = I.Get<MetaGen>();
         _worldLoader = _worldMetaGen.Loader;
         if (null == _worldLoader)
         {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using engine;
 using engine.meta;
 using engine.world;
 using static engine.Logger;
@@ -22,7 +23,7 @@ public class SetupMetaGen
         
         string keyScene = "abx";
 
-        _worldMetaGen = engine.world.MetaGen.Instance();
+        _worldMetaGen = I.Get<engine.world.MetaGen>();
 
         engine.meta.ExecDesc edRoot = new()
         {

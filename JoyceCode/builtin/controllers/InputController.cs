@@ -507,9 +507,9 @@ public class InputController : engine.AModule, engine.IInputPart
     }
 
 
-    public override void ModuleActivate(Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         I.Get<InputEventPipeline>().AddInputPart(0f, this);
         _refreshViewSize();

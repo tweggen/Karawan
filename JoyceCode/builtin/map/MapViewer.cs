@@ -93,19 +93,19 @@ public class MapViewer : AModule, IViewer
 
     public override void ModuleDeactivate()
     {
-        engine.world.MetaGen.Instance().Loader.RemoveViewer(this);
+        I.Get<engine.world.MetaGen>().Loader.RemoveViewer(this);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
     
 
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         
         I.Get<SubscriptionManager>().Subscribe(Event.MAP_RANGE_EVENT, _handleMapRange);
         _engine.AddModule(this);
 
-        engine.world.MetaGen.Instance().Loader.AddViewer(this);
+        I.Get<engine.world.MetaGen>().Loader.AddViewer(this);
     }
 }

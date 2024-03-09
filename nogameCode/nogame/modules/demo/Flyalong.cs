@@ -77,9 +77,9 @@ public class Flyalong : AModule
     }
     
     
-    public void ModuleActivate(Engine engine0)
+    public void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         _engine.AddModule(this);
         _selectNewTimer = new(10000);
         _selectNewTimer.Elapsed += _attachNewSubject;

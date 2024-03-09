@@ -214,7 +214,7 @@ public class Main
 
                 if (ImGui.Button("Regenerate"))
                 {
-                    MetaGen.Instance().Loader.WorldLoaderReleaseFragments();
+                    I.Get<MetaGen>().Loader.WorldLoaderReleaseFragments();
                 }
             }
 

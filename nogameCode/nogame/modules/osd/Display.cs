@@ -154,9 +154,9 @@ public class Display : engine.AModule
     }
 
     
-    public override void ModuleActivate(Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
  
         /*
          * local shortcuts.

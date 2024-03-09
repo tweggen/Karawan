@@ -49,9 +49,6 @@ public class MList<T>
 
 public class MetaGen
 {
-    private static readonly object _classLock = new object();
-    private static MetaGen _instance;
-
     public static float FragmentSize = 400f;
     public static Vector3 FragmentSize3 = new(FragmentSize, FragmentSize, FragmentSize);
     public static Vector2 FragmentSize2 = new(FragmentSize, FragmentSize);
@@ -278,7 +275,7 @@ public class MetaGen
                     var oppath = o.WorldOperatorGetPath();
                     Trace($"WorldMetaGen.applyWorldOperators(): Applying operator '{oppath}'...");
                     // var t0 = Sys.time();
-                    await o.WorldOperatorApply(this)();
+                    await o.WorldOperatorApply()();
                     // var dt = Sys.time() - t0;
                     // trace( 'WorldMetaGen.applyWorldOperators(): Applying operator "$oppath" took $dt.');
                 }
@@ -366,7 +363,7 @@ public class MetaGen
     }
 
 
-    private MetaGen()
+    public MetaGen()
     {
         _myKey = "mydear";
 
@@ -401,20 +398,5 @@ public class MetaGen
     {
         _loader = loader;
     }
-
-
-    public static MetaGen Instance()
-    {
-        lock (_classLock)
-        {
-            if (null == _instance)
-            {
-                _instance = new MetaGen();
-            }
-
-            return _instance;
-        }
-    }
-
 }
 

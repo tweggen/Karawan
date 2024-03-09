@@ -725,9 +725,9 @@ public class Module : AModule, IInputPart
     }
 
     
-    public override void ModuleActivate(Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         _engine.AddModule(this);
         
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.map.toggleMap", _onClickMap);

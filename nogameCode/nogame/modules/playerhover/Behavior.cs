@@ -90,7 +90,7 @@ public class Behavior : IBehavior
          */
         
         _controllerWASDPhysics = new WASDPhysics(_eShip, _massShip);
-        _controllerWASDPhysics.ModuleActivate(_engine);
+        _controllerWASDPhysics.ModuleActivate();
     }
 
 

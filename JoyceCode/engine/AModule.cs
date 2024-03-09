@@ -59,9 +59,9 @@ public abstract class AModule : IModule
     }
 
 
-    public virtual void ModuleActivate(engine.Engine engine0)
+    public virtual void ModuleActivate()
     {
-        _engine = engine0;
+        _engine = I.Get<Engine>();
         var deps = ModuleDepends();
         lock (_lo)
         {
@@ -99,7 +99,7 @@ public abstract class AModule : IModule
                 // TXWTODO: This basically is a workaround.
                 if (!_engine.HasModule(module))
                 {
-                    module.ModuleActivate(_engine);
+                    module.ModuleActivate();
                 }
                 _activatedModules.Add(module);
             }

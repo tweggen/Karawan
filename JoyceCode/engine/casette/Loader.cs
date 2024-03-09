@@ -129,7 +129,7 @@ public class Loader
                 try
                 {
                     IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
-                    MetaGen.Instance().WorldBuildingOperators.Add(wop);
+                    I.Get<MetaGen>().WorldBuildingOperators.Add(wop);
                 }
                 catch (Exception e)
                 {
@@ -154,7 +154,7 @@ public class Loader
                 try
                 {
                     IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
-                    MetaGen.Instance().WorldPopulatingOperators.Add(wop);
+                    I.Get<MetaGen>().WorldPopulatingOperators.Add(wop);
                 }
                 catch (Exception e)
                 {
@@ -380,8 +380,9 @@ public class Loader
     }
     
 
-    static public void LoadStartGame(engine.Engine e, string jsonPath)
+    static public void LoadStartGame(string jsonPath)
     {
+        var e = I.Get<Engine>();
         /*
          * Load the game config
          */
@@ -391,6 +392,6 @@ public class Loader
         /*
          * Start the root module in the main thread.
          */
-        e.QueueMainThreadAction(() => { mRoot.ModuleActivate(e);});
+        e.QueueMainThreadAction(() => { mRoot.ModuleActivate();});
     }
 }

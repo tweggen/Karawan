@@ -87,6 +87,6 @@ public interface IModule : IDisposable
 {
     public IEnumerable<IModuleDependency> ModuleDepends();
     
-    public void ModuleActivate(engine.Engine engine);
+    public void ModuleActivate();
     public void ModuleDeactivate();
 }

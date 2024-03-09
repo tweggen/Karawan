@@ -74,9 +74,9 @@ public class Scores : engine.AModule
     }
     
     
-    public override void ModuleActivate(Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         _engine.AddModule(this);
 
         _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");

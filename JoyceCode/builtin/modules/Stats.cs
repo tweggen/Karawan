@@ -49,7 +49,7 @@ public class Stats : engine.AModule
         }
 
         {
-            var loader = engine.world.MetaGen.Instance().Loader;
+            var loader = I.Get<engine.world.MetaGen>().Loader;
             displayData += $"{loader.NFragments} frags, {loader.NViewers} viewers.";
         }
         
@@ -103,9 +103,9 @@ public class Stats : engine.AModule
     }
 
 
-    public override void ModuleActivate(engine.Engine engine0)
+    public override void ModuleActivate()
     {
-        base.ModuleActivate(engine0);
+        base.ModuleActivate();
         
         _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
