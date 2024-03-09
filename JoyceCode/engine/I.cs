@@ -114,15 +114,10 @@ public sealed class I
     }
 
 
-
     public static T Get<T>()
     {
         return Instance.GetInstance<T>();
     }
-
-
-    //static Implementations()
-    //{}
 
     
     private I()
