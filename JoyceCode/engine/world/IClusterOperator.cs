@@ -1,6 +1,6 @@
 namespace engine.world;
 
-public class IClusterOperator
+public interface IClusterOperator
 {
     
 }

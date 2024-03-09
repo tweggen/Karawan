@@ -26,7 +26,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 
             if (null == cBehavior.Provider) continue;
 
-            foo.FindPerBehaviorStats(cBehavior.Provider)
+            foo.FindPerBehaviorStats(cBehavior.Provider.GetType())
                 .FindPerFragmentStats(Fragment.PosToIndex3(cTransformWorld.Matrix.Translation))
                 .Add();
         }

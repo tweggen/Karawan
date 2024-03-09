@@ -209,7 +209,6 @@ public class Scene : AModule, IScene, IInputPart
     
     public void SceneOnLogicalFrame(float dt)
     {
-        // TXWTODO: We do not want to have that every frame.
         engine.behave.BehaviorStats behaviorStats = new();
         _spawnSystem.Update(behaviorStats);
     }

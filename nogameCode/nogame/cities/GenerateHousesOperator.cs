@@ -97,6 +97,14 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         }
         
         /*
+         * Debug test: Is the normal facing the right direction?
+         */
+        if (false) {
+            Vector3 v3RoofNormal = Vector3.Cross(p[0], p[1]);
+            Trace($"roof normal: @{p[0]+worldFragment.Position} is {v3RoofNormal}");
+        }
+        
+        /*
          * 27 is the magical number we currently use to identify buildings in collisions.
          */
         var opExtrudePoly = new builtin.tools.ExtrudePoly(listWalls, path, 27, _metersPerTexture, false, false, true)
@@ -407,7 +415,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                  */
                 foreach (var building in estate.GetBuildings())
                 {
-                    var orgCenter = building.getCenter();
+                    var orgCenter = building.GetCenter();
                     var center = orgCenter;
                     center.X += cx;
                     center.Z += cz;

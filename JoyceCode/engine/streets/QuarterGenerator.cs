@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using ClipperLib;
 using engine.world;
+using static engine.Logger;
 
 namespace engine.streets
 {
@@ -173,8 +174,6 @@ namespace engine.streets
             /*
              * We have the concave polygon, create a collection of convex polygons
              */
-
-            // var convexPolys = geom.Tools.concaveToConvex( p );
 
             var building = new streets.Building() { ClusterDesc = _clusterDesc };
             building.AddPoints(p);
@@ -448,10 +447,13 @@ namespace engine.streets
                              * Now create the root estate.
                              */
                             var estate = new Estate() { ClusterDesc = _clusterDesc };
+                            List<Vector3> estatePoints = new();
                             foreach (var delim in quarter.GetDelims())
                             {
-                                estate.AddPoint(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
+                                estatePoints.Add(new Vector3(delim.StartPoint.X, 0, delim.StartPoint.Y));
                             }
+                         
+                            estate.AddPoints(estatePoints);
 
                             /*
                              * Create the building(s) on that estate

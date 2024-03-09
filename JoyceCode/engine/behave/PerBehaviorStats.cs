@@ -6,9 +6,8 @@ namespace engine.behave;
 
 public class PerBehaviorStats
 {
-    public SortedDictionary<Index3, PerFragmentStats> MapPerFragmentStats = new();
+    public Dictionary<Index3, PerFragmentStats> MapPerFragmentStats = new();
     
-   
     public PerFragmentStats FindPerFragmentStats(in Index3 idxFragment)
     {
         PerFragmentStats perFragmentStats;
@@ -24,5 +23,4 @@ public class PerBehaviorStats
 
         return perFragmentStats;
     }
-
 }

@@ -1,5 +1,7 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
+using static engine.Logger;
 
 namespace engine.streets;
 
@@ -44,6 +46,9 @@ public class Building
     }
 
 
+    /**
+     * Add this building's points. We expect the points to be in the right order. 
+     */
     public void AddPoints(in List<Vector3> points)
     {
         lock (_lo)
@@ -56,15 +61,6 @@ public class Building
     }
 
 
-    public void AddPoint(in Vector3 point)
-    {
-        lock (_lo)
-        {
-            _points.Add(point);
-        }
-    }
-
-    
     public void SetHeight(float height)
     {
         lock (_lo)
@@ -83,7 +79,7 @@ public class Building
     }
 
 
-    public Vector3 getCenter()
+    public Vector3 GetCenter()
     {
         lock (_lo)
         {

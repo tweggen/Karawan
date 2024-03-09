@@ -1,14 +1,13 @@
+using System;
 using System.Collections.Generic;
-using engine.behave;
-using engine.joyce;
 
 namespace engine.behave;
 
 public class BehaviorStats
 {
-    public SortedDictionary<IBehavior, PerBehaviorStats> MapPerBehaviorStats = new();
+    public Dictionary<Type, PerBehaviorStats> MapPerBehaviorStats = new();
 
-    public PerBehaviorStats FindPerBehaviorStats(IBehavior behavior)
+    public PerBehaviorStats FindPerBehaviorStats(Type behavior)
     {
         PerBehaviorStats perBehaviorStats;
         if (MapPerBehaviorStats.TryGetValue(behavior, out perBehaviorStats))
