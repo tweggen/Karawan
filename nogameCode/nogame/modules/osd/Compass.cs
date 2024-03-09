@@ -12,7 +12,7 @@ public class Compass : engine.AModule
 
 
     private readonly float _compassCircleLength = 12 * 4;
-    private string _strCompass = "N  .  .  .  E  .  .  .  S  .  .  .  W  .  .  .  N  .  .  .  O  .  .  .  S  .  .  .  W  .  .  .  ";
+    private string _strCompass = "N  .  .  .  E  .  .  .  S  .  .  .  W  .  .  .  N  .  .  .  E .  .  .  S  .  .  .  W  .  .  .  ";
     private string _lastCompass = "";
     
     private void _onLogical(object? sender, float dt)

@@ -85,6 +85,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\rom\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\ShopFront.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\FixedPosViewer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\IClusterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />

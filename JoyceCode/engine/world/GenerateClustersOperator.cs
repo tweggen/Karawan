@@ -261,14 +261,10 @@ public class GenerateClustersOperator : world.IWorldOperator
             for (int j = 0; j < nClusters; j++)
             {
                 var cl2 = acd[j];
-                // cast(cl1, ClusterDesc);
-                // cast(cl2, ClusterDesc);
                 cl1.AddClosest(cl2);
             }
 
-            // int rndIdx = (int)Math.Floor(_rnd.GetFloat() * 1000000.0f);
-
-            string newKey = _strKey; //rndIdx;
+            string newKey = _strKey;
 
             /*
              * TXWTODO: World Gen shall generate them, or some kind of operator
@@ -290,9 +286,6 @@ public class GenerateClustersOperator : world.IWorldOperator
                     clusterElevationOperator
                 );
             }
-
-
-            worldMetaGen.GenerateFragmentOperatorsForCluster(newKey, cl1);
         }
     }
 

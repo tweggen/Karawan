@@ -1,12 +1,51 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Numerics;
 using static engine.Logger;
 using System.Threading.Tasks;
 using engine.meta;
 
 namespace engine.world;
+
+public class MList<T>
+{
+    private readonly object _lo;
+    private List<T> _list = new();
+
+    public void Add(T o)
+    {
+        lock (_lo)
+        {
+            _list.Add(o);
+        }
+    }
+
+
+    public void Remove(T o)
+    {
+        lock (_lo)
+        {
+            _list.Remove(o);
+        }
+    }
+    
+    
+    public IImmutableList<T> List()
+    {
+        lock (_lo)
+        {
+            return _list.ToImmutableList();
+        }
+    }
+
+    public MList(object lo)
+    {
+        _lo = lo;
+    }
+}
+
 
 public class MetaGen
 {
@@ -55,11 +94,11 @@ public class MetaGen
 
     private object _lo = new();
 
-    private List<engine.world.IWorldOperator> _worldBuildingOperators = new();
-    private List<engine.world.IWorldOperator> _worldPopulatingOperators = new();
-    private SortedDictionary<string, engine.world.IFragmentOperator> _fragmentOperators = new();
-    private List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList = new();
-
+    public MList<engine.world.IWorldOperator> WorldBuildingOperators { get; }
+    public MList<engine.world.IWorldOperator> WorldPopulatingOperators { get; }
+    private readonly List<Func<string, ClusterDesc, world.IFragmentOperator>> _clusterFragmentOperatorFactoryList = new();
+    public MList<world.IClusterOperator> ClusterOperators;
+    
     private meta.ExecDesc _edRoot;
     private meta.AExecNode _enRoot;
 
@@ -160,7 +199,6 @@ public class MetaGen
                 try
                 {
                     op = clusterFragmentOperatorFactory(key, cluster);
-                    _fragmentOperators.Add(op.FragmentOperatorGetPath(), op);
                 }
                 catch (Exception e)
                 {
@@ -228,12 +266,12 @@ public class MetaGen
      * Execute all world operators for this metagen.
      * This can be terrain generatation, cluster generation etc. .
      */
-    private void _applyOperators(IList<IWorldOperator> operators)
+    private void _applyOperators(MList<IWorldOperator> operators)
     {
         Trace("WorldMetaGen: Calling operators...");
         Task applyTask = new Task(async () =>
         {
-            foreach (var o in operators)
+            foreach (var o in operators.List())
             {
                 try
                 {
@@ -265,7 +303,7 @@ public class MetaGen
      */
     public void SetupComplete()
     {
-        _applyOperators(_worldBuildingOperators);
+        _applyOperators(WorldBuildingOperators);
     }
 
 
@@ -276,7 +314,7 @@ public class MetaGen
      */
     public void Populate()
     {
-        _applyOperators(_worldPopulatingOperators);
+        _applyOperators(WorldPopulatingOperators);
     }
     
 
@@ -332,12 +370,16 @@ public class MetaGen
     {
         _myKey = "mydear";
 
+        WorldBuildingOperators = new(_lo);
+        WorldPopulatingOperators = new(_lo);
+        ClusterOperators = new(_lo);
+        
         MaxPos = new Vector3(MaxWidth / 2f - 1f, 0f, MaxHeight / 2f - 1f);
         MinPos = new Vector3(-MaxWidth / 2f + 1f, 0f, -MaxWidth / 2f + 1f);
 
         _unitExecDesc();
 
-        _worldBuildingOperators.Add(new engine.world.GenerateClustersOperator(_myKey));
+        WorldBuildingOperators.Add(new engine.world.GenerateClustersOperator(_myKey));
     }
 
 
@@ -350,24 +392,10 @@ public class MetaGen
         }
         lock (_lo)
         {
-            _worldBuildingOperators.Add(worldOperator);
+            WorldBuildingOperators.Add(worldOperator);
         }
     }
 
-
-    public void WorldPopulatingOperatorAdd(IWorldOperator worldOperator)
-    {
-        if (null == worldOperator)
-        {
-            ErrorThrow<ArgumentException>("Called with null operator.");
-            return;
-        }
-        lock (_lo)
-        {
-            _worldPopulatingOperators.Add(worldOperator);
-        }
-    }
-    
 
     public void SetLoader(in world.Loader loader)
     {

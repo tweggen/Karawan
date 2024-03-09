@@ -129,7 +129,7 @@ public class Loader
                 try
                 {
                     IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
-                    MetaGen.Instance().WorldBuildingOperatorAdd(wop);
+                    MetaGen.Instance().WorldBuildingOperators.Add(wop);
                 }
                 catch (Exception e)
                 {
@@ -154,7 +154,7 @@ public class Loader
                 try
                 {
                     IWorldOperator wop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IWorldOperator;
-                    MetaGen.Instance().WorldPopulatingOperatorAdd(wop);
+                    MetaGen.Instance().WorldPopulatingOperators.Add(wop);
                 }
                 catch (Exception e)
                 {

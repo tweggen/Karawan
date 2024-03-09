@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHouseDescriptionsOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateHousesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GeneratePolytopeOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateShopsOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\GenerateTreesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\HouseDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\HouseInstanceGenerator.cs" />
