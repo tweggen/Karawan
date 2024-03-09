@@ -20,6 +20,26 @@ Current builds actively supported are Windows 11 x64; Linux x86 and ARM64 Androi
 and other Android versions also work.
 
 
+## Operators
+
+The basic idea of joyce is that everything is (re-)creatable on demand.
+To accomplish this, the entire world is composed from results of operators.
+
+### WorldOperator
+
+### FragmentOperator
+
+### ClusterOperator
+
+## About Behaviours
+
+There's a lot of behaving things in the world, like the cars, cubes, the trams.
+Due to design, if they were shot of just once per segment, they would diffuse
+away. To have all characters appear in a reasonable and controlled manner, a
+master spawnsystem is used.
+
+The idea is that rather than iterating over the entities over and over again
+we should iterate once over the characters, executing whatever is desired.
 ## About models and instances
 
 When rendering content, joyce tries to use instance rendering as
@@ -98,3 +118,4 @@ This does, however, not solve the problem of how to set the object's position.
 We do recommmend to insert an additional entity here. It contain any sort
 of transformation component (ToWorld or ToParent). That component can
 be updated by physics or by behavior.
+
