@@ -27,9 +27,15 @@ To accomplish this, the entire world is composed from results of operators.
 
 ### WorldOperator
 
+Applied to the entire world, executed in sequence
+
 ### FragmentOperator
 
+Applied to every fragment after it (re-)loads.
+
 ### ClusterOperator
+
+Applied to every cluster immediately after creation.
 
 ## About Behaviours
 
@@ -40,6 +46,7 @@ master spawnsystem is used.
 
 The idea is that rather than iterating over the entities over and over again
 we should iterate once over the characters, executing whatever is desired.
+
 ## About models and instances
 
 When rendering content, joyce tries to use instance rendering as
