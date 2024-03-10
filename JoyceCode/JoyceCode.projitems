@@ -51,6 +51,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\BehaviorStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ISpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerBehaviorStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerFragmentStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnBehavior.cs" />
@@ -92,7 +93,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\FixedPosViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IClusterOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOperator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\world\ISpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />
     <Folder Include="$(MSBuildThisFileDirectory)builtin\tools\components\" />

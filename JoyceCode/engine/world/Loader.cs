@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Numerics;
 using engine.geom;
 using engine.joyce;
@@ -306,6 +307,27 @@ namespace engine.world
                  */
                 _releaseFragmentList(eraseList);
             }
+        }
+
+
+        public ImmutableList<Index3> GetPopulatedFragments()
+        {
+            List<Index3> listPopulatedFragments = new();
+            lock (_lo)
+            {
+                foreach (var kvp in _mapFrags)
+                {
+                    ref var visib = ref kvp.Value.Visibility;
+                    if (0 == (visib.How & FragmentVisibility.Visible3dNow))
+                    {
+                        continue;
+                    }
+                    Index3 idxFragment = kvp.Value.Visibility.Pos();
+                    listPopulatedFragments.Add(idxFragment);
+                }
+            }
+
+            return listPopulatedFragments.ToImmutableList();
         }
 
 

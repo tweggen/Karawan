@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using builtin.modules;
 using engine;
+using engine.behave;
 using engine.behave.systems;
 using engine.joyce;
 using engine.news;
@@ -26,6 +27,7 @@ public class Scene : AModule, IScene, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.World>(),
+        new SharedModule<engine.behave.SpawnModule>(),
         new MyModule<builtin.modules.ScreenComposer>(),
         new MyModule<nogame.modules.playerhover.Module>(),
         new MyModule<nogame.modules.Gameplay>(),
@@ -53,7 +55,7 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<engine.news.ClickModule>(),
     };
 
-    private SpawnSystem _spawnSystem = new();
+    private SpawnSystem? _spawnSystem = new();
 
     private bool _isMapShown = false;
 
@@ -209,8 +211,6 @@ public class Scene : AModule, IScene, IInputPart
     
     public void SceneOnLogicalFrame(float dt)
     {
-        engine.behave.BehaviorStats behaviorStats = new();
-        _spawnSystem.Update(behaviorStats);
     }
 
 
@@ -281,8 +281,9 @@ public class Scene : AModule, IScene, IInputPart
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
+        // M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
+        
         _engine.AddModule(this);
-
         M<modules.map.Module>().ModuleActivate();
     }
 

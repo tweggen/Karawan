@@ -75,7 +75,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     private builtin.tools.RandomSource _rnd;
     private string _myKey;
 
-    private bool _trace = false;
+    private bool _trace = true;
 
     private int _characterIndex = 0;
 
@@ -97,6 +97,189 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
 
 
+
+    private StreetPoint? _chooseStreetPoint(Fragment worldFragment)
+    {
+        /*
+         * Load all prerequisites
+         */
+        var strokeStore = _clusterDesc.StrokeStore();
+        IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
+        if (streetPoints.Count == 0)
+        {
+            Trace($"Cluster does not have streetpoints at all.");
+            return null;
+        }
+        int l = streetPoints.Count;
+        
+        /*
+         * Now actually select the starting point.
+         */
+        var idxPoint = (int)(_rnd.GetFloat() * l);
+        var idx = 0;
+        StreetPoint chosenStreetPoint = null;
+        foreach (var sp in streetPoints)
+        {
+            if (idx == idxPoint)
+            {
+                chosenStreetPoint = sp;
+                break;
+            }
+
+            idx++;
+        }
+
+        if (null==chosenStreetPoint)
+        {
+            Trace($"NO street point has been found.");
+            return null;
+        }
+
+        if (!chosenStreetPoint.HasStrokes())
+        {
+            Trace($"The chosen street point does not have strokes at all.");
+            return null;
+        }
+        
+        /*
+         * Check, wether the given street point really is inside our fragment.
+         * That way, every fragment owns only the characters spawn on their
+         * territory.
+         */
+        {
+            float px = chosenStreetPoint.Pos.X + _clusterDesc.Pos.X;
+            float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
+            if (!worldFragment.IsInside(new Vector2(px, pz)))
+            {
+                Trace($"The chosen street point would not be inside the world fragment.");
+                return null;
+            }
+        }
+
+        return chosenStreetPoint;
+    }
+
+    
+    
+    public async void GenerateCharacter(Fragment worldFragment, StreetPoint chosenStreetPoint)
+    {
+        float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
+
+        {
+            int carIdx = (int)(_rnd.GetFloat() * 4f);
+            int colorIdx = (int)(_rnd.GetFloat() * (float)_primarycolors.Count);
+
+            builtin.loader.ModelProperties props = new()
+            {
+                ["primarycolor"] = _primarycolors[colorIdx],
+            };
+            InstantiateModelParams instantiateModelParams = new()
+            {
+                GeomFlags = 0
+                            | InstantiateModelParams.CENTER_X
+                            | InstantiateModelParams.CENTER_Z
+                            | InstantiateModelParams.ROTATE_Y180
+                            | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
+                MaxDistance = propMaxDistance
+            };
+
+            Model model = await ModelCache.Instance().Instantiate(
+                _carFileName(carIdx), props, instantiateModelParams);
+            InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
+
+            var wf = worldFragment;
+
+            int fragmentId = worldFragment.NumericalId;
+
+            /*
+             * Now, first, from any of the worker threads, prepare the physics.
+             * There's no contact listeners etc added and they're off, so no worries.
+             */
+            engine.physics.Object po;
+            BodyReference prefSphere;
+            lock (wf.Engine.Simulation)
+            {
+                var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
+                po = new engine.physics.Object(wf.Engine, default, Vector3.Zero, Quaternion.Identity, shape);
+                prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                prefSphere.Awake = false;
+            }
+
+            /*
+             * Now, using the prepared physics, add the actual entity components.
+             */
+            var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
+            {
+#if DEBUG
+                Stopwatch sw = new();
+                sw.Start();
+#endif
+
+                eTarget.Set(new engine.world.components.FragmentId(fragmentId));
+
+#if DEBUG
+                float millisAfterFragmentId = (float)sw.Elapsed.TotalMilliseconds;
+#endif
+
+                {
+                    builtin.tools.ModelBuilder modelBuilder = new(worldFragment.Engine, model, instantiateModelParams);
+                    modelBuilder.BuildEntity(eTarget);
+                }
+#if DEBUG
+                float millisAfterBuild = (float)sw.Elapsed.TotalMilliseconds;
+#endif
+
+                eTarget.Set(new engine.behave.components.Behavior(
+                    new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
+                    {
+                        Speed = (30f + _rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
+                    })
+                {
+                    MaxDistance = propMaxDistance
+                });
+
+#if DEBUG
+                float millisAfterBehavior = (float)sw.Elapsed.TotalMilliseconds;
+#endif
+
+                eTarget.Set(new engine.audio.components.MovingSound(
+                    _getCar3Sound(carIdx), 150f));
+
+#if DEBUG
+                float millisAfterMovingSound = (float)sw.Elapsed.TotalMilliseconds;
+#endif
+
+
+                engine.physics.CollisionProperties collisionProperties =
+                    new engine.physics.CollisionProperties
+                    {
+                        Entity = eTarget,
+                        Flags =
+                            CollisionProperties.CollisionFlags.IsTangible
+                            | CollisionProperties.CollisionFlags.IsDetectable
+                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
+                        Name = PhysicsName,
+                    };
+                po.CollisionProperties = collisionProperties;
+                po.Entity = eTarget;
+                eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+
+#if DEBUG
+                float millisAfterBody = (float)sw.Elapsed.TotalMilliseconds;
+                sw.Stop();
+                if (sw.Elapsed.TotalMilliseconds > 3f)
+                {
+                    int a;
+                }
+#endif
+            });
+            wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
+
+        }
+    }
+
+
+
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
         if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
@@ -104,8 +287,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return;
         }
         
-        var aPhysics = I.Get<engine.physics.API>();
-
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
@@ -130,11 +311,17 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             }
         }
 
-        float propMaxDistance = (float) engine.Props.Get("nogame.characters.car3.maxDistance", 800f); 
-        
         if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
         _rnd.Clear();
-
+        
+        var strokeStore = _clusterDesc.StrokeStore();
+        IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
+        if (streetPoints.Count == 0)
+        {
+            return;
+        }
+        int l = streetPoints.Count;
+        
         /*
          * Now, that we have read the cluster description that is associated, we
          * can place the characters randomly on the streetpoints.
@@ -142,168 +329,20 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
          * TXWTODO: We would be more intersint to place them on the streets.
          */
 
-        var strokeStore = _clusterDesc.StrokeStore();
-        IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
-        if (streetPoints.Count == 0)
-        {
-            return;
-        }
-
-        int l = streetPoints.Count;
+        // TXWTODO: The target number of characters shall be a property of the spawnoperator.
         int nCharacters = (int)((float)l * 8f / 10f);
 
         for (int i = 0; i < nCharacters; i++)
-        {
+        {   
+            StreetPoint? chosenStreetPoint = _chooseStreetPoint(worldFragment);
 
-            var idxPoint = (int)(_rnd.GetFloat() * l);
-            var idx = 0;
-            StreetPoint chosenStreetPoint = null;
-            foreach (var sp in streetPoints)
-            {
-                if (idx == idxPoint)
-                {
-                    chosenStreetPoint = sp;
-                    break;
-                }
-
-                idx++;
-            }
-
-            if (!chosenStreetPoint.HasStrokes())
-            {
-                continue;
-            }
-
-            /*
-             * Check, wether the given street point really is inside our fragment.
-             * That way, every fragment owns only the characters spawn on their
-             * territory.
-             */
-            {
-                float px = chosenStreetPoint.Pos.X + _clusterDesc.Pos.X;
-                float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
-                if (!worldFragment.IsInside(new Vector2(px, pz)))
-                {
-                    chosenStreetPoint = null;
-                }
-            }
             if (null != chosenStreetPoint)
             {
                 if (_trace)
                     Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
                 ++_characterIndex;
-                {
-                    int carIdx = (int)(_rnd.GetFloat() * 4f);
-                    int colorIdx = (int)(_rnd.GetFloat() * (float)_primarycolors.Count);
-                    
-                    builtin.loader.ModelProperties props = new()
-                    {
-                        ["primarycolor"] = _primarycolors[colorIdx],
-                    };
-                    InstantiateModelParams instantiateModelParams = new()
-                    {
-                        GeomFlags = 0
-                                    | InstantiateModelParams.CENTER_X
-                                    | InstantiateModelParams.CENTER_Z
-                                    | InstantiateModelParams.ROTATE_Y180
-                                    | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
-                        MaxDistance = propMaxDistance
-                    }; 
-                        
-                    Model model = await ModelCache.Instance().Instantiate(
-                        _carFileName(carIdx), props, instantiateModelParams);
-                    InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
-                    
-                    var wf = worldFragment;
-
-                    int fragmentId = worldFragment.NumericalId;
-
-                    /*
-                     * Now, first, from any of the worker threads, prepare the physics.
-                     * There's no contact listeners etc added and they're off, so no worries.
-                     */
-                    engine.physics.Object po;
-                    BodyReference prefSphere;
-                    lock (wf.Engine.Simulation)
-                    {
-                        var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
-                        po = new engine.physics.Object(wf.Engine, default, Vector3.Zero, Quaternion.Identity, shape);
-                        prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                        prefSphere.Awake = false;
-                    }
-                    
-                    /*
-                     * Now, using the prepared physics, add the actual entity components.
-                     */
-                    var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
-                    {
-                        #if DEBUG
-                        Stopwatch sw = new();
-                        sw.Start();
-                        #endif
-                        
-                        eTarget.Set(new engine.world.components.FragmentId(fragmentId));
-                        
-                        #if DEBUG
-                        float millisAfterFragmentId = (float) sw.Elapsed.TotalMilliseconds;
-                        #endif
-                        
-                        {
-                            builtin.tools.ModelBuilder modelBuilder = new(worldFragment.Engine, model, instantiateModelParams);
-                            modelBuilder.BuildEntity(eTarget);
-                        }
-                        #if DEBUG
-                        float millisAfterBuild = (float) sw.Elapsed.TotalMilliseconds;
-                        #endif
-
-                        eTarget.Set(new engine.behave.components.Behavior(
-                            new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
-                            { 
-                                Speed = (30f + _rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
-                            })
-                        {
-                            MaxDistance = propMaxDistance
-                        });
-                        
-                        #if DEBUG
-                        float millisAfterBehavior = (float) sw.Elapsed.TotalMilliseconds;
-                        #endif
-
-                        eTarget.Set(new engine.audio.components.MovingSound(
-                            _getCar3Sound(carIdx), 150f));
-                        
-                        #if DEBUG
-                        float millisAfterMovingSound = (float) sw.Elapsed.TotalMilliseconds;
-                        #endif
-
-                        
-                        engine.physics.CollisionProperties collisionProperties =
-                            new engine.physics.CollisionProperties
-                            {
-                                Entity = eTarget,
-                                Flags = 
-                                    CollisionProperties.CollisionFlags.IsTangible 
-                                    | CollisionProperties.CollisionFlags.IsDetectable
-                                    | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                                Name = PhysicsName,
-                            };
-                        po.CollisionProperties = collisionProperties;
-                        po.Entity = eTarget;
-                        eTarget.Set(new engine.physics.components.Body(po, prefSphere));
-                        
-                        #if DEBUG
-                        float millisAfterBody = (float) sw.Elapsed.TotalMilliseconds;
-                        sw.Stop();
-                        if (sw.Elapsed.TotalMilliseconds > 3f)
-                        {
-                            int a;
-                        }
-                        #endif
-                    });
-                    wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
-                    
-                }
+                GenerateCharacter(worldFragment, chosenStreetPoint);
             }
             else
             {
