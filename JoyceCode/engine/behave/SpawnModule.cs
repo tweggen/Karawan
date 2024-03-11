@@ -5,6 +5,7 @@ using engine;
 using engine.behave;
 using engine.behave.components;
 using engine.behave.systems;
+using engine.geom;
 using engine.world;
 using static engine.Logger;
 
@@ -52,15 +53,23 @@ public class SpawnModule : AModule
                 }
             }
 
-            var opStatus = op.SpawnStatus;
-            
+            /*
+             * Help ourselves to optimize the are the operator may work in.
+             */
+            AABB aabb = op.AABB; 
+
             /*
              * Now iterate through all fragments which might be populated
              * only in parts but actually should be.
              */
-            // TXWTODO: We are missing the list of fragments that should be populated
             foreach (var kvpFrag in kvpBehavior.Value.MapPerFragmentStats)
             {
+                if (!aabb.Intersects(Fragment.GetAABB(kvpFrag.Key)))
+                {
+                    continue;
+                }
+                var opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
+            
                 PerFragmentStats perFragmentStats = kvpFrag.Value;
                 int nCharacters = perFragmentStats.NumberEntities + opStatus.InCreation;
                 int needCharacters = opStatus.MinCharacters - nCharacters;

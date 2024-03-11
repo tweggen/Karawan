@@ -1,33 +1,45 @@
-using System;
 using engine.behave;
 using engine.joyce;
+using FbxSharp;
 
 namespace nogame.characters.car3;
 
+
+/**
+ * Spawn operator for the omnipresent cars. 
+ */
 public class SpawnOperator : ISpawnOperator
 {
     private object _lo = new();
     private SpawnStatus _spawnStatus = new();
+    private engine.geom.AABB _aabb = new();
     
-    public System.Type BehaviorType
-    {
-        get => typeof(Behavior);
-    }
-
     
-    public SpawnStatus SpawnStatus
+    public engine.geom.AABB AABB
     {
         get
         {
             lock (_lo)
             {
-                return _spawnStatus;
+                return _aabb;
             }
         }
     }
+
+
+    public System.Type BehaviorType
+    {
+        get => typeof(Behavior);
+    }
+
+
+    public SpawnStatus GetFragmentSpawnStatus(System.Type behaviorType, in Index3 idxFragment)
+    {
+        return _spawnStatus;
+    }
     
 
-    public void SpawnCharacter(Type behaviorType, in Index3 idxFragment, PerFragmentStats perFragmentStats)
+    public void SpawnCharacter(System.Type behaviorType, in Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
         
     }
