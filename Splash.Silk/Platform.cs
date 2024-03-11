@@ -349,6 +349,16 @@ public class Platform : engine.IPlatform
     }
 
 
+    public enum UnderlyingFrameworks
+    {
+        Unknown,
+        Glfw,
+        Sdl
+    }
+
+    private UnderlyingFrameworks _underlyingFrameworks = UnderlyingFrameworks.Unknown;
+    
+
     private void _windowOnLoad()
     {
         _frameTimingStopwatch.Start();
@@ -631,6 +641,14 @@ public class Platform : engine.IPlatform
         string baseDirectory = System.AppContext.BaseDirectory;
         System.Console.WriteLine($"Running in directory {baseDirectory}");
 
+        if (_iView.GetType().FullName.Contains("Glfw"))
+        {
+            _underlyingFrameworks = UnderlyingFrameworks.Glfw;
+        } else if (_iView.GetType().FullName.Contains("Sdl"))
+        {
+            _underlyingFrameworks = UnderlyingFrameworks.Sdl;
+        }
+        
         /*
          * First, event handling from UI.
          */
