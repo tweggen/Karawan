@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using BepuPhysics;
+using engine.geom;
 using engine.joyce;
 using static engine.Logger;
 
@@ -35,6 +36,19 @@ public class Fragment : IDisposable
     public Vector3 Position { get; }
     public geom.AABB AABB;
 
+    public static AABB GetAABB(in Index3 idxFragment)
+    {
+        return new geom.AABB(
+            new Vector3(
+                idxFragment.I * MetaGen.FragmentSize,
+                idxFragment.J * MetaGen.FragmentSize,
+                idxFragment.K * MetaGen.FragmentSize
+            ), 
+            MetaGen.FragmentSize
+        );
+    }
+    
+    
     public Index3 IdxFragment { get; set; }
 
     static public Index3 PosToIndex3(in Vector3 pos)

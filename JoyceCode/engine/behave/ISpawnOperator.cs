@@ -27,12 +27,19 @@ public struct SpawnStatus
  */
 public interface ISpawnOperator
 {
+    geom.AABB AABB { get; }
+    
     /**
      * The behavior type we shall control.
      */
     Type BehaviorType { get;  }
+
+    /**
+     * Return the requirements for the given fragment. This method should
+     * be rather fast.
+     */
+    SpawnStatus GetFragmentSpawnStatus(Type behaviorType, in Index3 idxFragment);
     
-    SpawnStatus SpawnStatus { get; }
     
     /**
      * Trigger creation of a new behavior.

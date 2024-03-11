@@ -75,7 +75,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     private builtin.tools.RandomSource _rnd;
     private string _myKey;
 
-    private bool _trace = true;
+    private bool _trace = false;
 
     private int _characterIndex = 0;
 
@@ -107,7 +107,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
         if (streetPoints.Count == 0)
         {
-            Trace($"Cluster does not have streetpoints at all.");
+            if (_trace) Trace($"Cluster does not have streetpoints at all.");
             return null;
         }
         int l = streetPoints.Count;
@@ -131,13 +131,13 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
         if (null==chosenStreetPoint)
         {
-            Trace($"NO street point has been found.");
+            if (_trace) Trace($"NO street point has been found.");
             return null;
         }
 
         if (!chosenStreetPoint.HasStrokes())
         {
-            Trace($"The chosen street point does not have strokes at all.");
+            if (_trace) Trace($"The chosen street point does not have strokes at all.");
             return null;
         }
         
@@ -151,7 +151,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
             if (!worldFragment.IsInside(new Vector2(px, pz)))
             {
-                Trace($"The chosen street point would not be inside the world fragment.");
+                if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
                 return null;
             }
         }
@@ -338,8 +338,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
             if (null != chosenStreetPoint)
             {
-                if (_trace)
-                    Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
+                if (_trace) Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
                 ++_characterIndex;
                 GenerateCharacter(worldFragment, chosenStreetPoint);
