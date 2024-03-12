@@ -21,6 +21,7 @@ using AndroidX.Core.App;
 using AndroidX.Core.Content;
 using Xamarin.Essentials;
 using nogame;
+using Silk.NET.SDL;
 using GameState = Android.App.GameState;
 
 namespace Wuka
@@ -76,10 +77,21 @@ namespace Wuka
             _triggerGame();
         }
 
+        private Silk.NET.SDL.Sdl _sdl = null;
 
         private void _beforeDoEvents()
         {
-            Silk.NET.SDL.PeepEvents()
+            if (null == _sdl)
+            {
+                System.Console.WriteLine("Fetching sdl.");
+                _sdl = Silk.NET.SDL.Sdl.GetApi();
+            }
+
+            int maxEvents = 100;
+            Silk.NET.SDL.Event[] events = new Silk.NET.SDL.Event[maxEvents];
+            int nEvents = _sdl.PeepEvents(events.AsSpan(), maxEvents, Eventaction.Peekevent,
+                (uint) Silk.NET.SDL.EventType.Firstevent,
+                (uint) Silk.NET.SDL.EventType.Lastevent);
         }
 
 
