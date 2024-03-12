@@ -19,6 +19,7 @@ using Android.Util;
 using Android.Widget;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
+using engine.news;
 using Xamarin.Essentials;
 using nogame;
 using Silk.NET.SDL;
@@ -78,6 +79,7 @@ namespace Wuka
         }
 
         private Silk.NET.SDL.Sdl _sdl = null;
+        private EventQueue _eq = null;
 
         private void _beforeDoEvents()
         {
@@ -87,11 +89,49 @@ namespace Wuka
                 _sdl = Silk.NET.SDL.Sdl.GetApi();
             }
 
+            if (null == _eq)
+            {
+                _eq = I.Get<EventQueue>();
+            }
+
             int maxEvents = 100;
             Silk.NET.SDL.Event[] events = new Silk.NET.SDL.Event[maxEvents];
             int nEvents = _sdl.PeepEvents(events.AsSpan(), maxEvents, Eventaction.Peekevent,
                 (uint) Silk.NET.SDL.EventType.Firstevent,
                 (uint) Silk.NET.SDL.EventType.Lastevent);
+            for (int i = 0; i < nEvents; ++i)
+            {
+                switch ((EventType) events[i].Type)
+                {
+                    case EventType.Fingerdown:
+                        _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_PRESSED, "")
+                        {
+                            Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
+                            Data1 = (uint) events[i].Tfinger.TouchId,
+                            Data2 = (uint) events[i].Tfinger.FingerId
+                        });
+                        break;
+                    case EventType.Fingerup:
+                        _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_RELEASED, "")
+                        {
+                            Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
+                            Data1 = (uint) events[i].Tfinger.TouchId,
+                            Data2 = (uint) events[i].Tfinger.FingerId
+                        });
+                        break;
+                    case EventType.Fingermotion:
+                        _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_MOVED, "")
+                        {
+                            Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
+                            Size = new (events[i].Tfinger.Dx, events[i].Tfinger.Dy),
+                            Data1 = (uint) events[i].Tfinger.TouchId,
+                            Data2 = (uint) events[i].Tfinger.FingerId
+                        });
+                        break;
+                    default: 
+                        break;
+                }
+            }
         }
 
 
@@ -132,7 +172,7 @@ namespace Wuka
             engine.GlobalSettings.Set("Engine.RWPath", System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData));
 
             _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView, out var silkPlatform);
-            silkPlatform.BeforeDoEvent = () => { };
+            silkPlatform.BeforeDoEvent = _beforeDoEvents;
             
             _iView.Initialize();
 
