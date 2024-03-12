@@ -77,6 +77,12 @@ namespace Wuka
         }
 
 
+        private void _beforeDoEvents()
+        {
+            Silk.NET.SDL.PeepEvents()
+        }
+
+
         void _triggerGame()
         {
             lock (_lo)
@@ -113,7 +119,9 @@ namespace Wuka
             engine.GlobalSettings.Set("nogame.LogosScene.PlayTitleMusic", "true");
             engine.GlobalSettings.Set("Engine.RWPath", System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData));
 
-            _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView);
+            _engine = Splash.Silk.Platform.EasyCreate(new string[] { }, _iView, out var silkPlatform);
+            silkPlatform.BeforeDoEvent = () => { };
+            
             _iView.Initialize();
 
             I.Register<Boom.ISoundAPI>(() =>
@@ -129,7 +137,7 @@ namespace Wuka
                 var rootDepends = new nogame.GameState();
                 System.Console.WriteLine("DOTNET silicon desert "+rootDepends);
             }
-            engine.casette.Loader.LoadStartGame(_engine, "nogame.json");
+            engine.casette.Loader.LoadStartGame("nogame.json");
             
             _engine.Execute();
 

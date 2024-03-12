@@ -589,6 +589,9 @@ public class Platform : engine.IPlatform
             }
         }
     }
+
+
+    public Action BeforeDoEvent = null;
     
 
     public void Execute()
@@ -601,7 +604,12 @@ public class Platform : engine.IPlatform
         iView.Run(delegate
         {
             _triggerWaitMonitor();
-        
+
+            if (BeforeDoEvent != null)
+            {
+                BeforeDoEvent();
+            }
+            
             iView.DoEvents();
             if (!iView.IsClosing)
             {
@@ -731,9 +739,10 @@ public class Platform : engine.IPlatform
     }
 
 
-    static public engine.Engine EasyCreate(string[] args, IView iView)
+    static public engine.Engine EasyCreate(string[] args, IView iView, out Splash.Silk.Platform out_platform)
     {
         var platform = new Platform(args);
+        out_platform = platform;
         I.Register<engine.Engine>(() => new engine.Engine(platform));
         engine.Engine e = I.Get<engine.Engine>();
         e.SetupDone();

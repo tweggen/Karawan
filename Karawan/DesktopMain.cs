@@ -103,7 +103,7 @@ public class DesktopMain
 
         }
 
-        var e = Splash.Silk.Platform.EasyCreate(args, iWindow);
+        var e = Splash.Silk.Platform.EasyCreate(args, iWindow, out var _);
         e.SetFullscreen(startFullscreen);
 
         iWindow.Initialize();
