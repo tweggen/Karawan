@@ -25,7 +25,7 @@ public class SpawnModule : AModule
     /**
      * Map of the actual spawn operators.
      */
-    private SortedDictionary<Type, ISpawnOperator> _mapSpawnOperators = new();
+    private Dictionary<Type, ISpawnOperator> _mapSpawnOperators = new();
 
     private Loader _loader;
 
@@ -94,17 +94,17 @@ public class SpawnModule : AModule
     }
     
 
-    public void AddSpawnOperator(IBehavior behavior, ISpawnOperator op)
+    public void AddSpawnOperator(Type behaviorType, ISpawnOperator op)
     {
         lock (_lo)
         {
-            if (_mapSpawnOperators.ContainsKey(behavior.GetType()))
+            if (_mapSpawnOperators.ContainsKey(behaviorType))
             {
                 ErrorThrow<ArgumentException>(
-                    $"Spawn operator for behavior {behavior.GetType().FullName} already registered.");
+                    $"Spawn operator for behavior {behaviorType.FullName} already registered.");
             }
 
-            _mapSpawnOperators[behavior.GetType()] = op;
+            _mapSpawnOperators[behaviorType] = op;
         }
     }
     

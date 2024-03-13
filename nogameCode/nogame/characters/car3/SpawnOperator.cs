@@ -1,3 +1,4 @@
+using DefaultEcs;
 using engine;
 using engine.behave;
 using engine.joyce;
@@ -16,6 +17,7 @@ public class SpawnOperator : ISpawnOperator
     private engine.geom.AABB _aabb = new();
     private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
     private int _inCreation = 0;
+    private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
     
     public engine.geom.AABB AABB
     {
@@ -67,6 +69,12 @@ public class SpawnOperator : ISpawnOperator
             
             return;
         }
-        
+
+        engine.world.Fragment worldFragment;
+        if (_loader.TryGetFragment(idxFragment, out worldFragment))
+        {
+            var chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
+            GenerateCharacterOperator.GenerateCharacter(cd, worldFragment);
+        }
     }
 }

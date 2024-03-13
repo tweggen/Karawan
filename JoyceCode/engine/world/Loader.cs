@@ -111,6 +111,18 @@ namespace engine.world
 
 
         private List<IViewer> _listViewers = new();
+
+
+        /*
+         * Try to find a loaded fragment.
+         */
+        public bool TryGetFragment(in Index3 idxFragment, out world.Fragment worldFragment)
+        {
+            lock (_lo)
+            {
+                return _mapFrags.TryGetValue(idxFragment.AsKey(), out worldFragment);
+            }
+        }
         
         
         /**

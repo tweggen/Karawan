@@ -22,6 +22,13 @@ public struct Index3
     {
         return new Vector3((float)I, (float)J, (float)K);
     }
+    
+    
+    public uint AsKey()
+    {
+        return ((uint)I & 0xffffu) | ((uint)K) << 16;
+    }
+    
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Index3(in Vector3 v3)
