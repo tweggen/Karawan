@@ -12,7 +12,7 @@ public class ClusterHeatMap : AHeatMap
 
     public ClusterDesc GetClusterDesc(in Index3 idxFragment)
     {
-        return _arrayClusters[_si + idxFragment.I, _sk + idxFragment.K];
+        return _arrayClusters[_si/2 + idxFragment.I, _sk/2 + idxFragment.K];
     }
     
     
@@ -21,20 +21,6 @@ public class ClusterHeatMap : AHeatMap
      */
     protected override float _computeDensity(in Index3 idxFragment)
     {
-        /*
-         * First clear the array. Then iterate through all clusters,
-         * summing up the cluster partitions to a total of 10000 == 100%.
-         */
-        // _arraySpawnStatus.Fill<SpawnStatus>(emptySpawnStatus); not possible for 2d arrays
-        
-        for (int i = 0; i < _si; ++i)
-        {
-            for (int k = 0; k < _sk; ++k)
-            {
-                _arrayDensity[i, k] = -1f;
-            }
-        }
-
         var clusterList = ClusterList.Instance().GetClusterList();
         foreach (var cd in clusterList)
         {
@@ -89,7 +75,7 @@ public class ClusterHeatMap : AHeatMap
             }
         }
 
-        return _arrayDensity[_si + idxFragment.I, _si + idxFragment.K];
+        return _arrayDensity[_si/2 + idxFragment.I, _si/2 + idxFragment.K];
     }
 
     

@@ -1,3 +1,4 @@
+using System.Numerics;
 using DefaultEcs;
 using engine;
 using engine.behave;
@@ -14,7 +15,7 @@ namespace nogame.characters.car3;
 public class SpawnOperator : ISpawnOperator
 {
     private object _lo = new();
-    private engine.geom.AABB _aabb = new();
+    private engine.geom.AABB _aabb = new(Vector3.Zero, engine.world.MetaGen.MaxWidth);
     private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
     private int _inCreation = 0;
     private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
@@ -45,7 +46,7 @@ public class SpawnOperator : ISpawnOperator
          */
         float density = _clusterHeatMap.GetDensity(idxFragment);
         
-        /*
+        /*_
          * Note that it is technically wrong to return the number of characters in creation
          * in total. However, this only would prevent more characters compared to the offset.
          */

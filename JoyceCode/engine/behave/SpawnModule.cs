@@ -19,6 +19,7 @@ namespace engine.behave;
 public class SpawnModule : AModule
 {
     private SpawnSystem _spawnSystem = new();
+    private MetaGen _metaGen = I.Get<world.MetaGen>();
 
     private Queue<Action> _queueSpawnActions = new();
 
@@ -33,10 +34,32 @@ public class SpawnModule : AModule
     private void _onLogicalFrame(object? sender, float dt)
     {
         BehaviorStats behaviorStats = new();
+
+        /*
+         * This is the list of modules we need to fill with life.
+         */
+        var listPopulatedFragments = _loader.GetPopulatedFragments();
+
+        /*
+         * Build the empty tree
+         */
+        lock (_lo)
+        {
+            foreach (var kvpOperators in _mapSpawnOperators)
+            {
+                var perBehaviorStats = new PerBehaviorStats();
+                behaviorStats.MapPerBehaviorStats[kvpOperators.Key] = perBehaviorStats;
+                foreach (var idxFragment in listPopulatedFragments)
+                {
+                    var perFragmentStats = new PerFragmentStats();
+                    perBehaviorStats.MapPerFragmentStats[idxFragment] = perFragmentStats;
+                }
+            }
+        }
+
+
         _spawnSystem.Update(behaviorStats);
 
-        var listPopulatedFragments = _loader.GetPopulatedFragments();
-        
         /*
          * Now that we have the stats, iterate over it to trigger spawning
          * or killing of characters wherever required
@@ -127,6 +150,6 @@ public class SpawnModule : AModule
         base.ModuleActivate();
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
-        _loader = I.Get<world.MetaGen>().Loader;
+        _loader = _metaGen.Loader;
     }
 }
