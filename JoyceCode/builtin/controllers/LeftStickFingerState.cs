@@ -44,7 +44,25 @@ class LeftStickFingerState : AFingerState
                 / _ic.ControllerXMax * _ic.TouchAnalogMax);
             cs.AnalogLeft = 0;
         }
-                
+
+        cs.AnalogToWalkControllerNoLock();
+    }
+
+
+    public override void HandleReleased(Event ev)
+    {
+        base.HandleReleased(ev);
+        var cs = _ic.ControllerState;
+
+        cs.AnalogForward = 0;
+        cs.AnalogBackward = 0;
+        cs.AnalogRight = 0;
+        cs.AnalogLeft = 0;
+        cs.AnalogUp = 0;
+        cs.AnalogDown = 0;
+        cs.AnalogToWalkControllerNoLock();
+
+        LastPosition = default;
     }
     
     public LeftStickFingerState(

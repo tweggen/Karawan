@@ -410,12 +410,6 @@ public class InputController : engine.AModule, engine.IInputPart
     }
     
 
-    private void _handleAdditionalTouchPressed(Event ev)
-    {
-        _touchCheckDebugClick(ev);
-    }
-    
-    
     private void _handleMousePressed(Event ev)
     {
         if (ev.Code != "0")
@@ -428,10 +422,6 @@ public class InputController : engine.AModule, engine.IInputPart
             _mousePressPosition = ev.Position;
             _currentMousePosition = ev.Position;
             _isMouseButtonClicked = true;
-        }
-        if (engine.GlobalSettings.Get("splash.touchControls") != "false")
-        {
-            _handleAdditionalTouchPressed(ev);
         }
 
     }
@@ -465,11 +455,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     private void _onLogicalFrame(object? sender, float dt)
     {
-        if (engine.GlobalSettings.Get("splash.touchControls") != "false")
-        {
-            //_touchMouseController();
-        }
-        else
+        if (engine.GlobalSettings.Get("splash.touchControls") == "false")
         {
             _desktopMouseController();
         }
@@ -583,9 +569,13 @@ public class InputController : engine.AModule, engine.IInputPart
     
     public void InputPartOnInputEvent(Event ev)
     {
-        if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
-        if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
-        if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
+        if (engine.GlobalSettings.Get("splash.touchControls") == "false")
+        {
+            if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
+            if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
+            if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
+        }
+
         if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _onKeyUp(ev);
         if (ev.Type.StartsWith(Event.INPUT_FINGER_PRESSED)) _onFingerPressed(ev);

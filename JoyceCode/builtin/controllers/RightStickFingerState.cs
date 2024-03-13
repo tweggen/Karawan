@@ -9,7 +9,6 @@ class RightStickFingerState : AFingerState
     public override void HandleMotion(Event ev)
     {
         base.HandleMotion(ev);
-        var cs = _ic.ControllerState;
         Vector2 vRel = ev.Position - LastPosition;
         LastPosition = ev.Position;
 
