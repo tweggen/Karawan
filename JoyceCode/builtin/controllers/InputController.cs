@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using engine;
 using engine.news;
@@ -18,16 +19,34 @@ public class InputController : engine.AModule, engine.IInputPart
     private object _lo = new();
     
     private Vector2 _vViewSize = Vector2.Zero;
-    private Vector2 _vMouseMove = Vector2.Zero;
+    public Vector2 VMouseMove = Vector2.Zero;
     private Vector2 _mousePressPosition = Vector2.Zero;
     private Vector2 _currentMousePosition = Vector2.Zero;
     private bool _isMouseButtonClicked = false;
     private Vector2 _lastMousePosition;
     private bool _isKeyboardFast = false;
     
-    public ControllerState _controllerState = new();
+    private ControllerState _controllerState = new();
 
+    public ControllerState ControllerState
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _controllerState;
+            }
+        }
+        set
+        {
+            lock (_lo)
+            {
+                _controllerState = value;
+            }
+        }
+    }
 
+    
     public float TouchLookMoveSensitivity { get; set; } = 1.5f;
     public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
@@ -55,17 +74,6 @@ public class InputController : engine.AModule, engine.IInputPart
         _isKeyboardFast = !_isKeyboardFast;
     }
 
-
-    private void _analogToWalkControllerNoLock()
-    {
-        _controllerState.WalkForward = _controllerState.AnalogForward;
-        _controllerState.WalkBackward = _controllerState.AnalogBackward;
-        _controllerState.TurnLeft = _controllerState.AnalogLeft;
-        _controllerState.TurnRight = _controllerState.AnalogRight;
-        _controllerState.FlyUp = _controllerState.AnalogUp;
-        _controllerState.FlyDown = _controllerState.AnalogDown;
-    }
-    
 
     private void _onKeyDown(Event ev)
     {
@@ -139,11 +147,11 @@ public class InputController : engine.AModule, engine.IInputPart
                     break;
             }
 
-            _analogToWalkControllerNoLock();
+            _controllerState.AnalogToWalkControllerNoLock();
         }
     }
 
-    
+
     /**
      * Respond to a move, press position is relative view size (anamorphic),
      * vRel is movement (relative to viewY resolution)
@@ -191,7 +199,7 @@ public class InputController : engine.AModule, engine.IInputPart
                     _controllerState.AnalogLeft = 0;
                 }
                 
-                _analogToWalkControllerNoLock();
+                _controllerState.AnalogToWalkControllerNoLock();
 
             }
             else
@@ -202,7 +210,7 @@ public class InputController : engine.AModule, engine.IInputPart
                     _lastTouchPosition = _currentMousePosition;
                 }
 
-                _vMouseMove += ((_currentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f *
+                VMouseMove += ((_currentMousePosition - _lastTouchPosition) / viewSize.Y) * 900f *
                                TouchLookMoveSensitivity;
             }
         }
@@ -285,7 +293,7 @@ public class InputController : engine.AModule, engine.IInputPart
                 _controllerState.AnalogUp = 0;
                 _controllerState.AnalogDown = 0;
                 
-                _analogToWalkControllerNoLock();
+                _controllerState.AnalogToWalkControllerNoLock();
 
                 _lastTouchPosition = default;
             }
@@ -306,7 +314,7 @@ public class InputController : engine.AModule, engine.IInputPart
                 {
                     var xOffset = (_currentMousePosition.X - _lastMousePosition.X) * MouseLookMoveSensitivity;
                     var yOffset = (_currentMousePosition.Y - _lastMousePosition.Y) * MouseLookMoveSensitivity;
-                    _vMouseMove += new Vector2(xOffset, yOffset);
+                    VMouseMove += new Vector2(xOffset, yOffset);
                 }
                 _lastMousePosition = _currentMousePosition;
             }
@@ -459,7 +467,7 @@ public class InputController : engine.AModule, engine.IInputPart
     {
         if (engine.GlobalSettings.Get("splash.touchControls") != "false")
         {
-            _touchMouseController();
+            //_touchMouseController();
         }
         else
         {
@@ -472,8 +480,8 @@ public class InputController : engine.AModule, engine.IInputPart
     {            
         lock (_lo)
         {
-            vMouseMove = _vMouseMove;
-            _vMouseMove = new Vector2(0f, 0f);
+            vMouseMove = VMouseMove;
+            VMouseMove = new Vector2(0f, 0f);
         }
     }
 
@@ -485,6 +493,92 @@ public class InputController : engine.AModule, engine.IInputPart
             controllerState = _controllerState;
         }
     }
+
+
+    private SortedDictionary<uint, AFingerState> _mapFingerStates = new();
+
+    
+    private void _onFingerPressed(Event ev)
+    {
+        AFingerState? oldFingerState = null;
+        AFingerState aFingerState;
+        
+        lock (_lo)
+        {
+            if (_mapFingerStates.TryGetValue(ev.Data2, out oldFingerState))
+            {
+                /*
+                 * This should not happen. Terminate the old one, start a new.
+                 */
+                _mapFingerStates.Remove(ev.Data2);
+            }
+        }
+
+        if (oldFingerState != null)
+        {
+            oldFingerState.HandleReleased(ev);
+        }
+
+        if (ev.Position.X < 0.5f)
+        {
+            aFingerState = new LeftStickFingerState(ev.Position, this);
+        }
+        else if (ev.Position.X < 0.9f)
+        {
+            aFingerState = new RightStickFingerState(ev.Position, this);
+        }
+        else
+        {
+            aFingerState = new ZoomStickFingerState(ev.Position, this);
+        }
+
+        lock (_lo)
+        {
+            _mapFingerStates[ev.Data2] = aFingerState;
+        }
+        
+        aFingerState.HandlePressed(ev);
+    }
+    
+    
+    private void _onFingerReleased(Event ev)
+    {
+        AFingerState? fingerState = null;
+        
+        lock (_lo)
+        {
+            if (_mapFingerStates.TryGetValue(ev.Data2, out fingerState))
+            {
+                /*
+                 * We better have an old one.
+                 */
+                _mapFingerStates.Remove(ev.Data2);
+            }
+        }
+
+        if (fingerState != null)
+        {
+            fingerState.HandleReleased(ev);
+        }
+    }
+    
+    
+    private void _onFingerMotion(Event ev)
+    {
+        AFingerState? fingerState = null;
+        
+        lock (_lo)
+        {
+            if (_mapFingerStates.TryGetValue(ev.Data2, out fingerState))
+            {
+            }
+        }
+
+        if (fingerState != null)
+        {
+            fingerState.HandleMotion(ev);
+        }
+    }
     
     
     public void InputPartOnInputEvent(Event ev)
@@ -494,6 +588,9 @@ public class InputController : engine.AModule, engine.IInputPart
         if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _onKeyUp(ev);
+        if (ev.Type.StartsWith(Event.INPUT_FINGER_PRESSED)) _onFingerPressed(ev);
+        if (ev.Type.StartsWith(Event.INPUT_FINGER_RELEASED)) _onFingerReleased(ev);
+        if (ev.Type.StartsWith(Event.INPUT_FINGER_MOVED)) _onFingerMotion(ev);
     }
 
     

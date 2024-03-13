@@ -66,6 +66,18 @@ namespace engine.news
         public int AnalogRight;
         public int TurnRight;
 
+        
+        public void AnalogToWalkControllerNoLock()
+        {
+            WalkForward = AnalogForward;
+            WalkBackward = AnalogBackward;
+            TurnLeft = AnalogLeft;
+            TurnRight = AnalogRight;
+            FlyUp = AnalogUp;
+            FlyDown = AnalogDown;
+        }
+
+
         public void Reset()
         {
             WalkForward = 0;
