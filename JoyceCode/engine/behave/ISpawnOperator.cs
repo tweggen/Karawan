@@ -4,24 +4,6 @@ using engine.joyce;
 namespace engine.behave;
 
 
-public struct SpawnStatus
-{
-    /**
-     * The minimum of characters per fragment.
-     */
-    public int MinCharacters;
-
-    /**
-     * The maximum of characters per fragment.
-     */
-    public int MaxCharacters;
-
-    /**
-     * The number of characters in creation.
-     */
-    public int InCreation;
-}
-
 /**
  * Operator implementation to populate fragments with behaved objects.
  */

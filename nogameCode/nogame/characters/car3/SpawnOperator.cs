@@ -1,5 +1,9 @@
+using System.Collections.Generic;
+using engine;
 using engine.behave;
+using engine.geom;
 using engine.joyce;
+using engine.world;
 using FbxSharp;
 
 namespace nogame.characters.car3;
@@ -11,9 +15,8 @@ namespace nogame.characters.car3;
 public class SpawnOperator : ISpawnOperator
 {
     private object _lo = new();
-    private SpawnStatus _spawnStatus = new();
     private engine.geom.AABB _aabb = new();
-    
+    private SpawnStatus _spawnStatus = new();
     
     public engine.geom.AABB AABB
     {

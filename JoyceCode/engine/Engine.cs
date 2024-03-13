@@ -101,6 +101,7 @@ public class Engine
     private SceneSequencer _sceneSequencer;
 
     public event EventHandler<float> OnLogicalFrame;
+    public event EventHandler<float> OnAfterPhysics;
     public event EventHandler<float> OnPhysicalFrame;
 
     public event EventHandler<float> OnImGuiRender;
@@ -644,6 +645,8 @@ public class Engine
          * Apply poses needs input from simulation
          */
         _systemApplyPoses.Update(dt);
+
+        OnAfterPhysics?.Invoke(this, dt);
 
         /*
          * hierarchy needs

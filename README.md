@@ -47,6 +47,31 @@ master spawnsystem is used.
 The idea is that rather than iterating over the entities over and over again
 we should iterate once over the characters, executing whatever is desired.
 
+### Option 1: Iterative
+
+We have the behaviour manager track the number of behaviours and the 
+actual behave system to track fragment transitions.
+Over the runtime of the engine, the behavior system keeps the count of
+behaviors by behavior type and fragment.
+
+### Option 2: Polling
+
+We have a system running every nth frame to count the behaviors and 
+to sort the by behavior type and fragment.
+
+### Actions
+
+For every (behavior type, fragment) we check the desired target status,
+eventually asking the ISpawnOperator to spawn new entities or to kill
+of some existing.
+
+### Target Status?
+
+Computing the target status might prove a bit difficult as it changes
+over time. However, obtaining the target status should be pretty efficient,
+given that it is called for each of the active fragments (25?) 
+every frame.
+
 ## About models and instances
 
 When rendering content, joyce tries to use instance rendering as

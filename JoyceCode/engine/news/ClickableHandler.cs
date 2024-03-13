@@ -189,6 +189,7 @@ public class ClickableHandler
             _findAt(pos, in mapClickedEntities);
             foreach (var kvp in mapClickedEntities)
             {
+                // TXWTODO: We better should set the event to IsHandled here.
                 var eFound = kvp.Key;
                 var v2RelPos = kvp.Value;
                 var cClickable = eFound.Get<engine.behave.components.Clickable>();
@@ -206,6 +207,8 @@ public class ClickableHandler
         
         /*
          * Finally, using the real cam (that we just define to be the main view), to do raycasting.
+         * This, however, will consume the input event, so no other actions, like panning or moving,
+         * would be performed at all.
          */
         var eMainCamera = _engine.GetCameraEntity();
         if (false && eMainCamera.IsAlive)
