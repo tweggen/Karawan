@@ -18,11 +18,10 @@ public class ClusterHeatMap : AHeatMap
          * summing up the cluster partitions to a total of 10000 == 100%.
          */
         // _arraySpawnStatus.Fill<SpawnStatus>(emptySpawnStatus); not possible for 2d arrays
-        int sx = (int)(world.MetaGen.MaxWidth / world.MetaGen.FragmentSize);
-        int sy = (int)(world.MetaGen.MaxHeight / world.MetaGen.FragmentSize);
-        for (int i = 0; i < sx; ++i)
+        
+        for (int i = 0; i < _si; ++i)
         {
-            for (int k = 0; k < sy; ++k)
+            for (int k = 0; k < _sk; ++k)
             {
                 _arrayDensity[i, k] = -1f;
             }
@@ -33,26 +32,41 @@ public class ClusterHeatMap : AHeatMap
         {
             AABB aabbCluster = cd.AABB;
             Index3 fragMin = new(
-                int.Clamp((int) (aabbCluster.AA.X / world.MetaGen.FragmentSize), -sx, sx),
+                int.Clamp((int) (aabbCluster.AA.X / world.MetaGen.FragmentSize), -_si, _si),
                 0,
-                int.Clamp((int)(aabbCluster.AA.Z / world.MetaGen.FragmentSize),-sy, sy)
+                int.Clamp((int)(aabbCluster.AA.Z / world.MetaGen.FragmentSize),-_sk, _sk)
                 );
             Index3 fragMax = new(
-                int.Clamp((int)((aabbCluster.BB.X+world.MetaGen.FragmentSize-1f) / world.MetaGen.FragmentSize), -sx, sx),
+                int.Clamp((int)((aabbCluster.BB.X+world.MetaGen.FragmentSize-1f) / world.MetaGen.FragmentSize), -_si, _si),
                 0,
-                int.Clamp((int)((aabbCluster.BB.Z+world.MetaGen.FragmentSize-1f) / world.MetaGen.FragmentSize), -sy, sy)
-            );
+                int.Clamp((int)((aabbCluster.BB.Z+world.MetaGen.FragmentSize-1f) / world.MetaGen.FragmentSize), -_sk, _sk)
+                );
 
-            for (int fi = fragMin.I; fi <= fragMax.I; ++fi)
+            Index3 idx = new(0,0,0);
+            for (idx.I = fragMin.I; idx.I <= fragMax.I; ++idx.I)
             {
-                for (int fk = fragMin.K; fk <= fragMax.K; ++fk)
+                for (idx.K = fragMin.K; idx.K <= fragMax.K; ++idx.K)
                 {
+                    int fi = idx.I + _si / 2;
+                    int fk = idx.I + _sk / 2;
+                    
                     /*
-                     * Compute fragment coverage if required. 
+                     * Compute fragment coverage if required.
                      */
-                    if (fi == fragMin.I || fi == fragMax.I || fk == fragMin.K || fk == fragMax.K)
+                    if (idx.I == fragMin.I || idx.I == fragMax.I || idx.K == fragMin.K || idx.K == fragMax.K)
                     {
-                        
+                        AABB aabbIntersection;
+                        if (aabbCluster.TryIntersect(Fragment.GetAABB(idx), out aabbIntersection))
+                        {
+                            float li = (aabbIntersection.BB.X - aabbIntersection.AA.X) / world.MetaGen.FragmentSize;
+                            float lk = (aabbIntersection.BB.Z - aabbIntersection.AA.Z) / world.MetaGen.FragmentSize;
+
+                            _arrayDensity[fi, fk] += li * lk;
+                        }
+                        else
+                        {
+                            // do nothing, no increment to density.
+                        }
                     }
                     else
                     {
@@ -60,11 +74,12 @@ public class ClusterHeatMap : AHeatMap
                     }
                 }
             }
-            
         }
 
+        return _arrayDensity[_si + idxFragment.I, _si + idxFragment.K];
     }
 
+    
     public ClusterHeatMap() : base()
     {
     }
