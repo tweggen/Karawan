@@ -8,6 +8,14 @@ namespace engine.behave;
 
 public class ClusterHeatMap : AHeatMap
 {
+    private ClusterDesc[,] _arrayClusters;
+
+    public ClusterDesc GetClusterDesc(in Index3 idxFragment)
+    {
+        return _arrayClusters[_si + idxFragment.I, _sk + idxFragment.K];
+    }
+    
+    
     /*
      * We compute the entire heat map as soon one element had been queried.
      */
@@ -61,7 +69,12 @@ public class ClusterHeatMap : AHeatMap
                             float li = (aabbIntersection.BB.X - aabbIntersection.AA.X) / world.MetaGen.FragmentSize;
                             float lk = (aabbIntersection.BB.Z - aabbIntersection.AA.Z) / world.MetaGen.FragmentSize;
 
-                            _arrayDensity[fi, fk] += li * lk;
+                            float oldDensity = _arrayDensity[fi, fk];
+                            if (null == _arrayClusters[fi, fk])
+                            {
+                                _arrayClusters[fi, fk] = cd;
+                            }
+                            _arrayDensity[fi, fk] = oldDensity + li * lk;
                         }
                         else
                         {
@@ -82,5 +95,6 @@ public class ClusterHeatMap : AHeatMap
     
     public ClusterHeatMap() : base()
     {
+        _arrayClusters = new ClusterDesc[_si + 1, _sk + 1];
     }
 }

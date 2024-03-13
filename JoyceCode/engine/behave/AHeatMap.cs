@@ -32,9 +32,6 @@ public abstract class AHeatMap
 
     protected AHeatMap()
     {
-        _arrayDensity =
-            new float[
-                (int)(world.MetaGen.MaxWidth / world.MetaGen.FragmentSize) + 1,
-                (int)(world.MetaGen.MaxHeight / world.MetaGen.FragmentSize) + 1];
+        _arrayDensity = new float[_si + 1, _sk + 1];
     }
 }

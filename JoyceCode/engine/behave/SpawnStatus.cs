@@ -1,3 +1,5 @@
+using BepuPhysics.Constraints;
+
 namespace engine.behave;
 
 public struct SpawnStatus
@@ -15,7 +17,7 @@ public struct SpawnStatus
     /**
      * The number of characters in creation.
      */
-    public ushort InCreation = 0xffff;
+    public ushort InCreation;
  
 
     public ushort _reserved;
@@ -24,5 +26,10 @@ public struct SpawnStatus
     public bool IsValid()
     {
         return InCreation != 0xffff;
+    }
+
+    public SpawnStatus()
+    {
+        InCreation = 0xffff;
     }
 }

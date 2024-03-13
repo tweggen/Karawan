@@ -1,10 +1,8 @@
-using System.Collections.Generic;
 using engine;
 using engine.behave;
-using engine.geom;
 using engine.joyce;
 using engine.world;
-using FbxSharp;
+using static engine.Logger;
 
 namespace nogame.characters.car3;
 
@@ -16,7 +14,8 @@ public class SpawnOperator : ISpawnOperator
 {
     private object _lo = new();
     private engine.geom.AABB _aabb = new();
-    private SpawnStatus _spawnStatus = new();
+    private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
+    private int _inCreation = 0;
     
     public engine.geom.AABB AABB
     {
@@ -38,12 +37,36 @@ public class SpawnOperator : ISpawnOperator
 
     public SpawnStatus GetFragmentSpawnStatus(System.Type behaviorType, in Index3 idxFragment)
     {
-        return _spawnStatus;
+        /*
+         * Read the probability for this fragment from the cluster heat map,
+         * return an appropriate spawnStatus.
+         */
+        float density = _clusterHeatMap.GetDensity(idxFragment);
+        
+        /*
+         * Note that it is technically wrong to return the number of characters in creation
+         * in total. However, this only would prevent more characters compared to the offset.
+         */
+        return new SpawnStatus()
+        {
+            MinCharacters = (ushort)(20f * density),
+            MaxCharacters = (ushort)(5f * density),
+            InCreation = (ushort) _inCreation
+        };
     }
     
 
     public void SpawnCharacter(System.Type behaviorType, in Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
+        ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
+        if (null == cd)
+        {
+            /*
+             * I don't know why we would have been called in the first place.
+             */
+            
+            return;
+        }
         
     }
 }
