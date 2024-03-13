@@ -10,7 +10,7 @@ class LeftStickFingerState : AFingerState
     {
         base.HandleMotion(ev);
         var cs = _ic.ControllerState;
-        Vector2 vRel = ev.Position - LastPosition;
+        Vector2 vRel = ev.Position - PressPosition;
         LastPosition = ev.Position;
 
         if (vRel.Y < -_ic.ControllerYTolerance)
