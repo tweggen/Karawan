@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine;
@@ -68,26 +69,36 @@ public class SpawnOperator : ISpawnOperator
         {
             _inCreation++;
         }
-        
-        ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
-        if (null == cd)
+
+        /*
+         * Catch exception to keep the inCreation counter up to date.
+         */
+        try
         {
-            /*
-             * I don't know why we would have been called in the first place.
-             */
-        }
-        else
-        {
-            engine.world.Fragment worldFragment;
-            if (_loader.TryGetFragment(idxFragment, out worldFragment))
+            ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
+            if (null == cd)
             {
-                StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
-                if (chosenStreetPoint != null)
+                /*
+                 * I don't know why we would have been called in the first place.
+                 */
+            }
+            else
+            {
+                engine.world.Fragment worldFragment;
+                if (_loader.TryGetFragment(idxFragment, out worldFragment))
                 {
-                    eCharacter = await GenerateCharacterOperator.GenerateCharacter(
+                    StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
+                    if (chosenStreetPoint != null)
+                    {
+                        eCharacter = await GenerateCharacterOperator.GenerateCharacter(
                             cd, worldFragment, chosenStreetPoint);
+                    }
                 }
             }
+        }
+        catch (Exception e)
+        {
+            Error($"Exception spawning character: {e}");
         }
 
         lock (_lo)

@@ -48,12 +48,10 @@ public class SpawnModule : AModule
         {
             foreach (var kvpOperators in _mapSpawnOperators)
             {
-                var perBehaviorStats = new PerBehaviorStats();
-                behaviorStats.MapPerBehaviorStats[kvpOperators.Key] = perBehaviorStats;
+                var perBehaviorStat = behaviorStats.FindPerBehaviorStats(kvpOperators.Key);
                 foreach (var idxFragment in listPopulatedFragments)
                 {
-                    var perFragmentStats = new PerFragmentStats();
-                    perBehaviorStats.MapPerFragmentStats[idxFragment] = perFragmentStats;
+                    perBehaviorStat.FindPerFragmentStats(idxFragment);
                 }
             }
         }
@@ -96,6 +94,10 @@ public class SpawnModule : AModule
             
                 PerFragmentStats perFragmentStats = kvpFrag.Value;
                 int nCharacters = perFragmentStats.NumberEntities + opStatus.InCreation;
+                if (perFragmentStats.NumberEntities > 0)
+                {
+                    int a = 0;
+                }
                 int needCharacters = opStatus.MinCharacters - nCharacters;
                 if (needCharacters>0)
                 {
