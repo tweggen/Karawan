@@ -49,7 +49,12 @@ internal class WASDPhysics : AModule, IInputPart
          * gravity. Note, that the empty impulse is pre-set with
          * an impulse to accelerate against gravity.
          */
-        Vector3 vTargetPos = _prefTarget.Pose.Position;
+        Vector3 vTargetPos;
+        lock (_engine.Simulation)
+        {
+            vTargetPos = _prefTarget.Pose.Position;
+        }
+    
 
         /*
          * Keep player in bounds.
@@ -69,8 +74,15 @@ internal class WASDPhysics : AModule, IInputPart
         }
 
 
-        Vector3 vTargetVelocity = _prefTarget.Velocity.Linear;
-        Vector3 vTargetAngularVelocity = _prefTarget.Velocity.Angular;
+        Vector3 vTargetVelocity;
+        Vector3 vTargetAngularVelocity;
+
+        lock (_engine.Simulation)
+        {
+            vTargetVelocity = _prefTarget.Velocity.Linear;
+            vTargetAngularVelocity = _prefTarget.Velocity.Angular;     
+        }
+        
         float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
         {
             var properDeltaY = 0;
@@ -263,22 +275,25 @@ internal class WASDPhysics : AModule, IInputPart
             vTotalAngular += -(vTargetAngularVelocity * (avel - MaxAngularVelocity) / avel) / dt;
         }
 
-        /*
-         * Set current velocity.
-         * TXWTODO: (or would that be the previous one?)
-         */
-        _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
-
+        Vector3 vNewTargetVelocity;
+        Quaternion qTargetOrientation;
         lock (_engine.Simulation)
         {
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
+            vNewTargetVelocity = _prefTarget.Velocity.Linear;
+            qTargetOrientation = _prefTarget.Pose.Orientation;
         }
+
+        /*
+         * Set current velocity.
+         */
+        _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
 
         {
             var gameState = I.Get<GameState>();
             gameState.PlayerPosition = vTargetPos;
-            gameState.PlayerOrientation = _prefTarget.Pose.Orientation;
+            gameState.PlayerOrientation = qTargetOrientation;
         }
 
     }
