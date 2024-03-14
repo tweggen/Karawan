@@ -61,51 +61,54 @@ public class SpawnOperator : ISpawnOperator
     }
     
 
-    public async Task<DefaultEcs.Entity> SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
+    public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
-        DefaultEcs.Entity eCharacter = default;
-        
         lock (_lo)
         {
             _inCreation++;
         }
 
-        /*
-         * Catch exception to keep the inCreation counter up to date.
-         */
-        try
+        Task.Run(async () =>
         {
-            ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
-            if (null == cd)
+            DefaultEcs.Entity eCharacter = default;
+
+            /*
+             * Catch exception to keep the inCreation counter up to date.
+             */
+            try
             {
-                /*
-                 * I don't know why we would have been called in the first place.
-                 */
-            }
-            else
-            {
-                engine.world.Fragment worldFragment;
-                if (_loader.TryGetFragment(idxFragment, out worldFragment))
+                ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
+                if (null == cd)
                 {
-                    StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
-                    if (chosenStreetPoint != null)
+                    /*
+                     * I don't know why we would have been called in the first place.
+                     */
+                }
+                else
+                {
+                    engine.world.Fragment worldFragment;
+                    if (_loader.TryGetFragment(idxFragment, out worldFragment))
                     {
-                        eCharacter = await GenerateCharacterOperator.GenerateCharacter(
-                            cd, worldFragment, chosenStreetPoint);
+                        StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
+                        if (chosenStreetPoint != null)
+                        {
+                            eCharacter = await GenerateCharacterOperator.GenerateCharacter(
+                                cd, worldFragment, chosenStreetPoint);
+                        }
                     }
                 }
             }
-        }
-        catch (Exception e)
-        {
-            Error($"Exception spawning character: {e}");
-        }
+            catch (Exception e)
+            {
+                Error($"Exception spawning character: {e}");
+            }
 
-        lock (_lo)
-        {
-            _inCreation--;
-        }
+            lock (_lo)
+            {
+                _inCreation--;
+            }
 
-        return eCharacter;
+            return eCharacter;
+        });
     }
 }

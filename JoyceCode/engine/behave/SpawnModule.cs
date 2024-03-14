@@ -109,7 +109,7 @@ public class SpawnModule : AModule
                          * Note that we are calling an async method synchronously, thereby
                          * having several of them run in the background.
                          */
-                        Task.Run(() => op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats));
+                        op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
                     }
                 }
             }

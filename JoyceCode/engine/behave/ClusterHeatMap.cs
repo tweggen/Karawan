@@ -60,6 +60,11 @@ public class ClusterHeatMap : AHeatMap
                     int fk = idx.K + _sk / 2;
                     
                     /*
+                     * Remember the cluster. Yes, the last cluster wins.
+                     */
+                    _arrayClusters[fi, fk] = cd;
+
+                    /*
                      * Compute fragment coverage if required.
                      */
                     if (idx.I == fragMin.I || idx.I == fragMax.I || idx.K == fragMin.K || idx.K == fragMax.K)
@@ -71,10 +76,6 @@ public class ClusterHeatMap : AHeatMap
                             float lk = (aabbIntersection.BB.Z - aabbIntersection.AA.Z) / world.MetaGen.FragmentSize;
 
                             float oldDensity = _arrayDensity[fi, fk];
-                            if (null == _arrayClusters[fi, fk])
-                            {
-                                _arrayClusters[fi, fk] = cd;
-                            }
                             _arrayDensity[fi, fk] = oldDensity + li * lk;
                         }
                         else
