@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DefaultEcs;
 using engine.behave.components;
+using engine.joyce;
 using engine.joyce.components;
 using engine.world;
 
@@ -26,8 +27,13 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 
             if (null == cBehavior.Provider) continue;
 
+            Index3 idxEntity = Fragment.PosToIndex3(cTransformWorld.Matrix.Translation);
+            if (idxEntity.I == 0 && idxEntity.K == 0 && idxEntity.J == 0)
+            {
+                int a = 1;
+            }
             foo.FindPerBehaviorStats(cBehavior.Provider.GetType())
-                .FindPerFragmentStats(Fragment.PosToIndex3(cTransformWorld.Matrix.Translation))
+                .FindPerFragmentStats(idxEntity)
                 .Add();
         }
     }
