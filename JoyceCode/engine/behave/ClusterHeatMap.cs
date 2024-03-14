@@ -21,6 +21,21 @@ public class ClusterHeatMap : AHeatMap
      */
     protected override float _computeDensity(in Index3 idxFragment)
     {
+        /*
+         * First, clear out the entire array, we are only setting the values for the clusters
+         * later.
+         */
+        for (int i = 0; i < _si; ++i)
+        {
+            for (int k = 0; k < _sk; ++k)
+            {
+                _arrayDensity[i, k] = 0f;
+            }
+        }
+        
+        /*
+         * Now add the clusters to the list.
+         */
         var clusterList = ClusterList.Instance().GetClusterList();
         foreach (var cd in clusterList)
         {
@@ -42,7 +57,7 @@ public class ClusterHeatMap : AHeatMap
                 for (idx.K = fragMin.K; idx.K <= fragMax.K; ++idx.K)
                 {
                     int fi = idx.I + _si / 2;
-                    int fk = idx.I + _sk / 2;
+                    int fk = idx.K + _sk / 2;
                     
                     /*
                      * Compute fragment coverage if required.

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using engine.joyce;
 
 namespace engine.behave;
@@ -21,8 +22,8 @@ public interface ISpawnOperator
      * be rather fast.
      */
     SpawnStatus GetFragmentSpawnStatus(Type behaviorType, in Index3 idxFragment);
-    
-    
+
+
     /**
      * Trigger creation of a new behavior.
      *
@@ -36,5 +37,5 @@ public interface ISpawnOperator
      * @param perFragmentStats
      *    The result of counting the characters.
      */
-    void SpawnCharacter(Type behaviorType, in Index3 idxFragment, PerFragmentStats perFragmentStats);
+    public Task<DefaultEcs.Entity> SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats);
 }

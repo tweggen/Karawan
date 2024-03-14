@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading.Tasks;
 using engine;
 using engine.behave;
 using engine.behave.components;
@@ -98,9 +99,15 @@ public class SpawnModule : AModule
                 int needCharacters = opStatus.MinCharacters - nCharacters;
                 if (needCharacters>0)
                 {
+                    Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} in creation {opStatus.InCreation} min characters {opStatus.MinCharacters}");
+                    
                     for (int i = 0; i < needCharacters; ++i)
                     {
-                        op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
+                        /*
+                         * Note that we are calling an async method synchronously, thereby
+                         * having several of them run in the background.
+                         */
+                        Task.Run(() => op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats));
                     }
                 }
             }

@@ -1,8 +1,9 @@
 using System.Numerics;
-using DefaultEcs;
+using System.Threading.Tasks;
 using engine;
 using engine.behave;
 using engine.joyce;
+using engine.streets;
 using engine.world;
 using static engine.Logger;
 
@@ -59,23 +60,41 @@ public class SpawnOperator : ISpawnOperator
     }
     
 
-    public void SpawnCharacter(System.Type behaviorType, in Index3 idxFragment, PerFragmentStats perFragmentStats)
+    public async Task<DefaultEcs.Entity> SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
+        DefaultEcs.Entity eCharacter = default;
+        
+        lock (_lo)
+        {
+            _inCreation++;
+        }
+        
         ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
         if (null == cd)
         {
             /*
              * I don't know why we would have been called in the first place.
              */
-            
-            return;
+        }
+        else
+        {
+            engine.world.Fragment worldFragment;
+            if (_loader.TryGetFragment(idxFragment, out worldFragment))
+            {
+                StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
+                if (chosenStreetPoint != null)
+                {
+                    eCharacter = await GenerateCharacterOperator.GenerateCharacter(
+                            cd, worldFragment, chosenStreetPoint);
+                }
+            }
         }
 
-        engine.world.Fragment worldFragment;
-        if (_loader.TryGetFragment(idxFragment, out worldFragment))
+        lock (_lo)
         {
-            var chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
-            GenerateCharacterOperator.GenerateCharacter(cd, worldFragment);
+            _inCreation--;
         }
+
+        return eCharacter;
     }
 }

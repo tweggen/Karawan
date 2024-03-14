@@ -159,13 +159,18 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         return chosenStreetPoint;
     }
 
+    
     public static async void GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment)
     {
         
     }
-    
-    public static async void GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint chosenStreetPoint)
+
+
+    public static async Task<DefaultEcs.Entity> GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint chosenStreetPoint)
     {
+        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
+        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
+        
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
 
         {
@@ -275,10 +280,13 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     int a;
                 }
 #endif
+                taskCompletionSource.SetResult(eTarget);
+
             });
             wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
 
         }
+        return taskResult.Result;
     }
 
 

@@ -175,12 +175,12 @@ public struct AABB
          * First test the cases where we don't overlap at all.
          */
         if (false
-            || (AA.X > o.BB.X)
-            || (AA.Y > o.BB.Y)
-            || (AA.Z > o.BB.Z)
-            || (BB.X < o.AA.X)
-            || (BB.Y < o.AA.Y)
-            || (BB.Z < o.AA.Z)
+            || (i.AA.X > o.BB.X)
+            || (i.AA.Y > o.BB.Y)
+            || (i.AA.Z > o.BB.Z)
+            || (i.BB.X < o.AA.X)
+            || (i.BB.Y < o.AA.Y)
+            || (i.BB.Z < o.AA.Z)
             )
         {
             return false;
@@ -189,13 +189,13 @@ public struct AABB
         /*
          * Otherwise, we overlap.
          */
-        if (AA.X > o.AA.X) o.AA.X = AA.X;
-        if (AA.Y > o.AA.Y) o.AA.Y = AA.Y;
-        if (AA.Z > o.AA.Z) o.AA.Z = AA.Z;
+        if (i.AA.X > o.AA.X) o.AA.X = i.AA.X;
+        if (i.AA.Y > o.AA.Y) o.AA.Y = i.AA.Y;
+        if (i.AA.Z > o.AA.Z) o.AA.Z = i.AA.Z;
 
-        if (BB.X < o.BB.X) o.BB.X = BB.X;
-        if (BB.Y < o.BB.Y) o.BB.Y = BB.Y;
-        if (BB.Z < o.BB.Z) o.BB.Z = BB.Z;
+        if (i.BB.X < o.BB.X) o.BB.X = i.BB.X;
+        if (i.BB.Y < o.BB.Y) o.BB.Y = i.BB.Y;
+        if (i.BB.Z < o.BB.Z) o.BB.Z = i.BB.Z;
         
         return true;
     }
