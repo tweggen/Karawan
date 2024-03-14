@@ -9,6 +9,9 @@ public struct Index3
 {
     public int I, J, K;
 
+    public override string ToString() => $"({I}, {J}, {K})";
+    
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Index3(int i0, int j0, int k0)
     {
