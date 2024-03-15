@@ -37,6 +37,10 @@ public class BoxLayout : ALayout
         var items = _immutableItems();
         if (null == items) return;
         
+        /*
+         * First figure out the proper attribute names
+         */
+        
         string strOrthoExtent;
         string strAxisExtent;
         string strAxisPos; 
@@ -55,17 +59,36 @@ public class BoxLayout : ALayout
             strOrthoPos = "x";
             strAxisPos = "y";
         }
-        
+
+        float maxExtent;
         /*
-         * First collect the extent in the non-axis direction,
-         * i.e. width on a vbox.
+         * Then look, how to layout. If we, i.e. the layout owner, has a width/height
+         * (ortho extent)
          */
-        float maxExtent = 0f;
-        foreach (var item in items)
+        if (Parent.HasAttr(strOrthoExtent))
         {
-            maxExtent = Single.Max(maxExtent, item.Widget.GetAttr(strOrthoExtent, 0f));
+            /*
+             * The parent has a specified width, so just apply that to the children.
+             */
+            maxExtent = Parent.GetAttr(strOrthoExtent, 200f);
         }
-        
+        else
+        {
+            /*
+             * The parent has no specified width, so collect the chilren's sizes.
+             */
+
+            /*
+             * First collect the extent in the non-axis direction,
+             * i.e. width on a vbox.
+             */
+            maxExtent = 0f;
+            foreach (var item in items)
+            {
+                maxExtent = Single.Max(maxExtent, item.Widget.GetAttr(strOrthoExtent, 0f));
+            }
+        }
+
         /*
          * The position in the axis to layout, e.g. Y in a vbox.
          */

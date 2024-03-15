@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Net.Http;
 using System.Numerics;
+using engine.geom;
+using engine.joyce;
 using engine.streets;
 using static engine.Logger;
 
@@ -190,6 +195,76 @@ public class ClusterDesc
             }
         }
         return minQuarter;
+    }
+
+    private Dictionary<Index3, ImmutableList<StreetPoint>> _mapFragmentPoints = null;
+
+    /**
+     * Return this cluster's streetpoints that are inside the fragment.
+     */
+    public IImmutableList<StreetPoint> GetStreetPointsInFragment(Index3 idxFragment)
+    {
+        lock (_lo)
+        {
+            /*
+             * If we do not know the street points per fragment, compute it now.
+             */
+            if (_mapFragmentPoints == null)
+            {
+                _triggerStreets_nl();
+                _mapFragmentPoints = new();
+
+                int _si = (int)(world.MetaGen.MaxWidth / world.MetaGen.FragmentSize);
+                int _sk = (int)(world.MetaGen.MaxHeight / world.MetaGen.FragmentSize);
+
+
+                AABB aabbCluster = AABB;
+                Index3 fragMin = new(
+                    int.Clamp((int)(aabbCluster.AA.X / world.MetaGen.FragmentSize), -_si, _si),
+                    0,
+                    int.Clamp((int)(aabbCluster.AA.Z / world.MetaGen.FragmentSize), -_sk, _sk)
+                );
+                Index3 fragMax = new(
+                    int.Clamp((int)((aabbCluster.BB.X + world.MetaGen.FragmentSize - 1f) / world.MetaGen.FragmentSize),
+                        -_si, _si),
+                    0,
+                    int.Clamp((int)((aabbCluster.BB.Z + world.MetaGen.FragmentSize - 1f) / world.MetaGen.FragmentSize),
+                        -_sk, _sk)
+                );
+
+                Dictionary<Index3, List<StreetPoint>> mapListSP = new();
+
+                foreach (var sp in _strokeStore.GetStreetPoints())
+                {
+                    Index3 idxSP = new(sp.Pos3 + Pos);
+                    List<StreetPoint> spList;
+                    if (!mapListSP.TryGetValue(idxSP, out spList))
+                    {
+                        spList = new List<StreetPoint>();
+                        mapListSP[idxSP] = spList;
+                    }
+
+                    spList.Add(sp);
+                }
+
+                foreach (var kvp in mapListSP)
+                {
+                    _mapFragmentPoints[kvp.Key] = kvp.Value.ToImmutableList();
+                }
+            }
+
+            /*
+             * After we computed it, either return a list of fragments or an empty list.
+             */
+            if (_mapFragmentPoints.TryGetValue(idxFragment, out var listPoints))
+            {
+                return listPoints;
+            }
+            else
+            {
+                return ImmutableList<StreetPoint>.Empty;
+            }
+        }
     }
 
 
@@ -387,6 +462,29 @@ public class ClusterDesc
     }
 
 
+    private void _triggerStreets_nl()
+    {
+        if (null == _strokeStore)
+        {
+            /*
+             * First, generate the actual streets.
+             */
+            _strokeStore = new streets.StrokeStore(Size);
+            _quarterStore = new streets.QuarterStore();
+
+            _findStrokes();
+
+            _processStrokes();
+            _findQuarters();
+                
+            Trace(
+                $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
+            );
+
+        }
+    }
+    
+
     /**
      * Load or compute the streets of this city.
      */
@@ -394,24 +492,7 @@ public class ClusterDesc
     {
         lock (_lo)
         {
-            if (null == _strokeStore)
-            {
-                /*
-                 * First, generate the actual streets.
-                 */
-                _strokeStore = new streets.StrokeStore(Size);
-                _quarterStore = new streets.QuarterStore();
-
-                _findStrokes();
-
-                _processStrokes();
-                _findQuarters();
-                
-                Trace(
-                    $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
-                );
-
-            }
+            _triggerStreets_nl();
         }
     }
 

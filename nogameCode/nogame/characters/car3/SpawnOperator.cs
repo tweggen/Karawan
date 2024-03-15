@@ -52,18 +52,41 @@ public class SpawnOperator : ISpawnOperator
          * Read the probability for this fragment from the cluster heat map,
          * return an appropriate spawnStatus.
          */
-        float density = _clusterHeatMap.GetDensity(idxFragment);
+        // float density = _clusterHeatMap.GetDensity(idxFragment);
         
-        /*_
-         * Note that it is technically wrong to return the number of characters in creation
-         * in total. However, this only would prevent more characters compared to the offset.
-         */
-        spawnStatus = new()
+        var cd = _clusterHeatMap.GetClusterDesc(idxFragment);
+        if (null == cd)
         {
-            MinCharacters = (ushort)(10f * density),
-            MaxCharacters = (ushort)(15f * density),
-            InCreation = (ushort) 0
-        };
+            spawnStatus = new()
+            {
+                MinCharacters = 0,
+                MaxCharacters = 0,
+                InCreation = 0
+            };
+        }
+        else
+        {
+
+            /*
+             * Now, before being able to estimate the number of cars, let's see
+             * how many different possible spawning points we have.
+             */
+            var ilistSPs = cd.GetStreetPointsInFragment(idxFragment);
+
+            // TXWTODO: Filter, so that we have meaningful spawning points.
+            float nMaxSpawns = ilistSPs.Count;
+
+            /*_
+             * Note that it is technically wrong to return the number of characters in creation
+             * in total. However, this only would prevent more characters compared to the offset.
+             */
+            spawnStatus = new()
+            {
+                MinCharacters = (ushort)(0.3f * nMaxSpawns),
+                MaxCharacters = (ushort)(0.5f * nMaxSpawns),
+                InCreation = (ushort)0
+            };
+        }
 
         _mapFragmentStatus[idxFragment] = spawnStatus;
     }
