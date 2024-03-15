@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using System.Security.Cryptography;
 using System.Text;
 using BepuPhysics;
@@ -28,6 +29,7 @@ public class FollowCameraController : IInputPart
     private Vector3 _vPreviousCameraOffset;
     private Quaternion _qLastPerfectCameraRotation;
     private Vector2 _vMouseOffset;
+    private Vector2 _vStickOffset;
     float _lastMouseMove = 0f;
     private bool _firstFrame = true;
     private bool _isInputEnabled = true;
@@ -46,6 +48,9 @@ public class FollowCameraController : IInputPart
     public float FOLLOW_AFTER_MOVING_FOR { get; set; } = 0.4f;
     public float ADJUST_AFTER_STOPPING_FOR { get; set; } = 0.5f;
     public float CONSIDER_ORIENTATION_WHILE_DRIVING { get; set; } = 0.9f;
+
+    public float STICK_VERTICAL_SENSITIVITY { get; set; } = 80f;
+    public float STICK_HORIZONTAL_SENSITIVITY { get; set; } = 80f;
 
     public float YAngleDefault { get; set; } = 2f;
     
@@ -623,8 +628,8 @@ public class FollowCameraController : IInputPart
             return;
         }
         
-        _mouseAngles.X = (_vMouseOffset.Y + YAngleDefault) * (float)Math.PI / 180f;
-        _mouseAngles.Y = -(_vMouseOffset.X) * (float)Math.PI / 180f;
+        _mouseAngles.X = (_vStickOffset.Y*STICK_VERTICAL_SENSITIVITY + _vMouseOffset.Y + YAngleDefault) * (float)Math.PI / 180f;
+        _mouseAngles.Y = -(_vStickOffset.X*STICK_HORIZONTAL_SENSITIVITY + _vMouseOffset.X) * (float)Math.PI / 180f;
 
 
         var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
@@ -683,6 +688,7 @@ public class FollowCameraController : IInputPart
         if (_isInputEnabled)
         {
             engine.I.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
+            engine.I.Get<builtin.controllers.InputController>().GetStickOffset(out _vStickOffset);
         }
         else
         {

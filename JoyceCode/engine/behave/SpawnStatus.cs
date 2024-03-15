@@ -20,7 +20,10 @@ public struct SpawnStatus
     public ushort InCreation;
  
 
-    public ushort _reserved;
+    /**
+     * The number of deads that won't be recreated
+     */
+    public ushort Dead;
 
 
     public bool IsValid()

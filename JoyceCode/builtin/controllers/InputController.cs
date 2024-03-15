@@ -20,6 +20,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     private Vector2 _vViewSize = Vector2.Zero;
     public Vector2 VMouseMove = Vector2.Zero;
+    private Vector2 _vStickOffset = Vector2.Zero;
     private Vector2 _mousePressPosition = Vector2.Zero;
     private Vector2 _currentMousePosition = Vector2.Zero;
     private bool _isMouseButtonClicked = false;
@@ -460,6 +461,27 @@ public class InputController : engine.AModule, engine.IInputPart
             _desktopMouseController();
         }
     }
+
+
+    private float _stickTransfer(float X)
+    {
+        return Single.Sign(X) * Single.Abs(X * X * X * X);
+    }
+
+
+    private Vector2 _stickTransfer(Vector2 v)
+    {
+        return new Vector2(_stickTransfer(v.X), _stickTransfer(v.Y));
+    }
+
+
+    public void GetStickOffset(out Vector2 vStickOffset)
+    {
+        lock (_lo)
+        {
+            vStickOffset = _vStickOffset;
+        }
+    }
     
 
     public void GetMouseMove(out Vector2 vMouseMove)
@@ -565,6 +587,82 @@ public class InputController : engine.AModule, engine.IInputPart
             fingerState.HandleMotion(ev);
         }
     }
+
+
+    public void _onStickMoved(Event ev)
+    {
+        Vector2 pos = _stickTransfer(ev.Position);
+        switch (ev.Data1)
+        {
+            case 0:
+                /*
+                 * This is left-right for driving.
+                 */
+                lock (_lo)
+                {
+                    if (ev.Position.X > 0)
+                    {
+                        _controllerState.AnalogRight = (int)(pos.X * 255f);
+                        _controllerState.AnalogLeft = 0;
+                    }
+                    else
+                    {
+                        _controllerState.AnalogRight = 0;
+                        _controllerState.AnalogLeft = -(int)(pos.X * 255f);
+                    }
+
+                    _controllerState.AnalogToWalkControllerNoLock();
+                }
+
+                break;
+            
+            case 1:
+                /*
+                 * This is for viewing
+                 */
+                lock (_lo)
+                {
+                    _vStickOffset = pos;
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+    
+    
+    public void _onTriggerMoved(Event ev)
+    {
+        switch (ev.Data1)
+        {
+            case 0:
+                /*
+                 * This is braking
+                 */
+                lock (_lo)
+                {
+                    _controllerState.AnalogBackward = (int)(255f * (ev.Position.X+1f)/2f);
+                    _controllerState.AnalogToWalkControllerNoLock();
+                }
+
+                break;
+            
+            case 1:
+                /*
+                 * This is for accelerating
+                 */
+                lock (_lo)
+                {
+                    _controllerState.AnalogForward = (int)(255f * (ev.Position.X+1f)/2f);
+                    _controllerState.AnalogToWalkControllerNoLock();
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
     
     
     public void InputPartOnInputEvent(Event ev)
@@ -578,9 +676,13 @@ public class InputController : engine.AModule, engine.IInputPart
 
         if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _onKeyUp(ev);
+
         if (ev.Type.StartsWith(Event.INPUT_FINGER_PRESSED)) _onFingerPressed(ev);
         if (ev.Type.StartsWith(Event.INPUT_FINGER_RELEASED)) _onFingerReleased(ev);
         if (ev.Type.StartsWith(Event.INPUT_FINGER_MOVED)) _onFingerMotion(ev);
+        
+        if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_STICK_MOVED)) _onStickMoved(ev);
+        if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_TRIGGER_MOVED)) _onTriggerMoved(ev);
     }
 
     
