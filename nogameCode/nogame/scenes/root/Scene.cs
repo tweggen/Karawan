@@ -138,28 +138,49 @@ public class Scene : AModule, IScene, IInputPart
 
     public void InputPartOnInputEvent(Event ev)
     {
-        if (ev.Type != Event.INPUT_KEY_PRESSED)
+        switch (ev.Type)
         {
-            return;
-        }
+            case Event.INPUT_KEY_PRESSED:
+                switch (ev.Code)
+                {
+                    case "(tab)":
+                        ev.IsHandled = true;
+                        _toggleMap(ev);
+                        break;
+                    case "(F12)":
+                        ev.IsHandled = true;
+                        _toggleDebugger();
+                        break;
+                    case "(F8)":
+                        ev.IsHandled = true;
+                        _toggleStats();
+                        break;
+                    case "(escape)":
+                        ev.IsHandled = true;
+                        _triggerPauseMenu();
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            
+            case Event.INPUT_GAMEPAD_BUTTON_PRESSED:
+                switch (ev.Code)
+                {
+                    case "Start":
+                        ev.IsHandled = true;
+                        _triggerPauseMenu();
+                        break;
+                    case "Back":
+                        ev.IsHandled = true;
+                        _toggleMap(ev);
+                        break;
+                    default:
+                        break;
+                }
 
-        switch (ev.Code)
-        {
-            case "(tab)":
-                ev.IsHandled = true;
-                _toggleMap(ev);
                 break;
-            case "(F12)":
-                ev.IsHandled = true;
-                _toggleDebugger();
-                break;
-            case "(F8)":
-                ev.IsHandled = true;
-                _toggleStats();
-                break;
-            case "(escape)":
-                _triggerPauseMenu();
-                break;
+            
             default:
                 break;
         }

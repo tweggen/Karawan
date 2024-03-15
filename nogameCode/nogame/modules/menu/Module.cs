@@ -18,21 +18,34 @@ public class Module : AModule, IInputPart
 
     public void InputPartOnInputEvent(Event ev)
     {
+        bool doDeactivate = false;
         switch (ev.Type)
         {
             case Event.INPUT_KEY_PRESSED:
                 switch (ev.Code)
                 {
                     case "(escape)":
-                        ev.IsHandled = true;
-                        ModuleDeactivate();
-                        break;
-                    default:
+                        doDeactivate = true;
                         break;
                 }
                 break;
-            default:
+            
+            case Event.INPUT_GAMEPAD_BUTTON_PRESSED:
+                switch (ev.Code)
+                {
+                    case "Back":
+                        doDeactivate = true;
+                        break;
+                }
+
                 break;
+        }
+
+
+        if (doDeactivate)
+        {
+            ev.IsHandled = true;
+            ModuleDeactivate();
         }
 
         if (!ev.IsHandled)
