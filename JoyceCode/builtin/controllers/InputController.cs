@@ -642,13 +642,60 @@ public class InputController : engine.AModule, engine.IInputPart
             
             case 1:
                 /*
-                 * This is for viewing
+                 * This is for viewing or zooming
                  */
                 lock (_lo)
                 {
-                    _vStickOffset = pos;
+                    if (_isGamepadRightStickPressed)
+                    {
+                        float zoomWay = pos.Y;
+                        I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
+                        {
+                            Position = new Vector2(0f, zoomWay)
+                        });
+                    }
+                    else
+                    {
+                        /*
+                         * Viewing.
+                         */
+                        _vStickOffset = pos;
+                    }
+
                 }
 
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    private bool _isGamepadRightStickPressed = false;
+    
+    public void _onGamepadButtonPressed(Event ev)
+    {
+        //Trace($"Button {ev.Code} pressed");
+
+        switch (ev.Code)
+        {
+            case "RightStick":
+                _isGamepadRightStickPressed = true;
+                break;
+            default:
+                break;
+        }
+    }
+    
+
+    public void _onGamepadButtonReleased(Event ev)
+    {
+        Trace($"Button {ev.Code} released");
+        
+        switch (ev.Code)
+        {
+            case "RightStick":
+                _isGamepadRightStickPressed = false;
                 break;
             default:
                 break;
@@ -707,6 +754,9 @@ public class InputController : engine.AModule, engine.IInputPart
         
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_STICK_MOVED)) _onStickMoved(ev);
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_TRIGGER_MOVED)) _onTriggerMoved(ev);
+        if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_BUTTON_PRESSED)) _onGamepadButtonPressed(ev);
+        if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_BUTTON_RELEASED)) _onGamepadButtonReleased(ev);
+        
     }
 
     

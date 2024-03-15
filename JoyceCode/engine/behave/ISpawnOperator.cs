@@ -23,7 +23,12 @@ public interface ISpawnOperator
      */
     SpawnStatus GetFragmentSpawnStatus(Type behaviorType, in Index3 idxFragment);
 
-
+    /**
+     * Purge all cached information about the given fragment.
+     * This is called when a fragment is unloaded.
+     */
+    public void PurgeFragment(in Index3 idxFragment);
+    
     /**
      * Trigger creation of a new behavior.
      *

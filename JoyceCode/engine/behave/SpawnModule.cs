@@ -7,6 +7,7 @@ using engine.behave;
 using engine.behave.components;
 using engine.behave.systems;
 using engine.geom;
+using engine.joyce;
 using engine.world;
 using static engine.Logger;
 
@@ -138,6 +139,24 @@ public class SpawnModule : AModule
             }
 
             _mapSpawnOperators[behaviorType] = op;
+        }
+    }
+
+
+    /**
+     * Purge all information for a given fragment once the fragment is unloaded.
+     */
+    public void PurgeFragment(Index3 idxFragment)
+    {
+        IImmutableList<ISpawnOperator> ops;
+        lock (_lo)
+        {
+            ops = _mapSpawnOperators.Values.ToImmutableList();
+        }
+
+        foreach (var op in ops)
+        {
+            op.PurgeFragment(idxFragment);
         }
     }
     
