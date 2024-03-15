@@ -279,9 +279,7 @@ public class Scene : AModule, IScene, IInputPart
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
-        M<SpawnModule>().AddSpawnOperator(
-            typeof(nogame.characters.car3.SpawnOperator), 
-            new nogame.characters.car3.SpawnOperator());
+        M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         
         _engine.AddModule(this);
         M<modules.map.Module>().ModuleActivate();

@@ -54,8 +54,8 @@ public class SpawnOperator : ISpawnOperator
          */
         return new SpawnStatus()
         {
-            MinCharacters = (ushort)(20f * density),
-            MaxCharacters = (ushort)(5f * density),
+            MinCharacters = (ushort)(10f * density),
+            MaxCharacters = (ushort)(15f * density),
             InCreation = (ushort) _inCreation
         };
     }
@@ -94,6 +94,9 @@ public class SpawnOperator : ISpawnOperator
                         {
                             eCharacter = await GenerateCharacterOperator.GenerateCharacter(
                                 cd, worldFragment, chosenStreetPoint);
+                        }
+                        else
+                        {
                         }
                     }
                 }

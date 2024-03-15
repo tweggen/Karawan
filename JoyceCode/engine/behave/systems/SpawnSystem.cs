@@ -33,7 +33,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
             if (idxEntity.I == 0 && idxEntity.K == 0 && idxEntity.J == 0)
             {
                 int a = 1;
-                Trace($"fragment 0, pos = {cTransformWorld.Matrix.Translation}");
+                // Trace($"fragment 0, pos = {cTransformWorld.Matrix.Translation}");
             }
             foo.FindPerBehaviorStats(cBehavior.Provider.GetType())
                 .FindPerFragmentStats(idxEntity)
