@@ -11,6 +11,7 @@ class LeftStickFingerState : AFingerState
         base.HandleMotion(ev);
         var cs = _ic.ControllerState;
         Vector2 vRel = ev.Position - PressPosition;
+        vRel = _ic.TouchSteerTransfer(vRel);
         LastPosition = ev.Position;
 
         if (vRel.Y < -_ic.ControllerYTolerance)

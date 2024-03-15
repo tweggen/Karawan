@@ -463,15 +463,39 @@ public class InputController : engine.AModule, engine.IInputPart
     }
 
 
-    private float _stickTransfer(float X)
+    public float TouchSteerTransfer(float X)
+    {
+        return Single.Sign(X) * Single.Abs(X * X * X * X);
+    }
+    
+
+    public Vector2 TouchSteerTransfer(Vector2 v)
+    {
+        return new Vector2(TouchSteerTransfer(v.X), TouchSteerTransfer(v.Y));
+    }
+
+
+    public float TouchViewTransfer(float X)
+    {
+        return Single.Sign(X) * Single.Abs(X * X);
+    }
+    
+
+    public Vector2 TouchViewTransfer(Vector2 v)
+    {
+        return new Vector2(TouchViewTransfer(v.X), TouchViewTransfer(v.Y));
+    }
+
+
+    public float StickTransfer(float X)
     {
         return Single.Sign(X) * Single.Abs(X * X * X * X);
     }
 
 
-    private Vector2 _stickTransfer(Vector2 v)
+    public Vector2 StickTransfer(Vector2 v)
     {
-        return new Vector2(_stickTransfer(v.X), _stickTransfer(v.Y));
+        return new Vector2(StickTransfer(v.X), StickTransfer(v.Y));
     }
 
 
@@ -591,7 +615,7 @@ public class InputController : engine.AModule, engine.IInputPart
 
     public void _onStickMoved(Event ev)
     {
-        Vector2 pos = _stickTransfer(ev.Position);
+        Vector2 pos = StickTransfer(ev.Position);
         switch (ev.Data1)
         {
             case 0:

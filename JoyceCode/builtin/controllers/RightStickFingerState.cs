@@ -10,6 +10,7 @@ class RightStickFingerState : AFingerState
     {
         base.HandleMotion(ev);
         Vector2 vRel = ev.Position - LastPosition;
+        vRel = _ic.TouchSteerTransfer(vRel);
         LastPosition = ev.Position;
 
         _ic.VMouseMove += vRel * 900f * _ic.TouchLookMoveSensitivity;    
