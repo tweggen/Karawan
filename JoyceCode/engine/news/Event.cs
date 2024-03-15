@@ -15,6 +15,10 @@ public class Event
     public const string INPUT_MOUSE_RELEASED = "input.mouse.released";
     public const string INPUT_MOUSE_MOVED = "input.mouse.moved";
     public const string INPUT_MOUSE_WHEEL = "input.mouse.wheel";
+    public const string INPUT_GAMEPAD_TRIGGER_MOVED = "input.gamepad.trigger.moved";
+    public const string INPUT_GAMEPAD_STICK_MOVED = "input.gamepad.stick.moved";
+    public const string INPUT_GAMEPAD_BUTTON_PRESSED = "input.gamepad.button.pressed";
+    public const string INPUT_GAMEPAD_BUTTON_RELEASED = "input.gamepad.button.released";
 
     public const string VIEW_SIZE_CHANGED = "view.size.changed";
     public const string MAP_RANGE_EVENT = "map.range";

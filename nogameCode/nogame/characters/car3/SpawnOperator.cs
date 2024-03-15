@@ -1,6 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using System.Threading.Tasks;
+using engine;
 using engine.behave;
 using engine.joyce;
-using FbxSharp;
+using engine.streets;
+using engine.world;
+using static engine.Logger;
 
 namespace nogame.characters.car3;
 
@@ -11,9 +18,9 @@ namespace nogame.characters.car3;
 public class SpawnOperator : ISpawnOperator
 {
     private object _lo = new();
-    private SpawnStatus _spawnStatus = new();
-    private engine.geom.AABB _aabb = new();
-    
+    private engine.geom.AABB _aabb = new(Vector3.Zero, engine.world.MetaGen.MaxWidth);
+    private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
+    private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
     
     public engine.geom.AABB AABB
     {
@@ -33,14 +40,110 @@ public class SpawnOperator : ISpawnOperator
     }
 
 
+    private Dictionary<Index3, SpawnStatus> _mapFragmentStatus = new();
+
+    private void _findSpawnStatus_nl(in Index3 idxFragment, out SpawnStatus spawnStatus)
+    {
+        if (_mapFragmentStatus.TryGetValue(idxFragment, out spawnStatus))
+        {
+            return;
+        }
+        /*
+         * Read the probability for this fragment from the cluster heat map,
+         * return an appropriate spawnStatus.
+         */
+        float density = _clusterHeatMap.GetDensity(idxFragment);
+        
+        /*_
+         * Note that it is technically wrong to return the number of characters in creation
+         * in total. However, this only would prevent more characters compared to the offset.
+         */
+        spawnStatus = new()
+        {
+            MinCharacters = (ushort)(10f * density),
+            MaxCharacters = (ushort)(15f * density),
+            InCreation = (ushort) 0
+        };
+
+        _mapFragmentStatus[idxFragment] = spawnStatus;
+    }
+
+
     public SpawnStatus GetFragmentSpawnStatus(System.Type behaviorType, in Index3 idxFragment)
     {
-        return _spawnStatus;
+        SpawnStatus spawnStatus;
+        lock (_lo)
+        {
+            _findSpawnStatus_nl(idxFragment, out spawnStatus);
+        }
+        return spawnStatus;
     }
     
 
-    public void SpawnCharacter(System.Type behaviorType, in Index3 idxFragment, PerFragmentStats perFragmentStats)
+    public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
-        
+        lock (_lo)
+        {
+            _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+            spawnStatus.InCreation++;
+            _mapFragmentStatus[idxFragment] = spawnStatus;
+        }
+
+        Task.Run(async () =>
+        {
+            DefaultEcs.Entity eCharacter = default;
+
+            /*
+             * Catch exception to keep the inCreation counter up to date.
+             */
+            try
+            {
+                ClusterDesc cd = _clusterHeatMap.GetClusterDesc(idxFragment);
+                if (null == cd)
+                {
+                    /*
+                     * I don't know why we would have been called in the first place.
+                     */
+                }
+                else
+                {
+                    engine.world.Fragment worldFragment;
+                    if (_loader.TryGetFragment(idxFragment, out worldFragment))
+                    {
+                        StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
+                        if (chosenStreetPoint != null)
+                        {
+                            eCharacter = await GenerateCharacterOperator.GenerateCharacter(
+                                cd, worldFragment, chosenStreetPoint);
+                        }
+                        else
+                        {
+                            lock (_lo)
+                            {
+                                /*
+                                 * Act as if the thing still is in creation.
+                                 */
+                                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+                                spawnStatus.InCreation++;
+                                _mapFragmentStatus[idxFragment] = spawnStatus;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Error($"Exception spawning character: {e}");
+            }
+
+            lock (_lo)
+            {
+                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+                spawnStatus.InCreation--;
+                _mapFragmentStatus[idxFragment] = spawnStatus;
+            }
+
+            return eCharacter;
+        });
     }
 }

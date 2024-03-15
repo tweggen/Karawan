@@ -29,7 +29,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     private static object _classLock = new();
 
     private static engine.audio.Sound[] _jCar3Sound;
-    private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
+    private static ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
 
     private static List<string> _primarycolors = new List<string>()
     {
@@ -72,10 +72,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
     
     private ClusterDesc _clusterDesc;
-    private builtin.tools.RandomSource _rnd;
+    private static builtin.tools.RandomSource _rnd = new builtin.tools.RandomSource("asd");
     private string _myKey;
 
-    private bool _trace = false;
+    private static bool _trace = false;
 
     private int _characterIndex = 0;
 
@@ -91,19 +91,19 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
 
 
-    private string _carFileName(int carIdx)
+    private static string _carFileName(int carIdx)
     {
         return $"car{5 + carIdx}.obj";
     }
 
 
 
-    private StreetPoint? _chooseStreetPoint(Fragment worldFragment)
+    public static StreetPoint? ChooseStreetPoint(ClusterDesc clusterDesc, Fragment worldFragment)
     {
         /*
          * Load all prerequisites
          */
-        var strokeStore = _clusterDesc.StrokeStore();
+        var strokeStore = clusterDesc.StrokeStore();
         IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
         if (streetPoints.Count == 0)
         {
@@ -111,22 +111,41 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return null;
         }
         int l = streetPoints.Count;
-        
-        /*
-         * Now actually select the starting point.
-         */
-        var idxPoint = (int)(_rnd.GetFloat() * l);
-        var idx = 0;
-        StreetPoint chosenStreetPoint = null;
-        foreach (var sp in streetPoints)
-        {
-            if (idx == idxPoint)
-            {
-                chosenStreetPoint = sp;
-                break;
-            }
 
-            idx++;
+        int nTries = 0;
+        StreetPoint chosenStreetPoint = null;
+
+        while (chosenStreetPoint == null && nTries++ < 10)
+        {
+            /*
+             * Now actually select the starting point.
+             */
+            var idxPoint = (int)(_rnd.GetFloat() * l);
+            var idx = 0;
+            foreach (var sp in streetPoints)
+            {
+                if (idx >= idxPoint)
+                {
+                    float px = sp.Pos.X + clusterDesc.Pos.X;
+                    float pz = sp.Pos.Y + clusterDesc.Pos.Z;
+                    if (worldFragment.IsInside(new Vector2(px, pz)))
+                    {
+                        if (sp.HasStrokes())
+                        {
+                            chosenStreetPoint = sp;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        
+                        if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
+                    }
+
+                }
+
+                idx++;
+            }
         }
 
         if (null==chosenStreetPoint)
@@ -135,34 +154,26 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return null;
         }
 
-        if (!chosenStreetPoint.HasStrokes())
-        {
-            if (_trace) Trace($"The chosen street point does not have strokes at all.");
-            return null;
-        }
-        
         /*
          * Check, wether the given street point really is inside our fragment.
          * That way, every fragment owns only the characters spawn on their
          * territory.
          */
-        {
-            float px = chosenStreetPoint.Pos.X + _clusterDesc.Pos.X;
-            float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
-            if (!worldFragment.IsInside(new Vector2(px, pz)))
-            {
-                if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
-                return null;
-            }
-        }
-
         return chosenStreetPoint;
     }
 
     
-    
-    public async void GenerateCharacter(Fragment worldFragment, StreetPoint chosenStreetPoint)
+    public static async void GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment)
     {
+        
+    }
+
+
+    public static async Task<DefaultEcs.Entity> GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint chosenStreetPoint)
+    {
+        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
+        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
+        
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
 
         {
@@ -230,7 +241,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 #endif
 
                 eTarget.Set(new engine.behave.components.Behavior(
-                    new car3.Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
+                    new car3.Behavior(wf.Engine, clusterDesc, chosenStreetPoint)
                     {
                         Speed = (30f + _rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
                     })
@@ -272,10 +283,13 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                     int a;
                 }
 #endif
+                taskCompletionSource.SetResult(eTarget);
+
             });
             wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
 
         }
+        return taskResult.Result;
     }
 
 
@@ -334,14 +348,14 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
         for (int i = 0; i < nCharacters; i++)
         {   
-            StreetPoint? chosenStreetPoint = _chooseStreetPoint(worldFragment);
+            StreetPoint? chosenStreetPoint = ChooseStreetPoint(_clusterDesc, worldFragment);
 
             if (null != chosenStreetPoint)
             {
                 if (_trace) Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
                 ++_characterIndex;
-                GenerateCharacter(worldFragment, chosenStreetPoint);
+                GenerateCharacter(_clusterDesc, worldFragment, chosenStreetPoint);
             }
             else
             {
@@ -356,7 +370,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new builtin.tools.RandomSource(strKey);
     }
     
     

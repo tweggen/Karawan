@@ -291,7 +291,8 @@ public class Platform : engine.IPlatform
             new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
             {
                 Position = pos,
-                Size = size
+                Size = size,
+                Data1 = (uint) mouseButton
             });
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_TOUCH_PRESSED, "")
@@ -310,13 +311,56 @@ public class Platform : engine.IPlatform
             new Event(Event.INPUT_MOUSE_RELEASED, $"{(int)mouseButton}")
             {
                 Position = pos,
-                Size = size
+                Size = size,
+                Data1 = (uint) mouseButton
             });
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_TOUCH_RELEASED, "")
             {
                 Position = pos,
                 Size = size
+            });
+    }
+
+
+    private void _onGamepadThumbstickMoved(IGamepad gamepad, Thumbstick thumbstick)
+    {
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_GAMEPAD_STICK_MOVED, "")
+            {
+                Position = new(thumbstick.X, thumbstick.Y),
+                Data1 = (uint) thumbstick.Index
+            });
+    }
+
+
+    private void _onGamepadTriggerMoved(IGamepad gamepad, Trigger trigger)
+    {
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_GAMEPAD_TRIGGER_MOVED, "")
+            {
+                Position = new(trigger.Position, 0f),
+                Data1 = (uint) trigger.Index
+            });
+    }
+
+
+    private void _onGamepadButtonDown(IGamepad gamepad, Button button)
+    {
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, "")
+            {
+                Data1 = (uint) button.Index
+            });
+    }
+
+
+    private void _onGamepadButtonUp(IGamepad gamepad, Button button)
+    {
+        I.Get<EventQueue>().Push(
+            new Event(Event.INPUT_GAMEPAD_BUTTON_RELEASED, "")
+            {
+                Data1 = (uint) button.Index
             });
     }
 
@@ -375,6 +419,14 @@ public class Platform : engine.IPlatform
             _iInputContext.Keyboards[i].KeyUp += _onKeyUp;
         }
 
+        if (_iInputContext.Gamepads.Count > 0)
+        {
+            _iInputContext.Gamepads[0].ButtonDown += _onGamepadButtonDown;
+            _iInputContext.Gamepads[0].ButtonUp += _onGamepadButtonUp;
+            _iInputContext.Gamepads[0].ThumbstickMoved += _onGamepadThumbstickMoved;
+            _iInputContext.Gamepads[0].TriggerMoved += _onGamepadTriggerMoved;
+        }
+        
         int maxMice;
         bool useRawMouse;
         if (GlobalSettings.Get("Android") == "true")

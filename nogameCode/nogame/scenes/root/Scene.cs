@@ -55,8 +55,6 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<engine.news.ClickModule>(),
     };
 
-    private SpawnSystem? _spawnSystem = new();
-
     private bool _isMapShown = false;
 
     private bool _areStatsShown =
@@ -281,7 +279,7 @@ public class Scene : AModule, IScene, IInputPart
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
-        // M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
+        M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         
         _engine.AddModule(this);
         M<modules.map.Module>().ModuleActivate();

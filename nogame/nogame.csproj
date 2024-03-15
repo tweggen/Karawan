@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ink.Engine.Runtime-Unofficial" Version="1.0.0-nightly-21091501" />
+    <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
   </ItemGroup>
 
 

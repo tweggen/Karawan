@@ -1,6 +1,8 @@
 using engine.behave;
 using engine.joyce;
 using engine.joyce.components;
+using FbxSharp;
+using static engine.Logger;
 
 namespace engine.behave;
 
@@ -17,6 +19,7 @@ public class PerFragmentStats
     // List of positions?
     public void Add()
     {
+        // Trace($"Incrementing from {NumberEntities}");
         ++NumberEntities;
     }
 }

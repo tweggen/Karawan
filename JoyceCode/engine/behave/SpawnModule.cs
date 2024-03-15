@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading.Tasks;
 using engine;
 using engine.behave;
 using engine.behave.components;
@@ -19,13 +20,14 @@ namespace engine.behave;
 public class SpawnModule : AModule
 {
     private SpawnSystem _spawnSystem = new();
+    private MetaGen _metaGen = I.Get<world.MetaGen>();
 
     private Queue<Action> _queueSpawnActions = new();
 
     /**
      * Map of the actual spawn operators.
      */
-    private SortedDictionary<Type, ISpawnOperator> _mapSpawnOperators = new();
+    private Dictionary<Type, ISpawnOperator> _mapSpawnOperators = new();
 
     private Loader _loader;
 
@@ -33,10 +35,30 @@ public class SpawnModule : AModule
     private void _onLogicalFrame(object? sender, float dt)
     {
         BehaviorStats behaviorStats = new();
+
+        /*
+         * This is the list of modules we need to fill with life.
+         */
+        var listPopulatedFragments = _loader.GetPopulatedFragments();
+
+        /*
+         * Build the empty tree
+         */
+        lock (_lo)
+        {
+            foreach (var kvpOperators in _mapSpawnOperators)
+            {
+                var perBehaviorStat = behaviorStats.FindPerBehaviorStats(kvpOperators.Key);
+                foreach (var idxFragment in listPopulatedFragments)
+                {
+                    perBehaviorStat.FindPerFragmentStats(idxFragment);
+                }
+            }
+        }
+
+
         _spawnSystem.Update(behaviorStats);
 
-        var listPopulatedFragments = _loader.GetPopulatedFragments();
-        
         /*
          * Now that we have the stats, iterate over it to trigger spawning
          * or killing of characters wherever required
@@ -72,11 +94,21 @@ public class SpawnModule : AModule
             
                 PerFragmentStats perFragmentStats = kvpFrag.Value;
                 int nCharacters = perFragmentStats.NumberEntities + opStatus.InCreation;
+                if (perFragmentStats.NumberEntities > 0)
+                {
+                    int a = 0;
+                }
                 int needCharacters = opStatus.MinCharacters - nCharacters;
                 if (needCharacters>0)
                 {
+                    Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} in creation {opStatus.InCreation} min characters {opStatus.MinCharacters}");
+                    
                     for (int i = 0; i < needCharacters; ++i)
                     {
+                        /*
+                         * Note that we are calling an async method synchronously, thereby
+                         * having several of them run in the background.
+                         */
                         op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
                     }
                 }
@@ -94,17 +126,18 @@ public class SpawnModule : AModule
     }
     
 
-    public void AddSpawnOperator(IBehavior behavior, ISpawnOperator op)
+    public void AddSpawnOperator(ISpawnOperator op)
     {
+        Type behaviorType = op.BehaviorType;
         lock (_lo)
         {
-            if (_mapSpawnOperators.ContainsKey(behavior.GetType()))
+            if (_mapSpawnOperators.ContainsKey(behaviorType))
             {
                 ErrorThrow<ArgumentException>(
-                    $"Spawn operator for behavior {behavior.GetType().FullName} already registered.");
+                    $"Spawn operator for behavior {behaviorType.FullName} already registered.");
             }
 
-            _mapSpawnOperators[behavior.GetType()] = op;
+            _mapSpawnOperators[behaviorType] = op;
         }
     }
     
@@ -127,6 +160,6 @@ public class SpawnModule : AModule
         base.ModuleActivate();
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
-        _loader = I.Get<world.MetaGen>().Loader;
+        _loader = _metaGen.Loader;
     }
 }

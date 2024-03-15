@@ -15,12 +15,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\DriveController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\LeftStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\RightStickFingerState.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\WASDController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ZoomStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ALayoutItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\BoxLayout.cs" />
@@ -54,12 +52,15 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\AutoRemoveBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AHeatMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\BehaviorStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ClusterHeatMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ISpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerBehaviorStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerFragmentStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnStatus.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\SpawnSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\editor\components\Highlight.cs" />

@@ -164,6 +164,43 @@ public struct AABB
     }
 
 
+    public bool TryIntersect(in AABB i, out AABB o)
+    {
+        /*
+         * We take our aabb and gradually shrink it.
+         */
+        o = this;
+        
+        /*
+         * First test the cases where we don't overlap at all.
+         */
+        if (false
+            || (i.AA.X > o.BB.X)
+            || (i.AA.Y > o.BB.Y)
+            || (i.AA.Z > o.BB.Z)
+            || (i.BB.X < o.AA.X)
+            || (i.BB.Y < o.AA.Y)
+            || (i.BB.Z < o.AA.Z)
+            )
+        {
+            return false;
+        }
+        
+        /*
+         * Otherwise, we overlap.
+         */
+        if (i.AA.X > o.AA.X) o.AA.X = i.AA.X;
+        if (i.AA.Y > o.AA.Y) o.AA.Y = i.AA.Y;
+        if (i.AA.Z > o.AA.Z) o.AA.Z = i.AA.Z;
+
+        if (i.BB.X < o.BB.X) o.BB.X = i.BB.X;
+        if (i.BB.Y < o.BB.Y) o.BB.Y = i.BB.Y;
+        if (i.BB.Z < o.BB.Z) o.BB.Z = i.BB.Z;
+        
+        return true;
+    }
+    
+
     public bool IsEmpty()
     {
         return AA.X == Single.MaxValue && AA.Y == Single.MaxValue && AA.Z == Single.MaxValue

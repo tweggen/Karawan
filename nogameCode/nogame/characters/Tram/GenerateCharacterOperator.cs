@@ -165,7 +165,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                         | InstantiateModelParams.CENTER_Z
                                         | InstantiateModelParams.ROTATE_Y180
                                         | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
-                            MaxDistance = 1000f,
+                            MaxDistance = propMaxDistance,
                         });
                     engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
  

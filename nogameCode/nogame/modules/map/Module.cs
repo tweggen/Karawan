@@ -524,7 +524,7 @@ public class Module : AModule, IInputPart
     }
 
 
-    public void _onLogicalFrame(object? sender, float dt)
+    private void _onAfterPhysics(object? sender, float dt)
     {
         bool shallHandleController = false;
 
@@ -591,7 +591,7 @@ public class Module : AModule, IInputPart
         });
 
         _noInputPart();
-        _engine.OnLogicalFrame -= _onLogicalFrame;
+        _engine.OnAfterPhysics -= _onAfterPhysics;
     }
 
 
@@ -605,7 +605,7 @@ public class Module : AModule, IInputPart
         
         _needResources();
 
-        _engine.OnLogicalFrame += _onLogicalFrame;
+        _engine.OnAfterPhysics += _onAfterPhysics;
 
         lock(_lo) {
             _requestedMapParams.IsVisible = true;

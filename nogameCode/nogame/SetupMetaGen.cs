@@ -97,11 +97,13 @@ public class SetupMetaGen
                                             ConfigCondition = "world.CreateCubeCharacters",
                                             Implementation = "nogame.characters.cubes.GenerateCharacterOperator.InstantiateFragmentOperator"
                                         },
+                                        #if false
                                         new () 
                                         {
                                             ConfigCondition = "world.CreateCar3Characters",
                                             Implementation = "nogame.characters.car3.GenerateCharacterOperator.InstantiateFragmentOperator"
                                         },
+                                        #endif
                                         new () 
                                         {
                                             ConfigCondition = "world.CreateTramCharacters",
