@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using DefaultEcs;
 using engine.behave.components;
 using engine.joyce;
 using engine.joyce.components;
 using engine.world;
+using static engine.Logger;
 
 namespace engine.behave.systems;
 
@@ -31,6 +33,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
             if (idxEntity.I == 0 && idxEntity.K == 0 && idxEntity.J == 0)
             {
                 int a = 1;
+                Trace($"fragment 0, pos = {cTransformWorld.Matrix.Translation}");
             }
             foo.FindPerBehaviorStats(cBehavior.Provider.GetType())
                 .FindPerFragmentStats(idxEntity)

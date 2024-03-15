@@ -324,7 +324,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     private void _handleMouseReleased(Event ev)
     {
-        if (ev.Code != "0")
+        if (ev.Data1 != 0)
         {
             return;
         }
@@ -412,7 +412,7 @@ public class InputController : engine.AModule, engine.IInputPart
 
     private void _handleMousePressed(Event ev)
     {
-        if (ev.Code != "0")
+        if (ev.Data1 != 0)
         {
             return;
         }
