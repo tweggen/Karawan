@@ -348,9 +348,10 @@ public class Platform : engine.IPlatform
     private void _onGamepadButtonDown(IGamepad gamepad, Button button)
     {
         I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, "")
+            new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, $"{button.Name}")
             {
-                Data1 = (uint) button.Index
+                Data1 = (uint) button.Name,
+                Data2 = (uint) button.Index
             });
     }
 
@@ -358,9 +359,10 @@ public class Platform : engine.IPlatform
     private void _onGamepadButtonUp(IGamepad gamepad, Button button)
     {
         I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_GAMEPAD_BUTTON_RELEASED, "")
+            new Event(Event.INPUT_GAMEPAD_BUTTON_RELEASED, $"{button.Name}")
             {
-                Data1 = (uint) button.Index
+                Data1 = (uint) button.Name,
+                Data2 = (uint) button.Index
             });
     }
 

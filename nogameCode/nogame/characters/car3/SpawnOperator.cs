@@ -78,6 +78,15 @@ public class SpawnOperator : ISpawnOperator
         }
         return spawnStatus;
     }
+
+
+    public void PurgeFragment(in Index3 idxFragment)
+    {
+        lock (_lo)
+        {
+            _mapFragmentStatus.Remove(idxFragment);
+        }
+    }
     
 
     public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)

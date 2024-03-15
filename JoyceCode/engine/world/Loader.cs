@@ -87,6 +87,7 @@ namespace engine.world
 
             foreach (var frag in fragList)
             {
+                I.Get<engine.behave.SpawnModule>().PurgeFragment(frag.IdxFragment);
                 frag.RemoveFragmentEntities();
                 frag.Dispose();
             }
@@ -322,6 +323,9 @@ namespace engine.world
         }
 
 
+        /**
+         * Return a list of fragments that currently might be populated by characters.
+         */
         public ImmutableList<Index3> GetPopulatedFragments()
         {
             List<Index3> listPopulatedFragments = new();
