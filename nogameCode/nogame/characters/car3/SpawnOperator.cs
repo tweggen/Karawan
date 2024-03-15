@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine;
@@ -19,7 +20,6 @@ public class SpawnOperator : ISpawnOperator
     private object _lo = new();
     private engine.geom.AABB _aabb = new(Vector3.Zero, engine.world.MetaGen.MaxWidth);
     private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
-    private int _inCreation = 0;
     private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
     
     public engine.geom.AABB AABB
@@ -40,8 +40,14 @@ public class SpawnOperator : ISpawnOperator
     }
 
 
-    public SpawnStatus GetFragmentSpawnStatus(System.Type behaviorType, in Index3 idxFragment)
+    private Dictionary<Index3, SpawnStatus> _mapFragmentStatus = new();
+
+    private void _findSpawnStatus_nl(in Index3 idxFragment, out SpawnStatus spawnStatus)
     {
+        if (_mapFragmentStatus.TryGetValue(idxFragment, out spawnStatus))
+        {
+            return;
+        }
         /*
          * Read the probability for this fragment from the cluster heat map,
          * return an appropriate spawnStatus.
@@ -52,12 +58,25 @@ public class SpawnOperator : ISpawnOperator
          * Note that it is technically wrong to return the number of characters in creation
          * in total. However, this only would prevent more characters compared to the offset.
          */
-        return new SpawnStatus()
+        spawnStatus = new()
         {
             MinCharacters = (ushort)(10f * density),
             MaxCharacters = (ushort)(15f * density),
-            InCreation = (ushort) _inCreation
+            InCreation = (ushort) 0
         };
+
+        _mapFragmentStatus[idxFragment] = spawnStatus;
+    }
+
+
+    public SpawnStatus GetFragmentSpawnStatus(System.Type behaviorType, in Index3 idxFragment)
+    {
+        SpawnStatus spawnStatus;
+        lock (_lo)
+        {
+            _findSpawnStatus_nl(idxFragment, out spawnStatus);
+        }
+        return spawnStatus;
     }
     
 
@@ -65,7 +84,9 @@ public class SpawnOperator : ISpawnOperator
     {
         lock (_lo)
         {
-            _inCreation++;
+            _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+            spawnStatus.InCreation++;
+            _mapFragmentStatus[idxFragment] = spawnStatus;
         }
 
         Task.Run(async () =>
@@ -97,6 +118,15 @@ public class SpawnOperator : ISpawnOperator
                         }
                         else
                         {
+                            lock (_lo)
+                            {
+                                /*
+                                 * Act as if the thing still is in creation.
+                                 */
+                                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+                                spawnStatus.InCreation++;
+                                _mapFragmentStatus[idxFragment] = spawnStatus;
+                            }
                         }
                     }
                 }
@@ -108,7 +138,9 @@ public class SpawnOperator : ISpawnOperator
 
             lock (_lo)
             {
-                _inCreation--;
+                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+                spawnStatus.InCreation--;
+                _mapFragmentStatus[idxFragment] = spawnStatus;
             }
 
             return eCharacter;

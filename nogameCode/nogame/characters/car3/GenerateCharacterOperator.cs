@@ -111,22 +111,41 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return null;
         }
         int l = streetPoints.Count;
-        
-        /*
-         * Now actually select the starting point.
-         */
-        var idxPoint = (int)(_rnd.GetFloat() * l);
-        var idx = 0;
-        StreetPoint chosenStreetPoint = null;
-        foreach (var sp in streetPoints)
-        {
-            if (idx == idxPoint)
-            {
-                chosenStreetPoint = sp;
-                break;
-            }
 
-            idx++;
+        int nTries = 0;
+        StreetPoint chosenStreetPoint = null;
+
+        while (chosenStreetPoint == null && nTries++ < 10)
+        {
+            /*
+             * Now actually select the starting point.
+             */
+            var idxPoint = (int)(_rnd.GetFloat() * l);
+            var idx = 0;
+            foreach (var sp in streetPoints)
+            {
+                if (idx >= idxPoint)
+                {
+                    float px = sp.Pos.X + clusterDesc.Pos.X;
+                    float pz = sp.Pos.Y + clusterDesc.Pos.Z;
+                    if (worldFragment.IsInside(new Vector2(px, pz)))
+                    {
+                        if (sp.HasStrokes())
+                        {
+                            chosenStreetPoint = sp;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        
+                        if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
+                    }
+
+                }
+
+                idx++;
+            }
         }
 
         if (null==chosenStreetPoint)
@@ -135,27 +154,11 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return null;
         }
 
-        if (!chosenStreetPoint.HasStrokes())
-        {
-            if (_trace) Trace($"The chosen street point does not have strokes at all.");
-            return null;
-        }
-        
         /*
          * Check, wether the given street point really is inside our fragment.
          * That way, every fragment owns only the characters spawn on their
          * territory.
          */
-        {
-            float px = chosenStreetPoint.Pos.X + clusterDesc.Pos.X;
-            float pz = chosenStreetPoint.Pos.Y + clusterDesc.Pos.Z;
-            if (!worldFragment.IsInside(new Vector2(px, pz)))
-            {
-                if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
-                return null;
-            }
-        }
-
         return chosenStreetPoint;
     }
 

@@ -101,7 +101,7 @@ public class SpawnModule : AModule
                 int needCharacters = opStatus.MinCharacters - nCharacters;
                 if (needCharacters>0)
                 {
-                    // Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} in creation {opStatus.InCreation} min characters {opStatus.MinCharacters}");
+                    Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} in creation {opStatus.InCreation} min characters {opStatus.MinCharacters}");
                     
                     for (int i = 0; i < needCharacters; ++i)
                     {
