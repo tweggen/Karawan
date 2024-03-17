@@ -21,6 +21,7 @@ Source: "Karawan.runtimeconfig.json"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.xml"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.exe"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "runtimes\win-x64\native\*"; DestDir: "{app}\"; Flags: ignoreversion 
+Source: "..\..\..\..\Wuka\Platforms\Android\*.glb"; DestDir: "{app}\assets\"; Flags: ignoreversion
 Source: "..\..\..\..\Wuka\Platforms\Android\*.ogg"; DestDir: "{app}\assets\"; Flags: ignoreversion
 Source: "..\..\..\..\Wuka\Platforms\Android\*.mtl"; DestDir: "{app}\assets\"; Flags: ignoreversion
 Source: "..\..\..\..\Wuka\Platforms\Android\*.obj"; DestDir: "{app}\assets\"; Flags: ignoreversion
