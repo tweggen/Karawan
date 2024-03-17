@@ -32,6 +32,8 @@ public class SpawnModule : AModule
 
     private Loader _loader;
 
+    private bool _trace = false;
+    
 
     private void _onLogicalFrame(object? sender, float dt)
     {
@@ -98,7 +100,7 @@ public class SpawnModule : AModule
                 int needCharacters = opStatus.MinCharacters - nCharacters;
                 if (needCharacters>0)
                 {
-                    Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} dead {opStatus.Dead} min {opStatus.MinCharacters}");
+                    if (_trace) Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} dead {opStatus.Dead} min {opStatus.MinCharacters}");
                     
                     for (int i = 0; i < needCharacters; ++i)
                     {
@@ -107,6 +109,14 @@ public class SpawnModule : AModule
                          * having several of them run in the background.
                          */
                         op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
+                    }
+                }
+                else
+                {
+                    if (nCharacters > opStatus.MaxCharacters)
+                    {
+                        if (_trace) Trace($"Warning: Number of characters exceeded for {kvpFrag.Key}: found {perFragmentStats.NumberEntities} resident {opStatus.ResidentCharacters}");
+                        // TXWTODO: Remove them if the player is unable to see it.
                     }
                 }
             }
