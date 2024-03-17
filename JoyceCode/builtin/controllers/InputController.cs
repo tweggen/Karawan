@@ -649,7 +649,7 @@ public class InputController : engine.AModule, engine.IInputPart
                 {
                     if (_isGamepadRightStickPressed)
                     {
-                        float zoomWay = pos.Y;
+                        float zoomWay = -pos.Y;
                         I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
                         {
                             Position = new Vector2(0f, zoomWay)
