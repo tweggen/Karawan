@@ -390,10 +390,11 @@ public class StreetNavigationController : INavigator
 
     public StreetNavigationController(
         ClusterDesc clusterDesc0,
-        StreetPoint startPoint0
+        StreetPoint startPoint0,
+        int seed = 0
     )
     {
-        _rnd = new builtin.tools.RandomSource(clusterDesc0.Name);
+        _rnd = new builtin.tools.RandomSource($"{clusterDesc0.Name}+{startPoint0.Pos}+{seed}");
         _clusterDesc = clusterDesc0;
         _startPoint = startPoint0;
         _targetPoint = null;

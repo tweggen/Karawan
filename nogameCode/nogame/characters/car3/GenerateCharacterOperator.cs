@@ -17,7 +17,6 @@ namespace nogame.characters.car3;
 
 class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
-
     static public readonly string PhysicsName = "nogame.characters.car3";
     static private readonly float PhysicsMass = 500f;
     static private readonly float PhysicsRadius = 5f;
@@ -169,7 +168,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
 
 
-    public static async Task<DefaultEcs.Entity> GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint chosenStreetPoint)
+    public static async Task<DefaultEcs.Entity> GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint chosenStreetPoint, int seed=0)
     {
         TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
         Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
@@ -241,7 +240,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 #endif
 
                 eTarget.Set(new engine.behave.components.Behavior(
-                    new car3.Behavior(wf.Engine, clusterDesc, chosenStreetPoint)
+                    new car3.Behavior(wf.Engine, clusterDesc, chosenStreetPoint, seed)
                     {
                         Speed = (30f + _rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
                     })

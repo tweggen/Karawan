@@ -84,10 +84,11 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
     public Behavior(
         in engine.Engine engine0,
         in engine.world.ClusterDesc clusterDesc0,
-        in engine.streets.StreetPoint streetPoint0
+        in engine.streets.StreetPoint streetPoint0,
+        int seed
     ) : base(
         engine0, 
-        new StreetNavigationController(clusterDesc0,streetPoint0)
+        new StreetNavigationController(clusterDesc0, streetPoint0, seed)
         {
             Height = MetaGen.ClusterNavigationHeight
         })

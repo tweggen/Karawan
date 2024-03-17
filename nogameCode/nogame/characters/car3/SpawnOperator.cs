@@ -110,6 +110,9 @@ public class SpawnOperator : ISpawnOperator
             _mapFragmentStatus.Remove(idxFragment);
         }
     }
+
+
+    private int _seed = 0;
     
 
     public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
@@ -146,7 +149,8 @@ public class SpawnOperator : ISpawnOperator
                         if (chosenStreetPoint != null)
                         {
                             eCharacter = await GenerateCharacterOperator.GenerateCharacter(
-                                cd, worldFragment, chosenStreetPoint);
+                                cd, worldFragment, chosenStreetPoint, _seed);
+                            ++_seed;
                         }
                         else
                         {
