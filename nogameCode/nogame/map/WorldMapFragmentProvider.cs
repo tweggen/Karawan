@@ -6,6 +6,7 @@ using engine.draw;
 using engine.world;
 using builtin.map;
 using engine;
+using engine.world;
 using engine.streets;
 using static engine.Logger;
 
@@ -13,13 +14,12 @@ namespace nogame.map;
 
 
 /**
- * Create an pixel image of the entire world.
+ * Create an pixel image of the entire 
  */
-public class WorldMapFragments : IWorldMapProvider
+public class WorldMapFragmentProvider : IWorldMapProvider
 {
     public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
     {
-        
     }
 
 
@@ -28,7 +28,7 @@ public class WorldMapFragments : IWorldMapProvider
         in Vector2 posA, in Vector2 posB,
         float width)
     {
-        Vector2[] poly = new Vector2[4];
+        Vector2[] poly = new Vector2[2];
 
         poly[0] = posA;
         poly[1] = posB;
@@ -43,16 +43,27 @@ public class WorldMapFragments : IWorldMapProvider
 
     private void _drawFragmentGrid(IFramebuffer target, in Matrix3x2 m2fb)
     {
-        int nx = (int)((world.MetaGen.MaxWidth+world.MetaGen.FragmentSize-1)/(world.MetaGen.FragmentSize));
-        int ny = (int)((world.MetaGen.MaxHEight+world.MetaGen.FragmentSize-1)/(world.MetaGen.FragmentSize));
+        int nx = (int)((MetaGen.MaxWidth+MetaGen.FragmentSize-1)/(MetaGen.FragmentSize));
+        int ny = (int)((MetaGen.MaxHeight+MetaGen.FragmentSize-1)/(MetaGen.FragmentSize));
         
         Context dcGrid = new Context();
-        dcHighway.Color = 0xff444444;
+        dcGrid.FillColor = 0xff444444;
         
-
-        for (int ix=1; ix<nx; ++ix)
+        for (int ix=-nx/2+1; ix<nx/2; ++ix)
         {
-            _drawLine(target, m2, dcGrid, new Vector2(ix*world.MetaGen.FragmentSize
+            float x = ix * MetaGen.FragmentSize - MetaGen.FragmentSize / 2f;
+            _drawLine(target, dcGrid, m2fb, 
+                new Vector2(x, -MetaGen.MaxHeight / 2f),
+                new Vector2(x, +MetaGen.MaxHeight / 2f-1),
+                1f);    
+        }
+        for (int iy=-ny/2; iy<ny/2; ++iy)
+        {
+            float y = iy * MetaGen.FragmentSize - MetaGen.FragmentSize / 2f;
+            _drawLine(target, dcGrid, m2fb, 
+                new Vector2(-MetaGen.MaxWidth / 2f, y),
+                new Vector2(+MetaGen.MaxWidth / 2f - 1, y), 
+                1);
         }
     }         
     

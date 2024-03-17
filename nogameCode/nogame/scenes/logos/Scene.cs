@@ -205,17 +205,13 @@ public class Scene : AModule, IScene
             _aTransform = I.Get<engine.joyce.TransformApi>();
 
         }
-        if (engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false")
-        {
-            engine.I.Get<Boom.Jukebox>().LoadThenPlaySong(
-                "shaklengokhsi.ogg", 0.05f, false,
-                _onTitleSongStarted, _onTitleSongStopped);
-        }
-        else
-        {
-            _onTitleSongStarted();
-            _onTitleSongStopped();
-        }
+
+        bool shouldPlayTitle = engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false";
+        
+    
+        engine.I.Get<Boom.Jukebox>().LoadThenPlaySong(
+            "shaklengokhsi.ogg", shouldPlayTitle?0.05f:0f, false,
+            _onTitleSongStarted, _onTitleSongStopped);
 
         /*
          * Moving light
