@@ -400,11 +400,24 @@ public class Engine
             EntitySetupAction entitySetupAction;
             lock (_lo)
             {
-                if (_queueEntitySetupActions.Count == 0)
+                int count = _queueEntitySetupActions.Count;
+                if (count == 0)
                 {
                     break;
                 }
-
+                else
+                {
+                    if (count > 1000)
+                    {
+                        /*
+                         * Emergency: If there is too much in the queue, increase the processing time
+                         * to 2s.
+                         */
+                        matTime = 2000f;
+                        Warning($"Action queue high threshold, blocking.");
+                    }
+                }
+ 
                 entitySetupAction = _queueEntitySetupActions.Dequeue();
             }
 
