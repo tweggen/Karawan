@@ -85,7 +85,7 @@
     "world.CreateStreetAnnotations": false,
     "nogame.CreateTrees": true,
     "nogame.CreateHouses": true,
-    "nogame.CreatePolytopes": false,
+    "nogame.CreatePolytopes": true,
     "world.CreateCubeCharacters": true,
     "world.CreateCar3Characters": true,
     "world.CreateTramCharacters": true,
