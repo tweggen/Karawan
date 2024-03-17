@@ -82,8 +82,8 @@ public class SpawnOperator : ISpawnOperator
              */
             spawnStatus = new()
             {
-                MinCharacters = (ushort)(0.3f * nMaxSpawns),
-                MaxCharacters = (ushort)(0.5f * nMaxSpawns),
+                MinCharacters = (ushort)(0.2f * nMaxSpawns),
+                MaxCharacters = (ushort)(0.4f * nMaxSpawns),
                 InCreation = (ushort)0
             };
         }
@@ -160,7 +160,7 @@ public class SpawnOperator : ISpawnOperator
                                  * Act as if the thing still is in creation.
                                  */
                                 _findSpawnStatus_nl(idxFragment, out var spawnStatus);
-                                spawnStatus.InCreation++;
+                                spawnStatus.Dead++;
                                 _mapFragmentStatus[idxFragment] = spawnStatus;
                             }
                         }

@@ -18,12 +18,16 @@ public struct SpawnStatus
      * The number of characters in creation.
      */
     public ushort InCreation;
- 
 
     /**
      * The number of deads that won't be recreated
      */
     public ushort Dead;
+
+    public ushort ResidentCharacters
+    {
+        get => (ushort)(InCreation + Dead);
+    }
 
 
     public bool IsValid()

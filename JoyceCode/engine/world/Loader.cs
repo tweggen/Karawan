@@ -326,7 +326,7 @@ namespace engine.world
         /**
          * Return a list of fragments that currently might be populated by characters.
          */
-        public ImmutableList<Index3> GetPopulatedFragments()
+        public ImmutableList<Index3> GetPopulatedFragments(byte visibKind)
         {
             List<Index3> listPopulatedFragments = new();
             lock (_lo)
@@ -334,7 +334,7 @@ namespace engine.world
                 foreach (var kvp in _mapFrags)
                 {
                     ref var visib = ref kvp.Value.Visibility;
-                    if (0 == (visib.How & FragmentVisibility.Visible3dNow))
+                    if (0 == (visib.How & visibKind))
                     {
                         continue;
                     }

@@ -40,7 +40,7 @@ public class SpawnModule : AModule
         /*
          * This is the list of modules we need to fill with life.
          */
-        var listPopulatedFragments = _loader.GetPopulatedFragments();
+        var listPopulatedFragments = _loader.GetPopulatedFragments(FragmentVisibility.Visible3dNow);
 
         /*
          * Build the empty tree
@@ -94,15 +94,11 @@ public class SpawnModule : AModule
                 var opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
             
                 PerFragmentStats perFragmentStats = kvpFrag.Value;
-                int nCharacters = perFragmentStats.NumberEntities + opStatus.InCreation;
-                if (perFragmentStats.NumberEntities > 0)
-                {
-                    int a = 0;
-                }
+                int nCharacters = perFragmentStats.NumberEntities + opStatus.ResidentCharacters;
                 int needCharacters = opStatus.MinCharacters - nCharacters;
                 if (needCharacters>0)
                 {
-                    Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} in creation {opStatus.InCreation} min characters {opStatus.MinCharacters}");
+                    Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} dead {opStatus.Dead} min {opStatus.MinCharacters}");
                     
                     for (int i = 0; i < needCharacters; ++i)
                     {
