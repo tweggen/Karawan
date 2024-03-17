@@ -9,9 +9,14 @@ namespace engine.behave;
 public class ClusterHeatMap : AHeatMap
 {
     private ClusterDesc[,] _arrayClusters;
+    private bool _isComputed = false;
 
     public ClusterDesc GetClusterDesc(in Index3 idxFragment)
     {
+        if (!_isComputed)
+        {
+            _computeDensity(new Index3(0, 0, 0));
+        }
         return _arrayClusters[_si/2 + idxFragment.I, _sk/2 + idxFragment.K];
     }
     
@@ -21,6 +26,8 @@ public class ClusterHeatMap : AHeatMap
      */
     protected override float _computeDensity(in Index3 idxFragment)
     {
+        if (_isComputed) return 0f;
+        
         /*
          * First, clear out the entire array, we are only setting the values for the clusters
          * later.
@@ -91,10 +98,11 @@ public class ClusterHeatMap : AHeatMap
             }
         }
 
+        _isComputed = true;
+
         return _arrayDensity[_si/2 + idxFragment.I, _si/2 + idxFragment.K];
     }
 
-    
     public ClusterHeatMap() : base()
     {
         _arrayClusters = new ClusterDesc[_si + 1, _sk + 1];

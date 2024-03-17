@@ -236,7 +236,7 @@ public class ClusterDesc
 
                 foreach (var sp in _strokeStore.GetStreetPoints())
                 {
-                    Index3 idxSP = new(sp.Pos3 + Pos);
+                    Index3 idxSP = Fragment.PosToIndex3(sp.Pos3 + Pos);
                     List<StreetPoint> spList;
                     if (!mapListSP.TryGetValue(idxSP, out spList))
                     {
