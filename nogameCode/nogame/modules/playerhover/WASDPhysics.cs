@@ -50,9 +50,13 @@ internal class WASDPhysics : AModule, IInputPart
          * an impulse to accelerate against gravity.
          */
         Vector3 vTargetPos;
+        Vector3 vTargetVelocity;
+        Vector3 vTargetAngularVelocity;
         lock (_engine.Simulation)
         {
             vTargetPos = _prefTarget.Pose.Position;
+            vTargetVelocity = _prefTarget.Velocity.Linear;
+            vTargetAngularVelocity = _prefTarget.Velocity.Angular;     
         }
     
 
@@ -63,7 +67,7 @@ internal class WASDPhysics : AModule, IInputPart
         {
             lock (_engine.Simulation)
             {
-                vTargetPos = _prefTarget.Pose.Position = Vector3.Zero;
+                // vTargetPos = _prefTarget.Pose.Position = Vector3.Zero;
                 _prefTarget.Pose.Orientation = Quaternion.Identity;
                 _prefTarget.Velocity.Angular = Vector3.Zero;
                 _prefTarget.Velocity.Linear = Vector3.Zero;
@@ -73,16 +77,6 @@ internal class WASDPhysics : AModule, IInputPart
             return;
         }
 
-
-        Vector3 vTargetVelocity;
-        Vector3 vTargetAngularVelocity;
-
-        lock (_engine.Simulation)
-        {
-            vTargetVelocity = _prefTarget.Velocity.Linear;
-            vTargetAngularVelocity = _prefTarget.Velocity.Angular;     
-        }
-        
         float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
         {
             var properDeltaY = 0;
@@ -134,6 +128,16 @@ internal class WASDPhysics : AModule, IInputPart
             float turnMotion;
             {
                 float inputTurnMotion = controllerState.TurnRight - controllerState.TurnLeft;
+                
+                /*
+                 * invert control if we are going backwards. This is car like, not thrust like,
+                 * but feels more natural for GTA infused people like me.
+                 */
+                if (Vector3.Dot(vFront, vTargetVelocity) < 0.1f)
+                {
+                    inputTurnMotion *= -1f;
+                }
+                
                 float maxThreshold;
                 if (_lastTurnMotion == 0)
                 {
