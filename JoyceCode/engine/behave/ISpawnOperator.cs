@@ -12,22 +12,26 @@ public interface ISpawnOperator
 {
     geom.AABB AABB { get; }
     
+    
     /**
      * The behavior type we shall control.
      */
     Type BehaviorType { get;  }
 
+    
     /**
      * Return the requirements for the given fragment. This method should
      * be rather fast.
      */
     SpawnStatus GetFragmentSpawnStatus(Type behaviorType, in Index3 idxFragment);
 
+    
     /**
      * Purge all cached information about the given fragment.
      * This is called when a fragment is unloaded.
      */
     public void PurgeFragment(in Index3 idxFragment);
+    
     
     /**
      * Trigger creation of a new behavior.
@@ -43,4 +47,10 @@ public interface ISpawnOperator
      *    The result of counting the characters.
      */
     public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats);
+
+
+    /**
+     * Remove extranous characters.
+     */
+    public void TerminateCharacters(PerBehaviorStats perBehaviorStats, int totalCharactersFound);
 }

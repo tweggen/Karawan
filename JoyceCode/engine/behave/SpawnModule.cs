@@ -98,17 +98,34 @@ public class SpawnModule : AModule
                 {
                     continue;
                 }
-                var opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
-                PerFragmentStats perFragmentStats = kvpFrag.Value;
                 
-                /*
-                 * Look if we need to create characters 
-                 */
-                int nCharacters = perFragmentStats.NumberEntities + opStatus.ResidentCharacters;
-                int needCharacters = opStatus.MinCharacters - nCharacters;
-                if (needCharacters>0)
+                SpawnStatus? opStatus;
+                PerFragmentStats perFragmentStats = kvpFrag.Value;
+                opStatus = perFragmentStats.SpawnStatus;
+                if (null == opStatus)
                 {
-                    if (_trace) Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} dead {opStatus.Dead} min {opStatus.MinCharacters}");
+                    opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
+                    perFragmentStats.SpawnStatus = opStatus.Value;
+                }
+
+                /*
+                 * We not only need to count the living characters, but also other characters
+                 * that still are in creation or failed to be created at all.
+                 */
+                int nCharacters = perFragmentStats.NumberEntities + opStatus.Value.ResidentCharacters;
+
+                /*
+                 * Look if we need to create characters
+                 */
+                if (nCharacters< opStatus.Value.MinCharacters)
+                {
+                    var needCharacters = opStatus.Value.MinCharacters - nCharacters;
+                    if (_trace)
+                    {
+                        Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} "
+                            +"found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
+                            +"dead {opStatus.Dead} min {opStatus.MinCharacters}");
+                    }
                     
                     for (int i = 0; i < needCharacters; ++i)
                     {
@@ -118,6 +135,14 @@ public class SpawnModule : AModule
                          */
                         op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
                     }
+                }
+
+                /*
+                 * Then look if we need to terminate characters.
+                 */
+                if (nCharacters > opStatus.Value.MaxCharacters)
+                {
+                    op.TerminateCharacters(kvpBehavior.Value, nCharacters);
                 }
             }
         }

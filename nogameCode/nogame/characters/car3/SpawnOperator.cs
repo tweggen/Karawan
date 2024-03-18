@@ -182,4 +182,10 @@ public class SpawnOperator : ISpawnOperator
             return eCharacter;
         });
     }
+
+
+    public void TerminateCharacters(PerBehaviorStats perBehaviorStats, int totalCharactersFound)
+    {
+        
+    }
 }
