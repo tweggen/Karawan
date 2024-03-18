@@ -186,6 +186,9 @@ public class SpawnOperator : ISpawnOperator
 
     public void TerminateCharacters(PerBehaviorStats perBehaviorStats, int totalCharactersFound)
     {
-        
+        /*
+         * bring the fragments into a descending order 
+         */
+        // TXWTODO: Get Camera info
     }
 }
