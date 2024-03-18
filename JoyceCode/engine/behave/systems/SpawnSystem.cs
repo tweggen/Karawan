@@ -25,7 +25,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
     private Vector3 _v3CameraPos;
     private Vector3 _v3CameraFront;
     
-    protected override void Update(BehaviorStats foo, ReadOnlySpan<Entity> entities)
+    protected override void Update(BehaviorStats behaviorStats, ReadOnlySpan<Entity> entities)
     {
         /*
          * Count and sort the entities per fragment.
@@ -38,7 +38,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
             if (null == cBehavior.Provider) continue;
 
             Index3 idxEntity = Fragment.PosToIndex3(cTransformWorld.Matrix.Translation);
-            PerBehaviorStats? perBehaviorStats = foo.GetPerBehaviorStats(cBehavior.Provider.GetType());
+            PerBehaviorStats? perBehaviorStats = behaviorStats.GetPerBehaviorStats(cBehavior.Provider.GetType());
             
             /*
              * Only count behaviors that are tracked by spawn operators.
