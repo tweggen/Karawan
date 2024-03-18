@@ -1,3 +1,4 @@
+using System;
 using engine.behave;
 using engine.joyce;
 using engine.joyce.components;
@@ -16,10 +17,13 @@ public class PerFragmentStats
      */
     public int NumberEntities = 0;
     
-    // List of positions?
+    /*
+     * The actual spawn status for this fragment, if we have it.
+     */
+    public SpawnStatus? SpawnStatus = null;
+    
     public void Add()
     {
-        // Trace($"Incrementing from {NumberEntities}");
         ++NumberEntities;
     }
 }

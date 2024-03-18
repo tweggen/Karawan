@@ -41,11 +41,14 @@ public class SpawnModule : AModule
 
         /*
          * This is the list of modules we need to fill with life.
+         * Also, only within this list of fragments we need to keep characters
+         * that have SpawnOperators associated.
          */
         var listPopulatedFragments = _loader.GetPopulatedFragments(FragmentVisibility.Visible3dNow);
 
         /*
-         * Build the empty tree
+         * Build the empty tree for the fragments that shall be visible and the
+         * behaviors we want to monitor.
          */
         lock (_lo)
         {
@@ -54,7 +57,9 @@ public class SpawnModule : AModule
                 var perBehaviorStat = behaviorStats.FindPerBehaviorStats(kvpOperators.Key);
                 foreach (var idxFragment in listPopulatedFragments)
                 {
-                    perBehaviorStat.FindPerFragmentStats(idxFragment);
+                    var perFragmentStats = perBehaviorStat.FindPerFragmentStats(idxFragment);
+                    perFragmentStats.SpawnStatus = kvpOperators.Value.GetFragmentSpawnStatus(
+                        kvpOperators.Key, idxFragment);
                 }
             }
         }
@@ -94,8 +99,11 @@ public class SpawnModule : AModule
                     continue;
                 }
                 var opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
-            
                 PerFragmentStats perFragmentStats = kvpFrag.Value;
+                
+                /*
+                 * Look if we need to create characters 
+                 */
                 int nCharacters = perFragmentStats.NumberEntities + opStatus.ResidentCharacters;
                 int needCharacters = opStatus.MinCharacters - nCharacters;
                 if (needCharacters>0)
@@ -109,14 +117,6 @@ public class SpawnModule : AModule
                          * having several of them run in the background.
                          */
                         op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
-                    }
-                }
-                else
-                {
-                    if (nCharacters > opStatus.MaxCharacters)
-                    {
-                        if (_trace) Trace($"Warning: Number of characters exceeded for {kvpFrag.Key}: found {perFragmentStats.NumberEntities} resident {opStatus.ResidentCharacters}");
-                        // TXWTODO: Remove them if the player is unable to see it.
                     }
                 }
             }

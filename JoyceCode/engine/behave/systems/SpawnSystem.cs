@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using DefaultEcs;
 using engine.behave.components;
 using engine.joyce;
@@ -17,6 +18,13 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 {
     private readonly Engine _engine;
 
+    private bool haveCamera;
+    private DefaultEcs.Entity _eCamera;
+    private Camera3 _cCamCamera3;
+    private Transform3ToWorld _cCamTransform3ToWorld;
+    private Vector3 _v3CameraPos;
+    private Vector3 _v3CameraFront;
+    
     protected override void Update(BehaviorStats foo, ReadOnlySpan<Entity> entities)
     {
         /*
@@ -30,14 +38,17 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
             if (null == cBehavior.Provider) continue;
 
             Index3 idxEntity = Fragment.PosToIndex3(cTransformWorld.Matrix.Translation);
-            if (idxEntity.I == 0 && idxEntity.K == 0 && idxEntity.J == 0)
+            PerBehaviorStats? perBehaviorStats = foo.GetPerBehaviorStats(cBehavior.Provider.GetType());
+            
+            /*
+             * Only count behaviors that are tracked by spawn operators.
+             */
+            if (perBehaviorStats != null)
             {
-                int a = 1;
-                // Trace($"fragment 0, pos = {cTransformWorld.Matrix.Translation}");
+                PerFragmentStats perFragmentStats = perBehaviorStats.FindPerFragmentStats(idxEntity);
+                perFragmentStats.Add();
             }
-            foo.FindPerBehaviorStats(cBehavior.Provider.GetType())
-                .FindPerFragmentStats(idxEntity)
-                .Add();
+            
         }
     }
 
@@ -49,6 +60,15 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 
     protected override void PreUpdate(BehaviorStats foo)
     {
+        _eCamera = _engine.GetCameraEntity();
+        if (_eCamera.IsAlive && _eCamera.Has<Camera3>() && _eCamera.Has<Transform3ToWorld>())
+        {
+            haveCamera = true;
+            _cCamCamera3 = _eCamera.Get<Camera3>();
+            _cCamTransform3ToWorld = _eCamera.Get<Transform3ToWorld>();
+            _v3CameraPos = _cCamTransform3ToWorld.Matrix.Translation;
+            _v3CameraFront = new Vector3(_cCamTransform3ToWorld.Matrix.M31, _cCamTransform3ToWorld.Matrix.M32, _cCamTransform3ToWorld.Matrix.M33);
+        }
     }
     
     

@@ -7,17 +7,26 @@ public class BehaviorStats
 {
     public Dictionary<Type, PerBehaviorStats> MapPerBehaviorStats = new();
 
-    public PerBehaviorStats FindPerBehaviorStats(Type behavior)
+
+    public PerBehaviorStats? GetPerBehaviorStats(Type behaviorType)
+    {
+        PerBehaviorStats perBehaviorStats = null;
+        MapPerBehaviorStats.TryGetValue(behaviorType, out perBehaviorStats);
+        return perBehaviorStats;
+    }
+    
+    
+    public PerBehaviorStats FindPerBehaviorStats(Type behaviorType)
     {
         PerBehaviorStats perBehaviorStats;
-        if (MapPerBehaviorStats.TryGetValue(behavior, out perBehaviorStats))
+        if (MapPerBehaviorStats.TryGetValue(behaviorType, out perBehaviorStats))
         {
             
         }
         else
         {
             perBehaviorStats = new PerBehaviorStats();
-            MapPerBehaviorStats[behavior] = perBehaviorStats;
+            MapPerBehaviorStats[behaviorType] = perBehaviorStats;
         }
 
         return perBehaviorStats;
