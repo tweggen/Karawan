@@ -23,7 +23,7 @@ public class BehaviorStats
     }
     
     
-    public PerBehaviorStats FindPerBehaviorStats(Type behaviorType)
+    public PerBehaviorStats FindPerBehaviorStats(ISpawnOperator spawnOperator, Type behaviorType)
     {
         PerBehaviorStats perBehaviorStats;
         if (MapPerBehaviorStats.TryGetValue(behaviorType, out perBehaviorStats))
@@ -32,7 +32,10 @@ public class BehaviorStats
         }
         else
         {
-            perBehaviorStats = new PerBehaviorStats();
+            perBehaviorStats = new PerBehaviorStats()
+            {
+                SpawnOperator = spawnOperator
+            };
             MapPerBehaviorStats[behaviorType] = perBehaviorStats;
         }
 

@@ -183,4 +183,32 @@ public class SpawnOperator : ISpawnOperator
             return eCharacter;
         });
     }
+
+
+    public void TerminateCharacter(Index3 idxFragment, DefaultEcs.Entity entity)
+    {
+        lock (_lo)
+        {
+            _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+            spawnStatus.IsDying++;
+            _mapFragmentStatus[idxFragment] = spawnStatus;
+        }
+
+        _engine.QueueCleanupAction(() =>
+        {
+            try
+            {
+                entity.Dispose();
+            }
+            catch (Exception e)
+            {
+            }
+            lock (_lo)
+            {
+                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
+                spawnStatus.IsDying--;
+                _mapFragmentStatus[idxFragment] = spawnStatus;
+            }
+        });
+    }
 }

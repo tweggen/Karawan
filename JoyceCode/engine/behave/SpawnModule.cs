@@ -52,7 +52,7 @@ public class SpawnModule : AModule
         {
             foreach (var kvpOperators in _mapSpawnOperators)
             {
-                var perBehaviorStat = _behaviorStats.FindPerBehaviorStats(kvpOperators.Key);
+                var perBehaviorStat = _behaviorStats.FindPerBehaviorStats(kvpOperators.Value, kvpOperators.Key);
                 foreach (var idxFragment in listPopulatedFragments)
                 {
                     var perFragmentStats = perBehaviorStat.FindPerFragmentStats(idxFragment);
@@ -130,19 +130,19 @@ public class SpawnModule : AModule
                  * We not only need to count the living characters, but also other characters
                  * that still are in creation or failed to be created at all.
                  */
-                int nCharacters = perFragmentStats.NumberEntities + opStatus.Value.ResidentCharacters;
+                int nHopingCharacters = perFragmentStats.NumberEntities + opStatus.Value.ResidentCharacters;
 
                 /*
                  * Look if we need to create characters
                  */
-                if (nCharacters < opStatus.Value.MinCharacters)
+                if (nHopingCharacters < opStatus.Value.MinCharacters)
                 {
-                    var needCharacters = opStatus.Value.MinCharacters - nCharacters;
+                    var needCharacters = opStatus.Value.MinCharacters - nHopingCharacters;
                     if (_trace)
                     {
-                        Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} "
-                              + "found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
-                              + "dead {opStatus.Dead} min {opStatus.MinCharacters}");
+                        Trace($"@{kvpFrag.Key}: add {needCharacters} type {kvpBehavior.Key.FullName} "
+                              + $"found {perFragmentStats.NumberEntities} creat {opStatus.Value.InCreation} "
+                              + $"dead {opStatus.Value.Dead} min {opStatus.Value.MinCharacters}");
                     }
 
                     for (int i = 0; i < needCharacters; ++i)
@@ -155,17 +155,19 @@ public class SpawnModule : AModule
                     }
                 }
 
+                int nLivingCharacters = perFragmentStats.NumberEntities + opStatus.Value.ResidentCharacters - opStatus.Value.IsDying;
+
                 /*
                  * Then look if we need to terminate characters.
                  * Note that we only can kill characters that are not in creation any more
                  * and have not been born dead.
                  */
-                if (nCharacters > opStatus.Value.MaxCharacters)
+                if (nLivingCharacters > opStatus.Value.MaxCharacters)
                 {
                     /*
                      * The number of characters too much.
                      */
-                    int basicallyTooMuch = nCharacters - opStatus.Value.MaxCharacters;
+                    int basicallyTooMuch = nLivingCharacters - opStatus.Value.MaxCharacters;
 
                     /*
                      * We would be able to kill that much.
@@ -200,9 +202,10 @@ public class SpawnModule : AModule
          * Unfortunately, we need to iterate through all fragments, not only over the populated ones.
          */
         
-        List<DefaultEcs.Entity> listDoomedEntities = new(100);
         foreach (var kvpBehavior in _behaviorStats.MapPerBehaviorStats)
         {
+            var op = kvpBehavior.Value.SpawnOperator;
+            
             foreach (var kvpFrag in kvpBehavior.Value.MapPerFragmentStats)
             {
                 var perFragmentStats = kvpFrag.Value;
@@ -218,10 +221,14 @@ public class SpawnModule : AModule
                          * just kill anything.
                          */
                         int killNow = Int32.Min(perFragmentStats.ToKill, perFragmentStats.PossibleVictims.Count);
-                        perFragmentStats.ToKill -= killNow;
-                        for (int i=0; i<killNow; ++i)
+                        if (killNow > 0)
                         {
-                            listDoomedEntities.Add(perFragmentStats.PossibleVictims[i].Entity);
+                            Trace($"@{kvpFrag.Key}: Adding {killNow} doomed entities.");
+                            perFragmentStats.ToKill -= killNow;
+                            for (int i = 0; i < killNow; ++i)
+                            {
+                                op.TerminateCharacter(kvpFrag.Key, perFragmentStats.PossibleVictims[i].Entity);
+                            }
                         }
                     }
 
@@ -231,15 +238,6 @@ public class SpawnModule : AModule
                     perFragmentStats.PossibleVictims.Clear();
                 }
             }
-        }
-
-        if (listDoomedEntities.Count > 0)
-        {
-            /*
-             * Finally, kill all doomed entities.
-             */
-            Trace($"Adding {listDoomedEntities.Count} doomed entities.");
-            _engine.AddDoomedEntities(listDoomedEntities);
         }
     }
 
