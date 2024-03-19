@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Threading.Tasks;
-using engine;
-using engine.behave;
-using engine.behave.components;
+
 using engine.behave.systems;
 using engine.geom;
 using engine.joyce;
@@ -34,11 +31,12 @@ public class SpawnModule : AModule
 
     private bool _trace = false;
     
+    private int _iteration = 0;
+    BehaviorStats _behaviorStats = new();
 
-    private void _onLogicalFrame(object? sender, float dt)
+
+    private void _findPopulatedFragments(int iteration)
     {
-        BehaviorStats behaviorStats = new();
-
         /*
          * This is the list of modules we need to fill with life.
          * Also, only within this list of fragments we need to keep characters
@@ -54,24 +52,44 @@ public class SpawnModule : AModule
         {
             foreach (var kvpOperators in _mapSpawnOperators)
             {
-                var perBehaviorStat = behaviorStats.FindPerBehaviorStats(kvpOperators.Key);
+                var perBehaviorStat = _behaviorStats.FindPerBehaviorStats(kvpOperators.Key);
                 foreach (var idxFragment in listPopulatedFragments)
                 {
                     var perFragmentStats = perBehaviorStat.FindPerFragmentStats(idxFragment);
+
+                    /*
+                     * Mark as touched.
+                     */
+                    perFragmentStats.Iteration = iteration;
+                    
+                    /*
+                     * Update the spawn status for popuplated areas.
+                     */
                     perFragmentStats.SpawnStatus = kvpOperators.Value.GetFragmentSpawnStatus(
                         kvpOperators.Key, idxFragment);
                 }
             }
         }
+    }
+    
 
-
-        _spawnSystem.Update(behaviorStats);
+    private void _onLogicalFrame(object? sender, float dt)
+    {
+        ++_iteration;
+        
+        /*
+         * Make sure we have behavior status for every populated fragment, marking them
+         * as current as required for this iteration.
+         */
+        _findPopulatedFragments(_iteration);
+        
+        _spawnSystem.Update(_behaviorStats);
 
         /*
          * Now that we have the stats, iterate over it to trigger spawning
          * or killing of characters wherever required
          */
-        foreach (var kvpBehavior in behaviorStats.MapPerBehaviorStats)
+        foreach (var kvpBehavior in _behaviorStats.MapPerBehaviorStats)
         {
             ISpawnOperator op;
 
@@ -86,7 +104,7 @@ public class SpawnModule : AModule
             /*
              * Help ourselves to optimize the are the operator may work in.
              */
-            AABB aabb = op.AABB; 
+            AABB aabb = op.AABB;
 
             /*
              * Now iterate through all fragments which might be populated
@@ -98,7 +116,7 @@ public class SpawnModule : AModule
                 {
                     continue;
                 }
-                
+
                 SpawnStatus? opStatus;
                 PerFragmentStats perFragmentStats = kvpFrag.Value;
                 opStatus = perFragmentStats.SpawnStatus;
@@ -117,16 +135,16 @@ public class SpawnModule : AModule
                 /*
                  * Look if we need to create characters
                  */
-                if (nCharacters< opStatus.Value.MinCharacters)
+                if (nCharacters < opStatus.Value.MinCharacters)
                 {
                     var needCharacters = opStatus.Value.MinCharacters - nCharacters;
                     if (_trace)
                     {
                         Trace($"SpawnModule: for type {kvpBehavior.Key.FullName} in Fragment {kvpFrag.Key} "
-                            +"found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
-                            +"dead {opStatus.Dead} min {opStatus.MinCharacters}");
+                              + "found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
+                              + "dead {opStatus.Dead} min {opStatus.MinCharacters}");
                     }
-                    
+
                     for (int i = 0; i < needCharacters; ++i)
                     {
                         /*
@@ -148,32 +166,75 @@ public class SpawnModule : AModule
                      * The number of characters too much.
                      */
                     int basicallyTooMuch = nCharacters - opStatus.Value.MaxCharacters;
-                    
+
                     /*
                      * We would be able to kill that much.
                      */
                     int realLiving = perFragmentStats.NumberEntities;
-                    
+
                     /*
                      * this is the number of items we still can spell dead.
                      */
                     int livingNotDoomed = realLiving - perFragmentStats.ToKill;
-                    
+
                     /*
                      * So we would increase the kill count by this
                      */
                     int increaseKillTargetTo = Int32.Min(livingNotDoomed, basicallyTooMuch);
 
                     perFragmentStats.ToKill += increaseKillTargetTo;
-                    
+
                     /*
                      * If ToKill is non-zero, spawn system will add specific entities to a list
                      * in the next iteration.
                      */
                 }
+
             }
-            // TXWTODO: We need to continue here to keep the state recorded in behavior stats.
         }
+        
+        /*
+         * After that, iterate through fragments that might still be overpopulated,
+         * identifying characters to kill.
+         *
+         * Unfortunately, we need to iterate through all fragments, not only over the populated ones.
+         */
+        
+        List<DefaultEcs.Entity> listDoomedEntities = new(100);
+        foreach (var kvpBehavior in _behaviorStats.MapPerBehaviorStats)
+        {
+            foreach (var kvpFrag in kvpBehavior.Value.MapPerFragmentStats)
+            {
+                var perFragmentStats = kvpFrag.Value;
+                
+                if (perFragmentStats.PossibleVictims != null)
+                {
+                    if (perFragmentStats.ToKill > 0 && perFragmentStats.PossibleVictims.Count > 0)
+                    {
+                        /*
+                         * We need to kill something.
+                         * At this point, we could do an educated prioritization of what to kill.
+                         * However, for now, before we analysed any of the performance metrics,
+                         * just kill anything.
+                         */
+                        for (int i=0; i<perFragmentStats.ToKill; ++i)
+                        {
+                            listDoomedEntities.Add(perFragmentStats.PossibleVictims[i].Entity);
+                        }
+                    }
+
+                    /*
+                     * In any case, reset the list.
+                     */
+                    perFragmentStats.PossibleVictims.Clear();
+                }
+            }
+        }
+        
+        /*
+         * Finally, kill all doomed entities.
+         */
+        _engine.AddDoomedEntities(listDoomedEntities);
     }
 
 

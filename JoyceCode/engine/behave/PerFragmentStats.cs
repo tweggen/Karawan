@@ -13,6 +13,8 @@ namespace engine.behave;
  */
 public class PerFragmentStats
 {
+    public int Iteration = -1;
+    
     /**
      * The number of entities found inside.
      */

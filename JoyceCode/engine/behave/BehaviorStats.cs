@@ -5,7 +5,10 @@ namespace engine.behave;
 
 
 /**
- * This is the accumulator / state data structure of the SpawnSystem.
+ * This is the accumulator / state data structure of the SpawnModule.
+ *
+ * It constantly is udpated to keep track of the entities found in the various
+ * segments.
  */
 public class BehaviorStats
 {

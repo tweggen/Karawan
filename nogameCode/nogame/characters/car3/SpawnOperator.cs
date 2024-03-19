@@ -183,15 +183,4 @@ public class SpawnOperator : ISpawnOperator
             return eCharacter;
         });
     }
-
-
-    public void TerminateCharacters(PerBehaviorStats perBehaviorStats, int totalCharactersFound)
-    {
-        CameraInfo cami = _engine.CameraInfo;
-        // TXWTODO: It wouldn't work that way.
-        /*
-         * We need some sort of functor to understand what character shall be terminated.
-         * This functor shall be called while iterating over all characters.
-         */
-    }
 }

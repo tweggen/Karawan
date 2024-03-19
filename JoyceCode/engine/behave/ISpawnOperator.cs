@@ -8,7 +8,8 @@ namespace engine.behave;
 
 
 public struct SpawnInfo
-{ 
+{
+    public DefaultEcs.Entity Entity; 
     public Vector3 Position;
     public Behavior CBehavior;
 }
@@ -56,10 +57,4 @@ public interface ISpawnOperator
      *    The result of counting the characters.
      */
     public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats);
-
-
-    /**
-     * Remove extranous characters.
-     */
-    public void TerminateCharacters(PerBehaviorStats perBehaviorStats, int totalCharactersFound);
 }

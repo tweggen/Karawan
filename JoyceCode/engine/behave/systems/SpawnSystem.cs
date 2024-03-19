@@ -59,7 +59,8 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
                     SpawnInfo si = new()
                     {
                         Position = cTransformWorld.Matrix.Translation,
-                        CBehavior = cBehavior
+                        CBehavior = cBehavior,
+                        Entity = entity
                     };
                     if (_cameraInfo.IsValid)
                     {
