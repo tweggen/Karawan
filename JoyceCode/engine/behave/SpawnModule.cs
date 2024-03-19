@@ -139,12 +139,40 @@ public class SpawnModule : AModule
 
                 /*
                  * Then look if we need to terminate characters.
+                 * Note that we only can kill characters that are not in creation any more
+                 * and have not been born dead.
                  */
                 if (nCharacters > opStatus.Value.MaxCharacters)
                 {
-                    op.TerminateCharacters(kvpBehavior.Value, nCharacters);
+                    /*
+                     * The number of characters too much.
+                     */
+                    int basicallyTooMuch = nCharacters - opStatus.Value.MaxCharacters;
+                    
+                    /*
+                     * We would be able to kill that much.
+                     */
+                    int realLiving = perFragmentStats.NumberEntities;
+                    
+                    /*
+                     * this is the number of items we still can spell dead.
+                     */
+                    int livingNotDoomed = realLiving - perFragmentStats.ToKill;
+                    
+                    /*
+                     * So we would increase the kill count by this
+                     */
+                    int increaseKillTargetTo = Int32.Min(livingNotDoomed, basicallyTooMuch);
+
+                    perFragmentStats.ToKill += increaseKillTargetTo;
+                    
+                    /*
+                     * If ToKill is non-zero, spawn system will add specific entities to a list
+                     * in the next iteration.
+                     */
                 }
             }
+            // TXWTODO: We need to continue here to keep the state recorded in behavior stats.
         }
     }
 

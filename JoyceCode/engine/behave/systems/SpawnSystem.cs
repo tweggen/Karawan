@@ -16,15 +16,16 @@ namespace engine.behave.systems;
  * This is the system to apply mass manipulation to behaviors.
  *
  * - it counts every behavior that has a spawn operator attached.
- * - it triggers deletion for characters it finds
- *   - using a comparator function provided by the operator,
- *   - using a deletion function provided by the operator.
+ * - if there should be characters killed in a fragment, it creates a list of possible
+ *   victims (based on type and the fact they are behind the camera). It does, however
+ *   not trigger killing the characters.
  */
 [DefaultEcs.System.With(typeof(engine.behave.components.Behavior))]
 [DefaultEcs.System.With(typeof(engine.joyce.components.Transform3ToWorld))]
 public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 {
     private readonly Engine _engine;
+    private CameraInfo _cameraInfo;
 
     protected override void Update(BehaviorStats behaviorStats, ReadOnlySpan<Entity> entities)
     {
@@ -47,6 +48,27 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
             if (perBehaviorStats != null)
             {
                 PerFragmentStats perFragmentStats = perBehaviorStats.FindPerFragmentStats(idxEntity);
+
+                /*
+                 * If we might need to kill some in this fragment, track the list of entities of that kind
+                 * in a list to decide whom we should kill. Don't consider anything in front of the camera.
+                 * (in a wild guess, we set the opening angle to 90 degrees
+                 */
+                if (perFragmentStats.ToKill > 0)
+                {
+                    SpawnInfo si = new()
+                    {
+                        Position = cTransformWorld.Matrix.Translation,
+                        CBehavior = cBehavior
+                    };
+                    if (_cameraInfo.IsValid)
+                    {
+                        if (Vector3.Dot(_cameraInfo.Front, si.Position - _cameraInfo.Position) <= 0.7f)
+                        {
+                            perFragmentStats.NeedVictims().Add(si);
+                        }
+                    }
+                }
                 perFragmentStats.Add();
             }
             
@@ -61,6 +83,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 
     protected override void PreUpdate(BehaviorStats foo)
     {
+        _cameraInfo = _engine.CameraInfo;
     }
     
     

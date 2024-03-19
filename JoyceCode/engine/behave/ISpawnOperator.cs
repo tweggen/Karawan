@@ -1,8 +1,17 @@
 using System;
+using System.Numerics;
 using System.Threading.Tasks;
+using engine.behave.components;
 using engine.joyce;
 
 namespace engine.behave;
+
+
+public struct SpawnInfo
+{ 
+    public Vector3 Position;
+    public Behavior CBehavior;
+}
 
 
 /**

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using engine.behave;
 using engine.joyce;
 using engine.joyce.components;
@@ -21,17 +22,27 @@ public class PerFragmentStats
      * The actual spawn status for this fragment, if we have it.
      */
     public SpawnStatus? SpawnStatus = null;
-    
+
     /**
-     * The number of characters to kill inside this fragment. 
+     * The number of characters to kill inside this fragment.
      */
-    
-    /**
-     * The number of characters to spawn inside this fragment
-     */
-    
+    public int ToKill = 0;
+
+
+    public List<SpawnInfo>? PossibleVictims;
+
     public void Add()
     {
         ++NumberEntities;
+    }
+
+    public List<SpawnInfo>? NeedVictims()
+    {
+        if (null == PossibleVictims)
+        {
+            PossibleVictims = new();
+        }
+
+        return PossibleVictims;
     }
 }
