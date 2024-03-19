@@ -107,6 +107,19 @@ public class Engine
     public event EventHandler<float> OnImGuiRender;
 
     private Entity _cameraEntity;
+    private CameraInfo? _cameraInfo;
+
+    public CameraInfo CameraInfo
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _cameraInfo;
+            }
+        }
+    }
+    
     public event EventHandler<DefaultEcs.Entity> OnCameraEntityChanged;
     private Entity _playerEntity;
     public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
@@ -617,6 +630,14 @@ public class Engine
         OnLogicalFrame?.Invoke(this, dt);
 
         /*
+         * Create the new camera info.
+         */
+        lock (_lo)
+        {
+            _cameraInfo = new CameraInfo(_cameraEntity);
+        }
+        
+        /*
          * After everything has behaved, read the camera(s) to get
          * the camera positions for further processing.
          */
@@ -977,6 +998,8 @@ public class Engine
         _managerLuaScript.Manage(_ecsWorld);
         _managerMapIcons = new();
         _managerMapIcons.Manage(_ecsWorld);
+
+        _cameraInfo = new CameraInfo(_cameraEntity);
 
         _logicalThread = new Thread(_logicalThreadFunction);
         _logicalThread.Priority = ThreadPriority.AboveNormal;

@@ -21,6 +21,7 @@ public class SpawnOperator : ISpawnOperator
     private engine.geom.AABB _aabb = new(Vector3.Zero, engine.world.MetaGen.MaxWidth);
     private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
     private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
+    private engine.Engine _engine = I.Get<engine.Engine>();
     
     public engine.geom.AABB AABB
     {
@@ -186,9 +187,10 @@ public class SpawnOperator : ISpawnOperator
 
     public void TerminateCharacters(PerBehaviorStats perBehaviorStats, int totalCharactersFound)
     {
+        CameraInfo cami = _engine.CameraInfo;
+        
         /*
-         * bring the fragments into a descending order 
+         * bring the fragments into a descending order
          */
-        // TXWTODO: Get Camera info
     }
 }

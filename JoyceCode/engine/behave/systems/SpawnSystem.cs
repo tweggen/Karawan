@@ -18,13 +18,6 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 {
     private readonly Engine _engine;
 
-    private bool haveCamera;
-    private DefaultEcs.Entity _eCamera;
-    private Camera3 _cCamCamera3;
-    private Transform3ToWorld _cCamTransform3ToWorld;
-    private Vector3 _v3CameraPos;
-    private Vector3 _v3CameraFront;
-    
     protected override void Update(BehaviorStats behaviorStats, ReadOnlySpan<Entity> entities)
     {
         /*
@@ -60,15 +53,6 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 
     protected override void PreUpdate(BehaviorStats foo)
     {
-        _eCamera = _engine.GetCameraEntity();
-        if (_eCamera.IsAlive && _eCamera.Has<Camera3>() && _eCamera.Has<Transform3ToWorld>())
-        {
-            haveCamera = true;
-            _cCamCamera3 = _eCamera.Get<Camera3>();
-            _cCamTransform3ToWorld = _eCamera.Get<Transform3ToWorld>();
-            _v3CameraPos = _cCamTransform3ToWorld.Matrix.Translation;
-            _v3CameraFront = new Vector3(_cCamTransform3ToWorld.Matrix.M31, _cCamTransform3ToWorld.Matrix.M32, _cCamTransform3ToWorld.Matrix.M33);
-        }
     }
     
     
