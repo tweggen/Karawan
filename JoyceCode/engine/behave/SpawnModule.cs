@@ -29,7 +29,7 @@ public class SpawnModule : AModule
 
     private Loader _loader;
 
-    private bool _trace = false;
+    private bool _trace = true;
     
     private int _iteration = 0;
     BehaviorStats _behaviorStats = new();
@@ -217,7 +217,9 @@ public class SpawnModule : AModule
                          * However, for now, before we analysed any of the performance metrics,
                          * just kill anything.
                          */
-                        for (int i=0; i<perFragmentStats.ToKill; ++i)
+                        int killNow = Int32.Min(perFragmentStats.ToKill, perFragmentStats.PossibleVictims.Count);
+                        perFragmentStats.ToKill -= killNow;
+                        for (int i=0; i<killNow; ++i)
                         {
                             listDoomedEntities.Add(perFragmentStats.PossibleVictims[i].Entity);
                         }
@@ -230,11 +232,15 @@ public class SpawnModule : AModule
                 }
             }
         }
-        
-        /*
-         * Finally, kill all doomed entities.
-         */
-        _engine.AddDoomedEntities(listDoomedEntities);
+
+        if (listDoomedEntities.Count > 0)
+        {
+            /*
+             * Finally, kill all doomed entities.
+             */
+            Trace($"Adding {listDoomedEntities.Count} doomed entities.");
+            _engine.AddDoomedEntities(listDoomedEntities);
+        }
     }
 
 
