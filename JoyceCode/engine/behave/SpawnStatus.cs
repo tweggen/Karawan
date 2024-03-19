@@ -18,11 +18,17 @@ public struct SpawnStatus
      * The number of characters in creation.
      */
     public ushort InCreation;
-
+    
+    /**
+     * The number of characters currently being killed.
+     */
+    public ushort IsDying;
+    
     /**
      * The number of deads that won't be recreated
      */
     public ushort Dead;
+    
 
     public ushort ResidentCharacters
     {

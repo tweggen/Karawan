@@ -22,6 +22,14 @@ public class PerFragmentStats
      */
     public SpawnStatus? SpawnStatus = null;
     
+    /**
+     * The number of characters to kill inside this fragment. 
+     */
+    
+    /**
+     * The number of characters to spawn inside this fragment
+     */
+    
     public void Add()
     {
         ++NumberEntities;

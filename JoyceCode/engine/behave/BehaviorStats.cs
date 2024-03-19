@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace engine.behave;
 
+
+/**
+ * This is the accumulator / state data structure of the SpawnSystem.
+ */
 public class BehaviorStats
 {
     public Dictionary<Type, PerBehaviorStats> MapPerBehaviorStats = new();
