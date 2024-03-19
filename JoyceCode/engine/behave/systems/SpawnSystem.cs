@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -36,7 +37,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
         {
             ref Transform3ToWorld cTransformWorld = ref entity.Get<Transform3ToWorld>();
             ref Behavior cBehavior = ref entity.Get<Behavior>();
-
+            if (cBehavior.MaxDistance < 0f) continue;
             if (null == cBehavior.Provider) continue;
 
             Index3 idxEntity = Fragment.PosToIndex3(cTransformWorld.Matrix.Translation);

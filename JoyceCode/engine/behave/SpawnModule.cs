@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-
+using DefaultEcs;
+using engine.behave.components;
 using engine.behave.systems;
 using engine.geom;
 using engine.joyce;
@@ -227,7 +228,9 @@ public class SpawnModule : AModule
                             perFragmentStats.ToKill -= killNow;
                             for (int i = 0; i < killNow; ++i)
                             {
-                                op.TerminateCharacter(kvpFrag.Key, perFragmentStats.PossibleVictims[i].Entity);
+                                var si = perFragmentStats.PossibleVictims[i];
+                                si.Entity.Get<Behavior>().MaxDistance = -1f;
+                                op.TerminateCharacter(kvpFrag.Key, si.Entity);
                             }
                         }
                     }
