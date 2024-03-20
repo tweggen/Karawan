@@ -137,7 +137,7 @@ public class SpawnModule : AModule
                     var needCharacters = opStatus.MinCharacters - nHopingCharacters;
                     if (_trace)
                     {
-                        Trace($"@{kvpFrag.Key}: add {needCharacters} type {kvpBehavior.Key.FullName} "
+                        Trace($"@{kvpFrag.Key}: id {opStatus.Id} add {needCharacters} type {kvpBehavior.Key.FullName} "
                               + $"found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
                               + $"dead {opStatus.Dead} min {opStatus.MinCharacters}");
                     }

@@ -5,14 +5,12 @@ namespace engine.behave;
 
 public class SpawnStatus
 {
-#if false
-    private static _nextId;
+    private static int _nextId = 0;
  
     /**
      * For debugging: Identify this SpawnStatus
      */
     public int Id;
-#endif
     
     /**
      * The minimum of characters per fragment.
@@ -54,5 +52,6 @@ public class SpawnStatus
     public SpawnStatus()
     {
         InCreation = 0xffff;
+        Id = ++_nextId;
     }
 }
