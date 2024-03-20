@@ -8,7 +8,6 @@ using engine.behave.components;
 using engine.joyce;
 using engine.joyce.components;
 using engine.world;
-using static engine.Logger;
 
 namespace engine.behave.systems;
 
@@ -27,6 +26,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 {
     private readonly Engine _engine;
     private CameraInfo _cameraInfo;
+    
 
     protected override void Update(BehaviorStats behaviorStats, ReadOnlySpan<Entity> entities)
     {
