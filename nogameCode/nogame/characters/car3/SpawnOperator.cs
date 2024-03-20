@@ -49,6 +49,7 @@ public class SpawnOperator : ISpawnOperator
         {
             return;
         }
+        
         /*
          * Read the probability for this fragment from the cluster heat map,
          * return an appropriate spawnStatus.

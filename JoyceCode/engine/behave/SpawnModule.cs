@@ -32,10 +32,10 @@ public class SpawnModule : AModule
 
     private bool _trace = true;
     
-   BehaviorStats _behaviorStats = new();
+    BehaviorStats _behaviorStats = new();
 
 
-    private void _findPopulatedFragments(int iteration)
+    private void _findPopulatedFragments()
     {
         /*
          * This is the list of modules we need to fill with life.
@@ -75,13 +75,11 @@ public class SpawnModule : AModule
 
     private void _onLogicalFrame(object? sender, float dt)
     {
-        ++_iteration;
-        
         /*
          * Make sure we have behavior status for every populated fragment, marking them
          * as current as required for this iteration.
          */
-        _findPopulatedFragments(_iteration);
+        _findPopulatedFragments();
         
         _spawnSystem.Update(_behaviorStats);
 
@@ -151,7 +149,14 @@ public class SpawnModule : AModule
                          * Note that we are calling an async method synchronously, thereby
                          * having several of them run in the background.
                          */
-                        op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
+                        try
+                        {
+                            op.SpawnCharacter(kvpBehavior.Key, kvpFrag.Key, perFragmentStats);
+                        }
+                        catch (Exception e)
+                        {
+                            Error($"Exception spawning character: {e}");
+                        }
                     }
                 }
 

@@ -43,7 +43,7 @@ public class PerFragmentStats
     }
 
     
-    public List<SpawnInfo>? NeedVictims()
+    public List<SpawnInfo> NeedVictims()
     {
         if (null == PossibleVictims)
         {
