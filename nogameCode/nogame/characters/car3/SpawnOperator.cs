@@ -123,7 +123,6 @@ public class SpawnOperator : ISpawnOperator
         {
             _findSpawnStatus_nl(idxFragment, out var spawnStatus);
             spawnStatus.InCreation++;
-            _mapFragmentStatus[idxFragment] = spawnStatus;
         }
 
         Task.Run(async () =>
@@ -163,7 +162,6 @@ public class SpawnOperator : ISpawnOperator
                                  */
                                 _findSpawnStatus_nl(idxFragment, out var spawnStatus);
                                 spawnStatus.Dead++;
-                                _mapFragmentStatus[idxFragment] = spawnStatus;
                             }
                         }
                     }
@@ -178,7 +176,6 @@ public class SpawnOperator : ISpawnOperator
             {
                 _findSpawnStatus_nl(idxFragment, out var spawnStatus);
                 spawnStatus.InCreation--;
-                _mapFragmentStatus[idxFragment] = spawnStatus;
             }
 
             return eCharacter;
@@ -192,7 +189,6 @@ public class SpawnOperator : ISpawnOperator
         {
             _findSpawnStatus_nl(idxFragment, out var spawnStatus);
             spawnStatus.IsDying++;
-            _mapFragmentStatus[idxFragment] = spawnStatus;
         }
 
         _engine.QueueCleanupAction(() =>
@@ -208,7 +204,6 @@ public class SpawnOperator : ISpawnOperator
             {
                 _findSpawnStatus_nl(idxFragment, out var spawnStatus);
                 spawnStatus.IsDying--;
-                _mapFragmentStatus[idxFragment] = spawnStatus;
             }
         });
     }

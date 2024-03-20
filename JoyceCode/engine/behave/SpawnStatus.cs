@@ -2,8 +2,18 @@ using BepuPhysics.Constraints;
 
 namespace engine.behave;
 
-public struct SpawnStatus
+
+public class SpawnStatus
 {
+#if false
+    private static _nextId;
+ 
+    /**
+     * For debugging: Identify this SpawnStatus
+     */
+    public int Id;
+#endif
+    
     /**
      * The minimum of characters per fragment.
      */

@@ -40,7 +40,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.map.MapViewer>(),
         new MyModule<modules.menu.Module>() { Activate = false },
         new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
-        new MyModule<builtin.modules.Stats>(),
+        new MyModule<builtin.modules.Stats>() { Activate = false },
         new MyModule<nogame.modules.daynite.FogColor>(),
         new SharedModule<nogame.modules.story.Narration>() { Activate = false },
         new SharedModule<builtin.controllers.InputController>(),

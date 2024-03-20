@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using DefaultEcs;
 using engine.behave.components;
 using engine.behave.systems;
 using engine.geom;
@@ -121,26 +120,26 @@ public class SpawnModule : AModule
                 if (null == opStatus)
                 {
                     opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
-                    perFragmentStats.SpawnStatus = opStatus.Value;
+                    perFragmentStats.SpawnStatus = opStatus;
                 }
 
                 /*
                  * We not only need to count the living characters, but also other characters
                  * that still are in creation or failed to be created at all.
                  */
-                int nHopingCharacters = perFragmentStats.NumberEntities + opStatus.Value.ResidentCharacters;
+                int nHopingCharacters = perFragmentStats.NumberEntities + opStatus.ResidentCharacters;
 
                 /*
                  * Look if we need to create characters
                  */
-                if (nHopingCharacters < opStatus.Value.MinCharacters)
+                if (nHopingCharacters < opStatus.MinCharacters)
                 {
-                    var needCharacters = opStatus.Value.MinCharacters - nHopingCharacters;
+                    var needCharacters = opStatus.MinCharacters - nHopingCharacters;
                     if (_trace)
                     {
                         Trace($"@{kvpFrag.Key}: add {needCharacters} type {kvpBehavior.Key.FullName} "
-                              + $"found {perFragmentStats.NumberEntities} creat {opStatus.Value.InCreation} "
-                              + $"dead {opStatus.Value.Dead} min {opStatus.Value.MinCharacters}");
+                              + $"found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
+                              + $"dead {opStatus.Dead} min {opStatus.MinCharacters}");
                     }
 
                     for (int i = 0; i < needCharacters; ++i)
@@ -160,19 +159,19 @@ public class SpawnModule : AModule
                     }
                 }
 
-                int nLivingCharacters = perFragmentStats.NumberEntities + opStatus.Value.ResidentCharacters - opStatus.Value.IsDying;
+                int nLivingCharacters = perFragmentStats.NumberEntities + opStatus.ResidentCharacters - opStatus.IsDying;
 
                 /*
                  * Then look if we need to terminate characters.
                  * Note that we only can kill characters that are not in creation any more
                  * and have not been born dead.
                  */
-                if (nLivingCharacters > opStatus.Value.MaxCharacters)
+                if (nLivingCharacters > opStatus.MaxCharacters)
                 {
                     /*
                      * The number of characters too much.
                      */
-                    int basicallyTooMuch = nLivingCharacters - opStatus.Value.MaxCharacters;
+                    int basicallyTooMuch = nLivingCharacters - opStatus.MaxCharacters;
 
                     /*
                      * We would be able to kill that much.
