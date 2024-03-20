@@ -41,7 +41,6 @@ namespace engine.streets
         public int probabilityNextStrokeDecreaseWeight { get; set; } = 77;
 
         public float  newStrokeMinimum { get; set; } = 40f;
-        public float newStrokeLinearWeight { get; set; } = 0f;
         public float newStrokeSquaredWeight { get; set; } = 40f;
         public float newLengthMin { get; set;  } = 50f;
 
