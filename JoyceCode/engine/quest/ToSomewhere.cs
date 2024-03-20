@@ -129,6 +129,7 @@ public class ToSomewhere : engine.world.IOperator
         }
 
         po.CollisionProperties = collisionProperties;
+        po.OnCollision = _onCollision;
         eGoal.Set(new Body(po, prefCylinder));
 
         var apiTransform = I.Get<joyce.TransformApi>();
