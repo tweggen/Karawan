@@ -32,8 +32,7 @@ public class SpawnModule : AModule
 
     private bool _trace = true;
     
-    private int _iteration = 0;
-    BehaviorStats _behaviorStats = new();
+   BehaviorStats _behaviorStats = new();
 
 
     private void _findPopulatedFragments(int iteration)
@@ -44,6 +43,11 @@ public class SpawnModule : AModule
          * that have SpawnOperators associated.
          */
         var listPopulatedFragments = _loader.GetPopulatedFragments(FragmentVisibility.Visible3dNow);
+
+        /*
+         * Increase the generation.
+         */
+        _behaviorStats.ClearPerFrame();
 
         /*
          * Build the empty tree for the fragments that shall be visible and the
@@ -58,11 +62,6 @@ public class SpawnModule : AModule
                 {
                     var perFragmentStats = perBehaviorStat.FindPerFragmentStats(idxFragment);
 
-                    /*
-                     * Mark as touched.
-                     */
-                    perFragmentStats.Iteration = iteration;
-                    
                     /*
                      * Update the spawn status for popuplated areas.
                      */

@@ -13,8 +13,6 @@ namespace engine.behave;
  */
 public class PerFragmentStats
 {
-    public int Iteration = -1;
-    
     /**
      * The number of entities found inside.
      */
@@ -33,11 +31,18 @@ public class PerFragmentStats
 
     public List<SpawnInfo>? PossibleVictims;
 
+    public void ClearPerFrame()
+    {
+        NumberEntities = 0;
+    }
+        
+    
     public void Add()
     {
         ++NumberEntities;
     }
 
+    
     public List<SpawnInfo>? NeedVictims()
     {
         if (null == PossibleVictims)

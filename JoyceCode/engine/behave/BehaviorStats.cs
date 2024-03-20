@@ -14,11 +14,21 @@ public class BehaviorStats
 {
     public Dictionary<Type, PerBehaviorStats> MapPerBehaviorStats = new();
 
+    public void ClearPerFrame()
+    {
+        foreach (var kvpFrag in MapPerBehaviorStats)
+        {
+            kvpFrag.Value.ClearPerFrame();
+        }
+    }
 
+    
     public PerBehaviorStats? GetPerBehaviorStats(Type behaviorType)
     {
         PerBehaviorStats perBehaviorStats = null;
-        MapPerBehaviorStats.TryGetValue(behaviorType, out perBehaviorStats);
+        if (MapPerBehaviorStats.TryGetValue(behaviorType, out perBehaviorStats))
+        {
+        }
         return perBehaviorStats;
     }
     
