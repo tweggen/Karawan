@@ -273,6 +273,11 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 po.CollisionProperties = collisionProperties;
                 po.Entity = eTarget;
                 eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+                
+                /*
+                 * We need to set a preliminary Transform3World asset. Invisible, but inside the fragment.
+                 */
+                eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0, Matrix4x4.CreateTranslation(worldFragment.Position)));
 
 #if DEBUG
                 float millisAfterBody = (float)sw.Elapsed.TotalMilliseconds;

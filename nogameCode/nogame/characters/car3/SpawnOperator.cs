@@ -84,8 +84,8 @@ public class SpawnOperator : ISpawnOperator
              */
             spawnStatus = new()
             {
-                MinCharacters = (ushort)(0.2f * nMaxSpawns),
-                MaxCharacters = (ushort)(0.4f * nMaxSpawns),
+                MinCharacters = (ushort)(0.6f * nMaxSpawns),
+                MaxCharacters = (ushort)(0.9f * nMaxSpawns),
                 InCreation = (ushort)0
             };
         }
@@ -94,13 +94,18 @@ public class SpawnOperator : ISpawnOperator
     }
 
 
-    public SpawnStatus GetFragmentSpawnStatus(System.Type behaviorType, in Index3 idxFragment)
+    private void _findSpawnStatus(in Index3 idxFragment, out SpawnStatus spawnStatus)
     {
-        SpawnStatus spawnStatus;
         lock (_lo)
         {
             _findSpawnStatus_nl(idxFragment, out spawnStatus);
         }
+    }
+    
+    
+    public SpawnStatus GetFragmentSpawnStatus(System.Type behaviorType, in Index3 idxFragment)
+    {
+        _findSpawnStatus(idxFragment, out var spawnStatus);
         return spawnStatus;
     }
 
@@ -119,11 +124,8 @@ public class SpawnOperator : ISpawnOperator
 
     public void SpawnCharacter(System.Type behaviorType, Index3 idxFragment, PerFragmentStats perFragmentStats)
     {
-        lock (_lo)
-        {
-            _findSpawnStatus_nl(idxFragment, out var spawnStatus);
-            spawnStatus.InCreation++;
-        }
+        _findSpawnStatus(idxFragment, out var spawnStatus);
+        spawnStatus.InCreation++;
 
         Task.Run(async () =>
         {
@@ -155,14 +157,7 @@ public class SpawnOperator : ISpawnOperator
                         }
                         else
                         {
-                            lock (_lo)
-                            {
-                                /*
-                                 * Act as if the thing still is in creation.
-                                 */
-                                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
-                                spawnStatus.Dead++;
-                            }
+                            spawnStatus.Dead++;
                         }
                     }
                 }
@@ -172,11 +167,7 @@ public class SpawnOperator : ISpawnOperator
                 Error($"Exception spawning character: {e}");
             }
 
-            lock (_lo)
-            {
-                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
-                spawnStatus.InCreation--;
-            }
+            spawnStatus.InCreation--;
 
             return eCharacter;
         });
@@ -185,11 +176,8 @@ public class SpawnOperator : ISpawnOperator
 
     public void TerminateCharacter(Index3 idxFragment, DefaultEcs.Entity entity)
     {
-        lock (_lo)
-        {
-            _findSpawnStatus_nl(idxFragment, out var spawnStatus);
-            spawnStatus.IsDying++;
-        }
+        _findSpawnStatus(idxFragment, out var spawnStatus);
+        spawnStatus.IsDying++;
 
         _engine.QueueCleanupAction(() =>
         {
@@ -200,11 +188,7 @@ public class SpawnOperator : ISpawnOperator
             catch (Exception e)
             {
             }
-            lock (_lo)
-            {
-                _findSpawnStatus_nl(idxFragment, out var spawnStatus);
-                spawnStatus.IsDying--;
-            }
+            spawnStatus.IsDying--;
         });
     }
 }
