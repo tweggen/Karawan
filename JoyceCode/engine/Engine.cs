@@ -422,12 +422,15 @@ public class Engine
                 {
                     if (count > 1000)
                     {
-                        /*
-                         * Emergency: If there is too much in the queue, increase the processing time
-                         * to 2s.
-                         */
-                        matTime = 2000f;
-                        Warning($"Action queue high threshold, blocking.");
+                        if (matTime < 2000f)
+                        {
+                            /*
+                             * Emergency: If there is too much in the queue, increase the processing time
+                             * to 2s.
+                             */
+                            matTime = 2000f;
+                            Warning($"Action queue high threshold, blocking.");
+                        }
                     }
                 }
  

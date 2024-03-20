@@ -227,7 +227,7 @@ public class SpawnModule : AModule
                         int killNow = Int32.Min(perFragmentStats.ToKill, perFragmentStats.PossibleVictims.Count);
                         if (killNow > 0)
                         {
-                            Trace($"@{kvpFrag.Key}: Adding {killNow} doomed entities.");
+                            if (_trace) Trace($"@{kvpFrag.Key}: Adding {killNow} doomed entities.");
                             perFragmentStats.ToKill -= killNow;
                             for (int i = 0; i < killNow; ++i)
                             {

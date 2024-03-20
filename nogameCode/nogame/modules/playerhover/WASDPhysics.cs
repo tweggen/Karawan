@@ -133,7 +133,10 @@ internal class WASDPhysics : AModule, IInputPart
                  * invert control if we are going backwards. This is car like, not thrust like,
                  * but feels more natural for GTA infused people like me.
                  */
-                if (Vector3.Dot(vFront, vTargetVelocity) < -0.1f)
+                if (
+                    /* Vector3.Dot(vFront, vTargetVelocity) < -0.1f */
+                    controllerState.FrontMotion < 0
+                    )
                 {
                     inputTurnMotion *= -1f;
                 }
