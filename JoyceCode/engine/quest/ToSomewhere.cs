@@ -114,24 +114,21 @@ public class ToSomewhere : engine.world.IOperator
 
         DefaultEcs.Entity eGoal = e.CreateEntity($"goal {Name}");
         engine.physics.Object po;
+        CollisionProperties collisionProperties = new() {
+            Entity = eGoal,
+            Flags =
+                engine.physics.CollisionProperties.CollisionFlags.IsDetectable
+                | engine.physics.CollisionProperties.CollisionFlags.TriggersCallbacks,
+            Name = Name,
+        };
         lock (e.Simulation)
         {
             var shape = I.Get<ShapeFactory>().GetCylinderShape(3f);
-            po = new engine.physics.Object(e, eGoal, shape)
-            {
-                CollisionProperties = new CollisionProperties()
-                {
-                    Entity = eGoal,
-                    Flags =
-                        engine.physics.CollisionProperties.CollisionFlags.IsDetectable
-                        | engine.physics.CollisionProperties.CollisionFlags.TriggersCallbacks,
-                    Name = Name,
-                },
-                OnCollision = _onCollision
-            };
+            po = new engine.physics.Object(e, eGoal, shape);
             prefCylinder = e.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
         }
 
+        po.CollisionProperties = collisionProperties;
         eGoal.Set(new Body(po, prefCylinder));
 
         var apiTransform = I.Get<joyce.TransformApi>();
