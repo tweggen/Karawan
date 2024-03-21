@@ -119,19 +119,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         {
 
             var idxPoint = (int)(_rnd.GetFloat() * l);
-            var idx = 0;
-            StreetPoint chosenStreetPoint = null;
-            foreach (var sp in streetPoints)
-            {
-                if (idx == idxPoint)
-                {
-                    chosenStreetPoint = sp;
-                    break;
-                }
-
-                idx++;
-            }
-
+            StreetPoint chosenStreetPoint = streetPoints[idxPoint];
             if (!chosenStreetPoint.HasStrokes())
             {
                 continue;

@@ -295,7 +295,7 @@ namespace engine.streets
             var w = Weight;
             //w = w - 0.5;
             if (w < 0f ) w = 0f;
-            return 1.8f * (9.5f + w * 12f);
+            return 0.5f+1.2f * (9.5f + w * 12f);
 #endif
         }
 

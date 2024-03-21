@@ -114,37 +114,30 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         int nTries = 0;
         StreetPoint chosenStreetPoint = null;
 
+        var idxPoint = (int)(_rnd.GetFloat() * l);
         while (chosenStreetPoint == null && nTries++ < 10)
         {
             /*
              * Now actually select the starting point.
              */
-            var idxPoint = (int)(_rnd.GetFloat() * l);
-            var idx = 0;
-            foreach (var sp in streetPoints)
+            var candStreetPoint = streetPoints[idxPoint];
+
+            float px = candStreetPoint.Pos.X + clusterDesc.Pos.X;
+            float pz = candStreetPoint.Pos.Y + clusterDesc.Pos.Z;
+            if (worldFragment.IsInside(new Vector2(px, pz)))
             {
-                if (idx >= idxPoint)
+                if (candStreetPoint.HasStrokes())
                 {
-                    float px = sp.Pos.X + clusterDesc.Pos.X;
-                    float pz = sp.Pos.Y + clusterDesc.Pos.Z;
-                    if (worldFragment.IsInside(new Vector2(px, pz)))
-                    {
-                        if (sp.HasStrokes())
-                        {
-                            chosenStreetPoint = sp;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        
-                        if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
-                    }
-
+                    chosenStreetPoint = candStreetPoint;
+                    break;
                 }
-
-                idx++;
             }
+            else
+            {
+                if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
+            }
+
+            idxPoint = (idxPoint + 1) % l;
         }
 
         if (null==chosenStreetPoint)

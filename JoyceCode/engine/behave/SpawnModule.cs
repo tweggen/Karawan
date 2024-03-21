@@ -22,6 +22,16 @@ public class SpawnModule : AModule
 
     private Queue<Action> _queueSpawnActions = new();
 
+
+    /**
+     * We run only Every nth frame. 
+     */
+    public int Every
+    {
+        get;
+        set;
+    } = 40;
+    
     /**
      * Map of the actual spawn operators.
      */
@@ -70,10 +80,16 @@ public class SpawnModule : AModule
             }
         }
     }
+
+
+    private int _callCounter = 0;
     
 
     private void _onLogicalFrame(object? sender, float dt)
     {
+        if (--_callCounter > 0) return;
+        _callCounter = Every;
+        
         /*
          * Make sure we have behavior status for every populated fragment, marking them
          * as current as required for this iteration.

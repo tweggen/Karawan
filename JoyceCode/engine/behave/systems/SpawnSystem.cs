@@ -35,19 +35,20 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
          */
         foreach (var entity in entities)
         {
-            ref Transform3ToWorld cTransformWorld = ref entity.Get<Transform3ToWorld>();
             ref Behavior cBehavior = ref entity.Get<Behavior>();
             if (cBehavior.MaxDistance < 0f) continue;
             if (null == cBehavior.Provider) continue;
 
-            Index3 idxEntity = Fragment.PosToIndex3(cTransformWorld.Matrix.Translation);
-            PerBehaviorStats? perBehaviorStats = behaviorStats.GetPerBehaviorStats(cBehavior.Provider.GetType());
-            
+            var perBehaviorStats = behaviorStats.GetPerBehaviorStats(cBehavior.Provider.GetType());
+
             /*
              * Only count behaviors that are tracked by spawn operators.
              */
             if (perBehaviorStats != null)
             {
+                ref Transform3ToWorld cTransformWorld = ref entity.Get<Transform3ToWorld>();
+                Index3 idxEntity = Fragment.PosToIndex3(cTransformWorld.Matrix.Translation);
+            
                 PerFragmentStats perFragmentStats = perBehaviorStats.FindPerFragmentStats(idxEntity);
 
                 /*

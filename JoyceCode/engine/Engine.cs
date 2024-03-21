@@ -1164,7 +1164,7 @@ public class Engine
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
         
 #if DEBUG
-        {
+        if (engine.GlobalSettings.Get("engine.physics.TraceCalls") == "true") {
             string filename = $"joyce-physics-dump-{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.json";
             PLog = new physics.actions.Log()
             {

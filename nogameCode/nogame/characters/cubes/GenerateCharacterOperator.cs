@@ -107,7 +107,7 @@ namespace nogame.characters.cubes
             if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
             _rnd.Clear();
 
-            float propMaxDistance = (float) engine.Props.Get("nogame.characters.cube.maxDistance", 400f); 
+            float propMaxDistance = (float) engine.Props.Get("nogame.characters.cube.maxDistance", 250f); 
             
             /*
              * Now, that we have read the cluster description that is associated, we
@@ -124,31 +124,15 @@ namespace nogame.characters.cubes
             }
 
             int l = streetPoints.Count;
-            int nCharacters = (int)((float)l * 4f / 5f);
+            int nCharacters = (int)((float)l * 2f / 5f);
 
             for (int i = 0; i < nCharacters; i++)
             {
 
                 var idxPoint = (int)(_rnd.GetFloat() * l);
-                var idx = 0;
                 StreetPoint chosenStreetPoint = null;
-                foreach (var sp in streetPoints)
-                {
-                    if (idx == idxPoint)
-                    {
-                        chosenStreetPoint = sp;
-                        break;
-                    }
-
-                    idx++;
-                }
-
-                if (null == chosenStreetPoint)
-                {
-                    Error("chosenStreetPoint must not be null at this point.");
-                }
-
-                if (!chosenStreetPoint.HasStrokes())
+                chosenStreetPoint = streetPoints[idxPoint];
+                if (null == chosenStreetPoint || !chosenStreetPoint.HasStrokes())
                 {
                     continue;
                 }
@@ -191,12 +175,7 @@ namespace nogame.characters.cubes
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
                             { MaxDistance = propMaxDistance }
                         );
-#if false
-                        eTarget.Set(new components.CubeSpinner(Quaternion.CreateFromAxisAngle(
-                            new Vector3(_rnd.GetFloat() * 2f - 1f, _rnd.GetFloat() * 2f - 1f,
-                                _rnd.GetFloat() * 2f - 1f),
-                            _rnd.GetFloat() * 2f * (float)Math.PI / 180f)));
-#endif
+
                         BodyReference prefSphere;
                         engine.physics.Object po;
                         lock (wf.Engine.Simulation)
