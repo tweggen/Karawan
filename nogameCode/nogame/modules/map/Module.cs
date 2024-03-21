@@ -362,7 +362,7 @@ public class Module : AModule, IInputPart
                 -MapY * Vector3.UnitY);
             _eMap.Set(new engine.behave.components.Clickable()
             {
-                ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.map.toggleMap", null) { Position = v2RelPos }
+                ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.map.toggleMap", null) { Position = cev.Position }
             });
 
         }
@@ -697,11 +697,10 @@ public class Module : AModule, IInputPart
                 break;
             case Modes.MapFullscreen:
                 // TXWTODO: Remove this workaround!
-                if (ev.Position.X < 0.1f && ev.Position.Y < 0.1f)
+                if ((ev.Position.X < _viewSize.X/10f) && (ev.Position.Y < _viewSize.Y/10f))
                 {
                     Mode = Modes.MapMini;
                 }
-
                 break;
         }
     }
