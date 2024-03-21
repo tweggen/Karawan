@@ -27,10 +27,12 @@ class AssetMaterialStreamProvider : IMaterialStreamProvider
 
 public class Obj
 {
-    static readonly private IMaterialStreamProvider _materialStreamProvider = new AssetMaterialStreamProvider();
-    static readonly private object _lo = new();
-    static readonly private ObjLoaderFactory _objLoaderFactory = new();
+    readonly private IMaterialStreamProvider _materialStreamProvider = new AssetMaterialStreamProvider();
+    readonly private object _lo = new();
+    readonly private ObjLoaderFactory _objLoaderFactory = new();
 
+    private engine.Engine _engine = I.Get<engine.Engine>();
+    
     private static ulong _toHash(int vertexIndex, int textureIndex, int normalIndex)
     {
         return
@@ -46,17 +48,20 @@ public class Obj
         return (n.Length >= 6 && n.Substring(0, 6) == "thrust");
     }
 
+    
     static private bool _isStandardLightMaterialName(string n)
     {
         return (n.Length >= 13 && n.Substring(0, 13) == "standardlight");
     }
+    
 
     static private bool _isPrimaryColorMaterialName(string n)
     {
         return (n.Length >= 12 && n.Substring(0, 12) == "primarycolor");
     }
+    
 
-    static public void LoadModelInstanceSync(string url,
+    public void LoadModelInstanceSync(string url,
         ModelProperties modelProperties,
         out Model model)
     {
@@ -248,9 +253,9 @@ public class Obj
     }
     
     
-    static public Task<Model> LoadModelInstance(string url, ModelProperties modelProperties)
+    public Task<Model> LoadModelInstance(string url, ModelProperties modelProperties)
     {
-        return Task.Run(() =>
+        return _engine.Run(() =>
         {
             LoadModelInstanceSync(url, modelProperties, out var model);
             return model;

@@ -70,7 +70,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
          * We need to create two instances, one for the stand and one for the ball.
          * The stand will be static, the ball will not be, as it can be consumed.
          */
-        Model modelStand = await ModelCache.Instance().Instantiate(
+        Model modelStand = await I.Get<ModelCache>().Instantiate(
             $"polytope-stand-only.obj", new builtin.loader.ModelProperties(), new InstantiateModelParams()
             {
                 GeomFlags = 0
@@ -89,7 +89,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
         Trace($"in frag {worldFragment.GetId()} Placing polytope @{worldFragment.Position+vPos}");
         
 
-        Model modelBall = await ModelCache.Instance().Instantiate(
+        Model modelBall = await I.Get<ModelCache>().Instantiate(
             $"polytope-ball-only.obj", new builtin.loader.ModelProperties(), new InstantiateModelParams()
             {
                 GeomFlags = 0

@@ -62,7 +62,7 @@ public class GenerateCharacterOperator : IWorldOperator
             Speed = 60f
         };
         
-        Model model = await ModelCache.Instance().Instantiate(
+        Model model = await I.Get<ModelCache>().Instantiate(
             "tram1.obj", null, new InstantiateModelParams()
             {
                 GeomFlags = 0

@@ -13,10 +13,8 @@ namespace engine.joyce;
 
 public class ModelCache
 {
-    private static object _loClass = new();
-    private static ModelCache _instance;
-    
     private object _lo = new();
+    private engine.Engine _engine = I.Get<engine.Engine>();
     
     /**
      * This is the per-model semaphore
@@ -29,7 +27,7 @@ public class ModelCache
     private readonly ConcurrentDictionary<string, Model> _cache = new ConcurrentDictionary<string, Model>();
     
     
-    private string _hash(string url,
+    private static string _hash(string url,
         ModelProperties modelProperties,
         in InstantiateModelParams? p)
     {
@@ -44,7 +42,7 @@ public class ModelCache
         ModelProperties modelProperties,
         InstantiateModelParams p)
     {
-        return Task.Run(() =>
+        return _engine.Run(() =>
         {
             /*
              * If this is an non-hjierarchical model, we bake the model params
@@ -71,7 +69,7 @@ public class ModelCache
     {
         if (url.EndsWith(".obj"))
         {
-            return Obj.LoadModelInstance(url, modelProperties);
+            return I.Get<Obj>().LoadModelInstance(url, modelProperties);
         } else if (url.EndsWith(".fbx"))
         {
             return Fbx.LoadModelInstance(url, modelProperties);
@@ -82,7 +80,7 @@ public class ModelCache
         else
         {
             ErrorThrow($"Unsupported file format for url {url}.", m => new ArgumentException(m));
-            return Task.Run(() => new Model());
+            return _engine.Run(() => new Model());
         }
     }
 
@@ -144,21 +142,4 @@ public class ModelCache
     }
     
 
-    public static ModelCache Instance()
-    {
-        lock (_loClass)
-        {
-            if (_instance == null)
-            {
-                _instance = new ModelCache();
-            }
-
-            return _instance;
-        }
-    }
-
-    private ModelCache()
-    {
-        
-    }
 }

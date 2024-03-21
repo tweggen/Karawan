@@ -186,7 +186,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 MaxDistance = propMaxDistance
             };
 
-            Model model = await ModelCache.Instance().Instantiate(
+            Model model = await I.Get<ModelCache>().Instantiate(
                 _carFileName(carIdx), props, instantiateModelParams);
             InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
 

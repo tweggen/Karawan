@@ -38,7 +38,9 @@
     "engine.news.ClickModule": null,
     "nogame.modules.World": null,
     "nogame.modules.daynite.Module": null,
-    "engine.behave.ClusterHeatMap": null
+    "engine.behave.ClusterHeatMap": null,
+    "builtin.loader.Obj": null,
+    "engine.joyce.ModelCache": null
   },
   "mapProviders":
   {
