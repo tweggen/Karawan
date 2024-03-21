@@ -1140,8 +1140,23 @@ public class Engine
     }
 
 
+    private TaskScheduler _taskScheduler;
+    public TaskScheduler TaskScheduler { get => _taskScheduler; }
+    
+    private TaskFactory _taskFactory;
+    public TaskFactory TF { get => _taskFactory; }
+    
+    public System.Threading.Tasks.Task Run(Action action) => _taskFactory.StartNew(action, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
+    public System.Threading.Tasks.Task<TResult> Run<TResult>(Func<TResult> function) => _taskFactory.StartNew(function, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
+    public System.Threading.Tasks.Task Run(Func<System.Threading.Tasks.Task?> function) => _taskFactory.StartNew(function, CancellationToken.None, TaskCreationOptions.DenyChildAttach, _taskScheduler );
+    
+
     public Engine(engine.IPlatform platform)
     {
+        _taskScheduler = new LimitedConcurrencyLevelTaskScheduler(
+            Int32.Max(3, Environment.ProcessorCount - 2));
+        _taskFactory = new TaskFactory(_taskScheduler);
+        
         engine.Unit u = new();
         u.RunStartupTest();
 

@@ -14,7 +14,7 @@ internal class PrioQueue
 }
 
 
-public class TaskScheduler
+public class RoundRobin
 {
     private PrioQueue[] PrioQueues;
     public void QueueTask(int prio, int thread, TaskArg func)
@@ -23,7 +23,7 @@ public class TaskScheduler
     }
 
 
-    public TaskScheduler()
+    public RoundRobin()
     {
     }
 }

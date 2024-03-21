@@ -84,7 +84,7 @@ public class Scene : AModule, IScene
         /*
          * Start preloading in the background.
          */
-        Task.Run(() =>
+        _engine.Run(() =>
         {
             I.Get<SetupMetaGen>().PrepareMetaGen(_engine);
             

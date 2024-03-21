@@ -407,7 +407,7 @@ public class Fragment : IDisposable
          * thread, it just needs to be mutexed with respect to the
          * simulation.
          */
-        Task.Run(() =>
+        Engine.Run(() =>
         {
             engine.physics.components.Statics cStatics = default;
 

@@ -12,6 +12,7 @@ public class Timeline : IDisposable
     private SortedDictionary<string, DateTime> _mapTimeline = new();
     private SortedDictionary<DateTime, Func<bool>> _mapActions = new();
     private System.Timers.Timer _timer = new();
+    private engine.Engine _engine = I.Get<Engine>(); 
     
 
     private void _checkExpiredActions(DateTime now)
@@ -55,7 +56,7 @@ public class Timeline : IDisposable
             /*
              * Async trigger off task.
              */
-            Task.Run(() =>
+            _engine.Run(() =>
             {
                 bool success = action();
                 if (!success)

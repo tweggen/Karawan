@@ -220,6 +220,8 @@ public class MetaGen
         }
 
         if (TRACE_FRAGMENT_OPEARTORS) Trace($"WorldMetaGen: Calling fragment operators for {fragment.GetId()}...");
+        
+        var e = fragment.Engine;
 
 
         /*
@@ -229,7 +231,7 @@ public class MetaGen
 
         if (null != enRoot)
         {
-            Task.Run(() => {
+            e.Run(() => {
                 Task tApplyFragmentOperators = enRoot.Execute((object instance) =>
                 {
                     var op = instance as IFragmentOperator;
@@ -243,7 +245,7 @@ public class MetaGen
 
                         if (TRACE_FRAGMENT_OPEARTORS) Trace($"Running Fragment Operator \"{op.FragmentOperatorGetPath()}\".");
 
-                        return Task.Run(op.FragmentOperatorApply(fragment, visib));
+                        return e.Run(op.FragmentOperatorApply(fragment, visib));
                     }
                     else
                     {

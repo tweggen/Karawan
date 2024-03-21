@@ -127,7 +127,7 @@ public class SpawnOperator : ISpawnOperator
         _findSpawnStatus(idxFragment, out var spawnStatus);
         spawnStatus.InCreation++;
 
-        Task.Run(async () =>
+        _engine.Run(async () =>
         {
             DefaultEcs.Entity eCharacter = default;
 
