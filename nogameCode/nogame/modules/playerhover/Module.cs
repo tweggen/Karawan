@@ -454,9 +454,10 @@ public class Module : engine.AModule
 
             InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags };
 
-            Model model = Task.Run(() => I.Get<ModelCache>().Instantiate(
+            var tModel = _engine.Run(() => I.Get<ModelCache>().Instantiate(
                 ModelUrl,
-                null, instantiateModelParams)).GetAwaiter().GetResult();
+                null, instantiateModelParams));
+            Model model = tModel.GetAwaiter().GetResult().GetAwaiter().GetResult();
 
             {
                 builtin.tools.ModelBuilder modelBuilder = new(_engine, model, instantiateModelParams);

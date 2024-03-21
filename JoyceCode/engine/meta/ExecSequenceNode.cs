@@ -8,7 +8,8 @@ public class ExecSequenceNode : AExecNode
 {
     public override Task? Execute(Func<object, Task?> op)
     {
-        return Task.Run(async () =>
+        // TXWTODO: IS there any way to remove this engine reference?
+        return I.Get<Engine>().Run(async () =>
         {
             if (null != _children)
             {
