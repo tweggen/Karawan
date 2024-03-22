@@ -24,31 +24,6 @@ public class GeneratePolytopeOperator : IFragmentOperator
     private string _myKey;
     private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
     
-    private static SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeSphere = new();
-    private static SortedDictionary<float, BepuPhysics.Collidables.Sphere> _mapPbodySphere = new();
-    private static BepuPhysics.Collidables.TypedIndex _getSphereShape(float radius, in Engine engine)
-    {
-        lock(_classLock)
-        {
-            BepuPhysics.Collidables.TypedIndex pshapeSphere;
-            if (_mapPshapeSphere.TryGetValue(radius, out pshapeSphere))
-            {
-                return pshapeSphere;
-            }
-
-            BepuPhysics.Collidables.Sphere pbodySphere = new(radius); 
-            lock (engine.Simulation)
-            {
-                 pshapeSphere = engine.Simulation.Shapes.Add(pbodySphere);
-            }
-
-            _mapPbodySphere[radius] = pbodySphere;
-            _mapPshapeSphere[radius] = pshapeSphere;
-            
-            return pshapeSphere;
-        }
-    }
-    
 
     public string FragmentOperatorGetPath()
     {
@@ -226,6 +201,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
 
     });
 
+    
     public GeneratePolytopeOperator(
         engine.world.ClusterDesc clusterDesc,
         string strKey
