@@ -31,7 +31,11 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
             ref physics.components.Body cRefKinetic = ref entity.Get<physics.components.Body>();
             var po = cRefKinetic.PhysicsObject;
             if (po == null) continue;
-            
+
+            if (po.CollisionProperties?.Name == "nogame.furniture.polytopeBall")
+            {
+                int a = 1;
+            }
             // TXWTODO: This is a workaround for addressing only the former kinematic objects.
             if ((po.Flags & (physics.Object.HaveContactListener|physics.Object.IsStatic)) != 0)
             {
