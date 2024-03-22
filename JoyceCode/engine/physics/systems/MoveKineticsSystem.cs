@@ -56,12 +56,27 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                 if (isInside)
                 {
                     // TXWTODO: Can we write that more efficiently?
-                    if (oldPos != newPos)
+                    bool hasNewPos = oldPos != newPos;
+                    
+                    /*
+                     * No matter, if the body has changed its target position, we need
+                     * to set the physics object's position, if it was outside before.
+                     */
+                    if (!wasInside || hasNewPos)
+                    {
+                        actions.SetBodyPosePosition.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, newPos);
+                        //actions.SetBodyAwake.Execute(_engine.PLog, _engine.Simulation, ref bodyReference,true);
+                        po.LastPosition = newPos;
+                    }
+                    
+                    /*
+                     * If the position of the body has changed, we wamt to compute
+                     * its velocity, remember it and transfer it to the kinemativ object.
+                     */
+                    if (hasNewPos)
                     {
                         if (true || bodyReference.Constraints.Count == 0)
                         {
-                            actions.SetBodyPosePosition.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, newPos);
-                            po.LastPosition = newPos;
                             if (oldPos != Vector3.Zero)
                             {
                                 Vector3 vel = (newPos - oldPos) / dt;
@@ -80,6 +95,12 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                         {
                             Error($"Avoiding to move body {bodyReference.Handle} while constraints apply.");
                         }
+                    }
+                    else
+                    {
+                        /*
+                         * No change in position.
+                         */
                     }
                 }
                 else
