@@ -44,19 +44,22 @@ public class ModelCache
     {
         return _engine.Run(() =>
         {
-            /*
-             * If this is an non-hjierarchical model, we bake the model params
-             * directly into the instancedesc.
-             */
             var mnRoot = model.RootNode;
             if (mnRoot != null)
             {
                 var id = mnRoot.InstanceDesc;
+
+                /*
+                 * If this is an non-hjierarchical model, we bake the model params
+                 * directly into the instancedesc.
+                 */
+                // TXWTODO: Where do we apply maximal distance for hierarchical models? 
                 if (id != null && (mnRoot.Children == null || mnRoot.Children.Count == 0))
                 {
                     Matrix4x4 m = Matrix4x4.Identity;
                     id.ComputeAdjustMatrix(p, ref m);
                     id.ModelTransform *= m;
+                    id.MaxDistance = p.MaxDistance;
                 }
             }
             return model;

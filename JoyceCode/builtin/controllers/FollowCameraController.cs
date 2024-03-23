@@ -50,7 +50,7 @@ public class FollowCameraController : IInputPart
     public float CONSIDER_ORIENTATION_WHILE_DRIVING { get; set; } = 0.9f;
 
     public float STICK_VERTICAL_SENSITIVITY { get; set; } = 80f;
-    public float STICK_HORIZONTAL_SENSITIVITY { get; set; } = 80f;
+    public float STICK_HORIZONTAL_SENSITIVITY { get; set; } = 180f;
 
     public float YAngleDefault { get; set; } = 2f;
     
