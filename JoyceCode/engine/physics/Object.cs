@@ -34,7 +34,7 @@ public class Object : IDisposable
     /**
      * Used to compute velocity.
      */
-    public Vector3 LastPosition;
+    public Vector3 LastPosition = default;
     
     /*
      * Whereas this is more class specific.

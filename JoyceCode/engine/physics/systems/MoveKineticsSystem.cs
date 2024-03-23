@@ -32,10 +32,6 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
             var po = cRefKinetic.PhysicsObject;
             if (po == null) continue;
 
-            if (po.CollisionProperties?.Name == "nogame.furniture.polytopeBall")
-            {
-                int a = 1;
-            }
             // TXWTODO: This is a workaround for addressing only the former kinematic objects.
             if ((po.Flags & (physics.Object.HaveContactListener|physics.Object.IsStatic)) != 0)
             {
@@ -50,6 +46,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                 float maxDistance2 = po.MaxDistance * po.MaxDistance;
                 bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <= maxDistance2;
                 bool wasInside = Vector3.DistanceSquared(oldPos, _vPlayerPos) <= maxDistance2;
+                bool isFirstPos = po.LastPosition == default;
 
                 var bodyReference = cRefKinetic.Reference;
 
@@ -59,14 +56,30 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                     bool hasNewPos = oldPos != newPos;
                     
                     /*
-                     * No matter, if the body has changed its target position, we need
-                     * to set the physics object's position, if it was outside before.
+                     * No matter,
+                     * - if the body has changed its target position
+                     * - it was not inside before
+                     * - it has a position for the first time
+                     * we need to set the physics object's position, if it was outside before.
                      */
-                    if (!wasInside || hasNewPos)
+                    if (isFirstPos || !wasInside || hasNewPos)
                     {
                         actions.SetBodyPosePosition.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, newPos);
                         //actions.SetBodyAwake.Execute(_engine.PLog, _engine.Simulation, ref bodyReference,true);
                         po.LastPosition = newPos;
+                    }
+                        
+                    /*
+                     * wake it up if
+                     * - it hasn't been inside before and has no new position, we need to wake it up.
+                     * - it hasn't been inside and is the first time
+                     */
+                    if (isFirstPos || !wasInside && !hasNewPos)
+                    {
+                        if (!bodyReference.Awake)
+                        {
+                            actions.SetBodyAwake.Execute(_engine.PLog, _engine.Simulation, ref bodyReference,true);
+                        }
                     }
                     
                     /*
@@ -98,9 +111,6 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                     }
                     else
                     {
-                        /*
-                         * No change in position.
-                         */
                     }
                 }
                 else
