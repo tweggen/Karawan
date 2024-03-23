@@ -103,8 +103,6 @@ internal class WASDPhysics : AModule, IInputPart
         /*
          * Apply controls
          */
-        // var cTransform3 = _eTarget.Get<engine.joyce.components.Transform3>();
-
         var cToParent = _eTarget.Get<engine.joyce.components.Transform3ToParent>();
 
         /*
