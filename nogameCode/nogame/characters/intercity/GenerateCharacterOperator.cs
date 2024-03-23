@@ -89,7 +89,7 @@ public class GenerateCharacterOperator : IWorldOperator
             );
             eTarget.Set(new engine.audio.components.MovingSound(
                 nogame.characters.tram.GenerateCharacterOperator.GetTramSound(), 
-                45 0f));
+                450f));
 
         });
 
