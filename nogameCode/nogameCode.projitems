@@ -69,4 +69,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\PlaceDebrisOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapFragmentProvider.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)story.md" />
+  </ItemGroup>
 </Project>

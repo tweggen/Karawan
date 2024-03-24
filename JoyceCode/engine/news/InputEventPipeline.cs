@@ -10,20 +10,11 @@ namespace engine.news;
 
 public class InputEventPipeline : engine.AModule
 {
-    private SortedDictionary<float, IInputPart> _dictParts = new();
+    private PriorityMap<IInputPart> _dictParts = new();
  
-    
+   
     void _onInputEvent(engine.news.Event ev)
     {
-        /*
-         * We need to propagate the event through all of the parts z order.
-         */
-        IEnumerable<IInputPart> listParts;
-        lock (_lo)
-        {
-            listParts = new List<IInputPart>(_dictParts.Values);
-        }
-
         /*
          * Now run distribution of key events in a dedicated task.
          * TXWTODO: This may become out of order, until we have a proper global event queue.
@@ -33,7 +24,11 @@ public class InputEventPipeline : engine.AModule
             Trace($"Event {ev} not dispatched at all, already handled from the beginning.");
             return;
         }
-
+        
+        /*
+         * We need to propagate the event through all of the parts z order.
+         */
+        IEnumerable<IInputPart> listParts = _dictParts.GetEnumerable();
 
         
         foreach (var part in listParts)
@@ -58,49 +53,19 @@ public class InputEventPipeline : engine.AModule
 
     public void RemoveInputPart(IInputPart part)
     {
-        lock (_lo)
-        {
-            foreach (KeyValuePair<float, IInputPart> kvp in _dictParts)
-            {
-                if (kvp.Value == part)
-                {
-                    _dictParts.Remove(kvp.Key);
-                    return;
-                }
-            }
-        }
-        ErrorThrow<ArgumentException>($"Warning: input part not found.");
+        _dictParts.Remove(part);
     }
 
 
     public void AddInputPart(float zOrder, IInputPart part0)
     {
-        lock (_lo)
-        {
-            if (_dictParts.ContainsKey(-zOrder))
-            {
-                ErrorThrow<ArgumentException>($"Handler for zOrder {zOrder} already exists: {part0}");
-                return;
-            }
-            /*
-             * We use the negative sign because we want to iterate in reverse order.
-             */
-            _dictParts.Add(-zOrder, part0);
-        }
+        _dictParts.Add(zOrder, part0);
     }
 
 
     public float GetFrontZ()
     {
-        lock (_lo)
-        {
-            foreach (KeyValuePair<float, IInputPart> kvp in _dictParts)
-            {
-                return -kvp.Key;
-            }
-
-            return Single.MinValue;
-        }
+        return _dictParts.FrontPrio();
     }
     
     

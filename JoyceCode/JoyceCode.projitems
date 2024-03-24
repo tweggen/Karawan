@@ -85,6 +85,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\Object.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ObjectCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\physics\ShapeFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\PriorityMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\AreaEnteredBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerSpinBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\GoalMarkerVanishBehavior.cs" />
