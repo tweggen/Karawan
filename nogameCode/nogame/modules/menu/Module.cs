@@ -12,8 +12,8 @@ public class Module : AModule, IInputPart
 {
     public float MY_Z_ORDER = 1000f;
 
-    private builtin.jt.Widget? _wMenu;
     private builtin.jt.Factory _factory = I.Get<builtin.jt.Factory>();
+    private builtin.jt.Parser _parser = null;
 
 
     public void InputPartOnInputEvent(Event ev)
@@ -50,10 +50,7 @@ public class Module : AModule, IInputPart
 
         if (!ev.IsHandled)
         {
-            if (null != _wMenu)
-            {
-                _wMenu.Root.PropagateInputEvent(ev);
-            }
+            _parser.RootWidget.PropagateInputEvent(ev);
         }
     }
     
@@ -62,11 +59,14 @@ public class Module : AModule, IInputPart
     {
         I.Get<InputEventPipeline>().RemoveInputPart(this);
 
-        if (null != _wMenu)
+        var children = _parser.RootWidget.Children;
+        if (children != null)
         {
-            _factory.FindRootWidget().RemoveChild(_wMenu);
-            _wMenu.Dispose();
-            _wMenu = null;
+            foreach (var wChild in children)
+            {
+                wChild.Parent = null;
+                wChild.Dispose();
+            }
         }
 
         _engine.GamePlayState = GamePlayStates.Running;
@@ -85,13 +85,24 @@ public class Module : AModule, IInputPart
 
         try
         {
+            /*
+             * Read the xml
+             */
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(engine.Assets.Open("menu.xml"));
-            builtin.jt.Parser jtParser = new Parser(xDoc, _factory);
-            _wMenu = jtParser.Build("menuOptions");
-            if (null != _wMenu)
+            
+            /*
+             * Parse the document
+             */
+            _parser = new Parser(xDoc, _factory);
+            
+            /*
+             * Open the default menu.
+             */
+            var wMenu = _parser.Build("menuOptions");
+            if (null != wMenu)
             {
-                _factory.FindRootWidget().AddChild(_wMenu);
+                _parser.RootWidget.AddChild(wMenu);
             }
         }
         catch (Exception e)
