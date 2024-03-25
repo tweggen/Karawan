@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+using System;
 using System.Xml;
 using builtin.jt;
 using engine;
 using engine.news;
-using engine.streets;
+using static engine.Logger;
 
 namespace nogame.modules.menu;
 
@@ -83,15 +83,20 @@ public class Module : AModule, IInputPart
 
         _engine.GamePlayState = GamePlayStates.Paused;
 
+        try
         {
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(engine.Assets.Open("menu.xml"));
             builtin.jt.Parser jtParser = new Parser(xDoc);
-            _wMenu = jtParser.Build(_factory);
+            _wMenu = jtParser.Build(_factory, "menuOptions");
             if (null != _wMenu)
             {
                 _factory.FindRootWidget().AddChild(_wMenu);
             }
+        }
+        catch (Exception e)
+        {
+            Error($"Exception opening menu: {e}");
         }
 
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);

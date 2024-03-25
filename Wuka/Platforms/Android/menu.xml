@@ -1,10 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<view>
-    <!-- oneof -->
-    <vbox width="250" x="200" y="200" direction="vertical">
-        <text color="#666666" height="40" focussable="false">Options</text>
-        <text color="#999999" height="20">Continue</text>
-        <text color="#999999" height="20" onClick="os.exit()">Exit...</text>
-    </vbox>
-    <!-- /oneof -->
-</view>
+<jt>
+    <view id="menuOptions">
+        <vbox width="250" x="200" y="200" direction="vertical">
+            <text color="#666666" height="40" focussable="false">Options</text>
+            <text color="#999999" height="20">Continue</text>
+            <text color="#999999" height="20" onClick="jt.open(&quot;menuHelp&quot;)">Help...</text>
+            <text color="#999999" height="20" onClick="os.exit()">Exit...</text>
+        </vbox>
+    </view>
+    <view id="menuHelp">
+        <vbox width="250" x="200" y="200" direction="vertical">
+            <text color="#666666" height="40" focussable="false">Help</text>
+            <text color="#999999" height="20" focussable="false">WASD - navigate</text>
+            <text color="#999999" height="20" focussable="false">Q/Y - up/down</text>
+            <text color="#999999" height="20" focussable="false">ESC - pause menu</text>
+            <text color="#999999" height="20" focussable="false">F8 - debug</text>
+            <text color="#999999" height="20" focussable="false">F10 - demo ride</text>
+            <text color="#999999" height="20" focussable="false">F11 - full screen</text>
+            <text color="#999999" height="20" focussable="false">F12 - joyce ui</text>
+            <text color="#999999" height="20" focussable="false">tab - map</text>
+            <text color="#999999" height="20" onClick="jt.open(&quot;menuOptions&quot;)">Back...</text>
+        </vbox>
+    </view>
+</jt>

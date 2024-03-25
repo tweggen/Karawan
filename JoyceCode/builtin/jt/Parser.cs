@@ -74,6 +74,15 @@ public class Parser
     private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
     {
         {
+            "jt", new()
+            {
+                ParentType = "view",
+                TemplateProperties = new()
+                {
+                } 
+            }
+        },
+        {
             "view", new()
             {
                 ParentType = null,
@@ -326,9 +335,17 @@ public class Parser
      *
      * Syntax: everything below root.
      */
-    public Widget Build(Factory factory)
+    public Widget Build(Factory factory, string? id = null)
     {
-        XmlElement xWidget = _xDoc.GetElementsByTagName("view")[0] as XmlElement;
+        XmlElement xWidget;
+        if (null == id)
+        {
+            xWidget = _xDoc.GetElementsByTagName("view")[0] as XmlElement;   
+        }
+        else
+        {
+            xWidget = _xDoc.SelectSingleNode($"//*[@id='{id}']") as XmlElement;
+        }
         if (null == xWidget)
         {
             ErrorThrow<ArgumentException>("No widget found.");
