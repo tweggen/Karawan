@@ -81,9 +81,12 @@ public class LuaScriptEntry : IDisposable
 
     private void _applyBindings()
     {
-        foreach (var lbf in _luaBindings)
+        if (_luaBindings != null)
         {
-            _applyBindingFrame(lbf);
+            foreach (var lbf in _luaBindings)
+            {
+                _applyBindingFrame(lbf);
+            }
         }
     }
     
