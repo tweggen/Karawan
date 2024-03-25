@@ -58,6 +58,12 @@ public class LuaScriptEntry : IDisposable
             return -1;
         }
     }
+
+
+    public void Bind(string id, object obj)
+    {
+        _luaState[id] = obj;
+    }
     
     
     public void Shutdown()
@@ -74,7 +80,6 @@ public class LuaScriptEntry : IDisposable
     {
         _luaState = new Lua();
         _luaState.State.Encoding = Encoding.UTF8;
-        
     }
 
     public void Dispose()

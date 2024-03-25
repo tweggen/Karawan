@@ -944,6 +944,7 @@ public class Widget : IDisposable
             else
             {
                 lse = new LuaScriptEntry();
+                lse.Bind("jt", new LuaBindings());
                 _storeCompiled_nl(evType, lse);
             }
         }

@@ -24,6 +24,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\BoxLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Factory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ALayout.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\LuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Parser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\RootWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\TextWidgetImplementation.cs" />
