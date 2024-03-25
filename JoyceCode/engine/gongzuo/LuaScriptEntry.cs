@@ -16,6 +16,10 @@ public class LuaScriptEntry : IDisposable
     private int _setScriptVersion = 0;
     private int _compiledScriptVersion = 0;
     private Lua _luaState;
+    public Lua LuaState
+    {
+        get => _luaState;
+    }
     private LuaFunction _luaFunction;
 
 

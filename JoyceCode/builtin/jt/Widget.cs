@@ -46,6 +46,8 @@ public class Widget : IDisposable
     protected object _lo = new();
     public required string Type;
     
+    private Lazy<LuaWidgetContext> _luaWidgetContext;
+    
     /**
      * Stores the user accessible property data.
      */
@@ -940,11 +942,14 @@ public class Widget : IDisposable
             if (null != _compiledProperties && _compiledProperties.TryGetValue(evType, out var oCompiled))
             {
                 lse = oCompiled as LuaScriptEntry;
+                if (lse != null)
+                {
+                    lse.Bind("_context", _luaWidgetContext.Value);
+                }
             }
             else
             {
                 lse = new LuaScriptEntry();
-                lse.Bind("jt", new LuaBindings());
                 _storeCompiled_nl(evType, lse);
             }
         }
@@ -1100,5 +1105,15 @@ public class Widget : IDisposable
         Unrealize();
         // TXWTODO: We know that Unrealize basically is a dispose. Technically, we
         // would love to have a second dispose iteration.
+    }
+
+    public Widget()
+    {
+        _luaWidgetContext = new(() => new LuaWidgetContext()
+        {
+            _widget = this,
+            _parser = this["parser"] as Parser,
+            _factory = Root?.Factory
+        });
     }
 }

@@ -198,6 +198,12 @@ public class Parser
         }
     }
 
+
+    public void ApplyBuiltin(Widget w)
+    {
+        w["parser"] = this;
+    }
+    
     
     public Widget BuildSelfWidget(Factory factory, XmlElement xWidget, out TypeDescriptor tdesc)
     {
@@ -215,6 +221,7 @@ public class Parser
         Widget w = new Widget() { Type = strType };
         
         ApplyTemplate(w, tdesc);
+        ApplyBuiltin(w);
 
         /*
          * Then, the attributes from the xml.
