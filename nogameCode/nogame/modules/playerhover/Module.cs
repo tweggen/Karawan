@@ -2,19 +2,14 @@
 using BepuPhysics.Collidables;
 using System;
 using System.Numerics;
-using System.Security.AccessControl;
-using System.Threading.Tasks;
 using DefaultEcs;
 using engine;
-using engine.audio;
 using engine.draw;
 using engine.gongzuo;
 using engine.joyce;
-using engine.joyce.components;
 using engine.news;
 using engine.physics;
 using engine.world;
-using engine.world.components;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
@@ -445,7 +440,7 @@ public class Module : engine.AModule
             _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
             _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
-            InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags };
+            InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
 
             var tModel = _engine.Run(() => I.Get<ModelCache>().Instantiate(
                 ModelUrl,
@@ -509,7 +504,7 @@ public class Module : engine.AModule
             I.Get<HierarchyApi>().SetParent(_eMapShip, _eShip);
             I.Get<TransformApi>().SetTransforms(_eMapShip, true,
                 nogame.modules.map.Module.MapCameraMask,
-                Quaternion.Identity, new Vector3(0f, 200f, 0f));
+                Quaternion.Identity, new Vector3(0f, 0f, 0f));
             _eMapShip.Set(new engine.world.components.MapIcon()
                 { Code = engine.world.components.MapIcon.IconCode.Player0 });
         }
