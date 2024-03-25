@@ -1,3 +1,4 @@
+#if false
 namespace builtin.jt;
 
 public class LuaWidgetContext
@@ -6,3 +7,4 @@ public class LuaWidgetContext
     internal Parser _parser;
     internal Factory _factory;
 }
+#endif

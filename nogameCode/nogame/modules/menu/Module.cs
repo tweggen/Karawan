@@ -87,8 +87,8 @@ public class Module : AModule, IInputPart
         {
             XmlDocument xDoc = new XmlDocument();
             xDoc.Load(engine.Assets.Open("menu.xml"));
-            builtin.jt.Parser jtParser = new Parser(xDoc);
-            _wMenu = jtParser.Build(_factory, "menuOptions");
+            builtin.jt.Parser jtParser = new Parser(xDoc, _factory);
+            _wMenu = jtParser.Build("menuOptions");
             if (null != _wMenu)
             {
                 _factory.FindRootWidget().AddChild(_wMenu);

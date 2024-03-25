@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using NLua;
 using static engine.Logger;
@@ -22,6 +23,7 @@ public class LuaScriptEntry : IDisposable
     }
     private LuaFunction _luaFunction;
 
+    private List<LuaBindingFrame>? _luaBindings = null;
 
     private void _setLuaScript(string luaScript)
     {
@@ -64,9 +66,43 @@ public class LuaScriptEntry : IDisposable
     }
 
 
-    public void Bind(string id, object obj)
+    private void _applyBindingFrame(LuaBindingFrame? lbf)
     {
-        _luaState[id] = obj;
+        if (lbf != null && lbf.MapBindings != null)
+        {
+            foreach (var kvp in lbf.MapBindings)
+            {
+                _luaState[kvp.Key] = kvp.Value;
+            }
+        }
+        
+    }
+
+
+    private void _applyBindings()
+    {
+        foreach (var lbf in _luaBindings)
+        {
+            _applyBindingFrame(lbf);
+        }
+    }
+    
+    
+    public void PushBinding(LuaBindingFrame lbf)
+    {
+        if (null == _luaState)
+        {
+            if (null == _luaBindings)
+            {
+                _luaBindings = new();
+            }
+
+            _luaBindings.Add(lbf);
+        }
+        else
+        {
+            _applyBindingFrame(lbf);
+        }
     }
     
     
@@ -84,7 +120,9 @@ public class LuaScriptEntry : IDisposable
     {
         _luaState = new Lua();
         _luaState.State.Encoding = Encoding.UTF8;
+        _applyBindings();
     }
+    
 
     public void Dispose()
     {

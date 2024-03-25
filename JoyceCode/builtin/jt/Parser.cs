@@ -1,8 +1,7 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Security.Cryptography;
+using engine.gongzuo;
 using System.Xml;
 using ObjLoader.Loader.Common;
 using static engine.Logger;
@@ -54,6 +53,12 @@ public class Parser
         { "focussable", typeof(bool) },
         { "selectable", typeof(bool) }
     };
+
+
+    public RootWidget RootWidget
+    {
+        get => _factory.FindRootWidget();
+    }
 
 
     private static void _setupAnyBox(Widget w, XmlElement xWidget)
@@ -152,6 +157,12 @@ public class Parser
         }
     };
 
+    
+    private readonly Factory _factory;
+    public Factory Factory { get;  }
+
+    private LuaBindingFrame _lbf;
+
 
     public bool IsValidType(string strType)
     {
@@ -205,7 +216,7 @@ public class Parser
     }
     
     
-    public Widget BuildSelfWidget(Factory factory, XmlElement xWidget, out TypeDescriptor tdesc)
+    public Widget BuildSelfWidget(XmlElement xWidget, out TypeDescriptor tdesc)
     {
         string strType = xWidget.LocalName;
         
@@ -290,18 +301,18 @@ public class Parser
     }
 
 
-    public Widget BuildText(Factory factory, XmlText xText)
+    public Widget BuildText(XmlText xText)
     {
         return null;
     }
     
 
-    public Widget BuildWidget(Factory factory, XmlElement xWidget)
+    public Widget BuildWidget(XmlElement xWidget)
     {
         /*
          * Create the widget on its own
          */
-        Widget w = BuildSelfWidget(factory, xWidget, out var tdesc);
+        Widget w = BuildSelfWidget(xWidget, out var tdesc);
         
         /*
          * Then iterate through its children.
@@ -314,7 +325,7 @@ public class Parser
                 case XmlNodeType.None:
                     break;
                 case XmlNodeType.Element:
-                    Widget wChildElement = BuildWidget(factory, xnChild as XmlElement);
+                    Widget wChildElement = BuildWidget(xnChild as XmlElement);
                     w.AddChild(wChildElement);
                     break;
                 case XmlNodeType.Attribute:
@@ -337,12 +348,21 @@ public class Parser
     }
     
     
+    internal void PushBindings(LuaScriptEntry lse)
+    {
+        /*
+         * No parent binding to call here.
+         */
+        lse.PushBinding(_lbf);
+    }
+    
+    
     /**
      * Build a meaningful display from the xml input.
      *
      * Syntax: everything below root.
      */
-    public Widget Build(Factory factory, string? id = null)
+    public Widget Build(string? id = null)
     {
         XmlElement xWidget;
         if (null == id)
@@ -358,13 +378,21 @@ public class Parser
             ErrorThrow<ArgumentException>("No widget found.");
         }
 
-        return BuildWidget(factory, xWidget);
+        return BuildWidget(xWidget);
     }
         
     
-    public Parser(XmlDocument xDoc)
+    public Parser(XmlDocument xDoc, Factory factory)
     {
         _xDoc = xDoc;
+        _factory = factory;
+        _lbf = new()
+        {
+            MapBindings = new SortedDictionary<string, object>()
+            {
+                { "jt", new JtBindings(this) }
+            }.ToFrozenDictionary()
+        };
     }
 
 
@@ -382,7 +410,7 @@ public class Parser
         Factory f = new();
         XmlDocument xDoc = new XmlDocument();
         xDoc.LoadXml(xml);
-        Parser p = new(xDoc);
-        Widget w = p.Build(f);
+        Parser p = new(xDoc, f);
+        Widget w = p.Build();
     }
 }

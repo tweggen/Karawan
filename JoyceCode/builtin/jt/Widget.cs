@@ -46,7 +46,9 @@ public class Widget : IDisposable
     protected object _lo = new();
     public required string Type;
     
+    #if false
     private Lazy<LuaWidgetContext> _luaWidgetContext;
+    #endif
     
     /**
      * Stores the user accessible property data.
@@ -934,6 +936,31 @@ public class Widget : IDisposable
     }
 
 
+    /**
+     * Create a symbol binding frame for this widget.
+     */
+    internal void PushBindings(LuaScriptEntry lse)
+    {
+        Parser? parser = this["parser"] as Parser;
+        if (null != parser)
+        {
+            parser.PushBindings(lse);
+        }
+        LuaBindingFrame lbf = new()
+        {
+            MapBindings = null
+            #if false
+            new()
+            {
+                // { "widget", widget API object }
+            }
+            #endif
+        };
+        lse.PushBinding(lbf);
+
+    }
+
+
     protected LuaScriptEntry _findLuaScriptEntry(string evType, string script)
     {
         LuaScriptEntry? lse = null;
@@ -942,14 +969,18 @@ public class Widget : IDisposable
             if (null != _compiledProperties && _compiledProperties.TryGetValue(evType, out var oCompiled))
             {
                 lse = oCompiled as LuaScriptEntry;
-                if (lse != null)
-                {
-                    lse.Bind("_context", _luaWidgetContext.Value);
-                }
             }
             else
             {
                 lse = new LuaScriptEntry();
+
+                /*
+                 * Push the bindings for this widget on the binding stack.
+                 */
+                PushBindings(lse);
+                #if false
+                lse.Bind("_context", _luaWidgetContext.Value);
+                #endif
                 _storeCompiled_nl(evType, lse);
             }
         }
@@ -1109,11 +1140,13 @@ public class Widget : IDisposable
 
     public Widget()
     {
+        #if false
         _luaWidgetContext = new(() => new LuaWidgetContext()
         {
             _widget = this,
             _parser = this["parser"] as Parser,
             _factory = Root?.Factory
         });
+        #endif
     }
 }

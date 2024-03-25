@@ -1,17 +1,9 @@
-using engine.gongzuo;
-
 namespace builtin.jt;
 
 public class Factory
 {
     private readonly RootWidget _wRoot;
 
-    
-    public void AddLuaBindings(LuaScriptEntry lse)
-    {
-        lse.Bind("jt", new LuaBindings(lse, this));
-    }
-    
     
     public void Unrealize(Widget widget, IWidgetImplementation impl)
     {
