@@ -29,13 +29,15 @@ public class Scene : AModule, IScene
     
     public static string TimepointTitlesongStarted = "nogame.scenes.logos.titlesong.Started"; 
 
+    
     public void SceneOnLogicalFrame(float dt)
     {
+        /*
+         * Implement some animation into the title.
+         */
         float t;
-        float tBefore;
         lock (_lo)
         {
-            tBefore = _t;
             t = _t + dt;
         }
         
@@ -58,10 +60,6 @@ public class Scene : AModule, IScene
                  */
                 _eCamera.Get<engine.joyce.components.Camera3>().CameraMask = 0;
                 _isCleared = true;
-                /*
-                 * Immediately trigger main scene. It will setup loading.
-                 */
-                I.Get<SceneSequencer>().SetMainScene("root");
             }
         }
 
@@ -75,6 +73,13 @@ public class Scene : AModule, IScene
     private bool _hideTitle()
     {
         _shallHideTitle = true;
+        return true;
+    }
+    
+
+    private bool _loadRootScene()
+    {
+        I.Get<SceneSequencer>().SetMainScene("root");
         return true;
     }
 
@@ -103,7 +108,7 @@ public class Scene : AModule, IScene
     }
     
     
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
         _modTitle.ModuleDeactivate();
@@ -135,20 +140,28 @@ public class Scene : AModule, IScene
         timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
         
         /*
-         * Fade out 4.674 after first bit of intro song. Read that one in audacity.
-         */
-        timeline.RunAt(
-            TimepointTitlesongStarted, 
-            TimeSpan.FromMilliseconds(4674),
-            _hideTitle);
-
-        /*
          * Start preloading after the first title starts display
          */
         timeline.RunAt(
             TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(800),
             _preload);
+        
+        /*
+         * Blank 4.674 after first bit of intro song. Read that one in audacity.
+         */
+        timeline.RunAt(
+            TimepointTitlesongStarted, 
+            TimeSpan.FromMilliseconds(4474),
+            _hideTitle);
+
+        /*
+         * Show the main scene after 4674 (This is the start in audacity)
+         */
+        timeline.RunAt(
+            TimepointTitlesongStarted,
+            TimeSpan.FromMilliseconds(4674),
+            _loadRootScene);
 
         _modTitle.Add(new TitleCard()
         {

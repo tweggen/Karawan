@@ -155,8 +155,10 @@ public class SceneSequencer : IDisposable
     {
         lock (_lo)
         {
+            #if false
             System.Diagnostics.StackTrace t = new System.Diagnostics.StackTrace(true);
             Trace($"Called SetMainScene at {t.ToString()}");
+            #endif
 
             if (_nameNewSceneRequest == name)
             {
