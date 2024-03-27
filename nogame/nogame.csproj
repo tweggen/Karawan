@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <UsingTask TaskName="CmdLine.Fbx2AsciiTask" AssemblyFile="..\CmdLine\bin\Debug\net7.0\joycecmd.dll" />
+  <UsingTask TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\CmdLine\bin\Debug\net7.0\joycecmd.dll" />
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -32,9 +33,9 @@
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
-	<!-- Target Name="ConvertFbx" BeforeTargets="Compile">
-    <Message Text="Converting fbx" />
-    <Fbx2AsciiTask SourceFbx="..\models\models\u\U5.fbx" DestinationFbx="..\Wuka\Platforms\Android\u.fbx"/>
-  </Target-->
+  <Target Name="CompileResources" BeforeTargets="Compile">
+    <Message Text="compiling resources" />
+    <Res2TargetTask GameJson="../Wuka/Platforms/Android/nogame.json"/>
+  </Target>
 
 </Project>

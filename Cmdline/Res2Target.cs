@@ -1,27 +1,37 @@
+using System.Diagnostics.Eventing.Reader;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
 namespace CmdLine;
 
 public class Res2Target
 {
     private string[] _args;
+    public Action<string> Trace = (msg) => System.Diagnostics.Debug.WriteLine(msg);
     
     public void Help()
     {
-        Console.Error.WriteLine("res2target <gamejson>");     
+        Trace("res2target <gamejson>");     
     }
 
     public int Execute()
     {
+        Trace("res2target Execute called");     
         try
         {
+			GameConfig gc = new (_args[1]) { Trace=Trace };
+            gc.Load();
+			#if false
             Console.Error.WriteLine($"res2target: Reading file {_args[1]}...");
             byte[] fileBytes = File.ReadAllBytes(_args[1]);
             Console.Error.WriteLine($"res2target: Writing file {_args[2]}...");
             File.WriteAllBytes(_args[2], fileBytes);
-            Console.Error.WriteLine($"res2target: Done.");
+			#endif
+            Trace($"res2target: Done.");
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"res2target: Exception copying {_args[1]}: {e}.");
+            Trace($"Exception in Execute: {e}");
         }
 
         return 0;
@@ -32,8 +42,6 @@ public class Res2Target
     {
         if (args.Length != 2)
         {
-            Console.Error.WriteLine("game json rgument expected.");
-            Help();
             throw new ArgumentException();
         }
 
