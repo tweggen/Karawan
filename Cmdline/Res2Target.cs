@@ -16,17 +16,19 @@ public class Res2Target
 
     public int Execute()
     {
-        Trace("res2target Execute called");     
+        Trace("res2target: Working...");     
         try
         {
 			GameConfig gc = new (_args[1]) { Trace=Trace };
             gc.Load();
-			#if false
-            Console.Error.WriteLine($"res2target: Reading file {_args[1]}...");
-            byte[] fileBytes = File.ReadAllBytes(_args[1]);
-            Console.Error.WriteLine($"res2target: Writing file {_args[2]}...");
-            File.WriteAllBytes(_args[2], fileBytes);
-			#endif
+            Trace($"res2target: Writing android assets...");
+            AndroidResourceWriter arw = new()
+            {
+                MapResources = gc.MapResources,
+                Trace = Trace,
+                DestinationPath = "./AndroidResources.xml"
+            };
+            arw.Execute();
             Trace($"res2target: Done.");
         }
         catch (Exception e)

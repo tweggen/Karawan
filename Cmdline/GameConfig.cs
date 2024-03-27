@@ -46,6 +46,10 @@ public class GameConfig
                 }
 
                 Trace($"GameConfig: Added Resource \"{tag}\" from {uri}.");
+                if (!File.Exists(uri))
+                {
+                    Trace($"Warning: resource file for {uri} does not exist.");
+                }
                 MapResources[tag] = new Resource() { Uri = uri };
             }
         }
