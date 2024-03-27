@@ -9,7 +9,8 @@ public class TitleCard
 {
     public enum F
     {
-        JitterEnd = 1
+        JitterEnd = 1,
+        FadeoutEnd = 2,
     };
     public string StartReference;
     public TimeSpan StartOffset;
@@ -19,7 +20,7 @@ public class TitleCard
 
     public uint Flags;
 
-    // public float FadeOutTime = 1.2f;
+    public float FadeOutTime = 0f;
 
     public Vector2 Size;
     public Transform3 StartTransform;

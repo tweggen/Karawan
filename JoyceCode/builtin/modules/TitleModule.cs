@@ -117,6 +117,21 @@ public class TitleModule : engine.AModule
             float t = (float)(now- ace.StartTime).TotalMilliseconds;
             _computeTransformAt(ace.Card, t, out engine.joyce.components.Transform3 t3);
             I.Get<engine.joyce.TransformApi>().SetTransforms(ace.Entity, t3.IsVisible, t3.CameraMask, t3.Rotation, t3.Position, t3.Scale);
+
+            ace.InstanceDesc.Materials[0].EmissiveFactors = 0xffffffff;
+
+            {
+                if (0 != (ace.Card.Flags & (uint)TitleCard.F.FadeoutEnd))
+                {
+                    float fadeoutStart = (float)ace.Card.Duration - (float)ace.Card.FadeOutTime;
+                    if (t >= fadeoutStart)
+                    {
+                        float relFadeout = 1f - (t-fadeoutStart) / (float)ace.Card.FadeOutTime;
+                        byte k = (byte)(relFadeout * 255f);
+                        ace.InstanceDesc.Materials[0].EmissiveFactors = ((uint)k << 24) |0xffffff;
+                    }
+                }
+            }
             {
                 float relTime = t / (float)ace.Card.Duration;
                 if (0 != (ace.Card.Flags & (uint)TitleCard.F.JitterEnd))
@@ -125,38 +140,13 @@ public class TitleModule : engine.AModule
                     {
                         ace.InstanceDesc.Materials[0].EmissiveFactors = 0;
                     }
-                    else
-                    {
-                        ace.InstanceDesc.Materials[0].EmissiveFactors = 0xffffffff;
-                    }
                 }
             }
-#if false
-            {
-                float inFadeOut = t - ((float)ace.Card.Duration - ace.Card.FadeOutTime*1000f);
-                if (inFadeOut < 0f)
-                {
-                    /*
-                     * already was setup that way.
-                     */
-                    // ace.InstanceDesc.Materials[0].EmissiveFactors = 0xffffffff;
-                }
-                else if (inFadeOut<1000f)
-                {
-                    byte fade = (byte)((1f - inFadeOut) * 255f);
-                    ace.InstanceDesc.Materials[0].EmissiveFactors = (uint)fade << 24;
-                }
-                else
-                {
-                    ace.InstanceDesc.Materials[0].EmissiveFactors = 0;
-                }
-            }
-#endif
         }
     }
 
 
-    public void ModuleDeactivate()
+    public override void ModuleDeactivate()
     {
         foreach (var card in _cards)
         {
