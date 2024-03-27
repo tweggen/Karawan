@@ -61,7 +61,7 @@ public class DesktopMain
         }
         else
         {
-            engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../Wuka/Platforms/Android/");
+            engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../nogame/");
         }
         engine.GlobalSettings.Set("Engine.RWPath", "./");
         
@@ -80,7 +80,7 @@ public class DesktopMain
                File.OpenRead(
                    Path.Combine(
                        engine.GlobalSettings.Get("Engine.ResourcePath"),
-                       "nogame.json"))) 
+                       "../models/nogame.json"))) 
         {
             cassetteLoader = new engine.casette.Loader(streamJson);
         }

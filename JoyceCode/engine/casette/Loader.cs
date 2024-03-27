@@ -420,7 +420,14 @@ public class Loader
     {
         if (_jeRoot.TryGetProperty("resources", out var jeResources))
         {
-            LoadResourcesTo(iasset, jeResources);
+            if (jeResources.TryGetProperty("list", out var jeList))
+            {
+                LoadResourcesTo(iasset, jeList);
+            }
+            else
+            {
+                Error("Warning: No resources/list section found in game.");
+            }
         }
         else
         {
