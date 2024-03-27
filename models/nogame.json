@@ -190,7 +190,9 @@
       { "uri": "../models/shaders/LIghtingFS.frag" },
       { "uri": "../models/shaders/ScreenFS.frag" },
       { "uri": "../models/shaders/LIghtingVS.vert" },
-      { "uri": "../models/fonts/Prototype.ttf" }
+      { "uri": "../models/fonts/Prototype.ttf" },
+      { "uri": "../models/icons/appiconpng.png" },
+      { "uri": "../models/menu/menu.xml" }
     ]
   }
 }

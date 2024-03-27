@@ -96,11 +96,15 @@ public class GameConfig
     private void _loadGameConfigFile(string jsonPath)
     {
 		Trace($"_loadGameConfigFile(\"{jsonPath}\");");
-        JsonDocument jdocGame = JsonDocument.Parse(new FileStream(jsonPath, FileMode.Open), new()
+        using (var stream = new FileStream(jsonPath, FileMode.Open))
         {
-            AllowTrailingCommas = true
-        });
-        _jeRoot = jdocGame.RootElement;
+            JsonDocument jdocGame = JsonDocument.Parse(stream, new()
+            {
+                AllowTrailingCommas = true
+            });
+            _jeRoot = jdocGame.RootElement;
+        }
+
         LoadGameConfig(_jeRoot);
     }
 

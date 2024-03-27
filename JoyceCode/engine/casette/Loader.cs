@@ -352,9 +352,10 @@ public class Loader
                 }
 
                 Trace($"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
-                if (!File.Exists(uri))
+                string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri); 
+                if (!File.Exists(pathProbe))
                 {
-                    Trace($"Warning: resource file for {uri} does not exist.");
+                    Trace($"Warning: resource file for {pathProbe} does not exist.");
                 }
                 iasset.AddAssociation(tag, uri);
             }

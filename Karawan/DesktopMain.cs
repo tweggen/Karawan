@@ -153,6 +153,7 @@ public class DesktopMain
             return api;
         });
 
+        cassetteLoader.InterpretConfig();
         cassetteLoader.StartGame();
         
         e.Execute();
