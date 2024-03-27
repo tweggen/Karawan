@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using UkooLabs.FbxSharpie;
+// using UkooLabs.FbxSharpie;
 
 namespace CmdLine;
 
@@ -17,11 +17,11 @@ public class Fbx2Ascii
         try
         {
             Console.Error.WriteLine($"fbx2ascii: Reading file {_args[1]}...");
-            var reader = new FbxBinaryReader(new FileStream(_args[1], FileMode.Open));
+            //var reader = null; // new FbxBinaryReader(new FileStream(_args[1], FileMode.Open));
             Console.Error.WriteLine($"fbx2ascii: Understanding file {_args[1]}...");
-            var doc = reader.Read();
+            //var doc = reader.Read();
             Console.Error.WriteLine($"fbx2ascii: Writing file {_args[2]}...");
-            FbxIO.WriteAscii(doc, _args[2]);
+            //FbxIO.WriteAscii(doc, _args[2]);
             Console.Error.WriteLine($"fbx2ascii: Done.");
         }
         catch (Exception e)
