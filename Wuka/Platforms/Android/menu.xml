@@ -9,7 +9,7 @@
         </vbox>
     </view>
     <view id="menuHelp">
-        <vbox width="250" x="200" y="200" direction="vertical">
+        <vbox width="250" x="200" y="100" direction="vertical">
             <text color="#666666" height="40" focussable="false">Help</text>
             <text color="#999999" height="20" focussable="false">WASD - navigate</text>
             <text color="#999999" height="20" focussable="false">Q/Y - up/down</text>
