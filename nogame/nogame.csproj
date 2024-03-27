@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <UsingTask TaskName="CmdLine.Fbx2AsciiTask" AssemblyFile="..\CmdLine\bin\Debug\net8.0\joycecmd.dll" />
-  <UsingTask TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\CmdLine\bin\Debug\net8.0\joycecmd.dll" />
+  <UsingTask TaskName="CmdLine.Fbx2AsciiTask" AssemblyFile="..\Cmdline\bin\Debug\net8.0\joycecmd.dll" />
+  <UsingTask TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Cmdline\bin\Debug\net8.0\joycecmd.dll" />
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
