@@ -6,34 +6,19 @@ namespace CmdLine;
 
 public class Res2TargetTask : Microsoft.Build.Utilities.Task
 {
-    private string _sourcePath;
-    private string _destinationPath;
+    private string _gameJson;
     
     
     [Required]
-    public string SourcePath
+    public string GameJson
     {
         get
         {
-            return _sourcePath;
+            return _gameJson;
         }
         set
         {
-            _sourcePath = value;
-        }
-    }
-    
-    
-    [Required]
-    public string DestinationPath
-    {
-        get
-        {
-            return _destinationPath;
-        }
-        set
-        {
-            _destinationPath = value;
+            _gameJson = value;
         }
     }
     
@@ -42,12 +27,11 @@ public class Res2TargetTask : Microsoft.Build.Utilities.Task
     {
         // Log a high-importance comment
         Log.LogMessage(MessageImportance.High,
-            $"Asked to convert {_sourcePath} to {_destinationPath}.");
+            $"Asked to convert data from {_gameJson}.");
 
         string[] args = new string[3];
         args[0] = "res2target";
-        args[1] = _sourcePath;
-        args[2] = _destinationPath;
+        args[1] = _gameJson;
         int result = new CmdLine.Res2Target(args).Execute();
         return 0 == result;
     }

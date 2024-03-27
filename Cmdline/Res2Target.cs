@@ -6,7 +6,7 @@ public class Res2Target
     
     public void Help()
     {
-        Console.Error.WriteLine("res2target <source file> <dest file>");     
+        Console.Error.WriteLine("res2target <gamejson>");     
     }
 
     public int Execute()
@@ -30,9 +30,9 @@ public class Res2Target
     
     public Res2Target(string[] args)
     {
-        if (args.Length != 3)
+        if (args.Length != 2)
         {
-            Console.Error.WriteLine("Source and destination file arguments expected.");
+            Console.Error.WriteLine("game json rgument expected.");
             Help();
             throw new ArgumentException();
         }
