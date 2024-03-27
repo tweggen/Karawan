@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.Json;
 using builtin.map;
 using engine.world;
@@ -319,6 +320,52 @@ public class Loader
         }
     }
 
+
+    public void LoadResourcesTo(IAssetImplementation iasset, JsonElement je)
+    {
+        try
+        {
+            foreach (var jeRes in je.EnumerateArray())
+            {
+                string? uri = jeRes.GetProperty("uri").GetString();
+                if (null == uri)
+                {
+                    throw new InvalidDataException("no uri specified in resource.");
+                }
+
+                string? tag = null;
+                if (jeRes.TryGetProperty("tag", out var jpTag))
+                {
+                    tag = jpTag.GetString();
+                }
+                if (null == tag)
+                {
+                    int idx = uri.LastIndexOf('/');
+                    if (idx != -1 && idx != uri.Length - 1)
+                    {
+                        tag = uri[(idx + 1)..];
+                    }
+                    else
+                    {
+                        tag = uri;
+                    }
+                }
+
+                Trace($"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
+                if (!File.Exists(uri))
+                {
+                    Trace($"Warning: resource file for {uri} does not exist.");
+                }
+                iasset.AddAssociation(tag, uri);
+            }
+        }
+        catch (Exception e)
+        {
+            Trace($"Error loading resource: {e}");
+        }
+
+    }
+
     
     public IModule LoadRootModule()
     {
@@ -359,13 +406,30 @@ public class Loader
     }
     
 
-    private void _loadGameConfigFile(string jsonPath)
+    private void _loadGameConfigFile(System.IO.Stream stream)
     {
-        JsonDocument jdocGame = JsonDocument.Parse(engine.Assets.Open(jsonPath), new()
+        JsonDocument jdocGame = JsonDocument.Parse(stream, new()
         {
             AllowTrailingCommas = true
         });
         _jeRoot = jdocGame.RootElement;
+    }
+
+    
+    public void SetAssetLoaderAssociations(IAssetImplementation iasset)
+    {
+        if (_jeRoot.TryGetProperty("resources", out var jeResources))
+        {
+            LoadResourcesTo(iasset, jeResources);
+        }
+        else
+        {
+            Error("Warning: No resources section found in game.");
+        }
+    }
+
+    public void InterpretConfig()
+    {
         if (_jeRoot.TryGetProperty("defaults", out var jeDefaults))
         {
             _loadDefaults(jeDefaults);
@@ -374,24 +438,30 @@ public class Loader
     }
 
 
-    public Loader(string jsonPath)
-    {
-        _loadGameConfigFile(jsonPath);
-    }
-    
-
-    static public void LoadStartGame(string jsonPath)
+    public void StartGame()
     {
         var e = I.Get<Engine>();
-        /*
-         * Load the game config
-         */
-        var loader = new engine.casette.Loader("nogame.json");
-        IModule mRoot = loader.LoadRootModule();
+        IModule mRoot = LoadRootModule();
         
         /*
          * Start the root module in the main thread.
          */
         e.QueueMainThreadAction(() => { mRoot.ModuleActivate();});
+    }
+    
+
+    public Loader(System.IO.Stream stream)
+    {
+        _loadGameConfigFile(stream);
+    }
+    
+
+    static public void LoadStartGame(string jsonPath)
+    {
+        /*
+         * Load the game config
+         */
+        var loader = new engine.casette.Loader(engine.Assets.Open("nogame.json"));
+        loader.InterpretConfig();
     }
 }

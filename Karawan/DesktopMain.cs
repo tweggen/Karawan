@@ -70,8 +70,26 @@ public class DesktopMain
         engine.GlobalSettings.Set("platform.initialZoomState", "0");
 
 
-        engine.Assets.SetAssetImplementation(new Karawan.AssetImplementation());
+        /*
+         * Bootstrap game by directly reading game config, setting up
+         * asset implementation with the pathes.
+         */
+        var iassetDesktop = new Karawan.AssetImplementation();
+        engine.casette.Loader cassetteLoader;
+        using (var streamJson =
+               File.OpenRead(
+                   Path.Combine(
+                       engine.GlobalSettings.Get("Engine.ResourcePath"),
+                       "nogame.json"))) 
+        {
+            cassetteLoader = new engine.casette.Loader(streamJson);
+        }
+        cassetteLoader.SetAssetLoaderAssociations(iassetDesktop);
 
+        engine.Assets.SetAssetImplementation(iassetDesktop);
+        
+
+        
         IWindow iWindow = null;
 
         bool startFullscreen = true;
@@ -135,7 +153,7 @@ public class DesktopMain
             return api;
         });
 
-        engine.casette.Loader.LoadStartGame("nogame.json");
+        cassetteLoader.StartGame();
         
         e.Execute();
 
