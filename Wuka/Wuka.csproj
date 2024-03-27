@@ -388,12 +388,6 @@
 	  <AndroidAsset Include="Platforms\Android\terminal.ogg">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>
-	  <AndroidAsset Include="Platforms\Android\titlelogo2_albedo.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidAsset>
-	  <AndroidAsset Include="Platforms\Android\titlelogo2_emissive.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidAsset>
 	  <AndroidAsset Include="Platforms\Android\tram1.mtl">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </AndroidAsset>

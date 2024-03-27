@@ -170,13 +170,12 @@ public class Scene : AModule, IScene
             EndReference = TimepointTitlesongStarted,
             EndOffset = TimeSpan.FromMilliseconds(1200),
             Duration = 700,
-            Size = new(64f, 64f/1280f*400f),
-            AlbedoTexture = new Texture("titlelogo2_albedo.png"),
-            EmissiveTexture = new Texture("titlelogo2_emissive.png"),
+            Size = new(14f, 7f),
+            EmissiveTexture = new Texture("aihao-emissive.png"),
             StartTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(2f, -10f, 0f), Vector3.One * 1.3f),
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
             EndTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(2f, -10f, 0f), Vector3.One * 1.3f)
+                true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f)
         });
         _modTitle.Add(new TitleCard()
         {
@@ -186,9 +185,9 @@ public class Scene : AModule, IScene
             EndOffset = TimeSpan.FromMilliseconds(2900),
             Duration = 1500,
             Flags = (uint) TitleCard.F.JitterEnd,
-            Size = new(64f, 64f/1280f*400f),
-            AlbedoTexture = new Texture("titlelogo2_albedo.png"),
-            EmissiveTexture = new Texture("titlelogo2_emissive.png"),
+            Size = new(64f, 64f/1280f*220f),
+            AlbedoTexture = new Texture("silicondesert-albedo.png"),
+            EmissiveTexture = new Texture("silicondesert-emissive.png"),
             StartTransform =  new engine.joyce.components.Transform3(
                 true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
             EndTransform =  new engine.joyce.components.Transform3(
