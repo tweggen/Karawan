@@ -88,6 +88,7 @@ public abstract class AModule : IModule
             {
                 ErrorThrow($"Unable to instantiate moduleDependency.",
                     (m) => new InvalidOperationException(m));
+                return;
             }
 
             _mapModules.Add(moduleDependency.ModuleType, module);
@@ -97,11 +98,15 @@ public abstract class AModule : IModule
                  * Only activate the module if it hasn't been activated yet. 
                  */
                 // TXWTODO: This basically is a workaround.
-                if (!_engine.HasModule(module))
+                if (!_engine.HasModuleType(moduleDependency.ModuleType))
                 {
                     module.ModuleActivate();
                 }
-                _activatedModules.Add(module);
+
+                if (moduleDependency.Deactivate)
+                {
+                    _activatedModules.Add(module);
+                }
             }
         }
     }

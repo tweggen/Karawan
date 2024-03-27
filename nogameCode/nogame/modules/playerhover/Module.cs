@@ -1,6 +1,7 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using DefaultEcs;
 using engine;
@@ -17,6 +18,12 @@ namespace nogame.modules.playerhover;
 public class Module : engine.AModule
 {
     static public readonly string PhysicsName = "nogame.playerhover";
+
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<nogame.modules.AutoSave>()
+    };
+
 
     private engine.joyce.TransformApi _aTransform;
 
@@ -89,7 +96,7 @@ public class Module : engine.AModule
     {
         lock (_lo)
         {
-            var gameState = I.Get<GameState>();
+            var gameState = M<AutoSave>().GameState;
             gameState.Health = int.Max(0, gameState.Health - less);
         }
     }
@@ -116,7 +123,7 @@ public class Module : engine.AModule
         var cev = ev as ContactEvent;
         cev.ContactInfo.PropertiesB.Entity.Set(
             new engine.behave.components.Behavior(new nogame.cities.PolytopeVanishBehaviour() { Engine = _engine }));
-        var gameState = I.Get<GameState>();
+        var gameState = M<AutoSave>().GameState;
         gameState.NumberPolytopes++;
         gameState.Health = 1000;
 
@@ -135,7 +142,7 @@ public class Module : engine.AModule
         _plingPlayer.PlayPling();
         _plingPlayer.Next();
 
-        var gameState = I.Get<GameState>();
+        var gameState = M<AutoSave>().GameState;
         gameState.NumberCubes++;
     }
 
@@ -355,7 +362,7 @@ public class Module : engine.AModule
          */
         _updateSound(velShip);
 
-        var gameState = I.Get<GameState>();
+        var gameState = M<AutoSave>().GameState;
 
     }
 
@@ -427,7 +434,7 @@ public class Module : engine.AModule
         {
             _eShip = _engine.CreateEntity("RootScene.playership");
 
-            var gameState = I.Get<GameState>();
+            var gameState = M<AutoSave>().GameState;
             var posShip = gameState.PlayerPosition;
             var rotShip = gameState.PlayerOrientation;
             if (posShip == Vector3.Zero)

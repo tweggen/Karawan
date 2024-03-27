@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Timers;
 using engine;
 
@@ -10,11 +11,21 @@ namespace nogame.modules;
 public class AutoSave : engine.AModule
 {
     private System.Timers.Timer _saveTimer;
+    
+    
+    public GameState GameState
+    {
+        get => I.Get<GameState>(); 
+    }
 
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<DBStorage>()
+    };
 
     private void _onSaveTimer(object sender, ElapsedEventArgs e)
     {
-        I.Get<DBStorage>().SaveGameState(I.Get<GameState>());
+        M<DBStorage>().SaveGameState(I.Get<GameState>());
     }
 
 
@@ -41,11 +52,11 @@ public class AutoSave : engine.AModule
         _engine.AddModule(this);
         
         {
-            bool haveGameState = I.Get<DBStorage>().LoadGameState(out GameState gameState);
+            bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
             if (false == haveGameState)
             {
                 gameState = new GameState();
-                I.Get<DBStorage>().SaveGameState(gameState);
+                M<DBStorage>().SaveGameState(gameState);
             }
             else
             {

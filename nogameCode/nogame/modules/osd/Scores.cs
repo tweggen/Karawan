@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Numerics;
 using engine;
 using engine.draw;
@@ -12,6 +13,12 @@ public class Scores : engine.AModule
 {
     public float YOffset { get; set; } = -5.0f;
     
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<nogame.modules.AutoSave>()
+    };
+
+
     /**
      * Display the current pling score.
      */
@@ -30,7 +37,7 @@ public class Scores : engine.AModule
 
     private void _onLogical(object? sender, float dt)
     {
-        var gameState = I.Get<GameState>();
+        var gameState = M<AutoSave>().GameState;
 
         _eScoreDisplay.Set(new engine.draw.components.OSDText(
             new Vector2(786f-64f-32f, 48f+YOffset),

@@ -480,6 +480,7 @@ public class SilkThreeD : IThreeD
     }
 
 
+    #if false
     private static readonly engine.joyce.AnyShader _defaultFragmentShader = new SplashAnyShader()
     {
         Source = (I.Get<Resources>().Get("shaders/default.frag") as engine.Resource.ShaderSource).ShaderCode
@@ -490,6 +491,7 @@ public class SilkThreeD : IThreeD
     {
         Source = (I.Get<Resources>().Get("shaders/default.vert") as engine.Resource.ShaderSource).ShaderCode
     };
+    #endif
 
     private int _frameno;
 

@@ -10,7 +10,7 @@ using static engine.Logger;
 
 namespace engine;
 
-public class DBStorage : IDisposable
+public class DBStorage : IDisposable, IModule
 {
     private object _lo = new();
 
@@ -322,5 +322,17 @@ public class DBStorage : IDisposable
     public DBStorage()
     {
         Mapper = _createMappers();
+    }
+
+    public IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
+    
+    public void ModuleActivate()
+    {
+        I.Get<Engine>().AddModule(this);
+    }
+
+    public void ModuleDeactivate()
+    {
+        I.Get<Engine>().RemoveModule(this);
     }
 }

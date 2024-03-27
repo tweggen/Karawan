@@ -786,6 +786,22 @@ public class Engine
     }
     
 
+    public bool HasModuleType(in System.Type moduleType)
+    {
+        lock (_lo)
+        {
+            foreach (var mod in _listModules)
+            {
+                if (mod.GetType() == moduleType)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+
     public void AddModule(in IModule module)
     {
         lock (_lo)

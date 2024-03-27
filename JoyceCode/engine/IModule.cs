@@ -10,6 +10,7 @@ public interface IModuleDependency
     public Func<bool> Condition { get; }
     public IModule Implementation { get; }
     public bool Activate { get; }
+    public bool Deactivate { get; }
 }
 
 
@@ -24,11 +25,18 @@ public abstract class AModuleDependency : IModuleDependency
     public Func<bool> Condition { get; protected set; }
     public abstract IModule Implementation { get; }
     public bool Activate { get; set; } = true;
+    public abstract bool Deactivate { get;  }
 }
 
 public class MyModule<T> : AModuleDependency where T:class  
 {
     private IModule _implementation = null;
+    
+    public override bool Deactivate
+    {
+        get => true; 
+    }
+
     public override IModule Implementation
     {
         get
@@ -70,6 +78,11 @@ public class MyModule<T> : AModuleDependency where T:class
 
 public class SharedModule<T> : AModuleDependency where T: class
 {
+    public override bool Deactivate
+    {
+        get => false; 
+    }
+
     public override IModule Implementation
     {
         get => I.Instance.GetInstance(ModuleType) as IModule;

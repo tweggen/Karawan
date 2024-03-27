@@ -48,10 +48,6 @@
     {
       "className": "nogame.map.WorldMapTerrainProvider"
     },
-    "0105/fragments":
-    {
-      "NOclassName": "nogame.map.WorldMapFragmentProvider"
-    },
     "0110/transport":
     {
       "className": "nogame.map.WorldMapIntercityProvider"
@@ -192,7 +188,8 @@
       { "uri": "../models/shaders/LIghtingVS.vert" },
       { "uri": "../models/fonts/Prototype.ttf" },
       { "uri": "../models/icons/appiconpng.png" },
-      { "uri": "../models/menu/menu.xml" }
+      { "uri": "../models/menu/menu.xml" },
+      { "uri": "../models/nogame.json" }
     ]
   }
 }

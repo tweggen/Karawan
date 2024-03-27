@@ -8,6 +8,7 @@ using engine;
 using engine.joyce;
 using engine.joyce.components;
 using engine.world;
+using nogame.modules;
 using static engine.Logger;
 
 namespace nogame.scenes.logos;
@@ -29,6 +30,10 @@ public class Scene : AModule, IScene
     
     public static string TimepointTitlesongStarted = "nogame.scenes.logos.titlesong.Started"; 
 
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<nogame.modules.AutoSave>()
+    };
     
     public void SceneOnLogicalFrame(float dt)
     {
@@ -96,7 +101,7 @@ public class Scene : AModule, IScene
             /*
              * Preload the player position from the current gamestate.
              */
-            I.Get<SetupMetaGen>().Preload(I.Get<GameState>().PlayerPosition);
+            I.Get<SetupMetaGen>().Preload(M<AutoSave>().GameState.PlayerPosition);
         });
 
         return true;

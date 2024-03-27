@@ -28,7 +28,7 @@ public class AndroidResourceWriter
             writer.WriteLine("  <ItemGroup>");
             foreach (var kvp in MapResources)
             {
-                writer.WriteLine($"    <AndroidAsset Include=\"{kvp.Value.Uri}\">");
+                writer.WriteLine($"    <AndroidAsset Include=\"{kvp.Value.Uri}\" LogicalName=\"{kvp.Key}\">");
                 writer.WriteLine("      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>");
                 writer.WriteLine("    </AndroidAsset>");
             }

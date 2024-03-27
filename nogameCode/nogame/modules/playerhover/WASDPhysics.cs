@@ -13,6 +13,13 @@ namespace nogame.modules.playerhover;
 internal class WASDPhysics : AModule, IInputPart
 {
     public static float MY_Z_ORDER = 25f;
+
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<nogame.modules.AutoSave>()
+    };
+    
+    
     private DefaultEcs.Entity _eTarget;
 
     private BepuPhysics.BodyReference _prefTarget;
@@ -296,7 +303,7 @@ internal class WASDPhysics : AModule, IInputPart
         _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
 
         {
-            var gameState = I.Get<GameState>();
+            var gameState = M<AutoSave>().GameState;
             gameState.PlayerPosition = vTargetPos;
             gameState.PlayerOrientation = qTargetOrientation;
         }

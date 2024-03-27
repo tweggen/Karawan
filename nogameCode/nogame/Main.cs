@@ -15,7 +15,6 @@ public class Main : AModule
         new SharedModule<nogame.modules.AutoSave>(),
     };
 
-
     public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
