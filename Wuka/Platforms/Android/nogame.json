@@ -116,4 +116,13 @@
     },
     "startup": "logos"
   },
+  "resources":
+  {
+    "list": [
+      { 
+        "tag": "story.json",
+        "uri": "../Karawan/models/story/story.json"
+      }
+    ]
+  }
 }

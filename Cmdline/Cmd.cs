@@ -23,6 +23,9 @@ class Cmd
             case "fbx2ascii":
                 result = new CmdLine.Fbx2Ascii(args).Execute();
                 break;
+            case "res2target":
+                result = new CmdLine.Res2Target(args).Execute();
+                break;
             default:
                 result = new CmdLine.Help(args).Execute();
                 break;
