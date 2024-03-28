@@ -34,7 +34,7 @@
 
   <Target Name="CompileResources" BeforeTargets="Compile">
     <Message Text="compiling resources" />
-    <Res2TargetTask GameJson="../models/nogame.json"/>
+    <Res2TargetTask OutputDirectory="./generated" GameJson="../models/nogame.json"/>
   </Target>
 
 </Project>

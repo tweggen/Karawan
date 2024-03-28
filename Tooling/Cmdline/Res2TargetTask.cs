@@ -21,15 +21,30 @@ namespace CmdLine
             }
         }
 
+        private string _outputDirectory = "";
+
+        public string OutputDirectory
+        {
+            get
+            {
+                return _outputDirectory;
+            }
+            set
+            {
+                _outputDirectory = value;
+            }
+        }
+
 
         public override bool Execute()
         {
             // Log a high-importance comment
-            Log.LogMessage(MessageImportance.High, $"Asked to convert data from {_gameJson}.");
+            Log.LogMessage(MessageImportance.High, $"Asked to convert data from \"{_gameJson}\" to \"{OutputDirectory}\".");
 
-            string[] args = new string[2];
+            string[] args = new string[3];
             args[0] = "res2target";
             args[1] = _gameJson;
+            args[2] = _outputDirectory;
             int result = new CmdLine.Res2Target(args) { Trace = msg => Log.LogMessage(MessageImportance.High, msg) }.Execute();
             return 0 == result;
         }

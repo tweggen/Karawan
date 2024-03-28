@@ -28,7 +28,7 @@ namespace CmdLine
                 {
                     MapResources = gc.MapResources,
                     Trace = Trace,
-                    DestinationPath = "./AndroidResources.xml"
+                    DestinationPath = System.IO.Path.Combine(_args[2], "./AndroidResources.xml")
                 };
                 arw.Execute();
                 Trace($"res2target: Writing windows setup assets...");
@@ -36,7 +36,7 @@ namespace CmdLine
                 {
                     MapResources = gc.MapResources,
                     Trace = Trace,
-                    DestinationPath = "./InnoResources.iss"
+                    DestinationPath = System.IO.Path.Combine(_args[2], "./InnoResources.iss")
                 };
                 irw.Execute();
 
@@ -53,7 +53,7 @@ namespace CmdLine
 
         public Res2Target(string[] args)
         {
-            if (args.Length != 2)
+            if (args.Length != 3)
             {
                 throw new ArgumentException();
             }

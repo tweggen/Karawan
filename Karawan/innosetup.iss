@@ -20,7 +20,7 @@ Source: "*.dll"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.runtimeconfig.json"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.xml"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.exe"; DestDir: "{app}\"; Flags: ignoreversion
-#include "..\nogame\InnoResources.iss"
+#include "..\nogame\generated\InnoResources.iss"
 Source: "..\..\..\..\appicon.ico"; DestDir: "{app}\"; Flags: ignoreversion
 
 [Icons]

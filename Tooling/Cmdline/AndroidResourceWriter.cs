@@ -18,6 +18,9 @@ namespace CmdLine
 
         public void Execute()
         {
+            string dirName = System.IO.Path.GetDirectoryName(DestinationPath);
+            System.IO.Directory.CreateDirectory(dirName);
+
             /*
              * Write xml content:
              * <ItemGroup>

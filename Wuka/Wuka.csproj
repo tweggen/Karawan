@@ -100,7 +100,7 @@
 	  <None Remove="Resources\Splash\splash_nassau.svg" />
 	</ItemGroup>
 
-	<Import Project="../nogame/AndroidResources.xml"/>
+	<Import Project="../nogame/generated/AndroidResources.xml"/>
 	
 	<ItemGroup>
 	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libopenal.so">
