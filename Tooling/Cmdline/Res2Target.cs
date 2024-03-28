@@ -22,6 +22,7 @@ namespace CmdLine
             {
                 GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
                 gc.Load();
+
                 Trace($"res2target: Writing android assets...");
                 AndroidResourceWriter arw = new AndroidResourceWriter()
                 {
@@ -30,6 +31,15 @@ namespace CmdLine
                     DestinationPath = "./AndroidResources.xml"
                 };
                 arw.Execute();
+                Trace($"res2target: Writing windows setup assets...");
+                InnoResourceWriter irw = new InnoResourceWriter()
+                {
+                    MapResources = gc.MapResources,
+                    Trace = Trace,
+                    DestinationPath = "./InnoResources.iss"
+                };
+                irw.Execute();
+
                 Trace($"res2target: Done.");
             }
             catch (Exception e)

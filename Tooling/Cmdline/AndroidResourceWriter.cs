@@ -40,5 +40,6 @@ namespace CmdLine
                 writer.WriteLine("</Project>");
             }
         }
+
     }
 }

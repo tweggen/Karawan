@@ -21,6 +21,9 @@
     <AndroidAsset Include="../models/buildings/buildingdiffuse.png" LogicalName="buildingdiffuse.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
+    <AndroidAsset Include="../models/sfx/car-collision.ogg" LogicalName="car-collision.ogg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AndroidAsset>
     <AndroidAsset Include="../models/sfx/car3noise.ogg" LogicalName="car3noise.ogg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
@@ -52,9 +55,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
     <AndroidAsset Include="../models/newcars/car8/car8.obj" LogicalName="car8.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AndroidAsset>
-    <AndroidAsset Include="../models/sfx/car-collision.ogg" LogicalName="car-collision.ogg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
     <AndroidAsset Include="../models/sfx/cubeloopmono.ogg" LogicalName="cubeloopmono.ogg">
@@ -90,10 +90,10 @@
     <AndroidAsset Include="../models/nogame.json" LogicalName="nogame.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
-    <AndroidAsset Include="../models/brands/plentomatic.png" LogicalName="plentomatic.png">
+    <AndroidAsset Include="../models/brands/plentomatic-small.png" LogicalName="plentomatic-small.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
-    <AndroidAsset Include="../models/brands/plentomatic-small.png" LogicalName="plentomatic-small.png">
+    <AndroidAsset Include="../models/brands/plentomatic.png" LogicalName="plentomatic.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AndroidAsset>
     <AndroidAsset Include="../models/sfx/pling01.ogg" LogicalName="pling01.ogg">

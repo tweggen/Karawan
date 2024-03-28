@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <UsingTask TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Cmdline\bin\Debug\netstandard2.0\joycecmd.dll" />
+  <UsingTask TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\joycecmd.dll" />
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>

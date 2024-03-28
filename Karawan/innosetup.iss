@@ -10,7 +10,7 @@ DefaultGroupName=SiliconDesert2
 UninstallDisplayIcon={app}\Karawan.exe
 Compression=lzma2
 SolidCompression=yes
-SourceDir=.\bin\Release\net8.0-windows10.0.17763.0\
+SourceDir=.\bin\Release\net8.0-windows10.0.17763.0\win-x64\
 OutputDir=..\..\..\..\Setup\
 OutputBaseFilename=InstallSiliconDesert2
 ArchitecturesInstallIn64BitMode=x64
@@ -20,18 +20,8 @@ Source: "*.dll"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.runtimeconfig.json"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.xml"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.exe"; DestDir: "{app}\"; Flags: ignoreversion
-Source: "runtimes\win-x64\native\*"; DestDir: "{app}\"; Flags: ignoreversion 
-Source: "..\..\..\..\Wuka\Platforms\Android\*.glb"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.ogg"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.mtl"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.obj"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.png"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.ttf"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.json"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.frag"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.vert"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\..\Wuka\Platforms\Android\*.xml"; DestDir: "{app}\assets\"; Flags: ignoreversion
-Source: "..\..\..\appicon.ico"; DestDir: "{app}\"; Flags: ignoreversion
+#include "..\nogame\InnoResources.iss"
+Source: "..\..\..\..\appicon.ico"; DestDir: "{app}\"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\SiliconDesert2"; Filename: "{app}\Karawan.exe"; IconFilename: "{app}\appicon.ico"
