@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cmdline", "Cmdline\Cmdline.csproj", "{612655E4-50D3-41EF-B4E7-7EDCEA948068}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{612655E4-50D3-41EF-B4E7-7EDCEA948068}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{612655E4-50D3-41EF-B4E7-7EDCEA948068}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{612655E4-50D3-41EF-B4E7-7EDCEA948068}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{612655E4-50D3-41EF-B4E7-7EDCEA948068}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

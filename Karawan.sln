@@ -40,8 +40,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BepuUtilities", "..\BepuPhy
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Boom.OpenAL", "Boom.OpenAL\Boom.OpenAL.csproj", "{DE9315AF-6633-4916-A589-34A4BAD9C966}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cmdline", "Cmdline\Cmdline.csproj", "{E7DCFBF0-FA6F-44B2-9499-4BF8D5C2F3D2}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FbxSharp", "..\FbxSharp\FbxSharp.csproj", "{2D031D6D-4988-43F0-9978-040D7258C34C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "glTFLoader", "..\glTF-CSharp-Loader\glTFLoader\glTFLoader.csproj", "{F812745B-E883-4512-A937-0A92D6A66D3F}"
