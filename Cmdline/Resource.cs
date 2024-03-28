@@ -1,7 +1,8 @@
-namespace CmdLine;
-
-public class Resource
+namespace CmdLine
 {
-    public string Tag { get; set; }
-    public string Uri { get; set; }
+    public class Resource
+    {
+        public string Tag { get; set; }
+        public string Uri { get; set; }
+    }
 }

@@ -1,47 +1,49 @@
 using System.Diagnostics;
+using System;
 // using UkooLabs.FbxSharpie;
 
-namespace CmdLine;
-
-public class Fbx2Ascii
+namespace CmdLine
 {
-    private string[] _args;
-    
-    public void Help()
+    public class Fbx2Ascii
     {
-        Console.Error.WriteLine("fbx2ascii <source file> <dest file>");     
-    }
+        private string[] _args;
 
-    public int Execute()
-    {
-        try
+        public void Help()
         {
-            Console.Error.WriteLine($"fbx2ascii: Reading file {_args[1]}...");
-            //var reader = null; // new FbxBinaryReader(new FileStream(_args[1], FileMode.Open));
-            Console.Error.WriteLine($"fbx2ascii: Understanding file {_args[1]}...");
-            //var doc = reader.Read();
-            Console.Error.WriteLine($"fbx2ascii: Writing file {_args[2]}...");
-            //FbxIO.WriteAscii(doc, _args[2]);
-            Console.Error.WriteLine($"fbx2ascii: Done.");
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine($"fbx2ascii: Exception converting {_args[1]}: {e}.");
+            Console.Error.WriteLine("fbx2ascii <source file> <dest file>");
         }
 
-        return 0;
-    }
-    
-    
-    public Fbx2Ascii(string[] args)
-    {
-        if (args.Length != 3)
+        public int Execute()
         {
-            Console.Error.WriteLine("Source and destination file arguments expected.");
-            Help();
-            throw new ArgumentException();
+            try
+            {
+                Console.Error.WriteLine($"fbx2ascii: Reading file {_args[1]}...");
+                //var reader = null; // new FbxBinaryReader(new FileStream(_args[1], FileMode.Open));
+                Console.Error.WriteLine($"fbx2ascii: Understanding file {_args[1]}...");
+                //var doc = reader.Read();
+                Console.Error.WriteLine($"fbx2ascii: Writing file {_args[2]}...");
+                //FbxIO.WriteAscii(doc, _args[2]);
+                Console.Error.WriteLine($"fbx2ascii: Done.");
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"fbx2ascii: Exception converting {_args[1]}: {e}.");
+            }
+
+            return 0;
         }
 
-        _args = args;
+
+        public Fbx2Ascii(string[] args)
+        {
+            if (args.Length != 3)
+            {
+                Console.Error.WriteLine("Source and destination file arguments expected.");
+                Help();
+                throw new ArgumentException();
+            }
+
+            _args = args;
+        }
     }
 }

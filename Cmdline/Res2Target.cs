@@ -1,52 +1,54 @@
-using System.Diagnostics.Eventing.Reader;
+using System;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
-namespace CmdLine;
-
-public class Res2Target
+namespace CmdLine
 {
-    private string[] _args;
-    public Action<string> Trace = (msg) => System.Diagnostics.Debug.WriteLine(msg);
-    
-    public void Help()
-    {
-        Trace("res2target <gamejson>");     
-    }
 
-    public int Execute()
+    public class Res2Target
     {
-        Trace("res2target: Working...");     
-        try
+        private string[] _args;
+        public Action<string> Trace = (msg) => System.Diagnostics.Debug.WriteLine(msg);
+
+        public void Help()
         {
-			GameConfig gc = new (_args[1]) { Trace=Trace };
-            gc.Load();
-            Trace($"res2target: Writing android assets...");
-            AndroidResourceWriter arw = new()
+            Trace("res2target <gamejson>");
+        }
+
+        public int Execute()
+        {
+            Trace("res2target: Working...");
+            try
             {
-                MapResources = gc.MapResources,
-                Trace = Trace,
-                DestinationPath = "./AndroidResources.xml"
-            };
-            arw.Execute();
-            Trace($"res2target: Done.");
-        }
-        catch (Exception e)
-        {
-            Trace($"Exception in Execute: {e}");
+                GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
+                gc.Load();
+                Trace($"res2target: Writing android assets...");
+                AndroidResourceWriter arw = new AndroidResourceWriter()
+                {
+                    MapResources = gc.MapResources,
+                    Trace = Trace,
+                    DestinationPath = "./AndroidResources.xml"
+                };
+                arw.Execute();
+                Trace($"res2target: Done.");
+            }
+            catch (Exception e)
+            {
+                Trace($"Exception in Execute: {e}");
+            }
+
+            return 0;
         }
 
-        return 0;
-    }
-    
-    
-    public Res2Target(string[] args)
-    {
-        if (args.Length != 2)
-        {
-            throw new ArgumentException();
-        }
 
-        _args = args;
+        public Res2Target(string[] args)
+        {
+            if (args.Length != 2)
+            {
+                throw new ArgumentException();
+            }
+
+            _args = args;
+        }
     }
 }
