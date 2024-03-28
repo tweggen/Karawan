@@ -11,10 +11,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Boom\Boom.csproj" />
-    <ProjectReference Include="..\Cmdline\Cmdline.csproj">
+    <!--ProjectReference Include="..\Cmdline\Cmdline.csproj">
       <PrivateAssets>all</PrivateAssets>
       <ExcludeAssets>runtime</ExcludeAssets>
-    </ProjectReference>
+    </ProjectReference -->
       <!--
       <PrivateAssets>runtime</PrivateAssets>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
