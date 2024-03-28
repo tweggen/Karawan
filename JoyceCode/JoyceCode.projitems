@@ -55,12 +55,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AHeatMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\BehaviorStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ClusterHeatMap.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Particle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ISpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerBehaviorStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerFragmentStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnStatus.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\ParticleSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\SpawnSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\CameraInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />

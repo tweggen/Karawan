@@ -601,7 +601,8 @@ public class FollowCameraController : IInputPart
          */
         if (_eTarget.Has<Camera3>())
         {
-            _eTarget.Get<Camera3>().Angle = 45f + Single.Min(_vCarrotVelocity.Length(), 100f) / 100f * 30f;
+            float relSpeed = (Single.Min(_vCarrotVelocity.Length(), 100f) / 100f);
+            _eTarget.Get<Camera3>().Angle = 45f + relSpeed * relSpeed * 45f; 
         }
     }
 
