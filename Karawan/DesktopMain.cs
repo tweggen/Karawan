@@ -61,7 +61,7 @@ public class DesktopMain
         }
         else
         {
-            engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../nogame/");
+            engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
         }
         engine.GlobalSettings.Set("Engine.RWPath", "./");
         

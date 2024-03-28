@@ -74,8 +74,8 @@ namespace engine.physics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void IntegrateVelocity(Vector<int> bodyIndices, Vector3Wide position, QuaternionWide orientation, BodyInertiaWide localInertia, Vector<int> integrationMask, int workerIndex, Vector<float> dt, ref BodyVelocityWide velocity)
         {
-            velocity.Angular *= angularDampingDt;
-            velocity.Linear *= linearDampingDt;
+            // velocity.Angular *= angularDampingDt;
+            // velocity.Linear *= linearDampingDt;
             velocity.Linear += gravityWideDt;
         }
 

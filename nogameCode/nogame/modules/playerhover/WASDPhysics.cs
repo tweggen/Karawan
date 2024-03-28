@@ -26,7 +26,7 @@ internal class WASDPhysics : AModule, IInputPart
 
     private float _massShip;
 
-    public float LinearThrust { get; set; } = 70f;
+    public float LinearThrust { get; set; } = 35f;
     public float AngularThrust { get; set; } = 50.0f;
 
     public float MaxLinearVelocity { get; set; } = 150f;
@@ -209,8 +209,6 @@ internal class WASDPhysics : AModule, IInputPart
          * Now apply a damping on velocity, i.e. computing linear and angular impulses
          * proportional to the velocity
          */
-        // vTotalImpulse += vTargetVelocity * -0.8f;
-        // vTotalAngular += vTargetAngularVelocity * -0.8f;
 
         /*
          * Also, try to rotate me back to horizontal plane.
@@ -286,7 +284,23 @@ internal class WASDPhysics : AModule, IInputPart
             float avel = vTargetAngularVelocity.Length();
             vTotalAngular += -(vTargetAngularVelocity * (avel - MaxAngularVelocity) / avel) / dt;
         }
+        
+        /*
+         * Let the ship gradually slow down.
+         */
+        {
+            vTotalImpulse -= 0.5f * vTargetVelocity;
+            vTotalAngular -= 0.95f * vTargetAngularVelocity;
+        }
 
+        /*
+         * Remove parts of the velocity that are not in the direction of the ship.
+         */
+        {
+            Vector3 v3Off = vTargetVelocity - Vector3.Dot(vTargetVelocity, vFront) * vFront;
+            vTotalImpulse -= 2f*v3Off;
+        }
+        
         Vector3 vNewTargetVelocity;
         Quaternion qTargetOrientation;
         lock (_engine.Simulation)

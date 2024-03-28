@@ -126,7 +126,8 @@ public class TitleModule : engine.AModule
                     float fadeoutStart = (float)ace.Card.Duration - (float)ace.Card.FadeOutTime;
                     if (t >= fadeoutStart)
                     {
-                        float relFadeout = 1f - (t-fadeoutStart) / (float)ace.Card.FadeOutTime;
+                        float fadeVal = Single.Min((t - fadeoutStart)/ace.Card.FadeOutTime, 1f);
+                        float relFadeout = 1f - fadeVal;
                         byte k = (byte)(relFadeout * 255f);
                         ace.InstanceDesc.Materials[0].EmissiveFactors = ((uint)k << 24) |0xffffff;
                     }

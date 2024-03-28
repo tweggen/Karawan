@@ -10,6 +10,7 @@ using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.Constraints;
 using engine;
+using engine.joyce.components;
 using engine.news;
 using engine.physics;
 using SkiaSharp;
@@ -127,6 +128,8 @@ public class FollowCameraController : IInputPart
      */
     private float _zoomState = 0.15f;
 
+    private Vector3 _vCarrotVelocity;
+
     private float _zoomDistance()
     {
         if (_isInputEnabled)
@@ -166,6 +169,7 @@ public class FollowCameraController : IInputPart
                     && _prefPlayer.Pose.Orientation != Quaternion.Identity)
                 {
                     vVelocity = _prefPlayer.Velocity.Linear;
+                    _vCarrotVelocity = vVelocity;
                     haveVelocity = true;
                 }
             }
@@ -176,6 +180,7 @@ public class FollowCameraController : IInputPart
             if (_eCarrot.IsAlive && _eCarrot.Has<engine.joyce.components.Motion>())
             {
                 vVelocity = _eCarrot.Get<engine.joyce.components.Motion>().Velocity;
+                _vCarrotVelocity = vVelocity;
                 haveVelocity = true;
             }
         }
@@ -590,6 +595,13 @@ public class FollowCameraController : IInputPart
             _prefCameraBall.Pose.Position = vVisibleCameraPos;
             _prefCameraBall.Velocity.Linear = Vector3.Zero;
             _prefCameraBall.Velocity.Angular = Vector3.Zero;
+        }
+        /*
+         * Also modify the camera angle with the speed.
+         */
+        if (_eTarget.Has<Camera3>())
+        {
+            _eTarget.Get<Camera3>().Angle = 45f + Single.Min(_vCarrotVelocity.Length(), 100f) / 100f * 30f;
         }
     }
 
