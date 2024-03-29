@@ -14,11 +14,15 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
     private engine.Engine _engine;
     private readonly RandomSource _rnd;
+    private CameraInfo? _cameraInfo = null;
+    private List<Entity> _listDelete = null;
 
     protected override void Update(
-        float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
+        float dt, ReadOnlySpan<Entity> entities)
     {
-        List<DefaultEcs.Entity> listDelete = new();
+        if (null == _cameraInfo) return;
+        
+        List<Entity> listDelete = new();
         foreach (var entity in entities)
         {
             ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
@@ -29,9 +33,17 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
             }
             else
             {
+                float maxDistSquared = cParticleEmitter.MaxDistance * cParticleEmitter.MaxDistance;
+
                 Entity eParticle = _engine.GetEcsWorld().CreateEntity();
+                Vector3 v3EmitterPosition = cTransform3ToWorld.Matrix.Translation;
+                if ((v3EmitterPosition - _cameraInfo.Position).LengthSquared() > maxDistSquared)
+                {
+                    continue;
+                }
                 Vector3 v3Position =
-                    cParticleEmitter.Position
+                    v3EmitterPosition
+                    + cParticleEmitter.Position
                     + new Vector3(
                         (-1f + 2f * _rnd.GetFloat()) * cParticleEmitter.RandomPos.X,
                         (-1f + 2f * _rnd.GetFloat()) * cParticleEmitter.RandomPos.Y,
@@ -60,11 +72,25 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                 });
             }
         }
+    }
 
-        foreach (var entity in listDelete)
+
+    protected override void PostUpdate(float dt)
+    {
+        base.PostUpdate(dt);
+        foreach (var entity in _listDelete)
         {
             entity.Dispose();
         }
+        _listDelete = null;
+    }
+    
+
+    protected override void PreUpdate(float dt)
+    {
+        base.PreUpdate(dt);
+        _cameraInfo = _engine.CameraInfo;
+        _listDelete = new();
     }
     
     public ParticleEmitterSystem()

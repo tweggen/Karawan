@@ -12,19 +12,19 @@ namespace engine.behave.systems;
 public class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
     private engine.Engine _engine;
+    List<DefaultEcs.Entity> _listDelete;
 
     protected override void Update(
         float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
-        List<DefaultEcs.Entity> listDelete = new();
         foreach (var entity in entities)
         {
             ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
             ref var cParticle = ref entity.Get<Particle>();
             if (0 == --cParticle.TimeToLive)
             {
-                cTransform3ToWorld.IsVisible = false;
-                listDelete.Add(entity);
+                //cTransform3ToWorld.IsVisible = false;
+                _listDelete.Add(entity);
             }
             else
             {
@@ -37,13 +37,25 @@ public class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
                     cParticle.VelocityPerFrame;
             }
         }
+    }
 
-        foreach (var entity in listDelete)
+
+    protected override void PostUpdate(float state)
+    {
+        foreach (var entity in _listDelete)
         {
             entity.Dispose();
         }
+        _listDelete = null;
     }
     
+
+    protected override void PreUpdate(float state)
+    {
+        base.PreUpdate(state);
+        _listDelete = new();
+    }
+
     public ParticleSystem()
         : base(I.Get<Engine>().GetEcsWorld())
     {

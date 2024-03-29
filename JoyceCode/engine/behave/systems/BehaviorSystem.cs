@@ -83,11 +83,13 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
 
     protected override void PostUpdate(float dt)
     {
+        base.PostUpdate(dt);
     }
 
 
     protected override void PreUpdate(float dt)
     {
+        base.PreUpdate(dt);
         _havePlayerPosition = false;
         _ePlayer = _engine.GetPlayerEntity();
         if (_ePlayer.IsAlive && _ePlayer.IsEnabled())

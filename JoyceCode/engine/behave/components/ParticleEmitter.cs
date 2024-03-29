@@ -14,5 +14,6 @@ public struct ParticleEmitter
     public float RandomDirection;
     public float Frequency;
     public float SlowDown;
+    public float MaxDistance;
     public uint CameraMask;
 }

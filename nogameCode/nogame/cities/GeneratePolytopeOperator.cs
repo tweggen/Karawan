@@ -120,6 +120,24 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 0x88226622,
                 0x00000000,
                 engine.draw.HAlign.Left) {MaxDistance = 800f});
+            var jFountainCubesInstanceDesc = InstanceDesc.CreateFromMatMesh(
+                new MatMesh(
+                    I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
+                    engine.joyce.mesh.Tools.CreateCubeMesh("polytopefountain", 0.2f)
+                ), 150f
+            );
+            eTarget.Set(new engine.behave.components.ParticleEmitter()
+            {
+                Position = new Vector3(0f, 2f, 0f),
+                ScalePerSec = 1f,
+                RandomPos = Vector3.One,
+                EmitterTimeToLive = Int32.MaxValue,
+                Velocity = 2f * Vector3.UnitY,
+                ParticleTimeToLive = 60*2,
+                InstanceDesc = jFountainCubesInstanceDesc,
+                MaxDistance = 150f,
+                CameraMask = 0x00000001,
+            });
 
         });
         worldFragment.Engine.QueueEntitySetupAction("nogame.furniture.polytopeBall", tSetupEntity);
@@ -206,6 +224,11 @@ public class GeneratePolytopeOperator : IFragmentOperator
         engine.world.ClusterDesc clusterDesc,
         string strKey
     ) {
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.polytope.materials.cube",
+            name => new Material()
+            {
+                AlbedoColor = 0xff226666
+            });
         _clusterDesc = clusterDesc;
         _myKey = strKey;
         _rnd = new builtin.tools.RandomSource(_myKey);

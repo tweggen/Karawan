@@ -1,26 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
-using BepuPhysics;
 using DefaultEcs;
-using engine.behave.components;
-using engine.elevation;
 using engine.news;
 using engine.Resource;
-using engine.world;
 using static engine.Logger;
-using Trace = System.Diagnostics.Trace;
 
 namespace engine;
 
@@ -77,6 +66,8 @@ public class Engine
     private IPlatform _platform;
 
     private behave.systems.BehaviorSystem _systemBehave;
+    private behave.systems.ParticleEmitterSystem _systemParticleEmitter;
+    private behave.systems.ParticleSystem _systemParticle;
     private physics.systems.ApplyPosesSystem _systemApplyPoses;
     private physics.systems.MoveKineticsSystem _systemMoveKinetics;
     private audio.systems.MovingSoundsSystem _systemMovingSounds;
@@ -628,7 +619,12 @@ public class Engine
          *
          * Require: Previously computed world transforms.
          */
-        if (gamePlayState == GamePlayStates.Running) _systemBehave.Update(dt);
+        if (gamePlayState == GamePlayStates.Running)
+        {
+            _systemBehave.Update(dt);
+            _systemParticleEmitter.Update(dt);
+            _systemParticle.Update(dt);
+        }
 
         OnLogicalFrame?.Invoke(this, dt);
 
@@ -1005,6 +1001,8 @@ public class Engine
         _aTransform = I.Get<engine.joyce.TransformApi>();
         _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
 
+        _systemParticle = new();
+        _systemParticleEmitter = new();
         _systemBehave = new();
         _systemApplyPoses = new();
         _systemMoveKinetics = new();
