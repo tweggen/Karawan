@@ -40,7 +40,7 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                 eParticle.Set(
                     new Particle()
                     {
-                        Position = v3Position
+                        Position = v3Position,
                         TimeToLive = cParticleEmitter.ParticleTimeToLive,
                         Orientation = Quaternion.Identity,
                         VelocityPerFrame = cParticleEmitter.Velocity * 1f/60f,
@@ -54,6 +54,10 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                         IsVisible = true
                     }
                 );
+                eParticle.Set(new Instance3()
+                {
+                    InstanceDesc = cParticleEmitter.InstanceDesc
+                });
             }
         }
 
