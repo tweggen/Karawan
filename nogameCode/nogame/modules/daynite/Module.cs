@@ -13,7 +13,7 @@ public class Module : AModule
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<GameState>()
+        new SharedModule<AutoSave>()
     };
 
 
@@ -47,7 +47,7 @@ public class Module : AModule
     {
         int todayGameHours, todayGameMinutes;
 
-        M<GameState>().GameTime = GameNow;
+        M<AutoSave>().GameState.GameTime = GameNow;
 
         lock (_lo)
         {
