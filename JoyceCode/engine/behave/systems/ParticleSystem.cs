@@ -21,13 +21,14 @@ public class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
         {
             ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
             ref var cParticle = ref entity.Get<Particle>();
-            if (0 == --cParticle.TimeToLive)
+            if (0 >= cParticle.TimeToLive)
             {
                 //cTransform3ToWorld.IsVisible = false;
                 _listDelete.Add(entity);
             }
             else
             {
+                --cParticle.TimeToLive;
                 cTransform3ToWorld.Matrix =
                     Matrix4x4.CreateFromQuaternion(cParticle.Orientation)
                     * Matrix4x4.CreateTranslation(cParticle.Position);

@@ -339,9 +339,9 @@ public class ClusterDesc
     private void _addHighwayTriggers(Generator streetGenerator)
     {
         _initialOuterStreetLength =
-            Single.Max(35f, Single.Min(1000f, Size) / 18f);
+            Single.Max(45f, Single.Min(1000f, Size) / 12f);
         _initialInnerStreetLength =
-            Single.Max(30f, Single.Min(1000f, Size) / 25f);
+            Single.Max(45f, Single.Min(1000f, Size) / 16f);
         
         /*
          * Variant two: n random points

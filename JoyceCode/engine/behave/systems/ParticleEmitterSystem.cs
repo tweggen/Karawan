@@ -29,12 +29,13 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
         {
             ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
             ref var cParticleEmitter = ref entity.Get<ParticleEmitter>();
-            if (0 == --cParticleEmitter.EmitterTimeToLive)
+            if (0 >= cParticleEmitter.EmitterTimeToLive)
             {
                 listDelete.Add(entity);
             }
             else
             {
+                --cParticleEmitter.EmitterTimeToLive;
                 float maxDistSquared = cParticleEmitter.MaxDistance * cParticleEmitter.MaxDistance;
 
                 Vector3 v3EmitterPosition = cTransform3ToWorld.Matrix.Translation;

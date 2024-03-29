@@ -327,6 +327,7 @@ public class API
             {
                 ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
             }
+            _setRegisteredEntities.Remove(handle.Value);
         }
 
         lock (_engine.Simulation)

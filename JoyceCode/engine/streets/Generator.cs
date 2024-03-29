@@ -25,9 +25,9 @@ namespace engine.streets
         private Vector2 _bl;
         private Vector2 _tr;
 
-        public float minPointToCandPointDistance { get; set; } = 20f;
-        public float minPointToCandStrokeDistance { get; set; } = 20f;
-        public float minPointToCandIntersectionDistance { get; set; } = 20f;
+        public float minPointToCandPointDistance { get; set; } = 30f;
+        public float minPointToCandStrokeDistance { get; set; } = 30f;
+        public float minPointToCandIntersectionDistance { get; set; } = 30f;
 
         /*
          * All proabilities are given in the 0..256 range to avoid differrences 
@@ -40,16 +40,16 @@ namespace engine.streets
         public int probabilityNextStrokeIncreaseWeight { get; set; } = 8;
         public int probabilityNextStrokeDecreaseWeight { get; set; } = 77;
 
-        public float  newStrokeMinimum { get; set; } = 40f;
+        public float  newStrokeMinimum { get; set; } = 60f;
         public float newStrokeSquaredWeight { get; set; } = 40f;
-        public float newLengthMin { get; set;  } = 50f;
+        public float newLengthMin { get; set;  } = 75f;
 
         public float weightIncreaseFactor { get; set; } = 1.1f;
         public float weightDecreaseFactor { get; set; } = 0.9f;
         public float weightMin { get; set; } = 0.1f;
         public float weightMax { get; set; } = 1.3f;
 
-        public float probabilityAngleSlightTurn { get; set; } = 20f;
+        public float probabilityAngleSlightTurn { get; set; } = 30f;
         public int AngleSlightTurnMax { get; set; } = 6;
 
         public float AngleMinStrokes { get; set; } = 40.0f;

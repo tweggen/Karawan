@@ -110,9 +110,51 @@ public class Module : engine.AModule
     }
 
 
+    private void _createCollisionParticles(ContactEvent cev)
+    {
+        _engine.QueueEntitySetupAction("carcollision", e =>
+        {
+            var jFountainCubesInstanceDesc = InstanceDesc.CreateFromMatMesh(
+                new MatMesh(
+                    I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
+                    engine.joyce.mesh.Tools.CreatePlaneMesh("carcrashfragments", new Vector2(0.1f,0.1f))
+                ), 20f
+            );
+            Vector3 v3Pos;
+            lock (_engine.Simulation)
+            {
+                v3Pos = _prefShip.Pose.Position;
+            }
+
+            v3Pos += cev.ContactInfo.ContactOffset;
+            e.Set(new engine.behave.components.ParticleEmitter()
+            {
+                Position = Vector3.Zero,
+                ScalePerSec = 1f,
+                RandomPos = Vector3.One,
+                EmitterTimeToLive = 10,
+                Velocity = 3f * cev.ContactInfo.ContactNormal,
+                ParticleTimeToLive = 30,
+                InstanceDesc = jFountainCubesInstanceDesc,
+                MaxDistance = 20f,
+                CameraMask = 0x00000001,
+            });
+            e.Set(new engine.joyce.components.Transform3ToWorld()
+                {
+                    Matrix = Matrix4x4.CreateTranslation(v3Pos),
+                    CameraMask = 0x00000001,
+                    IsVisible = true
+                }
+            );
+
+        });
+    }
+    
+
     private void _onAnonymousCollision(engine.news.Event ev)
     {
         var cev = ev as ContactEvent;
+        _createCollisionParticles(cev);
         _playCollisionSound();
         _decreaseHealth(14);
     }
@@ -135,6 +177,8 @@ public class Module : engine.AModule
     private void _onCubeCollision(engine.news.Event ev)
     {
         var cev = ev as ContactEvent;
+        _createCollisionParticles(cev);
+
         cev.ContactInfo.PropertiesB.Entity.Set(
             new engine.behave.components.Behavior(new nogame.characters.cubes.CubeVanishBehavior()
                 { Engine = _engine }));
@@ -150,6 +194,8 @@ public class Module : engine.AModule
     private void _onCarCollision(engine.news.Event ev)
     {
         var cev = ev as ContactEvent;
+        _createCollisionParticles(cev);
+
         var other = cev.ContactInfo.PropertiesB;
 
         _playCollisionSound();
