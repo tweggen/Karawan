@@ -50,7 +50,21 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                         (-1f + 2f * _rnd.GetFloat()) * cParticleEmitter.RandomPos.X,
                         (-1f + 2f * _rnd.GetFloat()) * cParticleEmitter.RandomPos.Y,
                         (-1f + 2f * _rnd.GetFloat()) * cParticleEmitter.RandomPos.Z
-                    ); 
+                    );
+                var v = cParticleEmitter.Velocity.Length();
+                var v3RandDirection = _rnd.GetVector3();
+                v3RandDirection = Vector3.Normalize(v3RandDirection);
+                Vector3 v3EffectiveDirection;
+                if (v < 0.0001f)
+                {
+                    v3EffectiveDirection = Vector3.Normalize(v3RandDirection) * cParticleEmitter.RandomDirection;
+                }
+                else
+                {
+                    v3EffectiveDirection = v3RandDirection * cParticleEmitter.RandomDirection + (cParticleEmitter.Velocity / v) * (1f-cParticleEmitter.RandomDirection);
+                    if (Single.Abs(v3EffectiveDirection.X) < 0.00001f) v3EffectiveDirection.X = 0.00001f;
+                    v3EffectiveDirection = Vector3.Normalize(v3EffectiveDirection) * v;
+                }
 
                 Entity eParticle = _engine.GetEcsWorld().CreateEntity();
                 eParticle.Set(
@@ -59,7 +73,7 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                         Position = v3Position,
                         TimeToLive = cParticleEmitter.ParticleTimeToLive,
                         Orientation = Quaternion.Identity,
-                        VelocityPerFrame = cParticleEmitter.Velocity * 1f/60f,
+                        VelocityPerFrame = v3EffectiveDirection * 1f/60f,
                         SpinPerFrame = Quaternion.Identity
                     }
                 );

@@ -136,6 +136,7 @@ public class Module : engine.AModule
                 Velocity = 3f * cev.ContactInfo.ContactNormal,
                 ParticleTimeToLive = 30,
                 InstanceDesc = jFountainCubesInstanceDesc,
+                RandomDirection = 0.5f,
                 MaxDistance = 20f,
                 CameraMask = 0x00000001,
             });
