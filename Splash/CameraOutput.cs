@@ -442,8 +442,8 @@ public class CameraOutput
                     float db;
                     if (_camera3.Angle != 0f)
                     {
-                        da = (a.AveragePosition - _v3CameraPos).LengthSquared();
-                        db = (b.AveragePosition - _v3CameraPos).LengthSquared();
+                        da = -(a.AveragePosition - _v3CameraPos).LengthSquared();
+                        db = -(b.AveragePosition - _v3CameraPos).LengthSquared();
                     }
                     else
                     {
