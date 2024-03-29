@@ -9,7 +9,7 @@ namespace engine.behave.systems;
 
 [DefaultEcs.System.With(typeof(components.Particle))]
 [DefaultEcs.System.With(typeof(Transform3ToWorld))]
-internal class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
+public class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
 {
     private engine.Engine _engine;
 

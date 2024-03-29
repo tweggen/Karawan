@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Numerics;
 
 namespace builtin.tools;
 
@@ -18,6 +16,13 @@ public class RandomSource
         ;
     }
 
+
+    public Vector3 GetVector3()
+    {
+        return new(-1f+2f*GetFloat(), -1f+2f*GetFloat(), -1f+2f*GetFloat());
+    }
+    
+    
     public float GetFloat()
     {
         _next();
