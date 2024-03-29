@@ -25,7 +25,6 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
         }
         
         Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
-        // TXWTODO: Do we need a copy?
         entities.CopyTo(copiedEntities);
         foreach (var entity in copiedEntities)
         {

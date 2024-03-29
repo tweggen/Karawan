@@ -4,7 +4,10 @@ namespace engine.behave.components;
 
 public struct Particle
 {
-    public Vector3 Velocity;
+    public Vector3 Position;
     public int TimeToLive;
-    public Quaternion Spin;
+    public Quaternion Orientation;
+    public Vector3 VelocityPerFrame;
+    public int _reserved;
+    public Quaternion SpinPerFrame;
 }

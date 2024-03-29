@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using DefaultEcs;
 using engine.behave.components;
 using engine.joyce.components;
 
@@ -18,20 +19,22 @@ internal class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
         List<DefaultEcs.Entity> listDelete = new();
         foreach (var entity in entities)
         {
+            ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
             ref var cParticle = ref entity.Get<Particle>();
             if (0 == --cParticle.TimeToLive)
             {
+                cTransform3ToWorld.IsVisible = false;
                 listDelete.Add(entity);
             }
             else
             {
-                ref var cTransform = ref entity.Get<joyce.components.Transform3ToWorld>();
-                Vector3 v3Translate = cTransform.Matrix.Translation;
-                // TXWTODO: This heavily can be optzimized.
-                cTransform.Matrix *=
-                    Matrix4x4.CreateTranslation(-v3Translate)
-                    * Matrix4x4.CreateFromQuaternion(cParticle.Spin*dt)
-                    * Matrix4x4.CreateTranslation(v3Translate+cParticle.Velocity*dt);
+                cTransform3ToWorld.Matrix =
+                    Matrix4x4.CreateFromQuaternion(cParticle.Orientation)
+                    * Matrix4x4.CreateTranslation(cParticle.Position);
+                cParticle.Orientation = 
+                    Quaternion.Concatenate(cParticle.Orientation, cParticle.SpinPerFrame);
+                cParticle.Position += 
+                    cParticle.VelocityPerFrame;
             }
         }
 
