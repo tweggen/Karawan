@@ -42,10 +42,7 @@ public class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
 
     protected override void PostUpdate(float state)
     {
-        foreach (var entity in _listDelete)
-        {
-            entity.Dispose();
-        }
+        _engine.AddDoomedEntities(_listDelete);
         _listDelete = null;
     }
     

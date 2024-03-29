@@ -32,7 +32,8 @@ public class Scene : AModule, IScene
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<nogame.modules.AutoSave>()
+        new SharedModule<nogame.modules.AutoSave>(),
+        new SharedModule<nogame.modules.daynite.Module>()
     };
     
     public void SceneOnLogicalFrame(float dt)
@@ -102,6 +103,7 @@ public class Scene : AModule, IScene
              * Preload the player position from the current gamestate.
              */
             I.Get<SetupMetaGen>().Preload(M<AutoSave>().GameState.PlayerPosition);
+            M<nogame.modules.daynite.Module>().GameNow = M<AutoSave>().GameState.GameTime;
         });
 
         return true;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using engine;
@@ -10,6 +11,12 @@ public class Module : AModule
 {
     private DefaultEcs.Entity _eClockDisplay;
     
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<GameState>()
+    };
+
+
     public float RealSecondsPerDay { get; set; } = 30f * 60f;
 
     private DateTime _realWorldStart;
@@ -25,13 +32,23 @@ public class Module : AModule
                 return _gameNow;
             }
         }
+
+        set
+        {
+            lock (_lo)
+            {
+                _gameNow = value;
+            }
+        }
     }
 
 
     private void _onLogicalFrame(object? sender, float dt)
     {
         int todayGameHours, todayGameMinutes;
-        
+
+        M<GameState>().GameTime = GameNow;
+
         lock (_lo)
         {
             var timeSinceStart = DateTime.UtcNow - _realWorldStart;

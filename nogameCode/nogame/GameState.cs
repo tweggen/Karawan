@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -13,6 +14,8 @@ public class GameState
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
 
+    public DateTime GameTime { get; set; } = default;
+    
     public bool IsValid()
     {
         if (!engine.world.MetaGen.AABB.Contains(PlayerPosition))

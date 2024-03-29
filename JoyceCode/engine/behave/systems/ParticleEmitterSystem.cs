@@ -23,7 +23,9 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
         if (null == _cameraInfo) return;
         
         List<Entity> listDelete = new();
-        foreach (var entity in entities)
+        Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
+        entities.CopyTo(copiedEntities);
+        foreach (var entity in copiedEntities)
         {
             ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
             ref var cParticleEmitter = ref entity.Get<ParticleEmitter>();
@@ -35,7 +37,6 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
             {
                 float maxDistSquared = cParticleEmitter.MaxDistance * cParticleEmitter.MaxDistance;
 
-                Entity eParticle = _engine.GetEcsWorld().CreateEntity();
                 Vector3 v3EmitterPosition = cTransform3ToWorld.Matrix.Translation;
                 if ((v3EmitterPosition - _cameraInfo.Position).LengthSquared() > maxDistSquared)
                 {
@@ -49,6 +50,8 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                         (-1f + 2f * _rnd.GetFloat()) * cParticleEmitter.RandomPos.Y,
                         (-1f + 2f * _rnd.GetFloat()) * cParticleEmitter.RandomPos.Z
                     ); 
+
+                Entity eParticle = _engine.GetEcsWorld().CreateEntity();
                 eParticle.Set(
                     new Particle()
                     {

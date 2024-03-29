@@ -39,6 +39,9 @@ internal class WASDPhysics : AModule, IInputPart
     public float InputTurnThreshold { get; set; } = 50f;
     public float FirstInputTurnThreshold { get; set; } = 10f;
 
+    public float AngularDamping { get; set; } = 0.95f;
+    public float LinearDamping { get; set; } = 0.5f;
+
 
     private float _lastTurnMotion = 0f;
 
@@ -289,8 +292,8 @@ internal class WASDPhysics : AModule, IInputPart
          * Let the ship gradually slow down.
          */
         {
-            vTotalImpulse -= 0.5f * vTargetVelocity;
-            vTotalAngular -= 0.95f * vTargetAngularVelocity;
+            vTotalImpulse -= LinearDamping * vTargetVelocity;
+            vTotalAngular -= AngularDamping * vTargetAngularVelocity;
         }
 
         /*
