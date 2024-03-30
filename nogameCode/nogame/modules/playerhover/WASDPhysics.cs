@@ -189,35 +189,31 @@ internal class WASDPhysics : AModule, IInputPart
              */
             if (turnMotion != 0f)
             {
-#if true
                 /*
                  * gently lean to the right iof turning right.
                  */
                 vTotalAngular += vFront * (turnMotion / 256f * WingsDownWhileTurning);
+                
                 /*
                  * Compute the angle per frame. TurnMotion ranges from -255 ... 255.
                  * We try to start with 120 degrees per second.
                  */
                 float degreesPerSecond = 120f;
-                radiansTurnVehicle += ((float)turnMotion / 255f) * degreesPerSecond / 180f * Single.Pi * dt; 
-
-#else
-                float fullThresh = 0.5f;
-                float
-                    damp = 1f; //(Single.Clamp(vTargetAngularVelocity.LengthSquared(), 0.1f, fullThresh) / fullThresh);
-                turnMotion *= damp;
-
+                
                 /*
-                 * gently lean to the right iof turning right.
+                 * We need to consider the direction depending on the effective speed of the vehicle
+                 * in direction of its front
                  */
-                vTotalAngular += vFront * (turnMotion / 256f * WingsDownWhileTurning);
-
-                /*
-                 * And finally turn
-                 */
-                vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
-                vTotalImpulse += vTotalImpulse * (-0.3f * Single.Abs(turnMotion / 256f));
-#endif
+                float direction;
+                if (Vector3.Dot(vFront, vTargetVelocity) > 0f)
+                {
+                    direction = 1f;
+                }
+                else
+                {
+                    direction = -1f;
+                }
+                radiansTurnVehicle += direction * ((float)turnMotion / 255f) * degreesPerSecond / 180f * Single.Pi * dt;
             }
         }
 
