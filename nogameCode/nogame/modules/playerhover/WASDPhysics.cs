@@ -38,7 +38,7 @@ internal class WASDPhysics : AModule, IInputPart
     public float WingsDownWhileTurning { get; set; } = 4f;
 
     public float InputTurnThreshold { get; set; } = 150f;
-    public float FirstInputTurnThreshold { get; set; } = 10f;
+    public float FirstInputTurnThreshold { get; set; } = 4f;
 
     public float AngularDamping { get; set; } = 0.99f;
     public float LinearDamping { get; set; } = 0.5f;
