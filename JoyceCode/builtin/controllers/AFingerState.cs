@@ -28,6 +28,8 @@ abstract class AFingerState
     {
         var cs = _ic.ControllerState;
         cs.LastInput = DateTime.UtcNow;
+        PressPosition = ev.Position;
+        LastPosition = ev.Position;
     }
 
     public AFingerState(

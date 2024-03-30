@@ -6,15 +6,20 @@ namespace builtin.controllers;
 
 class LeftStickFingerState : AFingerState
 {
+    float _accuX = 0f;
+
     public override void HandleMotion(Event ev)
     {
         base.HandleMotion(ev);
         var cs = _ic.ControllerState;
         Vector2 vRel = ev.Position - PressPosition;
-        vRel.X *= 16f/9f;
-        vRel *= _ic.TouchMoveSensitivity;
-        vRel = _ic.TouchSteerTransfer(vRel);
+        Vector2 vNow = ev.Position - LastPosition;
         LastPosition = ev.Position;
+        vRel.X *= 16f/9f;
+        vNow.X *= 16f/9f;
+        vRel *= _ic.TouchMoveSensitivity;
+        vNow *= _ic.TouchPeakMoveSensitivity;
+        vRel = _ic.TouchSteerTransfer(vRel);
 
         if (vRel.Y < -_ic.ControllerYTolerance)
         {
@@ -34,7 +39,27 @@ class LeftStickFingerState : AFingerState
                 / _ic.ControllerYMax * _ic.TouchAnalogMax);
             cs.AnalogForward = 0;
         }
+#if true
+        {
 
+            float moveX = vNow.X;
+            _accuX += moveX;
+            float curvedX = _ic.TouchSteerTransfer(_accuX);
+            if (curvedX < -_ic.ControllerXTolerance)
+            {
+                cs.AnalogLeft = (int)(Single.Min(_ic.ControllerXMax, -curvedX - _ic.ControllerXTolerance)
+                    / _ic.ControllerXMax * _ic.TouchAnalogMax);
+                cs.AnalogRight = 0;
+            }
+            else if (curvedX > _ic.ControllerXTolerance)
+            {
+                cs.AnalogRight = (int)(Single.Min(_ic.ControllerXMax, curvedX - _ic.ControllerXTolerance)
+                    / _ic.ControllerXMax * _ic.TouchAnalogMax);
+                cs.AnalogLeft = 0;
+            }
+            _accuX *= 0.94f;
+        }
+#else
         if (vRel.X < -_ic.ControllerXTolerance)
         {
             cs.AnalogLeft = (int)(Single.Min(_ic.ControllerXMax, -vRel.X-_ic.ControllerXTolerance) 
@@ -47,7 +72,7 @@ class LeftStickFingerState : AFingerState
                 / _ic.ControllerXMax * _ic.TouchAnalogMax);
             cs.AnalogLeft = 0;
         }
-
+#endif
         cs.AnalogToWalkControllerNoLock();
     }
 
@@ -63,11 +88,19 @@ class LeftStickFingerState : AFingerState
         cs.AnalogLeft = 0;
         cs.AnalogUp = 0;
         cs.AnalogDown = 0;
+        _accuX = 0f;
         cs.AnalogToWalkControllerNoLock();
 
         LastPosition = default;
     }
-    
+
+
+    public override void HandlePressed(Event ev)
+    {
+        base.HandlePressed(ev);
+        _accuX = 0;
+    }
+
     public LeftStickFingerState(
         in Vector2 pos,
         InputController ic) : base(pos, ic)
