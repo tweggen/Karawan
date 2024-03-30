@@ -32,14 +32,6 @@ public class Module : AModule
                 return _gameNow;
             }
         }
-
-        set
-        {
-            lock (_lo)
-            {
-                _gameNow = value;
-            }
-        }
     }
 
 
@@ -47,7 +39,7 @@ public class Module : AModule
     {
         int todayGameHours, todayGameMinutes;
 
-        M<AutoSave>().GameState.GameTime = GameNow;
+        M<AutoSave>().GameState.GameStart = GameStart;
 
         lock (_lo)
         {

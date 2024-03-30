@@ -103,7 +103,7 @@ public class Scene : AModule, IScene
              * Preload the player position from the current gamestate.
              */
             I.Get<SetupMetaGen>().Preload(M<AutoSave>().GameState.PlayerPosition);
-            M<nogame.modules.daynite.Module>().GameNow = M<AutoSave>().GameState.GameTime;
+            M<nogame.modules.daynite.Module>().GameStart = M<AutoSave>().GameState.GameStart;
         });
 
         return true;

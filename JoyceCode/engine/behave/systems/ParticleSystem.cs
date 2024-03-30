@@ -23,7 +23,7 @@ public class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
             ref var cParticle = ref entity.Get<Particle>();
             if (0 >= cParticle.TimeToLive)
             {
-                //cTransform3ToWorld.IsVisible = false;
+                entity.Disable();
                 _listDelete.Add(entity);
             }
             else

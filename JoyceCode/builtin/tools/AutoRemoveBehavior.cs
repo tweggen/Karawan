@@ -1,4 +1,5 @@
 using System;
+using engine;
 using engine.behave;
 using engine.physics;
 
@@ -14,7 +15,7 @@ public class AutoRemoveBehavior : ABehavior
         Lifetime -= dt;
         if (Lifetime <= 0)
         {
-            entity.Dispose();
+            I.Get<engine.Engine>().AddDoomedEntity(entity);
         }
     }
 }

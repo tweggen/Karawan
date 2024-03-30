@@ -181,14 +181,9 @@ public class SpawnOperator : ISpawnOperator
 
         _engine.QueueCleanupAction(() =>
         {
-            try
-            {
-                entity.Dispose();
-            }
-            catch (Exception e)
-            {
-            }
+            entity.Disable();
             spawnStatus.IsDying--;
+            _engine.AddDoomedEntity(entity);
         });
     }
 }

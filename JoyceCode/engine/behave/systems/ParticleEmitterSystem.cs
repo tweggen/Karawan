@@ -22,7 +22,6 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
         if (null == _cameraInfo) return;
         
-        List<Entity> listDelete = new();
         Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
         entities.CopyTo(copiedEntities);
         foreach (var entity in copiedEntities)
@@ -31,7 +30,8 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
             ref var cParticleEmitter = ref entity.Get<ParticleEmitter>();
             if (0 >= cParticleEmitter.EmitterTimeToLive)
             {
-                listDelete.Add(entity);
+                entity.Disable();
+                _listDelete.Add(entity);
             }
             else
             {
@@ -66,7 +66,7 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                     v3EffectiveDirection = Vector3.Normalize(v3EffectiveDirection) * v;
                 }
 
-                Entity eParticle = _engine.GetEcsWorld().CreateEntity();
+                Entity eParticle = _engine.CreateEntity("particle");
                 eParticle.Set(
                     new Particle()
                     {
@@ -96,10 +96,7 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
     protected override void PostUpdate(float dt)
     {
         base.PostUpdate(dt);
-        foreach (var entity in _listDelete)
-        {
-            entity.Dispose();
-        }
+        _engine.AddDoomedEntities(_listDelete);
         _listDelete = null;
     }
     

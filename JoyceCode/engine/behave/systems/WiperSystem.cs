@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using DefaultEcs;
 using System.Numerics;
 using engine.world.components;
@@ -12,6 +13,8 @@ namespace engine.behave.systems;
 internal class WiperSystem : DefaultEcs.System.AEntitySetSystem<engine.geom.AABB>
 {
     private engine.Engine _engine;
+    private 
+        List<Entity> _listToWipe = null;
 
     protected override void Update(
         engine.geom.AABB aabb, ReadOnlySpan<DefaultEcs.Entity> entities)
@@ -32,12 +35,23 @@ internal class WiperSystem : DefaultEcs.System.AEntitySetSystem<engine.geom.AABB
             }
             else
             {
-                /*
-                 * Remove entity
-                 */
-                entity.Dispose();
+                entity.Disable();
+                _listToWipe.Add(entity);
             }
         }
+    }
+
+
+    protected override void PostUpdate(engine.geom.AABB aabb)
+    {
+        _engine.AddDoomedEntities(_listToWipe);
+        _listToWipe = null;
+    }
+    
+
+    protected override void PreUpdate(engine.geom.AABB aabb)
+    {
+        _listToWipe = new();
     }
 
 

@@ -473,7 +473,7 @@ public class CameraOutput
                         break;
                     }
 
-                    mb.Sort(_v3CameraPos);
+                    mb.Sort(_v3CameraPos, _v3CameraZ, _camera3.Angle);
                 }
             } 
             else

@@ -46,7 +46,11 @@ public class Engine
     private engine.joyce.HierarchyApi _aHierarchy;
 
     private DefaultEcs.Command.EntityCommandRecorder _entityCommandRecorder;
+    #if !DEBUG
     private List<IList<DefaultEcs.Entity>> _listDoomedEntityLists = new();
+    #else
+    private HashSet<DefaultEcs.Entity> _setDoomedEntities = new();
+    #endif
 
 
     private int _requireEntityIdArrays = 0;
@@ -77,7 +81,7 @@ public class Engine
 
     private readonly Queue<EntitySetupAction> _queueEntitySetupActions = new();
 
-    private Thread _logicalThread;
+    private Thread _logicalThread = null;
     private readonly Stopwatch _queueStopwatch = new();
 
     private readonly WorkerQueue _workerCleanupActions = new("engine.Engine.Cleanup");
@@ -339,6 +343,7 @@ public class Engine
 
     private void _executeDoomedEntities()
     {
+#if !DEBUG
         List<IList<DefaultEcs.Entity>> listList;
         lock (_lo)
         {
@@ -363,6 +368,19 @@ public class Engine
                 entity.Dispose();
             }
         }
+#else
+        List<Entity> list = new();
+        lock (_lo)
+        {
+            list = new(_setDoomedEntities);
+            _setDoomedEntities.Clear();
+        }
+
+        foreach (var e in list)
+        {
+            e.Dispose();
+        }
+#endif
     }
 
 
@@ -370,7 +388,19 @@ public class Engine
     {
         lock (_lo)
         {
+#if !DEBUG
             _listDoomedEntityLists.Add(listDoomedEntities);
+#else
+            foreach (var e in listDoomedEntities)
+            {
+                if (_setDoomedEntities.Contains(e))
+                {
+                    ErrorThrow<ArgumentException>($"Entity {e} already was doomed before.");
+                }
+
+                _setDoomedEntities.Add(e);
+            }
+#endif
         }
     }
 
@@ -379,19 +409,33 @@ public class Engine
     {
         lock (_lo)
         {
+#if !DEBUG
             List<Entity> listEntity = new List<Entity>();
             listEntity.Add(entity);
             _listDoomedEntityLists.Add(listEntity);
+#else
+            if (_setDoomedEntities.Contains(entity))
+            {
+                ErrorThrow<ArgumentException>($"Entity {entity} already was doomed before.");
+            }
+
+            _setDoomedEntities.Add(entity);
+#endif
         }
     }
 
 
+    #if DEBUG
     public DefaultEcs.Entity CreateEntity(string name)
     {
+        Debug.Assert(System.Threading.Thread.CurrentThread == _logicalThread, "Not called from logical thread.");
         DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
         entity.Set(new joyce.components.EntityName(name));
         return entity;
     }
+    #else
+    public Entity CreateEntity(string _) => _ecsWorld.CreateEntity();
+    #endif
 
 
     private void _executeEntitySetupActions(float matTime)

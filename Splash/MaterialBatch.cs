@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using engine.joyce.components;
 
 namespace Splash;
 
@@ -19,15 +20,25 @@ public class MaterialBatch
     }
 
 
-    public void Sort(Vector3 v3CameraPos)
+    public void Sort(Vector3 v3CameraPos, Vector3 v3CameraZ, float angleCamera)
     {
         if (MeshBatches != null && MeshBatches.Count > 0)
         {
             ListMeshBatches = new(MeshBatches.Values);
             ListMeshBatches.Sort((b, a) =>
             {
-                float da = (a.AveragePosition - v3CameraPos).LengthSquared();
-                float db = (b.AveragePosition - v3CameraPos).LengthSquared();
+                float da, db;
+                if (angleCamera != 0f)
+                {
+                    da = -(a.AveragePosition - v3CameraPos).LengthSquared();
+                    db = -(b.AveragePosition - v3CameraPos).LengthSquared();
+                }
+                else
+                {
+                    da = Vector3.Dot(a.AveragePosition - v3CameraPos, v3CameraZ);
+                    db = Vector3.Dot(b.AveragePosition - v3CameraPos, v3CameraZ);
+                }
+
                 if (da < db)
                 {
                     return -1;
