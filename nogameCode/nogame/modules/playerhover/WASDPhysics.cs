@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using System;
 using System.Collections.Generic;
+using System.Formats.Tar;
 using System.Numerics;
 using engine;
 using engine.draw;
@@ -61,12 +62,14 @@ internal class WASDPhysics : AModule, IInputPart
          */
         Vector3 vTargetPos;
         Vector3 vTargetVelocity;
+        Quaternion qTargetOrientation;
         Vector3 vTargetAngularVelocity;
         lock (_engine.Simulation)
         {
             vTargetPos = _prefTarget.Pose.Position;
             vTargetVelocity = _prefTarget.Velocity.Linear;
-            vTargetAngularVelocity = _prefTarget.Velocity.Angular;     
+            vTargetAngularVelocity = _prefTarget.Velocity.Angular;
+            qTargetOrientation = _prefTarget.Pose.Orientation;
         }
     
 
@@ -124,6 +127,8 @@ internal class WASDPhysics : AModule, IInputPart
         var vUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
         var vRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
 
+        float radiansTurnVehicle = 0f;
+
         /*
          * If I shall control the ship.
          */
@@ -136,19 +141,7 @@ internal class WASDPhysics : AModule, IInputPart
             float turnMotion;
             {
                 float inputTurnMotion = controllerState.TurnRight - controllerState.TurnLeft;
-                
-                /*
-                 * invert control if we are going backwards. This is car like, not thrust like,
-                 * but feels more natural for GTA infused people like me.
-                 */
-                if (
-                    /* Vector3.Dot(vFront, vTargetVelocity) < -0.1f */
-                    controllerState.FrontMotion < 0
-                    )
-                {
-                    inputTurnMotion *= -1f;
-                }
-                
+                 
                 float maxThreshold;
                 if (_lastTurnMotion == 0)
                 {
@@ -188,8 +181,27 @@ internal class WASDPhysics : AModule, IInputPart
                 vTotalImpulse += LinearThrust * vUp * upMotion / 256f;
             }
 
+            /*
+             * Apply turn motion.
+             * This just changes the impulse vector rather than creating an angular impulse.
+             * We still read the absolute value we needed to change (i.e. the force)
+             * to do something like squeeking tires.
+             */
             if (turnMotion != 0f)
             {
+#if true
+                /*
+                 * gently lean to the right iof turning right.
+                 */
+                vTotalAngular += vFront * (turnMotion / 256f * WingsDownWhileTurning);
+                /*
+                 * Compute the angle per frame. TurnMotion ranges from -255 ... 255.
+                 * We try to start with 120 degrees per second.
+                 */
+                float degreesPerSecond = 120f;
+                radiansTurnVehicle += ((float)turnMotion / 255f) * degreesPerSecond / 180f * Single.Pi * dt; 
+
+#else
                 float fullThresh = 0.5f;
                 float
                     damp = 1f; //(Single.Clamp(vTargetAngularVelocity.LengthSquared(), 0.1f, fullThresh) / fullThresh);
@@ -205,6 +217,7 @@ internal class WASDPhysics : AModule, IInputPart
                  */
                 vTotalAngular += new Vector3(0f, AngularThrust * -turnMotion / 256f, 0f);
                 vTotalImpulse += vTotalImpulse * (-0.3f * Single.Abs(turnMotion / 256f));
+#endif
             }
         }
 
@@ -291,7 +304,7 @@ internal class WASDPhysics : AModule, IInputPart
         /*
          * Let the ship gradually slow down.
          */
-        {
+        if (true) {
             vTotalImpulse -= LinearDamping * vTargetVelocity;
             vTotalAngular -= AngularDamping * vTargetAngularVelocity;
         }
@@ -299,30 +312,50 @@ internal class WASDPhysics : AModule, IInputPart
         /*
          * Remove parts of the velocity that are not in the direction of the ship.
          */
-        {
+        if(true) {
             Vector3 v3Off = vTargetVelocity - Vector3.Dot(vTargetVelocity, vFront) * vFront;
             vTotalImpulse -= 2f*v3Off;
         }
         
-        Vector3 vNewTargetVelocity;
-        Quaternion qTargetOrientation;
+        Vector3 vFinalTargetVelocity;
+        Quaternion qFinalTargetOrientation;
         lock (_engine.Simulation)
         {
+            /*
+             * First apply all impulses, angular and linear.
+             */
             _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
             _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
-            vNewTargetVelocity = _prefTarget.Velocity.Linear;
-            qTargetOrientation = _prefTarget.Pose.Orientation;
+            
+            /*
+             * Now manipulate the velocity according to the spec.
+             * However, we need to read it back after applying the impulse (which also just applies it to the velocity).
+             */
+            vTargetVelocity = _prefTarget.Velocity.Linear;
+            float a = radiansTurnVehicle;
+            Vector3 vTargetNewVelocity = new(
+                vTargetVelocity.X*Single.Cos(a) - vTargetVelocity.Z*Single.Sin(a),
+                vTargetVelocity.Y,
+                vTargetVelocity.Z*Single.Cos(a) + vTargetVelocity.X*Single.Sin(a)
+            );
+            Quaternion qTargetNewOrientation = Quaternion.Concatenate(qTargetOrientation, Quaternion.CreateFromAxisAngle(Vector3.UnitY, -a));
+
+            _prefTarget.Velocity.Linear = vTargetNewVelocity;
+            _prefTarget.Pose.Orientation = qTargetNewOrientation;
+
+            vFinalTargetVelocity = vTargetNewVelocity;
+            qFinalTargetOrientation = qTargetNewOrientation;
         }
 
         /*
          * Set current velocity.
          */
-        _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
+        _eTarget.Set(new engine.joyce.components.Motion(vFinalTargetVelocity));
 
         {
             var gameState = M<AutoSave>().GameState;
             gameState.PlayerPosition = vTargetPos;
-            gameState.PlayerOrientation = qTargetOrientation;
+            gameState.PlayerOrientation = qFinalTargetOrientation;
         }
 
     }
