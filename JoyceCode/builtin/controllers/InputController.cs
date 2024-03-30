@@ -49,7 +49,7 @@ public class InputController : engine.AModule, engine.IInputPart
 
     
     public float TouchLookSensitivity { get; set; } = 12f;
-    public float TouchMoveSensitivity { get; set; } = 5f;
+    public float TouchMoveSensitivity { get; set; } = 4f;
     public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
 
@@ -466,7 +466,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     public float TouchSteerTransfer(float X)
     {
-        return Single.Clamp(Single.Sign(X) * Single.Abs(X * X * X * X), -1f, 1f);
+        return Single.Clamp(Single.Sign(X) * Single.Abs(X * X), -1f, 1f);
     }
     
 

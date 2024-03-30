@@ -23,6 +23,7 @@ Between two cities, there are groves above which intercity trains hover.
 
 In segments of cities, you can find polytopes. Polytopes repair your hover. They can
 be collected, but only once.
+As we see, polytopes emit small cubes. What's the meaning behind this?
 
 ### Cubes
 

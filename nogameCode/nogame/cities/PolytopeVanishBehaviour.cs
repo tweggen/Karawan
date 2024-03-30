@@ -15,16 +15,20 @@ public class PolytopeVanishBehaviour : ABehavior
     private static float POLYTOPE_MIN_SCALE = 0.2f;
 
     public required Engine Engine;
+    
 
     private float _lifetime = 0f;
+    private bool _isDoomed = false;
 
     
     public override void Behave(in Entity entity, float dt)
     {
         _lifetime += dt;
         float time = _lifetime / POLYTOPE_VANISH_TIME;
-        if (time > 1f)
+        if (!_isDoomed && time > 1f)
         {
+            _isDoomed = true;
+            entity.Disable();
             Engine.AddDoomedEntity(entity);
             return;
         }

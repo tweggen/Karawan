@@ -37,7 +37,7 @@ internal class WASDPhysics : AModule, IInputPart
     public float NoseDownWhileAcceleration { get; set; } = 1f;
     public float WingsDownWhileTurning { get; set; } = 4f;
 
-    public float InputTurnThreshold { get; set; } = 50f;
+    public float InputTurnThreshold { get; set; } = 150f;
     public float FirstInputTurnThreshold { get; set; } = 10f;
 
     public float AngularDamping { get; set; } = 0.99f;
@@ -205,7 +205,7 @@ internal class WASDPhysics : AModule, IInputPart
                  * in direction of its front
                  */
                 float direction;
-                if (Vector3.Dot(vFront, vTargetVelocity) > 0f)
+                if (Vector3.Dot(vFront with { Y = 0f }, vTargetVelocity with { Y=0f } ) > -0.05f)
                 {
                     direction = 1f;
                 }
