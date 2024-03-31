@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using BepuUtilities;
 using engine.draw.components;
 using engine.editor.components;
 using engine.joyce.components;
-using engine.world;
 using static engine.Logger;
 
 namespace engine.draw.systems;
@@ -38,17 +36,6 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
     private bool _clearWholeScreen = true;
 
-#if false
-    private DefaultEcs.Entity _eCamera;
-    private bool _haveCamera;
-    private Matrix4x4 _mCameraToWorld;
-    private Camera3 _cCamera;
-    private Transform3ToWorld _cCamTransform;
-    private Vector3 _vCamPosition;
-    private Matrix4x4 _mView;
-    private Matrix4x4 _mProjection;
-#endif
-
     /**
      * This is a dictionary of the current cameras we have.
      * TXWTODO: Keep this camera set globally, check if faster.
@@ -64,7 +51,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
         foreach (var entity in entities)
         {
-            components.OSDText osdText = entity.Get<components.OSDText>();
+            components.OSDText cOsdText = entity.Get<components.OSDText>();
 
             Vector2 vScreenPos;
             bool isBehind = false;
@@ -90,16 +77,13 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                  * Then use the world and the view matrices to convert to screen space.
                  */
                 Vector4 vWorldPos4 = Vector4.Transform(vModel, ce.MView);
-#if true
                 if (vWorldPos4.Z*vWorldPos4.W > 0)
                 {
-                    // vWorldPos4.Z *= -1f;
                     isBehind = true;
                 }
-#endif
 
                 distance = Vector3.Distance(ce.V3CamPosition, vModel);
-                if (distance > osdText.MaxDistance)
+                if (distance > cOsdText.MaxDistance)
                 {
                     continue;
                 }
@@ -120,20 +104,20 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             {
                 continue;
             }
-            vScreenPos += osdText.Position;
+            vScreenPos += cOsdText.Position;
             
             /*
              * Render standard 2d entities.
              */
             Vector2 ul = vScreenPos;
-            Vector2 lr = vScreenPos + osdText.Size - new Vector2(1f, 1f);
+            Vector2 lr = vScreenPos + cOsdText.Size - new Vector2(1f, 1f);
             
             /*
              * If we didn't clear the screen before, clear the component's rectangle.
              */
             if (!_clearWholeScreen)
             {
-                _dc.ClearColor = osdText.FillColor;
+                _dc.ClearColor = cOsdText.FillColor;
                 _framebuffer.ClearRectangle(_dc, ul, lr);
             }
 
@@ -141,28 +125,34 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
              * Render text part.
              */
             uint textColor;
-            if ((osdText.OSDTextFlags & OSDText.ENABLE_DISTANCE_FADE) != 0)
+            if ((cOsdText.OSDTextFlags & OSDText.ENABLE_DISTANCE_FADE) != 0)
             {
-                float distFactor = 1f- distance / osdText.MaxDistance;
-                byte distAlpha = (byte)(distFactor * (osdText.TextColor>>24));
-                textColor = (osdText.TextColor & 0xffffff) | (uint)(distAlpha << 24);
+                float distFactor = 1f- distance / cOsdText.MaxDistance;
+                byte distAlpha = (byte)(distFactor * (cOsdText.TextColor>>24));
+                textColor = (cOsdText.TextColor & 0xffffff) | (uint)(distAlpha << 24);
             }
             else
             {
-                textColor = osdText.TextColor;
+                textColor = cOsdText.TextColor;
             }
             
             _dc.TextColor = textColor;
-            _dc.HAlign = osdText.HAlign;
-            _dc.VAlign = osdText.VAlign;
-            _framebuffer.DrawText(_dc, ul, lr, osdText.Text, (int)osdText.FontSize);
+            _dc.HAlign = cOsdText.HAlign;
+            _dc.VAlign = cOsdText.VAlign;
+            _framebuffer.DrawText(_dc, ul, lr, cOsdText.Text, (int)cOsdText.FontSize);
             
             /*
              * If there is a highlight, render the hightlight.
              */
             bool shouldDraw = false;
             uint color = 0;
-
+            
+            if ((cOsdText.BorderColor & 0xff000000) != 0)
+            {
+                _dc.Color = color;
+                _framebuffer.DrawRectangle(_dc, ul, lr);
+            }
+    
             if (entity.Has<Highlight>())
             {
                 ref var cHighlight = ref entity.Get<Highlight>();

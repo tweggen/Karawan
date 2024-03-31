@@ -390,7 +390,8 @@ public class Parser
         {
             MapBindings = new SortedDictionary<string, object>()
             {
-                { "jt", new JtBindings(this) }
+                { "jt", new JtBindings(this) },
+                { "joyce", new engine.gongzuo.JoyceBindings() }
             }.ToFrozenDictionary()
         };
     }

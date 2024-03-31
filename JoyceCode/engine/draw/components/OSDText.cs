@@ -10,6 +10,7 @@ public struct OSDText
     public uint FontSize;
     public uint TextColor;
     public uint FillColor;
+    public uint BorderColor;
     public Vector2 Position, Size;
     public HAlign HAlign;
     public VAlign VAlign;
