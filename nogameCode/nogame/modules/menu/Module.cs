@@ -19,6 +19,15 @@ public class Module : AModule, IInputPart
     public void InputPartOnInputEvent(Event ev)
     {
         bool doDeactivate = false;
+        /*
+         * Let everything with screen locality be handled by the visual
+         * system handling clicks. 
+         */
+        if (ev.Type.StartsWith(Event.INPUT_MOUSE_ANY) || ev.Type.StartsWith(Event.INPUT_TOUCH_ANY))
+        {
+            return;
+        }
+        
         switch (ev.Type)
         {
             case Event.INPUT_KEY_PRESSED:

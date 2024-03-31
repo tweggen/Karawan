@@ -6,11 +6,13 @@ public class Event
 {
     public const string INPUT_KEY_PRESSED = "input.key.pressed";
     public const string INPUT_KEY_RELEASED = "input.key.released";
+    public const string INPUT_TOUCH_ANY = "input.touch.";
     public const string INPUT_TOUCH_PRESSED = "input.touch.pressed";
     public const string INPUT_TOUCH_RELEASED = "input.touch.released";
     public const string INPUT_FINGER_PRESSED = "input.finger.pressed";
     public const string INPUT_FINGER_RELEASED = "input.finger.released";
     public const string INPUT_FINGER_MOVED = "input.finger.moved";
+    public const string INPUT_MOUSE_ANY = "input.mouse.";
     public const string INPUT_MOUSE_PRESSED = "input.mouse.pressed";
     public const string INPUT_MOUSE_RELEASED = "input.mouse.released";
     public const string INPUT_MOUSE_MOVED = "input.mouse.moved";

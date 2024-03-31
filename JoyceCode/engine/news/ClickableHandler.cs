@@ -50,7 +50,7 @@ public class ClickableHandler
             .With<joyce.components.Instance3>()
             .AsEnumerable();
 
-        float minZ = Single.MaxValue;
+        float maxZ = Single.MinValue;
         
         /*
          * Iterate though all clickable entities by AABB boxes.
@@ -60,8 +60,8 @@ public class ClickableHandler
         foreach (var entity in clickableEntities)
         {
             var cTransform = entity.Get<joyce.components.Transform3ToWorld>();
-            if (cTransform.Matrix.Translation.Z >= minZ) continue;
-            minZ = cTransform.Matrix.Translation.Z;
+            // if (cTransform.Matrix.Translation.Z >= minZ) continue;
+            // minZ = cTransform.Matrix.Translation.Z;
             
             /*
              * Is it visible by the camera we are looking for?
@@ -73,12 +73,14 @@ public class ClickableHandler
              */
 
             joyce.InstanceDesc id = entity.Get<Instance3>().InstanceDesc;
-            
+
+            Matrix4x4 mTransformView = cTransform.Matrix * _mView;
+            Matrix4x4 mTransformViewProjection = mTransformView * _mProjection;
             /*
              * Transform the aabb to screenspace opengl coordinates, i.e. -1 ... 1
              */
-            Vector4 vAA4 = Vector4.Transform(id.AABBTransformed.AA, cTransform.Matrix * _mView * _mProjection);
-            Vector4 vBB4 = Vector4.Transform(id.AABBTransformed.BB, cTransform.Matrix * _mView * _mProjection);
+            Vector4 vAA4 = Vector4.Transform(id.AABBTransformed.AA, mTransformViewProjection);
+            Vector4 vBB4 = Vector4.Transform(id.AABBTransformed.BB, mTransformViewProjection);
             // TXWTODO: In addition, consider UL and LR from the actual Camera3 data structure.
             
             /*
@@ -109,6 +111,17 @@ public class ClickableHandler
              */
             if (pos.X >= ul.X && pos.X < lr.X && pos.Y >= ul.Y && pos.Y < lr.Y)
             {
+                /*
+                 * Now look, if we already found something that is closer.
+                 */
+                Vector3 v3Center = Vector3.Transform(id.AABBTransformed.Center, mTransformView);
+                if (v3Center.Z < maxZ)
+                {
+                    Trace($"Discarding entity {entity} with z value {v3Center.Z}");
+                    continue;
+                }
+
+                maxZ = v3Center.Z;
                 Vector2 v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
 
                 /*

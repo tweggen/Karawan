@@ -51,10 +51,7 @@ public class Widget : IDisposable
     private static uint _nextId = 0;
     public uint Id;
 
-    
-    #if false
-    private Lazy<LuaWidgetContext> _luaWidgetContext;
-    #endif
+    private string _widgetEventPath;
     
     /**
      * Stores the user accessible property data.
@@ -1036,7 +1033,23 @@ public class Widget : IDisposable
     {
         bool haveChildren = HasChildren;
         bool isHorizontal = GetAttr("direction", "vertical") == "horizontal";
-        
+
+        if (ev.Type.StartsWith(_widgetEventPath))
+        {
+            string widgetEventType = ev.Type.Substring(_widgetEventPath.Length);
+            switch (widgetEventType)
+            {
+                case "onClick":
+                    _emitSelected(ev);
+                    ev.IsHandled = true;
+                    break;
+
+                default:
+                    break;
+            }
+
+            return;
+        }
         switch (ev.Type)
         {
             case engine.news.Event.INPUT_MOUSE_PRESSED:
@@ -1112,13 +1125,13 @@ public class Widget : IDisposable
 
     private void _unsubscribeEvents()
     {
-        I.Get<SubscriptionManager>().Unsubscribe($"builtin.jt.widget.{Id}.onClick", _onWidgetEvent);
+        I.Get<SubscriptionManager>().Unsubscribe($"{_widgetEventPath}onClick", _onWidgetEvent);
     }
     
     
     private void _subscribeEvents()
     {
-        I.Get<SubscriptionManager>().Subscribe($"builtin.jt.widget.{Id}.onClick", _onWidgetEvent);
+        I.Get<SubscriptionManager>().Subscribe($"{_widgetEventPath}onClick", _onWidgetEvent);
     }
     
 
@@ -1178,15 +1191,8 @@ public class Widget : IDisposable
         lock (_classLock)
         {
             Id = _nextId++;
+            _widgetEventPath = $"builtin.jt.widget.{Id}.";
         }
-        #if false
-        _luaWidgetContext = new(() => new LuaWidgetContext()
-        {
-            _widget = this,
-            _parser = this["parser"] as Parser,
-            _factory = Root?.Factory
-        });
-        #endif
         _subscribeEvents();
     }
 }
