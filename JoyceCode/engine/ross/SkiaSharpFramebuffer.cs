@@ -8,7 +8,7 @@ using Trace = System.Diagnostics.Trace;
 
 namespace engine.ross;
 
-public class SkiaSharpFramebuffer : IFramebuffer
+public class SkiaSharpFramebuffer : IFramebuffer 
 {
     private object _lo = new();
     private readonly string _id;
@@ -69,7 +69,6 @@ public class SkiaSharpFramebuffer : IFramebuffer
         {
             _generation++;
         }
-        
     }
 
 
@@ -86,6 +85,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
         }
+        paint.Dispose();
     }
 
 
@@ -102,6 +102,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
         }
+        paint.Dispose();
     }
 
 
@@ -119,6 +120,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
             _skiaSurface.Canvas.DrawRect(ul.X, ul.Y, lr.X-ul.X+1, lr.Y-ul.Y+1, paint);
             _applyModified(ul, lr);
         }
+        paint.Dispose();
     }
 
     public void DrawPoly(Context context, in Vector2[] polyPoints)
@@ -144,6 +146,9 @@ public class SkiaSharpFramebuffer : IFramebuffer
         {
             _skiaSurface.Canvas.DrawPath(skiaPath, paint);
         }
+
+        paint.Dispose();
+        skiaPath.Dispose();
     }
 
 
@@ -170,6 +175,9 @@ public class SkiaSharpFramebuffer : IFramebuffer
         {
             _skiaSurface.Canvas.DrawPath(skiaPath, paint);
         }
+
+        skiaPath.Dispose();
+        paint.Dispose();
     }
 
 
@@ -300,6 +308,8 @@ public class SkiaSharpFramebuffer : IFramebuffer
             // TXWTODO: We do not need y+the entire fontSize, just the under lengths.
             //_applyModified(ul, lr with { Y = y + fontSize});
             _applyModified(ul, lr with { Y = y /* metrics.Descent-metrics.Ascent */ });
+            paint.Dispose();
+            font.Dispose();
         }
     }
     
@@ -309,16 +319,18 @@ public class SkiaSharpFramebuffer : IFramebuffer
         try
         {
             SKImageInfo info = new((int)_width, (int)_height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-            SKPixmap skiaPixmap = _skiaSurface.PeekPixels();
-            lock (_lo)
+            using (SKPixmap skiaPixmap = _skiaSurface.PeekPixels())
             {
-                fixed (byte* p = _superfluousBackBuffer)
+                lock (_lo)
                 {
-                    IntPtr intptr = (IntPtr)p;
+                    fixed (byte* p = _superfluousBackBuffer)
+                    {
+                        IntPtr intptr = (IntPtr)p;
 
-                    skiaPixmap.ReadPixels(info, intptr, (int)_width * 4);
+                        skiaPixmap.ReadPixels(info, intptr, (int)_width * 4);
+                    }
+
                 }
-
             }
 
             spanBytes = _superfluousBackBuffer.AsSpan();
@@ -342,7 +354,14 @@ public class SkiaSharpFramebuffer : IFramebuffer
             _lrModified.Y = 0;
         }
     }
-    
+
+
+    public void Dispose()
+    {
+        Array.Resize(ref _superfluousBackBuffer, 1);
+        _skiaSurface.Dispose();
+        _skiaTypefacePrototype.Dispose();
+    }
 
     public SkiaSharpFramebuffer(string id, uint width, uint height)
     {
@@ -359,20 +378,5 @@ public class SkiaSharpFramebuffer : IFramebuffer
         
         System.IO.Stream streamFont = engine.Assets.Open("Prototype.ttf");
         _skiaTypefacePrototype = SKTypeface.FromStream(streamFont);
-#if false
-        /*
-         * We need to put a memorystream on top because android does not implement seeking natively.
-         */
-        using (var assetStreamReader = new StreamReader(streamFont))
-        {
-            using (var ms = new MemoryStream())
-            {
-                assetStreamReader.BaseStream.CopyTo(ms);
-                ms.Position = 0;
-
-                _skiaTypefacePrototype = SKTypeface.FromStream(ms);
-            }
-        }
-#endif
     }
 }

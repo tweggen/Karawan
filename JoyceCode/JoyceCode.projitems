@@ -103,6 +103,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ToSomewhere.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TrailVehicle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\rom\Loader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\ross\SkiaFontManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\run\LimitedConcurrencyLevelTaskScheduler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\run\RoundRobin.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\ShopFront.cs" />
