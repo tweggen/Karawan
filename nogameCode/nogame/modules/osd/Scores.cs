@@ -33,7 +33,7 @@ public class Scores : engine.AModule
      * Display the current polytope score.
      */
     private DefaultEcs.Entity _eHealthDisplay;
-    
+
 
     private void _onLogical(object? sender, float dt)
     {
@@ -87,8 +87,26 @@ public class Scores : engine.AModule
         _engine.AddModule(this);
 
         _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
+        _eScoreDisplay.Set(new engine.behave.components.Clickable()
+        {
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
+        });
+
+
         _ePolytopeDisplay = _engine.CreateEntity("OsdPolytopeDisplay");
+        _ePolytopeDisplay.Set(new engine.behave.components.Clickable()
+        {
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
+        });
+
+
         _eHealthDisplay = _engine.CreateEntity("OsdHealthDisplay");
+        _eHealthDisplay.Set(new engine.behave.components.Clickable()
+        {
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
+        });
+
+
 
         _engine.OnLogicalFrame += _onLogical;
     }

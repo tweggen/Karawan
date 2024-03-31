@@ -94,6 +94,8 @@ public class Scene : AModule, IScene, IInputPart
             M<modules.menu.Module>().ModuleDeactivate();
         }
     }
+
+    private void _triggerPauseMenu(engine.news.Event ev) => _triggerPauseMenu();
     
     
     private void _toggleMap(Event ev)
@@ -228,7 +230,9 @@ public class Scene : AModule, IScene, IInputPart
     {
         _engine.RemoveModule(this);
         I.Get<InputEventPipeline>().RemoveInputPart(this);
-        
+
+        I.Get<SubscriptionManager>().Unsubscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
+
         /*
          * Null out everything we don't need when the scene is unloaded.
          */
@@ -287,6 +291,8 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
+        
+        I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
         
         _engine.AddModule(this);
         M<modules.map.Module>().ModuleActivate();

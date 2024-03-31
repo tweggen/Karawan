@@ -49,7 +49,7 @@ public class InputController : engine.AModule, engine.IInputPart
 
     
     public float TouchLookSensitivity { get; set; } = 12f;
-    public float TouchMoveSensitivity { get; set; } = 1.6f;
+    public float TouchMoveSensitivity { get; set; } = 1.4f;
     public float TouchPeakMoveSensitivity { get; set; } = 4f * 8f;
     public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
