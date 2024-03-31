@@ -125,10 +125,8 @@ public class Scene : AModule, IScene
          */
         _engine.AddDoomedEntity(_eCamera);
         _engine.AddDoomedEntity(_eLight);
-        engine.Engine engine = null;
         lock (_lo)
         {
-            engine = _engine;
             _aTransform = null;
         }
 

@@ -502,6 +502,10 @@ public class SilkThreeD : IThreeD
     }
     
 
+    /**
+     * Note that fill material entry also is called if the material already had been uplodaded but is outdated.
+     * Therefore we need to test which of the resources needs to be created and which needs to be updated only.
+     */
     public void FillMaterialEntry(in AMaterialEntry aMaterialEntry)
     {
         SkMaterialEntry skMaterialEntry = (SkMaterialEntry) aMaterialEntry;
@@ -509,45 +513,68 @@ public class SilkThreeD : IThreeD
         engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
 
         {
-            string fragmentShaderName = jMaterial.FragmentShader;
-            if (String.IsNullOrEmpty(fragmentShaderName))
+            if (null == skMaterialEntry.SkFragmentShader)
             {
-                fragmentShaderName = "shaders/default.frag";
-            }
-            engine.Resource.ShaderSource? fragmentShaderSource = (I.Get<Resources>().Get(fragmentShaderName)) as engine.Resource.ShaderSource;
-            if (fragmentShaderSource == null)
-            {
-                ErrorThrow("Internal error: Even the default fragment shader is not valid.", m => new InvalidOperationException(m));
-                return;
-            }
-            engine.joyce.AnyShader? fragmentShader = new SplashAnyShader() { Source = fragmentShaderSource.ShaderCode };
-            ASingleShaderEntry? aFragmentShaderEntry = _shaderManager.FindAdd(
-                fragmentShader,
-                (anyShader) => new SkSingleShaderEntry(
-                    _getGL(), anyShader as SplashAnyShader, ShaderType.FragmentShader));
+                string fragmentShaderName = jMaterial.FragmentShader;
+                if (String.IsNullOrEmpty(fragmentShaderName))
+                {
+                    fragmentShaderName = "shaders/default.frag";
+                }
 
-            skMaterialEntry.SkFragmentShader = ((SkSingleShaderEntry)aFragmentShaderEntry);
+                engine.Resource.ShaderSource? fragmentShaderSource =
+                    (I.Get<Resources>().Get(fragmentShaderName)) as engine.Resource.ShaderSource;
+                if (fragmentShaderSource == null)
+                {
+                    ErrorThrow("Internal error: Even the default fragment shader is not valid.",
+                        m => new InvalidOperationException(m));
+                    return;
+                }
 
-            string vertexShaderName = jMaterial.VertexShader;
-            if (String.IsNullOrEmpty(vertexShaderName))
-            {
-                vertexShaderName = "shaders/default.vert";
-            }
-            engine.Resource.ShaderSource? vertexShaderSource = (I.Get<Resources>().Get(vertexShaderName)) as engine.Resource.ShaderSource;
-            if (vertexShaderSource == null)
-            {
-                ErrorThrow("Internal error: Even the default vertex shader is not valid.", m => new InvalidOperationException(m));
-                return;
-            }
-            engine.joyce.AnyShader? vertexShader = new SplashAnyShader() { Source = vertexShaderSource.ShaderCode };
-            ASingleShaderEntry? aVertexShaderEntry = _shaderManager.FindAdd(
-                vertexShader, 
-                (anyShader) => new SkSingleShaderEntry(
-                    _getGL(), anyShader as SplashAnyShader, ShaderType.VertexShader));;
-            skMaterialEntry.SkVertexShader = ((SkSingleShaderEntry)aVertexShaderEntry);
+                engine.joyce.AnyShader? fragmentShader = new SplashAnyShader()
+                    { Source = fragmentShaderSource.ShaderCode };
+                ASingleShaderEntry? aFragmentShaderEntry = _shaderManager.FindAdd(
+                    fragmentShader,
+                    (anyShader) => new SkSingleShaderEntry(
+                        _getGL(), anyShader as SplashAnyShader, ShaderType.FragmentShader));
 
-            skMaterialEntry.SkProgram = new SkProgramEntry(_gl,
-                skMaterialEntry.SkVertexShader, skMaterialEntry.SkFragmentShader);
+                skMaterialEntry.SkFragmentShader = ((SkSingleShaderEntry)aFragmentShaderEntry);
+            }
+
+            if (null == skMaterialEntry.SkVertexShader)
+            {
+                string vertexShaderName = jMaterial.VertexShader;
+                if (String.IsNullOrEmpty(vertexShaderName))
+                {
+                    vertexShaderName = "shaders/default.vert";
+                }
+
+                engine.Resource.ShaderSource? vertexShaderSource =
+                    (I.Get<Resources>().Get(vertexShaderName)) as engine.Resource.ShaderSource;
+                if (vertexShaderSource == null)
+                {
+                    ErrorThrow("Internal error: Even the default vertex shader is not valid.",
+                        m => new InvalidOperationException(m));
+                    return;
+                }
+
+                engine.joyce.AnyShader? vertexShader = new SplashAnyShader() { Source = vertexShaderSource.ShaderCode };
+                ASingleShaderEntry? aVertexShaderEntry = _shaderManager.FindAdd(
+                    vertexShader,
+                    (anyShader) => new SkSingleShaderEntry(
+                        _getGL(), anyShader as SplashAnyShader, ShaderType.VertexShader));
+                
+                skMaterialEntry.SkVertexShader = ((SkSingleShaderEntry)aVertexShaderEntry);
+            }
+
+            if (null == skMaterialEntry.SkProgram)
+            {
+                skMaterialEntry.SkProgram = new SkProgramEntry(_gl,
+                    skMaterialEntry.SkVertexShader, skMaterialEntry.SkFragmentShader);
+            }
+
+            /*
+             * Note, that the program shader uploads the vertex shader and the fragment shader.
+             */
             if (!skMaterialEntry.SkProgram.IsUploaded()) skMaterialEntry.SkProgram.Upload();
         }
 
