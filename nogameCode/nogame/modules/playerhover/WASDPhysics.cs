@@ -27,15 +27,15 @@ internal class WASDPhysics : AModule, IInputPart
 
     private float _massShip;
 
-    public float LinearThrust { get; set; } = 30f;
+    public float LinearThrust { get; set; } = 25f;
     public float AngularThrust { get; set; } = 50.0f;
 
-    public float MaxLinearVelocity { get; set; } = 150f;
+    public float MaxLinearVelocity { get; set; } = 220f;
     public float MaxAngularVelocity { get; set; } = 0.8f;
     public float LevelUpThrust { get; set; } = 16f;
     public float LevelDownThrust { get; set; } = 16f;
-    public float NoseDownWhileAcceleration { get; set; } = 1f;
-    public float WingsDownWhileTurning { get; set; } = 4f;
+    public float NoseDownWhileAcceleration { get; set; } = 0.5f;
+    public float WingsDownWhileTurning { get; set; } = 1.5f;
 
     public float InputTurnThreshold { get; set; } = 150f;
     public float FirstInputTurnThreshold { get; set; } = 4f;

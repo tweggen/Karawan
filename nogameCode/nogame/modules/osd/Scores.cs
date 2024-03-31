@@ -47,7 +47,7 @@ public class Scores : engine.AModule
             lock (_engine.Simulation)
             {
                 ref var prefPlayer = ref ePlayer.Get<engine.physics.components.Body>().Reference;
-                var v3Vel = prefPlayer.Velocity.Linear;
+                var v3Vel = prefPlayer.Velocity.Linear with  { Y=0f };
                 speed = (int)Single.Floor(v3Vel.Length() * 3.6f + 0.5f);
             }
         }

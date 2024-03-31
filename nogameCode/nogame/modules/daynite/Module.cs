@@ -32,6 +32,14 @@ public class Module : AModule
                 return _gameNow;
             }
         }
+        set
+        {
+            lock (_lo)
+            {
+                var sinceStart = value - GameStart;
+                _realWorldStart = DateTime.UtcNow - sinceStart;
+            }
+        }
     }
 
 
@@ -39,7 +47,7 @@ public class Module : AModule
     {
         int todayGameHours, todayGameMinutes;
 
-        M<AutoSave>().GameState.GameStart = GameStart;
+        M<AutoSave>().GameState.GameNow = GameNow;
 
         lock (_lo)
         {

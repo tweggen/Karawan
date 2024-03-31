@@ -60,7 +60,7 @@ public class FollowCameraController : IInputPart
     public float CameraRadius { get; set; } = 0.5f;
     public float CameraMass { get; set; } = 0.5f;
 
-    public float CameraDistance { get; set; } = 0.15f;
+    public float CameraDistance { get; set; } = 0.25f;
     public float CameraMinDistance { get; set; } = 2.0f;
 
     public string CameraPhysicsName { get; set; } = "CameraPhysics";

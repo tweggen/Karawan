@@ -54,21 +54,13 @@ public class InputController : engine.AModule, engine.IInputPart
     public float MouseLookMoveSensitivity  { get; set; }= 1f;
 
 
-    public float ControllerWalkForwardNormal { get; set; } = 184f;
-    public float ControllerWalkBackwardNormal { get; set; } = 184f;
-    public float ControllerWalkForwardFast { get; set; } = 255f;
-    public float ControllerWalkBackwardFast { get; set; } = 255f;
-    public float ControllerFlyUpNormal { get; set; } = 255f;
-    public float ControllerFlyDownNormal { get; set; } = 255f;
-    public float ControllerTurnLeftRight { get; set; } = 255f;
-
-
     public float ControllerYMax { get; set; } = 0.2f;
     public float ControllerYTolerance { get; set; } = 0.008f;
     public float ControllerXMax { get; set; } = 0.2f;
     public float ControllerXTolerance { get; set; } = 0.008f;
 
 
+    public int KeyboardAnalogWalk { get; set; } = 180;
     public int KeyboardAnalogMax { get; set; } = 255;
     public int TouchAnalogMax { get; set; } = 255;
 
@@ -85,31 +77,26 @@ public class InputController : engine.AModule, engine.IInputPart
                     break;
                 case "Q":
                     _controllerState.AnalogUp = KeyboardAnalogMax; 
-                    _controllerState.FlyUp = (int)ControllerFlyUpNormal;
                     break;
                 case "Z":
                     _controllerState.AnalogDown = KeyboardAnalogMax;
-                    _controllerState.FlyDown = (int)ControllerFlyDownNormal;
                     break;
                 case "W":
-                    _controllerState.AnalogForward = KeyboardAnalogMax;
-                    _controllerState.WalkForward = _isKeyboardFast?(int)ControllerWalkForwardFast:(int)ControllerWalkForwardNormal;
+                    _controllerState.AnalogForward = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
                 case "S":
-                    _controllerState.AnalogBackward = KeyboardAnalogMax;
-                    _controllerState.WalkBackward = _isKeyboardFast?(int)ControllerWalkBackwardFast:(int)ControllerWalkBackwardNormal;
+                    _controllerState.AnalogBackward = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
                 case "A":
                     _controllerState.AnalogLeft = KeyboardAnalogMax;
-                    _controllerState.TurnLeft = (int)ControllerTurnLeftRight;
                     break;
                 case "D":
                     _controllerState.AnalogRight = KeyboardAnalogMax;
-                    _controllerState.TurnRight = (int)ControllerTurnLeftRight;
                     break;
                 default:
                     break;
             }
+            _controllerState.AnalogToWalkControllerNoLock();
         }
     }
     

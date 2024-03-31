@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -47,6 +48,12 @@ public class DBStorage : IDisposable, IModule
                     (float)value.AsArray[2].AsDouble,
                     (float)value.AsArray[3].AsDouble)
         );
+        m.RegisterType<DateTime>(
+            value => value.ToString("o", CultureInfo.InvariantCulture),
+            bson => DateTime.ParseExact(bson, "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
+        m.RegisterType<DateTimeOffset>(
+            value => value.ToString("o", CultureInfo.InvariantCulture),
+            bson => DateTimeOffset.ParseExact(bson, "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
         return m;
     }
     
