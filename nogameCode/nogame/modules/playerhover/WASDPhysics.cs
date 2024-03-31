@@ -27,7 +27,7 @@ internal class WASDPhysics : AModule, IInputPart
 
     private float _massShip;
 
-    public float LinearThrust { get; set; } = 35f;
+    public float LinearThrust { get; set; } = 30f;
     public float AngularThrust { get; set; } = 50.0f;
 
     public float MaxLinearVelocity { get; set; } = 150f;
@@ -205,13 +205,20 @@ internal class WASDPhysics : AModule, IInputPart
                  * in direction of its front
                  */
                 float direction;
-                if (Vector3.Dot(vFront with { Y = 0f }, vTargetVelocity with { Y=0f } ) > -0.05f)
+                if (Vector3.Dot(vFront with { Y = 0f }, vTargetVelocity with { Y=0f } ) > 0)
                 {
                     direction = 1f;
                 }
                 else
                 {
-                    direction = -1f;
+                    if (frontMotion >= -1)
+                    {
+                        direction = 1f;
+                    }
+                    else
+                    {
+                        direction = -1f;
+                    }
                 }
                 radiansTurnVehicle += direction * ((float)turnMotion / 255f) * degreesPerSecond / 180f * Single.Pi * dt;
             }

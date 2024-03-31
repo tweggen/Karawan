@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine;
@@ -39,15 +40,31 @@ public class Scores : engine.AModule
     {
         var gameState = M<AutoSave>().GameState;
 
+        int speed = 0;
+        var ePlayer = _engine.GetPlayerEntity();
+        if (ePlayer.IsAlive && ePlayer.IsEnabled() && ePlayer.Has<engine.physics.components.Body>())
+        {
+            lock (_engine.Simulation)
+            {
+                ref var prefPlayer = ref ePlayer.Get<engine.physics.components.Body>().Reference;
+                var v3Vel = prefPlayer.Velocity.Linear;
+                speed = (int)Single.Floor(v3Vel.Length() * 3.6f + 0.5f);
+            }
+        }
+        
         _eScoreDisplay.Set(new engine.draw.components.OSDText(
             new Vector2(786f-64f-32f, 48f+YOffset),
             new Vector2(64f, 40f),
-            $"{gameState.NumberCubes}",
+            $"{speed}",
             32,
             0xff448822,
             0x00000000,
             HAlign.Right
-        ));
+        )
+        {
+            GaugeColor = 0x44448822,
+            GaugeValue = (ushort)(4096f * speed / 200f)
+        });
         _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
             new Vector2(786f-64f-32f-96f, 48f+YOffset),
             new Vector2(64f, 40f),

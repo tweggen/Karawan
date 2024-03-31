@@ -121,6 +121,16 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 _framebuffer.ClearRectangle(_dc, ul, lr);
             }
 
+            if (cOsdText.GaugeValue != 0 && (cOsdText.GaugeColor & 0xff000000) != 0)
+            {
+                _dc.FillColor = cOsdText.GaugeColor;
+                if (true)
+                {
+                    float width = (float)cOsdText.GaugeValue / 4096f * cOsdText.Size.X;
+                    _framebuffer.FillRectangle(_dc, ul, lr with { X = ul.X+width });
+                }
+            }
+            
             /*
              * Render text part.
              */

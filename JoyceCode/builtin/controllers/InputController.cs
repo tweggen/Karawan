@@ -72,12 +72,6 @@ public class InputController : engine.AModule, engine.IInputPart
     public int KeyboardAnalogMax { get; set; } = 255;
     public int TouchAnalogMax { get; set; } = 255;
 
-    private void _toggleSpeedNoLock()
-    {
-        _isKeyboardFast = !_isKeyboardFast;
-    }
-
-
     private void _onKeyDown(Event ev)
     {
         lock (_lo)
@@ -87,7 +81,7 @@ public class InputController : engine.AModule, engine.IInputPart
             switch (ev.Code)
             {
                 case "(shiftleft)":
-                    _toggleSpeedNoLock();
+                    _isKeyboardFast = true;
                     break;
                 case "Q":
                     _controllerState.AnalogUp = KeyboardAnalogMax; 
@@ -128,6 +122,9 @@ public class InputController : engine.AModule, engine.IInputPart
 
             switch (ev.Code)
             {
+                case "(shiftleft)":
+                    _isKeyboardFast = false;
+                    break;
                 case "Q":
                     _controllerState.AnalogUp = 0;
                     break;

@@ -4,17 +4,19 @@ namespace engine.draw.components;
 
 public struct OSDText
 {
-    public static uint ENABLE_DISTANCE_FADE = 0x00000001;
+    public static ushort ENABLE_DISTANCE_FADE = 0x00000001;
 
     public string Text;
     public uint FontSize;
     public uint TextColor;
     public uint FillColor;
     public uint BorderColor;
+    public uint GaugeColor;
     public Vector2 Position, Size;
     public HAlign HAlign;
     public VAlign VAlign;
-    public uint OSDTextFlags = 0;
+    public ushort OSDTextFlags = 0;
+    public ushort GaugeValue;
     public float MaxDistance = 200f;
 
     public override string ToString()
