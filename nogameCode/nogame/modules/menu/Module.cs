@@ -37,7 +37,6 @@ public class Module : AModule, IInputPart
                         doDeactivate = true;
                         break;
                 }
-
                 break;
         }
 

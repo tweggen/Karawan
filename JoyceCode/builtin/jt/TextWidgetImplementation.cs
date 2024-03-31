@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using engine;
 using engine.draw;
 using engine.draw.components;
+using engine.news;
 
 namespace builtin.jt;
 
@@ -19,8 +20,7 @@ public class TextWidgetImplementation : IWidgetImplementation
         public required Action<TextWidgetImplementation, AttributeEntry, object> ApplyFunction;
     }
 
-
-    private DefaultEcs.Entity eText;
+    private DefaultEcs.Entity _eText;
     private Widget _widget;
 
     private HAlign _hAlign(object oAlign)
@@ -128,7 +128,7 @@ public class TextWidgetImplementation : IWidgetImplementation
         uint color = _color(strColor);
 
         uint finalColor = _widget.IsFocussed ? 0xffffffff : _widget.IsSelected ? 0xffffff00 : color;
-        eText.Get<OSDText>().TextColor = finalColor;
+        _eText.Get<OSDText>().TextColor = finalColor;
     }
 
 
@@ -139,7 +139,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "x", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl.eText.Get<OSDText>().Position.X = impl._x(o);
+                    impl._eText.Get<OSDText>().Position.X = impl._x(o);
                 }
             }
         },
@@ -148,7 +148,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "y", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl.eText.Get<OSDText>().Position.Y = impl._y(o);
+                    impl._eText.Get<OSDText>().Position.Y = impl._y(o);
                 }
             }
         },
@@ -157,7 +157,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "width", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl.eText.Get<OSDText>().Size.X = impl._width(o);
+                    impl._eText.Get<OSDText>().Size.X = impl._width(o);
                 }
             }
         },
@@ -166,7 +166,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "height", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl.eText.Get<OSDText>().Size.X = impl._height(o);
+                    impl._eText.Get<OSDText>().Size.X = impl._height(o);
                 }
             }
         },
@@ -175,7 +175,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "hAlign", DefaultValue = (object)"left", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl.eText.Get<OSDText>().HAlign = impl._hAlign(o);
+                    impl._eText.Get<OSDText>().HAlign = impl._hAlign(o);
                 }
             }
         },
@@ -184,7 +184,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "vAlign", DefaultValue = (object)"top", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl.eText.Get<OSDText>().VAlign = impl._vAlign(o);
+                    impl._eText.Get<OSDText>().VAlign = impl._vAlign(o);
                 }
             }
         },
@@ -193,7 +193,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "fillColor", DefaultValue = (object)"0xff888888", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl.eText.Get<OSDText>().FillColor = impl._color(o);
+                    impl._eText.Get<OSDText>().FillColor = impl._color(o);
                 }
             }
         },
@@ -250,9 +250,9 @@ public class TextWidgetImplementation : IWidgetImplementation
     
     public void Unrealize()
     {
-        if (eText.IsAlive)
+        if (_eText.IsAlive)
         {
-            eText.Dispose();
+            _eText.Dispose();
         }
     }
 
@@ -267,8 +267,8 @@ public class TextWidgetImplementation : IWidgetImplementation
     public TextWidgetImplementation(Widget w)
     {
         _widget = w;
-        eText = I.Get<Engine>().CreateEntity("widget");
-        eText.Set(new OSDText()
+        _eText = I.Get<Engine>().CreateEntity("widget");
+        _eText.Set(new OSDText()
         {
             HAlign = HAlign.Left,
             VAlign = VAlign.Top,
@@ -278,6 +278,10 @@ public class TextWidgetImplementation : IWidgetImplementation
             FontSize = 16,
             TextColor = 0xffffff00,
             FillColor = 0xff0000ff
+        });
+        _eText.Set(new engine.behave.components.Clickable()
+        {
+            ClickEventFactory = (e, cev, v2RelPos) => new WidgetEvent($"builtin.jt.widget.{_widget.Id}.onClick", this._widget) { RelativePosition = v2RelPos}
         });
         foreach (var kvp in _mapAttributes)
         {

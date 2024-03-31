@@ -64,9 +64,9 @@ public class InputController : engine.AModule, engine.IInputPart
 
 
     public float ControllerYMax { get; set; } = 0.2f;
-    public float ControllerYTolerance { get; set; } = 0.05f;
+    public float ControllerYTolerance { get; set; } = 0.008f;
     public float ControllerXMax { get; set; } = 0.2f;
-    public float ControllerXTolerance { get; set; } = 0.05f;
+    public float ControllerXTolerance { get; set; } = 0.008f;
 
 
     public int KeyboardAnalogMax { get; set; } = 255;

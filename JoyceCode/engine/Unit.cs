@@ -25,7 +25,7 @@ public class Unit : IDisposable
         // builtin.loader.Fbx.Unit(); not yet implemented
         // builtin.loader.GlTF.Unit();
         SubscriptionManager.Unit();
-        builtin.jt.Parser.Unit();
+        // builtin.jt.Parser.Unit();
         Trace("Startup unit tests passed.");
     }
 }

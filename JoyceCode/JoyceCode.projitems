@@ -30,6 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\RootWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\TextWidgetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Widget.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\WidgetEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\FindLights.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\GlTF.cs" />

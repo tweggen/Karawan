@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Threading;
+using engine;
 using engine.gongzuo;
 using engine.news;
 using ObjLoader.Loader.Common;
@@ -45,6 +47,10 @@ public class Widget : IDisposable
 {   
     protected object _lo = new();
     public required string Type;
+    private static object _classLock = new();
+    private static uint _nextId = 0;
+    public uint Id;
+
     
     #if false
     private Lazy<LuaWidgetContext> _luaWidgetContext;
@@ -1033,6 +1039,12 @@ public class Widget : IDisposable
         
         switch (ev.Type)
         {
+            case engine.news.Event.INPUT_MOUSE_PRESSED:
+            case engine.news.Event.INPUT_TOUCH_PRESSED:
+                _emitSelected(ev);
+                ev.IsHandled = true;
+                break;
+            
             case engine.news.Event.INPUT_KEY_PRESSED:
                 switch (ev.Code)
                 {
@@ -1086,8 +1098,30 @@ public class Widget : IDisposable
                 break;
         }
     }
+
+
+    private void _onWidgetEvent(engine.news.Event ev)
+    {
+        WidgetEvent wev = ev as WidgetEvent;
+        Debug.Assert(wev != null);
+        Debug.Assert(wev.Widget == this);
+        // TXWTODO: EVents not always are targeted.
+        HandleInputEvent(ev);
+    }
+    
+
+    private void _unsubscribeEvents()
+    {
+        I.Get<SubscriptionManager>().Unsubscribe($"builtin.jt.widget.{Id}.onClick", _onWidgetEvent);
+    }
     
     
+    private void _subscribeEvents()
+    {
+        I.Get<SubscriptionManager>().Subscribe($"builtin.jt.widget.{Id}.onClick", _onWidgetEvent);
+    }
+    
+
     /**
      * Try to handle the given event. If you are not able to handle it,
      * pass it up again.
@@ -1134,12 +1168,17 @@ public class Widget : IDisposable
     public void Dispose()
     {
         Unrealize();
+        _unsubscribeEvents();
         // TXWTODO: We know that Unrealize basically is a dispose. Technically, we
         // would love to have a second dispose iteration.
     }
 
     public Widget()
     {
+        lock (_classLock)
+        {
+            Id = _nextId++;
+        }
         #if false
         _luaWidgetContext = new(() => new LuaWidgetContext()
         {
@@ -1148,5 +1187,6 @@ public class Widget : IDisposable
             _factory = Root?.Factory
         });
         #endif
+        _subscribeEvents();
     }
 }
