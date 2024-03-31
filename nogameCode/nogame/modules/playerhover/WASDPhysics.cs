@@ -32,7 +32,7 @@ internal class WASDPhysics : AModule, IInputPart
 
     public float MaxLinearVelocity { get; set; } = 220f;
     public float MaxAngularVelocity { get; set; } = 0.8f;
-    public float LevelUpThrust { get; set; } = 16f;
+    public float LevelUpThrust { get; set; } = 48f;
     public float LevelDownThrust { get; set; } = 16f;
     public float NoseDownWhileAcceleration { get; set; } = 0.5f;
     public float WingsDownWhileTurning { get; set; } = 1.5f;

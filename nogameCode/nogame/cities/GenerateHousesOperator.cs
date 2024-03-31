@@ -451,7 +451,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                             listCreatePhysics);
 
                         _createLargeAdvertsSubGeo(
-                            worldFragment, matmesh, fragPoints, height);
+                            worldFragment, matmesh, fragPoints, height); //15434
                     }
                     catch (Exception e)
                     {

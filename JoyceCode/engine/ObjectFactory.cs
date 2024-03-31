@@ -14,10 +14,10 @@ internal class ObjectEntry<K, T> where T : class?
 }
 
 
-public class ObjectFactory<K, T> where T : class?
+public class ObjectFactory<K, T> where T : class? where K : IComparable
 {
     private object _lo = new();
-    private Dictionary<K, ObjectEntry<K, T> > _mapObjects = new();
+    private SortedDictionary<K, ObjectEntry<K, T> > _mapObjects = new();
 
 
     public T FindAdd(K key, T referenceObject)
