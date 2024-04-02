@@ -63,8 +63,8 @@ public class API
                     ahandle = (uint) pair.A.BodyHandle.Value;
                     break;
                 case CollidableMobility.Static:
-                    ahandle = (uint)0x80000000 | (uint) pair.A.StaticHandle.Value;
-                    // _mapCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out propsA);
+                    ahandle = (uint)0x80000000 | (uint) pair.A.StaticHandle.Value; 
+                    _mapStaticCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out propsA);
                     break;
             }
             
@@ -76,7 +76,7 @@ public class API
                     bhandle = (uint) pair.B.BodyHandle.Value;
                     break;
                 case CollidableMobility.Static:
-                    // _mapCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out propsB);
+                    _mapStaticCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out propsB);
                     bhandle = (uint)0x80000000 | (uint) pair.B.StaticHandle.Value;
                     break;
             }

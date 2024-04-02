@@ -71,7 +71,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                         
                     /*
                      * wake it up if
-                     * - it hasn't been inside before and has no new position, we need to wake it up.
+                     * - it hasn't been inside before and has no new position, we need to wake itx^xup.
                      * - it hasn't been inside and is the first time
                      */
                     if (isFirstPos || !wasInside && !hasNewPos)

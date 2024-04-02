@@ -87,6 +87,7 @@ public class Module : AModule, IInputPart
     
     static public uint MapCameraMask = 0x00800000;
 
+    private bool _trace = false;
 
     /**
      * Identifiers of the desired map modes.
@@ -280,7 +281,7 @@ public class Module : AModule, IInputPart
             float maxDist = 1.5f;
             Vector2 v2NewPos = new(v3PlayerPos.X, v3PlayerPos.Z);
             float currDist = (v2NewPos - v2LastPos).Length();
-            Trace($"dist is {currDist} scaled {currDist*scale}");
+            if (_trace) Trace($"dist is {currDist} scaled {currDist*scale}");
             if (currDist*scale > maxDist)
             {
                 lock (_lo)
@@ -681,7 +682,7 @@ public class Module : AModule, IInputPart
 
     private void _onClickMap(engine.news.Event ev)
     {
-        Trace($"{ev.Position}");
+        if (_trace) Trace($"{ev.Position}");
         Modes mode;
         lock (_lo)
         {

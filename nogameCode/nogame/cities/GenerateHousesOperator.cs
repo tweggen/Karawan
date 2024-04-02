@@ -97,11 +97,26 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         }
         
         /*
-         * Debug test: Is the normal facing the right direction?
+         * Debug test: Is the normal facing the right direction? Is it convex at all?
          */
-        if (false) {
-            Vector3 v3RoofNormal = Vector3.Cross(p[0], p[1]);
-            Trace($"roof normal: @{p[0]+worldFragment.Position} is {v3RoofNormal}");
+        if (true)
+        {
+            int nUp = 0, nDown = 0;
+            for (int i = 0; i < l; ++i)
+            {
+                Vector3 v3a = p[(i + 0) % l] - p[(i + 1) % l];
+                Vector3 v3b = p[(i + 2) % l] - p[(i + 1) % l];
+
+                Vector3 v3Normal = Vector3.Cross(v3a, v3b);
+                if (v3Normal.Y > 0.1f) nUp++;
+                else if (v3Normal.Y < -0.1f) nDown++;
+            }
+            Trace($"for building with {p[0]+worldFragment.Position}: {nUp} up, {nDown} down.");
+            var p0 = p[0] + worldFragment.Position;
+            if (Single.Floor(p0.X) == 343f && Single.Floor(p0.Z) == 275f)
+            {
+                int a = 1;
+            }
         }
         
         /*
