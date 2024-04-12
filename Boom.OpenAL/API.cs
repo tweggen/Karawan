@@ -101,10 +101,6 @@ unsafe public class API : Boom.ISoundAPI
     }
 
 
-    private ReopenDevices _extReopenDevices;
-    private bool _haveReopenDevices = false;
-
-
     private string _researchDeviceName()
     {
         string firstDevice = "";
@@ -158,10 +154,6 @@ unsafe public class API : Boom.ISoundAPI
     
     private unsafe void _openDevice()
     {
-        _haveReopenDevices = _al.TryGetExtension<ReopenDevices>(out _extReopenDevices);
-        Trace($"haveReopenDevices = {_haveReopenDevices}");
-
-
         string deviceName = _researchDeviceName();
         _alDevice = _alc.OpenDevice(deviceName);
         _checkForErrors($"OpenDevice(\"{deviceName}\"");
