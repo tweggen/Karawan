@@ -45,7 +45,7 @@ public class DefaultMapProvider : IMapProvider
 
         foreach (var kvp in worldMapLayers)
         {
-            Trace($"Calling world map layer \"{kvp.Key}\".");
+            // Trace($"Calling world map layer \"{kvp.Key}\".");
             try
             {
                 action(kvp.Value);

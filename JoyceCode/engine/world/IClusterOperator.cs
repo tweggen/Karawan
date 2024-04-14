@@ -4,5 +4,5 @@ namespace engine.world;
 
 public interface IClusterOperator
 {
-    public System.Func<Task> ClusterOperatorApply(ClusterDesc clusterDesc);
+    public void ClusterOperatorApply(ClusterDesc clusterDesc);
 }

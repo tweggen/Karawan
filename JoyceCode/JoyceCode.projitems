@@ -140,7 +140,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\components\Music.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\Music.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\Sound.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\audio\SoundInstance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\audio\systems\MovingSoundsSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ABehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Behavior.cs" />

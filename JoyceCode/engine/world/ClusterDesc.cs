@@ -478,9 +478,10 @@ public class ClusterDesc
             _findQuarters();
                 
             Trace(
-                $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments."
+                $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments. Now calling cluster operators..."
             );
 
+            I.Get<MetaGen>().ApplyClusterOperators(this);
         }
     }
     

@@ -73,6 +73,7 @@ public class MetaGen
 
     public static bool TRACE_WORLD_LOADER = false;
     public static bool TRACE_FRAGMENT_OPEARTORS = false;
+    public static bool TRACE_CLUSTER_OPEARTORS = false;
 
     public static float CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE = 2.0f;
 
@@ -185,7 +186,7 @@ public class MetaGen
         };
     }
 
-
+    #if false
     public void GenerateFragmentOperatorsForCluster(string key, ClusterDesc cluster)
     {
         lock (_lo)
@@ -202,6 +203,25 @@ public class MetaGen
                     Error($"Exception while instantiating and adding cluster fragment operator: {e}.");
                 }
             }
+        }
+    }
+    #endif
+
+
+    public void ApplyClusterOperators(ClusterDesc clusterDesc)
+    {
+        if (null == clusterDesc)
+        {
+            throw new System.ArgumentException($"WorldMetaGen.applyClusterOperators(): clusterDesc is null.");
+        }
+
+        if (TRACE_CLUSTER_OPEARTORS) Trace($"WorldMetaGen: Calling cluster operators for {clusterDesc.Name}...");
+
+        var e = I.Get<Engine>();
+
+        foreach (var opCluster in ClusterOperators.List())
+        {
+            opCluster.ClusterOperatorApply(clusterDesc);
         }
     }
     
@@ -317,54 +337,6 @@ public class MetaGen
     }
     
     
-    private void _unitExecDesc()
-    {
-#if false
-        meta.ExecDesc ed1 = new()
-        {
-            Mode = ExecDesc.ExecMode.Sequence,
-            Children = new()
-            {
-                new ExecDesc()
-                {
-                    Mode = ExecDesc.ExecMode.Task,
-                    Implementation = "nogame.test.prerequisites"
-                },
-                new()
-                {
-                    Mode = ExecDesc.ExecMode.Parallel,
-                    Children = new()
-                    {
-                        new()
-                        {
-                            Mode = ExecDesc.ExecMode.Task,
-                            Implementation = "nogame.test.candy1"
-                        },
-                        new()
-                        {
-                            Mode = ExecDesc.ExecMode.Task,
-                            Implementation = "nogame.test.camdy2"
-                        },
-                    }
-                }
-            }
-        };
-
-        JsonSerializerOptions options = new()
-        {
-            ReferenceHandler = ReferenceHandler.Preserve,
-            WriteIndented = true
-        };
-        string jsonEd1 = JsonSerializer.Serialize(ed1, options);
-        Trace("Serializer output:");
-        Trace(jsonEd1);
-
-        meta.ExecDesc? ed2 = JsonSerializer.Deserialize<meta.ExecDesc>(jsonEd1, options);
-        Trace(ed2.ToString());
-#endif
-    }
-
-
     public MetaGen()
     {
         _myKey = "mydear";
@@ -375,8 +347,6 @@ public class MetaGen
         
         MaxPos = new Vector3(MaxWidth / 2f - 1f, 0f, MaxHeight / 2f - 1f);
         MinPos = new Vector3(-MaxWidth / 2f + 1f, 0f, -MaxWidth / 2f + 1f);
-
-        _unitExecDesc();
 
         WorldBuildingOperators.Add(new engine.world.GenerateClustersOperator(_myKey));
     }

@@ -30,7 +30,7 @@ class GenerateShopsOperator : IClusterOperator
      */
     public uint MapCameraMask { get; set; } = 0x00800000;
 
-    public Func<Task> ClusterOperatorApply(ClusterDesc clusterDesc) => new(async () =>
+    public void ClusterOperatorApply(ClusterDesc clusterDesc)
     {
         /*
          * This is a stupidly simple imple100mentation, chosing just about one shop 100m100m of cluster size
@@ -102,10 +102,13 @@ class GenerateShopsOperator : IClusterOperator
             e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
             {
                 Trace($"Generating shop at {v3Shop}");
+                I.Get<TransformApi>().SetTransforms(ePOI, true, 
+                    MapCameraMask, Quaternion.Identity, v3Shop with {Y=clusterDesc.AverageHeight+3f});
+
                 DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");
                 I.Get<HierarchyApi>().SetParent(eMapMarker, ePOI); 
                 I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
-                    MapCameraMask, Quaternion.Identity, v3Shop with {Y=clusterDesc.AverageHeight+3f});
+                    MapCameraMask, Quaternion.Identity, Vector3.Zero);
                 eMapMarker.Set(new engine.world.components.MapIcon()
                     { Code = engine.world.components.MapIcon.IconCode.Target0 });
                 
@@ -124,5 +127,5 @@ class GenerateShopsOperator : IClusterOperator
     
             });
         }
-    });
+    }
 }
