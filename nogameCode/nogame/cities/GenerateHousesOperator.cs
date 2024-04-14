@@ -111,7 +111,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 if (v3Normal.Y > 0.1f) nUp++;
                 else if (v3Normal.Y < -0.1f) nDown++;
             }
-            Trace($"for building with {p[0]+worldFragment.Position}: {nUp} up, {nDown} down.");
+            // Trace($"for building with {p[0]+worldFragment.Position}: {nUp} up, {nDown} down.");
             var p0 = p[0] + worldFragment.Position;
             if (Single.Floor(p0.X) == 343f && Single.Floor(p0.Z) == 275f)
             {

@@ -9,7 +9,7 @@ public class Building
 {
     private object _lo = new();
 
-    public required engine.world.ClusterDesc ClusterDesc;
+    public required world.ClusterDesc ClusterDesc;
 
     private List<ShopFront> _shopfronts = new();
     
