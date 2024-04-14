@@ -78,11 +78,10 @@ public struct Camera3
     }
 
 
-    public void ToScreenPosition(in Vector4 v4View, out Vector2 v2Screen)
+    public void ToScreenPosition(Vector4 v4View, out Vector2 v2Screen)
     {
         v2Screen.X = v4View.X / v4View.W;
         v2Screen.Y = v4View.Y / v4View.W;
-
         Vector2 glUL = UL;
         Vector2 glLR = LR;
         //glUL.Y *= -1;
@@ -94,8 +93,12 @@ public struct Camera3
         Vector2 v2Size = glLR - glUL;
         v2Screen.X *= v2Size.X / 2f;
         v2Screen.Y *= v2Size.Y / 2f;
-        //v2Screen -= (UL * 2f - Vector2.One) - (-Vector2.One);
-        v2Screen -= UL * 2f;
+        /*
+         * Now this is the correcly scaled point around the center of the target window.
+         * However, the target window is from UL to LR with inverted Y.
+         */
+        v2Screen.Y *= -1f;
+        v2Screen += ((LR-UL)/2f) * 2f;
     }
     
     
