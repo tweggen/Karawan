@@ -90,9 +90,10 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
 
                 
                 Vector4 vScreenPos4 = Vector4.Transform(vWorldPos4, ce.MProjection);
+                ce.CCamera.ToScreenPosition(vScreenPos4, out var v2ScreenPosWindowed);
                 vScreenPos = new(
-                    (vScreenPos4.X/vScreenPos4.W+1f) * (_vOSDViewSize.X/2f),
-                    (-vScreenPos4.Y/vScreenPos4.W+1f) * (_vOSDViewSize.Y/2f));
+                    (v2ScreenPosWindowed.X+1f) * (_vOSDViewSize.X/2f),
+                    (-v2ScreenPosWindowed.Y+1f) * (_vOSDViewSize.Y/2f));
             }
             else
             {

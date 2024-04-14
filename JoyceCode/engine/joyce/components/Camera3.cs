@@ -76,6 +76,27 @@ public struct Camera3
         v2ScreenUL = new Vector2(viewSize.X * UL.X, viewSize.Y * UL.Y);
         v2ScreenLR = new Vector2(viewSize.X * LR.X, viewSize.Y * LR.Y);
     }
+
+
+    public void ToScreenPosition(in Vector4 v4View, out Vector2 v2Screen)
+    {
+        v2Screen.X = v4View.X / v4View.W;
+        v2Screen.Y = v4View.Y / v4View.W;
+
+        Vector2 glUL = UL;
+        Vector2 glLR = LR;
+        //glUL.Y *= -1;
+        //glLR.Y *= -1;
+        glUL *= 2f;
+        glUL -= Vector2.One;
+        glLR *= 2f; 
+        glLR -= Vector2.One;
+        Vector2 v2Size = glLR - glUL;
+        v2Screen.X *= v2Size.X / 2f;
+        v2Screen.Y *= v2Size.Y / 2f;
+        //v2Screen -= (UL * 2f - Vector2.One) - (-Vector2.One);
+        v2Screen -= UL * 2f;
+    }
     
     
     public void GetViewMatrix(out Matrix4x4 matView, in Matrix4x4 mCameraToWorld)
