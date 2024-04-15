@@ -78,18 +78,21 @@ public struct Camera3
     }
 
 
+    /**
+     * Convert view position -1..1 , x/y right/down
+     * to screen position x/y right down
+     * considering the window as defined in UI.
+     */
     public void ToScreenPosition(Vector4 v4View, out Vector2 v2Screen)
     {
         v2Screen.X = v4View.X / v4View.W;
         v2Screen.Y = v4View.Y / v4View.W;
         Vector2 glUL = UL;
+        glUL.Y = 1f - glUL.Y;
         Vector2 glLR = LR;
-        //glUL.Y *= -1;
-        //glLR.Y *= -1;
-        glUL *= 2f;
-        glUL -= Vector2.One;
-        glLR *= 2f; 
-        glLR -= Vector2.One;
+        glLR.Y = 1f - glLR.Y;
+        glUL = glUL*2f - Vector2.One;
+        glLR = glLR*2f - Vector2.One;
         Vector2 v2Size = glLR - glUL;
         v2Screen.X *= v2Size.X / 2f;
         v2Screen.Y *= v2Size.Y / 2f;
@@ -97,8 +100,7 @@ public struct Camera3
          * Now this is the correcly scaled point around the center of the target window.
          * However, the target window is from UL to LR with inverted Y.
          */
-        v2Screen.Y *= -1f;
-        v2Screen += ((LR-UL)/2f) * 2f;
+        v2Screen += (glLR + glUL) / 2f;
     }
     
     
