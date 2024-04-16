@@ -30,6 +30,8 @@ class GenerateShopsOperator : IClusterOperator
      */
     public uint MapCameraMask { get; set; } = 0x00800000;
 
+    public bool TraceMe { get; set; } = true;
+
     public void ClusterOperatorApply(ClusterDesc clusterDesc)
     {
         /*
@@ -46,19 +48,23 @@ class GenerateShopsOperator : IClusterOperator
 
         for (int t = 0; t < nTries; t++)
         {
-            Vector2 v2Try = new(_rnd.GetFloat() * clusterDesc.Size, _rnd.GetFloat() * clusterDesc.Size);
+            Vector2 v2Try = new(
+                (_rnd.GetFloat()-0.5f) * clusterDesc.Size,
+                (_rnd.GetFloat()-0.5f) * clusterDesc.Size);
             float shopIntensity =
                 clusterDesc.GetAttributeIntensity(
                     new(v2Try.X, 0f, v2Try.Y), 
                     ClusterDesc.LocationAttributes.Shopping);
             if (shopIntensity < 0.5f)
             {
+                if (TraceMe) Trace($"Discarding shop {t} outside of shopping zone.");
                 continue;
             }
 
             var quarter = clusterDesc.GuessQuarter(v2Try);
             if (null == quarter)
             {
+                if (TraceMe) Trace($"Discarding shop {t} because null quarter.");
                 continue;
             }
             
@@ -68,6 +74,7 @@ class GenerateShopsOperator : IClusterOperator
             var estates = quarter.GetEstates();
             if (null == estates || 0 == estates.Count)
             {
+                if (TraceMe) Trace($"Discarding shop {t} because no estates.");
                 continue;
             }
 
@@ -75,15 +82,17 @@ class GenerateShopsOperator : IClusterOperator
             var buildings = estate.GetBuildings();
             if (null == buildings || 0 == buildings.Count)
             {
+                if (TraceMe) Trace($"Discarding shop {t} because no building.");
                 continue;
             }
             
             /*
-             * Just pick the first shop front. 
+             * Just pick the first shop front.
              */
             var shopFronts = buildings[0].GetShopFronts();
             if (null == shopFronts || shopFronts.Count == 0)
             {
+                if (TraceMe) Trace($"Discarding shop {t} because no shop.");
                 continue;
             }
 
@@ -91,6 +100,7 @@ class GenerateShopsOperator : IClusterOperator
             var myShopFrontPoints = myShopFront.GetPoints();
             if (null == myShopFrontPoints || myShopFrontPoints.Count < 2)
             {
+                if (TraceMe) Trace($"Discarding shop {t} because no shop fronts.");
                 continue;
             }
 
