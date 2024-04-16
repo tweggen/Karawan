@@ -39,9 +39,10 @@ class GenerateShopsOperator : IClusterOperator
          * We do a monte carlo approach. If the shops should be 100m apart on average, we
          * shoot area / (100*109m^2) times, applying a probability if we hit a shopping zone.
          */
-        float distance = 100f;
-        float clusterSize = clusterDesc.Size * clusterDesc.Size;
-        int nTries = (int)(clusterSize / (distance * distance));
+        float shopDistance = 50f;
+        float shopArea = shopDistance*shopDistance;
+        float clusterArea = clusterDesc.Size * clusterDesc.Size;
+        int nTries = (int)(clusterArea / shopArea);
 
         for (int t = 0; t < nTries; t++)
         {

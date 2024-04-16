@@ -93,7 +93,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                 ce.CCamera.ToScreenPosition(vScreenPos4, out var v2ScreenPosWindowed);
                 vScreenPos = new(
                     (v2ScreenPosWindowed.X+1f) * (_vOSDViewSize.X/2f),
-                    (-v2ScreenPosWindowed.Y+1f) * (_vOSDViewSize.Y/2f));
+                    (v2ScreenPosWindowed.Y+1f) * (_vOSDViewSize.Y/2f));
             }
             else
             {
