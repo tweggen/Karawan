@@ -121,8 +121,9 @@ class GenerateShopsOperator : IClusterOperator
                 I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
                     MapCameraMask, Quaternion.Identity, Vector3.Zero);
                 eMapMarker.Set(new engine.world.components.MapIcon()
-                    { Code = engine.world.components.MapIcon.IconCode.Target0 });
+                    { Code = engine.world.components.MapIcon.IconCode.Game2 });
                 
+#if false                
                 float width = 240f;
                 ePOI.Set(new engine.draw.components.OSDText(
                     new Vector2(0f , -8f),
@@ -135,6 +136,7 @@ class GenerateShopsOperator : IClusterOperator
                 {
                     MaxDistance = 100000f
                 });
+#endif
     
             });
         }
