@@ -221,7 +221,14 @@ public class MetaGen
 
         foreach (var opCluster in ClusterOperators.List())
         {
-            opCluster.ClusterOperatorApply(clusterDesc);
+            try
+            {
+                opCluster.ClusterOperatorApply(clusterDesc);
+            }
+            catch (Exception x)
+            {
+                Error($"Caught exception while applying cluster operator for cluster {clusterDesc.Name}: {x}");
+            }
         }
     }
     

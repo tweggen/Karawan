@@ -181,7 +181,7 @@ public class ClusterDesc
          */
         var pc = p;
         pc.X -= Pos.X;
-        pc.Y -= Pos.Y;
+        pc.Y -= Pos.Z;
         float minDist = 9999999999f;
         streets.Quarter minQuarter = null;
         foreach(var quarter in _quarterStore.GetQuarters() )

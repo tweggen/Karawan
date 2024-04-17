@@ -224,10 +224,11 @@ namespace engine.streets
              * Now generate shops if we are supposed to have storefronts.
              * We store shops as a path in front of a building.
              */
-            if (_rnd.GetFloat() <=
-                _clusterDesc.GetAttributeIntensity(
-                    p[0] + _clusterDesc.Pos, 
-                    ClusterDesc.LocationAttributes.Shopping))
+            float shoppingness = _clusterDesc.GetAttributeIntensity(
+                p[0] + _clusterDesc.Pos,
+                ClusterDesc.LocationAttributes.Shopping);
+            // Trace($"shoppingness in {_clusterDesc.Name} is {shoppingness}");
+            if (_rnd.GetFloat() <= shoppingness)
             {
                 _addShops(building);
             }

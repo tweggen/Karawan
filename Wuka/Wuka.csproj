@@ -137,5 +137,11 @@
 	  <ProjectReference Include="..\Splash\Splash.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Content Include="..\models\fonts\Slideyouran-Regular.ttf">
+	    <Link>models\fonts\Slideyouran-Regular.ttf</Link>
+	  </Content>
+	</ItemGroup>
+
 
 </Project>
