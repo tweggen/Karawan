@@ -240,34 +240,48 @@ namespace CmdLine
             tw.Close();
         }
 
+
+        private void AddFileInfo(FileInfo fi)
+        {
+            Image img = Image.FromFile(fi.FullName);
+            if (img != null)
+            {
+                if (img.Width <= AtlasSize && img.Height <= AtlasSize)
+                {
+                    TextureInfo ti = new TextureInfo();
+
+                    ti.Source = fi.FullName;
+                    ti.Width = img.Width;
+                    ti.Height = img.Height;
+
+                    SourceTextures.Add(ti);
+
+                    Log.WriteLine("Added " + fi.FullName);
+                }
+                else
+                {
+                    Error.WriteLine(fi.FullName + " is too large to fix in the atlas. Skipping!");
+                }
+            }
+        }
+
         private void ScanForTextures(string _Path, string _Wildcard)
         {
+            if (_Path.IsNullOrEmpty() || _Wildcard.IsNullOrEmpty()) return;
+
             DirectoryInfo di = new DirectoryInfo(_Path);
             FileInfo[] files = di.GetFiles(_Wildcard, SearchOption.AllDirectories);
 
             foreach (FileInfo fi in files)
             {
-                Image img = Image.FromFile(fi.FullName);
-                if (img != null)
-                {
-                    if (img.Width <= AtlasSize && img.Height <= AtlasSize)
-                    {
-                        TextureInfo ti = new TextureInfo();
-
-                        ti.Source = fi.FullName;
-                        ti.Width = img.Width;
-                        ti.Height = img.Height;
-
-                        SourceTextures.Add(ti);
-
-                        Log.WriteLine("Added " + fi.FullName);
-                    }
-                    else
-                    {
-                        Error.WriteLine(fi.FullName + " is too large to fix in the atlas. Skipping!");
-                    }
-                }
+                AddFileInfo(fi);
             }
+        }
+
+        public void AddTexture(string _FilePath)
+        {
+            var fi = new FileInfo(_FilePath);
+            AddFileInfo(fi);
         }
 
         private void HorizontalSplit(Node _ToSplit, int _Width, int _Height, List<Node> _List)
