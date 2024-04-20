@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Drawing;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Text;
+using System.Net.Mime;
+using SkiaSharp;
 
 namespace CmdLine
 {
@@ -107,6 +108,9 @@ namespace CmdLine
     /// </summary>
     public class Packer
     {
+        public string DestinationAtlas;
+        public string DestinationTexture;
+        
         /// <summary>
         /// List of all the textures that need to be packed
         /// </summary>
@@ -211,8 +215,15 @@ namespace CmdLine
                 string atlasName = String.Format(prefix + "{0:000}" + ".png", atlasCount);
 
                 //1: Save images
-                Image img = CreateAtlasImage(atlas);
-                img.Save(atlasName, System.Drawing.Imaging.ImageFormat.Png);
+                SKSurface skiaSurface = CreateAtlasImage(atlas);
+                using (var image = skiaSurface.Snapshot())
+                using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
+                using (var stream = File.OpenWrite(DestinationTexture))
+                {
+                    // save the data to a stream
+                    data.SaveTo(stream);
+                }
+                //img.Save(atlasName, System.Drawing.Imaging.ImageFormat.Png);
 
                 //2: save description in file
                 foreach (Node n in atlas.Nodes)
@@ -243,16 +254,15 @@ namespace CmdLine
 
         private void AddFileInfo(FileInfo fi)
         {
-            Image img = Image.FromFile(fi.FullName);
-            if (img != null)
+            using (var image = SKImage.FromEncodedData(fi.FullName))
             {
-                if (img.Width <= AtlasSize && img.Height <= AtlasSize)
+                if (image.Width <= AtlasSize && image.Height <= AtlasSize)
                 {
                     TextureInfo ti = new TextureInfo();
 
                     ti.Source = fi.FullName;
-                    ti.Width = img.Width;
-                    ti.Height = img.Height;
+                    ti.Width = image.Width;
+                    ti.Height = image.Height;
 
                     SourceTextures.Add(ti);
 
@@ -419,23 +429,33 @@ namespace CmdLine
             return textures;
         }
 
-        private Image CreateAtlasImage(Atlas _Atlas)
+        private SKSurface CreateAtlasImage(Atlas _Atlas)
         {
-            Image img = new Bitmap(_Atlas.Width, _Atlas.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            Graphics g = Graphics.FromImage(img);
+            var info = new SKImageInfo(_Atlas.Width, _Atlas.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+            var skiaSurface = SKSurface.Create(info);
 
             if (DebugMode)
             {
-                g.FillRectangle(Brushes.Green, new Rectangle(0, 0, _Atlas.Width, _Atlas.Height));
+                var paint = new SKPaint
+                {
+                    Color = 0xff00ff00,
+                    Style = SKPaintStyle.Fill
+                };
+                skiaSurface.Canvas.DrawRect(0, 0, _Atlas.Width-1, _Atlas.Height-1, paint);
+                paint.Dispose();
             }
 
             foreach (Node n in _Atlas.Nodes)
             {
                 if (n.Texture != null)
                 {
-                    Image sourceImg = Image.FromFile(n.Texture.Source);
-                    g.DrawImage(sourceImg, n.Bounds);
+                    using(var image = SKImage.FromEncodedData(n.Texture.Source))
+                    using (var bm = SKBitmap.FromImage(image))
+                    {
+                        skiaSurface.Canvas.DrawBitmap(bm, new SKPoint(n.Bounds.X, n.Bounds.Y));
+                    }
 
+#if false
                     if (DebugMode)
                     {
                         string label = Path.GetFileNameWithoutExtension(n.Texture.Source);
@@ -444,11 +464,19 @@ namespace CmdLine
                         g.FillRectangle(Brushes.Black, rectBounds);
                         g.DrawString(label, SystemFonts.MenuFont, Brushes.White, rectBounds);
                     }
+#endif
                 }
                 else
                 {
-                    g.FillRectangle(Brushes.DarkMagenta, n.Bounds);
+                    var paint = new SKPaint
+                    {
+                        Color = 0xff00ff00,
+                        Style = SKPaintStyle.Fill
+                    };
+                    skiaSurface.Canvas.DrawRect(n.Bounds.X, n.Bounds.Y, n.Bounds.Width-1, n.Bounds.Height-1, paint);
+                    paint.Dispose();
 
+#if false
                     if (DebugMode)
                     {
                         string label = n.Bounds.Width.ToString() + "x" + n.Bounds.Height.ToString();
@@ -457,10 +485,11 @@ namespace CmdLine
                         g.FillRectangle(Brushes.Black, rectBounds);
                         g.DrawString(label, SystemFonts.MenuFont, Brushes.White, rectBounds);
                     }
+#endif
                 }
             }
 
-            return img;
+            return skiaSurface;
         }
 
     }
