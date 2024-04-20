@@ -15,8 +15,44 @@ namespace CmdLine
         public Action<string> Trace; // = (msg) => Debug.WriteLine(msg);
 
         public SortedDictionary<string, Resource> MapResources = new SortedDictionary<string, Resource>();
+        public SortedDictionary<string, AtlasSpec> MapAtlasSpecs = new SortedDictionary<string, AtlasSpec>();
 
 
+        public Resource LoadResource(JsonElement jeRes)
+        {
+            string uri = jeRes.GetProperty("uri").GetString();
+            if (null == uri)
+            {
+                throw new InvalidDataException("no uri specified in resource.");
+            }
+
+            string tag = null;
+            if (jeRes.TryGetProperty("tag", out var jpTag))
+            {
+                tag = jpTag.GetString();
+            }
+            if (null == tag)
+            {
+                int idx = uri.LastIndexOf('/');
+                if (idx != -1 && idx != uri.Length - 1)
+                {
+                    tag = uri.Substring(idx + 1);
+                }
+                else
+                {
+                    tag = uri;
+                }
+            }
+
+            Trace($"GameConfig: Loaded Resource \"{tag}\" from {uri}.");
+            if (!File.Exists(uri))
+            {
+                Trace($"Warning: resource file for {uri} does not exist.");
+            }
+            return new Resource() { Uri = uri, Tag = tag };
+        }
+        
+        
         public void LoadResourceList(JsonElement je)
         {
             Trace($"LoadResourceList();");
@@ -24,43 +60,16 @@ namespace CmdLine
             {
                 foreach (var jeRes in je.EnumerateArray())
                 {
-                    string uri = jeRes.GetProperty("uri").GetString();
-                    if (null == uri)
-                    {
-                        throw new InvalidDataException("no uri specified in resource.");
-                    }
-
-                    string tag = null;
-                    if (jeRes.TryGetProperty("tag", out var jpTag))
-                    {
-                        tag = jpTag.GetString();
-                    }
-                    if (null == tag)
-                    {
-                        int idx = uri.LastIndexOf('/');
-                        if (idx != -1 && idx != uri.Length - 1)
-                        {
-                            tag = uri.Substring(idx + 1);
-                        }
-                        else
-                        {
-                            tag = uri;
-                        }
-                    }
-
-                    Trace($"GameConfig: Added Resource \"{tag}\" from {uri}.");
-                    if (!File.Exists(uri))
-                    {
-                        Trace($"Warning: resource file for {uri} does not exist.");
-                    }
-                    MapResources[tag] = new Resource() { Uri = uri };
+                    Resource resource = LoadResource(jeRes);
+                    string tag = resource.Tag;
+                    MapResources[tag] = resource;
+                    Trace($"GameConfig: Added Resource \"{tag}\".");
                 }
             }
             catch (Exception e)
             {
                 Trace($"Error loading resource: {e}");
             }
-
         }
 
 
@@ -84,6 +93,44 @@ namespace CmdLine
             }
         }
 
+
+        public void LoadAtlas(string path, JsonElement je)
+        {
+            AtlasSpec atlasSpec = new AtlasSpec() { Path = path};
+            try
+            {
+                foreach (var jeRes in je.EnumerateArray())
+                {
+                    Resource resource = LoadResource(jeRes);
+                    atlasSpec.TextureResources.Add(resource);
+                }
+                MapAtlasSpecs[path] = atlasSpec;
+            }
+            catch (Exception e)
+            {
+                Trace($"GameConfig: Unable to load texture atlas: {e}");
+            }
+        }
+        
+        
+        public void LoadTextures(JsonElement je)
+        {
+            Trace($"LoadTextures():");
+            try
+            {
+                foreach (var jpAtlas in je.EnumerateObject())
+                {
+                    Trace($"LoadTextures(): Loading atlas {jpAtlas.Name}");
+                    LoadAtlas(jpAtlas.Name, jpAtlas.Value);
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"GameConfig: Unable to load texture list: {e}");
+            }
+        }
+
+        
         public void LoadGameConfig(JsonElement je)
         {
             Trace($"LoadGameConfig();");
@@ -94,6 +141,14 @@ namespace CmdLine
             else
             {
                 Trace($"GameConfig: Unable to find \"resources\" in game config json.");
+            }
+            if (je.TryGetProperty("textures", out var jeTextures))
+            {
+                LoadTextures(jeTextures);
+            }
+            else
+            {
+                Trace($"GameConfig: Unable to find \"textures\" in game config json.");
             }
         }
 

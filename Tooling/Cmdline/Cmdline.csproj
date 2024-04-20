@@ -1,19 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Library</OutputType>
+        <OutputType>exe</OutputType>
         <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
         <SelfContained>True</SelfContained>
+        <PublishSingleFile>true</PublishSingleFile>
     </PropertyGroup>
 
     <PropertyGroup>
         <AssemblyName>joycecmd</AssemblyName>
+        <TargetName>joycecmd</TargetName>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Build.Framework" Version="17.9.5" />
       <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.9.5" />
-      <PackageReference Include="SkiaSharp" Version="3.0.0-preview.3.1" />
+      <PackageReference Include="SkiaSharp" Version="2.88.8" />
+      <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.8" />
       <PackageReference Include="System.Text.Json" Version="8.0.3" />
 		<!-- PackageReference Include="UkooLabs.FbxSharpie" Version="1.0.99" /-->
     </ItemGroup>

@@ -112,10 +112,9 @@
     },
     "startup": "logos"
   },
-  "resources":
+  "textures":
   {
-    "list": [
-      { "uri": "../models/story/story1.json" },
+    "atlas-trans.png": [
       { "uri": "../models/brands/plentomatic-small.png" },
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },
@@ -123,8 +122,34 @@
       { "uri": "../models/buildings/buildingalphadiffuse.png" },
       { "uri": "../models/buildings/buildingalphadiffuse2.png" },
       { "uri": "../models/buildings/buildingalphadiffuse3.png" },
+      { "uri": "../models/buildings/lorem.png" },
+      { "uri": "../models/lightfx/standardlight/standardlight.png" },
+      { "uri": "../models/logos/joyce/aihao-emissive.png" },
+      { "uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
+      { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
+      { "uri": "../models/mapicons/mapicons.png" },
+      { "uri": "../models/newcars/car7/Textures/car7.png" }
+    ],
+    "atlas-opaque.png": [
       { "uri": "../models/buildings/buildingambient.png" },
       { "uri": "../models/buildings/buildingdiffuse.png" },
+      { "uri": "../models/sky/skybox2.png" },
+      { "uri": "../models/sky/skybox2noborder.png" },
+      { "uri": "../models/streets/streets1to4.png" },
+      { "uri": "../models/void/gridlines.png" },
+      { "uri": "../models/void/gridlines1.png" }
+    ]
+  },
+  "resources":
+  {
+    "list": [
+      { "uri": "../models/brands/plentomatic-small.png" },
+      { "uri": "../models/brands/plentomatic.png" },
+      { "uri": "../models/brands/sprouce-cn.png" },
+      { "uri": "../models/brands/sprouce-en.png" },
+      { "uri": "../models/buildings/buildingalphadiffuse.png" },
+      { "uri": "../models/buildings/buildingalphadiffuse2.png" },
+      { "uri": "../models/buildings/buildingalphadiffuse3.png" },
       { "uri": "../models/buildings/lorem.png" },
       { "uri": "../models/lightfx/standardlight/standardlight.png" },
       { "uri": "../models/logos/joyce/aihao-emissive.png" },
@@ -132,11 +157,14 @@
       { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
       { "uri": "../models/mapicons/mapicons.png" },
       { "uri": "../models/newcars/car7/Textures/car7.png" },
+      { "uri": "../models/buildings/buildingambient.png" },
+      { "uri": "../models/buildings/buildingdiffuse.png" },
       { "uri": "../models/sky/skybox2.png" },
       { "uri": "../models/sky/skybox2noborder.png" },
       { "uri": "../models/streets/streets1to4.png" },
       { "uri": "../models/void/gridlines.png" },
       { "uri": "../models/void/gridlines1.png" },
+      { "uri": "../models/story/story1.json" },
       { "uri": "../models/sfx/car-collision.ogg" },
       { "uri": "../models/sfx/car3noise.ogg" },
       { "uri": "../models/sfx/car3noisemono.ogg" },
@@ -181,7 +209,7 @@
       { "uri": "../models/newcars/car8/car8.obj" },
       { "uri": "../models/tram/tram1.obj" },
       { "uri": "../models/tram/tram1.mtl" },
-      { "uri": "../models/void/gridlines1.png" },
+      { "uri": "../models/void/gridlines1.png", "atlas": "atlas-opaque.png" },
       { "uri": "../models/shaders/LIghtingFS.frag" },
       { "uri": "../models/shaders/ScreenFS.frag" },
       { "uri": "../models/shaders/LIghtingVS.vert" },

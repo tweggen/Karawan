@@ -1,13 +1,15 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace CmdLine
 {
     public class PackTextures
     {
+        public Action<string> Trace = (msg) => System.Diagnostics.Debug.WriteLine(msg);
+        private string[] _args;
         private Packer _packer;
-        private string _destinationAtlas;
-        private string _destinationTexture;
-        
+
         private List<string> _listFiles = new List<string>();
 
         private void _addTextureFiles(List<string> listFiles)
@@ -21,23 +23,37 @@ namespace CmdLine
 
         public int Execute()
         {
-            _packer = new Packer();
-            _packer.DestinationAtlas = _destinationAtlas;
-            _packer.DestinationTexture = _destinationTexture;
-            _addTextureFiles(_listFiles);
+            Trace("packtextures: Working...");
+            GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
+            gc.Load();
+
+            foreach (var kvp in gc.MapAtlasSpecs)
+            {
+                Trace($"packtextures: Generating atlas {kvp.Key}...");
+                _packer = new Packer() { AtlasSize = 1024};
+                _packer.DestinationTexture = Path.Combine(_args[2], kvp.Key);
+                foreach (var textureResource in kvp.Value.TextureResources)
+                {
+                    Trace($"packtextures: Adding texture {textureResource.Uri} to atlas {kvp.Key}...");
+                    _packer.AddTexture(textureResource.Uri);
+                }
+                _packer.Process(null, null, 1024,0, true);
+                Trace($"packtextures: Saving atlas {kvp.Key} to {_packer.DestinationTexture}...");
+                _packer.SaveAtlasses(_packer.DestinationTexture);
+            }
+            Trace($"packtextures: Done");
             return 0;
         }
 
         
         public PackTextures(string[] args)
         {
-            _destinationAtlas = args[1];
-            _destinationTexture = args[2];
-            int l = args.Length;
-            for (int i = 3; i < l; ++i)
+            if (args.Length != 3)
             {
-                _listFiles.Add(args[i]);
+                throw new ArgumentException();
             }
+
+            _args = args;
         }
     }
 }

@@ -218,7 +218,7 @@ namespace CmdLine
                 SKSurface skiaSurface = CreateAtlasImage(atlas);
                 using (var image = skiaSurface.Snapshot())
                 using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
-                using (var stream = File.OpenWrite(DestinationTexture))
+                using (var stream = File.OpenWrite(atlasName))
                 {
                     // save the data to a stream
                     data.SaveTo(stream);
@@ -277,7 +277,7 @@ namespace CmdLine
 
         private void ScanForTextures(string _Path, string _Wildcard)
         {
-            if (_Path.IsNullOrEmpty() || _Wildcard.IsNullOrEmpty()) return;
+            if (String.IsNullOrEmpty(_Path) || String.IsNullOrEmpty(_Wildcard)) return;
 
             DirectoryInfo di = new DirectoryInfo(_Path);
             FileInfo[] files = di.GetFiles(_Wildcard, SearchOption.AllDirectories);
