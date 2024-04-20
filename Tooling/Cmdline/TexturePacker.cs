@@ -4,25 +4,48 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net.Mime;
+using System.Text.Json;
 using SkiaSharp;
 
 namespace CmdLine
 {
+    public class JsonTextureDesc {
+        public string Uri { get; set; }
+        public string Tag { get; set; }
+        public string AtlasName { get; set; }
+        public float U { get; set; }
+        public float V { get; set; }
+        public float UScale { get; set; }
+        public float VScale { get; set; }
+    }
+
+    public class JsonAtlasDesc
+    {
+        public string Uri { get; set; }
+        public Dictionary<string,JsonTextureDesc> Textures { get; set; }
+    }
+
+    public class JsonAtlassesDesc
+    {
+        public Dictionary<string, JsonAtlasDesc> Atlasses { get; set; }
+    }
+    
     /// <summary>
     /// Represents a Texture in an atlas
     /// </summary>
     public class TextureInfo
     {
+        public Resource Resource;
         /// <summary>
         /// Path of the source texture on disk
         /// </summary>
-        public string Source;
-        
+        public string FullPath;
+
         /// <summary>
         /// Width in Pixels
         /// </summary>
         public int Width;
-        
+
         /// <summary>
         /// Height in Pixels
         /// </summary>
@@ -38,7 +61,7 @@ namespace CmdLine
         /// Split Horizontally (textures are stacked up)
         /// </summary>
         Horizontal,
-        
+
         /// <summary>
         /// Split verticaly (textures are side by side)
         /// </summary>
@@ -54,7 +77,7 @@ namespace CmdLine
         /// 
         /// </summary>
         Area,
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -75,7 +98,7 @@ namespace CmdLine
         /// Texture this node represents
         /// </summary>
         public TextureInfo Texture;
-        
+
         /// <summary>
         /// If this is an empty node, indicates how to split it when it will  be used
         /// </summary>
@@ -91,7 +114,7 @@ namespace CmdLine
         /// Width in pixels
         /// </summary>
         public int Width;
-        
+
         /// <summary>
         /// Height in Pixel
         /// </summary>
@@ -110,7 +133,7 @@ namespace CmdLine
     {
         public string DestinationAtlas;
         public string DestinationTexture;
-        
+
         /// <summary>
         /// List of all the textures that need to be packed
         /// </summary>
@@ -125,22 +148,22 @@ namespace CmdLine
         /// Stream that recieves all the error info
         /// </summary>
         public StringWriter Error;
-        
+
         /// <summary>
         /// Number of pixels that separate textures in the atlas
         /// </summary>
         public int Padding;
-        
+
         /// <summary>
         /// Size of the atlas in pixels. Represents one axis, as atlases are square
         /// </summary>
         public int AtlasSize;
-        
+
         /// <summary>
         /// Toggle for debug mode, resulting in debug atlasses to check the packing algorithm
         /// </summary>
         public bool DebugMode;
-        
+
         /// <summary>
         /// Which heuristic to use when doing the fit
         /// </summary>
@@ -150,6 +173,8 @@ namespace CmdLine
         /// List of all the output atlases
         /// </summary>
         public List<Atlas> Atlasses;
+
+        public List<Resource> StandaloneTextures = new List<Resource>();
 
         public Packer()
         {
@@ -163,9 +188,6 @@ namespace CmdLine
             Padding = _Padding;
             AtlasSize = _AtlasSize;
             DebugMode = _DebugMode;
-
-            //1: scan for all the textures we need to pack
-            ScanForTextures(_SourceDir, _Pattern);
 
             List<TextureInfo> textures = new List<TextureInfo>();
             textures = SourceTextures.ToList();
@@ -189,6 +211,7 @@ namespace CmdLine
                         atlas.Height /= 2;
                         leftovers = LayoutAtlas(textures, atlas);
                     }
+
                     // we need to go 1 step larger as we found the first size that is to small
                     atlas.Width *= 2;
                     atlas.Height *= 2;
@@ -206,10 +229,11 @@ namespace CmdLine
             int atlasCount = 0;
             string prefix = _Destination.Replace(Path.GetExtension(_Destination), "");
 
-            string descFile = _Destination;
-            StreamWriter tw = new StreamWriter(_Destination);
-            tw.WriteLine("source_tex, atlas_tex, u, v, scale_u, scale_v");
-
+            JsonAtlassesDesc jAtlasses = new JsonAtlassesDesc()
+            {
+                Atlasses = new Dictionary<string, JsonAtlasDesc>()
+            };
+            
             foreach (Atlas atlas in Atlasses)
             {
                 string atlasName = String.Format(prefix + "{0:000}" + ".png", atlasCount);
@@ -225,21 +249,63 @@ namespace CmdLine
                 }
                 //img.Save(atlasName, System.Drawing.Imaging.ImageFormat.Png);
 
+                JsonAtlasDesc jAtlas = new JsonAtlasDesc()
+                {
+                    Uri = atlasName,
+                    Textures = new Dictionary<string, JsonTextureDesc>()
+                };
+                
                 //2: save description in file
                 foreach (Node n in atlas.Nodes)
                 {
                     if (n.Texture != null)
                     {
-                        tw.Write(n.Texture.Source + ", ");
-                        tw.Write(atlasName + ", ");
-                        tw.Write(((float)n.Bounds.X / atlas.Width).ToString() + ", ");
-                        tw.Write(((float)n.Bounds.Y / atlas.Height).ToString() + ", ");
-                        tw.Write(((float)n.Bounds.Width / atlas.Width).ToString() + ", ");
-                        tw.WriteLine(((float)n.Bounds.Height / atlas.Height).ToString());
+                        JsonTextureDesc jTexture = new JsonTextureDesc()
+                        {
+                            Uri = n.Texture.Resource.Uri,
+                            Tag = n.Texture.Resource.Tag,
+                            AtlasName = atlasName,
+                            U = ((float)n.Bounds.X / atlas.Width),
+                            V = ((float)n.Bounds.Y / atlas.Height),
+                            UScale = ((float)n.Bounds.Width / atlas.Width),
+                            VScale = ((float)n.Bounds.Height / atlas.Height)
+                        };
+                        jAtlas.Textures[jTexture.Tag] = jTexture;
                     }
                 }
+                jAtlasses.Atlasses[atlasName] = jAtlas;
 
                 ++atlasCount;
+            }
+
+            foreach (var resource in StandaloneTextures)
+            {
+                JsonAtlasDesc jAtlas = new JsonAtlasDesc()
+                {
+                    Uri = resource.Uri,
+                    Textures = new Dictionary<string, JsonTextureDesc>()
+                };
+
+                JsonTextureDesc jTexture = new JsonTextureDesc()
+                {
+                    Uri = resource.Uri,
+                    Tag = resource.Tag,
+                    AtlasName = resource.Uri,
+                    U = 0f,
+                    V = 0f,
+                    UScale = 1f,
+                    VScale = 1f
+                };
+                jAtlas.Textures[resource.Tag] = jTexture;
+                jAtlasses.Atlasses[resource.Tag] = jAtlas;
+            }
+
+            string descFile = _Destination;
+            StreamWriter tw = new StreamWriter(descFile);
+            {
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string jsonString = JsonSerializer.Serialize(jAtlasses, options);
+                tw.Write(jsonString);
             }
             tw.Close();
 
@@ -252,48 +318,33 @@ namespace CmdLine
         }
 
 
-        private void AddFileInfo(FileInfo fi)
+        public void AddTexture(Resource resourceTexture)
         {
+            FileInfo fi = new FileInfo(resourceTexture.Uri);
             using (var image = SKImage.FromEncodedData(fi.FullName))
             {
                 if (image.Width <= AtlasSize && image.Height <= AtlasSize)
                 {
                     TextureInfo ti = new TextureInfo();
 
-                    ti.Source = fi.FullName;
+                    ti.Resource = resourceTexture;
+                    ti.FullPath = fi.FullName;
                     ti.Width = image.Width;
                     ti.Height = image.Height;
 
                     SourceTextures.Add(ti);
 
-                    Log.WriteLine("Added " + fi.FullName);
+                    Log.WriteLine($"Added \"{resourceTexture.Tag}\" (found at \"{fi.FullName}\")");
                 }
                 else
                 {
-                    Error.WriteLine(fi.FullName + " is too large to fix in the atlas. Skipping!");
+                    StandaloneTextures.Add(resourceTexture);
+                    Log.WriteLine($"Added standalone \"{resourceTexture.Tag}\" (found at \"{fi.FullName}\")");
                 }
             }
         }
 
-        private void ScanForTextures(string _Path, string _Wildcard)
-        {
-            if (String.IsNullOrEmpty(_Path) || String.IsNullOrEmpty(_Wildcard)) return;
-
-            DirectoryInfo di = new DirectoryInfo(_Path);
-            FileInfo[] files = di.GetFiles(_Wildcard, SearchOption.AllDirectories);
-
-            foreach (FileInfo fi in files)
-            {
-                AddFileInfo(fi);
-            }
-        }
-
-        public void AddTexture(string _FilePath)
-        {
-            var fi = new FileInfo(_FilePath);
-            AddFileInfo(fi);
-        }
-
+        
         private void HorizontalSplit(Node _ToSplit, int _Width, int _Height, List<Node> _List)
         {
             Node n1 = new Node();
@@ -316,6 +367,7 @@ namespace CmdLine
                 _List.Add(n2);
         }
 
+        
         private void VerticalSplit(Node _ToSplit, int _Width, int _Height, List<Node> _List)
         {
             Node n1 = new Node();
@@ -337,7 +389,8 @@ namespace CmdLine
             if (n2.Bounds.Width > 0 && n2.Bounds.Height > 0)
                 _List.Add(n2);
         }
-
+        
+        
         private TextureInfo FindBestFitForNode(Node _Node, List<TextureInfo> _Textures)
         {
             TextureInfo bestFit = null;
@@ -380,10 +433,10 @@ namespace CmdLine
                         break;
                 }
             }
-
             return bestFit;
         }
 
+        
         private List<TextureInfo> LayoutAtlas(List<TextureInfo> _Textures, Atlas _Atlas)
         {
             List<Node> freeList = new List<Node>();
@@ -428,6 +481,7 @@ namespace CmdLine
 
             return textures;
         }
+        
 
         private SKSurface CreateAtlasImage(Atlas _Atlas)
         {
@@ -441,7 +495,7 @@ namespace CmdLine
                     Color = 0xff00ff00,
                     Style = SKPaintStyle.Fill
                 };
-                skiaSurface.Canvas.DrawRect(0, 0, _Atlas.Width-1, _Atlas.Height-1, paint);
+                skiaSurface.Canvas.DrawRect(0, 0, _Atlas.Width - 1, _Atlas.Height - 1, paint);
                 paint.Dispose();
             }
 
@@ -449,22 +503,11 @@ namespace CmdLine
             {
                 if (n.Texture != null)
                 {
-                    using(var image = SKImage.FromEncodedData(n.Texture.Source))
+                    using (var image = SKImage.FromEncodedData(n.Texture.FullPath))
                     using (var bm = SKBitmap.FromImage(image))
                     {
                         skiaSurface.Canvas.DrawBitmap(bm, new SKPoint(n.Bounds.X, n.Bounds.Y));
                     }
-
-#if false
-                    if (DebugMode)
-                    {
-                        string label = Path.GetFileNameWithoutExtension(n.Texture.Source);
-                        SizeF labelBox = g.MeasureString(label, SystemFonts.MenuFont, new SizeF(n.Bounds.Size));
-                        RectangleF rectBounds = new Rectangle(n.Bounds.Location, new Size((int)labelBox.Width, (int)labelBox.Height));
-                        g.FillRectangle(Brushes.Black, rectBounds);
-                        g.DrawString(label, SystemFonts.MenuFont, Brushes.White, rectBounds);
-                    }
-#endif
                 }
                 else
                 {
@@ -473,19 +516,8 @@ namespace CmdLine
                         Color = 0xff00ff00,
                         Style = SKPaintStyle.Fill
                     };
-                    skiaSurface.Canvas.DrawRect(n.Bounds.X, n.Bounds.Y, n.Bounds.Width-1, n.Bounds.Height-1, paint);
+                    skiaSurface.Canvas.DrawRect(n.Bounds.X, n.Bounds.Y, n.Bounds.Width - 1, n.Bounds.Height - 1, paint);
                     paint.Dispose();
-
-#if false
-                    if (DebugMode)
-                    {
-                        string label = n.Bounds.Width.ToString() + "x" + n.Bounds.Height.ToString();
-                        SizeF labelBox = g.MeasureString(label, SystemFonts.MenuFont, new SizeF(n.Bounds.Size));
-                        RectangleF rectBounds = new Rectangle(n.Bounds.Location, new Size((int)labelBox.Width, (int)labelBox.Height));
-                        g.FillRectangle(Brushes.Black, rectBounds);
-                        g.DrawString(label, SystemFonts.MenuFont, Brushes.White, rectBounds);
-                    }
-#endif
                 }
             }
 
@@ -493,114 +525,4 @@ namespace CmdLine
         }
 
     }
-
-#if false
-    class Program
-    {
-        static void DisplayInfo()
-        {
-            Console.WriteLine("  usage: TexturePacker -sp xxx -ft xxx -o xxx [-s xxx] [-b x] [-d]");
-            Console.WriteLine("            -sp | --sourcepath : folder to recursively scan for textures to pack");
-            Console.WriteLine("            -ft | --filetype   : types of textures to pack (*.png only for now)");
-            Console.WriteLine("            -o  | --output     : name of the atlas file to generate");
-            Console.WriteLine("            -s  | --size       : size of 1 side of the atlas file in pixels. Default = 1024");
-            Console.WriteLine("            -b  | --border     : nb of pixels between textures in the atlas. Default = 0");
-            Console.WriteLine("            -d  | --debug      : output debug info in the atlas");
-            Console.WriteLine("  ex: TexturePacker -sp C:\\Temp\\Textures -ft *.png -o C:\\Temp\atlas.txt -s 512 -b 2 --debug");
-        }
-
-        static void Main(string[] args)
-        {
-            Console.WriteLine("TexturePacker - Package rect/non pow 2 textures into square power of 2 atlas");
-
-            if (args.Length == 0)
-            {
-                DisplayInfo();
-                return;
-            }
-
-            List<string> prms = args.ToList();
-
-            string sourcePath = "";
-            string searchPattern = "";
-            string outName = "";
-            int textureSize = 1024;
-            int border = 0;
-            bool debug = false;
-
-            for (int ip = 0; ip < prms.Count; ++ip)
-            {
-                prms[ip] = prms[ip].ToLowerInvariant();
-
-                switch (prms[ip])
-                {
-                    case "-sp":
-                    case "--sourcepath":
-                        if (!prms[ip + 1].StartsWith("-"))
-                        {
-                            sourcePath = prms[ip + 1];
-                            ++ip;
-                        }
-                        break;
-
-                    case "-ft":
-                    case "--filetype":
-                        if (!prms[ip + 1].StartsWith("-"))
-                        {
-                            searchPattern = prms[ip + 1];
-                            ++ip;
-                        }
-                        break;
-
-                    case "-o":
-                    case "--output":
-                        if (!prms[ip + 1].StartsWith("-"))
-                        {
-                            outName = prms[ip + 1];
-                            ++ip;
-                        }
-                        break;
-
-                    case "-s":
-                    case "--size":
-                        if (!prms[ip + 1].StartsWith("-"))
-                        {
-                            textureSize = int.Parse(prms[ip + 1]);
-                            ++ip;
-                        }
-                        break;
-
-                    case "-b":
-                    case "--border":
-                        if (!prms[ip + 1].StartsWith("-"))
-                        {
-                            border = int.Parse(prms[ip + 1]);
-                            ++ip;
-                        }
-                        break;
-
-                    case "-d":
-                    case "--debug":
-                        debug = true;
-                        break;
-                }
-            }
-
-            if (sourcePath == "" || searchPattern == "" || outName == "")
-            {
-                DisplayInfo();
-                return;
-            }
-            else
-            {
-                Console.WriteLine("Processing, please wait");
-            }
-
-            Packer packer = new Packer();
-
-            packer.Process(sourcePath, searchPattern, textureSize, border, debug);
-            packer.SaveAtlasses(outName);
-        }
-    }
-#endif
 }
