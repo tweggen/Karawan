@@ -36,8 +36,8 @@ namespace engine.joyce
         public uint AlbedoColor = 0x00000000;
         public uint EmissiveColor = 0x00000000;
         public uint EmissiveFactors = 0xffffffff;
-        public bool AddInterior = false;
         
+        public bool AddInterior = false;
         public bool IsBillboardTransform = false;
         public bool IsUnscalable = false;
         

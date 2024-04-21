@@ -452,22 +452,9 @@ public class SilkThreeD : IThreeD
         {
             if (_loadingMaterial == null)
             {
-#if false
-                var loadingMaterial = new RlMaterialEntry(new engine.joyce.Material());
-
-                Image checkedImage = Raylib_CsLo.Raylib.GenImageChecked(2, 2, 1, 1, Raylib_CsLo.Raylib.RED, Raylib_CsLo.Raylib.GREEN);
-                var loadingTexture = Raylib_CsLo.Raylib.LoadTextureFromImage(checkedImage);
-                Raylib_CsLo.Raylib.UnloadImage(checkedImage);
-
-                loadingMaterial.RlMaterial = Raylib_CsLo.Raylib.LoadMaterialDefault();
-                loadingMaterial.RlMaterial.shader = _rlInstanceShaderEntry.RlShader;
-                loadingMaterial.RlMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].texture = loadingTexture;
-                // loadingMaterial.RlMaterial.maps[(int)Raylib_CsLo.Raylib.MATERIAL_MAP_DIFFUSE].color = Raylib_CsLo.Raylib.WHITE;
-                _loadingMaterial = loadingMaterial;
-#endif
+                throw new InvalidOperationException("not yet implemented");
             }
 
-            throw new InvalidOperationException("not yet implemented");
             return _loadingMaterial;
         }
     }
@@ -479,19 +466,6 @@ public class SilkThreeD : IThreeD
         return skMaterialEntry;
     }
 
-
-    #if false
-    private static readonly engine.joyce.AnyShader _defaultFragmentShader = new SplashAnyShader()
-    {
-        Source = (I.Get<Resources>().Get("shaders/default.frag") as engine.Resource.ShaderSource).ShaderCode
-    };
-
-
-    private static readonly engine.joyce.AnyShader _defaultVertexShader = new SplashAnyShader()
-    {
-        Source = (I.Get<Resources>().Get("shaders/default.vert") as engine.Resource.ShaderSource).ShaderCode
-    };
-    #endif
 
     private int _frameno;
 
