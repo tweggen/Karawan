@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net.Mime;
+using System.Security.AccessControl;
 using System.Text.Json;
 using SkiaSharp;
 
@@ -12,7 +13,7 @@ namespace CmdLine
     public class JsonTextureDesc {
         public string Uri { get; set; }
         public string Tag { get; set; }
-        public string AtlasName { get; set; }
+        public string AtlasTag { get; set; }
         public float U { get; set; }
         public float V { get; set; }
         public float UScale { get; set; }
@@ -22,12 +23,22 @@ namespace CmdLine
     public class JsonAtlasDesc
     {
         public string Uri { get; set; }
+        public string Tag { get; set; }
         public Dictionary<string,JsonTextureDesc> Textures { get; set; }
     }
 
+
+    public class AtlasFileDesc
+    {
+        public string Uri { get; set; }
+        public string Tag { get; set; }
+    }
+    
+    
     public class JsonAtlassesDesc
     {
         public Dictionary<string, JsonAtlasDesc> Atlasses { get; set; }
+        public Dictionary<string, AtlasFileDesc> AtlasFiles { get; set; }
     }
     
     /// <summary>
@@ -237,6 +248,7 @@ namespace CmdLine
             foreach (Atlas atlas in Atlasses)
             {
                 string atlasName = String.Format(prefix + "{0:000}" + ".png", atlasCount);
+                string atlasTag = System.IO.Path.GetFileName(atlasName);
 
                 //1: Save images
                 SKSurface skiaSurface = CreateAtlasImage(atlas);
@@ -252,6 +264,7 @@ namespace CmdLine
                 JsonAtlasDesc jAtlas = new JsonAtlasDesc()
                 {
                     Uri = atlasName,
+                    Tag = atlasTag,
                     Textures = new Dictionary<string, JsonTextureDesc>()
                 };
                 
@@ -264,7 +277,7 @@ namespace CmdLine
                         {
                             Uri = n.Texture.Resource.Uri,
                             Tag = n.Texture.Resource.Tag,
-                            AtlasName = atlasName,
+                            AtlasTag = atlasTag,
                             U = ((float)n.Bounds.X / atlas.Width),
                             V = ((float)n.Bounds.Y / atlas.Height),
                             UScale = ((float)n.Bounds.Width / atlas.Width),
@@ -273,7 +286,7 @@ namespace CmdLine
                         jAtlas.Textures[jTexture.Tag] = jTexture;
                     }
                 }
-                jAtlasses.Atlasses[atlasName] = jAtlas;
+                jAtlasses.Atlasses[atlasTag] = jAtlas;
 
                 ++atlasCount;
             }
@@ -282,6 +295,7 @@ namespace CmdLine
             {
                 JsonAtlasDesc jAtlas = new JsonAtlasDesc()
                 {
+                    Tag = resource.Tag,
                     Uri = resource.Uri,
                     Textures = new Dictionary<string, JsonTextureDesc>()
                 };
@@ -290,7 +304,7 @@ namespace CmdLine
                 {
                     Uri = resource.Uri,
                     Tag = resource.Tag,
-                    AtlasName = resource.Uri,
+                    AtlasTag = resource.Tag,
                     U = 0f,
                     V = 0f,
                     UScale = 1f,

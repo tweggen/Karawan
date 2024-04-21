@@ -54,7 +54,7 @@ namespace CmdLine
                 }
             }
 
-            Trace($"GameConfig: Loaded Resource \"{tag}\" from {uri}.");
+            Trace($"GameConfig: Loaded Resource \"{tag}\" from {uri} type \"{type}\".");
             if (!File.Exists(uri))
             {
                 Trace($"Warning: resource file for {uri} does not exist.");
@@ -191,6 +191,7 @@ namespace CmdLine
          */
         public void LoadAtlasResource(Resource atlasListResource)
         {
+            Trace($"LoadAtlasResource({atlasListResource.Uri});");
             JsonElement jeAtlasFile;
             using (var stream = new FileStream(atlasListResource.Uri, FileMode.Open))
             {
@@ -208,12 +209,14 @@ namespace CmdLine
                     var jeAtlas = kvpAtlasses.Value;
                     if (!jeAtlas.TryGetProperty("uri", out var jeAtlasUri))
                     {
+                        Trace($"LoadAtlasResource({atlasListResource.Uri}): No uri in element");
                         continue;
                     }
 
                     string uriAtlas = jeAtlasUri.GetString();
                     if (null == uriAtlas)
                     {
+                        Trace($"LoadAtlasResource({atlasListResource.Uri}): null uri in element");
                         continue;
                     }
                     
@@ -222,10 +225,14 @@ namespace CmdLine
                      * as a resource.
                      */
                     string tag = System.IO.Path.GetFileName(uriAtlas);
-                    Resource atlasResource = new Resource()
-                        { Uri = uriAtlas, Tag = tag };
+                    Resource atlasResource = new Resource()  { Uri = uriAtlas, Tag = tag };
+                    Trace($"Adding atlas resource with tag \"{tag}\" at location \"{uriAtlas}\"");                   
                     MapResources[tag] = atlasResource;
                 }
+            }
+            else
+            {
+                Trace($"LoadAtlasResource({atlasListResource.Uri}): no atlasses in element");
             }
             
         }
@@ -236,13 +243,19 @@ namespace CmdLine
          */
         public void LoadIndirectResources()
         {
+            List<Resource> listAtlasResources = new List<Resource>();
             foreach (var kvp in MapResources)
             {
                 var resource = kvp.Value;
                 if (resource.Type == "atlas")
                 {
-                    LoadAtlasResource(resource);
+                    listAtlasResources.Add(resource);
                 }
+            }
+
+            foreach (var atlasResource in listAtlasResources)
+            {
+                LoadAtlasResource(atlasResource);
             }
         }
 

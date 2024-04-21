@@ -22,6 +22,7 @@ namespace CmdLine
             {
                 GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
                 gc.Load();
+                gc.LoadIndirectResources();
 
                 Trace($"res2target: Writing android assets...");
                 AndroidResourceWriter arw = new AndroidResourceWriter()

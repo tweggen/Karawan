@@ -20,7 +20,7 @@ namespace CmdLine
             {
                 Trace($"packtextures: Generating atlas {kvp.Key}...");
                 _packer = new Packer() { AtlasSize = 2048, FitHeuristic = BestFitHeuristic.Area };
-                _packer.DestinationTexture = Path.Combine(_args[2], kvp.Key);
+                _packer.DestinationTexture = Path.Combine(_args[2], kvp.Key).Replace('\\', '/');
                 foreach (var textureResource in kvp.Value.TextureResources)
                 {
                     Trace($"packtextures: Adding texture {textureResource.Uri} to atlas {kvp.Key}...");
