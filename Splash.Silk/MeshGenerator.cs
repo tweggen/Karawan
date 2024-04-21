@@ -7,13 +7,14 @@ namespace Splash.Silk
 {
     public class MeshGenerator
     {
-        public static void CreateSilkMesh(GL gl, in engine.joyce.Mesh mesh, out SkMeshEntry skMeshEntry )
+        public static void CreateSilkMesh(GL gl, in AMeshParams aMeshParams, out SkMeshEntry skMeshEntry )
         {
+            var mesh = aMeshParams.JMesh;
             if( null==mesh.Normals )
             {
                 mesh.GenerateCCWNormals();
             }
-            skMeshEntry = new(gl, mesh);
+            skMeshEntry = new(gl, aMeshParams);
 
             var nVertices = mesh.Vertices.Count;
             var nIndices = mesh.Indices.Count;
@@ -33,6 +34,8 @@ namespace Splash.Silk
             {
                 Vector3 vertex = (Vector3) mesh.Vertices[v];
                 Vector2 uv = (Vector2)mesh.UVs[v];
+                uv *= aMeshParams.UVScale;
+                uv += aMeshParams.UVOffset;
                 Vector3 normals = (Vector3)mesh.Normals[v];
                 skMeshEntry.Vertices[v * 3 + 0] = vertex.X;
                 skMeshEntry.Vertices[v * 3 + 1] = vertex.Y;

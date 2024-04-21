@@ -8,8 +8,11 @@ using DefaultEcs;
 
 namespace engine.joyce
 {
-    public class Material
+    public class Material : IComparable<Material>
     {
+        private IdHolder _idHolder = new();
+        public int CompareTo(Material other) => _idHolder.CompareTo(other._idHolder);    
+    
         /**
          * These flags are used in the shader.
          */

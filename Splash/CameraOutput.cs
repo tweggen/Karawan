@@ -171,7 +171,7 @@ public class CameraOutput
             foreach (var meshItem in listMeshBatches)
             {
                 var aMeshEntry = meshItem.AMeshEntry;
-                var jMesh = aMeshEntry.JMesh;
+                var jMesh = aMeshEntry.Params.JMesh;
                 bool haveMesh = aMeshEntry.IsUploaded();
                 if (!haveMesh)
                 {
@@ -268,7 +268,7 @@ public class CameraOutput
         _frameStats.NInstances++;
         if (trackPositions)
         {
-            Vector3 pos = matrix.Translation + aMeshEntry.JMesh.AABB.Center;
+            Vector3 pos = matrix.Translation + aMeshEntry.Params.JMesh.AABB.Center;
             materialBatch.NMeshes++;
             materialBatch.SumOfPositions += pos;
             meshBatch.SumOfPositions += pos;
@@ -362,10 +362,10 @@ public class CameraOutput
                      */
                     Vector3 vc = Vector3.Zero;
                     {
-                        int l = aMeshEntry.JMesh.Vertices.Count;
+                        int l = aMeshEntry.Params.JMesh.Vertices.Count;
                         for (int vi = 0; vi < l; ++vi)
                         {
-                            vc += aMeshEntry.JMesh.Vertices[vi];
+                            vc += aMeshEntry.Params.JMesh.Vertices[vi];
                         }
 
                         vc /= l;

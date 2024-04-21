@@ -345,19 +345,20 @@ public class SilkThreeD : IThreeD
          */
 
 
+        var jMesh = skMeshEntry.Params.JMesh;
         // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
         if (_useInstanceRendering) 
         {
             Matrix4x4 mvp = _matView * _matProjection;
             sh.SetUniform("mvp", mvp);
-            if (skMeshEntry.JMesh.Vertices.Count > 65535)
+            if (jMesh.Vertices.Count > 65535)
             {
-                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({jMesh.Vertices.Count})");
             }
-            if (skMeshEntry.JMesh.Indices.Count > 65535)
+            if (jMesh.Indices.Count > 65535)
             {
-                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({jMesh.Indices.Count})");
             }
             if (nMatrices > 1023)
             {
@@ -365,20 +366,20 @@ public class SilkThreeD : IThreeD
             }
             gl.DrawElementsInstanced(
                 PrimitiveType.Triangles,
-                (uint)skMeshEntry.JMesh.Indices.Count,
+                (uint)jMesh.Indices.Count,
                 GLEnum.UnsignedShort,
                 (void*)0,
                 (uint)nMatrices);
         }
         else
         {
-            if (skMeshEntry.JMesh.Vertices.Count > 65535)
+            if (jMesh.Vertices.Count > 65535)
             {
-                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Vertices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({jMesh.Vertices.Count})");
             }
-            if (skMeshEntry.JMesh.Indices.Count > 65535)
+            if (jMesh.Indices.Count > 65535)
             {
-                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({skMeshEntry.JMesh.Indices.Count})");
+                Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({jMesh.Indices.Count})");
             }
 
             for (int i = 0; i < nMatrices; ++i)
@@ -388,7 +389,7 @@ public class SilkThreeD : IThreeD
                 CheckError(gl,"upload mvpi");
                 gl.DrawElements(
                     PrimitiveType.Triangles,
-                    (uint)skMeshEntry.JMesh.Indices.Count,
+                    (uint)jMesh.Indices.Count,
                     DrawElementsType.UnsignedShort,
                     (void*)0);
                 CheckError(gl,"draw elements");
@@ -425,9 +426,9 @@ public class SilkThreeD : IThreeD
      * Create a silk mesh entry for the given mesh. That is converting
      * engine representation to silk representation, but not yet uploading it.
      */
-    public AMeshEntry CreateMeshEntry(in engine.joyce.Mesh jMesh)
+    public AMeshEntry CreateMeshEntry(in AMeshParams aMeshParams)
     {
-        MeshGenerator.CreateSilkMesh(_getGL(), jMesh, out var skMeshEntry);
+        MeshGenerator.CreateSilkMesh(_getGL(), aMeshParams, out var skMeshEntry);
         return skMeshEntry;
     }
 

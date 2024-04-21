@@ -73,8 +73,8 @@ namespace Splash.Silk
         }
         
 
-        public SkMeshEntry(GL gl, engine.joyce.Mesh jMesh)
-            : base(jMesh)
+        public SkMeshEntry(GL gl, AMeshParams aMeshParams)
+            : base(aMeshParams)
         {
             _gl = gl;
         }

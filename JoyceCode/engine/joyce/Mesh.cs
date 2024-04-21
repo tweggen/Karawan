@@ -16,8 +16,11 @@ public class MergeMeshEntry
     public Mesh Mesh;
 }
 
-public class Mesh
+public class Mesh : IComparable<Mesh>
 {
+    private IdHolder _idHolder = new();
+    public int CompareTo(Mesh other) => _idHolder.CompareTo(other._idHolder);    
+    
     private AABB _aabb;
 
     private bool _haveAABB = false;

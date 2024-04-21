@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using DefaultEcs;
 using engine;
 using static engine.Logger;
@@ -28,8 +29,8 @@ public class InstanceManager : IDisposable
 
     private readonly object _lo;
     private readonly IThreeD _threeD;
-    private readonly Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>> _meshResources;
-    private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
+    private readonly SortedDictionary<AMeshParams, Resource<AMeshEntry>> _meshResources;
+    private readonly SortedDictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
 
     /**
      * Well, removing PfInstance from within Remove Instance3 seems correct,
@@ -38,20 +39,21 @@ public class InstanceManager : IDisposable
      */
     private int _inRemoveInstance3 = 0;
 
-    private void _unloadMesh(engine.joyce.Mesh jMesh, Resource<AMeshEntry> meshResource)
+    private void _unloadMesh(Resource<AMeshEntry> meshResource)
     {
         _threeD.UnloadMeshEntry(meshResource.Value);
     }
 
-    private void _unloadMaterial(engine.joyce.Material jMesh, Resource<AMaterialEntry> materialResource)
+    private void _unloadMaterial(Resource<AMaterialEntry> materialResource)
     {
         _threeD.UnloadMaterialEntry(materialResource.Value);
     }
 
 
-    private AMeshEntry _loadMesh(in engine.joyce.Mesh jMesh)
+    private AMeshEntry _loadMesh(AMeshParams meshKey)
     {
-        return _threeD.CreateMeshEntry(jMesh);
+        // TXWTODO: We're not housekeeping duplicate meshes, are we?
+        return _threeD.CreateMeshEntry(meshKey);
     }
 
 
@@ -83,15 +85,17 @@ public class InstanceManager : IDisposable
         {
             for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
+                engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
+                // TXWTODO: somehow derive the UV scale from the material
                 Resource<AMeshEntry> meshResource;
-                engine.joyce.Mesh jMesh = value.InstanceDesc.Meshes[i];
-                if (!_meshResources.TryGetValue(jMesh, out meshResource))
+                AMeshParams meshParams = new() { JMesh = value.InstanceDesc.Meshes[i], UVScale = Vector2.One, UVOffset = Vector2.Zero };
+                if (!_meshResources.TryGetValue(meshParams, out meshResource))
                 {
                     try
                     {
-                        AMeshEntry aMeshEntry = _loadMesh(jMesh);
+                        AMeshEntry aMeshEntry = _loadMesh(meshParams);
                         meshResource = new Resource<AMeshEntry>(aMeshEntry);
-                        _meshResources.Add(jMesh, meshResource);
+                        _meshResources.Add(meshParams, meshResource);
                     }
                     catch (Exception e)
                     {
@@ -164,8 +168,9 @@ public class InstanceManager : IDisposable
             for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
                 Resource<AMeshEntry> meshResource;
-                engine.joyce.Mesh jMesh = value.InstanceDesc.Meshes[i];
-                if (!_meshResources.TryGetValue(jMesh, out meshResource))
+                AMeshParams aMeshParams = value.AMeshEntries[i].Params;
+                // engine.joyce.Mesh jMesh = value.InstanceDesc.Meshes[i];
+                if (!_meshResources.TryGetValue(aMeshParams, out meshResource))
                 {
                     Error($"Unknown mesh to unreference.");
                 }
@@ -175,11 +180,11 @@ public class InstanceManager : IDisposable
                     {
                         try
                         {
-                            _unloadMesh(jMesh, meshResource);
+                            _unloadMesh(meshResource);
                         }
                         finally
                         {
-                            _meshResources.Remove(jMesh);
+                            _meshResources.Remove(aMeshParams);
                         }
                     }
                 }
@@ -200,7 +205,7 @@ public class InstanceManager : IDisposable
                     {
                         try
                         {
-                            _unloadMaterial(jMaterial, materialResource);
+                            _unloadMaterial( materialResource);
                         }
                         finally
                         {
@@ -273,14 +278,14 @@ public class InstanceManager : IDisposable
     {
         GC.SuppressFinalize(this);
 
-        foreach (KeyValuePair<engine.joyce.Mesh, Resource<AMeshEntry>> pair in _meshResources)
+        foreach (KeyValuePair<AMeshParams, Resource<AMeshEntry>> pair in _meshResources)
         {
-            _unloadMesh(pair.Key, pair.Value);
+            _unloadMesh(pair.Value);
         }
 
         foreach (KeyValuePair<engine.joyce.Material, Resource<AMaterialEntry>> pair in _materialResources)
         {
-            _unloadMaterial(pair.Key, pair.Value);
+            _unloadMaterial(pair.Value);
         }
 
         _meshResources.Clear();
@@ -292,8 +297,8 @@ public class InstanceManager : IDisposable
     {
         _lo = new object();
         _threeD = I.Get<IThreeD>();
-        _meshResources = new Dictionary<engine.joyce.Mesh, Resource<AMeshEntry>>();
-        _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
+        _meshResources = new SortedDictionary<AMeshParams, Resource<AMeshEntry>>();
+        _materialResources = new SortedDictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
     }
 }
 
