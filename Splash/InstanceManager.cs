@@ -83,6 +83,37 @@ public class InstanceManager : IDisposable
 
         lock (_lo)
         {
+            /*
+             * Now we first need to load the materials, then the meshes.
+             * We need the material entries first, because we need to know how we resolve
+             * the textures to create the mesh.
+             */
+            for (int i = 0; i < value.InstanceDesc.Materials.Count; ++i)
+            {
+                Resource<AMaterialEntry> materialResource;
+                engine.joyce.Material jMaterial = value.InstanceDesc.Materials[i];
+                if (!_materialResources.TryGetValue(jMaterial, out materialResource))
+                {
+                    try
+                    {
+                        AMaterialEntry aMaterialEntry = _loadMaterial(jMaterial);
+                        materialResource = new Resource<AMaterialEntry>(aMaterialEntry);
+                        _materialResources.Add(jMaterial, materialResource);
+                    }
+                    catch (Exception e)
+                    {
+                        Error("Exception loading mesh: {e}");
+                    }
+                }
+
+                if (null != materialResource)
+                {
+                    aMaterialEntries.Add(materialResource.Value);
+                    materialResource.AddReference();
+                }
+            }
+
+            
             for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
                 engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
@@ -110,30 +141,6 @@ public class InstanceManager : IDisposable
                 }
             }
 
-            for (int i = 0; i < value.InstanceDesc.Materials.Count; ++i)
-            {
-                Resource<AMaterialEntry> materialResource;
-                engine.joyce.Material jMaterial = value.InstanceDesc.Materials[i];
-                if (!_materialResources.TryGetValue(jMaterial, out materialResource))
-                {
-                    try
-                    {
-                        AMaterialEntry aMaterialEntry = _loadMaterial(jMaterial);
-                        materialResource = new Resource<AMaterialEntry>(aMaterialEntry);
-                        _materialResources.Add(jMaterial, materialResource);
-                    }
-                    catch (Exception e)
-                    {
-                        Error("Exception loading mesh: {e}");
-                    }
-                }
-
-                if (null != materialResource)
-                {
-                    aMaterialEntries.Add(materialResource.Value);
-                    materialResource.AddReference();
-                }
-            }
         }
 
         // TXWTODO: Looks inefficient
