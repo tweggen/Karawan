@@ -26,6 +26,16 @@ namespace CmdLine
                 throw new InvalidDataException("no uri specified in resource.");
             }
 
+            string type = null;
+            if (jeRes.TryGetProperty("type", out var jpType))
+            {
+                type = jpType.GetString();
+            }
+            else
+            {
+                type = "file";
+            }
+
             string tag = null;
             if (jeRes.TryGetProperty("tag", out var jpTag))
             {
@@ -49,7 +59,7 @@ namespace CmdLine
             {
                 Trace($"Warning: resource file for {uri} does not exist.");
             }
-            return new Resource() { Uri = uri, Tag = tag };
+            return new Resource() { Type = type, Uri = uri, Tag = tag };
         }
         
         
@@ -172,6 +182,68 @@ namespace CmdLine
         public void Load()
         {
             _loadGameConfigFile(_jsonPath);
+        }
+
+
+        /**
+         * Add the resources required by this atlas.
+         * This includes the atlas file itself as well as its contants.
+         */
+        public void LoadAtlasResource(Resource atlasListResource)
+        {
+            JsonElement jeAtlasFile;
+            using (var stream = new FileStream(atlasListResource.Uri, FileMode.Open))
+            {
+                JsonDocument jdocAtlas = JsonDocument.Parse(stream, new JsonDocumentOptions()
+                {
+                    AllowTrailingCommas = true
+                });
+                jeAtlasFile = jdocAtlas.RootElement;
+            }
+
+            if (jeAtlasFile.TryGetProperty("atlasses", out var jpAtlasses))
+            {
+                foreach (var kvpAtlasses in jpAtlasses.EnumerateObject())
+                {
+                    var jeAtlas = kvpAtlasses.Value;
+                    if (!jeAtlas.TryGetProperty("uri", out var jeAtlasUri))
+                    {
+                        continue;
+                    }
+
+                    string uriAtlas = jeAtlasUri.GetString();
+                    if (null == uriAtlas)
+                    {
+                        continue;
+                    }
+                    
+                    /*
+                     * We do not need to read the textures, however, we need to add the atlas file
+                     * as a resource.
+                     */
+                    string tag = System.IO.Path.GetFileName(uriAtlas);
+                    Resource atlasResource = new Resource()
+                        { Uri = uriAtlas, Tag = tag };
+                    MapResources[tag] = atlasResource;
+                }
+            }
+            
+        }
+
+
+        /**
+         * Resolve the resources referenced indirectly
+         */
+        public void LoadIndirectResources()
+        {
+            foreach (var kvp in MapResources)
+            {
+                var resource = kvp.Value;
+                if (resource.Type == "atlas")
+                {
+                    LoadAtlasResource(resource);
+                }
+            }
         }
 
 

@@ -114,7 +114,7 @@
   },
   "textures":
   {
-    "atlas-trans.png": [
+    "atlas-trans.json": [
       { "uri": "../models/brands/plentomatic-small.png" },
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },
@@ -130,7 +130,7 @@
       { "uri": "../models/mapicons/mapicons.png" },
       { "uri": "../models/newcars/car7/Textures/car7.png" }
     ],
-    "atlas-opaque.png": [
+    "atlas-opaque.json": [
       { "uri": "../models/buildings/buildingambient.png" },
       { "uri": "../models/buildings/buildingdiffuse.png" },
       { "uri": "../models/sky/skybox2.png" },
@@ -143,6 +143,8 @@
   "resources":
   {
     "list": [
+      { "uri": "./generated/atlas-opaque.json", "type": "atlas" },
+      { "uri": "./generated/atlas-trans.json", "type": "atlas" },
       { "uri": "../models/brands/plentomatic-small.png" },
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },

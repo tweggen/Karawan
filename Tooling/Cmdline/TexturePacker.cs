@@ -303,7 +303,7 @@ namespace CmdLine
             string descFile = _Destination;
             StreamWriter tw = new StreamWriter(descFile);
             {
-                var options = new JsonSerializerOptions { WriteIndented = true };
+                var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
                 string jsonString = JsonSerializer.Serialize(jAtlasses, options);
                 tw.Write(jsonString);
             }
