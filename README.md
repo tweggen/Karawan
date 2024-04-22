@@ -151,3 +151,66 @@ We do recommmend to insert an additional entity here. It contain any sort
 of transformation component (ToWorld or ToParent). That component can
 be updated by physics or by behavior.
 
+## Splash Renderer
+
+Splash is the second renderer for joyce. It is now based on OpenGL 3 as provided
+by the Silk.NET framework.
+
+### Platform representations
+
+Platform primitives as meshes, materials and textures do have dedicated data
+structures on platform side: AMeshEntry, AMaterialEntry and ATextureEntry.
+This abstract classes are subclassed by the actual splash platform implementation.
+The current Silk Implementation provides the subclasses SkMeshEntry, SkMaterialEntry
+and SkTextureEntry. Although it might appear obvious, let's be clear what
+these data structures represent:
+- AMeshEntry: represents a platform specific object associated with a set of 
+  mesh parameters, that is the joyce.Mesh object plus the AMeshParams. The 
+  AMeshParams include the scaling of the UVs, which depends on the texture atlas
+  used.
+- AMaterialEntry: The material entry is a combination of shader parameters plus
+  references to ATextureEntry objects that are in use in the material's shader.
+- ATextureEntry: A reference to an actual physical texture in use (note: the 
+  texture entry is the actual memory object in GPU memory).
+
+#### Common operations
+
+These platform primitives implement
+- create: Create the platform representation.
+- fill: Prepare and gather data to be available for a later upload.
+- upload: upload the data onto the GPU
+- unload: remove the data from the GPU
+- dispose: delete the entire data structure.
+
+Today, none of these platform objects exactly follows this scheme. However,
+they should be converted to follow this scheme very soon.
+
+#### Life cycles
+
+As soon InstanceDesc objects are created (which happens by the time a threeD 
+object is created), the platform objects representing Meshes and Materials are
+created along the way. That means,  they do exist even for far-away objects that
+would not be rendered at all. As such, they should be cheap. 
+They are deleted (by help of garbage collection), as soon the last entity 
+referencing any of them are deleted.
+
+As soon materials are created, the dependent ATextureEntries shall be found.
+They might be in any state, created, filled, uploaded.
+
+As soon materials are filled, the dependent ATextureEntries shall be at least 
+filled. We do need the information about the texture's metadata when filling
+the mesh (namely the UV scales of a potential texture atlas).
+
+As soon the logical renderer decides to have any InstanceDesc rendered, it would
+trigger "Fill" on each of these objects: This should make the implementation
+prepare and fetch all platform specific data to prepare an upload.
+
+As soon the physical renderer really needs to render it, it will trigger upload
+on any of these items.
+
+#### Caveats
+
+ATextureEntry instances are a special beast: In addition to not being uploaded
+as anything else, they also can be outdated. This would happen if they are 
+rendered from a framebuffer who is newer inside memory than on GPU. In that case
+the texture also would be uploaded by the renderer.
