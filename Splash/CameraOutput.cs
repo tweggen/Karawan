@@ -309,12 +309,24 @@ public class CameraOutput
                     continue;
                 }
 
-                // Skip things that incompletely are loaded.
+                /*
+                 * The mesh might not yet be created, or ready for platform. In that case
+                 * we do not need to add it to the rendering list.
+                 */
                 if (null == aMeshEntry)
                 {
                     continue;
                 }
-
+                if (!aMeshEntry.IsFilled())
+                {
+                    _threeD.FillMeshEntry(aMeshEntry);
+                }
+                if (!aMeshEntry.IsFilled())
+                {
+                    continue;
+                }
+                        
+                
                 if (null == aMaterialEntry)
                 {
                     aMaterialEntry = _threeD.GetDefaultMaterial();

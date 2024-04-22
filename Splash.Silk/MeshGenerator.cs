@@ -9,7 +9,7 @@ namespace Splash.Silk
     {
         public static void FillSilkMesh(in SkMeshEntry skMeshEntry)
         {
-            var mesh = aMeshParams.JMesh;
+            var mesh = skMeshEntry.Params.JMesh;
             if( null==mesh.Normals )
             {
                 mesh.GenerateCCWNormals();
@@ -32,8 +32,8 @@ namespace Splash.Silk
             {
                 Vector3 vertex = (Vector3) mesh.Vertices[v];
                 Vector2 uv = (Vector2)mesh.UVs[v];
-                uv *= aMeshParams.UVScale;
-                uv += aMeshParams.UVOffset;
+                uv *= skMeshEntry.Params.UVScale;
+                uv += skMeshEntry.Params.UVOffset;
                 Vector3 normals = (Vector3)mesh.Normals[v];
                 skMeshEntry.Vertices[v * 3 + 0] = vertex.X;
                 skMeshEntry.Vertices[v * 3 + 1] = vertex.Y;

@@ -434,7 +434,7 @@ public class SilkThreeD : IThreeD
 
     public void FillMeshEntry(in AMeshEntry aMeshEntry)
     {
-        MeshGenerator.FillSilkMesh(aMeshEntry as skMeshEntry);
+        MeshGenerator.FillSilkMesh(aMeshEntry as SkMeshEntry);
     }
 
     public void UnloadMeshEntry(in AMeshEntry aMeshEntry)
