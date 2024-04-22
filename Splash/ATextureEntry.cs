@@ -5,6 +5,10 @@ namespace Splash;
 public abstract class ATextureEntry
 {
     public engine.joyce.Texture JTexture;
+    
+    /**
+     * UV scale is valid after the texture is filled.
+     */
     public Vector2 v2ScaleUV;
     public abstract bool IsUploaded();
     public abstract bool IsOutdated();

@@ -597,7 +597,27 @@ public class SilkThreeD : IThreeD
     }
 
 
+    /**
+     * Prepare all data for this texture that would be required for upload.
+     * (This is not necessarily binary data, however the data should be
+     * available on very short notice).
+     *
+     * This one performs the lookup from the texture tag to the real texture
+     * uri including the UVSCale.
+     *
+     * While the texture atlas implementation is generic, the use of it is
+     * specific to Splash (but not SplashSilk)
+     */
     public void FillTextureEntry(in Splash.ATextureEntry aTextureEntry)
+    {
+    }
+    
+    
+    /**
+     * Associate the texture entry with the platform texture buffer,
+     * uploading the content if required on the GPU.
+     */
+    public void UploadTextureEntry(in Splash.ATextureEntry aTextureEntry)
     {
         _textureGenerator.LoadUploadTextureEntry(((SkTextureEntry)aTextureEntry));
     }
