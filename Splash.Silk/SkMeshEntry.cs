@@ -10,15 +10,15 @@ namespace Splash.Silk
         public VertexArrayObject vao = null;
         private bool  _isUploaded = false;
 
-        public float[] Vertices;
-        public float[] Normals;
-        public float[] UVs;
-        public ushort[] Indices;
+        public float[] Vertices = null;
+        public float[] Normals = null;
+        public float[] UVs = null;
+        public ushort[] Indices = null;
 
         private static int _nMeshes = 0;
 
         private bool _traceMesh = false;
-
+        
         
         /**
          * Upload the mesh to the GPU.
@@ -52,6 +52,7 @@ namespace Splash.Silk
          */
         public override void Dispose()
         {
+            // TXWTODO: Also free arrays explicitely here?
             if (_isUploaded)
             {
                 Release();
@@ -70,6 +71,12 @@ namespace Splash.Silk
             }
 
             return _isUploaded == true;
+        }
+
+
+        public override bool IsFilled()
+        {
+            return Vertices != null;
         }
         
 

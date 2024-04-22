@@ -178,7 +178,7 @@ public class CameraOutput
                     if (jMesh.UploadImmediately || swUpload.Elapsed.TotalMilliseconds < msUploadMeshPerFrame)
                     {
                         swUpload.Start();
-                        _threeD.UploadMesh(meshItem.AMeshEntry);
+                        _threeD.UploadMeshEntry(meshItem.AMeshEntry);
                         swUpload.Stop();
                     }
                     else

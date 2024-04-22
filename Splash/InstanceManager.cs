@@ -111,6 +111,12 @@ public class InstanceManager : IDisposable
                     aMaterialEntries.Add(materialResource.Value);
                     materialResource.AddReference();
                 }
+                
+                /*
+                 * Now that we have the material we need to find the associated textures as
+                 * well: We need to know how the texture is represented to properly scale the
+                 * mesh.
+                 */
             }
 
             

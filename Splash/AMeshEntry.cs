@@ -32,6 +32,8 @@ public abstract class AMeshEntry : IDisposable
 
     public abstract bool IsUploaded();
 
+    public abstract bool IsFilled();
+    
     public abstract void Dispose();
 
     protected AMeshEntry(in AMeshParams p)

@@ -407,7 +407,7 @@ public class SilkThreeD : IThreeD
 
     }   
 
-    public void UploadMesh(in AMeshEntry aMeshEntry)
+    public void UploadMeshEntry(in AMeshEntry aMeshEntry)
     {
         var gl = _getGL();
         SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
@@ -428,8 +428,13 @@ public class SilkThreeD : IThreeD
      */
     public AMeshEntry CreateMeshEntry(in AMeshParams aMeshParams)
     {
-        MeshGenerator.CreateSilkMesh(_getGL(), aMeshParams, out var skMeshEntry);
+        var skMeshEntry = new SkMeshEntry(_getGL(), aMeshParams);
         return skMeshEntry;
+    }
+
+    public void FillMeshEntry(in AMeshEntry aMeshEntry)
+    {
+        MeshGenerator.FillSilkMesh(aMeshEntry as skMeshEntry);
     }
 
     public void UnloadMeshEntry(in AMeshEntry aMeshEntry)

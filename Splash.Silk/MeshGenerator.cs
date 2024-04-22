@@ -7,15 +7,13 @@ namespace Splash.Silk
 {
     public class MeshGenerator
     {
-        public static void CreateSilkMesh(GL gl, in AMeshParams aMeshParams, out SkMeshEntry skMeshEntry )
+        public static void FillSilkMesh(in SkMeshEntry skMeshEntry)
         {
             var mesh = aMeshParams.JMesh;
             if( null==mesh.Normals )
             {
                 mesh.GenerateCCWNormals();
             }
-            skMeshEntry = new(gl, aMeshParams);
-
             var nVertices = mesh.Vertices.Count;
             var nIndices = mesh.Indices.Count;
             {

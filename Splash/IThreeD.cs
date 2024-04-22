@@ -9,7 +9,8 @@ public interface IThreeD
     public engine.Engine Engine { get; }
     
     public AMeshEntry CreateMeshEntry(in AMeshParams aMeshParams);
-    public void UploadMesh(in AMeshEntry aMeshEntry);
+    public void FillMeshEntry(in AMeshEntry aMeshEntry);
+    public void UploadMeshEntry(in AMeshEntry aMeshEntry);
     public void UnloadMeshEntry(in AMeshEntry aMeshEntry);
 
     public AMaterialEntry GetDefaultMaterial();
