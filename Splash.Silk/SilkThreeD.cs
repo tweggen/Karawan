@@ -599,7 +599,7 @@ public class SilkThreeD : IThreeD
 
     public void FillTextureEntry(in Splash.ATextureEntry aTextureEntry)
     {
-        _textureGenerator.FillTextureEntry(((SkTextureEntry)aTextureEntry));
+        _textureGenerator.LoadUploadTextureEntry(((SkTextureEntry)aTextureEntry));
     }
 
 

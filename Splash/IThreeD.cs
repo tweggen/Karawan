@@ -4,13 +4,32 @@ using System.Collections.Generic;
 
 namespace Splash;
 
+
 public interface IThreeD
 {
     public engine.Engine Engine { get; }
     
+    /**
+     * Create a platform data structure for this object. It does not need to filled with anything.
+     * It just is a representation of data required by Splash implementation that is specific and
+     * unique for this set of parameters.
+     */
     public AMeshEntry CreateMeshEntry(in AMeshParams aMeshParams);
+    
+    /**
+     * Prepare a platform data structure for upload. This triggers the computation of any platform
+     * specific data that later might be uploaded. It is not required to complete synchronously.
+     */
     public void FillMeshEntry(in AMeshEntry aMeshEntry);
+    
+    /**
+     * Upload the platform specific data for use on the GPU.
+     */
     public void UploadMeshEntry(in AMeshEntry aMeshEntry);
+    
+    /**
+     * Unload any GPU data from the GPU.
+     */
     public void UnloadMeshEntry(in AMeshEntry aMeshEntry);
 
     public AMaterialEntry GetDefaultMaterial();

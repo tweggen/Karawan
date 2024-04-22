@@ -12,7 +12,15 @@ namespace Splash.Silk
         private readonly SilkThreeD _silkThreeD;
         private static Byte[] _arrBlack = { 0, 0, 0, 0 };
 
-        public void FillTextureEntry(in SkTextureEntry skTextureEntry)
+        
+        /**
+         * Create a GPU texture object for the TextureEntry if it does
+         * not yet exist.
+         *
+         * Fill it with data from the texture source, so either a file
+         * or a framebuffer.
+         */
+        public void LoadUploadTextureEntry(in SkTextureEntry skTextureEntry)
         {
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
             if (null == skTextureEntry.SkTexture)
