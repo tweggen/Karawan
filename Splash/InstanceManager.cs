@@ -44,10 +44,11 @@ public class InstanceManager : IDisposable
     }
 
 
-    private AMeshEntry _loadMesh(AMeshParams meshKey)
+    private AMeshEntry _loadMesh(AMeshParams meshParams)
     {
         // TXWTODO: We're not housekeeping duplicate meshes, are we?
-        return _threeD.CreateMeshEntry(meshKey);
+        var aMeshEntry = _threeD.CreateMeshEntry(meshParams);
+        return aMeshEntry;
     }
 
 
@@ -119,7 +120,7 @@ public class InstanceManager : IDisposable
                 engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
                 // TXWTODO: somehow derive the UV scale from the material
                 Resource<AMeshEntry> meshResource;
-                AMeshParams meshParams = new() { JMesh = value.InstanceDesc.Meshes[i], UVScale = Vector2.One, UVOffset = Vector2.Zero };
+                AMeshParams meshParams = new() { JMesh = value.InstanceDesc.Meshes[i],UVScale = Vector2.One, UVOffset = Vector2.Zero };
                 if (!_meshResources.TryGetValue(meshParams, out meshResource))
                 {
                     try
