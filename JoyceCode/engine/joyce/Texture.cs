@@ -1,4 +1,6 @@
 ﻿
+using System.Numerics;
+
 namespace engine.joyce
 {
     /**
@@ -11,7 +13,42 @@ namespace engine.joyce
         public engine.draw.IFramebuffer Framebuffer;
 
         public bool DoFilter = true;
+        public Vector2 UVOffset = new(0f, 0f);
+        public Vector2 UVScale = new (1f, 1f);
 
+
+        public bool IsMergableEqual(Texture o)
+        {
+            return DoFilter == o.DoFilter
+                   && Source == o.Source
+                   && Framebuffer == o.Framebuffer;
+        }
+        
+        
+        public int GetMergableHashCode()
+        {
+            int h = 0;
+            if (DoFilter) h ^= 1;
+
+            if (Source != null)
+            {
+                h ^= 10;
+                h ^= Source.GetHashCode();
+            }
+
+            if (Framebuffer != null)
+            {
+                h ^= 20;
+                h ^= Framebuffer.GetHashCode();
+            }
+            
+            /*
+             * Do not consider UVOffset and UVScale
+             */
+            return h;
+        }
+        
+        
         public override string ToString()
         {
             if (Source != null)

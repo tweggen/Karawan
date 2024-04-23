@@ -134,10 +134,10 @@ public class SilkThreeD : IThreeD
             sh.SetUniform("texture0", 0);
             sh.SetUniform("texture2", 2);
 
-            Material.Flags materialFlags = 0;
+            Material.ShaderFlags materialFlags = 0;
             if (jMaterial.AddInterior)
             {
-                materialFlags |= Material.Flags.RenderInterior;
+                materialFlags |= Material.ShaderFlags.RenderInterior;
             }
             sh.SetUniform("materialFlags", (int) materialFlags);
         }
@@ -610,6 +610,7 @@ public class SilkThreeD : IThreeD
      */
     public void FillTextureEntry(in Splash.ATextureEntry aTextureEntry)
     {
+        
     }
     
     

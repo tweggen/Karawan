@@ -29,15 +29,9 @@ public class InstanceManager : IDisposable
 
     private readonly object _lo;
     private readonly IThreeD _threeD;
-    private readonly SortedDictionary<AMeshParams, Resource<AMeshEntry>> _meshResources;
-    private readonly SortedDictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
+    private readonly Dictionary<AMeshParams, Resource<AMeshEntry>> _meshResources;
+    private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
 
-    /**
-     * Well, removing PfInstance from within Remove Instance3 seems correct,
-     * however, when deleting the entity, this triggers RemoveInstance3 twice.
-     * So keep track.
-     */
-    private int _inRemoveInstance3 = 0;
 
     private void _unloadMesh(Resource<AMeshEntry> meshResource)
     {
@@ -239,9 +233,7 @@ public class InstanceManager : IDisposable
         in engine.joyce.components.Instance3 cOldInstance,
         in engine.joyce.components.Instance3 cNewInstance)
     {
-        ++_inRemoveInstance3;
         entity.Remove<Splash.components.PfInstance>();
-        --_inRemoveInstance3;
     }
 
 
@@ -252,9 +244,7 @@ public class InstanceManager : IDisposable
     private void _onRemoved(in DefaultEcs.Entity entity,
         in engine.joyce.components.Instance3 cOldInstance)
     {
-        ++_inRemoveInstance3;
         entity.Remove<Splash.components.PfInstance>();
-        --_inRemoveInstance3;
     }
 
     
@@ -310,8 +300,8 @@ public class InstanceManager : IDisposable
     {
         _lo = new object();
         _threeD = I.Get<IThreeD>();
-        _meshResources = new SortedDictionary<AMeshParams, Resource<AMeshEntry>>();
-        _materialResources = new SortedDictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
+        _meshResources = new Dictionary<AMeshParams, Resource<AMeshEntry>>();
+        _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
     }
 }
 

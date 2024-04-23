@@ -1,5 +1,6 @@
 ﻿namespace Splash;
 
+
 public abstract class AMaterialEntry
 {
     public readonly engine.joyce.Material JMaterial;

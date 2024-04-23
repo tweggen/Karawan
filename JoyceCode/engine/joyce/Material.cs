@@ -1,25 +1,65 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.SymbolStore;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DefaultEcs;
+
 
 namespace engine.joyce
 {
-    public class Material : IComparable<Material>
+    public class Material
     {
         private IdHolder _idHolder = new();
-        public int CompareTo(Material other) => _idHolder.CompareTo(other._idHolder);    
-    
+
+        public bool IsMergableEqual(Material o)
+        {
+            return Flags == o.Flags
+                   && AlbedoColor == o.AlbedoColor
+                   && EmissiveColor == o.EmissiveColor
+                   && EmissiveFactors == o.EmissiveFactors
+                   && FragmentShader == o.FragmentShader
+                   && VertexShader == o.VertexShader
+                   && (Texture == o.Texture
+                       || Texture != null && Texture.IsMergableEqual(o.Texture));
+        }
+        
+        public int GetMergableHashCode()
+        {
+            int h = (int)Flags ^ (int)(AlbedoColor ^ EmissiveColor ^ EmissiveFactors);
+            
+            if (null != FragmentShader)
+            {
+                h ^= FragmentShader.GetHashCode();
+            } 
+            if (null != VertexShader)
+            {
+                h ^= VertexShader.GetHashCode();
+            }
+            if (null != EmissiveTexture)
+            {
+                h ^= EmissiveTexture.GetHashCode();
+            }
+            if (null != Texture)
+            {
+                h ^= Texture.GetHashCode();
+            }
+            
+            return h;
+        }
+        
         /**
          * These flags are used in the shader.
          */
-        public enum Flags
+        [Flags] public enum ShaderFlags
         {
             RenderInterior = 0x00000001
         }
+
+        [Flags] public enum MaterialFlags
+        {
+            AddInterior = 0x00000001,
+            IsBillboardTransform = 0x00000002,
+            IsUnscalable = 0x00000004,
+            HasTransparency = 0x00000008,
+            UploadImmediately = 0x00000010
+        }
+        public MaterialFlags Flags = 0;
         
         /**
          * Specify the fragment shader to use.
@@ -40,12 +80,56 @@ namespace engine.joyce
         public uint EmissiveColor = 0x00000000;
         public uint EmissiveFactors = 0xffffffff;
         
-        public bool AddInterior = false;
-        public bool IsBillboardTransform = false;
-        public bool IsUnscalable = false;
+        public bool AddInterior
+        {
+            get => (Flags & MaterialFlags.AddInterior) != 0;
+            set
+            {
+                if (value) Flags |= MaterialFlags.AddInterior;
+                else Flags &= ~MaterialFlags.AddInterior;
+            }
+        }
         
-        public bool HasTransparency = false;
-        public bool UploadImmediately = false;
+        public bool IsBillboardTransform         
+        {
+            get => (Flags & MaterialFlags.IsBillboardTransform) != 0;
+            set
+            {
+                if (value) Flags |= MaterialFlags.IsBillboardTransform;
+                else Flags &= ~MaterialFlags.IsBillboardTransform;
+            }
+        }
+
+        public bool IsUnscalable         
+        {
+            get => (Flags & MaterialFlags.IsUnscalable) != 0;
+            set
+            {
+                if (value) Flags |= MaterialFlags.IsUnscalable;
+                else Flags &= ~MaterialFlags.IsUnscalable;
+            }
+        }
+        
+        public bool HasTransparency         
+        {
+            get => (Flags & MaterialFlags.HasTransparency) != 0;
+            set
+            {
+                if (value) Flags |= MaterialFlags.HasTransparency;
+                else Flags &= ~MaterialFlags.HasTransparency;
+            }
+        }
+        
+        public bool UploadImmediately         
+        {
+            get => (Flags & MaterialFlags.UploadImmediately) != 0;
+            set
+            {
+                if (value) Flags |= MaterialFlags.UploadImmediately;
+                else Flags &= ~MaterialFlags.UploadImmediately;
+            }
+        }
+        
 
         public string Name = "(unnamed)";
 
