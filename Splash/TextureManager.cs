@@ -67,7 +67,7 @@ namespace Splash
             }
             if (needFillEntry)
             {
-                _threeD.FillTextureEntry(aTextureEntry);
+                _threeD.UploadTextureEntry(aTextureEntry);
             }
             return aTextureEntry;
         }

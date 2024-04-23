@@ -40,6 +40,7 @@ public interface IThreeD
 
     public ATextureEntry CreateTextureEntry(in engine.joyce.Texture jTexture);
     public void FillTextureEntry(in ATextureEntry aTextureEntry);
+    public void UploadTextureEntry(in ATextureEntry aTextureEntry);
 
     public ARenderbufferEntry CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer);
     public void UploadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
