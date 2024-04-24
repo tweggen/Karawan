@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using DefaultEcs;
+using engine.joyce;
 using engine.news;
 using engine.Resource;
 using static engine.Logger;
@@ -1235,6 +1236,7 @@ public class Engine
         I.Register<engine.Resources>(() => new Resources());
         I.Register<engine.SceneSequencer>(() => new SceneSequencer(this));
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
+        I.Register<engine.joyce.TextureCatalogue>(() => new TextureCatalogue());
         
 #if DEBUG
         if (engine.GlobalSettings.Get("engine.physics.TraceCalls") == "true") {

@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Numerics;
 using System.Text.Json;
 using builtin.map;
+using engine.joyce;
 using engine.world;
 using static engine.Logger;
 
@@ -11,6 +13,7 @@ public class Loader
 {
     private JsonElement _jeRoot;
     private string strDefaultLoaderAssembly = "";
+    private bool _traceResources = false; 
     
     static public void SetJsonElement(in JsonElement je, Action<object> action)
     {
@@ -169,16 +172,53 @@ public class Loader
         }
     }
 
+
+    public void LoadTextureAtlas(JsonElement jeAtlas)
+    {
+        var tc = I.Get<TextureCatalogue>();
+        string atlasTag = jeAtlas.GetProperty("tag").GetString();
+        var jeTextures = jeAtlas.GetProperty("textures");
+        foreach (var pairTexture in jeTextures.EnumerateObject())
+        {
+            string textureTag = pairTexture.Name;
+            float u = pairTexture.Value.GetProperty("u").GetSingle();
+            float v = pairTexture.Value.GetProperty("u").GetSingle();
+            float uScale = pairTexture.Value.GetProperty("uScale").GetSingle();
+            float vScale = pairTexture.Value.GetProperty("vScale").GetSingle();
+            tc.AddAtlasEntry(
+                textureTag, atlasTag, 
+                new Vector2(u,v), 
+                new Vector2(uScale, vScale));
+        }
+    }
+
     
+    /**
+     * Read the textures: each of the object keys contains the resource
+     * tag for a json file containing the texture atlas. We shall try
+     * to open that one.
+     */
     public void LoadTextures(JsonElement jeTextures)
     {
         try
         {
             foreach (var pair in jeTextures.EnumerateObject())
             {
+                JsonElement jeAtlas;
                 try
                 {
+                    JsonDocument jdocAtlas = JsonDocument.Parse(
+                        engine.Assets.Open(pair.Name), new()
+                    {
+                        AllowTrailingCommas = true
+                    });
+                    jeAtlas = jdocAtlas.RootElement;
 
+                    JsonElement jeAtlasList = jeAtlas.GetProperty("atlasses");
+                    foreach (var pairAtlas in jeAtlasList.EnumerateObject())
+                    {
+                        LoadTextureAtlas(pairAtlas.Value);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -337,6 +377,11 @@ public class Loader
             LoadScenes(jeScenes);
         }
 
+        if (je.TryGetProperty("textures", out var jeTextures))
+        {
+            LoadTextures(jeTextures);
+        }
+
         if (je.TryGetProperty("quests", out var jeQuests))
         {
             LoadQuests(jeQuests);
@@ -374,7 +419,7 @@ public class Loader
                     }
                 }
 
-                Trace($"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
+                if (_traceResources) Trace($"LoadResourcesTo: Added Resource \"{tag}\" from {uri}.");
                 string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), uri); 
                 if (!File.Exists(pathProbe))
                 {
