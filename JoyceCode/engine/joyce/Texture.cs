@@ -9,6 +9,8 @@ namespace engine.joyce
      */
     public class Texture
     {
+        public static string BLACK = "joyce://col00000000"; 
+
         public string Source;
         public engine.draw.IFramebuffer Framebuffer;
 

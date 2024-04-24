@@ -32,7 +32,7 @@ namespace Splash.Silk
             {
                 string texturePath = jTexture.Source;
 
-                if (texturePath == "joyce://col00000000")
+                if (texturePath == engine.joyce.Texture.BLACK)
                 {
                     skTextureEntry.SkTexture.SetFrom(0, _arrBlack, 1, 1);
                 }
