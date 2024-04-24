@@ -13,7 +13,8 @@ public class Loader
 {
     private JsonElement _jeRoot;
     private string strDefaultLoaderAssembly = "";
-    private bool _traceResources = false; 
+    private bool _traceResources = false;
+    private IAssetImplementation _iAssetImpl;
     
     static public void SetJsonElement(in JsonElement je, Action<object> action)
     {
@@ -177,6 +178,7 @@ public class Loader
     {
         var tc = I.Get<TextureCatalogue>();
         string atlasTag = jeAtlas.GetProperty("tag").GetString();
+        string atlasUri = jeAtlas.GetProperty("uri").GetString();
         var jeTextures = jeAtlas.GetProperty("textures");
         foreach (var pairTexture in jeTextures.EnumerateObject())
         {
@@ -377,11 +379,6 @@ public class Loader
             LoadScenes(jeScenes);
         }
 
-        if (je.TryGetProperty("textures", out var jeTextures))
-        {
-            LoadTextures(jeTextures);
-        }
-
         if (je.TryGetProperty("quests", out var jeQuests))
         {
             LoadQuests(jeQuests);
@@ -389,7 +386,7 @@ public class Loader
     }
 
 
-    public void LoadResourcesTo(IAssetImplementation iasset, JsonElement je)
+    public void LoadResourcesTo(JsonElement je)
     {
         try
         {
@@ -425,7 +422,7 @@ public class Loader
                 {
                     Trace($"Warning: resource file for {pathProbe} does not exist.");
                 }
-                iasset.AddAssociation(tag, uri);
+                _iAssetImpl.AddAssociation(tag, uri);
             }
         }
         catch (Exception e)
@@ -487,11 +484,13 @@ public class Loader
     
     public void SetAssetLoaderAssociations(IAssetImplementation iasset)
     {
+        _iAssetImpl = iasset;
+        
         if (_jeRoot.TryGetProperty("resources", out var jeResources))
         {
             if (jeResources.TryGetProperty("list", out var jeList))
             {
-                LoadResourcesTo(iasset, jeList);
+                LoadResourcesTo(jeList);
             }
             else
             {
@@ -502,6 +501,17 @@ public class Loader
         {
             Error("Warning: No resources section found in game.");
         }
+        
+        if (_jeRoot.TryGetProperty("textures", out var jeTextures))
+        {
+            LoadTextures(jeTextures);
+        }
+        else
+        {
+            Error("Warning: No textures section found in game.");
+        }
+
+
     }
 
     public void InterpretConfig()
