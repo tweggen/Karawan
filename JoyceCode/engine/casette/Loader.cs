@@ -169,6 +169,29 @@ public class Loader
         }
     }
 
+    
+    public void LoadTextures(JsonElement jeTextures)
+    {
+        try
+        {
+            foreach (var pair in jeTextures.EnumerateObject())
+            {
+                try
+                {
+
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to parse resource object for texture: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Unable to load textures.");
+        }
+    }
+    
 
     public void LoadMetaGen(JsonElement je)
     {
