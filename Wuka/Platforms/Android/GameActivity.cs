@@ -176,6 +176,7 @@ namespace Wuka
             
             _iView.Initialize();
 
+            I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
             I.Register<Boom.ISoundAPI>(() =>
             {
                 var api = new Boom.OpenAL.API(_engine);

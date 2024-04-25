@@ -70,6 +70,8 @@ public class DesktopMain
         engine.GlobalSettings.Set("platform.initialZoomState", "0");
 
 
+        I.Register<engine.joyce.TextureCatalogue>(() => new engine.joyce.TextureCatalogue());
+
         /*
          * Bootstrap game by directly reading game config, setting up
          * asset implementation with the pathes.
@@ -84,10 +86,8 @@ public class DesktopMain
         {
             cassetteLoader = new engine.casette.Loader(streamJson);
         }
-        cassetteLoader.SetAssetLoaderAssociations(iassetDesktop);
-
         engine.Assets.SetAssetImplementation(iassetDesktop);
-        
+        cassetteLoader.SetAssetLoaderAssociations(iassetDesktop);
 
         
         IWindow iWindow = null;
