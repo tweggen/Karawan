@@ -3,8 +3,6 @@ using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Net.Mime;
-using System.Security.AccessControl;
 using System.Text.Json;
 using SkiaSharp;
 
@@ -502,11 +500,10 @@ namespace CmdLine
             var info = new SKImageInfo(_Atlas.Width, _Atlas.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
             var skiaSurface = SKSurface.Create(info);
 
-            if (DebugMode)
             {
                 var paint = new SKPaint
                 {
-                    Color = 0xff00ff00,
+                    Color = 0x000000,
                     Style = SKPaintStyle.Fill
                 };
                 skiaSurface.Canvas.DrawRect(0, 0, _Atlas.Width - 1, _Atlas.Height - 1, paint);
