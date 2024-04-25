@@ -126,7 +126,7 @@ public class GenerateClusterStreetAnnotationsOperator : IFragmentOperator
             {
                 AlbedoColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000 : 0xff888888,
-                Texture = new engine.joyce.Texture("streets1to4.png")
+                Texture = I.Get<TextureCatalogue>().FindTexture("streets1to4.png")
             });
     }
     

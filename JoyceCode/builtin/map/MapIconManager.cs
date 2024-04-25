@@ -197,7 +197,7 @@ public class MapIconManager : IDisposable
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000
                     : 0xffff00ff,
-                EmissiveTexture = new engine.joyce.Texture(MapIconsTexture),
+                EmissiveTexture = I.Get<TextureCatalogue>().FindTexture(MapIconsTexture),
                 HasTransparency = true,
                 IsUnscalable = true
             });

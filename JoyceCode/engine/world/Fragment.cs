@@ -521,7 +521,7 @@ public class Fragment : IDisposable
         I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.world.fragment.materials.ground",
             (name) => new Material()
             {
-                Texture = new Texture("gridlines1.png"),
+                Texture = I.Get<TextureCatalogue>().FindTexture("gridlines1.png"),
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000
                     : 0xff002222

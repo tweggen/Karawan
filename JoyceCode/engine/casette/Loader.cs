@@ -179,6 +179,16 @@ public class Loader
         var tc = I.Get<TextureCatalogue>();
         string atlasTag = jeAtlas.GetProperty("tag").GetString();
         string atlasUri = jeAtlas.GetProperty("uri").GetString();
+
+        if (_traceResources) Trace($"LoadTextureAtlas: Added Resource \"{atlasTag}\" from {atlasUri}.");
+        string pathProbe = Path.Combine(engine.GlobalSettings.Get("Engine.ResourcePath"), atlasUri); 
+        if (!File.Exists(pathProbe))
+        {
+            Trace($"Warning: resource file for {pathProbe} does not exist.");
+        }
+        _iAssetImpl.AddAssociation(atlasTag, atlasUri);
+
+        
         var jeTextures = jeAtlas.GetProperty("textures");
         foreach (var pairTexture in jeTextures.EnumerateObject())
         {

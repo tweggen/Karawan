@@ -526,7 +526,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000
                     : 0xff333333,
-                Texture = new engine.joyce.Texture("buildingalphadiffuse.png"),
+                Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse.png"),
                 AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win2",
@@ -535,7 +535,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000
                     : 0xff333333,
-                Texture = new engine.joyce.Texture("buildingalphadiffuse2.png"),
+                Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse2.png"),
                 AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win3",
@@ -544,7 +544,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
                     ? 0x00000000
                     : 0xff333333,
-                Texture = new engine.joyce.Texture("buildingalphadiffuse3.png"),
+                Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse3.png"),
                 AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.neon",
@@ -554,7 +554,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     ? 0x00000000
                     : 0xffff3333,
                 Texture = null,
-                EmissiveTexture = new engine.joyce.Texture("lorem.png"),
+                EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("lorem.png"),
                 HasTransparency = true
             });
 
@@ -563,14 +563,14 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             {
                 HasTransparency = true,
                 EmissiveFactors = 0x77ffffff,
-                EmissiveTexture = new engine.joyce.Texture("sprouce-cn.png")
+                EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("sprouce-cn.png")
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.ad2",
             name => new Material()
             {
                 HasTransparency = true,
                 EmissiveFactors = 0x77ffffff,
-                EmissiveTexture = new engine.joyce.Texture("plentomatic.png")
+                EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("plentomatic.png")
             });
     }
     
