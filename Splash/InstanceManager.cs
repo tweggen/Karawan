@@ -120,7 +120,24 @@ public class InstanceManager : IDisposable
                 engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
                 // TXWTODO: somehow derive the UV scale from the material
                 Resource<AMeshEntry> meshResource;
-                AMeshParams meshParams = new() { JMesh = value.InstanceDesc.Meshes[i],UVScale = Vector2.One, UVOffset = Vector2.Zero };
+                AMeshParams meshParams = new() { JMesh = value.InstanceDesc.Meshes[i] };
+                engine.joyce.Texture jTexture = jMeshMaterial.Texture;
+                if (null == jTexture)
+                {
+                    jTexture = jMeshMaterial.EmissiveTexture;
+                }
+
+                if (null != jTexture)
+                {
+                    meshParams.UVOffset = jTexture.UVOffset;
+                    meshParams.UVScale = jTexture.UVScale;
+                }
+                else
+                {
+                    meshParams.UVOffset = Vector2.Zero;
+                    meshParams.UVScale = Vector2.One;
+                }
+
                 if (!_meshResources.TryGetValue(meshParams, out meshResource))
                 {
                     try
