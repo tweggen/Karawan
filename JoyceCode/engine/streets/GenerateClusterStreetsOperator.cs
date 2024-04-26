@@ -302,14 +302,21 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         var texlen = stroke.StreetWidth() * 4f;
 
         /*
+         * This defines which part of the street texture we are about to use.
+         */
+        Vector2 uvStreetOrigin = new(0.5f, 0f);
+        Vector2 uvStreetSize = new(0.25f, 1f);
+        
+        /*
          * So we initialize our uv projector with uv origin at am - half street width.
          * (left side of street at am).
          */
         var uvp = new builtin.tools.UVProjector(
             new Vector3(vam.X - n.X * hsw, h, vam.Z - n.Y * hsw),
-            new Vector3(n.X * sw * 4f, 0f, n.Y * sw * 4f), // That is the logical size of the u [0..1[ interval.
-            new Vector3(q.X * texlen, 0f, q.Y * texlen));
-
+            new Vector3(n.X * sw, 0f, n.Y * sw), // That is the logical size of the u [0..1[ interval.
+            new Vector3(q.X * texlen, 0f, q.Y * texlen),
+            uvStreetOrigin,
+            uvStreetSize);
 
         /*
          * These are the 4 edge points of the street, projected to street,
@@ -361,11 +368,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvar = uvp.getUVOfs(new Vector3(arx, h, ary), 0f, vStart);
                 float vofs = 1.0f - uvar.Y;
                 g.p(alx, h, aly);
-                g.UV(0.5f + uval.X, uval.Y + vofs);
+                g.UV(uval.X, uval.Y + vofs);
                 g.p(clx, h, cly);
-                g.UV(0.5f + uvcl.X, uvcl.Y + vofs);
+                g.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(arx, h, ary);
-                g.UV(0.5f + uvar.X, uvar.Y + vofs);
+                g.UV(uvar.X, uvar.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
 
@@ -408,11 +415,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = 1.0f - uval.Y;
                 g.p(arx, h, ary);
-                g.UV(0.5f + uvar.X, uvar.Y + vofs);
+                g.UV(uvar.X, uvar.Y + vofs);
                 g.p(alx, h, aly);
-                g.UV(0.5f + uval.X, uval.Y + vofs);
+                g.UV(uval.X, uval.Y + vofs);
                 g.p(crx, h, cry);
-                g.UV(0.5f + uvcr.X, uvcr.Y + vofs);
+                g.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
         }
@@ -456,11 +463,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
                 var vofs = -uvbl.Y;
                 g.p(blx, h, bly);
-                g.UV(0.5f + uvbl.X, uvbl.Y + vofs);
+                g.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry);
-                g.UV(0.5f + uvbr.X, uvbr.Y + vofs);
+                g.UV(uvbr.X, uvbr.Y + vofs);
                 g.p(crx, h, cry);
-                g.UV(0.5f + uvcr.X, uvcr.Y + vofs);
+                g.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
         }
@@ -502,11 +509,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvbr = uvp.getUVOfs(new Vector3(brx, h, bry), 0f, vStart);
                 var vofs = -uvbr.Y;
                 g.p(clx, h, cly);
-                g.UV(0.5f + uvcl.X, uvcl.Y + vofs);
+                g.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(blx, h, bly);
-                g.UV(0.5f + uvbl.X, uvbl.Y + vofs);
+                g.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry);
-                g.UV(0.5f + uvbr.X, uvbr.Y + vofs);
+                g.UV(uvbr.X, uvbr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
         }
@@ -585,9 +592,9 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 }
 
                 g.p(elx, h, ely);
-                g.UV(0.5f + uv0.X, uv0.Y);
+                g.UV(uv0.X, uv0.Y);
                 g.p(erx, h, ery);
-                g.UV(0.5f + uv1.X, uv1.Y);
+                g.UV(uv1.X, uv1.Y);
 
                 /*
                  * Emit next row (we need it twice in the end)
@@ -624,9 +631,9 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                         $"#{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
 
                 g.p(flx, h, fly);
-                g.UV(0.5f + uv2.X, uv2.Y);
+                g.UV(uv2.X, uv2.Y);
                 g.p(frx, h, fry);
-                g.UV(0.5f + uv3.X, uv3.Y);
+                g.UV(uv3.X, uv3.Y);
 
                 ++nVertexRows;
                 vStart += 1;
