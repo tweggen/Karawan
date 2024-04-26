@@ -70,6 +70,7 @@ namespace engine.world
             float texWidth = 20; // That is 20 times per fragment.
             float texHeight = 20;
 
+            #if false
             var getUV = (int iterX, int iterY) =>
             {
                 return new Vector2(
@@ -79,6 +80,7 @@ namespace engine.world
                     / coarseResolution / texHeight
                 );
             };
+            #endif
             
 
             for(int iterY=0; iterY<coarseResolution; ++iterY) {
@@ -99,10 +101,16 @@ namespace engine.world
                      * We need to offset it a little bit to make the "nearest" sampling work in the tiles.
                      * So that the first pixel is 1/128 / 4, and the last pixel 127/128 + 1/128/4
                      */
+                    #if false
                     Vector2 v2UL = getUV(iterX, iterY);
                     Vector2 v2UR = getUV(iterX+1, iterY);
                     Vector2 v2LL = getUV(iterX, iterY+1);
                     Vector2 v2LR = getUV(iterX+1, iterY+1);
+                    #endif
+                    Vector2 v2UL = new(0f, 0f);
+                    Vector2 v2UR = new(1f, 0f);
+                    Vector2 v2LL = new(0f, 1f);
+                    Vector2 v2LR = new(1f, 1f);
                     
                     g.UV(v2UL);
                     g.UV(v2UR);
@@ -119,8 +127,6 @@ namespace engine.world
                     uint idx = (iterY * coarseResolution + iterX) * 4;
                     g.Idx(idx + 2, idx + 1, idx + 0);
                     g.Idx(idx + 2, idx + 3, idx + 1);
-                    //g.Idx(w + 1, w + 2, w + 0);
-                    //g.Idx(w + 3, w + 2, w + 1);
                 }
             }
 
