@@ -340,26 +340,42 @@ namespace CmdLine
 
         public void AddTexture(Resource resourceTexture)
         {
-            FileInfo fi = new FileInfo(resourceTexture.Uri);
-            using (var image = SKImage.FromEncodedData(fi.FullName))
+            if (resourceTexture.Uri == "rgba")
             {
-                if (image.Width <= AtlasSize && image.Height <= AtlasSize)
+                TextureInfo ti = new TextureInfo();
+
+                ti.Resource = resourceTexture;
+                ti.FullPath = "rgba";
+                ti.Width = 512;
+                ti.Height = 512;
+
+                SourceTextures.Add(ti);
+
+                Log.WriteLine($"Added \"{resourceTexture.Tag}\" (found at \"{ti.FullPath}\")");
+            }
+            else
+            {
+                FileInfo fi = new FileInfo(resourceTexture.Uri);
+                using (var image = SKImage.FromEncodedData(fi.FullName))
                 {
-                    TextureInfo ti = new TextureInfo();
+                    if (image.Width <= AtlasSize && image.Height <= AtlasSize)
+                    {
+                        TextureInfo ti = new TextureInfo();
 
-                    ti.Resource = resourceTexture;
-                    ti.FullPath = fi.FullName;
-                    ti.Width = image.Width;
-                    ti.Height = image.Height;
+                        ti.Resource = resourceTexture;
+                        ti.FullPath = fi.FullName;
+                        ti.Width = image.Width;
+                        ti.Height = image.Height;
 
-                    SourceTextures.Add(ti);
+                        SourceTextures.Add(ti);
 
-                    Log.WriteLine($"Added \"{resourceTexture.Tag}\" (found at \"{fi.FullName}\")");
-                }
-                else
-                {
-                    StandaloneTextures.Add(resourceTexture);
-                    Log.WriteLine($"Added standalone \"{resourceTexture.Tag}\" (found at \"{fi.FullName}\")");
+                        Log.WriteLine($"Added \"{resourceTexture.Tag}\" (found at \"{ti.FullPath}\")");
+                    }
+                    else
+                    {
+                        StandaloneTextures.Add(resourceTexture);
+                        Log.WriteLine($"Added standalone \"{resourceTexture.Tag}\" (found at \"{fi.FullName}\")");
+                    }
                 }
             }
         }
@@ -501,7 +517,62 @@ namespace CmdLine
 
             return textures;
         }
-        
+
+
+        /**
+         * Create a dedicated image for fixed palette colors.
+         * This image containns all RGBA 3331 color values, i.e. all values
+         * for a 3331 bit per component RGBA palette, with a being 8 or f
+         * Every value exists on two horizontal and two vertical values.
+         * This gives a total of 1k * 4 = 4k pixels, arranged in a 64*64 texture.
+         *
+         * The texture is first treated as 2x2 pixels.
+         * Then, the pixels are filled according to the numeric ABGB numerical
+         * values, like ((y>>1)<<8) | (x>>1)).
+         */
+        private SKImage CreateRGBA16Image()
+        {
+            
+            var info = new SKImageInfo(64, 64, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+            SKImage image;
+            using (var skiaSurface = SKSurface.Create(info))
+            {
+
+                var paint = new SKPaint
+                {
+                    Color = 0x00000000,
+                    Style = SKPaintStyle.Fill
+                };
+                for (uint y = 0; y < 32; y++)
+                {
+                    for (uint x = 0; x < 32; x++)
+                    {
+                        uint a = ((y & 0x10u) != 0) ? 0xffu : 0x88u;
+                        uint r = (y & 0x0e) << 4;
+                        r |= r >> 4;
+                        uint g = ((y & 0x1)<<7) | ((x&0x18u)<<2);
+                        g |= g >> 4;
+                        uint b = (x & 0x07) << 5;
+                        b |= b >> 4;
+                        paint.Color = (a << 24) | (r << 16) | (g << 8) | (b);
+                        skiaSurface.Canvas.DrawRect(2 * x, 2 * y, 2, 2, paint);
+                    }
+                }
+
+                paint.Dispose();
+                image = skiaSurface.Snapshot();
+            }
+
+            return image;
+        }
+
+        private SKImage LoadImage(string path)
+        {
+            if (path == "rgba") return CreateRGBA16Image();
+            else return SKImage.FromEncodedData(path);
+        }
+
+
 
         private SKSurface CreateAtlasImage(Atlas _Atlas)
         {
@@ -522,7 +593,7 @@ namespace CmdLine
             {
                 if (n.Texture != null)
                 {
-                    using (var image = SKImage.FromEncodedData(n.Texture.FullPath))
+                    using (var image = LoadImage(n.Texture.FullPath))
                     using (var bm = SKBitmap.FromImage(image))
                     {
                         skiaSurface.Canvas.DrawBitmap(bm, new SKPoint(n.Bounds.X, n.Bounds.Y));

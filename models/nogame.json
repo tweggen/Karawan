@@ -115,6 +115,7 @@
   "textures":
   {
     "atlas-trans.json": [
+      { "uri": "rgba" },
       { "uri": "../models/brands/plentomatic-small.png" },
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },
@@ -128,6 +129,7 @@
       { "uri": "../models/newcars/car7/Textures/car7.png" }
     ],
     "atlas-opaque.json": [
+      { "uri": "rgba" },
       { "uri": "../models/buildings/buildingambient.png" },
       { "uri": "../models/buildings/buildingdiffuse.png" },
       { "uri": "../models/sky/skybox2.png" },
