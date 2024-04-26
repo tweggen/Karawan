@@ -136,7 +136,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         streets.Stroke stroke,
         joyce.Mesh g)
     {
-
+        /*
+         * We need the material to know the texture size in use.
+         */
+        var jMat = I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street");
+        var jStreetTexture = jMat.Texture;
+        
         /*
          * We need the intersection points for this stroke in each of its street points
          * to have the polygon that makes up the road.
@@ -304,7 +309,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         /*
          * This defines which part of the street texture we are about to use.
          */
-        Vector2 uvStreetOrigin = new(0.5f, 0f);
+        Vector2 uvStreetOrigin = new Vector2(0.5f, 0f);
         Vector2 uvStreetSize = new(0.25f, 1f);
         
         /*
@@ -316,7 +321,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             new Vector3(n.X * sw, 0f, n.Y * sw), // That is the logical size of the u [0..1[ interval.
             new Vector3(q.X * texlen, 0f, q.Y * texlen),
             uvStreetOrigin,
-            uvStreetSize);
+            uvStreetSize,
+            jStreetTexture.Size2);
 
         /*
          * These are the 4 edge points of the street, projected to street,

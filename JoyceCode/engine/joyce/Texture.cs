@@ -17,7 +17,16 @@ namespace engine.joyce
         public bool DoFilter = true;
         public Vector2 UVOffset = new(0f, 0f);
         public Vector2 UVScale = new (1f, 1f);
-
+        public int Width, Height;
+        
+        public Vector2 Size2
+        {
+            get => new Vector2(Width, Height); 
+        }
+        public Vector2 InvSize2
+        {
+            get => new Vector2(1f/Width, 1f/Height); 
+        }
 
         public bool IsMergableEqual(Texture o)
         {
@@ -63,6 +72,7 @@ namespace engine.joyce
             }
         }
 
+        
         public bool IsValid()
         {
             return 
@@ -70,11 +80,13 @@ namespace engine.joyce
                 || (Framebuffer != null);
         }
         
+        
         public Texture(string source)
         {
             Source = source;
             Framebuffer = null;
         }
+        
 
         public Texture(engine.draw.IFramebuffer framebuffer)
         {

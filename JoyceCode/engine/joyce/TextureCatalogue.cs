@@ -18,6 +18,7 @@ public class TextureAtlasEntry
     public readonly TextureAtlas TextureAtlas;
     public Vector2 UVOffset;
     public Vector2 UVScale;
+    public int Width, Height;
 
     public TextureAtlasEntry(TextureAtlas atlas)
     {
@@ -36,7 +37,7 @@ public class TextureCatalogue
     private SortedDictionary<string, TextureAtlasEntry> _dictTextures = new();
     private SortedDictionary<string, TextureAtlas> _dictAtlasses = new();
 
-    public void AddAtlasEntry(string textureTag, string atlasTag, in Vector2 uvOffset, in Vector2 uvScale)
+    public void AddAtlasEntry(string textureTag, string atlasTag, in Vector2 uvOffset, in Vector2 uvScale, int Width, int Height)
     {
         lock (_lo)
         {
@@ -57,7 +58,9 @@ public class TextureCatalogue
             {
                 TextureTag = textureTag,
                 UVOffset = uvOffset,
-                UVScale = uvScale
+                UVScale = uvScale,
+                Width = Width,
+                Height = Height
             };
 
             atlas.AtlasEntries.Add(tae);
@@ -88,7 +91,9 @@ public class TextureCatalogue
         jTexture = new Texture(tae.TextureAtlas.AtlasTag)
         {
             UVOffset = tae.UVOffset,
-            UVScale = tae.UVScale
+            UVScale = tae.UVScale,
+            Width = tae.Width,
+            Height = tae.Height
         };
         
         return jTexture;

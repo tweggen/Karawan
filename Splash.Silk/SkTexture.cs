@@ -88,9 +88,9 @@ public class SkTexture : IDisposable
     private void _setParameters()
     {
         _trace("_setParameters");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
         CheckError("TexParam WrapS");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
         CheckError("TexParam WrapT");
 
         if (_doFilter)
@@ -111,7 +111,7 @@ public class SkTexture : IDisposable
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
         CheckError("TexParam BaseLevel");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 8);
-        CheckError("TexParam MAxLevel");
+        CheckError("TexParam MaxLevel");
     }
 
 

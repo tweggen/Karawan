@@ -192,15 +192,18 @@ public class Loader
         var jeTextures = jeAtlas.GetProperty("textures");
         foreach (var pairTexture in jeTextures.EnumerateObject())
         {
+            JsonElement jet = pairTexture.Value;
             string textureTag = pairTexture.Name;
-            float u = pairTexture.Value.GetProperty("u").GetSingle();
-            float v = pairTexture.Value.GetProperty("v").GetSingle();
-            float uScale = pairTexture.Value.GetProperty("uScale").GetSingle();
-            float vScale = pairTexture.Value.GetProperty("vScale").GetSingle();
+            float u = jet.GetProperty("u").GetSingle();
+            float v = jet.GetProperty("v").GetSingle();
+            float uScale = jet.GetProperty("uScale").GetSingle();
+            float vScale = jet.GetProperty("vScale").GetSingle();
             tc.AddAtlasEntry(
                 textureTag, atlasTag, 
                 new Vector2(u,v), 
-                new Vector2(uScale, vScale));
+                new Vector2(uScale, vScale),
+                jet.GetProperty("width").GetInt32(),
+                jet.GetProperty("height").GetInt32());
         }
     }
 

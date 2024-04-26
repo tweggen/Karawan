@@ -10,7 +10,7 @@ namespace builtin.tools
      */
     public class UVProjector
     {
-        //public Vector2 TextureResolution = new(512f, 512f);
+        private  Vector2 _textureSize = new(512f, 512f);
         
         private Vector2 _uvOffset;
         private Vector2 _uvSize;
@@ -65,8 +65,8 @@ namespace builtin.tools
         private void _computeFactors()
         {
             _v2ProjectionFactors = new(
-                (_uvSize.X * _uvSize.X) / _u.LengthSquared(),
-                (_uvSize.Y * _uvSize.Y) / _v.LengthSquared()
+                 _uvSize.X/_u.LengthSquared(),
+                _uvSize.Y/_v.LengthSquared()
             );
         }
 
@@ -108,13 +108,14 @@ namespace builtin.tools
          * @param uvSize
          *     The size of the area in the texture
          */
-        public UVProjector(in Vector3 o, in Vector3 uAxis, in Vector3 vAxis, in Vector2 uvOffset, in Vector2 uvSize)
+        public UVProjector(in Vector3 o, in Vector3 uAxis, in Vector3 vAxis, in Vector2 uvOffset, in Vector2 uvSize, in Vector2 textureSize)
         {
             _o = o;
             _u = uAxis;
             _v = vAxis;
-            _uvOffset = uvOffset;
-            _uvSize = uvSize;
+            _textureSize = textureSize;
+            _uvOffset = uvOffset; //+ new Vector2(0.5f/textureSize.X,0.5f/textureSize.Y);
+            _uvSize = uvSize; // - new Vector2(1f/textureSize.X, 1f/textureSize.Y);
             _computeFactors();
         }
     }    

@@ -16,12 +16,16 @@ namespace CmdLine
         public float V { get; set; }
         public float UScale { get; set; }
         public float VScale { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
     }
 
     public class JsonAtlasDesc
     {
         public string Uri { get; set; }
         public string Tag { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
         public Dictionary<string,JsonTextureDesc> Textures { get; set; }
     }
 
@@ -263,6 +267,8 @@ namespace CmdLine
                 {
                     Uri = atlasName,
                     Tag = atlasTag,
+                    Width = atlas.Width,
+                    Height = atlas.Height,
                     Textures = new Dictionary<string, JsonTextureDesc>()
                 };
                 
@@ -279,7 +285,9 @@ namespace CmdLine
                             U = ((float)n.Bounds.X / atlas.Width),
                             V = ((float)n.Bounds.Y / atlas.Height),
                             UScale = ((float)n.Bounds.Width / atlas.Width),
-                            VScale = ((float)n.Bounds.Height / atlas.Height)
+                            VScale = ((float)n.Bounds.Height / atlas.Height),
+                            Width = (int)n.Bounds.Width,
+                            Height = (int)n.Bounds.Height
                         };
                         jAtlas.Textures[jTexture.Tag] = jTexture;
                     }
