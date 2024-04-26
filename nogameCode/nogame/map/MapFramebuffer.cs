@@ -47,7 +47,7 @@ public class MapFramebuffer
             engine.I.Get<builtin.map.IMapProvider>().WorldMapCreateBitmap(_framebuffer);
             
             _jTexture = new(_framebuffer);
-            _jTexture.DoFilter = false;
+            _jTexture.FilteringMode = engine.joyce.Texture.FilteringModes.Framebuffer;
 
             _wasCreated = true;
         }

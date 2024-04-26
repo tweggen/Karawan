@@ -103,9 +103,8 @@ public class Display : engine.AModule
             meshFramebuffer.UploadImmediately = true;
             engine.joyce.Texture textureFramebuffer = new(_framebuffer)
             {
-                DoFilter = false
+                FilteringMode = engine.joyce.Texture.FilteringModes.Framebuffer
             };
-            textureFramebuffer.DoFilter = false;
             engine.joyce.Material materialFramebuffer = new();
             materialFramebuffer.UploadImmediately = true;
             materialFramebuffer.EmissiveTexture = textureFramebuffer;

@@ -5,6 +5,7 @@ using SixLabors.ImageSharp;
 //using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using static engine.Logger;
+using Texture = engine.joyce.Texture;
 using Trace = System.Diagnostics.Trace;
 
 namespace Splash.Silk;
@@ -21,7 +22,7 @@ public class SkTexture : IDisposable
     private bool _backData = false;
     
 
-    private bool _doFilter = false;
+    private engine.joyce.Texture.FilteringModes _filteringMode = engine.joyce.Texture.FilteringModes.Pixels;
 
     private bool _traceTexture = false;
     
@@ -88,44 +89,62 @@ public class SkTexture : IDisposable
     private void _setParameters()
     {
         _trace("_setParameters");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS,
+            (int)GLEnum.ClampToEdge);
         CheckError("TexParam WrapS");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT,
+            (int)GLEnum.ClampToEdge);
         CheckError("TexParam WrapT");
 
-        if (_doFilter)
+        switch (_filteringMode)
         {
-            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
-            CheckError("TexParam MinFilter");
-            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-            CheckError("TexParam MagFilter");
-        }
-        else
-        {
-            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
-            CheckError("TexParam MinFilter");
-            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-            CheckError("TexParam MagFilter");
+            case engine.joyce.Texture.FilteringModes.Framebuffer:
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
+                    (int)GLEnum.Nearest);
+                CheckError("TexParam MinFilter");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                    (int)GLEnum.Nearest);
+                CheckError("TexParam MagFilter");
+                break;
+            case engine.joyce.Texture.FilteringModes.Pixels:
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
+                    (int)GLEnum.NearestMipmapLinear);
+                CheckError("TexParam MinFilter");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                    (int)GLEnum.Nearest);
+                CheckError("TexParam MagFilter");
+                break;
+            case engine.joyce.Texture.FilteringModes.Smooth:
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
+                    (int)GLEnum.LinearMipmapLinear);
+                CheckError("TexParam MinFilter");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                    (int)GLEnum.Linear);
+                CheckError("TexParam MagFilter");
+                break;
         }
 
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
+            0);
         CheckError("TexParam BaseLevel");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 8);
+        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
+            8);
         CheckError("TexParam MaxLevel");
     }
 
 
     private void _generateMipmap()
     {
-        if (_doFilter)
+        switch (_filteringMode)
         {
-            _trace($"generate mipmap for {_backHandle}");
-            _gl.GenerateMipmap(TextureTarget.Texture2D);
-            CheckError("GenerateMipMap");
-        }
-        else
-        {
-            _trace($"Skipping mipmap for {_backHandle}");
+            case Texture.FilteringModes.Framebuffer:
+                _trace($"Skipping mipmap for {_backHandle}");
+                break;
+            default:
+                _trace($"generate mipmap for {_backHandle}");
+                _gl.GenerateMipmap(TextureTarget.Texture2D);
+                CheckError("GenerateMipMap");
+                break;
         }
     }
 
@@ -344,11 +363,11 @@ public class SkTexture : IDisposable
     }
 
 
-    public unsafe SkTexture(GL gl, bool doFilter)
+    public unsafe SkTexture(GL gl, engine.joyce.Texture.FilteringModes filteringMode)
     {
-        _trace($"new SkTexture doFilter={doFilter}");
+        _trace($"new SkTexture filteringMode={filteringMode}");
         _gl = gl;
-        _doFilter = doFilter;
+        _filteringMode = filteringMode;
         _allocateBack();
     }
     

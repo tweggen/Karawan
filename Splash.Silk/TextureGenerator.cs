@@ -25,7 +25,7 @@ namespace Splash.Silk
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
             if (null == skTextureEntry.SkTexture)
             {
-                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.DoFilter);
+                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
             }
                 
             if (jTexture.Source != null)

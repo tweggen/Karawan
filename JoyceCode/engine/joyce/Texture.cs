@@ -14,7 +14,22 @@ namespace engine.joyce
         public string Source;
         public engine.draw.IFramebuffer Framebuffer;
 
-        public bool DoFilter = true;
+        public enum FilteringModes
+        {
+            Smooth,
+            
+            /*
+             * Nearest pixel within mipmap, mipmaps linearly blended.
+             */
+            Pixels,
+            
+            /*
+             * No mipmap, strictest nearest sampling pixel output.
+             */
+            Framebuffer
+        };
+
+        public FilteringModes FilteringMode = FilteringModes.Pixels;
         public Vector2 UVOffset = new(0f, 0f);
         public Vector2 UVScale = new (1f, 1f);
         public int Width, Height;
@@ -30,7 +45,7 @@ namespace engine.joyce
 
         public bool IsMergableEqual(Texture o)
         {
-            return DoFilter == o.DoFilter
+            return FilteringMode == o.FilteringMode
                    && Source == o.Source
                    && Framebuffer == o.Framebuffer;
         }
@@ -39,7 +54,7 @@ namespace engine.joyce
         public int GetMergableHashCode()
         {
             int h = 0;
-            if (DoFilter) h ^= 1;
+            h += (int)FilteringMode;
 
             if (Source != null)
             {
