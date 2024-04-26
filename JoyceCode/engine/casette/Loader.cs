@@ -194,7 +194,7 @@ public class Loader
         {
             string textureTag = pairTexture.Name;
             float u = pairTexture.Value.GetProperty("u").GetSingle();
-            float v = pairTexture.Value.GetProperty("u").GetSingle();
+            float v = pairTexture.Value.GetProperty("v").GetSingle();
             float uScale = pairTexture.Value.GetProperty("uScale").GetSingle();
             float vScale = pairTexture.Value.GetProperty("vScale").GetSingle();
             tc.AddAtlasEntry(

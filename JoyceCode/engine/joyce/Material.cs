@@ -33,11 +33,11 @@ namespace engine.joyce
             }
             if (null != EmissiveTexture)
             {
-                h ^= EmissiveTexture.GetHashCode();
+                h ^= EmissiveTexture.GetMergableHashCode();
             }
             if (null != Texture)
             {
-                h ^= Texture.GetHashCode();
+                h ^= Texture.GetMergableHashCode();
             }
             
             return h;
