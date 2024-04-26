@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace engine.world
 {
@@ -14,95 +16,111 @@ namespace engine.world
         {
             var g = joyce.Mesh.CreateListInstance("terrainknitter");
 
-            var groundResolution = world.MetaGen.GroundResolution;
+            var groundResolution = world.MetaGen.GroundResolution; // 20
 
             uint coarseResolution = (uint)(groundResolution / coarseness);
-            uint coarseNElevations = coarseResolution + 1;
+            
+            /*
+             * Because we need to build the entire mesh up to the beginning of the next one.
+             */
+            //uint coarseNElevations = coarseResolution;
             // trace('groundResolution: '+groundResolution+", coarseResolution: "+coarseResolution);
 
-            // var verts:Array<Float> = new Array<Float>();
-            for(int iterY=0; iterY<coarseNElevations; ++iterY) {
+            var getLocal = (int iterX, int iterY) =>
+            {
+                int x0 = (int) (((iterX+0) * groundResolution) / coarseResolution);
+                int x1 = (int) (((iterX+1) * groundResolution) / coarseResolution);
+
                 int y0 = (int)(((iterY+0) * groundResolution) / coarseResolution);
                 int y1 = (int) (((iterY+1) * groundResolution) / coarseResolution);
-                for(int iterX=0; iterX<coarseNElevations; ++iterX ) {
-                    float localX = -world.MetaGen.FragmentSize/2.0f
-                        + (world.MetaGen.FragmentSize* iterX/coarseResolution);
-                    float localZ = -world.MetaGen.FragmentSize/2.0f
-                        + (world.MetaGen.FragmentSize*(iterY)/coarseResolution);
-                    int x0 = (int) (((iterX+0) * groundResolution) / coarseResolution);
-                    int x1 = (int) (((iterX+1) * groundResolution) / coarseResolution);
-                    // trace("iterX: "+iterX+", x0: "+x0+", x1: "+x1);
 
-                    float localY = 0f;
+                float localY = 0f;
 
-                    if(1==coarseness) {
-                        localY = elevations[iterY,iterX].Height;
-                    } else {
-                        int n  = 0;
-                        for(int ey=y0; ey<y1; ey++ ) {
-                            for(int ex=x0; ex<x1; ex++ ) {
-                                // trace("ex: "+ex+", ey="+ey+", localY="+localY);
-                                localY += elevations[ey,ex].Height;
-                                ++n;
-                            }
+                if(1==coarseness) {
+                    localY = elevations[iterY,iterX].Height;
+                } else {
+                    int n  = 0;
+                    for(int ey=y0; ey<y1; ey++ ) {
+                        for(int ex=x0; ex<x1; ex++ ) {
+                            // trace("ex: "+ex+", ey="+ey+", localY="+localY);
+                            localY += elevations[ey,ex].Height;
+                            ++n;
                         }
-                        localY = localY / n;
                     }
-                    if (localY > -0.00001 && localY < 0.00001)
-                    {
-                    // trace( "Warning: elevation ca. 0 at "+iterX+", "+iterY );
-                    }
-                    g.p(localX, localY, localZ);
-                    //trace( "x: "+localX+", y: "+localY+", z: "+localZ );
+                    localY = localY / n;
                 }
-            }
+                if (localY > -0.00001 && localY < 0.00001)
+                {
+                    // trace( "Warning: elevation ca. 0 at "+iterX+", "+iterY );
+                }
 
+                return new Vector3(
+                    -world.MetaGen.FragmentSize/2.0f // -100
+                    + (world.MetaGen.FragmentSize* iterX/coarseResolution),
+                    localY,
+                    -world.MetaGen.FragmentSize/2.0f // -100
+                    + (world.MetaGen.FragmentSize*(iterY)/coarseResolution)
+                    );
+            };
+            
             /*
-            * 25m are the width/height of entire 512 pixel size.
-            * However, we are going to tile that.
-            */
-            float texWidth = 20;
+             * 20m are the width/height of entire 512 pixel size.
+             * However, we are going to tile that.
+             */
+            float texWidth = 20; // That is 20 times per fragment.
             float texHeight = 20;
 
-            // var uvs:Array<Float> = new Array<Float>();
-            for (int iterY=0; iterY<coarseNElevations; ++iterY )
+            var getUV = (int iterX, int iterY) =>
             {
-                for (int iterX=0; iterX<coarseNElevations; ++iterX )
-                {
-                    float localU =
-                        (iterX * world.MetaGen.FragmentSize)
-                            / coarseResolution / texWidth;
-                    float localV =
-                        (iterY * world.MetaGen.FragmentSize)
-                            / coarseResolution / texHeight;
+                return new Vector2(
+                    (iterX * world.MetaGen.FragmentSize)
+                    / coarseResolution / texWidth,
+                    (iterY * world.MetaGen.FragmentSize)
+                    / coarseResolution / texHeight
+                );
+            };
+            
 
+            for(int iterY=0; iterY<coarseResolution; ++iterY) {
+                for(int iterX=0; iterX<coarseResolution; ++iterX ) {
+
+                    Vector3 v3UL = getLocal(iterX, iterY);
+                    Vector3 v3UR = getLocal(iterX+1, iterY);
+                    Vector3 v3LL = getLocal(iterX, iterY+1);
+                    Vector3 v3LR = getLocal(iterX+1, iterY+1);
+                    
+                    g.p(v3UL);
+                    g.p(v3UR);
+                    g.p(v3LL);
+                    g.p(v3LR);
+            
                     /*
                      * At this point, u/v is integer digits.
                      * We need to offset it a little bit to make the "nearest" sampling work in the tiles.
                      * So that the first pixel is 1/128 / 4, and the last pixel 127/128 + 1/128/4
                      */
-                    //localU += (1./128.)*0.25;
-                    g.UV(localU, localV);
+                    Vector2 v2UL = getUV(iterX, iterY);
+                    Vector2 v2UR = getUV(iterX+1, iterY);
+                    Vector2 v2LL = getUV(iterX, iterY+1);
+                    Vector2 v2LR = getUV(iterX+1, iterY+1);
+                    
+                    g.UV(v2UL);
+                    g.UV(v2UR);
+                    g.UV(v2LL);
+                    g.UV(v2LR);
                 }
             }
 
 
-            // var indices:Array<UInt> = new Array<UInt>();
-            uint w = coarseNElevations;
             for(uint iterY=0; iterY<coarseResolution; iterY++ )
             {
                 for(uint iterX=0; iterX<coarseResolution; iterX++ )
                 {
-                    g.Idx(
-                        (iterY + 1) * w + iterX,
-                        iterY * w + iterX + 1,
-                        iterY * w + iterX
-                    );
-                    g.Idx(
-                        (iterY + 1) * w + iterX,
-                        (iterY + 1) * w + iterX + 1,
-                        iterY * w + iterX + 1
-                    );
+                    uint idx = (iterY * coarseResolution + iterX) * 4;
+                    g.Idx(idx + 2, idx + 1, idx + 0);
+                    g.Idx(idx + 2, idx + 3, idx + 1);
+                    //g.Idx(w + 1, w + 2, w + 0);
+                    //g.Idx(w + 3, w + 2, w + 1);
                 }
             }
 
