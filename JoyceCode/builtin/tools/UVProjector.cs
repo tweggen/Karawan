@@ -5,10 +5,24 @@ using System.Text;
 
 namespace builtin.tools
 {
+    /**
+     * Tool to compute u and v coordinates for arbitrary points.
+     */
     public class UVProjector
     {
+        /**
+         * The reference point for all textures in space. 
+         */
         private Vector3 _o;
+        
+        /**
+         * Where does the ui axis go to? 
+         */
         private Vector3 _u;
+        
+        /**
+         * Where does the V axis go to?
+         */
         private Vector3 _v;
 
         public Vector2 GetUV(in Vector3 point)
@@ -51,6 +65,17 @@ namespace builtin.tools
             return uv;
         }
 
+        /**
+         * Initialize an instance. This will project any point on the UV plane, returning a
+         * valid UV coordinate.
+         *
+         * @param o
+         *     The origin of the UV plane.
+         * @param uAxis
+         *     The u axis
+         * @param vAxis
+         *     The v axis
+         */
         public UVProjector(in Vector3 o, in Vector3 uAxis, in Vector3 vAxis)
         {
             _o = o;

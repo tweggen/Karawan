@@ -93,19 +93,21 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * Now create the vertices and the uv values.
          * We start with a center point.
          */
-        float facu = (1f / 200f);
-        float ofsu = (0.125f);
-        float facv = (1f / 200f);
-        float ofsv = (0.5f);
+        float uFactor = (1f / 200f);
+        float uOffset = (0.125f);
+        float vFactor = (1f / 200f);
+        float vOffset = (0.5f);
 
         {
             uint i0 = g.GetNextVertexIndex();
             g.p(ax + cx, h, ay + cy);
-            g.UV(ax * facu + ofsu, ay * facv + ofsv);
+            //g.UV(ax * uFactor + uOffset, ay * vFactor + vOffset);
+            g.UV(0.25f,0.5f);
             foreach (var b in secArray)
             {
                 g.p(b.X + cx, h, b.Y + cy);
-                g.UV(b.X * facu + ofsu, b.Y * facv + ofsv);
+                //g.UV(b.X * uFactor + uOffset, b.Y * vFactor + vOffset);
+                g.UV(0.25f,0.5f);
             }
 
             /*
