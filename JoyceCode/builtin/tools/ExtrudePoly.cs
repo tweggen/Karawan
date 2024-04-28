@@ -235,10 +235,18 @@ namespace builtin.tools
              * ... etc
              * for p.length+1 columns.
              */
-            int pathLen = p.Count;
-            for (int j=0; j<pathLen+1; j++ )
+            int polyLen = p.Count;
+            
+            /*
+             * When we are in paired normals mode, we already have a point that
+             * is closing to the opening one.
+             *
+             * However, when we just are connecting, we do not.
+             */
+            int loopLen = polyLen + (PairedNormals ? 0 : 1);
+            for (int j=0; j<loopLen; j++ )
             {
-                int i = j % p.Count;
+                int i = j % polyLen;
                 Vector3 vc = p[i];
 
                 Vector3 vnPairNormal = default;
@@ -248,7 +256,7 @@ namespace builtin.tools
                      * The pair normal is the cross product between the difference between
                      * this point of pairs and the up vector.
                      */
-                    Vector3 vuTangent = p[((j%pathLen) & (~1)) + 1] - p[((j%pathLen) & (~1)) + 0];
+                    Vector3 vuTangent = p[((j%polyLen) & (~1)) + 1] - p[((j%polyLen) & (~1)) + 0];
                     vuTangent /= vuTangent.Length();
                     vnPairNormal = Vector3.Cross(vu, vuTangent);
                     g.N(vnPairNormal);
@@ -293,7 +301,11 @@ namespace builtin.tools
              */
             uint columnHeight = (nCompleteRows + 1) * 2;
 
-            for (uint side=0; side<p.Count; ++side)
+            /*
+             * If we are working in paired normals mode, we create the columns per pair of vertices.
+             */
+            uint sideIncrement = PairedNormals ? 2u : 1u;
+            for (uint side=0; side<polyLen; side+=sideIncrement)
             {
                 /*
                  * We need to generate 2 triangles for every complete row
@@ -336,7 +348,7 @@ namespace builtin.tools
                 }
                 // Why? IDK, was wrong.
                 topPlane.Reverse();
-                builtin.tools.Triangulate.ToMesh(topPlane, g);
+                builtin.tools.Triangulate.ToMesh(topPlane, Vector3.Normalize(_path[0]), g);
             }
         }
 

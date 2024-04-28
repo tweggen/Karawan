@@ -102,8 +102,10 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         if (true)
         {
             int nUp = 0, nDown = 0;
+            Vector3 v3Center = Vector3.Zero;
             for (int i = 0; i < l; ++i)
             {
+                v3Center += p[i];
                 Vector3 v3a = p[(i + 0) % l] - p[(i + 1) % l];
                 Vector3 v3b = p[(i + 2) % l] - p[(i + 1) % l];
 
@@ -111,9 +113,12 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 if (v3Normal.Y > 0.1f) nUp++;
                 else if (v3Normal.Y < -0.1f) nDown++;
             }
-            // Trace($"for building with {p[0]+worldFragment.Position}: {nUp} up, {nDown} down.");
+
+            v3Center /= l;
+            Trace($"for building with {p[0]+worldFragment.Position} center {v3Center+worldFragment.Position} : {nUp} up, {nDown} down.");
             var p0 = p[0] + worldFragment.Position;
-            if (Single.Floor(p0.X) == 343f && Single.Floor(p0.Z) == 275f)
+            // GenerateHousesOperator:_createClassicHouseSubGeo: Trace: for building with <98,928764. 39,856236. -468,8> center <111,578766. 39,856236. -434,1> : 0 up, 4 down.
+            if (Single.Floor(p0.X) == 98f && Single.Floor(p0.Z) == -469f)
             {
                 int a = 1;
             }

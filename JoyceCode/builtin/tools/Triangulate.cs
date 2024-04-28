@@ -39,7 +39,7 @@ namespace builtin.tools
             }
         }
 #endif
-        static public void ToMesh( in IList<Vector3> inPolyPoints, in engine.joyce.Mesh mesh)
+        static public void ToMesh(in IList<Vector3> inPolyPoints, in Vector3 v3Normal, in engine.joyce.Mesh mesh)
         {
             LibTessDotNet.Tess tess = new LibTessDotNet.Tess();
 
@@ -70,9 +70,11 @@ namespace builtin.tools
             {
                 mesh.p(tess.Vertices[i].Position.X, tess.Vertices[i].Position.Y, tess.Vertices[i].Position.Z);
                 mesh.UV(0f, 0f);
+                mesh.N(v3Normal);
             }
         }
 
+        #if false
         static public void ToMesh( in IList<Vector2> inPoly2Points, in engine.joyce.Mesh mesh)
         {
             List<Vector3> inPolyPoints = new();
@@ -82,6 +84,7 @@ namespace builtin.tools
             }
             ToMesh(inPolyPoints, mesh);
         }
+        #endif
 
         static public void ToConvexArrays(in IList<Vector3> inPolyPoints, out IList<IList<Vector3>> outPolygons)
         {
