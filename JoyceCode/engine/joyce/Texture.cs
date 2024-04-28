@@ -80,7 +80,7 @@ namespace engine.joyce
         {
             if (Source != null)
             {
-                return $"Texture {{ Source: \"{Source}\" }}";
+                return $"Texture {{ Source: \"{Source}\", UVOffset: {UVOffset}, UVScale: {UVScale} }}";
             }
             else
             {
