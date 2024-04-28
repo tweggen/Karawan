@@ -259,14 +259,15 @@ namespace builtin.tools
                     Vector3 vuTangent = p[((j%polyLen) & (~1)) + 1] - p[((j%polyLen) & (~1)) + 0];
                     vuTangent /= vuTangent.Length();
                     vnPairNormal = Vector3.Cross(vu, vuTangent);
-                    g.N(vnPairNormal);
                 }
 
                 /*
                  * Bottom ring
                  */
                 g.p(vc); g.UV(ot+it*listU[i], ot+it*1f);
+                if (PairedNormals) g.N(vnPairNormal);
 
+                
                 /*
                  * Complete rings
                  */
@@ -285,7 +286,9 @@ namespace builtin.tools
                      * TXWTODO: Replace 0.;1. with the corresponding segment of the texture.
                      */
                     g.p(vc); g.UV(ot+it*listU[i], ot+it*0f);
+                    if (PairedNormals) g.N(vnPairNormal);
                     g.p(vc); g.UV(ot+it*listU[i], ot+it*1f);
+                    if (PairedNormals) g.N(vnPairNormal);
                 }
 
                 /*
@@ -293,7 +296,7 @@ namespace builtin.tools
                  */
                 vc += lrh;
                 g.p(vc); g.UV(ot+it*listU[i], ot+it*(1f-lastRowHeight/_mpt));
-                // g.p1(vc); g.uv(currU/du, 1. );
+                if (PairedNormals) g.N(vnPairNormal);
             }
 
             /*
@@ -348,7 +351,7 @@ namespace builtin.tools
                 }
                 // Why? IDK, was wrong.
                 topPlane.Reverse();
-                builtin.tools.Triangulate.ToMesh(topPlane, Vector3.Normalize(_path[0]), g);
+                builtin.tools.Triangulate.ToMesh(topPlane, PairedNormals?Vector3.Normalize(_path[0]):Vector3.Zero, g);
             }
         }
 

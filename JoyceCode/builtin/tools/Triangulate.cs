@@ -70,7 +70,10 @@ namespace builtin.tools
             {
                 mesh.p(tess.Vertices[i].Position.X, tess.Vertices[i].Position.Y, tess.Vertices[i].Position.Z);
                 mesh.UV(0f, 0f);
-                mesh.N(v3Normal);
+                if (v3Normal != Vector3.Zero)
+                {
+                    mesh.N(v3Normal);
+                }
             }
         }
 

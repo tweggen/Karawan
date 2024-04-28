@@ -135,6 +135,15 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         try
         {
             opExtrudePoly.BuildGeom(meshHouse);
+            {
+                var p0 = p[0] + worldFragment.Position;
+
+                // GenerateHousesOperator:_createClassicHouseSubGeo: Trace: for building with <98,928764. 39,856236. -468,8> center <111,578766. 39,856236. -434,1> : 0 up, 4 down.
+                if (Single.Floor(p0.X) == 98f && Single.Floor(p0.Z) == -469f)
+                {
+                    int a = 1;
+                }
+            }
             matmesh.Add(materialHouse, meshHouse);
         }
         catch (Exception e)
