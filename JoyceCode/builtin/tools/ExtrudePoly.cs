@@ -21,6 +21,7 @@ namespace builtin.tools
         private readonly bool _addFloor;
         private readonly bool _addCeiling;
         public bool PairedNormals { get; set; } = false;
+        public bool TileToTexture { get; set; } = false;
 
         private engine.physics.API _aPhysics;
     
@@ -30,7 +31,122 @@ namespace builtin.tools
 
             if (null == g.Normals) g.Normals = new List<Vector3>();
             var vh = _path[0];
-            var p = _poly;
+            
+            /*
+             * Unfortunately, we cannot directly build the poly, we need to take care
+             * no wall has a length longer than texture length (_mpt)
+             */
+            List<Vector3> p = new();
+            List<float> listU = new();
+            if (TileToTexture) {
+                int n = _poly.Count;
+                
+                float uCurr = 0f;
+
+                for (int i = 0; i < n; ++i)
+                {
+                    /*
+                     * First, add the current point and the u value we currently are using.
+                     */
+                    Vector3 v3Curr = _poly[i];
+                    p.Add(v3Curr);
+                    listU.Add(uCurr);
+
+                    /*
+                     * The next one (or the first) obviously is the target.
+                     */
+                    var v3Target = _poly[(i+1)%n];
+
+                    /*
+                     * Now add inbetween points of the wall is longer than the texture.
+                     */
+                    while (true)
+                    {
+                        Vector3 v3Delta = v3Target - v3Curr;
+                        float lDelta = v3Delta.Length();
+
+                        /*
+                         * Where would the end of the texture be?
+                         */
+                        float uDelta = lDelta / _mpt;
+                        float uThen = uCurr + uDelta;
+
+                        /*
+                         * Figure out, if we want to use the poly as is
+                         * or want to stretch the texture a little bit
+                         * to avoid miniature stitches.
+                         */
+                        if (uThen > 1.1f)
+                        {
+                            /*
+                             * OK, the extent we are facing would be too long.
+                             * So add an additional set of points
+                             */
+                            v3Curr = v3Curr + (v3Target - v3Curr) * 1f / uDelta;
+                            uCurr = 1f;
+
+                            p.Add(v3Curr);
+                            listU.Add(uCurr);
+
+                            uCurr = 0f;
+                            if (PairedNormals)
+                            {
+                                p.Add(v3Curr);
+                                listU.Add(uCurr);
+                            }
+                        }
+                        else
+                        {
+                            /*
+                             * This still might be a tiny bit too long, however, we just stretch
+                             * the texture a bit. This avoids small irritating stripes of color.
+                             */
+                            if (uThen >= 1f)
+                            {
+                                uThen = 1f;
+                                uCurr = 0f;
+                            }
+                            
+                            /*
+                             * This is not too long, so we can finally add the target point if required.
+                             */
+                            if (PairedNormals)
+                            {
+                                v3Curr = v3Target;
+                                listU.Add(uThen);
+                                p.Add(v3Curr);
+                                
+                            }
+                            
+                            /*
+                             * We now can leave the while look, there is no more point to emit.
+                             */
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (PairedNormals)
+                {
+                    for (int i = 0; i < p.Count; ++i)
+                    {
+                        p.Add(_poly[i]);
+                        listU.Add(0f);
+                        p.Add(_poly[i]);
+                        listU.Add(0f);
+                    }
+                }
+                else
+                {
+                    p = _poly;
+                    for (int i = 0; i < p.Count; ++i)
+                    {
+                        listU.Add(0f);
+                    }
+                }
+            }
 
             float it;
             float ot;
@@ -119,7 +235,6 @@ namespace builtin.tools
              * ... etc
              * for p.length+1 columns.
              */
-            float currU = 0f;
             int pathLen = p.Count;
             for (int j=0; j<pathLen+1; j++ )
             {
@@ -142,7 +257,7 @@ namespace builtin.tools
                 /*
                  * Bottom ring
                  */
-                g.p(vc); g.UV(ot+it*currU/du, ot+it*1f);
+                g.p(vc); g.UV(ot+it*listU[i], ot+it*1f);
 
                 /*
                  * Complete rings
@@ -161,25 +276,16 @@ namespace builtin.tools
                      * 
                      * TXWTODO: Replace 0.;1. with the corresponding segment of the texture.
                      */
-                    g.p(vc); g.UV(ot+it*currU/du, ot+it*0f);
-                    g.p(vc); g.UV(ot+it*currU/du, ot+it*1f);
+                    g.p(vc); g.UV(ot+it*listU[i], ot+it*0f);
+                    g.p(vc); g.UV(ot+it*listU[i], ot+it*1f);
                 }
 
                 /*
                  * Ceiling.
                  */
                 vc += lrh;
-                g.p(vc); g.UV(ot+it*currU/du, ot+it*(1f-lastRowHeight/_mpt));
+                g.p(vc); g.UV(ot+it*listU[i], ot+it*(1f-lastRowHeight/_mpt));
                 // g.p1(vc); g.uv(currU/du, 1. );
-
-                /*
-                 * Compute the "width" of this facade to get the 
-                 * texture right.
-                 */
-                var uDiff = p[(i + 1) % p.Count];
-                uDiff -=  p[i];
-                var l = uDiff.Length();
-                currU += l;
             }
 
             /*

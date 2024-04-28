@@ -93,7 +93,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         for (int i = 0; i < l; ++i)
         {
             listWalls.Add(p[i]);
-            listWalls.Add(p[(i + 1) % l]);
+            // listWalls.Add(p[(i + 1) % l]);
         }
         
         /*
@@ -124,7 +124,8 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
          */
         var opExtrudePoly = new builtin.tools.ExtrudePoly(listWalls, path, 27, _metersPerTexture, false, false, true)
         {
-            PairedNormals = true
+            PairedNormals = true,
+            TileToTexture = true
         };
         try
         {
