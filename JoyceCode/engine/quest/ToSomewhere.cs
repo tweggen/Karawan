@@ -53,7 +53,7 @@ public class ToSomewhere : engine.world.IOperator
     private static Lazy<engine.joyce.InstanceDesc> _jMeshGoal = new(
         () => InstanceDesc.CreateFromMatMesh(
             new MatMesh(
-                new Material() { EmissiveColor = 0xff888822, AlbedoColor = 0xff0000ff },
+                new Material() { EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff888822) },
                 engine.joyce.mesh.Tools.CreateCubeMesh($"goal mesh", 3f)
             ),
             400f

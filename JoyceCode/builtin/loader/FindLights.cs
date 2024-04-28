@@ -176,8 +176,6 @@ public class FindLights
         I.Get<ObjectRegistry<Material>>().RegisterFactory("builtin.loader.materials.standardlight",
             name => new Material()
             {
-                EmissiveColor = (bool) engine.Props.Get("debug.options.flatshading", false) != true
-                    ? 0x00000000 : 0xccffffcc,
                 EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("standardlight.png"),
                 HasTransparency = true,
                 IsBillboardTransform = true

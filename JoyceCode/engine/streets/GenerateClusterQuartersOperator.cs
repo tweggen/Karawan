@@ -187,8 +187,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.cluster",
             name => new Material()
             {
-                //AlbedoColor = 0xff441144
-                AlbedoColor = 0xff262222
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff262222)
             });
     }
     

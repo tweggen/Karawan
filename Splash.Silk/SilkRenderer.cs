@@ -151,7 +151,14 @@ namespace Splash.Silk
                 if ((cCameraParams.CameraFlags & engine.joyce.components.Camera3.Flags.DisableDepthTest) == 0)
                 {
                     _gl.Enable(EnableCap.DepthTest);
-                    _gl.DepthFunc(DepthFunction.Less);
+                    if ((cCameraParams.CameraFlags & engine.joyce.components.Camera3.Flags.OverwriteSameDepth) == 0)
+                    {
+                        _gl.DepthFunc(DepthFunction.Less);
+                    }
+                    else
+                    {
+                        _gl.DepthFunc(DepthFunction.Lequal);
+                    }
                 }
                 else
                 {

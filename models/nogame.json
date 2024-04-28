@@ -115,7 +115,6 @@
   "textures":
   {
     "atlas-trans.json": [
-      { "uri": "rgba" },
       { "uri": "../models/brands/plentomatic-small.png" },
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },

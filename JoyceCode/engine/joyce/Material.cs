@@ -9,19 +9,21 @@ namespace engine.joyce
 
         public bool IsMergableEqual(Material o)
         {
-            return Flags == o.Flags
+            return (Flags&MaterialFlags.UnmergableFlags) == (o.Flags&MaterialFlags.UnmergableFlags)
                    && AlbedoColor == o.AlbedoColor
                    && EmissiveColor == o.EmissiveColor
                    && EmissiveFactors == o.EmissiveFactors
                    && FragmentShader == o.FragmentShader
                    && VertexShader == o.VertexShader
                    && (Texture == o.Texture
-                       || Texture != null && Texture.IsMergableEqual(o.Texture));
+                       || Texture != null && Texture.IsMergableEqual(o.Texture))
+                   && (EmissiveTexture == o.EmissiveTexture
+                      || EmissiveTexture != null && EmissiveTexture.IsMergableEqual(o.EmissiveTexture));
         }
         
         public int GetMergableHashCode()
         {
-            int h = (int)Flags ^ (int)(AlbedoColor ^ EmissiveColor ^ EmissiveFactors);
+            int h = (int)(Flags&MaterialFlags.UnmergableFlags) ^ (int)(AlbedoColor ^ EmissiveColor ^ EmissiveFactors);
             
             if (null != FragmentShader)
             {
@@ -53,11 +55,23 @@ namespace engine.joyce
 
         [Flags] public enum MaterialFlags
         {
+            /*
+             * If any of the following flags differ, the materials cannot be
+             * merged into the same draw calls. This is because they would change
+             * the parameters of the shaders.
+             */
             AddInterior = 0x00000001,
-            IsBillboardTransform = 0x00000002,
-            IsUnscalable = 0x00000004,
             HasTransparency = 0x00000008,
-            UploadImmediately = 0x00000010
+            UnmergableFlags = 0x00ffffff,
+            
+            /*
+             * Draw calls with different values for any of the following parameters
+             * can be merged into the same draw call, their values do not affect
+             * the shader call.
+             */
+            UploadImmediately = 0x01000000,
+            IsBillboardTransform = 0x02000000,
+            IsUnscalable = 0x04000000
         }
         public MaterialFlags Flags = 0;
         

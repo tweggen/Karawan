@@ -45,7 +45,8 @@ namespace engine.joyce
 
         public bool IsMergableEqual(Texture o)
         {
-            return FilteringMode == o.FilteringMode
+            return o != null 
+                   && FilteringMode == o.FilteringMode
                    && Source == o.Source
                    && Framebuffer == o.Framebuffer;
         }

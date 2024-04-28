@@ -194,9 +194,6 @@ public class MapIconManager : IDisposable
         I.Get<ObjectRegistry<Material>>().RegisterFactory("builtin.map.mapicons",
             (name) => new engine.joyce.Material()
             {
-                AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
-                    ? 0x00000000
-                    : 0xffff00ff,
                 EmissiveTexture = I.Get<TextureCatalogue>().FindTexture(MapIconsTexture),
                 HasTransparency = true,
                 IsUnscalable = true

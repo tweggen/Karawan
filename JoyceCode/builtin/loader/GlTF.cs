@@ -281,7 +281,7 @@ public class GlTF
 
             _readTriangles(_gltfModel.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
             
-            matMesh.Add(new() { AlbedoColor = 0xff888888}, jMesh);
+            matMesh.Add(new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888)}, jMesh);
         }
     }
 

@@ -260,7 +260,7 @@ public class TreeInstanceGenerator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.trees.materials.treeleave",
             (name) => new Material()
             {
-                AlbedoColor = 0xff448822
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff448822)
             });
     }
 }

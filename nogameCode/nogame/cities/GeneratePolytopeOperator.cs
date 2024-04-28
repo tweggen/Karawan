@@ -227,7 +227,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.polytope.materials.cube",
             name => new Material()
             {
-                AlbedoColor = 0xff226666
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff226666),
             });
         _clusterDesc = clusterDesc;
         _myKey = strKey;

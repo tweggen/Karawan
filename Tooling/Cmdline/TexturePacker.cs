@@ -346,8 +346,8 @@ namespace CmdLine
 
                 ti.Resource = resourceTexture;
                 ti.FullPath = "rgba";
-                ti.Width = 512;
-                ti.Height = 512;
+                ti.Width = 64;
+                ti.Height = 64;
 
                 SourceTextures.Add(ti);
 
@@ -529,6 +529,10 @@ namespace CmdLine
          * The texture is first treated as 2x2 pixels.
          * Then, the pixels are filled according to the numeric ABGB numerical
          * values, like ((y>>1)<<8) | (x>>1)).
+         * 
+         * x == gg aaa0
+         * y == ab bbg0
+         * 
          */
         private SKImage CreateRGBA16Image()
         {
@@ -548,13 +552,13 @@ namespace CmdLine
                     for (uint x = 0; x < 32; x++)
                     {
                         uint a = ((y & 0x10u) != 0) ? 0xffu : 0x88u;
-                        uint r = (y & 0x0e) << 4;
-                        r |= r >> 4;
+                        uint b = (y & 0x0e) << 4;
+                        b |= b >> 4;
                         uint g = ((y & 0x1)<<7) | ((x&0x18u)<<2);
                         g |= g >> 4;
-                        uint b = (x & 0x07) << 5;
-                        b |= b >> 4;
-                        paint.Color = (a << 24) | (r << 16) | (g << 8) | (b);
+                        uint r = (x & 0x07) << 5;
+                        r |= r >> 4;
+                        paint.Color = (a << 24) | (b << 16) | (g << 8) | r;
                         skiaSurface.Canvas.DrawRect(2 * x, 2 * y, 2, 2, paint);
                     }
                 }

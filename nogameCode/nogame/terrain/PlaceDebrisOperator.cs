@@ -103,7 +103,7 @@ public class PlaceDebrisOperator : IFragmentOperator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.terrain.debris.materials.debris",
             name => new engine.joyce.Material()
             {
-                AlbedoColor = 0xffaa6688
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xffaa6688)
             });
     }
     

@@ -67,6 +67,54 @@ public class TextureCatalogue
             _dictTextures[textureTag] = tae;
         }
     }
+
+
+    public Texture FindColorTexture(uint color)
+    {
+        uint r = ((color      ) & 0xff);
+        uint g = ((color >>  8) & 0xff);
+        uint b = ((color >> 16) & 0xff);
+        uint a = (((color >> 24) & 0xff) > 0xcc) ? 0xffu : 0x00u;
+
+        uint y = (a >> 2) & 0x20 | (b >> 3) & 0x1c | (g >> 6) & 0x02;
+        uint x = (g >> 1) & 0x30 | (r >> 4) & 0x0e;
+        
+        /*
+         * We return uv between the middle of the (x,y) pixel and the middle of
+         * the (x+1, y+1) pixel.
+         *
+         * We know the texture resolution is 64 pixel.
+         */
+        Vector2 uvColorOffset = (new Vector2(x, y) + 0.5f * Vector2.One) / 64f;
+        Vector2 uvColorScale = 1f / 64f * Vector2.One;
+        
+        /*
+         * Now we need to resolve the position of the RGBA texture and combine
+         * it with the uv value we computed for the color. 
+         */
+        
+        TextureAtlasEntry tae;
+        lock (_lo)
+        {
+            if (!_dictTextures.TryGetValue("rgba", out tae))
+            {
+                ErrorThrow<InvalidDataException>($"No rgba texture found although it was requested.");
+                return null;
+            }
+        }
+
+        Texture jTexture;
+        jTexture = new Texture(tae.TextureAtlas.AtlasTag)
+        {
+            UVOffset = tae.UVOffset + (uvColorOffset*tae.UVScale),
+            UVScale = tae.UVScale * uvColorScale,
+            Width = 2,
+            Height = 2
+        };
+
+        return jTexture;
+    }
+    
     
     /**
      * Look up a texture for the given texture tag.

@@ -820,9 +820,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.street",
             (name) => new Material()
             {
-                AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
-                    ? 0x00000000
-                    : 0xff888888,
                 Texture = I.Get<TextureCatalogue>().FindTexture("streets1to4.png")
             });
     }

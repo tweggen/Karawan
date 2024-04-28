@@ -318,7 +318,9 @@ public class Module : AModule, IInputPart
             cCamMap.FarFrustum = 1000f;
             cCamMap.Scale = 2f / engine.world.MetaGen.MaxHeight;
             cCamMap.CameraMask = MapCameraMask;
-            cCamMap.CameraFlags = engine.joyce.components.Camera3.Flags.PreloadOnly;
+            cCamMap.CameraFlags =
+                engine.joyce.components.Camera3.Flags.PreloadOnly
+                | engine.joyce.components.Camera3.Flags.OverwriteSameDepth;
             _eCamMap.Set(cCamMap);
             /*
              * Let the camera be well over every object

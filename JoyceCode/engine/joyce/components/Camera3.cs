@@ -13,7 +13,8 @@ public struct Camera3
         DontRenderInstances = 0x00000010,
         RenderMapIcons = 0x00000020,
         DisableDepthTest = 0x00000040,
-        EnableFog = 0x00000080
+        EnableFog = 0x00000080,
+        OverwriteSameDepth = 0x00000100
     };
 
     public float Angle = 60f;

@@ -129,7 +129,6 @@ public class Object : IDisposable
             }
             else
             {
-#if DEBUG
                 {
                     BepuPhysics.BodyHandle bh = new(IntHandle);
                     BodyReference prefBody = Engine.Simulation.Bodies.GetBodyReference(bh);
@@ -139,7 +138,6 @@ public class Object : IDisposable
                             $"Rejecting to remove body {IntHandle} from entity {Entity}");
                     }
                 }
-#endif              
                 _doRemoveContactListenerNoLock();
 
                 ref var location = ref Engine.Simulation.Bodies.HandleToLocation[IntHandle];

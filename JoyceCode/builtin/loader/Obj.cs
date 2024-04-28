@@ -101,13 +101,11 @@ public class Obj
                 /*
                  * Self-lighting engine.
                  */
-                jMaterial.AlbedoColor = 0x00000000;
-                jMaterial.EmissiveColor =
+                jMaterial.EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(
                     ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
                     | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
                     | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
-                    | 0xff000000;
-                jMaterial.HasTransparency = true;
+                    | 0xff000000);
                 jMaterial.Name = "thrust";
             }
             else if (_isStandardLightMaterialName(loadedMaterial.Name))
@@ -115,13 +113,11 @@ public class Obj
                 /*
                  * Self-lighting engine.
                  */
-                jMaterial.AlbedoColor = 0x00000000;
-                jMaterial.EmissiveColor =
+                jMaterial.EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(
                     ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
                     | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
                     | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
-                    | 0xff000000;
-                jMaterial.HasTransparency = true;
+                    | 0xff000000);
                 jMaterial.Name = "standardlight";
             }
             else if (primarycolor.Length != 0 && _isPrimaryColorMaterialName(loadedMaterial.Name))
@@ -129,14 +125,12 @@ public class Obj
                 /*
                  * Self-lighting engine.
                  */
-                jMaterial.AlbedoColor =
+                jMaterial.Texture = I.Get<TextureCatalogue>().FindColorTexture(
                     ((uint)syscol.B)
                     | (((uint)syscol.G) << 8)
                     | (((uint)syscol.R) << 16)
                     | 0xff000000
-                    ;
-                //jMaterial.EmissiveColor = 0x00000000;
-                //jMaterial.HasTransparency = false;
+                );
                 jMaterial.Name = "primarycolor";
             }
             else
@@ -144,11 +138,11 @@ public class Obj
                 /*
                  * Standard case
                  */
-                jMaterial.AlbedoColor =
+                jMaterial.Texture = I.Get<TextureCatalogue>().FindColorTexture(
                     ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
                     | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
                     | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
-                    | 0xff000000;
+                    | 0xff000000);
                 jMaterial.Name = loadedMaterial.Name;
             }
 

@@ -522,9 +522,6 @@ public class Fragment : IDisposable
             (name) => new Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("gridlines1.png"),
-                AlbedoColor = (bool)engine.Props.Get("debug.options.flatshading", false) != true
-                    ? 0x00000000
-                    : 0xff002222
             });
     }
 
