@@ -38,7 +38,7 @@ public class MapIconManager : IDisposable
     public int MapIconsVert { get; set; } = 4;
     public string MapIconsTexture { get; set; } = "mapicons.png";
 
-    public Vector2 MapIconSize { get; set; } = new(0.2f, 0.2f);
+    public Vector2 MapIconSize { get; set; } = new(0.15f, 0.15f);
     
 
     private void _unloadInstanceDesc(engine.world.components.MapIcon.IconCode mapIcon, Resource<InstanceDesc> instanceDescEntry)
