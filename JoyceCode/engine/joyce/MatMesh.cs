@@ -77,7 +77,7 @@ public class MatMesh
             if (list.Count < 1) continue;
 
             Mesh mergedMesh = Mesh.CreateFrom(list);
-            Trace($"merged mesh {mergedMesh.Name} with {mergedMesh.Vertices.Count} vertices");
+            // Trace($"merged mesh {mergedMesh.Name} with {mergedMesh.Vertices.Count} vertices");
             List<Mesh> lm = new();
             lm.Add(mergedMesh);
             tm.Tree[kvp.Key] = lm;

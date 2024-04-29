@@ -37,6 +37,8 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     private static float _storyHeight = 3f;
     private static float _metersPerTexture = 3f * _storiesPerTexture;
 
+    public bool TraceHouses { get; set; } = false; 
+    
     public static HashSet<Vector2> SetDebugBuildings = new()
     {
         // new(-348f, -495f), // HPUCK
@@ -150,7 +152,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             }
 
             v3Center /= l;
-            Trace($"f {worldFragment.IdxFragment} b {p[0]+worldFragment.Position} c {v3Center+worldFragment.Position} h {h0}: {nUp} u, {nDown} d.");
+            if (TraceHouses) Trace($"f {worldFragment.IdxFragment} b {p[0]+worldFragment.Position} c {v3Center+worldFragment.Position} h {h0}: {nUp} u, {nDown} d.");
             _breakOnDebugBuilding((p[0] + worldFragment.Position));
         }
         
@@ -417,7 +419,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             }
         }
         
-        Trace($"frag {worldFragment.Position} aabb {worldFragment.AABB}");
+        if (TraceHouses) Trace($"frag {worldFragment.Position} aabb {worldFragment.AABB}");
         
         // TXWTODO: I'd love to have a better thing than this.
         List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
@@ -475,12 +477,12 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     haveDebugBuilding |= isDebugBuilding;
                     if (isDebugBuilding)
                     {
-                        Trace($"This is the debug building p0 = {orgPoints[0]+_clusterDesc.Pos} c = {orgCenter+_clusterDesc.Pos}");
+                        if (TraceHouses) Trace($"This is the debug building p0 = {orgPoints[0]+_clusterDesc.Pos} c = {orgCenter+_clusterDesc.Pos}");
                     }
                     if (!isFirst)
                     {
                         isFirst = true;
-                        Trace($"First run with building p0 {orgPoints[0]+_clusterDesc.Pos}");
+                        if (TraceHouses) Trace($"First run with building p0 {orgPoints[0]+_clusterDesc.Pos}");
                     }
                         
                     var fragPoints = new List<Vector3>();
@@ -565,22 +567,19 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse.png"),
-                // AddInterior = true,
-                HasTransparency = true,
+                AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win2",
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse2.png"),
-                //AddInterior = true,
-                HasTransparency = true,
+                AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win3",
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse3.png"),
-                //AddInterior = true,
-                HasTransparency = true,
+                AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.neon",
             (name) => new engine.joyce.Material()
