@@ -274,6 +274,7 @@ public class Mesh : IComparable<Mesh>
         var arrVertices = new Vector3[nTotalVertices];
         var arrIndices = new uint[nTotalIndices];
         var arrUVs = new Vector2[nTotalVertices];
+        var arrNormals = new Vector3[nTotalVertices];
 
         int off = 0;
         int offIndices = 0;
@@ -295,6 +296,7 @@ public class Mesh : IComparable<Mesh>
                 {
                     arrVertices[off + i] = otherMesh.Vertices[i];
                     arrUVs[off + i] = otherMesh.UVs[i];
+                    arrNormals[off + i] = otherMesh.Normals[i];
                 }
             }
             else
@@ -302,6 +304,7 @@ public class Mesh : IComparable<Mesh>
                 for (int i = 0; i < l; ++i)
                 {
                     arrVertices[off + i] = Vector3.Transform(otherMesh.Vertices[i], mme.Transform);
+                    arrNormals[off+i] = Vector3.TransformNormal(otherMesh.Normals[i], mme.Transform);
                     arrUVs[off + i] = otherMesh.UVs[i];
                 }
             }
@@ -319,7 +322,7 @@ public class Mesh : IComparable<Mesh>
          * Finally create a new mesh consisting of the arrays
          * we have created.
          */
-        return new Mesh(lastName, arrVertices, arrIndices, arrUVs);
+        return new Mesh(lastName, arrVertices, arrIndices, arrUVs) { Normals = arrNormals };
     }
 
 
