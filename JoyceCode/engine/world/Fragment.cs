@@ -450,6 +450,7 @@ public class Fragment : IDisposable
             });
         });
 
+        // TXWTODO: Race condition!!!
         _meshesInFragment += jInstanceDesc.Meshes.Count;
         // Trace($"Fragment {_myKey} now has {_meshesInFragment} static meshes.");
     }

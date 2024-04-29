@@ -36,7 +36,17 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     public static HashSet<Vector2> SetDebugBuildings = new()
     {
         // new(-348f, -495f), // HPUCK
-        new(98f,-469f )     // DELL notebook
+        // DELL notebook
+        new(98f,-469f ),
+        // DELL: for building with <347.42877, 39.856236, -225.3> center <359.07877, 39.856236, -192.325> :
+        new Vector2 (-348f, -226f),
+        // DELL: Trace: for building with <401.22876, 39.856236, 183.2> center <391.82877, 39.856236, 239.63335> :
+        new Vector2( 401f,183f),
+        // DELL: <343.22876, 39.856236, 275.2> center <342.75375, 39.856236, 304.575> : 0 up, 4 down.
+        new Vector2(343f, 275f),
+        // DELL: building with <91.62877, 39.856236, 189.1> center <74.27877, 39.856236, 223.07501> : 0 up, 4 down.
+        new Vector2(91f, 189f)
+            
     };
 
     public string FragmentOperatorGetPath()
@@ -136,7 +146,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             }
 
             v3Center /= l;
-            Trace($"for building with {p[0]+worldFragment.Position} center {v3Center+worldFragment.Position} : {nUp} up, {nDown} down.");
+            Trace($"f {worldFragment.IdxFragment} b {p[0]+worldFragment.Position} c {v3Center+worldFragment.Position} h {h0}: {nUp} u, {nDown} d.");
             _breakOnDebugBuilding((p[0] + worldFragment.Position));
         }
         
@@ -392,6 +402,8 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 return;
             }
         }
+        
+        Trace($"frag {worldFragment.Position} aabb {worldFragment.AABB}");
 
         // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
         _rnd.Clear();
@@ -409,6 +421,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
          * Iterate through all quarters in the clusters and generate lots and houses.
          */
         var quarterStore = _clusterDesc.QuarterStore();
+        bool isFirst = false;
 
         foreach (var quarter in quarterStore.GetQuarters())
         {
@@ -447,7 +460,17 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     }
                     
                     var orgPoints = building.GetPoints();
-                    haveDebugBuilding |= _isDebugBuilding(orgPoints[0] + _clusterDesc.Pos);
+                    bool isDebugBuilding = _isDebugBuilding(orgPoints[0] + _clusterDesc.Pos);
+                    haveDebugBuilding |= isDebugBuilding;
+                    if (isDebugBuilding)
+                    {
+                        Trace($"This is the debug building p0 = {orgPoints[0]+_clusterDesc.Pos} c = {orgCenter+_clusterDesc.Pos}");
+                    }
+                    if (!isFirst)
+                    {
+                        isFirst = true;
+                        Trace($"First run with building p0 {orgPoints[0]+_clusterDesc.Pos}");
+                    }
                         
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
@@ -531,19 +554,22 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse.png"),
-                AddInterior = true,
+                // AddInterior = true,
+                HasTransparency = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win2",
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse2.png"),
-                AddInterior = true,
+                //AddInterior = true,
+                HasTransparency = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win3",
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse3.png"),
-                AddInterior = true,
+                //AddInterior = true,
+                HasTransparency = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.neon",
             (name) => new engine.joyce.Material()
