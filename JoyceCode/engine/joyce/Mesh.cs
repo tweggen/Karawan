@@ -255,7 +255,6 @@ public class Mesh : IComparable<Mesh>
 
     public static Mesh CreateFrom(IList<MergeMeshEntry> others)
     {
-        // TXWTODO: We ignore normals right now because we only create them after adding everything.
         int nTotalVertices = 0;
         int nTotalIndices = 0;
         foreach (var mme in others)
@@ -304,7 +303,7 @@ public class Mesh : IComparable<Mesh>
                 for (int i = 0; i < l; ++i)
                 {
                     arrVertices[off + i] = Vector3.Transform(otherMesh.Vertices[i], mme.Transform);
-                    arrNormals[off+i] = Vector3.TransformNormal(otherMesh.Normals[i], mme.Transform);
+                    arrNormals[off + i] = Vector3.TransformNormal(otherMesh.Normals[i], mme.Transform);
                     arrUVs[off + i] = otherMesh.UVs[i];
                 }
             }
