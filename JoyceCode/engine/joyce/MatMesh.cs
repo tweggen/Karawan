@@ -73,7 +73,7 @@ public class MatMesh
         foreach (var kvp in sm.Tree)
         {
             var list = kvp.Value;
-            // TXWTODO: Why not 1?
+
             if (list.Count < 1) continue;
 
             Mesh mergedMesh = Mesh.CreateFrom(list);
