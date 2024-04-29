@@ -370,6 +370,7 @@ public class SilkThreeD : IThreeD
                 GLEnum.UnsignedShort,
                 (void*)0,
                 (uint)nMatrices);
+            CheckError(gl,"draw elements instanced");
         }
         else
         {
@@ -755,6 +756,11 @@ public class SilkThreeD : IThreeD
         _gl.Enable(EnableCap.DepthTest);
         _gl.Disable(EnableCap.ScissorTest);
         _gl.Disable(EnableCap.StencilTest);
+
+        _gl.GetInteger(GetPName.MaxElementsVertices, out var maxVertices);
+        _gl.GetInteger(GetPName.MaxElementsIndices, out var maxIndices);
+        _gl.GetInteger(GetPName.MaxElementIndex, out var maxElementIndex);
+        Trace($"On this platform GL_MAX_ELEMENTS_VERTICES == {maxVertices}, GL_MAX_ELEMENTS_INDICES == {maxIndices}, GL_MAX_ELEMENT_INDEX = {maxElementIndex}");
     }
 
     public GL GetGL()
