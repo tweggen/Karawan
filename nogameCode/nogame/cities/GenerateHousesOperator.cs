@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Numerics;
 using System.Threading.Tasks;
+using builtin.tools.Lindenmayer;
 using engine;
 using engine.elevation;
 using engine.joyce;
@@ -19,8 +20,13 @@ namespace nogame.cities;
  */
 public class GenerateHousesOperator : engine.world.IFragmentOperator
 {
+    private class Context
+    {
+        public engine.world.Fragment Fragment;
+        public builtin.tools.RandomSource Rnd;
+    }
+    
     private engine.world.ClusterDesc _clusterDesc;
-    private builtin.tools.RandomSource _rnd;
     private string _myKey;
 
     /*
@@ -85,13 +91,14 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      *     The number of meters per texture.
      */
     private void _createClassicHouseSubGeo(
-        in engine.world.Fragment worldFragment,
+        in Context ctx,
         in engine.joyce.MatMesh matmesh,
         in IList<Vector3> p,
         float h0, float mpt,
         in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
     )
     {
+        var worldFragment = ctx.Fragment;
         if (p.Count < 1) return;
         uint matIdx = (((uint)(p[0].X + p[0].Z * 123.0)) % 3) + 1;
         engine.joyce.Material materialHouse = I.Get<ObjectRegistry<Material>>().Get($"nogame.cities.houses.materials.houses.win{matIdx}");
@@ -190,11 +197,12 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * Look for a suitably high wall and place an advert on it.
      */
     private void _createLargeAdvertsSubGeo(
-        in engine.world.Fragment worldFragment,
+        in Context ctx,
         in engine.joyce.MatMesh matmesh,
         in IList<Vector3> fragPoints,
         float height)
     {
+        var worldFragment = ctx.Fragment;
         /*
          * Let's assume the ads are 10m in height
          */
@@ -226,7 +234,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             return;
         }
 
-        if (_rnd.GetFloat() < 0.7f)
+        if (ctx.Rnd.GetFloat() < 0.7f)
         {
             return;
         }
@@ -242,7 +250,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             mesh,
             fragPoints[idx]
             + Single.Min(15f, height - 2f - 60f) * vUnitUp
-            + _rnd.GetFloat() * (diff.Length() - 15f) * vUnitSide * _storyHeight
+            + ctx.Rnd.GetFloat() * (diff.Length() - 15f) * vUnitSide * _storyHeight
             + vUnitOut,
             vUnitSide * 15f,
             vUnitUp * 60f,
@@ -251,7 +259,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             Vector2.UnitX
         );
 
-        int adIdx = (int)(1f + _rnd.GetFloat() * 1.99f);
+        int adIdx = (int)(1f + ctx.Rnd.GetFloat() * 1.99f);
 
         matmesh.Add(I.Get<ObjectRegistry<Material>>().Get($"nogame.cities.houses.material.ad{adIdx}"), mesh);
 
@@ -259,11 +267,12 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
 
     private void _createShopFrontsSubGeo(
-        in engine.world.Fragment worldFragment,
+        in Context ctx,
         in Vector3 vOffset,
         in engine.joyce.MatMesh matmesh,
         in engine.streets.ShopFront shopFront)
     {
+        var worldFragment = ctx.Fragment;
         engine.joyce.Material materialShopFront = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.material.ad1");
         engine.joyce.Mesh meshShopFront = new($"{worldFragment.GetId()}-shopfrontsubgeo");
 
@@ -282,25 +291,26 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     
 
     private void _createNeonSignSubGeo(
-        in engine.world.Fragment worldFragment,
+        in Context ctx,
         in engine.joyce.MatMesh matmesh,
         in Vector3 p0, in Vector3 pe,
         float h)
     {
+        var worldFragment = ctx.Fragment;
         engine.joyce.Material materialNeon = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.materials.neon");
         engine.joyce.Mesh meshNeon = new($"{worldFragment.GetId()}-neonsignsubgeo");
 
         /*
          * Number of letters.
          */
-        int nLetters = 2 + (int)(_rnd.GetFloat() * 8.0);
+        int nLetters = 2 + (int)(ctx.Rnd.GetFloat() * 8.0);
 
         float letterHeight = 1.5f;
 
         /*
          * height of first letter.
          */
-        float h0 = _rnd.GetFloat() * (h - nLetters * letterHeight - 3.0f);
+        float h0 = ctx.Rnd.GetFloat() * (h - nLetters * letterHeight - 3.0f);
         float h1 = h0 + nLetters * letterHeight;
 
         /*
@@ -328,7 +338,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * Create large-scale neon-lights for the given house geometry.
      */
     private void _createNeonSignsSubGeo(
-        in engine.world.Fragment worldFragment,
+        in Context ctx,
         in engine.joyce.MatMesh matmesh,
         in IList<Vector3> p,
         float h)
@@ -362,7 +372,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             pe *= -letterWidth;
 
             _createNeonSignSubGeo(
-                worldFragment, matmesh,
+                ctx, matmesh,
                 p0, pe, h);
         }
     }
@@ -371,6 +381,13 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, engine.world.FragmentVisibility visib) => new (async () =>
     {
+        Context ctx = new()
+        {
+            Rnd = new builtin.tools.RandomSource(_myKey),
+            Fragment = worldFragment
+        };
+        
+
         if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
         {
             return;
@@ -401,10 +418,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         }
         
         Trace($"frag {worldFragment.Position} aabb {worldFragment.AABB}");
-
-        // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
-        _rnd.Clear();
-
+        
         // TXWTODO: I'd love to have a better thing than this.
         List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
 
@@ -485,12 +499,12 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     try
                     {
                         _createClassicHouseSubGeo(
-                            worldFragment, matmesh,
+                            ctx, matmesh,
                             fragPoints, height, _metersPerTexture,
                             listCreatePhysics);
 
                         _createLargeAdvertsSubGeo(
-                            worldFragment, matmesh, fragPoints, height); //15434
+                            ctx, matmesh, fragPoints, height); //15434
                     }
                     catch (Exception e)
                     {
@@ -499,7 +513,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
                     try
                     {
-                        _createNeonSignsSubGeo(worldFragment, matmesh,
+                        _createNeonSignsSubGeo(ctx, matmesh,
                             fragPoints, height);
                     }
                     catch (Exception e)
@@ -511,7 +525,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         try
                         {
-                            _createShopFrontsSubGeo(worldFragment, vC, matmesh, shopFront);
+                            _createShopFrontsSubGeo(ctx, vC, matmesh, shopFront);
                         }
                         catch (Exception e)
                         {
@@ -599,7 +613,6 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new builtin.tools.RandomSource(strKey);
 
         _registerMaterials();
     }
