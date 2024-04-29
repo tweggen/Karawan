@@ -178,7 +178,7 @@ internal class WASDPhysics : AModule, IInputPart
 
             if (upMotion != 0f)
             {
-                vTotalImpulse += LinearThrust * vUp * upMotion / 256f;
+                vTotalImpulse += 2f * LinearThrust * vUp * upMotion / 256f;
             }
 
             /*

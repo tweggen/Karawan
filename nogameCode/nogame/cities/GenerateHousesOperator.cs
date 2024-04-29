@@ -33,6 +33,11 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     private static float _storyHeight = 3f;
     private static float _metersPerTexture = 3f * _storiesPerTexture;
 
+    public static HashSet<Vector2> SetDebugBuildings = new()
+    {
+        // new(-348f, -495f), // HPUCK
+        new(98f,-469f )     // DELL notebook
+    };
 
     public string FragmentOperatorGetPath()
     {
@@ -43,6 +48,22 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     public void FragmentOperatorGetAABB(out engine.geom.AABB aabb)
     {
         _clusterDesc.GetAABB(out aabb);
+    }
+    
+    private bool _isDebugBuilding(in Vector3 p0)
+    {  
+        bool isDebugBuilding = SetDebugBuildings.Contains(new Vector2(Single.Floor(p0.X), Single.Floor(p0.Z)));
+        return isDebugBuilding;
+    }
+
+
+    private void _breakOnDebugBuilding(in Vector3 p0)
+    {
+        bool isDebugBuilding = _isDebugBuilding(p0);
+        if (isDebugBuilding)
+        {
+            int a = 1;
+        }
     }
 
 
@@ -116,12 +137,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
             v3Center /= l;
             Trace($"for building with {p[0]+worldFragment.Position} center {v3Center+worldFragment.Position} : {nUp} up, {nDown} down.");
-            var p0 = p[0] + worldFragment.Position;
-            // GenerateHousesOperator:_createClassicHouseSubGeo: Trace: for building with <98,928764. 39,856236. -468,8> center <111,578766. 39,856236. -434,1> : 0 up, 4 down.
-            if (Single.Floor(p0.X) == 98f && Single.Floor(p0.Z) == -469f)
-            {
-                int a = 1;
-            }
+            _breakOnDebugBuilding((p[0] + worldFragment.Position));
         }
         
         /*
@@ -136,13 +152,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         {
             opExtrudePoly.BuildGeom(meshHouse);
             {
-                var p0 = p[0] + worldFragment.Position;
-
-                // GenerateHousesOperator:_createClassicHouseSubGeo: Trace: for building with <98,928764. 39,856236. -468,8> center <111,578766. 39,856236. -434,1> : 0 up, 4 down.
-                if (Single.Floor(p0.X) == 98f && Single.Floor(p0.Z) == -469f)
-                {
-                    int a = 1;
-                }
+                _breakOnDebugBuilding(p[0]+worldFragment.Position);
             }
             matmesh.Add(materialHouse, meshHouse);
         }
@@ -393,6 +403,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
          * This is where we create our houses in.
          */
         engine.joyce.MatMesh matmesh = new();
+        bool haveDebugBuilding = false;
 
         /*
          * Iterate through all quarters in the clusters and generate lots and houses.
@@ -406,29 +417,6 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 Trace($"Skipping invalid quarter.");
                 continue;
             }
-
-            /*
-             * Place on house in each quarter in the middle.
-             */
-            float xmiddle = 0.0f;
-            float ymiddle = 0.0f;
-            int n = 0;
-            var delims = quarter.GetDelims();
-            foreach (var delim in delims)
-            {
-                xmiddle += delim.StreetPoint.Pos.X;
-                ymiddle += delim.StreetPoint.Pos.Y;
-                ++n;
-            }
-
-            // trace( 'middle: $xmiddle, $ymiddle');
-            if (3 > n)
-            {
-                continue;
-            }
-
-            xmiddle /= n;
-            ymiddle /= n;
 
             /*
              * Compute some properties of this quarter.
@@ -446,20 +434,21 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 foreach (var building in estate.GetBuildings())
                 {
                     var orgCenter = building.GetCenter();
+
                     var center = orgCenter;
                     center.X += cx;
                     center.Z += cz;
                     if (!worldFragment.IsInsideLocal(center.X, center.Z))
                     {
-                        // trace( 'No building ${orgCenter.x}, ${orgCenter.z} (abs ${center.x}, ${center.z})' );
                         continue;
                     }
                     else
                     {
-                        // trace( 'Building at ${orgCenter.x}, ${orgCenter.z} (abs ${center.x}, ${center.z})' );
                     }
-
+                    
                     var orgPoints = building.GetPoints();
+                    haveDebugBuilding |= _isDebugBuilding(orgPoints[0] + _clusterDesc.Pos);
+                        
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
                     {
@@ -521,10 +510,13 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 
         try
         {
-            // TXWTODO: Merge this, this is inefficient.
+            if (haveDebugBuilding)
+            {
+                int a = 1;
+            }
             var mmmerged = MatMesh.CreateMerged(matmesh);
             var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, 1500f);
-            worldFragment.AddStaticInstance("nogame.cities.houses", id, listCreatePhysics);
+            worldFragment.AddStaticInstance($"nogame.cities.houses {worldFragment.Position}", id, listCreatePhysics);
         }
         catch (Exception e)
         {

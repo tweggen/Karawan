@@ -86,23 +86,19 @@ public class Building
             if (!_haveCenter)
             {
                 _haveCenter = true;
-                _center = new Vector3(0f, 0f, 0f);
+                _center = Vector3.Zero;
                 foreach (var p in _points)
                 {
-                    _center.X += p.X;
-                    _center.Y += p.Y;
-                    _center.Z += p.Z;
+                    _center += p;
                 }
 
                 if (_points.Count > 0)
                 {
-                    _center.X = _center.X / _points.Count;
-                    _center.Y = _center.Y / _points.Count;
-                    _center.Z = _center.Z / _points.Count;
+                    _center /= _points.Count;
                 }
             }
-        }
 
-        return _center;
+            return _center;
+        }
     }
 }
