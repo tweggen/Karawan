@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using engine.geom;
 using engine.joyce;
@@ -260,7 +261,13 @@ public class Mesh : IComparable<Mesh>
         foreach (var mme in others)
         {
             var otherMesh = mme.Mesh;
+            if (otherMesh.Normals == null)
+            {
+                otherMesh.GenerateCCWNormals();
+            }
             nTotalVertices += otherMesh.Vertices.Count;
+            Debug.Assert(otherMesh.Vertices.Count == otherMesh.UVs.Count);
+            Debug.Assert(otherMesh.Normals == null || otherMesh.Normals.Count == otherMesh.UVs.Count);
             nTotalIndices += otherMesh.Indices.Count;
         }
 
@@ -351,6 +358,7 @@ public class Mesh : IComparable<Mesh>
         Vertices = new List<Vector3>();
         Indices = new List<uint>();
         UVs = new List<Vector2>();
+        Normals = null;
     }
 
     public static Mesh CreateListInstance(string name)

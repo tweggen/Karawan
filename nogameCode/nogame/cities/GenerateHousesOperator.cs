@@ -19,8 +19,6 @@ namespace nogame.cities;
  */
 public class GenerateHousesOperator : engine.world.IFragmentOperator
 {
-    static private object _lo = new();
-
     private engine.world.ClusterDesc _clusterDesc;
     private builtin.tools.RandomSource _rnd;
     private string _myKey;
@@ -46,7 +44,6 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         new Vector2(343f, 275f),
         // DELL: building with <91.62877, 39.856236, 189.1> center <74.27877, 39.856236, 223.07501> : 0 up, 4 down.
         new Vector2(91f, 189f)
-            
     };
 
     public string FragmentOperatorGetPath()

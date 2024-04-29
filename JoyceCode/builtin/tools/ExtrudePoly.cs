@@ -29,7 +29,13 @@ namespace builtin.tools
             in engine.joyce.Mesh g)
         {
 
-            if (null == g.Normals) g.Normals = new List<Vector3>();
+            if (PairedNormals)
+            {
+                if (null == g.Normals)
+                {
+                    g.Normals = new List<Vector3>();
+                }
+            }
             var vh = _path[0];
             
             /*
