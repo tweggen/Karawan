@@ -344,7 +344,6 @@ public class SilkThreeD : IThreeD
          * We need a combined view and projection matrix
          */
 
-
         var jMesh = skMeshEntry.Params.JMesh;
         // Matrix4x4 matTotal = mvp * Matrix4x4.Transpose(spanMatrices[0]);
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
@@ -407,6 +406,7 @@ public class SilkThreeD : IThreeD
         }
 
     }   
+    
 
     public void UploadMeshEntry(in AMeshEntry aMeshEntry)
     {
@@ -423,6 +423,7 @@ public class SilkThreeD : IThreeD
         }
     }
 
+    
     /**
      * Create a silk mesh entry for the given mesh. That is converting
      * engine representation to silk representation, but not yet uploading it.
@@ -432,12 +433,14 @@ public class SilkThreeD : IThreeD
         var skMeshEntry = new SkMeshEntry(_getGL(), aMeshParams);
         return skMeshEntry;
     }
+    
 
     public void FillMeshEntry(in AMeshEntry aMeshEntry)
     {
         MeshGenerator.FillSilkMesh(aMeshEntry as SkMeshEntry);
     }
 
+    
     public void UnloadMeshEntry(in AMeshEntry aMeshEntry)
     {
         SkMeshEntry skMeshEntry = (SkMeshEntry)aMeshEntry;
@@ -453,6 +456,7 @@ public class SilkThreeD : IThreeD
         });
     }
 
+    
     public AMaterialEntry GetDefaultMaterial()
     {
         lock (_lo)

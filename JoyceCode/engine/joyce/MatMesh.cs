@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using static engine.Logger;
 
 namespace engine.joyce;
 
@@ -72,9 +73,11 @@ public class MatMesh
         foreach (var kvp in sm.Tree)
         {
             var list = kvp.Value;
-            if (list.Count <= 1) continue;
+            // TXWTODO: Why not 1?
+            if (list.Count < 1) continue;
 
             Mesh mergedMesh = Mesh.CreateFrom(list);
+            Trace($"merged mesh {mergedMesh.Name} with {mergedMesh.Vertices.Count} vertices");
             List<Mesh> lm = new();
             lm.Add(mergedMesh);
             tm.Tree[kvp.Key] = lm;
