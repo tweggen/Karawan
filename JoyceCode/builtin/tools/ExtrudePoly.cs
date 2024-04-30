@@ -264,7 +264,8 @@ namespace builtin.tools
                      */
                     Vector3 vuTangent = p[((j%polyLen) & (~1)) + 1] - p[((j%polyLen) & (~1)) + 0];
                     vuTangent /= vuTangent.Length();
-                    vnPairNormal = Vector3.Cross(vu, vuTangent);
+                    // This is minus cross product because gl operates counterclockwise
+                    vnPairNormal = -Vector3.Cross(vu, vuTangent);
                 }
 
                 /*

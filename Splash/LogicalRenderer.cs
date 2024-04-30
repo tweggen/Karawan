@@ -205,20 +205,6 @@ public class LogicalRenderer
         return null;
     }
     
-
-    public RenderFrame DequeueRenderFrame()
-    {
-        lock (_lo)
-        {
-            if (_renderQueue.Count > 0)
-            {
-                return _renderQueue.Dequeue();
-            }
-        }
-
-        return null;
-    }
-    
     
     public LogicalRenderer()
     {

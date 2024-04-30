@@ -148,7 +148,7 @@ public class FindLights
          */
         foreach (var c in listLights)
         {
-            // _addLightToModel(instanceDesc, c.Center);
+            _addLightToModel(instanceDesc, c.Center);
         }
         
     }

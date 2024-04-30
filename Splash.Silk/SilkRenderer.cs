@@ -202,6 +202,9 @@ namespace Splash.Silk
                 /*
                  * Then draw standard world
                  */
+                _gl.Disable(EnableCap.Blend);
+                _gl.Enable(EnableCap.CullFace);
+
                 renderPart.CameraOutput.RenderStandard(_threeD);
 
 
@@ -213,6 +216,9 @@ namespace Splash.Silk
 
                 renderPart.CameraOutput.RenderTransparent(_threeD);
                 
+                /*
+                 * Revert to defaults.
+                 */
                 _gl.Disable(EnableCap.Blend);
                 _gl.Enable(EnableCap.CullFace);
                 y0Stats += 20;
