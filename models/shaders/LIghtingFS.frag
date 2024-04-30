@@ -165,7 +165,7 @@ void renderInterior(inout vec3 v3CurrNormal, inout vec4 col4Diffuse, inout vec4 
          * We have a wall here and do not need tzo compute the interior.
          */
         col4Diffuse = col4TexDiffuse;
-        col4Emissive = vec4(0.0, 0.0, 0.0, 1.0);
+        col4Emissive = vec4(0.0, 0.0, 0.0, 0.0);
         return;
     }
 
@@ -401,7 +401,8 @@ void main()
     vec4 col4EmissiveTotal = col4TexelEmissive * col4EmissiveFactors + col4Emissive; 
     vec4 col4AmbientTotal = col4Ambient;
 
-    vec4 col4Unfogged =  
+    vec4 col4Unfogged =
+        //vec4(0.3 * col3TotalLight, 0)
         vec4(col4DiffuseTotal.xyz * col3TotalLight, col4DiffuseTotal.w)
         //+ col4DiffuseTotal * vec4(col3TotalLight,0.0)
         + col4EmissiveTotal

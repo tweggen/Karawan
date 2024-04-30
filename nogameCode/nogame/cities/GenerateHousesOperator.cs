@@ -567,19 +567,19 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse.png"),
-                AddInterior = true,
+                // AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win2",
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse2.png"),
-                AddInterior = true,
+                // AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.houses.win3",
             (name) => new engine.joyce.Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("buildingalphadiffuse3.png"),
-                AddInterior = true,
+                // AddInterior = true,
             });
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.materials.neon",
             (name) => new engine.joyce.Material()
