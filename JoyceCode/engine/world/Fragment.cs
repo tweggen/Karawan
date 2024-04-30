@@ -428,7 +428,7 @@ public class Fragment : IDisposable
             /*
              * Schedule execution of entity setup in the logical thread.
              */
-            Engine.QueueEntitySetupAction(staticName, (DefaultEcs.Entity entity) =>
+            Engine.QueueEntitySetupAction(staticName, entity =>
             {
                 entity.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                 engine.joyce.components.Transform3 cTransform3 = new(
@@ -450,8 +450,10 @@ public class Fragment : IDisposable
             });
         });
 
-        // TXWTODO: Race condition!!!
-        _meshesInFragment += jInstanceDesc.Meshes.Count;
+        lock (_lo)
+        {
+            _meshesInFragment += jInstanceDesc.Meshes.Count;
+        }
         // Trace($"Fragment {_myKey} now has {_meshesInFragment} static meshes.");
     }
 

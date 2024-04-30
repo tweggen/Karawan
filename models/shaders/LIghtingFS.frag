@@ -402,11 +402,11 @@ void main()
     vec4 col4AmbientTotal = col4Ambient;
 
     vec4 col4Unfogged =
-        //vec4(0.3 * col3TotalLight, 0)
-        vec4(col4DiffuseTotal.xyz * col3TotalLight, col4DiffuseTotal.w)
+        //vec4(0.1 * col3TotalLight, 0)
+        vec4((col4DiffuseTotal.xyz+col4AmbientTotal.xyz) * col3TotalLight, col4DiffuseTotal.w)
         //+ col4DiffuseTotal * vec4(col3TotalLight,0.0)
         + col4EmissiveTotal
-        + col4AmbientTotal
+        //+ col4AmbientTotal 
         ;
 
     if (fogDistance > 1.0)

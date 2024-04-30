@@ -344,8 +344,6 @@ namespace builtin.tools
              */
             if (_addCeiling)
             {
-                // trace( 'ExtrudePoly.buildGeom(): Adding ceiling.' );
-
                 /*
                  * First, push the vertices.
                  * Then we create triangulation indices and add them.
@@ -358,7 +356,10 @@ namespace builtin.tools
                 }
                 // Why? IDK, was wrong.
                 topPlane.Reverse();
-                builtin.tools.Triangulate.ToMesh(topPlane, PairedNormals?Vector3.Normalize(_path[0]):Vector3.Zero, g);
+                /*
+                 * We hard code the UV to be a bit next to zero to make up for any range problems
+                 */
+                builtin.tools.Triangulate.ToMesh(topPlane, PairedNormals?Vector3.Normalize(_path[0]):Vector3.Zero, Vector2.One/64f, g);
             }
         }
 

@@ -39,7 +39,7 @@ namespace builtin.tools
             }
         }
 #endif
-        static public void ToMesh(in IList<Vector3> inPolyPoints, in Vector3 v3Normal, in engine.joyce.Mesh mesh)
+        static public void ToMesh(in IList<Vector3> inPolyPoints, in Vector3 v3Normal, in Vector2 v2UV, in engine.joyce.Mesh mesh)
         {
             LibTessDotNet.Tess tess = new LibTessDotNet.Tess();
 
@@ -50,8 +50,8 @@ namespace builtin.tools
                 contour[i].Position = new LibTessDotNet.Vec3(
                     inPolyPoints[i].X, inPolyPoints[i].Y, inPolyPoints[i].Z);
             }
-            tess.AddContour(contour, LibTessDotNet.ContourOrientation.Clockwise);
-            tess.Tessellate(LibTessDotNet.WindingRule.EvenOdd, LibTessDotNet.ElementType.Polygons, 3, null);
+            tess.AddContour(contour, LibTessDotNet.ContourOrientation.CounterClockwise);
+            tess.Tessellate(LibTessDotNet.WindingRule.EvenOdd, LibTessDotNet.ElementType.Polygons, 3, null, new LibTessDotNet.Vec3(v3Normal.X, v3Normal.Y, v3Normal.Z));
             int outTriangles = tess.ElementCount;
             uint maxIndex = 0;
             uint ia = (uint)mesh.GetNextVertexIndex();
@@ -63,13 +63,12 @@ namespace builtin.tools
                 if (i0 > maxIndex) maxIndex = i0;
                 if (i1 > maxIndex) maxIndex = i1;
                 if (i2 > maxIndex) maxIndex = i2;
-                // Add reversed to make them CCW.
-                mesh.Idx(ia+i2, ia+i1, ia+i0);
+                mesh.Idx(ia+i0, ia+i1, ia+i2);
             }
             for( int i=0; i<=maxIndex; i++)
             {
                 mesh.p(tess.Vertices[i].Position.X, tess.Vertices[i].Position.Y, tess.Vertices[i].Position.Z);
-                mesh.UV(0f, 0f);
+                mesh.UV(v2UV);
                 if (v3Normal != Vector3.Zero)
                 {
                     mesh.N(v3Normal);
