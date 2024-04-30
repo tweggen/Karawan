@@ -10,35 +10,6 @@ namespace builtin.tools
 
     public class Triangulate
     {
-        //static private LibTessDotNet.Tess _tess = new LibTessDotNet.Tess();
-#if false
-        /*
-         * Triangulate the polygon into a list of triangles, represented by an 3d mesh in xy plane.
-         */
-        static public void ToMesh( in IList<Vector2> inPolyPoints, in engine.joyce.Mesh mesh )
-        {
-            List<Poly2Tri.PolygonPoint> polyPoints = new();
-            foreach(var vector2 in inPolyPoints )
-            {
-                polyPoints.Add(new Poly2Tri.PolygonPoint(vector2.X,vector2.Y));
-            }
-            Poly2Tri.Polygon poly = new(polyPoints);
-            // poly.AddPoints(polyPoints);
-            Poly2Tri.P2T.Triangulate(poly);
-            var trianglePoints = poly.Points;
-            foreach(var dpoint in poly.Points)
-            {
-                mesh.Vertices.Add(new Vector3((float)dpoint.X, (float)dpoint.Y, 0f));
-                mesh.UVs.Add(new Vector2(0f, 0f));
-            }
-            foreach(var dtriangle in poly.Triangles)
-            {
-                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[1]));
-                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[0]));
-                mesh.Indices.Add(trianglePoints.IndexOf(dtriangle.Points[2]));
-            }
-        }
-#endif
         static public void ToMesh(in IList<Vector3> inPolyPoints, in Vector3 v3Normal, in Vector2 v2UV, in engine.joyce.Mesh mesh)
         {
             LibTessDotNet.Tess tess = new LibTessDotNet.Tess();
@@ -76,18 +47,7 @@ namespace builtin.tools
             }
         }
 
-        #if false
-        static public void ToMesh( in IList<Vector2> inPoly2Points, in engine.joyce.Mesh mesh)
-        {
-            List<Vector3> inPolyPoints = new();
-            foreach(var p in inPoly2Points)
-            {
-                inPolyPoints.Add(new Vector3(p.X, p.Y, 0f));
-            }
-            ToMesh(inPolyPoints, mesh);
-        }
-        #endif
-
+        
         static public void ToConvexArrays(in IList<Vector3> inPolyPoints, out IList<IList<Vector3>> outPolygons)
         {
             LibTessDotNet.Tess tess = new LibTessDotNet.Tess();
