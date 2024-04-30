@@ -15,6 +15,12 @@ namespace nogame.characters.tram;
 
 class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
+    private class Context
+    {
+        public builtin.tools.RandomSource Rnd;
+        public engine.world.Fragment Fragment;
+    }
+    
     private static object _classLock = new();
     private static engine.joyce.Material _jMaterialCube;
 
@@ -36,7 +42,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     
  
     private ClusterDesc _clusterDesc;
-    private builtin.tools.RandomSource _rnd;
     private string _myKey;
 
     private bool _trace = false;
@@ -63,6 +68,12 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return;
         }
         
+        var ctx = new Context()
+        {
+            Rnd = new(_myKey),
+            Fragment = worldFragment
+        };
+
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
@@ -88,7 +99,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         }
 
         if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
-        _rnd.Clear();
+        ctx.Rnd.Clear();
 
 
         float propMaxDistance = (float) engine.Props.Get("nogame.characters.tram.maxDistance", 1600f); 
@@ -118,7 +129,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         for (int i = 0; i < nCharacters; i++)
         {
 
-            var idxPoint = (int)(_rnd.GetFloat() * l);
+            var idxPoint = (int)(ctx.Rnd.GetFloat() * l);
             StreetPoint chosenStreetPoint = streetPoints[idxPoint];
             if (!chosenStreetPoint.HasStrokes())
             {
@@ -192,7 +203,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new builtin.tools.RandomSource(strKey);
     }
     
 

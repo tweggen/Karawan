@@ -25,8 +25,11 @@ namespace nogame.cities;
  */
 class GenerateShopsOperator : IClusterOperator
 {
-    private RandomSource _rnd;
-    
+    private class Context
+    {
+        public ClusterDesc ClusterDesc;
+        public RandomSource Rnd;
+    }
 
     /**
      * The map we shall render on
@@ -37,10 +40,11 @@ class GenerateShopsOperator : IClusterOperator
     public bool TraceCreate { get; set; } = false;
 
 
-    private void _createShops(ClusterDesc clusterDesc, float shopDistance, Func<Vector3, float> funcProbab, MapIcon.IconCode iconCode)
+    private void _createShops(Context ctx, float shopDistance, Func<Vector3, float> funcProbab, MapIcon.IconCode iconCode)
     {
+        var clusterDesc = ctx.ClusterDesc;
         float shopArea = shopDistance*shopDistance;
-        float clusterArea = clusterDesc.Size * clusterDesc.Size;
+        float clusterArea = ctx.ClusterDesc.Size * ctx.ClusterDesc.Size;
         int nTries = (int)(clusterArea / shopArea);
 
         HashSet<Vector3> setPositions = new();
@@ -48,9 +52,9 @@ class GenerateShopsOperator : IClusterOperator
         for (int t = 0; t < nTries; t++)
         {
             Vector2 v2TryLocal = new(
-                    (_rnd.GetFloat()-0.5f) * clusterDesc.Size,
-                    (_rnd.GetFloat()-0.5f) * clusterDesc.Size);
-            Vector2 v2TryGlobal = v2TryLocal + clusterDesc.Pos2;
+                    (ctx.Rnd.GetFloat()-0.5f) * clusterDesc.Size,
+                    (ctx.Rnd.GetFloat()-0.5f) * clusterDesc.Size);
+            Vector2 v2TryGlobal = v2TryLocal + ctx.ClusterDesc.Pos2;
 
             float shopIntensity = funcProbab(new Vector3(v2TryGlobal.X, clusterDesc.AverageHeight, v2TryGlobal.Y));
 
@@ -103,7 +107,7 @@ class GenerateShopsOperator : IClusterOperator
                 continue;
             }
             var nShopFronts = myShopFrontPoints.Count;
-            int shopIdx = (int)(_rnd.GetFloat() * nShopFronts);
+            int shopIdx = (int)(ctx.Rnd.GetFloat() * nShopFronts);
             Vector3 v3ShopLocal = (myShopFrontPoints[(shopIdx)%nShopFronts] + myShopFrontPoints[(shopIdx+1)%nShopFronts]) / 2f;
             
             if (setPositions.Contains(v3ShopLocal))
@@ -141,10 +145,15 @@ class GenerateShopsOperator : IClusterOperator
 
     public void ClusterOperatorApply(ClusterDesc clusterDesc)
     {
-        _rnd = new(clusterDesc.Name);
+        var ctx = new Context()
+        {
+            ClusterDesc = clusterDesc,
+            Rnd = new(clusterDesc.Name)
+        };
 
         
         Trace($"Creating fishmongers for {clusterDesc.Name}");
+        
         /*
          * This is a stupidly simple imple100mentation, chosing just about one shop 100m100m of cluster size
          * in the shopping zone as a shop.
@@ -153,7 +162,7 @@ class GenerateShopsOperator : IClusterOperator
          * shoot area / (100*109m^2) times, applying a probability if we hit a shopping zone.
          */
         _createShops(
-            clusterDesc,
+            ctx,
             100f, 
             v3PosShop => clusterDesc.GetAttributeIntensity(
                 v3PosShop, 
@@ -162,7 +171,7 @@ class GenerateShopsOperator : IClusterOperator
 
         Trace($"Creating bars for {clusterDesc.Name}");        
         _createShops(
-            clusterDesc,
+            ctx,
             50f, 
             v3PosShop => clusterDesc.GetAttributeIntensity(
                 v3PosShop,  
@@ -171,7 +180,7 @@ class GenerateShopsOperator : IClusterOperator
 
         Trace($"Creating takeaways for {clusterDesc.Name}");        
         _createShops(
-            clusterDesc,
+            ctx,
             130f, 
             v3PosShop => 1f,
             MapIcon.IconCode.Eat);

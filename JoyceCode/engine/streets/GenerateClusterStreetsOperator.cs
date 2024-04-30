@@ -24,7 +24,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
     private ClusterDesc _clusterDesc;
 
-    // private builtin.tools.RandomSource _rnd;
     private string _myKey;
     private bool _traceStreets = false;
 

@@ -22,6 +22,7 @@ public class SpawnOperator : ISpawnOperator
     private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
     private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
     private engine.Engine _engine = I.Get<engine.Engine>();
+    private builtin.tools.RandomSource _rnd = new("car3");
     
     public engine.geom.AABB AABB
     {
@@ -148,11 +149,11 @@ public class SpawnOperator : ISpawnOperator
                     engine.world.Fragment worldFragment;
                     if (_loader.TryGetFragment(idxFragment, out worldFragment))
                     {
-                        StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(cd, worldFragment);
+                        StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(_rnd,  worldFragment, cd);
                         if (chosenStreetPoint != null)
                         {
                             eCharacter = await GenerateCharacterOperator.GenerateCharacter(
-                                cd, worldFragment, chosenStreetPoint, _seed);
+                                _rnd, cd, worldFragment, chosenStreetPoint, _seed);
                             ++_seed;
                         }
                         else

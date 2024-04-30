@@ -10,10 +10,14 @@ namespace nogame.cities;
 
 public class GenerateTreesOperator : engine.world.IFragmentOperator 
 {
+    private class Context
+    {
+        public builtin.tools.RandomSource Rnd;
+        public engine.world.Fragment Fragment;
+    }
+    
     private engine.world.ClusterDesc _clusterDesc;
-    private builtin.tools.RandomSource _rnd;
     private string _myKey;
-
 
     public string FragmentOperatorGetPath()
     {
@@ -33,12 +37,16 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
         {
             return;
         }
+
+        var ctx = new Context()
+        {
+            Rnd = new(_myKey),
+            Fragment = worldFragment
+        };
         
+
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
-
-        // trace( 'GenerateHousesOperator(): cluster "${_clusterDesc.name}" (${_clusterDesc.id}) in range');
-        _rnd.Clear();
 
         /*
          * Iterate through all quarters in the clusters and generate lots and houses.
@@ -92,7 +100,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                 /*
                  * But don't use every estate, just some.
                  */
-                if (_rnd.GetFloat() <= 0.7f)
+                if (ctx.Rnd.GetFloat() <= 0.7f)
                 {
                     continue;
                 }
@@ -124,7 +132,7 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                      */
                     var treePos = center with { Y = inFragmentY };
                     listInstanceDesc.Add(_treeInstanceGenerator.CreateInstance(
-                        worldFragment, treePos, _rnd.Get16()));
+                        worldFragment, treePos, ctx.Rnd.Get16()));
                 }
                 else if (area >= (2f * areaPerTree))
                 {
@@ -143,16 +151,16 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
                     {
                         iterations++;
                         var treePos = new Vector3(
-                            min.X + _rnd.GetFloat() * extent.X,
+                            min.X + ctx.Rnd.GetFloat() * extent.X,
                             inFragmentY,
-                            min.Z + _rnd.GetFloat() * extent.Z
+                            min.Z + ctx.Rnd.GetFloat() * extent.Z
                         );
                         // TXWTODO: Check, if it is inside.
                         if (!estate.IsInside(treePos)) continue;
                         treePos.X += cx;
                         treePos.Z += cz;
                         listInstanceDesc.Add(_treeInstanceGenerator.CreateInstance(
-                            worldFragment, treePos, _rnd.Get16()));
+                            worldFragment, treePos, ctx.Rnd.Get16()));
                         nPlanted++;
                     }
                 }
@@ -195,7 +203,6 @@ public class GenerateTreesOperator : engine.world.IFragmentOperator
     ) {
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new builtin.tools.RandomSource(strKey);
     }
     
     

@@ -4,6 +4,8 @@ using System.Numerics;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using BepuPhysics;
+using builtin.tools;
+using DefaultEcs;
 using engine;
 using engine.joyce;
 using engine.physics;
@@ -18,9 +20,14 @@ namespace nogame.cities;
  */
 public class GeneratePolytopeOperator : IFragmentOperator
 {
+    private class Context
+    {
+        public builtin.tools.RandomSource Rnd;
+        public engine.world.Fragment Fragment;
+    }
+    
     private static object _classLock = new();
     private engine.world.ClusterDesc _clusterDesc;
-    private builtin.tools.RandomSource _rnd;
     private string _myKey;
     private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
     
@@ -37,8 +44,9 @@ public class GeneratePolytopeOperator : IFragmentOperator
     }
 
 
-    private async void _placePolytope(engine.world.Fragment worldFragment, engine.streets.Estate estate)
+    private async void _placePolytope(Context ctx, engine.streets.Estate estate)
     {
+        Fragment worldFragment = ctx.Fragment;
         engine.physics.API aPhysics = engine.I.Get<engine.physics.API>();
         
         /*
@@ -150,8 +158,12 @@ public class GeneratePolytopeOperator : IFragmentOperator
         {
             return;
         }
-        
-        _rnd.Clear();
+
+        var ctx = new Context()
+        {
+            Rnd = new RandomSource(_myKey),
+            Fragment = worldFragment
+        };
  
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
@@ -213,9 +225,9 @@ public class GeneratePolytopeOperator : IFragmentOperator
             return;
         }
 
-        int idx = (int)(_rnd.GetFloat() * nEstates);
+        int idx = (int)(ctx.Rnd.GetFloat() * nEstates);
         var polytopeEstate = potentialEstates[idx];
-        _placePolytope(worldFragment, polytopeEstate);
+        _placePolytope(ctx, polytopeEstate);
 
     });
 
@@ -231,7 +243,6 @@ public class GeneratePolytopeOperator : IFragmentOperator
             });
         _clusterDesc = clusterDesc;
         _myKey = strKey;
-        _rnd = new builtin.tools.RandomSource(_myKey);
     }
     
     

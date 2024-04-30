@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using builtin.tools;
 using engine;
 using engine.joyce;
 using engine.physics;
@@ -11,75 +12,87 @@ using engine.streets;
 using engine.world.components;
 using static engine.Logger;   
 
-namespace nogame.characters.cubes
+namespace nogame.characters.cubes;
+
+internal class GenerateCharacterOperator : engine.world.IFragmentOperator
 {
-    internal class GenerateCharacterOperator : engine.world.IFragmentOperator
+    private class Context
     {
-        public static readonly string PhysicsName = "nogame.characters.cube";
-        private static object _classLock = new();
+        public builtin.tools.RandomSource Rnd;
+        public Fragment Fragment;
+    }
+    
+    public static readonly string PhysicsName = "nogame.characters.cube";
+    private static object _classLock = new();
 
-        private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
+    private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
 
-        private static engine.audio.Sound _jCubeSound;
+    private static engine.audio.Sound _jCubeSound;
 
-        private static engine.audio.Sound _getCubeSound()
+    private static engine.audio.Sound _getCubeSound()
+    {
+        lock (_classLock)
         {
-            lock (_classLock)
+            if (_jCubeSound == null)
             {
-                if (_jCubeSound == null)
-                {
-                    _jCubeSound = new engine.audio.Sound(
-                        "cubeloopmono.ogg", true, 0.6f, 1.0f);
-                }
-
-                return _jCubeSound;
+                _jCubeSound = new engine.audio.Sound(
+                    "cubeloopmono.ogg", true, 0.6f, 1.0f);
             }
-        }
 
-        private static float _cubeSize = 0.5f; 
-        
-        private static engine.joyce.Mesh _jMeshCube;
-        private static engine.joyce.Mesh _getCubeMesh()
+            return _jCubeSound;
+        }
+    }
+
+    private static float _cubeSize = 0.5f;
+
+    private static engine.joyce.Mesh _jMeshCube;
+
+    private static engine.joyce.Mesh _getCubeMesh()
+    {
+        lock (_classLock)
         {
-            lock(_classLock)
+            if (null == _jMeshCube)
             {
-                if( null==_jMeshCube)
-                {
-                    _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh("cubecharacter", _cubeSize);
-                }
-                return _jMeshCube;
+                _jMeshCube = engine.joyce.mesh.Tools.CreateCubeMesh("cubecharacter", _cubeSize);
             }
+
+            return _jMeshCube;
         }
+    }
 
-        private ClusterDesc _clusterDesc;
-        private builtin.tools.RandomSource _rnd;
-        private string _myKey;
+    private ClusterDesc _clusterDesc;
+    private string _myKey;
 
-        private bool _trace = false;
+    private bool _trace = false;
 
-        private int _characterIndex = 0;
+    private int _characterIndex = 0;
 
-        public string FragmentOperatorGetPath()
-        {
-            return $"7001/GenerateCubeCharacterOperatar/{_myKey}/{_clusterDesc.IdString}";
-        }
-        
-        
-        public void FragmentOperatorGetAABB(out engine.geom.AABB aabb)
-        {
-            _clusterDesc.GetAABB(out aabb);
-        }
+    public string FragmentOperatorGetPath()
+    {
+        return $"7001/GenerateCubeCharacterOperatar/{_myKey}/{_clusterDesc.IdString}";
+    }
 
 
-        public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
+    public void FragmentOperatorGetAABB(out engine.geom.AABB aabb)
+    {
+        _clusterDesc.GetAABB(out aabb);
+    }
+
+
+    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new(
+        async () =>
         {
             if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
             {
                 return;
             }
-        
-            var aPhysics = I.Get<engine.physics.API>();
 
+            var ctx = new Context()
+            {
+                Rnd = new RandomSource(_myKey),
+                Fragment = worldFragment
+            };
+            
             float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
             float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
 
@@ -104,11 +117,11 @@ namespace nogame.characters.cubes
                 }
             }
 
-            if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
-            _rnd.Clear();
+            if (_trace)
+                Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
 
-            float propMaxDistance = (float) engine.Props.Get("nogame.characters.cube.maxDistance", 250f); 
-            
+            float propMaxDistance = (float)engine.Props.Get("nogame.characters.cube.maxDistance", 250f);
+
             /*
              * Now, that we have read the cluster description that is associated, we
              * can place the characters randomly on the streetpoints.
@@ -129,7 +142,7 @@ namespace nogame.characters.cubes
             for (int i = 0; i < nCharacters; i++)
             {
 
-                var idxPoint = (int)(_rnd.GetFloat() * l);
+                var idxPoint = (int)(ctx.Rnd.GetFloat() * l);
                 StreetPoint chosenStreetPoint = null;
                 chosenStreetPoint = streetPoints[idxPoint];
                 if (null == chosenStreetPoint || !chosenStreetPoint.HasStrokes())
@@ -160,19 +173,21 @@ namespace nogame.characters.cubes
 
                 ++_characterIndex;
                 {
-                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.cube.materials.cube"), _getCubeMesh()), 300f);
+                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
+                        new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.cube.materials.cube"),
+                            _getCubeMesh()), 300f);
 
                     var wf = worldFragment;
 
 
-                    var speed = 25f + _rnd.GetFloat() * 15f;
+                    var speed = 25f + ctx.Rnd.GetFloat() * 15f;
                     int fragmentId = worldFragment.NumericalId;
                     var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                     {
                         eTarget.Set(new engine.world.components.FragmentId(fragmentId));
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
-                            new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
+                                new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
                             { MaxDistance = propMaxDistance }
                         );
 
@@ -185,13 +200,14 @@ namespace nogame.characters.cubes
                                 CollisionProperties = new engine.physics.CollisionProperties
                                 {
                                     DebugInfo = $"_chrIdx {_characterIndex}",
-                                    Entity = eTarget, 
+                                    Entity = eTarget,
                                     Flags = CollisionProperties.CollisionFlags.IsDetectable,
                                     Name = "nogame.characters.cube",
                                 }
                             };
                             prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
                         }
+
                         eTarget.Set(new engine.audio.components.MovingSound(
                             _getCubeSound(), 150f));
                         eTarget.Set(new engine.physics.components.Body(po, prefSphere));
@@ -205,24 +221,22 @@ namespace nogame.characters.cubes
         });
 
 
-        public GenerateCharacterOperator(
-            in ClusterDesc clusterDesc, in string strKey)
-        {
-            _clusterDesc = clusterDesc;
-            _myKey = strKey;
-            _rnd = new builtin.tools.RandomSource(strKey);
-            I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.cube.materials.cube",
-                name => new Material()
-                {
-                    Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff226666)
-                });
-        }
+    public GenerateCharacterOperator(
+        in ClusterDesc clusterDesc, in string strKey)
+    {
+        _clusterDesc = clusterDesc;
+        _myKey = strKey;
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.cube.materials.cube",
+            name => new Material()
+            {
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff226666)
+            });
+    }
 
-        public static IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
-        {
-            return new GenerateCharacterOperator(
-                (ClusterDesc)p["clusterDesc"],
-                (string)p["strKey"]);
-        }
+    public static IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
+    {
+        return new GenerateCharacterOperator(
+            (ClusterDesc)p["clusterDesc"],
+            (string)p["strKey"]);
     }
 }
