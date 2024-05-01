@@ -190,7 +190,10 @@ namespace Wuka
                 var rootDepends = new nogame.GameState();
                 System.Console.WriteLine("DOTNET silicon desert "+rootDepends);
             }
-            engine.casette.Loader.LoadStartGame("nogame.json");
+            engine.casette.Loader cassetteLoader = new(engine.Assets.Open("nogame.json"));
+            cassetteLoader.SetAssetLoaderAssociations(assetManagerImplementation);
+            cassetteLoader.InterpretConfig();
+            cassetteLoader.StartGame();
             
             _engine.Execute();
 
