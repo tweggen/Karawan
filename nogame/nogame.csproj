@@ -35,11 +35,11 @@
 
   <Target Name="GatherTextures" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="./generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\win-x64\publish\joycecmd.exe"/>
+    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\win-x64\publish\joycecmd.exe"/>
   </Target>
   <Target Name="GatherResources" BeforeTargets="Compile">
     <Message Text="compiling resources" />
-    <Res2TargetTask OutputDirectory="./generated" GameJson="../models/nogame.json"/>
+    <Res2TargetTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json"/>
   </Target>
 
 </Project>

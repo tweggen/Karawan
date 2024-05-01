@@ -144,8 +144,8 @@
   "resources":
   {
     "list": [
-      { "uri": "./generated/atlas-opaque.json", "type": "atlas" },
-      { "uri": "./generated/atlas-trans.json", "type": "atlas" },
+      { "uri": "../nogame/generated/atlas-opaque.json", "type": "atlas" },
+      { "uri": "../nogame/generated/atlas-trans.json", "type": "atlas" },
       { "uri": "../models/newcars/car7/Textures/car7.png" },
       { "uri": "../models/sky/skybox2.png" },
       { "uri": "../models/sky/skybox2noborder.png" },
