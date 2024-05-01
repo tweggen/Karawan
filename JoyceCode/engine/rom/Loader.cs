@@ -84,11 +84,13 @@ public class Loader
 
         return null;
     }
+
+    
+    private static SortedDictionary<string, Assembly> _visited = new ();
     
     
     public static System.Reflection.Assembly[] GetAllAssemblies(string dllPath)
     {
-        var visited = new SortedDictionary<string, Assembly>();
         var queue = new Queue<Assembly>();
 
         try
@@ -163,13 +165,13 @@ public class Loader
                 /*
                  * If we already traced its dependencies, ignore it.
                  */
-                if (visited.ContainsKey(asm.GetName().Name))
+                if (_visited.ContainsKey(asm.GetName().Name))
                 {
                     continue;
                 }
 
                 if (_traceLoad) Trace($"Adding dll {asm.GetName().Name}");
-                visited.Add(asm.GetName().Name, asm);
+                _visited.Add(asm.GetName().Name, asm);
                 var references = asm.GetReferencedAssemblies();
                 foreach (var anRef in references)
                 {
