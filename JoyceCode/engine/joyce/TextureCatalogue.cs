@@ -39,6 +39,7 @@ public class TextureCatalogue
 
     public void AddAtlasEntry(string textureTag, string atlasTag, in Vector2 uvOffset, in Vector2 uvScale, int Width, int Height)
     {
+        Trace($"About to add texture {textureTag} in atlas {atlasTag}.");
         lock (_lo)
         {
             if (_dictTextures.TryGetValue(textureTag, out _))
