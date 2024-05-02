@@ -115,17 +115,11 @@
   "textures":
   {
     "atlas-trans.json": [
-      { "uri": "../models/brands/plentomatic-small.png" },
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },
-      { "uri": "../models/brands/sprouce-en.png" },
-      { "uri": "../models/buildings/lorem.png" },
+     { "uri": "../models/buildings/lorem.png" },
       { "uri": "../models/lightfx/standardlight/standardlight.png" },
-      { "uri": "../models/logos/joyce/aihao-emissive.png" },
-      { "uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
-      { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
       { "uri": "../models/mapicons/mapicons.png" },
-      { "uri": "../models/newcars/car7/Textures/car7.png" }
     ],
     "atlas-opaque.json": [
       { "uri": "rgba" },
@@ -142,6 +136,9 @@
     "list": [
       { "uri": "../nogame/generated/atlas-opaque.json", "type": "atlas" },
       { "uri": "../nogame/generated/atlas-trans.json", "type": "atlas" },
+      { "uri": "../models/logos/joyce/aihao-emissive.png" },
+      { "uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
+      { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
       { "uri": "../models/sky/skybox2noborder.png" },
       { "uri": "../models/story/story1.json" },
       { "uri": "../models/sfx/car-collision.ogg" },

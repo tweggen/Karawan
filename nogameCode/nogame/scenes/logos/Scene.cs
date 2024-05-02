@@ -170,6 +170,10 @@ public class Scene : AModule, IScene
             TimeSpan.FromMilliseconds(4674),
             _loadRootScene);
 
+        /*
+         * We do not use the texture atlas because there is no need to waste previous atlas space
+         * with these intro logos.
+         */
         _modTitle.Add(new TitleCard()
         {
             StartReference = TimepointTitlesongStarted,
@@ -180,7 +184,7 @@ public class Scene : AModule, IScene
             Flags = (uint) TitleCard.F.FadeoutEnd,
             FadeOutTime = 500f,
             Size = new(14f, 7f),
-            EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("aihao-emissive.png"),
+            EmissiveTexture = new Texture("aihao-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("aihao-emissive.png"),
             StartTransform =  new engine.joyce.components.Transform3(
                 true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
             EndTransform =  new engine.joyce.components.Transform3(
@@ -195,8 +199,8 @@ public class Scene : AModule, IScene
             Duration = 700,
             Flags = (uint) TitleCard.F.JitterEnd ,
             Size = new(64f, 64f/1280f*220f),
-            AlbedoTexture = I.Get<TextureCatalogue>().FindTexture("silicondesert-albedo.png"),
-            EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("silicondesert-emissive.png"),
+            AlbedoTexture = new Texture("silicondesert-albedo.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-albedo.png"),
+            EmissiveTexture = new Texture("silicondesert-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-emissive.png"),
             StartTransform =  new engine.joyce.components.Transform3(
                 true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
             EndTransform =  new engine.joyce.components.Transform3(

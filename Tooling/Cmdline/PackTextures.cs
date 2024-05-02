@@ -19,14 +19,14 @@ namespace CmdLine
             foreach (var kvp in gc.MapAtlasSpecs)
             {
                 Trace($"packtextures: Generating atlas {kvp.Key}...");
-                _packer = new Packer() { AtlasSize = 2048, FitHeuristic = BestFitHeuristic.Area };
+                _packer = new Packer() { AtlasSize = 1024, FitHeuristic = BestFitHeuristic.Area };
                 _packer.DestinationTexture = Path.Combine(_args[2], kvp.Key).Replace('\\', '/');
                 foreach (var textureResource in kvp.Value.TextureResources)
                 {
                     Trace($"packtextures: Adding texture {textureResource.Uri} to atlas {kvp.Key}...");
                     _packer.AddTexture(textureResource);
                 }
-                _packer.Process(null, null, 2048,0, true);
+                _packer.Process(null, null, 1024,0, true);
                 Trace($"packtextures: Saving atlas {kvp.Key} to {_packer.DestinationTexture}...");
                 _packer.SaveAtlasses(_packer.DestinationTexture);
             }
