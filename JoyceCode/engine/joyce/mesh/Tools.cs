@@ -52,6 +52,23 @@ namespace engine.joyce.mesh
             return m;
         }
 
+        
+        public static joyce.Mesh CreatePlaneMesh(in string name, Vector2 vSize, Vector2 uvMin, Vector2 uvSize)
+        {
+            var m = joyce.Mesh.CreateArrayListInstance(name);
+
+            Vector2 uvMax = uvMin + uvSize;
+            AddQuadXYUV(m, new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
+                new Vector3(vSize.X, 0f, 0f),
+                new Vector3(0f, vSize.Y, 0f),
+                new Vector2(uvMin.X, uvMax.Y),
+                new Vector2(uvSize.X, 0f),
+                new Vector2(0f, -uvSize.Y));
+
+            return m;
+        }
+
+        
         public static joyce.Mesh CreatePlaneMesh(in string name, Vector2 vSize)
         {
             var m = joyce.Mesh.CreateArrayListInstance(name);
@@ -66,6 +83,7 @@ namespace engine.joyce.mesh
             return m;
         }
 
+        
         public static joyce.Mesh CreateCubeMesh(string name, float size)
         {
             float h /* half */ = size / 2;
@@ -87,6 +105,7 @@ namespace engine.joyce.mesh
 
             return m;
         }
+        
 
         /**
          * Create a skybox texture cube with inside-faced rectangles.
