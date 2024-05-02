@@ -129,12 +129,9 @@
     ],
     "atlas-opaque.json": [
       { "uri": "rgba" },
-      { "uri": "../models/buildings/buildingambient.png" },
-      { "uri": "../models/buildings/buildingdiffuse.png" },
       { "uri": "../models/sky/skybox2.png" },
       { "uri": "../models/sky/skybox2noborder.png" },
       { "uri": "../models/streets/streets1to4.png" },
-      { "uri": "../models/void/gridlines.png" },
       { "uri": "../models/void/gridlines1.png" },
       { "uri": "../models/buildings/buildingalphadiffuse.png" },
       { "uri": "../models/buildings/buildingalphadiffuse2.png" },

@@ -33,7 +33,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
      * Relation between basic texture and stories.
      * We do assume that a texture contains a integer number of stories.
      */
-    private static float _storiesPerTexture = 32f;
+    private static float _storiesPerTexture = 8f;
     private static float _storyHeight = 3f;
     private static float _metersPerTexture = 3f * _storiesPerTexture;
 
