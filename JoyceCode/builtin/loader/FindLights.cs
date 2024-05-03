@@ -53,7 +53,8 @@ public class FindLights
         int il = instanceDesc.FindMaterial(matLight);
         
         /*
-         * We are adding a mesh that will not be rotate
+         * We are adding a mesh that will not be rotate.
+         * Unfortunately we need to shrink a bit to avoid artifacts at the borders.
          */
         var m = Tools.CreatePlaneMesh("autolight", new Vector2(0.8f, 0.8f),
             4*matLight.EmissiveTexture.InvSize2,
