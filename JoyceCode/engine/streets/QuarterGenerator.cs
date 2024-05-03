@@ -23,6 +23,15 @@ namespace engine.streets
         private builtin.tools.RandomSource _rnd;
 
 
+        /**
+         * Add the possible shops in this building.
+         *
+         * Only when they are tagged later by the quarter generator they are
+         * populated with actual visual shops.
+         *
+         * TXWTODO: We should partition large shopfronts into several
+         * smaller ones.
+         */
         private void _addShops(Building building)
         {
             float minShopWidth = 5f;

@@ -275,7 +275,21 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         in engine.streets.ShopFront shopFront)
     {
         var worldFragment = ctx.Fragment;
-        engine.joyce.Material materialShopFront = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.material.ad1");
+        string? materialName = null;
+        if (shopFront.Tags.Contains("shop Game2"))
+        {
+            materialName = "nogame.cities.houses.material.ad2";
+        }
+        else if (shopFront.Tags.Contains("shop Drink"))
+        {
+            materialName = "nogame.cities.houses.material.ad1";
+        }
+        else
+        {
+            return;
+        }
+
+        engine.joyce.Material materialShopFront = I.Get<ObjectRegistry<Material>>().Get(materialName);
         engine.joyce.Mesh meshShopFront = new($"{worldFragment.GetId()}-shopfrontsubgeo");
 
         var p = shopFront.GetPoints();

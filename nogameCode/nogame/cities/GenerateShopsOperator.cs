@@ -100,6 +100,21 @@ class GenerateShopsOperator : IClusterOperator
             }
 
             var myShopFront = shopFronts[0];
+
+            // TXWTODO: This is a wrong tag, and no meaningful set of tags either.
+            
+            /*
+             * Tag the new shop.
+             */
+            string tagShop = $"shop {iconCode}";
+            if (myShopFront.Tags.Contains(tagShop))
+            {
+                if (TraceDetail) Trace($"Discading shop {t} because shopFront already tagged {tagShop}");
+            }
+
+            myShopFront.Tags.Add(tagShop);
+            
+            // TXWTODO:Remove the actual creation of  entities from this.
             var myShopFrontPoints = myShopFront.GetPoints();
             if (null == myShopFrontPoints || myShopFrontPoints.Count < 2)
             {
@@ -118,6 +133,7 @@ class GenerateShopsOperator : IClusterOperator
 
             setPositions.Add(v3ShopLocal);
 
+            // TXWTODO: We shouldn't create POIs right here, should we?
             /*
              * Create POI right in the middle.
              */

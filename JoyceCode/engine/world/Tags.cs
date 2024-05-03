@@ -22,7 +22,7 @@ public class Tags
     }
 
 
-    public void Set(in string s)
+    public void Add(in string s)
     {
         lock (this)
         {
