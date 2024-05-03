@@ -115,6 +115,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\Tags.cs" />
     <Folder Include="$(MSBuildThisFileDirectory)builtin\tools\components\" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ExtrudePoly.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\FPSMonitor.cs" />
