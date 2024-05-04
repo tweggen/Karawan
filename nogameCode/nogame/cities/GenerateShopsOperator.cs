@@ -85,9 +85,21 @@ class GenerateShopsOperator : IClusterOperator
                 continue;
             }
 
-            var estate = estates[0];
-            var buildings = estate.GetBuildings();
-            if (null == buildings || 0 == buildings.Count)
+            int nEstates = estates.Count;
+            int estateStartIdx = (int)(ctx.Rnd.GetFloat() * nEstates);
+            IList<engine.streets.Building> buildings = null; 
+            for (int estateOfs = 0; estateOfs < nEstates; estateOfs++)
+            {
+                int estateIdx = (estateStartIdx + estateOfs) % nEstates;
+                engine.streets.Estate myEstate = estates[estateIdx];
+                buildings = myEstate.GetBuildings();
+                if (null != buildings && buildings.Count > 0)
+                {
+                    break;
+                }
+            }
+            
+            if (null == buildings || buildings.Count == 0)
             {
                 isBadTry = true;
                 if (TraceDetail) Trace($"Discarding shop {t} because no building.");
@@ -108,8 +120,12 @@ class GenerateShopsOperator : IClusterOperator
                 continue;
             }
 
-            foreach (var myShopFront in shopFronts)
+            int nShops = shopFronts.Count;
+            int shopStartIdx = (int)(ctx.Rnd.GetFloat() * nShops);
+            for (int shopOfs=0; shopOfs<nShops; shopOfs++)
             {
+                int shopIdx = (shopStartIdx + shopOfs) % nShops;
+                var myShopFront = shopFronts[shopIdx];
                 if (myShopFront.Tags.Contains("shop"))
                 {
                     // no bad try.
@@ -134,9 +150,9 @@ class GenerateShopsOperator : IClusterOperator
                 }
 
                 var nShopFronts = myShopFrontPoints.Count;
-                int shopIdx = (int)(ctx.Rnd.GetFloat() * nShopFronts);
-                Vector3 v3ShopLocal = (myShopFrontPoints[(shopIdx) % nShopFronts] +
-                                       myShopFrontPoints[(shopIdx + 1) % nShopFronts]) / 2f;
+                int shopFrontIdx = (int)(ctx.Rnd.GetFloat() * nShopFronts);
+                Vector3 v3ShopLocal = (myShopFrontPoints[(shopFrontIdx) % nShopFronts] +
+                                       myShopFrontPoints[(shopFrontIdx + 1) % nShopFronts]) / 2f;
 
                 if (setPositions.Contains(v3ShopLocal))
                 {
