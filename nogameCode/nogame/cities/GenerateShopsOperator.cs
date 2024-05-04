@@ -112,10 +112,23 @@ class GenerateShopsOperator : IClusterOperator
              *
              * ... we right now just take the first one.
              */
-            var shopFronts = buildings[0].GetShopFronts();
+            int nBuildings = buildings.Count;
+            int buildingStartIdx = (int)(ctx.Rnd.GetFloat() * nBuildings);
+            IList<engine.streets.ShopFront> shopFronts = null;
+            for (int buildingOfs = 0; buildingOfs < nBuildings; buildingOfs++)
+            {
+                int buildingIdx = (buildingStartIdx + buildingOfs) % nBuildings;
+                engine.streets.Building myBuilding = buildings[buildingIdx];
+                shopFronts = myBuilding.GetShopFronts();
+                if (null != shopFronts && shopFronts.Count > 0)
+                {
+                    break;
+                }
+            }
+
             if (null == shopFronts || shopFronts.Count == 0)
             {
-                isBadTry = true;
+                isBadTry = false;
                 if (TraceDetail) Trace($"Discarding shop {t} because no shop.");
                 continue;
             }
@@ -222,7 +235,7 @@ class GenerateShopsOperator : IClusterOperator
         Trace($"Creating bars for {clusterDesc.Name}");        
         _createShops(
             ctx,
-            150f, 
+            100f, 
             v3PosShop => clusterDesc.GetAttributeIntensity(
                 v3PosShop,  
                 ClusterDesc.LocationAttributes.Downtown),
@@ -231,7 +244,7 @@ class GenerateShopsOperator : IClusterOperator
         Trace($"Creating takeaways for {clusterDesc.Name}");        
         _createShops(
             ctx,
-            150f, 
+            100f, 
             v3PosShop => 1f,
             MapIcon.IconCode.Eat);
 
