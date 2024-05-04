@@ -278,11 +278,11 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         string? materialName = null;
         if (shopFront.Tags.Contains("shop Game2"))
         {
-            materialName = "nogame.cities.houses.material.ad2";
+            materialName = "nogame.cities.houses.material.fishmongers-window";
         }
         else if (shopFront.Tags.Contains("shop Drink"))
         {
-            materialName = "nogame.cities.houses.material.ad1";
+            materialName = "nogame.cities.houses.material.drink-window";
         }
         else
         {
@@ -299,7 +299,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         for (int i = 1; i < l; ++i)
         {
             engine.joyce.mesh.Tools.AddQuadXYUV(
-                meshShopFront, vGround + vOffset + p[i-1], p[i] - p[i-1], vUp, Vector2.Zero, Vector2.UnitX, Vector2.UnitY
+                meshShopFront, vGround + vOffset + p[i-1], p[i] - p[i-1], vUp, Vector2.UnitY, Vector2.UnitX, -Vector2.UnitY
             );
             matmesh.Add(materialShopFront, meshShopFront);
         }
@@ -617,6 +617,19 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 EmissiveFactors = 0x77ffffff,
                 EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("plentomatic.png")
             });
+        
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.drink-window",
+            name => new Material()
+            {
+                Texture = I.Get<TextureCatalogue>().FindTexture("drink-window.png")
+            });
+
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.fishmongers-window",
+            name => new Material()
+            {
+                Texture = I.Get<TextureCatalogue>().FindTexture("fishmongers-window.png")
+            });
+
     }
     
 
