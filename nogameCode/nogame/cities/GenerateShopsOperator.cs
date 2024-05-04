@@ -90,7 +90,10 @@ class GenerateShopsOperator : IClusterOperator
             }
             
             /*
-             * Just pick the first shop front.
+             * TXWTODO: Iterate through the building's shop fronts until we found the first one
+             * to use.
+             *
+             * ... we right now just take the first one.
              */
             var shopFronts = buildings[0].GetShopFronts();
             if (null == shopFronts || shopFronts.Count == 0)
@@ -99,62 +102,66 @@ class GenerateShopsOperator : IClusterOperator
                 continue;
             }
 
-            var myShopFront = shopFronts[0];
-
-            // TXWTODO: This is a wrong tag, and no meaningful set of tags either.
-            
-            /*
-             * Tag the new shop.
-             */
-            string tagShop = $"shop {iconCode}";
-            if (myShopFront.Tags.Contains(tagShop))
+            foreach (var myShopFront in shopFronts)
             {
-                if (TraceDetail) Trace($"Discading shop {t} because shopFront already tagged {tagShop}");
+                if (myShopFront.Tags.Contains("shop"))
+                {
+                    if (TraceDetail) Trace($"Discading shop {t} because shopFront already tagged shop");
+                    continue;
+                }
+
+                /*
+                 * Tag the new shop.
+                 */
+                // TXWTODO: This is a wrong tag, and no meaningful set of tags either.
+                string tagShop = $"shop {iconCode}";
+                myShopFront.Tags.Add(tagShop);
+
+                // TXWTODO:Remove the actual creation of  entities from this.
+                var myShopFrontPoints = myShopFront.GetPoints();
+                if (null == myShopFrontPoints || myShopFrontPoints.Count < 2)
+                {
+                    if (TraceDetail) Trace($"Discarding shop {t} because no shop fronts.");
+                    continue;
+                }
+
+                var nShopFronts = myShopFrontPoints.Count;
+                int shopIdx = (int)(ctx.Rnd.GetFloat() * nShopFronts);
+                Vector3 v3ShopLocal = (myShopFrontPoints[(shopIdx) % nShopFronts] +
+                                       myShopFrontPoints[(shopIdx + 1) % nShopFronts]) / 2f;
+
+                if (setPositions.Contains(v3ShopLocal))
+                {
+                    if (TraceDetail) Trace($"Discarding shop at {v3ShopLocal} because it already exists.");
+                    continue;
+                }
+
+                setPositions.Add(v3ShopLocal);
+
+                // TXWTODO: We shouldn't create POIs right here, should we?
+                /*
+                 * Create POI right in the middle.
+                 */
+                var e = I.Get<engine.Engine>();
+                e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
+                {
+                    var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal with
+                            {
+                                Y = clusterDesc.AverageHeight + 30f + 5f * (t * 8f + (float)iconCode)
+                            }
+                        );
+                    if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
+                    I.Get<TransformApi>().SetTransforms(ePOI, true,
+                        MapCameraMask, Quaternion.Identity, v3ShopGlobal);
+
+                    DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");
+                    I.Get<HierarchyApi>().SetParent(eMapMarker, ePOI);
+                    I.Get<TransformApi>().SetTransforms(eMapMarker, true,
+                        MapCameraMask, Quaternion.Identity, Vector3.Zero);
+                    eMapMarker.Set(new engine.world.components.MapIcon() { Code = iconCode });
+                });
+                break;
             }
-
-            myShopFront.Tags.Add(tagShop);
-            
-            // TXWTODO:Remove the actual creation of  entities from this.
-            var myShopFrontPoints = myShopFront.GetPoints();
-            if (null == myShopFrontPoints || myShopFrontPoints.Count < 2)
-            {
-                if (TraceDetail) Trace($"Discarding shop {t} because no shop fronts.");
-                continue;
-            }
-            var nShopFronts = myShopFrontPoints.Count;
-            int shopIdx = (int)(ctx.Rnd.GetFloat() * nShopFronts);
-            Vector3 v3ShopLocal = (myShopFrontPoints[(shopIdx)%nShopFronts] + myShopFrontPoints[(shopIdx+1)%nShopFronts]) / 2f;
-            
-            if (setPositions.Contains(v3ShopLocal))
-            {
-                if (TraceDetail) Trace($"Discarding shop at {v3ShopLocal} because it already exists.");
-                continue;
-            }
-
-            setPositions.Add(v3ShopLocal);
-
-            // TXWTODO: We shouldn't create POIs right here, should we?
-            /*
-             * Create POI right in the middle.
-             */
-            var e = I.Get<engine.Engine>();
-            e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
-            {
-                var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal with
-                        {
-                            Y = clusterDesc.AverageHeight + 30f + 5f * (t * 8f + (float)iconCode)
-                        }
-                    ); 
-                if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
-                I.Get<TransformApi>().SetTransforms(ePOI, true,
-                    MapCameraMask, Quaternion.Identity, v3ShopGlobal);
-
-                DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");
-                I.Get<HierarchyApi>().SetParent(eMapMarker, ePOI); 
-                I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
-                    MapCameraMask, Quaternion.Identity, Vector3.Zero);
-                eMapMarker.Set(new engine.world.components.MapIcon() { Code = iconCode });
-            });
         }
     }
     
