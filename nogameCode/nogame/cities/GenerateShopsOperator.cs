@@ -51,6 +51,7 @@ class GenerateShopsOperator : IClusterOperator
         
         for (int t = 0; t < nTries; t++)
         {
+            bool isBadTry = false; 
             Vector2 v2TryLocal = new(
                     (ctx.Rnd.GetFloat()-0.5f) * clusterDesc.Size,
                     (ctx.Rnd.GetFloat()-0.5f) * clusterDesc.Size);
@@ -60,6 +61,7 @@ class GenerateShopsOperator : IClusterOperator
 
             if (shopIntensity < 0.5f)
             {
+                isBadTry = true;
                 if (TraceDetail) Trace($"Discarding shop {t} outside of shopping zone.");
                 continue;
             }
@@ -67,6 +69,7 @@ class GenerateShopsOperator : IClusterOperator
             var quarter = clusterDesc.GuessQuarter(v2TryGlobal);
             if (null == quarter)
             {
+                isBadTry = true;
                 if (TraceDetail) Trace($"Discarding shop {t} because null quarter.");
                 continue;
             }
@@ -77,6 +80,7 @@ class GenerateShopsOperator : IClusterOperator
             var estates = quarter.GetEstates();
             if (null == estates || 0 == estates.Count)
             {
+                isBadTry = true;
                 if (TraceDetail) Trace($"Discarding shop {t} because no estates.");
                 continue;
             }
@@ -85,6 +89,7 @@ class GenerateShopsOperator : IClusterOperator
             var buildings = estate.GetBuildings();
             if (null == buildings || 0 == buildings.Count)
             {
+                isBadTry = true;
                 if (TraceDetail) Trace($"Discarding shop {t} because no building.");
                 continue;
             }
@@ -98,6 +103,7 @@ class GenerateShopsOperator : IClusterOperator
             var shopFronts = buildings[0].GetShopFronts();
             if (null == shopFronts || shopFronts.Count == 0)
             {
+                isBadTry = true;
                 if (TraceDetail) Trace($"Discarding shop {t} because no shop.");
                 continue;
             }
@@ -106,7 +112,8 @@ class GenerateShopsOperator : IClusterOperator
             {
                 if (myShopFront.Tags.Contains("shop"))
                 {
-                    if (TraceDetail) Trace($"Discading shop {t} because shopFront already tagged shop");
+                    // no bad try.
+                    if (TraceDetail) Trace($"Not using {t} because shopFront already tagged shop, trying to find another one for this try.");
                     continue;
                 }
 
@@ -121,7 +128,8 @@ class GenerateShopsOperator : IClusterOperator
                 var myShopFrontPoints = myShopFront.GetPoints();
                 if (null == myShopFrontPoints || myShopFrontPoints.Count < 2)
                 {
-                    if (TraceDetail) Trace($"Discarding shop {t} because no shop fronts.");
+                    // no bad try.
+                    if (TraceDetail) Trace($"Discarding shop {t} because no shop front points.");
                     continue;
                 }
 
@@ -132,6 +140,7 @@ class GenerateShopsOperator : IClusterOperator
 
                 if (setPositions.Contains(v3ShopLocal))
                 {
+                    // no bad try.
                     if (TraceDetail) Trace($"Discarding shop at {v3ShopLocal} because it already exists.");
                     continue;
                 }
@@ -162,6 +171,8 @@ class GenerateShopsOperator : IClusterOperator
                 });
                 break;
             }
+            
+            // We placed a shop if isBadTry==false
         }
     }
     
@@ -195,7 +206,7 @@ class GenerateShopsOperator : IClusterOperator
         Trace($"Creating bars for {clusterDesc.Name}");        
         _createShops(
             ctx,
-            50f, 
+            150f, 
             v3PosShop => clusterDesc.GetAttributeIntensity(
                 v3PosShop,  
                 ClusterDesc.LocationAttributes.Downtown),
@@ -204,7 +215,7 @@ class GenerateShopsOperator : IClusterOperator
         Trace($"Creating takeaways for {clusterDesc.Name}");        
         _createShops(
             ctx,
-            130f, 
+            150f, 
             v3PosShop => 1f,
             MapIcon.IconCode.Eat);
 

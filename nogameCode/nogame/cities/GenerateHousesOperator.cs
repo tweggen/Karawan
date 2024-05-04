@@ -284,9 +284,13 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         {
             materialName = "nogame.cities.houses.material.drink-window";
         }
+        else if (shopFront.Tags.Contains("shop Eat"))
+        {
+            materialName = "nogame.cities.houses.material.eat-window";
+        }
         else
         {
-            return;
+            materialName = "nogame.cities.houses.material.empty-window";
         }
 
         engine.joyce.Material materialShopFront = I.Get<ObjectRegistry<Material>>().Get(materialName);
@@ -624,10 +628,22 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 Texture = I.Get<TextureCatalogue>().FindTexture("drink-window.png")
             });
 
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.eat-window",
+            name => new Material()
+            {
+                Texture = I.Get<TextureCatalogue>().FindTexture("eat-window.png")
+            });
+
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.fishmongers-window",
             name => new Material()
             {
                 Texture = I.Get<TextureCatalogue>().FindTexture("fishmongers-window.png")
+            });
+
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.empty-window",
+            name => new Material()
+            {
+                Texture = I.Get<TextureCatalogue>().FindTexture("empty-window.png")
             });
 
     }

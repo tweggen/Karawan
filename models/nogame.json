@@ -117,7 +117,7 @@
     "atlas-trans.json": [
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },
-     { "uri": "../models/buildings/lorem.png" },
+      { "uri": "../models/buildings/lorem.png" },
       { "uri": "../models/lightfx/standardlight/standardlight.png" },
       { "uri": "../models/mapicons/mapicons.png" },
     ],
@@ -130,6 +130,8 @@
       { "uri": "../models/buildings/buildingalphadiffuse2.png" },
       { "uri": "../models/buildings/buildingalphadiffuse3.png" },
       { "uri": "../models/brands/drink-window.png" },
+      { "uri": "../models/brands/eat-window.png" },
+      { "uri": "../models/brands/empty-window.png" },
       { "uri": "../models/brands/fishmongers-window.png" }
     ]
   },
