@@ -117,7 +117,7 @@
     "atlas-trans.json": [
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },
-     { "uri": "../models/buildings/lorem.png" },
+      { "uri": "../models/buildings/lorem.png" },
       { "uri": "../models/lightfx/standardlight/standardlight.png" },
       { "uri": "../models/mapicons/mapicons.png" },
     ],

@@ -63,6 +63,11 @@ namespace CmdLine
         /// Height in Pixels
         /// </summary>
         public int Height;
+
+        /// <summary>
+        ///  How important is this texture? Textures with prio 1 are laid out first.
+        /// </summary>
+        public int Priority = 0;
     }
 
     /// <summary>
@@ -338,7 +343,7 @@ namespace CmdLine
         }
 
 
-        public void AddTexture(Resource resourceTexture)
+        public void AddTexture(Resource resourceTexture, int prio)
         {
             if (resourceTexture.Uri == "rgba")
             {
@@ -348,6 +353,7 @@ namespace CmdLine
                 ti.FullPath = "rgba";
                 ti.Width = 64;
                 ti.Height = 64;
+                ti.Priority = prio;
 
                 SourceTextures.Add(ti);
 
