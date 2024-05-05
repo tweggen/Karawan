@@ -3,8 +3,18 @@ using System.Numerics;
 
 namespace engine.streets;
 
+
+/**
+ * Shopfronts on buildings are the equivalent of available retail
+ * space to rent in reality. They are populated only by tagging them with
+ * a specific shop.
+ *
+ * The house generator will read the tags in turn.
+ */
 public class ShopFront
 {
+    public engine.world.Tags Tags { get; } = new();
+    
     private object _lo = new();
     private List<Vector3> _points = new();
     

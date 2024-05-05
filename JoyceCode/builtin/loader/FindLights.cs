@@ -49,12 +49,16 @@ public class FindLights
 
     private static void _addLightToModel(engine.joyce.InstanceDesc instanceDesc, Vector3 p)
     {
-        int il = instanceDesc.FindMaterial(
-            I.Get<ObjectRegistry<Material>>().Get("builtin.loader.materials.standardlight"));
+        var matLight = I.Get<ObjectRegistry<Material>>().Get("builtin.loader.materials.standardlight"); 
+        int il = instanceDesc.FindMaterial(matLight);
+        
         /*
-         * We are adding a mesh that will not be rotate
+         * We are adding a mesh that will not be rotate.
+         * Unfortunately we need to shrink a bit to avoid artifacts at the borders.
          */
-        var m = Tools.CreatePlaneMesh("autolight", new Vector2(0.8f, 0.8f));
+        var m = Tools.CreatePlaneMesh("autolight", new Vector2(0.8f, 0.8f),
+            4*matLight.EmissiveTexture.InvSize2,
+            Vector2.One - 8f*matLight.EmissiveTexture.InvSize2);
         m.Move(p);
         instanceDesc.AddMesh(m, il);
     }
@@ -179,7 +183,6 @@ public class FindLights
                 EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("standardlight.png"),
                 HasTransparency = true,
                 IsBillboardTransform = true
-
             });
         
         ModelNode mnRoot = model.RootNode;

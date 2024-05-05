@@ -121,11 +121,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
-		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.20.0" />
+		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.21.0" />
 		<PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.21.1.2" />
-		<PackageReference Include="Silk.NET.SDL" Version="2.20.0" />
-		<PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
-		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.20.0" />
+		<PackageReference Include="Silk.NET.SDL" Version="2.21.0" />
+		<PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
+		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.21.0" />
 		<PackageReference Include="Xamarin.Essentials" Version="1.8.1" />
 	</ItemGroup>
 
