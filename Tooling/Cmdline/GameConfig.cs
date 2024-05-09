@@ -104,6 +104,11 @@ namespace CmdLine
         }
 
 
+        public void LoadTextures(Channel atlasSpec, JsonElement jeTextures)
+        {
+            
+        }
+
         public void LoadAtlas(string path, JsonElement je)
         {
             AtlasSpec atlasSpec = new AtlasSpec() { Path = path};
@@ -123,13 +128,17 @@ namespace CmdLine
         }
         
         
-        public void LoadTextures(JsonElement je)
+        public void LoadTextureSection(JsonElement je)
         {
             Trace($"LoadTextures():");
             try
             {
                 foreach (var jpAtlas in je.EnumerateObject())
                 {
+                    if (jeAtlas.Name == "textures")
+                    {
+                        LoadTextures
+                    }
                     Trace($"LoadTextures(): Loading atlas {jpAtlas.Name}");
                     LoadAtlas(jpAtlas.Name, jpAtlas.Value);
                 }
@@ -154,7 +163,7 @@ namespace CmdLine
             }
             if (je.TryGetProperty("textures", out var jeTextures))
             {
-                LoadTextures(jeTextures);
+                LoadTextureSection(jeTextures);
             }
             else
             {

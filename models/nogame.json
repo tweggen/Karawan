@@ -114,6 +114,26 @@
   },
   "textures":
   {
+    "targets": {
+      "emissive-trans": {
+        "description": { "file": "atlas-emissive-trans.json" },
+      },
+      "albedo-trans": {
+        "description": { "file": "atlas-emissive-trans.json" },
+      },
+      "emissive": {
+        "description": { "file": "atlas-emissive-trans.json" },
+      },
+      "albedo":  {
+        "description": { "file": "atlas-emissive-trans.json" },
+      },
+    },
+    "textures": {
+      "silicondesert": {
+        "emissive-trans": { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
+        "albedo-trans": {"uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
+      },
+    },
     "atlas-trans.json": [
       { "uri": "../models/brands/plentomatic.png" },
       { "uri": "../models/brands/sprouce-cn.png" },
