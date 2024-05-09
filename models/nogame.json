@@ -114,18 +114,18 @@
   },
   "textures":
   {
-    "targets": {
+    "channels": {
       "emissive-trans": {
-        "description": { "file": "atlas-emissive-trans.json" },
+        "file": "atlas-emissive-trans.json",
       },
       "albedo-trans": {
-        "description": { "file": "atlas-emissive-trans.json" },
+        "file": "atlas-emissive-trans.json",
       },
       "emissive": {
-        "description": { "file": "atlas-emissive-trans.json" },
+        "file": "atlas-emissive-trans.json",
       },
       "albedo":  {
-        "description": { "file": "atlas-emissive-trans.json" },
+        "file": "atlas-emissive-trans.json",
       },
     },
     "textures": {

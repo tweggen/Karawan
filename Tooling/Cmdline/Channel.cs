@@ -2,6 +2,6 @@
 {
     public class Channel
     {
-        private string DescriptionFile;
+        public string File;
     }
 }

@@ -1,7 +1,10 @@
-﻿namespace CmdLine
+﻿using System.Collections.Generic;
+
+namespace CmdLine
 {
     public class Texture
     {
-        public SortedDictionary<string, Resource> Channels;
+        public string Name;
+        public SortedDictionary<string, Resource> Channels = new SortedDictionary<string, Resource>();
     }
 }

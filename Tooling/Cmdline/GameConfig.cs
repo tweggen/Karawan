@@ -104,13 +104,98 @@ namespace CmdLine
         }
 
 
-        public void LoadTextures(Channel atlasSpec, JsonElement jeTextures)
+        public Texture LoadTexture(JsonElement jeTexture, string name)
         {
+            var texture = new Texture() { Name = name };
             
+            /*
+            * Now load the channels within.
+            */
+            try
+            {
+                foreach (var jpChannel in jeTexture.EnumerateObject())
+                {
+                    try
+                    {
+                        string strChannel = jpChannel.Name;
+                        Resource resource = LoadResource(jpChannel.Value);
+                        texture.Channels[strChannel] = resource;
+                    }
+                    catch (Exception e)
+                    {
+                        Trace($"LoadTextures(): Exception while loading texture: {e}.");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"LoadTextures(): Exception while loading textures: {e}.");
+            }
+            
+            return texture;
         }
+
+
+        public void LoadTextures(TextureSection ts, JsonElement jeTextures)
+        {
+            Trace($"LoadTextures(): Loading teture definitions.");
+            try
+            {
+                foreach (var jpTexture in je.EnumerateObject())
+                {
+                    try
+                    {
+                        Texture texture = LoadTexture(jpTexture.Value, jpTexture.Name);
+                        ts.Textures[jpTexture.Name] = texture;
+                    }
+                    catch (Exception e)
+                    {
+                        Trace($"LoadTextures(): Exception while loading texture: {e}.");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"LoadTextures(): Exception while loading textures: {e}.");
+            }
+        }
+
+
+        public Channel LoadChannel(JsonElement jeChannel)
+        {
+            string strFile = jeChannel.GetProperty("file").GetString();
+            return new Channel() { File = strFile };
+        }
+
+
+        public void LoadChannels(TextureSection ts, JsonElement jeTextures)
+        {
+            Trace($"LoadChannels(): Loading channel definitions.");
+            try
+            {
+                foreach (var jpChannel in je.EnumerateObject())
+                {
+                    try
+                    {
+                        Channel channel = LoadChannel(jpChannel.Value);
+                        ts.Channels[jpChannel.Name] = channel;
+                    }
+                    catch (Exception e)
+                    {
+                        Trace($"LoadChannels(): Exception while loading channel: {e}.");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace($"LoadChannels(): Exception while loading channels: {e}.");
+            }
+        }
+
 
         public void LoadAtlas(string path, JsonElement je)
         {
+            Trace($"LoadAtlas(): Loading atlas {path}.");
             AtlasSpec atlasSpec = new AtlasSpec() { Path = path};
             try
             {
@@ -131,16 +216,23 @@ namespace CmdLine
         public void LoadTextureSection(JsonElement je)
         {
             Trace($"LoadTextures():");
+            TextureSection ts = new();
             try
             {
                 foreach (var jpAtlas in je.EnumerateObject())
                 {
-                    if (jeAtlas.Name == "textures")
+                    if (jpAtlas.Name == "textures")
                     {
-                        LoadTextures
+                        LoadTextures(ts, jpAtlas.Value);
                     }
-                    Trace($"LoadTextures(): Loading atlas {jpAtlas.Name}");
-                    LoadAtlas(jpAtlas.Name, jpAtlas.Value);
+                    else if (jpAtlas.Name == "channels")
+                    {
+                        LoadChannels(ts, jpAtlas.Value);
+                    }
+                    else
+                    {
+                        LoadAtlas(jpAtlas.Name, jpAtlas.Value);
+                    }
                 }
             }
             catch (Exception e)
