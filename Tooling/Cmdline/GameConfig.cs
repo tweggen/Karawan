@@ -16,6 +16,7 @@ namespace CmdLine
 
         public SortedDictionary<string, Resource> MapResources = new SortedDictionary<string, Resource>();
         public SortedDictionary<string, AtlasSpec> MapAtlasSpecs = new SortedDictionary<string, AtlasSpec>();
+        public TextureSection TextureSection;
 
 
         public Resource LoadResource(JsonElement jeRes)
@@ -234,6 +235,8 @@ namespace CmdLine
                         LoadAtlas(jpAtlas.Name, jpAtlas.Value);
                     }
                 }
+
+                TextureSection = ts;
             }
             catch (Exception e)
             {
