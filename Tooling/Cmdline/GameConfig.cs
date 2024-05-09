@@ -141,7 +141,7 @@ namespace CmdLine
             Trace($"LoadTextures(): Loading teture definitions.");
             try
             {
-                foreach (var jpTexture in je.EnumerateObject())
+                foreach (var jpTexture in jeTextures.EnumerateObject())
                 {
                     try
                     {
@@ -168,12 +168,12 @@ namespace CmdLine
         }
 
 
-        public void LoadChannels(TextureSection ts, JsonElement jeTextures)
+        public void LoadChannels(TextureSection ts, JsonElement jeChannels)
         {
             Trace($"LoadChannels(): Loading channel definitions.");
             try
             {
-                foreach (var jpChannel in je.EnumerateObject())
+                foreach (var jpChannel in jeChannels.EnumerateObject())
                 {
                     try
                     {
@@ -216,7 +216,7 @@ namespace CmdLine
         public void LoadTextureSection(JsonElement je)
         {
             Trace($"LoadTextures():");
-            TextureSection ts = new();
+            TextureSection ts = new TextureSection();
             try
             {
                 foreach (var jpAtlas in je.EnumerateObject())

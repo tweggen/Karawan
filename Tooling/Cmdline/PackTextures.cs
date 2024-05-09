@@ -24,7 +24,7 @@ namespace CmdLine
                 foreach (var textureResource in kvp.Value.TextureResources)
                 {
                     Trace($"packtextures: Adding texture {textureResource.Uri} to atlas {kvp.Key}...");
-                    _packer.AddTexture(textureResource);
+                    _packer.AddTexture(textureResource,0);
                 }
                 _packer.Process(null, null, 1024,0, true);
                 Trace($"packtextures: Saving atlas {kvp.Key} to {_packer.DestinationTexture}...");
