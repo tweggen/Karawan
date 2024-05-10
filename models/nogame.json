@@ -103,9 +103,9 @@
   "scenes":
   {
     "catalogue": {
-    "root": {
-      "className": "nogame.scenes.root.Scene"
-    },
+      "root": {
+        "className": "nogame.scenes.root.Scene"
+      },
       "logos": {
         "className": "nogame.scenes.logos.Scene"
       }
@@ -119,13 +119,13 @@
         "file": "atlas-emissive-trans.json",
       },
       "albedo-trans": {
-        "file": "atlas-emissive-trans.json",
+        "file": "atlas-albedo-trans.json",
       },
       "emissive": {
-        "file": "atlas-emissive-trans.json",
+        "file": "atlas-emissive.json",
       },
       "albedo":  {
-        "file": "atlas-emissive-trans.json",
+        "file": "atlas-albedo.json",
       },
     },
     "textures": {
@@ -133,27 +133,38 @@
         "emissive-trans": { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
         "albedo-trans": {"uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
       },
+      "drink-window": {
+        "emissive": { "uri": "../models/brands/drink-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/drink-window-albedo.png" },
+      },
+      "eat-window": {
+        "emissive": { "uri": "../models/brands/eat-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/eat-window-albedo.png" },
+      },
+      "fishmongers-window": {
+        "emissive": { "uri": "../models/brands/fishmongers-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/fishmongers-window-albedo.png" },
+      },
+      "empty-window": {
+        "emissive": { "uri": "../models/brands/empty-window-emissive.png" },
+        "albedo": { "uri": "../models/brands/empty-window-albedo.png" },
+      },
+      "rgba": {
+        "emissive": { "uri": "rgba" },
+        "albedo": { "uri": "rgba" },
+      },
+      "plentomatic": { "emissive-trans": { "uri": "../models/brands/plentomatic.png" } },
+      "sprouce-cn": { "emissive-trans": { "uri": "../models/brands/sprouce-cn.png" } },
+      "lorem": { "emissive-trans": { "uri": "../models/buildings/lorem.png" } },
+      "standardlight": { "emissive-trans": { "uri": "../models/lightfx/standardlight/standardlight.png" } },
+      "mapicons": { "uri": "../models/mapicons/mapicons.png" } },
+
+      "streets1to4": { "albedo": { "uri": "../models/streets/streets1to4.png" } },
+      "gridlines1": { "albedo": { "uri": "../models/void/gridlines1.png" } },
+      "buildingalphadiffuse": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse.png" } },
+      "buildingalphadiffuse2": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse2.png" } },
+      "buildingalphadiffuse3": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse3.png" } },
     },
-    "atlas-trans.json": [
-      { "uri": "../models/brands/plentomatic.png" },
-      { "uri": "../models/brands/sprouce-cn.png" },
-      { "uri": "../models/buildings/lorem.png" },
-      { "uri": "../models/lightfx/standardlight/standardlight.png" },
-      { "uri": "../models/mapicons/mapicons.png" },
-    ],
-    "atlas-opaque.json": [
-      { "uri": "rgba" },
-      { "uri": "../models/sky/skybox2noborder.png" },
-      { "uri": "../models/streets/streets1to4.png" },
-      { "uri": "../models/void/gridlines1.png" },
-      { "uri": "../models/buildings/buildingalphadiffuse.png" },
-      { "uri": "../models/buildings/buildingalphadiffuse2.png" },
-      { "uri": "../models/buildings/buildingalphadiffuse3.png" },
-      { "uri": "../models/brands/drink-window.png" },
-      { "uri": "../models/brands/eat-window.png" },
-      { "uri": "../models/brands/empty-window.png" },
-      { "uri": "../models/brands/fishmongers-window.png" }
-    ]
   },
   "resources":
   {
