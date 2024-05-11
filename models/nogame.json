@@ -129,10 +129,6 @@
       },
     },
     "textures": {
-      "silicondesert": {
-        "emissive-trans": { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
-        "albedo-trans": {"uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
-      },
       "drink-window": {
         "emissive": { "uri": "../models/brands/drink-window-emissive.png" },
         "albedo": { "uri": "../models/brands/drink-window-albedo.png" },
@@ -150,7 +146,6 @@
         "albedo": { "uri": "../models/brands/empty-window-albedo.png" },
       },
       "rgba": {
-        "emissive": { "uri": "rgba" },
         "albedo": { "uri": "rgba" },
       },
       "plentomatic": { "emissive-trans": { "uri": "../models/brands/plentomatic.png" } },
@@ -169,8 +164,10 @@
   "resources":
   {
     "list": [
-      { "uri": "../nogame/generated/atlas-opaque.json", "type": "atlas" },
-      { "uri": "../nogame/generated/atlas-trans.json", "type": "atlas" },
+      { "uri": "../nogame/generated/atlas-albedo.json", "type": "atlas" },
+      { "uri": "../nogame/generated/atlas-emissive.json", "type": "atlas" },
+      { "uri": "../nogame/generated/atlas-albedo-trans.json", "type": "atlas" },
+      { "uri": "../nogame/generated/atlas-emissive-trans.json", "type": "atlas" },
       { "uri": "../models/logos/joyce/aihao-emissive.png" },
       { "uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
       { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },

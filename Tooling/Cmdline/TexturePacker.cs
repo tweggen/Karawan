@@ -557,6 +557,7 @@ namespace CmdLine
                 Atlasses.Add(atlas);
 
                 SourceTextures = leftovers;
+                atlas = new Atlas() { Width = AtlasSize, Height = AtlasSize };
             }
 
             /*

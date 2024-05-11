@@ -217,33 +217,38 @@ public class Loader
     {
         try
         {
-            foreach (var pair in jeTextures.EnumerateObject())
+            if (jeTextures.TryGetProperty("channels", out var jpChannels))
             {
-                JsonElement jeAtlas;
-                try
-                {
-                    JsonDocument jdocAtlas = JsonDocument.Parse(
-                        engine.Assets.Open(pair.Name), new()
-                    {
-                        AllowTrailingCommas = true
-                    });
-                    jeAtlas = jdocAtlas.RootElement;
 
-                    JsonElement jeAtlasList = jeAtlas.GetProperty("atlasses");
-                    foreach (var pairAtlas in jeAtlasList.EnumerateObject())
-                    {
-                        LoadTextureAtlas(pairAtlas.Value);
-                    }
-                }
-                catch (Exception e)
+                foreach (var kvpChannels in jpChannels.EnumerateObject())
                 {
-                    Warning($"Unable to parse resource object for texture: {e}");
+                    JsonElement jeChannelDesc = kvpChannels.Value;
+                    string file = jeChannelDesc.GetProperty("file").GetString();
+                    try
+                    {
+                        JsonDocument jdocAtlas = JsonDocument.Parse(
+                            engine.Assets.Open(file), new()
+                            {
+                                AllowTrailingCommas = true
+                            });
+                        var jeAtlas = jdocAtlas.RootElement;
+
+                        JsonElement jeAtlasList = jeAtlas.GetProperty("atlasses");
+                        foreach (var pairAtlas in jeAtlasList.EnumerateObject())
+                        {
+                            LoadTextureAtlas(pairAtlas.Value);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Warning($"Unable to parse resource object for texture: {e}");
+                    }
                 }
             }
         }
         catch (Exception e)
         {
-            Warning($"Unable to load textures.");
+            Warning($"Unable to load textures: {e}");
         }
     }
     

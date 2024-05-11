@@ -51,7 +51,7 @@ namespace CmdLine
                 var packer = new Packer()
                 {
                     AtlasSize = AtlasSize, FitHeuristic = BestFitHeuristic.Area,
-                    DestinationTexture = Path.Combine(_args[2], $"{kvpChannel.Key}.json").Replace('\\', '/')
+                    DestinationTexture = Path.Combine(_args[2], $"{kvpChannel.Value.File}").Replace('\\', '/')
                 };
                 packer.Prepare();
                 dictPackers[kvpChannel.Key] = packer;
