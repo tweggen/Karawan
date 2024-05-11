@@ -236,6 +236,7 @@ namespace CmdLine
                     }
                 }
 
+                ts.Digest();
                 TextureSection = ts;
             }
             catch (Exception e)
