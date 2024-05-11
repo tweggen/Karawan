@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CmdLine
 {
@@ -8,30 +9,37 @@ namespace CmdLine
     {
         public class ComparerByComplexity : IComparer<ChannelCombination>
         {
+            int _direction = 1;
+
             public int Compare(ChannelCombination x, ChannelCombination y)
             {
                 if (x == y) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
+                if (x == null) return -1*_direction;
+                if (y == null) return 1*_direction;
 
                 int nX = x.Channels.Count;
                 int nY = y.Channels.Count;
 
                 if (nX < nY)
                 {
-                    return -1;
+                    return -1*_direction;
                 }
                 else
                 {
                     if (nX > nY)
                     {
-                        return 1;
+                        return 1*_direction;
                     }
                 }
                 
                 string strX = x.GetCombinationString();
                 string strY = y.GetCombinationString();
-                return string.CompareOrdinal(strX, strY);
+                return string.CompareOrdinal(strX, strY)*_direction;
+            }
+
+            public ComparerByComplexity(bool isReverse = false)
+            {
+                if (isReverse) _direction = -1;
             }
         }
         
@@ -58,7 +66,7 @@ namespace CmdLine
 
         public string GetCombinationString()
         {
-            return GetCombinationString(Channels.Keys());
+            return GetCombinationString(Channels.Keys.ToList());
         }
     }
     
@@ -116,7 +124,7 @@ namespace CmdLine
         /**
          * Keeps a sorted set of the combinations for later composition of the atlas.
          */
-        public SortedSet<ChannelCombination> SetChannelCombinations = new SortedSet<ChannelCombination>(new ChannelCombination.ComparerByComplexity());
+        public SortedSet<ChannelCombination> SetChannelCombinations = new SortedSet<ChannelCombination>(new ChannelCombination.ComparerByComplexity(true));
         public SortedDictionary<string, Channel> Channels = new SortedDictionary<string, Channel>();
         public SortedDictionary<string, Texture> Textures = new SortedDictionary<string, Texture>();
 

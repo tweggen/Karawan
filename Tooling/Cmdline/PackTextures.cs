@@ -10,12 +10,9 @@ namespace CmdLine
         private string[] _args;
         private Packer _packer;
 
-        public int Execute()
-        {
-            Trace("packtextures: Working...");
-            GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
-            gc.Load();
 
+        private void _generateTraditional(GameConfig gc)
+        {
             foreach (var kvp in gc.MapAtlasSpecs)
             {
                 Trace($"packtextures: Generating atlas {kvp.Key}...");
@@ -32,6 +29,29 @@ namespace CmdLine
                 Trace($"packtextures: Saving atlas {kvp.Key} to {_packer.DestinationTexture}...");
                 _packer.SaveAtlasses();
             }
+        }
+
+
+
+        private void _generateFromTextureSection(GameConfig gc)
+        {
+            var ts = gc.TextureSection;
+            foreach (ChannelCombination comb in ts.SetChannelCombinations)
+            {
+                Trace($"Processing channel combination \"{comb.GetCombinationString()}\".");
+            }
+        }
+        
+        
+        
+        public int Execute()
+        {
+            Trace("packtextures: Working...");
+            GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
+            gc.Load();
+
+            _generateTraditional(gc);
+            _generateFromTextureSection(gc);
             Trace($"packtextures: Done");
             return 0;
         }

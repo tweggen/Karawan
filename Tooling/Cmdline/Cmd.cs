@@ -18,20 +18,25 @@ class Cmd
 
         int result = 0;
 
-        switch (args[0])
+        try {
+            switch (args[0])
+            {
+                case "fbx2ascii":
+                    result = new CmdLine.Fbx2Ascii(args).Execute();
+                    break;
+                case "packtextures":
+                    result = new CmdLine.PackTextures(args) { Trace = m => Console.Error.WriteLine(m) }.Execute();
+                    break;
+                case "res2target":
+                    result = new CmdLine.Res2Target(args) { Trace = m => Console.Error.WriteLine(m) }.Execute();
+                    break;
+                default:
+                    result = new CmdLine.Help(args).Execute();
+                    break;
+            }
+        } catch (System.Exception e)
         {
-            case "fbx2ascii":
-                result = new CmdLine.Fbx2Ascii(args).Execute();
-                break;
-            case "packtextures":
-                result = new CmdLine.PackTextures(args).Execute();
-                break;
-            case "res2target":
-                result = new CmdLine.Res2Target(args).Execute();
-                break;
-            default:
-                result = new CmdLine.Help(args).Execute();
-                break;
+            Console.Error.WriteLine($"Error executing command: {e}.");
         }
 
         return result;

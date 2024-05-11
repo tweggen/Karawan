@@ -157,7 +157,7 @@
       "sprouce-cn": { "emissive-trans": { "uri": "../models/brands/sprouce-cn.png" } },
       "lorem": { "emissive-trans": { "uri": "../models/buildings/lorem.png" } },
       "standardlight": { "emissive-trans": { "uri": "../models/lightfx/standardlight/standardlight.png" } },
-      "mapicons": { "uri": "../models/mapicons/mapicons.png" } },
+      "mapicons": { "emissive-trans": { "uri": "../models/mapicons/mapicons.png" } },
 
       "streets1to4": { "albedo": { "uri": "../models/streets/streets1to4.png" } },
       "gridlines1": { "albedo": { "uri": "../models/void/gridlines1.png" } },
