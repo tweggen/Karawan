@@ -26,9 +26,11 @@ namespace CmdLine
                     Trace($"packtextures: Adding texture {textureResource.Uri} to atlas {kvp.Key}...");
                     _packer.AddTexture(textureResource,0);
                 }
-                _packer.Process(null, null, 1024,0, true);
+
+                _packer.Prepare();
+                _packer.ProcessTextures();
                 Trace($"packtextures: Saving atlas {kvp.Key} to {_packer.DestinationTexture}...");
-                _packer.SaveAtlasses(_packer.DestinationTexture);
+                _packer.SaveAtlasses();
             }
             Trace($"packtextures: Done");
             return 0;

@@ -149,13 +149,12 @@ namespace CmdLine
     /// </summary>
     public class Packer
     {
-        public string DestinationAtlas;
-        public string DestinationTexture;
-
         /// <summary>
         /// List of all the textures that need to be packed
         /// </summary>
         public List<TextureInfo> SourceTextures;
+
+        public string DestinationTexture;
 
         /// <summary>
         /// Stream that recieves all the info logged
@@ -170,17 +169,12 @@ namespace CmdLine
         /// <summary>
         /// Number of pixels that separate textures in the atlas
         /// </summary>
-        public int Padding;
+        public int Padding { get; set; } = 0;
 
         /// <summary>
         /// Size of the atlas in pixels. Represents one axis, as atlases are square
         /// </summary>
-        public int AtlasSize;
-
-        /// <summary>
-        /// Toggle for debug mode, resulting in debug atlasses to check the packing algorithm
-        /// </summary>
-        public bool DebugMode;
+        public int AtlasSize { get; set; } = 1024;
 
         /// <summary>
         /// Which heuristic to use when doing the fit
@@ -194,58 +188,248 @@ namespace CmdLine
 
         public List<Resource> StandaloneTextures = new List<Resource>();
 
-        public Packer()
+        
+        private void _horizontalSplit(Node _ToSplit, int _Width, int _Height, List<Node> _List)
         {
-            SourceTextures = new List<TextureInfo>();
-            Log = new StringWriter();
-            Error = new StringWriter();
+            Node n1 = new Node();
+            n1.Bounds.X = _ToSplit.Bounds.X + _Width + Padding;
+            n1.Bounds.Y = _ToSplit.Bounds.Y;
+            n1.Bounds.Width = _ToSplit.Bounds.Width - _Width - Padding;
+            n1.Bounds.Height = _Height;
+            n1.SplitType = SplitType.Vertical;
+
+            Node n2 = new Node();
+            n2.Bounds.X = _ToSplit.Bounds.X;
+            n2.Bounds.Y = _ToSplit.Bounds.Y + _Height + Padding;
+            n2.Bounds.Width = _ToSplit.Bounds.Width;
+            n2.Bounds.Height = _ToSplit.Bounds.Height - _Height - Padding;
+            n2.SplitType = SplitType.Horizontal;
+
+            if (n1.Bounds.Width > 0 && n1.Bounds.Height > 0)
+                _List.Add(n1);
+            if (n2.Bounds.Width > 0 && n2.Bounds.Height > 0)
+                _List.Add(n2);
         }
 
-        public void Process(string _SourceDir, string _Pattern, int _AtlasSize, int _Padding, bool _DebugMode)
+        
+        private void _verticalSplit(Node _ToSplit, int _Width, int _Height, List<Node> _List)
         {
-            Padding = _Padding;
-            AtlasSize = _AtlasSize;
-            DebugMode = _DebugMode;
+            Node n1 = new Node();
+            n1.Bounds.X = _ToSplit.Bounds.X + _Width + Padding;
+            n1.Bounds.Y = _ToSplit.Bounds.Y;
+            n1.Bounds.Width = _ToSplit.Bounds.Width - _Width - Padding;
+            n1.Bounds.Height = _ToSplit.Bounds.Height;
+            n1.SplitType = SplitType.Vertical;
 
-            List<TextureInfo> textures = new List<TextureInfo>();
-            textures = SourceTextures.ToList();
+            Node n2 = new Node();
+            n2.Bounds.X = _ToSplit.Bounds.X;
+            n2.Bounds.Y = _ToSplit.Bounds.Y + _Height + Padding;
+            n2.Bounds.Width = _Width;
+            n2.Bounds.Height = _ToSplit.Bounds.Height - _Height - Padding;
+            n2.SplitType = SplitType.Horizontal;
 
-            //2: generate as many atlasses as needed (with the latest one as small as possible)
-            Atlasses = new List<Atlas>();
-            while (textures.Count > 0)
+            if (n1.Bounds.Width > 0 && n1.Bounds.Height > 0)
+                _List.Add(n1);
+            if (n2.Bounds.Width > 0 && n2.Bounds.Height > 0)
+                _List.Add(n2);
+        }
+        
+        
+        /**
+         * Create a dedicated image for fixed palette colors.
+         * This image containns all RGBA 3331 color values, i.e. all values
+         * for a 3331 bit per component RGBA palette, with a being 8 or f
+         * Every value exists on two horizontal and two vertical values.
+         * This gives a total of 1k * 4 = 4k pixels, arranged in a 64*64 texture.
+         *
+         * The texture is first treated as 2x2 pixels.
+         * Then, the pixels are filled according to the numeric ABGB numerical
+         * values, like ((y>>1)<<8) | (x>>1)).
+         * 
+         * x == gg aaa0
+         * y == ab bbg0
+         * 
+         */
+        private SKImage _createRGBA16Image()
+        {
+            
+            var info = new SKImageInfo(64, 64, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+            SKImage image;
+            using (var skiaSurface = SKSurface.Create(info))
             {
-                Atlas atlas = new Atlas();
-                atlas.Width = _AtlasSize;
-                atlas.Height = _AtlasSize;
 
-                List<TextureInfo> leftovers = LayoutAtlas(textures, atlas);
-
-                if (leftovers.Count == 0)
+                var paint = new SKPaint
                 {
-                    // we reached the last atlas. Check if this last atlas could have been twice smaller
-                    while (leftovers.Count == 0)
+                    Color = 0x00000000,
+                    Style = SKPaintStyle.Fill
+                };
+                for (uint y = 0; y < 32; y++)
+                {
+                    for (uint x = 0; x < 32; x++)
                     {
-                        atlas.Width /= 2;
-                        atlas.Height /= 2;
-                        leftovers = LayoutAtlas(textures, atlas);
+                        uint a = ((y & 0x10u) != 0) ? 0xffu : 0x88u;
+                        uint b = (y & 0x0e) << 4;
+                        b |= b >> 4;
+                        uint g = ((y & 0x1)<<7) | ((x&0x18u)<<2);
+                        g |= g >> 4;
+                        uint r = (x & 0x07) << 5;
+                        r |= r >> 4;
+                        paint.Color = (a << 24) | (b << 16) | (g << 8) | r;
+                        skiaSurface.Canvas.DrawRect(2 * x, 2 * y, 2, 2, paint);
                     }
-
-                    // we need to go 1 step larger as we found the first size that is to small
-                    atlas.Width *= 2;
-                    atlas.Height *= 2;
-                    leftovers = LayoutAtlas(textures, atlas);
                 }
 
-                Atlasses.Add(atlas);
-
-                textures = leftovers;
+                paint.Dispose();
+                image = skiaSurface.Snapshot();
             }
+
+            return image;
+        }
+        
+
+        private SKImage _loadImage(string path)
+        {
+            if (path == "rgba") return _createRGBA16Image();
+            else return SKImage.FromEncodedData(path);
         }
 
-        public void SaveAtlasses(string _Destination)
+
+
+        private SKSurface _createAtlasImage(Atlas _Atlas)
+        {
+            var info = new SKImageInfo(_Atlas.Width, _Atlas.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+            var skiaSurface = SKSurface.Create(info);
+
+            {
+                var paint = new SKPaint
+                {
+                    Color = 0x000000,
+                    Style = SKPaintStyle.Fill
+                };
+                skiaSurface.Canvas.DrawRect(0, 0, _Atlas.Width - 1, _Atlas.Height - 1, paint);
+                paint.Dispose();
+            }
+
+            foreach (Node n in _Atlas.Nodes)
+            {
+                if (n.Texture != null)
+                {
+                    using (var image = _loadImage(n.Texture.FullPath))
+                    using (var bm = SKBitmap.FromImage(image))
+                    {
+                        skiaSurface.Canvas.DrawBitmap(bm, new SKPoint(n.Bounds.X, n.Bounds.Y));
+                    }
+                }
+                else
+                {
+                    var paint = new SKPaint
+                    {
+                        Color = 0xff00ff00,
+                        Style = SKPaintStyle.Fill
+                    };
+                    skiaSurface.Canvas.DrawRect(n.Bounds.X, n.Bounds.Y, n.Bounds.Width - 1, n.Bounds.Height - 1, paint);
+                    paint.Dispose();
+                }
+            }
+
+            return skiaSurface;
+        }
+
+
+        private TextureInfo _findBestFitForNode(Node _Node, List<TextureInfo> _Textures)
+            {
+                TextureInfo bestFit = null;
+
+                float nodeArea = _Node.Bounds.Width * _Node.Bounds.Height;
+                float maxCriteria = 0.0f;
+
+                foreach (TextureInfo ti in _Textures)
+                {
+                    switch (FitHeuristic)
+                    {
+                        // Max of Width and Height ratios
+                        case BestFitHeuristic.MaxOneAxis:
+                            if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
+                            {
+                                float wRatio = (float)ti.Width / (float)_Node.Bounds.Width;
+                                float hRatio = (float)ti.Height / (float)_Node.Bounds.Height;
+                                float ratio = wRatio > hRatio ? wRatio : hRatio;
+                                if (ratio > maxCriteria)
+                                {
+                                    maxCriteria = ratio;
+                                    bestFit = ti;
+                                }
+                            }
+                            break;
+
+                        // Maximize Area coverage
+                        case BestFitHeuristic.Area:
+
+                            if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
+                            {
+                                float textureArea = ti.Width * ti.Height;
+                                float coverage = textureArea / nodeArea;
+                                if (coverage > maxCriteria)
+                                {
+                                    maxCriteria = coverage;
+                                    bestFit = ti;
+                                }
+                            }
+                            break;
+                    }
+                }
+                return bestFit;
+            }
+
+        
+        private List<TextureInfo> _layoutAtlas(List<TextureInfo> textures0, Atlas atlas)
+        {
+            List<Node> freeList = new List<Node>();
+            List<TextureInfo> textures = new List<TextureInfo>(textures0);
+
+            atlas.Nodes = new List<Node>();
+
+            Node root = new Node();
+            root.Bounds.Size = new Size(atlas.Width, atlas.Height);
+            root.SplitType = SplitType.Horizontal;
+
+            freeList.Add(root);
+
+            while (freeList.Count > 0 && textures.Count > 0)
+            {
+                Node node = freeList[0];
+                freeList.RemoveAt(0);
+
+                TextureInfo bestFit = _findBestFitForNode(node, textures);
+                if (bestFit != null)
+                {
+                    if (node.SplitType == SplitType.Horizontal)
+                    {
+                        _horizontalSplit(node, bestFit.Width, bestFit.Height, freeList);
+                    }
+                    else
+                    {
+                        _verticalSplit(node, bestFit.Width, bestFit.Height, freeList);
+                    }
+
+                    node.Texture = bestFit;
+                    node.Bounds.Width = bestFit.Width;
+                    node.Bounds.Height = bestFit.Height;
+
+                    textures.Remove(bestFit);
+                }
+
+                atlas.Nodes.Add(node);
+            }
+
+            return textures;
+        }
+
+
+        public void SaveAtlasses()
         {
             int atlasCount = 0;
-            string prefix = _Destination.Replace(Path.GetExtension(_Destination), "");
+            string prefix = DestinationTexture.Replace(Path.GetExtension(DestinationTexture), "");
 
             JsonAtlassesDesc jAtlasses = new JsonAtlassesDesc()
             {
@@ -258,7 +442,7 @@ namespace CmdLine
                 string atlasTag = System.IO.Path.GetFileName(atlasName);
 
                 //1: Save images
-                SKSurface skiaSurface = CreateAtlasImage(atlas);
+                SKSurface skiaSurface = _createAtlasImage(atlas);
                 using (var image = skiaSurface.Snapshot())
                 using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
                 using (var stream = File.OpenWrite(atlasName))
@@ -325,7 +509,7 @@ namespace CmdLine
                 jAtlasses.Atlasses[resource.Tag] = jAtlas;
             }
 
-            string descFile = _Destination;
+            string descFile = DestinationTexture;
             StreamWriter tw = new StreamWriter(descFile);
             {
                 var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -341,7 +525,50 @@ namespace CmdLine
             tw.WriteLine(Error.ToString());
             tw.Close();
         }
+       
+        
+        /**
+         * Process the incoming textures, creating as many atlasses as required on the go.
+         */
+        public void ProcessTextures()
+        {
+            List<TextureInfo> textures = SourceTextures.ToList();
 
+            //2: generate as many atlasses as needed (with the latest one as small as possible)
+            while (textures.Count > 0)
+            {
+                Atlas atlas = new Atlas() { Width = AtlasSize, Height = AtlasSize };
+
+                List<TextureInfo> leftovers = _layoutAtlas(textures, atlas);
+
+                if (leftovers.Count == 0)
+                {
+                    // we reached the last atlas. Check if this last atlas could have been twice smaller
+                    while (leftovers.Count == 0)
+                    {
+                        atlas.Width /= 2;
+                        atlas.Height /= 2;
+                        leftovers = _layoutAtlas(textures, atlas);
+                    }
+
+                    // we need to go 1 step larger as we found the first size that is to small
+                    atlas.Width *= 2;
+                    atlas.Height *= 2;
+                    leftovers = _layoutAtlas(textures, atlas);
+                }
+
+                Atlasses.Add(atlas);
+
+                textures = leftovers;
+            }
+        }
+        
+
+        public void Prepare()
+        {
+            Atlasses = new List<Atlas>();
+        }
+        
 
         public void AddTexture(Resource resourceTexture, int prio)
         {
@@ -387,242 +614,11 @@ namespace CmdLine
         }
 
         
-        private void HorizontalSplit(Node _ToSplit, int _Width, int _Height, List<Node> _List)
+        public Packer()
         {
-            Node n1 = new Node();
-            n1.Bounds.X = _ToSplit.Bounds.X + _Width + Padding;
-            n1.Bounds.Y = _ToSplit.Bounds.Y;
-            n1.Bounds.Width = _ToSplit.Bounds.Width - _Width - Padding;
-            n1.Bounds.Height = _Height;
-            n1.SplitType = SplitType.Vertical;
-
-            Node n2 = new Node();
-            n2.Bounds.X = _ToSplit.Bounds.X;
-            n2.Bounds.Y = _ToSplit.Bounds.Y + _Height + Padding;
-            n2.Bounds.Width = _ToSplit.Bounds.Width;
-            n2.Bounds.Height = _ToSplit.Bounds.Height - _Height - Padding;
-            n2.SplitType = SplitType.Horizontal;
-
-            if (n1.Bounds.Width > 0 && n1.Bounds.Height > 0)
-                _List.Add(n1);
-            if (n2.Bounds.Width > 0 && n2.Bounds.Height > 0)
-                _List.Add(n2);
+            SourceTextures = new List<TextureInfo>();
+            Log = new StringWriter();
+            Error = new StringWriter();
         }
-
-        
-        private void VerticalSplit(Node _ToSplit, int _Width, int _Height, List<Node> _List)
-        {
-            Node n1 = new Node();
-            n1.Bounds.X = _ToSplit.Bounds.X + _Width + Padding;
-            n1.Bounds.Y = _ToSplit.Bounds.Y;
-            n1.Bounds.Width = _ToSplit.Bounds.Width - _Width - Padding;
-            n1.Bounds.Height = _ToSplit.Bounds.Height;
-            n1.SplitType = SplitType.Vertical;
-
-            Node n2 = new Node();
-            n2.Bounds.X = _ToSplit.Bounds.X;
-            n2.Bounds.Y = _ToSplit.Bounds.Y + _Height + Padding;
-            n2.Bounds.Width = _Width;
-            n2.Bounds.Height = _ToSplit.Bounds.Height - _Height - Padding;
-            n2.SplitType = SplitType.Horizontal;
-
-            if (n1.Bounds.Width > 0 && n1.Bounds.Height > 0)
-                _List.Add(n1);
-            if (n2.Bounds.Width > 0 && n2.Bounds.Height > 0)
-                _List.Add(n2);
-        }
-        
-        
-        private TextureInfo FindBestFitForNode(Node _Node, List<TextureInfo> _Textures)
-        {
-            TextureInfo bestFit = null;
-
-            float nodeArea = _Node.Bounds.Width * _Node.Bounds.Height;
-            float maxCriteria = 0.0f;
-
-            foreach (TextureInfo ti in _Textures)
-            {
-                switch (FitHeuristic)
-                {
-                    // Max of Width and Height ratios
-                    case BestFitHeuristic.MaxOneAxis:
-                        if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
-                        {
-                            float wRatio = (float)ti.Width / (float)_Node.Bounds.Width;
-                            float hRatio = (float)ti.Height / (float)_Node.Bounds.Height;
-                            float ratio = wRatio > hRatio ? wRatio : hRatio;
-                            if (ratio > maxCriteria)
-                            {
-                                maxCriteria = ratio;
-                                bestFit = ti;
-                            }
-                        }
-                        break;
-
-                    // Maximize Area coverage
-                    case BestFitHeuristic.Area:
-
-                        if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
-                        {
-                            float textureArea = ti.Width * ti.Height;
-                            float coverage = textureArea / nodeArea;
-                            if (coverage > maxCriteria)
-                            {
-                                maxCriteria = coverage;
-                                bestFit = ti;
-                            }
-                        }
-                        break;
-                }
-            }
-            return bestFit;
-        }
-
-        
-        private List<TextureInfo> LayoutAtlas(List<TextureInfo> _Textures, Atlas _Atlas)
-        {
-            List<Node> freeList = new List<Node>();
-            List<TextureInfo> textures = new List<TextureInfo>();
-
-            _Atlas.Nodes = new List<Node>();
-
-            textures = _Textures.ToList();
-
-            Node root = new Node();
-            root.Bounds.Size = new Size(_Atlas.Width, _Atlas.Height);
-            root.SplitType = SplitType.Horizontal;
-
-            freeList.Add(root);
-
-            while (freeList.Count > 0 && textures.Count > 0)
-            {
-                Node node = freeList[0];
-                freeList.RemoveAt(0);
-
-                TextureInfo bestFit = FindBestFitForNode(node, textures);
-                if (bestFit != null)
-                {
-                    if (node.SplitType == SplitType.Horizontal)
-                    {
-                        HorizontalSplit(node, bestFit.Width, bestFit.Height, freeList);
-                    }
-                    else
-                    {
-                        VerticalSplit(node, bestFit.Width, bestFit.Height, freeList);
-                    }
-
-                    node.Texture = bestFit;
-                    node.Bounds.Width = bestFit.Width;
-                    node.Bounds.Height = bestFit.Height;
-
-                    textures.Remove(bestFit);
-                }
-
-                _Atlas.Nodes.Add(node);
-            }
-
-            return textures;
-        }
-
-
-        /**
-         * Create a dedicated image for fixed palette colors.
-         * This image containns all RGBA 3331 color values, i.e. all values
-         * for a 3331 bit per component RGBA palette, with a being 8 or f
-         * Every value exists on two horizontal and two vertical values.
-         * This gives a total of 1k * 4 = 4k pixels, arranged in a 64*64 texture.
-         *
-         * The texture is first treated as 2x2 pixels.
-         * Then, the pixels are filled according to the numeric ABGB numerical
-         * values, like ((y>>1)<<8) | (x>>1)).
-         * 
-         * x == gg aaa0
-         * y == ab bbg0
-         * 
-         */
-        private SKImage CreateRGBA16Image()
-        {
-            
-            var info = new SKImageInfo(64, 64, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-            SKImage image;
-            using (var skiaSurface = SKSurface.Create(info))
-            {
-
-                var paint = new SKPaint
-                {
-                    Color = 0x00000000,
-                    Style = SKPaintStyle.Fill
-                };
-                for (uint y = 0; y < 32; y++)
-                {
-                    for (uint x = 0; x < 32; x++)
-                    {
-                        uint a = ((y & 0x10u) != 0) ? 0xffu : 0x88u;
-                        uint b = (y & 0x0e) << 4;
-                        b |= b >> 4;
-                        uint g = ((y & 0x1)<<7) | ((x&0x18u)<<2);
-                        g |= g >> 4;
-                        uint r = (x & 0x07) << 5;
-                        r |= r >> 4;
-                        paint.Color = (a << 24) | (b << 16) | (g << 8) | r;
-                        skiaSurface.Canvas.DrawRect(2 * x, 2 * y, 2, 2, paint);
-                    }
-                }
-
-                paint.Dispose();
-                image = skiaSurface.Snapshot();
-            }
-
-            return image;
-        }
-
-        private SKImage LoadImage(string path)
-        {
-            if (path == "rgba") return CreateRGBA16Image();
-            else return SKImage.FromEncodedData(path);
-        }
-
-
-
-        private SKSurface CreateAtlasImage(Atlas _Atlas)
-        {
-            var info = new SKImageInfo(_Atlas.Width, _Atlas.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
-            var skiaSurface = SKSurface.Create(info);
-
-            {
-                var paint = new SKPaint
-                {
-                    Color = 0x000000,
-                    Style = SKPaintStyle.Fill
-                };
-                skiaSurface.Canvas.DrawRect(0, 0, _Atlas.Width - 1, _Atlas.Height - 1, paint);
-                paint.Dispose();
-            }
-
-            foreach (Node n in _Atlas.Nodes)
-            {
-                if (n.Texture != null)
-                {
-                    using (var image = LoadImage(n.Texture.FullPath))
-                    using (var bm = SKBitmap.FromImage(image))
-                    {
-                        skiaSurface.Canvas.DrawBitmap(bm, new SKPoint(n.Bounds.X, n.Bounds.Y));
-                    }
-                }
-                else
-                {
-                    var paint = new SKPaint
-                    {
-                        Color = 0xff00ff00,
-                        Style = SKPaintStyle.Fill
-                    };
-                    skiaSurface.Canvas.DrawRect(n.Bounds.X, n.Bounds.Y, n.Bounds.Width - 1, n.Bounds.Height - 1, paint);
-                    paint.Dispose();
-                }
-            }
-
-            return skiaSurface;
-        }
-
     }
 }
