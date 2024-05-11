@@ -625,25 +625,28 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.drink-window",
             name => new Material()
             {
-                Texture = I.Get<TextureCatalogue>().FindTexture("drink-window.png")
+                Texture = I.Get<TextureCatalogue>().FindTexture("drink-window-albedo.png"),
+                EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("drink-window-emissive.png")
             });
 
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.eat-window",
             name => new Material()
             {
-                Texture = I.Get<TextureCatalogue>().FindTexture("eat-window.png")
+                Texture = I.Get<TextureCatalogue>().FindTexture("eat-window-albedo.png"),
+                EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("eat-window-emissive.png"),
             });
 
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.fishmongers-window",
             name => new Material()
             {
-                Texture = I.Get<TextureCatalogue>().FindTexture("fishmongers-window.png")
+                Texture = I.Get<TextureCatalogue>().FindTexture("fishmongers-window-albedo.png"),
+                EmissiveTexture = I.Get<TextureCatalogue>().FindTexture("fishmongers-window-emissive.png")
             });
 
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.houses.material.empty-window",
             name => new Material()
             {
-                Texture = I.Get<TextureCatalogue>().FindTexture("empty-window.png")
+                Texture = I.Get<TextureCatalogue>().FindTexture("empty-window-albedo.png")
             });
 
     }
