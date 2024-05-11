@@ -429,7 +429,12 @@ namespace CmdLine
         public void SaveAtlasses()
         {
             int atlasCount = 0;
-            string prefix = DestinationTexture.Replace(Path.GetExtension(DestinationTexture), "");
+            
+            string prefix = DestinationTexture;
+            if (Path.HasExtension(prefix))
+            {
+                prefix = prefix.Replace(Path.GetExtension(prefix), ""); 
+            }
 
             JsonAtlassesDesc jAtlasses = new JsonAtlassesDesc()
             {
@@ -525,48 +530,57 @@ namespace CmdLine
             tw.WriteLine(Error.ToString());
             tw.Close();
         }
-       
-        
+
+        private Atlas _currentAtlas = null;
+
         /**
          * Process the incoming textures, creating as many atlasses as required on the go.
          */
         public void ProcessTextures()
         {
-            List<TextureInfo> textures = SourceTextures.ToList();
-
-            //2: generate as many atlasses as needed (with the latest one as small as possible)
-            while (textures.Count > 0)
+            /*
+             * Fetch current state.
+             */
+            var atlas = _currentAtlas;
+            _currentAtlas = null;
+            
+            while (SourceTextures.Count > 0)
             {
-                Atlas atlas = new Atlas() { Width = AtlasSize, Height = AtlasSize };
+                /*
+                 * Collect as much as we can into this atlas.
+                 */
+                List<TextureInfo> leftovers = _layoutAtlas(SourceTextures, atlas);
 
-                List<TextureInfo> leftovers = _layoutAtlas(textures, atlas);
-
-                if (leftovers.Count == 0)
-                {
-                    // we reached the last atlas. Check if this last atlas could have been twice smaller
-                    while (leftovers.Count == 0)
-                    {
-                        atlas.Width /= 2;
-                        atlas.Height /= 2;
-                        leftovers = _layoutAtlas(textures, atlas);
-                    }
-
-                    // we need to go 1 step larger as we found the first size that is to small
-                    atlas.Width *= 2;
-                    atlas.Height *= 2;
-                    leftovers = _layoutAtlas(textures, atlas);
-                }
-
+                /*
+                 * We do not minimize the last texture, only after the last packing
+                 */
                 Atlasses.Add(atlas);
 
-                textures = leftovers;
+                SourceTextures = leftovers;
             }
+
+            /*
+             * Write back current state
+             */
+            _currentAtlas = atlas;
+        }
+
+
+        public void FinishTextures()
+        {
+            /*
+             * Try to minimize the last atlas.
+             */
+            
+            var atlas = _currentAtlas;
+            _currentAtlas = null;
         }
         
 
         public void Prepare()
         {
             Atlasses = new List<Atlas>();
+            _currentAtlas = new Atlas() { Width = AtlasSize, Height = AtlasSize };
         }
         
 
@@ -589,6 +603,11 @@ namespace CmdLine
             else
             {
                 FileInfo fi = new FileInfo(resourceTexture.Uri);
+                if (!fi.Exists)
+                {
+                    Log.WriteLine($"Error: File \"{fi.FullName}\" does not exist.");
+                    return;
+                }
                 using (var image = SKImage.FromEncodedData(fi.FullName))
                 {
                     if (image.Width <= AtlasSize && image.Height <= AtlasSize)
