@@ -62,6 +62,17 @@ namespace CmdLine
         }
     }
     
+    
+    /**
+     * We keep the information the textures should be generated with.
+     *
+     * First:
+     * For every combination of more than one channel, a new set of texture packers
+     * should be generated. The corresponding textures shall be added.
+     *
+     * Secondly:
+     * Now, all remaining single channel textures shall be added.
+     */
     public class TextureSection
     {
         
