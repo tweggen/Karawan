@@ -131,17 +131,42 @@ namespace CmdLine
         /// <summary>
         /// Width in pixels
         /// </summary>
-        public int Width;
+        public readonly int Width;
 
         /// <summary>
         /// Height in Pixel
         /// </summary>
-        public int Height;
+        public readonly int Height;
 
         /// <summary>
         /// List of the nodes in the Atlas. This will represent all the textures that are packed into it and all the remaining free space
         /// </summary>
-        public List<Node> Nodes;
+        public readonly List<Node> Nodes;
+
+        public readonly List<Node> FreeList;
+
+        
+        public Atlas(int width, int height)
+        {
+            Nodes = new List<Node>();
+            FreeList = new List<Node>();
+            Width = width;
+            Height = height;
+            Node root = new Node();
+            root.Bounds.Size = new Size(Width, Height);
+            root.SplitType = SplitType.Horizontal;
+
+            FreeList.Add(root);
+        }
+
+
+        public Atlas(Atlas o)
+        {
+            Width = o.Width;
+            Height = o.Height;
+            Nodes = new List<Node>(o.Nodes);
+            FreeList = new List<Node>(o.FreeList);
+        }
     }
 
     /// <summary>
@@ -382,40 +407,40 @@ namespace CmdLine
             }
 
         
-        private List<TextureInfo> _layoutAtlas(List<TextureInfo> textures0, Atlas atlas)
+        private List<TextureInfo> _layoutAtlas(List<TextureInfo> textures0, Atlas orgAtlas, out Atlas atlas)
         {
-            List<Node> freeList = new List<Node>();
+            /*
+             * We operate on a copy.
+             */
+            atlas = new Atlas(orgAtlas);
+            
             List<TextureInfo> textures = new List<TextureInfo>(textures0);
-
-            atlas.Nodes = new List<Node>();
-
+            
             Node root = new Node();
             root.Bounds.Size = new Size(atlas.Width, atlas.Height);
             root.SplitType = SplitType.Horizontal;
 
-            freeList.Add(root);
-
-            while (freeList.Count > 0 && textures.Count > 0)
+            while (atlas.FreeList.Count > 0 && textures.Count > 0)
             {
-                List<Node> sortedFreeList = freeList.ToList();
+                List<Node> sortedFreeList = atlas.FreeList.ToList();
                 
                 sortedFreeList.Sort((n1, n2) =>
                 {
                     return n1.Bounds.Width * n1.Bounds.Height - n2.Bounds.Width * n2.Bounds.Height;
                 });
                 Node node = sortedFreeList[0];
-                freeList.Remove(node);
+                atlas.FreeList.Remove(node);
 
                 TextureInfo bestFit = _findBestFitForNode(node, textures);
                 if (bestFit != null)
                 {
                     if (node.SplitType == SplitType.Horizontal)
                     {
-                        _horizontalSplit(node, bestFit.Width, bestFit.Height, freeList);
+                        _horizontalSplit(node, bestFit.Width, bestFit.Height, atlas.FreeList);
                     }
                     else
                     {
-                        _verticalSplit(node, bestFit.Width, bestFit.Height, freeList);
+                        _verticalSplit(node, bestFit.Width, bestFit.Height, atlas.FreeList);
                     }
 
                     node.Texture = bestFit;
@@ -552,18 +577,31 @@ namespace CmdLine
             
             while (SourceTextures.Count > 0)
             {
+                if (null == atlas)
+                {
+                    atlas = new Atlas(AtlasSize, AtlasSize);
+                }
+
                 /*
                  * Collect as much as we can into this atlas.
                  */
-                List<TextureInfo> leftovers = _layoutAtlas(SourceTextures, atlas);
+                List<TextureInfo> leftovers = _layoutAtlas(SourceTextures, atlas, out var newAtlas);
 
                 /*
-                 * We do not minimize the last texture, only after the last packing
+                 * We unconditionally use the newly created atlas.
                  */
-                Atlasses.Add(atlas);
+                atlas = newAtlas;
+                
+                if (leftovers.Count > 0)
+                {
+                    /*
+                     * We do not minimize the last texture, only after the last packing
+                     */
+                    Atlasses.Add(atlas);
+                    atlas = null;
+                }
 
                 SourceTextures = leftovers;
-                atlas = new Atlas() { Width = AtlasSize, Height = AtlasSize };
             }
 
             /*
@@ -578,16 +616,19 @@ namespace CmdLine
             /*
              * Try to minimize the last atlas.
              */
-            
             var atlas = _currentAtlas;
             _currentAtlas = null;
+            if (atlas != null)
+            {
+                Atlasses.Add(atlas);
+            }
         }
         
 
         public void Prepare()
         {
             Atlasses = new List<Atlas>();
-            _currentAtlas = new Atlas() { Width = AtlasSize, Height = AtlasSize };
+            _currentAtlas = null; 
         }
 
 
