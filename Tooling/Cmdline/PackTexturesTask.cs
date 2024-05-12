@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -51,10 +52,11 @@ namespace CmdLine
             // Log a high-importance comment
             Log.LogMessage(MessageImportance.High, $"Asked to pack textures...");
 
-            string[] args = new string[3];
+            string[] args = new string[4];
             args[0] = "packtextures";
-            args[1] = _gameJson;
-            args[2] = _outputDirectory;
+            args[1] = Path.GetFullPath(_gameJson);
+            args[2] = Path.GetFullPath(_outputDirectory);
+            args[3] = Path.GetFullPath(".");
 
             using (var process = new Process())
             {
@@ -80,6 +82,7 @@ namespace CmdLine
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.WorkingDirectory = Path.GetDirectoryName(Executable);
 
 
                 process.OutputDataReceived += (sender, data) =>

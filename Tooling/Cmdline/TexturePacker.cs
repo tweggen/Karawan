@@ -397,8 +397,14 @@ namespace CmdLine
 
             while (freeList.Count > 0 && textures.Count > 0)
             {
-                Node node = freeList[0];
-                freeList.RemoveAt(0);
+                List<Node> sortedFreeList = freeList.ToList();
+                
+                sortedFreeList.Sort((n1, n2) =>
+                {
+                    return n1.Bounds.Width * n1.Bounds.Height - n2.Bounds.Width * n2.Bounds.Height;
+                });
+                Node node = sortedFreeList[0];
+                freeList.Remove(node);
 
                 TextureInfo bestFit = _findBestFitForNode(node, textures);
                 if (bestFit != null)
@@ -583,9 +589,15 @@ namespace CmdLine
             Atlasses = new List<Atlas>();
             _currentAtlas = new Atlas() { Width = AtlasSize, Height = AtlasSize };
         }
-        
+
 
         public void AddTexture(Resource resourceTexture, int prio)
+        {
+            AddTexture("", resourceTexture, prio);
+        }
+
+
+        public void AddTexture(string CurrentPath, Resource resourceTexture, int prio)
         {
             if (resourceTexture.Uri == "rgba")
             {
@@ -603,7 +615,7 @@ namespace CmdLine
             }
             else
             {
-                FileInfo fi = new FileInfo(resourceTexture.Uri);
+                FileInfo fi = new FileInfo(Path.Combine(CurrentPath,resourceTexture.Uri));
                 if (!fi.Exists)
                 {
                     Log.WriteLine($"Error: File \"{fi.FullName}\" does not exist.");

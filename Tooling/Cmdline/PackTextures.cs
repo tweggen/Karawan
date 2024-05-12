@@ -10,6 +10,7 @@ namespace CmdLine
         public Action<string> Trace = (msg) => System.Diagnostics.Debug.WriteLine(msg);
         private string[] _args;
         private Packer _packer;
+        public string CurrentPath = "";
 
         public int AtlasSize { get; set; } = 1024;
 
@@ -26,7 +27,7 @@ namespace CmdLine
                 foreach (var textureResource in kvp.Value.TextureResources)
                 {
                     Trace($"packtextures: Adding texture {textureResource.Uri} to atlas {kvp.Key}...");
-                    _packer.AddTexture(textureResource,0);
+                    _packer.AddTexture(CurrentPath, textureResource,0);
                 }
 
                 _packer.Prepare();
@@ -72,7 +73,7 @@ namespace CmdLine
                     foreach (var kvpTexChannel in texture.Channels)
                     {
                         Trace($"Adding texture \"{kvpTexChannel.Value.Uri}\" for channel \"{kvpTexChannel.Key}\".");
-                        dictPackers[kvpTexChannel.Key].AddTexture(kvpTexChannel.Value, 0);
+                        dictPackers[kvpTexChannel.Key].AddTexture(CurrentPath, kvpTexChannel.Value, 0);
                     }
                 }
                 
@@ -112,9 +113,14 @@ namespace CmdLine
         
         public PackTextures(string[] args)
         {
-            if (args.Length != 3)
+            if (args.Length < 3)
             {
                 throw new ArgumentException();
+            }
+
+            if (args.Length == 4)
+            {
+                CurrentPath = args[3];
             }
 
             _args = args;
