@@ -211,6 +211,8 @@ namespace CmdLine
         /// </summary>
         public List<Atlas> Atlasses;
 
+        public string CurrentPath;
+
         public List<Resource> StandaloneTextures = new List<Resource>();
 
         
@@ -481,7 +483,7 @@ namespace CmdLine
                 SKSurface skiaSurface = _createAtlasImage(atlas);
                 using (var image = skiaSurface.Snapshot())
                 using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
-                using (var stream = File.OpenWrite(atlasName))
+                using (var stream = File.OpenWrite(Path.Combine(CurrentPath,atlasName)))
                 {
                     // save the data to a stream
                     data.SaveTo(stream);

@@ -52,7 +52,8 @@ namespace CmdLine
                 var packer = new Packer()
                 {
                     AtlasSize = AtlasSize, FitHeuristic = BestFitHeuristic.Area,
-                    DestinationTexture = Path.Combine(_args[2], $"{kvpChannel.Value.File}").Replace('\\', '/')
+                    DestinationTexture = Path.Combine(_args[2], $"{kvpChannel.Value.File}").Replace('\\', '/'),
+                    CurrentPath = CurrentPath
                 };
                 packer.Prepare();
                 dictPackers[kvpChannel.Key] = packer;
@@ -101,7 +102,7 @@ namespace CmdLine
         public int Execute()
         {
             Trace("packtextures: Working...");
-            GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
+            GameConfig gc = new GameConfig(Path.Combine(CurrentPath,_args[1])) { Trace = Trace };
             gc.Load();
 
             // _generateTraditional(gc);

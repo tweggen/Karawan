@@ -54,8 +54,8 @@ namespace CmdLine
 
             string[] args = new string[4];
             args[0] = "packtextures";
-            args[1] = Path.GetFullPath(_gameJson);
-            args[2] = Path.GetFullPath(_outputDirectory);
+            args[1] = _gameJson;
+            args[2] = _outputDirectory;
             args[3] = Path.GetFullPath(".");
 
             using (var process = new Process())
