@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using builtin.tools.Lindenmayer;
 using engine;
@@ -318,7 +319,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     {
         var worldFragment = ctx.Fragment;
         engine.joyce.Material materialNeon = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.materials.neon");
-        engine.joyce.Mesh meshNeon = new($"{worldFragment.GetId()}-neonsignsubgeo");
+        var meshNeon = engine.joyce.Mesh.CreateArrayListInstance($"{worldFragment.GetId()}-neonsignsubgeo");
 
         /*
          * Number of letters.
@@ -333,22 +334,20 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         float h0 = ctx.Rnd.GetFloat() * (h - nLetters * letterHeight - 3.0f);
         float h1 = h0 + nLetters * letterHeight;
 
-        /*
-         * Trivial implementation: Add a part of the texture, which is 8x8
-         */
-        uint i0 = meshNeon.GetNextVertexIndex();
-
-        meshNeon.p(p0.X, p0.Y + h0, p0.Z);
-        meshNeon.UV(0.0f, 1.0f - 0.0f);
-        meshNeon.p(p0.X, p0.Y + h1, p0.Z);
-        meshNeon.UV(0.0f, 1.0f - 0.125f * nLetters);
-        meshNeon.p(p0.X + pe.X, p0.Y + h1 + pe.Y, p0.Z + pe.Z);
-        meshNeon.UV(0.125f, 1.0f - 0.125f * nLetters);
-        meshNeon.p(p0.X + pe.X, p0.Y + h0 + pe.Y, p0.Z + pe.Z);
-        meshNeon.UV(0.125f, 1.0f - 0.0f);
-
-        meshNeon.Idx(i0 + 0, i0 + 1, i0 + 3);
-        meshNeon.Idx(i0 + 1, i0 + 2, i0 + 3);
+        for (int i = 0; i < nLetters; i++)
+        {
+            int lx = ctx.Rnd.Get8() & 15;
+            int ly = ctx.Rnd.Get8() & 3;
+            float y = p0.Y + h0 + i * letterHeight;
+            engine.joyce.mesh.Tools.AddQuadXYUV(meshNeon,
+                p0 with { Y=y },
+                pe,
+                Vector3.UnitY * letterHeight,
+                new Vector2(lx/16f,ly/4f),
+                new Vector2(1f/16f, 0f),
+                new Vector2(0f, 1f/4f)
+            );
+        }
 
         matmesh.Add(materialNeon, meshNeon);
     }

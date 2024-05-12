@@ -118,6 +118,9 @@
       "emissive-trans": {
         "file": "atlas-emissive-trans.json",
       },
+      "emissive-half-trans": {
+        "file": "atlas-emissive-half-trans.json",
+      },
       "albedo-trans": {
         "file": "atlas-albedo-trans.json",
       },
@@ -148,9 +151,11 @@
       "rgba": {
         "albedo": { "uri": "rgba" },
       },
-      "plentomatic": { "emissive-trans": { "uri": "../models/brands/plentomatic.png" } },
-      "sprouce-cn": { "emissive-trans": { "uri": "../models/brands/sprouce-cn.png" } },
-      "lorem": { "emissive-trans": { "uri": "../models/buildings/lorem.png" } },
+      
+      "plentomatic": { "emissive-half-trans": { "uri": "../models/brands/plentomatic.png" } },
+      "sprouce-cn": { "emissive-half-trans": { "uri": "../models/brands/sprouce-cn.png" } },
+      
+      "lorem": { "emissive-half-trans": { "uri": "../models/buildings/lorem.png" } },
       "standardlight": { "emissive-trans": { "uri": "../models/lightfx/standardlight/standardlight.png" } },
       "mapicons": { "emissive-trans": { "uri": "../models/mapicons/mapicons.png" } },
 
@@ -168,6 +173,7 @@
       { "uri": "../nogame/generated/atlas-emissive.json", "type": "atlas" },
       { "uri": "../nogame/generated/atlas-albedo-trans.json", "type": "atlas" },
       { "uri": "../nogame/generated/atlas-emissive-trans.json", "type": "atlas" },
+      { "uri": "../nogame/generated/atlas-emissive-half-trans.json", "type": "atlas" },
       { "uri": "../models/logos/joyce/aihao-emissive.png" },
       { "uri": "../models/logos/titlelogo/silicondesert-albedo.png" },
       { "uri": "../models/logos/titlelogo/silicondesert-emissive.png" },
