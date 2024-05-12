@@ -1236,6 +1236,7 @@ public class Engine
         I.Register<engine.Resources>(() => new Resources());
         I.Register<engine.SceneSequencer>(() => new SceneSequencer(this));
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
+        I.Register<System.Net.Http.HttpClient>(() => new System.Net.Http.HttpClient());
         
 #if DEBUG
         if (engine.GlobalSettings.Get("engine.physics.TraceCalls") == "true") {

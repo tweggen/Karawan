@@ -1,6 +1,10 @@
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Timers;
 using engine;
+using static engine.Logger;
 
 namespace nogame.modules;
 
@@ -24,17 +28,26 @@ public class AutoSave : engine.AModule
     };
 
 
-    private void _triggerCloudSave()
+    private void _triggerCloudSave(GameState gs)
     {
-        
+        var jsonContent = JsonContent.Create(gs);
+        I.Get<HttpClient>()
+            .PostAsync("https://silicondesert.io/api/random", jsonContent)
+            .ContinueWith(
+                async (responseTask) =>
+                {
+                    var jsonResponse = await (await responseTask).Content.ReadAsStringAsync();
+                    Trace($"Save response is {jsonResponse}");
+                });
     }
     
 
     private void _doSave()
     {
-        M<DBStorage>().SaveGameState(I.Get<GameState>());
-
-        _triggerCloudSave();
+        var gs = I.Get<GameState>();
+        
+        M<DBStorage>().SaveGameState(gs);
+        _triggerCloudSave(gs);
     }
     
 
