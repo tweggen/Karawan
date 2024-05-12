@@ -304,7 +304,8 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         for (int i = 1; i < l; ++i)
         {
             engine.joyce.mesh.Tools.AddQuadXYUV(
-                meshShopFront, vGround + vOffset + p[i-1], p[i] - p[i-1], vUp, Vector2.UnitY, Vector2.UnitX, -Vector2.UnitY
+                meshShopFront, vGround + vOffset + p[i-1], p[i] - p[i-1], vUp,
+                Vector2.UnitY, Vector2.UnitX, -Vector2.UnitY
             );
             matmesh.Add(materialShopFront, meshShopFront);
         }
@@ -343,9 +344,9 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 p0 with { Y=y },
                 pe,
                 Vector3.UnitY * letterHeight,
-                new Vector2(lx/16f,ly/4f),
+                new Vector2(lx/16f,ly/4f + 1f/4f),
                 new Vector2(1f/16f, 0f),
-                new Vector2(0f, 1f/4f)
+                new Vector2(0f, -1f/4f)
             );
         }
 
