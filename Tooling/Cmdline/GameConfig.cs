@@ -9,6 +9,7 @@ namespace CmdLine
 {
     public class GameConfig
     {
+        public string CurrentPath;
         private JsonElement _jeRoot;
         private string _jsonPath;
 
@@ -56,7 +57,7 @@ namespace CmdLine
             }
 
             Trace($"GameConfig: Loaded Resource \"{tag}\" from {uri} type \"{type}\".");
-            if (!File.Exists(uri))
+            if (!File.Exists(Path.Combine(CurrentPath,uri)))
             {
                 Trace($"Warning: resource file for {uri} does not exist.");
             }
@@ -271,8 +272,9 @@ namespace CmdLine
         private void _loadGameConfigFile(string jsonPath)
         {
             Trace($"_loadGameConfigFile(\"{jsonPath}\");");
-            using (var stream = new FileStream(jsonPath, FileMode.Open))
+            using (var stream = new FileStream(Path.Combine(CurrentPath,jsonPath), FileMode.Open))
             {
+                Trace($"_loadGameConfigFile(is absolute \"{jsonPath}\");");
                 JsonDocument jdocGame = JsonDocument.Parse(stream, new JsonDocumentOptions()
                 {
                     AllowTrailingCommas = true
@@ -298,7 +300,7 @@ namespace CmdLine
         {
             Trace($"LoadAtlasResource({atlasListResource.Uri});");
             JsonElement jeAtlasFile;
-            using (var stream = new FileStream(atlasListResource.Uri, FileMode.Open))
+            using (var stream = new FileStream(Path.Combine(CurrentPath,atlasListResource.Uri), FileMode.Open))
             {
                 JsonDocument jdocAtlas = JsonDocument.Parse(stream, new JsonDocumentOptions()
                 {

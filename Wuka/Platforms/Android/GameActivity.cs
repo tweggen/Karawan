@@ -51,7 +51,7 @@ namespace Wuka
                 /*
                  * Try to save a backup copy
                  */
-                I.Get<engine.DBStorage>()?.SaveGameState(I.Get<GameState>());
+                I.Get<nogame.modules.AutoSave>()?.Save();
             }
             catch (Exception e)
             {

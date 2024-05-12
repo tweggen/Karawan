@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -9,6 +10,7 @@ namespace CmdLine
     {
         private string[] _args;
         public Action<string> Trace = (msg) => System.Diagnostics.Debug.WriteLine(msg);
+        public string CurrentPath;
 
         public void Help()
         {
@@ -20,7 +22,7 @@ namespace CmdLine
             Trace("res2target: Working...");
             try
             {
-                GameConfig gc = new GameConfig(_args[1]) { Trace = Trace };
+                GameConfig gc = new GameConfig(Path.Combine(CurrentPath, _args[1])) { CurrentPath = CurrentPath, Trace = Trace };
                 gc.Load();
                 gc.LoadIndirectResources();
 
@@ -54,11 +56,17 @@ namespace CmdLine
 
         public Res2Target(string[] args)
         {
-            if (args.Length != 3)
+            if (args.Length < 3)
             {
                 throw new ArgumentException();
             }
 
+            if (args.Length == 4)
+            {
+                CurrentPath = args[3];
+            }
+
+ 
             _args = args;
         }
     }

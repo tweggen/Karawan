@@ -548,7 +548,7 @@ namespace CmdLine
             }
 
             string descFile = DestinationTexture;
-            StreamWriter tw = new StreamWriter(descFile);
+            StreamWriter tw = new StreamWriter(Path.Combine(CurrentPath,descFile));
             {
                 var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
                 string jsonString = JsonSerializer.Serialize(jAtlasses, options);
@@ -556,7 +556,7 @@ namespace CmdLine
             }
             tw.Close();
 
-            tw = new StreamWriter(prefix + ".log");
+            tw = new StreamWriter(Path.Combine(CurrentPath,prefix + ".log"));
             tw.WriteLine("--- LOG -------------------------------------------");
             tw.WriteLine(Log.ToString());
             tw.WriteLine("--- ERROR -----------------------------------------");

@@ -102,7 +102,7 @@ namespace CmdLine
         public int Execute()
         {
             Trace("packtextures: Working...");
-            GameConfig gc = new GameConfig(Path.Combine(CurrentPath,_args[1])) { Trace = Trace };
+            GameConfig gc = new GameConfig(Path.Combine(CurrentPath, _args[1])) { Trace = Trace, CurrentPath = CurrentPath };
             gc.Load();
 
             // _generateTraditional(gc);

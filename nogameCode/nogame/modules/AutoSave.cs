@@ -23,9 +23,24 @@ public class AutoSave : engine.AModule
         new SharedModule<DBStorage>()
     };
 
-    private void _onSaveTimer(object sender, ElapsedEventArgs e)
+
+    private void _triggerCloudSave()
+    {
+        
+    }
+    
+
+    private void _doSave()
     {
         M<DBStorage>().SaveGameState(I.Get<GameState>());
+
+        _triggerCloudSave();
+    }
+    
+
+    private void _onSaveTimer(object sender, ElapsedEventArgs e)
+    {
+        _doSave();
     }
 
 
@@ -36,6 +51,12 @@ public class AutoSave : engine.AModule
         _saveTimer.Elapsed += _onSaveTimer;
         _saveTimer.AutoReset = true;
         _saveTimer.Enabled = true;
+    }
+
+
+    public void Save()
+    {
+        _doSave();
     }
     
 
