@@ -68,8 +68,12 @@ public class Module : AModule, IInputPart
 
     private float _zoomState = 0.2f;
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
-    public float CameraY { get; set; } = 700f;
+    
+    public float CameraY { get; set; } = 200f + 50f;
     public float MapY { get; set; } = 200f;
+
+    public float MapMaxY { get; set; } = 200f;
+    public float MapMinY { get; set; } = -50f;
 
     public float MiniMapSize { get; set; } = 0.12f;
 
@@ -149,7 +153,7 @@ public class Module : AModule, IInputPart
     {
         float x = (dmp.CurrentZoomState - DisplayMapParams.MIN_ZOOM_STATE)
             / DisplayMapParams.MAX_ZOOM_STATE - DisplayMapParams.MIN_ZOOM_STATE;
-        return (1024f * (x * x * x) + 3) / (engine.world.MetaGen.MaxHeight);
+        return (8192f * (x * x * x) + 3f) / (engine.world.MetaGen.MaxHeight);
     }
 
     
@@ -314,8 +318,8 @@ public class Module : AModule, IInputPart
             _eCamMap = _engine.CreateEntity("RootScene.MapCamera");
             var cCamMap = new engine.joyce.components.Camera3();
             cCamMap.Angle = 0f;
-            cCamMap.NearFrustum = 5f;
-            cCamMap.FarFrustum = 1000f;
+            cCamMap.NearFrustum = CameraY - MapMaxY; // Map maximal height
+            cCamMap.FarFrustum = CameraY - MapMinY;
             cCamMap.Scale = 2f / engine.world.MetaGen.MaxHeight;
             cCamMap.CameraMask = MapCameraMask;
             cCamMap.CameraFlags =
