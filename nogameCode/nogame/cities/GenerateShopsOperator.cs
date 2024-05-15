@@ -185,7 +185,7 @@ class GenerateShopsOperator : IClusterOperator
                 {
                     var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal with
                             {
-                                Y = clusterDesc.AverageHeight + 30f + 5f * (t * 8f + (float)iconCode)
+                                Y = clusterDesc.AverageHeight + 30f + (t + 5f*(float)iconCode)
                             }
                         );
                     if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
