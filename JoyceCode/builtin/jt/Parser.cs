@@ -108,7 +108,18 @@ public class Parser
                 ParentType = "view",
                 TemplateProperties = new()
                 {
-                } 
+                    { "focussable", false }
+                }
+            }
+        },
+        {
+            "option", new ()
+            {
+                ParentType = "text",
+                TemplateProperties = new ()
+                {
+                    { "focussable", true }
+                }
             }
         },
         {
@@ -172,17 +183,9 @@ public class Parser
 
     public void ApplyTemplate(Widget w, TypeDescriptor tdesc)
     {
-        if (tdesc.TemplateProperties != null)
-        {
-            /*
-             * First, the attributes from the template.
-             */
-            foreach (var kvp in tdesc.TemplateProperties)
-            {
-                w[kvp.Key] = kvp.Value;
-            }
-        }
-
+        /*
+         * First, apply the properties of the parent.
+         */
         if (tdesc.ParentType != null)
         {
             if (_mapTypes.TryGetValue(tdesc.ParentType, out var ptdesc))
@@ -190,6 +193,18 @@ public class Parser
                 ApplyTemplate(w, ptdesc);
             }
         }
+
+        /*
+         * Then, apply the properties of the item itselves.
+         */
+        if (tdesc.TemplateProperties != null)
+        {
+            foreach (var kvp in tdesc.TemplateProperties)
+            {
+                w[kvp.Key] = kvp.Value;
+            }
+        }
+
     }
 
 

@@ -26,6 +26,7 @@ public class Factory
         switch (w.Type)
         {
             case "text":
+            case "option":
                 /*
                  * Text is interpreted as an OSDText entity.
                  */
