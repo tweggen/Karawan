@@ -120,6 +120,7 @@ public class TextWidgetImplementation : IWidgetImplementation
     private float _y(object oY) => (float)oY;
     private float _width(object oWidth) => (float)oWidth;
     private float _height(object oHeight) => (float)oHeight;
+    private string _text(object oText) => (string)oText;
 
     
     private void _updateColor()
@@ -131,6 +132,13 @@ public class TextWidgetImplementation : IWidgetImplementation
         _eText.Get<OSDText>().TextColor = finalColor;
     }
 
+
+    private void _onSetText(string text)
+    {
+        ref var cOSDText = ref _eText.Get<OSDText>();
+        cOSDText.Text = text;
+    }
+    
 
     private SortedDictionary<string, AttributeEntry> _mapAttributes = new()
     {
@@ -231,6 +239,15 @@ public class TextWidgetImplementation : IWidgetImplementation
                 {
                 }
             }
+        },
+        {
+            "text", new ()
+            {
+                Name = "text", DefaultValue = (object) "", ApplyFunction = (impl, ae, o) =>
+                {
+                    impl._onSetText(impl._text(o));
+                } 
+            }
         }
     };
 
@@ -268,17 +285,22 @@ public class TextWidgetImplementation : IWidgetImplementation
     {
         _widget = w;
         _eText = I.Get<Engine>().CreateEntity("widget");
+        string text = (string)w["text"];
         _eText.Set(new OSDText()
         {
             HAlign = HAlign.Left,
             VAlign = VAlign.Top,
             Position = new Vector2( (float) w["x"], (float) w["y"] ),
             Size = new Vector2( (float) w["width"], (float) w["height"] ),
-            Text = (string) w["text"],
+            Text = text,
             FontSize = 16,
             TextColor = 0xffffff00,
             FillColor = 0xff0000ff
         });
+        /*
+         * Go to the proper callback to setup the additional properties.
+         */
+        _onSetText(text);
         _eText.Set(new engine.behave.components.Clickable()
         {
             ClickEventFactory = (e, cev, v2RelPos) => new WidgetEvent($"builtin.jt.widget.{_widget.Id}.onClick", this._widget) { RelativePosition = v2RelPos}

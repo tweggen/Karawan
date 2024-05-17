@@ -184,11 +184,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             };
             InstantiateModelParams instantiateModelParams = new()
             {
-                GeomFlags = 0
-                            | InstantiateModelParams.CENTER_X
-                            | InstantiateModelParams.CENTER_Z
-                            | InstantiateModelParams.ROTATE_Y180
-                            | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
+                GeomFlags = 0 | InstantiateModelParams.CENTER_X
+                              | InstantiateModelParams.CENTER_Z
+                              | InstantiateModelParams.ROTATE_Y180
+                              | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                 MaxDistance = propMaxDistance
             };
 

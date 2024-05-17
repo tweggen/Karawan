@@ -3,27 +3,25 @@
     <view id='menuOptions'>
         <vbox width='250' x='200' y='200' direction='vertical'>
             <text color='#666666' height='40'>Options</text>
-            <option color='#999999' height='20' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
-            <option color='#999999' height='20' onClick='jt:replaceAll("menuHelp")'>Help...</option>
-            <hbox width='250' height="20">
-                <option width="80">This one</option>
-                <option width="80">Other one</option>
-            </hbox>
-            <option color='#999999' height='20' onClick='os.exit()'>Exit...</option>
+            <option color='#999999' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
+            <option color='#999999' onClick='jt:replaceAll("menuHelp")'>Help...</option>
+            <hbox><text width="80">eMail</text><option>Input</option></hbox>
+            <hbox><text width="80">Password</text><option>Input</option></hbox>
+            <option color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>
     </view>
     <view id='menuHelp'>
         <vbox width='250' x='200' y='100' direction='vertical'>
             <text color='#666666' height='40'>Help</text>
-            <text color='#999999' height='20'>WASD - navigate</text>
-            <text color='#999999' height='20'>Q/Y - up/down</text>
-            <text color='#999999' height='20'>ESC - pause menu</text>
-            <text color='#999999' height='20'>F8 - debug</text>
-            <text color='#999999' height='20'>F10 - demo ride</text>
-            <text color='#999999' height='20'>F11 - full screen</text>
-            <text color='#999999' height='20'>F12 - joyce ui</text>
-            <text color='#999999' height='20'>tab - map</text>
-            <option color='#999999' height='20' onClick='jt:replaceAll("menuOptions")'>Back...</option>
+            <text color='#999999'>WASD - navigate</text>
+            <text color='#999999'>Q/Y - up/down</text>
+            <text color='#999999'>ESC - pause menu</text>
+            <text color='#999999'>F8 - debug</text>
+            <text color='#999999'>F10 - demo ride</text>
+            <text color='#999999'>F11 - full screen</text>
+            <text color='#999999'>F12 - joyce ui</text>
+            <text color='#999999'>tab - map</text>
+            <option color='#999999' onClick='jt:replaceAll("menuOptions")'>Back...</option>
         </vbox>
     </view>
 </jt>

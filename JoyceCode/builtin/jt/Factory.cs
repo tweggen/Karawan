@@ -15,6 +15,13 @@ public class Factory
     {
         return _wRoot;
     }
+
+
+    public (float, float) GetTextExtent(object font, string text)
+    {
+        // TXWTODO: This is a wild guess. We would need to establish some interface for that.
+        return (12*text.Length, 20);
+    }
     
 
     /**

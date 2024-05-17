@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Threading;
 using engine;
 using engine.gongzuo;
 using engine.news;
@@ -63,6 +61,26 @@ public class Widget : IDisposable
      */
     private SortedDictionary<string, IDisposable>? _compiledProperties = null;
 
+    
+    public virtual (float, float) SizeHint()
+    {
+        return (0f, 0f);
+    }
+
+
+    public virtual (float, float) MinSize()
+    {
+        float width = GetAttr("minWidth", 0f);
+        float height = GetAttr("minHeight", 0f);
+        return (width, height);
+    }
+
+
+    public virtual float HeightForWidth(float w)
+    {
+        return 0f;
+    }
+    
 
     private void _invalidateCompiled(string key)
     {
@@ -131,7 +149,7 @@ public class Widget : IDisposable
     }
     
     
-    public object this[string key]
+    public virtual object this[string key]
     {
         get
         {

@@ -52,6 +52,18 @@ Introduced to be a household name, with sinister associations.
 This now is a kind of a 7/11, a 24/7 convenience store. They are said to trade a 
 lot more.
 
+Actually, it's the fishmongers who built the void, a large space of virtual reality.
+It was designed to built a peaceful place to rest from the real life. Because users 
+felt lonely, they added other inhabitants to it, to feel more home.
+
+Fishmongers created the retail shops to be part of the entire thing, to be able
+to watch and supervise the entire creation.
+
+Maybe find source code repos of the founders?
+Mine Fishcoins?
+Fight robots?
+
+
 ### someone
 
 They started out by selling games to play if you are on the go. They are seriously

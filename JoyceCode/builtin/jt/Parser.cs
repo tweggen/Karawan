@@ -15,6 +15,8 @@ namespace builtin.jt;
  */
 public class TypeDescriptor
 {
+    public Type WidgetType;
+    
     /**
      * The xml tag type this type inherits.
      */
@@ -81,6 +83,7 @@ public class Parser
         {
             "jt", new()
             {
+                WidgetType = typeof(builtin.jt.Widget),
                 ParentType = "view",
                 TemplateProperties = new()
                 {
@@ -90,6 +93,7 @@ public class Parser
         {
             "view", new()
             {
+                WidgetType = typeof(builtin.jt.Widget),
                 ParentType = null,
                 TemplateProperties = new()
                 {
@@ -105,6 +109,7 @@ public class Parser
         { 
             "text", new()
             {
+                WidgetType = typeof(builtin.jt.TextWidget),
                 ParentType = "view",
                 TemplateProperties = new()
                 {
@@ -115,6 +120,7 @@ public class Parser
         {
             "option", new ()
             {
+                WidgetType = typeof(builtin.jt.TextWidget),
                 ParentType = "text",
                 TemplateProperties = new ()
                 {
@@ -125,6 +131,7 @@ public class Parser
         {
             "grid", new()  
             { 
+                WidgetType = typeof(builtin.jt.Widget),
                 ParentType = "view",
                 TemplateProperties = new()
                 {
@@ -136,6 +143,7 @@ public class Parser
         {
             "box", new ()
             {
+                WidgetType = typeof(builtin.jt.Widget),
                 ParentType = "view",
                 TemplateProperties = new()
                 {
@@ -147,6 +155,7 @@ public class Parser
         {
             "vbox", new()
             {
+                WidgetType = typeof(builtin.jt.Widget),
                 ParentType = "view",
                 TemplateProperties = new()
                 {
@@ -158,6 +167,7 @@ public class Parser
         {
             "hbox", new()
             {
+                WidgetType = typeof(builtin.jt.Widget),
                 ParentType = "view",
                 TemplateProperties = new()
                 {
@@ -174,7 +184,7 @@ public class Parser
 
     private LuaBindingFrame _lbf;
 
-
+    
     public bool IsValidType(string strType)
     {
         return _mapTypes.ContainsKey(strType);
@@ -244,7 +254,8 @@ public class Parser
         /*
          * First create the widget including all of the attributes.
          */
-        Widget w = new Widget() { Type = strType };
+        Widget w = Activator.CreateInstance(tdesc.WidgetType) as Widget;
+        w.Type = strType;
         
         ApplyTemplate(w, tdesc);
         ApplyBuiltin(w);
