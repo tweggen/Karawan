@@ -97,10 +97,6 @@ public class Parser
                 ParentType = null,
                 TemplateProperties = new()
                 {
-                    { "x", 0f },
-                    { "y", 0f },
-                    { "width", 0f },
-                    { "height", 0f },
                     { "hAlign", "left" },
                     { "vAlign", "top" }
                 } 

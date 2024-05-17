@@ -62,17 +62,22 @@ public class Widget : IDisposable
     private SortedDictionary<string, IDisposable>? _compiledProperties = null;
 
     
-    public virtual (float, float) SizeHint()
+    public virtual (float Width, float Height) SizeHint()
     {
-        return (0f, 0f);
-    }
+        ALayout layout;
+        lock (_lo)
+        {
+            layout = _layout;
+        }
 
-
-    public virtual (float, float) MinSize()
-    {
-        float width = GetAttr("minWidth", 0f);
-        float height = GetAttr("minHeight", 0f);
-        return (width, height);
+        if (null != layout)
+        {
+            return layout.SizeHint();
+        }
+        else
+        {
+            return (0f, 0f);
+        }
     }
 
 

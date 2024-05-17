@@ -111,6 +111,12 @@ public class ALayout
     protected virtual void _doActivate()
     {
     }
+
+
+    public virtual (float Width, float Height) SizeHint()
+    {
+        return (0f, 0f);
+    }
     
 
     public virtual void Activate()

@@ -1,4 +1,5 @@
 using System;
+using engine;
 using static engine.Logger;
 
 
@@ -92,7 +93,24 @@ public class BoxLayout : ALayout
             maxExtent = 0f;
             foreach (var item in items)
             {
-                float orthoExtent = item.Widget.GetAttr(strOrthoExtent, 0f);
+                float orthoExtent; 
+                if (item.Widget.HasAttr(strOrthoExtent))
+                {
+                    orthoExtent = item.Widget.GetAttr(strOrthoExtent, 0f);
+                }
+                else
+                {
+                    var (width, height) = item.Widget.SizeHint(); 
+                    if (IsHorizontal)
+                    {
+                        orthoExtent = height;
+                    }
+                    else
+                    {
+                        orthoExtent = width;
+                    }
+                }
+
                 float orthoMinExtent = item.Widget.GetAttr(strOrthoMinExtent, 0f);
                 maxExtent = Single.Max(maxExtent, Single.Max(orthoExtent, orthoMinExtent));
             }
@@ -108,9 +126,24 @@ public class BoxLayout : ALayout
             Widget w = item.Widget;
 
             float axisMinExtent = w.GetAttr(strAxisMinExtent, 0f);
-            float axisExtent = w.GetAttr(strAxisExtent, 0f);
+            float axisExtent;
+            if (item.Widget.HasAttr(strAxisExtent))
+            {
+                axisExtent = item.Widget.GetAttr(strAxisExtent, 0f);
+            }
+            else
+            {
+                var (width, height) = item.Widget.SizeHint();
+                if (IsHorizontal)
+                {
+                    axisExtent = width;
+                }
+                else
+                {
+                    axisExtent = height;
+                }
+            }
             float axisEffectiveExtent = Single.Max(axisMinExtent, axisExtent);
-            
             float nextAxisPos = currAxisPos + axisEffectiveExtent;
             
             w[strAxisPos] = currAxisPos;
@@ -119,6 +152,70 @@ public class BoxLayout : ALayout
             w[strOrthoExtent] = maxExtent;
 
             currAxisPos = nextAxisPos;
+        } 
+    }
+    
+    
+    public override (float Width, float Height) SizeHint()
+    {
+        float totalWidth = 0f;
+        float totalHeight = 0f;
+
+        var items = _immutableItems();
+        if (null == items || items.Count == 0)
+        {
+            return (0f, 0f);
         }
+        
+        foreach (var item in items)
+        {
+            Widget w = item.Widget;
+            var (hintWidth, hintHeight) = (0f, 0f);
+
+            bool hasHeight = w.HasAttr("Height");
+            bool hasWidth = w.HasAttr("Width");
+            
+            float widgetWidth, widgetHeight;
+            float effectiveWidth, effectiveHeight;
+            
+            if (!hasHeight || !hasWidth)
+            {
+                (hintWidth, hintHeight) = w.SizeHint();
+            }
+
+            if (hasWidth)
+            {
+                widgetWidth = w.GetAttr("width", 0f);
+            }
+            else
+            {
+                widgetWidth = hintWidth;
+            }
+            
+            if (hasHeight)
+            {
+                widgetHeight = w.GetAttr("height", 0f);
+            }
+            else
+            {
+                widgetHeight = hintHeight;
+            }
+
+            effectiveWidth = Single.Max(w.GetAttr("minWidth", 0f), widgetWidth);
+            effectiveHeight = Single.Max(w.GetAttr("minHeight", 0f), widgetHeight);
+            
+            if (IsHorizontal)
+            {
+                totalWidth += effectiveWidth;
+                totalHeight = Single.Max(totalHeight, effectiveHeight);
+            }
+            else
+            {
+                totalWidth = Single.Max(totalWidth, effectiveWidth);
+                totalHeight += effectiveHeight;
+            }
+        }
+
+        return (totalWidth, totalHeight);
     }
 }

@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ZoomStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ALayoutItem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\BoxLayout.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\BoxWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Factory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ALayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\JtBindings.cs" />
