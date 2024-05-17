@@ -1079,7 +1079,7 @@ public class Widget : IDisposable
                         break;
                     case "(cursorleft)":
                     case "A":
-                        if (haveChildren && !isHorizontal)
+                        if (haveChildren && isHorizontal)
                         {
                             FocusPreviousChild();
                             ev.IsHandled = true;
@@ -1087,7 +1087,7 @@ public class Widget : IDisposable
                         break;
                     case "(cursorright)":
                     case "D":
-                        if (haveChildren && !isHorizontal)
+                        if (haveChildren && isHorizontal)
                         {
                             FocusNextChild();
                             ev.IsHandled = true;

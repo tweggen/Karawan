@@ -13,7 +13,7 @@ internal class BoxLayoutItem : ALayoutItem
 
 public class BoxLayout : ALayout
 {
-    private bool _isHorizonal;
+    public bool IsHorizontal { get; set; } = false;
     public void RemoveWidget(Widget w)
     {
         _removeItem(w);
@@ -45,7 +45,7 @@ public class BoxLayout : ALayout
         string strAxisExtent;
         string strAxisPos; 
         string strOrthoPos;
-        if (_isHorizonal)
+        if (IsHorizontal)
         {
             strOrthoExtent = "height";
             strAxisExtent = "width";

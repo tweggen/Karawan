@@ -63,7 +63,7 @@ public class Parser
 
     private static void _setupAnyBox(Widget w, XmlElement xWidget)
     {
-        var boxLayout = new BoxLayout() { Parent = w };
+        var boxLayout = new BoxLayout() { Parent = w, IsHorizontal = w.GetAttr("direction", "vertical") == "horizontal"};
         w.Layout = boxLayout;
         var children = w.Children;
         if (null != children)

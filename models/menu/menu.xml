@@ -5,6 +5,10 @@
             <text color='#666666' height='40'>Options</text>
             <option color='#999999' height='20' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
             <option color='#999999' height='20' onClick='jt:replaceAll("menuHelp")'>Help...</option>
+            <hbox width='250' height="20">
+                <option width="80">This one</option>
+                <option width="80">Other one</option>
+            </hbox>
             <option color='#999999' height='20' onClick='os.exit()'>Exit...</option>
         </vbox>
     </view>
