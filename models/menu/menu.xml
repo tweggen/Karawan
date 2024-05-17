@@ -5,8 +5,8 @@
             <text color='#666666' height='40'>Options</text>
             <option color='#999999' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
             <option color='#999999' onClick='jt:replaceAll("menuHelp")'>Help...</option>
-            <hbox><option width="80">eMail</option><option>Input</option></hbox>
-            <hbox><option width="80">Password</option><option>Input</option></hbox>
+            <hbox><option color='#999999' width="80">eMail</option><option>Input</option></hbox>
+            <hbox><option color='#999999' width="80">Password</option><option>Input</option></hbox>
             <option color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>
     </view>
