@@ -1353,7 +1353,7 @@ public class Widget : IDisposable
                     return null;
                 }
 
-                Widget? wParentSibling = wParentParent._findSibling(wParentParent, dir);
+                Widget? wParentSibling = wParentParent._findSibling(wCurrentParent, dir);
 
                 if (null != wParentSibling)
                 {
