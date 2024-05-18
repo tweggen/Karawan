@@ -1281,7 +1281,7 @@ public class Widget : IDisposable
             var currentChildren = wCurrent.Children;
             if (null != currentChildren && currentChildren.Count > 0)
             {
-                var wFirstChild = currentChildren[0];
+                var wFirstChild = currentChildren[dir>0?0:currentChildren.Count-1];
                 if (condition(wFirstChild))
                 {
                     return wFirstChild;
@@ -1332,11 +1332,6 @@ public class Widget : IDisposable
         {
             while (true)
             {
-                if (condition(wCurrentParent))
-                {
-                    return wCurrentParent;
-                }
-
                 Widget? wParentParent = wCurrentParent.Parent;
                 
                 if (null == wParentParent)
@@ -1348,11 +1343,6 @@ public class Widget : IDisposable
                     return null;
                 }
 
-                if (wParentParent == this)
-                {
-                    return null;
-                }
-
                 Widget? wParentSibling = wParentParent._findSibling(wCurrentParent, dir);
 
                 if (null != wParentSibling)
@@ -1361,9 +1351,10 @@ public class Widget : IDisposable
                     {
                         return wParentSibling;
                     }
-                    else
+                    wMatch = FindNextChild(wParentSibling, dir, condition);
+                    if (wMatch != null)
                     {
-                        return FindNextChild(wParentSibling, dir, condition);
+                        return wMatch;
                     }
                 } 
                 else
