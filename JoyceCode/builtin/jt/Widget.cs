@@ -1315,12 +1315,12 @@ public class Widget : IDisposable
                 {
                     return wSibling;
                 }
-            }
 
-            wMatch = FindNextChild(wSibling, dir, condition);
-            if (wMatch != null)
-            {
-                return wMatch;
+                wMatch = FindNextChild(wSibling, dir, condition);
+                if (wMatch != null)
+                {
+                    return wMatch;
+                }
             }
         }
         
@@ -1330,15 +1330,50 @@ public class Widget : IDisposable
          */
         if (wCurrentParent != this)
         {
-            if (condition(wCurrentParent))
+            while (true)
             {
-                return wCurrentParent;
+                if (condition(wCurrentParent))
+                {
+                    return wCurrentParent;
+                }
+
+                Widget? wParentParent = wCurrentParent.Parent;
+                
+                if (null == wParentParent)
+                {
+                    /*
+                     * If our current parent does not have a parent, it does not have a sibling
+                     * and as such we do not have a next.
+                     */
+                    return null;
+                }
+
+                if (wParentParent == this)
+                {
+                    return null;
+                }
+
+                Widget? wParentSibling = wParentParent._findSibling(wParentParent, dir);
+
+                if (null != wParentSibling)
+                {
+                    if (condition(wParentSibling))
+                    {
+                        return wParentSibling;
+                    }
+                    else
+                    {
+                        return FindNextChild(wParentSibling, dir, condition);
+                    }
+                } 
+                else
+                {
+                    /*
+                     * If this parent has no sibling, traverse up to it's parent and continue.
+                     */
+                    wCurrentParent = wParentParent;
+                }
             }
-            
-            /*
-             * Do a proper tail recursion.
-             */
-            return FindNextChild(wCurrentParent, dir, condition);
         }
 
         /*
