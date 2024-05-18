@@ -111,6 +111,7 @@ public class Module : AModule, IInputPart
             if (null != wMenu)
             {
                 _parser.RootWidget.AddChild(wMenu);
+                _parser.RootWidget.SetFocussedChild(wMenu.FindFirstFocussableChild());
             }
         }
         catch (Exception e)

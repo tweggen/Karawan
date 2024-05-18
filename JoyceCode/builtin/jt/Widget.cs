@@ -174,6 +174,13 @@ public class Widget : IDisposable
         }
         set
         {
+            const string strId = "id";
+            if (key == strId && Root != null)
+            {
+                Error($"It is not allowed to change the id string if the widget is belonging to a root.");
+                return;
+            }
+            
             object oldValue = null, newValue = value;
             IWidgetImplementation impl;
             IDisposable? oldCompiled = null;
@@ -335,16 +342,38 @@ public class Widget : IDisposable
                 return _isFocussed;
             }
         }
-        set
+        protected set
         {
+            Widget wParent;
+            RootWidget wRoot;
             lock (_lo)
             {
                 if (_isFocussed == value) return;
-                _isFocussed = value;
+                wRoot = Root;
             }
 
-            this["focussed"] = value;
-            OnFocusChanged?.Invoke(this, value);
+            if (null != wRoot)
+            {
+                /*
+                 * If we have a root, we totally pass the job to the root.
+                 */
+                if (!value)
+                {
+                    wRoot.UnfocusChild(this);
+                }
+                else
+                {
+                    wRoot.SetFocussedChild(this);
+                }
+            }
+            else
+            {
+                /*
+                 * We do not have a root, so this is a purely local call, affecting our
+                 * local property only.
+                 */
+                _setFocusLocally(value);
+            }
         }
     }
     
@@ -574,7 +603,61 @@ public class Widget : IDisposable
     }
 
 
-    protected void _setNewFocus(Widget wNewFocus)
+    /**
+     * Just set the local focussed state, wqthout any context operations.
+     */
+    protected void _setFocusLocally(bool isFocussed)
+    {
+        lock (_lo)
+        {
+            if (_isFocussed == isFocussed)
+            {
+                return;
+            }
+
+            _isFocussed = isFocussed;
+        }
+
+        this["focussed"] = isFocussed;
+    }
+    
+
+    /**
+     * This widget was doomed to be unfocussed.
+     * Adjust our local flags and inform the parent.
+     */
+    internal void _unfocusSelf()
+    {
+        _setFocusLocally(false);
+        
+        Widget? wParent;
+        lock (_lo)
+        {
+            wParent = Parent;
+        }
+  
+        wParent?._setFocussedChild(null);
+    }
+
+
+    /**
+     * This widget was elected to be focussed.
+     * Adjust our local flags and inform the parent.
+     */
+    internal void _focusSelf()
+    {
+        _setFocusLocally(true);
+        
+        Widget? wParent;
+        lock (_lo)
+        {
+            wParent = Parent;
+        }
+        wParent?._setFocussedChild(this);
+    }
+
+
+    protected void _setFocussedChild(Widget wNewFocus)
     {
         Widget wOldFocus;
         lock (_lo)
@@ -585,16 +668,6 @@ public class Widget : IDisposable
             _wFocussedChild = wNewFocus;
         }
 
-        if (wOldFocus != null)
-        {
-            wOldFocus.IsFocussed = false;
-        }
-
-        if (wNewFocus != null)
-        {
-            wNewFocus.IsFocussed = true;
-        }
-        
         OnFocussedChildChanged?.Invoke(this, wNewFocus);
     }
     
@@ -607,40 +680,29 @@ public class Widget : IDisposable
     
     public virtual void AddChild(Widget child)
     {
-        bool doFocusChild = false;
-        
         lock (_lo)
         {
             if (null == _children) _children = new();
 
             _children.Add(child);
-
-            /*
-             * If we didn't have a focussed child yet, try to find some.
-             */
-            if (null == _wFocussedChild)
-            {
-                if (child.FocusState == FocusStates.Focussable)
-                {
-                    doFocusChild = true;
-                }
-            }
             _immutableChildren = null;
         }
 
         child.Parent = this;
-
-        if (doFocusChild)
-        {
-            _setNewFocus(child);
-        }
     }
 
     
     public virtual void RemoveChild(Widget child)
     {
         child.Parent = null;
-        Widget wNewFocus = null; 
+        Widget? wOldFocus = null;
+        
+        /*
+         * First remove the child from the focus.
+         * This also will remove this löcal focus.
+         */
+        Root?.UnfocusChild(child);
+        
         
         lock (_lo)
         {
@@ -648,16 +710,7 @@ public class Widget : IDisposable
             
             _children.Remove(child);
             _immutableChildren = null;
-
-            if (_wFocussedChild == child)
-            {
-                // TXWTODO: There are better ways to find a good follow-up focus than just taking the first child.
-                _wFocussedChild = _firstFocussableOwnChildNL();
-                wNewFocus = _wFocussedChild;
-            }
         }
-
-        _setNewFocus(wNewFocus);
     }
 
 
@@ -877,77 +930,44 @@ public class Widget : IDisposable
     }
 
 
-    protected Widget? _firstFocussableOwnChildNL()
+    internal Widget? _findSiblingNL(Widget wStart, int dir)
     {
-        Widget? wFirst = null;
-        if (null != _children)
+        if (null == _children)
         {
-            wFirst = _children.Find(w => w.FocusState == FocusStates.Focussable);
+            return null;
         }
-        
-        return wFirst;
+        int l = _children.Count;
+        if (l == 0)
+        {
+            return null;
+        }
+
+        int startIndex = _children.IndexOf(wStart);
+        if (startIndex < 0)
+        {
+            ErrorThrow<ArgumentException>("Invalid start widget, not a child of me.");
+            return null;
+        }
+
+        int siblingIndex = startIndex + dir;
+        if (siblingIndex >= 0 && siblingIndex < l)
+        {
+            return _children[siblingIndex];
+        }
+
+        return null;
     }
 
 
-    private void _focusOffsetChild(int increment)
+    internal Widget? _findSibling(Widget wStart, int dir)
     {
-        Widget wNewFocus = null;
         lock (_lo)
         {
-            if (null == _children)
-            {
-                return;
-            }
-            int l = _children.Count;
-            if (l == 0)
-            {
-                return;
-            }
-
-            int startIndex;
-            if (null == _wFocussedChild)
-            {
-                startIndex = 0;
-            }
-            else
-            {
-                startIndex = _children.IndexOf(_wFocussedChild);
-            }
-
-            for (int i = 1; i < l; ++i)
-            {
-                startIndex += increment;
-                var wCand =_children[(startIndex + l) % l];
-                if (wCand.FocusState == FocusStates.Focussable)
-                {
-                    wNewFocus = wCand;
-                    break;
-                }
-            }
+            return _findSiblingNL(wStart, dir);
         }
-
-        if (null != wNewFocus)
-        {
-            _setNewFocus(wNewFocus);
-        }
-    }
-
-
-    /**
-     * Try to focus the previous widget
-     */
-    public void FocusPreviousChild()
-    {
-        _focusOffsetChild(-1);
     }
     
-
-    public void FocusNextChild()
-    {
-        _focusOffsetChild(1);
-    }
-
-
+    
     protected void _queueLuaScript(string evType, LuaScriptEntry lse, string script, engine.news.Event ev)
     {
         /*
@@ -1054,6 +1074,12 @@ public class Widget : IDisposable
      */
     protected virtual void _handleSelfInputEvent(engine.news.Event ev)
     {
+        RootWidget? wRoot = Root;
+        if (null == wRoot)
+        {
+            return;
+        }
+        
         bool haveChildren = HasChildren;
         bool isHorizontal = GetAttr("direction", "vertical") == "horizontal";
 
@@ -1088,7 +1114,7 @@ public class Widget : IDisposable
                     case "W":
                         if (haveChildren && !isHorizontal)
                         {
-                            FocusPreviousChild();
+                            _setOffsetFocus(-1);
                             ev.IsHandled = true;
                         }
                         break;
@@ -1096,7 +1122,7 @@ public class Widget : IDisposable
                     case "S":
                         if (haveChildren && !isHorizontal)
                         {
-                            FocusNextChild();
+                            _setOffsetFocus(1);
                             ev.IsHandled = true;
                         }
                         break;
@@ -1104,7 +1130,7 @@ public class Widget : IDisposable
                     case "A":
                         if (haveChildren && isHorizontal)
                         {
-                            FocusPreviousChild();
+                            _setOffsetFocus(-1);
                             ev.IsHandled = true;
                         }
                         break;
@@ -1112,7 +1138,7 @@ public class Widget : IDisposable
                     case "D":
                         if (haveChildren && isHorizontal)
                         {
-                            FocusNextChild();
+                            _setOffsetFocus(1);
                             ev.IsHandled = true;
                         }
                         break;
@@ -1182,7 +1208,7 @@ public class Widget : IDisposable
      * Propoagate the input event to the currently focussed widget.
      * The leaf widget that is focussed will call the handle chain bottom-up.
      */
-    public void PropagateInputEvent(engine.news.Event ev)
+    public virtual void PropagateInputEvent(engine.news.Event ev)
     {
         Widget wFocussedChild;
         lock (_lo)
@@ -1201,6 +1227,211 @@ public class Widget : IDisposable
     }
     
 
+    public Widget? FindFirstFocussableChild()
+    {
+        return FindOffsetFocussableChild(this, 1);
+    }
+
+    
+    /**
+     * Return a pointer to the given widget if it is my direct
+     * or indirect child.
+     */
+    public Widget? FindMyChild(Widget? wStart)
+    {
+        if (null == wStart)
+        {
+            return null;
+        }
+
+        if (wStart == this)
+        {
+            return wStart;
+        }
+
+        Widget? wParent = wStart.Parent;
+        if (null == wParent)
+        {
+            return null;
+        }
+
+        if (wParent == this)
+        {
+            return wStart;
+        }
+
+        return FindMyChild(wParent);
+    }
+
+    
+    /**
+     * Find the next child that is "condition" after (in direction of dir) the specified
+     * child. The child needs to be a direct or indirect child of this.
+     *
+     * Algorithm: Depth first traversal, starting with wCurrent->next
+     * - we already are checked.
+     * - if we have children, so call ourselves recursive on our first child.
+     * - then move on to our next sibling. Call ourselfes recursive.
+     * - if no child was left
+     */
+    public Widget? FindNextChild(Widget wCurrent, int dir, Func<Widget, bool> condition)
+    {
+        if (null == wCurrent)
+        {
+            ErrorThrow<ArgumentNullException>("Passed a null top widget.");
+            return null;
+        }
+        
+        if (wCurrent == this)
+        {
+            return null;
+        }
+
+        Widget? wMatch = null;
+
+        /*
+         * First traverse down to our children.
+         */
+        {
+            var currentChildren = wCurrent.Children;
+            if (null != currentChildren && currentChildren.Count > 0)
+            {
+                var wFirstChild = currentChildren[0];
+                if (condition(wFirstChild))
+                {
+                    return wFirstChild;
+                }
+                wMatch = FindNextChild(wFirstChild, dir, condition);
+                if (wMatch != null)
+                {
+                    return wMatch;
+                }
+            }
+        }
+
+        /*
+         * Now, traverse to our next sibling in the given direction.
+         */
+        Widget? wCurrentParent = wCurrent.Parent;
+        if (null == wCurrentParent)
+        {
+            /*
+             * If we do not have a parent, which we usually should have,
+             * we do not continue that direction.
+             */
+            return null;
+        }
+
+        {
+            var wSibling = wCurrentParent._findSibling(wCurrent, dir);
+            if (wSibling != null)
+            {
+                if (condition(wSibling))
+                {
+                    return wSibling;
+                }
+            }
+
+            wMatch = FindNextChild(wSibling, dir, condition);
+            if (wMatch != null)
+            {
+                return wMatch;
+            }
+        }
+        
+        /*
+         * We did not find it below and not within our siblings.
+         * So continue from our parent, unless the parent is the start.
+         */
+        if (wCurrentParent != this)
+        {
+            if (condition(wCurrentParent))
+            {
+                return wCurrentParent;
+            }
+            
+            /*
+             * Do a proper tail recursion.
+             */
+            return FindNextChild(wCurrentParent, dir, condition);
+        }
+
+        /*
+         * We did not find it at all.
+         */
+        return null;
+    }
+
+
+    public Widget? FindOffsetFocussableChild(Widget? wStart, int dir)
+    {
+        return FindNextChild(wStart, dir, w => w.FocusState == FocusStates.Focussable);
+    }
+
+
+    /**
+     * Focus the next/prev focussable child, if the current focus is
+     * within this parent.
+     * If it is not, select the first / last focussable child.
+     */
+    private Widget? _findOffsetFocus(int dir)
+    {
+        RootWidget? wRoot = Root;
+        if (null == wRoot)
+        {
+            return null;
+        }
+
+        Widget? wOldFocus = wRoot.GetFocussedChild();
+        if (null != wOldFocus)
+        {
+            /*
+             * If we had a focussed widget, keep it non-null only,
+             * if it also is below me,
+             */
+            wOldFocus = FindMyChild(wOldFocus);
+        }
+        
+        if (null == wOldFocus)
+        {
+            /*
+             * If we did not have a focus at all, or if the focus
+             * was outside my scope, take the first
+             * element in the desired direction.
+             */
+            return FindOffsetFocussableChild(this, dir);
+        }
+        else
+        {
+            Widget? wNewFocus = FindOffsetFocussableChild(wOldFocus, dir);
+            if (null == wNewFocus)
+            {
+                return FindOffsetFocussableChild(this, dir);
+            }
+            else
+            {
+                return wNewFocus;
+            }
+        }
+    }
+
+
+    private void _setOffsetFocus(int dir)
+    {
+        RootWidget? wRoot = Root;
+        if (null == wRoot)
+        {
+            return;
+        }
+
+        Widget? wNewFocus = _findOffsetFocus(dir);
+        if (wNewFocus != null)
+        {
+            wRoot.SetFocussedChild(wNewFocus);
+        }
+    }
+    
+  
     public void Dispose()
     {
         Unrealize();

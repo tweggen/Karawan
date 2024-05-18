@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using static engine.Logger;
+
 namespace builtin.jt;
 
 /**
@@ -5,6 +10,9 @@ namespace builtin.jt;
  */
 public class RootWidget : Widget
 {
+    private SortedDictionary<string, Widget> _idMap = new();
+    private Widget? _wFocussedChild = null;
+    
     private Factory _factory; 
     public required Factory Factory
     {
@@ -25,8 +33,118 @@ public class RootWidget : Widget
     }
 
 
+    public Widget? GetFocussedChild()
+    {
+        lock (_lo)
+        {
+            return _wFocussedChild; 
+        }
+    }
+
+
+    public void SetFocussedChild(Widget? wFocussed)
+    {
+        Widget? wOldFocus;
+        
+        lock (_lo)
+        {
+            wOldFocus = _wFocussedChild;
+            
+            /*
+             * Note that both pointers very well may be null.
+             */
+            if (wFocussed == wOldFocus)
+            {
+                return;
+            }
+            
+            /*
+             * Otherwise first onfocus the former, then focus the new.
+             */
+        }
+
+        if (wOldFocus != null)
+        {
+            wOldFocus._unfocusSelf();
+            lock (_lo)
+            {
+                _wFocussedChild = null;
+            }
+        }
+
+        if (wFocussed != null)
+        {
+            lock (_lo)
+            {
+                _wFocussedChild = wFocussed;
+            }
+
+            wFocussed._focusSelf();
+        }
+        
+    }
+
+
+    /**
+     * Unfocus a child.
+     * This child might not have been focussed at all from the root widget's point
+     * of view. So only really onfocus it, if it really was focussed. Otherwise,
+     * ignore the call.
+     */
+    public void UnfocusChild(Widget wFocussed)
+    {
+        lock (_lo)
+        {
+            if (_wFocussedChild != wFocussed)
+            {
+                return;
+            }
+        }
+        SetFocussedChild(null);
+    }
+
+
+    public bool FindChild(string id, [MaybeNullWhen(false)] out Widget widget)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            Error($"Unable to find a child by empty id.");
+            widget = null;
+            return false;
+        }
+
+        lock (_lo)
+        {
+            return _idMap.TryGetValue(id, out widget);
+        }
+    }
+
+    
     public override void RemoveChild(Widget child)
     {
+        string id = child.GetAttr("id", "");
+        Widget wCurrentlyFocussedChild;
+        lock (_lo)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+                if (!_idMap.Remove(id))
+                {
+                    Error($"Warning, no widget with id \"{id}\" could be found.");
+                }
+            }
+
+            wCurrentlyFocussedChild = _wFocussedChild;
+        }
+        
+        /*
+         * Remove the widget from things it might be involved in.
+         */
+        if (wCurrentlyFocussedChild == child)
+        {
+            SetFocussedChild(null);
+        }
+        
         base.RemoveChild(child);
         child.Root = null;
     }
@@ -34,7 +152,40 @@ public class RootWidget : Widget
 
     public override void AddChild(Widget child)
     {
+        string id = child.GetAttr("id", "");
+        lock (_lo)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+                if (_idMap.TryGetValue(id, out var _))
+                {
+                    Error($"Unable to add widget with id \"{id}\", id already in use.");
+                }
+                else
+                {
+                    _idMap[id] = child;
+                }
+            }
+        }
         child.Root = this;
         base.AddChild(child);
+
+        if (child.IsFocussed)
+        {
+            SetFocussedChild(child);
+        }
+    }
+
+
+    public override void PropagateInputEvent(engine.news.Event ev)
+    {
+        Widget? wFocussedChild;
+        lock (_lo)
+        {
+            wFocussedChild = _wFocussedChild;
+        }
+
+        wFocussedChild?.PropagateInputEvent(ev);
     }
 }
+

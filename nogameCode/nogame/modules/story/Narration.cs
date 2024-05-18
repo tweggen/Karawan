@@ -32,9 +32,9 @@ public class Narration : AModule, IInputPart
     public float LineHeight { get; set; } = 16f+4f;
 
     public uint TextColor { get; set; } = 0xffcccccc;
-    public uint TextFill { get; set; } = 0xff336633;
+    public uint TextFill { get; set; } = 0x00000000;
     public uint ChoiceColor { get; set; } = 0xffbbdddd;
-    public uint ChoiceFill { get; set; } = 0xff663333;
+    public uint ChoiceFill { get; set; } = 0x00000000;
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
