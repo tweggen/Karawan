@@ -116,7 +116,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             /*
              * If we didn't clear the screen before, clear the component's rectangle.
              */
-            if (!_clearWholeScreen)
+            if ((cOsdText.FillColor & 0xff000000) != 0)
             {
                 _dc.ClearColor = cOsdText.FillColor;
                 _framebuffer.ClearRectangle(_dc, ul, lr);
