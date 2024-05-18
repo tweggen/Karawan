@@ -87,6 +87,7 @@ public class Parser
                 ParentType = "view",
                 TemplateProperties = new()
                 {
+                    { "focussable", false },
                 } 
             }
         },
@@ -97,6 +98,7 @@ public class Parser
                 ParentType = null,
                 TemplateProperties = new()
                 {
+                    { "focussable", false },
                     { "hAlign", "left" },
                     { "vAlign", "top" }
                 } 
@@ -109,7 +111,6 @@ public class Parser
                 ParentType = "view",
                 TemplateProperties = new()
                 {
-                    { "focussable", false }
                 }
             }
         },

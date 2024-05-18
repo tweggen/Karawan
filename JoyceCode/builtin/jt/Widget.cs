@@ -1239,28 +1239,18 @@ public class Widget : IDisposable
      */
     public Widget? FindMyChild(Widget? wStart)
     {
-        if (null == wStart)
+        Widget? wParent = wStart;
+        while (null != wParent)
         {
-            return null;
+            if (this == wParent)
+            {
+                return wStart;
+            }
+
+            wParent = wParent.Parent;
         }
 
-        if (wStart == this)
-        {
-            return wStart;
-        }
-
-        Widget? wParent = wStart.Parent;
-        if (null == wParent)
-        {
-            return null;
-        }
-
-        if (wParent == this)
-        {
-            return wStart;
-        }
-
-        return FindMyChild(wParent);
+        return null;
     }
 
     
@@ -1282,11 +1272,6 @@ public class Widget : IDisposable
             return null;
         }
         
-        if (wCurrent == this)
-        {
-            return null;
-        }
-
         Widget? wMatch = null;
 
         /*
