@@ -10,10 +10,23 @@ namespace builtin.tools
      */
     public class UVProjector
     {
-        private  Vector2 _textureSize = new(512f, 512f);
+        private Vector2 _textureSize = new(1024f, 1024f);
+
+        /**
+         * The offset to add to have UV begin mid-pixel
+         */
+        private Vector2 _pixelOffset;
+        
+        /**
+         * The offset to adjust from perfect 0 to perfect 1 texture
+         * to a texture that starts and ends in the middle of a pixel.
+         */
+        private Vector2 _pixelScale;
         
         private Vector2 _uvOffset;
         private Vector2 _uvSize;
+        private Vector2 _uvMin;
+        private Vector2 _uvMax;
         
         /**
          * The reference point for all textures in space. 
@@ -33,41 +46,39 @@ namespace builtin.tools
         /**
          * Precomputed factors for the projection because we use them all the time.
          * this is (u.Length() * uvSize.X)^2 (that is , the inverse of it)
+         *
+         * Not considering texture pixel adjustment.
          */
-        private Vector2 _v2ProjectionFactors;
+        private Vector2 _v2ProjectionFactorsUncorrected;
 
-        public Vector2 GetUV(in Vector3 point)
+        
+        public Vector2 GetUV(in Vector3 point, float uStart, float vStart)
         {
             Vector3 p = point - _o;
-            return new Vector2(
-                Vector3.Dot(p, _u) * _v2ProjectionFactors.X,
-                Vector3.Dot(p, _v) * _v2ProjectionFactors.Y
-                );
-        }
+            Vector2 uv = new Vector2(
+                Vector3.Dot(p, _u) * _v2ProjectionFactorsUncorrected.X - uStart,
+                Vector3.Dot(p, _v) * _v2ProjectionFactorsUncorrected.Y - vStart
+                ) + _uvOffset;
 
-        public Vector2 getUVOfs(in Vector3 point, float uStart, float vStart)
-        {
-            Vector2 uv = GetUV(point);
-            uv += _uvOffset;
-            uv.X = uv.X - uStart;
-            uv.Y = uv.Y - vStart;
+            uv.X = Single.Clamp(uv.X, _uvMin.X, _uvMax.X);
+            uv.Y = Single.Clamp(uv.Y, _uvMin.Y, _uvMax.Y);
 
-            uv.X = (float)(Math.Round(uv.X * 131072) / 131072);
-            uv.Y = (float)(Math.Round(uv.Y * 131072) / 131072);
-
-            uv.X = Single.Clamp(uv.X, 0f, 1f);
-            uv.Y = Single.Clamp(uv.Y, 0f, 1f);
-
+            uv = uv * _pixelScale + _pixelOffset;
+            
             return uv;
         }
 
 
         private void _computeFactors()
         {
-            _v2ProjectionFactors = new(
+            _uvMin = _uvOffset;
+            _uvMax = _uvOffset + _uvSize;
+            _v2ProjectionFactorsUncorrected = new(
                  _uvSize.X/_u.LengthSquared(),
                 _uvSize.Y/_v.LengthSquared()
             );
+            _pixelScale = new Vector2(1f - 1f / _textureSize.X, 1f - 1f / _textureSize.Y);
+            _pixelOffset = new Vector2(0.5f / _textureSize.X, 0.5f / _textureSize.Y);
         }
 
         

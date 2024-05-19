@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
@@ -120,7 +121,7 @@ public class TextureCatalogue
     /**
      * Look up a texture for the given texture tag.
      */
-    public Texture FindTexture(string tag)
+    public Texture FindTexture(string tag, Action<Texture>? action = null)
     {
         TextureAtlasEntry tae;
         lock (_lo)
@@ -144,6 +145,10 @@ public class TextureCatalogue
             Width = tae.Width,
             Height = tae.Height
         };
+        if (null != action)
+        {
+            action(jTexture);
+        }
         
         return jTexture;
     }

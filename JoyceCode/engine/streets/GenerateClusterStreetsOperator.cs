@@ -368,10 +368,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 cm = cm + vam;
                 var clx = cm.X - hsw * n.X;
                 var cly = cm.Z - hsw * n.Y;
-                var uval = uvp.getUVOfs(new Vector3(alx, h, aly), 0f, vStart);
-                var uvcl = uvp.getUVOfs(new Vector3(clx, h, cly), 0f, vStart);
-                var uvar = uvp.getUVOfs(new Vector3(arx, h, ary), 0f, vStart);
-                float vofs = 1.0f - Single.Max(uvar.Y, uvcl.Y);
+                var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
+                var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
+                var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
+                float vofs = 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y));
                 g.p(alx, h, aly);
                 g.UV(uval.X, uval.Y + vofs);
                 g.p(clx, h, cly);
@@ -415,10 +415,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 cm += vam;
                 var crx = cm.X + hsw * n.X;
                 var cry = cm.Z + hsw * n.Y;
-                var uvar = uvp.getUVOfs(new Vector3(arx, h, ary), 0f, vStart);
-                var uval = uvp.getUVOfs(new Vector3(alx, h, aly), 0f, vStart);
-                var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
-                float vofs = 1.0f - Single.Max(uval.Y, uvcr.Y);
+                var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
+                var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
+                var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
+                float vofs = 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y));
                 g.p(arx, h, ary);
                 g.UV(uvar.X, uvar.Y + vofs);
                 g.p(alx, h, aly);
@@ -463,10 +463,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 cm += vam;
                 var crx = cm.X + hsw * n.X;
                 var cry = cm.Z + hsw * n.Y;
-                var uvbl = uvp.getUVOfs(new Vector3(blx, h, bly), 0f, vStart);
-                var uvbr = uvp.getUVOfs(new Vector3(brx, h, bry), 0f, vStart);
-                var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
-                var vofs = -Single.Min(uvbl.Y, uvcr.Y);
+                var uvbl = uvp.GetUV(new Vector3(blx, h, bly), 0f, vStart);
+                var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
+                var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
+                float vofs = -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y));
                 g.p(blx, h, bly);
                 g.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry);
@@ -509,10 +509,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 cm += vam;
                 var clx = cm.X - hsw * n.X;
                 var cly = cm.Z - hsw * n.Y;
-                var uvcl = uvp.getUVOfs(new Vector3(clx, h, cly), 0f, vStart);
-                var uvbl = uvp.getUVOfs(new Vector3(blx, h, bly), 0f, vStart);
-                var uvbr = uvp.getUVOfs(new Vector3(brx, h, bry), 0f, vStart);
-                var vofs = -Single.Min(uvbr.Y, uvcl.Y);
+                var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
+                var uvbl = uvp.GetUV(new Vector3(blx, h, bly), 0f, vStart);
+                var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
+                float vofs = -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y));
                 g.p(clx, h, cly);
                 g.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(blx, h, bly);
@@ -585,8 +585,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var ely = em.Z - hsw * n.Y;
                 var erx = em.X + hsw * n.X;
                 var ery = em.Z + hsw * n.Y;
-                var uv0 = uvp.getUVOfs(new Vector3(elx, h, ely), 0f, vStart);
-                var uv1 = uvp.getUVOfs(new Vector3(erx, h, ery), 0f, vStart);
+                var uv0 = uvp.GetUV(new Vector3(elx, h, ely), 0f, vStart);
+                var uv1 = uvp.GetUV(new Vector3(erx, h, ery), 0f, vStart);
                 if (_traceStreets)
                     Trace(
                         $"#$nVertexRows: el = ({elx}; {ely}); uv = ({uv0.X}; {uv0.Y}); er = ($erx; $ery); uv = ({uv1.X}; {uv1.Y})");
@@ -629,8 +629,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var fly = fm.Z - hsw * n.Y;
                 var frx = fm.X + hsw * n.X;
                 var fry = fm.Z + hsw * n.Y;
-                var uv2 = uvp.getUVOfs(new Vector3(flx, h, fly), 0f, vStart);
-                var uv3 = uvp.getUVOfs(new Vector3(frx, h, fry), 0f, vStart);
+                var uv2 = uvp.GetUV(new Vector3(flx, h, fly), 0f, vStart);
+                var uv3 = uvp.GetUV(new Vector3(frx, h, fry), 0f, vStart);
                 if (_traceStreets)
                     Trace(
                         $"#{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
@@ -819,7 +819,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.street",
             (name) => new Material()
             {
-                Texture = I.Get<TextureCatalogue>().FindTexture("streets1to4.png")
+                Texture = I.Get<TextureCatalogue>().FindTexture("streets1to4.png", 
+                    t => t.FilteringMode = Texture.FilteringModes.Framebuffer)
             });
     }
     
