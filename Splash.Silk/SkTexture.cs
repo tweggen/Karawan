@@ -104,6 +104,11 @@ public class SkTexture : IDisposable
                 CheckError("TexParam MinFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Nearest);
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
+                    0);
+                CheckError("TexParam BaseLevel");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
+                    0);
                 CheckError("TexParam MagFilter");
                 break;
             case engine.joyce.Texture.FilteringModes.Pixels:
@@ -113,6 +118,11 @@ public class SkTexture : IDisposable
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Nearest);
                 CheckError("TexParam MagFilter");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
+                    0);
+                CheckError("TexParam BaseLevel");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
+                    8);
                 break;
             case engine.joyce.Texture.FilteringModes.Smooth:
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
@@ -121,14 +131,14 @@ public class SkTexture : IDisposable
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Linear);
                 CheckError("TexParam MagFilter");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
+                    0);
+                CheckError("TexParam BaseLevel");
+                _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
+                    8);
                 break;
         }
 
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
-            0);
-        CheckError("TexParam BaseLevel");
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-            8);
         CheckError("TexParam MaxLevel");
     }
 
