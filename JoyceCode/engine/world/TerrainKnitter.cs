@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using engine.joyce;
 using Newtonsoft.Json;
 
 namespace engine.world
@@ -10,10 +11,25 @@ namespace engine.world
     {
         public static joyce.Mesh BuildMolecule(
             engine.elevation.ElevationPixel[,] elevations,
-            int coarseness //,
-            //string materialId
+            int coarseness,
+            Material jMaterial
         )
         {
+            Texture jTexture = jMaterial.Texture;
+            if (null == jTexture) jTexture = jMaterial.EmissiveTexture;
+            Vector2 uvMin, uvMax;
+
+            if (null != jTexture)
+            {
+                uvMin = jTexture.InvSize2;
+                uvMax = Vector2.One - jTexture.InvSize2;
+            }
+            else
+            {
+                uvMin = Vector2.Zero;
+                uvMax = Vector2.One;
+            }
+            
             var g = joyce.Mesh.CreateListInstance("terrainknitter");
 
             var groundResolution = world.MetaGen.GroundResolution; // 20
@@ -70,18 +86,6 @@ namespace engine.world
             float texWidth = 20; // That is 20 times per fragment.
             float texHeight = 20;
 
-            #if false
-            var getUV = (int iterX, int iterY) =>
-            {
-                return new Vector2(
-                    (iterX * world.MetaGen.FragmentSize)
-                    / coarseResolution / texWidth,
-                    (iterY * world.MetaGen.FragmentSize)
-                    / coarseResolution / texHeight
-                );
-            };
-            #endif
-            
 
             for(int iterY=0; iterY<coarseResolution; ++iterY) {
                 for(int iterX=0; iterX<coarseResolution; ++iterX ) {
@@ -101,16 +105,11 @@ namespace engine.world
                      * We need to offset it a little bit to make the "nearest" sampling work in the tiles.
                      * So that the first pixel is 1/128 / 4, and the last pixel 127/128 + 1/128/4
                      */
-                    #if false
-                    Vector2 v2UL = getUV(iterX, iterY);
-                    Vector2 v2UR = getUV(iterX+1, iterY);
-                    Vector2 v2LL = getUV(iterX, iterY+1);
-                    Vector2 v2LR = getUV(iterX+1, iterY+1);
-                    #endif
-                    Vector2 v2UL = new(0f, 0f);
-                    Vector2 v2UR = new(1f, 0f);
-                    Vector2 v2LL = new(0f, 1f);
-                    Vector2 v2LR = new(1f, 1f);
+
+                    Vector2 v2UL = uvMin;
+                    Vector2 v2UR = new(uvMax.X, uvMin.Y);
+                    Vector2 v2LL = new(uvMin.X, uvMax.Y);
+                    Vector2 v2LR = uvMax;
                     
                     g.UV(v2UL);
                     g.UV(v2UR);
@@ -130,15 +129,6 @@ namespace engine.world
                 }
             }
 
-            g.GenerateCCWNormals();
-            foreach (var v3n in g.Normals)
-            {
-                if (v3n.Y <= 0f)
-                {
-                    int a = 1;
-                }
-            }
-            
             return g;
         }
 

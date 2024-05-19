@@ -122,7 +122,7 @@ public class SkTexture : IDisposable
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-                    8);
+                    2);
                 break;
             case engine.joyce.Texture.FilteringModes.Smooth:
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 

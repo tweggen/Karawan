@@ -294,9 +294,10 @@ public class Fragment : IDisposable
 
     private void _createGround()
     {
-        joyce.Mesh jMeshTerrain = world.TerrainKnitter.BuildMolecule(_elevations, 1);
+        Material jMaterial = I.Get<ObjectRegistry<Material>>().Get("engine.world.fragment.materials.ground");
+        Mesh jMeshTerrain = world.TerrainKnitter.BuildMolecule(_elevations, 1, jMaterial);
         var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
-            new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.world.fragment.materials.ground"), jMeshTerrain),
+            new MatMesh(jMaterial, jMeshTerrain),
             3000f);
         AddStaticInstance("engine.world.ground", jInstanceDesc);
     }
