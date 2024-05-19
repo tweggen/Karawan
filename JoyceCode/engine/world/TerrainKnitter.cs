@@ -130,6 +130,15 @@ namespace engine.world
                 }
             }
 
+            g.GenerateCCWNormals();
+            foreach (var v3n in g.Normals)
+            {
+                if (v3n.Y <= 0f)
+                {
+                    int a = 1;
+                }
+            }
+            
             return g;
         }
 

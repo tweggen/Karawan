@@ -38,10 +38,13 @@ namespace engine.joyce
         {
             get => new Vector2(Width, Height); 
         }
+        
+        
         public Vector2 InvSize2
         {
             get => new Vector2(1f/Width, 1f/Height); 
         }
+        
 
         public bool IsMergableEqual(Texture o)
         {
@@ -55,7 +58,7 @@ namespace engine.joyce
         public int GetMergableHashCode()
         {
             int h = 0;
-            h += (int)FilteringMode;
+            h += (int)FilteringMode<<13;
 
             if (Source != null)
             {

@@ -320,7 +320,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     {
         var worldFragment = ctx.Fragment;
         engine.joyce.Material materialNeon = I.Get<ObjectRegistry<Material>>().Get("nogame.cities.houses.materials.neon");
-        var meshNeon = engine.joyce.Mesh.CreateArrayListInstance($"{worldFragment.GetId()}-neonsignsubgeo");
+        var meshNeon = engine.joyce.Mesh.CreateListInstance($"{worldFragment.GetId()}-neonsignsubgeo");
 
         /*
          * Number of letters.

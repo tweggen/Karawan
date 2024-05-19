@@ -51,8 +51,10 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         /*
          * Create the main poly, plus the edges.
          */
-        foreach (var delim in delimList)
+        for (int i=delimList.Count-1; i>=0; --i)
         {
+            var delim = delimList[i];
+            
             ++n;
             edges.Add(new Vector3(cx + delim.StartPoint.X, h, cy + delim.StartPoint.Y));
         }

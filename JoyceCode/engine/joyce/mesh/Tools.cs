@@ -41,7 +41,7 @@ namespace engine.joyce.mesh
         public static joyce.Mesh CreatePlaneMesh(string name, in Vector2 vSize,
             in Vector2 vUV0, in Vector2 vUVX, in Vector2 vUVY)
         {
-            var m = joyce.Mesh.CreateArrayListInstance(name);
+            var m = joyce.Mesh.CreateListInstance(name);
 
             AddQuadXYUV(m, 
                 new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
@@ -55,7 +55,7 @@ namespace engine.joyce.mesh
         
         public static joyce.Mesh CreatePlaneMesh(in string name, Vector2 vSize, Vector2 uvMin, Vector2 uvSize)
         {
-            var m = joyce.Mesh.CreateArrayListInstance(name);
+            var m = joyce.Mesh.CreateListInstance(name);
 
             Vector2 uvMax = uvMin + uvSize;
             AddQuadXYUV(m, new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
@@ -71,7 +71,7 @@ namespace engine.joyce.mesh
         
         public static joyce.Mesh CreatePlaneMesh(in string name, Vector2 vSize)
         {
-            var m = joyce.Mesh.CreateArrayListInstance(name);
+            var m = joyce.Mesh.CreateListInstance(name);
 
             AddQuadXYUV(m, new Vector3(-vSize.X / 2f, -vSize.Y / 2f, 0f),
                 new Vector3(vSize.X, 0f, 0f),
@@ -88,7 +88,7 @@ namespace engine.joyce.mesh
         {
             float h /* half */ = size / 2;
 
-            var m = joyce.Mesh.CreateArrayListInstance(name);
+            var m = joyce.Mesh.CreateListInstance(name);
 
             // Back (-Z)
             _addQuadXY( m, new Vector3(h, -h, -h), new Vector3(-size, 0f, 0f), new Vector3(0f, size, 0f) );
@@ -118,7 +118,7 @@ namespace engine.joyce.mesh
         {
             float h /* half */ = size / 2f;
 
-            var m = joyce.Mesh.CreateArrayListInstance(name);
+            var m = joyce.Mesh.CreateListInstance(name);
 
             /*
              *  Note that the direction of the surfaces is mirrored due to the inbound direction of the normals.

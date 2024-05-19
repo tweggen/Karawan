@@ -60,7 +60,7 @@ public class MapIconManager : IDisposable
             ((float)(idx%MapIconsHoriz))/(float)MapIconsHoriz,
             ((float)(idx/MapIconsVert))/(float)MapIconsVert
             );
-        var jMesh = Mesh.CreateArrayListInstance($"mapIcon{jMapIcon}");
+        var jMesh = Mesh.CreateListInstance($"mapIcon{jMapIcon}");
         engine.joyce.mesh.Tools.AddQuadXYUV(jMesh,
             new Vector3(-MapIconSize.X/2f, 0f, -MapIconSize.Y/2f), MapIconSize.X*Vector3.UnitX, MapIconSize.Y*Vector3.UnitZ,
             v2Pos, new Vector2(1f / MapIconsHoriz, 0f), new Vector2(0f, 1f / MapIconsVert)

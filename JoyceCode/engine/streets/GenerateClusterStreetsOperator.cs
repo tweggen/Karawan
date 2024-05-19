@@ -99,12 +99,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         {
             uint i0 = g.GetNextVertexIndex();
-            g.p(ax + cx, h, ay + cy);
+            g.p(ax + cx, h, ay + cy); g.N(Vector3.UnitY);
             //g.UV(ax * uFactor + uOffset, ay * vFactor + vOffset);
             g.UV(0.25f,0.5f);
             foreach (var b in secArray)
             {
-                g.p(b.X + cx, h, b.Y + cy);
+                g.p(b.X + cx, h, b.Y + cy); g.N(Vector3.UnitY);
                 //g.UV(b.X * uFactor + uOffset, b.Y * vFactor + vOffset);
                 g.UV(0.25f,0.5f);
             }
@@ -372,11 +372,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
                 var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y));
-                g.p(alx, h, aly);
+                g.p(alx, h, aly); g.N(Vector3.UnitY);
                 g.UV(uval.X, uval.Y + vofs);
-                g.p(clx, h, cly);
+                g.p(clx, h, cly); g.N(Vector3.UnitY);
                 g.UV(uvcl.X, uvcl.Y + vofs);
-                g.p(arx, h, ary);
+                g.p(arx, h, ary); g.N(Vector3.UnitY);
                 g.UV(uvar.X, uvar.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
@@ -419,11 +419,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y));
-                g.p(arx, h, ary);
+                g.p(arx, h, ary); g.N(Vector3.UnitY);
                 g.UV(uvar.X, uvar.Y + vofs);
-                g.p(alx, h, aly);
+                g.p(alx, h, aly); g.N(Vector3.UnitY);
                 g.UV(uval.X, uval.Y + vofs);
-                g.p(crx, h, cry);
+                g.p(crx, h, cry); g.N(Vector3.UnitY);
                 g.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
@@ -467,11 +467,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y));
-                g.p(blx, h, bly);
+                g.p(blx, h, bly); g.N(Vector3.UnitY);
                 g.UV(uvbl.X, uvbl.Y + vofs);
-                g.p(brx, h, bry);
+                g.p(brx, h, bry); g.N(Vector3.UnitY);
                 g.UV(uvbr.X, uvbr.Y + vofs);
-                g.p(crx, h, cry);
+                g.p(crx, h, cry); g.N(Vector3.UnitY);
                 g.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
@@ -513,11 +513,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvbl = uvp.GetUV(new Vector3(blx, h, bly), 0f, vStart);
                 var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
                 float vofs = -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y));
-                g.p(clx, h, cly);
+                g.p(clx, h, cly); g.N(Vector3.UnitY);
                 g.UV(uvcl.X, uvcl.Y + vofs);
-                g.p(blx, h, bly);
+                g.p(blx, h, bly); g.N(Vector3.UnitY);
                 g.UV(uvbl.X, uvbl.Y + vofs);
-                g.p(brx, h, bry);
+                g.p(brx, h, bry); g.N(Vector3.UnitY);
                 g.UV(uvbr.X, uvbr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
@@ -596,9 +596,9 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                     if (_traceStreets) Trace("Too close");
                 }
 
-                g.p(elx, h, ely);
+                g.p(elx, h, ely); g.N(Vector3.UnitY);
                 g.UV(uv0.X, uv0.Y);
-                g.p(erx, h, ery);
+                g.p(erx, h, ery); g.N(Vector3.UnitY);
                 g.UV(uv1.X, uv1.Y);
 
                 /*
@@ -635,9 +635,9 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                     Trace(
                         $"#{nVertexRows}: fl = ({flx}; {fly}); uv = ({uv2.X}; {uv2.Y}); fr = ({frx}; {fry}); uv = ({uv3.X}; {uv3.Y})");
 
-                g.p(flx, h, fly);
+                g.p(flx, h, fly); g.N(Vector3.UnitY);
                 g.UV(uv2.X, uv2.Y);
-                g.p(frx, h, fry);
+                g.p(frx, h, fry); g.N(Vector3.UnitY);
                 g.UV(uv3.X, uv3.Y);
 
                 ++nVertexRows;
@@ -703,7 +703,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         var nGeneratedStreets = 0;
         var nIgnoredStrokes = 0;
 
-        var g = engine.joyce.Mesh.CreateListInstance($"{worldFragment.GetId()}-streetsgenerator");
+        var g = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator");
         /*
          * Create the roads between the junctions.
          */

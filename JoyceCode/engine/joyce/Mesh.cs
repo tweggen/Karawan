@@ -358,13 +358,13 @@ public class Mesh : IComparable<Mesh>
     }
 
 
-    public Mesh(string name, IList<Vector3> vertices, IList<uint> indices, IList<Vector2> uvs)
+    public Mesh(string name, IList<Vector3> vertices, IList<uint> indices, IList<Vector2> uvs, IList<Vector3> normals = null)
     {
         Name = name;
         Vertices = vertices;
         Indices = indices;
         UVs = uvs;
-        Normals = null;
+        Normals = normals;
         WriteIndexVertices = Vertices.Count;
         WriteIndexIndices = Indices.Count;
         WriteIndexUVs = Vertices.Count;
@@ -385,10 +385,10 @@ public class Mesh : IComparable<Mesh>
     {
         return new Mesh(name, new List<Vector3>(), new List<uint>(), new List<Vector2>());
     }
-
-    public static Mesh CreateArrayListInstance(string name)
+    
+    public static Mesh CreateNormalsListInstance(string name)
     {
-        return new Mesh(name, new List<Vector3>(), new List<uint>(), new List<Vector2>());
+        return new Mesh(name, new List<Vector3>(), new List<uint>(), new List<Vector2>(), new List<Vector3>());
     }
 }
 
