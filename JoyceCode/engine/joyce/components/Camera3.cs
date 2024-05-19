@@ -80,28 +80,41 @@ public struct Camera3
 
 
     /**
-     * Convert view position -1..1 , x/y right/down
+     * Convert view position -1..1 , x/y right/up
      * to screen position x/y right down
      * considering the window as defined in UI.
      */
     public void ToScreenPosition(Vector4 v4View, out Vector2 v2Screen)
     {
+        if (CameraMask == 0x00800000)
+        {
+            int a = 1;
+        }
         v2Screen.X = v4View.X / v4View.W;
         v2Screen.Y = v4View.Y / v4View.W;
-        Vector2 glUL = UL;
-        glUL.Y = 1f - glUL.Y;
-        Vector2 glLR = LR;
-        glLR.Y = 1f - glLR.Y;
-        glUL = glUL*2f - Vector2.One;
-        glLR = glLR*2f - Vector2.One;
+        
+        /*
+         * This is the ul/lr coordinates in GL space.
+         */
+        Vector2 glUL = UL*2f - Vector2.One;
+        Vector2 glLR = LR*2f - Vector2.One;
+        
         Vector2 v2Size = glLR - glUL;
         v2Screen.X *= v2Size.X / 2f;
         v2Screen.Y *= v2Size.Y / 2f;
+
+        Vector2 v2Center = (glLR + glUL) / 2f;
+        
         /*
-         * Now this is the correcly scaled point around the center of the target window.
-         * However, the target window is from UL to LR with inverted Y.
+         * Flip y for traditional rendering coordinates
          */
-        v2Screen += (glLR + glUL) / 2f;
+        v2Screen.Y *= -1f;
+        
+        /*
+         * Add the offset after flipping, because it already is screen space.
+         */
+        v2Screen += v2Center;
+
     }
     
     

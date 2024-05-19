@@ -72,6 +72,23 @@ public class SkiaSharpFramebuffer : IFramebuffer
     }
 
 
+    public void PushClipping(Vector2 ul, Vector2 lr)
+    {
+        lock (_lo)
+        {
+            _skiaSurface.Canvas.Save();
+            SKRect clipRect = new(ul.X, ul.Y, lr.X, lr.Y);
+            _skiaSurface.Canvas.ClipRect(clipRect);
+        }
+    }
+
+
+    public void PopClipping()
+    {
+        _skiaSurface.Canvas.Restore();
+    }
+
+
     public void DrawRectangle(Context context, Vector2 ul, Vector2 lr)
     {
         var paint = new SKPaint

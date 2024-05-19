@@ -98,7 +98,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
             //    _getCar3Sound(carIdx), 150f));
 
             engine.joyce.components.Transform3 cTransform3 = new(
-                true, 0x00000001, Quaternion.Identity, worldFragment.Position+vPos);
+                true, 0x00800001, Quaternion.Identity, worldFragment.Position+vPos);
             eTarget.Set(cTransform3);
             engine.joyce.TransformApi.CreateTransform3ToParent(cTransform3, out var mat);
             eTarget.Set(new engine.joyce.components.Transform3ToParent(cTransform3.IsVisible, cTransform3.CameraMask, mat));

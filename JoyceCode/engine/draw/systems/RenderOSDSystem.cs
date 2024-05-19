@@ -53,21 +53,32 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         {
             components.OSDText cOsdText = entity.Get<components.OSDText>();
 
-            Vector2 vScreenPos;
+            Vector2 v2ScreenPos;
             bool isBehind = false;
             float distance;
+
             
+            CameraEntry ce = null;
+
+            var glToSkia = (in Vector4 v4ViewPos) =>
+            {
+                ce.CCamera.ToScreenPosition(v4ViewPos, out var v2ScreenPosWindowed);
+                return new Vector2(
+                    (v2ScreenPosWindowed.X + 1f) * (_vOSDViewSize.X / 2f),
+                    (v2ScreenPosWindowed.Y + 1f) * (_vOSDViewSize.Y / 2f)
+                );
+            };
+
             if (entity.Has<Transform3ToWorld>())
             {
                 var cEntityTransform = entity.Get<Transform3ToWorld>();
 
-                CameraEntry ce = null;
                 if (!_mapCameras.TryGetValue(cEntityTransform.CameraMask, out ce))
                 {
                     continue;
                 }
 
-                Vector3 vModel = cEntityTransform.Matrix.Translation;
+                Vector3 v3Model = cEntityTransform.Matrix.Translation;
 
                 /*
                  * Render 3d label with position relative to the projected
@@ -76,28 +87,25 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
                  * So first, transform the thing we render to world coordinates.
                  * Then use the world and the view matrices to convert to screen space.
                  */
-                Vector4 vWorldPos4 = Vector4.Transform(vModel, ce.MView);
-                if (vWorldPos4.Z*vWorldPos4.W > 0)
+                Vector4 v4WorldPos = Vector4.Transform(v3Model, ce.MView);
+                if (v4WorldPos.Z*v4WorldPos.W > 0)
                 {
                     isBehind = true;
                 }
 
-                distance = Vector3.Distance(ce.V3CamPosition, vModel);
+                distance = Vector3.Distance(ce.V3CamPosition, v3Model);
                 if (distance > cOsdText.MaxDistance)
                 {
                     continue;
                 }
 
                 
-                Vector4 vScreenPos4 = Vector4.Transform(vWorldPos4, ce.MProjection);
-                ce.CCamera.ToScreenPosition(vScreenPos4, out var v2ScreenPosWindowed);
-                vScreenPos = new(
-                    (v2ScreenPosWindowed.X+1f) * (_vOSDViewSize.X/2f),
-                    (v2ScreenPosWindowed.Y+1f) * (_vOSDViewSize.Y/2f));
+                Vector4 v4ScreenPos = Vector4.Transform(v4WorldPos, ce.MProjection);
+                v2ScreenPos = glToSkia(v4ScreenPos);
             }
             else
             {
-                vScreenPos = Vector2.Zero;
+                v2ScreenPos = Vector2.Zero;
                 distance = 0f;
             }
 
@@ -105,13 +113,24 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             {
                 continue;
             }
-            vScreenPos += cOsdText.Position;
+            v2ScreenPos += cOsdText.Position;
             
+            
+            /*
+             * Setup clipping if we are associated with a camera.
+             */
+            if (ce != null)
+            {
+                var v2UL = glToSkia(new Vector4(-1f, 1f, 0f, 1f));
+                var v2LR = glToSkia(new Vector4(1f, -1f, 0f, 1f));
+                _framebuffer.PushClipping(v2UL, v2LR);
+            }
+
             /*
              * Render standard 2d entities.
              */
-            Vector2 ul = vScreenPos;
-            Vector2 lr = vScreenPos + cOsdText.Size - new Vector2(1f, 1f);
+            Vector2 ul = v2ScreenPos;
+            Vector2 lr = v2ScreenPos + cOsdText.Size - new Vector2(1f, 1f);
             
             /*
              * If we didn't clear the screen before, clear the component's rectangle.
@@ -178,6 +197,11 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             {
                 _dc.Color = color;
                 _framebuffer.DrawRectangle(_dc, ul, lr);
+            }
+
+            if (ce != null)
+            {
+                _framebuffer.PopClipping();
             }
         }
     }

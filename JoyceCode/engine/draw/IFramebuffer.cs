@@ -15,12 +15,16 @@ public interface IFramebuffer
 
     public void BeginModification();
     public void EndModification();
+    public void PushClipping(Vector2 ul, Vector2 lr);
+    public void PopClipping();
+        
+
     public void DrawRectangle(Context context, Vector2 ul, Vector2 lr);
     public void FillRectangle(Context context, Vector2 ul, Vector2 lr);
     public void ClearRectangle(Context context, Vector2 ul, Vector2 lr);
     public void FillPoly(Context context, in Vector2[] polyPoints);
     public void DrawPoly(Context context, in Vector2[] polyPoints);
-        
+
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize);
 
     

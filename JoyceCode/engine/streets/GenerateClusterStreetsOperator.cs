@@ -159,7 +159,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         var spA = stroke.A;
 
         /*
-         * Before continueing, we check whether point a is inside this fragment.
+         * Before continuing, we check whether point a is inside this fragment.
          * By convention, we only create streets that have their a point inside this
          * fragment.
          */

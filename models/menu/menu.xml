@@ -1,17 +1,23 @@
 <?xml version='1.0' encoding='utf-8'?>
 <jt>
     <view id='menuOptions'>
-        <vbox width='250' x='200' y='200' direction='vertical'>
+        <vbox width='250' x='200' y='200'>
             <text color='#666666' height='40'>Options</text>
             <option color='#999999' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
             <option color='#999999' onClick='jt:replaceAll("menuHelp")'>Help...</option>
-            <hbox><option color='#999999' onClick='jt:focus("ui.username")' width="80">eMail</option><option id="ui.username">Input</option></hbox>
-            <hbox><option color='#999999' onClick='jt:focus("ui.password")' width="80">Password</option><option id="ui.password">Input</option></hbox>
+            <hbox>
+                <option color='#999999' onClick='jt:focus("ui.username")' width="80">eMail</option>
+                <option id="ui.username">Input</option>
+            </hbox>
+            <hbox>
+                <option color='#999999' onClick='jt:focus("ui.password")' width="80">Password</option>
+                <option id="ui.password">Input</option>
+            </hbox>
             <option color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>
     </view>
     <view id='menuHelp'>
-        <vbox width='250' x='200' y='100' direction='vertical'>
+        <vbox width='250' x='200' y='100'>
             <text color='#666666' height='40'>Help</text>
             <text color='#999999'>WASD - navigate</text>
             <text color='#999999'>Q/Y - up/down</text>
@@ -23,5 +29,9 @@
             <text color='#999999'>tab - map</text>
             <option color='#999999' onClick='jt:replaceAll("menuOptions")'>Back...</option>
         </vbox>
+    </view>
+    
+    <view id="fishmongers">
+        
     </view>
 </jt>
