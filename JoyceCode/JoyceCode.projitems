@@ -58,6 +58,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AHeatMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\BehaviorStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ClusterHeatMap.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Nearby.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\Particle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\components\ParticleEmitter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ISpawnOperator.cs" />
