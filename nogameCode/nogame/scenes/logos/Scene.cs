@@ -94,12 +94,18 @@ public class Scene : AModule, IScene
     private bool _preload()
     {
         /*
+         * Use a local copy of engine as this task may outlive the lifetime of
+         * this module.
+         */
+        var engine = _engine;
+        
+        /*
          * Start preloading in the background.
          */
         _engine.Run(() =>
         {
             I.Get<MetaGen>().ClusterOperators.Add(new GenerateShopsOperator());
-            I.Get<SetupMetaGen>().PrepareMetaGen(_engine);
+            I.Get<SetupMetaGen>().PrepareMetaGen(engine);
             
             /*
              * Preload the player position from the current gamestate.
