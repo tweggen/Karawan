@@ -172,7 +172,6 @@ public class Mesh : IComparable<Mesh>
     public void p(in Vector3 p)
     {
         Vertices.Insert(WriteIndexVertices++, p);
-        // Vertices[WriteIndexVertices++] = p;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,14 +183,33 @@ public class Mesh : IComparable<Mesh>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UV(in Vector2 uv)
     {
+        if (uv.X >= 0f && uv.X <= 1f && uv.Y >= 0f && uv.Y <= 1f)
+        {
+           
+        }
+        else
+        {
+            int a = 1;
+        }
         UVs.Insert(WriteIndexUVs++, uv);
-        // UVs[WriteIndexUVs++] = uv;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void UV(float u, float v)
     {
         UV(new Vector2(u, v));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void UVUnsafe(in Vector2 uv)
+    {
+        UVs.Insert(WriteIndexUVs++, uv);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void UVUnsafe(float u, float v)
+    {
+        UVUnsafe(new Vector2(u, v));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

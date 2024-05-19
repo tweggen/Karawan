@@ -213,7 +213,7 @@ public class Obj
                         nVertices++;
 
                         jMesh.p(vertex);
-                        jMesh.UV(
+                        jMesh.UVUnsafe(
                             loadedObject.Textures[textureIndex].X,
                             loadedObject.Textures[textureIndex].Y
                         );

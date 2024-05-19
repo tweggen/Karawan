@@ -371,7 +371,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uval = uvp.getUVOfs(new Vector3(alx, h, aly), 0f, vStart);
                 var uvcl = uvp.getUVOfs(new Vector3(clx, h, cly), 0f, vStart);
                 var uvar = uvp.getUVOfs(new Vector3(arx, h, ary), 0f, vStart);
-                float vofs = 1.0f - uvar.Y;
+                float vofs = 1.0f - Single.Max(uvar.Y, uvcl.Y);
                 g.p(alx, h, aly);
                 g.UV(uval.X, uval.Y + vofs);
                 g.p(clx, h, cly);
@@ -418,7 +418,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvar = uvp.getUVOfs(new Vector3(arx, h, ary), 0f, vStart);
                 var uval = uvp.getUVOfs(new Vector3(alx, h, aly), 0f, vStart);
                 var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
-                float vofs = 1.0f - uval.Y;
+                float vofs = 1.0f - Single.Max(uval.Y, uvcr.Y);
                 g.p(arx, h, ary);
                 g.UV(uvar.X, uvar.Y + vofs);
                 g.p(alx, h, aly);
@@ -466,7 +466,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvbl = uvp.getUVOfs(new Vector3(blx, h, bly), 0f, vStart);
                 var uvbr = uvp.getUVOfs(new Vector3(brx, h, bry), 0f, vStart);
                 var uvcr = uvp.getUVOfs(new Vector3(crx, h, cry), 0f, vStart);
-                var vofs = -uvbl.Y;
+                var vofs = -Single.Min(uvbl.Y, uvcr.Y);
                 g.p(blx, h, bly);
                 g.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry);
@@ -512,7 +512,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcl = uvp.getUVOfs(new Vector3(clx, h, cly), 0f, vStart);
                 var uvbl = uvp.getUVOfs(new Vector3(blx, h, bly), 0f, vStart);
                 var uvbr = uvp.getUVOfs(new Vector3(brx, h, bry), 0f, vStart);
-                var vofs = -uvbr.Y;
+                var vofs = -Single.Min(uvbr.Y, uvcl.Y);
                 g.p(clx, h, cly);
                 g.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(blx, h, bly);
