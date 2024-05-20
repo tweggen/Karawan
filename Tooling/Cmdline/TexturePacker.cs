@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using SkiaSharp;
 
@@ -319,7 +321,131 @@ namespace CmdLine
             if (path == "rgba") return _createRGBA16Image();
             else return SKImage.FromEncodedData(path);
         }
+        
+        
+        private SKBitmap _halfBitmap(in ReadOnlySpan<byte> spanPixels, int fullWidth, int fullHeight, int fullRowBytes)
+        {
+            var pf = spanPixels;
+            int yFullOffset1 = 0;
+            int yFullOffset2 = fullRowBytes;
 
+            int halfWidth = fullHeight / 2;
+            int halfHeight = fullHeight / 2;
+
+            int halfRowBytes = halfWidth * 4; 
+            int yHalfOffset = 0;
+
+            const int pixelBytes = 4;
+
+            byte[] p = new byte[halfRowBytes * halfHeight];            
+            
+            for (int y = 0; y < halfHeight; y++)
+            {
+                int x2 = 0;
+                int xDest = 0;
+                for (int x = 0; x < halfWidth; x++)
+                {
+                    p[yHalfOffset + xDest] = 
+                        (byte)(
+                            (pf[yFullOffset1 + x2] 
+                            + pf[yFullOffset1 + x2 + pixelBytes]
+                            + pf[yFullOffset2 + x2] 
+                            + pf[yFullOffset2 + x2 + pixelBytes])/4);
+                    ++x2;
+                    ++xDest;
+                    p[yHalfOffset + xDest] = 
+                        (byte)(
+                            (pf[yFullOffset1 + x2] 
+                             + pf[yFullOffset1 + x2 + pixelBytes]
+                             + pf[yFullOffset2 + x2] 
+                             + pf[yFullOffset2 + x2 + pixelBytes])/4);
+                    ++x2;
+                    ++xDest;
+                    p[yHalfOffset + xDest] = 
+                        (byte)(
+                            (pf[yFullOffset1 + x2] 
+                             + pf[yFullOffset1 + x2 + pixelBytes]
+                             + pf[yFullOffset2 + x2] 
+                             + pf[yFullOffset2 + x2 + pixelBytes])/4);
+                    ++x2;
+                    ++xDest;
+                    p[yHalfOffset + xDest] = 
+                        (byte)(
+                            (pf[yFullOffset1 + x2] 
+                             + pf[yFullOffset1 + x2 + pixelBytes]
+                             + pf[yFullOffset2 + x2] 
+                             + pf[yFullOffset2 + x2 + pixelBytes])/4);
+                    ++x2;
+                    ++xDest;
+                    
+                    x2 += pixelBytes;
+                }
+
+                yFullOffset1 += 2 * fullRowBytes;
+                yFullOffset2 += 2 * fullRowBytes;
+                yHalfOffset += halfRowBytes;
+            }
+
+            SKBitmap bmHalf = new SKBitmap();
+            GCHandle gcHandle = GCHandle.Alloc(p, GCHandleType.Pinned);
+            SKImageInfo ii = new SKImageInfo(halfWidth, halfHeight, SKColorType.Rgba8888, SKAlphaType.Premul);
+            bmHalf.InstallPixels(ii, gcHandle.AddrOfPinnedObject(), ii.RowBytes, delegate { gcHandle.Free(); });
+            return bmHalf;
+        }
+
+        private SKSurface _createMipmapSurface(SKSurface sksAtlas, Atlas atlas)
+        {
+            var info = new SKImageInfo(atlas.Width*2, atlas.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
+
+            /*
+             * The number of mipmap levels.
+             */
+            const int nMipmaps = 8;
+            
+            /*
+             * The original image
+             */
+            SKImage skiAtlas = sksAtlas.Snapshot();
+
+            /*
+             * This is the overall destination for all mipmap levels including the original.
+             * Clear it out to leave room for compression.
+             */
+            var sksMipmap = SKSurface.Create(info);
+            using (var paint = new SKPaint
+                   {
+                       Color = 0x00000000,
+                       Style = SKPaintStyle.Fill
+                   })
+            {
+                sksMipmap.Canvas.DrawRect(0, 0, atlas.Width * 2 - 1, atlas.Height - 1, paint);
+            }
+            
+            /*
+             * Creaete the root bitmap.
+             */
+            SKBitmap skbSource = SKBitmap.FromImage(skiAtlas);
+            
+            /*
+             * This is the offset of the current mipmap level.
+             */
+            int xOffset = 0;
+            for (int level = 0; level < nMipmaps; level++)
+            {
+                sksMipmap.Canvas.DrawBitmap(skbSource, xOffset, 0);
+                if (skbSource.Width <= 1)
+                {
+                    break;
+                }
+                SKBitmap skbHalf = _halfBitmap(skbSource.GetPixelSpan(), skbSource.Width, skbSource.Height, skbSource.RowBytes);
+                xOffset += skbSource.Width;
+                skbSource.Dispose();
+                skbSource = skbHalf;
+            }
+            skbSource.Dispose();
+            
+            return sksMipmap;
+        }
 
 
         private SKSurface _createAtlasImage(Atlas _Atlas)
@@ -342,9 +468,11 @@ namespace CmdLine
                 if (n.Texture != null)
                 {
                     using (var image = _loadImage(n.Texture.FullPath))
-                    using (var bm = SKBitmap.FromImage(image))
                     {
-                        skiaSurface.Canvas.DrawBitmap(bm, new SKPoint(n.Bounds.X, n.Bounds.Y));
+                        using (SKBitmap bm = SKBitmap.FromImage(image))
+                        {
+                            skiaSurface.Canvas.DrawBitmap(bm, new SKPoint(n.Bounds.X, n.Bounds.Y));
+                        }
                     }
                 }
                 else
@@ -358,57 +486,60 @@ namespace CmdLine
                     paint.Dispose();
                 }
             }
-
+            
             return skiaSurface;
         }
 
 
         private TextureInfo _findBestFitForNode(Node _Node, List<TextureInfo> _Textures)
+        {
+            TextureInfo bestFit = null;
+
+            float nodeArea = _Node.Bounds.Width * _Node.Bounds.Height;
+            float maxCriteria = 0.0f;
+
+            foreach (TextureInfo ti in _Textures)
             {
-                TextureInfo bestFit = null;
-
-                float nodeArea = _Node.Bounds.Width * _Node.Bounds.Height;
-                float maxCriteria = 0.0f;
-
-                foreach (TextureInfo ti in _Textures)
+                switch (FitHeuristic)
                 {
-                    switch (FitHeuristic)
-                    {
-                        // Max of Width and Height ratios
-                        case BestFitHeuristic.MaxOneAxis:
-                            if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
+                    // Max of Width and Height ratios
+                    case BestFitHeuristic.MaxOneAxis:
+                        if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
+                        {
+                            float wRatio = (float)ti.Width / (float)_Node.Bounds.Width;
+                            float hRatio = (float)ti.Height / (float)_Node.Bounds.Height;
+                            float ratio = wRatio > hRatio ? wRatio : hRatio;
+                            if (ratio > maxCriteria)
                             {
-                                float wRatio = (float)ti.Width / (float)_Node.Bounds.Width;
-                                float hRatio = (float)ti.Height / (float)_Node.Bounds.Height;
-                                float ratio = wRatio > hRatio ? wRatio : hRatio;
-                                if (ratio > maxCriteria)
-                                {
-                                    maxCriteria = ratio;
-                                    bestFit = ti;
-                                }
+                                maxCriteria = ratio;
+                                bestFit = ti;
                             }
-                            break;
+                        }
 
-                        // Maximize Area coverage
-                        case BestFitHeuristic.Area:
+                        break;
 
-                            if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
+                    // Maximize Area coverage
+                    case BestFitHeuristic.Area:
+
+                        if (ti.Width <= _Node.Bounds.Width && ti.Height <= _Node.Bounds.Height)
+                        {
+                            float textureArea = ti.Width * ti.Height;
+                            float coverage = textureArea / nodeArea;
+                            if (coverage > maxCriteria)
                             {
-                                float textureArea = ti.Width * ti.Height;
-                                float coverage = textureArea / nodeArea;
-                                if (coverage > maxCriteria)
-                                {
-                                    maxCriteria = coverage;
-                                    bestFit = ti;
-                                }
+                                maxCriteria = coverage;
+                                bestFit = ti;
                             }
-                            break;
-                    }
+                        }
+
+                        break;
                 }
-                return bestFit;
             }
 
+            return bestFit;
+        }
         
+
         private List<TextureInfo> _layoutAtlas(List<TextureInfo> textures0, Atlas orgAtlas, out Atlas atlas)
         {
             /*
@@ -479,9 +610,16 @@ namespace CmdLine
                 string atlasName = String.Format(prefix + "{0:000}" + ".png", atlasCount);
                 string atlasTag = System.IO.Path.GetFileName(atlasName);
 
-                //1: Save images
-                SKSurface skiaSurface = _createAtlasImage(atlas);
-                using (var image = skiaSurface.Snapshot())
+                /*
+                 * Now create the atlas from the atlas surface.
+                 */
+                using(SKSurface skSurface = _createAtlasImage(atlas))
+
+                /*
+                 * Create the mipmaps from the atlas
+                 */
+                using(SKSurface skMipmapSurface = _createMipmapSurface(skSurface, atlas))
+                using (var image = skMipmapSurface.Snapshot())
                 using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
                 using (var stream = File.OpenWrite(Path.Combine(CurrentPath,atlasName)))
                 {
