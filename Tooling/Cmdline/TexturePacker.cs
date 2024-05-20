@@ -389,7 +389,7 @@ namespace CmdLine
 
             SKBitmap bmHalf = new SKBitmap();
             GCHandle gcHandle = GCHandle.Alloc(p, GCHandleType.Pinned);
-            SKImageInfo ii = new SKImageInfo(halfWidth, halfHeight, SKColorType.Rgba8888, SKAlphaType.Premul);
+            SKImageInfo ii = new SKImageInfo(halfWidth, halfHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
             bmHalf.InstallPixels(ii, gcHandle.AddrOfPinnedObject(), ii.RowBytes, delegate { gcHandle.Free(); });
             return bmHalf;
         }
