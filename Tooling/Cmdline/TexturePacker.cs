@@ -18,6 +18,8 @@ namespace CmdLine
         public float V { get; set; }
         public float UScale { get; set; }
         public float VScale { get; set; }
+        public float UScaleCell { get; set; }
+        public float VScaleCell { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
         public int CellWidth { get; set; }
@@ -662,8 +664,10 @@ namespace CmdLine
                             PixelY = n.Bounds.Y,
                             U = ((float)n.Bounds.X / atlas.Width),
                             V = ((float)n.Bounds.Y / atlas.Height),
-                            UScale = ((float)n.Bounds.Width / atlas.Width),
-                            VScale = ((float)n.Bounds.Height / atlas.Height),
+                            UScaleCell = ((float)n.Bounds.Width / atlas.Width),
+                            VScaleCell = ((float)n.Bounds.Height / atlas.Height),
+                            UScale = ((float)n.Texture.ImageWidth / atlas.Width),
+                            VScale = ((float)n.Texture.ImageHeight / atlas.Height),
                             CellWidth = (int)n.Bounds.Width,
                             CellHeight = (int)n.Bounds.Height,
                             Width = n.Texture.ImageWidth,
