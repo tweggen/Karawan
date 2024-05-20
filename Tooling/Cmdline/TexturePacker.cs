@@ -20,6 +20,11 @@ namespace CmdLine
         public float VScale { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+        public int CellWidth { get; set; }
+        public int CellHeight { get; set; }
+        
+        public int PixelX { get; set; }
+        public int PixelY { get; set; }
     }
 
     public class JsonAtlasDesc
@@ -67,6 +72,10 @@ namespace CmdLine
         /// </summary>
         public int Height;
 
+
+        public int ImageWidth;
+        public int ImageHeight;
+        
         /// <summary>
         ///  How important is this texture? Textures with prio 1 are laid out first.
         /// </summary>
@@ -649,12 +658,16 @@ namespace CmdLine
                             Uri = n.Texture.Resource.Uri,
                             Tag = n.Texture.Resource.Tag,
                             AtlasTag = atlasTag,
+                            PixelX = n.Bounds.X,
+                            PixelY = n.Bounds.Y,
                             U = ((float)n.Bounds.X / atlas.Width),
                             V = ((float)n.Bounds.Y / atlas.Height),
                             UScale = ((float)n.Bounds.Width / atlas.Width),
                             VScale = ((float)n.Bounds.Height / atlas.Height),
-                            Width = (int)n.Bounds.Width,
-                            Height = (int)n.Bounds.Height
+                            CellWidth = (int)n.Bounds.Width,
+                            CellHeight = (int)n.Bounds.Height,
+                            Width = n.Texture.ImageWidth,
+                            Height = n.Texture.ImageHeight
                         };
                         jAtlas.Textures[jTexture.Tag] = jTexture;
                     }
@@ -783,6 +796,17 @@ namespace CmdLine
 
         public void AddTexture(string CurrentPath, Resource resourceTexture, int prio)
         {
+            Func<int,int> nextPOT = (int n) =>
+            {
+                int r = n - 1;
+                r |= r >> 1;
+                r |= r >> 2;
+                r |= r >> 4;
+                r |= r >> 8;
+                r |= r >> 16;
+                return r;
+            };
+                
             if (resourceTexture.Uri == "rgba")
             {
                 TextureInfo ti = new TextureInfo();
@@ -791,6 +815,8 @@ namespace CmdLine
                 ti.FullPath = "rgba";
                 ti.Width = 64;
                 ti.Height = 64;
+                ti.ImageWidth = 64;
+                ti.ImageHeight = 64;
                 ti.Priority = prio;
 
                 SourceTextures.Add(ti);
@@ -807,15 +833,20 @@ namespace CmdLine
                 }
                 using (var image = SKImage.FromEncodedData(fi.FullName))
                 {
+                    int cellWidth = nextPOT(image.Width)+1;
+                    int cellHeight = nextPOT(image.Height)+1;
+
                     if (image.Width <= AtlasSize && image.Height <= AtlasSize)
                     {
                         TextureInfo ti = new TextureInfo();
 
                         ti.Resource = resourceTexture;
                         ti.FullPath = fi.FullName;
-                        ti.Width = image.Width;
-                        ti.Height = image.Height;
-
+                        ti.Width = cellWidth;
+                        ti.Height = cellHeight;
+                        ti.ImageWidth = image.Width;
+                        ti.ImageHeight = image.Height;
+                        
                         SourceTextures.Add(ti);
 
                         Log.WriteLine($"Added \"{resourceTexture.Tag}\" (found at \"{ti.FullPath}\")");
