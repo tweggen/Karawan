@@ -28,6 +28,7 @@ namespace CmdLine
         public string Tag { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+        public bool IsMipmap { get; set; }
         public Dictionary<string,JsonTextureDesc> Textures { get; set; }
     }
 
@@ -634,6 +635,7 @@ namespace CmdLine
                     Tag = atlasTag,
                     Width = atlas.Width,
                     Height = atlas.Height,
+                    IsMipmap = true,
                     Textures = new Dictionary<string, JsonTextureDesc>()
                 };
                 
@@ -668,7 +670,8 @@ namespace CmdLine
                 {
                     Tag = resource.Tag,
                     Uri = resource.Uri,
-                    Textures = new Dictionary<string, JsonTextureDesc>()
+                    Textures = new Dictionary<string, JsonTextureDesc>(),
+                    IsMipmap = false
                 };
 
                 JsonTextureDesc jTexture = new JsonTextureDesc()
