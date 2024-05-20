@@ -62,6 +62,21 @@ namespace engine.joyce
         
         public Vector2 UVOffset = new(0f, 0f);
         public Vector2 UVScale = new (1f, 1f);
+
+        /**
+         * We do not need has mipmap in the key, a texture either has a
+         * mipmap or it doesn't.
+         */
+        private bool _hasMipmap = false;
+        public bool HasMipmap {
+            get => _hasMipmap;
+            set
+            {
+                _hasMipmap = value;
+                _computeKey();
+            } 
+        }
+        
         public int Width, Height;
         
         public Vector2 Size2
@@ -140,7 +155,7 @@ namespace engine.joyce
             {
                 if (Framebuffer != null)
                 {
-                    _key = $"{Framebuffer.Id}-{_filteringMode}";
+                    _key = $"{Framebuffer.Id}-{_filteringMode}-{HasMipmap}";
                 }
                 else
                 {

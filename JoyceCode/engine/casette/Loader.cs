@@ -203,7 +203,9 @@ public class Loader
                 new Vector2(u,v), 
                 new Vector2(uScale, vScale),
                 jet.GetProperty("width").GetInt32(),
-                jet.GetProperty("height").GetInt32());
+                jet.GetProperty("height").GetInt32(),
+                jeAtlas.GetProperty("isMipmap").GetBoolean()
+                );
         }
     }
 

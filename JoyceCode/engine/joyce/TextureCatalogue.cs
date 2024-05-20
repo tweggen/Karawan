@@ -10,6 +10,7 @@ namespace engine.joyce;
 public class TextureAtlas
 {
     public string AtlasTag;
+    public bool HasMipmap;
     public List<TextureAtlasEntry> AtlasEntries = new();
 }
 
@@ -20,6 +21,7 @@ public class TextureAtlasEntry
     public Vector2 UVOffset;
     public Vector2 UVScale;
     public int Width, Height;
+    public bool HasMipmap;
 
     public TextureAtlasEntry(TextureAtlas atlas)
     {
@@ -38,7 +40,7 @@ public class TextureCatalogue
     private SortedDictionary<string, TextureAtlasEntry> _dictTextures = new();
     private SortedDictionary<string, TextureAtlas> _dictAtlasses = new();
 
-    public void AddAtlasEntry(string textureTag, string atlasTag, in Vector2 uvOffset, in Vector2 uvScale, int Width, int Height)
+    public void AddAtlasEntry(string textureTag, string atlasTag, in Vector2 uvOffset, in Vector2 uvScale, int Width, int Height, bool hasMipmap)
     {
         Trace($"About to add texture {textureTag} in atlas {atlasTag}.");
         lock (_lo)
@@ -52,7 +54,7 @@ public class TextureCatalogue
             TextureAtlas atlas;
             if (!_dictAtlasses.TryGetValue(atlasTag, out atlas))
             {
-                atlas = new TextureAtlas() { AtlasTag = atlasTag};
+                atlas = new TextureAtlas() { AtlasTag = atlasTag, HasMipmap = hasMipmap };
                 _dictAtlasses[atlasTag] = atlas;
             }
 
@@ -62,7 +64,8 @@ public class TextureCatalogue
                 UVOffset = uvOffset,
                 UVScale = uvScale,
                 Width = Width,
-                Height = Height
+                Height = Height,
+                HasMipmap = hasMipmap
             };
 
             atlas.AtlasEntries.Add(tae);
@@ -111,7 +114,9 @@ public class TextureCatalogue
             UVOffset = tae.UVOffset + (uvColorOffset*tae.UVScale),
             UVScale = tae.UVScale * uvColorScale,
             Width = 2,
-            Height = 2
+            Height = 2,
+            // TXWTODO: We need to set the filtering to none, i.e. framebuffer
+            HasMipmap = true
         };
 
         return jTexture;
@@ -143,7 +148,8 @@ public class TextureCatalogue
             UVOffset = tae.UVOffset,
             UVScale = tae.UVScale,
             Width = tae.Width,
-            Height = tae.Height
+            Height = tae.Height,
+            HasMipmap = tae.HasMipmap
         };
         if (null != action)
         {

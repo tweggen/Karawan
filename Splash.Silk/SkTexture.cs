@@ -20,6 +20,8 @@ public class SkTexture : IDisposable
     private bool _backBound = false;
     private bool _backGenerated = false;
     private bool _backData = false;
+
+    private bool _haveMipmap = false;
     
 
     private engine.joyce.Texture.FilteringModes _filteringMode = engine.joyce.Texture.FilteringModes.Pixels;
@@ -99,19 +101,22 @@ public class SkTexture : IDisposable
         switch (_filteringMode)
         {
             case engine.joyce.Texture.FilteringModes.Framebuffer:
+                _trace("_setParameters Framebuffer");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
                     (int)GLEnum.Nearest);
                 CheckError("TexParam MinFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Nearest);
+                CheckError("TexParam MagFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
                     0);
-                CheckError("TexParam MagFilter");
+                CheckError("TexParam MaxLevel");
                 break;
             case engine.joyce.Texture.FilteringModes.Pixels:
+                _trace("_setParameters Pixels");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
                     (int)GLEnum.NearestMipmapLinear);
                 CheckError("TexParam MinFilter");
@@ -122,9 +127,11 @@ public class SkTexture : IDisposable
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-                    4);
+                    6);
+                CheckError("TexParam MaxLevel");
                 break;
             case engine.joyce.Texture.FilteringModes.Smooth:
+                _trace("_setParameters Smooth");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
                     (int)GLEnum.LinearMipmapLinear);
                 CheckError("TexParam MinFilter");
@@ -135,11 +142,11 @@ public class SkTexture : IDisposable
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-                    7);
+                    6);
+                CheckError("TexParam MaxLevel");
                 break;
         }
 
-        CheckError("TexParam MaxLevel");
     }
 
 
@@ -151,9 +158,19 @@ public class SkTexture : IDisposable
                 _trace($"Skipping mipmap for {_backHandle}");
                 break;
             default:
-                _trace($"generate mipmap for {_backHandle}");
-                _gl.GenerateMipmap(TextureTarget.Texture2D);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 7); // pick mipmap level 7 or lower
+                /*
+                 * If we did not bring in a mipmap, create a default one.
+                 */
+                if (false == _haveMipmap)
+                {
+                    _trace($"generate mipmap for {_backHandle}");
+                    _gl.GenerateMipmap(TextureTarget.Texture2D);
+                }
+                else
+                {
+                    _trace($"Using uploaded mipmap for {_backHandle}");
+                }
+
                 CheckError("GenerateMipMap");
                 break;
         }
@@ -204,7 +221,7 @@ public class SkTexture : IDisposable
     }
 
 
-    public unsafe void SetFrom(string path)
+    public unsafe void SetFrom(string path, bool isAtlas)
     {
         _trace($"Creating new Texture from path {path}");
 
@@ -215,24 +232,105 @@ public class SkTexture : IDisposable
             System.IO.Stream streamImage = engine.Assets.Open(path);
             var img = Image.Load<Rgba32>(streamImage);
             {
+                int width, height;
                 _backData = true;
-                _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)img.Width, (uint)img.Height, 0,
-                    PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                CheckError("TexImage2D");
 
-                img.ProcessPixelRows(accessor =>
+                // TXWTODO: Read this from a property.
+                int nLevel = _filteringMode!=Texture.FilteringModes.Framebuffer?6:1;
+                
+                if (!isAtlas)
                 {
-                    for (int y = 0; y < accessor.Height; y++)
-                    {
-                        fixed (void* data = accessor.GetRowSpan(y))
-                        {
-                            _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1,
-                                PixelFormat.Rgba, PixelType.UnsignedByte, data);
-                            CheckError("TexParam SubImage2D {y}");
+                    _trace($"texture {path} is no atlas, uploading straight.");
+                    
+                    width = img.Width;
+                    height = img.Height;
+                    _haveMipmap = false;
+                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height,
+                        0,
+                        PixelFormat.Rgba, PixelType.UnsignedByte, null);
+                    CheckError("TexImage2D");
 
+                    img.ProcessPixelRows(accessor =>
+                    {
+                        for (int y = 0; y < accessor.Height; y++)
+                        {
+                            fixed (void* data = accessor.GetRowSpan(y))
+                            {
+                                _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1,
+                                    PixelFormat.Rgba, PixelType.UnsignedByte, data);
+                                CheckError($"TexParam w/o mipmap SubImage2D {y}");
+
+                            }
                         }
+                    });
+                }
+                else
+                {
+                    _trace($"texture {path} has an atlas, uploading...");
+
+                    width = img.Width / 2;
+                    height = img.Height;
+                    _haveMipmap = true;
+
+
+                    if (_backHandle == 9)
+                    {
+                        int a = 1;
                     }
-                });
+                    
+                    /*
+                     * Now, first step, allocate the textures.
+                     */
+                    for (int mm = 0; mm < nLevel; ++mm)
+                    {
+                        _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8, 
+                            (uint)(width>>mm), (uint)(height>>mm),
+                            0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+                        CheckError($"TexImage2D {mm}");
+                    }
+                    
+
+                    img.ProcessPixelRows(accessor =>
+                    {
+                        // TXWTODO: We need to condfigure the number of mipmaps before
+                        // ZXWTODO :We should write the number of mipmaps to the atals.
+                        /*
+                         * Line by line, fill all of the mipmap images.
+                         */
+                        for (int y = 0; y < accessor.Height; y++)
+                        {
+                            fixed (void* data = accessor.GetRowSpan(y))
+                            {
+                                /*
+                                 * Where does the mipmap start?
+                                 */
+                                int xOffset = 0;
+                                
+                                /*
+                                 * We only select a row if y & rowMask == 0.
+                                 */
+                                int rowMask = 0;
+                                for (int mm = 0; mm < nLevel; ++mm)
+                                {
+                                    int mmWidth = width >> mm;
+
+                                    if ((y & rowMask) == 0)
+                                    {
+                                        _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y>>mm, (uint)mmWidth, 1,
+                                            PixelFormat.Rgba, PixelType.UnsignedByte, ((byte *)data + 4*xOffset));
+                                        if (CheckError($"TexParam with mipmap SubImage2D {y}") > 0)
+                                        {
+                                            int a = 1;
+                                        }
+                                    }
+
+                                    rowMask = (rowMask << 1) | 1;
+                                    xOffset += mmWidth;
+                                }
+                            }
+                        }
+                    });
+                }
             }
         }
         catch (Exception e)

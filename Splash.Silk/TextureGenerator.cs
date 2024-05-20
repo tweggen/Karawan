@@ -38,7 +38,7 @@ namespace Splash.Silk
                 }
                 else
                 {
-                    skTextureEntry.SkTexture.SetFrom(jTexture.Source);
+                    skTextureEntry.SkTexture.SetFrom(jTexture.Source, jTexture.HasMipmap);
                 }
             } 
             else if (jTexture.Framebuffer != null)
