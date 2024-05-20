@@ -148,9 +148,9 @@ public class SkRenderbufferEntry : ARenderbufferEntry
             Error("Unable to initialize frame buffer");
         }
         CheckError("SkRenderbuffer CheckFramebufferStatus");
-        Trace( $"Uploaded texture {_jTexture.Source}.");
+        Trace( $"Uploaded texture {_jTexture.Key}.");
 
-        textureManager.PushTexture(_jTexture.Source, _skTextureEntry);
+        textureManager.PushTexture(_jTexture.Key, _skTextureEntry);
     }
     
     

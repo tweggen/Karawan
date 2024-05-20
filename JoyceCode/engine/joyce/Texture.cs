@@ -12,7 +12,18 @@ namespace engine.joyce
         public static string BLACK = "joyce://col00000000"; 
 
         public string Source;
-        public engine.draw.IFramebuffer Framebuffer;
+
+
+        private engine.draw.IFramebuffer _framebuffer;
+        public engine.draw.IFramebuffer Framebuffer
+        {
+            get => _framebuffer;
+            set  {
+                _framebuffer = value;
+                _computeKey();
+            }
+        }
+        
 
         public enum FilteringModes
         {
@@ -29,7 +40,26 @@ namespace engine.joyce
             Framebuffer
         };
 
-        public FilteringModes FilteringMode = FilteringModes.Pixels;
+
+        private string _key;
+        public string Key
+        {
+            get => _key;
+        }
+
+        
+        private FilteringModes _filteringMode = FilteringModes.Pixels;
+        public FilteringModes FilteringMode
+        {
+            get => _filteringMode;
+            set
+            {
+                _filteringMode = value;
+                _computeKey();
+            }
+        }
+
+        
         public Vector2 UVOffset = new(0f, 0f);
         public Vector2 UVScale = new (1f, 1f);
         public int Width, Height;
@@ -91,12 +121,32 @@ namespace engine.joyce
             }
         }
 
-        
+
         public bool IsValid()
         {
             return 
                 (Source != null && Source != "")
                 || (Framebuffer != null);
+        }
+
+
+        private void _computeKey()
+        {
+            if (Source != null)
+            {
+                _key = $"{Source}-{_filteringMode}";
+            }
+            else
+            {
+                if (Framebuffer != null)
+                {
+                    _key = $"{Framebuffer.Id}-{_filteringMode}";
+                }
+                else
+                {
+                    _key = "(null)";
+                }
+            }
         }
         
         
@@ -104,6 +154,7 @@ namespace engine.joyce
         {
             Source = source;
             Framebuffer = null;
+            _computeKey();
         }
         
 
@@ -111,6 +162,7 @@ namespace engine.joyce
         {
             Source = null;
             Framebuffer = framebuffer;
+            _computeKey();
         }
     }
 }

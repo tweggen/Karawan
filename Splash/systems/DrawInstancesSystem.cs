@@ -35,10 +35,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
         in ReadOnlySpan<DefaultEcs.Entity> entities
     )
     {
-        if (cameraOutput.CameraMask == 0x00800000)
-        {
-            int a = 1;
-        }
         foreach (var entity in entities)
         {
             var transform3ToWorld = entity.Get<engine.joyce.components.Transform3ToWorld>();
@@ -48,10 +44,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                 var id = pfInstance.InstanceDesc;
                 _nInstancesConsidered++;
 
-                if (!id.ModelTransform.IsIdentity)
-                {
-                    var a = 1;
-                }
                 Matrix4x4 mModelTotalTransform = id.ModelTransform * transform3ToWorld.Matrix; 
                 Vector3 vPos = mModelTotalTransform.Translation;
                 
@@ -125,7 +117,6 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
 
         _nInstancesAppended = 0;
         _nInstancesConsidered = 0;
-        // Trace($"{_nearFrustum}");
     }
 
     protected override void PostUpdate(CameraOutput cameraOutput)

@@ -122,7 +122,7 @@ public class SkTexture : IDisposable
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-                    2);
+                    4);
                 break;
             case engine.joyce.Texture.FilteringModes.Smooth:
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
@@ -135,7 +135,7 @@ public class SkTexture : IDisposable
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-                    8);
+                    7);
                 break;
         }
 
@@ -153,6 +153,7 @@ public class SkTexture : IDisposable
             default:
                 _trace($"generate mipmap for {_backHandle}");
                 _gl.GenerateMipmap(TextureTarget.Texture2D);
+                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 7); // pick mipmap level 7 or lower
                 CheckError("GenerateMipMap");
                 break;
         }
@@ -376,6 +377,7 @@ public class SkTexture : IDisposable
     public unsafe SkTexture(GL gl, engine.joyce.Texture.FilteringModes filteringMode)
     {
         _trace($"new SkTexture filteringMode={filteringMode}");
+
         _gl = gl;
         _filteringMode = filteringMode;
         _allocateBack();

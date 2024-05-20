@@ -13,26 +13,6 @@ namespace Splash
         private Dictionary<string, ATextureEntry> _dictTextures;
 
 
-        private string _textureKey(in engine.joyce.Texture jTexture)
-        {
-            if( jTexture.Source == null)
-            {
-                if (jTexture.Framebuffer == null)
-                {
-                    return "(null)";
-                }
-                else
-                {
-                    return jTexture.Framebuffer.Id;
-                }
-            }
-            else
-            {
-                return jTexture.Source;
-            }
-        }
-
-
         public void PushTexture(in string textureKey, in ATextureEntry aTextureEntry)
         {
             lock (_lock)
@@ -47,7 +27,7 @@ namespace Splash
         {
             ATextureEntry aTextureEntry;
             bool needFillEntry = false;
-            string textureKey = _textureKey(jTexture);
+            string textureKey = jTexture.Key;
             lock (_lock)
             {
                 if (_dictTextures.TryGetValue(textureKey, out aTextureEntry))
