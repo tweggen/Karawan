@@ -22,7 +22,8 @@ public class SkTexture : IDisposable
     private bool _backData = false;
 
     private bool _haveMipmap = false;
-    
+
+    private const int NMipmaps = 5;
 
     private engine.joyce.Texture.FilteringModes _filteringMode = engine.joyce.Texture.FilteringModes.Pixels;
 
@@ -118,7 +119,7 @@ public class SkTexture : IDisposable
             case engine.joyce.Texture.FilteringModes.Pixels:
                 _trace("_setParameters Pixels");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
-                    (int)GLEnum.NearestMipmapLinear);
+                    (int)GLEnum.NearestMipmapNearest);
                 CheckError("TexParam MinFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Nearest);
@@ -127,7 +128,7 @@ public class SkTexture : IDisposable
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-                    6);
+                    NMipmaps-1);
                 CheckError("TexParam MaxLevel");
                 break;
             case engine.joyce.Texture.FilteringModes.Smooth:
@@ -142,7 +143,7 @@ public class SkTexture : IDisposable
                     0);
                 CheckError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
-                    6);
+                    NMipmaps-1);
                 CheckError("TexParam MaxLevel");
                 break;
         }
@@ -236,7 +237,7 @@ public class SkTexture : IDisposable
                 _backData = true;
 
                 // TXWTODO: Read this from a property.
-                int nLevel = _filteringMode!=Texture.FilteringModes.Framebuffer?6:1;
+                int nLevel = _filteringMode!=Texture.FilteringModes.Framebuffer?NMipmaps:1;
                 
                 if (!isAtlas)
                 {
@@ -305,26 +306,22 @@ public class SkTexture : IDisposable
                                  * Where does the mipmap start?
                                  */
                                 int xOffset = 0;
-                                
-                                /*
-                                 * We only select a row if y & rowMask == 0.
-                                 */
-                                int rowMask = 0;
+
                                 for (int mm = 0; mm < nLevel; ++mm)
                                 {
+                                    int mmHeight = height >> mm;
                                     int mmWidth = width >> mm;
 
-                                    if ((y & rowMask) == 0)
+                                    if (y<mmHeight)
                                     {
-                                        _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y>>mm, (uint)mmWidth, 1,
-                                            PixelFormat.Rgba, PixelType.UnsignedByte, ((byte *)data + 4*xOffset));
+                                        _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y, (uint)mmWidth, 1,
+                                            PixelFormat.Rgba, PixelType.UnsignedByte, ((byte *)data) + 4*xOffset);
                                         if (CheckError($"TexParam with mipmap SubImage2D {y}") > 0)
                                         {
                                             int a = 1;
                                         }
                                     }
 
-                                    rowMask = (rowMask << 1) | 1;
                                     xOffset += mmWidth;
                                 }
                             }

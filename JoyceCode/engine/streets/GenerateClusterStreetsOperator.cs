@@ -819,8 +819,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("engine.streets.materials.street",
             (name) => new Material()
             {
-                Texture = I.Get<TextureCatalogue>().FindTexture("streets1to4.png", 
-                    t => t.FilteringMode = Texture.FilteringModes.Framebuffer)
+                Texture = I.Get<TextureCatalogue>().FindTexture("streets1to4.png" /*, 
+                    t => t.FilteringMode = Texture.FilteringModes.Framebuffer */)
             });
     }
     
