@@ -5,7 +5,7 @@ using System.Numerics;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 
-namespace builtin.loader;
+namespace builtin.loader.fbx;
 
 
 public class FbxModel
@@ -123,7 +123,7 @@ public class FbxModel
             textures.AddRange(heightMaps);
 
         // return a mesh object created from the extracted mesh data
-        var result = new Mesh(_gl, BuildVertices(vertices), BuildIndices(indices), textures);
+        var result = new Mesh(BuildVertices(vertices), BuildIndices(indices), textures);
         return result;
     }
 
@@ -148,7 +148,7 @@ public class FbxModel
 
             if (!skip)
             {
-                var texture = new Texture(_gl, Directory, type);
+                var texture = new Texture(Directory, type);
                 texture.Path = path;
                 textures.Add(texture);
                 _texturesLoaded.Add(texture);

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace builtin.loader;
+namespace builtin.loader.fbx;
+
 
 public class Mesh : IDisposable
 {

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using builtin.tools;
 using engine;
 using engine.draw;
+using engine.draw.components;
 using engine.joyce;
 using engine.world;
 using engine.world.components;
@@ -184,18 +185,25 @@ class GenerateShopsOperator : IClusterOperator
                 e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
                 {
                     var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal with
-                            {
-                                Y = clusterDesc.AverageHeight + 30f + (t + 5f*(float)iconCode)
-                            }
+                            { Y = clusterDesc.AverageHeight }
                         );
                     if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
+                    
                     I.Get<TransformApi>().SetTransforms(ePOI, true,
                         MapCameraMask, Quaternion.Identity, v3ShopGlobal);
+                    ePOI.Set(new engine.behave.components.Nearby() { MaxDistance = 10.0f });
 
+                    DefaultEcs.Entity eActionMarker = e.CreateEntity("poi.shop.action");
+                    eActionMarker.Set(new OSDText(new Vector2(-100f, 0f), new Vector2(200f, 14f), "E to enter", 14, 0xff22aaee,
+                        0x00000000, engine.draw.HAlign.Center) { MaxDistance = 100f });
+                    I.Get<HierarchyApi>().SetParent(eActionMarker, ePOI);
+                    I.Get<TransformApi>().SetTransforms(eActionMarker, true,
+                        0x00000001, Quaternion.Identity, Vector3.UnitY * (2.5f+2f));
+                    
                     DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");
                     I.Get<HierarchyApi>().SetParent(eMapMarker, ePOI);
                     I.Get<TransformApi>().SetTransforms(eMapMarker, true,
-                        MapCameraMask, Quaternion.Identity, Vector3.Zero);
+                        MapCameraMask, Quaternion.Identity, Vector3.UnitY * (30f + (t + 5f*(float)iconCode)));
                     eMapMarker.Set(new engine.world.components.MapIcon() { Code = iconCode });
                 });
                 break;

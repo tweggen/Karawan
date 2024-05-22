@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace builtin.loader;
+namespace builtin.loader.fbx;
 
 public struct Vertex
 {
