@@ -79,5 +79,4 @@ public class Fbx
     {
         LoadModelInstanceSync("u.fbx", new ModelProperties(), out var _);
     }
-    
 }
