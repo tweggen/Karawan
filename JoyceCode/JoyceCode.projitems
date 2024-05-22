@@ -34,6 +34,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Widget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\WidgetEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\FbxModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Mesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Texture.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Vertex.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\FindLights.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\GlTF.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\ModelProperties.cs" />

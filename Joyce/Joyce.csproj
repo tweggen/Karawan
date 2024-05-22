@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="NetOctree" Version="2.1.0" />
     <PackageReference Include="NLua" Version="1.6.3" />
+    <PackageReference Include="Silk.NET.Assimp" Version="2.21.0" />
     <PackageReference Include="SkiaSharp" Version="2.88.3" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
   </ItemGroup>

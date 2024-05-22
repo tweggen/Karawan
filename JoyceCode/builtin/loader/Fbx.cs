@@ -4,12 +4,29 @@ using System.IO;
 using System.Threading.Tasks;
 using engine;
 using engine.joyce;
+using Silk.NET.Assimp;
 using static engine.Logger;
 
 namespace builtin.loader;
 
 public class Fbx
 {
+    static private Assimp _assimp;
+    
+    static public void LoadModelInstanceSync(string url,
+        ModelProperties modelProperties,
+        out Model model)
+    {
+        engine.joyce.InstanceDesc instanceDesc = new(
+            new List<engine.joyce.Mesh>(),
+            new List<int>(),
+            new List<engine.joyce.Material>(),
+            400f);
+
+        model = new Model(instanceDesc); 
+    }
+    
+#if false
     static public void LoadModelInstanceSync(string url,
         ModelProperties modelProperties,
         out Model model)
@@ -46,8 +63,8 @@ public class Fbx
 
         model = new Model(instanceDesc);
     }
-
-
+#endif
+    
     static public Task<Model> LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return Task.Run(() => 
@@ -62,4 +79,5 @@ public class Fbx
     {
         LoadModelInstanceSync("u.fbx", new ModelProperties(), out var _);
     }
+    
 }
