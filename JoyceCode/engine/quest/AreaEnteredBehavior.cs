@@ -17,7 +17,7 @@ namespace engine.quest;
  * after the quest, such as a collision shape to identify the target
  * location.
  */
-public class AreaEnteredBehavior : IBehavior
+public class AreaEnteredBehavior : ABehavior
 {
     private engine.Engine _engine;
     private BodyReference _prefCylinder;
@@ -25,24 +25,8 @@ public class AreaEnteredBehavior : IBehavior
     private DefaultEcs.Entity _eGoal;
 
 
-    public void OnCollision(ContactEvent cev)
+    public override void OnCollision(ContactEvent cev)
     {
         Trace("Something collided with me.");
-    }
-
-    public void Behave(in Entity entity, float dt)
-    {
-    }
-
-    public void Sync(in Entity entity)
-    {
-    }
-
-    public void OnDetach(in Entity entity)
-    {
-    }
-
-    public void OnAttach(in Engine engine0, in Entity entity)
-    {
     }
 }

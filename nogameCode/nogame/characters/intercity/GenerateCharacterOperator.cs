@@ -84,7 +84,7 @@ public class GenerateCharacterOperator : IWorldOperator
                     /*
                      * This means, the behavior always is called.
                      */
-                    MaxDistance = MetaGen.MaxWidth
+                    MaxDistance = (short)MetaGen.MaxWidth
                 }
             );
             eTarget.Set(new engine.audio.components.MovingSound(

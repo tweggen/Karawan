@@ -188,7 +188,7 @@ internal class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
                                 new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
-                            { MaxDistance = propMaxDistance }
+                            { MaxDistance = (short)propMaxDistance }
                         );
 
                         BodyReference prefSphere;

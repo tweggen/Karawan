@@ -92,7 +92,7 @@ public class ToSomewhere : engine.world.IOperator
         _eMarker.Set(
             new engine.behave.components.Behavior(_goalMarkerSpinBehavior.Value)
             {
-                MaxDistance = 2000f
+                MaxDistance = 2000
             });
         DefaultEcs.Entity eMapMarker = e.CreateEntity($"quest goal {Name} map marker");
         I.Get<HierarchyApi>().SetParent(eMapMarker, _eMarker); 

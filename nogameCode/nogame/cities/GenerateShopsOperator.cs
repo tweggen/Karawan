@@ -189,12 +189,15 @@ class GenerateShopsOperator : IClusterOperator
                         );
                     if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
                     
-                    I.Get<TransformApi>().SetTransforms(ePOI, true,
+                    I.Get<TransformApi>().SetTransforms(ePOI, false,
                         MapCameraMask, Quaternion.Identity, v3ShopGlobal);
-                    ePOI.Set(new engine.behave.components.Nearby()
+                    ePOI.Set(new engine.behave.components.Behavior(new ShopNearbyBehavior()
                     {
-                        Provider = new ShopNearbyBehavior() { EPOI = ePOI },
-                        MaxDistance = 3.0f
+                        EPOI = ePOI
+                    })
+                    {
+                        Flags = (ushort)engine.behave.components.Behavior.BehaviorFlags.DontVisibInRange,
+                        MaxDistance = 3
                     });
                     
                     DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");

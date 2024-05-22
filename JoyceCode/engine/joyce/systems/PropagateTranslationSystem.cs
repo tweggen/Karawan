@@ -28,20 +28,11 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
     {
         var cTransform3 = childEntity.Get<Transform3ToParent>();
 
-#if true
         /*
          * New mode of operation: Child's camera is not affected by parents or children, just left as is.
          */
         cChildTransform3ToWorld.CameraMask = cTransform3.CameraMask;
         cChildTransform3ToWorld.IsVisible = cTransform3.IsVisible; 
-#else
-            /*
-             * Child's world camera mask is parent's camera mask and its own combinied with its visibility.
-             */
-            cChildTransform3ToWorld.CameraMask =
-                cParentTransform3ToWorld.CameraMask &
-                    (cTransform3.IsVisible ? cTransform3.CameraMask : 0);
-#endif
         cChildTransform3ToWorld.Matrix =
             cTransform3.Matrix * cParentTransform3ToWorld.Matrix;
         childEntity.Set<Transform3ToWorld>(cChildTransform3ToWorld);
@@ -56,13 +47,16 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
         // Console.WriteLine("nChildren = {0}", children.Count);
         foreach (var childEntity in children)
         {
-            var cChildTransform3ToWorld = new Transform3ToWorld();
-            _updateChildToWorld(cParentTransform3ToWorld, childEntity, ref cChildTransform3ToWorld);
-
-            if (childEntity.Has<joyce.components.Children>()
-                && childEntity.Has<Transform3ToParent>())
+            if (childEntity.IsAlive)
             {
-                _recurseChildren(cChildTransform3ToWorld, childEntity);
+                var cChildTransform3ToWorld = new Transform3ToWorld();
+                _updateChildToWorld(cParentTransform3ToWorld, childEntity, ref cChildTransform3ToWorld);
+
+                if (childEntity.Has<joyce.components.Children>()
+                    && childEntity.Has<Transform3ToParent>())
+                {
+                    _recurseChildren(cChildTransform3ToWorld, childEntity);
+                }
             }
         }
     }

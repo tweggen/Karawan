@@ -18,7 +18,6 @@ public interface IBehavior
      */
     public void Sync(in DefaultEcs.Entity entity);
 
-
     /**
      * On Detach
      */
@@ -28,5 +27,8 @@ public interface IBehavior
      * Called after the behavior has been attached to this entity.
      */
     public void OnAttach(in engine.Engine engine0, in DefaultEcs.Entity entity);
+
+    public void InRange(in engine.Engine engine0, in DefaultEcs.Entity entity);
+    public void OutOfRange(in engine.Engine engine0, in DefaultEcs.Entity entity);
 }
   
