@@ -4,7 +4,7 @@ using static engine.Logger;
 
 namespace engine.behave;
 
-public class Manager : AComponentManager<components.Behavior>
+public class Manager : AComponentWatcher<components.Behavior>
 {
     internal override void _onComponentRemoved(
         in DefaultEcs.Entity entity,

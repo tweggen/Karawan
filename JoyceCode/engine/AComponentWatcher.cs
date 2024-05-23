@@ -4,7 +4,7 @@ using static engine.Logger;
 
 namespace engine;
 
-public abstract class AComponentManager<T> : IDisposable where T : struct 
+public abstract class AComponentWatcher<T> : IDisposable where T : struct 
 {
     protected engine.Engine _engine;
 
