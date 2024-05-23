@@ -180,7 +180,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
                                 .SetSpeed(30f)
                                 .SetHeight(10f))
-                            { MaxDistance = propMaxDistance }
+                            { MaxDistance = (short)propMaxDistance }
                         );
                         eTarget.Set(new engine.audio.components.MovingSound(GetTramSound(), 150f));
                     });

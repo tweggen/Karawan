@@ -38,21 +38,37 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
             {
                 oldTransform = entity.Get<joyce.components.Transform3>();
             }
-            else
-            {
-            }
 
-            var cBehavior = entity.Get<behave.components.Behavior>();
+            ref var cBehavior = ref entity.Get<behave.components.Behavior>();
 
             if (hadTransform3)
             {
                 if (Vector3.DistanceSquared(oldTransform.Position, _vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
                 {
-                    if (oldTransform.IsVisible)
+                    if (0 != (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
+                    {
+                        cBehavior.Provider?.OutOfRange(_engine, entity);
+                        cBehavior.Flags = (ushort) (cBehavior.Flags & ~(uint)components.Behavior.BehaviorFlags.InRange);
+                    }
+
+                    if (oldTransform.IsVisible && 0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.DontVisibInRange))
                     {
                         I.Get<engine.joyce.TransformApi>().SetVisible(entity, false);
                     }
                     continue;
+                }
+                else
+                {
+                    if (0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
+                    {
+                        cBehavior.Provider?.InRange(_engine, entity);
+                        cBehavior.Flags = (ushort) (cBehavior.Flags | (uint)components.Behavior.BehaviorFlags.InRange);
+                    }
+
+                    if (!oldTransform.IsVisible && 0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.DontVisibInRange))
+                    {
+                        I.Get<engine.joyce.TransformApi>().SetVisible(entity, true);
+                    }
                 }
             }
 
@@ -60,22 +76,28 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
             {
                 continue;
             }
-            
-            /*
-             * Behave shall make it visible if it can.
-             */
-            cBehavior.Provider.Behave(entity, dt);
- 
-            if (dt > 0.0000001 && hadTransform3)
+
+            if (0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.DontCallBehave))
             {
-                if (entity.Has<joyce.components.Transform3>())
+                /*
+                 * Behave shall make it visible if it can.
+                 */
+                cBehavior.Provider.Behave(entity, dt);
+            }
+
+            if (0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.DontEstimateMotion))
+            {
+                if (dt > 0.0000001 && hadTransform3)
                 {
-                    Vector3 vNewPosition = entity.Get<joyce.components.Transform3>().Position;
-                    /*
-                     * Write back/create motion for that one.
-                     */
-                    Vector3 vVelocity = (vNewPosition - oldTransform.Position) / dt;
-                    entity.Set(new joyce.components.Motion(vVelocity));
+                    if (entity.Has<joyce.components.Transform3>())
+                    {
+                        Vector3 vNewPosition = entity.Get<joyce.components.Transform3>().Position;
+                        /*
+                         * Write back/create motion for that one.
+                         */
+                        Vector3 vVelocity = (vNewPosition - oldTransform.Position) / dt;
+                        entity.Set(new joyce.components.Motion(vVelocity));
+                    }
                 }
             }
         }

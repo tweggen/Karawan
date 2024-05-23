@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using builtin.tools;
 using engine;
 using engine.draw;
+using engine.draw.components;
 using engine.joyce;
 using engine.world;
 using engine.world.components;
@@ -184,18 +185,25 @@ class GenerateShopsOperator : IClusterOperator
                 e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
                 {
                     var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal with
-                            {
-                                Y = clusterDesc.AverageHeight + 30f + (t + 5f*(float)iconCode)
-                            }
+                            { Y = clusterDesc.AverageHeight + 2.5f +1f }
                         );
                     if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
-                    I.Get<TransformApi>().SetTransforms(ePOI, true,
+                    
+                    I.Get<TransformApi>().SetTransforms(ePOI, false,
                         MapCameraMask, Quaternion.Identity, v3ShopGlobal);
-
+                    ePOI.Set(new engine.behave.components.Behavior(new ShopNearbyBehavior()
+                    {
+                        EPOI = ePOI
+                    })
+                    {
+                        Flags = (ushort)engine.behave.components.Behavior.BehaviorFlags.DontVisibInRange,
+                        MaxDistance = 3
+                    });
+                    
                     DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");
                     I.Get<HierarchyApi>().SetParent(eMapMarker, ePOI);
                     I.Get<TransformApi>().SetTransforms(eMapMarker, true,
-                        MapCameraMask, Quaternion.Identity, Vector3.Zero);
+                        MapCameraMask, Quaternion.Identity, Vector3.UnitY * (25f + (t + 5f*(float)iconCode)));
                     eMapMarker.Set(new engine.world.components.MapIcon() { Code = iconCode });
                 });
                 break;

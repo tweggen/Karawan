@@ -35,4 +35,12 @@ public class ABehavior : IBehavior
     public virtual void OnAttach(in Engine engine0, in Entity entity)
     {
     }
+
+    public virtual void InRange(in Engine engine0, in Entity entity)
+    {
+    }
+
+    public virtual void OutOfRange(in Engine engine0, in Entity entity)
+    {
+    }
 }

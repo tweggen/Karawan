@@ -21,60 +21,12 @@ public class Manager
     }
     
 
-    public void _onNearbyRemoved(in DefaultEcs.Entity entity,
-        in components.Nearby cOldNearby)
-    {
-        var oldProvider = cOldNearby.Provider;
-        if (oldProvider != null)
-        {
-            oldProvider.OnDetach(entity);
-        }
-    }
-    
-
     public void _onBehaviorChanged(in DefaultEcs.Entity entity,
         in components.Behavior cOldBehavior,
         in components.Behavior cNewBehavior)
     {
         var oldProvider = cOldBehavior.Provider;
         var newProvider = cNewBehavior.Provider;
-
-        if (oldProvider == newProvider)
-        {
-            if (null == oldProvider)
-            {
-                return;
-            }
-            else
-            {
-                newProvider.Sync(entity);
-            }
-        }
-        else
-        {
-            if (null != oldProvider)
-            {
-                oldProvider.OnDetach(entity);
-            }
-
-            if (null != newProvider)
-            {
-                newProvider.OnAttach(_engine, entity);
-                if (null != oldProvider)
-                {
-                    newProvider.Sync(entity);
-                }
-            }
-        }
-    }
-    
-
-    public void _onNearbyChanged(in DefaultEcs.Entity entity,
-        in components.Nearby cOldNearby,
-        in components.Nearby cNewNearby)
-    {
-        var oldProvider = cOldNearby.Provider;
-        var newProvider = cNewNearby.Provider;
 
         if (oldProvider == newProvider)
         {
@@ -117,17 +69,6 @@ public class Manager
     }
 
 
-    public void _onNearbyAdded(in DefaultEcs.Entity entity, 
-        in components.Nearby cNewNearby)
-    {
-        var newProvider = cNewNearby.Provider;
-        if (newProvider != null)
-        {
-            newProvider.OnAttach(_engine, entity);
-        }
-    }
-
-
     public void Stop()
     {
         if (_subscriptions != null)
@@ -145,11 +86,8 @@ public class Manager
         IEnumerable<IDisposable> GetSubscriptions(DefaultEcs.World w)
         {
             yield return w.SubscribeEntityComponentAdded<components.Behavior>(_onBehaviorAdded);
-            yield return w.SubscribeEntityComponentAdded<components.Nearby>(_onNearbyAdded);
             yield return w.SubscribeEntityComponentChanged<components.Behavior>(_onBehaviorChanged);
-            yield return w.SubscribeEntityComponentChanged<components.Nearby>(_onNearbyChanged);
             yield return w.SubscribeEntityComponentRemoved<components.Behavior>(_onBehaviorRemoved);
-            yield return w.SubscribeEntityComponentRemoved<components.Nearby>(_onNearbyRemoved);
         }
         DefaultEcs.World world = _engine.GetEcsWorld();
         if (null == world)
@@ -162,13 +100,6 @@ public class Manager
             foreach (DefaultEcs.Entity entity in entities)
             {
                 _onBehaviorAdded(entity, entity.Get<components.Behavior>());
-            }
-        }
-        {
-            var entities = world.GetEntities().With<components.Nearby>().AsEnumerable();
-            foreach (DefaultEcs.Entity entity in entities)
-            {
-                _onNearbyAdded(entity, entity.Get<components.Nearby>());
             }
         }
 

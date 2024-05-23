@@ -6,7 +6,7 @@ using engine.physics;
 
 namespace nogame.modules.playerhover;
 
-public class Behavior : IBehavior
+public class Behavior : ABehavior
 {
     public static string PLAYER_COLLISION_ANONYMOUS = "nogame.playerhover.collision.anonymous";
     public static string PLAYER_COLLISION_CUBE = "nogame.playerhover.collision.cube";
@@ -20,7 +20,7 @@ public class Behavior : IBehavior
 
     private float _massShip;
     
-    public void OnCollision(ContactEvent cev)
+    public override void OnCollision(ContactEvent cev)
     {
         if (_cutCollisions) return;
         
@@ -57,22 +57,8 @@ public class Behavior : IBehavior
         }
     }
 
-    
-    public void Sync(in Entity entity)
-    {
-        /*
-         * We should update the behavior from reality, in case it has a state.
-         * However, we are stateless. 
-         */
-    }
-    
 
-    public void Behave(in Entity entity, float dt)
-    {
-    }
-
-    
-    public void OnDetach(in Entity entity)
+    public override void OnDetach(in Entity entity)
     {
         _controllerWASDPhysics.ModuleDeactivate();
         _controllerWASDPhysics.Dispose();
@@ -81,7 +67,7 @@ public class Behavior : IBehavior
     }
     
     
-    public void OnAttach(in engine.Engine engine0, in Entity entity)
+    public override void OnAttach(in engine.Engine engine0, in Entity entity)
     {
         _engine = engine0;
         _eShip = entity;

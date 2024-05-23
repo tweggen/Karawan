@@ -5,7 +5,7 @@ using System.Numerics;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 
-namespace builtin.loader;
+namespace builtin.loader.fbx;
 
 
 public class FbxModel
@@ -34,6 +34,7 @@ public class FbxModel
     
     private unsafe void ProcessNode(Node* node, Scene* scene)
     {
+        
         for (var i = 0; i < node->MNumMeshes; i++)
         {
             var mesh = scene->MMeshes[node->MMeshes[i]];
@@ -122,10 +123,9 @@ public class FbxModel
             textures.AddRange(heightMaps);
 
         // return a mesh object created from the extracted mesh data
-        var result = new Mesh( BuildVertices(vertices), BuildIndices(indices), textures);
+        var result = new Mesh(BuildVertices(vertices), BuildIndices(indices), textures);
         return result;
     }
-    
 
     private unsafe List<Texture> LoadMaterialTextures(Material* mat, TextureType type, string typeName)
     {
@@ -158,7 +158,6 @@ public class FbxModel
         return textures;
     }
 
-    
     private float[] BuildVertices(List<Vertex> vertexCollection)
     {
         var vertices = new List<float>();
@@ -175,13 +174,11 @@ public class FbxModel
         return vertices.ToArray();
     }
 
-    
     private uint[] BuildIndices(List<uint> indices)
     {
         return indices.ToArray();
     }
 
-    
     public void Dispose()
     {
         foreach (var mesh in Meshes)
