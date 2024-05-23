@@ -59,6 +59,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\AutoRemoveBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\AComponentManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AHeatMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\BehaviorStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\ClusterHeatMap.cs" />
