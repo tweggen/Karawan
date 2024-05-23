@@ -4,25 +4,25 @@ using static engine.Logger;
 
 namespace engine;
 
-public abstract class AComponentManager<T> where T : class
+public abstract class AComponentManager<T> : IDisposable where T : struct 
 {
-    private engine.Engine _engine;
+    protected engine.Engine _engine;
 
     private IDisposable? _subscriptions;
 
     
-    public abstract void _onComponentRemoved(
+    internal abstract void _onComponentRemoved(
         in DefaultEcs.Entity entity,
         in T cOldComponent);
 
     
-    public abstract void _onComponentChanged(
+    internal abstract void _onComponentChanged(
         in DefaultEcs.Entity entity,
         in T cOldComponent,
         in T cNewComponent);
 
 
-    public abstract void _onComponentAdded(
+    internal abstract void _onComponentAdded(
         in DefaultEcs.Entity entity,
         in T cNewComponent);
 
