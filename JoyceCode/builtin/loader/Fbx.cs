@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using builtin.loader.fbx;
 using engine;
 using engine.joyce;
 using Silk.NET.Assimp;
@@ -23,7 +24,11 @@ public class Fbx
             new List<engine.joyce.Material>(),
             400f);
 
-        model = new Model(instanceDesc); 
+        using (var fbxModel = new FbxModel())
+        {
+            model = new Model(instanceDesc);
+            fbxModel.Load
+        }
     }
     
 #if false

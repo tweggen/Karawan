@@ -34,6 +34,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Widget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\WidgetEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpFileIO.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\FbxModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Mesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Texture.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\JoyceBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaBindingFrame.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IdHolder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TextureCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickModule.cs" />

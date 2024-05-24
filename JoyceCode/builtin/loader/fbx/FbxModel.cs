@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 
 namespace builtin.loader.fbx;
+
+
 
 
 public class FbxModel
@@ -15,12 +18,28 @@ public class FbxModel
     public string Directory { get; protected set; } = string.Empty;
     public List<Mesh> Meshes { get; protected set; } = new List<Mesh>();
 
+
+    private unsafe static File* _assimpOpenProc(FileIO* arg0, byte* arg1, byte* arg2)
+    {
+        return null;
+    }
+    
+    
+    private unsafe static void _assimpCloseProc(FileIO* arg0, File* arg1)
+    {
+        return null;
+    }
+    
     
     unsafe public void Load(string path)
     {
         
         Directory = path;
         _assimp = Assimp.GetApi();
+        FileIO assimpFileIO;
+        assimpFileIO.OpenProc = new PfnFileOpenProc(_assimpOpenProc);
+        assimpFileIO.CloseProc = new PfnFileCloseProc(_assimpCloseProc); 
+        
         var scene = _assimp.ImportFile(path, (uint)PostProcessSteps.Triangulate);
         if (scene == null || scene->MFlags == Assimp.SceneFlagsIncomplete || scene->MRootNode == null)
         {

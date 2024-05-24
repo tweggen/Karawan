@@ -10,21 +10,45 @@ public abstract class AComponentWatcher<T> : IDisposable where T : struct
 
     private IDisposable? _subscriptions;
 
-    
-    internal abstract void _onComponentRemoved(
-        in DefaultEcs.Entity entity,
-        in T cOldComponent);
 
-    
-    internal abstract void _onComponentChanged(
+    protected virtual void _remove(
+        in DefaultEcs.Entity entity,
+        in T cOldComponent)
+    {
+    }
+
+
+    protected virtual void _add(
+        in DefaultEcs.Entity entity,
+        in T cNewComponent)
+    {
+    }
+
+
+    protected virtual void _onComponentRemoved(
+        in DefaultEcs.Entity entity,
+        in T cOldComponent)
+    {
+        _remove(entity, cOldComponent);
+    }
+
+
+    protected virtual void _onComponentChanged(
         in DefaultEcs.Entity entity,
         in T cOldComponent,
-        in T cNewComponent);
+        in T cNewComponent)
+    {
+        _remove(entity, cOldComponent);
+        _add(entity, cNewComponent);
+    }
 
 
-    internal abstract void _onComponentAdded(
+    protected virtual void _onComponentAdded(
         in DefaultEcs.Entity entity,
-        in T cNewComponent);
+        in T cNewComponent)
+    {
+        _add(entity, cNewComponent);
+    }
 
 
     public void Stop()

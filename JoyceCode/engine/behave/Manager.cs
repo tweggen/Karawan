@@ -6,7 +6,7 @@ namespace engine.behave;
 
 public class Manager : AComponentWatcher<components.Behavior>
 {
-    internal override void _onComponentRemoved(
+    protected override void _onComponentRemoved(
         in DefaultEcs.Entity entity,
         in components.Behavior cOldBehavior)
     {
@@ -18,7 +18,7 @@ public class Manager : AComponentWatcher<components.Behavior>
     }
     
 
-    internal override void _onComponentChanged(
+    protected override void _onComponentChanged(
         in DefaultEcs.Entity entity,
         in components.Behavior cOldBehavior,
         in components.Behavior cNewBehavior)
@@ -56,7 +56,7 @@ public class Manager : AComponentWatcher<components.Behavior>
     }
     
 
-    internal override void _onComponentAdded(
+    protected override void _onComponentAdded(
         in DefaultEcs.Entity entity, 
         in components.Behavior cNewBehavior)
     {
