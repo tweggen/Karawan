@@ -108,6 +108,7 @@ public unsafe class AssimpFile
         _pFile = (File*)Marshal.AllocHGlobal(sizeof(File));
         _pFile->ReadProc = new PfnFileReadProc(_read);
         _pFile->WriteProc = new PfnFileReadProc(_write);
+        _pFile->SeekProc = new PfnFileSeek(_seek);
         _pFile->TellProc = new PfnFileTellProc(_tell);
         _pFile->FileSizeProc = new PfnFileTellProc(_fileSize);
         _pFile->FlushProc = new PfnFileFlushProc(_flush);
