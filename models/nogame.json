@@ -229,7 +229,8 @@
       { "uri": "../models/fonts/Prototype.ttf" },
       { "uri": "../models/icons/appiconpng.png" },
       { "uri": "../models/menu/menu.xml" },
-      { "uri": "../models/nogame.json" }
+      { "uri": "../models/nogame.json" },
+      { "uri": "../models/models/u/U5.fbx" }
     ]
   }
 }

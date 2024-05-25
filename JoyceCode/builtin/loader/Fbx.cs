@@ -24,10 +24,10 @@ public class Fbx
             new List<engine.joyce.Material>(),
             400f);
 
-        using (var fbxModel = new FbxModel())
+        using (var fbxModel = new fbx.FbxModel())
         {
             model = new Model(instanceDesc);
-            fbxModel.Load
+            fbxModel.Load(url);
         }
     }
     
@@ -82,7 +82,7 @@ public class Fbx
         
     public static void Unit()
     {
-        LoadModelInstanceSync("u.fbx", new ModelProperties(), out var _);
+        LoadModelInstanceSync("U5.fbx", new ModelProperties(), out var _);
     }
     
 }
