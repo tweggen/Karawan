@@ -164,6 +164,11 @@
       "buildingalphadiffuse": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse.png" } },
       "buildingalphadiffuse2": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse2.png" } },
       "buildingalphadiffuse3": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse3.png" } },
+      
+      "StudioOchi_SpringPeople.001": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
+      "StudioOchi_SpringPeople.002": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.002.png" } },
+      "StudioOchi_SpringPeople.003": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
+      "Studio Ochi Vehicles": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
     },
   },
   "resources":
@@ -230,7 +235,8 @@
       { "uri": "../models/icons/appiconpng.png" },
       { "uri": "../models/menu/menu.xml" },
       { "uri": "../models/nogame.json" },
-      { "uri": "../models/models/u/U5.fbx" }
+      { "uri": "../models/models/u/U5.fbx" },
+      { "uri": "../models/models/people/Spring Boy.fbx" }
     ]
   }
 }
