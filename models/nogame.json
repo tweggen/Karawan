@@ -34,7 +34,13 @@
           "input.key.pressed:(tab)": "<map>",
           "input.gamepad.button.pressed:back": "<map>",
           "input.key.pressed:(escape)": "<menu>",
-          "input.gamepad.button.pressed:start": "<map>"
+          "input.gamepad.button.pressed:start": "<map>",
+          "input.key.released:E": "<interact>",
+          "input.gamepad.button.released:A": "<interact>",
+          "input.key.released:(tab)": "<map>",
+          "input.gamepad.button.released:back": "<map>",
+          "input.key.released:(escape)": "<menu>",
+          "input.gamepad.button.released:start": "<map>"
         }
       }
     },

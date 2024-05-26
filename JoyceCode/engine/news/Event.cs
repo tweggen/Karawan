@@ -22,6 +22,10 @@ public class Event
     public const string INPUT_GAMEPAD_BUTTON_PRESSED = "input.gamepad.button.pressed";
     public const string INPUT_GAMEPAD_BUTTON_RELEASED = "input.gamepad.button.released";
 
+    public const string INPUT_BUTTON_PRESSED = "input.button.pressed";
+    public const string INPUT_BUTTON_RELEASED = "input.button.released";
+
+
     public const string VIEW_SIZE_CHANGED = "view.size.changed";
     public const string MAP_RANGE_EVENT = "map.range";
 
@@ -48,8 +52,12 @@ public class Event
     public Vector2 Size = Vector2.One;
     public uint Data1;
     public uint Data2;
-    public uint Data3; 
+    public uint Data3;
 
+
+    public string ToKey() => $"{Type}:{Code}";
+    
+    
     public Event(string type, string code)
     {
         Type = type;

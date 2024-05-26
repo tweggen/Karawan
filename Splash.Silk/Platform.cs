@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
+using builtin.controllers;
 using engine;
 using engine.news;
 using ObjLoader.Loader.Common;
@@ -28,6 +29,8 @@ public class Platform : engine.IPlatform
     private InstanceManager _instanceManager;
     private CameraManager _cameraManager;
     private SilkRenderer _renderer;
+    private InputMapper _inputMapper;
+
     private RenderStats _renderStats = new();
     private bool _isRunning = true;
 
@@ -213,6 +216,13 @@ public class Platform : engine.IPlatform
         return code;
     }
 
+    
+    private void _pushTranslate(in Event ev)
+    {
+        // TXWTODO: Have a locally resolved input manager variable.
+        _inputMapper.EmitPlusTranslation(ev);
+    }
+    
 
     private void _onKeyDown(IKeyboard arg1, Key arg2, int arg3)
     {
@@ -225,7 +235,7 @@ public class Platform : engine.IPlatform
             }
             else
             {
-                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
             }
         }
     }
@@ -236,7 +246,7 @@ public class Platform : engine.IPlatform
         string code = _convertKeyCodeFromPlatform(arg2);
         if (!code.IsNullOrEmpty())
         {
-            I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
+            _pushTranslate(new engine.news.Event(Event.INPUT_KEY_RELEASED, code));
         }
     }
 
@@ -325,8 +335,7 @@ public class Platform : engine.IPlatform
 
     private void _onGamepadThumbstickMoved(IGamepad gamepad, Thumbstick thumbstick)
     {
-        I.Get<EventQueue>().Push(
-            new Event(Event.INPUT_GAMEPAD_STICK_MOVED, "")
+        _pushTranslate(new Event(Event.INPUT_GAMEPAD_STICK_MOVED, "")
             {
                 Position = new(thumbstick.X, thumbstick.Y),
                 Data1 = (uint) thumbstick.Index
@@ -347,7 +356,7 @@ public class Platform : engine.IPlatform
 
     private void _onGamepadButtonDown(IGamepad gamepad, Button button)
     {
-        I.Get<EventQueue>().Push(
+        _pushTranslate(
             new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, $"{button.Name}")
             {
                 Data1 = (uint) button.Name,
@@ -358,7 +367,7 @@ public class Platform : engine.IPlatform
 
     private void _onGamepadButtonUp(IGamepad gamepad, Button button)
     {
-        I.Get<EventQueue>().Push(
+        _pushTranslate(
             new Event(Event.INPUT_GAMEPAD_BUTTON_RELEASED, $"{button.Name}")
             {
                 Data1 = (uint) button.Name,
@@ -650,6 +659,9 @@ public class Platform : engine.IPlatform
 
     public void Execute()
     {
+        _inputMapper = I.Get<builtin.controllers.InputMapper>();
+
+
         /*
          * Instead of just calling _iView.Run(),
          * we run the same thing explicitely. That way we can inject calls.

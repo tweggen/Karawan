@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using engine;
+using engine.news;
 
 namespace builtin.controllers;
 
@@ -13,6 +14,14 @@ public class InputMapper : AModule
 {
     private SortedDictionary<string, string> _mapButtonToLogical = new ();
 
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<EventQueue>(),
+    };
+
+    private EventQueue _eq;
+    
+    
     public SortedDictionary<string, string> MapButtonToLogical
     {
         get
@@ -52,10 +61,50 @@ public class InputMapper : AModule
         }
     }
 
+
+    public Event? ToLogical(Event ev)
+    {
+        lock (_lo)
+        {
+            if (_mapButtonToLogical.TryGetValue(ev.ToKey(), out var codeLogical))
+            {
+                return new Event(Event.INPUT_BUTTON_PRESSED, codeLogical);
+            }
+        }
+
+        return null;
+    }
+
+
+    public void TranslateEmitLogical(engine.news.Event ev)
+    {
+        Event? evLogical = ToLogical(ev);
+        if (null != evLogical)
+        {
+            I.Get<EventQueue>().Push(evLogical);
+        }
+    }
+
     
+    public void EmitPlusTranslation(engine.news.Event ev)
+    {
+        if (null == _eq)
+        {
+            return;
+        }
+
+        _eq.Push(ev);
+        Event? evLogical = ToLogical(ev);
+        if (null != evLogical)
+        {
+            _eq.Push(evLogical);
+        }
+    }
+
     
     public override void ModuleDeactivate()
     {
+        _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
     
@@ -63,5 +112,8 @@ public class InputMapper : AModule
     public override void ModuleActivate()
     {
         base.ModuleActivate();
+        _eq = M<EventQueue>();
+        _engine.AddModule(this);
     }
 }
+
