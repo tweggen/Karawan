@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipes;
 using System.Numerics;
+using System.Reflection;
 using System.Text.Json;
+using BepuPhysics.CollisionDetection;
 using builtin.map;
 using engine.joyce;
 using engine.world;
@@ -87,9 +91,51 @@ public class Loader
             {
                 string interfaceName = pair.Name;
                 string implementationName = null;
+                Action<object> setupProperties = null;
+                
                 if (pair.Value.ValueKind == JsonValueKind.Object)
                 {
-                    implementationName = pair.Value.GetProperty("className").GetString();
+                    if (pair.Value.TryGetProperty("className", out var jeClassName)
+                        && jeClassName.ValueKind == JsonValueKind.String)
+                    {
+                        implementationName = pair.Value.GetProperty("className").GetString();
+                    }
+
+                    if (pair.Value.TryGetProperty("properties", out var jeProperties) 
+                        && jeProperties.ValueKind == JsonValueKind.Object)
+                    {
+                        setupProperties = (object obj) =>
+                        {
+                            foreach (var pair in jeProperties.EnumerateObject())
+                            {
+                                PropertyInfo prop = obj.GetType().GetProperty(
+                                    pair.Name, BindingFlags.Public | BindingFlags.Instance);
+                                if(null != prop && prop.CanWrite)
+                                {
+                                    switch (pair.Value.ValueKind)
+                                    {
+                                        case JsonValueKind.String:
+                                            prop.SetValue(obj, pair.Value.GetString(), null);
+                                            break;
+                                        case JsonValueKind.Number:
+                                            prop.SetValue(obj, (float) pair.Value.GetDouble(), null);
+                                            break;
+                                        case JsonValueKind.Object:
+                                        {
+                                            SortedDictionary<string, string> dict = new();
+                                            foreach (var kvpDict in pair.Value.EnumerateObject())
+                                            {
+                                                
+                                                dict[kvpDict.Name] = kvpDict.Value.GetString();
+                                            }
+                                            prop.SetValue(obj, dict, null);
+                                        }
+                                            break;
+                                    }
+                                }
+                            }
+                        };
+                    }
                 }
                 if (String.IsNullOrWhiteSpace(implementationName))
                 {

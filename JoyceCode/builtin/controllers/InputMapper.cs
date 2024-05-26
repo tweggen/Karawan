@@ -26,7 +26,7 @@ public class InputMapper : AModule
         {
             lock (_lo)
             {
-                _mapButtonToLogical = value;
+                _mapButtonToLogical = new SortedDictionary<string, string>(value);;
             }
         }
     }
@@ -47,7 +47,7 @@ public class InputMapper : AModule
         {
             lock (_lo)
             {
-                _mapLogicalToDescription = value;
+                _mapLogicalToDescription = new SortedDictionary<string, string>(value);
             }
         }
     }

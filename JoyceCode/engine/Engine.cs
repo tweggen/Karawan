@@ -654,7 +654,7 @@ public class Engine
             while (!eq.IsEmpty())
             {
                 Event ev = eq.Pop();
-                sm.Handle(ev);
+                sm.Handle(ev, new EmissionContext());
             }
         }
 

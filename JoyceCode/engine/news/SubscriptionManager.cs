@@ -344,8 +344,8 @@ public class SubscriptionManager
                 float distB = b.DistanceFunc != null ? b.DistanceFunc(ectx) : Single.MaxValue;
                 return Single.Sign(distA - distB);
             });
-            listSubscribers.ForEach(sub => listActions.Add(sub.Handler));
         }
+        listSubscribers.ForEach(sub => listActions.Add(sub.Handler));
 
         listSubscribers = null;
 
@@ -398,7 +398,7 @@ public class SubscriptionManager
             {
                 bool haveDistanceFunc = false;
                 subman._findSubscribers(subman._root, _createList("event.key"), 0, matchedSubscribers, ref haveDistanceFunc);
-                if (matchedSubscribers.Count != 1 || null != matchedSubscribers.Find(sub => sub.Handler == a[2]))
+                if (matchedSubscribers.Count != 1 || null == matchedSubscribers.Find(sub => sub.Handler == a[2]))
                 {
                     Error("Wrong result.");
                     result -= 1;
@@ -426,7 +426,7 @@ public class SubscriptionManager
             {
                 bool haveDistanceFunc = false;
                 subman._findSubscribers(subman._root, _createList("input.mouse.released"), 0, matchedSubscribers, ref haveDistanceFunc);
-                if (matchedSubscribers.Count != 1 || null != matchedSubscribers.Find(sub => sub.Handler == a[0]))
+                if (matchedSubscribers.Count != 1 || null == matchedSubscribers.Find(sub => sub.Handler == a[0]))
                 {
                     Error("Wrong result.");
                     result -= 1;

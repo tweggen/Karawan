@@ -28,8 +28,13 @@
           "<menu>": "Toggle menu",
           "<developer>": "Toggle developer view"
         },
-        "MapButtonToLogical":{
-          
+        "MapButtonToLogical": {
+          "input.key.pressed:E": "<interact>",
+          "input.gamepad.button.pressed:A": "<interact>",
+          "input.key.pressed:(tab)": "<map>",
+          "input.gamepad.button.pressed:back": "<map>",
+          "input.key.pressed:(escape)": "<menu>",
+          "input.gamepad.button.pressed:start": "<map>"
         }
       }
     },
