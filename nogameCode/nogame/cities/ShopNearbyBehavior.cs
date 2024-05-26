@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Numerics;
 using DefaultEcs;
@@ -37,7 +38,7 @@ public class ShopNearbyBehavior : ABehavior
     {
         if (!_eActionMarker.IsAlive) return;
      
-        I.Get<SubscriptionManager>().Unsubscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton, _onInputButtonDistance);
+        I.Get<SubscriptionManager>().Unsubscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton);
         // I.Get<SubscriptionManager>().Unsubscribe();
     }
     

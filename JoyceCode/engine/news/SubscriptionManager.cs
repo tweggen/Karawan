@@ -9,12 +9,19 @@ using static engine.Logger;
 
 namespace engine.news;
 
-using DistanceFunction = Func<EmissionContext, float>;
+using DistanceFunction = Func<Event, EmissionContext, float>;
+
 
 public class EmissionContext
 {
     public Vector3 PlayerPos;
     public Vector3 CameraPos;
+
+    public void UpdateFrom(EmissionContext o)
+    {
+        PlayerPos = o.PlayerPos;
+        CameraPos = o.CameraPos;
+    }
 }
 
 
@@ -340,8 +347,8 @@ public class SubscriptionManager
         {
             listSubscribers.Sort((a, b) =>
             {
-                float distA = a.DistanceFunc != null ? a.DistanceFunc(ectx) : Single.MaxValue;
-                float distB = b.DistanceFunc != null ? b.DistanceFunc(ectx) : Single.MaxValue;
+                float distA = a.DistanceFunc != null ? a.DistanceFunc(ev, ectx) : Single.MaxValue;
+                float distB = b.DistanceFunc != null ? b.DistanceFunc(ev, ectx) : Single.MaxValue;
                 return Single.Sign(distA - distB);
             });
         }
@@ -434,5 +441,21 @@ public class SubscriptionManager
             }
         }
         return result;
+    }
+
+    public SubscriptionManager()
+    {
+        try
+        {
+            /*
+             * We put this in a try catch because it is triggerted by a re-instantiation as caused by the unit
+             * test.
+             */
+            I.Register<EmissionContext>(() => new EmissionContext());
+        }
+        catch (Exception e)
+        {
+            
+        }
     }
 }

@@ -55,6 +55,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlingPlayer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\UpdateEmissionContext.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WASDPhysics.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\skybox\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\Narration.cs" />
