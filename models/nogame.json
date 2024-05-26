@@ -8,7 +8,6 @@
   {
     "nogame.CreateOSD": true,
     "nogame.framebuffer.resolution": "368x207",
-    "nogame.CreateOSD": true,
     "nogame.CreateMap": true,
     "nogame.CreateMiniMap": true,
     "nogame.LogosScene.PlayTitleMusic": true,
@@ -21,6 +20,19 @@
     "engine.world.MetaGen": null,
     "engine.behave.SpawnModule": null,
     "nogame.modules.AutoSave": null,
+    "builtin.controllers.InputMapper": {
+      "properties": {
+        "MapLogicalToDescription":{
+          "<interact>": "Interact with your environment.",
+          "<map>": "Toggle map",
+          "<menu>": "Toggle menu",
+          "<developer>": "Toggle developer view"
+        },
+        "MapButtonToLogical":{
+          
+        }
+      }
+    },
     "engine.streets.ClusterStorage": null,
     "builtin.map.IMapProvider":
     {

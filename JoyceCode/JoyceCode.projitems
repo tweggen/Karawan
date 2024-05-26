@@ -17,6 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\InputMapper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\LeftStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\RightStickFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ZoomStickFingerState.cs" />
