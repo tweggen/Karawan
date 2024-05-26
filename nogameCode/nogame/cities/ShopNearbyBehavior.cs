@@ -6,6 +6,7 @@ using engine;
 using engine.behave;
 using engine.draw.components;
 using engine.joyce;
+using engine.joyce.components;
 using engine.news;
 using engine.physics;
 
@@ -13,6 +14,7 @@ namespace nogame.cities;
 
 public class ShopNearbyBehavior : ABehavior
 {
+    private Engine _engine;
     public DefaultEcs.Entity EPOI;
     private DefaultEcs.Entity _eActionMarker;
 
@@ -22,6 +24,40 @@ public class ShopNearbyBehavior : ABehavior
         if (ev.Code != "<interact>") return;
 
         ev.IsHandled = true;
+
+        _engine.QueueEntitySetupAction("shopping", e =>
+        {
+            var jFountainCubesInstanceDesc = InstanceDesc.CreateFromMatMesh(
+                new MatMesh(
+                    I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
+                    engine.joyce.mesh.Tools.CreatePlaneMesh("carcrashfragments", new Vector2(0.1f, 0.1f))
+                ), 20f
+            );
+            Vector3 v3Pos;
+            v3Pos = EPOI.Get<Transform3ToWorld>().Matrix.Translation;
+
+            e.Set(new engine.behave.components.ParticleEmitter()
+            {
+                Position = Vector3.Zero,
+                ScalePerSec = 1f,
+                RandomPos = Vector3.One,
+                EmitterTimeToLive = 10,
+                Velocity = Vector3.UnitY * 5f,
+                ParticleTimeToLive = 30,
+                InstanceDesc = jFountainCubesInstanceDesc,
+                RandomDirection = 0.5f,
+                MaxDistance = 20f,
+                CameraMask = 0x00000001,
+            });
+            e.Set(new engine.joyce.components.Transform3ToWorld()
+                {
+                    Matrix = Matrix4x4.CreateTranslation(v3Pos),
+                    CameraMask = 0x00000001,
+                    IsVisible = true
+                }
+            );
+        });
+
     }
 
 
@@ -29,7 +65,7 @@ public class ShopNearbyBehavior : ABehavior
     {
         if (ev.Code != "<interact>") return Single.MinValue;
         
-        // TXWTODO: Return the distance between the object and me 
+         
         return 10f;
     }
     
@@ -57,6 +93,7 @@ public class ShopNearbyBehavior : ABehavior
     
     public override void InRange(in Engine engine0, in Entity entity)
     {
+        _engine = engine0;
         _eActionMarker = engine0.CreateEntity("poi.shop.action");
         _eActionMarker.Set(new OSDText(
             new Vector2(-100f, 0f), new Vector2(200f, 14f), 
