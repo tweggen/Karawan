@@ -16,10 +16,28 @@ public class ShopNearbyBehavior : ABehavior
     private DefaultEcs.Entity _eActionMarker;
 
 
+    private void _onInputButton(Event ev)
+    {
+        if (ev.Code != "<interact>") return;
+
+        ev.IsHandled = true;
+    }
+
+
+    private float _onInputButtonDistance(Event ev, EmissionContext ctx)
+    {
+        if (ev.Code != "<interact>") return Single.MinValue;
+        
+        // TXWTODO: Return the distance between the object and me 
+        return 10f;
+    }
+    
+
     private void _detach()
     {
         if (!_eActionMarker.IsAlive) return;
      
+        I.Get<SubscriptionManager>().Unsubscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton, _onInputButtonDistance);
         // I.Get<SubscriptionManager>().Unsubscribe();
     }
     
@@ -47,6 +65,6 @@ public class ShopNearbyBehavior : ABehavior
         I.Get<TransformApi>().SetTransforms(_eActionMarker, true,
             0x00000001, Quaternion.Identity, Vector3.Zero);
         
-        //I.Get<SubscriptionManager>().Subscribe();
+        I.Get<SubscriptionManager>().Subscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton, _onInputButtonDistance);
     }
 }
