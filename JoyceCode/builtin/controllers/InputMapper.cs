@@ -16,7 +16,6 @@ public class InputMapper : AModule
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<EventQueue>(),
     };
 
     private EventQueue _eq;
@@ -112,7 +111,7 @@ public class InputMapper : AModule
     public override void ModuleActivate()
     {
         base.ModuleActivate();
-        _eq = M<EventQueue>();
+        _eq = I.Get<EventQueue>();
         _engine.AddModule(this);
     }
 }
