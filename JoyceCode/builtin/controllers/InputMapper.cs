@@ -67,7 +67,14 @@ public class InputMapper : AModule
         {
             if (_mapButtonToLogical.TryGetValue(ev.ToKey(), out var codeLogical))
             {
-                return new Event(Event.INPUT_BUTTON_PRESSED, codeLogical);
+                int seperatorPos = codeLogical.IndexOf(':');
+                if (-1 != seperatorPos)
+                {
+                    return new Event(
+                        codeLogical.Substring(0,seperatorPos), 
+                        codeLogical.Substring(seperatorPos+1, codeLogical.Length-seperatorPos-1)
+                        );
+                }
             }
         }
 

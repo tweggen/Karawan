@@ -150,11 +150,20 @@ public class Loader
                     Type type = engine.rom.Loader.LoadType(strDefaultLoaderAssembly, interfaceName);
                     if (interfaceName == implementationName)
                     {
-                        I.Instance.RegisterFactory(type, () => { return Activator.CreateInstance(type); });
+                        I.Instance.RegisterFactory(type, () => { 
+                            var i = Activator.CreateInstance(type);
+                            if (null != setupProperties) setupProperties(i);
+                            return i;
+                        });
                     }
                     else
                     {
-                        I.Instance.RegisterFactory(type, () => { return engine.rom.Loader.LoadClass(strDefaultLoaderAssembly,implementationName); });
+                        I.Instance.RegisterFactory(type, () =>
+                        {
+                            var i = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName);
+                            if (null != setupProperties) setupProperties(i);
+                            return i;
+                        });
                     }
                 }
                 catch (Exception e)
