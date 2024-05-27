@@ -8,27 +8,37 @@ using AssimpMesh = Silk.NET.Assimp.Mesh;
 namespace builtin.loader.fbx;
 
 
-public class FbxModel
+public class FbxModel : IDisposable
 {
     private Assimp _assimp;
     private List<Texture> _texturesLoaded = new List<Texture>();
     public string Directory { get; protected set; } = string.Empty;
     public List<Mesh> Meshes { get; protected set; } = new List<Mesh>();
 
-    
+
     unsafe public void Load(string path)
     {
         
         Directory = path;
         _assimp = Assimp.GetApi();
-        var scene = _assimp.ImportFile(path, (uint)PostProcessSteps.Triangulate);
-        if (scene == null || scene->MFlags == Assimp.SceneFlagsIncomplete || scene->MRootNode == null)
+
+        FileIO fileIO = fbx.Assets.Get();
+        Scene* pScene = null;
+        FileIO* pFileIO = &fileIO;
+        pScene = _assimp.ImportFileEx(
+            path,
+            (uint)PostProcessSteps.Triangulate,
+            pFileIO
+        );
+        if (pScene == null || pScene->MFlags == Assimp.SceneFlagsIncomplete || pScene->MRootNode == null)
         {
             var error = _assimp.GetErrorStringS();
             throw new Exception(error);
         }
 
-        ProcessNode(scene->MRootNode, scene);
+        ProcessNode(pScene->MRootNode, pScene);
+        
+        // TXWTODO: How to free scene?
     }
     
     

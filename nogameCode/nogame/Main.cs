@@ -13,6 +13,7 @@ public class Main : AModule
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
+        new SharedModule<builtin.controllers.InputMapper>()
     };
 
     public override void ModuleDeactivate()

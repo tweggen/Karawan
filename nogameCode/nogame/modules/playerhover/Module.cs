@@ -21,7 +21,8 @@ public class Module : engine.AModule
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<nogame.modules.AutoSave>()
+        new SharedModule<nogame.modules.AutoSave>(),
+        new MyModule<nogame.modules.playerhover.UpdateEmissionContext>()
     };
 
 
@@ -302,6 +303,7 @@ public class Module : engine.AModule
         Vector3 velShip = _prefShip.Velocity.Linear;
         Vector3 posShip = mShip.Translation;
 
+        
         /*
          * Look up the object we are facing.
          */

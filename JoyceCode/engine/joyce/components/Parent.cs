@@ -1,7 +1,7 @@
 ﻿
 namespace engine.joyce.components
 {
-    struct Parent
+    public struct Parent
     {
         public DefaultEcs.Entity Entity;
 

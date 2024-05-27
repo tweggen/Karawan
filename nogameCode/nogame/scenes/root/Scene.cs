@@ -128,13 +128,24 @@ public class Scene : AModule, IScene, IInputPart
     {
         switch (ev.Type)
         {
-            case Event.INPUT_KEY_PRESSED:
+            case Event.INPUT_BUTTON_PRESSED:
                 switch (ev.Code)
                 {
-                    case "(tab)":
+                    case "<map>":
                         ev.IsHandled = true;
                         _toggleMap(ev);
                         break;
+                    case "<menu>":
+                        ev.IsHandled = true;
+                        _triggerPauseMenu();
+                        break;
+                        
+                }
+                break;
+            
+            case Event.INPUT_KEY_PRESSED:
+                switch (ev.Code)
+                {
                     case "(F12)":
                         ev.IsHandled = true;
                         _toggleDebugger();
@@ -142,10 +153,6 @@ public class Scene : AModule, IScene, IInputPart
                     case "(F8)":
                         ev.IsHandled = true;
                         _toggleStats();
-                        break;
-                    case "(escape)":
-                        ev.IsHandled = true;
-                        _triggerPauseMenu();
                         break;
                     default:
                         break;
@@ -155,14 +162,6 @@ public class Scene : AModule, IScene, IInputPart
             case Event.INPUT_GAMEPAD_BUTTON_PRESSED:
                 switch (ev.Code)
                 {
-                    case "Start":
-                        ev.IsHandled = true;
-                        _triggerPauseMenu();
-                        break;
-                    case "Back":
-                        ev.IsHandled = true;
-                        _toggleMap(ev);
-                        break;
                     default:
                         break;
                 }

@@ -8,7 +8,6 @@
   {
     "nogame.CreateOSD": true,
     "nogame.framebuffer.resolution": "368x207",
-    "nogame.CreateOSD": true,
     "nogame.CreateMap": true,
     "nogame.CreateMiniMap": true,
     "nogame.LogosScene.PlayTitleMusic": true,
@@ -21,6 +20,30 @@
     "engine.world.MetaGen": null,
     "engine.behave.SpawnModule": null,
     "nogame.modules.AutoSave": null,
+    "builtin.controllers.InputMapper": {
+      "properties": {
+        "MapLogicalToDescription":{
+          "<interact>": "Interact with your environment.",
+          "<map>": "Toggle map",
+          "<menu>": "Toggle menu",
+          "<developer>": "Toggle developer view"
+        },
+        "MapButtonToLogical": {
+          "input.key.pressed:E": "input.button.pressed:<interact>",
+          "input.gamepad.button.pressed:A": "input.button.pressed:<interact>",
+          "input.key.released:E": "input.button.released:<interact>",
+          "input.gamepad.button.released:A": "input.button.released:<interact>",
+          "input.key.pressed:(escape)": "input.button.pressed:<menu>",
+          "input.gamepad.button.pressed:Start": "input.button.pressed:<menu>",
+          "input.key.released:(escape)": "input.button.released:<menu>",
+          "input.gamepad.button.released:Start": "input.button.released:<menu>",
+          "input.key.pressed:(tab)": "input.button.pressed:<map>",
+          "input.gamepad.button.pressed:Back": "input.button.pressed:<map>",
+          "input.key.released:(tab)": "input.button.released:<map>",
+          "input.gamepad.button.released:Back": "input.button.released:<map>"
+        }
+      }
+    },
     "engine.streets.ClusterStorage": null,
     "builtin.map.IMapProvider":
     {
@@ -164,6 +187,11 @@
       "buildingalphadiffuse": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse.png" } },
       "buildingalphadiffuse2": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse2.png" } },
       "buildingalphadiffuse3": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse3.png" } },
+      
+      "StudioOchi_SpringPeople.001": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
+      "StudioOchi_SpringPeople.002": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.002.png" } },
+      "StudioOchi_SpringPeople.003": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
+      "Studio Ochi Vehicles": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
     },
   },
   "resources":
@@ -229,7 +257,9 @@
       { "uri": "../models/fonts/Prototype.ttf" },
       { "uri": "../models/icons/appiconpng.png" },
       { "uri": "../models/menu/menu.xml" },
-      { "uri": "../models/nogame.json" }
+      { "uri": "../models/nogame.json" },
+      { "uri": "../models/models/u/U5.fbx" },
+      { "uri": "../models/models/people/Spring Boy.fbx" }
     ]
   }
 }

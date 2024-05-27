@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
+using System.Numerics;
 using BepuUtilities;
 using engine.joyce.components;
 using ObjLoader.Loader.Common;
@@ -8,12 +9,30 @@ using static engine.Logger;
 
 namespace engine.news;
 
+using DistanceFunction = Func<Event, EmissionContext, float>;
+
+
+public class EmissionContext
+{
+    public Vector3 PlayerPos;
+    public Vector3 CameraPos;
+
+    public void UpdateFrom(EmissionContext o)
+    {
+        PlayerPos = o.PlayerPos;
+        CameraPos = o.CameraPos;
+    }
+}
+
+
+
 class SubscriberEntry : IComparable<SubscriberEntry>
 {
     public string Path;
     public List<string> SubscriptionPath;
     public Action<Event> Handler;
     public int SerialNumber;
+    public DistanceFunction? DistanceFunc = null;
     
     public int CompareTo(SubscriberEntry other)
     {
@@ -201,7 +220,7 @@ public class SubscriptionManager
     }
     
 
-    public void Subscribe(string path, Action<Event> handler)
+    public void Subscribe(string path, Action<Event> handler, DistanceFunction distanceFunc = null)
     {
         if (path.Contains("widget"))
         {
@@ -217,6 +236,7 @@ public class SubscriptionManager
             Path = path,
             SubscriptionPath = listPath,
             Handler = handler,
+            DistanceFunc = distanceFunc,
             SerialNumber = 0
         };
         lock (_lo)
@@ -259,7 +279,7 @@ public class SubscriptionManager
     }
 
 
-    private void _findSubscribers(PathNode nodeCurr, List<string> pathListEvent, int pathIndex, List<Action<Event>> listActions)
+    private void _findSubscribers(PathNode nodeCurr, List<string> pathListEvent, int pathIndex, List<SubscriberEntry> listSubscriptionEntries, ref bool haveDistanceFunc)
     {
         /*
          * nodeCurr is a match. It's subscribers can be added to the list of actions.
@@ -268,7 +288,11 @@ public class SubscriptionManager
         {
             foreach (var sub in nodeCurr.Subscribers)
             {
-                listActions.Add(sub.Handler);
+                if (sub.DistanceFunc != null)
+                {
+                    haveDistanceFunc = true;
+                }
+                listSubscriptionEntries.Add(sub);
             }
         }
 
@@ -292,14 +316,17 @@ public class SubscriptionManager
             /*
              * There is a handler for this segment. Recurse into it.
              */
-            _findSubscribers(nodeChild, pathListEvent, pathIndex+1, listActions);
+            _findSubscribers(nodeChild, pathListEvent, pathIndex+1, listSubscriptionEntries, ref haveDistanceFunc);
         }
     }
 
 
-    public void Handle(Event ev)
+    public void Handle(Event ev, EmissionContext ectx)
     {
-        List<Action<Event>> listActions;
+        List<Action<Event>> listActions = new();
+        List<SubscriberEntry> listSubscribers = new();
+
+        bool haveDistanceFunc = false;
         lock (_lo)
         {
             while (_queueCommands.Count > 0)
@@ -308,11 +335,31 @@ public class SubscriptionManager
                 _handleCommandNL(ce);
             }
             var pathListEvent = _createList(ev.Type);
-            listActions = new();
-            _findSubscribers(_root, pathListEvent, 0, listActions);
+            _findSubscribers(_root, pathListEvent, 0, listSubscribers, ref haveDistanceFunc);
             _inHandle = true;
         }
+        
+        /*
+         * Now, if we have any matches that include a distance function, sort them using
+         * the distance function.
+         */
+        if (haveDistanceFunc)
+        {
+            listSubscribers.Sort((a, b) =>
+            {
+                float distA = a.DistanceFunc != null ? a.DistanceFunc(ev, ectx) : Single.MaxValue;
+                float distB = b.DistanceFunc != null ? b.DistanceFunc(ev, ectx) : Single.MaxValue;
+                return Single.Sign(distA - distB);
+            });
+        }
+        listSubscribers.ForEach(sub => listActions.Add(sub.Handler));
 
+        listSubscribers = null;
+
+        /*
+         * Now, with no more references to the llist of subscribers pending, we
+         * can finally execute the actions.
+         */
         foreach (var action in listActions)
         {
             if (ev.IsHandled) break;
@@ -352,12 +399,13 @@ public class SubscriptionManager
             {
                 "event.key.up", "event.key.down", "event", "event.collision", "absolutely.nothing", "freely.speaking"
             };
-            List<Action<Event>> matchedActions = new();
+            List<SubscriberEntry> matchedSubscribers = new();
             registerSubs(pathes, subman, out var a);
             lock (subman._lo)
             {
-                subman._findSubscribers(subman._root, _createList("event.key"), 0, matchedActions);
-                if (matchedActions.Count != 1 || !matchedActions.Contains(a[2]))
+                bool haveDistanceFunc = false;
+                subman._findSubscribers(subman._root, _createList("event.key"), 0, matchedSubscribers, ref haveDistanceFunc);
+                if (matchedSubscribers.Count != 1 || null == matchedSubscribers.Find(sub => sub.Handler == a[2]))
                 {
                     Error("Wrong result.");
                     result -= 1;
@@ -379,12 +427,13 @@ public class SubscriptionManager
                 "nogame.scenes.root.Scene.kickoff", "view.size.changed"
             };
 
-            List<Action<Event>> matchedActions = new();
+            List<SubscriberEntry> matchedSubscribers = new();
             registerSubs(pathes, subman, out var a);
             lock (subman._lo)
             {
-                subman._findSubscribers(subman._root, _createList("input.mouse.released"), 0, matchedActions);
-                if (matchedActions.Count != 1 || !matchedActions.Contains(a[0]))
+                bool haveDistanceFunc = false;
+                subman._findSubscribers(subman._root, _createList("input.mouse.released"), 0, matchedSubscribers, ref haveDistanceFunc);
+                if (matchedSubscribers.Count != 1 || null == matchedSubscribers.Find(sub => sub.Handler == a[0]))
                 {
                     Error("Wrong result.");
                     result -= 1;
@@ -392,5 +441,21 @@ public class SubscriptionManager
             }
         }
         return result;
+    }
+
+    public SubscriptionManager()
+    {
+        try
+        {
+            /*
+             * We put this in a try catch because it is triggerted by a re-instantiation as caused by the unit
+             * test.
+             */
+            I.Register<EmissionContext>(() => new EmissionContext());
+        }
+        catch (Exception e)
+        {
+            
+        }
     }
 }

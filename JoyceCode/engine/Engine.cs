@@ -590,6 +590,7 @@ public class Engine
         EngineState engineState;
         GamePlayStates gamePlayState;
         _fpsLogicalMonitor.OnFrame(dt);
+        var ectx = I.Get<EmissionContext>(); 
 
         lock (_lo)
         {
@@ -654,7 +655,7 @@ public class Engine
             while (!eq.IsEmpty())
             {
                 Event ev = eq.Pop();
-                sm.Handle(ev);
+                sm.Handle(ev, ectx);
             }
         }
 
@@ -1228,6 +1229,7 @@ public class Engine
         I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
         I.Register<engine.news.EventQueue>(() => new EventQueue());
         I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
+
         I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi());
         I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi());
         I.Register<engine.physics.API>(() => new physics.API(this));
