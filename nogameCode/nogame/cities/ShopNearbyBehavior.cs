@@ -45,7 +45,7 @@ public class ShopNearbyBehavior : ABehavior
                 RandomPos = Vector3.One,
                 EmitterTimeToLive = 10,
                 Velocity = Vector3.UnitY * 5f,
-                ParticleTimeToLive = 30,
+                ParticleTimeToLive = 300,
                 InstanceDesc = jFountainCubesInstanceDesc,
                 RandomDirection = 0.5f,
                 MaxDistance = 20f,

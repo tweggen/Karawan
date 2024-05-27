@@ -111,9 +111,9 @@ namespace engine.streets
                 /*
                  * Generate a random sidewalk width.
                  * TXWTODO: High buildings might have a larger entrace area, don't they?
-                 * Do it random for now.
+                 * This strangely is measured in tenth meters. 
                  */
-                float sidewalkWidth = 30f;
+                float sidewalkWidth = 4f*10f;
                 {
                     //sidewalkWidth = _rnd.getFloat()*75. + 25.;
                 }
