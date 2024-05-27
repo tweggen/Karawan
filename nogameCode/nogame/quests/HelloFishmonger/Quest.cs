@@ -1,28 +1,27 @@
+using System.Linq;
 using System.Numerics;
 using engine;
 using engine.quest;
 
-namespace nogame.quests.VisitAgentTwelve;
+namespace nogame.quests.HelloFishmonger;
 
 public class Quest : AModule, IQuest
 {
     private bool _isActive = false;
-    
-    private engine.quest.ToLocation _questTarget;  
+
+    private engine.quest.TrailVehicle _questTarget;  
     
     private Description _description = new()
     {
-        Title = "Come to the location.",
-        ShortDescription = "Try to find the marker on the map and reach it.",
-        LongDescription = "Every journey starts with the first step. Reach for the third step" +
-                          " to make it an experience."
+        Title = "Trail the car.",
+        ShortDescription = "The car quickly is departing. Follow it to its target!",
+        LongDescription = "Isn't this a chase again?"
     };
 
 
     private void _onReachTarget()
     {
-        // TXWTODO: Is this the proper way to advance the logic?
-        I.Get<nogame.modules.story.Narration>().TriggerPath("agent12");
+        I.Get<nogame.modules.story.Narration>().TriggerPath("collectCubes");
     }
 
 
@@ -55,15 +54,25 @@ public class Quest : AModule, IQuest
         base.ModuleActivate();
         _isActive = true;
         _engine.AddModule(this);
-        
+
         /*
-         * Test code to add a destination.
+         * Randomly chose a destination car.
          */
-        _questTarget = new engine.quest.ToLocation()
+        DefaultEcs.Entity eVictim = default;
+        var behaving = 
+            _engine.GetEcsWorld().GetEntities().With<engine.behave.components.Behavior>().AsEnumerable();
+        int nTries = 10;
+        while (nTries-- > 0)
         {
-            RelativePosition = new Vector3(-440f, 40f, 389f),
+            eVictim = behaving.First();
+            if (!eVictim.IsAlive) continue;
+        }
+
+        _questTarget = new engine.quest.TrailVehicle()
+        {
             SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+            ParentEntity = eVictim,
             OnReachTarget = _onReachTarget
         };
         _questTarget.ModuleActivate();

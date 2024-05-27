@@ -74,7 +74,7 @@ public class Module : AModule, IInputPart
     public float MapMaxY { get; set; } = 295f;
     public float MapMinY { get; set; } = -300f;
 
-    public float MapMiniSize { get; set; } = 80f;
+    public float MapMiniSize { get; set; } = 100f;
 
     /*
      * Map display parameters

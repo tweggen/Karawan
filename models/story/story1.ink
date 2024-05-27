@@ -40,5 +40,13 @@ He would tell me something, you know, get straight to it.
 Sometimes I wonder if he knows the fishmongers. Though I never dared to ask him.
 { triggerQuest("nogame.quests.HelloFishmonger.Quest") }
 
+-> END
+
+=== collectCubes ===
+
+Well, I hit them, but they just rode on. Guess I have to repair my car.
+Let's better go to a polytope. Cubes rule!
+{ triggerQuest("nogame.quests.FirstRecharge.Quest") }
+
 -> END // continues with HelloFishmonger after we reached the target.
 

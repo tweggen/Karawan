@@ -121,7 +121,8 @@
   },
   "quests":
   {
-    "nogame.quests.VisitAgentTwelve.Quest": null
+    "nogame.quests.VisitAgentTwelve.Quest": null,
+    "nogame.quests.HelloFishmonger.Quest": null
   },
   "scenes":
   {

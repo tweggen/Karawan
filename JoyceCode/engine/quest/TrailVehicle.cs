@@ -6,8 +6,8 @@ namespace engine.quest;
 
 public class TrailVehicle : ToSomewhere
 {
-    public override void OperatorApply()
+    public TrailVehicle()
     {
-        base.OperatorApply();
+        RelativePosition = new Vector3(0f, 3f, 0f);
     }
 }
