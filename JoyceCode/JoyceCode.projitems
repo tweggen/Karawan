@@ -61,6 +61,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\AutoRemoveBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\CameraWatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\ColorBlender.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\LowerBoundSortedSet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\LowerBoundsSortedDictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AComponentWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AHeatMap.cs" />

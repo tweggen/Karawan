@@ -22,6 +22,15 @@ public class WorldMapTerrainProvider : IWorldMapProvider
         
     }
 
+    private builtin.tools.ColorBlender _groundColorBlender = new()
+    {
+        MapColors = {
+            { 0f, new (16f/256f, 32f/256f, 32f/256f, 1f) },
+            { 0.5f,new(48f/256f, 64f/256f, 64f/256f, 1f) },
+            { 1.0f, new(80f/256f, 80f/256f, 64f/256f, 1f) }
+        }
+    };
+
 
     static private float MapColorMinHeight = -64f; 
     static private float MapColorMaxHeight = 600f; 
@@ -29,17 +38,7 @@ public class WorldMapTerrainProvider : IWorldMapProvider
     {
         float normalizedHeight = (height - MapColorMinHeight) / (MapColorMaxHeight - MapColorMinHeight);
         normalizedHeight = Single.Max(0f, Single.Min(1f, normalizedHeight));
-        /*
-         * normalizedheight now ranges from 0 to 1.
-         */
-        
-        int heightCol = (int)(normalizedHeight * 255f);
-        heightCol = Int32.Min(255, heightCol);
-        heightCol = Int32.Max(0, heightCol);
-
-        byte blue = (byte)Int32.Min(255, heightCol );
-        byte others = (byte)Int32.Max(0, heightCol - 128);
-        uint col = 0xff000000 | ((uint)blue << 16) | ((uint)others << 8) | ((uint)others);
+        _groundColorBlender.GetColor(normalizedHeight, out uint col);
         return col;
     }
 
