@@ -191,13 +191,13 @@ class GenerateShopsOperator : IClusterOperator
                     
                     I.Get<TransformApi>().SetTransforms(ePOI, false,
                         MapCameraMask, Quaternion.Identity, v3ShopGlobal);
-                    ePOI.Set(new engine.behave.components.Behavior(new ShopNearbyBehavior()
-                    {
+                    var shopNearbyBehavior = new ShopNearbyBehavior() {
                         EPOI = ePOI
-                    })
+                    };
+                    ePOI.Set(new engine.behave.components.Behavior(shopNearbyBehavior)
                     {
                         Flags = (ushort)engine.behave.components.Behavior.BehaviorFlags.DontVisibInRange,
-                        MaxDistance = 3
+                        MaxDistance = (short)shopNearbyBehavior.Distance
                     });
                     
                     DefaultEcs.Entity eMapMarker = e.CreateEntity($"poi.shop map marker");

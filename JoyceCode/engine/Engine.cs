@@ -590,6 +590,7 @@ public class Engine
         EngineState engineState;
         GamePlayStates gamePlayState;
         _fpsLogicalMonitor.OnFrame(dt);
+        var ectx = I.Get<EmissionContext>(); 
 
         lock (_lo)
         {
@@ -654,7 +655,7 @@ public class Engine
             while (!eq.IsEmpty())
             {
                 Event ev = eq.Pop();
-                sm.Handle(ev, new EmissionContext());
+                sm.Handle(ev, ectx);
             }
         }
 

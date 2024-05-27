@@ -27,6 +27,7 @@ public class UpdateEmissionContext : AModule
 
     public override void ModuleDeactivate()
     {
+        _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
