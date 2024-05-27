@@ -59,7 +59,7 @@ struct DisplayMapParams
  */
 public class Module : AModule, IInputPart
 {
-    private static float MY_Z_ORDER = 500f;
+    public float MY_Z_ORDER { get; set; } = 500f;
 
     private bool _createdResources = false;
 
@@ -67,7 +67,6 @@ public class Module : AModule, IInputPart
     private DefaultEcs.Entity _eCamMap;
 
     private float _zoomState = 0.2f;
-    public float ZOOM_STEP_FRACTION { get; set; } = 60f;
     
     public float CameraY { get; set; } = 200f + 100f;
     public float MapY { get; set; } = 200f;
@@ -75,7 +74,7 @@ public class Module : AModule, IInputPart
     public float MapMaxY { get; set; } = 295f;
     public float MapMinY { get; set; } = -300f;
 
-    public float MiniMapSize { get; set; } = 0.12f;
+    public float MapMiniSize { get; set; } = 80f;
 
     /*
      * Map display parameters
@@ -235,7 +234,7 @@ public class Module : AModule, IInputPart
                  * The map shall start at x/y position 48, with number of y pixels is 768*9/16
                  */
                 cCamera3.UL = _osdToViewport(14f, 48f);
-                cCamera3.LR = _osdToViewport(14f+80f, 48f+80f);
+                cCamera3.LR = _osdToViewport(14f + MapMiniSize, 48f + MapMiniSize);
             }
                 break;
         }

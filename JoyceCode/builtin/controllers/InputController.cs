@@ -17,6 +17,24 @@ namespace builtin.controllers;
 public class InputController : engine.AModule, engine.IInputPart
 {
     private object _lo = new();
+
+    public float MY_Z_ORDER { get; set; } = 0f;
+    public float TouchLookSensitivity { get; set; } = 12f;
+    public float TouchMoveSensitivity { get; set; } = 1.4f;
+    public float TouchPeakMoveSensitivity { get; set; } = 4f * 8f;
+    public float MouseLookMoveSensitivity  { get; set; }= 1f;
+
+
+    public float ControllerYMax { get; set; } = 0.2f;
+    public float ControllerYTolerance { get; set; } = 0.008f;
+    public float ControllerXMax { get; set; } = 0.2f;
+    public float ControllerXTolerance { get; set; } = 0.008f;
+
+
+    public int KeyboardAnalogWalk { get; set; } = 180;
+    public int KeyboardAnalogMax { get; set; } = 255;
+    public int TouchAnalogMax { get; set; } = 255;
+    
     
     private Vector2 _vViewSize = Vector2.Zero;
     public Vector2 VMouseMove = Vector2.Zero;
@@ -48,22 +66,6 @@ public class InputController : engine.AModule, engine.IInputPart
     }
 
     
-    public float TouchLookSensitivity { get; set; } = 12f;
-    public float TouchMoveSensitivity { get; set; } = 1.4f;
-    public float TouchPeakMoveSensitivity { get; set; } = 4f * 8f;
-    public float MouseLookMoveSensitivity  { get; set; }= 1f;
-
-
-    public float ControllerYMax { get; set; } = 0.2f;
-    public float ControllerYTolerance { get; set; } = 0.008f;
-    public float ControllerXMax { get; set; } = 0.2f;
-    public float ControllerXTolerance { get; set; } = 0.008f;
-
-
-    public int KeyboardAnalogWalk { get; set; } = 180;
-    public int KeyboardAnalogMax { get; set; } = 255;
-    public int TouchAnalogMax { get; set; } = 255;
-
     private void _onKeyDown(Event ev)
     {
         lock (_lo)
@@ -760,7 +762,7 @@ public class InputController : engine.AModule, engine.IInputPart
     {
         base.ModuleActivate();
         I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
-        I.Get<InputEventPipeline>().AddInputPart(0f, this);
+        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _refreshViewSize();
         _engine.OnLogicalFrame += _onLogicalFrame;
     }

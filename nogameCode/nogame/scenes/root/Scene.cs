@@ -22,7 +22,7 @@ public class Scene : AModule, IScene, IInputPart
         Demo,
     };
 
-    private static float MY_Z_ORDER = 20f;
+    public float MY_Z_ORDER { get; set; } = 20f;
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {

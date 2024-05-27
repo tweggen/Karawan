@@ -37,6 +37,9 @@ public class FollowCameraController : IInputPart
 
     private float _previousZoomDistance = 33f;
 
+    public float MY_Z_ORDER { get; set; } = 21f;
+    
+
     public float ORIENTATION_SLERP_AMOUNT { get; set; } = 0.07f;
     public float CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT { get; set; } = 0.01f;
     public float ZOOM_SLERP_AMOUNT { get; set; } = 0.05f;
@@ -89,9 +92,6 @@ public class FollowCameraController : IInputPart
 
     private CameraAngle _cameraAngle;
     private CameraAngle _previousCameraAngle;
-
-
-    private static float MY_Z_ORDER = 21f;
 
 
     private void _buildPhysics()

@@ -10,7 +10,7 @@ namespace nogame.modules.menu;
 
 public class Module : AModule, IInputPart
 {
-    public float MY_Z_ORDER = 1000f;
+    public float MY_Z_ORDER { get; set; } = 1000f;
 
     private builtin.jt.Factory _factory = I.Get<builtin.jt.Factory>();
     private builtin.jt.Parser _parser = null;

@@ -8,7 +8,7 @@ namespace nogame.modules;
 
 public class Gameplay : AModule, IInputPart
 {
-    public static float MY_Z_ORDER = 24f;
+    public float MY_Z_ORDER { get; set; } = 24f;
 
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
