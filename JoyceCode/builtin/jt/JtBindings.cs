@@ -20,12 +20,12 @@ public class JtBindings
      * We need the parser from the calling widget to reference the given id.
      * We use the factory that is default to the bindings.
      */
-    public void open(string id)
+    public void open(string layer, string id)
     {
         try
         {
             var wNew = Parser.Build(id);
-            Parser.RootWidget.AddChild(wNew);
+            Parser.Layer(layer).AddChild(wNew);
         }
         catch (Exception e)
         {
@@ -38,11 +38,11 @@ public class JtBindings
     /**
      * Close all open widgets
      */
-    public void closeAll()
+    public void closeAll(string layername)
     {
         try
         {
-            RootWidget wRoot = Parser.RootWidget;
+            RootWidget wRoot = Parser.Layer(layername);
             var children = wRoot.Children;
             if (null != children)
             {
@@ -70,10 +70,10 @@ public class JtBindings
     /**
      * Close all windows and open a new one. 
      */
-    public void replaceAll(string id)
+    public void replaceAll(string layername, string id)
     {
-        closeAll();
-        open(id);
+        closeAll(layername);
+        open(layername, id);
     }
 
     

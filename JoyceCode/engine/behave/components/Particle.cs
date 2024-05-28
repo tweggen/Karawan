@@ -10,5 +10,9 @@ public struct Particle
     public Quaternion Orientation;
     public Vector3 VelocityPerFrame;
     public int _reserved;
-    public Quaternion SpinPerFrame;
+    public Quaternion SpinPerFrame = Quaternion.Identity;
+
+    public Particle()
+    {
+    }
 }

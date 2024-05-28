@@ -45,6 +45,9 @@ public class ShopNearbyBehavior : ABehavior
                 RandomPos = Vector3.One,
                 EmitterTimeToLive = 120,
                 Velocity = Vector3.UnitY,
+                RotationVelocity = Quaternion.CreateFromAxisAngle(
+                    Vector3.UnitY,
+                    720f / 60f / 180f * Single.Pi),
                 ParticleTimeToLive = 300,
                 InstanceDesc = jFountainCubesInstanceDesc,
                 RandomDirection = 0.5f,

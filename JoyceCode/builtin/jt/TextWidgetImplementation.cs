@@ -256,7 +256,7 @@ public class TextWidgetImplementation : IWidgetImplementation
     };
 
 
-    public void OnPropertyChanged(string key, object oldValue, object newValue)
+    public virtual void OnPropertyChanged(string key, object oldValue, object newValue)
     {
         if (_mapAttributes.TryGetValue(key, out var ae))
         {
@@ -269,7 +269,7 @@ public class TextWidgetImplementation : IWidgetImplementation
     }
 
     
-    public void Unrealize()
+    public virtual void Unrealize()
     {
         if (_eText.IsAlive)
         {
@@ -278,7 +278,7 @@ public class TextWidgetImplementation : IWidgetImplementation
     }
 
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         Unrealize();
         _widget = null;

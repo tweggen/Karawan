@@ -9,6 +9,7 @@ public struct ParticleEmitter
     public Vector3 RandomPos;
     public int EmitterTimeToLive;
     public Vector3 Velocity;
+    public Quaternion RotationVelocity;
     public int ParticleTimeToLive;
     public engine.joyce.InstanceDesc InstanceDesc;
     public float RandomDirection;

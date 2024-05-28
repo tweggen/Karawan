@@ -57,10 +57,7 @@ public class Parser
     };
 
 
-    public RootWidget RootWidget
-    {
-        get => _factory.FindRootWidget();
-    }
+    public RootWidget Layer(string layername) => _factory.FindRootWidget(layername);
 
 
     private static void _setupAnyBox(Widget w, XmlElement xWidget)
@@ -118,6 +115,17 @@ public class Parser
             "option", new ()
             {
                 WidgetType = typeof(builtin.jt.TextWidget),
+                ParentType = "text",
+                TemplateProperties = new ()
+                {
+                    { "focussable", true }
+                }
+            }
+        },
+        {
+            "input", new ()
+            {
+                WidgetType = typeof(builtin.jt.Widget),
                 ParentType = "text",
                 TemplateProperties = new ()
                 {

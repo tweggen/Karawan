@@ -1,8 +1,10 @@
+using System.Collections.Generic;
+
 namespace builtin.jt;
 
 public class Factory
 {
-    private readonly RootWidget _wRoot;
+    private SortedDictionary<string, RootWidget> _mapLayers = new();
 
     
     public void Unrealize(Widget widget, IWidgetImplementation impl)
@@ -11,9 +13,19 @@ public class Factory
     }
 
 
-    public RootWidget FindRootWidget()
+    public RootWidget FindRootWidget(string layername)
     {
-        return _wRoot;
+        RootWidget? wRoot;
+        if (_mapLayers.TryGetValue(layername, out wRoot))
+        {
+        }
+        else
+        {
+            wRoot = new RootWidget() { Factory = this, Type = "Root"};
+            _mapLayers[layername] = wRoot;
+        }
+
+        return wRoot;
     }
 
 
@@ -39,6 +51,11 @@ public class Factory
                  */
                 return new TextWidgetImplementation(w);
                 break;
+            
+            case "input":
+                return new InputWidgetImplementation(w);
+                break;
+            
             default:
                 /*
                  * Everything is just nothing.
@@ -52,6 +69,5 @@ public class Factory
 
     public Factory()
     {
-        _wRoot = new RootWidget() { Factory = this, Type = "Root"};
     }
 }

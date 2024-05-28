@@ -5,9 +5,14 @@ using builtin.tools;
 using DefaultEcs;
 using engine.behave.components;
 using engine.joyce.components;
+using static engine.Logger;
 
 namespace engine.behave.systems;
 
+
+/**
+ * This system continuously creates new particles.
+ */
 [DefaultEcs.System.With(typeof(components.ParticleEmitter))]
 [DefaultEcs.System.With(typeof(Transform3ToWorld))]
 public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
@@ -26,6 +31,23 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
         entities.CopyTo(copiedEntities);
         foreach (var entity in copiedEntities)
         {
+            if (!entity.IsEnabled())
+            {
+                Error($"Did not expect an entity that is not enabled.");
+                continue;
+            }
+
+            #if false
+            if (entity.Has<joyce.components.EntityName>())
+            {
+                ref string name = ref entity.Get<joyce.components.EntityName>().Name;
+                if (name == "shopping")
+                {
+                    int a = 1;
+                }
+            }
+            #endif
+
             ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
             ref var cParticleEmitter = ref entity.Get<ParticleEmitter>();
             if (0 >= cParticleEmitter.EmitterTimeToLive)
@@ -74,7 +96,7 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                         TimeToLive = cParticleEmitter.ParticleTimeToLive,
                         Orientation = Quaternion.Identity,
                         VelocityPerFrame = v3EffectiveDirection * 1f/60f,
-                        SpinPerFrame = Quaternion.Identity
+                        SpinPerFrame = cParticleEmitter.RotationVelocity
                     }
                 );
                 eParticle.Set(new Transform3ToWorld()

@@ -30,19 +30,10 @@ public class Module : AModule, IInputPart
         
         switch (ev.Type)
         {
-            case Event.INPUT_KEY_PRESSED:
+            case Event.INPUT_BUTTON_PRESSED:
                 switch (ev.Code)
                 {
-                    case "(escape)":
-                        doDeactivate = true;
-                        break;
-                }
-                break;
-            
-            case Event.INPUT_GAMEPAD_BUTTON_PRESSED:
-                switch (ev.Code)
-                {
-                    case "Back":
+                    case "<menu1>":
                         doDeactivate = true;
                         break;
                 }
@@ -58,7 +49,7 @@ public class Module : AModule, IInputPart
 
         if (!ev.IsHandled)
         {
-            _parser.RootWidget.PropagateInputEvent(ev);
+            _parser.Layer("pausemenu").PropagateInputEvent(ev);
         }
     }
     
@@ -67,7 +58,7 @@ public class Module : AModule, IInputPart
     {
         I.Get<InputEventPipeline>().RemoveInputPart(this);
 
-        var children = _parser.RootWidget.Children;
+        var children = _parser.Layer("pausemenu").Children;
         if (children != null)
         {
             foreach (var wChild in children)
@@ -110,8 +101,8 @@ public class Module : AModule, IInputPart
             var wMenu = _parser.Build("menuOptions");
             if (null != wMenu)
             {
-                _parser.RootWidget.AddChild(wMenu);
-                _parser.RootWidget.SetFocussedChild(wMenu.FindFirstFocussableChild());
+                _parser.Layer(wMenu["layer"].ToString()).AddChild(wMenu);
+                _parser.Layer(wMenu["layer"].ToString()).SetFocussedChild(wMenu.FindFirstFocussableChild());
             }
         }
         catch (Exception e)
