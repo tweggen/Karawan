@@ -156,8 +156,8 @@ public class AlphaInterpreter
                 // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
 
                 /*
-                 * Make a trivial four sided poly.
-                 */
+                * Make a trivial four sided poly.
+                */
                 var poly = new List<Vector3>();
                 poly.Add(vs + vr);
                 //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
