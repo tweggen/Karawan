@@ -32,7 +32,7 @@ public class ShopNearbyBehavior : ABehavior
             var jFountainCubesInstanceDesc = InstanceDesc.CreateFromMatMesh(
                 new MatMesh(
                     I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
-                    engine.joyce.mesh.Tools.CreatePlaneMesh("carcrashfragments", new Vector2(0.1f, 0.1f))
+                    engine.joyce.mesh.Tools.CreatePlaneMesh("carcrashfragments", new Vector2(1f, 1f))
                 ), 30f
             );
             Vector3 v3Pos;
@@ -43,8 +43,8 @@ public class ShopNearbyBehavior : ABehavior
                 Position = Vector3.Zero,
                 ScalePerSec = 1f,
                 RandomPos = Vector3.One,
-                EmitterTimeToLive = 10,
-                Velocity = Vector3.UnitY * 5f,
+                EmitterTimeToLive = 120,
+                Velocity = Vector3.UnitY,
                 ParticleTimeToLive = 300,
                 InstanceDesc = jFountainCubesInstanceDesc,
                 RandomDirection = 0.5f,
