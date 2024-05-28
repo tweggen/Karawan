@@ -141,6 +141,9 @@
 	  <Content Include="..\models\fonts\Slideyouran-Regular.ttf">
 	    <Link>models\fonts\Slideyouran-Regular.ttf</Link>
 	  </Content>
+	  <Content Include="..\models\menu\shop.xml">
+	    <Link>models\menu\shop.xml</Link>
+	  </Content>
 	</ItemGroup>
 
 

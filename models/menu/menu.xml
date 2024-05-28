@@ -30,8 +30,4 @@
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
         </vbox>
     </view>
-    
-    <view id="fishmongers">
-        
-    </view>
 </jt>

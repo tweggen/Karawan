@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<jt>
+    <view layer='shop' id='menuShop'>
+        <vbox width='250' x='200' y='200'>
+            <text color='#666666' height='40'>welcome to the shop!</text>
+            <text color='#999999'>You can purchase or sell items here.</text>
+            <option color='#999999' onClick='jt:close("menuShop")'>Leave...</option>
+        </vbox>
+    </view>
+</jt>
