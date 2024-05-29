@@ -13,21 +13,21 @@ public class RootWidget : Widget
     private SortedDictionary<string, Widget> _idMap = new();
     private Widget? _wFocussedChild = null;
     
-    private Factory _factory; 
-    public required Factory Factory
+    private ImplementationFactory _implementationFactory; 
+    public required ImplementationFactory ImplementationFactory
     {
         set
         {
             lock (_lo)
             {
-                _factory = value;
+                _implementationFactory = value;
             }
         }
         get
         {
             lock (_lo)
             {
-                return _factory;
+                return _implementationFactory;
             }
         }
     }

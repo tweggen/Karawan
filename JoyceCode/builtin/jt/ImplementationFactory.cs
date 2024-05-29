@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace builtin.jt;
 
-public class Factory
+public class ImplementationFactory
 {
     private SortedDictionary<string, RootWidget> _mapLayers = new();
 
@@ -21,7 +21,7 @@ public class Factory
         }
         else
         {
-            wRoot = new RootWidget() { Factory = this, Type = "Root"};
+            wRoot = new RootWidget() { ImplementationFactory = this, Type = "Root"};
             _mapLayers[layername] = wRoot;
         }
 
@@ -67,7 +67,7 @@ public class Factory
     }
     
 
-    public Factory()
+    public ImplementationFactory()
     {
     }
 }

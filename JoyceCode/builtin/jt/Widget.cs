@@ -789,7 +789,7 @@ public class Widget : IDisposable
             
             try
             {
-                impl = root.Factory.Realize(this);
+                impl = root.ImplementationFactory.Realize(this);
                 if (null == impl)
                 {
                     /*

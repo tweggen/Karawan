@@ -12,7 +12,7 @@ public class Module : AModule, IInputPart
 {
     public float MY_Z_ORDER { get; set; } = 1000f;
 
-    private builtin.jt.Factory _factory = I.Get<builtin.jt.Factory>();
+    private builtin.jt.ImplementationFactory _implementationFactory = I.Get<builtin.jt.ImplementationFactory>();
     private builtin.jt.Parser _parser = null;
 
 
@@ -93,7 +93,7 @@ public class Module : AModule, IInputPart
             /*
              * Parse the document
              */
-            _parser = new Parser(xDoc, _factory);
+            _parser = new Parser(xDoc, _implementationFactory);
             
             /*
              * Open the default menu.

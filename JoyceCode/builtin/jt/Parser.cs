@@ -57,7 +57,7 @@ public class Parser
     };
 
 
-    public RootWidget Layer(string layername) => _factory.FindRootWidget(layername);
+    public RootWidget Layer(string layername) => _implementationFactory.FindRootWidget(layername);
 
 
     private static void _setupAnyBox(Widget w, XmlElement xWidget)
@@ -184,8 +184,8 @@ public class Parser
     };
 
     
-    private readonly Factory _factory;
-    public Factory Factory { get;  }
+    private readonly ImplementationFactory _implementationFactory;
+    public ImplementationFactory ImplementationFactory { get;  }
 
     private LuaBindingFrame _lbf;
 
@@ -413,10 +413,10 @@ public class Parser
     }
         
     
-    public Parser(XmlDocument xDoc, Factory factory)
+    public Parser(XmlDocument xDoc, ImplementationFactory implementationFactory)
     {
         _xDoc = xDoc;
-        _factory = factory;
+        _implementationFactory = implementationFactory;
         _lbf = new()
         {
             MapBindings = new SortedDictionary<string, object>()
@@ -439,7 +439,7 @@ public class Parser
 </view>
 ";
 
-        Factory f = new();
+        ImplementationFactory f = new();
         XmlDocument xDoc = new XmlDocument();
         xDoc.LoadXml(xml);
         Parser p = new(xDoc, f);
