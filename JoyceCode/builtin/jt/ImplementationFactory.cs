@@ -29,6 +29,8 @@ public class ImplementationFactory
     }
 
 
+    public RootWidget Layer(string layername) => FindRootWidget(layername);
+
     public (float, float) GetTextExtent(object font, string text)
     {
         // TXWTODO: This is a wild guess. We would need to establish some interface for that.

@@ -11,11 +11,7 @@ namespace nogame.modules.menu;
 public class Module : AModule, IInputPart
 {
     public float MY_Z_ORDER { get; set; } = 1000f;
-
-    private builtin.jt.ImplementationFactory _implementationFactory = I.Get<builtin.jt.ImplementationFactory>();
-    private builtin.jt.Parser _parser = null;
-
-
+    
     public void InputPartOnInputEvent(Event ev)
     {
         bool doDeactivate = false;
@@ -33,7 +29,7 @@ public class Module : AModule, IInputPart
             case Event.INPUT_BUTTON_PRESSED:
                 switch (ev.Code)
                 {
-                    case "<menu1>":
+                    case "<menu>":
                         doDeactivate = true;
                         break;
                 }
@@ -49,7 +45,7 @@ public class Module : AModule, IInputPart
 
         if (!ev.IsHandled)
         {
-            _parser.Layer("pausemenu").PropagateInputEvent(ev);
+            I.Get<ImplementationFactory>().Layer("pausemenu").PropagateInputEvent(ev);
         }
     }
     
@@ -58,7 +54,7 @@ public class Module : AModule, IInputPart
     {
         I.Get<InputEventPipeline>().RemoveInputPart(this);
 
-        var children = _parser.Layer("pausemenu").Children;
+        var children = I.Get<ImplementationFactory>().Layer("pausemenu").Children;
         if (children != null)
         {
             foreach (var wChild in children)
@@ -84,26 +80,7 @@ public class Module : AModule, IInputPart
 
         try
         {
-            /*
-             * Read the xml
-             */
-            XmlDocument xDoc = new XmlDocument();
-            xDoc.Load(engine.Assets.Open("menu.xml"));
-            
-            /*
-             * Parse the document
-             */
-            _parser = new Parser(xDoc, _implementationFactory);
-            
-            /*
-             * Open the default menu.
-             */
-            var wMenu = _parser.Build("menuOptions");
-            if (null != wMenu)
-            {
-                _parser.Layer(wMenu["layer"].ToString()).AddChild(wMenu);
-                _parser.Layer(wMenu["layer"].ToString()).SetFocussedChild(wMenu.FindFirstFocussableChild());
-            }
+            var wMenu = I.Get<Factory>().OpenOSD("menu.xml", "menuOptions");
         }
         catch (Exception e)
         {
