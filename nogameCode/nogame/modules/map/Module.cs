@@ -559,7 +559,7 @@ public class Module : AModule, IInputPart
         {
             if (!_haveInputPart) return;
             _haveInputPart = false;
-            I.Get<InputEventPipeline>().RemoveInputPart(this);
+            M<InputEventPipeline>().RemoveInputPart(this);
         }
     }
 
@@ -570,7 +570,7 @@ public class Module : AModule, IInputPart
         {
             if (_haveInputPart) return;
             _haveInputPart = true;
-            I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+            M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         }
     }
 
@@ -723,7 +723,8 @@ public class Module : AModule, IInputPart
     {
         return new List<IModuleDependency>()
         {
-            new MyModule<engine.news.ClickModule>() { Activate = false } 
+            new SharedModule<InputEventPipeline>()
+            //new MyModule<engine.news.ClickModule>() { ShallActivate = false } // FIXDEPS 
         };
     }
 

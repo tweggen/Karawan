@@ -104,7 +104,7 @@ public class RootWidget : Widget
     }
 
 
-    public bool FindChild(string id, [MaybeNullWhen(false)] out Widget widget)
+    public bool GetChild(string id, [MaybeNullWhen(false)] out Widget widget)
     {
         if (string.IsNullOrEmpty(id))
         {

@@ -79,7 +79,6 @@ public class Loader
         {
             Warning($"Error reading map provider: {e}");
         }
-
     }
 
 

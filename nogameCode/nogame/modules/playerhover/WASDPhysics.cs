@@ -6,6 +6,7 @@ using System.Numerics;
 using engine;
 using engine.draw;
 using engine.geom;
+using engine.news;
 using engine.world;
 using static engine.Logger;
 
@@ -17,7 +18,8 @@ internal class WASDPhysics : AModule, IInputPart
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<nogame.modules.AutoSave>()
+        new SharedModule<nogame.modules.AutoSave>(),
+        new SharedModule<InputEventPipeline>()        
     };
     
     
@@ -132,7 +134,7 @@ internal class WASDPhysics : AModule, IInputPart
         /*
          * If I shall control the ship.
          */
-        if (MY_Z_ORDER == I.Get<engine.news.InputEventPipeline>().GetFrontZ())
+        if (MY_Z_ORDER == M<InputEventPipeline>().GetFrontZ())
         {
             I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
@@ -368,7 +370,7 @@ internal class WASDPhysics : AModule, IInputPart
     {
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
+        M<InputEventPipeline>().RemoveInputPart(this);
         base.ModuleDeactivate();
     }
 
@@ -379,7 +381,7 @@ internal class WASDPhysics : AModule, IInputPart
 
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 
-        I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
     }

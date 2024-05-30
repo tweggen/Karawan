@@ -11,9 +11,8 @@ using static engine.Logger;
 
 namespace engine;
 
-public class DBStorage : IDisposable, IModule
+public class DBStorage : engine.AModule
 {
-    private object _lo = new();
 
     private Dictionary<string, LiteDatabase> _mapDBs = new();
 
@@ -313,7 +312,7 @@ public class DBStorage : IDisposable, IModule
     }
     
     
-    public void Dispose()
+    public override void Dispose()
     {
         foreach (var dbName in _mapDBs.Keys)
         {
@@ -323,23 +322,27 @@ public class DBStorage : IDisposable, IModule
                 _close(dbName);
             }
         }
+
+        base.Dispose();
+    }
+    
+    
+    public override void ModuleActivate()
+    {
+        base.ModuleActivate();
+        _engine.AddModule(this);
     }
 
-
+    
+    public override void ModuleDeactivate()
+    {
+        _engine.RemoveModule(this);
+        base.ModuleDeactivate();
+    }
+    
+    
     public DBStorage()
     {
         Mapper = _createMappers();
-    }
-
-    public IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
-    
-    public void ModuleActivate()
-    {
-        I.Get<Engine>().AddModule(this);
-    }
-
-    public void ModuleDeactivate()
-    {
-        I.Get<Engine>().RemoveModule(this);
     }
 }

@@ -64,7 +64,8 @@
     "nogame.modules.daynite.Module": null,
     "engine.behave.ClusterHeatMap": null,
     "builtin.loader.Obj": null,
-    "engine.joyce.ModelCache": null
+    "engine.joyce.ModelCache": null,
+    "engine.LayerCatalogue": null
   },
   "mapProviders":
   {
@@ -124,6 +125,15 @@
   {
     "nogame.quests.VisitAgentTwelve.Quest": null,
     "nogame.quests.HelloFishmonger.Quest": null
+  },
+  "layers":
+  {
+    "pausemenu": {
+      "zOrder": 1000
+    },
+    "shop": {
+      "zOrder": 900
+    }
   },
   "scenes":
   {

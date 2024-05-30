@@ -57,9 +57,6 @@ public class Parser
     };
 
 
-    public RootWidget Layer(string layername) => _implementationFactory.FindRootWidget(layername);
-
-
     private static void _setupAnyBox(Widget w, XmlElement xWidget)
     {
         var boxLayout = new BoxLayout() { Parent = w, IsHorizontal = w.GetAttr("direction", "vertical") == "horizontal"};
@@ -184,9 +181,7 @@ public class Parser
     };
 
     
-    private readonly ImplementationFactory _implementationFactory;
-    public ImplementationFactory ImplementationFactory { get;  }
-
+    private readonly Factory _factory;
     private LuaBindingFrame _lbf;
 
     
@@ -413,36 +408,17 @@ public class Parser
     }
         
     
-    public Parser(XmlDocument xDoc, ImplementationFactory implementationFactory)
+    public Parser(XmlDocument xDoc, Factory factory)
     {
         _xDoc = xDoc;
-        _implementationFactory = implementationFactory;
+        _factory = factory;
         _lbf = new()
         {
             MapBindings = new SortedDictionary<string, object>()
             {
-                { "jt", new JtBindings(this) },
+                { "jt", new JtBindings(factory,this) },
                 { "joyce", new engine.gongzuo.JoyceBindings() }
             }.ToFrozenDictionary()
         };
-    }
-
-
-    static public void Unit()
-    {
-        string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<view>
-    <vbox direction=""vertical"">
-        <text>Item 1</text>
-        <text>Item 2</text>
-    </vbox>
-</view>
-";
-
-        ImplementationFactory f = new();
-        XmlDocument xDoc = new XmlDocument();
-        xDoc.LoadXml(xml);
-        Parser p = new(xDoc, f);
-        Widget w = p.Build();
     }
 }

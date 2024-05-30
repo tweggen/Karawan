@@ -24,7 +24,12 @@ public class Gameplay : AModule, IInputPart
     private bool _wasEnabled = true;
     private bool _isDemoActive = false;
 
-    
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<InputEventPipeline>()
+    };
+
+
     private void _onRootKickoff(Event ev)
     {
         builtin.controllers.FollowCameraController fcc;
@@ -43,7 +48,7 @@ public class Gameplay : AModule, IInputPart
     private void _onLogicalFrame(object? sender, float dt)
     {
         // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
-        var frontZ = I.Get<InputEventPipeline>().GetFrontZ();
+        var frontZ = M<InputEventPipeline>().GetFrontZ();
         bool shallBeEnabled;
         if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
         {
@@ -264,7 +269,7 @@ public class Gameplay : AModule, IInputPart
         
         I.Get<SubscriptionManager>().Unsubscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
         _engine.RemoveModule(this);
-        I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
+        M<engine.news.InputEventPipeline>().RemoveInputPart(this);
         _killOldCameraController();
         base.ModuleDeactivate();
     }
@@ -273,7 +278,7 @@ public class Gameplay : AModule, IInputPart
     public override void ModuleActivate()
     {
         base.ModuleActivate();
-        I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        M<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.AddModule(this);
 
         {

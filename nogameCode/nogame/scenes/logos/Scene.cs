@@ -22,8 +22,6 @@ public class Scene : AModule, IScene
     private DefaultEcs.Entity _eLogo;
     private DefaultEcs.Entity _eLight;
 
-    private TitleModule _modTitle;
-    
     private bool _isCleared = false;
     private bool _shallHideTitle = false;
 
@@ -34,7 +32,8 @@ public class Scene : AModule, IScene
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
-        new SharedModule<nogame.modules.daynite.Module>()
+        new SharedModule<nogame.modules.daynite.Module>(),
+        new MyModule<TitleModule> { ShallActivate = false }
     };
     
     public void SceneOnLogicalFrame(float dt)
@@ -126,11 +125,7 @@ public class Scene : AModule, IScene
     public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
-        _modTitle.ModuleDeactivate();
 
-        /*
-         * 
-         */
         _engine.AddDoomedEntity(_eCamera);
         _engine.AddDoomedEntity(_eLight);
         lock (_lo)
@@ -142,6 +137,7 @@ public class Scene : AModule, IScene
          * Null out everything we don't need when the scene is unloaded.
          */
         I.Get<SceneSequencer>().RemoveScene(this);
+        
         base.ModuleDeactivate();
     }
 
@@ -176,44 +172,53 @@ public class Scene : AModule, IScene
             TimeSpan.FromMilliseconds(4674),
             _loadRootScene);
 
-        /*
-         * We do not use the texture atlas because there is no need to waste previous atlas space
-         * with these intro logos.
-         */
-        _modTitle.Add(new TitleCard()
         {
-            StartReference = TimepointTitlesongStarted,
-            StartOffset = TimeSpan.FromMilliseconds(500),
-            EndReference = TimepointTitlesongStarted,
-            EndOffset = TimeSpan.FromMilliseconds(1200),
-            Duration = 700,
-            Flags = (uint) TitleCard.F.FadeoutEnd,
-            FadeOutTime = 500f,
-            Size = new(14f, 7f),
-            EmissiveTexture = new Texture("aihao-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("aihao-emissive.png"),
-            StartTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
-            EndTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f)
-        });
-        _modTitle.Add(new TitleCard()
-        {
-            StartReference = TimepointTitlesongStarted,
-            StartOffset = TimeSpan.FromMilliseconds(1400),
-            EndReference = TimepointTitlesongStarted,
-            EndOffset = TimeSpan.FromMilliseconds(2900),
-            Duration = 700,
-            Flags = (uint) TitleCard.F.JitterEnd ,
-            Size = new(64f, 64f/1280f*220f),
-            AlbedoTexture = new Texture("silicondesert-albedo.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-albedo.png"),
-            EmissiveTexture = new Texture("silicondesert-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-emissive.png"),
-            StartTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
-            EndTransform =  new engine.joyce.components.Transform3(
-                true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
-        });
-        
-        _modTitle.ModuleActivate();
+            var modTitle = M<TitleModule>();
+
+            /*
+             * We do not use the texture atlas because there is no need to waste previous atlas space
+             * with these intro logos.
+             */
+            modTitle.Add(new TitleCard()
+            {
+                StartReference = TimepointTitlesongStarted,
+                StartOffset = TimeSpan.FromMilliseconds(500),
+                EndReference = TimepointTitlesongStarted,
+                EndOffset = TimeSpan.FromMilliseconds(1200),
+                Duration = 700,
+                Flags = (uint)TitleCard.F.FadeoutEnd,
+                FadeOutTime = 500f,
+                Size = new(14f, 7f),
+                EmissiveTexture =
+                    new Texture("aihao-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("aihao-emissive.png"),
+                StartTransform = new engine.joyce.components.Transform3(
+                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
+                EndTransform = new engine.joyce.components.Transform3(
+                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f)
+            });
+            modTitle.Add(new TitleCard()
+            {
+                StartReference = TimepointTitlesongStarted,
+                StartOffset = TimeSpan.FromMilliseconds(1400),
+                EndReference = TimepointTitlesongStarted,
+                EndOffset = TimeSpan.FromMilliseconds(2900),
+                Duration = 700,
+                Flags = (uint)TitleCard.F.JitterEnd,
+                Size = new(64f, 64f / 1280f * 220f),
+                AlbedoTexture =
+                    new Texture(
+                        "silicondesert-albedo.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-albedo.png"),
+                EmissiveTexture =
+                    new Texture(
+                        "silicondesert-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-emissive.png"),
+                StartTransform = new engine.joyce.components.Transform3(
+                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
+                EndTransform = new engine.joyce.components.Transform3(
+                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
+            });
+        }
+
+        ActivateMyModule<TitleModule>();
     }
 
 
@@ -278,9 +283,8 @@ public class Scene : AModule, IScene
 
 
         _engine.AddModule(this);
+
         I.Get<Boom.ISoundAPI>().SoundMask = 0xffff0000;
         I.Get<SceneSequencer>().AddScene(5, this);
-        _modTitle = new();
-        
     }
 }

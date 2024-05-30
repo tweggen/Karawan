@@ -39,6 +39,7 @@ public class Narration : AModule, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new MyModule<nogame.modules.osd.Display>(),
+        new SharedModule<InputEventPipeline>()
     };
     
 
@@ -393,7 +394,7 @@ public class Narration : AModule, IInputPart
     public override void ModuleDeactivate()
     {
         I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
-        I.Get<engine.news.InputEventPipeline>().RemoveInputPart(this);
+        M<InputEventPipeline>().RemoveInputPart(this);
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -408,7 +409,7 @@ public class Narration : AModule, IInputPart
         {
             _soundTty = I.Get<Boom.ISoundAPI>().FindSound("terminal.ogg");
         }
-        I.Get<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
         _triggerNextStory();
     }

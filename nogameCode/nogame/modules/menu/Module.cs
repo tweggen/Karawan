@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Xml;
 using builtin.jt;
 using engine;
@@ -10,20 +11,24 @@ namespace nogame.modules.menu;
 
 public class Module : AModule, IInputPart
 {
-    public float MY_Z_ORDER { get; set; } = 1000f;
+    public LayerDefinition _layerDefinition;
+
+
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<builtin.jt.Factory>(),
+        new SharedModule<InputEventPipeline>(),
+        new SharedModule<LayerCatalogue>()
+    };
+
     
+    /**
+     * This input handler exists purely for closing the osd again. using escape.
+     */
     public void InputPartOnInputEvent(Event ev)
     {
         bool doDeactivate = false;
-        /*
-         * Let everything with screen locality be handled by the visual
-         * system handling clicks. 
-         */
-        if (ev.Type.StartsWith(Event.INPUT_MOUSE_ANY) || ev.Type.StartsWith(Event.INPUT_TOUCH_ANY))
-        {
-            return;
-        }
-        
+
         switch (ev.Type)
         {
             case Event.INPUT_BUTTON_PRESSED:
@@ -43,27 +48,14 @@ public class Module : AModule, IInputPart
             ModuleDeactivate();
         }
 
-        if (!ev.IsHandled)
-        {
-            I.Get<ImplementationFactory>().Layer("pausemenu").PropagateInputEvent(ev);
-        }
     }
     
 
     public override void ModuleDeactivate()
     {
-        I.Get<InputEventPipeline>().RemoveInputPart(this);
+        M<InputEventPipeline>().RemoveInputPart(this);
 
-        var children = I.Get<ImplementationFactory>().Layer("pausemenu").Children;
-        if (children != null)
-        {
-            foreach (var wChild in children)
-            {
-                wChild.Parent = null;
-                wChild.Dispose();
-            }
-        }
-
+        M<Factory>().CloseOSD(_layerDefinition.Name, "menuOptions");
         _engine.GamePlayState = GamePlayStates.Running;
         
         _engine.RemoveModule(this);
@@ -80,13 +72,14 @@ public class Module : AModule, IInputPart
 
         try
         {
-            var wMenu = I.Get<Factory>().OpenOSD("menu.xml", "menuOptions");
+            var wMenu = M<Factory>().OpenOSD("menu.xml", "menuOptions");
+            _layerDefinition = M<LayerCatalogue>().Get(wMenu["layer"].ToString());
         }
         catch (Exception e)
         {
             Error($"Exception opening menu: {e}");
         }
 
-        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        M<InputEventPipeline>().AddInputPart(_layerDefinition.ZOrder, this);
     }
 }

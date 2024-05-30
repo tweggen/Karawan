@@ -14,6 +14,8 @@ public abstract class AModule : IModule
     private List<IModule> _activatedModules = new();
     private Dictionary<Type, IModule> _mapModules = new();
 
+    public bool IgnoreDoubleActivation { get; set; } = false;
+    
     
     public virtual IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
 
@@ -28,34 +30,67 @@ public abstract class AModule : IModule
             return null;
         }
     }
+    
+    protected void ActivateMyModule<T>() where T : class, IModule
+    {
+        IModule myModule = M<T>();
+        if (myModule.IsModuleActive())
+        {
+            ErrorThrow<InvalidOperationException>($"My module of type {myModule.GetType()} already was active.");
+        }
+        myModule.ModuleActivate();
+    }
+
+
+    protected void DeactivateMyModule<T>() where T : class, IModule
+    {
+        IModule myModule = M<T>();
+        if (!myModule.IsModuleActive())
+        {
+            ErrorThrow<InvalidOperationException>($"My module of type {myModule.GetType()} was not active.");
+        }
+        myModule.ModuleDeactivate();
+    }
 
 
     public virtual void Dispose()
     {
         // Do not dispose the dependant modules.
     }
+
+
+    public bool IsModuleActive() => _isActivated;
     
 
     public virtual void ModuleDeactivate()
     {
+        List<IModule> activatedModules;
         lock (_lo)
         {
             if (!_isActivated)
             {
-                ErrorThrow<InvalidOperationException>($"Module was not activated.");
+                Error($"Module was not activated.");
+                return;
             }
 
             _isActivated = false;
+            activatedModules = new List<IModule>(_activatedModules);
+            _activatedModules.Clear();
         }
-
-        foreach (var module in _activatedModules)
+        
+        foreach (var module in activatedModules)
         {
-            module.ModuleDeactivate();
+            if (module.IsModuleActive())
+            {
+                module.ModuleDeactivate();
+            }
         }
 
-        _mapModules.Clear();
-        _activatedModules.Clear();
-        _engine = null;
+        lock (_lo)
+        {
+            _mapModules.Clear();
+            _engine = null;
+        }
     }
 
 
@@ -67,7 +102,14 @@ public abstract class AModule : IModule
         {
             if (_isActivated)
             {
-                ErrorThrow<InvalidOperationException>($"Module already activated.");
+                if (IgnoreDoubleActivation)
+                {
+                    return;
+                }
+                else
+                {
+                    ErrorThrow<InvalidOperationException>($"Module ${this.GetType()} already activated.");
+                }
             }
 
             _isActivated = true;
@@ -91,19 +133,16 @@ public abstract class AModule : IModule
                 return;
             }
 
-            _mapModules.Add(moduleDependency.ModuleType, module);
-            if (moduleDependency.Activate)
+            lock (_lo)
             {
-                /*
-                 * Only activate the module if it hasn't been activated yet. 
-                 */
-                // TXWTODO: This basically is a workaround.
-                if (!_engine.HasModuleType(moduleDependency.ModuleType))
-                {
-                    module.ModuleActivate();
-                }
+                _mapModules.Add(moduleDependency.ModuleType, module);
+            }
 
-                if (moduleDependency.Deactivate)
+            
+            bool didActivate = moduleDependency.Activate();
+            if (didActivate)
+            {
+                lock (_lo)
                 {
                     _activatedModules.Add(module);
                 }

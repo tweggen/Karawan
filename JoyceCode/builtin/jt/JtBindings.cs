@@ -11,9 +11,11 @@ namespace builtin.jt;
 public class JtBindings
 {
     private object _lo = new();
-    
+
+    public readonly Factory Factory;
     public readonly Parser Parser;
 
+    
     /**
      * open a certain menu.
      *
@@ -25,7 +27,7 @@ public class JtBindings
         try
         {
             var wNew = Parser.Build(id);
-            Parser.Layer(layer).AddChild(wNew);
+            Factory.Layer(layer).AddChild(wNew);
         }
         catch (Exception e)
         {
@@ -42,7 +44,7 @@ public class JtBindings
     {
         try
         {
-            RootWidget wRoot = Parser.Layer(layername);
+            RootWidget wRoot = Factory.Layer(layername);
             var children = wRoot.Children;
             if (null != children)
             {
@@ -77,8 +79,9 @@ public class JtBindings
     }
 
     
-    public JtBindings(Parser parser)
+    public JtBindings(Factory factory, Parser parser)
     {
+        Factory = factory;
         Parser = parser;
     }
 }

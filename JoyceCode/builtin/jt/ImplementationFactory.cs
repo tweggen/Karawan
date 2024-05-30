@@ -13,24 +13,6 @@ public class ImplementationFactory
     }
 
 
-    public RootWidget FindRootWidget(string layername)
-    {
-        RootWidget? wRoot;
-        if (_mapLayers.TryGetValue(layername, out wRoot))
-        {
-        }
-        else
-        {
-            wRoot = new RootWidget() { ImplementationFactory = this, Type = "Root"};
-            _mapLayers[layername] = wRoot;
-        }
-
-        return wRoot;
-    }
-
-
-    public RootWidget Layer(string layername) => FindRootWidget(layername);
-
     public (float, float) GetTextExtent(object font, string text)
     {
         // TXWTODO: This is a wild guess. We would need to establish some interface for that.

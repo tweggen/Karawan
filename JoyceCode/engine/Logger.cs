@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 /*
  * plent-o-matic: your job is our business
@@ -124,6 +125,7 @@ namespace engine
         }
 
 
+        [DoesNotReturn]
         public static void ErrorThrow(in string msg, Func<string, SystemException> excFunc )
         {
             var logEntry = _createLogEntry(Level.Error, msg);
@@ -132,6 +134,7 @@ namespace engine
         }
         
 
+        [DoesNotReturn]
         public static void ErrorThrow<E>(in string msg) where E : new()
         {
             var logEntry = _createLogEntry(Level.Error, msg);

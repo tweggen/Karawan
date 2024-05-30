@@ -31,20 +31,21 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.modules.ScreenComposer>(),
         new MyModule<nogame.modules.playerhover.Module>(),
         new MyModule<nogame.modules.Gameplay>(),
-        new MyModule<modules.debugger.Module>("nogame.CreateUI") { Activate = false },
+        new MyModule<modules.debugger.Module>("nogame.CreateUI") { ShallActivate = false },
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
         new MyModule<nogame.modules.osd.Display>("nogame.CreateOSD"),
-        new MyModule<nogame.modules.osd.Camera>("nogame.CreateOSD") { Activate = false },
+        new MyModule<nogame.modules.osd.Camera>() { ShallActivate = false },
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),
         new MyModule<builtin.map.MapViewer>(),
-        new MyModule<modules.menu.Module>() { Activate = false },
-        new MyModule<modules.map.Module>("nogame.CreateMap") { Activate = false },
-        new MyModule<builtin.modules.Stats>() { Activate = false },
+        new MyModule<modules.menu.Module>() { ShallActivate = false },
+        new MyModule<modules.map.Module>("nogame.CreateMap") { ShallActivate = false },
+        new MyModule<builtin.modules.Stats>() { ShallActivate = false },
         new MyModule<nogame.modules.daynite.FogColor>(),
-        new SharedModule<nogame.modules.story.Narration>() { Activate = false },
+        new SharedModule<nogame.modules.story.Narration>() { ShallActivate = false },
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<engine.news.ClickModule>(),
+        new SharedModule<InputEventPipeline>()
     };
 
     private bool _isMapShown = false;
@@ -55,12 +56,6 @@ public class Scene : AModule, IScene, IInputPart
 
     private void _toggleDebugger()
     {
-        var mUI = M<modules.debugger.Module>();
-        if (null == mUI)
-        {
-            return;
-        }
-
         bool isUIShown;
         lock (_lo)
         {
@@ -71,14 +66,14 @@ public class Scene : AModule, IScene, IInputPart
         if (isUIShown)
         {
             _engine.SetViewRectangle(Vector2.Zero, Vector2.Zero );
-            mUI.ModuleDeactivate();
+            DeactivateMyModule<modules.debugger.Module>();
             _engine.DisableMouse();
         }
         else
         {
             _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
             _engine.EnableMouse();
-            mUI.ModuleActivate();
+            ActivateMyModule<modules.debugger.Module>();
         }
     }
 
@@ -87,11 +82,11 @@ public class Scene : AModule, IScene, IInputPart
     {
         if (!_engine.HasModule(M<modules.menu.Module>()))
         {
-            M<modules.menu.Module>().ModuleActivate();
+            ActivateMyModule<modules.menu.Module>();
         }
         else
         {
-            M<modules.menu.Module>().ModuleDeactivate();
+            DeactivateMyModule<modules.menu.Module>();
         }
     }
 
@@ -115,11 +110,11 @@ public class Scene : AModule, IScene, IInputPart
 
         if (areStatsShown)
         {
-            M<builtin.modules.Stats>().ModuleActivate();
+            ActivateMyModule<builtin.modules.Stats>();
         }
         else
         {
-            M<builtin.modules.Stats>().ModuleDeactivate();
+            DeactivateMyModule<builtin.modules.Stats>();
         }
     }
 
@@ -196,7 +191,7 @@ public class Scene : AModule, IScene, IInputPart
          */
         _engine.QueueMainThreadAction(() =>
         {
-            M<modules.osd.Camera>().ModuleActivate();
+            ActivateMyModule<modules.osd.Camera>();
             _engine.SuggestEndLoading();
             M<modules.map.Module>().Mode = Module.Modes.MapMini;
         });
@@ -205,7 +200,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             _engine.QueueMainThreadAction(() =>
             {
-                M<nogame.modules.story.Narration>().ModuleActivate();
+                ActivateMyModule<nogame.modules.story.Narration>();
             });
         });
         
@@ -228,7 +223,7 @@ public class Scene : AModule, IScene, IInputPart
     public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
-        I.Get<InputEventPipeline>().RemoveInputPart(this);
+        M<InputEventPipeline>().RemoveInputPart(this);
 
         I.Get<SubscriptionManager>().Unsubscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
 
@@ -287,14 +282,14 @@ public class Scene : AModule, IScene, IInputPart
             nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
             TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
 
-        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
         
         _engine.AddModule(this);
-        M<modules.map.Module>().ModuleActivate();
+        ActivateMyModule<modules.map.Module>();
     }
 
 }

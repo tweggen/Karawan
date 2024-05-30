@@ -1066,7 +1066,7 @@ public class Engine
 
         _logicalThread = new Thread(_logicalThreadFunction);
         _logicalThread.Priority = ThreadPriority.AboveNormal;
-        I.Get<InputEventPipeline>().ModuleActivate();
+        I.Get<ModuleFactory>().FindModule<InputEventPipeline>();
     }
 
 
@@ -1225,6 +1225,8 @@ public class Engine
         _ecsWorld = new DefaultEcs.World();
         _entityCommandRecorder = new(4096, 1024 * 1024);
 
+        I.Register<engine.ModuleFactory>(() => new engine.ModuleFactory());
+        
         I.Register<engine.Timeline>(() => new engine.Timeline());
         I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
         I.Register<engine.news.EventQueue>(() => new EventQueue());
