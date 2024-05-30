@@ -457,6 +457,11 @@ public class Loader
         {
             LoadQuests(jeQuests);
         }
+
+        if (je.TryGetProperty("layers", out var jeLayers))
+        {
+            I.Get<LayerCatalogue>().LoadConfig(jeLayers);
+        }
     }
 
 

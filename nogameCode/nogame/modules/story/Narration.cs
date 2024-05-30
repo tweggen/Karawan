@@ -389,6 +389,12 @@ public class Narration : AModule, IInputPart
         currentStory.ChoosePathString(strPath, true, null);
         _advanceStory();
     }
+
+
+    public void Start()
+    {
+        _triggerNextStory();
+    }
     
     
     public override void ModuleDeactivate()
@@ -411,6 +417,5 @@ public class Narration : AModule, IInputPart
         }
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
-        _triggerNextStory();
     }
 }

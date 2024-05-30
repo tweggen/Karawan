@@ -42,7 +42,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<modules.map.Module>("nogame.CreateMap") { ShallActivate = false },
         new MyModule<builtin.modules.Stats>() { ShallActivate = false },
         new MyModule<nogame.modules.daynite.FogColor>(),
-        new SharedModule<nogame.modules.story.Narration>() { ShallActivate = false },
+        new SharedModule<nogame.modules.story.Narration>() {},
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<engine.news.ClickModule>(),
         new SharedModule<InputEventPipeline>()
@@ -200,7 +200,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             _engine.QueueMainThreadAction(() =>
             {
-                ActivateMyModule<nogame.modules.story.Narration>();
+                M<nogame.modules.story.Narration>().Start();
             });
         });
         
