@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using engine.news;
 using static engine.Logger;
 
 namespace engine;
@@ -108,6 +109,10 @@ public class SharedModule<T> : AModuleDependency where T: class
     {
         if (null != _implementation)
         {
+            if (ModuleType == typeof(InputEventPipeline))
+            {
+                int a = 1;
+            }
             I.Get<ModuleFactory>().Unreference(_implementation.Value);
             _implementation = null;
         }

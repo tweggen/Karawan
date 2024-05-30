@@ -72,6 +72,7 @@ public class InputEventPipeline : engine.AModule
     public override void ModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe("input.", _onInputEvent);
+        _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
 
@@ -79,6 +80,7 @@ public class InputEventPipeline : engine.AModule
     public override void ModuleActivate()
     {
         base.ModuleActivate();
+        _engine.AddModule(this);
         I.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
     }
 }
