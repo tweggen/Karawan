@@ -41,7 +41,7 @@
   </Target>
   <Target Condition=" '$(OS)' != 'Windows_NT' " Name="GatherTextures" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\linux-x64\publish\joycecmd.exe"/>
+    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\linux-x64\publish\joycecmd"/>
   </Target>
   <Target Name="GatherResources" BeforeTargets="Compile">
     <Message Text="compiling resources" />
