@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <UsingTask TaskName="CmdLine.PackTexturesTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
-  <UsingTask TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
+  <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.PackTexturesTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
+  <UsingTask Condition=" '$(OS)' == 'Windows_NT' " TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\win-x64\joycecmd.dll" />
+  <UsingTask Condition=" '$(OS)' != 'Windows_NT' " TaskName="CmdLine.PackTexturesTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\linux-x64\joycecmd.dll" />
+  <UsingTask Condition=" '$(OS)' != 'Windows_NT' " TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\linux-x64\joycecmd.dll" />
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -33,9 +35,13 @@
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
-  <Target Name="GatherTextures" BeforeTargets="GatherResources">
+  <Target Condition=" '$(OS)' == 'Windows_NT' " Name="GatherTextures" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
     <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\win-x64\publish\joycecmd.exe"/>
+  </Target>
+  <Target Condition=" '$(OS)' != 'Windows_NT' " Name="GatherTextures" BeforeTargets="GatherResources">
+    <Message Text="gathering textures" />
+    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\linux-x64\publish\joycecmd.exe"/>
   </Target>
   <Target Name="GatherResources" BeforeTargets="Compile">
     <Message Text="compiling resources" />
