@@ -33,7 +33,8 @@ public class Factory : AModule
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<LayerCatalogue>()
+        new SharedModule<LayerCatalogue>(),
+        new SharedModule<InputEventPipeline>()
     };
     
 

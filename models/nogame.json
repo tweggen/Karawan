@@ -15,8 +15,10 @@
   },
   "implementations":
   {
+    "engine.news.InputEventPipeline": null,
     "engine.DBStorage": null,
     "engine.physics.ShapeFactory": null,
+    "engine.LayerCatalogue": null,
     "engine.world.MetaGen": null,
     "engine.behave.SpawnModule": null,
     "nogame.modules.AutoSave": null,
@@ -65,7 +67,6 @@
     "engine.behave.ClusterHeatMap": null,
     "builtin.loader.Obj": null,
     "engine.joyce.ModelCache": null,
-    "engine.LayerCatalogue": null
   },
   "mapProviders":
   {
