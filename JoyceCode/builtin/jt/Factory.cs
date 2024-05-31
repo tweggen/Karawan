@@ -79,6 +79,36 @@ public class Factory : AModule
     }
 
 
+    public void CloseAll(string layername)
+    {
+        try
+        {
+            RootWidget wRoot = Layer(layername);
+            var children = wRoot.Children;
+            if (null != children)
+            {
+                foreach (var child in children)
+                {
+                    try
+                    {
+                        child.Parent = null;
+                    }
+                    catch (Exception e)
+                    {
+                        Error($"Unable to remove widget from parent: {e}");
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Error($"Exception executing close call.");
+            return;
+        }
+
+    }
+    
+
     public void CloseOSD(string layername, string id)
     {
         OSDLayer osdLayer;
@@ -102,21 +132,10 @@ public class Factory : AModule
         wVictim.Parent = null;
         wVictim.Dispose();
     }
-    
 
-    public Widget OpenOSD(string filename, string id)
+
+    public Widget OpenOSD(Parser parser, string id)
     {
-        /*
-         * Read the xml
-         */
-        XmlDocument xDoc = new XmlDocument();
-        xDoc.Load(engine.Assets.Open(filename));
-        
-        /*
-         * Parse the document
-         */
-        var parser = new Parser(xDoc, this);
-        
         /*
          * Open the default menu.
          */
@@ -136,4 +155,23 @@ public class Factory : AModule
 
         return wMenu;
     }
+    
+    
+    public Widget OpenOSD(string filename, string id)
+    {
+        /*
+         * Read the xml
+         */
+        XmlDocument xDoc = new XmlDocument();
+        xDoc.Load(engine.Assets.Open(filename));
+        
+        /*
+         * Parse the document
+         */
+        var parser = new Parser(xDoc, this);
+
+        return OpenOSD(parser, id);
+    }
+    
+
 }

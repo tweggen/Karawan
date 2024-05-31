@@ -26,8 +26,7 @@ public class JtBindings
     {
         try
         {
-            var wNew = Parser.Build(id);
-            Factory.Layer(layer).AddChild(wNew);
+            Factory.OpenOSD(Parser, id);
         }
         catch (Exception e)
         {
@@ -42,30 +41,7 @@ public class JtBindings
      */
     public void closeAll(string layername)
     {
-        try
-        {
-            RootWidget wRoot = Factory.Layer(layername);
-            var children = wRoot.Children;
-            if (null != children)
-            {
-                foreach (var child in children)
-                {
-                    try
-                    {
-                        child.Parent = null;
-                    }
-                    catch (Exception e)
-                    {
-                        Error($"Unable to remove widget from parent: {e}");
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Error($"Exception executing close call.");
-            return;
-        }
+        Factory.CloseAll(layername);
     }
 
 

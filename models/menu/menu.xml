@@ -16,7 +16,7 @@
             <option color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>
     </view>
-    <view id='menuHelp'>
+    <view layer='pausemenu' id='menuHelp'>
         <vbox width='250' x='200' y='100'>
             <text color='#666666' height='40'>Help</text>
             <text color='#999999'>WASD - navigate</text>
