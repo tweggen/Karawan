@@ -319,15 +319,19 @@ public class API
         in DefaultEcs.Entity entity, 
         in BepuPhysics.BodyHandle bodyHandle)
     {
-        var handle = entity.Get<physics.components.Body>().Reference.Handle;
-
-        lock (_lo)
+        if (entity.IsAlive && entity.Has<physics.components.Body>())
         {
-            if (!_setRegisteredEntities.Contains(handle.Value))
+            var handle = entity.Get<physics.components.Body>().Reference.Handle;
+
+            lock (_lo)
             {
-                ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
+                if (!_setRegisteredEntities.Contains(handle.Value))
+                {
+                    ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
+                }
+
+                _setRegisteredEntities.Remove(handle.Value);
             }
-            _setRegisteredEntities.Remove(handle.Value);
         }
 
         lock (_engine.Simulation)

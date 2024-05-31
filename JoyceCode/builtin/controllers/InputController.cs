@@ -16,6 +16,11 @@ namespace builtin.controllers;
  */
 public class InputController : engine.AModule, engine.IInputPart
 {
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<InputEventPipeline>()    
+    };
+
     private object _lo = new();
 
     public float MY_Z_ORDER { get; set; } = 0f;
