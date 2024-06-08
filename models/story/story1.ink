@@ -42,11 +42,14 @@ Sometimes I wonder if he knows the fishmongers. Though I never dared to ask him.
 
 -> END
 
-=== collectCubes ===
+=== firstPubSecEncounter ===
 
 Well, I hit them, but they just rode on. Guess I have to repair my car.
-Let's better go to a polytope. Cubes rule!
-{ triggerQuest("nogame.quests.FirstRecharge.Quest") }
+Driving into any arbitrary polytope will do it.
+However, I hope public security didn't notice the bump.
+{ triggerQuest("nogame.quests.FirstPubSec.Quest") }
+{ triggerQuest("nogame.quests.FirstReacharge.Quest") }
 
 -> END // continues with HelloFishmonger after we reached the target.
+
 
