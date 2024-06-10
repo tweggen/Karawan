@@ -134,7 +134,7 @@ public class Object : IDisposable
                     BodyReference prefBody = Engine.Simulation.Bodies.GetBodyReference(bh);
                     if (prefBody.Constraints.Count > 0)
                     {
-                        ErrorThrow<InvalidOperationException>(
+                        Error<InvalidOperationException>(
                             $"Rejecting to remove body {IntHandle} from entity {Entity}");
                     }
                 }
