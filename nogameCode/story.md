@@ -63,6 +63,15 @@ Maybe find source code repos of the founders?
 Mine Fishcoins?
 Fight robots?
 
+THe Fishmongers are a business established to become a daily part of everyone's life.
+Later, we learn they are funded by suspicious business, involved with dubious political
+fractions, to make everybody dependant on them, to evetually tear down the current 
+government in a public revolution.
+In the end we learn, this action is organized by the party of the current government,
+which is funded by international governments and domestic heavy industries.
+
+
+
 
 ### someone
 

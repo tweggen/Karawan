@@ -29,7 +29,7 @@ public class ClickableHandler
     private Matrix4x4 _mView;
 
     
-    private void _findAt(in Vector2 pos, in SortedDictionary<DefaultEcs.Entity, Vector2> mapResultingEntities)
+    private void _findAt(in Vector2 pos, in Dictionary<DefaultEcs.Entity, Vector2> mapResultingEntities)
     {
         /*
          * We have two (+, see above) different version of Clickables: Those from 3d space
@@ -195,7 +195,7 @@ public class ClickableHandler
                 continue;
             }
 
-            SortedDictionary<DefaultEcs.Entity, Vector2> mapClickedEntities = new();
+            Dictionary<DefaultEcs.Entity, Vector2> mapClickedEntities = new();
             /*
              * Then find the entity somebody would have clicked on.
              */
