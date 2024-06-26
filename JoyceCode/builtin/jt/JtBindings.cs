@@ -30,12 +30,25 @@ public class JtBindings
         }
         catch (Exception e)
         {
-            Error($"Exception executing open call.");
+            Error($"Exception executing open call: {e}.");
             return;
         }
     }
 
 
+    public void close(string layername, string id)
+    {
+        try
+        {
+            Factory.CloseOSD(layername, id);
+        }
+        catch (Exception e)
+        {
+            Error($"Exception executing close call: {e}.");
+        }
+    }
+    
+    
     /**
      * Close all open widgets
      */

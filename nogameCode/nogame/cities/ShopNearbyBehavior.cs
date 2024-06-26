@@ -21,12 +21,18 @@ public class ShopNearbyBehavior : ABehavior
     public float Distance { get; set; } = 10f;
 
 
+    private void _onShopEnter(Event ev)
+    {
+        I.Get<nogame.modules.shop.Module>().ModuleActivate();
+    }
+
     private void _onInputButton(Event ev)
     {
         if (ev.Code != "<interact>") return;
-
         ev.IsHandled = true;
 
+        _onShopEnter(ev);
+#if false
         _engine.QueueEntitySetupAction("shopping", e =>
         {
             var jFountainCubesInstanceDesc = InstanceDesc.CreateFromMatMesh(
@@ -62,7 +68,7 @@ public class ShopNearbyBehavior : ABehavior
                 }
             );
         });
-
+#endif
     }
 
 

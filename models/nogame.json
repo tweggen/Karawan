@@ -22,6 +22,7 @@
     "engine.world.MetaGen": null,
     "engine.behave.SpawnModule": null,
     "nogame.modules.AutoSave": null,
+    "nogame.modules.shop.Module": null,
     "builtin.controllers.InputMapper": {
       "properties": {
         "MapLogicalToDescription":{
@@ -270,6 +271,7 @@
       { "uri": "../models/fonts/Prototype.ttf" },
       { "uri": "../models/icons/appiconpng.png" },
       { "uri": "../models/menu/menu.xml" },
+      { "uri": "../models/menu/shop.xml" },
       { "uri": "../models/nogame.json" },
       { "uri": "../models/models/u/U5.fbx" },
       { "uri": "../models/models/people/Spring Boy.fbx" }
