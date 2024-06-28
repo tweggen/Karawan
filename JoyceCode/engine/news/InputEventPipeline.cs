@@ -30,7 +30,6 @@ public class InputEventPipeline : engine.AModule
          */
         IEnumerable<IInputPart> listParts = _dictParts.GetEnumerable();
 
-        
         foreach (var part in listParts)
         {
             try

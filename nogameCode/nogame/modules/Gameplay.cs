@@ -47,9 +47,12 @@ public class Gameplay : AModule, IInputPart
 
     private void _onLogicalFrame(object? sender, float dt)
     {
+        bool shallBeEnabled;
+        shallBeEnabled = _engine.State == Engine.EngineState.Running;
+
+#if false
         // TXWTODO: Remove this workaround. We still need a smart idea, who can read the analog controls.
         var frontZ = M<InputEventPipeline>().GetFrontZ();
-        bool shallBeEnabled;
         if (frontZ != nogame.modules.playerhover.WASDPhysics.MY_Z_ORDER)
         {
             shallBeEnabled = false;
@@ -58,6 +61,7 @@ public class Gameplay : AModule, IInputPart
         {
             shallBeEnabled = true;
         }
+#endif
 
         if (_wasEnabled != shallBeEnabled)
         {

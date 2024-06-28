@@ -526,6 +526,7 @@ public class Widget : IDisposable
              */
             if (null == value)
             {
+                (oldRoot as RootWidget)?.UnfocusChild(this);
                 UnrealizeSelf();
             }
         }

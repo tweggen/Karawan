@@ -37,6 +37,7 @@ public class Module : AModule, IInputPart
                     case "<menu>":
                         doDeactivate = true;
                         break;
+                    
                     case "<interact>":
                         /*
                        * We just consume the interact key to avoid reopening the shop.
@@ -59,6 +60,7 @@ public class Module : AModule, IInputPart
 
     private void _closeShop(Event ev)
     {
+        ev.IsHandled = true;
         ModuleDeactivate();
     }
     

@@ -134,7 +134,7 @@ internal class WASDPhysics : AModule, IInputPart
         /*
          * If I shall control the ship.
          */
-        if (MY_Z_ORDER == M<InputEventPipeline>().GetFrontZ())
+        if (_engine.State == Engine.EngineState.Running)
         {
             I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
