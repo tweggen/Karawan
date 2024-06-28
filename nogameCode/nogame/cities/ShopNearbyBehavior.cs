@@ -5,6 +5,7 @@ using DefaultEcs;
 using engine;
 using engine.behave;
 using engine.draw.components;
+using engine.draw.systems;
 using engine.joyce;
 using engine.joyce.components;
 using engine.news;
@@ -24,51 +25,14 @@ public class ShopNearbyBehavior : ABehavior
     private void _onShopEnter(Event ev)
     {
         I.Get<nogame.modules.shop.Module>().ModuleActivate();
+        ev.IsHandled = true;
     }
 
     private void _onInputButton(Event ev)
     {
         if (ev.Code != "<interact>") return;
-        ev.IsHandled = true;
 
         _onShopEnter(ev);
-#if false
-        _engine.QueueEntitySetupAction("shopping", e =>
-        {
-            var jFountainCubesInstanceDesc = InstanceDesc.CreateFromMatMesh(
-                new MatMesh(
-                    I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),
-                    engine.joyce.mesh.Tools.CreatePlaneMesh("carcrashfragments", new Vector2(1f, 1f))
-                ), 30f
-            );
-            Vector3 v3Pos;
-            v3Pos = EPOI.Get<Transform3ToWorld>().Matrix.Translation;
-
-            e.Set(new engine.behave.components.ParticleEmitter()
-            {
-                Position = Vector3.Zero,
-                ScalePerSec = 1f,
-                RandomPos = Vector3.One,
-                EmitterTimeToLive = 120,
-                Velocity = Vector3.UnitY,
-                RotationVelocity = Quaternion.CreateFromAxisAngle(
-                    Vector3.UnitY,
-                    720f / 60f / 180f * Single.Pi),
-                ParticleTimeToLive = 300,
-                InstanceDesc = jFountainCubesInstanceDesc,
-                RandomDirection = 0.5f,
-                MaxDistance = 20f,
-                CameraMask = 0x00000001,
-            });
-            e.Set(new engine.joyce.components.Transform3ToWorld()
-                {
-                    Matrix = Matrix4x4.CreateTranslation(v3Pos),
-                    CameraMask = 0x00000001,
-                    IsVisible = true
-                }
-            );
-        });
-#endif
     }
 
 
@@ -84,6 +48,7 @@ public class ShopNearbyBehavior : ABehavior
     {
         if (!_eActionMarker.IsAlive) return;
      
+        I.Get<SubscriptionManager>().Unsubscribe("nogame.modules.shop.open", _onShopEnter);
         I.Get<SubscriptionManager>().Unsubscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton);
         _eActionMarker.Dispose();
     }
@@ -111,10 +76,15 @@ public class ShopNearbyBehavior : ABehavior
             new Vector2(-100f, 0f), new Vector2(200f, 14f), 
             "E to enter", 18, 0xff22aaee,
             0x00000000, engine.draw.HAlign.Center) { MaxDistance = 2f*Distance });
+        _eActionMarker.Set(new engine.behave.components.Clickable()
+        {
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.shop.open", null)
+        });
         I.Get<HierarchyApi>().SetParent(_eActionMarker, EPOI);
         I.Get<TransformApi>().SetTransforms(_eActionMarker, true,
             0x00000001, Quaternion.Identity, Vector3.Zero);
         
         I.Get<SubscriptionManager>().Subscribe(engine.news.Event.INPUT_BUTTON_PRESSED, _onInputButton, _onInputButtonDistance);
+        I.Get<SubscriptionManager>().Subscribe("nogame.modules.shop.open", _onShopEnter);
     }
 }
