@@ -38,6 +38,8 @@ Let's see if navigation can help us.
 I can't see agent 12. He usually would be here if I long for a beverage or a meal.
 He would tell me something, you know, get straight to it. 
 Sometimes I wonder if he knows the fishmongers. Though I never dared to ask him.
+I should ... wait I have a signal
+... I should look on the map to find that car he's in.
 { triggerQuest("nogame.quests.HelloFishmonger.Quest") }
 
 -> END
@@ -48,7 +50,7 @@ Well, I hit them, but they just rode on. Guess I have to repair my car.
 Driving into any arbitrary polytope will do it.
 However, I hope public security didn't notice the bump.
 // { triggerQuest("nogame.quests.FirstPubSec.Quest") }
-// { triggerQuest("nogame.quests.FirstReacharge.Quest") }
+// { triggerQuest("nogame.quests.FirstRecharge.Quest") }
 
 -> END // continues with HelloFishmonger after we reached the target.
 

@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Numerics;
 using engine;
+using engine.behave.components;
 using engine.quest;
 
 namespace nogame.quests.HelloFishmonger;
@@ -61,11 +62,16 @@ public class Quest : AModule, IQuest
         DefaultEcs.Entity eVictim = default;
         var behaving = 
             _engine.GetEcsWorld().GetEntities().With<engine.behave.components.Behavior>().AsEnumerable();
-        int nTries = 10;
+        int nTries = 50;
         while (nTries-- > 0)
         {
             eVictim = behaving.First();
             if (!eVictim.IsAlive) continue;
+            ref var cBehavior = ref eVictim.Get<Behavior>();
+            if (cBehavior.Provider.GetType() != typeof(nogame.characters.car3.Behavior))
+            {
+                continue;
+            }
         }
 
         _questTarget = new engine.quest.TrailVehicle()
