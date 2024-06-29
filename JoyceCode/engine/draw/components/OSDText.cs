@@ -13,6 +13,7 @@ public struct OSDText
     public uint BorderColor;
     public uint GaugeColor;
     public Vector2 Position, Size;
+    public Vector2 ScreenPos;
     public HAlign HAlign;
     public VAlign VAlign;
     public ushort OSDTextFlags = 0;

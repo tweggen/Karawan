@@ -98,7 +98,7 @@ public class ModuleTracker : IDisposable
                 }
                 else
                 {
-                    ErrorThrow<InvalidOperationException>($"Module ${this.GetType()} already activated.");
+                    ErrorThrow<InvalidOperationException>($"Module {Module} already activated.");
                 }
             }
 

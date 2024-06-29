@@ -58,29 +58,37 @@ public class Display : engine.AModule
             .With<Clickable>()
             .With<engine.draw.components.OSDText>()
             .AsEnumerable();
-        Vector2 v2OSDPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
+        
+        Vector2 v2OsdPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
         //List<Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event>> listClickables = new();
 
+        #if false
         foreach (var eCand in clickableEntities)
         {
-            var cOSDText = eCand.Get<engine.draw.components.OSDText>();
+            ref var cOSDText = ref eCand.Get<engine.draw.components.OSDText>();
+
+            if (cOSDText.ScreenPos.X == -1000f) continue;
 
             Trace($"have clickable {cOSDText.Position} + {cOSDText.Size}: cOSDText");
         }
+        #endif
 
-        Trace($"Handling relative click {v2OSDPos}");
+        Trace($"Handling relative click {v2OsdPos}");
         foreach (var eCand in clickableEntities)
         {
-            var cOSDText = eCand.Get<engine.draw.components.OSDText>();
+            ref var cOsdText = ref eCand.Get<engine.draw.components.OSDText>();
 
-            if (v2OSDPos.X >= cOSDText.Position.X
-                && v2OSDPos.Y >= cOSDText.Position.Y
-                && v2OSDPos.X < (cOSDText.Position.X + cOSDText.Size.X)
-                && v2OSDPos.Y < (cOSDText.Position.Y + cOSDText.Size.Y))
+            ref var v2ScreenPos = ref cOsdText.ScreenPos;
+            if (v2ScreenPos.X == -1000f) continue;
+
+            if (v2OsdPos.X >= v2ScreenPos.X
+                && v2OsdPos.Y >= v2ScreenPos.Y
+                && v2OsdPos.X < (v2ScreenPos.X + cOsdText.Size.X)
+                && v2OsdPos.Y < (v2ScreenPos.Y + cOsdText.Size.Y))
             {
-                Trace($"matching {cOSDText.Position} + {cOSDText.Size}: cOSDText");
+                Trace($"matching {v2ScreenPos} + {cOsdText.Size}: cOSDText");
                 //listClickables.Add(eCand.Get<Clickable>().ClickEventFactory);
-                return eCand.Get<Clickable>().ClickEventFactory(e, cev, v2OSDPos);
+                return eCand.Get<Clickable>().ClickEventFactory(e, cev, v2OsdPos);
             }
         }
 

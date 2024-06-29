@@ -39,7 +39,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
 
         foreach (var entity in entities)
         {
-            components.OSDText cOsdText = entity.Get<components.OSDText>();
+            ref components.OSDText cOsdText = ref entity.Get<components.OSDText>();
 
             Vector2 v2ScreenPos;
             bool isBehind = false;
@@ -59,7 +59,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
 
             if (entity.Has<Transform3ToWorld>())
             {
-                var cEntityTransform = entity.Get<Transform3ToWorld>();
+                ref var cEntityTransform = ref entity.Get<Transform3ToWorld>();
 
                 ce = _cameraWatcher.GetCameraEntry(cEntityTransform.CameraMask); 
                 if (null == ce)
@@ -100,9 +100,11 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
 
             if (isBehind)
             {
+                cOsdText.ScreenPos = new(-1000f, -1000f);
                 continue;
             }
             v2ScreenPos += cOsdText.Position;
+            cOsdText.ScreenPos = v2ScreenPos;
             
             
             /*
