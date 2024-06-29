@@ -5,6 +5,7 @@ using engine;
 using engine.behave.components;
 using engine.draw.systems;
 using engine.joyce;
+using engine.joyce.components;
 using static engine.Logger;
 
 namespace nogame.modules.osd;
@@ -147,7 +148,15 @@ public class Display : engine.AModule
         var dtTotal = _dtTotal;
         _dtTotal = 0f;
         _frameCounter = 0;
-        M<RenderOSDSystem>().Update(dtTotal);
+        var renderOSDSystem = M<RenderOSDSystem>();
+        try
+        {
+            renderOSDSystem.ReferencePosition = _engine.GetPlayerEntity().Get<Transform3ToWorld>().Matrix.Translation;
+        }
+        catch (Exception e)
+        {
+        }
+        renderOSDSystem.Update(dtTotal);
     }
 
     

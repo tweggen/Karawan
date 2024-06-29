@@ -30,6 +30,9 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
     private bool _clearWholeScreen = true;
     private builtin.tools.CameraWatcher _cameraWatcher;
 
+    public Vector3 ReferencePosition = Vector3.Zero;
+    
+    
     protected override void Update(double dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
         if (null == _framebuffer)
@@ -40,11 +43,12 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
         foreach (var entity in entities)
         {
             ref components.OSDText cOsdText = ref entity.Get<components.OSDText>();
+            cOsdText.ScreenPos = new(-1000f, -1000f);
 
             Vector2 v2ScreenPos;
             bool isBehind = false;
-            float distance;
-
+            float distanceSquared;
+            float maxDistanceSquared = cOsdText.MaxDistance * cOsdText.MaxDistance;
             
             CameraEntry ce = null;
 
@@ -82,8 +86,8 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
                     isBehind = true;
                 }
 
-                distance = Vector3.Distance(ce.V3CamPosition, v3Model);
-                if (distance > cOsdText.MaxDistance)
+                distanceSquared = Vector3.DistanceSquared(ReferencePosition, v3Model);
+                if (distanceSquared > maxDistanceSquared)
                 {
                     continue;
                 }
@@ -95,12 +99,11 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
             else
             {
                 v2ScreenPos = Vector2.Zero;
-                distance = 0f;
+                distanceSquared = 0f;
             }
 
             if (isBehind)
             {
-                cOsdText.ScreenPos = new(-1000f, -1000f);
                 continue;
             }
             v2ScreenPos += cOsdText.Position;
@@ -148,7 +151,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
             uint textColor;
             if ((cOsdText.OSDTextFlags & OSDText.ENABLE_DISTANCE_FADE) != 0)
             {
-                float distFactor = 1f- distance / cOsdText.MaxDistance;
+                float distFactor = 1f- distanceSquared / maxDistanceSquared;
                 byte distAlpha = (byte)(distFactor * (cOsdText.TextColor>>24));
                 textColor = (cOsdText.TextColor & 0xffffff) | (uint)(distAlpha << 24);
             }
