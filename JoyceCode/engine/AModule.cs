@@ -4,22 +4,23 @@ using static engine.Logger;
 
 namespace engine;
 
-public abstract class AModule : IModule
+
+public class ModuleTracker : IDisposable
 {
-    protected object _lo = new();
-    private bool _isActivated;
-    protected Engine _engine;
-    protected IEnumerable<IModuleDependency> _moduleDependencies = null;
+    private object _lo = new();
     
     private List<IModule> _activatedModules = new();
     private Dictionary<Type, IModule> _mapModules = new();
-
     public bool IgnoreDoubleActivation { get; set; } = false;
-    
-    
-    public virtual IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
 
-    protected T M<T>() where T : class
+    public IEnumerable<IModuleDependency> ModuleDependencies = null;
+   
+
+    required public IModule Module;
+    public bool _isActivated = false;
+
+    
+    public T M<T>() where T : class
     {
         if (_mapModules.TryGetValue(typeof(T), out var mod))
         {
@@ -31,7 +32,8 @@ public abstract class AModule : IModule
         }
     }
     
-    protected void ActivateMyModule<T>() where T : class, IModule
+    
+    public void ActivateMyModule<T>() where T : class, IModule
     {
         IModule myModule = M<T>();
         if (myModule.IsModuleActive())
@@ -42,7 +44,7 @@ public abstract class AModule : IModule
     }
 
 
-    protected void DeactivateMyModule<T>() where T : class, IModule
+    public void DeactivateMyModule<T>() where T : class, IModule
     {
         IModule myModule = M<T>();
         if (!myModule.IsModuleActive())
@@ -52,16 +54,7 @@ public abstract class AModule : IModule
         myModule.ModuleDeactivate();
     }
 
-
-    public virtual void Dispose()
-    {
-        // Do not dispose the dependant modules.
-    }
-
-
-    public bool IsModuleActive() => _isActivated;
     
-
     public virtual void ModuleDeactivate()
     {
         List<IModule> activatedModules;
@@ -89,15 +82,12 @@ public abstract class AModule : IModule
         lock (_lo)
         {
             _mapModules.Clear();
-            _engine = null;
         }
     }
 
 
     public virtual void ModuleActivate()
     {
-        _engine = I.Get<Engine>();
-        var deps = ModuleDepends();
         lock (_lo)
         {
             if (_isActivated)
@@ -113,10 +103,9 @@ public abstract class AModule : IModule
             }
 
             _isActivated = true;
-            _moduleDependencies = deps;
         }
 
-        foreach (var moduleDependency in _moduleDependencies)
+        foreach (var moduleDependency in ModuleDependencies)
         {
             bool condition = true;
             if (moduleDependency.Condition != null)
@@ -148,6 +137,58 @@ public abstract class AModule : IModule
                 }
             }
         }
+    }
+    
+
+    public void Dispose()
+    {
+        // Nothing to dispose
+    }
+}
+
+
+public abstract class AModule : IModule
+{
+    protected ModuleTracker _moduleTracker;
+    
+    protected object _lo = new();
+    
+    protected Engine _engine;
+
+    public virtual IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>();
+
+    
+    protected T M<T>() where T : class => _moduleTracker.M<T>();
+    protected void ActivateMyModule<T>() where T : class, IModule => _moduleTracker.ActivateMyModule<T>();
+    protected void DeactivateMyModule<T>() where T : class, IModule => _moduleTracker.DeactivateMyModule<T>();
+
+
+    public virtual void ModuleDeactivate() => _moduleTracker.ModuleDeactivate();
+
+    
+    public virtual void ModuleActivate()
+    {
+        _engine = I.Get<Engine>();
+        
+        /*
+         * Generate the dependencies on demand. This is not possible at construction time.
+         */
+        _moduleTracker.ModuleDependencies = ModuleDepends();
+        _moduleTracker.ModuleActivate();  
+    } 
+    
+    
+    public virtual bool IsModuleActive() => _moduleTracker._isActivated;
+
+    public virtual void Dispose()
+    {
+        _moduleTracker.Dispose();
+    }
+
+
+    protected AModule()
+    {
+        _moduleTracker = new() { Module = this };
     }
 
 }

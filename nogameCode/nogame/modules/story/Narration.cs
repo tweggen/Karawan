@@ -38,7 +38,7 @@ public class Narration : AModule, IInputPart
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new MyModule<nogame.modules.osd.Display>(),
+        new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<InputEventPipeline>()
     };
     

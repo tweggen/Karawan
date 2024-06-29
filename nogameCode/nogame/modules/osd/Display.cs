@@ -11,6 +11,11 @@ namespace nogame.modules.osd;
 
 public class Display : engine.AModule
 {
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new MyModule<RenderOSDSystem>() { ShallActivate = false } 
+    };
+    
     private engine.joyce.TransformApi _aTransform;
 
     /**
@@ -23,11 +28,6 @@ public class Display : engine.AModule
      */
     DefaultEcs.Entity _eFramebuffer;
 
-    /**
-     * OSD rendering system
-     */
-    private engine.draw.systems.RenderOSDSystem _renderOSDSystem;
-    
     /**
      * Default draw context.
      */
@@ -139,16 +139,17 @@ public class Display : engine.AModule
         var dtTotal = _dtTotal;
         _dtTotal = 0f;
         _frameCounter = 0;
-        _renderOSDSystem.Update(dtTotal);
+        M<RenderOSDSystem>().Update(dtTotal);
     }
 
     
     public override void ModuleDeactivate()
     {
+        DeactivateMyModule<RenderOSDSystem>();
+
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogical;
-        _renderOSDSystem.Dispose();
-        _renderOSDSystem = null;
+
         base.ModuleDeactivate();
     }
 
@@ -162,13 +163,14 @@ public class Display : engine.AModule
          */
         _aTransform = I.Get<engine.joyce.TransformApi>();
 
-        _renderOSDSystem = new RenderOSDSystem();
 
         _engine.AddModule(this);
 
         _engine.OnLogicalFrame += _onLogical;
         
         _setupOSD();
-        _renderOSDSystem.SetFramebuffer(_framebuffer);
+        M<RenderOSDSystem>().SetFramebuffer(_framebuffer);
+        ActivateMyModule<RenderOSDSystem>();
+
     }
 }

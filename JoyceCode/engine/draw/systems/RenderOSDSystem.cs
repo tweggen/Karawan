@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using builtin.tools;
 using engine.draw.components;
 using engine.editor.components;
 using engine.joyce.components;
@@ -9,23 +10,15 @@ using static engine.Logger;
 namespace engine.draw.systems;
 
 
-internal class CameraEntry
-{
-    public Camera3 CCamera;
-    public Transform3ToWorld CCamTransform;
-    public Vector3 V3CamPosition;
-    public Matrix4x4 MCameraToWorld;
-    public Matrix4x4 MView;
-    public Matrix4x4 MProjection;
-}
-
 /**
  * Straightforward implementation that renders every frame entirely without any optimization.
  */
 [DefaultEcs.System.With(typeof(draw.components.OSDText))]
-public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
+public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModule
 {
     private object _lo = new();
+    
+    protected ModuleTracker _moduleTracker;
     
     private engine.Engine _engine;
     private IFramebuffer? _framebuffer = null;
@@ -35,12 +28,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
     private Vector2 _vOSDViewSize;
 
     private bool _clearWholeScreen = true;
-
-    /**
-     * This is a dictionary of the current cameras we have.
-     * TXWTODO: Keep this camera set globally, check if faster.
-     */
-    private SortedDictionary<uint, CameraEntry> _mapCameras;
+    private builtin.tools.CameraWatcher _cameraWatcher;
 
     protected override void Update(double dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
@@ -73,7 +61,8 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             {
                 var cEntityTransform = entity.Get<Transform3ToWorld>();
 
-                if (!_mapCameras.TryGetValue(cEntityTransform.CameraMask, out ce))
+                ce = _cameraWatcher.GetCameraEntry(cEntityTransform.CameraMask); 
+                if (null == ce)
                 {
                     continue;
                 }
@@ -214,37 +203,9 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
             return;
         }
 
-        _mapCameras = new();
+        _cameraWatcher = I.Get<CameraWatcher>();
 
-        //TXWTODO: We need to have a per-camera resolution.
         _vOSDViewSize = new Vector2(_framebuffer.Width, _framebuffer.Height);
-
-        IEnumerable<DefaultEcs.Entity> listCameras = 
-            _engine.GetEcsWorld().GetEntities().With<Camera3>().With<Transform3ToWorld>()
-            .AsEnumerable();
-        foreach (var eCamera in listCameras)
-        {
-            if (eCamera.Has<Transform3ToWorld>() && eCamera.Has<Camera3>())
-            {
-
-                var cCamTransform = eCamera.Get<Transform3ToWorld>();
-                if (!cCamTransform.IsVisible)
-                {
-                    continue;
-                }
-                CameraEntry ce = new();
-                ce.CCamTransform = cCamTransform;
-                ce.CCamera = eCamera.Get<Camera3>();
-                
-
-                ce.MCameraToWorld = ce.CCamTransform.Matrix;
-                ce.V3CamPosition = ce.MCameraToWorld.Translation;
-
-                ce.CCamera.GetViewMatrix(out ce.MView, ce.MCameraToWorld);
-                ce.CCamera.GetProjectionMatrix(out ce.MProjection, _vOSDViewSize);
-                _mapCameras[ce.CCamera.CameraMask] = ce;
-            }
-        }
 
         _framebuffer.BeginModification();
 
@@ -267,6 +228,37 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         _framebuffer.EndModification();
     }
 
+    
+    protected T M<T>() where T : class => _moduleTracker.M<T>();
+
+    public virtual IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<CameraWatcher>()
+    };
+    
+    public virtual void ModuleDeactivate() => _moduleTracker.ModuleDeactivate();
+
+    
+    public virtual void ModuleActivate() 
+    {
+        /*
+         * Generate the dependencies on demand. This is not possible at construction time.
+         */
+        _moduleTracker.ModuleDependencies = ModuleDepends();
+        _moduleTracker.ModuleActivate();  
+    } 
+    
+    
+    public virtual bool IsModuleActive() => _moduleTracker._isActivated;
+
+    
+    public override void Dispose()
+    {
+        _moduleTracker.Dispose();
+        base.Dispose();
+    }
+
+
     public void SetFramebuffer(IFramebuffer framebuffer)
     {
         _framebuffer = framebuffer;
@@ -285,10 +277,13 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>
         
     }
     
+    
     public RenderOSDSystem()
         : base(I.Get<Engine>().GetEcsWorld())
     {
         _engine = I.Get<Engine>();
+        _moduleTracker = new() { Module = this };
+
         _dc = new();
     }
 }

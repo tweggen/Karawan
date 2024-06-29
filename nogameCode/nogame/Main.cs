@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using builtin.tools;
 using engine;
 
 namespace nogame;
@@ -13,7 +14,8 @@ public class Main : AModule
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
-        new SharedModule<builtin.controllers.InputMapper>()
+        new SharedModule<builtin.controllers.InputMapper>(),
+        new SharedModule<builtin.tools.CameraWatcher>()
     };
 
     public override void ModuleDeactivate()

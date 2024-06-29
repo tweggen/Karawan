@@ -22,7 +22,9 @@
     "engine.world.MetaGen": null,
     "engine.behave.SpawnModule": null,
     "nogame.modules.AutoSave": null,
+    "builtin.tools.CameraWatcher": null,
     "nogame.modules.shop.Module": null,
+    "nogame.modules.osd.Display": null,
     "builtin.controllers.InputMapper": {
       "properties": {
         "MapLogicalToDescription":{

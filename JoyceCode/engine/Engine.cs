@@ -37,7 +37,6 @@ public class Engine
 
     public physics.actions.Log PLog;
     
-    
     private int _nextId = 0;
 
     private DefaultEcs.World _ecsWorld;
@@ -143,6 +142,14 @@ public class Engine
     
     private bool _platformIsAvailable = false;
     private bool _isRunning = true;
+
+    private uint _frameNumber = 0;
+
+    public uint FrameNumber
+    {
+        get => _frameNumber;
+        set { _frameNumber = value; }
+    }
 
     public BepuPhysics.Simulation Simulation
     {
@@ -596,6 +603,7 @@ public class Engine
         {
             engineState = State;
             gamePlayState = _gamePlayState;
+            _frameNumber++;
         }
 
         /*

@@ -33,7 +33,7 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<nogame.modules.Gameplay>(),
         new MyModule<modules.debugger.Module>("nogame.CreateUI") { ShallActivate = false },
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
-        new MyModule<nogame.modules.osd.Display>("nogame.CreateOSD"),
+        new SharedModule<nogame.modules.osd.Display>(),
         new MyModule<nogame.modules.osd.Camera>() { ShallActivate = false },
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),
