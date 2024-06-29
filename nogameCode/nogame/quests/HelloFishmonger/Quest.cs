@@ -22,7 +22,7 @@ public class Quest : AModule, IQuest
 
     private void _onReachTarget()
     {
-        I.Get<nogame.modules.story.Narration>().TriggerPath("collectCubes");
+        I.Get<nogame.modules.story.Narration>().TriggerPath("firstPubSecEncounter");
     }
 
 
