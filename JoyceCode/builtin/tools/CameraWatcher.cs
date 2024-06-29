@@ -218,7 +218,6 @@ public class CameraWatcher : AModule
 
     public override void ModuleActivate()
     {
-        _engine.RemoveModule(this);
         base.ModuleActivate();
 
         lock (_lo)
@@ -246,5 +245,6 @@ public class CameraWatcher : AModule
         }
 
         _subscriptions = GetSubscriptions(world).Merge();
+        _engine.AddModule(this);
     }
 }
