@@ -33,6 +33,8 @@ public class ToSomewhere : AModule
      */
     public string SensitivePhysicsName { get; set; } = "";
 
+    public float SensitiveRadius { get; set; } = 3f;
+
     /**
      * The map we shall render on
      */
@@ -140,7 +142,7 @@ public class ToSomewhere : AModule
         };
         lock (_engine.Simulation)
         {
-            var shape = I.Get<ShapeFactory>().GetCylinderShape(3f);
+            var shape = I.Get<ShapeFactory>().GetCylinderShape(SensitiveRadius);
             po = new engine.physics.Object(_engine, _eGoal, shape);
             prefCylinder = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
         }

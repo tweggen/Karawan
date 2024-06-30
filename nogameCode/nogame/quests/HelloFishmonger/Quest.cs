@@ -72,6 +72,8 @@ public class Quest : AModule, IQuest
             {
                 continue;
             }
+
+            cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
         }
 
         _questTarget = new engine.quest.TrailVehicle()

@@ -248,8 +248,17 @@ public class SpawnModule : AModule
                             for (int i = 0; i < killNow; ++i)
                             {
                                 var si = perFragmentStats.PossibleVictims[i];
-                                si.Entity.Get<Behavior>().MaxDistance = -1;
-                                op.TerminateCharacter(kvpFrag.Key, si.Entity);
+                                ref var cBehavior = ref si.Entity.Get<Behavior>();
+                                if (cBehavior.MayBePurged())
+                                {
+                                    cBehavior.MaxDistance = -1;
+                                    op.TerminateCharacter(kvpFrag.Key, si.Entity);
+                                }
+                                else
+                                {
+                                    Error($"Should not be here at all with entity ${si.Entity}");
+                                    perFragmentStats.ToKill++;
+                                }
                             }
                         }
                     }

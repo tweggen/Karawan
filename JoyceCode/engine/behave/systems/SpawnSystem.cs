@@ -66,9 +66,12 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
                     };
                     if (_cameraInfo.IsValid)
                     {
-                        if (Vector3.Dot(_cameraInfo.Front, si.Position - _cameraInfo.Position) <= 0.7f)
+                        if (cBehavior.MayBePurged())
                         {
-                            perFragmentStats.NeedVictims().Add(si);
+                            if (Vector3.Dot(_cameraInfo.Front, si.Position - _cameraInfo.Position) <= 0.7f)
+                            {
+                                perFragmentStats.NeedVictims().Add(si);
+                            }
                         }
                     }
                 }

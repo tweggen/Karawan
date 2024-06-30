@@ -1,6 +1,9 @@
+using System;
 using System.Numerics;
 using engine;
+using engine.joyce.components;
 using engine.quest;
+using engine.world.components;
 
 namespace nogame.quests.VisitAgentTwelve;
 
@@ -57,12 +60,34 @@ public class Quest : AModule, IQuest
         _engine.AddModule(this);
         
         /*
+         * Test code: Find any bar.
+         * This is not smart. We just look for the one closest to the player.
+         */
+        var withIcon = 
+            _engine.GetEcsWorld().GetEntities().With<Transform3ToWorld>().With<MapIcon>().AsEnumerable();
+        float mind2 = Single.MaxValue;
+        var v3Player = _engine.GetPlayerEntity().Get<Transform3ToWorld>().Matrix.Translation;
+        DefaultEcs.Entity eClosest = default;
+        foreach (var e in withIcon)
+        {
+            ref var cMapIcon = ref e.Get<MapIcon>();
+            if (cMapIcon.Code != MapIcon.IconCode.Drink) continue;
+            var d2 = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation).LengthSquared();
+            if (d2 < mind2)
+            {
+                eClosest = e;
+                mind2 = d2;
+            }
+        }
+        
+        /*
          * Test code to add a destination.
          */
         _questTarget = new engine.quest.ToLocation()
         {
-            RelativePosition = new Vector3(-440f, 40f, 389f),
+            RelativePosition = eClosest.Get<Transform3ToWorld>().Matrix.Translation,
             SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+            SensitiveRadius = 15f,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
             OnReachTarget = _onReachTarget
         };
