@@ -10,17 +10,29 @@ namespace builtin.loader.fbx;
 
 public class FbxModel : IDisposable
 {
-    private Assimp _assimp;
+    static  private Assimp _assimp;
     private List<Texture> _texturesLoaded = new List<Texture>();
     public string Directory { get; protected set; } = string.Empty;
     public List<Mesh> Meshes { get; protected set; } = new List<Mesh>();
 
 
+    private static void _needAssimp()
+    {
+        if (null == _assimp)
+        {
+            _assimp = Assimp.GetApi();
+            //var customAssimpLibraryNameContainer = new CustomAssimpLibraryNameContainer();
+            //_assimp = new(Silk.NET.Assimp.Assimp.CreateDefaultContext(customAssimpLibraryNameContainer.GetLibraryNames()));
+        }
+    }
+    
+
     unsafe public void Load(string path)
     {
         
         Directory = path;
-        _assimp = Assimp.GetApi();
+        _needAssimp();
+        
 
         FileIO fileIO = fbx.Assets.Get();
         Scene* pScene = null;

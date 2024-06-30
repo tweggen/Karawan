@@ -39,6 +39,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\Fbx.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Assets.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\AssimpFile.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\CustomAssimpLibraryNameContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\FbxModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Mesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\loader\fbx\Texture.cs" />

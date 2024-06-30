@@ -11,7 +11,7 @@ using static engine.Logger;
 namespace builtin.loader;
 
 public class Fbx
-{
+{ 
     static private Assimp _assimp;
     
     static public void LoadModelInstanceSync(string url,
@@ -44,7 +44,7 @@ public class Fbx
         
     public static void Unit()
     {
-        LoadModelInstanceSync("U5.fbx", new ModelProperties(), out var _);
-        LoadModelInstanceSync("Spring Boy.fbx", new ModelProperties(), out var _);
+        //LoadModelInstanceSync("U5.fbx", new ModelProperties(), out var _);
+        //LoadModelInstanceSync("Spring Boy.fbx", new ModelProperties(), out var _);
     }
 }
