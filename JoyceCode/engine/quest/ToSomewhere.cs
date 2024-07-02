@@ -63,7 +63,7 @@ public class ToSomewhere : AModule
         () => InstanceDesc.CreateFromMatMesh(
             new MatMesh(
                 new Material() { EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff888822) },
-                engine.joyce.mesh.Tools.CreateCubeMesh($"goal mesh", 3f)
+                engine.joyce.mesh.Tools.CreateCubeMesh($"goal mesh", 1f)
             ),
             400f
         )
@@ -93,8 +93,7 @@ public class ToSomewhere : AModule
     {
         if (_eMarker.IsAlive)
         {
-            _eMarker.Dispose();
-            _eMarker = default;
+            I.Get<HierarchyApi>().Delete(ref _eMarker);
         }
     }
     
@@ -105,15 +104,22 @@ public class ToSomewhere : AModule
     private void _createTargetInstance(DefaultEcs.Entity eParent)
     {
         _eMarker = _engine.CreateEntity($"quest.goal {Name} marker");
-        _eMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
         I.Get<TransformApi>().SetTransforms(_eMarker, true, 0x0000ffff, Quaternion.Identity, Vector3.Zero);
         I.Get<HierarchyApi>().SetParent(_eMarker, eParent);
-        _eMarker.Set(
+
+        DefaultEcs.Entity eMeshMarker = _engine.CreateEntity($"quest.goal {Name} mesh marker");
+        eMeshMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
+        I.Get<HierarchyApi>().SetParent(eMeshMarker, _eMarker);
+        I.Get<TransformApi>().SetTransforms(eMeshMarker, true, 0x0000ffff, Quaternion.Identity, 
+            Vector3.Zero,
+            new Vector3(SensitiveRadius, 1f, SensitiveRadius));
+        eMeshMarker.Set(
             new engine.behave.components.Behavior(_goalMarkerSpinBehavior.Value)
             {
                 MaxDistance = 2000
             });
-        DefaultEcs.Entity eMapMarker = _engine.CreateEntity($"quest goal {Name} map marker");
+        
+        DefaultEcs.Entity eMapMarker = _engine.CreateEntity($"quest.goal {Name} map marker");
         I.Get<HierarchyApi>().SetParent(eMapMarker, _eMarker); 
         I.Get<TransformApi>().SetTransforms(eMapMarker, true, 
             MapCameraMask, Quaternion.Identity, Vector3.Zero);

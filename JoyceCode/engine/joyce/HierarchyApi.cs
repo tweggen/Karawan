@@ -47,6 +47,28 @@ namespace engine.joyce
         }
 
 
+        private void _deleteRecursively(DefaultEcs.Entity entity)
+        {
+            var eChildren = _engine.GetEcsWorld().GetEntities()
+                .With((in components.Parent cParent) => cParent.Entity == entity).AsEnumerable();
+            foreach (var eChild in eChildren)
+            {
+                _deleteRecursively(eChild);
+                eChild.Dispose();
+            }
+        }
+        
+        
+        /**
+         * Recursively dispose an entity, including its children.
+         */
+        public void Delete(ref DefaultEcs.Entity entity)
+        {
+            _deleteRecursively(entity);
+            entity = default;
+        }
+        
+
         public void Update()
         {
             if(_isDirty)

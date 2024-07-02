@@ -87,7 +87,7 @@ public class Quest : AModule, IQuest
         {
             RelativePosition = eClosest.Get<Transform3ToWorld>().Matrix.Translation,
             SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-            SensitiveRadius = 15f,
+            SensitiveRadius = 30f,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
             OnReachTarget = _onReachTarget
         };
