@@ -83,11 +83,14 @@ public class Quest : AModule, IQuest
         /*
          * Test code to add a destination.
          */
+        var v3Marker = eClosest.Get<Transform3ToWorld>().Matrix.Translation;
+        var v3Target = v3Marker with { Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(v3Marker)+engine.world.MetaGen.ClusterNavigationHeight };
+        
         _questTarget = new engine.quest.ToLocation()
         {
-            RelativePosition = eClosest.Get<Transform3ToWorld>().Matrix.Translation,
+            RelativePosition = v3Target,  
             SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-            SensitiveRadius = 30f,
+            SensitiveRadius = 10f,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
             OnReachTarget = _onReachTarget
         };

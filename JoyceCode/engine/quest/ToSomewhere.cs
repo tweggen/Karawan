@@ -52,6 +52,8 @@ public class ToSomewhere : AModule
      * The specific visual marker of the mission.
      */
     private DefaultEcs.Entity _eMarker;
+
+    private DefaultEcs.Entity _eMeshMarker;
     
     /*
      * The abstract mission target that physically shall be reached.
@@ -80,7 +82,7 @@ public class ToSomewhere : AModule
              * At this point we can call whatever has been reached.
              */
             Trace("Called onCollision of ToLocation.");
-            _eMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
+            _eMeshMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
             if (OnReachTarget != default)
             {
                 OnReachTarget();
@@ -107,13 +109,13 @@ public class ToSomewhere : AModule
         I.Get<TransformApi>().SetTransforms(_eMarker, true, 0x0000ffff, Quaternion.Identity, Vector3.Zero);
         I.Get<HierarchyApi>().SetParent(_eMarker, eParent);
 
-        DefaultEcs.Entity eMeshMarker = _engine.CreateEntity($"quest.goal {Name} mesh marker");
-        eMeshMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
-        I.Get<HierarchyApi>().SetParent(eMeshMarker, _eMarker);
-        I.Get<TransformApi>().SetTransforms(eMeshMarker, true, 0x0000ffff, Quaternion.Identity, 
+        _eMeshMarker = _engine.CreateEntity($"quest.goal {Name} mesh marker");
+        _eMeshMarker.Set(new engine.joyce.components.Instance3(_jMeshGoal.Value));
+        I.Get<HierarchyApi>().SetParent(_eMeshMarker, _eMarker);
+        I.Get<TransformApi>().SetTransforms(_eMeshMarker, true, 0x0000ffff, Quaternion.Identity, 
             Vector3.Zero,
-            new Vector3(SensitiveRadius, 1f, SensitiveRadius));
-        eMeshMarker.Set(
+            new Vector3(SensitiveRadius, 3f, SensitiveRadius));
+        _eMeshMarker.Set(
             new engine.behave.components.Behavior(_goalMarkerSpinBehavior.Value)
             {
                 MaxDistance = 2000

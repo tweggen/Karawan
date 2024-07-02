@@ -502,6 +502,15 @@ namespace engine.world
         }
 
 
+        public float GetHeightAt(
+            in Vector3 v3Pos,
+            string layer = engine.elevation.Cache.TOP_LAYER
+        )
+        {
+            return GetElevationPixelAt(v3Pos.X, v3Pos.Z, layer).Height;
+        }
+
+
         /**
          * Constructor
          */
