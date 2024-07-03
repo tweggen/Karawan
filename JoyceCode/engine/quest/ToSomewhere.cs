@@ -86,6 +86,7 @@ public class ToSomewhere : AModule
             if (OnReachTarget != default)
             {
                 OnReachTarget();
+                _destroyTargetInstance();
             }
         }
     }
@@ -93,9 +94,9 @@ public class ToSomewhere : AModule
 
     private void _destroyTargetInstance()
     {
-        if (_eMarker.IsAlive)
+        if (_eGoal.IsAlive)
         {
-            I.Get<HierarchyApi>().Delete(ref _eMarker);
+            I.Get<HierarchyApi>().Delete(ref _eGoal);
         }
     }
     
@@ -174,11 +175,6 @@ public class ToSomewhere : AModule
     private void _destroyGoal()
     {
         _destroyTargetInstance();
-        if (_eGoal.IsAlive)
-        {
-            _eGoal.Dispose();
-            _eGoal = default;
-        }
     }
 
 
