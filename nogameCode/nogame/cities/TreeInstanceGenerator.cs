@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text.Json.Nodes;
 using builtin.tools.Lindenmayer;
 using engine;
 using engine.joyce;
@@ -30,14 +31,14 @@ public class TreeInstanceGenerator
                 /*
                  * Straight up.
                  */
-                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                new Part( "rotate(d,x,y,z)", new JsonObject {
                     ["d"] = 90f,["x"] = 0f, ["y"] = 0f, ["z"] =1f } ),
                 /*
                  * Random orientation
                  */
-                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                new Part( "rotate(d,x,y,z)", new JsonObject {
                     ["d"] = rnd.GetFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
-                new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                new Part( "stem(r,l)", new JsonObject {
                     ["r"] = 0.10f, ["l"] = (1f+3f*rnd.GetFloat()) } )
             } ),
             /*
@@ -46,26 +47,26 @@ public class TreeInstanceGenerator
              */            
             new List<Rule> {
                 new Rule("stem(r,l)", 1.0f, 
-                    (Params p) => (p["r"] > 0.02 && p["l"] > 0.1),
+                    (Params p) => ((float)p["r"] > 0.02 && (float)p["l"] > 0.1),
                     (Params p) => new List<Part> {
-                        new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                            ["r"] = p["r"]*1.05f, ["l"] = p["l"]*0.8f } ),
+                        new Part( "stem(r,l)", new JsonObject {
+                            ["r"] = (float)p["r"]*1.05f, ["l"] = (float)p["l"]*0.8f } ),
                         new Part( "push()", null ),
-                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                            new Part( "rotate(d,x,y,z)", new JsonObject {
                                 ["d"] = 30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
-                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f } ),
+                            new Part( "stem(r,l)", new JsonObject {
+                                ["r"] = (float)p["r"]*0.6f, ["l"] = (float)p["l"]*0.8f } ),
                         new Part( "pop()", null ),
                         new Part( "push()", null ),
-                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                            new Part( "rotate(d,x,y,z)", new JsonObject {
                                 ["d"] = -30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
-                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f }),
+                            new Part( "stem(r,l)", new JsonObject {
+                                ["r"] = (float)p["r"]*0.6f, ["l"] = (float)p["l"]*0.8f }),
                         new Part( "pop()", null ),
-                        new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                        new Part( "rotate(d,x,y,z)", new JsonObject {
                             ["d"] = 90f+rnd.GetFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
-                        new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                            ["r"] = p["r"]*0.8f, ["l"] = p["l"]*0.5f } )
+                        new Part( "stem(r,l)", new JsonObject {
+                            ["r"] = (float)p["r"]*0.8f, ["l"] = (float)p["l"]*0.5f } )
                     }
                 )
             },
@@ -76,10 +77,10 @@ public class TreeInstanceGenerator
             new List<Rule> {
                 new Rule("stem(r,l)", 1.0f, null,
                     (Params p) => new List<Part> {
-                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                        new Part( "fillrgb(r,g,b)", new JsonObject {
                             ["r"] = 0.2f, ["g"] = 0.7f, ["b"] = 0.1f } ),
-                        new Part( "cyl(r,l)", new SortedDictionary<string, float> {
-                            ["r"] = p["r"], ["l"] = p["l"] } )
+                        new Part( "cyl(r,l)", new JsonObject {
+                            ["r"] = (float)p["r"], ["l"] = (float)p["l"] } )
                     }
                 )
             }
@@ -98,14 +99,14 @@ public class TreeInstanceGenerator
                 /*
                  * Straight up.
                  */
-                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                new Part( "rotate(d,x,y,z)", new JsonObject {
                     ["d"] = 90f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
                 /* 
                  * Random orientation
                  */
-                new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                new Part( "rotate(d,x,y,z)", new JsonObject {
                     ["d"] = rnd.GetFloat()*359f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } ),
-                new Part( "stem(r,l)", new SortedDictionary<string, float> {
+                new Part( "stem(r,l)", new JsonObject {
                     ["r"] = 0.1f, ["l"] = (1f+3f*rnd.GetFloat()) } )
             } ),
             /*
@@ -114,23 +115,23 @@ public class TreeInstanceGenerator
              */            
             new List<Rule> {
                 new Rule("stem(r,l)", 1.0f, 
-                    (Params p) => (p["r"] > 0.02f && p["l"] > 0.1f),
+                    (Params p) => ((float)p["r"] > 0.02f && (float)p["l"] > 0.1f),
                     (Params p) => new List<Part> {
-                        new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                            ["r"] = p["r"]*1.05f, ["l"] = p["l"]*0.8f } ),
+                        new Part( "stem(r,l)", new JsonObject {
+                            ["r"] = (float)p["r"]*1.05f, ["l"] = (float)p["l"]*0.8f } ),
                         new Part( "push()", null ),
-                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                            new Part( "rotate(d,x,y,z)", new JsonObject {
                                 ["d"] = 30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f } ),
-                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f } ),
+                            new Part( "stem(r,l)", new JsonObject {
+                                ["r"] = (float)p["r"]*0.6f, ["l"] = (float)p["l"]*0.8f } ),
                         new Part( "pop()", null ),
                         new Part( "push()", null ),
-                            new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                            new Part( "rotate(d,x,y,z)", new JsonObject {
                                 ["d"] = -30f+rnd.GetFloat()*30f, ["x"] = 0f, ["y"] = 0f, ["z"] = 1f} ),
-                            new Part( "stem(r,l)", new SortedDictionary<string, float> {
-                                ["r"] = p["r"]*0.6f, ["l"] = p["l"]*0.8f} ),
+                            new Part( "stem(r,l)", new JsonObject {
+                                ["r"] = (float)p["r"]*0.6f, ["l"] = (float)p["l"]*0.8f} ),
                         new Part( "pop()", null ),
-                        new Part( "rotate(d,x,y,z)", new SortedDictionary<string, float> {
+                        new Part( "rotate(d,x,y,z)", new JsonObject {
                             ["d"] = 90f+rnd.GetFloat()*20f, ["x"] = 1f, ["y"] = 0f, ["z"] = 0f } )
                     }
                 )
@@ -141,30 +142,30 @@ public class TreeInstanceGenerator
              */
             new List<Rule> {
                 new Rule("stem(r,l)", 1.0f, 
-                    (Params p) => (p["r"] > 0.06f),
+                    (Params p) => ((float)p["r"] > 0.06f),
                     (Params p) => new List<Part> {
-                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                        new Part( "fillrgb(r,g,b)", new JsonObject {
                             ["r"] = 0.4f, ["g"] = 0.2f, ["b"] = 0.1f } ),
-                        new Part( "cyl(r,l)", new SortedDictionary<string, float> {
-                            ["r"] = p["r"], ["l"] = p["l"] } )
+                        new Part( "cyl(r,l)", new JsonObject {
+                            ["r"] = (float)p["r"], ["l"] = (float)p["l"] } )
                     }
                 ),
                 new Rule("stem(r,l)", 1.0f,  
-                    (Params p) => (p["r"] <= 0.06 && p["r"] > 0.04),
+                    (Params p) => ((float)p["r"] <= 0.06 && (float)p["r"] > 0.04),
                     (Params p) => new List<Part> {
-                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                        new Part( "fillrgb(r,g,b)", new JsonObject {
                             ["r"] = 0.3f, ["g"] = 0.5f, ["b"] = 0.1f } ),
-                        new Part( "flat(r,l)", new SortedDictionary<string, float> {
-                            ["r"] = p["r"], ["l"] = p["l"] } )
+                        new Part( "flat(r,l)", new JsonObject {
+                            ["r"] = (float)p["r"], ["l"] = (float)p["l"] } )
                     }
                 ),
                 new Rule("stem(r,l)", 1.0f, 
-                    (Params p) => (p["r"] <= 0.04f),
+                    (Params p) => ((float)p["r"] <= 0.04f),
                     (Params p) => new List<Part> {
-                        new Part( "fillrgb(r,g,b)", new SortedDictionary<string, float> {
+                        new Part( "fillrgb(r,g,b)", new JsonObject {
                             ["r"] = 0.2f, ["g"] = 0.4f, ["b"] = 0.8f } ),
-                        new Part( "flat(r,l)", new SortedDictionary<string, float> {
-                            ["r"] = p["r"], ["l"] = p["l"] } )
+                        new Part( "flat(r,l)", new JsonObject {
+                            ["r"] = (float)p["r"], ["l"] = (float)p["l"] } )
                     }
                 ),
             }
@@ -175,28 +176,43 @@ public class TreeInstanceGenerator
 
     private Instance _createLInstance(builtin.tools.RandomSource rnd)
     {
-        var whichtree = rnd.GetFloat();
-
-        builtin.tools.Lindenmayer.System lSystem = null;
-        if( whichtree<0.5 ) {
-            lSystem = _createTree1System(rnd);
-        } else {
-            lSystem = _createTree2System(rnd);
-        }
-        // TXWTODO: Create some sort of function encapsulating this?
-        var lGenerator = new LGenerator( lSystem );
-        var lInstance = lGenerator.Instantiate();
-        var prevInstance = lInstance;
-        int iMax = (int)(rnd.GetFloat() * 1.5f + 1f);
-        for( int i=0; i<iMax; ++i ) 
+        try
         {
-            var nextInstance = lGenerator.Iterate( prevInstance );
-            if( null==nextInstance ) {
-                break;
+            var whichtree = rnd.GetFloat();
+
+            builtin.tools.Lindenmayer.System lSystem = null;
+            if (whichtree < 0.5)
+            {
+                lSystem = _createTree1System(rnd);
             }
-            prevInstance = nextInstance;
+            else
+            {
+                lSystem = _createTree2System(rnd);
+            }
+
+            // TXWTODO: Create some sort of function encapsulating this?
+            var lGenerator = new LGenerator(lSystem);
+            var lInstance = lGenerator.Instantiate();
+            var prevInstance = lInstance;
+            int iMax = (int)(rnd.GetFloat() * 1.5f + 1f);
+            for (int i = 0; i < iMax; ++i)
+            {
+                var nextInstance = lGenerator.Iterate(prevInstance);
+                if (null == nextInstance)
+                {
+                    break;
+                }
+
+                prevInstance = nextInstance;
+            }
+
+            return lGenerator.Finalize(prevInstance);
         }
-        return lGenerator.Finalize( prevInstance );
+        catch (Exception e)
+        {
+            Error($"Error building tree instance: {e}.");
+            return null;
+        }
     }
 
 

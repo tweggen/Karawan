@@ -1,30 +1,24 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Nodes;
 
 namespace builtin.tools.Lindenmayer;
 
 public class Params
 {
-    public SortedDictionary<string, float> Map;
+    public JsonObject Map;
 
     public Params Clone()
     {
-        if (null != Map)
-        {
-            return new Params(new SortedDictionary<string, float>(Map));
-        }
-        else
-        {
-            return new Params(null);
-        }
+        return new Params(Map.DeepClone() as JsonObject);
     }
 
-    public float this[string key]
+    public JsonNode this[string key]
     {
         get => Map[key];
     }
 
 
-    public Params(SortedDictionary<string, float> map)
+    public Params(JsonObject map)
     {
         Map = map;
     }

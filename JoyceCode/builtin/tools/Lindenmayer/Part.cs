@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Text.Json.Nodes;
 
 namespace builtin.tools.Lindenmayer;
 
@@ -8,26 +8,19 @@ public class Part
 
     public Params Parameters;
 
-    public string ToString()
+    public override string ToString()
     {
         var strName = "null";
         if( null != Name ) {
             strName = $"{Name}";
         }
-        var strParameters = "null";
+        string strParameters;
         if( null != Parameters ) {
-            var result = "";
-            var isFirst = true;
-            foreach (string key in Parameters.Map.Keys) 
-            {
-                if( !isFirst ) {
-                    result += ", ";
-                } else {
-                    isFirst = false;
-                }
-                result += $"{key} -> {Parameters.Map[key]}";
-            }
-            strParameters = $"{result}";
+            strParameters = Parameters.Map.ToString();
+        }
+        else
+        {
+            strParameters = "(null)";
         }
         return $"Part {{ Name => \"{strName}\", Parameters => {strParameters} }}";
     }
@@ -43,6 +36,7 @@ public class Part
         }
         return new Part( Name, dupParams );
     }
+    
 
     public Part(
         string name,
@@ -54,7 +48,7 @@ public class Part
 
     public Part(
         in string name,
-        in SortedDictionary<string, float> map
+        JsonObject map
     )
     {
         Name = name;

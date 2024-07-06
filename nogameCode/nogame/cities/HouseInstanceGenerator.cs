@@ -1,4 +1,4 @@
-#if false
+
 using System.Collections.Generic;
 using builtin.tools.Lindenmayer;
 using static engine.Logger;
@@ -21,14 +21,21 @@ public class HouseInstanceGenerator
         // TXWTODO: Register materials
     }
 
+    
     private builtin.tools.Lindenmayer.System _createHouse1System(builtin.tools.RandomSource rnd)
     {
         return new builtin.tools.Lindenmayer.System(new State(new List<Part>
             /*
              * Initial seed
+             *
+             * Expected context parameters:
+             *    "basearea" : Poly
+             *        The area we may build our building on
+             *    "maxheight" : float
+             *        The maximal height of the building.
+             
              */
             {
-                
             }),
             /*
              * Transformation
@@ -46,4 +53,3 @@ public class HouseInstanceGenerator
             });
     }
 }
-#endif

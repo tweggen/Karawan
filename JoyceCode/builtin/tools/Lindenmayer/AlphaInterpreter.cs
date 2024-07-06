@@ -82,14 +82,14 @@ public class AlphaInterpreter
             if (part.Name == "rotate(d,x,y,z)")
             {
                 var qrot = Quaternion.CreateFromAxisAngle(
-                    new Vector3(p["x"], p["y"], p["z"]),
-                    p["d"] / 180f * (float) Math.PI
+                    new Vector3((float)p["x"], (float)p["y"], (float)p["z"]),
+                    (float)p["d"] / 180f * (float) Math.PI
                 );
                 state.Rotation = state.Rotation * qrot;
             }
             else if (part.Name == "fillrgb(r,g,b)")
             {
-                state.Color = new Vector3(p["r"], p["g"], p["b"]);
+                state.Color = new Vector3((float)p["r"], (float)p["g"], (float)p["b"]);
             }
             else if (part.Name == "cyl(r,l)")
             {
@@ -111,9 +111,9 @@ public class AlphaInterpreter
                 Vector3 vt = Vector3.Cross(vd, vr);
                 //Vector3 vt = Vector3.Cross(vr, vd);
 
-                vd *= p["l"];
-                vr *= p["r"];
-                vt *= p["r"];
+                vd *= (float)p["l"];
+                vr *= (float)p["r"];
+                vt *= (float)p["r"];
                 // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
 
                 /*
@@ -150,8 +150,8 @@ public class AlphaInterpreter
 
                 Vector3 vt = Vector3.Cross(vd, vr);
 
-                vd *= p["l"];
-                vr *= p["r"];
+                vd *= (float)p["l"];
+                vr *= (float)p["r"];
                 // vt *= p["r"];
                 // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
 
