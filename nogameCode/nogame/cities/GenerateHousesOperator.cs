@@ -168,9 +168,9 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
         try
         {
             opExtrudePoly.BuildGeom(meshHouse);
-            {
-                _breakOnDebugBuilding(p[0]+worldFragment.Position);
-            }
+            //{
+            //    _breakOnDebugBuilding(p[0]+worldFragment.Position);
+            //}
             matmesh.Add(materialHouse, meshHouse);
         }
         catch (Exception e)

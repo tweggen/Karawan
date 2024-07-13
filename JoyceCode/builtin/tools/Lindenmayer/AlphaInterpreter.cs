@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Numerics;
+using FbxSharp;
+using static builtin.extensions.JsonObjectNumerics;
 using static engine.Logger;
 
 namespace builtin.tools.Lindenmayer;
@@ -9,6 +11,7 @@ class AlphaState {
     public Quaternion Rotation;
     public Vector3 Position;
     public Vector3 Color;
+    public string Material;
 
     public AlphaState( AlphaState parentState ) 
     {
@@ -17,12 +20,14 @@ class AlphaState {
             Rotation = new Quaternion( 0f, 0f, 0f, 1f );
             Position = new Vector3(  0f, 0f, 0f );
             Color = new Vector3( 1f, 1f, 1f );
+            Material = "";
         } 
         else
         {
             Rotation = parentState.Rotation;
             Position = parentState.Position;
             Color = parentState.Color;
+            Material = parentState.Material;
         }
     }
 }
@@ -79,110 +84,156 @@ public class AlphaInterpreter
             // trace('Before part: position is ${state.position}.');
             // trace('Now part ${part.name}');
             var p = part.Parameters?.Map;
-            if (part.Name == "rotate(d,x,y,z)")
+            switch (part.Name)
             {
-                var qrot = Quaternion.CreateFromAxisAngle(
-                    new Vector3((float)p["x"], (float)p["y"], (float)p["z"]),
-                    (float)p["d"] / 180f * (float) Math.PI
-                );
-                state.Rotation = state.Rotation * qrot;
-            }
-            else if (part.Name == "fillrgb(r,g,b)")
-            {
-                state.Color = new Vector3((float)p["r"], (float)p["g"], (float)p["b"]);
-            }
-            else if (part.Name == "cyl(r,l)")
-            {
+                case "rotate(d,x,y,z)":
+                {
+                    var qrot = Quaternion.CreateFromAxisAngle(
+                        new Vector3((float)p["x"], (float)p["y"], (float)p["z"]),
+                        (float)p["d"] / 180f * (float)Math.PI
+                    );
+                    state.Rotation = state.Rotation * qrot;
+                    break;
+                }
 
-                var vs = state.Position;
-
-                /*
-                 * vd shall be scaled with l
-                 */
-                var vd = new Vector3(1f, 0f, 0f);
-                vd = Vector3.Transform(vd, state.Rotation);
-
-                /*
-                 * vRadius shall be scaled with r
-                 */
-                var vr = new Vector3(0f, 1f, 0f);
-                vr = Vector3.Transform(vr, state.Rotation);
-
-                Vector3 vt = Vector3.Cross(vd, vr);
-                //Vector3 vt = Vector3.Cross(vr, vd);
-
-                vd *= (float)p["l"];
-                vr *= (float)p["r"];
-                vt *= (float)p["r"];
-                // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
-
-                /*
-                 * Make a trivial four sided poly.
-                 */
-                var poly = new List<Vector3>();
-                poly.Add(vs + vr);
-                poly.Add(vs + vt);
-                poly.Add(vs - vt);
-                var path = new List<Vector3>();
-                path.Add(vd);
-                // trace( 'poly: $poly' );
-                var ext = new builtin.tools.ExtrudePoly(poly, path, 
-                    27, 100f, false, false, false);
-                ext.BuildGeom( g);
-                state.Position += vd;
-            }
-            else if (part.Name == "flat(r,l)")
-            {
-
-                var vs = state.Position;
-
-                /*
-                 * vd shall be scaled with l
-                 */
-                var vd = new Vector3(1f, 0f, 0f);
-                vd = Vector3.Transform(vd, state.Rotation);
                 
-                /*
-                 * vRadius shall be scaled with r
-                 */
-                var vr = new Vector3(0f, 1f, 0f);
-                vr = Vector3.Transform(vr,state.Rotation);
+                case "fillrgb(r,g,b)":
+                {
+                    state.Color = new Vector3((float)p["r"], (float)p["g"], (float)p["b"]);
+                    break;
+                }
 
-                Vector3 vt = Vector3.Cross(vd, vr);
+                
+                case "cyl(r,l)":
+                {
+                    var vs = state.Position;
 
-                vd *= (float)p["l"];
-                vr *= (float)p["r"];
-                // vt *= p["r"];
-                // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
+                    /*
+                     * vd shall be scaled with l
+                     */
+                    var vd = new Vector3(1f, 0f, 0f);
+                    vd = Vector3.Transform(vd, state.Rotation);
 
-                /*
-                * Make a trivial four sided poly.
-                */
-                var poly = new List<Vector3>();
-                poly.Add(vs + vr);
-                //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
-                poly.Add(vs - vr); 
-                // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
-                var path = new List<Vector3>();
-                path.Add(vd);
-                // trace( 'poly: $poly' );
-                var ext = new builtin.tools.ExtrudePoly(poly, path, 27, 100f, false, false, false);
-                ext.BuildGeom( g);
-                state.Position += vd;
-            }
-            else if (part.Name == "push()")
-            {
-                _stack.Add(state);
-                state = new AlphaState(state);
-            }
-            else if (part.Name == "pop()")
-            {
-                state = _stack[_stack.Count - 1];
-                _stack.RemoveAt(_stack.Count - 1);
-            }
-            else
-            {
-                Warning($"Unknown part {part}.");
+                    /*
+                     * vRadius shall be scaled with r
+                     */
+                    var vr = new Vector3(0f, 1f, 0f);
+                    vr = Vector3.Transform(vr, state.Rotation);
+
+                    Vector3 vt = Vector3.Cross(vd, vr);
+                    //Vector3 vt = Vector3.Cross(vr, vd);
+
+                    vd *= (float)p["l"];
+                    vr *= (float)p["r"];
+                    vt *= (float)p["r"];
+                    // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
+
+                    /*
+                     * Make a trivial four sided poly.
+                     */
+                    var poly = new List<Vector3>();
+                    poly.Add(vs + vr);
+                    poly.Add(vs + vt);
+                    poly.Add(vs - vt);
+                    var path = new List<Vector3>();
+                    path.Add(vd);
+                    // trace( 'poly: $poly' );
+                    var ext = new builtin.tools.ExtrudePoly(poly, path,
+                        27, 100f, false, false, false);
+                    ext.BuildGeom(g);
+                    state.Position += vd;
+
+                    break;
+                }
+
+
+                case "flat(r,l)":
+                {
+
+                    var vs = state.Position;
+
+                    /*
+                     * vd shall be scaled with l
+                     */
+                    var vd = new Vector3(1f, 0f, 0f);
+                    vd = Vector3.Transform(vd, state.Rotation);
+
+                    /*
+                     * vRadius shall be scaled with r
+                     */
+                    var vr = new Vector3(0f, 1f, 0f);
+                    vr = Vector3.Transform(vr, state.Rotation);
+
+                    Vector3 vt = Vector3.Cross(vd, vr);
+
+                    vd *= (float)p["l"];
+                    vr *= (float)p["r"];
+                    // vt *= p["r"];
+                    // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
+
+                    /*
+                     * Make a trivial four sided poly.
+                     */
+                    var poly = new List<Vector3>();
+                    poly.Add(vs + vr);
+                    //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
+                    poly.Add(vs - vr);
+                    // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
+                    var path = new List<Vector3>();
+                    path.Add(vd);
+                    // trace( 'poly: $poly' );
+                    var ext = new ExtrudePoly(poly, path, 27, 100f, false, false, false);
+                    ext.BuildGeom(g);
+                    state.Position += vd;
+
+                    break;
+                }
+
+                case "extrudePoly(A,h,mat)":
+                {
+                    var listWalls = new List<Vector3>(ToVector3List(p["A"]));
+                    var path = new List<Vector3>();
+                    Vector3 v3h = new Vector3(0f, (float)p["h"], 0f);
+                    path.Add( v3h);
+
+                    state.Material = (string)p["mat"];
+                    var opExtrudePoly = new ExtrudePoly(
+                        listWalls, 
+                        path, 
+                        27, /* magic for houses */ 
+                        24f,/* standard for windows */
+                        false, false, true /* standard values for houses */
+                        )
+                    {
+                        /* also standard values for houses */
+                        PairedNormals = true,
+                        TileToTexture = true
+                    };
+                    opExtrudePoly.BuildGeom(g);
+                    state.Position += v3h;
+                    break;
+                }
+                
+
+                case "push()":
+                {
+                    _stack.Add(state);
+                    state = new AlphaState(state);
+                    break;
+                }
+                
+
+                case "pop()":
+                {
+                    state = _stack[_stack.Count - 1];
+                    _stack.RemoveAt(_stack.Count - 1);
+                    break;
+                }
+                
+
+                default:
+                    Warning($"Unknown part {part}.");
+                    break;
             }
         }
     }
@@ -193,3 +244,4 @@ public class AlphaInterpreter
         _stack = new List<AlphaState>();
     }
 }
+
