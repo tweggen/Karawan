@@ -212,7 +212,7 @@ public class TreeInstanceGenerator
          */ 
         var instance = _createLInstance(rnd);
         var alpha = new AlphaInterpreter( instance );
-        alpha.Run( null, Vector3.Zero, matmesh);
+        alpha.Run( null, Vector3.Zero, matmesh, null);
         
         var id = InstanceDesc.CreateFromMatMesh(matmesh, 500f);
 

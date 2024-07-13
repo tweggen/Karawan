@@ -535,7 +535,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                             ctx.Rnd
                         );
                         var lInstance = new LGenerator(lSystem).Generate(3);
-                        new AlphaInterpreter(lInstance).Run(null, Vector3.Zero, matmesh);
+                        new AlphaInterpreter(lInstance).Run(ctx.Fragment, Vector3.Zero, matmesh, listCreatePhysics);
                     }
                     catch (Exception e)
                     {

@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Numerics;
+using BepuPhysics;
 using engine;
 using engine.joyce;
+using engine.physics;
 using FbxSharp;
 using static builtin.extensions.JsonObjectNumerics;
 using static engine.Logger;
@@ -71,7 +73,8 @@ public class AlphaInterpreter
     public void Run(
         engine.world.Fragment? worldFragment,
         Vector3 start,
-        MatMesh mmTarget
+        MatMesh mmTarget,
+        IList<Func<IList<StaticHandle>, Action>> listCreatePhysicsTarget
     )
     {
         var alphaResources = _alphaResources.Value;
@@ -222,6 +225,32 @@ public class AlphaInterpreter
                     opExtrudePoly.BuildGeom(meshExtrusion);
                     state.Position += v3h;
                     mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get(state.Material), meshExtrusion);
+
+
+
+                    if (null != listCreatePhysicsTarget)
+                    {
+                        /*
+                         * Finally, add physics for this part.
+                         */
+                        CollisionProperties props = new()
+                        {
+                            Flags =
+                                CollisionProperties.CollisionFlags.IsTangible
+                                | CollisionProperties.CollisionFlags.IsDetectable,
+                            Name = $"house-{listWalls[0] + worldFragment.Position}",
+                        };
+                        try
+                        {
+                            var fCreatePhysics = opExtrudePoly.BuildStaticPhys(worldFragment, props);
+                            listCreatePhysicsTarget.Add(fCreatePhysics);
+                        }
+                        catch (Exception e)
+                        {
+                            Trace($"Unknown exception creating extrusion physics: {e}");
+                        }
+                    }
+
                     break;
                 }
                 

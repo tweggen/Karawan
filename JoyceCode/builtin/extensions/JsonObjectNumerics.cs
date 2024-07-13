@@ -31,16 +31,7 @@ static public class JsonObjectNumerics
 
     static public Vector3 ToVector3(in JsonNode jn)
     {
-        if (jn == null)
-        {
-            int a = 0;
-            
-        }
         var jo = jn.AsObject();
-        if (jo == null)
-        {
-            int b = 0;
-        }
         return new Vector3((float)jo["x"], (float)jo["y"], (float)jo["z"]);
     }
     
