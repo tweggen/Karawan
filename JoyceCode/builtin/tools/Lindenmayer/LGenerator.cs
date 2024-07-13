@@ -95,6 +95,26 @@ public class LGenerator
     }
 
 
+    public Instance Generate(int maxGenerations)
+    {
+        var lInstance = Instantiate();
+        var prevInstance = lInstance;
+        int iMax = maxGenerations;
+        for (int i = 0; i < iMax; ++i)
+        {
+            var nextInstance = Iterate(prevInstance);
+            if (null == nextInstance)
+            {
+                break;
+            }
+
+            prevInstance = nextInstance;
+        }
+
+        return Finalize(prevInstance);
+    }
+
+
     public LGenerator( System system )
     {
         _system = system;

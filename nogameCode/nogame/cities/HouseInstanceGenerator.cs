@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text.Json.Nodes;
 using builtin.tools.Lindenmayer;
@@ -28,13 +29,25 @@ public class HouseInstanceGenerator
     }
 
     
+    #if false
     private JsonObject _extrudeAh(IEnumerable<Vector3> pA, float ph) => new ()
     {
         ["A"] = From(pA), ["h"] = ph
     };
+    #endif
+
+
+    private Part _createSeed1(Params ini, builtin.tools.RandomSource rnd)
+    {
+        var jo = new JsonObject
+        {
+            ["A"] = ini["A"].DeepClone(), ["h"] = (float)ini["h"]
+        };
+        return new("buildable(A,h)", jo);
+    }
     
     
-    private builtin.tools.Lindenmayer.System _createHouse1System(
+    public builtin.tools.Lindenmayer.System CreateHouse1System(
         Params ini,
         builtin.tools.RandomSource rnd
         )
@@ -50,9 +63,7 @@ public class HouseInstanceGenerator
              *        The maximal height of the building.
              */
             {
-                
-                new Part( "segment(A,h)", new JsonObject {
-                    ["A"] = ini["A"], ["h"] = (float)ini["h"] } ),
+                _createSeed1(ini, rnd)
             }),
             
             /*
@@ -60,9 +71,20 @@ public class HouseInstanceGenerator
              */
             new List<Rule>
             {
-                /*
-                 * We are testing and not using any rules at all.
-                 */
+                new Rule("buildable(A,h)",
+                (p) => new List<Part>
+                {
+                    new ("segment(A,h)", new JsonObject
+                    {
+                        ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
+                    }),
+                    new ("neon(P,h,n)", new JsonObject
+                    {
+                        ["P"] = From(ToVector3List(p["A"].DeepClone()).First()),
+                        ["h"] = ((float)p["h"])*(rnd.GetFloat()*0.7f+0.1f),
+                        ["n"] = (rnd.Get8()&3)+2
+                    })
+                })
             },
             
             /*
@@ -71,11 +93,11 @@ public class HouseInstanceGenerator
             new List<Rule>
             {
                 new Rule("segment(A,h)",
-                    (Params p) => new List<Part>
+                    (p) => new List<Part>
                     {
-                        new Part("extrudePoly(A,h,mat)", new JsonObject
+                        new ("extrudePoly(A,h,mat)", new JsonObject
                         {
-                            ["A"] = p["A"], ["h"] = p["h"], ["mat"] = "nogame.cities.houses.materials.houses.win3"
+                            ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"], ["mat"] = "nogame.cities.houses.materials.houses.win3"
                         })
                     })
             });

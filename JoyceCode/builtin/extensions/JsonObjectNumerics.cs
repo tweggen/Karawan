@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Nodes;
+using static engine.Logger;
 
 namespace builtin.extensions;
 
@@ -44,7 +45,14 @@ static public class JsonObjectNumerics
     
     static public IEnumerable<Vector3> ToVector3List(in JsonNode jn)
     {
-        return jn.AsArray().Select(jnVector => ToVector3(jnVector));
+        var ienu = jn.AsArray().Select((jnVector) =>
+        {
+            Trace($"{jnVector}");
+            var v3 = ToVector3(jnVector);
+            Trace($"{v3}");
+            return v3;
+        });
+        return ienu;
     }
 
 }

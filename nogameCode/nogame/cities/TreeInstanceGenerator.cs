@@ -190,23 +190,8 @@ public class TreeInstanceGenerator
                 lSystem = _createTree2System(rnd);
             }
 
-            // TXWTODO: Create some sort of function encapsulating this?
             var lGenerator = new LGenerator(lSystem);
-            var lInstance = lGenerator.Instantiate();
-            var prevInstance = lInstance;
-            int iMax = (int)(rnd.GetFloat() * 1.5f + 1f);
-            for (int i = 0; i < iMax; ++i)
-            {
-                var nextInstance = lGenerator.Iterate(prevInstance);
-                if (null == nextInstance)
-                {
-                    break;
-                }
-
-                prevInstance = nextInstance;
-            }
-
-            return lGenerator.Finalize(prevInstance);
+            return lGenerator.Generate(4);
         }
         catch (Exception e)
         {

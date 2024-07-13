@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Numerics;
 using System.Security.Cryptography;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using builtin.tools.Lindenmayer;
 using engine;
@@ -11,7 +12,7 @@ using engine.elevation;
 using engine.joyce;
 using engine.physics;
 using static engine.Logger;
-
+using static builtin.extensions.JsonObjectNumerics;
 
 namespace nogame.cities;
 
@@ -516,12 +517,39 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     }
 
                     var height = building.GetHeight();
+
                     try
                     {
+                        /*
+                         * First, perform the new procedural way of crafting the building.
+                         */
+                        var gen = new HouseInstanceGenerator();
+                        var lSystem = gen.CreateHouse1System(
+                            new Params(
+                                new JsonObject
+                                {
+                                    ["A"] = From(fragPoints),
+                                    ["h"] = height
+                                }
+                            ),
+                            ctx.Rnd
+                        );
+                        var lInstance = new LGenerator(lSystem).Generate(3);
+                        new AlphaInterpreter(lInstance).Run(null, Vector3.Zero, matmesh);
+                    }
+                    catch (Exception e)
+                    {
+                        Error($"Unable to generate lindenmeyer houses: {e}");
+                    }
+
+                    try
+                    {
+#if false
                         _createClassicHouseSubGeo(
                             ctx, matmesh,
                             fragPoints, height, _metersPerTexture,
                             listCreatePhysics);
+#endif
 
                         _createLargeAdvertsSubGeo(
                             ctx, matmesh, fragPoints, height); //15434
