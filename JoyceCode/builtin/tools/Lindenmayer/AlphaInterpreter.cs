@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Numerics;
+using engine;
+using engine.joyce;
 using FbxSharp;
 using static builtin.extensions.JsonObjectNumerics;
 using static engine.Logger;
@@ -54,7 +56,7 @@ public class AlphaInterpreter
     public void Run(
         engine.world.Fragment? worldFragment,
         Vector3 start,
-        SortedDictionary<string, engine.joyce.Mesh> targets
+        MatMesh mmTarget
     )
     {
         var parts = _instance.State.Parts;
@@ -62,22 +64,9 @@ public class AlphaInterpreter
         var state = new AlphaState(null);
         state.Position = start;
 
-        var matnameLeaves = "LAlphaInterpreter._matAlpha";
-        engine.joyce.Mesh g = null;
-        if (targets.ContainsKey(matnameLeaves))
-        {
-            g = targets[matnameLeaves];
-            if (g == null)
-            {
-                Trace("Unable to generate, geom atom is non engine.PlainGeomAtom.");
-                return;
-            }
-        }
-        else
-        {
-            targets[matnameLeaves] = g = engine.joyce.Mesh.CreateListInstance("treegenerator");
-        }
-
+        var matnameLeaves = "nogame.cities.trees.materials.treeleave";
+        var matLeaves = I.Get<ObjectRegistry<Material>>().Get(matnameLeaves);
+        
         foreach (Part part in parts)
         {
             // trace('Before part: rotation is ${state.rotation}.');
@@ -140,8 +129,10 @@ public class AlphaInterpreter
                     // trace( 'poly: $poly' );
                     var ext = new builtin.tools.ExtrudePoly(poly, path,
                         27, 100f, false, false, false);
-                    ext.BuildGeom(g);
+                    engine.joyce.Mesh meshExtrusion = new("mesh_cyl_rl");
+                    ext.BuildGeom(meshExtrusion);
                     state.Position += vd;
+                    mmTarget.Add(matLeaves, meshExtrusion);
 
                     break;
                 }
@@ -182,9 +173,11 @@ public class AlphaInterpreter
                     var path = new List<Vector3>();
                     path.Add(vd);
                     // trace( 'poly: $poly' );
+                    engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
                     var ext = new ExtrudePoly(poly, path, 27, 100f, false, false, false);
-                    ext.BuildGeom(g);
+                    ext.BuildGeom(meshExtrusion);
                     state.Position += vd;
+                    mmTarget.Add(matLeaves, meshExtrusion);
 
                     break;
                 }
@@ -196,6 +189,7 @@ public class AlphaInterpreter
                     Vector3 v3h = new Vector3(0f, (float)p["h"], 0f);
                     path.Add( v3h);
 
+                    engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
                     state.Material = (string)p["mat"];
                     var opExtrudePoly = new ExtrudePoly(
                         listWalls, 
@@ -209,8 +203,9 @@ public class AlphaInterpreter
                         PairedNormals = true,
                         TileToTexture = true
                     };
-                    opExtrudePoly.BuildGeom(g);
+                    opExtrudePoly.BuildGeom(meshExtrusion);
                     state.Position += v3h;
+                    mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get(state.Material), meshExtrusion);
                     break;
                 }
                 

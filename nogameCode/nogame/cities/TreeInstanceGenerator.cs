@@ -225,27 +225,10 @@ public class TreeInstanceGenerator
          * is meant for use with larger things): We build the trees one by
          * one using their material maps...
          */ 
-        var atomsMap = new SortedDictionary<string, engine.joyce.Mesh>();
         var instance = _createLInstance(rnd);
         var alpha = new AlphaInterpreter( instance );
-        alpha.Run( null, Vector3.Zero, atomsMap );
+        alpha.Run( null, Vector3.Zero, matmesh);
         
-        /*
-         * ... then we create a standard instanceDesc from it.
-         */
-        try
-        {
-            foreach (var mesh in atomsMap.Values)
-            {
-                matmesh.Add(I.Get<ObjectRegistry<Material>>().Get("nogame.cities.trees.materials.treeleave"), mesh);
-            }
-
-        }
-        catch (Exception e)
-        {
-            Trace($"Unknown exception: {e}");
-        }
-
         var id = InstanceDesc.CreateFromMatMesh(matmesh, 500f);
 
         return id;
