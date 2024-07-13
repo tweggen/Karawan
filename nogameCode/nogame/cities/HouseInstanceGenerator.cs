@@ -1,9 +1,11 @@
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Nodes;
 using builtin.tools.Lindenmayer;
+using engine.geom;
 using static engine.Logger;
 using static builtin.extensions.JsonObjectNumerics;
 
@@ -71,20 +73,85 @@ public class HouseInstanceGenerator
              */
             new List<Rule>
             {
+                /*
+                 * A buildable with available space more than 4 stories may become
+                 * segmented into a lower buildableBaseSegment and an upper buildableSegment. 
+                 */
                 new Rule("buildable(A,h)",
-                (p) => new List<Part>
-                {
-                    new ("segment(A,h)", new JsonObject
+                    0.5f, (Params p) => (float)p["h"] > 4f*3f,
+                    (p) =>
                     {
-                        ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
+                        int availableStories = (int)Single.Ceiling((float)p["h"]) / 3;
+                        /*
+                         * The base is at least on storey.
+                         */
+                        int baseStories = 1 + (int)((availableStories - 1) * rnd.GetFloat() * 0.8f);
+                        
+                        /*
+                         * Well, all that remains is the reaminder.
+                         */
+                        int remainingStories = availableStories - baseStories;
+
+                        var v3Edges = ToVector3List(p["A"]);
+
+                        var v3SmallerEdges = new PolyTool(v3Edges, Vector3.UnitY).Extend(-2f);
+                        
+                        return new List<Part>
+                        {
+                            new("buildableBaseSegment(A,h)", new JsonObject
+                            {
+                                ["A"] = From(v3Edges), ["h"] = (float)(baseStories * 3f)
+                            }),
+                            new("buildableAnySegment(A,h)", new JsonObject
+                            {
+                                ["A"] = From(v3SmallerEdges), ["h"] = (float)(remainingStories * 3f)
+                            }),
+                        };
                     }),
-                    new ("neon(P,h,n)", new JsonObject
+
+                /*
+                 * A buildable may straightforward become a single buildable base part.
+                 * That's what we had in the original game all the time.
+                 */
+                new Rule("buildable(A,h)",
+                    0.5f, (Params p) => (float)p["h"] > 4f*3f,
+                    (p) => new List<Part>
                     {
-                        ["P"] = From(ToVector3List(p["A"].DeepClone()).First()),
-                        ["h"] = ((float)p["h"])*(rnd.GetFloat()*0.7f+0.1f),
-                        ["n"] = (rnd.Get8()&3)+2
+                        new ("buildableBaseSegment(A,h)", new JsonObject
+                        {
+                            ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
+                        }),
+                    }),
+                
+                /*
+                 * A buildable base segment has neon signs etc. .
+                 */
+                new Rule("buildableBaseSegment(A,h)",
+                    (p) => new List<Part>
+                    {
+                        new ("segment(A,h)", new JsonObject
+                        {
+                            ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
+                        }),
+                        new ("neon(P,h,n)", new JsonObject
+                        {
+                            ["P"] = From(ToVector3List(p["A"].DeepClone()).First()),
+                            ["h"] = ((float)p["h"])*(rnd.GetFloat()*0.7f+0.1f),
+                            ["n"] = (rnd.Get8()&3)+2
+                        })
+                    }),
+                
+                /*
+                 * Any other segment does not have neon signs.
+                 */
+                new Rule("buildableAnySegment(A,h)",
+                    (p) => new List<Part>
+                    {
+                        new ("segment(A,h)", new JsonObject
+                        {
+                            ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
+                        }),
                     })
-                })
             },
             
             /*

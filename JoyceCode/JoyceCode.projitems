@@ -87,6 +87,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\CameraInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\editor\components\Highlight.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\geom\PolyTool.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\JoyceBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaBindingFrame.cs" />

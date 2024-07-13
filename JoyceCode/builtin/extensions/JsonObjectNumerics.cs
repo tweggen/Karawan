@@ -43,7 +43,7 @@ static public class JsonObjectNumerics
     }
     
     
-    static public IEnumerable<Vector3> ToVector3List(in JsonNode jn)
+    static public List<Vector3> ToVector3List(in JsonNode jn)
     {
         var ienu = jn.AsArray().Select((jnVector) =>
         {
@@ -52,7 +52,7 @@ static public class JsonObjectNumerics
             Trace($"{v3}");
             return v3;
         });
-        return ienu;
+        return new List<Vector3>(ienu);
     }
 
 }

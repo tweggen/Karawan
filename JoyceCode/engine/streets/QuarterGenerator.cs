@@ -94,7 +94,7 @@ namespace engine.streets
 
             var mn = 0;
 
-            float minHouseSide = 10000f;
+            float minHouseSide = Single.MaxValue;
 
             List<IntPoint> polyPoints = new();
             List<List<IntPoint>> polyList = new();
