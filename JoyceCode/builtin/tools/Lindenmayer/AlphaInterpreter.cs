@@ -35,6 +35,20 @@ class AlphaState {
 }
 
 
+internal class AlphaResources
+{
+    public AlphaResources()
+    {
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.trees.materials.treeleave",
+            (name) => new Material()
+            {
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff448822)
+            });
+
+    }
+}
+
+
 public class AlphaInterpreter
 {
 
@@ -42,6 +56,7 @@ public class AlphaInterpreter
 
     private List<AlphaState> _stack;
 
+    private Lazy<AlphaResources> _alphaResources = new (new AlphaResources());
 
     /**
      * Render the lindenmayer system within the scope of the current worldfragment.
@@ -59,8 +74,9 @@ public class AlphaInterpreter
         MatMesh mmTarget
     )
     {
+        var alphaResources = _alphaResources.Value;
         var parts = _instance.State.Parts;
-
+        
         var state = new AlphaState(null);
         state.Position = start;
 

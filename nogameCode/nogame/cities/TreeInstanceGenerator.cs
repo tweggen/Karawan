@@ -241,10 +241,5 @@ public class TreeInstanceGenerator
 
     public TreeInstanceGenerator()
     {
-        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.cities.trees.materials.treeleave",
-            (name) => new Material()
-            {
-                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff448822)
-            });
     }
 }

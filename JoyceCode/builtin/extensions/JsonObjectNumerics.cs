@@ -31,15 +31,24 @@ static public class JsonObjectNumerics
 
     static public Vector3 ToVector3(in JsonNode jn)
     {
+        if (jn == null)
+        {
+            int a = 0;
+            
+        }
         var jo = jn.AsObject();
-        return new Vector3((float)jo["X"], (float)jo["Y"], (float)jo["Z"]);
+        if (jo == null)
+        {
+            int b = 0;
+        }
+        return new Vector3((float)jo["x"], (float)jo["y"], (float)jo["z"]);
     }
     
     
     static public Quaternion ToQuaternion(in JsonNode jn)
     {
         var jo = jn.AsObject();
-        return new Quaternion((float)jo["X"], (float)jo["Y"], (float)jo["Z"], (float)jo["W"]);
+        return new Quaternion((float)jo["x"], (float)jo["y"], (float)jo["z"], (float)jo["w"]);
     }
     
     
@@ -47,7 +56,7 @@ static public class JsonObjectNumerics
     {
         var ienu = jn.AsArray().Select((jnVector) =>
         {
-            Trace($"{jnVector}");
+            // Trace($"{jnVector}");
             var v3 = ToVector3(jnVector);
             Trace($"{v3}");
             return v3;
