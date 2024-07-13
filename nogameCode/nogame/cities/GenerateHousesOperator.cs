@@ -517,7 +517,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     }
 
                     var height = building.GetHeight();
-
+#if true
                     try
                     {
                         /*
@@ -534,7 +534,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                             ),
                             ctx.Rnd
                         );
-                        var lInstance = new LGenerator(lSystem).Generate(3);
+                        var lInstance = new LGenerator(lSystem, $"{orgPoints[0]}").Generate(3);
                         if (null != lInstance)
                         {
                             new AlphaInterpreter(lInstance).Run(ctx.Fragment, Vector3.Zero, matmesh, listCreatePhysics);
@@ -549,7 +549,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         Error($"Unable to generate lindenmeyer houses: {e}");
                     }
-
+#endif
                     try
                     {
 #if false

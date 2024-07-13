@@ -190,7 +190,7 @@ public class TreeInstanceGenerator
                 lSystem = _createTree2System(rnd);
             }
 
-            var lGenerator = new LGenerator(lSystem);
+            var lGenerator = new LGenerator(lSystem, rnd);
             return lGenerator.Generate(4);
         }
         catch (Exception e)

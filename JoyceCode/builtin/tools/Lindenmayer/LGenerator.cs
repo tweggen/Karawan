@@ -6,6 +6,7 @@ namespace builtin.tools.Lindenmayer;
 public class LGenerator
 {
     private System _system;
+    private RandomSource _rnd;
 
     private bool _traceEmit = false;
 
@@ -24,7 +25,10 @@ public class LGenerator
             return new Instance( _system, new State( op ) );
         }
         var np = new List<Part>();
-        foreach (Part part in op ) {
+        foreach (Part part in op )
+        {
+
+            float totalProbab = 0f;
             /*
              * First collect all the rules that match the part.
              */
@@ -44,20 +48,38 @@ public class LGenerator
                 }
                 if( _traceEmit ) Trace($"Matched rule {rule.Name}.");
                 matchingRules.Add( rule );
+                totalProbab += rule.Probability;
             }
 
-            if( 0 != matchingRules.Count ) {
+            if( 0 != matchingRules.Count )
+            {
+
+                float probabOffset = _rnd.GetFloat() * totalProbab;
+                
                 /*
-                * If we have matching rules, select the first match.
-                * TXWTODO: Collect the probabilities and select accordingly.
-                */
-                var winningRule = matchingRules[0];
-                var newParts = winningRule.TransformParts( part.Parameters );
+                 * Roll the dice and select a rule accordingly.
+                 * We preset with the first rule for very absurd rounding errors.
+                 */
+                Rule winningRule = matchingRules[0];
+                float probabAccu = 0f;
+                foreach (var rule in matchingRules)
+                {
+                    float nextProbab = probabAccu + rule.Probability;
+                    if (probabOffset <= nextProbab)
+                    {
+                        winningRule = rule;
+                        break;
+                    }
+                    probabAccu = nextProbab;
+                }
+                
+                var newParts = winningRule.TransformParts(part.Parameters);
                 foreach (Part singleNewPart in newParts ) {
                     if( _traceEmit ) Trace( $"Pushing new \"{singleNewPart}\".");
                     np.Add( singleNewPart );
                 }
                 isChanged = true;
+                
             } else {
                 /*
                  * No rule match, leave part untouched.
@@ -115,8 +137,16 @@ public class LGenerator
     }
 
 
-    public LGenerator( System system )
+    public LGenerator(System system, string randomSeed)
     {
         _system = system;
+        _rnd = new RandomSource(randomSeed);
+    }
+    
+    
+    public LGenerator(System system, RandomSource rnd)
+    {
+        _system = system;
+        _rnd = rnd;
     }
 }

@@ -49,7 +49,7 @@ static public class JsonObjectNumerics
         {
             // Trace($"{jnVector}");
             var v3 = ToVector3(jnVector);
-            Trace($"{v3}");
+            // Trace($"{v3}");
             return v3;
         });
         return new List<Vector3>(ienu);

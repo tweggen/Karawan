@@ -110,6 +110,43 @@ public class HouseInstanceGenerator
                     }),
 
                 /*
+                 * A buildable with available space more than 4 stories may become
+                 * segmented into a lower buildableBaseSegment and an upper buildableSegment.
+                 */
+                new Rule("buildableAnySegment(A,h)",
+                    0.5f, (Params p) => (float)p["h"] > 4f*3f,
+                    (p) =>
+                    {
+                        int availableStories = (int)Single.Ceiling((float)p["h"]) / 3;
+                        
+                        /*
+                         * The base is at least on storey.
+                         */
+                        int lowerStories = 1 + (int)((availableStories - 1) * rnd.GetFloat() * 0.8f);
+                        
+                        /*
+                         * Well, all that remains is the reaminder.
+                         */
+                        int upperStories = availableStories - lowerStories;
+
+                        var v3Edges = ToVector3List(p["A"]);
+
+                        var v3SmallerEdges = new PolyTool(v3Edges, Vector3.UnitY).Extend(-2f);
+                        
+                        return new List<Part>
+                        {
+                            new("buildableAnySegment(A,h)", new JsonObject
+                            {
+                                ["A"] = From(v3Edges), ["h"] = (float)(lowerStories * 3f)
+                            }),
+                            new("buildableAnySegment(A,h)", new JsonObject
+                            {
+                                ["A"] = From(v3SmallerEdges), ["h"] = (float)(upperStories * 3f)
+                            }),
+                        };
+                    }),
+
+                /*
                  * A buildable may straightforward become a single buildable base part.
                  * That's what we had in the original game all the time.
                  */
@@ -145,6 +182,7 @@ public class HouseInstanceGenerator
                  * Any other segment does not have neon signs.
                  */
                 new Rule("buildableAnySegment(A,h)",
+                    0.3f, Rule.Always,
                     (p) => new List<Part>
                     {
                         new ("segment(A,h)", new JsonObject
