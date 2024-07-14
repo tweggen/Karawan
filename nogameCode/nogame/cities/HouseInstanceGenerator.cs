@@ -151,7 +151,17 @@ public class HouseInstanceGenerator
                  * That's what we had in the original game all the time.
                  */
                 new Rule("buildable(A,h)",
-                    0.5f, (Params p) => (float)p["h"] > 4f*3f,
+                    0.1f, (Params p) => (float)p["h"] > 4f*3f,
+                    (p) => new List<Part>
+                    {
+                        new ("buildableBaseSegment(A,h)", new JsonObject
+                        {
+                            ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
+                        }),
+                    }),
+                
+                new Rule("buildable(A,h)",
+                    0.7f, (Params p) => (float)p["h"] < 4f*3f,
                     (p) => new List<Part>
                     {
                         new ("buildableBaseSegment(A,h)", new JsonObject
@@ -204,6 +214,11 @@ public class HouseInstanceGenerator
                         {
                             ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"], ["mat"] = "nogame.cities.houses.materials.houses.win3"
                         })
+                    }),
+                new Rule("neon(P,h,n)",
+                    (p) => new List<Part>
+                    {
+                        /* TXWTODO: Write me */
                     })
             });
     }

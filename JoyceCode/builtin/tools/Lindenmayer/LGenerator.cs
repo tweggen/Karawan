@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using static engine.Logger;
 
 namespace builtin.tools.Lindenmayer;
@@ -8,7 +9,7 @@ public class LGenerator
     private System _system;
     private RandomSource _rnd;
 
-    private bool _traceEmit = false;
+    public bool DebugRules { get; set; } = false;
 
     private Instance _applyRules( Instance lInstance, IList<Rule> rules )
     {
@@ -35,7 +36,7 @@ public class LGenerator
             var matchingRules = new List<Rule>();
             foreach (Rule rule in rules) 
             {
-                if( rule.Name != part.Name ) 
+                if (rule.Name != part.Name) 
                 {
                     continue;
                 }
@@ -46,7 +47,7 @@ public class LGenerator
                         continue;
                     }
                 }
-                if( _traceEmit ) Trace($"Matched rule {rule.Name}.");
+                if( DebugRules ) Trace($"Matched rule {rule.Name}.");
                 matchingRules.Add( rule );
                 totalProbab += rule.Probability;
             }
@@ -75,7 +76,7 @@ public class LGenerator
                 
                 var newParts = winningRule.TransformParts(part.Parameters);
                 foreach (Part singleNewPart in newParts ) {
-                    if( _traceEmit ) Trace( $"Pushing new \"{singleNewPart}\".");
+                    if( DebugRules ) Trace( $"Pushing new \"{singleNewPart}\".");
                     np.Add( singleNewPart );
                 }
                 isChanged = true;
@@ -84,7 +85,7 @@ public class LGenerator
                 /*
                  * No rule match, leave part untouched.
                  */
-                if( _traceEmit ) Trace( $"Pushing old \"{part}\".");
+                if( DebugRules ) Trace( $"Pushing old \"{part}\".");
                 np.Add( part.Clone() );
             }
         }
@@ -107,7 +108,13 @@ public class LGenerator
 
     public Instance Finalize( Instance instance )
     {
-        return _applyRules(instance, _system.Macros );
+        var finalizedInstance = _applyRules(instance, _system.Macros);
+        if (null == finalizedInstance)
+        {
+            ErrorThrow<InvalidOperationException>($"Unable to create finalized version of current instance.");
+        }
+
+        return finalizedInstance;
     }
 
 
