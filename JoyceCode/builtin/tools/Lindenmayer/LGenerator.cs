@@ -85,7 +85,7 @@ public class LGenerator
                 /*
                  * No rule match, leave part untouched.
                  */
-                if( DebugRules ) Trace( $"Pushing old \"{part}\".");
+                if(DebugRules) Trace( $"Pushing old \"{part}\".");
                 np.Add( part.Clone() );
             }
         }

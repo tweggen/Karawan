@@ -10,7 +10,7 @@ namespace builtin.tools
 
     public class Triangulate
     {
-        static public void ToMesh(in IList<Vector3> inPolyPoints, in Vector3 v3Normal, in Vector2 v2UV, in engine.joyce.Mesh mesh)
+        static public void ToMesh(in IList<Vector3> inPolyPoints, in Vector3 v3Normal, in Vector2 v2UV, in engine.joyce.Mesh mesh, bool clockwise = false)
         {
             LibTessDotNet.Tess tess = new LibTessDotNet.Tess();
 
@@ -21,7 +21,7 @@ namespace builtin.tools
                 contour[i].Position = new LibTessDotNet.Vec3(
                     inPolyPoints[i].X, inPolyPoints[i].Y, inPolyPoints[i].Z);
             }
-            tess.AddContour(contour, LibTessDotNet.ContourOrientation.CounterClockwise);
+            tess.AddContour(contour, clockwise?LibTessDotNet.ContourOrientation.Clockwise:LibTessDotNet.ContourOrientation.CounterClockwise);
             tess.Tessellate(LibTessDotNet.WindingRule.EvenOdd, LibTessDotNet.ElementType.Polygons, 3, null, new LibTessDotNet.Vec3(v3Normal.X, v3Normal.Y, v3Normal.Z));
             int outTriangles = tess.ElementCount;
             uint maxIndex = 0;
@@ -34,7 +34,15 @@ namespace builtin.tools
                 if (i0 > maxIndex) maxIndex = i0;
                 if (i1 > maxIndex) maxIndex = i1;
                 if (i2 > maxIndex) maxIndex = i2;
-                mesh.Idx(ia+i0, ia+i1, ia+i2);
+                if (clockwise)
+                {
+                    mesh.Idx(ia + i0, ia + i2, ia + i1);
+                    
+                }
+                else
+                {
+                    mesh.Idx(ia + i0, ia + i1, ia + i2);
+                }
             }
             for( int i=0; i<=maxIndex; i++)
             {

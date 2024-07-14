@@ -203,7 +203,11 @@ public class AlphaInterpreter
 
                 case "extrudePoly(A,h,mat)":
                 {
-                    var listWalls = new List<Vector3>(ToVector3List(p["A"]));
+                    var listEdges = new List<Vector3>(ToVector3List(p["A"]));
+                    for (int i = 0; i < listEdges.Count; ++i)
+                    {
+                        listEdges[i] += state.Position;
+                    }
                     var path = new List<Vector3>();
                     Vector3 v3h = new Vector3(0f, (float)p["h"], 0f);
                     path.Add( v3h);
@@ -211,11 +215,11 @@ public class AlphaInterpreter
                     engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
                     state.Material = (string)p["mat"];
                     var opExtrudePoly = new ExtrudePoly(
-                        listWalls, 
+                        listEdges, 
                         path, 
                         27, /* magic for houses */ 
                         24f,/* standard for windows */
-                        false, false, true /* standard values for houses */
+                        false, true, true /* standard values for houses */
                         )
                     {
                         /* also standard values for houses */
@@ -238,7 +242,7 @@ public class AlphaInterpreter
                             Flags =
                                 CollisionProperties.CollisionFlags.IsTangible
                                 | CollisionProperties.CollisionFlags.IsDetectable,
-                            Name = $"house-{listWalls[0] + worldFragment.Position}",
+                            Name = $"house-{listEdges[0] + worldFragment.Position}",
                         };
                         try
                         {

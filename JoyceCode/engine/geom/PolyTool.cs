@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using static engine.Logger;
 using ClipperLib;
 
 namespace engine.geom;
@@ -32,14 +33,22 @@ public class PolyTool
 
             clipperOffset.Execute(ref solution2, d*100f);
 
+            bool haveAny = false;
             foreach (var polygon in solution2)
             {
                 foreach (var point in polygon)
                 {
+                    haveAny = true;
                     float x = point.X / 100f;
                     float y = point.Y / 100f;
                     p.Insert(0, new Vector3(x, polyY, y));
                 }
+            }
+
+            if (!haveAny)
+            {
+                Error($"Solution is empty.");
+                return null;
             }
 
         }

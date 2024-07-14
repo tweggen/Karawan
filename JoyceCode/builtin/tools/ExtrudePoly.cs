@@ -361,6 +361,26 @@ namespace builtin.tools
                  */
                 builtin.tools.Triangulate.ToMesh(topPlane, PairedNormals?Vector3.Normalize(_path[0]):Vector3.Zero, Vector2.One/64f, g);
             }
+
+            if (_addFloor)
+            {
+                /*
+                 * First, push the vertices.
+                 * Then we create triangulation indices and add them.
+                 */
+                List<Vector3> bottomPlane = new();
+                foreach(var op in p)
+                {
+                    Vector3 tp = op;
+                    bottomPlane.Add(tp);
+                }
+                // Why? IDK, was wrong.
+                bottomPlane.Reverse();
+                /*
+                 * We hard code the UV to be a bit next to zero to make up for any range problems
+                 */
+                builtin.tools.Triangulate.ToMesh(bottomPlane, PairedNormals?Vector3.Normalize(_path[0]):Vector3.Zero, Vector2.One/64f, g, true);
+            }
         }
 
         /**

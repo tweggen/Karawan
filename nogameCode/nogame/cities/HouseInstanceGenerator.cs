@@ -78,7 +78,7 @@ public class HouseInstanceGenerator
                  * segmented into a lower buildableBaseSegment and an upper buildableSegment. 
                  */
                 new Rule("buildable(A,h)",
-                    0.5f, (Params p) => (float)p["h"] > 4f*3f,
+                    0.8f, (Params p) => (float)p["h"] > 4f*3f,
                     (p) =>
                     {
                         int availableStories = (int)Single.Ceiling((float)p["h"]) / 3;
@@ -96,17 +96,35 @@ public class HouseInstanceGenerator
 
                         var v3SmallerEdges = new PolyTool(v3Edges, Vector3.UnitY).Extend(-2f);
                         
-                        return new List<Part>
+                        if (null == v3SmallerEdges)
                         {
-                            new("buildableBaseSegment(A,h)", new JsonObject
+                            /*
+                             * We can't shrink it any more, keep the entire stem.
+                             * TXWTODO: It would be kind of nice ta allow the grammer to do further
+                             * trials.
+                             */
+                            return new List<Part>
                             {
-                                ["A"] = From(v3Edges), ["h"] = (float)(baseStories * 3f)
-                            }),
-                            new("buildableAnySegment(A,h)", new JsonObject
+                                new("buildableBaseSegment(A,h)", new JsonObject
+                                {
+                                    ["A"] = From(v3Edges), ["h"] = (float)(availableStories * 3f)
+                                })
+                            };
+                        }
+                        else
+                        {
+                            return new List<Part>
                             {
-                                ["A"] = From(v3SmallerEdges), ["h"] = (float)(remainingStories * 3f)
-                            }),
-                        };
+                                new("buildableBaseSegment(A,h)", new JsonObject
+                                {
+                                    ["A"] = From(v3Edges), ["h"] = (float)(baseStories * 3f)
+                                }),
+                                new("buildableAnySegment(A,h)", new JsonObject
+                                {
+                                    ["A"] = From(v3SmallerEdges), ["h"] = (float)(remainingStories * 3f)
+                                }),
+                            };
+                        }
                     }),
 
                 /*
@@ -132,18 +150,35 @@ public class HouseInstanceGenerator
                         var v3Edges = ToVector3List(p["A"]);
 
                         var v3SmallerEdges = new PolyTool(v3Edges, Vector3.UnitY).Extend(-2f);
-                        
-                        return new List<Part>
+                        if (null == v3SmallerEdges)
                         {
-                            new("buildableAnySegment(A,h)", new JsonObject
+                            /*
+                             * We can't shrink it any more, keep the entire stem.
+                             * TXWTODO: It would be kind of nice ta allow the grammer to do further
+                             * trials.
+                             */
+                            return new List<Part>
                             {
-                                ["A"] = From(v3Edges), ["h"] = (float)(lowerStories * 3f)
-                            }),
-                            new("buildableAnySegment(A,h)", new JsonObject
+                                new("segment(A,h)", new JsonObject
+                                {
+                                    ["A"] = From(v3Edges), ["h"] = (float)(availableStories * 3f)
+                                })
+                            };
+                        }
+                        else
+                        {
+                            return new List<Part>
                             {
-                                ["A"] = From(v3SmallerEdges), ["h"] = (float)(upperStories * 3f)
-                            }),
-                        };
+                                new("buildableAnySegment(A,h)", new JsonObject
+                                {
+                                    ["A"] = From(v3Edges), ["h"] = (float)(lowerStories * 3f)
+                                }),
+                                new("buildableAnySegment(A,h)", new JsonObject
+                                {
+                                    ["A"] = From(v3SmallerEdges), ["h"] = (float)(upperStories * 3f)
+                                }),
+                            };
+                        }
                     }),
 
                 /*
@@ -161,7 +196,7 @@ public class HouseInstanceGenerator
                     }),
                 
                 new Rule("buildable(A,h)",
-                    0.7f, (Params p) => (float)p["h"] < 4f*3f,
+                    1f, (Params p) => (float)p["h"] < 4f*3f,
                     (p) => new List<Part>
                     {
                         new ("buildableBaseSegment(A,h)", new JsonObject
