@@ -461,8 +461,9 @@ public class Module : AModule, IInputPart
         {
             int currentZoomState = (int)_requestedMapParams.CurrentZoomState;
             currentZoomState += DisplayMapParams.ZOOM_STEPS * y;
-            currentZoomState = Int32.Max((int)DisplayMapParams.MIN_ZOOM_STATE,
-                Int32.Min((int)DisplayMapParams.MAX_ZOOM_STATE, currentZoomState));
+            currentZoomState = Int32.Clamp(currentZoomState,
+                (int)DisplayMapParams.MIN_ZOOM_STATE,
+                (int)DisplayMapParams.MAX_ZOOM_STATE);
             _requestedMapParams.CurrentZoomState = currentZoomState;
         }
 

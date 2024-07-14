@@ -235,7 +235,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     /**
      * Besides reading the standard touch movements, the touch controller also implements
-     * a zoom controller (mouse wheel) on the right hand side of the screen.
+     * a mouse wheel controller on the right hand side of the screen.
      */
     private void _touchMouseController()
     {
@@ -251,17 +251,25 @@ public class InputController : engine.AModule, engine.IInputPart
                  */
                 float relY = (float)currDist.Y / (float)viewSize.Y;
                 float relX = (float)currDist.X / (float)viewSize.Y;
-
-                //Console.WriteLine($"ViewSize: {_vViewSize}, press: {_mousePressPosition}, relX: {relX}, relY: {relY}");
-
+                
                 if (_mousePressPosition.X >= (viewSize.X - viewSize.X/25f))
                 {
+#if false
                     float zoomWay = relY / ControllerTouchZoomFull * (8);
                     
                     I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
                     {
                         Position = new Vector2(0f, zoomWay)
                     });
+#else
+                    var v2Moved = (_currentMousePosition - _lastTouchPosition) / (float)viewSize.Y;
+                    float virtualWheelY = v2Moved.Y * 20f;
+
+                    I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
+                    {
+                        Position = new Vector2(0f, virtualWheelY)
+                    });
+#endif
                 }
                 else
                 {
@@ -271,8 +279,8 @@ public class InputController : engine.AModule, engine.IInputPart
                             _mousePressPosition.Y / viewSize.Y),
                         new Vector2(relX, relY));
 
-                    _lastTouchPosition = _currentMousePosition;
                 }
+                _lastTouchPosition = _currentMousePosition;
                 
             }
             else
@@ -416,6 +424,9 @@ public class InputController : engine.AModule, engine.IInputPart
             _mousePressPosition = ev.Position;
             _currentMousePosition = ev.Position;
             _isMouseButtonClicked = true;
+
+            _lastMousePosition = ev.Position;
+            _lastTouchPosition = ev.Position;
         }
 
     }
@@ -456,7 +467,13 @@ public class InputController : engine.AModule, engine.IInputPart
     }
 
     
-    public float TouchSteerTransfer(float X)
+    public float TouchSteerTransferX(float X)
+    {
+        return Single.Clamp(Single.Sign(X)*Single.Abs(X) * Single.Abs(X) / 18f, -1f, 1f);
+    }
+    
+
+    public float TouchSteerTransferY(float X)
     {
         return Single.Clamp(Single.Sign(X) * Single.Abs(X) / 6f, -1f, 1f);
     }
@@ -464,7 +481,7 @@ public class InputController : engine.AModule, engine.IInputPart
 
     public Vector2 TouchSteerTransfer(Vector2 v)
     {
-        return new Vector2(TouchSteerTransfer(v.X), TouchSteerTransfer(v.Y));
+        return new Vector2(TouchSteerTransferX(v.X), TouchSteerTransferY(v.Y));
     }
 
 

@@ -44,7 +44,7 @@ class LeftStickFingerState : AFingerState
 
             float moveX = vNow.X;
             _accuX += moveX;
-            float curvedX = _ic.TouchSteerTransfer(_accuX);
+            float curvedX = _ic.TouchSteerTransferX(_accuX);
             if (curvedX < -_ic.ControllerXTolerance)
             {
                 cs.AnalogLeft = (int)(Single.Min(_ic.ControllerXMax, -curvedX - _ic.ControllerXTolerance)
