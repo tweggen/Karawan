@@ -191,7 +191,7 @@ public class TreeInstanceGenerator
             }
 
             var lGenerator = new LGenerator(lSystem, rnd);
-            return lGenerator.Generate(4);
+            return lGenerator.Generate(1);
         }
         catch (Exception e)
         {
@@ -212,7 +212,7 @@ public class TreeInstanceGenerator
          */ 
         var instance = _createLInstance(rnd);
         var alpha = new AlphaInterpreter( instance );
-        alpha.Run( null, Vector3.Zero, matmesh, null);
+        alpha.Run(null, Vector3.Zero, matmesh, null);
         
         var id = InstanceDesc.CreateFromMatMesh(matmesh, 500f);
 

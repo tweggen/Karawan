@@ -85,7 +85,7 @@ public class HouseInstanceGenerator
                         /*
                          * The base is at least on storey.
                          */
-                        int baseStories = 1 + (int)((availableStories - 1) * rnd.GetFloat() * 0.8f);
+                        int baseStories = 1 + (int)(((float)availableStories - 1f) * rnd.GetFloat());
                         
                         /*
                          * Well, all that remains is the reaminder.
@@ -114,7 +114,7 @@ public class HouseInstanceGenerator
                  * segmented into a lower buildableBaseSegment and an upper buildableSegment.
                  */
                 new Rule("buildableAnySegment(A,h)",
-                    0.5f, (Params p) => (float)p["h"] > 4f*3f,
+                    0.9f, (Params p) => (float)p["h"] > 4f*3f,
                     (p) =>
                     {
                         int availableStories = (int)Single.Ceiling((float)p["h"]) / 3;
@@ -122,7 +122,7 @@ public class HouseInstanceGenerator
                         /*
                          * The base is at least on storey.
                          */
-                        int lowerStories = 1 + (int)((availableStories - 1) * rnd.GetFloat() * 0.8f);
+                        int lowerStories = 1 + (int)(((float)availableStories - 1f) * rnd.GetFloat());
                         
                         /*
                          * Well, all that remains is the reaminder.
@@ -192,7 +192,7 @@ public class HouseInstanceGenerator
                  * Any other segment does not have neon signs.
                  */
                 new Rule("buildableAnySegment(A,h)",
-                    0.3f, Rule.Always,
+                    0.1f, Rule.Always,
                     (p) => new List<Part>
                     {
                         new ("segment(A,h)", new JsonObject
