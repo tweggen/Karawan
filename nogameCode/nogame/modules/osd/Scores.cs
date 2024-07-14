@@ -51,38 +51,20 @@ public class Scores : engine.AModule
                 speed = (int)Single.Floor(v3Vel.Length() * 3.6f + 0.5f);
             }
         }
-        
-        _eScoreDisplay.Set(new engine.draw.components.OSDText(
-            new Vector2(786f-64f-32f, 48f+YOffset),
-            new Vector2(64f, 40f),
-            $"{speed}",
-            32,
-            0xff448822,
-            0x00000000,
-            HAlign.Right
-        )
+
         {
-            GaugeColor = 0x44448822,
-            GaugeValue = (ushort)(4096f * speed / 200f)
-        });
-        _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
-            new Vector2(786f-64f-32f-96f, 48f+YOffset),
-            new Vector2(64f, 40f),
-            $"{gameState.NumberPolytopes}",
-            32,
-            0xff448822,
-            0x00000000,
-            HAlign.Right
-        ));
-        _eHealthDisplay.Set(new engine.draw.components.OSDText(
-            new Vector2(786f-64f-32f-48f, 48f+48f+YOffset),
-            new Vector2(64f+48f, 40f),
-            $"{gameState.Health}",
-            32,
-            0xff448822,
-            0x00000000,
-            HAlign.Right
-        ));
+            ref var cScoreOsdText = ref _eScoreDisplay.Get<engine.draw.components.OSDText>();
+            cScoreOsdText.Text = $"{speed}";
+            cScoreOsdText.GaugeValue = (ushort)(4096f * speed / 200f);
+        }
+        {
+            ref var cPolytopeOsdText = ref _ePolytopeDisplay.Get<engine.draw.components.OSDText>();
+            cPolytopeOsdText.Text = $"{gameState.NumberPolytopes}";
+        }
+        {
+            ref var cHealthOsdText = ref _eHealthDisplay.Get<engine.draw.components.OSDText>();
+            cHealthOsdText.Text = $"{gameState.Health}";
+        }
     }
     
     
@@ -108,6 +90,19 @@ public class Scores : engine.AModule
         {
             ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
         });
+        _eScoreDisplay.Set(new engine.draw.components.OSDText(
+            new Vector2(786f-64f-32f, 48f+YOffset),
+            new Vector2(64f, 40f),
+            $"0",
+            32,
+            0xff448822,
+            0x00000000,
+            HAlign.Right
+        )
+        {
+            GaugeColor = 0x44448822,
+            GaugeValue = 0
+        });
 
 
         _ePolytopeDisplay = _engine.CreateEntity("OsdPolytopeDisplay");
@@ -115,6 +110,15 @@ public class Scores : engine.AModule
         {
             ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
         });
+        _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
+            new Vector2(786f-64f-32f-96f, 48f+YOffset),
+            new Vector2(64f, 40f),
+            $"",
+            32,
+            0xff448822,
+            0x00000000,
+            HAlign.Right
+        ));
 
 
         _eHealthDisplay = _engine.CreateEntity("OsdHealthDisplay");
@@ -122,6 +126,15 @@ public class Scores : engine.AModule
         {
             ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
         });
+        _eHealthDisplay.Set(new engine.draw.components.OSDText(
+            new Vector2(786f-64f-32f-48f, 48f+48f+YOffset),
+            new Vector2(64f+48f, 40f),
+            $"",
+            32,
+            0xff448822,
+            0x00000000,
+            HAlign.Right
+        ));
 
 
 

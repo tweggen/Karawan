@@ -80,14 +80,18 @@ public class Display : engine.AModule
             ref var cOsdText = ref eCand.Get<engine.draw.components.OSDText>();
 
             ref var v2ScreenPos = ref cOsdText.ScreenPos;
-            if (v2ScreenPos.X == -1000f) continue;
+            if (v2ScreenPos.X == -1000f)
+            {
+                continue;
+            }
 
+            //Trace($"testing {v2ScreenPos} + {cOsdText.Size}: cOSDText {cOsdText.Text}");
             if (v2OsdPos.X >= v2ScreenPos.X
                 && v2OsdPos.Y >= v2ScreenPos.Y
                 && v2OsdPos.X < (v2ScreenPos.X + cOsdText.Size.X)
                 && v2OsdPos.Y < (v2ScreenPos.Y + cOsdText.Size.Y))
             {
-                Trace($"matching {v2ScreenPos} + {cOsdText.Size}: cOSDText");
+                // Trace($"matching {v2ScreenPos} + {cOsdText.Size}: cOSDText");
                 //listClickables.Add(eCand.Get<Clickable>().ClickEventFactory);
                 return eCand.Get<Clickable>().ClickEventFactory(e, cev, v2OsdPos);
             }

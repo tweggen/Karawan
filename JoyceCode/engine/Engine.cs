@@ -401,6 +401,10 @@ public class Engine
 #else
             foreach (var e in listDoomedEntities)
             {
+                if (!e.IsAlive)
+                {
+                    ErrorThrow<ArgumentException>($"Tried to kill an entity {e} that has not been alive anymore.");
+                }
                 if (_setDoomedEntities.Contains(e))
                 {
                     ErrorThrow<ArgumentException>($"Entity {e} already was doomed before.");
@@ -422,6 +426,10 @@ public class Engine
             listEntity.Add(entity);
             _listDoomedEntityLists.Add(listEntity);
 #else
+            if (!entity.IsAlive)
+            {
+                ErrorThrow<ArgumentException>($"Tried to kill an entity {entity} that has not been alive anymore.");
+            }
             if (_setDoomedEntities.Contains(entity))
             {
                 ErrorThrow<ArgumentException>($"Entity {entity} already was doomed before.");
