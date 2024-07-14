@@ -3,8 +3,8 @@
 		xmlns:android="http://schemas.android.com/apk/res/android" 
 		xmlns:tools="http://schemas.android.com/tools"
 		package="de.nassau_records.silicondesert2" 
-		android:versionCode="112" 
-		android:versionName="Lindenmeyer again.">
+		android:versionCode="113" 
+		android:versionName="Lindenmeyer less.">
 	<application 
 			android:allowBackup="true"
 			android:icon="@mipmap/appicon" 
