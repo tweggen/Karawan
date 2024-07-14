@@ -10,7 +10,7 @@
     "nogame.framebuffer.resolution": "368x207",
     "nogame.CreateMap": true,
     "nogame.CreateMiniMap": true,
-    "nogame.LogosScene.PlayTitleMusic": "false",
+    "nogame.LogosScene.PlayTitleMusic": "true",
     "engine.physics.TraceCalls": false
   },
   "implementations":
