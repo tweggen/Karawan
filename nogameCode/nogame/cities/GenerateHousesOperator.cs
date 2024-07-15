@@ -517,7 +517,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     }
 
                     var height = building.GetHeight();
-#if faöse
+#if true
                     try
                     {
                         /*
@@ -552,7 +552,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
 #endif
                     try
                     {
-#if true
+#if false
                         _createClassicHouseSubGeo(
                             ctx, matmesh,
                             fragPoints, height, _metersPerTexture,

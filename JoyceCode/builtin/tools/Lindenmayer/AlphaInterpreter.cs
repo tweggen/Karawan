@@ -224,7 +224,8 @@ public class AlphaInterpreter
                     {
                         /* also standard values for houses */
                         PairedNormals = true,
-                        TileToTexture = true
+                        TileToTexture = true,
+                        SkipSmall = true
                     };
                     opExtrudePoly.BuildGeom(meshExtrusion);
                     state.Position += v3h;
