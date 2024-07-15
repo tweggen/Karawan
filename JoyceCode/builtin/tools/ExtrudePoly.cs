@@ -406,7 +406,7 @@ namespace builtin.tools
             var vh = _path[0];
 
             float vhLength2 = vh.LengthSquared();
-            if (SkipSmall && vh.LengthSquared() < 0.01f)
+            if (SkipSmall && vh.LengthSquared() < 0.1f)
             {
                 Warning($"Very small polygon.");
                 return _emptyCreate;
@@ -460,7 +460,7 @@ namespace builtin.tools
                                 area += Vector3.Cross(convexPoly[i]-p0, convexPoly[i + 1]-p0).Length() / 2f;
                             }
 
-                            if (area < 0.1f)
+                            if (area < 1f)
                             {
                                 Warning($"Suspiciosly small area {area}");
                                 continue;
