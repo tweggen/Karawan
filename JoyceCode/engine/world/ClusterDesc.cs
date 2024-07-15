@@ -528,7 +528,7 @@ public class ClusterDesc
                 }
             }
         }
-        return (Pos+vOffset) with { Y = AverageHeight + 3f };
+        return (Pos+vOffset) with { Y = AverageHeight + 300f };
     }
 
 

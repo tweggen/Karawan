@@ -456,11 +456,11 @@ public class Module : AModule, IInputPart
         /*
          * size y contains the delta.
          */
-        int y = (int)ev.Position.Y;
+        var dy = (float)ev.Position.Y;
         lock (_lo)
         {
             int currentZoomState = (int)_requestedMapParams.CurrentZoomState;
-            currentZoomState += DisplayMapParams.ZOOM_STEPS * y;
+            currentZoomState += (int) (DisplayMapParams.ZOOM_STEPS * dy);
             currentZoomState = Int32.Clamp(currentZoomState,
                 (int)DisplayMapParams.MIN_ZOOM_STATE,
                 (int)DisplayMapParams.MAX_ZOOM_STATE);

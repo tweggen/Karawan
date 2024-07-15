@@ -426,9 +426,10 @@ public class Module : engine.AModule
         ClusterDesc startCluster = ClusterList.Instance().GetClusterAt(Vector3.Zero);
         if (null != startCluster)
         {
-            return startCluster.FindStartPosition();
+            var v3StartPosition = startCluster.FindStartPosition(); 
+            Trace($"Startposition is {v3StartPosition}");
+            return v3StartPosition;
         }
-
         return new Vector3(0f, 200f, 0f);
     }
 

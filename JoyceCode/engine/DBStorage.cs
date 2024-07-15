@@ -273,6 +273,10 @@ public class DBStorage : engine.AModule
 
     public bool LoadGameState<GS>(out GS gameState) where GS : class
     {
+#if false
+        gameState = null;
+        return false;
+#else
         bool haveIt = false;
         GS resultData = null;
         WithOpen(DbGameState, db =>
@@ -281,6 +285,7 @@ public class DBStorage : engine.AModule
         });
         gameState = resultData;
         return haveIt;
+#endif
     }
     
 
