@@ -404,6 +404,11 @@ namespace builtin.tools
             engine.physics.CollisionProperties? collisionProperties = null)
         {
             var vh = _path[0];
+            List<Vector3> listBreak = new()
+            {
+                new Vector3(1923f, 91f, -5544f)
+            };
+
 
             float vhLength2 = vh.LengthSquared();
             if (SkipSmall && vh.LengthSquared() < 0.1f)
@@ -453,6 +458,40 @@ namespace builtin.tools
                         if (SkipSmall)
                         {
                             Vector3 p0 = convexPoly[0];
+
+                            foreach (var v3Break in listBreak)
+                            {
+                                int f = 0;
+                                foreach (var p in convexPoly)
+                                {
+                                    if (p.X > v3Break.X)
+                                    {
+                                        f |= 1;
+                                    }
+                                    else
+                                    {
+                                        f |= 2;
+                                    }
+
+                                    if (p.Z > v3Break.Z)
+                                    {
+                                        f |= 4;
+                                    }
+                                    else
+                                    {
+                                        f |= 8;
+                                    }
+                                }
+
+                                if (f == 15)
+                                {
+                                    /*
+                                   * We hit a break point here, i.e. a point of our break list is inside the poly.
+                                   */
+                                    int a = 1;
+                                }
+                            }
+                            
                             int l = convexPoly.Count;
                             float area = 0f;
                             for (int i = 1; i < l-1; ++i)
@@ -466,7 +505,6 @@ namespace builtin.tools
                                 continue;
                             }
                         }
-
                         
                         QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
                         AABB aabbVolumeTest = new();
@@ -518,6 +556,23 @@ namespace builtin.tools
                         if (null != collisionProperties)
                         {
                             _aPhysics.AddCollisionEntry(staticHandle, collisionProperties);
+                        }
+
+                        Trace($"vCompoundCenter = {vCompoundCenter} staticHandle = {staticHandle}");
+
+                        foreach (var v3Break in listBreak)
+                        {
+                            if ((vCompoundCenter - v3Break).Length() < 5f)
+                            {
+                                /* break here for the exact center.
+                              */
+                                int a = 1;
+                            }
+                        }
+
+                        if (87 == staticHandle.Value)
+                        {
+                            int a = 1;
                         }
 
                         // Return release shapes function.

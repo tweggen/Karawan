@@ -278,7 +278,8 @@ public class API
             }
             catch (Exception e)
             {
-                Error($"Caught exception while raycasting for camera: {e}");
+                Error($"Caught exception while raycasting for camera: {e}"); 
+                _engine.PLog?.Dump();
             }
         }
     }
