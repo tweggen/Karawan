@@ -406,7 +406,9 @@ namespace builtin.tools
             var vh = _path[0];
             List<Vector3> listBreak = new()
             {
-                new Vector3(1923f, 91f, -5544f)
+                new Vector3(1923f, 91f, -5544f),
+                new Vector3(2201.7405f, 126.32393f, -6394.8325f),
+                new Vector3(1899.43f,63.84f,-5479.374f)
             };
 
 
@@ -430,6 +432,7 @@ namespace builtin.tools
                     var bufferPool = _aPhysics.BufferPool;
                     var simulation = _aPhysics.Simulation;
 
+                    List<float> listAreas = new();
                     List<ConvexHull> convexHullsToRelease = new();
 
                     IList<IList<Vector3>> listConvexPolys;
@@ -494,12 +497,15 @@ namespace builtin.tools
                             
                             int l = convexPoly.Count;
                             float area = 0f;
-                            for (int i = 1; i < l-1; ++i)
+                            for (int i = 1; i < l - 1; ++i)
                             {
-                                area += Vector3.Cross(convexPoly[i]-p0, convexPoly[i + 1]-p0).Length() / 2f;
+                                var localArea = Vector3.Cross(convexPoly[i] - p0, convexPoly[i + 1] - p0).Length() / 2f;
+                                Trace($"localArea = {localArea}");
+                                area += localArea;
                             }
+                            listAreas.Add(area);
 
-                            if (area < 1f)
+                            if (area < 10f)
                             {
                                 Warning($"Suspiciosly small area {area}");
                                 continue;
@@ -538,8 +544,11 @@ namespace builtin.tools
                          * Assuming, we are adding a static, we add the shape assuming infinite mass.
                          */
                         //builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
-                        builder.AddForKinematic(pshapeConvexHull,
+                        var shapeIndex = builder.Shapes.Add(pshapeConvexHull);
+                        builder.AddForKinematic(shapeIndex,
                             new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
+                        Trace($"shapeConvexHull {shapeIndex}");
+
                         nConvex++;
                     }
 
