@@ -17,7 +17,7 @@ public class Loader
 {
     private JsonElement _jeRoot;
     private string strDefaultLoaderAssembly = "";
-    private bool _traceResources = true;
+    private bool _traceResources = false;
     private IAssetImplementation _iAssetImpl;
     
     static public void SetJsonElement(in JsonElement je, Action<object> action)
