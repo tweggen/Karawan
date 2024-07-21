@@ -103,14 +103,12 @@ public class AlphaInterpreter
                     state.Rotation = state.Rotation * qrot;
                     break;
                 }
-
                 
                 case "fillrgb(r,g,b)":
                 {
                     state.Color = new Vector3((float)p["r"], (float)p["g"], (float)p["b"]);
                     break;
                 }
-
                 
                 case "cyl(r,l)":
                 {
@@ -155,8 +153,7 @@ public class AlphaInterpreter
 
                     break;
                 }
-
-
+                
                 case "flat(r,l)":
                 {
                     var vs = state.Position;
@@ -229,9 +226,7 @@ public class AlphaInterpreter
                     opExtrudePoly.BuildGeom(meshExtrusion);
                     state.Position += v3h;
                     mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get(state.Material), meshExtrusion);
-
-
-
+                    
                     if (null != listCreatePhysicsTarget)
                     {
                         /*
@@ -257,7 +252,6 @@ public class AlphaInterpreter
 
                     break;
                 }
-
 
                 case "powerline(P,h)":
                 {
@@ -289,6 +283,7 @@ public class AlphaInterpreter
                     poly.Add(vs + vr);
                     //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
                     poly.Add(vs - vr);
+                    poly.Add(vs - vt);
                     // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
                     var path = new List<Vector3>();
                     path.Add(vd);
@@ -308,7 +303,6 @@ public class AlphaInterpreter
                     state = new AlphaState(state);
                     break;
                 }
-                
 
                 case "pop()":
                 {
@@ -316,7 +310,6 @@ public class AlphaInterpreter
                     _stack.RemoveAt(_stack.Count - 1);
                     break;
                 }
-                
 
                 default:
                     // Warning($"Unknown part {part}.");

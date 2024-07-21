@@ -66,6 +66,11 @@ public class HouseInstanceGenerator
              *        The maximal height of the building.
              */
             {
+                /*
+                 * Straight up.
+                 */
+                new Part( "rotate(d,x,y,z)", new JsonObject {
+                    ["d"] = 90f,["x"] = 0f, ["y"] = 0f, ["z"] =1f } ),
                 _createSeed1(ini, rnd)
             }),
             
