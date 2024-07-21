@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Nodes;
 using builtin.tools.Lindenmayer;
 using engine.geom;
@@ -136,7 +137,7 @@ public class HouseInstanceGenerator
                     (p) =>
                     {
                         int availableStories = (int)Single.Ceiling((float)p["h"]) / 3;
-                        
+
                         /*
                          * The base is at least on storey.
                          */
@@ -230,6 +231,11 @@ public class HouseInstanceGenerator
                     0.1f, Rule.Always,
                     (p) => new List<Part>
                     {
+                        new ("powerline(P,h)", new JsonObject
+                        {
+                            ["P"] = From(AnyOf(rnd, ToVector3List(p["A"].DeepClone()))),
+                            ["h"] = (float)p["h"]
+                        }),
                         new ("segment(A,h)", new JsonObject
                         {
                             ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
