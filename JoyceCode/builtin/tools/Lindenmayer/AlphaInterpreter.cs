@@ -272,27 +272,32 @@ public class AlphaInterpreter
                     Vector3 vt = Vector3.Cross(vd, vr);
 
                     vd *= (float)p["h"];
-                    vr *= 0.5f; // (float)p["r"];
-                    // vt *= p["r"];
-                    // trace( 'LAlphaInterpreter.run(): From ${vs} direction ${vd} radius ${vr}.' );
-
+                    vr *= 2.5f; 
+                    vt *= 2.5f; 
+                    
                     /*
                      * Make a trivial four sided poly.
                      */
                     var poly = new List<Vector3>();
                     poly.Add(vs + vr);
                     //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
-                    poly.Add(vs - vr);
+                    poly.Add(vs + vt);
                     poly.Add(vs - vt);
                     // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
                     var path = new List<Vector3>();
-                    path.Add(vd);
+                    path.Add(2*vd);
                     // trace( 'poly: $poly' );
                     engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
-                    var ext = new ExtrudePoly(poly, path, 27, 100f, false, false, false);
+                    var ext = new ExtrudePoly(poly, path, 
+                        27, 
+                        100f,
+                        false, 
+                        false, 
+                        false);
                     ext.BuildGeom(meshExtrusion);
+                    
                     // state.Position += vd;
-                    mmTarget.Add(matLeaves, meshExtrusion);
+                    mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.cube.materials.cube"), meshExtrusion);
 
                     break;
                 }
