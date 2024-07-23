@@ -297,7 +297,7 @@ public class AlphaInterpreter
                     ext.BuildGeom(meshExtrusion);
                     
                     // state.Position += vd;
-                    mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.cube.materials.cube"), meshExtrusion);
+                    mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get((string)p["mat"]), meshExtrusion);
 
                     break;
                 }

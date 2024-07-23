@@ -6,7 +6,9 @@ using System.Numerics;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Nodes;
 using builtin.tools.Lindenmayer;
+using engine;
 using engine.geom;
+using engine.joyce;
 using static engine.Logger;
 using static builtin.extensions.JsonObjectNumerics;
 
@@ -28,6 +30,11 @@ public class HouseInstanceGenerator
 
     public HouseInstanceGenerator()
     {
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.house.materials.powerlines",
+            name => new Material()
+            {
+                EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff226666)
+            });
         // TXWTODO: Register materials
     }
 
@@ -224,7 +231,8 @@ public class HouseInstanceGenerator
                         new ("powerline(P,h)", new JsonObject
                         {
                             ["P"] = From(AnyOf(rnd, ToVector3List(p["A"].DeepClone()))),
-                            ["h"] = (float)p["h"]
+                            ["h"] = (float)p["h"],
+                            ["mat"] = "nogame.characters.house.materials.powerlines"
                         }),
                         new ("neon(P,h,n)", new JsonObject
                         {
@@ -244,7 +252,8 @@ public class HouseInstanceGenerator
                         new ("powerline(P,h)", new JsonObject
                         {
                             ["P"] = From(AnyOf(rnd, ToVector3List(p["A"].DeepClone()))),
-                            ["h"] = (float)p["h"]
+                            ["h"] = (float)p["h"],
+                            ["mat"] = "nogame.characters.house.materials.powerlines"
                         }),
                         new ("segment(A,h)", new JsonObject
                         {
