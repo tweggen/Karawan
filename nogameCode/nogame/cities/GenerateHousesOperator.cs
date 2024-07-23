@@ -504,20 +504,21 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         if (TraceHouses) Trace($"First run with building p0 {orgPoints[0]+_clusterDesc.Pos}");
                     }
                         
+                    var height = building.GetHeight();
+#if true
+                    Continue to add 2d lines for the blueprint, plus a proper start state position.
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
                     {
                         fragPoints.Add(
                             new Vector3(
                                 p.X + cx,
-                                _clusterDesc.AverageHeight + 2.15f,
+                                0f, //_clusterDesc.AverageHeight + 2.15f,
                                 p.Z + cz
                             )
                         );
                     }
 
-                    var height = building.GetHeight();
-#if true
                     try
                     {
                         /*
@@ -549,15 +550,25 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         Error($"Unable to generate lindenmeyer houses: {e}");
                     }
-#endif
+#else
+                    var fragPoints = new List<Vector3>();
+                    foreach (var p in orgPoints)
+                    {
+                        fragPoints.Add(
+                            new Vector3(
+                                p.X + cx,
+                                _clusterDesc.AverageHeight + 2.15f,
+                                p.Z + cz
+                            )
+                        );
+                    }
+
                     try
                     {
-#if false
                         _createClassicHouseSubGeo(
                             ctx, matmesh,
                             fragPoints, height, _metersPerTexture,
                             listCreatePhysics);
-#endif
 
                         _createLargeAdvertsSubGeo(
                             ctx, matmesh, fragPoints, height); //15434
@@ -566,6 +577,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                     }
+#endif
 
                     try
                     {
