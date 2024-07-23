@@ -221,6 +221,11 @@ public class HouseInstanceGenerator
                         {
                             ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
                         }),
+                        new ("powerline(P,h)", new JsonObject
+                        {
+                            ["P"] = From(AnyOf(rnd, ToVector3List(p["A"].DeepClone()))),
+                            ["h"] = (float)p["h"]
+                        }),
                         new ("neon(P,h,n)", new JsonObject
                         {
                             ["P"] = From(ToVector3List(p["A"].DeepClone()).First()),
