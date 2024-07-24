@@ -33,7 +33,7 @@ public class HouseInstanceGenerator
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.house.materials.powerlines",
             name => new Material()
             {
-                EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff226666)
+                EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff33ffff)
             });
         // TXWTODO: Register materials
     }

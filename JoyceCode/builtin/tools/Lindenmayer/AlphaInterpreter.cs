@@ -272,8 +272,8 @@ public class AlphaInterpreter
                     Vector3 vt = Vector3.Cross(vd, vr);
 
                     vd *= (float)p["h"];
-                    vr *= 2.5f; 
-                    vt *= 2.5f; 
+                    vr *= 0.5f; 
+                    vt *= 0.5f; 
                     
                     /*
                      * Make a trivial four sided poly.
@@ -286,15 +286,15 @@ public class AlphaInterpreter
                     //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
                     // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
                     var path = new List<Vector3>();
-                    path.Add(2*vd);
+                    path.Add(vd);
                     // trace( 'poly: $poly' );
                     engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
                     var ext = new ExtrudePoly(poly, path, 
                         27, 
                         100f,
                         false, 
-                        false, 
-                        false);
+                        true, 
+                        true);
                     ext.BuildGeom(meshExtrusion);
                     
                     // state.Position += vd;
