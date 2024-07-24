@@ -279,10 +279,11 @@ public class AlphaInterpreter
                      * Make a trivial four sided poly.
                      */
                     var poly = new List<Vector3>();
-                    poly.Add(vs + vr);
+                    poly.Add(vs + vr - vt);
+                    poly.Add(vs + vr + vt);
+                    poly.Add(vs - vr + vt);
+                    poly.Add(vs - vr - vt);
                     //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
-                    poly.Add(vs - vt);
-                    poly.Add(vs + vt);
                     // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
                     var path = new List<Vector3>();
                     path.Add(2*vd);

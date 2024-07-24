@@ -506,16 +506,22 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         
                     var height = building.GetHeight();
 #if true
-                    Continue to add 2d lines for the blueprint, plus a proper start state position.
+                    /*
+                     * We create a lindenmeyer placed at the building's center, the ground polygon
+                     * being relative to it.
+                     * Z coordinate is _clusterDesc.AverageHeight + 2.15f, 
+                     */
+                    
+                    /*
+                     * The building center is relative to the cluster, as are the corners of the building we have.
+                     */
+                    Vector3 v3BuildingCenter = building.GetCenter();
+
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
                     {
                         fragPoints.Add(
-                            new Vector3(
-                                p.X + cx,
-                                0f, //_clusterDesc.AverageHeight + 2.15f,
-                                p.Z + cz
-                            )
+                            new Vector3(p.X, 0f, p.Z) - v3BuildingCenter
                         );
                     }
 
@@ -538,7 +544,10 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         var lInstance = new LGenerator(lSystem, $"{orgPoints[0]}").Generate(8);
                         if (null != lInstance)
                         {
-                            new AlphaInterpreter(lInstance).Run(ctx.Fragment, Vector3.Zero, matmesh, listCreatePhysics);
+                            Vector3 v3Position =
+                                new Vector3(cx, 2.5f + _clusterDesc.AverageHeight, cz)
+                                + v3BuildingCenter;
+                            new AlphaInterpreter(lInstance).Run(ctx.Fragment, v3Position, matmesh, listCreatePhysics);
                         }
                         else
                         {
