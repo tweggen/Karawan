@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Nodes;
 using builtin.tools.Lindenmayer;
 using engine;
@@ -13,10 +12,6 @@ using static engine.Logger;
 using static builtin.extensions.JsonObjectNumerics;
 
 namespace nogame.cities;
-
-
-
-
 
 /**
  * Create an individual house.
@@ -224,15 +219,15 @@ public class HouseInstanceGenerator
                 new Rule("buildableBaseSegment(A,h)",
                     (p) => new List<Part>
                     {
-                        new ("segment(A,h)", new JsonObject
-                        {
-                            ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
-                        }),
                         new ("powerline(P,h)", new JsonObject
                         {
                             ["P"] = From(AnyOf(rnd, ToVector3List(p["A"].DeepClone()))),
                             ["h"] = (float)p["h"],
                             ["mat"] = "nogame.characters.house.materials.powerlines"
+                        }),
+                        new ("segment(A,h)", new JsonObject
+                        {
+                            ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
                         }),
                         new ("neon(P,h,n)", new JsonObject
                         {

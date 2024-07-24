@@ -72,7 +72,7 @@ public class AlphaInterpreter
      */
     public void Run(
         engine.world.Fragment? worldFragment,
-        Vector3 start,
+        Vector3 v3Start,
         MatMesh mmTarget,
         IList<Func<IList<StaticHandle>, Action>> listCreatePhysicsTarget
     )
@@ -81,7 +81,7 @@ public class AlphaInterpreter
         var parts = _instance.State.Parts;
         
         var state = new AlphaState(null);
-        state.Position = start;
+        state.Position = v3Start;
 
         var matnameLeaves = "nogame.cities.trees.materials.treeleave";
         var matLeaves = I.Get<ObjectRegistry<Material>>().Get(matnameLeaves);
@@ -206,7 +206,7 @@ public class AlphaInterpreter
                     }
                     var path = new List<Vector3>();
                     Vector3 v3h = new Vector3(0f, (float)p["h"], 0f);
-                    path.Add( v3h);
+                    path.Add(v3h);
 
                     engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
                     state.Material = (string)p["mat"];
