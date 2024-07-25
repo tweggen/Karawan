@@ -82,22 +82,22 @@ public class InputController : engine.AModule, engine.IInputPart
                 case "(shiftleft)":
                     _isKeyboardFast = true;
                     break;
-                case "Q":
+                case "q":
                     _controllerState.AnalogUp = KeyboardAnalogMax; 
                     break;
-                case "Z":
+                case "z":
                     _controllerState.AnalogDown = KeyboardAnalogMax;
                     break;
-                case "W":
+                case "w":
                     _controllerState.AnalogForward = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
-                case "S":
+                case "s":
                     _controllerState.AnalogBackward = _isKeyboardFast?KeyboardAnalogMax:KeyboardAnalogWalk;
                     break;
-                case "A":
+                case "a":
                     _controllerState.AnalogLeft = KeyboardAnalogMax;
                     break;
-                case "D":
+                case "d":
                     _controllerState.AnalogRight = KeyboardAnalogMax;
                     break;
                 default:
@@ -119,22 +119,22 @@ public class InputController : engine.AModule, engine.IInputPart
                 case "(shiftleft)":
                     _isKeyboardFast = false;
                     break;
-                case "Q":
+                case "q":
                     _controllerState.AnalogUp = 0;
                     break;
-                case "Z":
+                case "z":
                     _controllerState.AnalogDown = 0;
                     break;
-                case "W":
+                case "w":
                     _controllerState.AnalogForward = 0;
                     break;
-                case "S":
+                case "s":
                     _controllerState.AnalogBackward = 0;
                     break;
-                case "A":
+                case "a":
                     _controllerState.AnalogLeft = 0;
                     break;
-                case "D":
+                case "d":
                     _controllerState.AnalogRight = 0;
                     break;
                 default:

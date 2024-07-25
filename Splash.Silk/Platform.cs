@@ -153,25 +153,25 @@ public class Platform : engine.IPlatform
                 code = "9";
                 break;
             case Key.A:
-                code = "A";
+                code = "a";
                 break;
             case Key.D:
-                code = "D";
+                code = "d";
                 break;
             case Key.E:
-                code = "E";
+                code = "e";
                 break;
             case Key.S:
-                code = "S";
+                code = "s";
                 break;
             case Key.Q:
-                code = "Q";
+                code = "q";
                 break;
             case Key.W:
-                code = "W";
+                code = "w";
                 break;
             case Key.Z:
-                code = "Z";
+                code = "z";
                 break;
             case Key.Enter:
                 code = "(enter)";
@@ -209,6 +209,12 @@ public class Platform : engine.IPlatform
             case Key.Left:
                 code = "(cursorleft)";
                 break;
+            case Key.Delete:
+                code = "(delete)";
+                break;
+            case Key.Backspace:
+                code = "(backspace)";
+                break;
             default:
                 break;
         }
@@ -238,6 +244,12 @@ public class Platform : engine.IPlatform
                 _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
             }
         }
+    }
+
+
+    private void _onKeyChar(IKeyboard arg1, Key arg2, int arg3)
+    {
+        I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, arg3.ToString()));
     }
 
 
@@ -428,6 +440,7 @@ public class Platform : engine.IPlatform
         {
             _iInputContext.Keyboards[i].KeyDown += _onKeyDown;
             _iInputContext.Keyboards[i].KeyUp += _onKeyUp;
+            _iInputContext.Keyboards[i].KeyChar += _onKeyChar;
         }
 
         if (_iInputContext.Gamepads.Count > 0)

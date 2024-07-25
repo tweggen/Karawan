@@ -28,6 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\Factory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ImplementationFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\ALayout.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\InputWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\InputWidgetImplementation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\JtBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\LuaWidgetContext.cs" />

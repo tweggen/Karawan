@@ -126,7 +126,9 @@ public class Parser
                 ParentType = "text",
                 TemplateProperties = new ()
                 {
-                    { "focussable", true }
+                    { "focussable", true },
+                    { "value", "" },
+                    { "cursorPos", -1 }
                 }
             }
         },

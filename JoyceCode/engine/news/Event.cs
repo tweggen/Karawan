@@ -6,6 +6,7 @@ public class Event
 {
     public const string INPUT_KEY_PRESSED = "input.key.pressed";
     public const string INPUT_KEY_RELEASED = "input.key.released";
+    public const string INPUT_KEY_CHARACTER = "input.key.character";
     public const string INPUT_TOUCH_ANY = "input.touch.";
     public const string INPUT_TOUCH_PRESSED = "input.touch.pressed";
     public const string INPUT_TOUCH_RELEASED = "input.touch.released";
