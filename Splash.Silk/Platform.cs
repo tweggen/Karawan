@@ -247,7 +247,7 @@ public class Platform : engine.IPlatform
     }
 
 
-    private void _onKeyChar(IKeyboard arg1, Key arg2, int arg3)
+    private void _onKeyChar(IKeyboard arg1, char arg3)
     {
         I.Get<EventQueue>().Push(new Event(Event.INPUT_KEY_CHARACTER, arg3.ToString()));
     }

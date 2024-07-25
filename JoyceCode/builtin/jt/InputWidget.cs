@@ -5,6 +5,7 @@ namespace builtin.jt;
 
 public class InputWidget : TextWidget
 {
+    public string ValueProperty = "text";
 
     protected int _cursorPos()
     {
@@ -12,7 +13,7 @@ public class InputWidget : TextWidget
         
         if (oldPosition < 0)
         {
-            string oldValue = GetAttr("value", "");
+            string oldValue = GetAttr(ValueProperty, "");
             int len = oldValue.Length;
             oldPosition = len;
         }
@@ -22,7 +23,7 @@ public class InputWidget : TextWidget
 
     protected void _moveCursorRelative(int offset)
     {
-        string oldValue = GetAttr("value", "");
+        string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
         
         int len = oldValue.Length;
@@ -39,7 +40,7 @@ public class InputWidget : TextWidget
 
     protected void _delete()
     {
-        string oldValue = GetAttr("value", "");
+        string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
         
         int len = oldValue.Length;
@@ -57,13 +58,13 @@ public class InputWidget : TextWidget
             oldValue.Substring(0, oldPosition)
             + oldValue.Substring(oldPosition + 1);
 
-        this["value"] = newValue;
+        this[ValueProperty] = newValue;
     }
 
 
     protected void _backspace()
     {
-        string oldValue = GetAttr("value", "");
+        string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
         
         int len = oldValue.Length;
@@ -82,13 +83,13 @@ public class InputWidget : TextWidget
             + oldValue.Substring(oldPosition);
 
         this["cursorPos"] = oldPosition - 1;
-        this["value"] = newValue;
+        this[ValueProperty] = newValue;
     }
 
 
     protected void _insert(string newString)
     {
-        string oldValue = GetAttr("value", "");
+        string oldValue = GetAttr(ValueProperty, "");
         int oldPosition = GetAttr("cursorPos", -1);
         
         int len = oldValue.Length;
@@ -102,18 +103,18 @@ public class InputWidget : TextWidget
             + newString
             + oldValue.Substring(oldPosition);
 
-        this["value"] = newValue;
+        this[ValueProperty] = newValue;
         this["cursorPos"] = oldPosition + newString.Length;
     }
     
     
     protected override void _handleSelfInputEvent(engine.news.Event ev)
     {
-        bool isFocussed = this,IsFocussed;
+        bool isFocussed = this.IsFocussed;
         if (!isFocussed)
         {
-            base._handleSelfInputEvent(ev);
-            return;
+            //base._handleSelfInputEvent(ev);
+            //return;
         }
         else
         {
@@ -123,6 +124,7 @@ public class InputWidget : TextWidget
                  * Insert input at current cursor.
                  */
                 _insert(ev.Code);
+                ev.IsHandled = true;
 
             }
             else if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED))
@@ -134,15 +136,19 @@ public class InputWidget : TextWidget
                 {
                     case "(cursorright)":
                         _moveCursorRelative(1);
+                        ev.IsHandled = true;
                         break;
                     case "(cursorleft)":
                         _moveCursorRelative(-1);
+                        ev.IsHandled = true;
                         break;
                     case "(delete)":
                         _delete();
+                        ev.IsHandled = true;
                         break;
                     case "(backspace)":
                         _backspace();
+                        ev.IsHandled = true;
                         break;
                     case "(enter)":
                         // TXWTODO: Accept, leave focus
@@ -154,6 +160,11 @@ public class InputWidget : TextWidget
                         break;
                 }
             }
+        }
+
+        if (!ev.IsHandled)
+        {
+            base._handleSelfInputEvent(ev);
         }
     }
 

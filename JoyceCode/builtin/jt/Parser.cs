@@ -122,12 +122,12 @@ public class Parser
         {
             "input", new ()
             {
-                WidgetType = typeof(builtin.jt.Widget),
+                WidgetType = typeof(builtin.jt.InputWidget),
                 ParentType = "text",
                 TemplateProperties = new ()
                 {
                     { "focussable", true },
-                    { "value", "" },
+                    { "text", "" },
                     { "cursorPos", -1 }
                 }
             }

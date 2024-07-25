@@ -7,11 +7,11 @@
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuHelp")'>Help...</option>
             <hbox>
                 <option color='#999999' onClick='jt:focus("ui.username")' width="80">eMail</option>
-                <input id="ui.username">Input</input>
+                <input id="ui.username" text=""/>
             </hbox>
             <hbox>
                 <option color='#999999' onClick='jt:focus("ui.password")' width="80">Password</option>
-                <input id="ui.password">Input</input>
+                <input id="ui.password" text=""/>
             </hbox>
             <option color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>
