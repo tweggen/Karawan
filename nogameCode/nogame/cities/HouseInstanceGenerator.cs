@@ -5,15 +5,13 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json.Nodes;
 using builtin.tools.Lindenmayer;
+using engine;
 using engine.geom;
+using engine.joyce;
 using static engine.Logger;
 using static builtin.extensions.JsonObjectNumerics;
 
 namespace nogame.cities;
-
-
-
-
 
 /**
  * Create an individual house.
@@ -27,6 +25,11 @@ public class HouseInstanceGenerator
 
     public HouseInstanceGenerator()
     {
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.house.materials.powerlines",
+            name => new Material()
+            {
+                EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff33ffff)
+            });
         // TXWTODO: Register materials
     }
 
@@ -65,6 +68,11 @@ public class HouseInstanceGenerator
              *        The maximal height of the building.
              */
             {
+                /*
+                 * Straight up.
+                 */
+                new Part( "rotate(d,x,y,z)", new JsonObject {
+                    ["d"] = 90f,["x"] = 0f, ["y"] = 0f, ["z"] =1f } ),
                 _createSeed1(ini, rnd)
             }),
             
@@ -136,7 +144,7 @@ public class HouseInstanceGenerator
                     (p) =>
                     {
                         int availableStories = (int)Single.Ceiling((float)p["h"]) / 3;
-                        
+
                         /*
                          * The base is at least on storey.
                          */
@@ -211,6 +219,12 @@ public class HouseInstanceGenerator
                 new Rule("buildableBaseSegment(A,h)",
                     (p) => new List<Part>
                     {
+                        new ("powerline(P,h)", new JsonObject
+                        {
+                            ["P"] = From(AnyOf(rnd, ToVector3List(p["A"].DeepClone()))),
+                            ["h"] = (float)p["h"],
+                            ["mat"] = "nogame.characters.house.materials.powerlines"
+                        }),
                         new ("segment(A,h)", new JsonObject
                         {
                             ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]
@@ -230,6 +244,12 @@ public class HouseInstanceGenerator
                     0.1f, Rule.Always,
                     (p) => new List<Part>
                     {
+                        new ("powerline(P,h)", new JsonObject
+                        {
+                            ["P"] = From(AnyOf(rnd, ToVector3List(p["A"].DeepClone()))),
+                            ["h"] = (float)p["h"],
+                            ["mat"] = "nogame.characters.house.materials.powerlines"
+                        }),
                         new ("segment(A,h)", new JsonObject
                         {
                             ["A"] = p["A"].DeepClone(), ["h"] = (float)p["h"]

@@ -5,7 +5,7 @@ using System.Text;
 using engine.elevation;
 using SkiaSharp;
 using static engine.Logger;
-
+using static builtin.Workarounds;
 
 namespace nogame.intercity;
 
@@ -41,7 +41,7 @@ public class IntercityTrackElevationOperator : IOperator
         var vb = _line.StationB.Pos2;
         var vd = vb - va;
         var vp = new Vector2(vd.Y, -vd.X);
-        var vup = Vector2.Normalize(vp);
+        var vup = V2Normalize(vp);
 
         
         /*
@@ -100,7 +100,7 @@ public class IntercityTrackElevationOperator : IOperator
 
                     vt -= va;
 
-                    dist = Vector2.Dot(vt, vup);
+                    dist = V2Dot(vt, vup);
                 }
 
                 if (Single.Abs(dist) <= minDist)
@@ -133,7 +133,7 @@ public class IntercityTrackElevationOperator : IOperator
 
         var vd = _line.StationB.Pos2 - _line.StationA.Pos2;
         var vp = new Vector2(vd.Y, -vd.X);
-        var vup = Vector2.Normalize(vp);
+        var vup = V2Normalize(vp);
         var lineWidthHalf = vup * (_line.Width / 2f);
         engine.geom.Line ll1 = new(_line.StationA.Pos2-lineWidthHalf, _line.StationB.Pos2-lineWidthHalf);
         engine.geom.Line ll2 = new(_line.StationA.Pos2+lineWidthHalf, _line.StationB.Pos2+lineWidthHalf);

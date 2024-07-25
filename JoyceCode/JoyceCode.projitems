@@ -70,6 +70,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\LowerBoundSortedSet.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\LowerBoundsSortedDictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\MultiMap.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\Workarounds.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\AComponentWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\AHeatMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\BehaviorStats.cs" />

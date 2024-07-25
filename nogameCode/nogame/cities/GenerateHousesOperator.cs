@@ -504,20 +504,27 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         if (TraceHouses) Trace($"First run with building p0 {orgPoints[0]+_clusterDesc.Pos}");
                     }
                         
+                    var height = building.GetHeight();
+#if true
+                    /*
+                     * We create a lindenmeyer placed at the building's center, the ground polygon
+                     * being relative to it.
+                     * Z coordinate is _clusterDesc.AverageHeight + 2.15f, 
+                     */
+                    
+                    /*
+                     * The building center is relative to the cluster, as are the corners of the building we have.
+                     */
+                    Vector3 v3BuildingCenter = building.GetCenter();
+
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
                     {
                         fragPoints.Add(
-                            new Vector3(
-                                p.X + cx,
-                                _clusterDesc.AverageHeight + 2.15f,
-                                p.Z + cz
-                            )
+                            new Vector3(p.X, 0f, p.Z) - v3BuildingCenter
                         );
                     }
 
-                    var height = building.GetHeight();
-#if faöse
                     try
                     {
                         /*
@@ -537,7 +544,10 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         var lInstance = new LGenerator(lSystem, $"{orgPoints[0]}").Generate(8);
                         if (null != lInstance)
                         {
-                            new AlphaInterpreter(lInstance).Run(ctx.Fragment, Vector3.Zero, matmesh, listCreatePhysics);
+                            Vector3 v3Position =
+                                new Vector3(cx, 2.5f + _clusterDesc.AverageHeight, cz)
+                                + v3BuildingCenter;
+                            new AlphaInterpreter(lInstance).Run(ctx.Fragment, v3Position, matmesh, listCreatePhysics);
                         }
                         else
                         {
@@ -549,15 +559,25 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         Error($"Unable to generate lindenmeyer houses: {e}");
                     }
-#endif
+#else
+                    var fragPoints = new List<Vector3>();
+                    foreach (var p in orgPoints)
+                    {
+                        fragPoints.Add(
+                            new Vector3(
+                                p.X + cx,
+                                _clusterDesc.AverageHeight + 2.15f,
+                                p.Z + cz
+                            )
+                        );
+                    }
+
                     try
                     {
-#if true
                         _createClassicHouseSubGeo(
                             ctx, matmesh,
                             fragPoints, height, _metersPerTexture,
                             listCreatePhysics);
-#endif
 
                         _createLargeAdvertsSubGeo(
                             ctx, matmesh, fragPoints, height); //15434
@@ -566,6 +586,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
                     }
+#endif
 
                     try
                     {

@@ -272,7 +272,15 @@ public class API
         lock (_engine.Simulation)
         {
             DefaultRayHitHandler drh = new(this, action);
-            Simulation.RayCast(origin, target, length, ref drh, drh.GetRayHitId());
+            try
+            {
+                Simulation.RayCast(origin, target, length, ref drh, drh.GetRayHitId());
+            }
+            catch (Exception e)
+            {
+                Error($"Caught exception while raycasting for camera: {e}"); 
+                _engine.PLog?.Dump();
+            }
         }
     }
     

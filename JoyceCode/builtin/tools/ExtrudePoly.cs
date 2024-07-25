@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using engine;
+using engine.geom;
 
 namespace builtin.tools
 {
@@ -22,6 +23,10 @@ namespace builtin.tools
         private readonly bool _addCeiling;
         public bool PairedNormals { get; set; } = false;
         public bool TileToTexture { get; set; } = false;
+
+        public bool SkipSmall { get; set; } = false;
+
+        public bool TraceArea { get; set; } = false;
 
         private engine.physics.API _aPhysics;
     
@@ -383,6 +388,16 @@ namespace builtin.tools
             }
         }
 
+
+        private static void _emptyFree()
+        {
+        }
+
+        private static Action _emptyCreate(IList<StaticHandle> staticHandles)
+        {
+            return () => { };
+        }
+
         /**
          * Return a StaticDescription and a dtor for the shapes used within.
          */
@@ -391,6 +406,21 @@ namespace builtin.tools
             engine.physics.CollisionProperties? collisionProperties = null)
         {
             var vh = _path[0];
+            List<Vector3> listBreak = new()
+            {
+                new Vector3(1923f, 91f, -5544f),
+                new Vector3(2201.7405f, 126.32393f, -6394.8325f),
+                new Vector3(1899.43f,63.84f,-5479.374f)
+            };
+
+
+            float vhLength2 = vh.LengthSquared();
+            if (SkipSmall && vh.LengthSquared() < 0.1f)
+            {
+                if (TraceArea) Warning($"Very small polygon.");
+                return _emptyCreate;
+            }
+            
             if (null == _poly)
             {
                 ErrorThrow( "Got a null polygon.", le => new ArgumentNullException(le) );
@@ -404,6 +434,7 @@ namespace builtin.tools
                     var bufferPool = _aPhysics.BufferPool;
                     var simulation = _aPhysics.Simulation;
 
+                    List<float> listAreas = new();
                     List<ConvexHull> convexHullsToRelease = new();
 
                     IList<IList<Vector3>> listConvexPolys;
@@ -414,18 +445,96 @@ namespace builtin.tools
                         { Position = new Vector3(0f, 0f, 0f), Orientation = Quaternion.Identity };
 
                     /*
-                     * for each of the convex polys, build a convex hull from it.
-                     */
+                    * for each of the convex polys, build a convex hull from it.
+                    */
+                    int nConvex = 0;
                     foreach (var convexPoly in listConvexPolys)
                     {
                         int nPoints = 2 * convexPoly.Count;
+                        if (nPoints <= 4)
+                        {
+                            if (TraceArea) Error($"Invalid number of points in complex polygon.");
+                            /*
+                           * Do not add this as a complex hull.
+                           */
+                            continue;
+                        }
+
+                        if (SkipSmall)
+                        {
+                            Vector3 p0 = convexPoly[0];
+
+                            foreach (var v3Break in listBreak)
+                            {
+                                int f = 0;
+                                foreach (var p in convexPoly)
+                                {
+                                    if (p.X > v3Break.X)
+                                    {
+                                        f |= 1;
+                                    }
+                                    else
+                                    {
+                                        f |= 2;
+                                    }
+
+                                    if (p.Z > v3Break.Z)
+                                    {
+                                        f |= 4;
+                                    }
+                                    else
+                                    {
+                                        f |= 8;
+                                    }
+                                }
+
+                                if (f == 15)
+                                {
+                                    /*
+                                   * We hit a break point here, i.e. a point of our break list is inside the poly.
+                                   */
+                                    int a = 1;
+                                }
+                            }
+                            
+                            int l = convexPoly.Count;
+                            float area = 0f;
+                            for (int i = 1; i < l - 1; ++i)
+                            {
+                                var localArea = Vector3.Cross(convexPoly[i] - p0, convexPoly[i + 1] - p0).Length() / 2f;
+                                if (TraceArea) Trace($"localArea = {localArea}");
+                                area += localArea;
+                            }
+                            listAreas.Add(area);
+
+                            if (area < 10f)
+                            {
+                                if (TraceArea) Warning($"Suspiciosly small area {area}");
+                                continue;
+                            }
+                        }
+                        
                         QuickList<Vector3> pointsConvexHull = new QuickList<Vector3>(nPoints, bufferPool);
+                        AABB aabbVolumeTest = new();
                         foreach (var p3 in convexPoly)
                         {
                             var pBottom = worldFragment.Position + p3;
                             var pTop = worldFragment.Position + p3 + vh;
+                            /*
+                           * Just add the bottom because we do not want to consider the height. 
+                           */
+                            if (SkipSmall) aabbVolumeTest.Add(pBottom);
                             pointsConvexHull.AllocateUnsafely() = pBottom;
                             pointsConvexHull.AllocateUnsafely() = pTop;
+                        }
+
+                        if (SkipSmall && aabbVolumeTest.Radius < 0.1f)
+                        {
+                            if (TraceArea) Warning($"Warning: Suspiciously small convex hull.");
+                            /*
+                           * Do not add this as a complex hull. 
+                           */
+                            continue;
                         }
 
                         var pointsBuffer = pointsConvexHull.Span.Slice(pointsConvexHull.Count);
@@ -437,44 +546,72 @@ namespace builtin.tools
                          * Assuming, we are adding a static, we add the shape assuming infinite mass.
                          */
                         //builder.Add(pshapeConvexHull, new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
-                        builder.AddForKinematic(pshapeConvexHull,
+                        var shapeIndex = builder.Shapes.Add(pshapeConvexHull);
+                        builder.AddForKinematic(shapeIndex,
                             new BepuPhysics.RigidPose { Position = vCenter, Orientation = Quaternion.Identity }, 1f);
+                        if (TraceArea) Trace($"shapeConvexHull {shapeIndex}");
+
+                        nConvex++;
                     }
 
-                    builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
-                    builder.Reset();
-                    var pshapeCompound = new Compound(compoundChildren);
-                    var shapeIndex = simulation.Shapes.Add(pshapeCompound);
-                    var staticDescription = new StaticDescription(vCompoundCenter, shapeIndex);
-
-                    var staticHandle = simulation.Statics.Add(staticDescription);
-                    staticHandles.Add(staticHandle);
-                    if (null != collisionProperties)
+                    if (nConvex > 0)
                     {
-                        _aPhysics.AddCollisionEntry(staticHandle, collisionProperties);
-                    }
-
-                    // Return release shapes function.
-                    return new Action(() =>
-                    {
-                        lock (worldFragment.Engine.Simulation)
+                        builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
+                        builder.Reset();
+                        var pshapeCompound = new Compound(compoundChildren);
+                        var shapeIndex = simulation.Shapes.Add(pshapeCompound);
+                        var staticDescription = new StaticDescription(vCompoundCenter, shapeIndex);
+                        
+                        var staticHandle = simulation.Statics.Add(staticDescription);
+                        staticHandles.Add(staticHandle);
+                        if (null != collisionProperties)
                         {
-                            /*
-                             * First, release the compound structure.
-                             */
-                            pshapeCompound.Dispose(bufferPool);
-
-                            /*
-                             * After that, release the convex shapes contained within.
-                             */
-                            foreach (var convexHull in convexHullsToRelease)
-                            {
-                                convexHull.Dispose(bufferPool);
-                            }
-
-                            _aPhysics.RemoveCollisionEntry(staticHandle);
+                            _aPhysics.AddCollisionEntry(staticHandle, collisionProperties);
                         }
-                    });
+
+                        if (TraceArea) Trace($"vCompoundCenter = {vCompoundCenter} staticHandle = {staticHandle}");
+
+                        foreach (var v3Break in listBreak)
+                        {
+                            if ((vCompoundCenter - v3Break).Length() < 5f)
+                            {
+                                /* break here for the exact center.
+                              */
+                                int a = 1;
+                            }
+                        }
+
+                        if (87 == staticHandle.Value)
+                        {
+                            int a = 1;
+                        }
+
+                        // Return release shapes function.
+                        return new Action(() =>
+                        {
+                            lock (worldFragment.Engine.Simulation)
+                            {
+                                /*
+                                 * First, release the compound structure.
+                                 */
+                                pshapeCompound.Dispose(bufferPool);
+
+                                /*
+                                 * After that, release the convex shapes contained within.
+                                 */
+                                foreach (var convexHull in convexHullsToRelease)
+                                {
+                                    convexHull.Dispose(bufferPool);
+                                }
+
+                                _aPhysics.RemoveCollisionEntry(staticHandle);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        return _emptyFree;
+                    }
                 }
             });
 

@@ -72,7 +72,7 @@ public class AlphaInterpreter
      */
     public void Run(
         engine.world.Fragment? worldFragment,
-        Vector3 start,
+        Vector3 v3Start,
         MatMesh mmTarget,
         IList<Func<IList<StaticHandle>, Action>> listCreatePhysicsTarget
     )
@@ -81,7 +81,7 @@ public class AlphaInterpreter
         var parts = _instance.State.Parts;
         
         var state = new AlphaState(null);
-        state.Position = start;
+        state.Position = v3Start;
 
         var matnameLeaves = "nogame.cities.trees.materials.treeleave";
         var matLeaves = I.Get<ObjectRegistry<Material>>().Get(matnameLeaves);
@@ -103,14 +103,12 @@ public class AlphaInterpreter
                     state.Rotation = state.Rotation * qrot;
                     break;
                 }
-
                 
                 case "fillrgb(r,g,b)":
                 {
                     state.Color = new Vector3((float)p["r"], (float)p["g"], (float)p["b"]);
                     break;
                 }
-
                 
                 case "cyl(r,l)":
                 {
@@ -155,11 +153,9 @@ public class AlphaInterpreter
 
                     break;
                 }
-
-
+                
                 case "flat(r,l)":
                 {
-
                     var vs = state.Position;
 
                     /*
@@ -210,7 +206,7 @@ public class AlphaInterpreter
                     }
                     var path = new List<Vector3>();
                     Vector3 v3h = new Vector3(0f, (float)p["h"], 0f);
-                    path.Add( v3h);
+                    path.Add(v3h);
 
                     engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
                     state.Material = (string)p["mat"];
@@ -224,14 +220,13 @@ public class AlphaInterpreter
                     {
                         /* also standard values for houses */
                         PairedNormals = true,
-                        TileToTexture = true
+                        TileToTexture = true,
+                        SkipSmall = true
                     };
                     opExtrudePoly.BuildGeom(meshExtrusion);
                     state.Position += v3h;
                     mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get(state.Material), meshExtrusion);
-
-
-
+                    
                     if (null != listCreatePhysicsTarget)
                     {
                         /*
@@ -257,7 +252,56 @@ public class AlphaInterpreter
 
                     break;
                 }
-                
+
+                case "powerline(P,h)":
+                {
+                    var vs = state.Position + ToVector3(p["P"]);
+
+                    /*
+                     * vd shall be scaled with l
+                     */
+                    var vd = new Vector3(1f, 0f, 0f);
+                    vd = Vector3.Transform(vd, state.Rotation);
+
+                    /*
+                     * vRadius shall be scaled with r
+                     */
+                    var vr = new Vector3(0f, 1f, 0f);
+                    vr = Vector3.Transform(vr, state.Rotation);
+
+                    Vector3 vt = Vector3.Cross(vd, vr);
+
+                    vd *= (float)p["h"];
+                    vr *= 0.5f; 
+                    vt *= 0.5f; 
+                    
+                    /*
+                     * Make a trivial four sided poly.
+                     */
+                    var poly = new List<Vector3>();
+                    poly.Add(vs + vr - vt);
+                    poly.Add(vs + vr + vt);
+                    poly.Add(vs - vr + vt);
+                    poly.Add(vs - vr - vt);
+                    //poly.push( new geom.Vector3D( vs.x + vt.x, vs.y + vt.y ,vs.z + vt.z ) );
+                    // poly.push( new geom.Vector3D( vs.x - vt.x, vs.y - vt.y ,vs.z - vt.z ) );
+                    var path = new List<Vector3>();
+                    path.Add(vd);
+                    // trace( 'poly: $poly' );
+                    engine.joyce.Mesh meshExtrusion = new("mesh_flat_rl");
+                    var ext = new ExtrudePoly(poly, path, 
+                        27, 
+                        100f,
+                        false, 
+                        true, 
+                        true);
+                    ext.BuildGeom(meshExtrusion);
+                    
+                    // state.Position += vd;
+                    mmTarget.Add(I.Get<ObjectRegistry<Material>>().Get((string)p["mat"]), meshExtrusion);
+
+                    break;
+                }
 
                 case "push()":
                 {
@@ -265,7 +309,6 @@ public class AlphaInterpreter
                     state = new AlphaState(state);
                     break;
                 }
-                
 
                 case "pop()":
                 {
@@ -273,10 +316,9 @@ public class AlphaInterpreter
                     _stack.RemoveAt(_stack.Count - 1);
                     break;
                 }
-                
 
                 default:
-                    Warning($"Unknown part {part}.");
+                    // Warning($"Unknown part {part}.");
                     break;
             }
         }

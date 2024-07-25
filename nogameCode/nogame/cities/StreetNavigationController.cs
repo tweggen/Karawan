@@ -6,6 +6,7 @@ using engine.behave;
 using engine.world;
 using engine.streets;
 using static engine.Logger;
+using static builtin.Workarounds;
 
 namespace nogame.cities;
 
@@ -176,7 +177,7 @@ public class StreetNavigationController : INavigator
                  */
                 Vector2 vStreetTarget = _targetPoint.Pos;
                 Vector2 vStreetStart = _startPoint.Pos;
-                Vector2 vuStreetDirection = Vector2.Normalize(vStreetTarget - vStreetStart);
+                Vector2 vuStreetDirection = V2Normalize(vStreetTarget - vStreetStart);
 
                 /*
                  * Offset the target one unit towards the start point
@@ -247,7 +248,7 @@ public class StreetNavigationController : INavigator
                 if (vMeFromStartLength > 0.1f)
                 {
                     float vPerfectMeScale = 
-                        Vector2.Dot(vMeFromStart, vPerfectDirection)
+                        V2Dot(vMeFromStart, vPerfectDirection)
                         / vPerfectDirectionLength;
 
                     /*
@@ -273,7 +274,7 @@ public class StreetNavigationController : INavigator
                 }
 
                 var vDest = vCurrentTarget - _vPos2;        
-                vuDest = Vector2.Normalize(vDest);
+                vuDest = V2Normalize(vDest);
 
                 {
                     /*

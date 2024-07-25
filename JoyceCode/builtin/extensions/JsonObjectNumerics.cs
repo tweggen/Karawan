@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Nodes;
+using builtin.tools;
 using static engine.Logger;
 
 namespace builtin.extensions;
@@ -53,6 +54,13 @@ static public class JsonObjectNumerics
             return v3;
         });
         return new List<Vector3>(ienu);
+    }
+
+    static public Vector3 AnyOf(in RandomSource rnd, in List<Vector3> list)
+    {
+        int l = list.Count;
+        if (0 == l) return Vector3.Zero;
+        return list[((int)(rnd.GetFloat() * l)) % l];
     }
 
 }
