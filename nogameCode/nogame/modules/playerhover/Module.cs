@@ -486,7 +486,7 @@ public class Module : engine.AModule
 
             var gameState = M<AutoSave>().GameState;
             var posShip = gameState.PlayerPosition;
-            var rotShip = gameState.PlayerOrientation;
+            var rotShip = Quaternion.Normalize(gameState.PlayerOrientation);
             if (posShip == Vector3.Zero)
             {
                 posShip = _findStartPosition();

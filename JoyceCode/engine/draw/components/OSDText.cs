@@ -4,7 +4,10 @@ namespace engine.draw.components;
 
 public struct OSDText
 {
-    public static ushort ENABLE_DISTANCE_FADE = 0x00000001;
+    public const ushort ENABLE_DISTANCE_FADE = 0x00000001;
+    public const ushort GAUGE_TYPE_MASK = 0x00000070;
+    public const ushort GAUGE_TYPE_STANDARD = 0x00000000;
+    public const ushort GAUGE_TYPE_INSERT = 0x00000010;
 
     public string Text;
     public uint FontSize;

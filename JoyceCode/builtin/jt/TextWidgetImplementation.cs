@@ -21,7 +21,7 @@ public class TextWidgetImplementation : IWidgetImplementation
     }
 
     private DefaultEcs.Entity _eText;
-    private Widget _widget;
+    protected Widget _widget;
 
     private HAlign _hAlign(object oAlign)
     {
@@ -122,21 +122,36 @@ public class TextWidgetImplementation : IWidgetImplementation
     private float _height(object oHeight) => (float)oHeight;
     private string _text(object oText) => (string)oText;
 
-    
-    private void _updateColor()
+    protected virtual void _computeOsdText(ref OSDText cOsdText)
     {
-        string strColor = _widget.GetAttr("color", "#ff000000");
-        uint color = _color(strColor);
+        {
+            string strColor = _widget.GetAttr("color", "#ff000000");
+            uint color = _color(strColor);
 
-        uint finalTextColor = _widget.IsFocussed ? 0xffffffff : _widget.IsSelected ? 0xffffff88 : color;
-        uint finalFillColor = _widget.IsFocussed ? 0xff777777 : 0x00000000;
-        ref var cOSDText = ref _eText.Get<OSDText>();
-        
-        cOSDText.TextColor = finalTextColor;
-        cOSDText.FillColor = finalFillColor;
+            uint finalTextColor = _widget.IsFocussed ? 0xffffffff : _widget.IsSelected ? 0xffffff88 : color;
+            uint finalFillColor = _widget.IsFocussed ? 0xff777777 : 0x00000000;
+
+            cOsdText.TextColor = finalTextColor;
+            cOsdText.FillColor = finalFillColor;
+        }
+        cOsdText.Position.X = _x(_widget.GetAttr("x", 0f));
+        cOsdText.Position.Y = _y(_widget.GetAttr("y", 0f));
+        cOsdText.Size.X = _width(_widget.GetAttr("width", 0f));
+        cOsdText.Size.Y = _height(_widget.GetAttr("height", 0f));
+        cOsdText.HAlign = _hAlign(_widget.GetAttr("hAlign", "Left"));
+        cOsdText.VAlign = _vAlign(_widget.GetAttr("vAlign", "Top"));
+        cOsdText.FillColor = _color(_widget.GetAttr("fillColor", "#ff888888"));
+        cOsdText.Text = _text(_widget.GetAttr("text", ""));
+    }
+    
+    
+    protected void _updateOsdText()
+    {
+        ref var cOsdText = ref _eText.Get<OSDText>();
+        _computeOsdText(ref cOsdText);
     }
 
-
+    
     private void _onSetText(string text)
     {
         ref var cOSDText = ref _eText.Get<OSDText>();
@@ -151,7 +166,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "x", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._eText.Get<OSDText>().Position.X = impl._x(o);
+                    impl._updateOsdText();
                 }
             }
         },
@@ -160,7 +175,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "y", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._eText.Get<OSDText>().Position.Y = impl._y(o);
+                    impl._updateOsdText();
                 }
             }
         },
@@ -169,7 +184,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "width", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._eText.Get<OSDText>().Size.X = impl._width(o);
+                    impl._updateOsdText();
                 }
             }
         },
@@ -178,7 +193,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "height", DefaultValue = (object)0f, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._eText.Get<OSDText>().Size.X = impl._height(o);
+                    impl._updateOsdText();
                 }
             }
         },
@@ -187,7 +202,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "hAlign", DefaultValue = (object)"left", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._eText.Get<OSDText>().HAlign = impl._hAlign(o);
+                    impl._updateOsdText();
                 }
             }
         },
@@ -196,7 +211,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "vAlign", DefaultValue = (object)"top", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._eText.Get<OSDText>().VAlign = impl._vAlign(o);
+                    impl._updateOsdText();
                 }
             }
         },
@@ -205,7 +220,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "fillColor", DefaultValue = (object)"0xff888888", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._eText.Get<OSDText>().FillColor = impl._color(o);
+                    impl._updateOsdText();
                 }
             }
         },
@@ -214,7 +229,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "color", DefaultValue = (object)"0xffffffff", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._updateColor();
+                    impl._updateOsdText();
                 }
             }
         },
@@ -223,7 +238,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "focussed", DefaultValue = (object) false, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._updateColor();
+                    impl._updateOsdText();
                 }
             }
         },
@@ -232,7 +247,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "selected", DefaultValue = (object) false, ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._updateColor();
+                    impl._updateOsdText();
                 }
             }
         },
@@ -249,7 +264,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             {
                 Name = "text", DefaultValue = (object) "", ApplyFunction = (impl, ae, o) =>
                 {
-                    impl._onSetText(impl._text(o));
+                    impl._updateOsdText();
                 } 
             }
         }
@@ -284,27 +299,29 @@ public class TextWidgetImplementation : IWidgetImplementation
         _widget = null;
     }
 
+
+    protected void _defaultOsdText(ref OSDText osdText)
+    {
+        var w = _widget;
+        osdText.HAlign = HAlign.Left;
+        osdText.VAlign = VAlign.Top;
+        osdText.Position = new Vector2((float)w["x"], (float)w["y"]);
+        osdText.Size = new Vector2((float)w["width"], (float)w["height"]);
+        osdText.Text = _text(w.GetAttr("text",""));
+        osdText.FontSize = 16;
+        osdText.TextColor = 0xffffff00;
+        osdText.FillColor = 0xff0000ff;
+    }
+    
     
     public TextWidgetImplementation(Widget w)
     {
         _widget = w;
         _eText = I.Get<Engine>().CreateEntity("widget");
-        string text = (string)w["text"];
-        _eText.Set(new OSDText()
-        {
-            HAlign = HAlign.Left,
-            VAlign = VAlign.Top,
-            Position = new Vector2( (float) w["x"], (float) w["y"] ),
-            Size = new Vector2( (float) w["width"], (float) w["height"] ),
-            Text = text,
-            FontSize = 16,
-            TextColor = 0xffffff00,
-            FillColor = 0xff0000ff
-        });
-        /*
-         * Go to the proper callback to setup the additional properties.
-         */
-        _onSetText(text);
+        OSDText cOsdText = new();
+        _defaultOsdText(ref cOsdText);
+
+        _eText.Set(cOsdText);
         _eText.Set(new engine.behave.components.Clickable()
         {
             ClickEventFactory = (e, cev, v2RelPos) => new WidgetEvent($"builtin.jt.widget.{_widget.Id}.onClick", this._widget) { RelativePosition = v2RelPos}

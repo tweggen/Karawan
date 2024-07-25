@@ -7,7 +7,7 @@ public class InputWidget : TextWidget
 {
     public string ValueProperty = "text";
 
-    protected int _cursorPos()
+    internal int _cursorPos()
     {
         int oldPosition = GetAttr("cursorPos", -1);
         

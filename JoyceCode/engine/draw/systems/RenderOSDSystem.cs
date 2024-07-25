@@ -134,14 +134,35 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
                 _dc.ClearColor = cOsdText.FillColor;
                 _framebuffer.ClearRectangle(_dc, ul, lr);
             }
-
+            
             if (cOsdText.GaugeValue != 0 && (cOsdText.GaugeColor & 0xff000000) != 0)
             {
                 _dc.FillColor = cOsdText.GaugeColor;
+
+                switch (cOsdText.OSDTextFlags & (ushort)OSDText.GAUGE_TYPE_MASK)
+                {
+                    case OSDText.GAUGE_TYPE_STANDARD:
+                    {
+                        float width = (float)cOsdText.GaugeValue / 4096f * cOsdText.Size.X;
+                        _framebuffer.FillRectangle(_dc, ul, lr with { X = ul.X + width });
+                        break;
+                    }
+                    case OSDText.GAUGE_TYPE_INSERT:
+                    {
+                        float pos = (float)cOsdText.GaugeValue / 4096f * cOsdText.Size.X;
+                        _framebuffer.FillRectangle(_dc, 
+                            ul with
+                            {
+                                X= ul.X+pos
+                            }, lr with
+                            {
+                                X = ul.X + pos
+                            });
+                        break;
+                    }
+                }
                 if (true)
                 {
-                    float width = (float)cOsdText.GaugeValue / 4096f * cOsdText.Size.X;
-                    _framebuffer.FillRectangle(_dc, ul, lr with { X = ul.X+width });
                 }
             }
             
