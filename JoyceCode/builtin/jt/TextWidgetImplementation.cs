@@ -140,7 +140,7 @@ public class TextWidgetImplementation : IWidgetImplementation
         cOsdText.Size.Y = _height(_widget.GetAttr("height", 0f));
         cOsdText.HAlign = _hAlign(_widget.GetAttr("hAlign", "Left"));
         cOsdText.VAlign = _vAlign(_widget.GetAttr("vAlign", "Top"));
-        cOsdText.FillColor = _color(_widget.GetAttr("fillColor", "#ff888888"));
+        cOsdText.FillColor = _color(_widget.GetAttr("fillColor", "#00000000"));
         cOsdText.Text = _text(_widget.GetAttr("text", ""));
     }
     
@@ -311,6 +311,8 @@ public class TextWidgetImplementation : IWidgetImplementation
         osdText.FontSize = 16;
         osdText.TextColor = 0xffffff00;
         osdText.FillColor = 0xff0000ff;
+        osdText.GaugeColor = 0xff22cccc;
+        osdText.GaugeValue = 0;
     }
     
     
@@ -320,6 +322,7 @@ public class TextWidgetImplementation : IWidgetImplementation
         _eText = I.Get<Engine>().CreateEntity("widget");
         OSDText cOsdText = new();
         _defaultOsdText(ref cOsdText);
+        _computeOsdText(ref cOsdText);
 
         _eText.Set(cOsdText);
         _eText.Set(new engine.behave.components.Clickable()

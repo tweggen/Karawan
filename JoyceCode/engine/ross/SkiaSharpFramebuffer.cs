@@ -212,10 +212,31 @@ public class SkiaSharpFramebuffer : IFramebuffer
         }
     }
 
+
+
+    public void TextExtent(Context context, out Vector2 size, string text, int fontSize)
+    {
+        SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
+        var metrics = font.Metrics;
+        
+        var paint = new SKPaint(font)
+        {
+            Color = context.TextColor,
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            TextAlign = _toSkiaTextAlign(context.HAlign),
+            TextSize = fontSize
+        };
+        font.Dispose();
+        size = new(0f, 0f);
+    }
+
+    
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize)
     {
         SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
         var metrics = font.Metrics;
+        
         
         var paint = new SKPaint(font)
         {

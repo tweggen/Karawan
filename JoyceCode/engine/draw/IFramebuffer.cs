@@ -26,6 +26,7 @@ public interface IFramebuffer
     public void DrawPoly(Context context, in Vector2[] polyPoints);
 
     public void DrawText(Context context, Vector2 ul, Vector2 lr, string text, int fontSize);
+    public void TextExtent(Context context, out Vector2 size, string text, int fontSize);
 
     
     public void GetMemory(out Span<byte> spanBytes);

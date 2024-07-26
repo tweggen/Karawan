@@ -149,14 +149,14 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
                     }
                     case OSDText.GAUGE_TYPE_INSERT:
                     {
-                        float pos = (float)cOsdText.GaugeValue / 4096f * cOsdText.Size.X;
+                        float pos = (float)cOsdText.GaugeValue;
                         _framebuffer.FillRectangle(_dc, 
                             ul with
                             {
-                                X= ul.X+pos
+                                X= ul.X + pos
                             }, lr with
                             {
-                                X = ul.X + pos
+                                X = ul.X + pos+2
                             });
                         break;
                     }

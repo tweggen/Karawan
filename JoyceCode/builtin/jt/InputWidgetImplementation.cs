@@ -9,21 +9,22 @@ public class InputWidgetImplementation : TextWidgetImplementation
         base._computeOsdText(ref cOsdText);
 
         int cursorPos = (_widget as InputWidget)._cursorPos();
-        float pos = cursorPos * 12f;
+        float pos = cursorPos; 
         cOsdText.GaugeValue = (ushort)pos;
         cOsdText.OSDTextFlags = (ushort) ((cOsdText.OSDTextFlags) & (~OSDText.GAUGE_TYPE_MASK) | (OSDText.GAUGE_TYPE_INSERT));
     }
 
-    
+
     public override void OnPropertyChanged(string key, object oldValue, object newValue)
     {
-        if (key == "cursorPos")
+        switch (key)
         {
-            _updateOsdText();
-        }
-        else
-        {
-            base.OnPropertyChanged(key, oldValue, newValue);
+            case "cursorPos":
+                _updateOsdText();
+                break;
+            default:
+                base.OnPropertyChanged(key, oldValue, newValue);
+                break;
         }
     }
 
