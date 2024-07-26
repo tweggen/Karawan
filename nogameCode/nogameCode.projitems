@@ -32,6 +32,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\StreetNavigationController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\cities\TreeInstanceGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\components\CubeSpinner.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\config\GameConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\config\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\GameState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\intercity\IntercityTrackElevationOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\intercity\Network.cs" />

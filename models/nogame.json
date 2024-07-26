@@ -21,6 +21,7 @@
     "engine.LayerCatalogue": null,
     "engine.world.MetaGen": null,
     "engine.behave.SpawnModule": null,
+    "nogame.config.Module": null,
     "nogame.modules.AutoSave": null,
     "builtin.tools.CameraWatcher": null,
     "nogame.modules.shop.Module": null,

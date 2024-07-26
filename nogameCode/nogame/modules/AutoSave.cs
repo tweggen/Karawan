@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Timers;
 using engine;
+using nogame.config;
+using ObjLoader.Loader.Common;
 using static engine.Logger;
 
 namespace nogame.modules;
@@ -15,15 +17,18 @@ namespace nogame.modules;
 public class AutoSave : engine.AModule
 {
     private System.Timers.Timer _saveTimer;
-    
-    
+
+
+    private GameState _gameState = null;
     public GameState GameState
     {
-        get => I.Get<GameState>(); 
+        get => _gameState;
     }
 
+    
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
+        new SharedModule<nogame.config.Module>(),
         new SharedModule<DBStorage>()
     };
 
@@ -31,20 +36,25 @@ public class AutoSave : engine.AModule
     private void _triggerCloudSave(GameState gs)
     {
         var jsonContent = JsonContent.Create(gs);
-        I.Get<HttpClient>()
-            .PostAsync("https://silicondesert.io/api/random", jsonContent)
-            .ContinueWith(
-                async (responseTask) =>
-                {
-                    var jsonResponse = await (await responseTask).Content.ReadAsStringAsync();
-                    Trace($"Save response is {jsonResponse}");
-                });
+
+        var gc = M<nogame.config.Module>().GameConfig;
+        if (!gc.Username.IsNullOrEmpty() && !gc.Password.IsNullOrEmpty())
+        {
+            I.Get<HttpClient>()
+                .PostAsync("https://silicondesert.io/api/random", jsonContent)
+                .ContinueWith(
+                    async (responseTask) =>
+                    {
+                        var jsonResponse = await (await responseTask).Content.ReadAsStringAsync();
+                        Trace($"Save response is {jsonResponse}");
+                    });
+        }
     }
     
 
     private void _doSave()
     {
-        var gs = I.Get<GameState>();
+        var gs = _gameState;
         
         M<DBStorage>().SaveGameState(gs);
         _triggerCloudSave(gs);
@@ -99,10 +109,8 @@ public class AutoSave : engine.AModule
                     gameState.Fix();
                 }
             }
-            /*
-             * Global Data structures
-             */
-            I.Register<GameState>(() => gameState);
+
+            _gameState = gameState;
         }
         
         _startAutoSave();
