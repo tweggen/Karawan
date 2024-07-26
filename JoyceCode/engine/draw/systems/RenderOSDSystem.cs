@@ -149,15 +149,20 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
                     }
                     case OSDText.GAUGE_TYPE_INSERT:
                     {
-                        float pos = (float)cOsdText.GaugeValue;
-                        _framebuffer.FillRectangle(_dc, 
-                            ul with
-                            {
-                                X= ul.X + pos
-                            }, lr with
-                            {
-                                X = ul.X + pos+2
-                            });
+                        _framebuffer.TextExtent(
+                            _dc, 
+                            out var ulText, 
+                            out var sizeText, 
+                            out var ascent,
+                            out var descent,
+                            cOsdText.Text.Substring(0, cOsdText.GaugeValue), 
+                            cOsdText.FontSize
+                        );
+                        
+                        float pos = sizeText.X + ulText.X;
+                        Vector2 ulRect = ul + new Vector2(pos, 0);
+                        Vector2 lrRect = ul + new Vector2(pos, descent-ascent+1);
+                        _framebuffer.FillRectangle(_dc, ulRect, lrRect); 
                         break;
                     }
                 }
@@ -184,7 +189,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
             _dc.TextColor = textColor;
             _dc.HAlign = cOsdText.HAlign;
             _dc.VAlign = cOsdText.VAlign;
-            _framebuffer.DrawText(_dc, ul, lr, cOsdText.Text, (int)cOsdText.FontSize);
+            _framebuffer.DrawText(_dc, ul, lr, cOsdText.Text, cOsdText.FontSize);
             
             /*
              * If there is a highlight, render the hightlight.
@@ -194,7 +199,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
             
             if ((cOsdText.BorderColor & 0xff000000) != 0)
             {
-                _dc.Color = color;
+                _dc.Color = cOsdText.BorderColor;
                 _framebuffer.DrawRectangle(_dc, ul, lr);
             }
     

@@ -6,12 +6,15 @@ public class InputWidgetImplementation : TextWidgetImplementation
 {
     protected override void _computeOsdText(ref OSDText cOsdText)
     {
+        bool isFocussed = _widget.IsFocussed;
         base._computeOsdText(ref cOsdText);
 
         int cursorPos = (_widget as InputWidget)._cursorPos();
         float pos = cursorPos; 
         cOsdText.GaugeValue = (ushort)pos;
+        cOsdText.GaugeColor = isFocussed ? 0xff00ffff:0x00000000;
         cOsdText.OSDTextFlags = (ushort) ((cOsdText.OSDTextFlags) & (~OSDText.GAUGE_TYPE_MASK) | (OSDText.GAUGE_TYPE_INSERT));
+        cOsdText.BorderColor = isFocussed ? cOsdText.TextColor : cOsdText.FillColor;
     }
 
 
