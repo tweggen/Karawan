@@ -35,20 +35,41 @@ public class AutoSave : engine.AModule
 
     private void _triggerCloudSave(GameState gs)
     {
-        var jsonContent = JsonContent.Create(gs);
-
         var gc = M<nogame.config.Module>().GameConfig;
         if (!gc.Username.IsNullOrEmpty() && !gc.Password.IsNullOrEmpty())
         {
+            var loginObject = new
+            { 
+                user = new 
+                {
+                    email = gc.Username,
+                    password = gc.Password
+                }
+            };
+#if false
+            var jsonContent = JsonContent.Create(gs);
+           
             I.Get<HttpClient>()
                 .PostAsync("https://silicondesert.io/api/random", jsonContent)
                 .ContinueWith(
                     async (responseTask) =>
                     {
-                        var jsonResponse = await (await responseTask).Content.ReadAsStringAsync();
+                        HttpResponseMessage httpResponseMessage = await responseTask;
+                        string jsonResponse = await httpResponseMessage.Content.ReadAsStringAsync();
                         Trace($"Save response is {jsonResponse}");
                     });
-        }
+#else
+            I.Get<HttpClient>()
+                .PostAsync("https://silicondesert.io/api/users/log_in", JsonContent.Create(loginObject))
+                .ContinueWith(
+                    async (responseTask) =>
+                    {
+                        var responseMessage = await responseTask;
+                        string jsonResponse = await responseMessage.Content.ReadAsStringAsync();
+                        Trace($"Save response is {jsonResponse}");
+                    });
+#endif
+            }
     }
     
 
