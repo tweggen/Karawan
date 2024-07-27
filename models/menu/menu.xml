@@ -9,7 +9,8 @@
                 <text color='#999999' width="80" focusFor="ui.username">eMail</text>
                 <input 
                         id="ui.username" 
-                        width="120" 
+                        width="120"
+                        color='#999999'
                         onInit='widget["text"]=nogame:getConfig().Username' 
                         onChange='nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
@@ -17,6 +18,7 @@
                 <text color='#999999' width="80" focusFor="ui.password">Password</text>
                 <input id="ui.password" 
                        width="120"
+                       color='#999999'
                        type="password"
                        onInit='widget["text"]=nogame:getConfig().Password'
                        onChange='nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
