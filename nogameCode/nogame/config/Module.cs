@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using engine;
+using engine.news;
 
 namespace nogame.config;
 
@@ -65,12 +67,21 @@ public class Module : AModule
     {
         _saveGameConfigInternal(GameConfig);
     }
-    
+
+
+    private void _onSave(engine.news.Event ev)
+    {
+        Task.Run(() => Save());
+        ev.IsHandled = true;
+    }
     
     
     public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
+
+        I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.config.save", _onSave);
+        
         base.ModuleDeactivate();
     }
 
@@ -83,7 +94,10 @@ public class Module : AModule
             var gameConfig = _loadGameConfig();
             _gameConfig = gameConfig;
         }
+     
+        I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.config.save", _onSave);
         
         _engine.AddModule(this);
     }
+
 }

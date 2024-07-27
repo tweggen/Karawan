@@ -313,7 +313,7 @@ public class Parser
          */
         w.FocusState = w.GetAttr("focussable", true) ? FocusStates.Focussable : FocusStates.Unfocussable;
         w.SelectionState = w.GetAttr("selectable", true) ? SelectionStates.Selectable : SelectionStates.Unselectable;
-        
+
         /*
          * Then, the special text attribute
          */
@@ -324,6 +324,8 @@ public class Parser
                 w["text"] = text;
             }
         }
+        
+        w.OnInit();
         
         return w;
     }

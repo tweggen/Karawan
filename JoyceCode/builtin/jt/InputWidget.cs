@@ -126,7 +126,7 @@ public class InputWidget : TextWidget
                 _insert(ev.Code);
                 ev.IsHandled = true;
         
-                _emitEvent("onChange", ev);
+                _emitEvent("onChange");
 
             }
             else if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED))

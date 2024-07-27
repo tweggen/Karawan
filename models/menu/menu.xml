@@ -7,11 +7,18 @@
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuHelp")'>Help...</option>
             <hbox>
                 <text color='#999999' width="80">eMail</text>
-                <input id="ui.username" width="120" text="" onChange='print(widget["text"])'/>
+                <input 
+                        id="ui.username" 
+                        width="120" 
+                        onInit='widget["text"]=nogame:getConfig().Username' 
+                        onChange='nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
             <hbox>
                 <text color='#999999' width="80">Password</text>
-                <input id="ui.password" width="120" text=""/>
+                <input id="ui.password" 
+                       width="120"
+                       onInit='widget["text"]=nogame:getConfig().Password'
+                       onChange='nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
             <option color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>

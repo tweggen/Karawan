@@ -969,7 +969,7 @@ public class Widget : IDisposable
     }
     
     
-    protected void _queueLuaScript(string evType, LuaScriptEntry lse, string script, engine.news.Event ev)
+    protected void _queueLuaScript(string evType, LuaScriptEntry lse, string script)
     {
         /*
          * First, compile the script (this compiles only if required, checks for a change, again).
@@ -993,12 +993,14 @@ public class Widget : IDisposable
         {
             parser.PushBindings(lse);
         }
+
+        var mapBindings = 
+            new SortedDictionary<string, object>(I.Get<engine.gongzuo.API>().GetDefaultBindingMap());
+        mapBindings.Add("widget", new LuaWidgetContext(this));
+        
         LuaBindingFrame lbf = new()
         {
-            MapBindings = new SortedDictionary<string, object>()
-            {
-                { "widget", new LuaWidgetContext(this) }
-            }
+            MapBindings = mapBindings
         };
         lse.PushBinding(lbf);
 
@@ -1033,7 +1035,7 @@ public class Widget : IDisposable
     }
     
 
-    protected void _emitEvent(string evType, engine.news.Event ev)
+    protected void _emitEvent(string evType)
     {
         string script = GetAttr(evType, "");
         if (script.IsNullOrEmpty()) return;
@@ -1052,13 +1054,13 @@ public class Widget : IDisposable
         /*
          * Finally execute the script.
          */
-        _queueLuaScript(evType, lse, script, ev);
+        _queueLuaScript(evType, lse, script);
     }
 
 
     protected void _emitSelected(engine.news.Event ev)
     {
-        _emitEvent("onClick", ev);
+        _emitEvent("onClick");
     }
     
 
@@ -1438,6 +1440,12 @@ public class Widget : IDisposable
         {
             wRoot.SetFocussedChild(wNewFocus);
         }
+    }
+
+
+    public void OnInit()
+    {
+        _emitEvent("onInit");
     }
     
   
