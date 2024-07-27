@@ -59,6 +59,8 @@ public class InputWidget : TextWidget
             + oldValue.Substring(oldPosition + 1);
 
         this[ValueProperty] = newValue;
+        
+        _emitEvent("onChange");
     }
 
 
@@ -84,6 +86,8 @@ public class InputWidget : TextWidget
 
         this["cursorPos"] = oldPosition - 1;
         this[ValueProperty] = newValue;
+        _emitEvent("onChange");
+
     }
 
 
@@ -105,6 +109,8 @@ public class InputWidget : TextWidget
 
         this[ValueProperty] = newValue;
         this["cursorPos"] = oldPosition + newString.Length;
+        _emitEvent("onChange");
+
     }
     
     
@@ -125,8 +131,6 @@ public class InputWidget : TextWidget
                  */
                 _insert(ev.Code);
                 ev.IsHandled = true;
-        
-                _emitEvent("onChange");
 
             }
             else if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED))

@@ -15,16 +15,22 @@ public class GameConfig
     public string Password { get; set; } = "";
 
 
+    public string WebToken { get; set; } = "";
+    
+
     public bool IsValid()
     {
         return
             Username != null
-            && Password != null;
+            && Password != null
+            && WebToken != null;
     }
+    
     
     public void Fix()
     {
         if (Username == null) Username = DefaultUsername;
         if (Password == null) Password = DefaultPassword;
+        if (WebToken == null) WebToken = "";
     }
 }
