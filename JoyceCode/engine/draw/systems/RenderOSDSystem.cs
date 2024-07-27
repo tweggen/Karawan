@@ -156,7 +156,8 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
                             out var ascent,
                             out var descent,
                             cOsdText.Text.Substring(0, cOsdText.GaugeValue), 
-                            cOsdText.FontSize
+                            cOsdText.FontSize,
+                            true
                         );
                         
                         float pos = sizeText.X + ulText.X;

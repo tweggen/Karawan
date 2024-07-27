@@ -1,10 +1,30 @@
-#if false
 namespace builtin.jt;
 
 public class LuaWidgetContext
 {
     internal Widget _widget;
-    internal Parser _parser;
-    internal Factory _factory;
+
+    public object this[string key]
+    {
+        get
+        {
+            return _widget[key];
+        }
+        set
+        {
+            switch (key)
+            {
+                case "parser":
+                    break;
+                default:
+                    _widget[key] = value;
+                    break;
+            }
+        }
+    }
+    
+    public LuaWidgetContext(Widget widget)
+    {
+        _widget = widget;
+    }
 }
-#endif

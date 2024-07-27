@@ -7,7 +7,7 @@
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuHelp")'>Help...</option>
             <hbox>
                 <text color='#999999' width="80">eMail</text>
-                <input id="ui.username" width="120" text=""/>
+                <input id="ui.username" width="120" text="" onChange='print(widget["text"])'/>
             </hbox>
             <hbox>
                 <text color='#999999' width="80">Password</text>

@@ -213,7 +213,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
     }
 
 
-    public void TextExtent(Context context, out Vector2 ul, out Vector2 size, out float ascent, out float descent, string text, uint fontSize)
+    public void TextExtent(Context context, out Vector2 ul, out Vector2 size, out float ascent, out float descent, string text, uint fontSize, bool includeWhiteSpaces=false)
     {
         SKFont font = new SKFont(_skiaTypefacePrototype, fontSize);
         var metrics = font.Metrics;
@@ -230,9 +230,9 @@ public class SkiaSharpFramebuffer : IFramebuffer
         descent = metrics.Descent;
 
         SKRect rectExtent = new();
-        paint.MeasureText(text, ref rectExtent);
+        float totalWidth = paint.MeasureText(text, ref rectExtent);
         ul = new(rectExtent.Left, rectExtent.Top);
-        size = new(rectExtent.Width, rectExtent.Height);
+        size = new(includeWhiteSpaces?totalWidth:rectExtent.Width, rectExtent.Height);
         font.Dispose();
     }
 

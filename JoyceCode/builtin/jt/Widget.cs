@@ -995,13 +995,10 @@ public class Widget : IDisposable
         }
         LuaBindingFrame lbf = new()
         {
-            MapBindings = null
-            #if false
-            new()
+            MapBindings = new SortedDictionary<string, object>()
             {
-                // { "widget", widget API object }
+                { "widget", new LuaWidgetContext(this) }
             }
-            #endif
         };
         lse.PushBinding(lbf);
 
@@ -1112,7 +1109,7 @@ public class Widget : IDisposable
                 switch (ev.Code)
                 {
                     case "(cursorup)":
-                    case "W":
+                    case "w":
                         if (haveChildren && !isHorizontal)
                         {
                             _setOffsetFocus(-1);
@@ -1120,7 +1117,7 @@ public class Widget : IDisposable
                         }
                         break;
                     case "(cursordown)":
-                    case "S":
+                    case "s":
                         if (haveChildren && !isHorizontal)
                         {
                             _setOffsetFocus(1);
@@ -1128,7 +1125,7 @@ public class Widget : IDisposable
                         }
                         break;
                     case "(cursorleft)":
-                    case "A":
+                    case "a":
                         if (haveChildren && isHorizontal)
                         {
                             _setOffsetFocus(-1);
@@ -1136,7 +1133,7 @@ public class Widget : IDisposable
                         }
                         break;
                     case "(cursorright)":
-                    case "D":
+                    case "d":
                         if (haveChildren && isHorizontal)
                         {
                             _setOffsetFocus(1);
@@ -1144,7 +1141,7 @@ public class Widget : IDisposable
                         }
                         break;
                     case " ":
-                    case "E":
+                    case "e":
                     case "(enter)":
                         if (!haveChildren)
                         {

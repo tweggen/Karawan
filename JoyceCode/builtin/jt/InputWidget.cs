@@ -125,6 +125,8 @@ public class InputWidget : TextWidget
                  */
                 _insert(ev.Code);
                 ev.IsHandled = true;
+        
+                _emitEvent("onChange", ev);
 
             }
             else if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED))
@@ -134,6 +136,17 @@ public class InputWidget : TextWidget
                  */
                 switch (ev.Code)
                 {
+                    case " ":
+                    case "w":
+                    case "s":
+                    case "a":
+                    case "d":
+                    case "e":
+                        /*
+                         * Capture the usual selection keys, because we are inputting.
+                         */
+                        ev.IsHandled = true;
+                        break;
                     case "(cursorright)":
                         _moveCursorRelative(1);
                         ev.IsHandled = true;
