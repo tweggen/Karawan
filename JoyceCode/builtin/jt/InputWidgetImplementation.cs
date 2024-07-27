@@ -64,6 +64,8 @@ public class InputWidgetImplementation : TextWidgetImplementation
 
     public override void OnPropertyChanged(string key, object oldValue, object newValue)
     {
+        bool callBase = true;
+        
         switch (key)
         {
             case "focussed":
@@ -80,8 +82,12 @@ public class InputWidgetImplementation : TextWidgetImplementation
                 _updateOsdText();
                 break;
             default:
-                base.OnPropertyChanged(key, oldValue, newValue);
                 break;
+        }
+
+        if (callBase)
+        {
+            base.OnPropertyChanged(key, oldValue, newValue);
         }
     }
 

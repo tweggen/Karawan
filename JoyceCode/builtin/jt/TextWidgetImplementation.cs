@@ -124,6 +124,8 @@ public class TextWidgetImplementation : IWidgetImplementation
 
     protected virtual void _computeOsdText(ref OSDText cOsdText)
     {
+        bool isVisuallyFocussed = _widget.IsVisuallyFocussed;
+        
         {
             string strColor = _widget.GetAttr("color", "#ff000000");
             uint color = _color(strColor);

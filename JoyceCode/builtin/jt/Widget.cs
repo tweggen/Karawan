@@ -376,8 +376,39 @@ public class Widget : IDisposable
             }
         }
     }
-    
-    
+  
+
+    public bool IsVisuallyFocussed
+    {
+        get
+        {
+            if (IsFocussed)
+            {
+                return true;
+            }
+            string idFocusFor = GetAttr("focusFor", "");
+            if (string.IsNullOrEmpty(idFocusFor))
+            {
+                return false;
+            }
+
+            var wRoot = Root;
+            if (null == wRoot)
+            {
+                return false;
+            }
+
+            wRoot.GetChild(idFocusFor, out var wFocusFor);
+            if (null == wFocusFor)
+            {
+                return false;
+            }
+
+            return wFocusFor.IsVisuallyFocussed;
+        }
+    }
+
+
     public bool IsSelected = false;
     
     protected bool _isVisible = true;
@@ -1062,7 +1093,21 @@ public class Widget : IDisposable
     {
         _emitEvent("onClick");
     }
-    
+
+
+    private void _onClick(engine.news.Event ev)
+    {
+        /*
+         * Focus ourselves, if we are focussable.
+         */
+        if (FocusState == FocusStates.Focussable)
+        {
+            Root?.SetFocussedChild(this);
+        }
+
+        _emitSelected(ev);
+        ev.IsHandled = true;
+    }
 
     /**
      * Default implementation to handle keyboard events.
@@ -1089,8 +1134,7 @@ public class Widget : IDisposable
             switch (widgetEventType)
             {
                 case "onClick":
-                    _emitSelected(ev);
-                    ev.IsHandled = true;
+                    _onClick(ev);
                     break;
 
                 default:
@@ -1103,8 +1147,7 @@ public class Widget : IDisposable
         {
             case engine.news.Event.INPUT_MOUSE_PRESSED:
             case engine.news.Event.INPUT_TOUCH_PRESSED:
-                _emitSelected(ev);
-                ev.IsHandled = true;
+                _onClick(ev);
                 break;
             
             case engine.news.Event.INPUT_KEY_PRESSED:
