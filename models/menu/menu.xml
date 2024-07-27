@@ -17,6 +17,7 @@
                 <text color='#999999' width="80">Password</text>
                 <input id="ui.password" 
                        width="120"
+                       type="password"
                        onInit='widget["text"]=nogame:getConfig().Password'
                        onChange='nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>

@@ -141,7 +141,16 @@ public class TextWidgetImplementation : IWidgetImplementation
         cOsdText.HAlign = _hAlign(_widget.GetAttr("hAlign", "Left"));
         cOsdText.VAlign = _vAlign(_widget.GetAttr("vAlign", "Top"));
         cOsdText.FillColor = _color(_widget.GetAttr("fillColor", "#00000000"));
-        cOsdText.Text = _text(_widget.GetAttr("text", ""));
+
+        {
+            string realText = _widget.GetAttr("text", "");
+            if (_widget.GetAttr("type", "") == "password")
+            {
+                realText = new string('*', realText.Length);
+            }
+            
+            cOsdText.Text = realText;
+        }
     }
     
     
