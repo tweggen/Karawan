@@ -48,8 +48,8 @@ public class AutoSave : engine.AModule
            
         I.Get<HttpClient>()
             .PostAsync(
-                "http://localhost:4100/api/random", 
-                // "https://silicondesert.io/api/random", 
+                //"http://localhost:4100/api/random", 
+                "https://silicondesert.io/api/random", 
                 content
                 )
             .ContinueWith(
@@ -85,8 +85,8 @@ public class AutoSave : engine.AModule
                 };
                 I.Get<HttpClient>()
                     .PostAsync(
-                        //                    "https://silicondesert.io/api/users/log_in",
-                        "http://localhost:4100/api/users/log_in",
+                        "https://silicondesert.io/api/users/log_in",
+                        //"http://localhost:4100/api/users/log_in",
                         JsonContent.Create(loginObject))
                     .ContinueWith(
                         async (responseTask) =>
@@ -101,7 +101,7 @@ public class AutoSave : engine.AModule
                                 _webToken = webToken;
                             }
                             action(webToken);
-                            Trace($"Save response is {jsonResponse}");
+                            Trace($"GetToken response is {jsonResponse}");
                         });
             }
         }
