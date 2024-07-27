@@ -57,6 +57,15 @@ public class Platform : engine.IPlatform
     }
 
 
+    private bool _keyboardEnabled = false;
+
+    public bool KeyboardEnabled
+    {
+        get => _keyboardEnabled;
+        set => _platformThreadActions.Enqueue(() => _setKeyboardEnabled(value));
+    }
+
+
     public void SetEngine(engine.Engine engine)
     {
         lock (_lo)
@@ -412,6 +421,39 @@ public class Platform : engine.IPlatform
         {
             _iInputContext.Mice[i].Cursor.CursorMode =
                 value ? CursorMode.Normal : CursorMode.Raw;
+        }
+    }
+
+
+    private void _setKeyboardEnabled(bool value)
+    {
+        /*
+         * We better not set the mouse to raw on android.
+         */
+        //if (GlobalSettings.Get("Android") == "true") return;
+
+#if DEBUG
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform
+                .Linux))
+        {
+            value = true;
+        }
+#endif
+
+        _keyboardEnabled = value;
+        var maxKeyboards = _iInputContext.Keyboards.Count;
+        for (int i = 0; i < maxKeyboards; i++)
+        {
+            if (value)
+            {
+                Trace("Enabling keyboard.");
+                _iInputContext.Keyboards[i].BeginInput();
+            }
+            else
+            {
+                Trace("Disabling keyboard.");
+                _iInputContext.Keyboards[i].EndInput();
+            }
         }
     }
 

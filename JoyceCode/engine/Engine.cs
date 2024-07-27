@@ -1142,6 +1142,52 @@ public class Engine
     }
 
 
+    private int _enableKeyboardCounter = 0;
+
+    public void EnableKeyboard()
+    {
+        bool doEnable = false;
+        lock (_lo)
+        {
+            ++_enableKeyboardCounter;
+            if (1 == _enableKeyboardCounter)
+            {
+                doEnable = true;
+            }
+        }
+
+        if (doEnable)
+        {
+            _platform.KeyboardEnabled = true;
+        }
+    }
+
+
+    public void DisableKeyboard()
+    {
+        bool doDisable = false;
+        lock (_lo)
+        {
+            if (0 == _enableKeyboardCounter)
+            {
+                ErrorThrow("Mismatch disabling Keyboard.", (m) => new InvalidOperationException(m));
+            }
+
+            if (1 == _enableKeyboardCounter)
+            {
+                doDisable = true;
+            }
+
+            --_enableKeyboardCounter;
+        }
+
+        if (doDisable)
+        {
+            _platform.KeyboardEnabled = false;
+        }
+    }
+
+
     public void EnableEntityIds()
     {
         lock (_lo)

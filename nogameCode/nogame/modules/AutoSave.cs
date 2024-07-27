@@ -95,13 +95,22 @@ public class AutoSave : engine.AModule
                             string jsonResponse = await responseMessage.Content.ReadAsStringAsync();
                             
                             var objResponse = JsonSerializer.Deserialize<LoginResult>(jsonResponse);
-                            webToken = objResponse.token;
-                            lock (_lo)
+
+                            if (objResponse.GetType() == typeof(LoginResult))
                             {
-                                _webToken = webToken;
+                                webToken = objResponse.token;
+                                lock (_lo)
+                                {
+                                    _webToken = webToken;
+                                }
+
+                                action(webToken);
+                                Trace($"GetToken response is {jsonResponse}");
                             }
-                            action(webToken);
-                            Trace($"GetToken response is {jsonResponse}");
+                            else
+                            {
+                                Trace($"Error logging in: {jsonResponse}");
+                            }
                         });
             }
         }

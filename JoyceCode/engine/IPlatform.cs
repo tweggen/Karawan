@@ -12,6 +12,8 @@ namespace engine
         public void Execute();
 
         public bool MouseEnabled { get; set; }
+        
+        public bool KeyboardEnabled { get; set; }
 
         /**
          * Collect all data from the ECS to later render a frame.
