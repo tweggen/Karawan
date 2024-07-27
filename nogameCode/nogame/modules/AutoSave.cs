@@ -20,8 +20,8 @@ public class AutoSave : engine.AModule
     private System.Timers.Timer _saveTimer;
 
 
-    //public string GameServer { get; set; } = "https://silicondesert.io";
-    public string GameServer { get; set; } = "http://localhost:4100";
+    public string GameServer { get; set; } = "https://silicondesert.io";
+    // public string GameServer { get; set; } = "http://localhost:4100";
     
 
     private GameState _gameState = null;
