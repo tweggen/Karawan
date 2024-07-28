@@ -1114,97 +1114,32 @@ public class Engine
     }
 
 
-    private int _enableMouseCounter = 0;
-
-    public void EnableMouse()
+    private void _mouseEnableFunc(bool f)
     {
-        bool doEnable = false;
-        lock (_lo)
-        {
-            ++_enableMouseCounter;
-            if (1 == _enableMouseCounter)
-            {
-                doEnable = true;
-            }
-        }
-
-        if (doEnable)
-        {
-            _platform.MouseEnabled = true;
-        }
+        _platform.MouseEnabled = f;
     }
+    private builtin.CountedEnabler _mouseEnabler;
+    public void EnableMouse() => _mouseEnabler.Add();
+    public void DisableMouse() => _mouseEnabler.Remove();
+    
 
-
-    public void DisableMouse()
+    private void _keyboardEnableFunc(bool f)
     {
-        bool doDisable = false;
-        lock (_lo)
-        {
-            if (0 == _enableMouseCounter)
-            {
-                ErrorThrow("Mismatch disabling mouse.", (m) => new InvalidOperationException(m));
-            }
-
-            if (1 == _enableMouseCounter)
-            {
-                doDisable = true;
-            }
-
-            --_enableMouseCounter;
-        }
-
-        if (doDisable)
-        {
-            _platform.MouseEnabled = false;
-        }
+        _platform.KeyboardEnabled = f;
     }
+    private builtin.CountedEnabler _keyboardEnabler;
+    public void EnableKeyboard() => _keyboardEnabler.Add();
+    public void DisableKeyboard() => _keyboardEnabler.Remove();
 
 
-    private int _enableKeyboardCounter = 0;
-
-    public void EnableKeyboard()
+    private void _pauseEnablerFunc(bool f)
     {
-        bool doEnable = false;
-        lock (_lo)
-        {
-            ++_enableKeyboardCounter;
-            if (1 == _enableKeyboardCounter)
-            {
-                doEnable = true;
-            }
-        }
-
-        if (doEnable)
-        {
-            _platform.KeyboardEnabled = true;
-        }
+        GamePlayState = f?GamePlayStates.Paused:GamePlayStates.Running;
     }
-
-
-    public void DisableKeyboard()
-    {
-        bool doDisable = false;
-        lock (_lo)
-        {
-            if (0 == _enableKeyboardCounter)
-            {
-                ErrorThrow("Mismatch disabling Keyboard.", (m) => new InvalidOperationException(m));
-            }
-
-            if (1 == _enableKeyboardCounter)
-            {
-                doDisable = true;
-            }
-
-            --_enableKeyboardCounter;
-        }
-
-        if (doDisable)
-        {
-            _platform.KeyboardEnabled = false;
-        }
-    }
-
+    private builtin.CountedEnabler _pauseEnabler;
+    public void EnablePause() => _pauseEnabler.Add();
+    public void DisablePause() => _pauseEnabler.Remove();
+    
 
     public void EnableEntityIds()
     {
@@ -1304,7 +1239,7 @@ public class Engine
         _platform = platform;
         _ecsWorld = new DefaultEcs.World();
         _entityCommandRecorder = new(4096, 1024 * 1024);
-
+        
         I.Register<engine.ModuleFactory>(() => new engine.ModuleFactory());
         
         I.Register<engine.Timeline>(() => new engine.Timeline());
@@ -1321,6 +1256,10 @@ public class Engine
         I.Register<engine.SceneSequencer>(() => new SceneSequencer(this));
         I.Register<engine.physics.ObjectCatalogue>(() => new engine.physics.ObjectCatalogue());
         I.Register<System.Net.Http.HttpClient>(() => new System.Net.Http.HttpClient());
+
+        _mouseEnabler = new(_mouseEnableFunc);
+        _keyboardEnabler = new(_keyboardEnableFunc);
+        _pauseEnabler = new(_pauseEnablerFunc);
         
 #if DEBUG
         if (engine.GlobalSettings.Get("engine.physics.TraceCalls") == "true") {

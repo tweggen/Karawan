@@ -1,5 +1,32 @@
 <?xml version='1.0' encoding='utf-8'?>
 <jt>
+    <view layer='pausemenu' id='menuLogin'>
+        <vbox width='250' x='200' y='120'>
+            <text color='#666666' height='40'>Choose system to connect to...</text>
+            <option color='#999999' onClick='joyce:ev("nogame.login.loginLocally")'>local machine (offline)</option>
+            <text color='#666666' height='40' vAlign='bottom'>use these credentials to connect to...</text>
+            <hbox>
+                <text color='#999999' width="80" focusFor="ui.username">eMail</text>
+                <input
+                        id="ui.username"
+                        width="120"
+                        color='#448822'
+                        onInit='widget["text"]=nogame:getConfig().Username'
+                        onChange='nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
+            </hbox>
+            <hbox>
+                <text color='#999999' width="80" focusFor="ui.password">Password</text>
+                <input id="ui.password"
+                       width="120"
+                       color='#448822'
+                       type="password"
+                       onInit='widget["text"]=nogame:getConfig().Password'
+                       onChange='nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
+            </hbox>
+            <option color='#999999' onClick='joyce:ev("nogame.login.loginGlobally")'>global machine (online)</option>
+            <option color='#999999' onClick='os.exit()'>Exit...</option>
+        </vbox>
+    </view>
     <view layer='pausemenu' id='menuOptions'>
         <vbox width='250' x='200' y='200'>
             <text color='#666666' height='40'>Options</text>

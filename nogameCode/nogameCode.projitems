@@ -50,7 +50,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\Gameplay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\map\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\Module.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\LoginMenuModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\menu\PauseMenuModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Camera.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Compass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Display.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\VisitAgentTwelve\Quest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\login\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\logos\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\KeyHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\Scene.cs" />

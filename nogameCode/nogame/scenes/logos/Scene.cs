@@ -34,6 +34,7 @@ public class Scene : AModule, IScene
     {
         new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<nogame.modules.daynite.Module>(),
+        new MyModule<nogame.modules.menu.LoginMenuModule> { ShallActivate = false },
         new MyModule<TitleModule> { ShallActivate = false }
     };
   
@@ -126,6 +127,7 @@ public class Scene : AModule, IScene
 
     public void SceneKickoff()
     {
+        ActivateMyModule<nogame.modules.menu.LoginMenuModule>();
     }
     
     
@@ -173,6 +175,7 @@ public class Scene : AModule, IScene
             TimeSpan.FromMilliseconds(4474),
             _hideTitle);
 
+        #if false
         /*
          * Show the main scene after 4674 (This is the start in audacity)
          */
@@ -180,6 +183,7 @@ public class Scene : AModule, IScene
             TimepointTitlesongStarted,
             TimeSpan.FromMilliseconds(4674),
             _loadRootScene);
+        #endif
 
         {
             var modTitle = M<TitleModule>();

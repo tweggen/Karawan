@@ -9,7 +9,7 @@ using static engine.Logger;
 namespace nogame.modules.menu;
 
 
-public class Module : AModule, IInputPart
+public class PauseMenuModule : AModule, IInputPart
 {
     public LayerDefinition _layerDefinition;
 
@@ -56,7 +56,8 @@ public class Module : AModule, IInputPart
         M<InputEventPipeline>().RemoveInputPart(this);
 
         M<Factory>().CloseOSD(_layerDefinition.Name, "menuOptions");
-        _engine.GamePlayState = GamePlayStates.Running;
+        
+        _engine.DisablePause();
         
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
@@ -68,7 +69,7 @@ public class Module : AModule, IInputPart
         base.ModuleActivate();
         _engine.AddModule(this);
 
-        _engine.GamePlayState = GamePlayStates.Paused;
+        _engine.EnablePause();
 
         try
         {

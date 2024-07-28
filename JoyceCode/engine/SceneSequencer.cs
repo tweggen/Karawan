@@ -80,6 +80,7 @@ public class SceneSequencer : IDisposable
         if (scene != null)
         {
             scene.ModuleActivate();
+            scene.SceneKickoff();
         }
 
     }

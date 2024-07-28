@@ -32,18 +32,15 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<nogame.modules.Gameplay>(),
         new MyModule<modules.debugger.Module>("nogame.CreateUI") { ShallActivate = false },
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
-        new SharedModule<nogame.modules.osd.Display>(),
-        new MyModule<nogame.modules.osd.Camera>() { ShallActivate = false },
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),
         new MyModule<builtin.map.MapViewer>(),
-        new MyModule<modules.menu.Module>() { ShallActivate = false },
+        new MyModule<modules.menu.PauseMenuModule>() { ShallActivate = false },
         new MyModule<modules.map.Module>("nogame.CreateMap") { ShallActivate = false },
         new MyModule<builtin.modules.Stats>() { ShallActivate = false },
         new MyModule<nogame.modules.daynite.FogColor>(),
         new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<builtin.controllers.InputController>(),
-        new SharedModule<engine.news.ClickModule>(),
         new SharedModule<InputEventPipeline>()
     };
 
@@ -90,13 +87,13 @@ public class Scene : AModule, IScene, IInputPart
 
     private void _triggerPauseMenu()
     {
-        if (!_engine.HasModule(M<modules.menu.Module>()))
+        if (!_engine.HasModule(M<modules.menu.PauseMenuModule>()))
         {
-            ActivateMyModule<modules.menu.Module>();
+            ActivateMyModule<modules.menu.PauseMenuModule>();
         }
         else
         {
-            DeactivateMyModule<modules.menu.Module>();
+            DeactivateMyModule<modules.menu.PauseMenuModule>();
         }
     }
 
@@ -294,6 +291,9 @@ public class Scene : AModule, IScene, IInputPart
     
     public void SceneKickoff()
     {
+        /*
+         * This is the default kickoff, we leave it empty.
+         */
     }
 
 

@@ -130,7 +130,7 @@ public class TextWidgetImplementation : IWidgetImplementation
             string strColor = _widget.GetAttr("color", "#ff000000");
             uint color = _color(strColor);
 
-            uint finalTextColor = _widget.IsFocussed ? 0xffffffff : _widget.IsSelected ? 0xffffff88 : color;
+            uint finalTextColor = _widget.IsFocussed ? 0xff22aaee : _widget.IsSelected ? 0xff22aa55 : color;
             uint finalFillColor = _widget.IsFocussed ? 0xff777777 : 0x00000000;
 
             cOsdText.TextColor = finalTextColor;

@@ -28,6 +28,7 @@
     "builtin.tools.CameraWatcher": null,
     "nogame.modules.shop.Module": null,
     "nogame.modules.osd.Display": null,
+    "nogame.modules.osd.Camera": null,
     "builtin.controllers.InputMapper": {
       "properties": {
         "MapLogicalToDescription":{
