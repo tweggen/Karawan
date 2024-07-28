@@ -524,7 +524,7 @@ public class ClusterDesc
             {
                 if (estate.GetBuildings().Count == 0)
                 {
-                    return (Pos + estate.GetCenter() + vOffset) with { Y = AverageHeight + 3f };
+                    return (Pos + estate.GetCenter() + vOffset) with { Y = AverageHeight + 300f };
                 }
             }
         }
