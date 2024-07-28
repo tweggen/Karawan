@@ -40,6 +40,10 @@ public class Module : AModule
         {
             lock (_lo)
             {
+                if (!IsModuleActive())
+                {
+                    ErrorThrow<InvalidOperationException>("Unable to read time if module (daynite.Module) is not started.");
+                }
                 var sinceStart = value - GameStart;
                 _realWorldStart = DateTime.UtcNow - sinceStart;
             }
