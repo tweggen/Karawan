@@ -42,7 +42,7 @@ public struct Color
         byte g = byte.Parse(color.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
         byte b = byte.Parse(color.Substring(7, 2), System.Globalization.NumberStyles.HexNumber);
 
-        return ((uint)a << 24) | ((uint)r << 16) | ((uint)g << 8) | (uint)r;
+        return ((uint)a << 24) | ((uint)r << 16) | ((uint)g << 8) | (uint)b;
     }
 
 
@@ -52,7 +52,7 @@ public struct Color
         byte r = _b(v.X);        
         byte g = _b(v.Y);        
         byte b = _b(v.Z);        
-        return ((uint)a << 24) | ((uint)r << 16) | ((uint)g << 8) | (uint)r;
+        return ((uint)a << 24) | ((uint)r << 16) | ((uint)g << 8) | (uint)b;
     }
     
     
@@ -62,6 +62,6 @@ public struct Color
         byte r = _b(v.X);        
         byte g = _b(v.Y);        
         byte b = _b(v.Z);        
-        return ((uint)a << 24) | ((uint)r << 16) | ((uint)g << 8) | (uint)r;
+        return ((uint)a << 24) | ((uint)r << 16) | ((uint)g << 8) | (uint)b;
     }
 }
