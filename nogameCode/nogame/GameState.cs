@@ -14,7 +14,7 @@ public class GameState
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
 
-    public DateTime GameNow { get; set; } = default;
+    public DateTime GameNow { get; set; } = new DateTime(1982, 3, 12, 22, 46, 0);
     
     public bool IsValid()
     {
