@@ -285,22 +285,20 @@ public class Gameplay : AModule, IInputPart
         M<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.AddModule(this);
 
+        I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
+        
+        if (_engine.TryGetCameraEntity(out var eCamera))
         {
-            _engine.TryGetCameraEntity(out var eCamera);
-            _engine.TryGetPlayerEntity(out var ePlayer);
-
-            lock (_lo)
-            {
-                _eLatestCamera = eCamera;
-                _eCurrentPlayer = ePlayer;
-            }
-
-            _reviewShot();
+            _onNewCamera(this, eCamera);
         }
 
-        I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
+        if (_engine.TryGetPlayerEntity(out var ePlayer))
+        {
+            _onNewPlayer(this, ePlayer);
+        }
         _engine.OnCameraEntityChanged += _onNewCamera;
         _engine.OnPlayerEntityChanged += _onNewPlayer;
+        
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }
