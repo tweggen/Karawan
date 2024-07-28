@@ -38,7 +38,6 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<modules.menu.PauseMenuModule>() { ShallActivate = false },
         new MyModule<modules.map.Module>("nogame.CreateMap") { ShallActivate = false },
         new MyModule<builtin.modules.Stats>() { ShallActivate = false },
-        new MyModule<nogame.modules.daynite.FogColor>(),
         new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<InputEventPipeline>()

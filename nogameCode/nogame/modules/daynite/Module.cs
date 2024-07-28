@@ -90,6 +90,7 @@ public class Module : AModule
         _engine.AddModule(this);
         _realWorldStart = DateTime.UtcNow;
         _eClockDisplay = _engine.CreateEntity("OsdClockDisplay");
+        GameNow = M<AutoSave>().GameState.GameNow;
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

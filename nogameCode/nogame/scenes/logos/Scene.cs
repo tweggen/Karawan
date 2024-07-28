@@ -34,7 +34,6 @@ public class Scene : AModule, IScene
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
-        new SharedModule<nogame.modules.daynite.Module>(),
         new MyModule<nogame.modules.menu.LoginMenuModule> { ShallActivate = false },
         new MyModule<TitleModule> { ShallActivate = false }
     };
@@ -120,31 +119,47 @@ public class Scene : AModule, IScene
     }
 
 
-    private void _onLoginLocally(Event ev)
+    private void _onAutoSaveSetup(GameState gs)
     {
-        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
-
         _engine.QueueMainThreadAction(() =>
         {
             /*
              * Preload the player position from the current gamestate.
              */
-            I.Get<SetupMetaGen>().Preload(M<AutoSave>().GameState.PlayerPosition);
-            M<nogame.modules.daynite.Module>().GameNow = M<AutoSave>().GameState.GameNow;
-            
+            I.Get<SetupMetaGen>().Preload(gs.PlayerPosition);
+
             /*
              * Show the root scene earliest at this point.
              */
             I.Get<engine.Timeline>().RunAt(
                 TimepointTitlesongStarted,
                 TimeSpan.FromMilliseconds(4674),
-                _loadRootScene); 
+                _loadRootScene);
         });
+    }
+    
+
+    private void _startGame()
+    {
+        M<AutoSave>().StartAutoSave(_onAutoSaveSetup);
+    }
+
+
+    private void _onLoginLocally(Event ev)
+    {
+        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
+        I.Get<AutoSave>().SyncOnline = false; 
+
+        _startGame();
     }
     
 
     private void _onLoginGlobally(Event ev)
     {
+        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
+        I.Get<AutoSave>().SyncOnline = true;
+
+        _startGame();
     }
     
 

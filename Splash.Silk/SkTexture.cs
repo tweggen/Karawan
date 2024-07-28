@@ -401,7 +401,11 @@ public class SkTexture : IDisposable
         CheckError("ActiveTexture {texureSlot}");
         if (!_liveData)
         {
-            Error($"Live handle for texture {_liveHandle} does not have data.");
+            if (0xffffffff != _liveHandle)
+            {
+                Error($"Live handle for texture {_liveHandle} does not have data.");
+            }
+
             return;
         }
         _trace($"Bind texture {_liveHandle}");
@@ -420,7 +424,11 @@ public class SkTexture : IDisposable
         CheckError("ActiveTexture {textureSlot}");
         if (!_liveData)
         {
-            Error($"Live handle for texture {_liveHandle} does not have data.");
+            if (0xffffffff != _liveHandle)
+            {
+                Error($"Live handle for texture {_liveHandle} does not have data.");
+            }
+
             return;
         }
         _trace($"Unbind texture 0");

@@ -20,15 +20,57 @@ public class AutoSave : engine.AModule
     private System.Timers.Timer _saveTimer;
 
 
+    private bool _syncOnline = false;
+    private bool _isAutoSaveActive = false;
+
+    public bool SyncOnline
+    {
+        get
+        {
+            lock (_lo)
+            {
+                return _syncOnline;
+            }
+        }
+        set
+        {
+            if (_isAutoSaveActive)
+            {
+                ErrorThrow<ArgumentException>("Unable to activate online sync while an active game is going on.");
+            }
+
+            lock (_lo)
+            {
+                _syncOnline = value;
+            }
+        }
+    }
+
+
     public string GameServer { get; set; } = "https://silicondesert.io";
     // public string GameServer { get; set; } = "http://localhost:4100";
-    
+
 
     private GameState _gameState = null;
+
     public GameState GameState
     {
-        get => _gameState;
+        get
+        {
+            lock (_lo)
+            {
+                if (!_isAutoSaveActive)
+                {
+                    ErrorThrow<InvalidOperationException>($"Unable to provide game state before start.");
+                }
+
+                return _gameState;
+            }
+        }
+
+        private set { _gameState = value; }
     }
+
 
 
     public class LoginResult
@@ -179,9 +221,15 @@ public class AutoSave : engine.AModule
     }
 
 
+    private void _stopAutoSave()
+    {
+        _saveTimer.Enabled = false;
+    }
+    
+    
     private void _startAutoSave()
     {
-        _saveTimer = new System.Timers.Timer(10000);
+        _saveTimer = new System.Timers.Timer(60000);
         // Hook up the Elapsed event for the timer. 
         _saveTimer.Elapsed += _onSaveTimer;
         _saveTimer.AutoReset = true;
@@ -191,7 +239,91 @@ public class AutoSave : engine.AModule
 
     public void Save()
     {
+        lock (_lo)
+        {
+            if (!_isAutoSaveActive)
+            {
+                Error($"Unable to save right now.");
+                return;
+            }
+        }
         _doSave();
+    }
+
+
+
+    private void _triggerInitialOnlineLoad(Action<GameState> onInitialLoad)
+    {
+        
+    }
+    
+
+    private void _triggerInitialOfflineLoad(Action<GameState> onInitialLoad)
+    {
+        bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
+        if (false == haveGameState)
+        {
+            gameState = new GameState();
+            M<DBStorage>().SaveGameState(gameState);
+        }
+        else
+        {
+            if (!gameState.IsValid())
+            {
+                gameState.Fix();
+            }
+        }
+
+        _gameState = gameState;
+        _engine.QueueMainThreadAction(() =>
+        {
+            onInitialLoad(_gameState);
+            _startAutoSave();
+        });
+    }
+    
+
+    private void _triggerInitialLoad(Action<GameState> onInitialLoad)
+    {
+        if (_syncOnline)
+        {
+            _triggerInitialOnlineLoad(onInitialLoad);
+        }
+        else
+        {
+            _triggerInitialOfflineLoad(onInitialLoad);
+        }
+    }
+    
+    
+
+    public void StopAutoSave()
+    {
+        lock (_lo)
+        {
+            if (!_isAutoSaveActive)
+            {
+                return;
+            }
+            _isAutoSaveActive = true;
+        }
+
+        _stopAutoSave();
+    }
+    
+
+    public void StartAutoSave(Action<GameState> onInitialLoad)
+    {
+        lock (_lo)
+        {
+            if (_isAutoSaveActive)
+            {
+                ErrorThrow<InvalidOperationException>($"Autosave already was active.");
+            }
+            _isAutoSaveActive = true;
+        }
+
+        _triggerInitialLoad(onInitialLoad);
     }
     
 
@@ -206,25 +338,5 @@ public class AutoSave : engine.AModule
     {
         base.ModuleActivate();
         _engine.AddModule(this);
-        
-        {
-            bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
-            if (false == haveGameState)
-            {
-                gameState = new GameState();
-                M<DBStorage>().SaveGameState(gameState);
-            }
-            else
-            {
-                if (!gameState.IsValid())
-                {
-                    gameState.Fix();
-                }
-            }
-
-            _gameState = gameState;
-        }
-        
-        _startAutoSave();
     }
 }

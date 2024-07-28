@@ -26,7 +26,8 @@ public class Gameplay : AModule, IInputPart
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<InputEventPipeline>()
+        new SharedModule<InputEventPipeline>(),
+        new MyModule<nogame.modules.daynite.FogColor>(),
     };
 
 
