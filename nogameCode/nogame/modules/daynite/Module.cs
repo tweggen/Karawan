@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Numerics;
 using engine;
 using engine.draw;
+using static engine.Logger;
 
 namespace nogame.modules.daynite;
 
@@ -27,6 +27,10 @@ public class Module : AModule
     {
         get
         {
+            if (!IsModuleActive())
+            {
+                ErrorThrow<InvalidOperationException>("Unable to read time if module (daynite.Module) is not started.");
+            }
             lock (_lo)
             {
                 return _gameNow;
