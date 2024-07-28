@@ -7,6 +7,7 @@ using builtin.parts;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
+using engine.news;
 using engine.world;
 using nogame.cities;
 using nogame.modules;
@@ -109,27 +110,56 @@ public class Scene : AModule, IScene
         /*
          * Start preloading in the background.
          */
-        _engine.Run(() =>
+        _engine.QueueMainThreadAction(() =>
         {
             I.Get<MetaGen>().ClusterOperators.Add(new GenerateShopsOperator());
             I.Get<SetupMetaGen>().PrepareMetaGen(engine);
-            
+        });
+
+        return true;
+    }
+
+
+    private void _onLoginLocally(Event ev)
+    {
+        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
+
+        _engine.QueueMainThreadAction(() =>
+        {
             /*
              * Preload the player position from the current gamestate.
              */
             I.Get<SetupMetaGen>().Preload(M<AutoSave>().GameState.PlayerPosition);
             M<nogame.modules.daynite.Module>().GameNow = M<AutoSave>().GameState.GameNow;
+            
+            /*
+             * Show the root scene earliest at this point.
+             */
+            I.Get<engine.Timeline>().RunAt(
+                TimepointTitlesongStarted,
+                TimeSpan.FromMilliseconds(4674),
+                _loadRootScene); 
         });
+    }
+    
 
-        return true;
+    private void _onLoginGlobally(Event ev)
+    {
     }
     
 
     public void SceneKickoff()
     {
+    }
+
+
+    private void _showLoginMenu()
+    {
+        I.Get<SubscriptionManager>().Subscribe("nogame.login.loginLocally", _onLoginLocally);
+        I.Get<SubscriptionManager>().Subscribe("nogame.login.loginGlobally", _onLoginGlobally);
         ActivateMyModule<nogame.modules.menu.LoginMenuModule>();
     }
-    
+
     
     public override void ModuleDeactivate()
     {
@@ -147,91 +177,90 @@ public class Scene : AModule, IScene
          */
         I.Get<SceneSequencer>().RemoveScene(this);
         
+        I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginLocally", _onLoginLocally);
+        I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginGlobally", _onLoginGlobally);
+
         base.ModuleDeactivate();
     }
 
     
     private void _onTitleSongStarted()
     {
-        _isAnimRunning = true;
-        
-        DateTime now = DateTime.Now;
-        var timeline = I.Get<engine.Timeline>();
-        timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
-        
-        /*
-         * Start preloading after the first title starts display
-         */
-        timeline.RunAt(
-            TimepointTitlesongStarted, 
-            TimeSpan.FromMilliseconds(800),
-            _preload);
-        
-        /*
-         * Blank 4.674 after first bit of intro song. Read that one in audacity.
-         */
-        timeline.RunAt(
-            TimepointTitlesongStarted, 
-            TimeSpan.FromMilliseconds(4474),
-            _hideTitle);
-
-        #if false
-        /*
-         * Show the main scene after 4674 (This is the start in audacity)
-         */
-        timeline.RunAt(
-            TimepointTitlesongStarted,
-            TimeSpan.FromMilliseconds(4674),
-            _loadRootScene);
-        #endif
-
+        _engine.QueueMainThreadAction(() =>
         {
-            var modTitle = M<TitleModule>();
+            _isAnimRunning = true;
+
+            DateTime now = DateTime.Now;
+            var timeline = I.Get<engine.Timeline>();
+            timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
+
+            _showLoginMenu();
 
             /*
-             * We do not use the texture atlas because there is no need to waste previous atlas space
-             * with these intro logos.
+             * Start preloading after the first title starts display
              */
-            modTitle.Add(new TitleCard()
-            {
-                StartReference = TimepointTitlesongStarted,
-                StartOffset = TimeSpan.FromMilliseconds(500),
-                EndReference = TimepointTitlesongStarted,
-                EndOffset = TimeSpan.FromMilliseconds(1200),
-                Duration = 700,
-                Flags = (uint)TitleCard.F.FadeoutEnd,
-                FadeOutTime = 500f,
-                Size = new(14f, 7f),
-                EmissiveTexture =
-                    new Texture("aihao-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("aihao-emissive.png"),
-                StartTransform = new engine.joyce.components.Transform3(
-                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
-                EndTransform = new engine.joyce.components.Transform3(
-                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f)
-            });
-            modTitle.Add(new TitleCard()
-            {
-                StartReference = TimepointTitlesongStarted,
-                StartOffset = TimeSpan.FromMilliseconds(1400),
-                EndReference = TimepointTitlesongStarted,
-                EndOffset = TimeSpan.FromMilliseconds(2900),
-                Duration = 700,
-                Flags = (uint)TitleCard.F.JitterEnd,
-                Size = new(64f, 64f / 1280f * 220f),
-                AlbedoTexture =
-                    new Texture(
-                        "silicondesert-albedo.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-albedo.png"),
-                EmissiveTexture =
-                    new Texture(
-                        "silicondesert-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-emissive.png"),
-                StartTransform = new engine.joyce.components.Transform3(
-                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
-                EndTransform = new engine.joyce.components.Transform3(
-                    true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
-            });
-        }
+            timeline.RunAt(
+                TimepointTitlesongStarted,
+                TimeSpan.FromMilliseconds(800),
+                _preload);
 
-        ActivateMyModule<TitleModule>();
+            /*
+             * Blank 4.674 after first bit of intro song. Read that one in audacity.
+             */
+            timeline.RunAt(
+                TimepointTitlesongStarted,
+                TimeSpan.FromMilliseconds(4474),
+                _hideTitle);
+
+            {
+                var modTitle = M<TitleModule>();
+
+                /*
+                 * We do not use the texture atlas because there is no need to waste previous atlas space
+                 * with these intro logos.
+                 */
+                modTitle.Add(new TitleCard()
+                {
+                    StartReference = TimepointTitlesongStarted,
+                    StartOffset = TimeSpan.FromMilliseconds(500),
+                    EndReference = TimepointTitlesongStarted,
+                    EndOffset = TimeSpan.FromMilliseconds(1200),
+                    Duration = 700,
+                    Flags = (uint)TitleCard.F.FadeoutEnd,
+                    FadeOutTime = 500f,
+                    Size = new(14f, 7f),
+                    EmissiveTexture =
+                        new Texture(
+                            "aihao-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("aihao-emissive.png"),
+                    StartTransform = new engine.joyce.components.Transform3(
+                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
+                    EndTransform = new engine.joyce.components.Transform3(
+                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f)
+                });
+                modTitle.Add(new TitleCard()
+                {
+                    StartReference = TimepointTitlesongStarted,
+                    StartOffset = TimeSpan.FromMilliseconds(1400),
+                    EndReference = TimepointTitlesongStarted,
+                    EndOffset = TimeSpan.FromMilliseconds(2900),
+                    Duration = 700,
+                    Flags = (uint)TitleCard.F.JitterEnd,
+                    Size = new(64f, 64f / 1280f * 220f),
+                    AlbedoTexture =
+                        new Texture(
+                            "silicondesert-albedo.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-albedo.png"),
+                    EmissiveTexture =
+                        new Texture(
+                            "silicondesert-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-emissive.png"),
+                    StartTransform = new engine.joyce.components.Transform3(
+                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
+                    EndTransform = new engine.joyce.components.Transform3(
+                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
+                });
+            }
+
+            ActivateMyModule<TitleModule>();
+        });
     }
 
 

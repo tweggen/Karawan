@@ -198,7 +198,6 @@ public class Scene : AModule, IScene, IInputPart
          */
         _engine.QueueMainThreadAction(() =>
         {
-            ActivateMyModule<modules.osd.Camera>();
             _engine.SuggestEndLoading();
             M<modules.map.Module>().Mode = Module.Modes.MapMini;
             _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
@@ -325,15 +324,6 @@ public class Scene : AModule, IScene, IInputPart
          */
         I.Get<SceneSequencer>().AddScene(0, this);
 
-        /*
-         * Finally, set the timeline trigger for un-blanking the cameras and starting the show.
-         *
-         * Kick off 2 frames before nominal start.
-         */
-        I.Get<Timeline>().RunAt(
-            nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
-            TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
-
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
@@ -345,6 +335,17 @@ public class Scene : AModule, IScene, IInputPart
         ActivateMyModule<modules.map.Module>();
 
         _create3dEntites();
+        
+        /*
+         * Finally, set the timeline trigger for un-blanking the cameras and starting the show.
+         *
+         * Kick off 2 frames before nominal start.
+         */
+        I.Get<Timeline>().RunAt(
+            nogame.scenes.logos.Scene.TimepointTitlesongStarted, 
+            TimeSpan.FromMilliseconds(9735 - 33f), _kickoffScene);
+
+
     }
 
 }

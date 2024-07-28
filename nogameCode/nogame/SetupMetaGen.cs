@@ -12,9 +12,14 @@ namespace nogame;
 
 public class SetupMetaGen
 {
+    private object _lo = new();
+    
     private engine.Engine _engine;
     private engine.world.Loader _worldLoader;
     private engine.world.MetaGen _worldMetaGen;
+
+    private bool _shallPreload = false;
+    private Vector3 _v3Preload = default;
 
     
     public void PrepareMetaGen(engine.Engine engine0)
@@ -144,6 +149,19 @@ public class SetupMetaGen
         }
 
         _worldMetaGen.Populate();
+
+        Vector3 v3Preload;
+        bool shallPreload;
+        lock (_lo)
+        {
+            shallPreload = _shallPreload;
+            v3Preload = _v3Preload;
+        }
+
+        if (shallPreload)
+        {
+            Preload(v3Preload);
+        }
     }
 
 
@@ -151,10 +169,29 @@ public class SetupMetaGen
     {
         Trace("Trying to preload...");
 
-        var fixedPosViewer = new FixedPosViewer(_engine) { Position = pos };
-        
-        _worldLoader.AddViewer(fixedPosViewer);
-        _worldLoader.WorldLoaderProvideFragments();
-        _worldLoader.RemoveViewer(fixedPosViewer);
+        bool preloadNow = false;
+        lock (_lo)
+        {
+            if (_worldLoader != null)
+            {
+                preloadNow = true;
+                _shallPreload = false;
+            }
+            else
+            {
+                preloadNow = false;
+                _shallPreload = true;
+                _v3Preload = pos;
+            }
+        }
+
+        if (preloadNow)
+        {
+            var fixedPosViewer = new FixedPosViewer(_engine) { Position = pos };
+
+            _worldLoader.AddViewer(fixedPosViewer);
+            _worldLoader.WorldLoaderProvideFragments();
+            _worldLoader.RemoveViewer(fixedPosViewer);
+        }
     }
 }
