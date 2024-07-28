@@ -34,13 +34,13 @@ public sealed class I
     }
 
 
-    public void RegisterFactory(Type type, Func<Object> factory)
+    private bool _tryRegisterFactory(Type type, Func<Object> factory)
     {
         lock (_lo)
         {
             if (_mapInstances.TryGetValue(type, out _))
             {
-                ErrorThrow($"Already registered {type.FullName}.", (m) => throw new InvalidOperationException(m));
+                return false;
             }
             InstanceEntry instanceEntry = new()
             {
@@ -51,6 +51,17 @@ public sealed class I
             };
 
             _mapInstances[type] = instanceEntry;
+        }
+
+        return true;
+    }
+    
+    
+    public void RegisterFactory(Type type, Func<Object> factory)
+    {
+        if (!_tryRegisterFactory(type, factory))
+        {
+            ErrorThrow($"Already registered {type.FullName}.", (m) => throw new InvalidOperationException(m));
         }
     }
     
