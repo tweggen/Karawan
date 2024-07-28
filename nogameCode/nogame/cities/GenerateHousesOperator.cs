@@ -361,9 +361,11 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
     private void _createNeonSignsSubGeo(
         in Context ctx,
         in engine.joyce.MatMesh matmesh,
+        in engine.streets.Building building,
         in IList<Vector3> p,
         float h)
     {
+        var v3BuildingCenter = building.GetCenter();
         if (h < 2.9f * _storyHeight)
         {
             return;
@@ -391,10 +393,10 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             pe -= p0;
             pe = Vector3.Normalize(pe);
             pe *= -letterWidth;
-
-            _createNeonSignSubGeo(
-                ctx, matmesh,
-                p0, pe, h);
+            p0 += v3BuildingCenter;
+            p0 += _clusterDesc.Pos with { Y = 2.5f + _clusterDesc.AverageHeight };
+                
+            _createNeonSignSubGeo(ctx, matmesh, p0, pe, h);
         }
     }
 
@@ -478,9 +480,9 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                  */
                 foreach (var building in estate.GetBuildings())
                 {
-                    var orgCenter = building.GetCenter();
+                    var v3BuildingCenter = building.GetCenter();
 
-                    var center = orgCenter;
+                    var center = v3BuildingCenter;
                     center.X += cx;
                     center.Z += cz;
                     if (!worldFragment.IsInsideLocal(center.X, center.Z))
@@ -496,7 +498,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     haveDebugBuilding |= isDebugBuilding;
                     if (isDebugBuilding)
                     {
-                        if (TraceHouses) Trace($"This is the debug building p0 = {orgPoints[0]+_clusterDesc.Pos} c = {orgCenter+_clusterDesc.Pos}");
+                        if (TraceHouses) Trace($"This is the debug building p0 = {orgPoints[0]+_clusterDesc.Pos} c = {v3BuildingCenter+_clusterDesc.Pos}");
                     }
                     if (!isFirst)
                     {
@@ -505,7 +507,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     }
                         
                     var height = building.GetHeight();
-#if true
+
                     /*
                      * We create a lindenmeyer placed at the building's center, the ground polygon
                      * being relative to it.
@@ -515,7 +517,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     /*
                      * The building center is relative to the cluster, as are the corners of the building we have.
                      */
-                    Vector3 v3BuildingCenter = building.GetCenter();
+                    //Vector3 v3BuildingCenter = building.GetCenter();
 
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
@@ -544,9 +546,8 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                         var lInstance = new LGenerator(lSystem, $"{orgPoints[0]}").Generate(8);
                         if (null != lInstance)
                         {
-                            Vector3 v3Position =
-                                new Vector3(cx, 2.5f + _clusterDesc.AverageHeight, cz)
-                                + v3BuildingCenter;
+                            Vector3 v3Position = new Vector3(cx, 2.5f + _clusterDesc.AverageHeight, cz)
+                                                 + v3BuildingCenter;
                             new AlphaInterpreter(lInstance).Run(ctx.Fragment, v3Position, matmesh, listCreatePhysics);
                         }
                         else
@@ -559,39 +560,10 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                     {
                         Error($"Unable to generate lindenmeyer houses: {e}");
                     }
-#else
-                    var fragPoints = new List<Vector3>();
-                    foreach (var p in orgPoints)
-                    {
-                        fragPoints.Add(
-                            new Vector3(
-                                p.X + cx,
-                                _clusterDesc.AverageHeight + 2.15f,
-                                p.Z + cz
-                            )
-                        );
-                    }
 
                     try
                     {
-                        _createClassicHouseSubGeo(
-                            ctx, matmesh,
-                            fragPoints, height, _metersPerTexture,
-                            listCreatePhysics);
-
-                        _createLargeAdvertsSubGeo(
-                            ctx, matmesh, fragPoints, height); //15434
-                    }
-                    catch (Exception e)
-                    {
-                        Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
-                    }
-#endif
-
-                    try
-                    {
-                        _createNeonSignsSubGeo(ctx, matmesh,
-                            fragPoints, height);
+                        _createNeonSignsSubGeo(ctx, matmesh, building, fragPoints, Single.Max(20f, height));
                     }
                     catch (Exception e)
                     {
