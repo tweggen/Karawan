@@ -24,7 +24,8 @@ public class Scene : AModule, IScene
 
     private bool _isCleared = false;
     private bool _shallHideTitle = false;
-
+  
+    private bool _isAnimRunning = false;
     private float _t;
     
     public static string TimepointTitlesongStarted = "nogame.scenes.logos.titlesong.Started"; 
@@ -35,8 +36,9 @@ public class Scene : AModule, IScene
         new SharedModule<nogame.modules.daynite.Module>(),
         new MyModule<TitleModule> { ShallActivate = false }
     };
-    
-    public void SceneOnLogicalFrame(float dt)
+  
+  
+    private void _animateTitle(float dt)
     {
         /*
          * Implement some animation into the title.
@@ -74,7 +76,12 @@ public class Scene : AModule, IScene
             _t = t;
         }
     }
-
+    
+    
+    public void SceneOnLogicalFrame(float dt)
+    {
+        _animateTitle(dt);
+    }
 
     private bool _hideTitle()
     {
@@ -144,6 +151,8 @@ public class Scene : AModule, IScene
     
     private void _onTitleSongStarted()
     {
+        _isAnimRunning = true;
+        
         DateTime now = DateTime.Now;
         var timeline = I.Get<engine.Timeline>();
         timeline.SetMarker(TimepointTitlesongStarted, DateTime.Now);
