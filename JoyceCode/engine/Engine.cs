@@ -1292,7 +1292,7 @@ public class Engine
         I.Register<engine.Timeline>(() => new engine.Timeline());
         I.Register<engine.news.SubscriptionManager>(() => new SubscriptionManager());
         I.Register<engine.news.EventQueue>(() => new EventQueue());
-        I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
+        // I.Register<engine.news.InputEventPipeline>(() => new InputEventPipeline());
 
         I.Register<engine.joyce.TransformApi>(() => new joyce.TransformApi());
         I.Register<engine.joyce.HierarchyApi>(() => new joyce.HierarchyApi());
