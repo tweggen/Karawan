@@ -3,6 +3,7 @@ using static engine.Logger;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
+using engine.joyce.components;
 using Silk.NET.OpenAL;
 
 namespace Boom.OpenAL.systems;
@@ -518,17 +519,23 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                 return;
             }
             try {
-                _cameraMatrix = eCamera.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
-                _cameraVelocity = eCamera.Get<engine.joyce.components.Motion>().Velocity;
-                _cameraPosition = _cameraMatrix.Translation;
+                if (eCamera.Has<Transform3ToWorld>() && eCamera.Has<Motion>())
+                {
+                    _cameraMatrix = eCamera.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
+                    _cameraVelocity = eCamera.Get<engine.joyce.components.Motion>().Velocity;
+                    _cameraPosition = _cameraMatrix.Translation;
+                }
 
-                _playerMatrix = ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
-                _playerVelocity = ePlayer.Get<engine.joyce.components.Motion>().Velocity;
-                _playerPosition = _playerMatrix.Translation;
+                if (ePlayer.Has<Transform3ToWorld>() && ePlayer.Has<Motion>())
+                {
+                    _playerMatrix = ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
+                    _playerVelocity = ePlayer.Get<engine.joyce.components.Motion>().Velocity;
+                    _playerPosition = _playerMatrix.Translation;
+                }
             }
             catch (Exception e)
             {
-                Error($"Camera entity {eCamera} does not of both Transform3ToWorld and Motion set.");
+                Error($"{e} Camera and player entity {eCamera} does not of both Transform3ToWorld and Motion set.");
             }
         }
         /*

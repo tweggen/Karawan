@@ -24,17 +24,29 @@ public class World : AModule
 
     private void _triggerLoadWorld()
     {
-        Vector3 vMe;
         DefaultEcs.Entity eCamScene;
         if (!_engine.TryGetCameraEntity(out eCamScene) || !eCamScene.Has<Transform3ToWorld>())
         {
             return;
         }
-        
-        vMe = eCamScene.Get<Transform3ToWorld>().Matrix.Translation;
+
+        var cTransform3ToWorld = eCamScene.Get<Transform3ToWorld>(); 
+        var vMe = cTransform3ToWorld.Matrix.Translation;
+
+        bool shouldTryLoad = true;
+
+
+        if (shouldTryLoad && vMe == Vector3.Zero)
+        {
+            shouldTryLoad = false;
+        }
+        if (shouldTryLoad && (vMe - new Vector3(99999f, 99999f, 99999f)).LengthSquared() < 1f)
+        {
+            shouldTryLoad = false;
+        } 
         
         // TXWTODO: We don't precisely know when we have the first valid position 
-        if (vMe != Vector3.Zero)
+        if (shouldTryLoad)
         {
             if (_worldLoader == null)
             {

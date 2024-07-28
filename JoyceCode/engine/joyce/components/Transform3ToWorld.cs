@@ -5,7 +5,7 @@ namespace engine.joyce.components
 {
     public struct Transform3ToWorld
     {
-        public static readonly uint Visible = 1; 
+        public static readonly uint Visible = 1;
         public uint CameraMask;
         public uint Flags;
         

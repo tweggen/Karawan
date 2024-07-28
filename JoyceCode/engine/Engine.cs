@@ -247,12 +247,12 @@ public class Engine
     }
 
 
-    private bool _tryGetMemberEntity(out DefaultEcs.Entity eReturn, ref DefaultEcs.Entity myMember)
+    private bool _tryGetMemberEntity<T>(out DefaultEcs.Entity eReturn, ref DefaultEcs.Entity myMember)
     {
         lock (_lo)
         {
             eReturn = myMember;
-            bool haveMember = eReturn != default && eReturn.IsAlive && eReturn.IsEnabled() && eReturn.Has<engine.joyce.components.Camera3>();
+            bool haveMember = eReturn != default && eReturn.IsAlive && eReturn.IsEnabled() && eReturn.Has<T>();
             if (!haveMember)
             {
                 eReturn = default;
@@ -264,11 +264,11 @@ public class Engine
 
 
     public bool TryGetCameraEntity(out DefaultEcs.Entity eCamera) =>
-        _tryGetMemberEntity(out eCamera, ref _cameraEntity);
+        _tryGetMemberEntity<engine.joyce.components.Camera3>(out eCamera, ref _cameraEntity);
 
 
     public bool TryGetPlayerEntity(out DefaultEcs.Entity ePlayer)  =>
-        _tryGetMemberEntity(out ePlayer, ref _playerEntity);
+        _tryGetMemberEntity<engine.joyce.components.Transform3ToWorld>(out ePlayer, ref _playerEntity);
 
 
     public void BeamTo(Vector3 vPos)

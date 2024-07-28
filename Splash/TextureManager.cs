@@ -9,6 +9,8 @@ namespace Splash
     {
         private readonly object _lock = new ();
 
+        public bool TraceDetails { get; set; } = false;
+        
         private readonly IThreeD _threeD;
         private Dictionary<string, ATextureEntry> _dictTextures;
 
@@ -38,7 +40,7 @@ namespace Splash
                     }
                 } else
                 {
-                    Trace($"Texture {textureKey} not loaded yet.");
+                    if (TraceDetails) Trace($"Texture {textureKey} not loaded yet.");
                     aTextureEntry = _threeD.CreateTextureEntry(jTexture);
                     _dictTextures.Add(textureKey, aTextureEntry);
                     needFillEntry = true;
@@ -51,7 +53,7 @@ namespace Splash
                 _threeD.UploadTextureEntry(aTextureEntry);
                 if (!aTextureEntry.IsUploaded())
                 {
-                    Trace($"Texture {textureKey} could not be loaded, removing from dict.");
+                    if (TraceDetails) Trace($"Texture {textureKey} could not be loaded, removing from dict.");
                     lock (_lock)
                     {
                         _dictTextures.Remove(textureKey);

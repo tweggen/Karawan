@@ -573,7 +573,7 @@ public class SilkThreeD : IThreeD
             }
             else
             {
-                Warning($"Unable to uploade texture {jMaterial.Texture.Key}");
+                // Warning($"Unable to upload texture {jMaterial.Texture.Key}");
                 haveUploadSuccess = false;
             }
         }
@@ -591,7 +591,7 @@ public class SilkThreeD : IThreeD
             }
             else
             {
-                Warning($"Unable to uploade texture {jMaterial.EmissiveTexture.Key}");
+                // Warning($"Unable to upload texture {jMaterial.EmissiveTexture.Key}");
                 haveUploadSuccess = false;
             }
         }
