@@ -33,8 +33,8 @@ public class Flyalong : AModule
         _engine.QueueMainThreadAction(() =>
         {
             _detachSubject();
-            var eCam = _engine.GetCameraEntity();
-            if (!eCam.IsAlive || !eCam.Has<Camera3>())
+            DefaultEcs.Entity eCam;
+            if (!_engine.TryGetCameraEntity(out eCam)) 
             {
                 Task.Delay(50).ContinueWith(t => _attachNewSubject(sender, e));
                 return;

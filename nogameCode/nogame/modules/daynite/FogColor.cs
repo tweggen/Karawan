@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using engine;
 using engine.joyce.components;
+using engine.news;
 
 namespace nogame.modules.daynite;
 
@@ -38,8 +39,7 @@ public class FogColor : AModule
 
     private void _updateFog(TimeSpan now)
     {
-        EFogCamera = _engine.GetCameraEntity();
-        if (!EFogCamera.IsAlive && EFogCamera.Has<Camera3>())
+        if (!_engine.TryGetCameraEntity(out EFogCamera))
         {
             return;
         }
@@ -104,7 +104,7 @@ public class FogColor : AModule
             col4Ambient = v4AmbientNight;
         }
 
-        M<nogame.modules.World>().EAmbientLight.Get<AmbientLight>().Color = col4Ambient;
+        I.Get<EventQueue>().Push(new Event("nogame.scenes.root.setAmbientLight", Color.Vector4ToString(col4Ambient)));
     }
     
 

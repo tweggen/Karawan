@@ -28,7 +28,6 @@ public class Scene : AModule, IScene, IInputPart
     {
         new SharedModule<nogame.modules.World>(),
         new SharedModule<engine.behave.SpawnModule>(),
-        new MyModule<builtin.modules.ScreenComposer>(),
         new MyModule<nogame.modules.playerhover.Module>(),
         new MyModule<nogame.modules.Gameplay>(),
         new MyModule<modules.debugger.Module>("nogame.CreateUI") { ShallActivate = false },
@@ -54,6 +53,17 @@ public class Scene : AModule, IScene, IInputPart
     private bool _isUIShown = false;
     private bool _isMenuShown = false;
 
+    
+    private DefaultEcs.Entity _eCamScene;
+    private DefaultEcs.Entity _eLightMain;
+    private DefaultEcs.Entity _eLightBack;
+    private DefaultEcs.Entity _eAmbientLight;
+
+
+    private engine.joyce.TransformApi _aTransform;
+
+
+    
     private void _toggleDebugger()
     {
         bool isUIShown;
@@ -194,6 +204,8 @@ public class Scene : AModule, IScene, IInputPart
             ActivateMyModule<modules.osd.Camera>();
             _engine.SuggestEndLoading();
             M<modules.map.Module>().Mode = Module.Modes.MapMini;
+            _eCamScene.Get<engine.joyce.components.Camera3>().CameraFlags &=
+                ~engine.joyce.components.Camera3.Flags.PreloadOnly;
         });
         
         Task.Delay(5000).ContinueWith(t =>
@@ -208,6 +220,60 @@ public class Scene : AModule, IScene, IInputPart
 
         return true;
     }
+
+    
+    private void _create3dEntites()
+    {
+        /*
+         * Directional light
+         */
+        {
+            _eLightMain = _engine.CreateEntity("RootScene.DirectionalLight");
+            _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.7f, 0.8f, 0.9f, 0.0f)));
+            _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
+        }
+        {
+            _eLightBack = _engine.CreateEntity("RootScene.OtherLight");
+            _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.2f, 0.2f, 0.0f, 0.0f)));
+            _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
+        }
+        
+        /*
+         * Ambient light
+         */
+        {
+            _eAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
+            _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
+        }
+
+        /*
+         * Create a scene camera.
+         * Keep it invisible.
+         */
+        {
+            _eCamScene = _engine.CreateEntity("RootScene.SceneCamera");
+            var cCamScene = new engine.joyce.components.Camera3();
+            cCamScene.Angle = 60.0f;
+            cCamScene.NearFrustum = 1f;
+            cCamScene.CameraFlags = 
+                engine.joyce.components.Camera3.Flags.PreloadOnly
+                | engine.joyce.components.Camera3.Flags.RenderSkyboxes
+                | engine.joyce.components.Camera3.Flags.EnableFog;
+
+            /*
+             * We need to be as far away as the skycube is. Plus a bonus.
+             */
+            cCamScene.FarFrustum = (float)Math.Sqrt(3) * 1000f + 100f;
+            cCamScene.Renderbuffer = I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d");
+            cCamScene.CameraMask = 0x00000001;
+            _eCamScene.Set(cCamScene);
+            I.Get<TransformApi>().SetCameraMask(_eCamScene, 0x00000001);
+            I.Get<TransformApi>().SetVisible(_eCamScene, true);
+            // No set position, done by controller
+        }
+        _engine.SetCameraEntity(_eCamScene);
+        
+    }
     
     
     public void SceneOnLogicalFrame(float dt)
@@ -215,6 +281,17 @@ public class Scene : AModule, IScene, IInputPart
     }
 
 
+    private void _onSetAmbientLight(engine.news.Event ev)
+    {
+        if (_eAmbientLight.IsAlive && _eAmbientLight.IsEnabled() &&
+            _eAmbientLight.Has<engine.joyce.components.AmbientLight>())
+        {
+            _eAmbientLight.Get<engine.joyce.components.AmbientLight>().Color = Color.StringToVector4(ev.Code);
+
+        }
+    }
+    
+    
     public void SceneKickoff()
     {
     }
@@ -238,35 +315,10 @@ public class Scene : AModule, IScene, IInputPart
 
     public override void ModuleActivate()
     {
-        uint fbWidth, fbHeight;
-        {
-            var split = engine.GlobalSettings.Get("nogame.framebuffer.resolution").Split("x");
-            fbWidth = uint.Parse(split[0]);
-            fbHeight = uint.Parse(split[1]);
-        }
-        // FIXME: We need to register the renderbuffer before we reference it in the world module. This is not beatiful. Anyway, setting up the renderer doesn't belong here.
-        I.Get<ObjectRegistry<Renderbuffer>>().RegisterFactory(
-            "rootscene_3d", 
-            name => new Renderbuffer(name,
-                fbWidth, fbHeight
-                //480,270
-            ));
-
         base.ModuleActivate();
+        _aTransform = I.Get<TransformApi>();
         
         _engine.SuggestBeginLoading();
-
-        string keyScene = "abx";
-
-        /*
-         * Create the screen composer
-         */
-        {
-            M<ScreenComposer>().AddLayer(
-                "rootscene_3d", 0,
-                I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d"));
-            
-        }
 
         /*
          * Now, that everything has been created, add the scene.
@@ -287,9 +339,12 @@ public class Scene : AModule, IScene, IInputPart
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
+        I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.setAmbientLight", _onSetAmbientLight);
         
         _engine.AddModule(this);
         ActivateMyModule<modules.map.Module>();
+
+        _create3dEntites();
     }
 
 }

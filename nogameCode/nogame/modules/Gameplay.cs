@@ -286,8 +286,8 @@ public class Gameplay : AModule, IInputPart
         _engine.AddModule(this);
 
         {
-            Entity eCamera = _engine.GetCameraEntity();
-            Entity ePlayer = _engine.GetPlayerEntity();
+            _engine.TryGetCameraEntity(out var eCamera);
+            _engine.TryGetPlayerEntity(out var ePlayer);
 
             lock (_lo)
             {

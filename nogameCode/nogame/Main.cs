@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using builtin.tools;
 using engine;
 
 namespace nogame;
@@ -15,8 +14,37 @@ public class Main : AModule
     {
         new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<builtin.controllers.InputMapper>(),
-        new SharedModule<builtin.tools.CameraWatcher>()
+        new SharedModule<builtin.tools.CameraWatcher>(),
+        new SharedModule<builtin.modules.ScreenComposer>(),
     };
+
+
+    private void _setupScreenComposition()
+    {
+        uint fbWidth, fbHeight;
+        {
+            var split = engine.GlobalSettings.Get("nogame.framebuffer.resolution").Split("x");
+            fbWidth = uint.Parse(split[0]);
+            fbHeight = uint.Parse(split[1]);
+        }
+
+        I.Get<ObjectRegistry<engine.joyce.Renderbuffer>>().RegisterFactory(
+            "rootscene_3d", 
+            name => new engine.joyce.Renderbuffer(name,
+                fbWidth, fbHeight
+                //480,270
+            ));
+        
+        /*
+         * Create the 3d layer for the main game.
+         */
+        {
+            M<builtin.modules.ScreenComposer>().AddLayer(
+                "rootscene_3d", 0,
+                I.Get<ObjectRegistry<engine.joyce.Renderbuffer>>().Get("rootscene_3d"));
+            
+        }
+    }
 
     public override void ModuleDeactivate()
     {
@@ -34,5 +62,10 @@ public class Main : AModule
         I.Get<Boom.ISoundAPI>().SetupDone();
         
         I.Get<engine.gongzuo.API>().AddDefaultBinding("nogame", new LuaBindings());
+        
+        _setupScreenComposition();
+
+        I.Get<SceneSequencer>().Load();
+        I.Get<SceneSequencer>().Run();
     }
 }

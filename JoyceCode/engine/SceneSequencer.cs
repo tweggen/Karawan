@@ -12,6 +12,9 @@ public class SceneSequencer : IDisposable
 {
     private readonly object _lo = new();
     private readonly Engine _engine;
+
+    private bool _isLoading = false;
+    private bool _isRunning = false;
     
     private IScene _sceneNewMain = null;
     private string _nameNewMainScene = "";
@@ -22,11 +25,13 @@ public class SceneSequencer : IDisposable
     private readonly SortedDictionary<string, Func<IScene>> _dictSceneFactories = new();
     private readonly SortedDictionary<float, IScene> _dictScenes = new();
 
+    
     public IScene MainScene
     {
         get { lock(_lo) { return _mainScene;} }
     }
 
+    
     public IList<string> GetAvailableScenes()
     {
         lock (_lo)
@@ -94,9 +99,26 @@ public class SceneSequencer : IDisposable
     }
 
 
-    private void OnOnLogicalFrame(object sender, float dt)
+    private void _onLogicalFrame(object sender, float dt)
     {
+        lock (_lo)
+        {
+            if (!_isLoading)
+            {
+                return;
+            }
+        }
+
         _loadNewMainScene();
+
+        lock (_lo)
+        {
+            if (!_isRunning)
+            {
+                return;
+            }
+        }
+
         _callAllSceneLogicalFrames(dt);
     }
     
@@ -229,18 +251,39 @@ public class SceneSequencer : IDisposable
             Warning($"No scenes found to add or error in declaration.");
         }
     }
-    
 
+
+    /**
+     * Start the scene sequencer's execution.
+     */
+    public void Load()
+    {
+        lock (_lo)
+        {
+            _isLoading = true;
+        }
+    }
+
+
+    public void Run()
+    {
+        lock (_lo)
+        {
+            _isLoading = true;
+            _isRunning = true;
+        }
+    }
+    
 
     public void Dispose()
     {
-        _engine.OnLogicalFrame -= OnOnLogicalFrame;
+        _engine.OnLogicalFrame -= _onLogicalFrame;
     }
     
     
     public SceneSequencer(Engine engine)
     {
         _engine = engine;
-        _engine.OnLogicalFrame += OnOnLogicalFrame;
+        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

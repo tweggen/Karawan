@@ -15,8 +15,8 @@ public class PlayerViewer : IViewer
      */
     public void GetVisibleFragments(ref IList<FragmentVisibility> lsVisib)
     {
-        Entity ePlayer = _engine.GetPlayerEntity();
-        if (!ePlayer.IsAlive || !ePlayer.Has<engine.physics.components.Body>())
+        Entity ePlayer;
+        if (!_engine.TryGetPlayerEntity(out ePlayer) || !ePlayer.Has<engine.physics.components.Body>())
         {
             return;
         }

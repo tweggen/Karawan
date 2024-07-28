@@ -604,8 +604,15 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         audioThread.Start();
         _engine.OnCameraEntityChanged += _onCameraEntityChanged;
         _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
-        _onCameraEntityChanged(_engine, _engine.GetCameraEntity());
-        _onPlayerEntityChanged(_engine, _engine.GetPlayerEntity());
+        if (_engine.TryGetCameraEntity(out var eCamera))
+        {
+            _onCameraEntityChanged(_engine, eCamera);
+        }
+
+        if (_engine.TryGetPlayerEntity(out var ePlayer))
+        {
+            _onPlayerEntityChanged(_engine, ePlayer);
+        }
     }
 }
 

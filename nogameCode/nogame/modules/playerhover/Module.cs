@@ -580,7 +580,11 @@ public class Module : engine.AModule
 
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
-        _onCameraEntityChanged(this, _engine.GetCameraEntity());
+        if (_engine.TryGetCameraEntity(out var eCam))
+        {
+            _onCameraEntityChanged(this, eCam);
+        }
+
         _engine.OnCameraEntityChanged += _onCameraEntityChanged;
 
         {

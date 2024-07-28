@@ -15,6 +15,7 @@
   },
   "implementations":
   {
+    "builtin.modules.ScreenComposer": null,
     "engine.news.InputEventPipeline": null,
     "engine.DBStorage": null,
     "engine.physics.ShapeFactory": null,

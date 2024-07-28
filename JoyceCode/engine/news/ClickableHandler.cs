@@ -223,8 +223,8 @@ public class ClickableHandler
          * This, however, will consume the input event, so no other actions, like panning or moving,
          * would be performed at all.
          */
-        var eMainCamera = _engine.GetCameraEntity();
-        if (false && eMainCamera.IsAlive)
+        
+        if (false && _engine.TryGetCameraEntity(out var eMainCamera))
         {
             ref var cCamTransform = ref eMainCamera.Get<engine.joyce.components.Transform3ToWorld>();
             ref var cCamera = ref eMainCamera.Get<engine.joyce.components.Camera3>();

@@ -23,21 +23,29 @@ namespace Splash.Silk
         public void LoadUploadTextureEntry(in SkTextureEntry skTextureEntry)
         {
             engine.joyce.Texture jTexture = skTextureEntry.JTexture;
-            if (null == skTextureEntry.SkTexture)
-            {
-                skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
-            }
                 
             if (jTexture.Source != null)
             {
                 string texturePath = jTexture.Source;
-
-                if (texturePath == engine.joyce.Texture.BLACK)
+                if (texturePath.StartsWith("framebuffer:"))
                 {
+                    /*
+                     * Do not fill anything.
+                     */
+                } else if (texturePath == engine.joyce.Texture.BLACK)
+                {
+                    if (null == skTextureEntry.SkTexture)
+                    {
+                        skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
+                    }
                     skTextureEntry.SkTexture.SetFrom(0, _arrBlack, 1, 1);
                 }
                 else
                 {
+                    if (null == skTextureEntry.SkTexture)
+                    {
+                        skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
+                    }
                     skTextureEntry.SkTexture.SetFrom(jTexture.Source, jTexture.HasMipmap);
                 }
             } 
@@ -46,6 +54,10 @@ namespace Splash.Silk
                 IFramebuffer framebuffer = jTexture.Framebuffer;
                 Span<byte> spanBytes;
                 framebuffer.GetMemory(out spanBytes);
+                if (null == skTextureEntry.SkTexture)
+                {
+                    skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
+                }
                 skTextureEntry.SkTexture.SetFrom(
                     framebuffer.Generation,
                     spanBytes, framebuffer.Width, framebuffer.Height);

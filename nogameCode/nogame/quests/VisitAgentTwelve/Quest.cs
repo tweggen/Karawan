@@ -4,6 +4,7 @@ using engine;
 using engine.joyce.components;
 using engine.quest;
 using engine.world.components;
+using static engine.Logger;
 
 namespace nogame.quests.VisitAgentTwelve;
 
@@ -66,34 +67,54 @@ public class Quest : AModule, IQuest
         var withIcon = 
             _engine.GetEcsWorld().GetEntities().With<Transform3ToWorld>().With<MapIcon>().AsEnumerable();
         float mind2 = Single.MaxValue;
-        var v3Player = _engine.GetPlayerEntity().Get<Transform3ToWorld>().Matrix.Translation;
+        
+    
         DefaultEcs.Entity eClosest = default;
-        foreach (var e in withIcon)
+
+        if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
         {
-            ref var cMapIcon = ref e.Get<MapIcon>();
-            if (cMapIcon.Code != MapIcon.IconCode.Drink) continue;
-            var d2 = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation).LengthSquared();
-            if (d2 < mind2)
+            var v3Player = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
+            foreach (var e in withIcon)
             {
-                eClosest = e;
-                mind2 = d2;
+                ref var cMapIcon = ref e.Get<MapIcon>();
+                if (cMapIcon.Code != MapIcon.IconCode.Drink) continue;
+                var d2 = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation).LengthSquared();
+                if (d2 < mind2)
+                {
+                    if (eClosest.IsAlive && eClosest.IsEnabled())
+                    {
+                        eClosest = e;
+                        mind2 = d2;
+                    }
+                }
             }
         }
-        
-        /*
-         * Test code to add a destination.
-         */
-        var v3Marker = eClosest.Get<Transform3ToWorld>().Matrix.Translation;
-        var v3Target = v3Marker with { Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(v3Marker)+engine.world.MetaGen.ClusterNavigationHeight };
-        
-        _questTarget = new engine.quest.ToLocation()
+
+        if (default != eClosest)
         {
-            RelativePosition = v3Target,  
-            SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-            SensitiveRadius = 10f,
-            MapCameraMask = nogame.modules.map.Module.MapCameraMask,
-            OnReachTarget = _onReachTarget
-        };
-        _questTarget.ModuleActivate();
+            /*
+             * Test code to add a destination.
+             */
+            var v3Marker = eClosest.Get<Transform3ToWorld>().Matrix.Translation;
+            var v3Target = v3Marker with
+            {
+                Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(v3Marker) +
+                    engine.world.MetaGen.ClusterNavigationHeight
+            };
+
+            _questTarget = new engine.quest.ToLocation()
+            {
+                RelativePosition = v3Target,
+                SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+                SensitiveRadius = 10f,
+                MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+                OnReachTarget = _onReachTarget
+            };
+            _questTarget.ModuleActivate();
+        }
+        else
+        {
+            Error($"Unable to find any mark close to player entity.");           
+        }
     }
 }

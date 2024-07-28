@@ -41,8 +41,7 @@ public class Scores : engine.AModule
         var gameState = M<AutoSave>().GameState;
 
         int speed = 0;
-        var ePlayer = _engine.GetPlayerEntity();
-        if (ePlayer.IsAlive && ePlayer.IsEnabled() && ePlayer.Has<engine.physics.components.Body>())
+        if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<engine.physics.components.Body>())
         {
             lock (_engine.Simulation)
             {

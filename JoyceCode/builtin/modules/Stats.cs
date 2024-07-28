@@ -114,8 +114,13 @@ public class Stats : engine.AModule
             Event.RENDER_STATS, _onRenderStats);
 
         _engine.AddModule(this);
-        _onPlayerEntityChanged(_engine, _engine.GetPlayerEntity());
+        
+        if (_engine.TryGetPlayerEntity(out var ePlayer))
+        {
+            _onPlayerEntityChanged(_engine, ePlayer);
+        }
         _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
+        
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

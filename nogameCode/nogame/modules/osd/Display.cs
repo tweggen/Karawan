@@ -152,15 +152,13 @@ public class Display : engine.AModule
         var dtTotal = _dtTotal;
         _dtTotal = 0f;
         _frameCounter = 0;
-        var renderOSDSystem = M<RenderOSDSystem>();
-        try
+        
+        var renderOsdSystem = M<RenderOSDSystem>();
+        if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
         {
-            renderOSDSystem.ReferencePosition = _engine.GetPlayerEntity().Get<Transform3ToWorld>().Matrix.Translation;
+            renderOsdSystem.ReferencePosition = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
         }
-        catch (Exception e)
-        {
-        }
-        renderOSDSystem.Update(dtTotal);
+        renderOsdSystem.Update(dtTotal);
     }
 
     

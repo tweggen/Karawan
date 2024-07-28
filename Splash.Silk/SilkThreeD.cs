@@ -494,6 +494,7 @@ public class SilkThreeD : IThreeD
     public void FillMaterialEntry(in AMaterialEntry aMaterialEntry)
     {
         SkMaterialEntry skMaterialEntry = (SkMaterialEntry) aMaterialEntry;
+        bool haveUploadSuccess = true;
         
         engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
 
@@ -566,7 +567,15 @@ public class SilkThreeD : IThreeD
         if (jMaterial.Texture != null && jMaterial.Texture.IsValid())
         {
             ATextureEntry? aTextureEntry = _textureManager.FindATexture(jMaterial.Texture);
-            skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
+            if (null != aTextureEntry)
+            {
+                skMaterialEntry.SkDiffuseTexture = ((SkTextureEntry)aTextureEntry);
+            }
+            else
+            {
+                Warning($"Unable to uploade texture {jMaterial.Texture.Key}");
+                haveUploadSuccess = false;
+            }
         }
         else
         {
@@ -576,7 +585,15 @@ public class SilkThreeD : IThreeD
         if (jMaterial.EmissiveTexture != null && jMaterial.EmissiveTexture.IsValid())
         {
             ATextureEntry? aEmissiveTextureEntry = _textureManager.FindATexture(jMaterial.EmissiveTexture);
-            skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
+            if (null != aEmissiveTextureEntry)
+            {
+                skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
+            }
+            else
+            {
+                Warning($"Unable to uploade texture {jMaterial.EmissiveTexture.Key}");
+                haveUploadSuccess = false;
+            }
         }
         else
         {
@@ -584,8 +601,10 @@ public class SilkThreeD : IThreeD
             skMaterialEntry.SkEmissiveTexture = ((SkTextureEntry)aEmissiveTextureEntry);
         }
 
-        skMaterialEntry.SetUploaded();
-
+        if (haveUploadSuccess)
+        {
+            skMaterialEntry.SetUploaded();
+        }
     }
 
 

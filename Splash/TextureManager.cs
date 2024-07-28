@@ -23,7 +23,7 @@ namespace Splash
         }
         
         
-        public ATextureEntry FindATexture(in engine.joyce.Texture jTexture)        
+        public ATextureEntry? FindATexture(in engine.joyce.Texture jTexture)        
         {
             ATextureEntry aTextureEntry;
             bool needFillEntry = false;
@@ -38,6 +38,7 @@ namespace Splash
                     }
                 } else
                 {
+                    Trace($"Texture {textureKey} not loaded yet.");
                     aTextureEntry = _threeD.CreateTextureEntry(jTexture);
                     _dictTextures.Add(textureKey, aTextureEntry);
                     needFillEntry = true;
@@ -48,9 +49,20 @@ namespace Splash
             if (needFillEntry)
             {
                 _threeD.UploadTextureEntry(aTextureEntry);
+                if (!aTextureEntry.IsUploaded())
+                {
+                    Trace($"Texture {textureKey} could not be loaded, removing from dict.");
+                    lock (_lock)
+                    {
+                        _dictTextures.Remove(textureKey);
+                    }
+
+                    return null;
+                }
             }
             return aTextureEntry;
         }
+        
         
         public TextureManager()
         {

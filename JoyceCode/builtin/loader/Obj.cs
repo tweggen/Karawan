@@ -31,6 +31,8 @@ public class Obj
     readonly private object _lo = new();
     readonly private ObjLoaderFactory _objLoaderFactory = new();
 
+    static private uint Vec3ToUint(in ObjLoader.Loader.Data.Vec3 v) => engine.Color.Vector3ToUint(new(v.X, v.Y, v.Z));
+
     private engine.Engine _engine = I.Get<engine.Engine>();
     
     private static ulong _toHash(int vertexIndex, int textureIndex, int normalIndex)
@@ -86,7 +88,6 @@ public class Obj
         {
             primarycolor = col;
         }
-        Color syscol = System.Drawing.ColorTranslator.FromHtml(primarycolor);
 
         foreach (var loadedMaterial in loadedObject.Materials)
         {
@@ -101,11 +102,8 @@ public class Obj
                 /*
                  * Self-lighting engine.
                  */
-                jMaterial.EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(
-                    ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
-                    | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
-                    | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
-                    | 0xff000000);
+                jMaterial.EmissiveTexture = I.Get<TextureCatalogue>()
+                    .FindColorTexture(Vec3ToUint(loadedMaterial.DiffuseColor));
                 jMaterial.Name = "thrust";
             }
             else if (_isStandardLightMaterialName(loadedMaterial.Name))
@@ -113,11 +111,8 @@ public class Obj
                 /*
                  * Self-lighting engine.
                  */
-                jMaterial.EmissiveTexture = I.Get<TextureCatalogue>().FindColorTexture(
-                    ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
-                    | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
-                    | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
-                    | 0xff000000);
+                jMaterial.EmissiveTexture = I.Get<TextureCatalogue>()
+                    .FindColorTexture(Vec3ToUint(loadedMaterial.DiffuseColor));
                 jMaterial.Name = "standardlight";
             }
             else if (primarycolor.Length != 0 && _isPrimaryColorMaterialName(loadedMaterial.Name))
@@ -125,12 +120,8 @@ public class Obj
                 /*
                  * Self-lighting engine.
                  */
-                jMaterial.Texture = I.Get<TextureCatalogue>().FindColorTexture(
-                    ((uint)syscol.B)
-                    | (((uint)syscol.G) << 8)
-                    | (((uint)syscol.R) << 16)
-                    | 0xff000000
-                );
+                jMaterial.Texture = I.Get<TextureCatalogue>()
+                    .FindColorTexture(engine.Color.StringToUInt(primarycolor));
                 jMaterial.Name = "primarycolor";
             }
             else
@@ -138,11 +129,8 @@ public class Obj
                 /*
                  * Standard case
                  */
-                jMaterial.Texture = I.Get<TextureCatalogue>().FindColorTexture(
-                    ((uint)(loadedMaterial.DiffuseColor.Z * 255f))
-                    | ((uint)(loadedMaterial.DiffuseColor.Y * 255f) << 8)
-                    | ((uint)(loadedMaterial.DiffuseColor.X * 255f) << 16)
-                    | 0xff000000);
+                jMaterial.Texture = I.Get<TextureCatalogue>()
+                    .FindColorTexture(Vec3ToUint(loadedMaterial.DiffuseColor));
                 jMaterial.Name = loadedMaterial.Name;
             }
 
