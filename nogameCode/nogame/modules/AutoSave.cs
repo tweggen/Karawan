@@ -101,11 +101,11 @@ public class AutoSave : engine.AModule
 
     private void _performApiCall(HttpRequestMessage httpRequestMessage, string webToken, Action<HttpResponseMessage> onResponse)
     {
-        if (httpRequestMessage.Content.Headers.Contains("x-nassau-token"))
+        if (httpRequestMessage.Headers.Contains("x-nassau-token"))
         {
-            httpRequestMessage.Content.Headers.Remove("x-nassau-token");
+            httpRequestMessage.Headers.Remove("x-nassau-token");
         }
-        httpRequestMessage.Content.Headers.Add("x-nassau-token", webToken);
+        httpRequestMessage.Headers.Add("x-nassau-token", webToken);
            
         I.Get<HttpClient>()
             
@@ -353,18 +353,9 @@ public class AutoSave : engine.AModule
      */
     private void _triggerInitialOnlineLoad(Action<GameState> onInitialLoad)
     {
-        var loadGameObject = new
-        {
-            game = new
-            {
-                title = "silicondesert2",
-            }
-        };
-
         HttpRequestMessage httpRequestMessage = new HttpRequestMessage(
             HttpMethod.Get,
-            $"{GameServer}/api/auth/save_game");
-
+            $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
         _withWebToken(httpRequestMessage, _onLoadGameResponse);
     }
     
