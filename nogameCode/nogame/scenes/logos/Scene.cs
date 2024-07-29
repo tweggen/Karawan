@@ -25,6 +25,7 @@ public class Scene : AModule, IScene
 
     private bool _isCleared = false;
     private bool _shallHideTitle = false;
+    private bool _isStartingGame = false;
   
     private bool _isAnimRunning = false;
     private float _t;
@@ -147,6 +148,12 @@ public class Scene : AModule, IScene
 
     private void _onLoginLocally(Event ev)
     {
+        lock (_lo)
+        {
+            if (_isStartingGame) return;
+            _isStartingGame = true;
+        }
+        
         DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
         I.Get<AutoSave>().SyncOnline = false; 
 
@@ -156,6 +163,12 @@ public class Scene : AModule, IScene
 
     private void _onLoginGlobally(Event ev)
     {
+        lock (_lo)
+        {
+            if (_isStartingGame) return;
+            _isStartingGame = true;
+        }
+
         DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
         I.Get<AutoSave>().SyncOnline = true;
 

@@ -46,6 +46,10 @@ public class Module : AModule
                 }
                 var sinceStart = value - GameStart;
                 _realWorldStart = DateTime.UtcNow - sinceStart;
+                if (_realWorldStart.Year > 2100)
+                {
+                    int a = 1;
+                }
             }
         }
     }

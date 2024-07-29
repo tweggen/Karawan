@@ -274,13 +274,16 @@ public class AutoSave : engine.AModule
         bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
         if (false == haveGameState)
         {
+            Trace($"Creating new gamestate");
             gameState = new GameState();
             M<DBStorage>().SaveGameState(gameState);
         }
         else
         {
+            Trace($"Loading existing gamestate");
             if (!gameState.IsValid())
             {
+                Trace($"... fixing existing gamestate");
                 gameState.Fix();
             }
         }
@@ -316,7 +319,7 @@ public class AutoSave : engine.AModule
             {
                 return;
             }
-            _isAutoSaveActive = true;
+            _isAutoSaveActive = false;
         }
 
         _stopAutoSave();
