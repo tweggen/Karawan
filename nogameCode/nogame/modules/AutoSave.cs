@@ -79,6 +79,18 @@ public class AutoSave : engine.AModule
         public string token { get; set; } = "";
     };
 
+
+    public class SaveGame
+    {
+        public string gamedata;
+        public string storedAt;
+    }
+
+    public class SaveGameGetResult
+    {
+        public SaveGame save;
+    }
+
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -136,6 +148,8 @@ public class AutoSave : engine.AModule
                         {
                             string textResponse = await httpResponseMessage.Content.ReadAsStringAsync();
                             Trace($"Error while saving: {textResponse}");
+                            
+                            onResponse(httpResponseMessage);
                         }
                     }
                 });
@@ -241,7 +255,6 @@ public class AutoSave : engine.AModule
             Content = JsonContent.Create(saveGameObject)
         };
         _withWebToken(httpRequestMessage, _onSaveGameResponse);
-        //_withWebToken($"{GameServer}/api/auth/save_game", httpContent, _onSaveGameResponse);
     }
     
 
@@ -290,14 +303,7 @@ public class AutoSave : engine.AModule
     }
 
 
-
-    private void _triggerInitialOnlineLoad(Action<GameState> onInitialLoad)
-    {
-        
-    }
-    
-
-    private void _triggerInitialOfflineLoad(Action<GameState> onInitialLoad)
+    private void _loadCreateOffline()
     {
         bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
         if (false == haveGameState)
@@ -317,6 +323,55 @@ public class AutoSave : engine.AModule
         }
 
         _gameState = gameState;
+    }
+
+
+    private async void _onLoadGameResponse(HttpResponseMessage httpResponseMessage)
+    {
+        bool haveGameState = false;
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            string strRes = await httpResponseMessage.Content.ReadAsStringAsync();
+            Trace($"Load game response is {strRes}");
+            var res = JsonSerializer.Deserialize<SaveGameGetResult>( 
+                strRes);
+            Trace($"Deser result is {res}");
+        }
+
+        if (!haveGameState)
+        {
+            Trace($"Using fallback to local gamestate");
+            _loadCreateOffline();
+        }
+    }
+    
+    
+    /**
+     * Try to login and load a previous save game.
+     * No previous save game could be found, the offline game
+     * state is loaded or a new one is created.
+     */
+    private void _triggerInitialOnlineLoad(Action<GameState> onInitialLoad)
+    {
+        var loadGameObject = new
+        {
+            game = new
+            {
+                title = "silicondesert2",
+            }
+        };
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{GameServer}/api/auth/save_game");
+
+        _withWebToken(httpRequestMessage, _onLoadGameResponse);
+    }
+    
+
+    private void _triggerInitialOfflineLoad(Action<GameState> onInitialLoad)
+    {
+        _loadCreateOffline();
         _engine.QueueMainThreadAction(() =>
         {
             onInitialLoad(_gameState);
