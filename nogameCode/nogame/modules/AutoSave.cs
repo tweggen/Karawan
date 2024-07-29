@@ -87,14 +87,17 @@ public class AutoSave : engine.AModule
     };
 
 
-    private void _performApiCall(string url, HttpContent content, string webToken, Action<HttpResponseMessage> onResponse)
+    private void _performApiCall(HttpRequestMessage httpRequestMessage, string webToken, Action<HttpResponseMessage> onResponse)
     {
-        if (content.Headers.Contains("x-nassau-token")) content.Headers.Remove("x-nassau-token");
-        content.Headers.Add("x-nassau-token", webToken);
+        if (httpRequestMessage.Content.Headers.Contains("x-nassau-token"))
+        {
+            httpRequestMessage.Content.Headers.Remove("x-nassau-token");
+        }
+        httpRequestMessage.Content.Headers.Add("x-nassau-token", webToken);
            
         I.Get<HttpClient>()
             
-            .PostAsync(url, content)
+            .SendAsync(httpRequestMessage)
             .ContinueWith(
                 async (responseTask) =>
                 {
@@ -105,21 +108,21 @@ public class AutoSave : engine.AModule
                     {
                         if (string.IsNullOrEmpty(knownWebToken))
                         {
-                            Error($"Error while calling {url}: Call is unauthorized, even with a fresh token.");
+                            Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, even with a fresh token.");
                         }
                         else
                         {
                             M<nogame.config.Module>().GameConfig.WebToken = "";
                             M<nogame.config.Module>().Save();
-                            Error($"Error while calling {url}: Call is unauthorized, using an existing token. Fetching new token.");
-                            _withWebToken(url, content, onResponse);
+                            Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, using an existing token. Fetching new token.");
+                            _withWebToken(httpRequestMessage, onResponse);
                         }
                     }
                     else
                     {
                         if (httpResponseMessage.IsSuccessStatusCode)
                         {
-                            Trace($"Done calling {url}");
+                            Trace($"Done calling {httpRequestMessage.RequestUri}");
                             if (knownWebToken != webToken)
                             {
                                 Trace($"Saving web token.");
@@ -139,7 +142,10 @@ public class AutoSave : engine.AModule
     }
     
 
-    private void _withWebToken(string url, HttpContent content, Action<HttpResponseMessage> onResponse)
+    private void _withWebToken(
+        HttpRequestMessage httpRequestMessage,
+        Action<HttpResponseMessage> onResponse
+    )
     {
         string webToken = M<nogame.config.Module>().GameConfig.WebToken;
 
@@ -174,11 +180,11 @@ public class AutoSave : engine.AModule
                                 Trace($"GetToken response is {webToken}");
                                 try
                                 {
-                                    _performApiCall(url, content, webToken, onResponse);
+                                    _performApiCall(httpRequestMessage, webToken, onResponse);
                                 }
                                 catch (UnauthorizedAccessException ex)
                                 {
-                                    Error($"Action {url} appears to be unauthorized, even with a fresh token.");
+                                    Error($"Action {httpRequestMessage.RequestUri} appears to be unauthorized, even with a fresh token.");
                                 }
                             }
                             else
@@ -190,7 +196,7 @@ public class AutoSave : engine.AModule
         }
         else
         {
-            _performApiCall(url, content, webToken, onResponse);
+            _performApiCall(httpRequestMessage, webToken, onResponse);
         }
     }
 
@@ -199,6 +205,21 @@ public class AutoSave : engine.AModule
     {
         string textResponse = await response.Content.ReadAsStringAsync();
         Trace($"Save game text result {textResponse}.");
+    }
+
+
+    private void _withWebToken(
+        string url, 
+        HttpContent content, 
+        Action<HttpResponseMessage> onResponse)
+    {
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(
+            HttpMethod.Post,
+            url)
+        {
+            Content = content
+        };
+        _withWebToken(httpRequestMessage, onResponse);
     }
     
 
@@ -212,8 +233,15 @@ public class AutoSave : engine.AModule
             },
             gamedata = JsonSerializer.Serialize(gs)
         };
-        var httpContent = JsonContent.Create(saveGameObject);
-        _withWebToken($"{GameServer}/api/auth/save_game", httpContent, _onSaveGameResponse);
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"{GameServer}/api/auth/save_game")
+        {
+            Content = JsonContent.Create(saveGameObject)
+        };
+        _withWebToken(httpRequestMessage, _onSaveGameResponse);
+        //_withWebToken($"{GameServer}/api/auth/save_game", httpContent, _onSaveGameResponse);
     }
     
 
