@@ -47,8 +47,9 @@ public class AutoSave : engine.AModule
     }
 
 
-    public string GameServer { get; set; } = "https://silicondesert.io";
-    // public string GameServer { get; set; } = "http://localhost:4100";
+    // public string GameServer { get; set; } = "https://silicondesert.io";
+    public string GameServer { get; set; } = "http://localhost:4100";
+    public int SaveInterval { get; set; } = 10;
 
 
     private GameState _gameState = null;
@@ -88,6 +89,7 @@ public class AutoSave : engine.AModule
 
     private void _performApiCall(string url, HttpContent content, string webToken, Action<HttpResponseMessage> onResponse)
     {
+        if (content.Headers.Contains("x-nassau-token")) content.Headers.Remove("x-nassau-token");
         content.Headers.Add("x-nassau-token", webToken);
            
         I.Get<HttpClient>()
@@ -202,8 +204,16 @@ public class AutoSave : engine.AModule
 
     private void _triggerCloudSave(GameState gs)
     {
-        var httpContent = JsonContent.Create(gs);
-        _withWebToken($"{GameServer}/api/auth/random", httpContent, _onSaveGameResponse);
+        var saveGameObject = new
+        {
+            game = new
+            {
+                title = "silicondesert2",
+            },
+            gamedata = JsonSerializer.Serialize(gs)
+        };
+        var httpContent = JsonContent.Create(saveGameObject);
+        _withWebToken($"{GameServer}/api/auth/save_game", httpContent, _onSaveGameResponse);
     }
     
 
@@ -230,7 +240,7 @@ public class AutoSave : engine.AModule
     
     private void _startAutoSave()
     {
-        _saveTimer = new System.Timers.Timer(60000);
+        _saveTimer = new System.Timers.Timer(SaveInterval*1000);
         // Hook up the Elapsed event for the timer. 
         _saveTimer.Elapsed += _onSaveTimer;
         _saveTimer.AutoReset = true;
