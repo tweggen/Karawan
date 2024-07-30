@@ -82,13 +82,13 @@ public class AutoSave : engine.AModule
 
     public class SaveGame
     {
-        public string gamedata;
-        public string storedAt;
+        public string gamedata { get; set; }
+        public string storedAt { get; set; }
     }
 
     public class SaveGameGetResult
     {
-        public SaveGame save;
+        public SaveGame save { get; set; }
     }
 
     
@@ -326,16 +326,26 @@ public class AutoSave : engine.AModule
     }
 
 
-    private async void _onLoadGameResponse(HttpResponseMessage httpResponseMessage)
+    private async void _onLoadGameResponse(
+        HttpResponseMessage httpResponseMessage,
+        Action<GameState> onInitialLoad)
     {
         bool haveGameState = false;
         if (httpResponseMessage.IsSuccessStatusCode)
         {
-            string strRes = await httpResponseMessage.Content.ReadAsStringAsync();
-            Trace($"Load game response is {strRes}");
-            var res = JsonSerializer.Deserialize<SaveGameGetResult>( 
-                strRes);
-            Trace($"Deser result is {res}");
+            string strSave = await httpResponseMessage.Content.ReadAsStringAsync();
+            Trace($"Load game response is {strSave}");
+            var save = JsonSerializer.Deserialize<SaveGameGetResult>(strSave);
+            var gs = JsonSerializer.Deserialize<GameState>(save.save.gamedata);
+            if (null != gs)
+            {
+                if (!gs.IsValid())
+                {
+                    gs.Fix();
+                }
+
+                _gameState = gs;
+            }
         }
 
         if (!haveGameState)
@@ -343,6 +353,9 @@ public class AutoSave : engine.AModule
             Trace($"Using fallback to local gamestate");
             _loadCreateOffline();
         }
+        
+        _startAutoSave();
+        onInitialLoad(_gameState);
     }
     
     
@@ -356,7 +369,7 @@ public class AutoSave : engine.AModule
         HttpRequestMessage httpRequestMessage = new HttpRequestMessage(
             HttpMethod.Get,
             $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
-        _withWebToken(httpRequestMessage, _onLoadGameResponse);
+        _withWebToken(httpRequestMessage, (response) => _onLoadGameResponse(response, onInitialLoad));
     }
     
 
