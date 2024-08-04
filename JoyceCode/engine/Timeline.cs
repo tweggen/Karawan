@@ -154,6 +154,38 @@ public class Timeline : IDisposable
     }
 
 
+    public void RunIn(TimeSpan offset, Func<bool> action)
+    {
+        DateTime tsTarget;
+        DateTime now = DateTime.Now;
+        lock (_lo)
+        {
+            tsTarget = now + offset;
+            _mapActions[tsTarget] = action;
+        }
+
+        _checkExpiredActions(now);
+    }
+
+
+    public void RunIn(TimeSpan offset, Action action)
+    {
+        DateTime tsTarget;
+        DateTime now = DateTime.Now;
+        lock (_lo)
+        {
+            tsTarget = now + offset;
+            _mapActions[tsTarget] = () =>
+            {
+                action();
+                return true;
+            };
+        }
+
+        _checkExpiredActions(now);
+    }
+
+
     public void Dispose()
     {
         _timer.Enabled = false;

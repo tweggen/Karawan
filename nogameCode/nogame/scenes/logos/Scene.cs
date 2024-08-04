@@ -142,7 +142,11 @@ public class Scene : AModule, IScene
 
     private void _startGame()
     {
-        M<AutoSave>().StartAutoSave(_onAutoSaveSetup);
+        /*
+         * Give us a short delay to render some frames.
+         */
+        I.Get<engine.Timeline>().RunIn(TimeSpan.FromMilliseconds(200),
+            () => M<AutoSave>().StartAutoSave(_onAutoSaveSetup));
     }
 
 
