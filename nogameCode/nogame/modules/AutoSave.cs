@@ -258,6 +258,8 @@ public class AutoSave : engine.AModule
             gamedata = JsonSerializer.Serialize(gs)
         };
 
+        Trace($"Save game data is {saveGameObject.gamedata}");
+
         _withWebToken(() =>
         {
             

@@ -47,12 +47,26 @@ public class DBStorage : engine.AModule
                     (float)value.AsArray[2].AsDouble,
                     (float)value.AsArray[3].AsDouble)
         );
+#if false        
         m.RegisterType<DateTime>(
             value => value.ToString("o", CultureInfo.InvariantCulture),
             bson => DateTime.ParseExact(bson, "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
         m.RegisterType<DateTimeOffset>(
             value => value.ToString("o", CultureInfo.InvariantCulture),
             bson => DateTimeOffset.ParseExact(bson, "o", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
+#else
+        m.RegisterType<DateTime>(
+            value =>
+            {
+                var doc = new BsonDocument();
+                doc["ticks"] = value.Ticks;
+                return doc;
+            },
+            doc =>
+            {
+                return new DateTime(doc["ticks"].AsInt64);
+            });
+#endif
         return m;
     }
     

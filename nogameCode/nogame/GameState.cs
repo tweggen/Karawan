@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using engine.geom;
 using static engine.Logger;
 
 namespace nogame;
@@ -11,8 +12,8 @@ public class GameState
 
     [LiteDB.BsonId]
     public int Id { get; set; } = 1;
-    public Vector3 PlayerPosition { get; set; } = Vector3.Zero;
-    public Quaternion PlayerOrientation { get; set; } = Quaternion.Identity;
+    public SerializableVector3 PlayerPosition { get; set; } = SerializableVector3.Zero;
+    public SerializableQuaternion PlayerOrientation { get; set; } = SerializableQuaternion.Identity;
     public int NumberCubes { get; set; } = 0;
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
@@ -39,7 +40,7 @@ public class GameState
     {
         if (!engine.world.MetaGen.AABB.Contains(PlayerPosition))
         {
-            PlayerPosition = PlayerPos0;
+            PlayerPosition = new(PlayerPos0);
             Error($"Adjusting GameState PlayerPosition from {PlayerPosition} to {PlayerPos0}.");
         }
 

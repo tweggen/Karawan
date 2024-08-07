@@ -359,8 +359,8 @@ internal class WASDPhysics : AModule, IInputPart
 
         {
             var gameState = M<AutoSave>().GameState;
-            gameState.PlayerPosition = vTargetPos;
-            gameState.PlayerOrientation = qFinalTargetOrientation;
+            gameState.PlayerPosition = new(vTargetPos);
+            gameState.PlayerOrientation = new(qFinalTargetOrientation);
         }
 
     }

@@ -92,6 +92,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\Color.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\editor\components\Highlight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\PolyTool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\geom\SerializableQuaternion.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\geom\SerializableVector3.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\API.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\JoyceBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaBindingFrame.cs" />

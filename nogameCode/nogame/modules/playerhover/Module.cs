@@ -489,7 +489,7 @@ public class Module : engine.AModule
             var rotShip = Quaternion.Normalize(gameState.PlayerOrientation);
             if (posShip == Vector3.Zero)
             {
-                posShip = _findStartPosition();
+                posShip = new(_findStartPosition());
             }
 
             _aTransform.SetPosition(_eShip, posShip);
