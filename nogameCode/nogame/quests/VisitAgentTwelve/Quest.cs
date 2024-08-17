@@ -81,7 +81,7 @@ public class Quest : AModule, IQuest
                 var d2 = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation).LengthSquared();
                 if (d2 < mind2)
                 {
-                    if (eClosest.IsAlive && eClosest.IsEnabled())
+                    if (e.IsAlive && e.IsEnabled())
                     {
                         eClosest = e;
                         mind2 = d2;
