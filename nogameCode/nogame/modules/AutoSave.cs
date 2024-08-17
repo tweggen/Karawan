@@ -548,7 +548,7 @@ public class AutoSave : engine.AModule
             new Vector2(786f-64f-32f-48f, 48+48f+48f+YOffset),
             new Vector2(64f+48f, 40f),
             $"",
-            32,
+            12,
             0xff448822,
             0x00000000,
             HAlign.Right

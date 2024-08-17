@@ -38,9 +38,9 @@
           "<developer>": "Toggle developer view"
         },
         "MapButtonToLogical": {
-          "input.key.pressed:E": "input.button.pressed:<interact>",
+          "input.key.pressed:e": "input.button.pressed:<interact>",
           "input.gamepad.button.pressed:A": "input.button.pressed:<interact>",
-          "input.key.released:E": "input.button.released:<interact>",
+          "input.key.released:e": "input.button.released:<interact>",
           "input.gamepad.button.released:A": "input.button.released:<interact>",
           "input.key.pressed:(escape)": "input.button.pressed:<menu>",
           "input.gamepad.button.pressed:Start": "input.button.pressed:<menu>",

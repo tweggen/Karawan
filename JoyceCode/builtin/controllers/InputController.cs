@@ -100,6 +100,9 @@ public class InputController : engine.AModule, engine.IInputPart
                 case "d":
                     _controllerState.AnalogRight = KeyboardAnalogMax;
                     break;
+                case "e":
+                    
+                    break;
                 default:
                     break;
             }

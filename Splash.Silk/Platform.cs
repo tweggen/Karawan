@@ -244,13 +244,14 @@ public class Platform : engine.IPlatform
         string code = _convertKeyCodeFromPlatform(arg2);
         if (!code.IsNullOrEmpty())
         {
-            if (code == "(F11)")
+            switch (code)
             {
-                _toggleFullscreen();
-            }
-            else
-            {
-                _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                case "(F11)":
+                    _toggleFullscreen();
+                    break;
+                default:
+                    _pushTranslate(new engine.news.Event(Event.INPUT_KEY_PRESSED, code));
+                    break;
             }
         }
     }
