@@ -469,7 +469,7 @@ public class InputController : engine.AModule, engine.IInputPart
     
     public float TouchSteerTransferX(float X)
     {
-        return Single.Clamp(Single.Sign(X)*Single.Abs(X) * Single.Abs(X) / 18f, -1f, 1f);
+        return Single.Clamp(Single.Sign(X)*Single.Abs(X) / 9f, -1f, 1f);
     }
     
 

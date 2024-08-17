@@ -148,7 +148,14 @@ public class TextWidgetImplementation : IWidgetImplementation
             string realText = _widget.GetAttr("text", "");
             if (_widget.GetAttr("type", "") == "password")
             {
-                realText = new string('*', realText.Length);
+                if (realText.Length > 1)
+                {
+                    realText = new string('*', realText.Length-1) + realText.Substring(realText.Length-1);
+                }
+                else
+                {
+                    // Leave it.
+                }
             }
             
             cOsdText.Text = realText;

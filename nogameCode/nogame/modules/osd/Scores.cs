@@ -54,7 +54,7 @@ public class Scores : engine.AModule
         {
             ref var cScoreOsdText = ref _eScoreDisplay.Get<engine.draw.components.OSDText>();
             cScoreOsdText.Text = $"{speed}";
-            cScoreOsdText.GaugeValue = (ushort)(4096f * speed / 200f);
+            // cScoreOsdText.GaugeValue = (ushort)(4096f * speed / 200f);
         }
         {
             ref var cPolytopeOsdText = ref _ePolytopeDisplay.Get<engine.draw.components.OSDText>();

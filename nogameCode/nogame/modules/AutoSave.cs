@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Numerics;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Timers;
 using engine;
+using engine.draw;
+using engine.draw.components;
+using engine.news;
 using nogame.config;
 using static engine.Logger;
 
@@ -21,9 +25,15 @@ public class AutoSave : engine.AModule
     private System.Timers.Timer _saveTimer;
 
 
+    public float YOffset { get; set; } = -5.0f;
+
     private bool _syncOnline = false;
     private bool _isAutoSaveActive = false;
 
+
+    private DefaultEcs.Entity _eSaveOnlineDisplay; 
+    
+    
     public bool SyncOnline
     {
         get
@@ -58,6 +68,7 @@ public class AutoSave : engine.AModule
 
 
     private GameState _gameState = null;
+    
 
     public GameState GameState
     {
@@ -91,6 +102,7 @@ public class AutoSave : engine.AModule
         public string storedAt { get; set; }
     }
 
+    
     public class SaveGameGetResult
     {
         public SaveGame save { get; set; }
@@ -103,6 +115,71 @@ public class AutoSave : engine.AModule
         new SharedModule<DBStorage>()
     };
 
+
+    private void _updateOSDText()
+    {
+        string strStatus = "";
+
+        lock (_lo)
+        {
+            if (_isLoggedIn)
+            {
+                strStatus += "logged in";
+            }
+            
+            if (_isSaving)
+            {
+                if (strStatus != "") strStatus += ", ";
+                strStatus += "saving...";
+            }
+        }
+
+        _eSaveOnlineDisplay.Get<OSDText>().Text = strStatus;
+    }
+    
+    
+    private void _onLoggedIn(bool isLoggedIn)
+    {
+        _updateOSDText();
+    }
+
+
+    private bool _isSaving = false;
+
+    private void _setSaving(bool isSaving)
+    {
+        lock (_lo)
+        {
+            if (_isSaving == isSaving)
+            {
+                return;
+            }
+
+            _isSaving = isSaving;
+        }
+
+        _updateOSDText();
+    }
+    
+    
+    private bool _isLoggedIn = false;
+    
+    private void _setLoggedIn(bool isLoggedIn)
+    {
+        lock (_lo)
+        {
+            if (_isLoggedIn == isLoggedIn)
+            {
+                return;
+            }
+            _isLoggedIn = isLoggedIn;
+        }
+        
+        I.Get<EventQueue>().Push(new Event("nogame.module.AutoSave.IsOnline", $"{isLoggedIn}"));
+
+        _onLoggedIn(isLoggedIn);
+    }
+    
 
     private void _performApiCall(Func<HttpRequestMessage> httpRequestMessageFunc, string webToken, Action<HttpResponseMessage> onResponse)
     {
@@ -130,6 +207,7 @@ public class AutoSave : engine.AModule
                         }
                         else
                         {
+                            _setLoggedIn(false);
                             M<nogame.config.Module>().GameConfig.WebToken = "";
                             M<nogame.config.Module>().Save();
                             Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, using an existing token. Fetching new token.");
@@ -141,6 +219,7 @@ public class AutoSave : engine.AModule
                         Trace($"Saving web token.");
                         M<nogame.config.Module>().GameConfig.WebToken = webToken;
                         M<nogame.config.Module>().Save();
+                        _setLoggedIn(true);
          
                         if (httpResponseMessage.IsSuccessStatusCode)
                         {
@@ -220,6 +299,7 @@ public class AutoSave : engine.AModule
                                 } 
                                 else
                                 {
+                                    onResponse(responseMessage);
                                     Trace($"GetToken error.");
                                 }
                             }
@@ -244,6 +324,7 @@ public class AutoSave : engine.AModule
     {
         string textResponse = await response.Content.ReadAsStringAsync();
         Trace($"Save game text result {textResponse}.");
+        _setSaving(false);
     }
 
 
@@ -275,6 +356,7 @@ public class AutoSave : engine.AModule
 
     private void _doSave()
     {
+        _setSaving(true);
         var gs = _gameState;
         
         M<DBStorage>().SaveGameState(gs);
@@ -456,5 +538,21 @@ public class AutoSave : engine.AModule
     {
         base.ModuleActivate();
         _engine.AddModule(this);
+        
+        _eSaveOnlineDisplay = _engine.CreateEntity("SaveOnlineDisplay");
+        // _eSaveOnlineDisplay.Set(new engine.behave.components.Clickable()
+        // {
+        //    ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
+        // });
+        _eSaveOnlineDisplay.Set(new engine.draw.components.OSDText(
+            new Vector2(786f-64f-32f-48f, 48+48f+48f+YOffset),
+            new Vector2(64f+48f, 40f),
+            $"",
+            32,
+            0xff448822,
+            0x00000000,
+            HAlign.Right
+        ));
+
     }
 }
