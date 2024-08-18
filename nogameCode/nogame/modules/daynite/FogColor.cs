@@ -110,6 +110,9 @@ public class FogColor : AModule
 
     private void _onLogicalFrame(object? sender, float dt)
     {
+        /*
+         * Read the current in-game time to set the day-night cycle color. 
+         */
         var gameNow = M<nogame.modules.daynite.Module>().GameNow;
         var now = gameNow.TimeOfDay;
 

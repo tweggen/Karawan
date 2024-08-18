@@ -7,6 +7,11 @@ using static engine.Logger;
 
 namespace nogame.modules.daynite;
 
+
+/**
+ * We are responsible for the day night cycle but also for the
+ * current in-game time.
+ */
 public class Module : AModule
 {
     private DefaultEcs.Entity _eClockDisplay;
@@ -17,12 +22,28 @@ public class Module : AModule
     };
 
 
-    public float RealSecondsPerDay { get; set; } = 30f * 60f;
+    public float RealSecondsPerGameDay { get; set; } = 30f * 60f;
 
-    private DateTime _realWorldStart;
-    public DateTime GameStart { get; set; } = new DateTime(1982, 3, 12, 22, 46, 0);
     
+    /**
+     * We keep the start of the game in real world's time.
+     *
+     * We do know the logical start of the game, which is called GameState.GameT0
+     */
+    private DateTime _realWorldStart;
+    
+    
+    /**
+     * This is the start of the game in gane time. This is a constant we do not modify.
+     */
+    public DateTime GameStart { get; private set; }
+
+
     private DateTime _gameNow;
+    
+    /**
+     * This is the current game time as in-game time.
+     */
     public DateTime GameNow
     {
         get
@@ -38,15 +59,22 @@ public class Module : AModule
         }
         set
         {
-            lock (_lo)
+            lock (_lo) 
             {
                 if (!IsModuleActive())
                 {
                     ErrorThrow<InvalidOperationException>("Unable to read time if module (daynite.Module) is not started.");
                 }
-                var sinceStart = value - GameStart;
-                _realWorldStart = DateTime.UtcNow - sinceStart;
-                if (_realWorldStart.Year > 2100)
+                var sinceStartGameMilliSeconds = (value - GameStart).TotalMilliseconds;
+                
+                if (sinceStartGameMilliSeconds > 365*3600*24)
+                {
+                    int a = 1;
+                }
+
+                var sinceStartRealMilliSeconds = sinceStartGameMilliSeconds * RealSecondsPerGameDay / (24 * 60 * 60);
+                _realWorldStart = DateTime.UtcNow - TimeSpan.FromMilliseconds(sinceStartRealMilliSeconds);
+                if (_realWorldStart.Year > 2024)
                 {
                     int a = 1;
                 }
@@ -58,14 +86,21 @@ public class Module : AModule
     private void _onLogicalFrame(object? sender, float dt)
     {
         int todayGameHours, todayGameMinutes;
-
+        
+        /*
+         * Remember the current in-game time. 
+         */
         M<AutoSave>().GameState.GameNow = GameNow;
 
+        
+        /*
+         * Then advance the current in-game time. 
+         */
         lock (_lo)
         {
             var timeSinceStart = DateTime.UtcNow - _realWorldStart;
             float seconds = (float)timeSinceStart.TotalSeconds;
-            float gameSeconds = (float)seconds / RealSecondsPerDay * 86400f;
+            float gameSeconds = (float)seconds / RealSecondsPerGameDay * 86400f;
             _gameNow = GameStart + TimeSpan.FromSeconds(gameSeconds);
             var tod = _gameNow.TimeOfDay;
             todayGameHours = tod.Hours;
@@ -100,9 +135,24 @@ public class Module : AModule
     {
         base.ModuleActivate();
         _engine.AddModule(this);
+        
+        /*
+         * Initialize the real world game start time with "now", which might or
+         * might not be correct. Anyway, this represents the game starting in this very second.
+         */
         _realWorldStart = DateTime.UtcNow;
         _eClockDisplay = _engine.CreateEntity("OsdClockDisplay");
+        
+        /*
+         * Recall the current game time from the one in the save file.
+         * This will modify _realWorldStart
+         */
         GameNow = M<AutoSave>().GameState.GameNow;
         _engine.OnLogicalFrame += _onLogicalFrame;
+    }
+
+    public Module()
+    {
+        GameStart = GameState.GameT0;
     }
 }

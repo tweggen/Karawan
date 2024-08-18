@@ -2,6 +2,7 @@ using System.Linq;
 using engine;
 using engine.behave.components;
 using engine.quest;
+using Silk.NET.Core.Native;
 using static engine.Logger;
 
 namespace nogame.quests.HelloFishmonger;
@@ -60,27 +61,26 @@ public class Quest : AModule, IQuest
          * Randomly chose a destination car.
          */
         DefaultEcs.Entity eVictim = default;
-        var behaving = 
-            _engine.GetEcsWorld().GetEntities().With<engine.behave.components.Behavior>().AsEnumerable();
-        int nTries = 50;
-        
-        while (nTries-- > 0)
+        var behaving = _engine.GetEcsWorld().GetEntities().With<engine.behave.components.Behavior>().AsEnumerable();
+
+        foreach (var e in behaving)
         {
-            eVictim = behaving.First();
-            if (!eVictim.IsAlive) continue;
-            ref var cBehavior = ref eVictim.Get<Behavior>();
+            if (!e.IsAlive) continue;
+            ref var cBehavior = ref e.Get<Behavior>();
             if (cBehavior.Provider.GetType() != typeof(nogame.characters.car3.Behavior))
             {
                 continue;
             }
 
             cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
+            eVictim = e;
             break;
         }
 
-        if (0 == nTries)
+        if (eVictim == default)
         {
-            Error($"No victim found after a lot of tries.");           
+            Error($"No victim found after a lot of tries.");
+            return;
         }
 
         _questTarget = new engine.quest.TrailVehicle()
