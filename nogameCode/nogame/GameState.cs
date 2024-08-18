@@ -18,7 +18,22 @@ public class GameState
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
 
-    public DateTime GameNow { get; set; } = GameT0;
+    private DateTime _gameNow = GameT0;
+    public DateTime GameNow
+    {
+        get
+        {
+            return _gameNow;
+        }
+        set
+        {
+            if (value.Year > 2100)
+            {
+                int a = 1;
+            }
+            _gameNow = value;
+        }
+    }
     
     public bool IsValid()
     {

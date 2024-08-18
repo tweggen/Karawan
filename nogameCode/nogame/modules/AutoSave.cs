@@ -442,6 +442,7 @@ public class AutoSave : engine.AModule
                 }
 
                 _gameState = gs;
+                haveGameState = true;
             }
         }
 
