@@ -1,8 +1,8 @@
 using System.Linq;
-using System.Numerics;
 using engine;
 using engine.behave.components;
 using engine.quest;
+using static engine.Logger;
 
 namespace nogame.quests.HelloFishmonger;
 
@@ -63,6 +63,7 @@ public class Quest : AModule, IQuest
         var behaving = 
             _engine.GetEcsWorld().GetEntities().With<engine.behave.components.Behavior>().AsEnumerable();
         int nTries = 50;
+        
         while (nTries-- > 0)
         {
             eVictim = behaving.First();
@@ -74,6 +75,12 @@ public class Quest : AModule, IQuest
             }
 
             cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
+            break;
+        }
+
+        if (0 == nTries)
+        {
+            Error($"No victim found after a lot of tries.");           
         }
 
         _questTarget = new engine.quest.TrailVehicle()

@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
+using static engine.Logger;
 
 namespace engine.behave.systems;
 
@@ -55,7 +56,16 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                     {
                         I.Get<engine.joyce.TransformApi>().SetVisible(entity, false);
                     }
-                    continue;
+
+                    if (0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.MissionCritical))
+                    {
+                        /*
+                         * Do not even advance to the point of calling the behaviour. 
+                         */
+                        continue;
+                    }
+
+                    Trace("Wouldn't have moved before.");
                 }
                 else
                 {
