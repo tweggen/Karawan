@@ -2,6 +2,8 @@ namespace builtin.modules.satnav;
 
 public class Route
 {
+    public MapDB MapDB { get; }
+
     private IWaypoint _a;
     private IWaypoint _b;
     
@@ -21,8 +23,20 @@ public class Route
         }
     }
 
-    public Route(IWaypoint a, IWaypoint b)
+
+    public void LoadMap()
     {
+    }
+
+
+    public void FindRoute()
+    {
+    }
+    
+    
+    public Route(MapDB mapDB, IWaypoint a, IWaypoint b)
+    {
+        _mapDB = mapDB;
         _a = a;
         _b = b;
     }

@@ -5,10 +5,18 @@ namespace builtin.modules.satnav;
 
 public class Module : AModule
 {
+    private MapDB _mapDB;
+    
+    /**
+     * Create a route from one waypoint to another.
+     */
     public Route ActivateRoute(IWaypoint wFrom, IWaypoint wTo)
     {
-        Route route = new Route(wFrom, wTo);
+        Route route = new Route(_mapDB, wFrom, wTo);
+        route.LoadMap();
+        route.FindRoute();
     }
+    
     
     public override void ModuleDeactivate()
     {

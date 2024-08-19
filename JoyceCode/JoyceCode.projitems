@@ -62,6 +62,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\EntityWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\FragmentNavMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\MapDB.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Route.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\StaticWaypoint.cs" />
@@ -137,6 +138,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\Manager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\ToSomewhere.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\TrailVehicle.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Ref.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\rom\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\SkiaFontManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\run\LimitedConcurrencyLevelTaskScheduler.cs" />
