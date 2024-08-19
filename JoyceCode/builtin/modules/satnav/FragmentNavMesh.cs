@@ -21,6 +21,9 @@ public class FragmentNavMesh : IDisposable
     private ClusterDesc? _clusterDesc;
 
 
+    /**
+     * Return the entire navmesh for this fragment.
+     */
     public IEnumerable<Triangle3> GetNavMesh()
     {
         return null;

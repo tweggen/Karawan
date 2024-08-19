@@ -44,12 +44,12 @@ public struct FragmentVisibility
     
     
     public static readonly byte Visible3dNow = 1;
-    public static readonly byte Visible3dPredicted = 2;
-    public static readonly byte Visible3dAny = 3;
-    public static readonly byte Visible2dNow = 8;
-    public static readonly byte Visible2dPredicted = 16;
-    public static readonly byte Visible2dAny = 24;
-    public static readonly byte VisibleAny = 27;
+    public static readonly byte Visible3dAny = 1;
+    public static readonly byte Visible2dNow = 2;
+    public static readonly byte Visible2dAny = 2;
+    public static readonly byte VisibleNavMeshNow = 4;
+    public static readonly byte VisibleNavMeshAny = 4;
+    public static readonly byte VisibleAny = 7;
     
     public static IComparer<FragmentVisibility> PosComparer = new _posComparer(); 
     
