@@ -60,6 +60,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapIconManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapRangeEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\EntityWaypoint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\FragmentNavMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\StaticWaypoint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Waypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ScreenComposer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\Stats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
