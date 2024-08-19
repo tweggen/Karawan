@@ -4,7 +4,7 @@ namespace engine;
 
 public class Ref<T> where T : IDisposable
 {
-    private class ObjectReference<T>
+    private class ObjectReference<T> where T : IDisposable
     {
         public T Obj;
         internal object Lock = new();
@@ -21,20 +21,39 @@ public class Ref<T> where T : IDisposable
 
         public bool RemoveReference()
         {
+            bool dispose;
             lock (Lock)
             {
-                return --NReferences == 0;
+                dispose = --NReferences == 0;
             }
+
+            if (dispose)
+            {
+                Obj.Dispose();
+                Obj = default;
+            }
+
+            return dispose;
         }
+        
         
         public ObjectReference(T obj)
         {
             Obj = obj;
-            NReferences = obj;
+            NReferences = 1;
         }
     }
 
     private ObjectReference<T> _ref;
+
+
+    public void Dispose()
+    {
+        if (_ref.RemoveReference())
+        {
+            _ref = null;
+        }
+    }
     
     public Ref(Ref<T> other)
     {
@@ -44,6 +63,6 @@ public class Ref<T> where T : IDisposable
     
     public Ref(T obj)
     {
-        _ref = obj;
+        _ref = new ObjectReference<T>(obj);
     }
 }
