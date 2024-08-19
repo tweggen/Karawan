@@ -5,8 +5,9 @@ namespace builtin.modules.satnav;
 
 public class Module : AModule
 {
-    public Route ActivateRoute(Waypoint wFrom, Waypoint wTo)
+    public Route ActivateRoute(IWaypoint wFrom, IWaypoint wTo)
     {
+        Route route = new Route(wFrom, wTo);
     }
     
     public override void ModuleDeactivate()
