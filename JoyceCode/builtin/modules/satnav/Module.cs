@@ -1,20 +1,21 @@
-using System.Numerics;
 using engine;
 
 namespace builtin.modules.satnav;
 
 public class Module : AModule
 {
-    private MapDB _mapDB;
+    private MapDB _mapDb = new();
+    
     
     /**
      * Create a route from one waypoint to another.
      */
     public Route ActivateRoute(IWaypoint wFrom, IWaypoint wTo)
     {
-        Route route = new Route(_mapDB, wFrom, wTo);
+        Route route = new Route(_mapDb, wFrom, wTo);
         route.LoadMap();
         route.FindRoute();
+        return route;
     }
     
     

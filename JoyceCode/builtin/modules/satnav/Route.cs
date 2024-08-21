@@ -36,7 +36,7 @@ public class Route
     
     public Route(MapDB mapDB, IWaypoint a, IWaypoint b)
     {
-        _mapDB = mapDB;
+        MapDB = mapDB;
         _a = a;
         _b = b;
     }
