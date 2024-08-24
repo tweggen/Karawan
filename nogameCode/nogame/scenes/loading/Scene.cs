@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using engine;
+using engine.draw;
 using engine.joyce;
 
 namespace nogame.scenes.loading;
@@ -9,10 +10,14 @@ public class Scene : AModule, IScene
 {
     private engine.joyce.TransformApi _aTransform;
 
+    public float YOffset { get; set; } = -5.0f;
+
     private DefaultEcs.Entity _eCamera;
     private DefaultEcs.Entity _eSpinner;
     private DefaultEcs.Entity _eLight;
-
+    private DefaultEcs.Entity _eAmbientLight;
+    private DefaultEcs.Entity _eLoadingText;
+    
     private uint LoadingCamMask = 0x00000010; 
     
     private static Lazy<engine.joyce.InstanceDesc> _jMeshSpinner = new(
@@ -44,6 +49,8 @@ public class Scene : AModule, IScene
 
         _engine.AddDoomedEntity(_eCamera);
         _engine.AddDoomedEntity(_eLight);
+        _engine.AddDoomedEntity(_eSpinner);
+        _engine.AddDoomedEntity(_eLoadingText);
         _aTransform = null;
         
         /*
@@ -91,6 +98,9 @@ public class Scene : AModule, IScene
             _aTransform.SetPosition(_eLight, new Vector3(0f, 0f, 10f));
         }
 
+        //_eAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
+        //_eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
+
         /*
          * Create a camera.
          */
@@ -105,11 +115,26 @@ public class Scene : AModule, IScene
              */
             cCamera.FarFrustum = (float)100f;
             cCamera.CameraMask = LoadingCamMask;
+            cCamera.Renderbuffer = I.Get<ObjectRegistry<Renderbuffer>>().Get("rootscene_3d");
             _eCamera.Set(cCamera);
             _aTransform.SetVisible(_eCamera, true);
             _aTransform.SetCameraMask(_eCamera, LoadingCamMask);
             _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
         }
+
+        {
+            _eLoadingText = _engine.CreateEntity("LoadingScene.LoadingText");
+            _eLoadingText.Set(new engine.draw.components.OSDText(
+                new Vector2(786f - 64f - 32f - 48f, 48 + 48f + 48f + 48f + YOffset),
+                new Vector2(64f + 48f, 40f),
+                $"loading...",
+                12,
+                0xff448822,
+                0x00000000,
+                HAlign.Right
+            ));
+        }
+
     }
 
 }

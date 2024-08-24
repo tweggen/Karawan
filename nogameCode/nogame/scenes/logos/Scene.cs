@@ -90,12 +90,18 @@ public class Scene : AModule, IScene
         _shallHideTitle = true;
         return true;
     }
+
+
+    private bool _loadLoadingScene()
+    {
+        I.Get<SceneSequencer>().SetMainScene("loading");
+        return true;
+    }
     
 
     private bool _loadRootScene()
     {
         I.Get<SceneSequencer>().SetMainScene("root");
-        //I.Get<SceneSequencer>().SetMainScene("loading");
         return true;
     }
 
@@ -125,6 +131,8 @@ public class Scene : AModule, IScene
     {
         _engine.QueueMainThreadAction(() =>
         {
+            _loadLoadingScene();
+        
             /*
              * Preload the player position from the current gamestate.
              */
