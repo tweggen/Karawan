@@ -20,9 +20,14 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
     protected override void Update(
         float dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
+        Vector3 vPlayerPos;
         if (!_havePlayerPosition)
         {
-            return;
+            vPlayerPos = Vector3.Zero;
+        }
+        else
+        {
+            vPlayerPos = _vPlayerPos;
         }
         
         Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
@@ -44,7 +49,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
 
             if (hadTransform3)
             {
-                if (Vector3.DistanceSquared(oldTransform.Position, _vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
+                if (Vector3.DistanceSquared(oldTransform.Position, vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
                 {
                     if (0 != (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
                     {

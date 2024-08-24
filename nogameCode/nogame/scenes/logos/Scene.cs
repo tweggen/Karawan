@@ -95,6 +95,7 @@ public class Scene : AModule, IScene
     private bool _loadRootScene()
     {
         I.Get<SceneSequencer>().SetMainScene("root");
+        //I.Get<SceneSequencer>().SetMainScene("loading");
         return true;
     }
 
@@ -307,14 +308,11 @@ public class Scene : AModule, IScene
     public override void ModuleActivate()
     {
         base.ModuleActivate();
-        lock(_lo)
-        {
-            /*
-             * Some local shortcuts
-             */
-            _aTransform = I.Get<engine.joyce.TransformApi>();
 
-        }
+    /*
+         * Some local shortcuts
+         */
+        _aTransform = I.Get<engine.joyce.TransformApi>();
 
         bool shouldPlayTitle = engine.GlobalSettings.Get("nogame.LogosScene.PlayTitleMusic") != "false";
         

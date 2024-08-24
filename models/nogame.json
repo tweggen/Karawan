@@ -151,6 +151,9 @@
       },
       "logos": {
         "className": "nogame.scenes.logos.Scene"
+      },
+      "loading": {
+        "className": "nogame.scenes.loading.Scene"
       }
     },
     "startup": "logos"

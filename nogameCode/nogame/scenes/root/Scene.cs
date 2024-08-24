@@ -30,7 +30,6 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<engine.behave.SpawnModule>(),
         new MyModule<nogame.modules.playerhover.Module>(),
         new MyModule<nogame.modules.Gameplay>(),
-        new MyModule<modules.debugger.Module>("nogame.CreateUI") { ShallActivate = false },
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),
@@ -46,7 +45,6 @@ public class Scene : AModule, IScene, IInputPart
     private bool _isMapShown = false;
 
     private bool _areStatsShown = false;
-    private bool _isUIShown = false;
     private bool _isMenuShown = false;
 
     
@@ -60,30 +58,6 @@ public class Scene : AModule, IScene, IInputPart
 
 
     
-    private void _toggleDebugger()
-    {
-        bool isUIShown;
-        lock (_lo)
-        {
-            isUIShown = _isUIShown;
-            _isUIShown = !isUIShown;
-        }
-
-        if (isUIShown)
-        {
-            _engine.SetViewRectangle(Vector2.Zero, Vector2.Zero );
-            DeactivateMyModule<modules.debugger.Module>();
-            _engine.DisableMouse();
-        }
-        else
-        {
-            _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
-            _engine.EnableMouse();
-            ActivateMyModule<modules.debugger.Module>();
-        }
-    }
-
-
     private void _triggerPauseMenu()
     {
         if (!_engine.HasModule(M<modules.menu.PauseMenuModule>()))
@@ -147,10 +121,6 @@ public class Scene : AModule, IScene, IInputPart
             case Event.INPUT_KEY_PRESSED:
                 switch (ev.Code)
                 {
-                    case "(F12)":
-                        ev.IsHandled = true;
-                        _toggleDebugger();
-                        break;
                     case "(F8)":
                         ev.IsHandled = true;
                         _toggleStats();

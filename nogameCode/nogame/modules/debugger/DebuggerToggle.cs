@@ -1,0 +1,81 @@
+using System.Collections.Generic;
+using System.Numerics;
+using engine;
+using engine.news;
+
+namespace nogame.modules.debugger;
+
+public class DebuggerToggle : AModule, IInputPart
+{
+    public float MY_Z_ORDER { get; set; } = 25f;
+
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new MyModule<modules.debugger.Module>("nogame.CreateUI") { ShallActivate = false },
+        new SharedModule<InputEventPipeline>()
+    };
+
+    
+    private bool _isUIShown = false;
+
+
+    private void _toggleDebugger()
+    {
+        bool isUIShown;
+        lock (_lo)
+        {
+            isUIShown = _isUIShown;
+            _isUIShown = !isUIShown;
+        }
+
+        if (isUIShown)
+        {
+            _engine.SetViewRectangle(Vector2.Zero, Vector2.Zero );
+            DeactivateMyModule<modules.debugger.Module>();
+            _engine.DisableMouse();
+        }
+        else
+        {
+            _engine.SetViewRectangle(new Vector2(500f, 20f), Vector2.Zero );
+            _engine.EnableMouse();
+            ActivateMyModule<modules.debugger.Module>();
+        }
+    }
+    
+    
+    public void InputPartOnInputEvent(Event ev)
+    {
+        switch (ev.Type)
+        {
+            case Event.INPUT_KEY_PRESSED:
+                switch (ev.Code)
+                {
+                    case "(F12)":
+                        ev.IsHandled = true;
+                        _toggleDebugger();
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
+    }
+
+
+    public override void ModuleDeactivate()
+    {
+        _engine.RemoveModule(this);
+        M<InputEventPipeline>().RemoveInputPart(this);
+        base.ModuleDeactivate();
+    }
+    
+    
+    public override void ModuleActivate()
+    {
+        base.ModuleActivate();
+        M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        _engine.AddModule(this);
+
+    }
+
+}

@@ -19,6 +19,7 @@ public class Main : AModule
         new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<nogame.modules.osd.Camera>(),
         new SharedModule<engine.news.ClickModule>(),
+        new MyModule<nogame.modules.debugger.DebuggerToggle>()
     };
 
 
@@ -67,6 +68,7 @@ public class Main : AModule
         I.Get<engine.gongzuo.API>().AddDefaultBinding("nogame", new LuaBindings());
         
         _setupScreenComposition();
+        
 
         I.Get<SceneSequencer>().Load();
         I.Get<SceneSequencer>().Run();

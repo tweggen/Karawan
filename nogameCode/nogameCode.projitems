@@ -46,6 +46,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\AutoSave.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\FogColor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\DebuggerToggle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\demo\Flyalong.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\Gameplay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\map\Module.cs" />
@@ -67,6 +68,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\World.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\HelloFishmonger\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\quests\VisitAgentTwelve\Quest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\loading\LoadingSpinBehavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\loading\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\login\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\logos\Scene.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\scenes\root\KeyHandler.cs" />
