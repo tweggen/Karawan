@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using BepuPhysics;
+using builtin.modules.satnav;
 using engine.joyce;
+using engine.joyce.components;
 using engine.physics;
 using engine.physics.components;
 using static engine.Logger;
@@ -49,6 +52,14 @@ public class ToSomewhere : AModule
 
 
     /**
+     * The route to the target.
+     */
+    private builtin.modules.satnav.Route _routeTarget;
+
+    private IWaypoint _wStart = null;
+    private IWaypoint _wTarget = null;
+    
+    /**
      * The specific visual marker of the mission.
      */
     private DefaultEcs.Entity _eMarker;
@@ -70,6 +81,7 @@ public class ToSomewhere : AModule
             400f
         )
     );
+    
 
     private static Lazy<GoalMarkerSpinBehavior> _goalMarkerSpinBehavior = new(() => new GoalMarkerSpinBehavior());
 
@@ -131,6 +143,56 @@ public class ToSomewhere : AModule
             { Code = engine.world.components.MapIcon.IconCode.Target0 });
     }
 
+    private void _stopRoute()
+    {
+        _routeTarget.Suspend();
+    }
+
+
+    private void _startRoute()
+    {
+        _routeTarget.Activate();
+    }
+    
+
+    private void _destroyRoute()
+    {
+        _routeTarget.Dispose();
+        _routeTarget = null;
+        _wTarget.Dispose();
+        _wTarget = null;
+        _wStart.Dispose();
+        _wStart = null;
+    }
+    
+    
+    private void _createRoute()
+    {
+        if (!_engine.TryGetPlayerEntity(out var ePlayer))
+        {
+            ErrorThrow<InvalidOperationException>("No player defined currently.");
+        }
+
+        /*
+         * Create a route from the player to the target.
+         */
+        _wTarget = new StaticWaypoint()
+        {
+            Location = _eGoal.Get<Transform3ToWorld>().Matrix.Translation
+        };
+
+        _wStart = new EntityWaypoint()
+        {
+            Carrot = ePlayer
+        };
+        
+        /*
+         * Finally, create a route from it.
+         */
+        _routeTarget = M<builtin.modules.satnav.Module>().CreateRoute(
+            _wStart, _wTarget);
+    }
+
 
     /**
      * Create goal is called from the main thread.
@@ -171,16 +233,24 @@ public class ToSomewhere : AModule
             _createTargetInstance(_eGoal);
         }
     }
+    
 
     private void _destroyGoal()
     {
         _destroyTargetInstance();
     }
+    
+    
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<builtin.modules.satnav.Module>()
+    };
 
 
     public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
+        _destroyRoute();
         _destroyGoal();
         base.ModuleDeactivate();
     }
@@ -192,6 +262,10 @@ public class ToSomewhere : AModule
         _engine.QueueMainThreadAction(() =>
         {
             _createGoal();
+        });
+        _engine.QueueMainThreadAction(() =>
+        {
+            _createRoute();
         });
         _engine.AddModule(this);
     }

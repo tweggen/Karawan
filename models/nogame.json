@@ -74,6 +74,7 @@
     "engine.behave.ClusterHeatMap": null,
     "builtin.loader.Obj": null,
     "engine.joyce.ModelCache": null,
+    "builtin.modules.satnav.Module": null
   },
   "mapProviders":
   {

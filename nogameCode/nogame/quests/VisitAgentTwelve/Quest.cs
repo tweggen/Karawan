@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using engine;
 using engine.joyce.components;
@@ -12,7 +13,7 @@ public class Quest : AModule, IQuest
 {
     private bool _isActive = false;
     
-    private engine.quest.ToLocation _questTarget;  
+    private engine.quest.ToLocation _questTarget;
     
     private Description _description = new()
     {
@@ -90,11 +91,15 @@ public class Quest : AModule, IQuest
             }
         }
 
-        if (default != eClosest)
+        if (default == eClosest)
         {
-            /*
-             * Test code to add a destination.
-             */
+            Error($"Unable to find any mark close to player entity.");           
+        }
+
+        /*
+         * Create a destination marker.
+         */
+        {
             var v3Marker = eClosest.Get<Transform3ToWorld>().Matrix.Translation;
             var v3Target = v3Marker with
             {
@@ -111,10 +116,6 @@ public class Quest : AModule, IQuest
                 OnReachTarget = _onReachTarget
             };
             _questTarget.ModuleActivate();
-        }
-        else
-        {
-            Error($"Unable to find any mark close to player entity.");           
         }
     }
 }

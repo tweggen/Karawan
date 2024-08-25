@@ -8,6 +8,7 @@ public class StaticWaypoint : IWaypoint
 {
     public Vector3 Location { get; set; }
     
+    
     public DateTime LastMovedAt { get => DateTime.MinValue; }
     
     
@@ -16,8 +17,14 @@ public class StaticWaypoint : IWaypoint
         return Location;
     }
 
+    
     public bool IsValid()
     {
         return true;
+    }
+
+    
+    public void Dispose()
+    {
     }
 }

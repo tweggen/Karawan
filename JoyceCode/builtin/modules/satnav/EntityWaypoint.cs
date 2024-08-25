@@ -11,10 +11,14 @@ public class EntityWaypoint : IWaypoint
     private Vector3 _v3LastPosition;
     // private DateTime _timestampLastPosition;
     
-    public DefaultEcs.Entity Carrot { 
+    public required DefaultEcs.Entity Carrot { 
         get
         {
             return _eCarrot;
+        }
+        init
+        {
+            _eCarrot = value;
         }
     }
     
@@ -58,5 +62,10 @@ public class EntityWaypoint : IWaypoint
                && _eCarrot.IsAlive 
                && _eCarrot.IsEnabled() 
                && _eCarrot.Has<Transform3ToWorld>();
+    }
+
+
+    public void Dispose()
+    {
     }
 }

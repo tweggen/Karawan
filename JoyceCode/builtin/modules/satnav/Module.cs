@@ -1,4 +1,8 @@
+using System;
 using engine;
+using System.Numerics;
+using engine.world;
+using static engine.Logger;
 
 namespace builtin.modules.satnav;
 
@@ -10,11 +14,22 @@ public class Module : AModule
     /**
      * Create a route from one waypoint to another.
      */
-    public Route ActivateRoute(IWaypoint wFrom, IWaypoint wTo)
+    public Route CreateRoute(IWaypoint wFrom, IWaypoint wTo)
     {
+        /*
+         * Do a short sanity check if we suoport this right now. 
+         */
+
+        Vector3 v3From = wFrom.GetLocation();
+        Vector3 v3To = wTo.GetLocation();
+        ClusterDesc? clusterFrom = ClusterList.Instance().GetClusterAt(v3From); 
+        ClusterDesc? clusterTo = ClusterList.Instance().GetClusterAt(v3To);
+
+        if (null == clusterFrom || null == clusterTo || clusterFrom != clusterTo)
+        {
+            ErrorThrow<ArgumentException>("Route waypoints are not inside the same cluster.");
+        }
         Route route = new Route(_mapDb, wFrom, wTo);
-        route.LoadMap();
-        route.FindRoute();
         return route;
     }
     

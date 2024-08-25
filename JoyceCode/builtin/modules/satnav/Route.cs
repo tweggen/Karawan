@@ -1,6 +1,8 @@
+using System;
+
 namespace builtin.modules.satnav;
 
-public class Route
+public class Route : IDisposable
 {
     public MapDB MapDB { get; }
 
@@ -24,16 +26,22 @@ public class Route
     }
 
 
-    public void LoadMap()
+    public void Suspend()
+    {
+        
+    }
+    
+
+    public void Activate()
     {
     }
 
 
-    public void FindRoute()
+    public void Dispose()
     {
     }
-    
-    
+
+
     public Route(MapDB mapDB, IWaypoint a, IWaypoint b)
     {
         MapDB = mapDB;
