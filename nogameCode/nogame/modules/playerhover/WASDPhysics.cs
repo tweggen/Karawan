@@ -29,7 +29,7 @@ internal class WASDPhysics : AModule, IInputPart
 
     private float _massShip;
 
-    public float LinearThrust { get; set; } = 20f;
+    public float LinearThrust { get; set; } = 15f;
     public float AngularThrust { get; set; } = 40.0f;
 
     public float MaxLinearVelocity { get; set; } = 220f;
