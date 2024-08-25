@@ -670,16 +670,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
     
 
-    private void _apply2d(Fragment worldFragment)
-    {
-        /*
-         * We're cheating and using the same on.
-         */
-        _apply3d(worldFragment);
-    }
-    
-
-    public void _apply3d(Fragment worldFragment)
+    public void _applyAnyVisibility(Fragment worldFragment)
     {
         float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
         float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
@@ -796,14 +787,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         if (_traceStreets) Trace($"cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
 
-        if ((visib.How & FragmentVisibility.Visible2dAny) != 0)
-        {
-            _apply2d(worldFragment);
-        }
-        if ((visib.How & FragmentVisibility.Visible3dAny) != 0)
-        {
-            _apply3d(worldFragment);
-        }
+
+        /*
+         * We just have one code that does it all.
+         */
+        _applyAnyVisibility(worldFragment);
         
     });
 

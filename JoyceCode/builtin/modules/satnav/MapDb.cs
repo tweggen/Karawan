@@ -7,10 +7,16 @@ using SharpNav;
 namespace builtin.modules.satnav;
 
 
-public class MapDb : IDisposable
+public class MapDB : IDisposable
 {
     private ObjectFactory<int, Ref<NavMesh>> _factoryMeshes;
 
+
+    private Ref<NavMesh> _createNavMesh(ClusterDesc cd)
+    {
+        return new();
+    }
+    
 
     public Ref<NavMesh> FindNavMeshForCluster(ClusterDesc cd)
     {
@@ -21,7 +27,7 @@ public class MapDb : IDisposable
             /*
              * Create a navmesh for the given cluster id.
              */
-            return null;
+            return _createNavMesh(cd);
         });
     }
 
@@ -32,7 +38,7 @@ public class MapDb : IDisposable
     }
     
     
-    public MapDb()
+    public MapDB()
     {
         _factoryMeshes = new ();
     }
