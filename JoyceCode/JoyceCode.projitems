@@ -108,6 +108,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TextureCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\LayerCatalogue.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\MakeDisposable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\ModuleFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickableHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\news\ClickModule.cs" />

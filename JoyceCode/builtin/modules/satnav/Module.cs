@@ -29,7 +29,9 @@ public class Module : AModule
         {
             ErrorThrow<ArgumentException>("Route waypoints are not inside the same cluster.");
         }
+        
         Route route = new Route(_mapDb, wFrom, wTo);
+        
         return route;
     }
     

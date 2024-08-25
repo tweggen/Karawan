@@ -5,16 +5,17 @@ using static engine.Logger;
 namespace engine;
 
 
-internal class ObjectEntry<K, T> where T : class?
+internal class ObjectEntry<K, T>
 {
     public object Lock;
     public K Name;
     public Func<K, T>? FactoryFunction;
     public T Instance;
+    public required bool HasInstance;
 }
 
 
-public class ObjectFactory<K, T> where T : class? where K : IComparable
+public class ObjectFactory<K, T> : IDisposable where K : IComparable
 {
     private object _lo = new();
     private SortedDictionary<K, ObjectEntry<K, T> > _mapObjects = new();
@@ -34,7 +35,8 @@ public class ObjectFactory<K, T> where T : class? where K : IComparable
                 Lock = new(),
                 Name = key, //referenceObject.Name,
                 FactoryFunction = null,
-                Instance = referenceObject
+                Instance = referenceObject,
+                HasInstance = true
             };
             _mapObjects[key] = instanceEntry;
             return referenceObject;
@@ -57,7 +59,8 @@ public class ObjectFactory<K, T> where T : class? where K : IComparable
                 Lock = new(),
                 Name = key, //referenceObject.Name,
                 FactoryFunction = null,
-                Instance = referenceObject
+                Instance = referenceObject,
+                HasInstance = true
             };
             _mapObjects[key] = instanceEntry;
             return referenceObject;
@@ -78,7 +81,8 @@ public class ObjectFactory<K, T> where T : class? where K : IComparable
                 Lock = new(),
                 Name = name,
                 FactoryFunction = factory,
-                Instance = null
+                Instance = default,
+                HasInstance = false
             };
 
             _mapObjects[name] = instanceEntry;
@@ -104,7 +108,7 @@ public class ObjectFactory<K, T> where T : class? where K : IComparable
 
         lock (instanceEntry.Lock)
         {
-            if (null != instanceEntry.Instance)
+            if (instanceEntry.HasInstance)
             {
                 return instanceEntry.Instance;
             }
@@ -115,8 +119,25 @@ public class ObjectFactory<K, T> where T : class? where K : IComparable
             }
 
             instanceEntry.Instance = instanceEntry.FactoryFunction(name);
+            instanceEntry.HasInstance = true;
 
             return instanceEntry.Instance;
+        }
+    }
+
+
+    public void Dispose()
+    {
+        if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
+        {
+            foreach (var kvp in _mapObjects)
+            {
+                var oe = kvp.Value;
+                if (oe.HasInstance)
+                {
+                    (oe.Instance as IDisposable).Dispose();
+                }
+            }
         }
     }
 }
