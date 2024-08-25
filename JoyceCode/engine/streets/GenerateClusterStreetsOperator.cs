@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine.joyce;
+using engine.joyce.components;
+using engine.world.components;
 using static engine.Logger;
 
 namespace engine.streets;
@@ -733,14 +735,44 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             return;
         }
 
-        // var mol = new engine.SimpleMolecule( [g] );
-        // TXWTODO: This is too inefficient. We should also use a factory here.
+        var e = worldFragment.Engine;
+        
+        /*
+         * Add the navmesh component: It just consists of a list of meshes, which we already have generated.
+         * However we do not associate it with a particular fragment, so it won't get wiped out by the
+         * fragment unload process. Instead, it becomes tagged with the cluster.
+         *
+         * Note, that this will lock the navmesh in-memory.
+         *
+         * Navmesh building will query this.
+         */
+        e.QueueEntitySetupAction("GenerateClusterStreetsOperator.NavMesh", (entity) =>
+        {
+            entity.Set(new ClusterId
+            {
+                Id = _clusterDesc.Id
+            });
+            entity.Set(new NavMesh
+            {
+                ToWorld = Matrix4x4.CreateTranslation(worldFragment.Position),
+                Meshes = new List<Mesh>() { g }
+            });
+        });
+        
         var matmesh = new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), g);
+        
         /*
          * We use an incredibly large distance due to the map camera.
          */
         engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 100000f);
-        worldFragment.AddStaticInstance(0x00800001, "engine.streets.streets", instanceDesc);
+        
+        /*
+         * Add the entity containing the instanceDesc.
+         */
+        worldFragment.AddStaticInstance(
+            0x00800001, 
+            "engine.streets.streets", 
+            instanceDesc);
     }
 
     

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace engine.joyce.components;
 
@@ -7,5 +8,6 @@ namespace engine.joyce.components;
  */
 public struct NavMesh
 {
+    public Matrix4x4 ToWorld;
     public IEnumerable<Mesh> Meshes;
 }
