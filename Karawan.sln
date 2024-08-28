@@ -44,6 +44,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FbxSharp", "..\FbxSharp\Fbx
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "glTFLoader", "..\glTF-CSharp-Loader\glTFLoader\glTFLoader.csproj", "{F812745B-E883-4512-A937-0A92D6A66D3F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpNav", "..\SharpNav\Source\SharpNav\SharpNav.csproj", "{0E3C6E73-CCE6-4148-B847-36487FFEA225}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -430,6 +432,30 @@ Global
 		{F812745B-E883-4512-A937-0A92D6A66D3F}.ReleaseNoProfiling|x64.Build.0 = Debug|Any CPU
 		{F812745B-E883-4512-A937-0A92D6A66D3F}.ReleaseNoProfiling|x86.ActiveCfg = Debug|Any CPU
 		{F812745B-E883-4512-A937-0A92D6A66D3F}.ReleaseNoProfiling|x86.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|arm64.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|x64.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Debug|x86.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|arm64.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|arm64.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|x64.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|x64.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|x86.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.Release|x86.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|Any CPU.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|arm64.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|arm64.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|x64.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|x64.Build.0 = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|x86.ActiveCfg = Debug|Any CPU
+		{0E3C6E73-CCE6-4148-B847-36487FFEA225}.ReleaseNoProfiling|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
