@@ -2,7 +2,7 @@
   "profiles": {
     "Karawan": {
       "commandName": "Project",
-      "workingDirectory": "$(SoloutionDir)",
+      "workingDirectory": "$(SolutionDir)",
       "hotReloadEnabled": false
     }
   }

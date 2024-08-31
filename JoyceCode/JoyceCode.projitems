@@ -62,7 +62,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\EntityWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\FragmentNavMesh.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\MapDB.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\MapDb.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Route.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\StaticWaypoint.cs" />
