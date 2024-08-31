@@ -1194,6 +1194,21 @@ public class Widget : IDisposable
                             ev.IsHandled = true;
                         }
                         break;
+                    case "(tab)":
+                        if (IsFocussed)
+                        {
+                            wRoot = Root;
+                            if (wRoot != null)
+                            {
+                                var wNewFocus = wRoot.FindOffsetFocussableChild(this, 1);
+                                if (wNewFocus != null)
+                                {
+                                    wRoot.SetFocussedChild(wNewFocus);
+                                    ev.IsHandled = true;
+                                }
+                            }
+                        }
+                        break;
                     default:
                         break;
                 }
