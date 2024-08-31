@@ -61,7 +61,14 @@ public class DesktopMain
         }
         else
         {
-            engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
+            if (Path.Exists("./models/nogame.json"))
+            {
+                engine.GlobalSettings.Set("Engine.ResourcePath", "./nogame/");
+            }
+            else
+            {
+                engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
+            }
         }
         engine.GlobalSettings.Set("Engine.RWPath", "./");
         
@@ -78,6 +85,8 @@ public class DesktopMain
          */
         var iassetDesktop = new Karawan.AssetImplementation();
         engine.casette.Loader cassetteLoader;
+        var cwd = System.IO.Directory.GetCurrentDirectory();
+        Console.WriteLine($"CWD is {cwd}");
         using (var streamJson =
                File.OpenRead(
                    Path.Combine(
