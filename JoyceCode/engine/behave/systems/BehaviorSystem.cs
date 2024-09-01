@@ -69,8 +69,6 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                          */
                         continue;
                     }
-
-                    Trace("Wouldn't have moved before.");
                 }
                 else
                 {
