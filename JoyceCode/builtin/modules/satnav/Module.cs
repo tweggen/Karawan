@@ -1,19 +1,24 @@
 using System;
+using System.Collections.Generic;
 using engine;
 using System.Numerics;
 using engine.world;
+using engine.world.components;
 using static engine.Logger;
 
 namespace builtin.modules.satnav;
 
 public class Module : AModule
 {
-    private MapDB _mapDb = new();
-    
+    public IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new MyModule<MapDB>() {}
+    };
+
     
     /**
-     * Create a route from one waypoint to another.
-     */
+      * Create a route from one waypoint to another.
+      */
     public Route CreateRoute(IWaypoint wFrom, IWaypoint wTo)
     {
         /*
@@ -30,7 +35,7 @@ public class Module : AModule
             ErrorThrow<ArgumentException>("Route waypoints are not inside the same cluster.");
         }
         
-        Route route = new Route(_mapDb, wFrom, wTo);
+        Route route = new Route(M<MapDB>(), wFrom, wTo);
         
         return route;
     }
