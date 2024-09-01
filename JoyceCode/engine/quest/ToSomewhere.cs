@@ -250,6 +250,7 @@ public class ToSomewhere : AModule
     public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
+        _stopRoute();
         _destroyRoute();
         _destroyGoal();
         base.ModuleDeactivate();
@@ -266,6 +267,7 @@ public class ToSomewhere : AModule
         _engine.QueueMainThreadAction(() =>
         {
             _createRoute();
+            _startRoute();
         });
         _engine.AddModule(this);
     }
