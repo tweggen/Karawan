@@ -16,9 +16,10 @@ public class MapDB : AModule
 
     private Ref<NavMesh> _createNavMesh(ClusterDesc cd)
     {
-        #if true
+#if false
+
         return new Ref<NavMesh>();
-        #else
+#else
         List<engine.joyce.Mesh> listMeshes = new();
         var enumMeshes = _engine.GetEcsWorld().GetEntities()
             .With<ClusterId>()
@@ -35,7 +36,8 @@ public class MapDB : AModule
 
         var navMesh = NavMesh.Generate(tris, settings);
         return new Ref<NavMesh>(navMesh);
-        #endif
+        
+#endif
     }
     
 
