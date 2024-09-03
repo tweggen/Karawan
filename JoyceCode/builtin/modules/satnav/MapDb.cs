@@ -40,7 +40,7 @@ public class MapDB : AModule
         var enumMeshes = _engine.GetEcsWorld().GetEntities()
             .With<ClusterId>()
             .With<engine.joyce.components.NavMesh>().AsEnumerable();
-        
+
         foreach (var eNavMesh in enumMeshes)
         {
             listMeshes.AddRange(eNavMesh.Get<engine.joyce.components.NavMesh>().Meshes);
@@ -48,8 +48,10 @@ public class MapDB : AModule
 
         List<IEnumerable<Triangle3>> listTriEnums = new();
 
+        int nTris = 0;
         foreach (var jMesh in listMeshes)
         {
+            nTris += jMesh.Indices.Count / 3;
             listTriEnums.Add(_fromJoyceMesh(jMesh));
         }
 

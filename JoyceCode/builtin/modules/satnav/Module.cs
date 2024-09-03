@@ -10,7 +10,7 @@ namespace builtin.modules.satnav;
 
 public class Module : AModule
 {
-    public IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new MyModule<MapDB>() {}
     };
