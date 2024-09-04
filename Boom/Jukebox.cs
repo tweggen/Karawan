@@ -1,3 +1,4 @@
+using engine;
 using engine.joyce;
 using static engine.Logger;
 
@@ -38,7 +39,9 @@ public class Jukebox
                     _soundCurrentSong = null;
                 }
                 _soundCurrentSong = sound;
-                _soundCurrentSong.Volume = volume;
+                _soundCurrentSong.Volume = volume 
+                    * (float) engine.Props.Get("nogame.musicVolume", 
+                        1.0);
                 _soundCurrentSong.IsLooped = isLooped;
                 _soundCurrentSong.SoundMask = 0x00010000;
 

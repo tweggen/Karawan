@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using engine.joyce;
 using engine.joyce.components;
 using engine.world.components;
+using Silk.NET.Core.Native;
 using static engine.Logger;
 
 namespace engine.streets;
@@ -16,6 +17,12 @@ internal class ClusterStreetsData
     public FragmentVisibility Visibility = new();
 }
 
+
+internal class Artefact
+{
+    public joyce.Mesh g;
+    public joyce.Mesh ng;
+}
 
 /**
  * Create the 3d street geometry.
@@ -49,10 +56,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         in world.Fragment worldFragment,
         float cx, float cy,
         in streets.StreetPoint sp,
-        in joyce.Mesh g
+        Artefact a
     )
     {
-
+        var g = a.g;
+        var ng = a.ng;
         /*
          * We render only street points inside our fragment.
          */
@@ -101,14 +109,20 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         {
             uint i0 = g.GetNextVertexIndex();
+            var ni0 = ng.GetNextVertexIndex();
             g.p(ax + cx, h, ay + cy); g.N(Vector3.UnitY);
+            ng.p(ax + cx, h, ay + cy); ng.N(Vector3.UnitY);
+            
             //g.UV(ax * uFactor + uOffset, ay * vFactor + vOffset);
             g.UV(0.25f,0.5f);
+            ng.UV(0.25f,0.5f);
             foreach (var b in secArray)
             {
                 g.p(b.X + cx, h, b.Y + cy); g.N(Vector3.UnitY);
+                ng.p(b.X + cx, h, b.Y + cy); ng.N(Vector3.UnitY);
                 //g.UV(b.X * uFactor + uOffset, b.Y * vFactor + vOffset);
                 g.UV(0.25f,0.5f);
+                ng.UV(0.25f,0.5f);
             }
 
             /*
@@ -118,6 +132,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             {
                 uint knext = (k + 1) % l;
                 g.Idx(i0 + 0, i0 + 1 + knext, i0 + 1 + k);
+                ng.Idx(ni0 + 0, ni0 + 1 + knext, ni0 + 1 + k);
             }
         }
 
@@ -135,8 +150,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         world.Fragment worldFragment,
         float cx, float cy,
         streets.Stroke stroke,
-        joyce.Mesh g)
+        Artefact a)
     {
+        var g = a.g;
+        var ng = a.ng;
+        
         /*
          * We need the material to know the texture size in use.
          */
@@ -365,6 +383,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note that we start from the beginning in the texture.
                  */
                 uint i0 = g.GetNextVertexIndex();
+                uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dar;
                 cm = cm + vam;
@@ -375,13 +394,20 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y));
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
+                ng.p(alx, h, aly); ng.N(Vector3.UnitY);
                 g.UV(uval.X, uval.Y + vofs);
+                ng.UV(uval.X, uval.Y + vofs);
                 g.p(clx, h, cly); g.N(Vector3.UnitY);
+                ng.p(clx, h, cly); ng.N(Vector3.UnitY);
                 g.UV(uvcl.X, uvcl.Y + vofs);
+                ng.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
+                ng.p(arx, h, ary); ng.N(Vector3.UnitY);
                 g.UV(uvar.X, uvar.Y + vofs);
+                ng.UV(uvar.X, uvar.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-            }
+                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
+v            }
 
         }
         else
@@ -412,6 +438,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
+                uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dal;
                 cm += vam;
@@ -422,12 +449,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y));
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
+                ng.p(arx, h, ary); ng.N(Vector3.UnitY);
                 g.UV(uvar.X, uvar.Y + vofs);
+                ng.UV(uvar.X, uvar.Y + vofs);
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
+                ng.p(alx, h, aly); ng.N(Vector3.UnitY);
                 g.UV(uval.X, uval.Y + vofs);
+                ng.UV(uval.X, uval.Y + vofs);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
+                ng.p(crx, h, cry); ng.N(Vector3.UnitY);
                 g.UV(uvcr.X, uvcr.Y + vofs);
+                ng.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
         }
 
@@ -460,6 +494,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
+                uint ni0 = g.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dbl;
                 cm += vam;
@@ -470,12 +505,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y));
                 g.p(blx, h, bly); g.N(Vector3.UnitY);
+                ng.p(blx, h, bly); ng.N(Vector3.UnitY);
                 g.UV(uvbl.X, uvbl.Y + vofs);
+                ng.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry); g.N(Vector3.UnitY);
+                ng.p(brx, h, bry); ng.N(Vector3.UnitY);
                 g.UV(uvbr.X, uvbr.Y + vofs);
+                ng.UV(uvbr.X, uvbr.Y + vofs);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
+                ng.p(crx, h, cry); ng.N(Vector3.UnitY);
                 g.UV(uvcr.X, uvcr.Y + vofs);
+                ng.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
         }
         else
@@ -506,6 +548,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
+                uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dbr;
                 cm += vam;
@@ -516,12 +559,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
                 float vofs = -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y));
                 g.p(clx, h, cly); g.N(Vector3.UnitY);
+                ng.p(clx, h, cly); ng.N(Vector3.UnitY);
                 g.UV(uvcl.X, uvcl.Y + vofs);
+                ng.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(blx, h, bly); g.N(Vector3.UnitY);
+                ng.p(blx, h, bly); ng.N(Vector3.UnitY);
                 g.UV(uvbl.X, uvbl.Y + vofs);
+                ng.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry); g.N(Vector3.UnitY);
+                ng.p(brx, h, bry); ng.N(Vector3.UnitY);
                 g.UV(uvbr.X, uvbr.Y + vofs);
+                ng.UV(uvbr.X, uvbr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                ng.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
         }
 
@@ -757,6 +807,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 ToWorld = Matrix4x4.CreateTranslation(worldFragment.Position),
                 Meshes = new List<Mesh>() { g }
             });
+            entity.Set(new FragmentId(worldFragment.NumericalId));
         });
         
         var matmesh = new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), g);

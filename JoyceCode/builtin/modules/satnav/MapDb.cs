@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using engine;
 using engine.world;
 using engine.world.components;
 using SharpNav;
 using SharpNav.Geometry;
+using static engine.Logger;
 
 namespace builtin.modules.satnav;
 
@@ -41,8 +43,12 @@ public class MapDB : AModule
             .With<ClusterId>()
             .With<engine.joyce.components.NavMesh>().AsEnumerable();
 
+        int nNavMeshEntities = 0;
         foreach (var eNavMesh in enumMeshes)
         {
+            ++nNavMeshEntities;
+            var fragmentId = eNavMesh.Get<FragmentId>();
+            Trace($"navmesh for fragmentid = {fragmentId}");
             listMeshes.AddRange(eNavMesh.Get<engine.joyce.components.NavMesh>().Meshes);
         }
 
