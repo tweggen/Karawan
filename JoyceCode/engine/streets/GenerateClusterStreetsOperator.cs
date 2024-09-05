@@ -173,7 +173,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         float sw = stroke.StreetWidth();
         float hsw = sw / 2f;
-        Vector2 n = stroke.Normal;
+        Vector2 n = stroke.Normal; 
         Vector2 q = stroke.Unit;
 
         var spA = stroke.A;
@@ -407,7 +407,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 ng.UV(uvar.X, uvar.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
-v            }
+            }
 
         }
         else
@@ -593,6 +593,7 @@ v            }
          */
         {
             uint i0 = g.GetNextVertexIndex();
+            uint ni0 = ng.GetNextVertexIndex();
 
             /*
              * Count the number of rows to add tris.
@@ -624,14 +625,25 @@ v            }
                 vStart += 1f;
             }
 
+            bool isFirstSegment = true;
             while (true)
             {
-
                 /*
-                 * Emit current row.
-                 */
+                * Emit current row.
+                * 
+                * Direction of street ... 
+                */
                 var em = new Vector3(q.X, 0f, q.Y);
+                
+                /*
+                * ... scaled by current offset (i.e. end of start junction)
+                */
                 em *= currD;
+               
+                /*
+                * ... plus street point A in fragment coordinates with
+                * standard height.
+                */
                 em += vam;
                 var elx = em.X - hsw * n.X;
                 var ely = em.Z - hsw * n.Y;
@@ -652,6 +664,18 @@ v            }
                 g.UV(uv0.X, uv0.Y);
                 g.p(erx, h, ery); g.N(Vector3.UnitY);
                 g.UV(uv1.X, uv1.Y);
+                
+                /*
+                * If this is the first segment, also emit navmesh                 
+                */
+                if (isFirstSegment)
+                {
+                    ng.p(elx, h, ely); ng.N(Vector3.UnitY);
+                    ng.UV(uv0.X, uv0.Y);
+                    ng.p(erx, h, ery); ng.N(Vector3.UnitY);
+                    ng.UV(uv1.X, uv1.Y);
+                    isFirstSegment = false;
+                }
 
                 /*
                  * Emit next row (we need it twice in the end)
@@ -700,6 +724,13 @@ v            }
                  */
                 if (nextD == finalD)
                 {
+                    ng.p(flx, h, fly); ng.N(Vector3.UnitY);
+                    ng.UV(uv2.X, uv2.Y);
+                    ng.p(frx, h, fry); ng.N(Vector3.UnitY);
+                    ng.UV(uv3.X, uv3.Y);
+                    
+                    ng.Idx(ni0 + 1, ni0 + 0, ni0 + 2);
+                    ng.Idx(ni0 + 1, ni0 + 2, ni0 + 3);
                     break;
                 }
 
@@ -746,14 +777,19 @@ v            }
         var nGeneratedStreets = 0;
         var nIgnoredStrokes = 0;
 
-        var g = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator");
+        Artefact artefact = new()
+        {
+            g = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-streets"),
+            ng = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-navmesh")
+        };
+        
         /*
          * Create the roads between the junctions.
          */
         foreach (var stroke in strokeStore.GetStrokes())
         {
             var didCreateStreetRun = _generateStreetRun(
-                worldFragment, cx, cz, stroke, g);
+                worldFragment, cx, cz, stroke, artefact);
             if (didCreateStreetRun)
             {
                 nIgnoredStrokes++;
@@ -772,14 +808,14 @@ v            }
             foreach (var streetPoint in strokeStore.GetStreetPoints())
             {
                 _generateJunction(
-                    worldFragment, cx, cz, streetPoint, g
+                    worldFragment, cx, cz, streetPoint, artefact
                 );
             }
         }
 
         if (_traceStreets) Trace($"Created {nGeneratedStreets} strokes, discarded {nIgnoredStrokes}.");
 
-        if (g.IsEmpty())
+        if (artefact.g.IsEmpty())
         {
             if (_traceStreets) Trace($"Nothing to add at all.");
             return;
@@ -796,21 +832,26 @@ v            }
          *
          * Navmesh building will query this.
          */
-        e.QueueEntitySetupAction("GenerateClusterStreetsOperator.NavMesh", (entity) =>
+        if (!artefact.ng.IsEmpty())
         {
-            entity.Set(new ClusterId
+            e.QueueEntitySetupAction("GenerateClusterStreetsOperator.NavMesh", (entity) =>
             {
-                Id = _clusterDesc.Id
+                entity.Set(new ClusterId
+                {
+                    Id = _clusterDesc.Id
+                });
+                entity.Set(new NavMesh
+                {
+                    ToWorld = Matrix4x4.CreateTranslation(worldFragment.Position),
+                    Meshes = new List<Mesh>() { artefact.ng }
+                });
+                entity.Set(new FragmentId(worldFragment.NumericalId));
             });
-            entity.Set(new NavMesh
-            {
-                ToWorld = Matrix4x4.CreateTranslation(worldFragment.Position),
-                Meshes = new List<Mesh>() { g }
-            });
-            entity.Set(new FragmentId(worldFragment.NumericalId));
-        });
-        
-        var matmesh = new MatMesh(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), g);
+        }
+
+        var matmesh = new MatMesh(
+            I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), 
+            artefact.g);
         
         /*
          * We use an incredibly large distance due to the map camera.
