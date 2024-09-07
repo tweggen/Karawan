@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using builtin.modules.satnav.desc;
 using engine.joyce;
 using engine.joyce.components;
 using engine.world.components;
@@ -22,6 +23,7 @@ internal class Artefact
 {
     public joyce.Mesh g;
     public joyce.Mesh ng;
+    public builtin.modules.satnav.desc.NavClusterContent ncc;
 }
 
 /**
@@ -61,6 +63,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
         var g = a.g;
         var ng = a.ng;
+        
         /*
          * We render only street points inside our fragment.
          */
@@ -494,7 +497,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                uint ni0 = g.GetNextVertexIndex();
+                uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dbl;
                 cm += vam;
@@ -571,7 +574,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.UV(uvbr.X, uvbr.Y + vofs);
                 ng.UV(uvbr.X, uvbr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                ng.Idx(i0 + 0, i0 + 1, i0 + 2);
+                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
         }
 
@@ -751,6 +754,41 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         }
         return true;
     }
+
+
+    private void _computeNavClusterContent(ClusterDesc cd, NavClusterContent ncc)
+    {
+
+        SortedDictionary<int, NavJunction> dictJunctions = new();
+        foreach (var streetPoint in cd.StrokeStore().GetStreetPoints())
+        {
+            NavJunction nj = new();
+            dictJunctions[streetPoint.Id] = nj;
+            ncc.Junctions.Add(nj);
+        }
+
+        foreach (var stroke in cd.StrokeStore().GetStrokes())
+        {
+            var njA = dictJunctions[stroke.A.Id];
+            var njB = dictJunctions[stroke.B.Id];
+            
+            NavLane nlForth = new()
+            {
+                Start = njA,
+                End = njB,
+                Length = stroke.Length
+            };
+            ncc.Lanes.Add(nlForth);
+            
+            NavLane nlBack = new()
+            {
+                Start = njB,
+                End = njA,
+                Length = stroke.Length
+            };
+            ncc.Lanes.Add(nlBack);
+        }
+    }
     
 
     public void _applyAnyVisibility(Fragment worldFragment)
@@ -780,8 +818,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Artefact artefact = new()
         {
             g = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-streets"),
-            ng = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-navmesh")
+            ng = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-navmesh"),
+            ncc = new NavClusterContent()
         };
+
+
+        _computeNavClusterContent(_clusterDesc, artefact.ncc);
+        
         
         /*
          * Create the roads between the junctions.
@@ -834,6 +877,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         if (!artefact.ng.IsEmpty())
         {
+            artefact.ng.Move(worldFragment.Position);
             e.QueueEntitySetupAction("GenerateClusterStreetsOperator.NavMesh", (entity) =>
             {
                 entity.Set(new ClusterId

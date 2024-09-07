@@ -28,6 +28,10 @@ public class MapDB : AModule
             var indB = jMesh.Indices[i * 3 + 1];
             var indC = jMesh.Indices[i * 3 + 2];
 
+            if (indA > jMesh.Vertices.Count)
+            {
+                int a = 1;
+            }
             tri.A = jMesh.Vertices[(int)indA];
             tri.B = jMesh.Vertices[(int)indB];
             tri.C = jMesh.Vertices[(int)indC];
@@ -62,10 +66,12 @@ public class MapDB : AModule
         }
 
         IEnumerable<Triangle3> listTris = listTriEnums.SelectMany(tri => tri);
-        
+
         var settings = NavMeshGenerationSettings.Default;
-        settings.AgentHeight = 1.7f;
-        // settings.AgentWidth = 0.6f;
+        settings.CellSize = 5f;
+        settings.CellHeight = 100.0f;
+        settings.AgentRadius = 1.5f ;
+        settings.AgentHeight = 2f;
 
         var navMesh = NavMesh.Generate(listTris, settings);
         return new Ref<NavMesh>(navMesh);
