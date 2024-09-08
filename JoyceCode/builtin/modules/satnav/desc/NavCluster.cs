@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
+using engine.geom;
 
 namespace builtin.modules.satnav.desc;
 
@@ -12,10 +15,14 @@ namespace builtin.modules.satnav.desc;
  */
 public class NavCluster
 {
+    private object _lo = new();
+    
     /**
      * The unique id of this cluster.
      */
     public string Id;
+
+    public AABB AABB;
     
     /**
      * Clusters may be set up dynamically, this one contains the link to
@@ -43,14 +50,55 @@ public class NavCluster
      */
     public List<NavJunction> ProxyJunctions = new();
 
-
-    public Func<Task<NavClusterContent>> CreateClusterContentAsync()
+    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
     {
-        return new(async () =>
+        NavClusterContent ncc = null;
+        
+        lock (_lo)
         {
-            return null;
-        });
+            if (!AABB.Contains(v3Position))
+            {
+                return Task.FromResult(new NavCursor());
+            }
+
+            if (Content == null)
+            {
+                if (null == CreateClusterContentAsync)
+                {
+                    return Task.FromResult(new NavCursor());
+                }
+
+                if (null == _semCreate)
+                {
+                    /*
+                     * We do not have content, so create the content creation
+                     * semaphore.
+                     */
+                    _semCreate = new SemaphoreSlim(1);
+                }
+            }
+            
+            ncc = Content;
+        }
+
+        if (ncc != null)
+        {
+            return ncc.TryCreateCursor(v3Position);
+        }
+        
+        /*
+         * Looks like we did do not have cluster content for this one.
+         * So load it, then try returning the cursor.
+         */
+        
     }
+
+    private SemaphoreSlim _semCreate = null;
+    
+    /**
+     * How to create the NavCluster content if required
+     */
+    public Func<NavCluster, string, Task<NavClusterContent>> CreateClusterContentAsync;
 
     /**
      * The actual content of this cluster, it may be loaded on demand.

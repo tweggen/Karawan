@@ -62,6 +62,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavCluster.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavClusterContent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavCursor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavJunction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavLane.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavMap.cs" />
