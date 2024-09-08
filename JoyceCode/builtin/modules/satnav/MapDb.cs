@@ -94,6 +94,15 @@ public class MapDB : AModule
         });
     }
 
+
+    /**
+     * Assign the top level nav cluster to this map db.
+     */
+    public void SetTopNavCluster()
+    {
+        
+    }
+    
     
     public void Dispose()
     {
