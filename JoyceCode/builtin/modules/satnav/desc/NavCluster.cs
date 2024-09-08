@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using engine.geom;
+using static engine.Logger;
 
 namespace builtin.modules.satnav.desc;
 
@@ -49,6 +51,7 @@ public class NavCluster
      * #cluster content.
      */
     public List<NavJunction> ProxyJunctions = new();
+    
 
     public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
     {
@@ -58,14 +61,14 @@ public class NavCluster
         {
             if (!AABB.Contains(v3Position))
             {
-                return Task.FromResult(new NavCursor());
+                return NavCursor.Nil;
             }
 
             if (Content == null)
             {
                 if (null == CreateClusterContentAsync)
                 {
-                    return Task.FromResult(new NavCursor());
+                    return NavCursor.Nil;
                 }
 
                 if (null == _semCreate)
@@ -77,28 +80,64 @@ public class NavCluster
                     _semCreate = new SemaphoreSlim(1);
                 }
             }
-            
-            ncc = Content;
+            else
+            {
+                ncc = Content;
+            }
         }
 
         if (ncc != null)
         {
-            return ncc.TryCreateCursor(v3Position);
+            return await ncc.TryCreateCursor(v3Position);
         }
-        
+
+        _semCreate.Wait();
+
+        lock (_lo)
+        {
+            ncc = Content;
+        }
+
+        if (null == ncc)
+        {
+            try
+            {
+                ncc = await CreateClusterContentAsync(this);
+
+                lock (_lo)
+                {
+                    Content = ncc;
+                }
+            }
+            catch (Exception e)
+            {
+                Error($"Error creating cluster content for {Id} : {e}");
+            }
+        }
+
         /*
          * Looks like we did do not have cluster content for this one.
          * So load it, then try returning the cursor.
          */
-        
+        _semCreate.Release();
+
+        if (ncc != null)
+        {
+            return await ncc.TryCreateCursor(v3Position);
+        }
+        else
+        {
+            return NavCursor.Nil;
+        }
     }
+    
 
     private SemaphoreSlim _semCreate = null;
     
     /**
      * How to create the NavCluster content if required
      */
-    public Func<NavCluster, string, Task<NavClusterContent>> CreateClusterContentAsync;
+    public Func<NavCluster, Task<NavClusterContent>> CreateClusterContentAsync;
 
     /**
      * The actual content of this cluster, it may be loaded on demand.
