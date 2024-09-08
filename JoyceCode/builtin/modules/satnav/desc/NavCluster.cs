@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace builtin.modules.satnav.desc;
 
@@ -29,8 +31,8 @@ public class NavCluster
     /**
      * Lanes connecting this cluster to another cluster.
      */
-    public SortedDictionary<string, NavJunction> StartingLanes;
-    public SortedDictionary<string, NavJunction> StoppingLanes;
+    public SortedDictionary<string, NavJunction> StartingLanes = new();
+    public SortedDictionary<string, NavJunction> StoppingLanes = new();
 
     /**
      * A list of junctions by which this cluster is connected with
@@ -39,7 +41,16 @@ public class NavCluster
      * The proxy junctions also should be part of the standard navigable
      * #cluster content.
      */
-    public List<NavJunction> ProxyJunctions;
+    public List<NavJunction> ProxyJunctions = new();
+
+
+    public Func<Task<NavClusterContent>> CreateClusterContentAsync()
+    {
+        return new(async () =>
+        {
+            return null;
+        });
+    }
 
     /**
      * The actual content of this cluster, it may be loaded on demand.

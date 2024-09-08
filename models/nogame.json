@@ -21,6 +21,7 @@
     "engine.physics.ShapeFactory": null,
     "engine.LayerCatalogue": null,
     "engine.gongzuo.API": null,
+    "builtin.modules.satnav.desc.NavMap": null,
     "engine.world.MetaGen": null,
     "engine.behave.SpawnModule": null,
     "nogame.config.Module": null,
@@ -96,7 +97,8 @@
     "buildingOperators":
     [
       {
-        "className": "nogame.characters.intercity.GenerateTracksOperator"
+        "className": "nogame.characters.intercity.GenerateTracksOperator",
+        "className": "builtin.modules.satnav.GenerateNavMapOperator"
       } 
     ],
     "populatingOperators":

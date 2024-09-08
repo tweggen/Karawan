@@ -64,8 +64,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavClusterContent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavJunction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavLane.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavMap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\EntityWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\FragmentNavMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\GenerateNavMapOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\MapDb.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Route.cs" />
