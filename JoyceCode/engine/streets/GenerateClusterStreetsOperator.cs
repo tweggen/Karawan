@@ -3,11 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
-using builtin.modules.satnav.desc;
 using engine.joyce;
 using engine.joyce.components;
 using engine.world.components;
-using Silk.NET.Core.Native;
 using static engine.Logger;
 
 namespace engine.streets;
@@ -22,8 +20,7 @@ internal class ClusterStreetsData
 internal class Artefact
 {
     public joyce.Mesh g;
-    public joyce.Mesh ng;
-    public builtin.modules.satnav.desc.NavClusterContent ncc;
+ //   public joyce.Mesh ng;
 }
 
 /**
@@ -62,7 +59,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     )
     {
         var g = a.g;
-        var ng = a.ng;
+        //var ng = a.ng;
         
         /*
          * We render only street points inside our fragment.
@@ -112,20 +109,20 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         {
             uint i0 = g.GetNextVertexIndex();
-            var ni0 = ng.GetNextVertexIndex();
+            //var ni0 = ng.GetNextVertexIndex();
             g.p(ax + cx, h, ay + cy); g.N(Vector3.UnitY);
-            ng.p(ax + cx, h, ay + cy); ng.N(Vector3.UnitY);
+            //ng.p(ax + cx, h, ay + cy); ng.N(Vector3.UnitY);
             
             //g.UV(ax * uFactor + uOffset, ay * vFactor + vOffset);
             g.UV(0.25f,0.5f);
-            ng.UV(0.25f,0.5f);
+            //ng.UV(0.25f,0.5f);
             foreach (var b in secArray)
             {
                 g.p(b.X + cx, h, b.Y + cy); g.N(Vector3.UnitY);
-                ng.p(b.X + cx, h, b.Y + cy); ng.N(Vector3.UnitY);
+                //ng.p(b.X + cx, h, b.Y + cy); ng.N(Vector3.UnitY);
                 //g.UV(b.X * uFactor + uOffset, b.Y * vFactor + vOffset);
                 g.UV(0.25f,0.5f);
-                ng.UV(0.25f,0.5f);
+                //ng.UV(0.25f,0.5f);
             }
 
             /*
@@ -135,7 +132,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             {
                 uint knext = (k + 1) % l;
                 g.Idx(i0 + 0, i0 + 1 + knext, i0 + 1 + k);
-                ng.Idx(ni0 + 0, ni0 + 1 + knext, ni0 + 1 + k);
+                //ng.Idx(ni0 + 0, ni0 + 1 + knext, ni0 + 1 + k);
             }
         }
 
@@ -156,7 +153,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Artefact a)
     {
         var g = a.g;
-        var ng = a.ng;
+        //var ng = a.ng;
         
         /*
          * We need the material to know the texture size in use.
@@ -386,7 +383,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note that we start from the beginning in the texture.
                  */
                 uint i0 = g.GetNextVertexIndex();
-                uint ni0 = ng.GetNextVertexIndex();
+                //uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dar;
                 cm = cm + vam;
@@ -397,19 +394,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y));
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
-                ng.p(alx, h, aly); ng.N(Vector3.UnitY);
+                //ng.p(alx, h, aly); ng.N(Vector3.UnitY);
                 g.UV(uval.X, uval.Y + vofs);
-                ng.UV(uval.X, uval.Y + vofs);
+                //ng.UV(uval.X, uval.Y + vofs);
                 g.p(clx, h, cly); g.N(Vector3.UnitY);
-                ng.p(clx, h, cly); ng.N(Vector3.UnitY);
+                //ng.p(clx, h, cly); ng.N(Vector3.UnitY);
                 g.UV(uvcl.X, uvcl.Y + vofs);
-                ng.UV(uvcl.X, uvcl.Y + vofs);
+                //ng.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
-                ng.p(arx, h, ary); ng.N(Vector3.UnitY);
+                //ng.p(arx, h, ary); ng.N(Vector3.UnitY);
                 g.UV(uvar.X, uvar.Y + vofs);
-                ng.UV(uvar.X, uvar.Y + vofs);
+                //ng.UV(uvar.X, uvar.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
+                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
 
         }
@@ -441,7 +438,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                uint ni0 = ng.GetNextVertexIndex();
+                //uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dal;
                 cm += vam;
@@ -452,19 +449,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y));
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
-                ng.p(arx, h, ary); ng.N(Vector3.UnitY);
+                //ng.p(arx, h, ary); ng.N(Vector3.UnitY);
                 g.UV(uvar.X, uvar.Y + vofs);
-                ng.UV(uvar.X, uvar.Y + vofs);
+                //ng.UV(uvar.X, uvar.Y + vofs);
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
-                ng.p(alx, h, aly); ng.N(Vector3.UnitY);
+                //ng.p(alx, h, aly); ng.N(Vector3.UnitY);
                 g.UV(uval.X, uval.Y + vofs);
-                ng.UV(uval.X, uval.Y + vofs);
+                //ng.UV(uval.X, uval.Y + vofs);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
-                ng.p(crx, h, cry); ng.N(Vector3.UnitY);
+                //ng.p(crx, h, cry); ng.N(Vector3.UnitY);
                 g.UV(uvcr.X, uvcr.Y + vofs);
-                ng.UV(uvcr.X, uvcr.Y + vofs);
+                //ng.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
+                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
         }
 
@@ -497,7 +494,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                uint ni0 = ng.GetNextVertexIndex();
+                //uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dbl;
                 cm += vam;
@@ -508,19 +505,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y));
                 g.p(blx, h, bly); g.N(Vector3.UnitY);
-                ng.p(blx, h, bly); ng.N(Vector3.UnitY);
+                //ng.p(blx, h, bly); ng.N(Vector3.UnitY);
                 g.UV(uvbl.X, uvbl.Y + vofs);
-                ng.UV(uvbl.X, uvbl.Y + vofs);
+                //ng.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry); g.N(Vector3.UnitY);
-                ng.p(brx, h, bry); ng.N(Vector3.UnitY);
+                //ng.p(brx, h, bry); ng.N(Vector3.UnitY);
                 g.UV(uvbr.X, uvbr.Y + vofs);
-                ng.UV(uvbr.X, uvbr.Y + vofs);
+                //ng.UV(uvbr.X, uvbr.Y + vofs);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
-                ng.p(crx, h, cry); ng.N(Vector3.UnitY);
+                //ng.p(crx, h, cry); ng.N(Vector3.UnitY);
                 g.UV(uvcr.X, uvcr.Y + vofs);
-                ng.UV(uvcr.X, uvcr.Y + vofs);
+                //ng.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
+                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
         }
         else
@@ -551,7 +548,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                uint ni0 = ng.GetNextVertexIndex();
+                //uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dbr;
                 cm += vam;
@@ -562,19 +559,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
                 float vofs = -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y));
                 g.p(clx, h, cly); g.N(Vector3.UnitY);
-                ng.p(clx, h, cly); ng.N(Vector3.UnitY);
+                //ng.p(clx, h, cly); ng.N(Vector3.UnitY);
                 g.UV(uvcl.X, uvcl.Y + vofs);
-                ng.UV(uvcl.X, uvcl.Y + vofs);
+                //ng.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(blx, h, bly); g.N(Vector3.UnitY);
-                ng.p(blx, h, bly); ng.N(Vector3.UnitY);
+                //ng.p(blx, h, bly); ng.N(Vector3.UnitY);
                 g.UV(uvbl.X, uvbl.Y + vofs);
-                ng.UV(uvbl.X, uvbl.Y + vofs);
+                //ng.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry); g.N(Vector3.UnitY);
-                ng.p(brx, h, bry); ng.N(Vector3.UnitY);
+                //ng.p(brx, h, bry); ng.N(Vector3.UnitY);
                 g.UV(uvbr.X, uvbr.Y + vofs);
-                ng.UV(uvbr.X, uvbr.Y + vofs);
+                //ng.UV(uvbr.X, uvbr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
+                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
         }
 
@@ -596,7 +593,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         {
             uint i0 = g.GetNextVertexIndex();
-            uint ni0 = ng.GetNextVertexIndex();
+            //uint ni0 = ng.GetNextVertexIndex();
 
             /*
              * Count the number of rows to add tris.
@@ -673,10 +670,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 */
                 if (isFirstSegment)
                 {
-                    ng.p(elx, h, ely); ng.N(Vector3.UnitY);
-                    ng.UV(uv0.X, uv0.Y);
-                    ng.p(erx, h, ery); ng.N(Vector3.UnitY);
-                    ng.UV(uv1.X, uv1.Y);
+                    //ng.p(elx, h, ely); ng.N(Vector3.UnitY);
+                    //ng.UV(uv0.X, uv0.Y);
+                    //ng.p(erx, h, ery); ng.N(Vector3.UnitY);
+                    //ng.UV(uv1.X, uv1.Y);
                     isFirstSegment = false;
                 }
 
@@ -727,13 +724,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  */
                 if (nextD == finalD)
                 {
-                    ng.p(flx, h, fly); ng.N(Vector3.UnitY);
-                    ng.UV(uv2.X, uv2.Y);
-                    ng.p(frx, h, fry); ng.N(Vector3.UnitY);
-                    ng.UV(uv3.X, uv3.Y);
+                    //ng.p(flx, h, fly); ng.N(Vector3.UnitY);
+                    //ng.UV(uv2.X, uv2.Y);
+                    //ng.p(frx, h, fry); ng.N(Vector3.UnitY);
+                    //ng.UV(uv3.X, uv3.Y);
                     
-                    ng.Idx(ni0 + 1, ni0 + 0, ni0 + 2);
-                    ng.Idx(ni0 + 1, ni0 + 2, ni0 + 3);
+                    //ng.Idx(ni0 + 1, ni0 + 0, ni0 + 2);
+                    //ng.Idx(ni0 + 1, ni0 + 2, ni0 + 3);
                     break;
                 }
 
@@ -755,41 +752,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         return true;
     }
 
-
-    private void _computeNavClusterContent(ClusterDesc cd, NavClusterContent ncc)
-    {
-
-        SortedDictionary<int, NavJunction> dictJunctions = new();
-        foreach (var streetPoint in cd.StrokeStore().GetStreetPoints())
-        {
-            NavJunction nj = new();
-            dictJunctions[streetPoint.Id] = nj;
-            ncc.Junctions.Add(nj);
-        }
-
-        foreach (var stroke in cd.StrokeStore().GetStrokes())
-        {
-            var njA = dictJunctions[stroke.A.Id];
-            var njB = dictJunctions[stroke.B.Id];
-            
-            NavLane nlForth = new()
-            {
-                Start = njA,
-                End = njB,
-                Length = stroke.Length
-            };
-            ncc.Lanes.Add(nlForth);
-            
-            NavLane nlBack = new()
-            {
-                Start = njB,
-                End = njA,
-                Length = stroke.Length
-            };
-            ncc.Lanes.Add(nlBack);
-        }
-    }
-    
 
     public void _applyAnyVisibility(Fragment worldFragment)
     {
@@ -818,14 +780,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Artefact artefact = new()
         {
             g = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-streets"),
-            ng = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-navmesh"),
-            ncc = new NavClusterContent()
+            //ng = engine.joyce.Mesh.CreateNormalsListInstance($"{worldFragment.GetId()}-streetsgenerator-navmesh"),
         };
 
 
-        _computeNavClusterContent(_clusterDesc, artefact.ncc);
-        
-        
         /*
          * Create the roads between the junctions.
          */
@@ -866,6 +824,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
         var e = worldFragment.Engine;
         
+        #if false
         /*
          * Add the navmesh component: It just consists of a list of meshes, which we already have generated.
          * However we do not associate it with a particular fragment, so it won't get wiped out by the
@@ -892,6 +851,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 entity.Set(new FragmentId(worldFragment.NumericalId));
             });
         }
+        #endif
 
         var matmesh = new MatMesh(
             I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.street"), 

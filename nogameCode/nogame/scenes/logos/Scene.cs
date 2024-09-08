@@ -8,6 +8,7 @@ using engine;
 using engine.joyce;
 using engine.joyce.components;
 using engine.news;
+using engine.streets;
 using engine.world;
 using nogame.cities;
 using nogame.modules;
@@ -120,6 +121,7 @@ public class Scene : AModule, IScene
         _engine.QueueMainThreadAction(() =>
         {
             I.Get<MetaGen>().ClusterOperators.Add(new GenerateShopsOperator());
+            I.Get<MetaGen>().ClusterOperators.Add(new GenerateClusterNavLanesOperator());
             I.Get<SetupMetaGen>().PrepareMetaGen(engine);
         });
 
