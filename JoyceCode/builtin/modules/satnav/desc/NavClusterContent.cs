@@ -115,7 +115,7 @@ public class NavClusterContent
             return Task.FromResult(NavCursor.Nil);
         }
 
-        if (tmpMatchList.Count() == 0)
+        if (tmpMatchList.Count == 0)
         {
             return Task.FromResult(NavCursor.Nil);
         }

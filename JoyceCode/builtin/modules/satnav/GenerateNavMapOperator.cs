@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using builtin.modules.satnav.desc;
+using DefaultEcs;
 using engine;
 using engine.world;
 using static engine.Logger;
@@ -78,7 +79,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             Cluster = ncTop
         };
         
-        var clusterList = I.Get<ClusterList>().GetClusterList();
+        var clusterList = ClusterList.Instance().GetClusterList();
 
         foreach (var clusterDesc in clusterList)
         {
@@ -109,7 +110,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         NavCluster ncTop = new()
         {
             Id = "Top",
-            CreateClusterContentAsync = _createTopClusterContentAsync
+            CreateClusterContentAsync = _createTopClusterContentAsync,
+            AABB = MetaGen.AABB
         };
         
         I.Get<NavMap>().TopCluster = ncTop;

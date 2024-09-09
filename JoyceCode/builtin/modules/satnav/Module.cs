@@ -22,20 +22,9 @@ public class Module : AModule
       */
     public Route CreateRoute(IWaypoint wFrom, IWaypoint wTo)
     {
-        /*
-         * Do a short sanity check if we suoport this right now. 
-         */
-
         Vector3 v3From = wFrom.GetLocation();
         Vector3 v3To = wTo.GetLocation();
-        ClusterDesc? clusterFrom = ClusterList.Instance().GetClusterAt(v3From); 
-        ClusterDesc? clusterTo = ClusterList.Instance().GetClusterAt(v3To);
 
-        if (null == clusterFrom || null == clusterTo || clusterFrom != clusterTo)
-        {
-            ErrorThrow<ArgumentException>("Route waypoints are not inside the same cluster.");
-        }
-        
         Route route = new Route(I.Get<NavMap>(), wFrom, wTo);
         
         return route;

@@ -16,12 +16,6 @@ public class Route : IDisposable
     private IWaypoint _a;
     private IWaypoint _b;
     
-    private Ref<NavMesh> _refNavMesh;
-
-    private NavMeshQuery _navMeshQuery;
-
-    private ClusterDesc _clusterDesc;
-    
     public IWaypoint A
     {
         get
@@ -52,8 +46,9 @@ public class Route : IDisposable
         
         Vector3 v3EndCenter = _b.GetLocation();
         Vector3 v3EndExtents = new(10f, 10f, 10f);
-        
-        // TXWTODO: Do the navgation query.
+
+        var tStart = NavMap.TopCluster.TryCreateCursor(v3StartCenter);
+        var tEnd = NavMap.TopCluster.TryCreateCursor(v3EndCenter);
     }
 
 
@@ -67,6 +62,5 @@ public class Route : IDisposable
         NavMap = nm;
         _a = a;
         _b = b;
-        _clusterDesc = ClusterList.Instance().GetClusterAt(_a.GetLocation());
     }
 }
