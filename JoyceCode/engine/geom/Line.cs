@@ -123,7 +123,99 @@ namespace engine.geom
              */
             return p;
         }
+        
+        
+        public static float Distance(in Vector3 a, in Vector3 b, in Vector3 p)
+        {
+            Vector3 vAC = p - a;
+            Vector3 vAB = b - a;
 
+            float dotproduct = Vector3.Dot(vAC, vAB);
+
+            /*
+             * If the dot product is negative, the point is "before" point a anyway. However,
+             * it still could be too close to a. We should, however, already have checked the proximity
+             * of each of the points to each other.
+             */
+            if (dotproduct < 0f)
+            {
+                // trace( 'Skipping point ${sp0.pos.x}, ${sp0.pos.y}, because its on the wrong side.');
+
+                // TXWTODO: Compute end of line distance?
+                return 1000000000f;
+            }
+
+            float length2 = vAB.LengthSquared();
+            float length = Single.Sqrt(length2);
+            Vector3 v3Cross = Vector3.Cross(vAB, vAC);
+            float dist = v3Cross.Length() / length;
+
+            /*
+             * Now look, whether this stroke is in range at all.
+             */
+
+            /*
+             * Compute the distance between A and the projection of C on AB.
+             * (pythagoras)
+             */
+            float ac2 = vAC.LengthSquared();
+            float ad2 = ac2 - dist * dist;
+
+            if (ad2 >= length2)
+            {
+                return 1000000000f;
+            }
+
+            return dist;
+        }
+
+        
+        public static float Distance(in Vector2 a, in Vector2 b, in Vector2 p)
+        {
+            float acx = p.X - a.X;
+            float acy = p.Y - a.Y;
+            Vector2 vAB = b - a;
+
+            float dotproduct = vAB.X * acx + vAB.Y * acy;
+
+            /*
+             * If the dot product is negative, the point is "before" point a anyway. However,
+             * it still could be too close to a. We should, however, already have checked the proximity
+             * of each of the points to each other.
+             */
+            if (dotproduct < 0f)
+            {
+                // trace( 'Skipping point ${sp0.pos.x}, ${sp0.pos.y}, because its on the wrong side.');
+
+                // TXWTODO: Compute end of line distance?
+                return 1000000000f;
+            }
+
+            float length2 = vAB.LengthSquared();
+            float length = Single.Sqrt(length2);
+            float crossproduct = vAB.X * acy - vAB.Y * acx;
+            float dist = Single.Abs(crossproduct) / length;
+
+            /*
+             * Now look, whether this stroke is in range at all.
+             */
+
+            /*
+             * Compute the distance between A and the projection of C on AB.
+             * (pythagoras)
+             */
+            float ac2 = acx * acx + acy * acy;
+            float ad2 = ac2 - dist * dist;
+
+            if (ad2 >= length2)
+            {
+                return 1000000000f;
+            }
+
+            return dist;
+        }
+
+        
         public Line(Vector2 a0, Vector2 b0)
         {
             A = a0;

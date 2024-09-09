@@ -13,6 +13,8 @@ namespace builtin.modules.satnav.desc;
 public class NavClusterContent
 {
     private object _lo = new();
+
+    public required NavCluster NavCluster; 
     
     /**
      * The clusters contained inside this cluster.
@@ -34,10 +36,7 @@ public class NavClusterContent
     private float _maxLaneLength;
     private Octree.PointOctree<NavJunction> _octreeJunctions;
     private Octree.BoundsOctree<NavLane> _octreeLanes;
-    // private HashSet<long> _setStrokes = new();
     
-    
-    private List<NavLane> _tmpStrokeList = new();
     
     /*
      * Recreate the internal optzimization data stzructures.
@@ -101,21 +100,50 @@ public class NavClusterContent
         {
             // TXWTODO: Try to find any child matches
         }
-        
+
+        List<NavLane> tmpMatchList = new();
         /*
-         * If we shoulö noo
+         * If we should no
          */
         if (!_octreeLanes.GetCollidingNonAlloc(
-                _tmpStrokeList,
+                tmpMatchList,
                 new Octree.BoundingBox(_aabb.Center, 2f * _maxLaneLength * Vector3.One)))
         {
             /*
              * Nothing found? Short circuit.
              */
-            return null;
+            return Task.FromResult(NavCursor.Nil);
         }
+
+        if (tmpMatchList.Count() == 0)
+        {
+            return Task.FromResult(NavCursor.Nil);
+        }
+
+        float distClosest = Single.MaxValue;
+        NavLane? nlClosest = null;
+        foreach (var nl in tmpMatchList)
+        {
+            float dist = engine.geom.Line.Distance(nl.Start.Position, nl.End.Position, v3Position);
+            if (dist < distClosest)
+            {
+                nlClosest = nl;
+                distClosest = dist;
+            }
+            
+        }
+
+        NavJunction njClosest;
+
+        float dist2Start = (nlClosest.Start.Position - v3Position).LengthSquared();
+        float dist2End = (nlClosest.End.Position - v3Position).LengthSquared();
+
+        njClosest = (dist2Start <= dist2End) ? nlClosest.Start : nlClosest.End; 
         
-        
-        return Task.FromResult(NavCursor.Nil);
+        return Task.FromResult(new NavCursor(NavCluster)
+        {
+            Lane = nlClosest,
+            Junction = njClosest
+        });
     }
 }

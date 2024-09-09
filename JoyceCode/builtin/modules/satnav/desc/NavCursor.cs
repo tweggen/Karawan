@@ -13,4 +13,10 @@ public class NavCursor
     {
         return _isNil;
     }
+
+    public NavCursor(NavCluster nc)
+    {
+        Cluster = nc;
+        _isNil = false;
+    }
 }
