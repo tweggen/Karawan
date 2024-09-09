@@ -121,7 +121,6 @@ public class Scene : AModule, IScene
         _engine.QueueMainThreadAction(() =>
         {
             I.Get<MetaGen>().ClusterOperators.Add(new GenerateShopsOperator());
-            I.Get<MetaGen>().ClusterOperators.Add(new GenerateClusterNavLanesOperator());
             I.Get<SetupMetaGen>().PrepareMetaGen(engine);
         });
 

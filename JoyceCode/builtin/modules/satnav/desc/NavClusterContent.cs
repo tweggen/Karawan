@@ -14,7 +14,7 @@ public class NavClusterContent
 {
     private object _lo = new();
 
-    public required NavCluster NavCluster; 
+    public required NavCluster Cluster; 
     
     /**
      * The clusters contained inside this cluster.
@@ -140,7 +140,7 @@ public class NavClusterContent
 
         njClosest = (dist2Start <= dist2End) ? nlClosest.Start : nlClosest.End; 
         
-        return Task.FromResult(new NavCursor(NavCluster)
+        return Task.FromResult(new NavCursor(Cluster)
         {
             Lane = nlClosest,
             Junction = njClosest

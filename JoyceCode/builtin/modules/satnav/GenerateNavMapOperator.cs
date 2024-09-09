@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using builtin.modules.satnav.desc;
 using engine;
@@ -13,9 +15,53 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
      * Create the content for the individual clusters below the top
      * level cluster.
      */
-    private Task<NavClusterContent> _createClusterNavContentAsync(NavCluster ncTop, string id)
+    private Task<NavClusterContent> _createClusterNavContentAsync(ClusterDesc clusterDesc, NavCluster ncTop)
     {
+        Trace($"Loading cluster {clusterDesc.Name}");
         
+        NavClusterContent ncc = new NavClusterContent()
+        {
+            Cluster = ncTop
+        };
+        
+        SortedDictionary<int, NavJunction> dictJunctions = new();
+        foreach (var streetPoint in clusterDesc.StrokeStore().GetStreetPoints())
+        {
+            NavJunction nj = new();
+            dictJunctions[streetPoint.Id] = nj;
+            ncc.Junctions.Add(nj);
+        }
+
+        foreach (var stroke in clusterDesc.StrokeStore().GetStrokes())
+        {
+            try
+            {
+                var njA = dictJunctions[stroke.A.Id];
+                var njB = dictJunctions[stroke.B.Id];
+
+                NavLane nlForth = new()
+                {
+                    Start = njA,
+                    End = njB,
+                    Length = stroke.Length
+                };
+                ncc.Lanes.Add(nlForth);
+
+                NavLane nlBack = new()
+                {
+                    Start = njB,
+                    End = njA,
+                    Length = stroke.Length
+                };
+                ncc.Lanes.Add(nlBack);
+            }
+            catch (Exception e)
+            {
+                Trace($"Exception adding navlane: {e}");
+            }
+        }
+
+        return Task.FromResult(ncc);
     }
 
     
@@ -23,11 +69,17 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
      * Create the top level cluster content by creating sub-NavClusters
      * for each of our clusters.
      */
-    private Task<NavClusterContent> _createTopClusterContentAsync(NavCluster ncTop, string id)
+    private Task<NavClusterContent> _createTopClusterContentAsync(NavCluster ncTop)
     {
-        var clusterList = I.Get<ClusterList>().GetClusterList();
-        NavClusterContent ncc = new();
+        Trace($"Loading top level cluster");
+
+        NavClusterContent ncc = new NavClusterContent()
+        {
+            Cluster = ncTop
+        };
         
+        var clusterList = I.Get<ClusterList>().GetClusterList();
+
         foreach (var clusterDesc in clusterList)
         {
             NavCluster nc = new()
@@ -35,11 +87,16 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                 Id = clusterDesc.IdString,
                 AABB = clusterDesc.AABB,
                 ParentCluster = ncTop,
-                CreateClusterContentAsync = _createClusterNavContentAsync,
+                CreateClusterContentAsync = (NavCluster nc) => _createClusterNavContentAsync(clusterDesc, nc),
                 Content = null
             };
+
+            ncc.Clusters.Add(nc);
         }
+
+        return Task.FromResult(ncc);
     }
+    
     
     public string WorldOperatorGetPath()
     {
