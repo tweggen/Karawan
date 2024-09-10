@@ -103,6 +103,7 @@ public class NavCluster
             try
             {
                 ncc = await CreateClusterContentAsync(this);
+                ncc.Recompile();
 
                 lock (_lo)
                 {
