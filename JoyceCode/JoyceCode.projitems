@@ -69,8 +69,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\EntityWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\FragmentNavMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\GenerateNavMapOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\LocalPathfinder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\MapDb.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Pathfinder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\Route.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\StaticWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\IWaypoint.cs" />
