@@ -51,7 +51,7 @@ public class NavCluster
      * #cluster content.
      */
     public List<NavJunction> ProxyJunctions = new();
-    
+
 
     public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
     {

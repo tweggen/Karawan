@@ -28,7 +28,10 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         SortedDictionary<int, NavJunction> dictJunctions = new();
         foreach (var streetPoint in clusterDesc.StrokeStore().GetStreetPoints())
         {
-            NavJunction nj = new();
+            NavJunction nj = new()
+            {
+                Position = streetPoint.Pos3
+            };
             dictJunctions[streetPoint.Id] = nj;
             ncc.Junctions.Add(nj);
         }

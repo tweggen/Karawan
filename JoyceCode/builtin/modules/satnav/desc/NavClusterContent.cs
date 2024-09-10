@@ -53,7 +53,16 @@ public class NavClusterContent
             _aabb.Add(nj.Position);
         }
 
+        foreach (var nc in Clusters)
+        {
+            _aabb.Add(nc.AABB);
+        }
+
         var clusterSize = _aabb.Radius;
+        if (0 == clusterSize)
+        {
+            int a = 1;
+        }
 
         /*
          * Now generate the ocrrees with the adequate sizes.
@@ -80,10 +89,9 @@ public class NavClusterContent
     }
     
 
-    public Task<NavCursor> TryCreateCursor(Vector3 v3Position)
+    public async Task<NavCursor> TryCreateCursor(Vector3 v3Position)
     {
         List<NavCluster> matchingClusters = new();
-
         
         /*
          * Look, if we should forward this call to a child. 
@@ -98,7 +106,14 @@ public class NavClusterContent
 
         if (matchingClusters.Count > 0)
         {
-            // TXWTODO: Try to find any child matches
+            foreach (var ncl in matchingClusters)
+            {
+                var tCursor = await ncl.TryCreateCursor(v3Position);
+                if (!tCursor.IsNil())
+                {
+                    return tCursor;
+                }
+            }
         }
 
         List<NavLane> tmpMatchList = new();
@@ -112,12 +127,12 @@ public class NavClusterContent
             /*
              * Nothing found? Short circuit.
              */
-            return Task.FromResult(NavCursor.Nil);
+            return NavCursor.Nil;
         }
 
         if (tmpMatchList.Count == 0)
         {
-            return Task.FromResult(NavCursor.Nil);
+            return NavCursor.Nil;
         }
 
         float distClosest = Single.MaxValue;
@@ -130,7 +145,11 @@ public class NavClusterContent
                 nlClosest = nl;
                 distClosest = dist;
             }
-            
+        }
+
+        if (null == nlClosest)
+        {
+            return NavCursor.Nil;
         }
 
         NavJunction njClosest;
@@ -140,10 +159,10 @@ public class NavClusterContent
 
         njClosest = (dist2Start <= dist2End) ? nlClosest.Start : nlClosest.End; 
         
-        return Task.FromResult(new NavCursor(Cluster)
+        return new NavCursor(Cluster)
         {
             Lane = nlClosest,
             Junction = njClosest
-        });
+        };
     }
 }
