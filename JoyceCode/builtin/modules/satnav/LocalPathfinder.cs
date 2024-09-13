@@ -26,17 +26,6 @@ public class LocalPathfinder
     private Dictionary<NavJunction, Node> _dictNodes = new();
     private SortedMultiValue<float, Node> _listNodes = new();
 
-    private void _addOptions(NavJunction njStart, NavJunction njTarget)
-    {
-        foreach (var nl in njSource.StartingLanes)
-        {
-            var nj = nl.End;
-            if (_hashVisitedJunction.Contains(nj))
-            {
-                continue;
-            }
-        }
-    }
 
 
     private float _distance(NavJunction a, NavJunction b)
@@ -74,45 +63,52 @@ public class LocalPathfinder
     }
 
 
-    private void _pathFind()
+    private Node _pathFind()
     {
         while (true)
         {
             if (_listNodes.Count == 0)
             {
                 ErrorThrow<InvalidOperationException>($"No node found in A* list.");
-                return;
             }
             
             Node n = _listNodes.First();
 
             foreach (var nlChild in n.Junction.StartingLanes)
             {
-                var costFromParent = _distance(n.Junction, nlChild.End);
+                var njChild = nlChild.End;
+                Node nChild;
+                
+                var costFromParent = _distance(n.Junction, njChild);
                 var costNewFromStart = n.CostFromStart + costFromParent;
-
+                
                 /*
                  * Do we already have the target junction listed?
                  */
-                if (_dictNodes.TryGetValue(nlChild.End, out var nExisting))
+                if (_dictNodes.TryGetValue(njChild, out nChild))
                 {
                     /*
                      * We already visited that particular junction.
                      * Update it, if we can provide a shorter metric.
                      */
-                    if (costNewFromStart < nExisting.CostFromStart)
+                    if (costNewFromStart < nChild.CostFromStart)
                     {
-                        _listNodes.Remove(nExisting.EstimateToEnd, nExisting);
-                        nExisting.Parent = n;
-                        nExisting.CostFromStart = costNewFromStart;
-                        _listNodes.Add(nExisting.EstimateToEnd, nExisting);
+                        _listNodes.Remove(nChild.EstimateToEnd, nChild);
+                        nChild.Parent = n;
+                        nChild.CostFromStart = costNewFromStart;
+                        _listNodes.Add(nChild.EstimateToEnd, nChild);
                     }
                 }
                 else
                 {
-                    var nChild = _childNode(n, nlChild.End);
+                    nChild = _childNode(n, njChild);
                     _listNodes.Add(nChild.EstimateToEnd, nChild);
                     _dictNodes.Add(nChild.Junction, nChild);
+                }
+
+                if (njChild == Target)
+                {
+                    return nChild;
                 }
             }
             
@@ -127,7 +123,7 @@ public class LocalPathfinder
         _listNodes.Add(nStart.TotalCost(), nStart);
         _estimate(nStart);
 
-        _pathfind();
+        _pathFind();
     }
 
 

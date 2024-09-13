@@ -30,7 +30,9 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         {
             NavJunction nj = new()
             {
-                Position = streetPoint.Pos3
+                Position = streetPoint.Pos3,
+                StartingLanes = new(),
+                EndingLanes = new()
             };
             dictJunctions[streetPoint.Id] = nj;
             ncc.Junctions.Add(nj);
@@ -49,6 +51,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                     End = njB,
                     Length = stroke.Length
                 };
+                njA.StartingLanes.Add(nlForth);
+                njB.EndingLanes.Add(nlForth);
                 ncc.Lanes.Add(nlForth);
 
                 NavLane nlBack = new()
@@ -57,6 +61,8 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
                     End = njA,
                     Length = stroke.Length
                 };
+                njA.EndingLanes.Add(nlBack);
+                njB.StartingLanes.Add(nlBack);
                 ncc.Lanes.Add(nlBack);
             }
             catch (Exception e)

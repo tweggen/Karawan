@@ -35,16 +35,6 @@ public class Route : IDisposable
     }
 
 
-    private static float _heuristicWeight(NavJunction njStart, NavJunction njEnd)
-    {
-        /*
-         * We use the orthogonal distance 
-         */
-        Vector3 v3Diff = njEnd.Position - njStart.Position;
-        return Single.Abs(v3Diff.X) + Single.Abs(v3Diff.Y) + Single.Abs(v3Diff.Z);
-    }
-    
-    
     /**
      * Iterate though the list to find the target navJunction.
      *
@@ -81,7 +71,8 @@ public class Route : IDisposable
         /*
          * Plan the initial route.
          */
-        // var nrInitial = await NavMap
+        var pathfinder = new LocalPathfinder(ncuStart.Junction, ncuEnd.Junction);
+        pathfinder.Pathfind();
     }
 
 
