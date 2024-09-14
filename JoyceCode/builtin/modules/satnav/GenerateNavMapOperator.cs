@@ -30,7 +30,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
         {
             NavJunction nj = new()
             {
-                Position = streetPoint.Pos3 + clusterDesc.Pos,
+                Position = streetPoint.Pos3 + clusterDesc.Pos with { Y = clusterDesc.AverageHeight + MetaGen.ClusterNavigationHeight },
                 StartingLanes = new(),
                 EndingLanes = new()
             };

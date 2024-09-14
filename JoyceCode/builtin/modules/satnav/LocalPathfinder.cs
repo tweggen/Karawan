@@ -153,7 +153,7 @@ public class LocalPathfinder
         List<NavJunction> listJunctions = new();
         while (lastNode != null)
         {
-            listJunctions.Append(lastNode.Junction);
+            listJunctions.Add(lastNode.Junction);
             lastNode = lastNode.Parent;
         }
 

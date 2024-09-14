@@ -159,10 +159,15 @@ public class ToSomewhere : AModule
             }
 
             _eRouteParent = _engine.CreateEntity("routeparent");
+            I.Get<TransformApi>().SetTransforms(_eRouteParent,
+                true,
+                MapCameraMask | 0x00000001,
+                Quaternion.Identity, Vector3.Zero);
             int idx = 0;
             foreach (var nj in listJunctions)
             {
                 var eWayPoint = _engine.CreateEntity($"waypoint {idx}");
+                I.Get<HierarchyApi>().SetParent(eWayPoint, _eRouteParent);
                 I.Get<TransformApi>().SetTransforms(eWayPoint,
                     true,
                     MapCameraMask | 0x00000001,
