@@ -116,14 +116,34 @@ public class LocalPathfinder
     }
     
     
-    public void Pathfind()
+    public List<NavJunction> Pathfind()
     {
         var nStart = _startNode(Start);
         _dictNodes.Add(Start, nStart);
         _listNodes.Add(nStart.TotalCost(), nStart);
         _estimate(nStart);
 
-        _pathFind();
+        /*
+         * This results in a list of junctions.
+         * The node returned represents the node that is closest to the
+         * target, the last node in the list represents the junction closest
+         * to the start.
+         *
+         * We return an unoptimized list containing the junctions between
+         * but not including start and end.
+         */
+        var lastNode = _pathFind();
+        
+        List<NavJunction> listJunctions = new();
+        while (lastNode != null)
+        {
+            listJunctions.Append(lastNode.Junction);
+            lastNode = lastNode.Parent;
+        }
+
+        listJunctions.Reverse();
+
+        return listJunctions;
     }
 
 

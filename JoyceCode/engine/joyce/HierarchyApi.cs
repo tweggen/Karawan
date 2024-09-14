@@ -65,6 +65,7 @@ namespace engine.joyce
         public void Delete(ref DefaultEcs.Entity entity)
         {
             _deleteRecursively(entity);
+            entity.Dispose();
             entity = default;
         }
         

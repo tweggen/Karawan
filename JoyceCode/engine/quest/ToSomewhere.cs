@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using BepuPhysics;
 using builtin.modules.satnav;
+using builtin.modules.satnav.desc;
 using engine.joyce;
 using engine.joyce.components;
 using engine.physics;
@@ -63,8 +64,9 @@ public class ToSomewhere : AModule
      * The specific visual marker of the mission.
      */
     private DefaultEcs.Entity _eMarker;
-
     private DefaultEcs.Entity _eMeshMarker;
+
+    private DefaultEcs.Entity _eRouteParent;
     
     /*
      * The abstract mission target that physically shall be reached.
@@ -143,15 +145,51 @@ public class ToSomewhere : AModule
             { Code = engine.world.components.MapIcon.IconCode.Target0 });
     }
 
+    private Lazy<Mesh> _jMesh = new(() => joyce.mesh.Tools.CreateCubeMesh($"waypoint [idx]", 3f));
+
+
+
+    private void _onJunctions(List<NavJunction> listJunctions)
+    {
+        _engine.QueueMainThreadAction(() =>
+        {
+            if (_eRouteParent != default)
+            {
+                I.Get<HierarchyApi>().Delete(ref _eRouteParent);
+            }
+
+            _eRouteParent = _engine.CreateEntity("routeparent");
+            int idx = 0;
+            foreach (var nj in listJunctions)
+            {
+                var eWayPoint = _engine.CreateEntity($"waypoint {idx}");
+                I.Get<TransformApi>().SetTransforms(eWayPoint,
+                    true,
+                    MapCameraMask | 0x00000001,
+                    Quaternion.Identity, nj.Position + 3*Vector3.UnitY);
+
+                var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
+                    new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
+                        _jMesh.Value), 500f);
+                eWayPoint.Set(new Instance3(jInstanceDesc));
+
+                idx++;
+            }
+            
+        });
+    }
+    
+    
     private void _stopRoute()
     {
         _routeTarget.Suspend();
     }
-
+    
 
     private void _startRoute()
     {
         _routeTarget.Activate();
+        _routeTarget.Search(_onJunctions);
     }
     
 
@@ -260,6 +298,14 @@ public class ToSomewhere : AModule
     public override void ModuleActivate()
     {
         base.ModuleActivate();
+
+        I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.ToSomewhere.materials.waypoint",
+            name => new Material()
+            {
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff22aaee)
+            });
+
+        
         _engine.QueueMainThreadAction(() =>
         {
             _createGoal();

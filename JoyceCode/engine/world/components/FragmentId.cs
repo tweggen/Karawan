@@ -7,7 +7,7 @@ namespace engine.world.components
     public struct FragmentId
     {
         public int Id;
-
+        
         public override string ToString()
         {
             return $"Id={Id}";

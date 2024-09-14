@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using builtin.modules.satnav.desc;
 using engine;
 using engine.world;
@@ -11,10 +12,14 @@ namespace builtin.modules.satnav;
 
 public class Route : IDisposable
 {
+    private Engine _engine;
+    
     public NavMap NavMap { get; }
 
     private IWaypoint _a;
     private IWaypoint _b;
+
+    private LocalPathfinder _pathfinder;
 
     
     public IWaypoint A
@@ -33,8 +38,8 @@ public class Route : IDisposable
             return _b;
         }
     }
-
-
+    
+    
     /**
      * Iterate though the list to find the target navJunction.
      *
@@ -45,9 +50,10 @@ public class Route : IDisposable
      * Then, find the route from the children to the parent proxy
      * junctions.
      */
-    private void Search()
+    public void Search(Action<List<NavJunction>> onPath)
     {
-        
+        var listNodes = _pathfinder.Pathfind();
+        _engine.Run(() => onPath(listNodes));
     }
 
 
@@ -65,14 +71,15 @@ public class Route : IDisposable
         Vector3 v3EndCenter = _b.GetLocation();
         // Vector3 v3EndExtents = new(10f, 10f, 10f);
 
-        var ncuStart = await NavMap.TopCluster.TryCreateCursor(v3StartCenter);
-        var ncuEnd = await NavMap.TopCluster.TryCreateCursor(v3EndCenter);
+        var navCursors = await Task.WhenAll(
+            NavMap.TopCluster.TryCreateCursor(v3StartCenter),
+            NavMap.TopCluster.TryCreateCursor(v3EndCenter)
+        );
         
         /*
          * Plan the initial route.
          */
-        var pathfinder = new LocalPathfinder(ncuStart.Junction, ncuEnd.Junction);
-        pathfinder.Pathfind();
+        _pathfinder = new LocalPathfinder(navCursors[0].Junction, navCursors[1].Junction);
     }
 
 
@@ -83,6 +90,7 @@ public class Route : IDisposable
 
     public Route(NavMap nm, IWaypoint a, IWaypoint b)
     {
+        _engine = I.Get<Engine>();
         NavMap = nm;
         _a = a;
         _b = b;
