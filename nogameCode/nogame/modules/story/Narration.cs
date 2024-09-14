@@ -251,11 +251,7 @@ public class Narration : AModule, IInputPart
             _currentStory = new Story(jsonStory);
             _currentStory.BindExternalFunction ("triggerQuest", (string questName) =>
             {
-                engine.quest.IQuest quest = I.Get<engine.quest.Manager>().Get(questName);
-                if (null != quest)
-                {
-                    quest.ModuleActivate();
-                }
+                I.Get<engine.quest.Manager>().ActivateQuest(questName);
             });
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mail;
 using builtin.modules.satnav.desc;
 using static engine.Logger;
 
@@ -22,8 +23,8 @@ internal class Node
 
 public class LocalPathfinder
 {
-    public NavJunction Start;
-    public NavJunction Target;
+    public NavCursor Start;
+    public NavCursor Target;
     
     private Dictionary<NavJunction, Node> _dictNodes = new();
     private SortedMultiValue<float, Node> _listNodes = new();
@@ -61,14 +62,14 @@ public class LocalPathfinder
             LaneToMe = nlToMe,
             Parent = parent,
             CostFromStart = parent.CostFromStart + _realDistance(parent.Junction, njNext),
-            EstimateToEnd = _realDistance(njNext, Target)
+            EstimateToEnd = _realDistance(njNext, Target.Junction)
         };
     }
 
 
     private void _estimate(Node n)
     {
-        n.EstimateToEnd = _realDistance(n.Junction, Target);
+        n.EstimateToEnd = _realDistance(n.Junction, Target.Junction);
     }
 
 
@@ -131,9 +132,23 @@ public class LocalPathfinder
                     _dictNodes.Add(nChild.Junction, nChild);
                 }
 
-                if (njChild == Target)
+                if (njChild == Target.Junction)
                 {
-                    return nChild;
+                    /*
+                     * Maybe we reached the targvet junction but not the
+                     * target lane yet.
+                     */
+
+                    if (nlChild != Target.Lane)
+                    {
+                        var nAdditionalChild = _childNode(n, Target.Lane, Target.Lane.End);
+                        nAdditionalChild.Parent = nChild;
+                        return nAdditionalChild;
+                    }
+                    else
+                    {
+                        return nChild;
+                    }
                 }
             }
             
@@ -143,8 +158,8 @@ public class LocalPathfinder
     
     public List<NavLane> Pathfind()
     {
-        var nStart = _startNode(Start);
-        _dictNodes.Add(Start, nStart);
+        var nStart = _startNode(Start.Junction);
+        _dictNodes.Add(Start.Junction, nStart);
         _listNodes.Add(nStart.TotalCost(), nStart);
         _estimate(nStart);
 
@@ -176,9 +191,9 @@ public class LocalPathfinder
     }
 
 
-    public LocalPathfinder(NavJunction njStart, NavJunction njTarget)
+    public LocalPathfinder(NavCursor ncStart, NavCursor ncTarget)
     {
-        Start = njStart;
-        Target = njTarget;
+        Start = ncStart;
+        Target = ncTarget;
     }
 }

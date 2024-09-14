@@ -53,8 +53,27 @@ public class Route : IDisposable
      */
     public void Search(Action<List<NavLane>> onPath)
     {
-        var listLanes = _pathfinder.Pathfind();
-        _engine.Run(() => onPath(listLanes));
+        I.Get<Engine>().Run(async () =>
+        {
+            Vector3 v3StartCenter = _a.GetLocation();
+            // Vector3 v3StartExtents = new(10f, 10f, 10f);
+
+            Vector3 v3EndCenter = _b.GetLocation();
+            // Vector3 v3EndExtents = new(10f, 10f, 10f);
+
+            var navCursors = await Task.WhenAll(
+                NavMap.TopCluster.TryCreateCursor(v3StartCenter),
+                NavMap.TopCluster.TryCreateCursor(v3EndCenter)
+            );
+
+            /*
+             * Plan the initial route.
+             */
+            _pathfinder = new LocalPathfinder(navCursors[0], navCursors[1]);
+
+            var listLanes = _pathfinder.Pathfind();
+            _engine.Run(() => onPath(listLanes));
+        });
     }
 
 
@@ -66,21 +85,6 @@ public class Route : IDisposable
     
     public async void Activate()
     {
-        Vector3 v3StartCenter = _a.GetLocation();
-        // Vector3 v3StartExtents = new(10f, 10f, 10f);
-        
-        Vector3 v3EndCenter = _b.GetLocation();
-        // Vector3 v3EndExtents = new(10f, 10f, 10f);
-
-        var navCursors = await Task.WhenAll(
-            NavMap.TopCluster.TryCreateCursor(v3StartCenter),
-            NavMap.TopCluster.TryCreateCursor(v3EndCenter)
-        );
-        
-        /*
-         * Plan the initial route.
-         */
-        _pathfinder = new LocalPathfinder(navCursors[0].Lane.Start, navCursors[1].Lane.End);
     }
 
 

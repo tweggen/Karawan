@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading;
 using BepuPhysics;
 using builtin.modules.satnav;
 using builtin.modules.satnav.desc;
@@ -9,6 +10,7 @@ using engine.joyce.components;
 using engine.physics;
 using engine.physics.components;
 using static engine.Logger;
+using Object = System.Object;
 
 namespace engine.quest;
 
@@ -51,6 +53,7 @@ public class ToSomewhere : AModule
     
     public Action OnReachTarget = default;
 
+    private System.Threading.Timer _updateRouteTimer;
 
     /**
      * The route to the target.
@@ -153,10 +156,7 @@ public class ToSomewhere : AModule
     {
         _engine.QueueMainThreadAction(() =>
         {
-            if (_eRouteParent != default)
-            {
-                I.Get<HierarchyApi>().Delete(ref _eRouteParent);
-            }
+            _deleteWaypoints();
 
             _eRouteParent = _engine.CreateEntity("routeparent");
             I.Get<TransformApi>().SetTransforms(_eRouteParent,
@@ -186,17 +186,40 @@ public class ToSomewhere : AModule
             }
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
                 new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
-                    jMesh), 3000f);
+                    jMesh), 10000f);
             
             eWayPoint.Set(new Instance3(jInstanceDesc));
             
+            _updateRouteTimer = new System.Threading.Timer(
+                _updateRoute, 
+                this, 
+                7104, 0);
+
         });
+    }
+
+
+    private void _deleteWaypoints()
+    {
+        if (_eRouteParent != default)
+        {
+            I.Get<HierarchyApi>().Delete(ref _eRouteParent);
+        }
+
+    }
+
+
+    private void _updateRoute(Object state)
+    {
+        _routeTarget.Search(_onJunctions);
     }
     
     
     private void _stopRoute()
     {
         _routeTarget.Suspend();
+        _updateRouteTimer.Dispose();
+        _deleteWaypoints();
     }
     
 
@@ -204,6 +227,7 @@ public class ToSomewhere : AModule
     {
         _routeTarget.Activate();
         _routeTarget.Search(_onJunctions);
+            
     }
     
 
@@ -228,9 +252,9 @@ public class ToSomewhere : AModule
         /*
          * Create a route from the player to the target.
          */
-        _wTarget = new StaticWaypoint()
+        _wTarget = new EntityWaypoint()
         {
-            Location = _eGoal.Get<Transform3ToWorld>().Matrix.Translation
+            Carrot = _eGoal
         };
 
         _wStart = new EntityWaypoint()
