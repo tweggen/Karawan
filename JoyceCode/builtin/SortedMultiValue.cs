@@ -37,10 +37,16 @@ public class SortedMultiValue<TKey, TValue> : IEnumerable<TValue>
 
         foreach (var kvp in _data)
         {
-            if (kvp.Value.Count > 0)
+            int lCount = kvp.Value.Count;
+            if (lCount > 0)
             {
                 var first = kvp.Value[0];
                 kvp.Value.RemoveAt(0);
+                --_count;
+                if (1 == lCount)
+                {
+                    _data.Remove(kvp.Key);
+                }
                 return first;
             }
         }
@@ -67,10 +73,14 @@ public class SortedMultiValue<TKey, TValue> : IEnumerable<TValue>
         {
             return;
         }
-
+        
         if (items.Remove(value))
         {
             _count--;
+            if (items.Count == 0)
+            {
+                _data.Remove(key);
+            }
         }
     }
     

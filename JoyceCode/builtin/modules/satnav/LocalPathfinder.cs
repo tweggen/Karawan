@@ -10,6 +10,7 @@ namespace builtin.modules.satnav;
 internal class Node
 {
     public NavJunction Junction;
+    public bool IsVisited = false;
     
     public Node? Parent = null;
     public float CostFromStart = 0f;
@@ -65,6 +66,11 @@ public class LocalPathfinder
 
     private Node _pathFind()
     {
+        if (Start == Target)
+        {
+            return _listNodes.TakeFirst();
+        }
+        
         while (true)
         {
             if (_listNodes.Count == 0)
@@ -72,7 +78,8 @@ public class LocalPathfinder
                 ErrorThrow<InvalidOperationException>($"No node found in A* list.");
             }
             
-            Node n = _listNodes.First();
+            Node n = _listNodes.TakeFirst();
+            n.IsVisited = true;
 
             foreach (var nlChild in n.Junction.StartingLanes)
             {
@@ -88,21 +95,30 @@ public class LocalPathfinder
                 if (_dictNodes.TryGetValue(njChild, out nChild))
                 {
                     /*
-                     * We already visited that particular junction.
-                     * Update it, if we can provide a shorter metric.
-                     */
+                    * If we already visited that node, we do not need
+                    * to conitnue investigating it.
+                    */
+                    if (nChild.IsVisited)
+                    {
+                        continue;
+                    }
+
+                    /*
+                    * We already visited that particular junction.
+                    * Update it, if we can provide a shorter metric.
+                    */
                     if (costNewFromStart < nChild.CostFromStart)
                     {
                         _listNodes.Remove(nChild.EstimateToEnd, nChild);
                         nChild.Parent = n;
                         nChild.CostFromStart = costNewFromStart;
-                        _listNodes.Add(nChild.EstimateToEnd, nChild);
+                        _listNodes.Add(nChild.TotalCost(), nChild);
                     }
                 }
                 else
                 {
                     nChild = _childNode(n, njChild);
-                    _listNodes.Add(nChild.EstimateToEnd, nChild);
+                    _listNodes.Add(nChild.TotalCost(), nChild);
                     _dictNodes.Add(nChild.Junction, nChild);
                 }
 
