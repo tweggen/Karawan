@@ -10,6 +10,7 @@ using SharpNav.Pathfinding;
 
 namespace builtin.modules.satnav;
 
+
 public class Route : IDisposable
 {
     private Engine _engine;
@@ -50,10 +51,10 @@ public class Route : IDisposable
      * Then, find the route from the children to the parent proxy
      * junctions.
      */
-    public void Search(Action<List<NavJunction>> onPath)
+    public void Search(Action<List<NavLane>> onPath)
     {
-        var listNodes = _pathfinder.Pathfind();
-        _engine.Run(() => onPath(listNodes));
+        var listLanes = _pathfinder.Pathfind();
+        _engine.Run(() => onPath(listLanes));
     }
 
 

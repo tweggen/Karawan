@@ -9,10 +9,11 @@ namespace builtin.modules.satnav;
 
 internal class Node
 {
+    public Node? Parent = null;
+    public NavLane? LaneToMe = null;
     public NavJunction Junction;
     public bool IsVisited = false;
     
-    public Node? Parent = null;
     public float CostFromStart = 0f;
     public float EstimateToEnd = 0f;
 
@@ -52,11 +53,12 @@ public class LocalPathfinder
     }
 
 
-    private Node _childNode(Node parent, NavJunction njNext)
+    private Node _childNode(Node parent, NavLane nlToMe, NavJunction njNext)
     {
         return new Node()
         {
             Junction = njNext,
+            LaneToMe = nlToMe,
             Parent = parent,
             CostFromStart = parent.CostFromStart + _realDistance(parent.Junction, njNext),
             EstimateToEnd = _realDistance(njNext, Target)
@@ -117,13 +119,14 @@ public class LocalPathfinder
                     {
                         _listNodes.Remove(nChild.EstimateToEnd, nChild);
                         nChild.Parent = n;
+                        nChild.LaneToMe = nlChild;
                         nChild.CostFromStart = costNewFromStart;
                         _listNodes.Add(nChild.TotalCost(), nChild);
                     }
                 }
                 else
                 {
-                    nChild = _childNode(n, njChild);
+                    nChild = _childNode(n, nlChild, njChild);
                     _listNodes.Add(nChild.TotalCost(), nChild);
                     _dictNodes.Add(nChild.Junction, nChild);
                 }
@@ -138,7 +141,7 @@ public class LocalPathfinder
     }
     
     
-    public List<NavJunction> Pathfind()
+    public List<NavLane> Pathfind()
     {
         var nStart = _startNode(Start);
         _dictNodes.Add(Start, nStart);
@@ -156,16 +159,20 @@ public class LocalPathfinder
          */
         var lastNode = _pathFind();
         
-        List<NavJunction> listJunctions = new();
+        List<NavLane> listLanes = new();
         while (lastNode != null)
         {
-            listJunctions.Add(lastNode.Junction);
+            NavLane? nl = lastNode.LaneToMe;
+            if (nl != null)
+            {
+                listLanes.Add(nl);
+            }
             lastNode = lastNode.Parent;
         }
 
-        listJunctions.Reverse();
+        listLanes.Reverse();
 
-        return listJunctions;
+        return listLanes;
     }
 
 

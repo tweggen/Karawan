@@ -149,7 +149,7 @@ public class ToSomewhere : AModule
 
 
 
-    private void _onJunctions(List<NavJunction> listJunctions)
+    private void _onJunctions(List<NavLane> listLanes)
     {
         _engine.QueueMainThreadAction(() =>
         {
@@ -164,14 +164,15 @@ public class ToSomewhere : AModule
                 MapCameraMask | 0x00000001,
                 Quaternion.Identity, Vector3.Zero);
             int idx = 0;
-            foreach (var nj in listJunctions)
+            foreach (var nl in listLanes)
             {
+                Vector3 v3LaneMiddle = (nl.Start.Position + nl.End.Position) / 2f;
                 var eWayPoint = _engine.CreateEntity($"waypoint {idx}");
                 I.Get<HierarchyApi>().SetParent(eWayPoint, _eRouteParent);
                 I.Get<TransformApi>().SetTransforms(eWayPoint,
                     true,
                     MapCameraMask | 0x00000001,
-                    Quaternion.Identity, nj.Position + 3*Vector3.UnitY);
+                    Quaternion.Identity, v3LaneMiddle + 3*Vector3.UnitY);
 
                 var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
                     new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
