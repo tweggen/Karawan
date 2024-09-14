@@ -122,7 +122,7 @@ public class NavClusterContent
          */
         if (!_octreeLanes.GetCollidingNonAlloc(
                 tmpMatchList,
-                new Octree.BoundingBox(_aabb.Center, 2f * _maxLaneLength * Vector3.One)))
+                new Octree.BoundingBox(v3Position, 2f * _maxLaneLength * Vector3.One)))
         {
             /*
              * Nothing found? Short circuit.
@@ -157,7 +157,7 @@ public class NavClusterContent
         float dist2Start = (nlClosest.Start.Position - v3Position).LengthSquared();
         float dist2End = (nlClosest.End.Position - v3Position).LengthSquared();
 
-        njClosest = (dist2Start <= dist2End) ? nlClosest.Start : nlClosest.End; 
+        njClosest = (dist2Start <= dist2End) ? nlClosest.Start : nlClosest.End;
         
         return new NavCursor(Cluster)
         {

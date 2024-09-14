@@ -170,7 +170,7 @@ public class ToSomewhere : AModule
             I.Get<TransformApi>().SetTransforms(eWayPoint,
                 true,
                 MapCameraMask | 0x00000001,
-                Quaternion.Identity, 1.5f*Vector3.UnitY);
+                Quaternion.Identity, -0.5f*Vector3.UnitY);
 
             var jMesh = joyce.Mesh.CreateListInstance("waypoints");
             int idx = 0;
@@ -186,7 +186,7 @@ public class ToSomewhere : AModule
             }
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
                 new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
-                    jMesh), 500f);
+                    jMesh), 3000f);
             
             eWayPoint.Set(new Instance3(jInstanceDesc));
             

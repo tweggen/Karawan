@@ -80,7 +80,7 @@ public class Route : IDisposable
         /*
          * Plan the initial route.
          */
-        _pathfinder = new LocalPathfinder(navCursors[0].Junction, navCursors[1].Junction);
+        _pathfinder = new LocalPathfinder(navCursors[0].Lane.Start, navCursors[1].Lane.End);
     }
 
 
