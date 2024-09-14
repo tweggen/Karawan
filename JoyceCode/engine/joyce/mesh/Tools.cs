@@ -30,7 +30,8 @@ namespace engine.joyce.mesh
             m.UVs.Add(u0); m.UVs.Add(u0 + ux); m.UVs.Add(u0 + uy); m.UVs.Add(u0 + ux + uy);
             _addQuadIndicesXY(m, idx+0, idx+1, idx+2, idx+3);
         }
-
+        
+        
         private static void _addQuadXY(
             in joyce.Mesh m, in Vector3 v0, in Vector3 vx, in Vector3 vy )
         {

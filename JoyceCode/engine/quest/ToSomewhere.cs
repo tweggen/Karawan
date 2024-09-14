@@ -163,24 +163,32 @@ public class ToSomewhere : AModule
                 true,
                 MapCameraMask | 0x00000001,
                 Quaternion.Identity, Vector3.Zero);
+            
+            var eWayPoint = _engine.CreateEntity($"waypoints");
+
+            I.Get<HierarchyApi>().SetParent(eWayPoint, _eRouteParent);
+            I.Get<TransformApi>().SetTransforms(eWayPoint,
+                true,
+                MapCameraMask | 0x00000001,
+                Quaternion.Identity, 1.5f*Vector3.UnitY);
+
+            var jMesh = joyce.Mesh.CreateListInstance("waypoints");
             int idx = 0;
             foreach (var nl in listLanes)
             {
-                Vector3 v3LaneMiddle = (nl.Start.Position + nl.End.Position) / 2f;
-                var eWayPoint = _engine.CreateEntity($"waypoint {idx}");
-                I.Get<HierarchyApi>().SetParent(eWayPoint, _eRouteParent);
-                I.Get<TransformApi>().SetTransforms(eWayPoint,
-                    true,
-                    MapCameraMask | 0x00000001,
-                    Quaternion.Identity, v3LaneMiddle + 3*Vector3.UnitY);
+                var v3Direction = nl.End.Position - nl.Start.Position;
+                var vu3Right = Vector3.Normalize(new(v3Direction.Z, 0f, -v3Direction.X));
 
-                var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
-                    new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
-                        _jMesh.Value), 500f);
-                eWayPoint.Set(new Instance3(jInstanceDesc));
-
-                idx++;
+                joyce.mesh.Tools.AddQuadXYUV(jMesh, 
+                    nl.Start.Position+2f*vu3Right, -4f*vu3Right, v3Direction,
+                    Vector2.Zero, Vector2.Zero, Vector2.Zero
+                    );
             }
+            var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
+                new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.ToSomewhere.materials.waypoint"),
+                    jMesh), 500f);
+            
+            eWayPoint.Set(new Instance3(jInstanceDesc));
             
         });
     }
@@ -308,7 +316,7 @@ public class ToSomewhere : AModule
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.ToSomewhere.materials.waypoint",
             name => new Material()
             {
-                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff22aaee)
+                Texture = I.Get<TextureCatalogue>().FindColorTexture(0xffeeaa22)
             });
 
         
