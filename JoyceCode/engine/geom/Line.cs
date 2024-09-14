@@ -130,6 +130,10 @@ namespace engine.geom
             Vector3 vAC = p - a;
             Vector3 vAB = b - a;
 
+            float distA = vAC.Length();
+            float distB = (p - b).Length();
+            float distPointMin = Single.Min(distA, distB);
+
             float dotproduct = Vector3.Dot(vAC, vAB);
 
             /*
@@ -142,7 +146,7 @@ namespace engine.geom
                 // trace( 'Skipping point ${sp0.pos.x}, ${sp0.pos.y}, because its on the wrong side.');
 
                 // TXWTODO: Compute end of line distance?
-                return 1000000000f;
+                return distA;
             }
 
             float length2 = vAB.LengthSquared();
@@ -163,7 +167,7 @@ namespace engine.geom
 
             if (ad2 >= length2)
             {
-                return 1000000000f;
+                return distB;
             }
 
             return dist;

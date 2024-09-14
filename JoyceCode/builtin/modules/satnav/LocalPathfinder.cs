@@ -139,7 +139,7 @@ public class LocalPathfinder
         _listNodes.Add(nStart.TotalCost(), nStart);
         _estimate(nStart);
 
-        _pathFind();
+        var lastNode =_pathFind();
     }
 
 

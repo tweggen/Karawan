@@ -67,13 +67,13 @@ public class NavClusterContent
         /*
          * Now generate the ocrrees with the adequate sizes.
          */
-        _octreeJunctions = new(clusterSize, Vector3.Zero, 2);
+        _octreeJunctions = new(_aabb.Radius*2f, _aabb.Center, 2);
         foreach (var nj in Junctions)
         {
             _octreeJunctions.Add(nj, nj.Position);
         }
 
-        _octreeLanes = new(clusterSize, Vector3.Zero, 5f, 1f);
+        _octreeLanes = new(_aabb.Radius*2f, _aabb.Center, 5f, 1f);
         foreach (var nl in Lanes)
         {
             Vector3 v3Size = nl.End.Position - nl.Start.Position;
