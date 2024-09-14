@@ -36,6 +36,12 @@ public class LocalPathfinder
     }
 
 
+    private float _realDistance(NavJunction a, NavJunction b)
+    {
+        return (b.Position-a.Position).Length();
+    }
+
+
     private Node _startNode(NavJunction njStart)
     {
         return new()
@@ -52,15 +58,15 @@ public class LocalPathfinder
         {
             Junction = njNext,
             Parent = parent,
-            CostFromStart = parent.CostFromStart + _distance(parent.Junction, njNext),
-            EstimateToEnd = _distance(njNext, Target)
+            CostFromStart = parent.CostFromStart + _realDistance(parent.Junction, njNext),
+            EstimateToEnd = _realDistance(njNext, Target)
         };
     }
 
 
     private void _estimate(Node n)
     {
-        n.EstimateToEnd = _distance(n.Junction, Target);
+        n.EstimateToEnd = _realDistance(n.Junction, Target);
     }
 
 
@@ -86,7 +92,7 @@ public class LocalPathfinder
                 var njChild = nlChild.End;
                 Node nChild;
                 
-                var costFromParent = _distance(n.Junction, njChild);
+                var costFromParent = _realDistance(n.Junction, njChild);
                 var costNewFromStart = n.CostFromStart + costFromParent;
                 
                 /*
