@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
+using engine.quest;
 using static engine.Logger;
 
 namespace engine.behave.systems;
@@ -45,12 +46,25 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                 oldTransform = entity.Get<joyce.components.Transform3>();
             }
 
-            ref var cBehavior = ref entity.Get<behave.components.Behavior>();
-
-            if (hadTransform3)
+            bool hadWorldTransform3 = entity.Has<joyce.components.Transform3ToWorld>();
+            joyce.components.Transform3ToWorld oldWorldTransform3 = new();
+            Vector3 v3WorldPosition = new();
+            if (hadWorldTransform3)
             {
-                if (Vector3.DistanceSquared(oldTransform.Position, vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
+                oldWorldTransform3 = entity.Get<joyce.components.Transform3ToWorld>();
+                v3WorldPosition = oldWorldTransform3.Matrix.Translation;
+            }
+
+            ref var cBehavior = ref entity.Get<behave.components.Behavior>();
+            if (hadWorldTransform3 && hadTransform3)
+            {
+                if (Vector3.DistanceSquared(v3WorldPosition, vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
                 {
+                    if (cBehavior.Provider.GetType() == typeof(GoalMarkerSpinBehavior))
+                    {
+                        int a = 1;
+                    }
+
                     if (0 != (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
                     {
                         cBehavior.Provider?.OutOfRange(_engine, entity);
@@ -104,6 +118,10 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                 {
                     if (entity.Has<joyce.components.Transform3>())
                     {
+                        /*
+                         * TXWTODO: We use the local position to estimate the velocity, that's bad.
+                         * Unfortunately, we do not know the previous world position.
+                         */
                         Vector3 vNewPosition = entity.Get<joyce.components.Transform3>().Position;
                         /*
                          * Write back/create motion for that one.
