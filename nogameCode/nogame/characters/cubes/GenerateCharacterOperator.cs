@@ -129,93 +129,70 @@ internal class GenerateCharacterOperator : engine.world.IFragmentOperator
              * TXWTODO: We would be more intersint to place them on the streets.
              */
 
-            var strokeStore = _clusterDesc.StrokeStore();
-            IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
-            if (streetPoints.Count == 0)
+            var listInFragment = _clusterDesc.GetStreetPointsInFragment(worldFragment.IdxFragment);
+            var nStreetPoints = listInFragment.Count; 
+            if (nStreetPoints > 0)
             {
-                return;
-            }
+                int nCharacters = (int)((float)nStreetPoints * 2f / 5f);
 
-            int l = streetPoints.Count;
-            int nCharacters = (int)((float)l * 2f / 5f);
-
-            for (int i = 0; i < nCharacters; i++)
-            {
-
-                var idxPoint = (int)(ctx.Rnd.GetFloat() * l);
-                StreetPoint chosenStreetPoint = null;
-                chosenStreetPoint = streetPoints[idxPoint];
-                if (null == chosenStreetPoint || !chosenStreetPoint.HasStrokes())
+                for (int i = 0; i < nCharacters; i++)
                 {
-                    continue;
-                }
 
-                /*
-                 * Check, wether the given street point really is inside our fragment.
-                 * That way, every fragment owns only the characters spawn on their
-                 * territory.
-                 */
-                {
-                    float px = chosenStreetPoint.Pos.X + _clusterDesc.Pos.X;
-                    float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
-                    if (!worldFragment.IsInside(new Vector2(px, pz)))
+                    var idxPoint = ctx.Rnd.GetInt(nStreetPoints - 1);
+                    var chosenStreetPoint = listInFragment[idxPoint];
+
+                    if (_trace)
                     {
-                        // chosenStreetPoint = null;
-                        continue;
+                        Trace(
+                            $"GenerateCubeCharacterOperator(): Starting on streetpoint {idxPoint} {chosenStreetPoint.Pos}.");
                     }
-                }
 
-                if (_trace)
-                {
-                    Trace(
-                        $"GenerateCubeCharacterOperator(): Starting on streetpoint {idxPoint} {chosenStreetPoint.Pos}.");
-                }
-
-                ++_characterIndex;
-                {
-                    var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
-                        new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.cube.materials.cube"),
-                            _getCubeMesh()), 300f);
-
-                    var wf = worldFragment;
-
-
-                    var speed = 25f + ctx.Rnd.GetFloat() * 15f;
-                    int fragmentId = worldFragment.NumericalId;
-                    var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
+                    ++_characterIndex;
                     {
-                        eTarget.Set(new engine.world.components.FragmentId(fragmentId));
-                        eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-                        eTarget.Set(new engine.behave.components.Behavior(
-                                new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
-                            { MaxDistance = (short)propMaxDistance }
-                        );
+                        var jInstanceDesc = InstanceDesc.CreateFromMatMesh(
+                            new MatMesh(I.Get<ObjectRegistry<Material>>().Get("nogame.characters.cube.materials.cube"),
+                                _getCubeMesh()), 300f);
 
-                        BodyReference prefSphere;
-                        engine.physics.Object po;
-                        lock (wf.Engine.Simulation)
+                        var wf = worldFragment;
+
+
+                        var speed = 25f + ctx.Rnd.GetFloat() * 15f;
+                        int fragmentId = worldFragment.NumericalId;
+                        var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                         {
-                            po = new(wf.Engine, eTarget, _shapeFactory.GetSphereShape(_cubeSize / 1.4f))
+                            eTarget.Set(new engine.world.components.FragmentId(fragmentId));
+                            eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
+                            eTarget.Set(new engine.behave.components.Behavior(
+                                    new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))
+                                { MaxDistance = (short)propMaxDistance }
+                            );
+
+                            BodyReference prefSphere;
+                            engine.physics.Object po;
+                            lock (wf.Engine.Simulation)
                             {
-                                CollisionProperties = new engine.physics.CollisionProperties
+                                po = new(wf.Engine, eTarget, _shapeFactory.GetSphereShape(_cubeSize / 1.4f))
                                 {
-                                    DebugInfo = $"_chrIdx {_characterIndex}",
-                                    Entity = eTarget,
-                                    Flags = CollisionProperties.CollisionFlags.IsDetectable,
-                                    Name = "nogame.characters.cube",
-                                }
-                            };
-                            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                        }
+                                    CollisionProperties = new engine.physics.CollisionProperties
+                                    {
+                                        DebugInfo = $"_chrIdx {_characterIndex}",
+                                        Entity = eTarget,
+                                        Flags = CollisionProperties.CollisionFlags.IsDetectable,
+                                        Name = "nogame.characters.cube",
+                                    }
+                                };
+                                prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                            }
 
-                        eTarget.Set(new engine.audio.components.MovingSound(
-                            _getCubeSound(), 150f));
-                        eTarget.Set(new engine.physics.components.Body(po, prefSphere));
-                    });
+                            eTarget.Set(new engine.audio.components.MovingSound(
+                                _getCubeSound(), 150f));
+                            eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+                        });
 
-                    wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);
+                        wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);
 
 
+                    }
                 }
             }
         });

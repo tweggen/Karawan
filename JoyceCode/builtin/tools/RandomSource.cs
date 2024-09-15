@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
 namespace builtin.tools;
 
@@ -20,6 +21,13 @@ public class RandomSource
     public Vector3 GetVector3()
     {
         return new(-1f+2f*GetFloat(), -1f+2f*GetFloat(), -1f+2f*GetFloat());
+    }
+
+
+    public int GetInt(int max)
+    {
+        _next();
+        return Int32.Clamp((int)(((float)_randomSeed / 2147483647f) * (float)max), 0, max);
     }
     
     

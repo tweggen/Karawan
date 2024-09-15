@@ -484,6 +484,38 @@ public class StrokeStore
         }
     }
 
+
+    /**
+     * Validate the set of street points if all street points meet the required conditions.
+     * Required conditions are
+     * - street point has connected strokes.
+     */
+    public void PolishStreetPoints()
+    {
+        List<int> deadPoints = new();
+        int l = _listPoints.Count;
+        
+        /*
+         * Note that we are adding the streetpoints from the last to the first.
+         */
+        for (int i = l-1; i >= 0; --i)
+        {
+            var sp = _listPoints[i];
+            if (false
+                || !sp.HasStrokes())
+            {
+                deadPoints.Add(i);
+            }
+        }
+
+        foreach (var idx in deadPoints)
+        {
+            Trace($"Removing point @{idx} in cluster.");
+            _listPoints.RemoveAt(idx);
+        }
+    }
+    
+    
     // should be : Trace: Cluster Yelukhdidru has 480 street points, 818 street segments.
     public StrokeStore(float clusterSize)
     {

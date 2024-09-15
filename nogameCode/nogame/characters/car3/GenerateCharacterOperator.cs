@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using engine;
@@ -107,56 +108,20 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         /*
          * Load all prerequisites
          */
-        var strokeStore = clusterDesc.StrokeStore();
-        IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
-        if (streetPoints.Count == 0)
-        {
-            if (_trace) Trace($"Cluster does not have streetpoints at all.");
-            return null;
-        }
-        int l = streetPoints.Count;
-
-        int nTries = 0;
         StreetPoint chosenStreetPoint = null;
 
-        var idxPoint = (int)(rnd.GetFloat() * l);
-        while (chosenStreetPoint == null && nTries++ < 10)
+        /*
+         * First, generate the set of street points within this fragemnt.
+         */
+        var listInFragment = clusterDesc.GetStreetPointsInFragment(worldFragment.IdxFragment);
+        var nStreetPoints = listInFragment.Count(); 
+        if (nStreetPoints == 0)
         {
-            /*
-             * Now actually select the starting point.
-             */
-            var candStreetPoint = streetPoints[idxPoint];
-
-            float px = candStreetPoint.Pos.X + clusterDesc.Pos.X;
-            float pz = candStreetPoint.Pos.Y + clusterDesc.Pos.Z;
-            if (worldFragment.IsInside(new Vector2(px, pz)))
-            {
-                if (candStreetPoint.HasStrokes())
-                {
-                    chosenStreetPoint = candStreetPoint;
-                    break;
-                }
-            }
-            else
-            {
-                if (_trace) Trace($"The chosen street point would not be inside the world fragment.");
-            }
-
-            idxPoint = (idxPoint + 1) % l;
-        }
-
-        if (null==chosenStreetPoint)
-        {
-            if (_trace) Trace($"NO street point has been found.");
             return null;
         }
 
-        /*
-         * Check, wether the given street point really is inside our fragment.
-         * That way, every fragment owns only the characters spawn on their
-         * territory.
-         */
-        return chosenStreetPoint;
+        var idxPoint = rnd.GetInt(nStreetPoints - 1);
+        return listInFragment[idxPoint];
     }
 
     

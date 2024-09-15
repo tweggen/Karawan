@@ -118,41 +118,19 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
             return;
         }
 
-        int l = streetPoints.Count;
-        int nCharacters = (int)((float)_clusterDesc.Size / 20f + 1f);
-        if (nCharacters > _clusterDesc.GetNClosest())
+        var listInFragment = _clusterDesc.GetStreetPointsInFragment(worldFragment.IdxFragment);
+        var nStreetPoints = listInFragment.Count;
+        int nCharacters = nStreetPoints / 14;
+        if (nCharacters > 0)
         {
-            nCharacters = _clusterDesc.GetNClosest();
-        }
-        // Trace($"Generating {nCharacters} trams.");
-
-        for (int i = 0; i < nCharacters; i++)
-        {
-
-            var idxPoint = (int)(ctx.Rnd.GetFloat() * l);
-            StreetPoint chosenStreetPoint = streetPoints[idxPoint];
-            if (!chosenStreetPoint.HasStrokes())
+            for (int i = 0; i < nCharacters; i++)
             {
-                continue;
-            }
+                var idxPoint = ctx.Rnd.GetInt(nStreetPoints - 1);
+                var chosenStreetPoint = listInFragment[idxPoint];
 
-            /*
-             * Check, wether the given street point really is inside our fragment.
-             * That way, every fragment owns only the characters spawn on their
-             * territory.
-             */
-            {
-                float px = chosenStreetPoint.Pos.X + _clusterDesc.Pos.X;
-                float pz = chosenStreetPoint.Pos.Y + _clusterDesc.Pos.Z;
-                if (!worldFragment.IsInside(new Vector2(px, pz)))
-                {
-                    chosenStreetPoint = null;
-                }
-            }
-            if (null != chosenStreetPoint)
-            {
                 if (_trace)
-                    Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
+                    Trace(
+                        $"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
 
                 ++_characterIndex;
                 {
@@ -167,7 +145,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             MaxDistance = propMaxDistance,
                         });
                     engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
- 
+
                     var wf = worldFragment;
 
                     int fragmentId = worldFragment.NumericalId;
@@ -177,9 +155,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                         eTarget.Set(new engine.world.components.FragmentId(fragmentId));
                         eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                         eTarget.Set(new engine.behave.components.Behavior(
-                            new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
-                                .SetSpeed(30f)
-                                .SetHeight(10f))
+                                new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint)
+                                    .SetSpeed(30f)
+                                    .SetHeight(10f))
                             { MaxDistance = (short)propMaxDistance }
                         );
                         eTarget.Set(new engine.audio.components.MovingSound(GetTramSound(), 150f));
@@ -189,10 +167,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
 
                 }
-            }
-            else
-            {
-                if (_trace) Trace("No streetpoint found.");
             }
         }
     });

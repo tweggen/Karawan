@@ -440,6 +440,8 @@ public class ClusterDesc
 
     private void _processStrokes()
     {
+        _strokeStore.PolishStreetPoints();
+        
         /*
          * Unfortunately, we also need to generate the sections at this point.
          */

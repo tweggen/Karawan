@@ -85,8 +85,8 @@ public class SpawnOperator : ISpawnOperator
              */
             spawnStatus = new()
             {
-                MinCharacters = (ushort)(2f * nMaxSpawns),
-                MaxCharacters = (ushort)(3f * nMaxSpawns),
+                MinCharacters = (ushort)(1f * nMaxSpawns),
+                MaxCharacters = (ushort)(2f * nMaxSpawns),
                 InCreation = (ushort)0
             };
         }
