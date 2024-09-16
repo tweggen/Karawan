@@ -75,7 +75,7 @@ public class LocalPathfinder
 
     private Node _pathFind()
     {
-        if (Start == Target)
+        if (Start == Target || Start.Junction == Target.Junction)
         {
             return _listNodes.TakeFirst();
         }

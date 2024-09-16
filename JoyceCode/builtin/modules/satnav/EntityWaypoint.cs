@@ -43,16 +43,27 @@ public class EntityWaypoint : IWaypoint
             Error("Asked an entity waypoint with unset entity for its position.");
             return _v3LastPosition;
         }
-        if (_eCarrot.IsAlive && _eCarrot.IsEnabled() && _eCarrot.Has<Transform3ToWorld>())
+        if (!_eCarrot.IsAlive) 
         {
-            _v3LastPosition = _eCarrot.Get<Transform3ToWorld>().Matrix.Translation;
+            Error("Asked an entity waypoint which is not alive.");
             return _v3LastPosition;
         }
-        else
+
+        if (!_eCarrot.IsEnabled())
         {
-            Error("Asked an entity waypoint with an invalid entity for its location.");
+            Error("Asked an entity waypoint which is not enabled.");
             return _v3LastPosition;
         }
+
+        if (!_eCarrot.Has<Transform3ToWorld>())
+        {
+            // TXWTODO: We reach this with an entity that has NewParent and Transform.
+            Error("Asked an entity waypoint which has no transform to world.");
+            return _v3LastPosition;
+        }
+        
+        _v3LastPosition = _eCarrot.Get<Transform3ToWorld>().Matrix.Translation;
+        return _v3LastPosition;
     }
 
 
