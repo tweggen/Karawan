@@ -62,7 +62,10 @@ public class Quest : AModule, IQuest
          * Randomly chose a destination car.
          */
         DefaultEcs.Entity eVictim = default;
-        var behaving = _engine.GetEcsWorld().GetEntities().With<engine.behave.components.Behavior>().AsEnumerable();
+        var behaving = _engine.GetEcsWorld().GetEntities()
+            .With<engine.behave.components.Behavior>()
+            .With<engine.joyce.components.Transform3ToWorld>()
+            .AsEnumerable();
 
         foreach (var e in behaving)
         {
