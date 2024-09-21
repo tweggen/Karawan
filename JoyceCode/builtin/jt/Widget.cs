@@ -1283,6 +1283,17 @@ public class Widget : IDisposable
             wFocussedChild.PropagateInputEvent(ev);
         }
     }
+
+
+    public Widget? FindFirstDefaultFocussedChild()
+    {
+        return FindNextChild(this, 1,
+            w =>
+                w.FocusState == FocusStates.Focussable
+                && (w.GetAttr("defaultFocus", "false") == "true")
+                //|| w.HasAttr("isDefaultFocus") && 
+        );
+    }
     
 
     public Widget? FindFirstFocussableChild()

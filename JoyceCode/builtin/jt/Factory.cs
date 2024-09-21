@@ -145,8 +145,16 @@ public class Factory : AModule
             string layername = wMenu["layer"].ToString();
             OSDLayer osdLayer = _requireInputLayer(layername);
             osdLayer.RootWidget.AddChild(wMenu);
-            osdLayer.RootWidget.SetFocussedChild(wMenu.FindFirstFocussableChild());
-            
+            Widget? wFocussedChild = wMenu.FindFirstDefaultFocussedChild();
+            if (null == wFocussedChild)
+            {
+                wFocussedChild = wMenu.FindFirstFocussableChild();
+            }
+            if (null != wFocussedChild)
+            {
+                osdLayer.RootWidget.SetFocussedChild(wFocussedChild);
+            }
+
             /*
              * Yes, we just keep adding new layers but do not remove old ones.
              */
