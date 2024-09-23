@@ -254,7 +254,7 @@ public class ToSomewhere : AModule
          */
         _wTarget = new EntityWaypoint()
         {
-            Carrot = _eGoal
+            Carrot = ParentEntity
         };
 
         _wStart = new EntityWaypoint()

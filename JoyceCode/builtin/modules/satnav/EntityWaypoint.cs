@@ -51,6 +51,7 @@ public class EntityWaypoint : IWaypoint
 
         if (!_eCarrot.IsEnabled())
         {
+            
             Error("Asked an entity waypoint which is not enabled.");
             return _v3LastPosition;
         }

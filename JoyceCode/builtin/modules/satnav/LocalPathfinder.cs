@@ -75,7 +75,7 @@ public class LocalPathfinder
 
     private Node _pathFind()
     {
-        if (Start == Target || Start.Junction == Target.Junction)
+        if (Start == Target || Start.Junction == Target.Junction || Start.Lane == Target.Lane)
         {
             return _listNodes.TakeFirst();
         }
@@ -118,7 +118,7 @@ public class LocalPathfinder
                     */
                     if (costNewFromStart < nChild.CostFromStart)
                     {
-                        _listNodes.Remove(nChild.EstimateToEnd, nChild);
+                        _listNodes.Remove(nChild.TotalCost(), nChild);
                         nChild.Parent = n;
                         nChild.LaneToMe = nlChild;
                         nChild.CostFromStart = costNewFromStart;
