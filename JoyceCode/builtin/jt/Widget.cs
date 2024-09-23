@@ -1014,6 +1014,15 @@ public class Widget : IDisposable
     }
 
 
+    protected string _syncLuaScript(string _propName, LuaScriptEntry lse, string script)
+    {
+        lse.LuaScript = script;
+        object[] results = lse.Call();
+        if (results != null && results.Length >= 1) return results[0] as string;
+        return "";
+    }
+
+
     /**
      * Create a symbol binding frame for this widget.
      */
@@ -1063,6 +1072,30 @@ public class Widget : IDisposable
         }
 
         return lse;
+    }
+
+
+    protected string _evaluateProperty(string propName)
+    {
+        string script = GetAttr(propName, "");
+        if (script.IsNullOrEmpty()) return default;
+
+        LuaScriptEntry? lse;
+        try
+        {
+            lse = _findLuaScriptEntry(propName, script);
+        }
+        catch (Exception e)
+        {
+            Trace($"Exception while compiling lua handler: {e}");
+            return default;
+        }
+
+        /*
+         * Finally execute the script.
+         */
+        return _syncLuaScript(propName, lse, script);
+        
     }
     
 
@@ -1290,8 +1323,8 @@ public class Widget : IDisposable
         return FindNextChild(this, 1,
             w =>
                 w.FocusState == FocusStates.Focussable
-                && (w.GetAttr("defaultFocus", "false") == "true")
-                //|| w.HasAttr("isDefaultFocus") && 
+                && (w.GetAttr("defaultFocus", "false") == "true"
+                || w._evaluateProperty("isDefaultFocus") == "true")
         );
     }
     

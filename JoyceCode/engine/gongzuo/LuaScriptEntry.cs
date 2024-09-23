@@ -9,7 +9,9 @@ namespace engine.gongzuo;
 public class LuaScriptEntry : IDisposable
 {
     private string _luaScript;
-    public string LuaScript { 
+
+    public string LuaScript
+    {
         get => _luaScript;
         set => _setLuaScript(value);
     }
@@ -17,10 +19,12 @@ public class LuaScriptEntry : IDisposable
     private int _setScriptVersion = 0;
     private int _compiledScriptVersion = 0;
     private Lua _luaState;
+
     public Lua LuaState
     {
         get => _luaState;
     }
+
     private LuaFunction _luaFunction;
 
     private List<LuaBindingFrame>? _luaBindings = null;
@@ -48,6 +52,7 @@ public class LuaScriptEntry : IDisposable
         {
             return -1;
         }
+
         try
         {
             // TXWTODO: Add prebound script content, kind of global declarations
@@ -75,7 +80,7 @@ public class LuaScriptEntry : IDisposable
                 _luaState[kvp.Key] = kvp.Value;
             }
         }
-        
+
     }
 
 
@@ -89,8 +94,8 @@ public class LuaScriptEntry : IDisposable
             }
         }
     }
-    
-    
+
+
     public void PushBinding(LuaBindingFrame lbf)
     {
         if (null == _luaState)
@@ -107,8 +112,8 @@ public class LuaScriptEntry : IDisposable
             _applyBindingFrame(lbf);
         }
     }
-    
-    
+
+
     public void Shutdown()
     {
         if (null != _luaState)
@@ -118,14 +123,14 @@ public class LuaScriptEntry : IDisposable
         }
     }
 
-    
+
     public void Initialize()
     {
         _luaState = new Lua();
         _luaState.State.Encoding = Encoding.UTF8;
         _applyBindings();
     }
-    
+
 
     public void Dispose()
     {
@@ -133,14 +138,16 @@ public class LuaScriptEntry : IDisposable
     }
 
 
-    public void Call()
+    private object[] _emptyResult = new object[0];
+
+    public object[] Call()
     {
         if (null == _luaFunction)
         {
             ErrorThrow<InvalidOperationException>($"No lua function loaded.");
-            return;
+            return _emptyResult;
         }
 
-        _luaFunction.Call();
+        return _luaFunction.Call();
     }
 }
