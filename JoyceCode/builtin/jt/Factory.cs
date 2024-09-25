@@ -145,7 +145,7 @@ public class Factory : AModule
             string layername = wMenu["layer"].ToString();
             OSDLayer osdLayer = _requireInputLayer(layername);
             osdLayer.RootWidget.AddChild(wMenu);
-            Widget? wFocussedChild = wMenu.FindFirstDefaultFocussedChild();
+            Widget? wFocussedChild = wMenu.FindFirstDefaultFocussedChild(wMenu);
             if (null == wFocussedChild)
             {
                 wFocussedChild = wMenu.FindFirstFocussableChild();

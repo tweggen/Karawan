@@ -1014,11 +1014,11 @@ public class Widget : IDisposable
     }
 
 
-    protected string _syncLuaScript(string _propName, LuaScriptEntry lse, string script)
+    protected object _syncLuaScript(string _propName, LuaScriptEntry lse, string script)
     {
         lse.LuaScript = script;
         object[] results = lse.Call();
-        if (results != null && results.Length >= 1) return results[0] as string;
+        if (results != null && results.Length >= 1) return results[0];
         return "";
     }
 
@@ -1075,7 +1075,7 @@ public class Widget : IDisposable
     }
 
 
-    protected string _evaluateProperty(string propName)
+    protected object _evaluateProperty(string propName)
     {
         string script = GetAttr(propName, "");
         if (script.IsNullOrEmpty()) return default;
@@ -1318,13 +1318,13 @@ public class Widget : IDisposable
     }
 
 
-    public Widget? FindFirstDefaultFocussedChild()
+    public Widget? FindFirstDefaultFocussedChild(Widget wTop)
     {
-        return FindNextChild(this, 1,
+        return FindNextChild(wTop, 1,
             w =>
                 w.FocusState == FocusStates.Focussable
                 && (w.GetAttr("defaultFocus", "false") == "true"
-                || w._evaluateProperty("isDefaultFocus") == "true")
+                || w._evaluateProperty("isDefaultFocus") is true )
         );
     }
     
@@ -1432,6 +1432,13 @@ public class Widget : IDisposable
          */
         if (wCurrentParent != this)
         {
+            /*
+             * If the parent of the current is the start one, terminate the search. 
+             */
+            if (this == wCurrentParent)
+            {
+                return null;
+            }
             while (true)
             {
                 Widget? wParentParent = wCurrentParent.Parent;
@@ -1457,6 +1464,10 @@ public class Widget : IDisposable
                     if (wMatch != null)
                     {
                         return wMatch;
+                    }
+                    else
+                    {
+                        wCurrentParent = wParentParent;
                     }
                 } 
                 else
