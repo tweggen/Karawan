@@ -4,9 +4,6 @@ namespace builtin.jt;
 
 public class ImplementationFactory
 {
-    private SortedDictionary<string, RootWidget> _mapLayers = new();
-
-    
     public void Unrealize(Widget widget, IWidgetImplementation impl)
     {
         
@@ -38,12 +35,6 @@ public class ImplementationFactory
             
             case "input":
                 return new InputWidgetImplementation(w);
-                break;
-            
-            default:
-                /*
-                 * Everything is just nothing.
-                 */
                 break;
         }
 

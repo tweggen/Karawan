@@ -812,7 +812,7 @@ public class Widget : IDisposable
 
         if (realizationState == RealizationStates.Unrealized)
         {
-            IWidgetImplementation impl = null;
+            IWidgetImplementation impl;
 
             lock (_lo)
             {
@@ -1169,9 +1169,6 @@ public class Widget : IDisposable
                 case "onClick":
                     _onClick(ev);
                     break;
-
-                default:
-                    break;
             }
 
             return;
@@ -1242,12 +1239,8 @@ public class Widget : IDisposable
                             }
                         }
                         break;
-                    default:
-                        break;
                 }
 
-                break;
-            default:
                 break;
         }
     }
@@ -1258,7 +1251,7 @@ public class Widget : IDisposable
         WidgetEvent wev = ev as WidgetEvent;
         Debug.Assert(wev != null);
         Debug.Assert(wev.Widget == this);
-        // TXWTODO: EVents not always are targeted.
+        // TXWTODO: Events not always are targeted.
         HandleInputEvent(ev);
     }
     
@@ -1281,12 +1274,12 @@ public class Widget : IDisposable
      */
     public void HandleInputEvent(engine.news.Event ev)
     {
-        if (ev.IsHandled == true)
+        if (ev.IsHandled)
         {
             return;
         }
         _handleSelfInputEvent(ev);
-        if (ev.IsHandled == true)
+        if (ev.IsHandled)
         {
             return;
         }

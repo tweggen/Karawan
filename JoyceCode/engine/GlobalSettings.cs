@@ -12,7 +12,7 @@ namespace engine;
 public class GlobalSettings
 {
     static private object _staticLo = new();
-    static private GlobalSettings _instance = null;
+    static private GlobalSettings _instance;
 
     private object _lo = new();
     private Dictionary<string, string> _dictConfigParams = new();
