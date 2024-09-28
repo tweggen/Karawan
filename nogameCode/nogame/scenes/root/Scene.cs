@@ -8,6 +8,7 @@ using engine.behave;
 using engine.behave.systems;
 using engine.joyce;
 using engine.news;
+using nogame.modules;
 using nogame.modules.playerhover;
 using static engine.Logger;
 using Module = nogame.modules.map.Module;
@@ -27,6 +28,7 @@ public class Scene : AModule, IScene, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.World>(),
+        new SharedModule<AutoSave>(),
         new SharedModule<engine.behave.SpawnModule>(),
         new MyModule<nogame.modules.playerhover.Module>(),
         new MyModule<nogame.modules.Gameplay>(),
@@ -177,7 +179,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             _engine.QueueMainThreadAction(() =>
             {
-                M<nogame.modules.story.Narration>().Start();
+                M<nogame.modules.story.Narration>().Start("" /* M<AutoSave>().GameState.Story */);
             });
         });
         

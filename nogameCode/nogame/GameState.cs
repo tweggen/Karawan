@@ -18,6 +18,8 @@ public class GameState
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
 
+    public string Story { get; set; } = "";
+    
     private DateTime _gameNow = GameT0;
     public DateTime GameNow
     {

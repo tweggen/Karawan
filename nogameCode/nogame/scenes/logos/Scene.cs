@@ -36,6 +36,7 @@ public class Scene : AModule, IScene
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
+        new SharedModule<nogame.modules.story.Narration>(),
         new MyModule<nogame.modules.menu.LoginMenuModule> { ShallActivate = false },
         new MyModule<TitleModule> { ShallActivate = false }
     };
@@ -146,6 +147,7 @@ public class Scene : AModule, IScene
                 TimepointTitlesongStarted,
                 TimeSpan.FromMilliseconds(4674),
                 _loadRootScene);
+
         });
     }
     

@@ -38,6 +38,7 @@ public class Narration : AModule, IInputPart
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
+        new SharedModule<AutoSave>(),
         new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<InputEventPipeline>()
     };
@@ -216,6 +217,8 @@ public class Narration : AModule, IInputPart
             }
         }
         
+        _saveStory();
+        
         /*
          * If the story won't continue, just remove the display.
          */
@@ -239,26 +242,17 @@ public class Narration : AModule, IInputPart
             
         _displayNextSentence();
     }
-    
-    
-    private void _triggerNextStory()
+
+
+    private string _loadStoryJson()
     {
-        var stream = engine.Assets.Open("story1.json");
+        using var stream = engine.Assets.Open("story1.json");
         using var sr = new StreamReader(stream, Encoding.UTF8);
         string jsonStory = sr.ReadToEnd();
-        lock (_lo)
-        {
-            _currentStory = new Story(jsonStory);
-            _currentStory.BindExternalFunction ("triggerQuest", (string questName) =>
-            {
-                I.Get<engine.quest.Manager>().ActivateQuest(questName);
-            });
-        }
-
-        _advanceStory();
+        return jsonStory;
     }
-
-
+    
+    
     private void _onActionKey()
     {
         _advanceStory();
@@ -368,6 +362,24 @@ public class Narration : AModule, IInputPart
     }
 
 
+    private void _saveStory()
+    {
+        string strStory = ""; 
+        lock (_lo)
+        {
+            if (null != _currentStory)
+            {
+                if (_currentStory.state != null)
+                {
+                    strStory = _currentStory.state.ToJson();
+                }
+            }
+        }
+
+        M<AutoSave>().GameState.Story = strStory;
+    }
+    
+    
     public void TriggerPath(string strPath)
     {
         Story currentStory;
@@ -383,13 +395,64 @@ public class Narration : AModule, IInputPart
         }
 
         currentStory.ChoosePathString(strPath, true, null);
+
+        _saveStory();
+        
         _advanceStory();
     }
 
-
-    public void Start()
+    
+    private void _loadStoryFromJson(string jsonStory)
     {
-        _triggerNextStory();
+        lock (_lo)
+        {
+            _currentStory = null;
+            _currentString = "";
+            _currentNChoices = 0;
+            
+            _currentStory = new Story(jsonStory);
+            _currentStory.BindExternalFunction("triggerQuest",
+                (string questName) => { I.Get<engine.quest.Manager>().ActivateQuest(questName); });
+        }
+    }
+
+
+    private void _loadStateFromJson(string jsonState)
+    {
+        lock (_lo)
+        {
+            if (null == _currentStory)
+            {
+                return;
+            }
+            
+            _currentStory.state.LoadJson(jsonState);
+        }
+    }
+    
+
+    #if false
+    public void SetStateFromJson(string jsonState)
+    {
+        if (String.IsNullOrEmpty(jsonState))
+        {
+            return;
+        }
+
+        _loadStateFromJson(jsonState);
+        _advanceStory();
+    }
+    #endif
+
+
+    public void Start(string jsonState)
+    {
+        _loadStoryFromJson(_loadStoryJson());
+        if (!String.IsNullOrEmpty(jsonState))
+        {
+            _loadStateFromJson(jsonState);
+        }
+        _advanceStory();
     }
     
     
