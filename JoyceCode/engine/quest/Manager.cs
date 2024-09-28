@@ -1,9 +1,10 @@
 
 using System;
-using System.Collections.Generic;
+using engine.news;
 using static engine.Logger;
 
 namespace engine.quest;
+
 
 public class Manager : ObjectFactory<string, IQuest>
 {
@@ -44,6 +45,8 @@ public class Manager : ObjectFactory<string, IQuest>
         
         quest.ModuleDeactivate();
         quest.Dispose();
+
+        I.Get<EventQueue>().Push(new Event("builtin.SaveGame.TriggerSave", "questFinshed"));
     }
 }
 

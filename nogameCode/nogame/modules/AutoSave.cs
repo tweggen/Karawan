@@ -11,7 +11,6 @@ using engine;
 using engine.draw;
 using engine.draw.components;
 using engine.news;
-using nogame.config;
 using static engine.Logger;
 
 namespace nogame.modules;
@@ -400,6 +399,13 @@ public class AutoSave : engine.AModule
     }
 
 
+    private void _handleTriggerSave(Event ev)
+    {
+        Save();
+        // TXWTODO: Also trigger saving the game at this point.
+    }
+    
+
     private void _loadCreateOffline()
     {
         bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
@@ -555,5 +561,7 @@ public class AutoSave : engine.AModule
             HAlign.Right
         ));
 
+        
+        I.Get<SubscriptionManager>().Subscribe("builtin.SaveGame.TriggerSave", _handleTriggerSave);
     }
 }

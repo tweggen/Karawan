@@ -217,8 +217,6 @@ public class Narration : AModule, IInputPart
             }
         }
         
-        _saveStory();
-        
         /*
          * If the story won't continue, just remove the display.
          */
@@ -396,8 +394,6 @@ public class Narration : AModule, IInputPart
 
         currentStory.ChoosePathString(strPath, true, null);
 
-        _saveStory();
-        
         _advanceStory();
     }
 
@@ -444,6 +440,12 @@ public class Narration : AModule, IInputPart
     }
     #endif
 
+
+    public void Save()
+    {
+        _saveStory();
+    }
+    
 
     public void Start(string jsonState)
     {

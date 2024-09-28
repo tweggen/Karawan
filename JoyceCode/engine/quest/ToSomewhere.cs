@@ -249,13 +249,24 @@ public class ToSomewhere : AModule
             ErrorThrow<InvalidOperationException>("No player defined currently.");
         }
 
-        /*
-         * Create a route from the player to the target.
-         */
-        _wTarget = new EntityWaypoint()
+        if (ParentEntity != default)
         {
-            Carrot = ParentEntity
-        };
+            /*
+             * Create a route from the player to the target.
+             */
+            _wTarget = new EntityWaypoint()
+            {
+                Carrot = ParentEntity
+                // TXWTODO: Shouldn't we also set the relative position?
+            };
+        }
+        else
+        {
+            _wTarget = new StaticWaypoint()
+            {
+                Location = RelativePosition
+            };
+        }
 
         _wStart = new EntityWaypoint()
         {
