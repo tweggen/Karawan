@@ -179,7 +179,7 @@ public class Scene : AModule, IScene, IInputPart
         {
             _engine.QueueMainThreadAction(() =>
             {
-                M<nogame.modules.story.Narration>().Start("" /* M<AutoSave>().GameState.Story */);
+                M<nogame.modules.story.Narration>().Start(M<AutoSave>().GameState.Story);
             });
         });
         

@@ -468,14 +468,30 @@ public class AutoSave : engine.AModule
      * No previous save game could be found, the offline game
      * state is loaded or a new one is created.
      */
-    private void _triggerInitialOnlineLoad(Action<GameState> onInitialLoad)
+    private void _triggerInitialOnlineLoad(bool reset, Action<GameState> onInitialLoad)
     {
-        _withWebToken(() =>
+        if (!reset)
         {
-            return  new HttpRequestMessage(
-                HttpMethod.Get,
-                $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
-        }, (response) => _onLoadGameResponse(response, onInitialLoad), 5);
+            _withWebToken(() =>
+            {
+                return new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
+            }, (response) => _onLoadGameResponse(response, onInitialLoad), 5);
+        }
+        else
+        {
+            Trace($"Reset game.");
+            var gameState = new GameState();
+            M<DBStorage>().SaveGameState(gameState);
+            _gameState = gameState;
+            _doSave();
+            _engine.Run(() =>
+            {
+                onInitialLoad(gameState);
+            });
+            
+        }
     }
     
 
@@ -490,11 +506,11 @@ public class AutoSave : engine.AModule
     }
     
 
-    private void _triggerInitialLoad(Action<GameState> onInitialLoad)
+    private void _triggerInitialLoad(bool reset, Action<GameState> onInitialLoad)
     {
         if (_syncOnline)
         {
-            _triggerInitialOnlineLoad(onInitialLoad);
+            _triggerInitialOnlineLoad(reset, onInitialLoad);
         }
         else
         {
@@ -519,7 +535,7 @@ public class AutoSave : engine.AModule
     }
     
 
-    public void StartAutoSave(Action<GameState> onInitialLoad)
+    public void StartAutoSave(bool reset, Action<GameState> onInitialLoad)
     {
         lock (_lo)
         {
@@ -530,7 +546,7 @@ public class AutoSave : engine.AModule
             _isAutoSaveActive = true;
         }
 
-        _triggerInitialLoad(onInitialLoad);
+        _triggerInitialLoad(reset, onInitialLoad);
     }
     
 

@@ -117,6 +117,12 @@ public class NavClusterContent
         }
 
         List<NavLane> tmpMatchList = new();
+        
+        /*
+         * TXWTODO: Workaround to look close to the plane we cover here.
+         */
+        v3Position.Y = _aabb.Center.Y;
+
         /*
          * If we should no
          */

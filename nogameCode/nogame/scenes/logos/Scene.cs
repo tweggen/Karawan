@@ -152,13 +152,13 @@ public class Scene : AModule, IScene
     }
     
 
-    private void _startGame()
+    private void _startGame(bool reset)
     {
         /*
          * Give us a short delay to render some frames.
          */
         I.Get<engine.Timeline>().RunIn(TimeSpan.FromMilliseconds(200),
-            () => M<AutoSave>().StartAutoSave(_onAutoSaveSetup));
+            () => M<AutoSave>().StartAutoSave(reset, _onAutoSaveSetup));
     }
 
 
@@ -173,7 +173,7 @@ public class Scene : AModule, IScene
         DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
         I.Get<AutoSave>().SyncOnline = false; 
 
-        _startGame();
+        _startGame(false);
     }
     
 
@@ -188,7 +188,22 @@ public class Scene : AModule, IScene
         DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
         I.Get<AutoSave>().SyncOnline = true;
 
-        _startGame();
+        _startGame(false);
+    }
+    
+
+    private void _onNewGlobally(Event ev)
+    {
+        lock (_lo)
+        {
+            if (_isStartingGame) return;
+            _isStartingGame = true;
+        }
+
+        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
+        I.Get<AutoSave>().SyncOnline = true;
+
+        _startGame(true);
     }
     
 
@@ -201,6 +216,8 @@ public class Scene : AModule, IScene
     {
         I.Get<SubscriptionManager>().Subscribe("nogame.login.loginLocally", _onLoginLocally);
         I.Get<SubscriptionManager>().Subscribe("nogame.login.loginGlobally", _onLoginGlobally);
+        I.Get<SubscriptionManager>().Subscribe("nogame.login.newGlobally", _onNewGlobally);
+
         ActivateMyModule<nogame.modules.menu.LoginMenuModule>();
     }
 
@@ -223,6 +240,7 @@ public class Scene : AModule, IScene
         
         I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginLocally", _onLoginLocally);
         I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginGlobally", _onLoginGlobally);
+        I.Get<SubscriptionManager>().Unsubscribe("nogame.login.newGlobally", _onNewGlobally);
 
         base.ModuleDeactivate();
     }
