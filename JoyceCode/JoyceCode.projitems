@@ -155,6 +155,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ross\SkiaFontManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\run\LimitedConcurrencyLevelTaskScheduler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\run\RoundRobin.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\Saver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\GenerateClusterNavLanesOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\ShopFront.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\ClusterId.cs" />

@@ -29,6 +29,12 @@
     <ProjectReference Include="..\..\SharpNav\Source\SharpNav\SharpNav.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Mono.Android">
+      <HintPath>..\..\..\..\..\..\Program Files\dotnet\packs\Microsoft.Android.Ref.34\34.0.79\ref\net8.0\Mono.Android.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <Import Project="..\JoyceCode\JoyceCode.projitems" Label="Shared" />
 
 </Project>

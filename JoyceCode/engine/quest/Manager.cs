@@ -46,7 +46,7 @@ public class Manager : ObjectFactory<string, IQuest>
         quest.ModuleDeactivate();
         quest.Dispose();
 
-        I.Get<EventQueue>().Push(new Event("builtin.SaveGame.TriggerSave", "questFinshed"));
+        I.Get<Saver>().Save("quest deactivated");
     }
 }
 

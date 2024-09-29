@@ -7,6 +7,8 @@ using engine;
 using engine.world;
 using SharpNav;
 using SharpNav.Pathfinding;
+using static engine.Logger;
+
 
 namespace builtin.modules.satnav;
 
@@ -44,7 +46,7 @@ public class Route : IDisposable
     /**
      * Iterate though the list to find the target navJunction.
      *
-     * First, find the first common parent of source and target.
+      * First, find the first common parent of source and target.
      * The look, within the scope of the parent, how we can migrate
      * from the source topmost to the destination topmost cluster.
      *
@@ -66,13 +68,24 @@ public class Route : IDisposable
                 NavMap.TopCluster.TryCreateCursor(v3EndCenter)
             );
 
-            /*
-             * Plan the initial route.
-             */
-            _pathfinder = new LocalPathfinder(navCursors[0], navCursors[1]);
+            try
+            {
+                List<NavLane> listLanes;
 
-            var listLanes = _pathfinder.Pathfind();
-            _engine.Run(() => onPath(listLanes));
+                /*
+                 * Plan the initial route.
+                 */
+                _pathfinder = new LocalPathfinder(navCursors[0], navCursors[1]);
+
+                listLanes = _pathfinder.Pathfind();
+
+                _engine.Run(() => onPath(listLanes));
+            }
+            catch (Exception e)
+            {
+                Error($"Exception tracing path: {e}");
+            }
+
         });
     }
 

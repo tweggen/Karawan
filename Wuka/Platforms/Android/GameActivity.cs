@@ -51,7 +51,7 @@ namespace Wuka
                 /*
                  * Try to save a backup copy
                  */
-                I.Get<nogame.modules.AutoSave>()?.Save();
+                I.Get<nogame.modules.AutoSave>()?._save();
             }
             catch (Exception e)
             {

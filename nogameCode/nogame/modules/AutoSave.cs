@@ -110,6 +110,7 @@ public class AutoSave : engine.AModule
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
+        new SharedModule<Saver>(),
         new SharedModule<nogame.config.Module>(),
         new SharedModule<DBStorage>()
     };
@@ -357,15 +358,15 @@ public class AutoSave : engine.AModule
     {
         _setSaving(true);
         var gs = _gameState;
-        
         M<DBStorage>().SaveGameState(gs);
+        
         _triggerCloudSave(gs);
     }
     
 
     private void _onSaveTimer(object sender, ElapsedEventArgs e)
     {
-        _doSave();
+        M<Saver>().Save("auto save");
     }
 
 
@@ -385,7 +386,7 @@ public class AutoSave : engine.AModule
     }
 
 
-    public void Save()
+    private void _save()
     {
         lock (_lo)
         {
@@ -399,10 +400,9 @@ public class AutoSave : engine.AModule
     }
 
 
-    private void _handleTriggerSave(Event ev)
+    private void _afterLoad(GameState gs)
     {
-        Save();
-        // TXWTODO: Also trigger saving the game at this point.
+        M<Saver>().OnAfterLoadGame?.Invoke(this, gs);
     }
     
 
@@ -426,6 +426,8 @@ public class AutoSave : engine.AModule
         }
 
         _gameState = gameState;
+
+        _afterLoad(gameState);
     }
 
 
@@ -449,6 +451,7 @@ public class AutoSave : engine.AModule
 
                 _gameState = gs;
                 haveGameState = true;
+                _afterLoad(gs);
             }
         }
 
@@ -550,8 +553,15 @@ public class AutoSave : engine.AModule
     }
     
 
+    private void _handleTriggerSave()
+    {
+        _save();
+    }
+
+
     public override void ModuleDeactivate()
     {
+        M<Saver>().SaveAction = default;        
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
@@ -561,6 +571,8 @@ public class AutoSave : engine.AModule
     {
         base.ModuleActivate();
         _engine.AddModule(this);
+
+        M<Saver>().SaveAction = _handleTriggerSave;        
         
         _eSaveOnlineDisplay = _engine.CreateEntity("SaveOnlineDisplay");
         // _eSaveOnlineDisplay.Set(new engine.behave.components.Clickable()
@@ -576,8 +588,5 @@ public class AutoSave : engine.AModule
             0x00000000,
             HAlign.Right
         ));
-
-        
-        I.Get<SubscriptionManager>().Subscribe("builtin.SaveGame.TriggerSave", _handleTriggerSave);
     }
 }
