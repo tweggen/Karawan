@@ -425,25 +425,20 @@ public class Narration : AModule, IInputPart
             _currentStory.state.LoadJson(jsonState);
         }
     }
-    
-
-    #if false
-    public void SetStateFromJson(string jsonState)
-    {
-        if (String.IsNullOrEmpty(jsonState))
-        {
-            return;
-        }
-
-        _loadStateFromJson(jsonState);
-        _advanceStory();
-    }
-    #endif
 
 
-    public void Save()
+    private void _onBeforeSaveGame(object sender, object _)
     {
         _saveStory();
+    }
+
+    private void _onAfterLoadGame(object sender, object objGameState)
+    {
+        var gs = objGameState as GameState;
+        if (!String.IsNullOrEmpty(gs.Story))
+        {
+            _loadStateFromJson(gs.Story);
+        }
     }
     
 
@@ -477,6 +472,11 @@ public class Narration : AModule, IInputPart
             _soundTty = I.Get<Boom.ISoundAPI>().FindSound("terminal.ogg");
         }
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+
+
+        M<Saver>().OnBeforeSaveGame += _onBeforeSaveGame;
+        M<Saver>().OnAfterLoadGame += _onAfterLoadGame;
+        
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
     }
 }

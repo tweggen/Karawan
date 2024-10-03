@@ -402,7 +402,7 @@ public class AutoSave : engine.AModule
 
     private void _afterLoad(GameState gs)
     {
-        M<Saver>().OnAfterLoadGame?.Invoke(this, gs);
+        M<Saver>().CallAfterLoad(gs as object);
     }
     
 

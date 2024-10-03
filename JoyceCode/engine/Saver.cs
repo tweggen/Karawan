@@ -19,11 +19,11 @@ public class Saver : AModule
     }
     
 
-    public EventHandler<object> OnBeforeSaveGame;
+    public event EventHandler<object> OnBeforeSaveGame;
 
     public Action SaveAction;
 
-    public EventHandler<object> OnAfterLoadGame;
+    public event EventHandler<object> OnAfterLoadGame;
 
 
     public void EnableSave()
@@ -59,6 +59,11 @@ public class Saver : AModule
         SaveAction();
     }
 
+
+    public void CallAfterLoad(object gs)
+    {
+        OnAfterLoadGame?.Invoke(this, gs);
+    }
 
     private void _handleTriggerSave(Event ev)
     {
