@@ -175,14 +175,6 @@ public class Scene : AModule, IScene, IInputPart
                 ~engine.joyce.components.Camera3.Flags.PreloadOnly;
         });
         
-        Task.Delay(5000).ContinueWith(t =>
-        {
-            _engine.QueueMainThreadAction(() =>
-            {
-                M<nogame.modules.story.Narration>().Start(M<AutoSave>().GameState.Story);
-            });
-        });
-        
         I.Get<Boom.ISoundAPI>().SoundMask = 0xffffffff;
 
         return true;

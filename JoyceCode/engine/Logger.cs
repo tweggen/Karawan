@@ -32,6 +32,7 @@ namespace engine
         private static string _createLogEntry(in Level level, in string msg)
         {
             string strLevel;
+            var now = DateTime.UtcNow;
 
             if( level == Level.Fatal )
             {
@@ -80,7 +81,7 @@ namespace engine
                 }
             }
 
-            return $"{fileName}:{lineNumber}: {type}:{methodName}: {strLevel}: {msg}";
+            return $"{now} {fileName}:{lineNumber}: {type}:{methodName}: {strLevel}: {msg}";
         }
         
 

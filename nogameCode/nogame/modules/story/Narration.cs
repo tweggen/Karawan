@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Text;
+using System.Threading.Tasks;
 using engine;
 using engine.draw;
 using engine.geom;
@@ -399,30 +400,32 @@ public class Narration : AModule, IInputPart
     }
 
     
-    private void _loadStoryFromJson(string jsonStory)
+    private void _ensureStory()
     {
         lock (_lo)
         {
+            if (null != _currentStory)
+            {
+                return;
+            }
             _currentStory = null;
             _currentString = "";
             _currentNChoices = 0;
             
+            using var stream = engine.Assets.Open("story1.json");
+            using var sr = new StreamReader(stream, Encoding.UTF8);
+            string jsonStory = sr.ReadToEnd();
             _currentStory = new Story(jsonStory);
             _currentStory.BindExternalFunction("triggerQuest",
                 (string questName) => { I.Get<engine.quest.Manager>().ActivateQuest(questName); });
         }
     }
-
+    
 
     private void _loadStateFromJson(string jsonState)
     {
         lock (_lo)
         {
-            if (null == _currentStory)
-            {
-                return;
-            }
-            
             _currentStory.state.LoadJson(jsonState);
         }
     }
@@ -433,27 +436,37 @@ public class Narration : AModule, IInputPart
         _saveStory();
     }
 
+    
     private void _onAfterLoadGame(object sender, object objGameState)
     {
+        /*
+         * We need to have a story to apply a state on.
+         */
+        _ensureStory();
+
+        /*
+         * Now, either we have the state as received from the
+         * save game, or we use the default state.
+         */
         var gs = objGameState as GameState;
         if (!String.IsNullOrEmpty(gs.Story))
         {
             _loadStateFromJson(gs.Story);
         }
+        
+        /*
+         * After we initialized the desired state, start the story.
+         */
+        Task.Delay(5000).ContinueWith(t =>
+        {
+            _engine.QueueMainThreadAction(() =>
+            {
+                _advanceStory();
+            });
+        });
     }
     
 
-    public void Start(string jsonState)
-    {
-        _loadStoryFromJson(_loadStoryJson());
-        if (!String.IsNullOrEmpty(jsonState))
-        {
-            _loadStateFromJson(jsonState);
-        }
-        _advanceStory();
-    }
-    
-    
     public override void ModuleDeactivate()
     {
         I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
