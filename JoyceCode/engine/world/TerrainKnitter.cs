@@ -47,7 +47,7 @@ namespace engine.world
                 int x0 = (int) (((iterX+0) * groundResolution) / coarseResolution);
                 int x1 = (int) (((iterX+1) * groundResolution) / coarseResolution);
 
-                int y0 = (int)(((iterY+0) * groundResolution) / coarseResolution);
+                int y0 = (int) (((iterY+0) * groundResolution) / coarseResolution);
                 int y1 = (int) (((iterY+1) * groundResolution) / coarseResolution);
 
                 float localY = 0f;

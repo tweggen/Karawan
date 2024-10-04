@@ -469,24 +469,22 @@ namespace engine.world
          * but only the elevation.
          */
         public engine.elevation.ElevationPixel GetElevationPixelAt(
-            float x0,
-            float z0,
+            in Vector3 v3Pos,
             string layer = engine.elevation.Cache.TOP_LAYER
             )
         {
             /*
              * Convert global  to fragment-local coordinates
              */
-            Index3 idxFragment = Fragment.PosToIndex3(new Vector3(x0, 0f, z0)); 
+            Index3 idxFragment = Fragment.PosToIndex3(v3Pos); 
 
             // TXWTODO: find a more suitable "new" API for this.
             var elevationCache = engine.elevation.Cache.Instance();
             var entry = elevationCache.ElevationCacheGetBelow(idxFragment.I, idxFragment.K, layer);
 
-            float localX = x0 - (world.MetaGen.FragmentSize) * idxFragment.I;
-            float localZ = z0 - (world.MetaGen.FragmentSize) * idxFragment.K;
+            Vector3 v3Local = v3Pos with {Y = 0f} - Fragment.Index3ToPos(idxFragment);
 
-            var epx = entry.GetElevationPixelAt(localX, localZ);
+            var epx = entry.GetElevationPixelAt(v3Local);
 
             return epx;
         }
@@ -498,7 +496,7 @@ namespace engine.world
             string layer = engine.elevation.Cache.TOP_LAYER
         )
         {
-            return GetElevationPixelAt(x0, z0, layer).Height;
+            return GetElevationPixelAt(new Vector3(x0, 0f, z0), layer).Height;
         }
 
 
@@ -507,7 +505,7 @@ namespace engine.world
             string layer = engine.elevation.Cache.TOP_LAYER
         )
         {
-            return GetElevationPixelAt(v3Pos.X, v3Pos.Z, layer).Height;
+            return GetElevationPixelAt(v3Pos, layer).Height;
         }
 
 

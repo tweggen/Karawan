@@ -54,7 +54,7 @@ public class PlaceDebrisOperator : IFragmentOperator
                 rnd.GetFloat() * MetaGen.FragmentSize - MetaGen.FragmentSize / 2f);
 
             var epx = I.Get<engine.world.MetaGen>().Loader.GetElevationPixelAt(
-                worldFragment.Position.X + vCenter.X, worldFragment.Position.Z + vCenter.Z);
+                worldFragment.Position + vCenter);
             /*
              * Only place them outside a cluster, not in trails or other things.
              */

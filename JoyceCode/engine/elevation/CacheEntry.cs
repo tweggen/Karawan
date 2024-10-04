@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace engine.elevation
 {
@@ -9,9 +10,12 @@ namespace engine.elevation
 
 
         /**
-         * Return the interpolated height at the given relative position.
+         * Return the interpolated height at the given relative position
+         *
+         * @param v3Pos
+         *     The position of the elevation pixel relative to the center of the fragment.
          */
-        public ElevationPixel GetElevationPixelAt(float x0, float z0)
+        public ElevationPixel GetElevationPixelAt(in Vector3 v3Pos)
         {
             if (null == elevations) {
                 throw new NullReferenceException(
@@ -22,16 +26,16 @@ namespace engine.elevation
             float elevationStepSize =
                 world.MetaGen.FragmentSize / (float) world.MetaGen.GroundResolution;
 
-            int ex = (int) ((x0+world.MetaGen.FragmentSize/2.0) / elevationStepSize );
-            int ey = (int) ((z0+world.MetaGen.FragmentSize/2.0) / elevationStepSize );
+            int ex = (int) ((v3Pos.X+world.MetaGen.FragmentSize/2.0) / elevationStepSize );
+            int ey = (int) ((v3Pos.Z+world.MetaGen.FragmentSize/2.0) / elevationStepSize );
 
             if(ex<0 || ex> groundResolution ) {
                 throw new ArgumentException( 
-                    $"Invalid ex: {ex} > groundResolution: {groundResolution}, x0: {x0}" );
+                    $"Invalid ex: {ex} > groundResolution: {groundResolution}, x0: {v3Pos.X}" );
             }
             if(ey<0 || ey> groundResolution ) {
                 throw new ArgumentException( 
-                    $"Invalid ex: {ey} > groundResolution: {groundResolution}, z0: {z0}" );
+                    $"Invalid ex: {ey} > groundResolution: {groundResolution}, z0: {v3Pos.Z}" );
             }
 
             var epxOrg = elevations[ey, ex];
@@ -44,8 +48,8 @@ namespace engine.elevation
             float y10 = elevations[ey + 1,ex].Height;
             float y11 = elevations[ey + 1,ex + 1].Height;
 
-            float tileX = (x0 + world.MetaGen.FragmentSize / 2f) - (elevationStepSize * ex);
-            float tileY = (z0 + world.MetaGen.FragmentSize / 2f) - (elevationStepSize * ey);
+            float tileX = (v3Pos.X + world.MetaGen.FragmentSize / 2f) - (elevationStepSize * ex);
+            float tileY = (v3Pos.Z + world.MetaGen.FragmentSize / 2f) - (elevationStepSize * ey);
 
             // Which of the triangles is it?
             float yResult;

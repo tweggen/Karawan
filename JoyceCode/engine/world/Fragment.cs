@@ -51,6 +51,7 @@ public class Fragment : IDisposable
     
     public Index3 IdxFragment { get; set; }
 
+    
     static public Index3 PosToIndex3(in Vector3 pos)
     {
         float x = pos.X + world.MetaGen.FragmentSize / 2f;
@@ -65,6 +66,17 @@ public class Fragment : IDisposable
         );
     }
 
+
+    static public Vector3 Index3ToPos(in Index3 idx)
+    {
+        var fs = world.MetaGen.FragmentSize;
+        return new Vector3(
+            idx.I * fs,
+            0f,
+            idx.K * fs
+        );
+    }
+    
     /**
      * Our array of elevations.
      */
