@@ -402,7 +402,7 @@ public class AutoSave : engine.AModule
 
     private void _afterLoad(GameState gs)
     {
-        M<Saver>().CallAfterLoad(gs as object);
+        M<Saver>().CallAfterLoad(gs);
     }
     
 

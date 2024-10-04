@@ -40,7 +40,8 @@ public class Narration : AModule, IInputPart
     {
         new SharedModule<AutoSave>(),
         new SharedModule<nogame.modules.osd.Display>(),
-        new SharedModule<InputEventPipeline>()
+        new SharedModule<InputEventPipeline>(),
+        new SharedModule<Saver>()
     };
     
 
