@@ -55,17 +55,17 @@ namespace engine.streets
         public float AngleMinStrokes { get; set; } = 40.0f;
 
 
-        /**
-         * Find the first stroke in the list the candidate intersects with
-         * and return it.
-         */
-        private bool _inBounds(Stroke cand)
+        private bool _inBounds(in Stroke cand)
         {
-            return !(false
-                || cand.A.Pos.X < _bl.X
-                || cand.A.Pos.Y < _bl.Y
-                || cand.A.Pos.X > _tr.X
-                || cand.A.Pos.Y > _tr.Y);
+            return (true
+                && cand.A.Pos.X > _bl.X
+                && cand.A.Pos.Y > _bl.Y
+                && cand.A.Pos.X < _tr.X
+                && cand.A.Pos.Y < _tr.Y
+                && cand.B.Pos.X > _bl.X
+                && cand.B.Pos.Y > _bl.Y
+                && cand.B.Pos.X < _tr.X
+                && cand.B.Pos.Y < _tr.Y);
         }
 
 
@@ -84,7 +84,10 @@ namespace engine.streets
 
         private void _addStrokeToDo(in Stroke stroke)
         {
-            _listStrokesToDo.Add(stroke);
+            if (_inBounds(stroke))
+            {
+                _listStrokesToDo.Add(stroke);
+            }
         }
 
 

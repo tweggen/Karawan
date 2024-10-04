@@ -408,7 +408,13 @@ public class ClusterDesc
         Generator streetGenerator = new Generator();
         streetGenerator.SetAnnotation($"Cluster {Name}");
         streetGenerator.Reset("streets-" + _strKey, _strokeStore, this);
-        streetGenerator.SetBounds(-Size / 2f, -Size / 2f, Size / 2f, Size / 2f);
+        float terrainFacetSize =
+            world.MetaGen.FragmentSize / (float) world.MetaGen.GroundResolution;
+        streetGenerator.SetBounds(
+            -Size / 2f + terrainFacetSize, 
+            -Size / 2f + terrainFacetSize,
+            Size / 2f - terrainFacetSize,
+            Size / 2f - terrainFacetSize);
         _addHighwayTriggers(streetGenerator);
         streetGenerator.Generate();
         streetGenerator = null;
