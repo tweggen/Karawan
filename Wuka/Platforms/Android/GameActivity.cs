@@ -32,7 +32,7 @@ namespace Wuka
         ScreenOrientation = ScreenOrientation.Landscape,
         Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
     )]
-    public class GameActivity : Silk.NET.Windowing.Sdl.Android.SilkActivity, ActivityCompat.IOnRequestPermissionsResultCallback
+    public class GameActivity : Wuka.WukaSilkActivity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
         private object _lo = new();
         private bool _triggeredGame = false;
@@ -51,7 +51,7 @@ namespace Wuka
                 /*
                  * Try to save a backup copy
                  */
-                I.Get<nogame.modules.AutoSave>()?._save();
+                I.Get<engine.Saver>()?.Save("OnStop");
             }
             catch (Exception e)
             {
