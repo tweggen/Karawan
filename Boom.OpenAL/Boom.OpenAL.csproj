@@ -9,9 +9,9 @@
 
   <ItemGroup>
     <PackageReference Include="NVorbis" Version="0.10.5" />
-    <PackageReference Include="Silk.NET.OpenAL" Version="2.21.0-build4759.0" />
-    <PackageReference Include="Silk.NET.OpenAL.Extensions.Enumeration" Version="2.21.0-build4759.0" />
-    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.21.0-build4759.0" />
+    <PackageReference Include="Silk.NET.OpenAL" Version="2.21.0-build15.0" />
+    <PackageReference Include="Silk.NET.OpenAL.Extensions.Enumeration" Version="2.21.0-build15.0" />
+    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.21.0-build15.0" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.21.1.2" />
   </ItemGroup>
 

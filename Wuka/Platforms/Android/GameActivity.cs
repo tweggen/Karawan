@@ -23,6 +23,7 @@ using engine.news;
 using Xamarin.Essentials;
 using nogame;
 using Silk.NET.SDL;
+using Silk.NET.Windowing.Sdl.Android;
 using GameState = Android.App.GameState;
 
 namespace Wuka
@@ -32,7 +33,7 @@ namespace Wuka
         ScreenOrientation = ScreenOrientation.Landscape,
         Theme = "@style/Maui.SplashTheme" //"@android:style/Theme.Black.NoTitleBar.Fullscreen"
     )]
-    public class GameActivity : Wuka.WukaSilkActivity, ActivityCompat.IOnRequestPermissionsResultCallback
+    public class GameActivity : SilkActivity, ActivityCompat.IOnRequestPermissionsResultCallback
     {
         private object _lo = new();
         private bool _triggeredGame = false;

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="de.nassau_records.silicondesert2" android:versionCode="130" android:versionName="Targetting API level 34.">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="de.nassau_records.silicondesert2" android:versionCode="133" android:versionName="Targetting API level 34 for real.">
 	<application android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true" android:hardwareAccelerated="true" android:label="silicon desert 2"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
@@ -8,5 +8,5 @@
 	<uses-permission android:name="android.permission.BLUETOOTH" />
 	<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:node="remove" />
 	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-	<uses-sdk android:targetSdkVersion="33" android:minSdkVersion="26" />
+	<uses-sdk android:targetSdkVersion="34" android:minSdkVersion="26" />
 </manifest>
