@@ -394,7 +394,7 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
             pe = Vector3.Normalize(pe);
             pe *= -letterWidth;
             p0 += v3BuildingCenter;
-            p0 += _clusterDesc.Pos with { Y = 2.5f + _clusterDesc.AverageHeight };
+            p0 += (_clusterDesc.Pos - ctx.Fragment.Position) with { Y = 2.5f + _clusterDesc.AverageHeight };
                 
             _createNeonSignSubGeo(ctx, matmesh, p0, pe, h);
         }
@@ -482,24 +482,25 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                 {
                     var v3BuildingCenter = building.GetCenter();
 
-                    var center = v3BuildingCenter;
-                    center.X += cx;
-                    center.Z += cz;
-                    if (!worldFragment.IsInsideLocal(center.X, center.Z))
                     {
-                        continue;
+                        var center = v3BuildingCenter;
+                        center.X += cx;
+                        center.Z += cz;
+                        if (!worldFragment.IsInsideLocal(center.X, center.Z))
+                        {
+                            continue;
+                        }
                     }
-                    else
-                    {
-                    }
-                    
+
                     var orgPoints = building.GetPoints();
+                    #if false
                     bool isDebugBuilding = _isDebugBuilding(orgPoints[0] + _clusterDesc.Pos);
                     haveDebugBuilding |= isDebugBuilding;
                     if (isDebugBuilding)
                     {
                         if (TraceHouses) Trace($"This is the debug building p0 = {orgPoints[0]+_clusterDesc.Pos} c = {v3BuildingCenter+_clusterDesc.Pos}");
                     }
+                    #endif
                     if (!isFirst)
                     {
                         isFirst = true;
@@ -514,11 +515,6 @@ public class GenerateHousesOperator : engine.world.IFragmentOperator
                      * Z coordinate is _clusterDesc.AverageHeight + 2.15f, 
                      */
                     
-                    /*
-                     * The building center is relative to the cluster, as are the corners of the building we have.
-                     */
-                    //Vector3 v3BuildingCenter = building.GetCenter();
-
                     var fragPoints = new List<Vector3>();
                     foreach (var p in orgPoints)
                     {
