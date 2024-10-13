@@ -431,6 +431,17 @@ public class AutoSave : engine.AModule
     }
 
 
+    private async void _onGameHistoryResponse(
+        HttpResponseMessage httpResponseMessage)
+    {
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            string strSaves = await httpResponseMessage.Content.ReadAsStringAsync();
+            Trace($"Saves response is {strSaves}");
+        }
+    }
+
+
     private async void _onLoadGameResponse(
         HttpResponseMessage httpResponseMessage,
         Action<GameState> onInitialLoad)
@@ -481,6 +492,20 @@ public class AutoSave : engine.AModule
                     HttpMethod.Get,
                     $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
             }, (response) => _onLoadGameResponse(response, onInitialLoad), 5);
+            
+
+            #if false
+            /*
+             * As a one time debugging: Display history.
+             */
+            _withWebToken(() =>
+            {
+                return new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"{GameServer}/api/auth/saves?gameTitle=silicondesert2");
+            }, (response) => _onGameHistoryResponse(response), 5);
+            #endif
+
         }
         else
         {
