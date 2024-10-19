@@ -184,9 +184,10 @@ class GenerateShopsOperator : IClusterOperator
                 var e = I.Get<engine.Engine>();
                 e.QueueEntitySetupAction("poi.shop", (DefaultEcs.Entity ePOI) =>
                 {
-                    var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal with
-                            { Y = clusterDesc.AverageHeight + 2.5f +1f }
-                        );
+                    var v3ShopGlobal = (clusterDesc.Pos + v3ShopLocal) with
+                    {
+                        Y = clusterDesc.AverageHeight + 2.5f + 1f
+                    };
                     if (TraceCreate) Trace($"Generating {iconCode} at {v3ShopGlobal}");
                     
                     I.Get<TransformApi>().SetTransforms(ePOI, false,

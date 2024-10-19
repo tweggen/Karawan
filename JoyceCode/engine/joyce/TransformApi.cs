@@ -57,6 +57,7 @@ namespace engine.joyce
             cT3.Rotation = rotation;
             cT3.Position = position;
             _writeTransformToWorld(entity, cT3);
+            _writeTransformToParent(entity, cT3);
         }
         
 
