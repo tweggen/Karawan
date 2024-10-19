@@ -7,6 +7,7 @@
 - Bring things from A to B.
 - Carry persons from A to B (problem: Person visibility)
 - recharge at the polytopes.
+- heal things fdrom viruses
 
 ### Unsorted ideas
 
@@ -69,7 +70,6 @@ fractions, to make everybody dependant on them, to evetually tear down the curre
 government in a public revolution.
 In the end we learn, this action is organized by the party of the current government,
 which is funded by international governments and domestic heavy industries.
-
 
 
 
