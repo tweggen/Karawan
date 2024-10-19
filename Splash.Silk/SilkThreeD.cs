@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Numerics;
 using System.Text;
+using BepuPhysics.Constraints;
 using engine;
 using engine.joyce;
 using static engine.Logger;
@@ -188,9 +189,27 @@ public class SilkThreeD : IThreeD
     }
 
 
+    private List<IDisposable> _listFrameDisposables = null;
+
+
+    private void _unloadFrameDisposables()
+    {
+        if (null != _listFrameDisposables)
+        {
+            foreach (var disp in _listFrameDisposables)
+            {
+                disp.Dispose();
+            }
+
+            _listFrameDisposables = null;
+        }
+    }
+    
+    
     public void LoadFrame(RenderFrame renderFrame)
     {
         _currentRenderFrame = renderFrame;
+        _listFrameDisposables = new();
     }
     
     
@@ -208,6 +227,8 @@ public class SilkThreeD : IThreeD
         {
             _unloadProgramEntry();
         }
+        
+        _unloadFrameDisposables();
 
         _currentRenderFrame = null;
         _frameno++;
@@ -227,6 +248,7 @@ public class SilkThreeD : IThreeD
 
 
     private SkProgramEntry _lastProgramEntry = null;
+
 
     private void _useProgramEntry(SkProgramEntry sh)
     {
@@ -306,15 +328,14 @@ public class SilkThreeD : IThreeD
             CheckError(gl,"Bind Vertex Array");
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
             CheckError(gl,"New Buffer Object");
-            bMatrices.BindBuffer();
-            CheckError(gl,"Bind Buffer");
-            uint locInstanceMatrices = sh.GetAttrib("instanceTransform");
+            //bMatrices.BindBuffer();
+            // CheckError(gl,"Bind Buffer");
             for (uint i = 0; i < 4; ++i)
             {
-                gl.EnableVertexAttribArray(locInstanceMatrices + i);
+                gl.EnableVertexAttribArray((uint) _locInstanceMatrices + i);
                 CheckError(gl,"Enable vertex array in instances");
                 gl.VertexAttribPointer(
-                    locInstanceMatrices + i,
+                    (uint) _locInstanceMatrices + i,
                     4,
                     VertexAttribPointerType.Float,
                     false,
@@ -322,7 +343,7 @@ public class SilkThreeD : IThreeD
                     (void*)(sizeof(float) * i * 4)
                 );
                 CheckError(gl,"Enable vertex attribute pointer n");
-                gl.VertexAttribDivisor(locInstanceMatrices + i, 1);
+                gl.VertexAttribDivisor((uint) _locInstanceMatrices + i, 1);
                 CheckError(gl,"attrib divisor");
             }
 
@@ -350,7 +371,7 @@ public class SilkThreeD : IThreeD
         if (_useInstanceRendering) 
         {
             Matrix4x4 mvp = _matView * _matProjection;
-            sh.SetUniform("mvp", mvp);
+            sh.SetUniform(_locMvp, mvp);
             if (jMesh.Vertices.Count > 65535)
             {
                 Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({jMesh.Vertices.Count})");
@@ -385,7 +406,7 @@ public class SilkThreeD : IThreeD
             for (int i = 0; i < nMatrices; ++i)
             {
                 Matrix4x4 mvpi = Matrix4x4.Transpose(spanMatrices[i]) * _matView * _matProjection;
-                sh.SetUniform("mvp", mvpi);
+                sh.SetUniform(_locMvp, mvpi);
                 CheckError(gl,"upload mvpi");
                 gl.DrawElements(
                     PrimitiveType.Triangles,
@@ -402,7 +423,8 @@ public class SilkThreeD : IThreeD
         
         if (null != bMatrices)
         {
-            bMatrices.Dispose();
+            _listFrameDisposables.Add(bMatrices);
+            // bMatrices.Dispose();
         }
 
     }   
@@ -659,6 +681,9 @@ public class SilkThreeD : IThreeD
         }
     }
 
+    
+    private int _locInstanceMatrices = 0;
+    private int _locMvp = 0;
 
     private void _setupProgramGlobals(SkProgramEntry shader)
     {
@@ -683,6 +708,12 @@ public class SilkThreeD : IThreeD
 
         shader.SetUniform("v3AbsPosView", _vCamera);
         shader.SetUniform("frameNo", _frameno);
+        
+        /*
+         * Also load the locations for some programs from the shader.
+         */
+        _locInstanceMatrices = shader.GetAttrib("instanceTransform");
+        _locMvp = shader.GetUniform("mvp");
     }
     
     

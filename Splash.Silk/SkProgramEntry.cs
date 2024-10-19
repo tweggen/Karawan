@@ -71,7 +71,7 @@ public class SkProgramEntry : IDisposable
         }
     }
 
-    public uint GetUniform(string name)
+    public int GetUniform(string name)
     {
         int location = _gl.GetUniformLocation(Handle, name);
         if (location == -1)
@@ -80,11 +80,11 @@ public class SkProgramEntry : IDisposable
             return 0;
         }
 
-        return (uint) location;
+        return (int) location;
     }
 
 
-    public uint GetAttrib(string name)
+    public int GetAttrib(string name)
     {
         int location = _gl.GetAttribLocation(Handle, name);
         if (location == -1)
@@ -93,7 +93,7 @@ public class SkProgramEntry : IDisposable
             return 0;
         }
 
-        return (uint) location;
+        return (int) location;
     }
     
     public void SetUniform(string name, in Vector4 v)
@@ -122,6 +122,12 @@ public class SkProgramEntry : IDisposable
         {
             throw new Exception($"{name} uniform not found on shader.");
         }
+        _gl.UniformMatrix4(location, 1, false, (float*) &value);
+    }
+
+    
+    public unsafe void SetUniform(int location, Matrix4x4 value)
+    {
         _gl.UniformMatrix4(location, 1, false, (float*) &value);
     }
 

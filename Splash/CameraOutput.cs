@@ -237,7 +237,6 @@ public class CameraOutput
                 else
                 {
                     threeD.FinishUploadOnly(meshItem.AMeshEntry);
-
                 }
             }
         }
