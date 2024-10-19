@@ -35,11 +35,11 @@
 
   <Import Project="..\nogameCode\nogameCode.projitems" Label="Shared" />
 
-  <Target Condition=" '$(OS)' == 'Windows_NT' " Name="GatherTextures" BeforeTargets="GatherResources">
+  <Target Condition=" '$(OS)' == 'Windows_NT' " Name="GatherTexturesWindowsHost" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
     <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\win-x64\publish\joycecmd.exe"/>
   </Target>
-  <Target Condition=" '$(OS)' != 'Windows_NT' " Name="GatherTextures" BeforeTargets="GatherResources">
+  <Target Condition=" '$(OS)' != 'Windows_NT' " Name="GatherTexturesLinuxHost" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
     <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\linux-x64\publish\joycecmd"/>
   </Target>
