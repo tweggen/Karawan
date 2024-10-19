@@ -731,8 +731,18 @@ public class Platform : engine.IPlatform
             {
                 BeforeDoEvent();
             }
-            
-            iView.DoEvents();
+
+            try
+            {
+                iView.DoEvents();
+            }
+            catch (Exception e)
+            {
+                /*
+                 * Catching exception that might come from unknown keys in ImLib
+                 */
+            }
+
             if (!iView.IsClosing)
             {
                 _triggerWaitMonitor();
