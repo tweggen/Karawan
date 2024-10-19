@@ -22,6 +22,7 @@ public struct OSDText
     public ushort OSDTextFlags = 0;
     public ushort GaugeValue;
     public float MaxDistance = 200f;
+    public uint CameraMask = 0xffffffff;
 
     public override string ToString()
     {

@@ -127,7 +127,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 12,
                 0x88226622,
                 0x00000000,
-                engine.draw.HAlign.Left) {MaxDistance = 800f});
+                engine.draw.HAlign.Left) {MaxDistance = 800f, CameraMask=1});
             var jFountainCubesInstanceDesc = InstanceDesc.CreateFromMatMesh(
                 new MatMesh(
                     I.Get<ObjectRegistry<Material>>().Get("nogame.characters.polytope.materials.cube"),

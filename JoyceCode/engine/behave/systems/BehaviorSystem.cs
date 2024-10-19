@@ -56,15 +56,12 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
             }
 
             ref var cBehavior = ref entity.Get<behave.components.Behavior>();
+
+            
             if (hadWorldTransform3 && hadTransform3)
             {
                 if (Vector3.DistanceSquared(v3WorldPosition, vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
                 {
-                    if (cBehavior.Provider.GetType() == typeof(GoalMarkerSpinBehavior))
-                    {
-                        int a = 1;
-                    }
-
                     if (0 != (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
                     {
                         cBehavior.Provider?.OutOfRange(_engine, entity);
@@ -86,6 +83,10 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                 }
                 else
                 {
+                    if (cBehavior.MaxDistance == 16)
+                    {
+                        int a = 1;
+                    }
                     if (0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
                     {
                         cBehavior.Provider?.InRange(_engine, entity);
@@ -96,6 +97,13 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                     {
                         I.Get<engine.joyce.TransformApi>().SetVisible(entity, true);
                     }
+                }
+            }
+            else
+            {
+                if (cBehavior.MaxDistance == 16)
+                {
+                    int a = 1;
                 }
             }
 

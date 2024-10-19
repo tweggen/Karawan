@@ -65,7 +65,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
             {
                 ref var cEntityTransform = ref entity.Get<Transform3ToWorld>();
 
-                ce = _cameraWatcher.GetCameraEntry(cEntityTransform.CameraMask); 
+                ce = _cameraWatcher.GetCameraEntry(cEntityTransform.CameraMask & cOsdText.CameraMask); 
                 if (null == ce)
                 {
                     continue;

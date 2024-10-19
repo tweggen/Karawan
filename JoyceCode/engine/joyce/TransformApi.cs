@@ -44,6 +44,33 @@ namespace engine.joyce
         }
 
 
+        public void SetAbsoluteTransforms(
+            Entity entity,
+            bool isVisible,
+            uint cameraMask,
+            in Quaternion rotation,
+            in Vector3 position)
+        {
+            ref var cT3 = ref _findT3(entity);
+            cT3.IsVisible = isVisible;
+            cT3.CameraMask = cameraMask;
+            cT3.Rotation = rotation;
+            cT3.Position = position;
+            _writeTransformToWorld(entity, cT3);
+        }
+        
+
+        private void _writeTransformToWorld(in Entity entity, in Transform3 cT3)
+        {
+            var mScale = Matrix4x4.CreateScale(cT3.Scale);
+            var mRotate = Matrix4x4.CreateFromQuaternion(cT3.Rotation);
+            var mTranslate = Matrix4x4.CreateTranslation(cT3.Position);
+            var mToParent = mScale * mRotate * mTranslate;
+            entity.Set(new Transform3ToWorld(cT3.CameraMask, cT3.IsVisible?Transform3ToWorld.Visible:0, mToParent) );
+            _isDirty = true;
+        }
+        
+
         private void _writeTransformToParent(in Entity entity, in Transform3 cT3)
         {
             var mScale = Matrix4x4.CreateScale(cT3.Scale);

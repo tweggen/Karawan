@@ -19,7 +19,7 @@ public class ShopNearbyBehavior : ABehavior
     public DefaultEcs.Entity EPOI;
     private DefaultEcs.Entity _eActionMarker;
 
-    public float Distance { get; set; } = 10f;
+    public float Distance { get; set; } = 16f;
 
 
     private void _onShopEnter(Event ev)
@@ -75,7 +75,7 @@ public class ShopNearbyBehavior : ABehavior
         _eActionMarker.Set(new OSDText(
             new Vector2(-100f, 0f), new Vector2(200f, 14f), 
             "E to enter", 18, 0xff22aaee,
-            0x00000000, engine.draw.HAlign.Center) { MaxDistance = 2f*Distance });
+            0x00000000, engine.draw.HAlign.Center) { MaxDistance = 2f*Distance, CameraMask = 1});
         _eActionMarker.Set(new engine.behave.components.Clickable()
         {
             ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.shop.open", null)
