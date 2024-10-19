@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using engine.world;
-using SharpNav.Geometry;
 
 namespace builtin.modules.satnav;
 
@@ -21,14 +20,6 @@ public class FragmentNavMesh : IDisposable
     private ClusterDesc? _clusterDesc;
 
 
-    /**
-     * Return the entire navmesh for this fragment.
-     */
-    public IEnumerable<Triangle3> GetNavMesh()
-    {
-        return null;
-    }
-    
 
     public void Dispose()
     {

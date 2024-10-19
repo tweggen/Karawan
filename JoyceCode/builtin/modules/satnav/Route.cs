@@ -4,9 +4,6 @@ using System.Numerics;
 using System.Threading.Tasks;
 using builtin.modules.satnav.desc;
 using engine;
-using engine.world;
-using SharpNav;
-using SharpNav.Pathfinding;
 using static engine.Logger;
 
 

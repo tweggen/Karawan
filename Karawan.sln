@@ -44,8 +44,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FbxSharp", "..\FbxSharp\Fbx
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "glTFLoader", "..\glTF-CSharp-Loader\glTFLoader\glTFLoader.csproj", "{F812745B-E883-4512-A937-0A92D6A66D3F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpNav", "..\SharpNav\Source\SharpNav\SharpNav.csproj", "{0E3C6E73-CCE6-4148-B847-36487FFEA225}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
