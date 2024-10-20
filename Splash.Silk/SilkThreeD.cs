@@ -41,13 +41,9 @@ public class SilkThreeD : IThreeD
 
     private int _nUploadedMeshes = 0;
     
-    private RenderFrame _currentRenderFrame = null;
     private LightCollector _currentLightCollector = null;
     
     private readonly engine.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
-
-    private List<IShaderUseCase> _listShaderUseCases = new();
-    
 
     private GL _getGL()
     {
@@ -79,7 +75,7 @@ public class SilkThreeD : IThreeD
                 _unloadMaterialFromShader();
             }
 
-            _useProgramEntry(sh);
+            _silkFrame.UseProgramEntry(sh, _setupProgramGlobals);
 
             if (_lastMaterialEntry == skMaterialEntry)
             {
@@ -189,51 +185,44 @@ public class SilkThreeD : IThreeD
     }
 
 
-    private List<IDisposable> _listFrameDisposables = null;
-
-
-    private void _unloadFrameDisposables()
-    {
-        if (null != _listFrameDisposables)
-        {
-            foreach (var disp in _listFrameDisposables)
-            {
-                disp.Dispose();
-            }
-
-            _listFrameDisposables = null;
-        }
-    }
+    private SilkFrame _silkFrame = null;
     
-    
-    public void LoadFrame(RenderFrame renderFrame)
+    public void BeginRenderFrame(RenderFrame renderFrame)
     {
-        _currentRenderFrame = renderFrame;
-        _listFrameDisposables = new();
+        _silkFrame = new(_gl, renderFrame);
     }
     
     
     /*
      * Detach any pending programs from the pipeline.
      */
-    public void UnloadAfterFrame()
+    public void EndRenderFrame()
     {
         if (null != _lastMaterialEntry)
         {
             _unloadMaterialFromShader();
         }
 
-        if (null != _lastProgramEntry)
+        if (null != _silkFrame)
         {
-            _unloadProgramEntry();
+            _silkFrame.Dispose();
+            _silkFrame = null;
         }
-        
-        _unloadFrameDisposables();
-
-        _currentRenderFrame = null;
+ 
         _frameno++;
     }
 
+
+    public void EndRenderPart()
+    {
+    }
+    
+    
+    public void BeginRenderPart(RenderPart renderPart)
+    {
+    }
+    
+    
     private static readonly  bool _useInstanceRendering = true;
 
     public void FinishUploadOnly(in AMeshEntry aMeshEntry)
@@ -245,36 +234,55 @@ public class SilkThreeD : IThreeD
         // _gl.BindBuffer(GLEnum.ArrayBuffer, 0);
 
     }
-
-
-    private SkProgramEntry _lastProgramEntry = null;
-
-
-    private void _useProgramEntry(SkProgramEntry sh)
-    {
-        if (_lastProgramEntry == sh)
-        {
-            return;
-        }
-
-        _lastProgramEntry = sh;
-        sh.Use();
-        _setupProgramGlobals(sh);
-    }
-
-
-    private void _unloadProgramEntry()
-    {
-        if (null == _lastProgramEntry)
-        {
-            return;
-        }
-
-        var pe = _lastProgramEntry;
-        _lastProgramEntry = null;
-        _gl.UseProgram(pe.Handle);
-    }
     
+    private List<IShaderUseCase> _listShaderUseCases = new();
+
+    
+    private void _resolveProgramUseCases(SkProgramEntry shader)
+    {
+        foreach (var usecase in _listShaderUseCases)
+        {
+            if (!shader.ShaderUseCases.ContainsKey(usecase.Name))
+            {
+                shader.ShaderUseCases[usecase.Name] = usecase.Compile(shader);
+            }
+        }
+    }
+
+
+    private void _setupProgramGlobals(SkProgramEntry shader)
+    {
+        shader.Use();        
+        
+        /*
+         * Before using the shader at all, make sure all our use cases are
+         * resolved
+         */
+        _resolveProgramUseCases(shader);
+        
+        /*
+         * Now specific calls.
+         * FIXME: This needs a more beautiful API.
+         */
+        {
+            LightShaderUseCaseLocs uc = 
+                shader.ShaderUseCases[LightShaderUseCase.StaticName]
+                    as LightShaderUseCaseLocs;
+            uc.Apply(_getGL(), shader, _silkFrame.RenderFrame.LightCollector);
+        }
+        shader.SetUniform("fogDistance", _fogDistance);
+        shader.SetUniform("col3Fog", _v3FogColor);
+
+        shader.SetUniform("v3AbsPosView", _vCamera);
+        shader.SetUniform("frameNo", _frameno);
+        
+        /*
+         * Also load the locations for some programs from the shader.
+         */
+        _locInstanceMatrices = shader.GetAttrib("instanceTransform");
+        _locMvp = shader.GetUniform("mvp");
+    }
+
     
     public unsafe void DrawMeshInstanced(
         in AMeshEntry aMeshEntry,
@@ -326,6 +334,7 @@ public class SilkThreeD : IThreeD
         {
             skMeshEntry.vao.BindVertexArray();
             CheckError(gl,"Bind Vertex Array");
+            _silkFrame.RegisterInstanceBuffer(spanMatrices);
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
             CheckError(gl,"New Buffer Object");
             //bMatrices.BindBuffer();
@@ -423,7 +432,7 @@ public class SilkThreeD : IThreeD
         
         if (null != bMatrices)
         {
-            _listFrameDisposables.Add(bMatrices);
+            _silkFrame.ListFrameDisposables.Add(bMatrices);
             // bMatrices.Dispose();
         }
 
@@ -670,53 +679,9 @@ public class SilkThreeD : IThreeD
     }
 
 
-    private void _resolveProgramUseCases(SkProgramEntry shader)
-    {
-        foreach (var usecase in _listShaderUseCases)
-        {
-            if (!shader.ShaderUseCases.ContainsKey(usecase.Name))
-            {
-                shader.ShaderUseCases[usecase.Name] = usecase.Compile(shader);
-            }
-        }
-    }
-
-    
     private int _locInstanceMatrices = 0;
     private int _locMvp = 0;
 
-    private void _setupProgramGlobals(SkProgramEntry shader)
-    {
-        /*
-         * Before using the shader at all, make sure all our use cases are
-         * resolved
-         */
-        _resolveProgramUseCases(shader);
-        
-        /*
-         * Now specific calls.
-         * FIXME: This needs a more beautiful API.
-         */
-        {
-            LightShaderUseCaseLocs uc = 
-                shader.ShaderUseCases[LightShaderUseCase.StaticName]
-                as LightShaderUseCaseLocs;
-            uc.Apply(_getGL(), shader, _currentRenderFrame.LightCollector);
-        }
-        shader.SetUniform("fogDistance", _fogDistance);
-        shader.SetUniform("col3Fog", _v3FogColor);
-
-        shader.SetUniform("v3AbsPosView", _vCamera);
-        shader.SetUniform("frameNo", _frameno);
-        
-        /*
-         * Also load the locations for some programs from the shader.
-         */
-        _locInstanceMatrices = shader.GetAttrib("instanceTransform");
-        _locMvp = shader.GetUniform("mvp");
-    }
-    
-    
     public void SetCameraPos(in Vector3 vCamera)
     {
         _vCamera = vCamera;
@@ -838,7 +803,6 @@ public class SilkThreeD : IThreeD
     public SilkThreeD()
     {
         _engine = I.Get<Engine>();
-
         _listShaderUseCases.Add(new LightShaderUseCase());
     }
 }

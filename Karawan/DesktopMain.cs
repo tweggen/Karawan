@@ -44,7 +44,6 @@ public class DesktopMain
     }
 
 
-
     public static void Main(string[] args)
     {
         // System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");

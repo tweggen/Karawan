@@ -56,6 +56,8 @@ namespace Splash.Silk
             
             foreach(var renderPart in renderParts)
             {
+                _silkThreeD.BeginRenderPart(renderPart);
+                
                 /*
                  * We clear the screen only before the very first rendering pass.
                  * In all other passes, we clear the depth buffer only.
@@ -222,6 +224,8 @@ namespace Splash.Silk
                 _gl.Disable(EnableCap.Blend);
                 _gl.Enable(EnableCap.CullFace);
                 y0Stats += 20;
+                
+                _silkThreeD.EndRenderPart();
             }
 
         }
@@ -289,7 +293,7 @@ namespace Splash.Silk
 
         public void RenderFrame(in RenderFrame renderFrame)
         {
-            _silkThreeD.LoadFrame(renderFrame);
+            _silkThreeD.BeginRenderFrame(renderFrame);
             _gl = _silkThreeD.GetGL();
             
             /*
@@ -300,7 +304,7 @@ namespace Splash.Silk
             _nailViewport(true, Vector2.Zero, Vector2.One, true);
             _renderParts(renderFrame.RenderParts);
             _nailViewport(false, Vector2.Zero, Vector2.One, true);
-            _silkThreeD.UnloadAfterFrame();
+            _silkThreeD.EndRenderFrame();
         }
 
 

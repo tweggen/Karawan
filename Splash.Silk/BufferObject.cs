@@ -37,12 +37,14 @@ public class BufferObject<TDataType> : IDisposable
         }
     }
 
+    
     public void BindBuffer()
     {
         //Binding the buffer object, with the correct buffer type.
         _gl.BindBuffer(_bufferType, _handle);
     }
 
+    
     public void Dispose()
     {
         //Remember to delete our buffer.
