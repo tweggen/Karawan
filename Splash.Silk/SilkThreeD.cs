@@ -58,6 +58,7 @@ public class SilkThreeD : IThreeD
 
 
     private SkMaterialEntry _lastMaterialEntry = null;
+    private SilkRenderState _silkRenderState;
     
     
     /**
@@ -75,7 +76,7 @@ public class SilkThreeD : IThreeD
                 _unloadMaterialFromShader();
             }
 
-            _silkFrame.UseProgramEntry(sh, _setupProgramGlobals);
+            _silkRenderState.UseProgramEntry(sh, _setupProgramGlobals);
 
             if (_lastMaterialEntry == skMaterialEntry)
             {
@@ -780,6 +781,8 @@ public class SilkThreeD : IThreeD
         _gl.GetInteger(GetPName.MaxElementsIndices, out var maxIndices);
         _gl.GetInteger(GetPName.MaxElementIndex, out var maxElementIndex);
         Trace($"On this platform GL_MAX_ELEMENTS_VERTICES == {maxVertices}, GL_MAX_ELEMENTS_INDICES == {maxIndices}, GL_MAX_ELEMENT_INDEX = {maxElementIndex}");
+
+        _silkRenderState = new(_gl);
     }
 
     public GL GetGL()
