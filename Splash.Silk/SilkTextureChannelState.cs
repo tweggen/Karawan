@@ -43,7 +43,6 @@ public class SilkTextureChannelState
         if (_currentSkTexture == skTexture)
         {
             return;
-            
         }
         if (skTexture != null)
         {
