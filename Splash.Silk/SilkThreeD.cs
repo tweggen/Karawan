@@ -97,25 +97,8 @@ public class SilkThreeD : IThreeD
 
         try
         {
-            SkTextureEntry? skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
-            if (skDiffuseTextureEntry != null && skDiffuseTextureEntry.IsUploaded())
-            {
-                SkTexture? skTexture = skDiffuseTextureEntry.SkTexture;
-                if (skTexture != null)
-                {
-                    skTexture.ActiveAndBind(TextureUnit.Texture0);
-                }
-            }
-
-            SkTextureEntry? skEmissiveTextureEntry = skMaterialEntry.SkEmissiveTexture;
-            if (skEmissiveTextureEntry != null && skEmissiveTextureEntry.IsUploaded())
-            {
-                SkTexture? skTexture = skEmissiveTextureEntry.SkTexture;
-                if (skTexture != null)
-                {
-                    skTexture.ActiveAndBind(TextureUnit.Texture2);
-                }
-            }
+            _silkRenderState.Texture0.UseTextureEntry(skMaterialEntry.SkDiffuseTexture);
+            _silkRenderState.Texture2.UseTextureEntry(skMaterialEntry.SkEmissiveTexture);
 
             engine.joyce.Material jMaterial = skMaterialEntry.JMaterial;
             sh.SetUniform("col4Diffuse", new Vector4(
@@ -166,6 +149,7 @@ public class SilkThreeD : IThreeD
         _lastMaterialEntry = null;
         try
         {
+#if false
             //sh.SetUniform("texture0");
             SkTextureEntry? skDiffuseTextureEntry = skMaterialEntry.SkDiffuseTexture;
             if (skDiffuseTextureEntry != null && skDiffuseTextureEntry.IsUploaded())
@@ -186,7 +170,7 @@ public class SilkThreeD : IThreeD
                     skTexture.ActiveAndUnbind(TextureUnit.Texture2);
                 }
             }
-
+#endif
         }
         catch (Exception e)
         {
@@ -790,6 +774,8 @@ public class SilkThreeD : IThreeD
         _gl.GetInteger(GetPName.MaxElementsIndices, out var maxIndices);
         _gl.GetInteger(GetPName.MaxElementIndex, out var maxElementIndex);
         Trace($"On this platform GL_MAX_ELEMENTS_VERTICES == {maxVertices}, GL_MAX_ELEMENTS_INDICES == {maxIndices}, GL_MAX_ELEMENT_INDEX = {maxElementIndex}");
+
+        _silkRenderState = new(_gl);
     }
 
     public GL GetGL()

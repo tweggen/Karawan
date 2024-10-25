@@ -8,6 +8,9 @@ public class SilkRenderState
 
     private SkProgramEntry _lastProgramEntry = null;
 
+    public SilkTextureChannelState Texture0;
+    public SilkTextureChannelState Texture2;
+
     
     private void _unloadProgramEntry()
     {
@@ -41,5 +44,7 @@ public class SilkRenderState
     public SilkRenderState(GL gl)
     {
         _gl = gl;
+        Texture0 = new(gl, TextureUnit.Texture0);
+        Texture2 = new(gl, TextureUnit.Texture2);
     }
 }
