@@ -58,6 +58,7 @@ public class SilkThreeD : IThreeD
 
 
     private SkMaterialEntry _lastMaterialEntry = null;
+    private SilkRenderState _silkRenderState;
     
     
     /**
@@ -84,7 +85,12 @@ public class SilkThreeD : IThreeD
             /*
              * Setup new shader if required at all.
              */
-            _silkFrame.UseProgramEntry(sh, _setupProgramGlobals);
+            _silkRenderState.UseProgramEntry(sh, _setupProgramGlobals);
+
+            if (_lastMaterialEntry == skMaterialEntry)
+            {
+                return;
+            }
 
             _lastMaterialEntry = skMaterialEntry;
         }
