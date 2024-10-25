@@ -1,6 +1,7 @@
 ﻿using Silk.NET.OpenGL;
 using System;
 using System.Diagnostics;
+using Newtonsoft.Json.Serialization;
 using static engine.Logger;
 
 namespace Splash.Silk;
@@ -16,6 +17,7 @@ public class BufferObject<TDataType> : IDisposable
     private uint _handle;
     private BufferTargetARB _bufferType;
     private GL _gl;
+    private const bool _checkErrors = false;  
 
     public unsafe BufferObject(GL gl, Span<TDataType> data, BufferTargetARB bufferType)
     {
@@ -31,7 +33,7 @@ public class BufferObject<TDataType> : IDisposable
             _gl.BufferData(bufferType, (nuint)(data.Length * sizeof(TDataType)), d, BufferUsageARB.StaticDraw);
         }
 
-        if (_gl.GetError() != GLEnum.NoError)
+        if (_checkErrors && _gl.GetError() != GLEnum.NoError)
         {
             Trace("Error uploading mesh.");
         }

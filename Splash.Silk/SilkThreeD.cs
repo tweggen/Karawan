@@ -45,6 +45,14 @@ public class SilkThreeD : IThreeD
     
     private readonly engine.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
 
+    private bool _checkGLErrors = false;
+
+    public bool CheckGLErrors
+    {
+        get => _checkGLErrors;
+        set { _checkGLErrors = value; }
+    }
+
     private GL _getGL()
     {
         if (null == _gl)
@@ -286,7 +294,7 @@ public class SilkThreeD : IThreeD
     {
         var gl = _getGL();
         
-        CheckError(gl,"Beginning of DrawMeshInstanced");
+        if (_checkGLErrors) CheckError(gl,"Beginning of DrawMeshInstanced");
         SkMeshEntry skMeshEntry = ((SkMeshEntry)aMeshEntry);
         //VertexArrayObject skMesh = skMeshEntry.vao;
 
@@ -327,16 +335,16 @@ public class SilkThreeD : IThreeD
         if (_useInstanceRendering)
         {
             skMeshEntry.vao.BindVertexArray();
-            CheckError(gl,"Bind Vertex Array");
+            if (_checkGLErrors) CheckError(gl,"Bind Vertex Array");
             _silkFrame.RegisterInstanceBuffer(spanMatrices);
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
-            CheckError(gl,"New Buffer Object");
+            if (_checkGLErrors) CheckError(gl,"New Buffer Object");
             //bMatrices.BindBuffer();
-            // CheckError(gl,"Bind Buffer");
+            // if (_checkGLErrors) CheckError(gl,"Bind Buffer");
             for (uint i = 0; i < 4; ++i)
             {
                 gl.EnableVertexAttribArray((uint) _locInstanceMatrices + i);
-                CheckError(gl,"Enable vertex array in instances");
+                if (_checkGLErrors) CheckError(gl,"Enable vertex array in instances");
                 gl.VertexAttribPointer(
                     (uint) _locInstanceMatrices + i,
                     4,
@@ -345,9 +353,9 @@ public class SilkThreeD : IThreeD
                     16 * (uint)sizeof(float),
                     (void*)(sizeof(float) * i * 4)
                 );
-                CheckError(gl,"Enable vertex attribute pointer n");
+                if (_checkGLErrors) CheckError(gl,"Enable vertex attribute pointer n");
                 gl.VertexAttribDivisor((uint) _locInstanceMatrices + i, 1);
-                CheckError(gl,"attrib divisor");
+                if (_checkGLErrors) CheckError(gl,"attrib divisor");
             }
 
             /*
@@ -360,7 +368,7 @@ public class SilkThreeD : IThreeD
         else
         {
             skMeshEntry.vao.BindVertexArray();
-            CheckError(gl,"instance vertex array bind");
+            if (_checkGLErrors) CheckError(gl,"instance vertex array bind");
         }
         
         /*
@@ -393,7 +401,7 @@ public class SilkThreeD : IThreeD
                 GLEnum.UnsignedShort,
                 (void*)0,
                 (uint)nMatrices);
-            CheckError(gl,"draw elements instanced");
+            if (_checkGLErrors) CheckError(gl,"draw elements instanced");
         }
         else
         {
@@ -410,13 +418,13 @@ public class SilkThreeD : IThreeD
             {
                 Matrix4x4 mvpi = Matrix4x4.Transpose(spanMatrices[i]) * _matView * _matProjection;
                 sh.SetUniform(_locMvp, mvpi);
-                CheckError(gl,"upload mvpi");
+                if (_checkGLErrors) CheckError(gl,"upload mvpi");
                 gl.DrawElements(
                     PrimitiveType.Triangles,
                     (uint)jMesh.Indices.Count,
                     DrawElementsType.UnsignedShort,
                     (void*)0);
-                CheckError(gl,"draw elements");
+                if (_checkGLErrors) CheckError(gl,"draw elements");
             }
         }
         
@@ -440,10 +448,7 @@ public class SilkThreeD : IThreeD
         if (!skMeshEntry.IsUploaded())
         {
             skMeshEntry.Upload();
-            if (CheckError(gl,"AfterUpload mesh") < 0)
-            {
-                Trace("Something to break here.");
-            }
+            if (_checkGLErrors) CheckError(gl, "AfterUpload mesh");
             ++_nUploadedMeshes;
         }
     }

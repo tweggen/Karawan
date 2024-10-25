@@ -67,9 +67,17 @@ public class SkTexture : IDisposable
             Trace(msg);
         }
     }
+
     
+    private bool _checkGLErrors = false;
+
+    public bool CheckGLErrors
+    {
+        get => _checkGLErrors;
+        set { _checkGLErrors = value; }
+    }
     
-    public int CheckError(string what)
+    private int _checkError(string what)
     {
         int err = 0;
         while (true)
@@ -94,10 +102,10 @@ public class SkTexture : IDisposable
         _trace("_setParameters");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS,
             (int)GLEnum.ClampToEdge);
-        CheckError("TexParam WrapS");
+        if (_checkGLErrors) _checkError("TexParam WrapS");
         _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT,
             (int)GLEnum.ClampToEdge);
-        CheckError("TexParam WrapT");
+        if (_checkGLErrors) _checkError("TexParam WrapT");
 
         switch (_filteringMode)
         {
@@ -105,46 +113,46 @@ public class SkTexture : IDisposable
                 _trace("_setParameters Framebuffer");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
                     (int)GLEnum.Nearest);
-                CheckError("TexParam MinFilter");
+                if (_checkGLErrors) _checkError("TexParam MinFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Nearest);
-                CheckError("TexParam MagFilter");
+                if (_checkGLErrors) _checkError("TexParam MagFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
                     0);
-                CheckError("TexParam BaseLevel");
+                if (_checkGLErrors) _checkError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
                     0);
-                CheckError("TexParam MaxLevel");
+                if (_checkGLErrors) _checkError("TexParam MaxLevel");
                 break;
             case engine.joyce.Texture.FilteringModes.Pixels:
                 _trace("_setParameters Pixels");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
                     (int)GLEnum.NearestMipmapNearest);
-                CheckError("TexParam MinFilter");
+                if (_checkGLErrors) _checkError("TexParam MinFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Nearest);
-                CheckError("TexParam MagFilter");
+                if (_checkGLErrors) _checkError("TexParam MagFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
                     0);
-                CheckError("TexParam BaseLevel");
+                if (_checkGLErrors) _checkError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
                     NMipmaps-1);
-                CheckError("TexParam MaxLevel");
+                if (_checkGLErrors) _checkError("TexParam MaxLevel");
                 break;
             case engine.joyce.Texture.FilteringModes.Smooth:
                 _trace("_setParameters Smooth");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, 
                     (int)GLEnum.LinearMipmapLinear);
-                CheckError("TexParam MinFilter");
+                if (_checkGLErrors) _checkError("TexParam MinFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
                     (int)GLEnum.Linear);
-                CheckError("TexParam MagFilter");
+                if (_checkGLErrors) _checkError("TexParam MagFilter");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 
                     0);
-                CheckError("TexParam BaseLevel");
+                if (_checkGLErrors) _checkError("TexParam BaseLevel");
                 _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 
                     NMipmaps-1);
-                CheckError("TexParam MaxLevel");
+                if (_checkGLErrors) _checkError("TexParam MaxLevel");
                 break;
         }
 
@@ -172,7 +180,7 @@ public class SkTexture : IDisposable
                     _trace($"Using uploaded mipmap for {_backHandle}");
                 }
 
-                CheckError("GenerateMipMap");
+                if (_checkGLErrors) _checkError("GenerateMipMap");
                 break;
         }
     }
@@ -249,7 +257,7 @@ public class SkTexture : IDisposable
                     _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height,
                         0,
                         PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                    CheckError("TexImage2D");
+                    if (_checkGLErrors) _checkError("TexImage2D");
 
                     img.ProcessPixelRows(accessor =>
                     {
@@ -259,7 +267,7 @@ public class SkTexture : IDisposable
                             {
                                 _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1,
                                     PixelFormat.Rgba, PixelType.UnsignedByte, data);
-                                CheckError($"TexParam w/o mipmap SubImage2D {y}");
+                                if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
 
                             }
                         }
@@ -287,7 +295,7 @@ public class SkTexture : IDisposable
                         _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8, 
                             (uint)(width>>mm), (uint)(height>>mm),
                             0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                        CheckError($"TexImage2D {mm}");
+                        if (_checkGLErrors) _checkError($"TexImage2D {mm}");
                     }
                     
 
@@ -316,10 +324,7 @@ public class SkTexture : IDisposable
                                     {
                                         _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y, (uint)mmWidth, 1,
                                             PixelFormat.Rgba, PixelType.UnsignedByte, ((byte *)data) + 4*xOffset);
-                                        if (CheckError($"TexParam with mipmap SubImage2D {y}") > 0)
-                                        {
-                                            int a = 1;
-                                        }
+                                        if (_checkGLErrors) _checkError($"TexParam with mipmap SubImage2D {y}");
                                     }
 
                                     xOffset += mmWidth;
@@ -341,7 +346,7 @@ public class SkTexture : IDisposable
             {
                 _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, 1, 1, 0, PixelFormat.Rgba,
                     PixelType.UnsignedByte, d);
-                CheckError("TexImage2D");
+                if (_checkGLErrors) _checkError("TexImage2D");
             }
         }
 
@@ -369,7 +374,7 @@ public class SkTexture : IDisposable
             _backData = true;
             _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba,
                 PixelType.UnsignedByte, d);
-            CheckError("TexImage2D");
+            if (_checkGLErrors) _checkError("TexImage2D");
         }
 
         _generateMipmap();
@@ -386,7 +391,7 @@ public class SkTexture : IDisposable
         _backData = true;
         _gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, width, height, 0, PixelFormat.Rgba,
             PixelType.UnsignedByte, null);
-        CheckError("TexImage2D black");
+        if (_checkGLErrors) _checkError("TexImage2D black");
 
         _generateMipmap();
         _unbindBack();
@@ -398,7 +403,7 @@ public class SkTexture : IDisposable
     {
         _trace($"Bind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
-        CheckError("ActiveTexture {texureSlot}");
+        if (_checkGLErrors) _checkError("ActiveTexture {texureSlot}");
         if (!_liveData)
         {
             if (0xffffffff != _liveHandle)
@@ -410,7 +415,7 @@ public class SkTexture : IDisposable
         }
         _trace($"Bind texture {_liveHandle}");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
-        if (0 == CheckError("BindAndActive Texture"))
+        if (0 == _checkError("BindAndActive Texture"))
         {
             _liveBound = true;
         }
@@ -421,7 +426,7 @@ public class SkTexture : IDisposable
     {
         _trace($"Unbind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
-        CheckError("ActiveTexture {textureSlot}");
+        if (_checkGLErrors) _checkError("ActiveTexture {textureSlot}");
         if (!_liveData)
         {
             if (0xffffffff != _liveHandle)
@@ -433,7 +438,7 @@ public class SkTexture : IDisposable
         }
         _trace($"Unbind texture 0");
         _gl.BindTexture(TextureTarget.Texture2D, 0);
-        if (0 == CheckError("BindAndActive Texture"))
+        if (0 == _checkError("BindAndActive Texture"))
         {
             _liveBound = false;
         }
@@ -444,7 +449,7 @@ public class SkTexture : IDisposable
         _trace("_bindBack");
         _trace($"bind {_backHandle}");
         _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
-        int err = CheckError("_bindBack Texture");
+        int err = _checkError("_bindBack Texture");
         if (err < 0)
         {
             Trace("Break here.");
@@ -469,11 +474,11 @@ public class SkTexture : IDisposable
         _gl.DeleteTexture(_liveHandle);
         _liveHandle = 0xffffffff;
         _liveBound = false;
-        CheckError("DeleteTexture live");
+        if (_checkGLErrors) _checkError("DeleteTexture live");
         _gl.DeleteTexture(_backHandle);
         _backHandle = 0xffffffff;
         _backBound = false;
-        CheckError("DeleteTexture back");
+        if (_checkGLErrors) _checkError("DeleteTexture back");
     }
 
 
