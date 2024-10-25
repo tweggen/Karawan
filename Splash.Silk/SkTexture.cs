@@ -414,10 +414,17 @@ public class SkTexture : IDisposable
             return;
         }
         _trace($"Bind texture {_liveHandle}");
+        if (_checkGLErrors) _checkError("flush");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
-        if (0 == _checkError("BindAndActive Texture"))
+
+        int err = _checkGLErrors ? _checkError("BindAndActive Texture") : 0;
+        if (0 == err)
         {
-            _liveBound = true;
+            _liveBound = true; 
+        }
+        else
+        {
+            int a = 1;
         }
     }
 
@@ -437,10 +444,16 @@ public class SkTexture : IDisposable
             return;
         }
         _trace($"Unbind texture 0");
+        if (_checkGLErrors) _checkError("flush");
         _gl.BindTexture(TextureTarget.Texture2D, 0);
-        if (0 == _checkError("BindAndActive Texture"))
+        int err = _checkGLErrors ? _checkError("BindAndActive Texture"):0;
+        if (err == 0)
         {
             _liveBound = false;
+        }
+        else
+        {
+            int a = 1;
         }
     }
     
@@ -448,8 +461,9 @@ public class SkTexture : IDisposable
     {
         _trace("_bindBack");
         _trace($"bind {_backHandle}");
+        if (_checkGLErrors) _checkError("flush");
         _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
-        int err = _checkError("_bindBack Texture");
+        int err = _checkGLErrors?_checkError("_bindBack Texture"):0;
         if (err < 0)
         {
             Trace("Break here.");

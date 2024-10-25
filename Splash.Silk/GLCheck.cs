@@ -5,8 +5,10 @@ namespace Splash.Silk;
 
 static public class GLCheck
 {
+    private const bool _checkGLErrors = false;
     public static int CheckError(GL gl, string what)
     {
+        if (!_checkGLErrors) return 0;
         int err = 0;
         while (true)
         {

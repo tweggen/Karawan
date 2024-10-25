@@ -16,24 +16,32 @@ public class SkProgramEntry : IDisposable
     public uint Handle = 0xffffffff;
 
     public SortedDictionary<string, ShaderLocs> ShaderUseCases = new();
+
+    private const bool _checkErrors = false;
     
     public void SetUniform(int location, int value)
     {
         _gl.Uniform1(location, value);
-        var err = _gl.GetError();
-        if (err != GLEnum.NoError)
+        if (_checkErrors)
         {
-            if (_traceShader) Error($"Error setting uniform {location}: {err}");
+            var err = _gl.GetError();
+            if (err != GLEnum.NoError)
+            {
+                if (_traceShader) Error($"Error setting uniform {location}: {err}");
+            }
         }
     }
 
     public void SetUniform(int location, float value)
     {
         _gl.Uniform1(location, value);
-        var err = _gl.GetError();
-        if (err != GLEnum.NoError)
+        if (_checkErrors)
         {
-            if (_traceShader) Error($"Error setting uniform {location}: {err}");
+            var err = _gl.GetError();
+            if (err != GLEnum.NoError)
+            {
+                if (_traceShader) Error($"Error setting uniform {location}: {err}");
+            }
         }
     }
     
@@ -48,10 +56,13 @@ public class SkProgramEntry : IDisposable
             return;
         }
         _gl.Uniform1(location, value);
-        var err = _gl.GetError();
-        if (err != GLEnum.NoError)
+        if (_checkErrors)
         {
-            if (_traceShader) Error($"Error setting uniform {name}: {err}");
+            var err = _gl.GetError();
+            if (err != GLEnum.NoError)
+            {
+                if (_traceShader) Error($"Error setting uniform {name}: {err}");
+            }
         }
     }
 
@@ -64,10 +75,13 @@ public class SkProgramEntry : IDisposable
             return;
         }
         _gl.Uniform1(location, value);
-        var err = _gl.GetError();
-        if (err != GLEnum.NoError)
+        if (_checkErrors)
         {
-            if (_traceShader) Error($"Error setting uniform {name}: {err}");
+            var err = _gl.GetError();
+            if (err != GLEnum.NoError)
+            {
+                if (_traceShader) Error($"Error setting uniform {name}: {err}");
+            }
         }
     }
 
@@ -153,10 +167,13 @@ public class SkProgramEntry : IDisposable
     public void Use()
     {
         _gl.UseProgram(Handle);
-        var err = _gl.GetError();
-        if (err != GLEnum.NoError)
+        if (_checkErrors)
         {
-            if (_traceShader) Error($"Error using program {Handle}: {err}.");
+            var err = _gl.GetError();
+            if (err != GLEnum.NoError)
+            {
+                if (_traceShader) Error($"Error using program {Handle}: {err}.");
+            }
         }
     }
     
