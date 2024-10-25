@@ -70,17 +70,21 @@ public class SilkThreeD : IThreeD
          * Only really meaningful if the draw calls are sorted.
          */
         {
-            if (_lastMaterialEntry != skMaterialEntry)
-            {
-                _unloadMaterialFromShader();
-            }
-
-            _silkFrame.UseProgramEntry(sh, _setupProgramGlobals);
-
             if (_lastMaterialEntry == skMaterialEntry)
             {
                 return;
             }
+
+            if (_lastMaterialEntry != skMaterialEntry)
+            {
+                _unloadMaterialFromShader();
+                _lastMaterialEntry = null;
+            }
+
+            /*
+             * Setup new shader if required at all.
+             */
+            _silkFrame.UseProgramEntry(sh, _setupProgramGlobals);
 
             _lastMaterialEntry = skMaterialEntry;
         }
