@@ -297,6 +297,7 @@ public class ToSomewhere : AModule
                 engine.physics.CollisionProperties.CollisionFlags.IsDetectable
                 | engine.physics.CollisionProperties.CollisionFlags.TriggersCallbacks,
             Name = Name,
+            LayerMask = 0x0004,
         };
         lock (_engine.Simulation)
         {

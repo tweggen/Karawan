@@ -232,6 +232,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                             | CollisionProperties.CollisionFlags.IsDetectable
                             | CollisionProperties.CollisionFlags.TriggersCallbacks,
                         Name = PhysicsName,
+                        LayerMask = 0x0002,
                     };
                 po.CollisionProperties = collisionProperties;
                 po.Entity = eTarget;

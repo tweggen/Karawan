@@ -538,6 +538,7 @@ public class Module : engine.AModule
                         | CollisionProperties.CollisionFlags.IsDetectable
                         | CollisionProperties.CollisionFlags.TriggersCallbacks,
                     Name = PhysicsName,
+                    LayerMask = 0x00ff,
                 };
             engine.physics.Object po;
             lock (_engine.Simulation)

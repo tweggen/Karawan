@@ -63,11 +63,23 @@ namespace engine.physics
              */
             bool doACollide = false;
             bool doADetect = false;
+            ushort aLayerMask = 0, bLayerMask = 0;
             switch (a.Mobility)
             {
                 case CollidableMobility.Dynamic:
-                    doACollide = true;
-                    doADetect = true;
+                    if (I.Get<engine.physics.API>().GetCollisionProperties(a.BodyHandle, out propsA))
+                    {
+                        doACollide = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsTangible);
+                        doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
+                        aLayerMask = propsA.LayerMask;
+                    }
+                    else
+                    {
+                        doACollide = true;
+                        doADetect = true;
+                        aLayerMask = 0xffff;
+                    }
+
                     break;
                 
                 case CollidableMobility.Kinematic:
@@ -75,6 +87,7 @@ namespace engine.physics
                     {
                         doACollide = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
+                        aLayerMask = propsA.LayerMask;
                     }
                     break;
                 
@@ -82,6 +95,7 @@ namespace engine.physics
                     // TXWTODO: Read/store collision properties for static objects.
                     doACollide = true;
                     doADetect = true;
+                    aLayerMask = 0xffff;
                     break;
             }
 
@@ -90,8 +104,19 @@ namespace engine.physics
             switch (b.Mobility)
             {
                 case CollidableMobility.Dynamic:
-                    doBCollide = true;
-                    doBDetect = true;
+                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
+                    {
+                        doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
+                        doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
+                        bLayerMask = propsB.LayerMask;
+                    }
+                    else
+                    {
+                        doBCollide = true;
+                        doBDetect = true;
+                        bLayerMask = 0xffff;
+                    }
+
                     break;
                 
                 case CollidableMobility.Kinematic:
@@ -99,24 +124,32 @@ namespace engine.physics
                     {
                         doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
+                        bLayerMask = propsB.LayerMask;
                     }
 
                     break;
                 case CollidableMobility.Static:
                     doBCollide = true;
                     doBDetect = true;
+                    bLayerMask = 0xffff;
                     break;
             }
 
-            if (alsoCollide)
+            if ((aLayerMask & bLayerMask) != 0)
             {
-                return doACollide && doBCollide;
+                if (alsoCollide)
+                {
+                    return doACollide && doBCollide;
+                }
+                else
+                {
+                    return doADetect && doBDetect;
+                }
             }
             else
             {
-                return doADetect && doBDetect;
+                return false;
             }
-
         }
         
         

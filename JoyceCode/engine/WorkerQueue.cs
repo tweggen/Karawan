@@ -14,6 +14,7 @@ namespace engine
         private Queue<Action> _queueActions = new();
         private Stopwatch _stopwatch = new();
 
+        public int MaxYieldCount { get; set; } = 10000;
 
         public bool IsEmpty()
         {
@@ -52,23 +53,28 @@ namespace engine
                 lock (_lo)
                 {
                     usedTime = _stopwatch.ElapsedMilliseconds / 1000f;
-
-                    if (_queueActions.Count == 0)
+                    var count = _queueActions.Count;
+                    
+                    if (count == 0)
                     {
                         _stopwatch.Stop();
                         return usedTime;
                     }
 
-                    if( usedTime>dt )
+                    if (count < MaxYieldCount)
                     {
-                        _stopwatch.Stop();
-                        int queueLeft = _queueActions.Count;
-                        if (0 < queueLeft)
+                        if (usedTime > dt)
                         {
-                            Trace($"Left {queueLeft} actions in queue {_name}");
+                            _stopwatch.Stop();
+                            int queueLeft = _queueActions.Count;
+                            if (0 < queueLeft)
+                            {
+                                Trace($"Left {queueLeft} actions in queue {_name}");
+                            }
+
+                            return usedTime;
                         }
-                        return usedTime;
-                    }
+                    } 
 
                     action = _queueActions.Dequeue();
                 }

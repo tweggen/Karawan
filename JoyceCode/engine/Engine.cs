@@ -151,6 +151,12 @@ public class Engine
         set { _frameNumber = value; }
     }
 
+    
+    public physics.API APhysics
+    {
+        get => _aPhysics; 
+    }
+    
     public BepuPhysics.Simulation Simulation
     {
         get => _aPhysics.Simulation;
