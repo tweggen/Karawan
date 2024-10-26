@@ -49,7 +49,8 @@ class GenerateShopsOperator : IClusterOperator
         int nTries = (int)(clusterArea / shopArea);
 
         HashSet<Vector3> setPositions = new();
-        
+
+        var quarterStore = clusterDesc.QuarterStore();
         for (int t = 0; t < nTries; t++)
         {
             bool isBadTry = false; 
@@ -67,7 +68,7 @@ class GenerateShopsOperator : IClusterOperator
                 continue;
             }
 
-            var quarter = clusterDesc.GuessQuarter(v2TryGlobal);
+            var quarter = quarterStore.GuessQuarter(v2TryGlobal);
             if (null == quarter)
             {
                 isBadTry = true;

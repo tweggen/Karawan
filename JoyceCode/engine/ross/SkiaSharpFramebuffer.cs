@@ -370,6 +370,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
                     {
                         IntPtr intptr = (IntPtr)p;
 
+                        // TXWTODO: This is a performance hotspot
                         skiaPixmap.ReadPixels(info, intptr, (int)_width * 4);
                     }
 

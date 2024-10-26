@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using engine.geom;
 
 namespace engine.streets;
 
@@ -17,11 +18,18 @@ public class Quarter
 
     private List<Estate> _estates = new();
     private Dictionary<string, string> _debugMap = new();
+    private AABB _aabb = new();
+
+    public AABB AABB {
+        get => _aabb;
+        
+    }
 
     public void AddQuarterDelim(in QuarterDelim quarterDelim)
     {
         lock (_lo)
         {
+            _aabb.Add(new Vector3(quarterDelim.StartPoint.X, 0f, quarterDelim.StartPoint.Y));
             _delims.Add(quarterDelim);
         }
     }
@@ -36,10 +44,13 @@ public class Quarter
 
     public Vector2 GetCenterPoint()
     {
+        return new Vector2(AABB.Center.X, AABB.Center.Z);
+        #if false
         lock (_lo)
         {
             return _centerPoint;
         }
+        #endif
     }
 
     public void SetInvalid(bool i)
@@ -90,6 +101,7 @@ public class Quarter
         }
     }
 
+    #if false
     public void ForDelims(Action<QuarterDelim, StreetPoint, StreetPoint> action)
     {
         #if false
@@ -116,12 +128,14 @@ public class Quarter
             action(lastDelim, lastDelim.StreetPoint, delim.StreetPoint);
         }
     }
+    #endif
 
     /**
      * Compute things like the quarter center.
      */
     public void Polish()
     {
+        #if false
         lock (_lo)
         {
             int nPoints = 0;
@@ -145,6 +159,7 @@ public class Quarter
             }
             // else leave zero.
         }
+        #endif
     }
 
     public void AddDebugTag(string key, string value)

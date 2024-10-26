@@ -173,30 +173,6 @@ public class ClusterDesc
     }
     
 
-    public streets.Quarter GuessQuarter(in Vector2 p)
-    {
-        _triggerStreets();
-        /*
-         * Fast wrong implementation: Find the closest center point.
-         */
-        var pc = p;
-        pc.X -= Pos.X;
-        pc.Y -= Pos.Z;
-        float minDist = 9999999999f;
-        streets.Quarter minQuarter = null;
-        foreach(var quarter in _quarterStore.GetQuarters() )
-        {
-            var cp = quarter.GetCenterPoint();
-            float dist = Vector2.Distance( cp, pc );
-            if (dist < minDist)
-            {
-                minDist = dist;
-                minQuarter = quarter;
-            }
-        }
-        return minQuarter;
-    }
-
     private Dictionary<Index3, ImmutableList<StreetPoint>> _mapFragmentPoints = null;
 
     /**
@@ -478,7 +454,7 @@ public class ClusterDesc
              * First, generate the actual streets.
              */
             _strokeStore = new streets.StrokeStore(Size);
-            _quarterStore = new streets.QuarterStore();
+            _quarterStore = new streets.QuarterStore(this);
 
             _findStrokes();
 
