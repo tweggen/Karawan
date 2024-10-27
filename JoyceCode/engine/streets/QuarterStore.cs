@@ -15,12 +15,10 @@ namespace engine.streets
         
         public streets.Quarter GuessQuarter(in Vector2 p)
         {
-            var pc = p;
-            pc.X -= _clusterDesc.Pos.X;
-            pc.Y -= _clusterDesc.Pos.Z;
+            var pc = p - _clusterDesc.Pos2;
 
             List<Quarter> tmpQuarterList = new ();
-            if (!_octreeQuarters.GetCollidingNonAlloc(tmpQuarterList,
+            if (_octreeQuarters.GetCollidingNonAlloc(tmpQuarterList,
                     new BoundingBox(new Vector3(pc.X, 0f, pc.Y), Vector3.One*0.05f)))
             {
                 /*
@@ -69,7 +67,7 @@ namespace engine.streets
         public void Add(in Quarter quarter)
         {
             
-            var bb = new Octree.BoundingBox(quarter.AABB.Center, (2f * quarter.AABB.BB - quarter.AABB.Center));
+            var bb = new Octree.BoundingBox(quarter.AABB.Center, (quarter.AABB.BB - quarter.AABB.AA));
 
             _octreeQuarters.Add(quarter, bb);
             _listQuarters.Add(quarter);
