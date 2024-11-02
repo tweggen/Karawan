@@ -190,7 +190,7 @@ public class DBStorage : engine.AModule
     }
     
     
-    private LiteDatabase _open(string dbName)
+    private LiteDatabase _open(string dbName, int dbVersion)
     {
         LiteDatabase db;
         if (_mapDBs.TryGetValue(dbName, out db)) 
@@ -203,8 +203,25 @@ public class DBStorage : engine.AModule
         }
         string path = GlobalSettings.Get("Engine.RWPath");
         string dbFileName = dbName + DbFileSuffix;
+        string fullpath = Path.Combine(path, dbFileName);
+        bool hadDb = File.Exists(fullpath);
+        db = new LiteDatabase(fullpath, Mapper);
+        if (hadDb)
+        {
+            if (dbVersion != 0 && db.UserVersion < dbVersion)
+            {
+                Error($"Incompatible database version detected, deleting content.");
+                File.Delete(dbFileName);
+                db = new LiteDatabase(fullpath, Mapper);
+                db.UserVersion = dbVersion;
+            }
 
-        db = new LiteDatabase(Path.Combine(path, dbFileName), Mapper);
+        }
+        else
+        {
+            db.UserVersion = dbVersion;
+        }
+
         _mapDBs[dbName] = db;
         return db;
     }
@@ -216,30 +233,18 @@ public class DBStorage : engine.AModule
         {
             try
             {
-                LiteDatabase db = _open(dbName);
-                if (db.UserVersion >= dbVersion)
+                LiteDatabase db = _open(dbName, dbVersion);
+                try
                 {
-                    try
-                    {
-                        action(db);
-                    }
-                    catch (Exception e)
-                    {
-                        Error($"Unable to execute action: {e}");
-                    }
-
-                    _close(dbName);
-                    return true;
+                    action(db);
                 }
-                else
+                catch (Exception e)
                 {
-                    Warning($"Unable to use current cache, version too old {db.UserVersion} < {dbVersion}");
-                    
-                    _close(dbName);
-                    return false;
-
+                    Error($"Unable to execute action: {e}");
                 }
 
+                _close(dbName);
+                return true;
             }
             catch (Exception e)
             {
