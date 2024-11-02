@@ -21,7 +21,7 @@ public class DBStorage : engine.AModule
 
     private const string DbFileSuffix = ".db";
     private const string DbGameState = "gamestate";
-    private const int DbVersion = 2001;
+    private const int DbVersion = 0;
     
     
     private BsonMapper _createMappers()
@@ -210,8 +210,9 @@ public class DBStorage : engine.AModule
         {
             if (dbVersion != 0 && db.UserVersion < dbVersion)
             {
-                Error($"Incompatible database version detected, deleting content.");
-                File.Delete(dbFileName);
+                Error($"Incompatible ({db.UserVersion}<{dbVersion}) database version of {dbName} detected, deleting content.");
+                db.Dispose();
+                File.Delete(fullpath);
                 db = new LiteDatabase(fullpath, Mapper);
                 db.UserVersion = dbVersion;
             }
