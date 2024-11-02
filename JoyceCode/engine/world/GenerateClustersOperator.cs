@@ -311,7 +311,7 @@ public class GenerateClustersOperator : world.IWorldOperator
 
     private void _saveClusters(IList<ClusterDesc> clusterList)
     {
-        I.Get<DBStorage>().StoreCollection(engine.streets.ClusterStorage.DbWorldCache, clusterList);
+        I.Get<DBStorage>().StoreCollection(engine.streets.ClusterStorage.DbName, clusterList);
     }
     
     
@@ -325,7 +325,7 @@ public class GenerateClustersOperator : world.IWorldOperator
         {
             System.Collections.Generic.IEnumerable<ClusterDesc> enumClusterDesc;
             bool haveIt = I.Get<DBStorage>().LoadCollection<ClusterDesc>(
-                engine.streets.ClusterStorage.DbWorldCache, out enumClusterDesc);
+                engine.streets.ClusterStorage.DbName, out enumClusterDesc);
             if (!haveIt)
             {
                 clusterList = null;

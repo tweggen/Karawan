@@ -20,7 +20,8 @@ public class DBStorage : engine.AModule
 
 
     private const string DbFileSuffix = ".db";
-    private const string DbGameState = "gamestate"; 
+    private const string DbGameState = "gamestate";
+    private const int DbVersion = 2001;
     
     
     private BsonMapper _createMappers()
@@ -209,24 +210,36 @@ public class DBStorage : engine.AModule
     }
     
 
-    public bool WithOpen(string dbName, Action<LiteDatabase> action)
+    public bool WithOpen(string dbName, int dbVersion, Action<LiteDatabase> action)
     {
         lock (_lo)
         {
             try
             {
                 LiteDatabase db = _open(dbName);
-                try
+                if (db.UserVersion >= dbVersion)
                 {
-                    action(db);
+                    try
+                    {
+                        action(db);
+                    }
+                    catch (Exception e)
+                    {
+                        Error($"Unable to execute action: {e}");
+                    }
+
+                    _close(dbName);
+                    return true;
                 }
-                catch (Exception e)
+                else
                 {
-                    Error($"Unable to execute action: {e}");
+                    Warning($"Unable to use current cache, version too old {db.UserVersion} < {dbVersion}");
+                    
+                    _close(dbName);
+                    return false;
+
                 }
 
-                _close(dbName);
-                return true;
             }
             catch (Exception e)
             {
@@ -281,7 +294,7 @@ public class DBStorage : engine.AModule
     
     public void SaveGameState<GS>(GS gameState) where GS : class
     {
-        WithOpen(DbGameState, db => _writeObject(db, gameState));
+        WithOpen(DbGameState, DbVersion, db => _writeObject(db, gameState));
     }
     
 
@@ -293,7 +306,7 @@ public class DBStorage : engine.AModule
 #else
         bool haveIt = false;
         GS resultData = null;
-        WithOpen(DbGameState, db =>
+        WithOpen(DbGameState, DbVersion, db =>
         {
             haveIt = _readObject(db, out resultData);
         });
@@ -305,7 +318,7 @@ public class DBStorage : engine.AModule
 
    public bool StoreCollection<ObjType>(string dbName, IEnumerable<ObjType> obj) where ObjType : class
     {
-        return WithOpen(dbName, db =>
+        return WithOpen(dbName, DbVersion, db =>
         {
             _writeCollection(db, col => col.DeleteAll(), obj);
         });
@@ -316,7 +329,7 @@ public class DBStorage : engine.AModule
     {
         bool haveIt = false;
         IEnumerable<ObjType> resultData = null;
-        WithOpen(dbName, db =>
+        WithOpen(dbName, DbVersion, db =>
         {
             haveIt = _readCollection(db, predicate, out resultData);
         });

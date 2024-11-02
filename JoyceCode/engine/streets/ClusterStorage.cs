@@ -9,15 +9,17 @@ public class ClusterStorage
     private object _lo = new();
     
     private engine.EntityMap<engine.streets.StreetPoint> _mapStreetPoints = new();
+
+    public const int DbVersion = 1001;
     
-    public const string DbWorldCache = "worldcache";
+    public const string DbName = "worldcache";
 
     public bool TryLoadClusterStreets(ClusterDesc clusterDesc)
     {
         List<Stroke> strokes = null;
 
         bool haveStrokes = false;
-        I.Get<DBStorage>().WithOpen(DbWorldCache, db =>
+        I.Get<DBStorage>().WithOpen(DbName, DbVersion, db =>
         {
             if (!db.CollectionExists("Stroke") || !db.CollectionExists("StreetPoint")) return;
             var col = db.GetCollection<Stroke>().Include(x => x.A).Include(x => x.B);
@@ -42,7 +44,7 @@ public class ClusterStorage
     {
         var dbs = I.Get<DBStorage>(); 
         var streetPoints = clusterDesc.StrokeStore().GetStreetPoints();
-        dbs.WithOpen(DbWorldCache,
+        dbs.WithOpen(DbName, DbVersion,
             db =>
             {
                 dbs.WithCollection<StreetPoint>(db, col =>
@@ -63,7 +65,7 @@ public class ClusterStorage
     {
         var dbs = I.Get<DBStorage>(); 
         var strokes = clusterDesc.StrokeStore().GetStrokes();
-        dbs.WithOpen(DbWorldCache,
+        dbs.WithOpen(DbName, DbVersion,
             db =>
             {
                 dbs.WithCollection<Stroke>(db, col =>
