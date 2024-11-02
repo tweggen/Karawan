@@ -307,6 +307,61 @@ public class CameraOutput
         }
     }
 
+    void _computeInverseBillboardMatrix(
+        in AMaterialEntry aMaterialEntry,
+        in AMeshEntry aMeshEntry, in Matrix4x4 transform3ToWorld,
+        in InstanceDesc id,
+        out Matrix4x4 m)
+    {
+        /*
+         * This is inefficient.
+         * Compute the center of the mesh.
+         *
+         * We have a mesh, aligned with z axis (which is close to perfect).
+         *
+         * Instance transform and transformToWorld matrices. ... but ..., the
+         * canera natrix still will be applied.
+         *
+         * Everything we pass here as matrix argument will be multiplied by the
+         * camera to world and the projection matrix by the vertex shader.
+         *
+         * What do we want? We want a matrix argument solely translating the
+         * position.
+         *
+         * Then, we want to apply the inverse
+         * Plus, we want to apply the inverse camera rotation matrix.
+         * So let's start.
+         */
+        Vector3 vc = Vector3.Zero;
+        {
+            int l = aMeshEntry.Params.JMesh.Vertices.Count;
+            for (int vi = 0; vi < l; ++vi)
+            {
+                vc += aMeshEntry.Params.JMesh.Vertices[vi];
+            }
+
+            vc /= l;
+        }
+
+        Matrix4x4 mTrans = id.ModelTransform * transform3ToWorld;
+        Matrix4x4 mInvRot = Matrix4x4.Identity;
+        GetRotation(ref mInvRot, mTrans);
+        mInvRot = Matrix4x4.Transpose(mInvRot);
+
+        m =
+                Matrix4x4.CreateTranslation(-vc)
+                * _mInverseCameraRotation
+                * mInvRot
+                * Matrix4x4.CreateTranslation(vc)
+                * mTrans
+            ;
+
+        if (aMaterialEntry.JMaterial.IsUnscalable)
+        {
+            m = _mUnscale * m;
+        }
+    }
+
 
     public void AppendInstance(in Splash.components.PfInstance pfInstance, Matrix4x4 transform3ToWorld)
     {
@@ -385,54 +440,7 @@ public class CameraOutput
                 }
                 else
                 {
-                    /*
-                     * This is inefficient.
-                     * Compute the center of the mesh.
-                     *
-                     * We have a mesh, aligned with z axis (which is close to perfect).
-                     *
-                     * Instance transform and transformToWorld matrices. ... but ..., the
-                     * canera natrix still will be applied.
-                     *
-                     * Everything we pass here as matrix argument will be multiplied by the
-                     * camera to world and the projection matrix by the vertex shader.
-                     *
-                     * What do we want? We want a matrix argument solely translating the
-                     * position.
-                     *
-                     * Then, we want to apply the inverse
-                     * Plus, we want to apply the inverse camera rotation matrix.
-                     * So let's start.
-                     */
-                    Vector3 vc = Vector3.Zero;
-                    {
-                        int l = aMeshEntry.Params.JMesh.Vertices.Count;
-                        for (int vi = 0; vi < l; ++vi)
-                        {
-                            vc += aMeshEntry.Params.JMesh.Vertices[vi];
-                        }
-
-                        vc /= l;
-                    }
-
-                    Matrix4x4 mTrans = id.ModelTransform * transform3ToWorld;
-                    Matrix4x4 mInvRot = Matrix4x4.Identity;
-                    GetRotation(ref mInvRot, mTrans);
-                    mInvRot = Matrix4x4.Transpose(mInvRot);
-
-                    Matrix4x4 m =
-                            Matrix4x4.CreateTranslation(-vc)
-                            * _mInverseCameraRotation
-                            * mInvRot
-                            * Matrix4x4.CreateTranslation(vc)
-                            * mTrans
-                        ;
-
-                    if (aMaterialEntry.JMaterial.IsUnscalable)
-                    {
-                        m = _mUnscale * m;
-                    }
-
+                    _computeInverseBillboardMatrix(aMaterialEntry, aMeshEntry, transform3ToWorld, id, out var m);
                     _appendInstanceNoLock(aMeshEntry, aMaterialEntry, m);
                 }
             }
