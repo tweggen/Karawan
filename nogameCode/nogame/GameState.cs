@@ -8,7 +8,8 @@ namespace nogame;
 public class GameState
 {
     static public DateTime GameT0 = new DateTime(1982, 3, 12, 22, 46, 0);
-    static public Vector3 PlayerPos0 = new Vector3(0f, 300f, 0f);
+    static public Vector3 PlayerPos0 = new Vector3(0f, 150f, 0f);
+    static public Quaternion PlayerOrientation0 = Quaternion.CreateFromAxisAngle(Vector3.UnitY, Single.Pi);
 
     [LiteDB.BsonId]
     public int Id { get; set; } = 1;
@@ -58,6 +59,8 @@ public class GameState
         if (!engine.world.MetaGen.AABB.Contains(PlayerPosition))
         {
             PlayerPosition = new(PlayerPos0);
+            PlayerOrientation = new(PlayerOrientation0);
+            
             Error($"Adjusting GameState PlayerPosition from {PlayerPosition} to {PlayerPos0}.");
         }
 

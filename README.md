@@ -19,7 +19,6 @@ It references the other projects.
 Current builds actively supported are Windows 11 x64; Linux x86 and ARM64 Android 13 . Windows 10
 and other Android versions also work.
 
-
 ## Operators
 
 The basic idea of joyce is that everything is (re-)creatable on demand.
@@ -113,6 +112,7 @@ API is used together with the transform API: The Hierarchy API adds a
 parent reference component, the transform API adds a Transformation
 relative to parent component.
 
+
 ### Influences on the transform of a model
 
 In real life, several things might influence the transform matrix
@@ -135,11 +135,13 @@ directly. Still, this model would come with a "adjustment" matrix, fitting the
 model geometry into the game. However, let's assume this model is not hierarchial, i.e. consists just
 of one layer of geometry.
 
+
 #### Non-hierarchial model
 
 To keep execution fast, the recommended way is:
 - bake model adjustment matrix into the InstanceDesc of the object.
 - directly set TransformToWorld matrix, or let physics do that.
+
 
 #### Hierarchial model
 
@@ -151,10 +153,12 @@ We do recommmend to insert an additional entity here. It contain any sort
 of transformation component (ToWorld or ToParent). That component can
 be updated by physics or by behavior.
 
+
 ## Splash Renderer
 
 Splash is the second renderer for joyce. It is now based on OpenGL 3 as provided
 by the Silk.NET framework.
+
 
 ### Platform representations
 
@@ -173,6 +177,7 @@ these data structures represent:
 - ATextureEntry: A reference to an actual physical texture in use (note: the 
   texture entry is the actual memory object in GPU memory).
 
+
 #### Common operations
 
 These platform primitives implement
@@ -184,6 +189,7 @@ These platform primitives implement
 
 Today, none of these platform objects exactly follows this scheme. However,
 they should be converted to follow this scheme very soon.
+
 
 #### Life cycles
 
@@ -208,9 +214,22 @@ prepare and fetch all platform specific data to prepare an upload.
 As soon the physical renderer really needs to render it, it will trigger upload
 on any of these items.
 
+
 #### Caveats
 
 ATextureEntry instances are a special beast: In addition to not being uploaded
 as anything else, they also can be outdated. This would happen if they are 
 rendered from a framebuffer who is newer inside memory than on GPU. In that case
 the texture also would be uploaded by the renderer.
+
+
+## Save game integration
+
+Any implementation part that wants to be part of a load/save process can register
+itself with the Saver module, using its OnBeforeSaveGame and OnAfterLoadGame hooks.
+
+
+## About Narration
+
+The narration is based on inky. It hooks into the savegame system to be able to 
+restore itself.

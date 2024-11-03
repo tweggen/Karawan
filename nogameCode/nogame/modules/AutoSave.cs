@@ -516,6 +516,7 @@ public class AutoSave : engine.AModule
             _doSave();
             _engine.Run(() =>
             {
+                _afterLoad(gameState);
                 onInitialLoad(gameState);
             });
             

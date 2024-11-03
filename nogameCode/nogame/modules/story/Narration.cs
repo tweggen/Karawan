@@ -37,6 +37,7 @@ public class Narration : AModule, IInputPart
     public uint ChoiceColor { get; set; } = 0xffbbdddd;
     public uint ChoiceFill { get; set; } = 0x00000000;
     
+    
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<AutoSave>(),
@@ -154,7 +155,7 @@ public class Narration : AModule, IInputPart
     }
     
 
-    private void _displayNextSentence()
+    private void _displaySentence()
     {
         _prepareSentence();
 
@@ -240,19 +241,10 @@ public class Narration : AModule, IInputPart
             _currentString = _currentStory.Continue();
         }
             
-        _displayNextSentence();
+        _displaySentence();
     }
 
 
-    private string _loadStoryJson()
-    {
-        using var stream = engine.Assets.Open("story1.json");
-        using var sr = new StreamReader(stream, Encoding.UTF8);
-        string jsonStory = sr.ReadToEnd();
-        return jsonStory;
-    }
-    
-    
     private void _onActionKey()
     {
         _advanceStory();
@@ -453,6 +445,13 @@ public class Narration : AModule, IInputPart
         {
             _loadStateFromJson(gs.Story);
         }
+        else
+        {
+            /*
+             * If this story just was created, make the first sentence ready.
+             */
+            _currentString = _currentStory.Continue();           
+        }
         
         /*
          * After we initialized the desired state, start the story.
@@ -461,7 +460,7 @@ public class Narration : AModule, IInputPart
         {
             _engine.QueueMainThreadAction(() =>
             {
-                _advanceStory();
+                _displaySentence();
             });
         });
     }
@@ -474,8 +473,8 @@ public class Narration : AModule, IInputPart
         _engine.RemoveModule(this);
         base.ModuleDeactivate();
     }
-    
-    
+
+
     public override void ModuleActivate()
     {
         base.ModuleActivate();

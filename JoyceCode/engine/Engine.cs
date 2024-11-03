@@ -289,13 +289,13 @@ public class Engine
         _tryGetMemberEntity(out ePlayer, ref _playerEntity);
 
 
-    public void BeamTo(Vector3 vPos)
+    public void BeamTo(Vector3 vPos, Quaternion qStart)
     {
         lock (_lo)
         {
             var pref = _playerEntity.Get<engine.physics.components.Body>().Reference;
             pref.Pose.Position = vPos;
-            pref.Pose.Orientation = Quaternion.Identity;
+            pref.Pose.Orientation = qStart;
         }
     }
 

@@ -421,16 +421,21 @@ public class Module : engine.AModule
      * We know there is a cluster around 0/0, so find it, and find an estate
      * within without a house build upon it.
      */
-    private Vector3 _findStartPosition()
+    private void _findStartPosition(out Vector3 v3Start, out Quaternion qStart)
     {
         ClusterDesc startCluster = ClusterList.Instance().GetClusterAt(Vector3.Zero);
         if (null != startCluster)
         {
-            var v3StartPosition = startCluster.FindStartPosition(); 
-            Trace($"Startposition is {v3StartPosition}");
-            return v3StartPosition;
+            
+            startCluster.FindStartPosition(out v3Start, out qStart); 
+            Trace($"Startposition is {v3Start} {qStart}");
         }
-        return new Vector3(0f, 200f, 0f);
+        else
+        {
+            v3Start = new Vector3(0f, 200f, 0f);
+            qStart = Quaternion.Identity;
+            Trace($"No start cluster found, using default startposition is {v3Start} {qStart}");
+        }
     }
 
 
@@ -485,15 +490,16 @@ public class Module : engine.AModule
             _eShip = _engine.CreateEntity("RootScene.playership");
 
             var gameState = M<AutoSave>().GameState;
-            var posShip = gameState.PlayerPosition;
-            var rotShip = Quaternion.Normalize(gameState.PlayerOrientation);
-            if (posShip == Vector3.Zero)
+            Vector3 v3Ship = gameState.PlayerPosition;
+            Quaternion qShip = Quaternion.Normalize(gameState.PlayerOrientation);
+            if (v3Ship == Vector3.Zero)
             {
-                posShip = new(_findStartPosition());
+                Error($"Unbelievably could not come up with a valid start position, so generate one here.");
+                _findStartPosition(out v3Ship, out qShip);
             }
 
-            _aTransform.SetPosition(_eShip, posShip);
-            _aTransform.SetRotation(_eShip, rotShip);
+            _aTransform.SetPosition(_eShip, v3Ship);
+            _aTransform.SetRotation(_eShip, qShip);
             _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
             _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
@@ -548,7 +554,7 @@ public class Module : engine.AModule
                     Single.Max(1.4f, bodyRadius), out var pbody); 
                 var inertia = pbody.ComputeInertia(MassShip);
                 po = new engine.physics.Object(_engine, _eShip,
-                    posShip, rotShip, inertia, new TypedIndex() { Packed = uintShape }) { CollisionProperties = collisionProperties}.AddContactListener();
+                    v3Ship, qShip, inertia, new TypedIndex() { Packed = uintShape }) { CollisionProperties = collisionProperties}.AddContactListener();
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             }
 

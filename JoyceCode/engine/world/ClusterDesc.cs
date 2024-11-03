@@ -496,11 +496,19 @@ public class ClusterDesc
     }
 
 
-    public Vector3 FindStartPosition()
+    public void FindStartPosition(out Vector3 v3Start, out Quaternion qStart)
     {
         var vOffset = new Vector3(0f, 0f, -3f);
+        v3Start = new();
+        qStart = new();
+        
+        /*
+         * Cluster relative coordinates of the start.
+         */
+        Vector3 v3ClusterStart = new();
         
         _triggerStreets();
+        bool havePos = false;
         foreach (var quarter in _quarterStore.GetQuarters())
         {
             if (quarter.IsInvalid()) continue;
@@ -508,11 +516,41 @@ public class ClusterDesc
             {
                 if (estate.GetBuildings().Count == 0)
                 {
-                    return (Pos + estate.GetCenter() + vOffset) with { Y = AverageHeight + 300f };
+                    v3ClusterStart = (estate.GetCenter() + vOffset) with { Y = AverageHeight + 100f };
+                    v3Start = v3ClusterStart with { Y = AverageHeight + 100f };
+                    havePos = true;
+                    break;
                 }
             }
+
+            if (havePos) break;
         }
-        return (Pos+vOffset) with { Y = AverageHeight + 300f };
+
+        if (havePos)
+        {
+            /*
+             * We do have a start position, let's face the center of the city.
+             */
+            Vector3 vuZ = v3ClusterStart with { Y = 0f };
+            try
+            {
+                vuZ = Vector3.Normalize(vuZ);
+                qStart = Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateWorld(Vector3.Zero, -vuZ, Vector3.UnitY));
+            }
+            catch (Exception e)
+            {
+                qStart = Quaternion.Identity;
+            }
+        }
+
+        if (!havePos)
+        {
+            /*
+             * If we didn't find anything, position ourselves in the center of the cluster, facing north.
+             */
+            v3Start = (Pos + vOffset) with { Y = AverageHeight + 100f };
+            qStart = Quaternion.Identity;
+        }
     }
 
 

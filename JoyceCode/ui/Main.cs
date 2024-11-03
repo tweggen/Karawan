@@ -277,7 +277,8 @@ public class Main
                         {
                             _engine.QueueMainThreadAction(() =>
                             {
-                                _engine.BeamTo(clusterDesc.FindStartPosition());
+                                clusterDesc.FindStartPosition(out var v3Start, out var qStart);
+                                _engine.BeamTo(v3Start, qStart);
                             });
                         }
 
