@@ -36,7 +36,7 @@ namespace Splash.Silk
                 {
                     if (null == skTextureEntry.SkTexture)
                     {
-                        skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
+                        skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture, jTexture.FilteringMode);
                     }
                     skTextureEntry.SkTexture.SetFrom(0, _arrBlack, 1, 1);
                 }
@@ -44,7 +44,7 @@ namespace Splash.Silk
                 {
                     if (null == skTextureEntry.SkTexture)
                     {
-                        skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
+                        skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture, jTexture.FilteringMode);
                     }
                     skTextureEntry.SkTexture.SetFrom(jTexture.Source, jTexture.HasMipmap);
                 }
@@ -56,7 +56,7 @@ namespace Splash.Silk
                 framebuffer.GetMemory(out spanBytes);
                 if (null == skTextureEntry.SkTexture)
                 {
-                    skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture.FilteringMode);
+                    skTextureEntry.SkTexture = new SkTexture(_silkThreeD.GetGL(), jTexture, jTexture.FilteringMode);
                 }
                 skTextureEntry.SkTexture.SetFrom(
                     framebuffer.Generation,

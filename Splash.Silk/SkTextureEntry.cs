@@ -7,7 +7,21 @@ namespace Splash.Silk
     {
         public SkTexture? SkTexture = null;
 
-        
+        public override ResourceState State
+        {
+            get
+            {
+                if (SkTexture != null)
+                {
+                    return SkTexture.ResourceState;
+                }
+                else
+                {
+                    return ResourceState.Created;
+                }
+            }
+        }
+
         public override bool IsUploaded()
         {
             return SkTexture != null;

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.Design;
 using System.Numerics;
+using engine.draw;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 //using SixLabors.ImageSharp.Drawing.Processing;
@@ -12,6 +13,8 @@ namespace Splash.Silk;
 
 public class SkTexture : IDisposable
 {
+    private object _lo = new();
+    
     private uint _liveHandle = 0xffffffff;
     private bool _liveBound = false;
     private bool _liveGenerated = false;
@@ -25,9 +28,12 @@ public class SkTexture : IDisposable
 
     private const int NMipmaps = 5;
 
+    private engine.joyce.Texture _jTexture;
     private engine.joyce.Texture.FilteringModes _filteringMode = engine.joyce.Texture.FilteringModes.Pixels;
 
     private bool _traceTexture = false;
+    
+    private ATextureEntry.ResourceState _resourceState = ATextureEntry.ResourceState.Created;
     
     /*
      * Data generation that had been uploaded.
@@ -37,6 +43,29 @@ public class SkTexture : IDisposable
     public uint Generation
     {
         get => _generation;
+    }
+
+    public ATextureEntry.ResourceState ResourceState
+    {
+        get {
+            lock (_lo)
+            {
+                IFramebuffer framebuffer = JTexture.Framebuffer;
+                if (framebuffer == null)
+                {
+                    return false;
+                }
+
+                if (framebuffer.Generation != SkTexture.Generation)
+                {
+                    return true;
+                }
+
+                return false;
+
+                return _resourceState;
+            }
+        }
     }
 
     private GL _gl;
@@ -219,7 +248,7 @@ public class SkTexture : IDisposable
     }
 
 
-    private void _checkReloadTexture()
+    private void _checkReloadTexture() 
     {
         _trace("_checkReload");
         if (_backHandle == 0xffffffff)
@@ -496,12 +525,13 @@ public class SkTexture : IDisposable
     }
 
 
-    public unsafe SkTexture(GL gl, engine.joyce.Texture.FilteringModes filteringMode)
+    public unsafe SkTexture(GL gl, engine.joyce.Texture jTexture, engine.joyce.Texture.FilteringModes filteringMode)
     {
         _trace($"new SkTexture filteringMode={filteringMode}");
 
         _gl = gl;
         _filteringMode = filteringMode;
+        _jTexture = jTexture;
         _allocateBack();
     }
     
