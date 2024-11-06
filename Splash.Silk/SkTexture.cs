@@ -33,7 +33,10 @@ public class SkTexture : IDisposable
 
     private bool _traceTexture = false;
     
-    private ATextureEntry.ResourceState _resourceState = ATextureEntry.ResourceState.Created;
+    /*
+     * As we currently ignore the loading the textures, we immediately mark them as using.
+     */
+    private ATextureEntry.ResourceState _resourceState = ATextureEntry.ResourceState.Using;
     
     /*
      * Data generation that had been uploaded.
@@ -50,18 +53,20 @@ public class SkTexture : IDisposable
         get {
             lock (_lo)
             {
-                IFramebuffer framebuffer = JTexture.Framebuffer;
-                if (framebuffer == null)
+                /*
+                 * We are uploaded. Check, if we also are outdated.
+                 */
+                if (_resourceState < ATextureEntry.ResourceState.Outdated)
                 {
-                    return false;
+                    IFramebuffer framebuffer = _jTexture.Framebuffer;
+                    if (framebuffer != null)
+                    {
+                        if (framebuffer.Generation != _generation)
+                        {
+                            _resourceState = ATextureEntry.ResourceState.Outdated;
+                        }
+                    }
                 }
-
-                if (framebuffer.Generation != SkTexture.Generation)
-                {
-                    return true;
-                }
-
-                return false;
 
                 return _resourceState;
             }

@@ -87,7 +87,7 @@ public class SkRenderbufferEntry : ARenderbufferEntry
          */
         _jTextureName = JRenderbuffer.TextureName;
         _jTexture = new engine.joyce.Texture(_jTextureName);
-        _skTexture = new SkTexture(gl, engine.joyce.Texture.FilteringModes.Framebuffer);
+        _skTexture = new SkTexture(gl, _jTexture, engine.joyce.Texture.FilteringModes.Framebuffer);
         _skTexture.SetFrom(JRenderbuffer.Width, JRenderbuffer.Height);
         _skTextureEntry = new SkTextureEntry(_jTexture);
         _skTextureEntry.SkTexture = _skTexture;
