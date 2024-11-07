@@ -56,18 +56,18 @@ public class SkTexture : IDisposable
                 /*
                  * We are uploaded. Check, if we also are outdated.
                  */
-                if (_resourceState < ATextureEntry.ResourceState.Outdated)
+                if (_resourceState >= ATextureEntry.ResourceState.Using)
                 {
                     IFramebuffer framebuffer = _jTexture.Framebuffer;
                     if (framebuffer != null)
                     {
                         if (framebuffer.Generation != _generation)
                         {
-                            _resourceState = ATextureEntry.ResourceState.Outdated;
+                            return ATextureEntry.ResourceState.Outdated;
                         }
                     }
                 }
-
+                
                 return _resourceState;
             }
         }
