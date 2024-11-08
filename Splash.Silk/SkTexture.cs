@@ -328,6 +328,7 @@ public class SkTexture : IDisposable
                                  * Start a new chunk with this row.
                                  */
                                 pFirstRow = pCurrentRow;
+                                currentStride = 0l;                                
                                 y0 = y;
                                 nRows = 0; // which will increment to one very soon.
                             }
@@ -407,7 +408,8 @@ public class SkTexture : IDisposable
 #if true
                     _processPixelChunks(img, (p, _jTexture, y, w, h, stride) =>
                     {
-                        Trace($"nRows = {h}");
+                        Trace($"y = {y}, nRows = {h}");
+                        _gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
                         _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, h,
                             PixelFormat.Rgba, PixelType.UnsignedByte, p.ToPointer());
                         if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
@@ -447,7 +449,12 @@ public class SkTexture : IDisposable
                      */
                     for (int mm = 0; mm < nLevel; ++mm)
                     {
-                        _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8, 
+                        /*
+                         *_gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
+                         * If optimizing the texture atlas upload, use the row length parameter to upload more
+                         * * of the individual texture chunks at once.
+                        */
+                        _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8,
                             (uint)(width>>mm), (uint)(height>>mm),
                             0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
                         if (_checkGLErrors) _checkError($"TexImage2D {mm}");
