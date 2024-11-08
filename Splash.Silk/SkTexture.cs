@@ -495,34 +495,54 @@ public class SkTexture : IDisposable
     {
         _trace($"Creating new Texture from path {path}");
 
-        _checkReloadTexture();
-        _bindBack();
         try
         {
             lock (_lo)
             {
                 _resourceState = ATextureEntry.ResourceState.Loading;
             }
+            #if false
             System.IO.Stream streamImage = engine.Assets.Open(path);
+            var img = Image.Load<Rgba32>(streamImage);
             lock (_lo)
             {
                 _resourceState = ATextureEntry.ResourceState.Uploading;
             }
-            #if true
-            var img = Image.Load<Rgba32>(streamImage);
             _uploadImage(img, path, isAtlas);
             #else
-            I.Get<Engine>().Execute( ()=>
+            I.Get<Engine>().Run( ()=>
             {
+                System.IO.Stream streamImage = engine.Assets.Open(path);
                 var img = Image.Load<Rgba32>(streamImage);
-                I.Get<Engine>().
-                _uploadImage(img);
+                I.Get<IThreeD>().Execute(() =>
+                {
+                    _checkReloadTexture();
+                    _bindBack();
+                    lock (_lo)
+                    {
+                        _resourceState = ATextureEntry.ResourceState.Uploading;
+                    }
+                    _uploadImage(img, path, isAtlas);
+                    _generateMipmap();
+                    _unbindBack();
+                    _backToLive();
+                    lock (_lo)
+                    {
+                        _resourceState = ATextureEntry.ResourceState.Using;
+                    }
+                });
 
             });
             #endif
         }
         catch (Exception e)
         {
+            _checkReloadTexture();
+            _bindBack();
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Uploading;
+            }
             /*
              * As a fallback, generate a single-colored texture.
              */
@@ -534,15 +554,15 @@ public class SkTexture : IDisposable
                     PixelType.UnsignedByte, d);
                 if (_checkGLErrors) _checkError("TexImage2D");
             }
+            _generateMipmap();
+            _unbindBack();
+            _backToLive();
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Using;
+            }
         }
 
-        _generateMipmap();
-        _unbindBack();
-        _backToLive();
-        lock (_lo)
-        {
-            _resourceState = ATextureEntry.ResourceState.Using;
-        }
     }
 
 
