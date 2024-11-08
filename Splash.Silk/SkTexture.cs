@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.Design;
 using System.Numerics;
+using engine;
 using engine.draw;
 using glTFLoader.Schema;
 using Silk.NET.OpenGL;
@@ -376,6 +377,120 @@ public class SkTexture : IDisposable
     }
 
 
+
+    private unsafe void _uploadImage(Image<Rgba32> img, string path, bool isAtlas)
+    {
+        int width, height;
+        _backData = true;
+
+        // TXWTODO: Read this from a property.
+        int nLevel = _filteringMode != Texture.FilteringModes.Framebuffer ? NMipmaps : 1;
+
+        if (!isAtlas)
+        {
+            _trace($"texture {path} is no atlas, uploading straight.");
+
+            width = img.Width;
+            height = img.Height;
+            _haveMipmap = false;
+            _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height,
+                0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, null);
+            if (_checkGLErrors) _checkError("TexImage2D");
+
+#if true
+            _processPixelChunks(img, (p, _jTexture, y, w, h, stride) =>
+            {
+                Trace($"y = {y}, nRows = {h}");
+                _gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
+                _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, h,
+                    PixelFormat.Rgba, PixelType.UnsignedByte, p.ToPointer());
+                if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
+            });
+#else
+                    img.ProcessPixelRows(accessor =>
+                    {
+                        for (int y = 0; y < accessor.Height; y++)
+                        {
+                            fixed (void* data = accessor.GetRowSpan(y))
+                            {
+                                _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1,
+                                    PixelFormat.Rgba, PixelType.UnsignedByte, data);
+                                if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
+
+                            }
+                        }
+                    });
+#endif
+        }
+        else
+        {
+            _trace($"texture {path} has an atlas, uploading...");
+
+            width = img.Width / 2;
+            height = img.Height;
+            _haveMipmap = true;
+
+
+            if (_backHandle == 9)
+            {
+                int a = 1;
+            }
+
+            /*
+             * Now, first step, allocate the textures.
+             */
+            for (int mm = 0; mm < nLevel; ++mm)
+            {
+                /*
+                 *_gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
+                 * If optimizing the texture atlas upload, use the row length parameter to upload more
+                 * * of the individual texture chunks at once.
+                 */
+                _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8,
+                    (uint)(width >> mm), (uint)(height >> mm),
+                    0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+                if (_checkGLErrors) _checkError($"TexImage2D {mm}");
+            }
+
+
+            img.ProcessPixelRows(accessor =>
+            {
+                // TXWTODO: We need to condfigure the number of mipmaps before
+                // ZXWTODO :We should write the number of mipmaps to the atals.
+                /*
+                 * Line by line, fill all of the mipmap images.
+                 */
+                for (int y = 0; y < accessor.Height; y++)
+                {
+                    fixed (void* data = accessor.GetRowSpan(y))
+                    {
+                        /*
+                         * Where does the mipmap start?
+                         */
+                        int xOffset = 0;
+
+                        for (int mm = 0; mm < nLevel; ++mm)
+                        {
+                            int mmHeight = height >> mm;
+                            int mmWidth = width >> mm;
+
+                            if (y < mmHeight)
+                            {
+                                _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y, (uint)mmWidth, 1,
+                                    PixelFormat.Rgba, PixelType.UnsignedByte, ((byte*)data) + 4 * xOffset);
+                                if (_checkGLErrors) _checkError($"TexParam with mipmap SubImage2D {y}");
+                            }
+
+                            xOffset += mmWidth;
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+
     public unsafe void SetFrom(string path, bool isAtlas)
     {
         _trace($"Creating new Texture from path {path}");
@@ -393,117 +508,18 @@ public class SkTexture : IDisposable
             {
                 _resourceState = ATextureEntry.ResourceState.Uploading;
             }
+            #if true
             var img = Image.Load<Rgba32>(streamImage);
+            _uploadImage(img, path, isAtlas);
+            #else
+            I.Get<Engine>().Execute( ()=>
             {
-                int width, height;
-                _backData = true;
+                var img = Image.Load<Rgba32>(streamImage);
+                I.Get<Engine>().
+                _uploadImage(img);
 
-                // TXWTODO: Read this from a property.
-                int nLevel = _filteringMode!=Texture.FilteringModes.Framebuffer?NMipmaps:1;
-                
-                if (!isAtlas)
-                {
-                    _trace($"texture {path} is no atlas, uploading straight.");
-                    
-                    width = img.Width;
-                    height = img.Height;
-                    _haveMipmap = false;
-                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height,
-                        0,
-                        PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                    if (_checkGLErrors) _checkError("TexImage2D");
-                    
-#if true
-                    _processPixelChunks(img, (p, _jTexture, y, w, h, stride) =>
-                    {
-                        Trace($"y = {y}, nRows = {h}");
-                        _gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
-                        _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, h,
-                            PixelFormat.Rgba, PixelType.UnsignedByte, p.ToPointer());
-                        if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
-                    });
-#else
-                    img.ProcessPixelRows(accessor =>
-                    {
-                        for (int y = 0; y < accessor.Height; y++)
-                        {
-                            fixed (void* data = accessor.GetRowSpan(y))
-                            {
-                                _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)accessor.Width, 1,
-                                    PixelFormat.Rgba, PixelType.UnsignedByte, data);
-                                if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
-
-                            }
-                        }
-                    });
-#endif
-                }
-                else
-                {
-                    _trace($"texture {path} has an atlas, uploading...");
-
-                    width = img.Width / 2;
-                    height = img.Height;
-                    _haveMipmap = true;
-
-
-                    if (_backHandle == 9)
-                    {
-                        int a = 1;
-                    }
-                    
-                    /*
-                     * Now, first step, allocate the textures.
-                     */
-                    for (int mm = 0; mm < nLevel; ++mm)
-                    {
-                        /*
-                         *_gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
-                         * If optimizing the texture atlas upload, use the row length parameter to upload more
-                         * * of the individual texture chunks at once.
-                        */
-                        _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8,
-                            (uint)(width>>mm), (uint)(height>>mm),
-                            0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                        if (_checkGLErrors) _checkError($"TexImage2D {mm}");
-                    }
-                    
-
-                    img.ProcessPixelRows(accessor =>
-                    {
-                        // TXWTODO: We need to condfigure the number of mipmaps before
-                        // ZXWTODO :We should write the number of mipmaps to the atals.
-                        /*
-                         * Line by line, fill all of the mipmap images.
-                         */
-                        for (int y = 0; y < accessor.Height; y++)
-                        {
-                            fixed (void* data = accessor.GetRowSpan(y))
-                            {
-                                /*
-                                 * Where does the mipmap start?
-                                 */
-                                int xOffset = 0;
-
-                                for (int mm = 0; mm < nLevel; ++mm)
-                                {
-                                    int mmHeight = height >> mm;
-                                    int mmWidth = width >> mm;
-
-                                    if (y<mmHeight)
-                                    {
-                                        _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y, (uint)mmWidth, 1,
-                                            PixelFormat.Rgba, PixelType.UnsignedByte, ((byte *)data) + 4*xOffset);
-                                        if (_checkGLErrors) _checkError($"TexParam with mipmap SubImage2D {y}");
-                                    }
-
-                                    xOffset += mmWidth;
-                                }
-                            }
-                        }
-                    });
-                }
-            }
+            });
+            #endif
         }
         catch (Exception e)
         {

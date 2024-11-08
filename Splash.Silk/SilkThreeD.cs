@@ -788,6 +788,11 @@ public class SilkThreeD : IThreeD
         return _getGL();
     }
 
+    public void Execute(Action action)
+    {
+        _graphicsThreadActions.Enqueue(action);
+    }
+    
     public void ExecuteGraphicsThreadActions(float dt)
     {
         _graphicsThreadActions.RunPart(dt);
