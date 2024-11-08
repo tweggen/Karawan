@@ -272,9 +272,9 @@ public class SkTexture : IDisposable
         Action<IntPtr, int, int, uint, uint, long> action
     )
     {
+#if true
         img.ProcessPixelRows(accessor =>
         {
-#if false
             void* pFirstRow = null;
             void* pPreviousRow = null;
             void* pCurrentRow = null;
@@ -282,16 +282,19 @@ public class SkTexture : IDisposable
             long currentStride = 0l;
             uint nRows = 0;
             int y0 = 0;
-#endif
 
             uint width = (uint)accessor.Width;
             uint height = (uint)accessor.Height;
+
+            if (0 == height || 0 == width)
+            {
+                return;
+            }
 
             for (int y = 0; y < height; y++)
             {
                 fixed (void* p = accessor.GetRowSpan(y))
                 {
-#if false
                     pCurrentRow = p;
                     if (pFirstRow == null)
                     {
@@ -306,22 +309,33 @@ public class SkTexture : IDisposable
                             if (currentStride != previousStride)
                             {
                                 /*
+                                 * This is a third (or later) line in a chunk. It does have a different stride
+                                 * than the fist to the second.
+                                 * 
                                  * Different size of the line, take what we have up to this point.
+                                 * That is call the action from the first up until the previous line
+                                 * with the previousStride set up.
                                  */
 
                                 /*
-                                 * emit nRows from y0.
+                                 * emit nRows from y0, but not this.
                                  */
                                 {
                                     action(new IntPtr(pFirstRow), 0, y0, width, nRows, previousStride);
                                 }
-
+                                
+                                /*
+                                 * Start a new chunk with this row.
+                                 */
+                                pFirstRow = pCurrentRow;
                                 y0 = y;
-                                nRows = 0;
+                                nRows = 0; // which will increment to one very soon.
                             }
                             else
                             {
                                 /*
+                                 * This is a third (or later) line in a chunk. It did not have a different stride
+                                 * than the fist to the second.
                                  * Continue to accumulate lines.
                                  */
                             }
@@ -330,21 +344,34 @@ public class SkTexture : IDisposable
                     else
                     {
                         /*
-                         * This is the first row, continue to accumulate lines.
+                         * This is the first row in a chunk. Only after the second we can push out a segment.
                          */
                     }
-#endif
-                    
-                    action(new IntPtr(p), 0, y, width, height, width * sizeof(Rgba32));
                 }
 
-#if false
                 pPreviousRow = pCurrentRow;
                 previousStride = currentStride;
                 ++nRows;
-#endif
+            }
+            
+            /*
+             * If height has not been zero, nRows is > 0 here.
+             * Note that previousStride very well may be 0, precisely if nRows==1
+             */
+            action(new IntPtr(pFirstRow), 0, y0, width, nRows, previousStride);
+        });
+#else
+        img.ProcessPixelRows(accessor =>
+        {
+            uint width = (uint)accessor.Width;
+            uint height = (uint)accessor.Height;
+
+            for (int y = 0; y < height; y++)
+            {
+                action(new IntPtr(p), 0, y, width, height, width * sizeof(Rgba32));
             }
         });
+#endif
     }
 
 
@@ -380,7 +407,8 @@ public class SkTexture : IDisposable
 #if true
                     _processPixelChunks(img, (p, _jTexture, y, w, h, stride) =>
                     {
-                        _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, 1,
+                        Trace($"nRows = {h}");
+                        _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, h,
                             PixelFormat.Rgba, PixelType.UnsignedByte, p.ToPointer());
                         if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
                     });
