@@ -1,11 +1,14 @@
 ﻿using System.ComponentModel.Design;
 using System.Numerics;
 using engine.draw;
+using glTFLoader.Schema;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 //using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 using static engine.Logger;
+using Image = SixLabors.ImageSharp.Image;
 using Texture = engine.joyce.Texture;
 using Trace = System.Diagnostics.Trace;
 
@@ -264,6 +267,87 @@ public class SkTexture : IDisposable
     }
 
 
+    private unsafe void _processPixelChunks(
+        Image<Rgba32> img,
+        Action<IntPtr, int, int, uint, uint, long> action
+    )
+    {
+        img.ProcessPixelRows(accessor =>
+        {
+#if false
+            void* pFirstRow = null;
+            void* pPreviousRow = null;
+            void* pCurrentRow = null;
+            long previousStride = 0l;
+            long currentStride = 0l;
+            uint nRows = 0;
+            int y0 = 0;
+#endif
+
+            uint width = (uint)accessor.Width;
+            uint height = (uint)accessor.Height;
+
+            for (int y = 0; y < height; y++)
+            {
+                fixed (void* p = accessor.GetRowSpan(y))
+                {
+#if false
+                    pCurrentRow = p;
+                    if (pFirstRow == null)
+                    {
+                        pFirstRow = p;
+                    }
+
+                    if (pPreviousRow != null)
+                    {
+                        currentStride = (byte*)pCurrentRow - (byte*)pPreviousRow;
+                        if (previousStride != 0l)
+                        {
+                            if (currentStride != previousStride)
+                            {
+                                /*
+                                 * Different size of the line, take what we have up to this point.
+                                 */
+
+                                /*
+                                 * emit nRows from y0.
+                                 */
+                                {
+                                    action(new IntPtr(pFirstRow), 0, y0, width, nRows, previousStride);
+                                }
+
+                                y0 = y;
+                                nRows = 0;
+                            }
+                            else
+                            {
+                                /*
+                                 * Continue to accumulate lines.
+                                 */
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /*
+                         * This is the first row, continue to accumulate lines.
+                         */
+                    }
+#endif
+                    
+                    action(new IntPtr(p), 0, y, width, height, width * sizeof(Rgba32));
+                }
+
+#if false
+                pPreviousRow = pCurrentRow;
+                previousStride = currentStride;
+                ++nRows;
+#endif
+            }
+        });
+    }
+
+
     public unsafe void SetFrom(string path, bool isAtlas)
     {
         _trace($"Creating new Texture from path {path}");
@@ -292,7 +376,15 @@ public class SkTexture : IDisposable
                         0,
                         PixelFormat.Rgba, PixelType.UnsignedByte, null);
                     if (_checkGLErrors) _checkError("TexImage2D");
-
+                    
+#if true
+                    _processPixelChunks(img, (p, _jTexture, y, w, h, stride) =>
+                    {
+                        _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, 1,
+                            PixelFormat.Rgba, PixelType.UnsignedByte, p.ToPointer());
+                        if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
+                    });
+#else
                     img.ProcessPixelRows(accessor =>
                     {
                         for (int y = 0; y < accessor.Height; y++)
@@ -306,6 +398,7 @@ public class SkTexture : IDisposable
                             }
                         }
                     });
+#endif
                 }
                 else
                 {
