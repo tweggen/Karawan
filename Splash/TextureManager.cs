@@ -30,20 +30,30 @@ namespace Splash
             ATextureEntry aTextureEntry;
             bool needFillEntry = false;
             string textureKey = jTexture.Key;
+            ATextureEntry.ResourceState textureState;
             lock (_lock)
             {
                 if (_dictTextures.TryGetValue(textureKey, out aTextureEntry))
                 {
-                    if (aTextureEntry.IsOutdated())
+                    textureState = aTextureEntry.State;
+                    if (textureState == ATextureEntry.ResourceState.Outdated)
                     {
                         needFillEntry = true;
                     }
-                } else
+                    else
+                    {
+                        /*
+                         * However, it does not need filling if it already is loading.
+                         */
+                    }
+                } 
+                else
                 {
                     if (TraceDetails) Trace($"Texture {textureKey} not loaded yet.");
                     aTextureEntry = _threeD.CreateTextureEntry(jTexture);
                     _dictTextures.Add(textureKey, aTextureEntry);
                     needFillEntry = true;
+                    textureState = aTextureEntry.State;
                     // TXWTODO: Should be async and not with mutex held.
                 }
 
@@ -51,7 +61,7 @@ namespace Splash
             if (needFillEntry)
             {
                 _threeD.UploadTextureEntry(aTextureEntry);
-                if (!aTextureEntry.IsUploaded())
+                if (aTextureEntry.State <= ATextureEntry.ResourceState.Created)
                 {
                     if (TraceDetails) Trace($"Texture {textureKey} could not be loaded, removing from dict.");
                     lock (_lock)

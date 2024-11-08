@@ -34,7 +34,7 @@ public class SilkTextureChannelState
     {
         SkTexture? skTexture = null;
         
-        if (skTextureEntry != null && skTextureEntry.IsUploaded())
+        if (skTextureEntry != null && skTextureEntry.State >= AResourceEntry.ResourceState.Using)
         {
             skTexture = skTextureEntry.SkTexture;
         }

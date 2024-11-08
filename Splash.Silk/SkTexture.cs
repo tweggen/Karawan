@@ -39,7 +39,7 @@ public class SkTexture : IDisposable
     /*
      * As we currently ignore the loading the textures, we immediately mark them as using.
      */
-    private ATextureEntry.ResourceState _resourceState = ATextureEntry.ResourceState.Using;
+    private ATextureEntry.ResourceState _resourceState = ATextureEntry.ResourceState.Created;
     
     /*
      * Data generation that had been uploaded.
@@ -384,7 +384,15 @@ public class SkTexture : IDisposable
         _bindBack();
         try
         {
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Loading;
+            }
             System.IO.Stream streamImage = engine.Assets.Open(path);
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Uploading;
+            }
             var img = Image.Load<Rgba32>(streamImage);
             {
                 int width, height;
@@ -515,6 +523,10 @@ public class SkTexture : IDisposable
         _generateMipmap();
         _unbindBack();
         _backToLive();
+        lock (_lo)
+        {
+            _resourceState = ATextureEntry.ResourceState.Using;
+        }
     }
 
 
@@ -542,6 +554,10 @@ public class SkTexture : IDisposable
         _generateMipmap();
         _unbindBack();
         _backToLive();
+        lock (_lo)
+        {
+            _resourceState = ATextureEntry.ResourceState.Using;
+        }
     }
 
 
@@ -558,6 +574,10 @@ public class SkTexture : IDisposable
         _generateMipmap();
         _unbindBack();
         _backToLive();
+        lock (_lo)
+        {
+            _resourceState = ATextureEntry.ResourceState.Using;
+        }
     }
 
 
