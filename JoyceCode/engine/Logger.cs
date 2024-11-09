@@ -81,7 +81,7 @@ namespace engine
                 }
             }
 
-            return $"{now} {fileName}:{lineNumber}: {type}:{methodName}: {strLevel}: {msg}";
+            return $"{now}{now.Millisecond:D3}{now.Microsecond:D3} {fileName}:{lineNumber}: {type}:{methodName}: {strLevel}: {msg}";
         }
         
 
