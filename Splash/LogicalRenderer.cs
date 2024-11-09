@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -21,6 +22,8 @@ public class LogicalRenderer
     private readonly systems.DrawInstancesSystem _drawInstancesSystem;
     private readonly systems.DrawSkyboxesSystem _drawSkyboxesSystem;
 
+    private uint _logicalFrameNumber;
+    
     private readonly Queue<RenderFrame> _renderQueue = new();
     private bool _shallQuit;
     public bool ShallQuit
@@ -175,10 +178,16 @@ public class LogicalRenderer
 
         if(null != renderFrame)
         {
+            renderFrame.FrameNumber = ++_logicalFrameNumber;
+            renderFrame.StartCollectTime = DateTime.Now;
+            
             /*
-             * Create/upload all resources that haven't been uploaded.
-             */
+            * Create/upload all resources that haven't been uploaded.
+            */
             renderFrame.LightCollector.CollectLights();
+
+            renderFrame.EndCollectTime = DateTime.Now;
+            
             _logicalRenderFrame(scene, renderFrame);
             lock(_lo)
             {
