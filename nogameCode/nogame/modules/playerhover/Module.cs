@@ -606,6 +606,10 @@ public class Module : engine.AModule
 
         _engine.SetPlayerEntity(GetShipEntity());
 
+        /*
+         * Create a viewer for the player itself, defining what parts
+         * of the world shall be loaded.
+         */
         _playerViewer = new(_engine);
         I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
     }
