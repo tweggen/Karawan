@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 using engine.joyce.components;
 
@@ -6,6 +7,9 @@ namespace Splash
 {
     public class RenderFrame
     {
+        public uint FrameNumber;
+        public DateTime StartCollectTime;
+        public DateTime EndCollectTime;
         public LightCollector LightCollector = new();
         public FrameStats FrameStats = new();
         
