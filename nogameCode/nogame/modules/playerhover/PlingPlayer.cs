@@ -4,6 +4,8 @@ namespace nogame.modules.playerhover;
 
 public class PlingPlayer
 {
+    private object _lo = new();
+    
     private int _plingCounter;
 
     private static readonly int FirstPling = 1;
@@ -14,42 +16,65 @@ public class PlingPlayer
     
     public void PlayPling()
     {
-        _arrPlings[_plingCounter - FirstPling].Stop();
-        _arrPlings[_plingCounter - FirstPling].Play();
+        Boom.ISound[] arrPlings;
+        lock (_lo)
+        {
+            arrPlings = _arrPlings;
+        }
+
+        if (null == arrPlings)
+        {
+            return;
+        }
+        arrPlings[_plingCounter - FirstPling].Stop();
+        arrPlings[_plingCounter - FirstPling].Play();
     }
 
 
     private void _loadPlings()
     {
+        Boom.ISound[] arrLoadingPlings;
+
         var api = I.Get<Boom.ISoundAPI>();
-        _arrPlings = new Boom.ISound[LastPling - FirstPling + 1];
+        arrLoadingPlings = new Boom.ISound[LastPling - FirstPling + 1];
         for (int i = FirstPling-1; i < LastPling; ++i)
         {
-            _arrPlings[i] = api.FindSound($"pling{(i+1):D2}.ogg");
-            _arrPlings[i].Volume = 0.025f;
+            arrLoadingPlings[i] = api.FindSound($"pling{(i+1):D2}.ogg");
+            arrLoadingPlings[i].Volume = 0.025f;
+        }
+
+        lock (_lo)
+        {
+            _arrPlings = arrLoadingPlings;
         }
     }
 
     public void Reset()
     {
-        _plingCounter = FirstPling;
+        lock (_lo)
+        {
+            _plingCounter = FirstPling;
+        }
     }
 
     public void Next()
     {
-        if (_plingCounter >= LastPling)
+        lock (_lo)
         {
-            _plingCounter = FirstPling;
-        }
-        else
-        {
-            _plingCounter++;
+            if (_plingCounter >= LastPling)
+            {
+                _plingCounter = FirstPling;
+            }
+            else
+            {
+                _plingCounter++;
+            }
         }
     }
 
     public PlingPlayer()
     {
-        _loadPlings();
+        I.Get<Engine>().Run(() => _loadPlings());
         Reset();
     }
 }
