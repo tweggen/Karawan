@@ -25,6 +25,11 @@ namespace Splash
         public Light[] Lights {
             get => _lights; 
         }
+        public int LightsCount
+        {
+            get => _lightsCount;
+        }
+        
         public Vector4 ColAmbient;
         
 

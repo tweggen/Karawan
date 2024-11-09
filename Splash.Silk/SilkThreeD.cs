@@ -105,6 +105,14 @@ public class SilkThreeD : IThreeD
 
         try
         {
+            #if false
+            if (skMaterialEntry.JMaterial.EmissiveTexture != null
+                    && skMaterialEntry.JMaterial.EmissiveTexture.Source != null
+                    && skMaterialEntry.JMaterial.EmissiveTexture.Source == "framebuffer://rootscene_3d")
+            {
+                int a = 1;
+            }
+            #endif
             _silkRenderState.Texture0.UseTextureEntry(skMaterialEntry.SkDiffuseTexture);
             _silkRenderState.Texture2.UseTextureEntry(skMaterialEntry.SkEmissiveTexture);
 

@@ -19,13 +19,20 @@ public class SilkTextureChannelState
     }
     
     
-    public void UseTexture(SkTexture skTexture)
+    private void _useTexture(SkTexture? skTexture)
     {
         if (_currentSkTexture != skTexture)
         {
-            UnbindTexture();
-            _currentSkTexture = skTexture;
-            _currentSkTexture.ActiveAndBind(_textureUnit);
+            if (null != _currentSkTexture)
+            {
+                _currentSkTexture.ActiveAndUnbind(_textureUnit);
+                _currentSkTexture = null;
+            }
+            if (skTexture != null)
+            {
+                _currentSkTexture = skTexture;
+                _currentSkTexture.ActiveAndBind(_textureUnit);
+            }
         }
     }
     
@@ -39,19 +46,7 @@ public class SilkTextureChannelState
             skTexture = skTextureEntry.SkTexture;
         }
         
-
-        if (_currentSkTexture == skTexture)
-        {
-            return;
-        }
-        if (skTexture != null)
-        {
-            UseTexture(skTexture);
-        }
-        else
-        {
-            UnbindTexture();
-        }
+        _useTexture(skTexture);
     }
 
 

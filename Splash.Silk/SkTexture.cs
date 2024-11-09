@@ -621,7 +621,7 @@ public class SkTexture : IDisposable
     {
         _trace($"Bind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
-        if (_checkGLErrors) _checkError("ActiveTexture {texureSlot}");
+        if (_checkGLErrors) _checkError($"ActiveAndBind ActiveTexture {textureSlot}");
         if (!_liveData)
         {
             if (0xffffffff != _liveHandle)
@@ -635,7 +635,7 @@ public class SkTexture : IDisposable
         if (_checkGLErrors) _checkError("flush");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
 
-        int err = _checkGLErrors ? _checkError("BindAndActive Texture") : 0;
+        int err = _checkGLErrors ? _checkError("ActiveAndBind Bind Texture") : 0;
         if (0 == err)
         {
             _liveBound = true; 
@@ -651,7 +651,7 @@ public class SkTexture : IDisposable
     {
         _trace($"Unbind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
-        if (_checkGLErrors) _checkError("ActiveTexture {textureSlot}");
+        if (_checkGLErrors) _checkError($"ActiveAndUnbind ActiveTexture {textureSlot}");
         if (!_liveData)
         {
             if (0xffffffff != _liveHandle)
@@ -664,7 +664,7 @@ public class SkTexture : IDisposable
         _trace($"Unbind texture 0");
         if (_checkGLErrors) _checkError("flush");
         _gl.BindTexture(TextureTarget.Texture2D, 0);
-        int err = _checkGLErrors ? _checkError("BindAndActive Texture"):0;
+        int err = _checkGLErrors ? _checkError("ActiveAndUnbind Bind Texture"):0;
         if (err == 0)
         {
             _liveBound = false;

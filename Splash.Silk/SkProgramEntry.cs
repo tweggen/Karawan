@@ -17,10 +17,11 @@ public class SkProgramEntry : IDisposable
 
     public SortedDictionary<string, ShaderLocs> ShaderUseCases = new();
 
-    private const bool _checkErrors = false;
+    private const bool _checkErrors = true;
     
     public void SetUniform(int location, int value)
     {
+        if (-1 == location) return;
         _gl.Uniform1(location, value);
         if (_checkErrors)
         {
@@ -34,6 +35,7 @@ public class SkProgramEntry : IDisposable
 
     public void SetUniform(int location, float value)
     {
+        if (-1 == location) return;
         _gl.Uniform1(location, value);
         if (_checkErrors)
         {
@@ -91,7 +93,7 @@ public class SkProgramEntry : IDisposable
         if (location == -1)
         {
             if (_traceShader) Error($"{name} uniform not found on shader.");
-            return 0;
+            return -1;
         }
 
         return (int) location;
@@ -124,6 +126,7 @@ public class SkProgramEntry : IDisposable
 
     public void SetUniform(int location, in Vector4 v)
     {
+        if (-1 == location) return;
         _gl.Uniform4(location, v.X, v.Y, v.Z, v.W);
     }
 
@@ -142,12 +145,14 @@ public class SkProgramEntry : IDisposable
     
     public unsafe void SetUniform(int location, Matrix4x4 value)
     {
+        if (-1 == location) return;
         _gl.UniformMatrix4(location, 1, false, (float*) &value);
     }
 
     
     public void SetUniform(int location, Vector3 value)
     {
+        if (-1 == location) return;
         _gl.Uniform3(location, value.X, value.Y, value.Z);
     }
 
