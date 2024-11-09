@@ -245,7 +245,7 @@ public class Scene : AModule, IScene, IInputPart
         _nFrame++;
         if (_nFrame < 100)
         {
-            Trace($"Displaying root scene frame {_nFrame}.");
+            //Trace($"Displaying root scene frame {_nFrame}.");
         }
     }
 
