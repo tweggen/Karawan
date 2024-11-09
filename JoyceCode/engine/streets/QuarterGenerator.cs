@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using builtin.tools;
 using ClipperLib;
 using engine.world;
 using static engine.Logger;
@@ -19,9 +20,8 @@ namespace engine.streets
         private QuarterStore _quarterStore;
         private bool _traceGenerate = false;
         private float _storyHeight = 3f;
-
-        private builtin.tools.RandomSource _rnd;
-
+        private string _seed0;
+        
 
         /**
          * Add the possible shops in this building.
@@ -82,8 +82,18 @@ namespace engine.streets
         
         private void _createBuildings(in Quarter quarter, in Estate estate)
         {
+            var v2QuarterCenter = quarter.GetCenterPoint();
+
             /*
-             * The current implementation takes one estate, shrinks the real estate 
+             * To behave predictably no matter what platform, parallelization
+             * or caching we are on, we use a local random source using the
+             * position of the quarter only.
+             */
+            RandomSource rndQuarter;
+            rndQuarter = new RandomSource($"{((int)(v2QuarterCenter.X * 10))^((int)(v2QuarterCenter.Y*10))}{_seed0}"); 
+
+            /*
+             * The current implementation takes one estate, shrinks the real estate
              * (like a sidewalk). If any suitable area remains, this is gonna be
              * the house.
              *
@@ -115,7 +125,7 @@ namespace engine.streets
                  */
                 float sidewalkWidth = 4f*10f;
                 {
-                    //sidewalkWidth = _rnd.getFloat()*75. + 25.;
+                    //sidewalkWidth = rndQuarter.getFloat()*75. + 25.;
                 }
                 clipperOffset.Execute(ref solution2, -sidewalkWidth);
 
@@ -174,7 +184,7 @@ namespace engine.streets
             /*
              * But do not build everywhere. Trivial: Remove 30% of the buildings.
              */
-            if (_rnd.GetFloat() > 0.7f)
+            if (rndQuarter.GetFloat() > 0.7f)
             {
                 quarter.AddDebugTag("leftWithoutBuilding", "true");
                 return;
@@ -214,7 +224,7 @@ namespace engine.streets
                 maxHeight = 160f * _storyHeight;
             }
 
-            var height = _storyHeight * (int)((15f + _rnd.GetFloat() * 250f)/ _storyHeight);
+            var height = _storyHeight * (int)((15f + rndQuarter.GetFloat() * 250f)/ _storyHeight);
             if (height > maxHeight) height = maxHeight;
             building.SetHeight(height);
 
@@ -243,7 +253,7 @@ namespace engine.streets
                 p[0] + _clusterDesc.Pos,
                 ClusterDesc.LocationAttributes.Shopping);
             // Trace($"shoppingness in {_clusterDesc.Name} is {shoppingness}");
-            if (_rnd.GetFloat() <= shoppingness)
+            if (rndQuarter.GetFloat() <= shoppingness)
             {
                 _addShops(building);
             }
@@ -262,7 +272,6 @@ namespace engine.streets
         public void Generate()
         {
 
-            _rnd.Clear();
             _strokeStore.ClearTraversed();
             var points = _strokeStore.GetStreetPoints();
             foreach (var spStart in points)
@@ -474,7 +483,7 @@ namespace engine.streets
                             /*
                              * Create the building(s) on that estate
                              */
-                            if (true || _rnd.GetFloat() > 0.05)
+                            if (true)
                             {
                                 quarter.AddDebugTag("shallHaveBuildings", "true");
                                 _createBuildings(quarter, estate);
@@ -500,7 +509,7 @@ namespace engine.streets
             QuarterStore quarterStore,
             StrokeStore strokeStore) 
         {
-            _rnd = new builtin.tools.RandomSource(seed0);
+            _seed0 = seed0;
             _clusterDesc = clusterDesc;
             _quarterStore = quarterStore;
             _strokeStore = strokeStore;
