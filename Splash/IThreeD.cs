@@ -55,4 +55,6 @@ public interface IThreeD
         in int nMatrices);
 
     public void FinishUploadOnly(in AMeshEntry aMeshEntry);
+
+    public void Execute(Action action);
 }

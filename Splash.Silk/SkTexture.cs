@@ -1,11 +1,15 @@
 ﻿using System.ComponentModel.Design;
 using System.Numerics;
+using engine;
 using engine.draw;
+using glTFLoader.Schema;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 //using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 using static engine.Logger;
+using Image = SixLabors.ImageSharp.Image;
 using Texture = engine.joyce.Texture;
 using Trace = System.Diagnostics.Trace;
 
@@ -33,6 +37,9 @@ public class SkTexture : IDisposable
 
     private bool _traceTexture = false;
     
+    /*
+     * As we currently ignore the loading the textures, we immediately mark them as using.
+     */
     private ATextureEntry.ResourceState _resourceState = ATextureEntry.ResourceState.Created;
     
     /*
@@ -50,19 +57,21 @@ public class SkTexture : IDisposable
         get {
             lock (_lo)
             {
-                IFramebuffer framebuffer = JTexture.Framebuffer;
-                if (framebuffer == null)
+                /*
+                 * We are uploaded. Check, if we also are outdated.
+                 */
+                if (_resourceState >= ATextureEntry.ResourceState.Using)
                 {
-                    return false;
+                    IFramebuffer framebuffer = _jTexture.Framebuffer;
+                    if (framebuffer != null)
+                    {
+                        if (framebuffer.Generation != _generation)
+                        {
+                            return ATextureEntry.ResourceState.Outdated;
+                        }
+                    }
                 }
-
-                if (framebuffer.Generation != SkTexture.Generation)
-                {
-                    return true;
-                }
-
-                return false;
-
+                
                 return _resourceState;
             }
         }
@@ -259,35 +268,146 @@ public class SkTexture : IDisposable
     }
 
 
-    public unsafe void SetFrom(string path, bool isAtlas)
+    private unsafe void _processPixelChunks(
+        Image<Rgba32> img,
+        Action<IntPtr, int, int, uint, uint, long> action
+    )
     {
-        _trace($"Creating new Texture from path {path}");
-
-        _checkReloadTexture();
-        _bindBack();
-        try
+#if true
+        img.ProcessPixelRows(accessor =>
         {
-            System.IO.Stream streamImage = engine.Assets.Open(path);
-            var img = Image.Load<Rgba32>(streamImage);
+            void* pFirstRow = null;
+            void* pPreviousRow = null;
+            void* pCurrentRow = null;
+            long previousStride = 0l;
+            long currentStride = 0l;
+            uint nRows = 0;
+            int y0 = 0;
+
+            uint width = (uint)accessor.Width;
+            uint height = (uint)accessor.Height;
+
+            if (0 == height || 0 == width)
             {
-                int width, height;
-                _backData = true;
+                return;
+            }
 
-                // TXWTODO: Read this from a property.
-                int nLevel = _filteringMode!=Texture.FilteringModes.Framebuffer?NMipmaps:1;
-                
-                if (!isAtlas)
+            for (int y = 0; y < height; y++)
+            {
+                fixed (void* p = accessor.GetRowSpan(y))
                 {
-                    _trace($"texture {path} is no atlas, uploading straight.");
-                    
-                    width = img.Width;
-                    height = img.Height;
-                    _haveMipmap = false;
-                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height,
-                        0,
-                        PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                    if (_checkGLErrors) _checkError("TexImage2D");
+                    pCurrentRow = p;
+                    if (pFirstRow == null)
+                    {
+                        pFirstRow = p;
+                    }
 
+                    if (pPreviousRow != null)
+                    {
+                        currentStride = (byte*)pCurrentRow - (byte*)pPreviousRow;
+                        if (previousStride != 0l)
+                        {
+                            if (currentStride != previousStride)
+                            {
+                                /*
+                                 * This is a third (or later) line in a chunk. It does have a different stride
+                                 * than the fist to the second.
+                                 * 
+                                 * Different size of the line, take what we have up to this point.
+                                 * That is call the action from the first up until the previous line
+                                 * with the previousStride set up.
+                                 */
+
+                                /*
+                                 * emit nRows from y0, but not this.
+                                 */
+                                {
+                                    action(new IntPtr(pFirstRow), 0, y0, width, nRows, previousStride);
+                                }
+                                
+                                /*
+                                 * Start a new chunk with this row.
+                                 */
+                                pFirstRow = pCurrentRow;
+                                currentStride = 0l;                                
+                                y0 = y;
+                                nRows = 0; // which will increment to one very soon.
+                            }
+                            else
+                            {
+                                /*
+                                 * This is a third (or later) line in a chunk. It did not have a different stride
+                                 * than the fist to the second.
+                                 * Continue to accumulate lines.
+                                 */
+                            }
+                        }
+                    }
+                    else
+                    {
+                        /*
+                         * This is the first row in a chunk. Only after the second we can push out a segment.
+                         */
+                    }
+                }
+
+                pPreviousRow = pCurrentRow;
+                previousStride = currentStride;
+                ++nRows;
+            }
+            
+            /*
+             * If height has not been zero, nRows is > 0 here.
+             * Note that previousStride very well may be 0, precisely if nRows==1
+             */
+            action(new IntPtr(pFirstRow), 0, y0, width, nRows, previousStride);
+        });
+#else
+        img.ProcessPixelRows(accessor =>
+        {
+            uint width = (uint)accessor.Width;
+            uint height = (uint)accessor.Height;
+
+            for (int y = 0; y < height; y++)
+            {
+                action(new IntPtr(p), 0, y, width, height, width * sizeof(Rgba32));
+            }
+        });
+#endif
+    }
+
+
+
+    private unsafe void _uploadImage(Image<Rgba32> img, string path, bool isAtlas)
+    {
+        int width, height;
+        _backData = true;
+
+        // TXWTODO: Read this from a property.
+        int nLevel = _filteringMode != Texture.FilteringModes.Framebuffer ? NMipmaps : 1;
+
+        if (!isAtlas)
+        {
+            _trace($"texture {path} is no atlas, uploading straight.");
+
+            width = img.Width;
+            height = img.Height;
+            _haveMipmap = false;
+            _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height,
+                0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, null);
+            if (_checkGLErrors) _checkError("TexImage2D");
+
+#if true
+            _processPixelChunks(img, (p, _jTexture, y, w, h, stride) =>
+            {
+                _trace($"y = {y}, nRows = {h}");
+                _gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
+                _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, h,
+                    PixelFormat.Rgba, PixelType.UnsignedByte, p.ToPointer());
+                if (_checkGLErrors) _checkError($"TexParam w/o mipmap SubImage2D {y}");
+            });
+#else
                     img.ProcessPixelRows(accessor =>
                     {
                         for (int y = 0; y < accessor.Height; y++)
@@ -301,71 +421,128 @@ public class SkTexture : IDisposable
                             }
                         }
                     });
-                }
-                else
-                {
-                    _trace($"texture {path} has an atlas, uploading...");
+#endif
+        }
+        else
+        {
+            _trace($"texture {path} has an atlas, uploading...");
 
-                    width = img.Width / 2;
-                    height = img.Height;
-                    _haveMipmap = true;
+            width = img.Width / 2;
+            height = img.Height;
+            _haveMipmap = true;
 
 
-                    if (_backHandle == 9)
-                    {
-                        int a = 1;
-                    }
-                    
-                    /*
-                     * Now, first step, allocate the textures.
-                     */
-                    for (int mm = 0; mm < nLevel; ++mm)
-                    {
-                        _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8, 
-                            (uint)(width>>mm), (uint)(height>>mm),
-                            0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-                        if (_checkGLErrors) _checkError($"TexImage2D {mm}");
-                    }
-                    
-
-                    img.ProcessPixelRows(accessor =>
-                    {
-                        // TXWTODO: We need to condfigure the number of mipmaps before
-                        // ZXWTODO :We should write the number of mipmaps to the atals.
-                        /*
-                         * Line by line, fill all of the mipmap images.
-                         */
-                        for (int y = 0; y < accessor.Height; y++)
-                        {
-                            fixed (void* data = accessor.GetRowSpan(y))
-                            {
-                                /*
-                                 * Where does the mipmap start?
-                                 */
-                                int xOffset = 0;
-
-                                for (int mm = 0; mm < nLevel; ++mm)
-                                {
-                                    int mmHeight = height >> mm;
-                                    int mmWidth = width >> mm;
-
-                                    if (y<mmHeight)
-                                    {
-                                        _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y, (uint)mmWidth, 1,
-                                            PixelFormat.Rgba, PixelType.UnsignedByte, ((byte *)data) + 4*xOffset);
-                                        if (_checkGLErrors) _checkError($"TexParam with mipmap SubImage2D {y}");
-                                    }
-
-                                    xOffset += mmWidth;
-                                }
-                            }
-                        }
-                    });
-                }
+            if (_backHandle == 9)
+            {
+                int a = 1;
             }
+
+            /*
+             * Now, first step, allocate the textures.
+             */
+            for (int mm = 0; mm < nLevel; ++mm)
+            {
+                /*
+                 *_gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
+                 * If optimizing the texture atlas upload, use the row length parameter to upload more
+                 * * of the individual texture chunks at once.
+                 */
+                _gl.TexImage2D(TextureTarget.Texture2D, mm, InternalFormat.Rgba8,
+                    (uint)(width >> mm), (uint)(height >> mm),
+                    0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+                if (_checkGLErrors) _checkError($"TexImage2D {mm}");
+            }
+
+
+            img.ProcessPixelRows(accessor =>
+            {
+                // TXWTODO: We need to condfigure the number of mipmaps before
+                // ZXWTODO :We should write the number of mipmaps to the atals.
+                /*
+                 * Line by line, fill all of the mipmap images.
+                 */
+                for (int y = 0; y < accessor.Height; y++)
+                {
+                    fixed (void* data = accessor.GetRowSpan(y))
+                    {
+                        /*
+                         * Where does the mipmap start?
+                         */
+                        int xOffset = 0;
+
+                        for (int mm = 0; mm < nLevel; ++mm)
+                        {
+                            int mmHeight = height >> mm;
+                            int mmWidth = width >> mm;
+
+                            if (y < mmHeight)
+                            {
+                                _gl.TexSubImage2D(TextureTarget.Texture2D, mm, 0, y, (uint)mmWidth, 1,
+                                    PixelFormat.Rgba, PixelType.UnsignedByte, ((byte*)data) + 4 * xOffset);
+                                if (_checkGLErrors) _checkError($"TexParam with mipmap SubImage2D {y}");
+                            }
+
+                            xOffset += mmWidth;
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+
+    public unsafe void SetFrom(string path, bool isAtlas)
+    {
+        _trace($"Creating new Texture from path {path}");
+
+        try
+        {
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Loading;
+            }
+            #if false
+            System.IO.Stream streamImage = engine.Assets.Open(path);
+            var img = Image.Load<Rgba32>(streamImage);
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Uploading;
+            }
+            _uploadImage(img, path, isAtlas);
+            #else
+            I.Get<Engine>().Run( ()=>
+            {
+                System.IO.Stream streamImage = engine.Assets.Open(path);
+                var img = Image.Load<Rgba32>(streamImage);
+                I.Get<IThreeD>().Execute(() =>
+                {
+                    _checkReloadTexture();
+                    _bindBack();
+                    lock (_lo)
+                    {
+                        _resourceState = ATextureEntry.ResourceState.Uploading;
+                    }
+                    _uploadImage(img, path, isAtlas);
+                    _generateMipmap();
+                    _unbindBack();
+                    _backToLive();
+                    lock (_lo)
+                    {
+                        _resourceState = ATextureEntry.ResourceState.Using;
+                    }
+                });
+
+            });
+            #endif
         }
         catch (Exception e)
         {
+            _checkReloadTexture();
+            _bindBack();
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Uploading;
+            }
             /*
              * As a fallback, generate a single-colored texture.
              */
@@ -377,11 +554,15 @@ public class SkTexture : IDisposable
                     PixelType.UnsignedByte, d);
                 if (_checkGLErrors) _checkError("TexImage2D");
             }
+            _generateMipmap();
+            _unbindBack();
+            _backToLive();
+            lock (_lo)
+            {
+                _resourceState = ATextureEntry.ResourceState.Using;
+            }
         }
 
-        _generateMipmap();
-        _unbindBack();
-        _backToLive();
     }
 
 
@@ -409,6 +590,10 @@ public class SkTexture : IDisposable
         _generateMipmap();
         _unbindBack();
         _backToLive();
+        lock (_lo)
+        {
+            _resourceState = ATextureEntry.ResourceState.Using;
+        }
     }
 
 
@@ -425,6 +610,10 @@ public class SkTexture : IDisposable
         _generateMipmap();
         _unbindBack();
         _backToLive();
+        lock (_lo)
+        {
+            _resourceState = ATextureEntry.ResourceState.Using;
+        }
     }
 
 
@@ -432,7 +621,7 @@ public class SkTexture : IDisposable
     {
         _trace($"Bind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
-        if (_checkGLErrors) _checkError("ActiveTexture {texureSlot}");
+        if (_checkGLErrors) _checkError($"ActiveAndBind ActiveTexture {textureSlot}");
         if (!_liveData)
         {
             if (0xffffffff != _liveHandle)
@@ -446,7 +635,7 @@ public class SkTexture : IDisposable
         if (_checkGLErrors) _checkError("flush");
         _gl.BindTexture(TextureTarget.Texture2D, _liveHandle);
 
-        int err = _checkGLErrors ? _checkError("BindAndActive Texture") : 0;
+        int err = _checkGLErrors ? _checkError("ActiveAndBind Bind Texture") : 0;
         if (0 == err)
         {
             _liveBound = true; 
@@ -462,7 +651,7 @@ public class SkTexture : IDisposable
     {
         _trace($"Unbind: Active slot {textureSlot}");
         _gl.ActiveTexture(textureSlot);
-        if (_checkGLErrors) _checkError("ActiveTexture {textureSlot}");
+        if (_checkGLErrors) _checkError($"ActiveAndUnbind ActiveTexture {textureSlot}");
         if (!_liveData)
         {
             if (0xffffffff != _liveHandle)
@@ -475,7 +664,7 @@ public class SkTexture : IDisposable
         _trace($"Unbind texture 0");
         if (_checkGLErrors) _checkError("flush");
         _gl.BindTexture(TextureTarget.Texture2D, 0);
-        int err = _checkGLErrors ? _checkError("BindAndActive Texture"):0;
+        int err = _checkGLErrors ? _checkError("ActiveAndUnbind Bind Texture"):0;
         if (err == 0)
         {
             _liveBound = false;
