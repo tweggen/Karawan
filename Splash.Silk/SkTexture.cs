@@ -401,7 +401,7 @@ public class SkTexture : IDisposable
 #if true
             _processPixelChunks(img, (p, _jTexture, y, w, h, stride) =>
             {
-                Trace($"y = {y}, nRows = {h}");
+                _trace($"y = {y}, nRows = {h}");
                 _gl.PixelStore(PixelStoreParameter.PackRowLength, (int)(stride / 4));
                 _gl.TexSubImage2D(TextureTarget.Texture2D, 0, 0, y, (uint)w, h,
                     PixelFormat.Rgba, PixelType.UnsignedByte, p.ToPointer());

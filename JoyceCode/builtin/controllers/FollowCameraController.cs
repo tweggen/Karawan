@@ -42,7 +42,7 @@ public class FollowCameraController : IInputPart
 
     public float ORIENTATION_SLERP_AMOUNT { get; set; } = 0.07f;
     public float CAMERA_BACK_TO_ORIENTATION_SLERP_AMOUNT { get; set; } = 0.01f;
-    public float ZOOM_SLERP_AMOUNT { get; set; } = 0.05f;
+    public float ZOOM_SLERP_AMOUNT { get; set; } = 0.2f;
     public float ZOOM_MIN_DISTANCE { get; set; } = 5f;
     public float ZOOM_MAX_DISTANCE { get; set; } = 133f;
     public float ZOOM_STEP_FRACTION { get; set; } = 60f;
@@ -630,10 +630,6 @@ public class FollowCameraController : IInputPart
     private void _onLogicalFrame(object sender, float dt)
     {
         ++_frame;
-        if (_frame >= 600)
-        {
-            ZOOM_SLERP_AMOUNT = 0.1f;
-        }
 
         if (!_eCarrot.Has<engine.joyce.components.Transform3ToWorld>()
             || !_eCarrot.Has<engine.joyce.components.Transform3>())

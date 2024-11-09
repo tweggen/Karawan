@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Net.Http;
 using System.Numerics;
+using System.Threading;
 using engine.geom;
 using engine.joyce;
 using engine.streets;
@@ -35,6 +36,17 @@ public class ClusterDesc
      */
     private object _lo = new();
 
+    private enum ClusterState
+    {
+        Created,
+        Triggered,
+        Computing,
+        Generating,
+        Done
+    };
+
+    private ClusterState _clusterState = ClusterState.Created;
+    
     public string IdString
     {
         get => _strKey;
@@ -446,29 +458,41 @@ public class ClusterDesc
     }
 
 
+    private int _nStreetsTriggered = 0;
+    
     private void _triggerStreets_nl()
     {
-        if (null == _strokeStore)
+        if (_clusterState >= ClusterState.Triggered)
         {
-            /*
-             * First, generate the actual streets.
-             */
-            _strokeStore = new streets.StrokeStore(Size);
-            _quarterStore = new streets.QuarterStore(this);
-
-            _findStrokes();
-
-            _processStrokes();
-            _findQuarters();
-                
-            Trace(
-                $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments. Now calling cluster operators..."
-            );
-
-            I.Get<MetaGen>().ApplyClusterOperators(this);
+            return;
         }
+
+        _clusterState = ClusterState.Computing;
+        
+        _nStreetsTriggered++;
+        Trace($"Cluster {Name} triggering street generation #{_nStreetsTriggered}");
+        /*
+         * First, generate the actual streets.
+         */
+        _strokeStore = new streets.StrokeStore(Size);
+        _quarterStore = new streets.QuarterStore(this);
+
+        _findStrokes();
+
+        _processStrokes();
+        _findQuarters();
+
+        Trace(
+            $"Cluster {Name} has {_strokeStore.GetStreetPoints().Count} street points, {_strokeStore.GetStrokes().Count} street segments. Now calling cluster operators..."
+        );
+
+        _clusterState = ClusterState.Generating;
+        
+        I.Get<MetaGen>().ApplyClusterOperators(this);
+
+        _clusterState = ClusterState.Done;
     }
-    
+
 
     /**
      * Load or compute the streets of this city.
