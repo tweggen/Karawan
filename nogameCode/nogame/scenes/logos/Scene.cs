@@ -131,13 +131,12 @@ public class Scene : AModule, IScene
 
     private void _onAutoSaveSetup(GameState gs)
     {
-        _engine.QueueMainThreadAction(() =>
-        {
-            _loadLoadingScene();
-        
+        _engine.QueueMainThreadAction(() => _loadLoadingScene());
+        _engine.QueueMainThreadAction(() => {
+
             /*
-             * Preload the player position from the current gamestate.
-             */
+            * Preload the player position from the current gamestate.
+            */
             I.Get<SetupMetaGen>().Preload(gs.PlayerPosition);
 
             /*
@@ -147,7 +146,6 @@ public class Scene : AModule, IScene
                 TimepointTitlesongStarted,
                 TimeSpan.FromMilliseconds(4674),
                 _loadRootScene);
-
         });
     }
     

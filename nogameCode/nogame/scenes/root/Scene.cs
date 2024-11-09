@@ -25,6 +25,11 @@ public class Scene : AModule, IScene, IInputPart
 
     public float MY_Z_ORDER { get; set; } = 20f;
 
+    /*
+     * For debugging, we count the frames inside this scene.
+     */
+    private uint _nFrame = 0;
+    
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.World>(),
@@ -237,6 +242,11 @@ public class Scene : AModule, IScene, IInputPart
     
     public void SceneOnLogicalFrame(float dt)
     {
+        _nFrame++;
+        if (_nFrame < 100)
+        {
+            Trace($"Displaying root scene frame {_nFrame}.");
+        }
     }
 
 
