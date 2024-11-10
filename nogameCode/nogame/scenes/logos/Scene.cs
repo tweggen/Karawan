@@ -131,6 +131,7 @@ public class Scene : AModule, IScene
 
     private void _onAutoSaveSetup(GameState gs)
     {
+        _engine.QueueMainThreadAction(() => DeactivateMyModule<nogame.modules.menu.LoginMenuModule>());
         _engine.QueueMainThreadAction(() => _loadLoadingScene());
         _engine.QueueMainThreadAction(() => {
 
@@ -148,6 +149,12 @@ public class Scene : AModule, IScene
                 _loadRootScene);
         });
     }
+
+
+    private void _onAutoSaveError(string errorText)
+    {
+        
+    }
     
 
     private void _startGame(bool reset)
@@ -156,7 +163,7 @@ public class Scene : AModule, IScene
          * Give us a short delay to render some frames.
          */
         I.Get<engine.Timeline>().RunIn(TimeSpan.FromMilliseconds(200),
-            () => M<AutoSave>().StartAutoSave(reset, _onAutoSaveSetup));
+            () => M<AutoSave>().StartAutoSave(reset, _onAutoSaveSetup, _onAutoSaveError));
     }
 
 
@@ -168,7 +175,6 @@ public class Scene : AModule, IScene
             _isStartingGame = true;
         }
         
-        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
         I.Get<AutoSave>().SyncOnline = false; 
 
         _startGame(false);
@@ -183,7 +189,6 @@ public class Scene : AModule, IScene
             _isStartingGame = true;
         }
 
-        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
         I.Get<AutoSave>().SyncOnline = true;
 
         _startGame(false);
@@ -198,7 +203,6 @@ public class Scene : AModule, IScene
             _isStartingGame = true;
         }
 
-        DeactivateMyModule<nogame.modules.menu.LoginMenuModule>();
         I.Get<AutoSave>().SyncOnline = true;
 
         _startGame(true);

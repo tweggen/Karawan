@@ -122,6 +122,11 @@ public class AutoSave : engine.AModule
 
         lock (_lo)
         {
+            if (_isAuthenticating)
+            {
+                strStatus += "authenticating...";
+            }
+            
             if (_isLoggedIn)
             {
                 strStatus += "logged in";
@@ -160,8 +165,9 @@ public class AutoSave : engine.AModule
 
         _updateOSDText();
     }
-    
-    
+
+
+    private bool _isAuthenticating = false;
     private bool _isLoggedIn = false;
     
     private void _setLoggedIn(bool isLoggedIn)
@@ -181,7 +187,7 @@ public class AutoSave : engine.AModule
     }
     
 
-    private void _performApiCall(Func<HttpRequestMessage> httpRequestMessageFunc, string webToken, Action<HttpResponseMessage> onResponse)
+    private void _performApiCall(Func<HttpRequestMessage> httpRequestMessageFunc, string webToken, Action<HttpResponseMessage> onResponse, Action<string> onError)
     {
         HttpRequestMessage httpRequestMessage = httpRequestMessageFunc();
         if (httpRequestMessage.Headers.Contains("x-nassau-token"))
@@ -211,7 +217,7 @@ public class AutoSave : engine.AModule
                             M<nogame.config.Module>().GameConfig.WebToken = "";
                             M<nogame.config.Module>().Save();
                             Error($"Error while calling {httpRequestMessage.RequestUri}: Call is unauthorized, using an existing token. Fetching new token.");
-                            _withWebToken(httpRequestMessageFunc, onResponse, 5);
+                            _withWebToken(httpRequestMessageFunc, onResponse, onError, 5);
                         }
                     }
                     else
@@ -242,6 +248,7 @@ public class AutoSave : engine.AModule
     private void _withWebToken(
         Func<HttpRequestMessage> httpRequestMessageFunc,
         Action<HttpResponseMessage> onResponse,
+        Action<string> onError,
         int nRetries
     )
     {
@@ -249,6 +256,7 @@ public class AutoSave : engine.AModule
 
         if (string.IsNullOrEmpty(webToken))
         {
+            _isAuthenticating = true;
             var gc = M<nogame.config.Module>().GameConfig;
             if (!string.IsNullOrEmpty(gc.Username) && !string.IsNullOrEmpty(gc.Password))
             {
@@ -275,10 +283,11 @@ public class AutoSave : engine.AModule
                             if (objResponse.GetType() == typeof(LoginResult) && !string.IsNullOrEmpty(objResponse.token))
                             {
                                 webToken = objResponse.token;
+                                _isAuthenticating = false;
                                 Trace($"GetToken response is {webToken}");
                                 try
                                 {
-                                    _performApiCall(httpRequestMessageFunc, webToken, onResponse);
+                                    _performApiCall(httpRequestMessageFunc, webToken, onResponse, onError);
                                 }
                                 catch (UnauthorizedAccessException ex)
                                 {
@@ -295,11 +304,13 @@ public class AutoSave : engine.AModule
                                 {
                                     Trace($"GetToken error, retrying ({nRetries} retries left): {jsonResponse}");
                                     Task.Delay(2000)
-                                        .ContinueWith(t => _withWebToken(httpRequestMessageFunc, onResponse, nRetries - 1));
+                                        .ContinueWith(t => _withWebToken(httpRequestMessageFunc, onResponse, onError, nRetries - 1));
                                 } 
                                 else
                                 {
+                                    _isAuthenticating = false;
                                     onResponse(responseMessage);
+                                    onError("login failed");
                                     Trace($"GetToken error.");
                                 }
                             }
@@ -310,7 +321,7 @@ public class AutoSave : engine.AModule
         {
             try
             {
-                _performApiCall(httpRequestMessageFunc, webToken, onResponse);
+                _performApiCall(httpRequestMessageFunc, webToken, onResponse, onError);
             }
             catch (Exception ex)
             {
@@ -350,7 +361,7 @@ public class AutoSave : engine.AModule
             {
                 Content = JsonContent.Create(saveGameObject)
             };
-        }, _onSaveGameResponse, 5);
+        }, _onSaveGameResponse, _ => { }, 5);
     }
     
 
@@ -378,6 +389,7 @@ public class AutoSave : engine.AModule
     
     private void _startAutoSave()
     {
+        _isAuthenticating = true;
         _saveTimer = new System.Timers.Timer(SaveInterval*1000);
         // Hook up the Elapsed event for the timer. 
         _saveTimer.Elapsed += _onSaveTimer;
@@ -482,7 +494,7 @@ public class AutoSave : engine.AModule
      * No previous save game could be found, the offline game
      * state is loaded or a new one is created.
      */
-    private void _triggerInitialOnlineLoad(bool reset, Action<GameState> onInitialLoad)
+    private void _triggerInitialOnlineLoad(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
     {
         if (!reset)
         {
@@ -491,21 +503,9 @@ public class AutoSave : engine.AModule
                 return new HttpRequestMessage(
                     HttpMethod.Get,
                     $"{GameServer}/api/auth/save_game?gameTitle=silicondesert2");
-            }, (response) => _onLoadGameResponse(response, onInitialLoad), 5);
-            
-
-            #if false
-            /*
-             * As a one time debugging: Display history.
-             */
-            _withWebToken(() =>
-            {
-                return new HttpRequestMessage(
-                    HttpMethod.Get,
-                    $"{GameServer}/api/auth/saves?gameTitle=silicondesert2");
-            }, (response) => _onGameHistoryResponse(response), 5);
-            #endif
-
+            }, (response) => _onLoadGameResponse(response, onInitialLoad), 
+                onError,
+                5);
         }
         else
         {
@@ -524,7 +524,7 @@ public class AutoSave : engine.AModule
     }
     
 
-    private void _triggerInitialOfflineLoad(Action<GameState> onInitialLoad)
+    private void _triggerInitialOfflineLoad(Action<GameState> onInitialLoad, Action<string> _onError)
     {
         _loadCreateOffline();
         _engine.QueueMainThreadAction(() =>
@@ -535,15 +535,15 @@ public class AutoSave : engine.AModule
     }
     
 
-    private void _triggerInitialLoad(bool reset, Action<GameState> onInitialLoad)
+    private void _triggerInitialLoad(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
     {
         if (_syncOnline)
         {
-            _triggerInitialOnlineLoad(reset, onInitialLoad);
+            _triggerInitialOnlineLoad(reset, onInitialLoad, onError);
         }
         else
         {
-            _triggerInitialOfflineLoad(onInitialLoad);
+            _triggerInitialOfflineLoad(onInitialLoad, onError);
         }
     }
     
@@ -564,7 +564,7 @@ public class AutoSave : engine.AModule
     }
     
 
-    public void StartAutoSave(bool reset, Action<GameState> onInitialLoad)
+    public void StartAutoSave(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
     {
         lock (_lo)
         {
@@ -575,7 +575,7 @@ public class AutoSave : engine.AModule
             _isAutoSaveActive = true;
         }
 
-        _triggerInitialLoad(reset, onInitialLoad);
+        _triggerInitialLoad(reset, onInitialLoad, onError);
     }
     
 
