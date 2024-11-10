@@ -38,4 +38,4 @@ public class PolytopeVanishBehaviour : ABehavior
         entity.Get<engine.joyce.components.Transform3ToParent>().Transform3 =
             entity.Get<engine.joyce.components.Transform3>();
     }
-}
+}   

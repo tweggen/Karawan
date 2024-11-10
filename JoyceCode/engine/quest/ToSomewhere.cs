@@ -211,13 +211,25 @@ public class ToSomewhere : AModule
 
     private void _updateRoute(Object state)
     {
-        _routeTarget.Search(_onJunctions);
+        Route routeTarget;
+        lock (_lo)
+        {
+            routeTarget = _routeTarget;
+        }
+
+        routeTarget?.Search(_onJunctions);
     }
     
     
     private void _stopRoute()
     {
-        _routeTarget.Suspend();
+        Route routeTarget;
+        lock (_lo)
+        {
+            routeTarget = _routeTarget;
+        }
+
+        routeTarget.Suspend();
         _updateRouteTimer.Dispose();
         _deleteWaypoints();
     }
@@ -225,20 +237,36 @@ public class ToSomewhere : AModule
 
     private void _startRoute()
     {
-        _routeTarget.Activate();
-        _routeTarget.Search(_onJunctions);
+        Route routeTarget;
+        lock (_lo)
+        {
+            routeTarget = _routeTarget;
+        }
+
+        routeTarget.Activate();
+        routeTarget.Search(_onJunctions);
             
     }
     
 
     private void _destroyRoute()
     {
-        _routeTarget.Dispose();
-        _routeTarget = null;
-        _wTarget.Dispose();
-        _wTarget = null;
-        _wStart.Dispose();
-        _wStart = null;
+        Route routeTarget;
+        IWaypoint wTarget;
+        IWaypoint wStart;
+        lock (_lo)
+        {
+            routeTarget = _routeTarget;
+            _routeTarget = null;
+            wTarget = _wTarget;
+            _wTarget = null;
+            wStart = _wStart;
+            _wStart = null;
+        }
+
+        routeTarget?.Dispose();
+        wTarget?.Dispose();
+        wStart?.Dispose();
     }
     
     

@@ -226,9 +226,12 @@ public class StreetNavigationController : INavigator
                         (_nextStroke, _thenPoint) = _enumPath.Current;
                     }
                 }
-
                 
-
+                
+                /*
+                 * Now, as a function of (nsp, ncp, current vehicle position), compute the next movement
+                 */
+                
                 /*
                  * Now compute the actual target for the current iteration.
                  */
