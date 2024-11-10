@@ -8,6 +8,7 @@ using static engine.Logger;
 
 namespace nogame.cities;
 
+
 public class RandomPathEnumerator : System.Collections.Generic.IEnumerator<(Stroke,StreetPoint)>
 {
     public bool AvoidDeadEnds { init; get; } = false;

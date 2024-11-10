@@ -10,21 +10,23 @@ using static builtin.Workarounds;
 namespace nogame.cities;
 
 
-internal class NavigationSegment
+/**
+ * These numbers are constant per lane.
+ */
+internal class NavigationStrokeProperties
 {
-    /*
-     * These numbers are constant per lane.
-     */
     public Vector2 VStreetTarget;
     public Vector2 VStreetStart;
     public Vector2 VUStreetDirection;
     public float StreetWidth;
+}
+
+/**
+ * These constants are per lane per vehicle.
+ */
+internal class NavigationStrokeCarProperties
+{
     public float RightLane;
-    
-    
-    /*
-     * These constants are per lane per vehicle.
-     */
     public Vector2 VLaneOffset;
     public Vector2 VPerfectTarget;
     public Vector2 VPerfectStart;
@@ -52,7 +54,6 @@ public class StreetNavigationController : INavigator
 
     private ClusterDesc _clusterDesc;
     private StreetPoint _startPoint;
-    private StreetPoint _prevStart;
     private Stroke _currentStroke;
     private Stroke _nextStroke;
     
@@ -79,6 +80,9 @@ public class StreetNavigationController : INavigator
 
 
     private RandomPathEnumerator _enumPath;
+
+    private NavigationStrokeProperties _nsp;
+    private NavigationStrokeCarProperties _ncp;
     
 
     private void _loadStartPoint()
@@ -129,7 +133,90 @@ public class StreetNavigationController : INavigator
                         _enumPath.MoveNext();
                         (_nextStroke, _thenPoint) = _enumPath.Current;
                     }
-                    _prevStart = null;
+
+                    /*
+                     * Compute the properties per stroke.
+                     */
+                    {
+                        NavigationStrokeProperties nsp = new();
+                        
+                        nsp.StreetWidth = _currentStroke.StreetWidth();
+                        nsp.VStreetTarget = _targetPoint.Pos;
+                        nsp.VStreetStart = _startPoint.Pos;
+                        nsp.VUStreetDirection = V2Normalize(nsp.VStreetTarget - nsp.VStreetStart);
+
+                        _nsp = nsp;
+
+                    }
+                    
+                    /*
+                     * Compute the properties for this car per stroke.
+                     */
+                    {
+                        NavigationStrokeCarProperties ncp = new();
+                        
+                        /*
+                         * Compute a proper offset to emulate a bit
+                         * of traffic on right-hand side.
+                         *
+                         * tx is the target we move to, ux is the
+                         * unit vector of the direction.
+                         */
+                        /*
+                         * Offset the target one unit towards the start point
+                         * and one unit right-hand-side of start to target.
+                         *
+                         * Figure out the street lane
+                         *
+                         * Yes, this navigation is lacking proper curves.
+                         */
+                        if (_nsp.StreetWidth >= 16f)
+                        {
+                            /*
+                             * On larger streets, select lane according to speed.
+                             */
+                            if (_speed >= (65f / 3.6f))
+                            {
+                                /*
+                                 * fast? Drive on the Left hand side.
+                                 */
+                                ncp.RightLane = _nsp.StreetWidth / 2f - 5f;
+                            }
+                            else
+                            {
+                                /*
+                                 * Slow? Drive on the right hand side.
+                                 */
+                                ncp.RightLane = _nsp.StreetWidth / 2f - 2f;
+                            }
+                        }
+                        else
+                        {
+                            /*
+                             * On small streets, just drive on the right.
+                             */
+                            ncp.RightLane = _nsp.StreetWidth / 2f - 2f;
+                        }
+                
+                        ncp.VLaneOffset = ncp.RightLane * new Vector2(-_nsp.VUStreetDirection.Y, -_nsp.VUStreetDirection.X);
+
+                        /*
+                         * This is where we actually are heading to.
+                         */
+                        ncp.VPerfectTarget = _nsp.VStreetTarget
+                                             /*
+                                              * Not quite to the center of the junction
+                                              */
+                                             - _nsp.VUStreetDirection * _nsp.StreetWidth / 2f
+                                             /*
+                                              * And up to the right lane.
+                                              */
+                                             + ncp.VLaneOffset;
+                        
+                        ncp.VPerfectStart = _nsp.VStreetStart + ncp.VLaneOffset;
+
+                        _ncp = ncp;
+                    }
                 }
                 else
                 {
@@ -141,82 +228,17 @@ public class StreetNavigationController : INavigator
                 }
 
                 
-                Vector2 vStreetTarget = _targetPoint.Pos;
-                Vector2 vStreetStart = _startPoint.Pos;
-                Vector2 vuStreetDirection = V2Normalize(vStreetTarget - vStreetStart);
-
-                /*
-                 * Compute a proper offset to emulate a bit
-                 * of traffic on right-hand side.
-                 *
-                 * tx is the target we move to, ux is the
-                 * unit vector of the direction.
-                 */
-                /*
-                 * Offset the target one unit towards the start point
-                 * and one unit right-hand-side of start to target.
-                 *
-                 * Figure out the street lane
-                 *
-                 * Yes, this navigation is lacking proper curves.
-                 */
-                float streetWidth = _currentStroke.StreetWidth();
-                float rightLane;
-
-                if (streetWidth >= 16f)
-                {
-                    /*
-                     * On larger streets, select lane according to speed.
-                     */
-                    if (_speed >= (65f / 3.6f))
-                    {
-                        /*
-                         * fast? Drive on the Left hand side.
-                         */
-                        rightLane = streetWidth / 2f - 5f;
-                    }
-                    else
-                    {
-                        /*
-                         * Slow? Drive on the right hand side.
-                         */
-                        rightLane = streetWidth / 2f - 2f;
-                    }
-                }
-                else
-                {
-                    /*
-                     * On small streets, just drive on the right.
-                     */
-                    rightLane = streetWidth / 2f - 2f;
-                }
-                
-                var vLaneOffset = rightLane * new Vector2(-vuStreetDirection.Y, vuStreetDirection.X); 
-                
-                /*
-                 * This is where we actually are heading to.
-                 */
-                var vPerfectTarget = vStreetTarget
-                              /*
-                               * Not quite to the center of the junction
-                               */
-                              - vuStreetDirection * streetWidth / 2f
-                              /*
-                               * And up to the right lane.
-                               */
-                              + vLaneOffset;
-                var vPerfectStart = vStreetStart + vLaneOffset;
 
                 /*
                  * Now compute the actual target for the current iteration.
                  */
-                Vector2 vCurrentTarget = vPerfectTarget;
-                var vPerfectDirection = vPerfectTarget - vPerfectStart;
+                Vector2 vCurrentTarget = _ncp.VPerfectTarget;
+                var vPerfectDirection = _ncp.VPerfectTarget - _ncp.VPerfectStart;
                 var vPerfectDirectionLength = vPerfectDirection.Length();
                 var vuPerfectDirection = vPerfectDirection / vPerfectDirectionLength;
                 
                 Vector2 vPerfectMe = default;
-                Vector2 vMeFromStart = _vPos2 - vPerfectStart;
+                Vector2 vMeFromStart = _vPos2 - _ncp.VPerfectStart;
                 float vMeFromStartLength = vMeFromStart.Length();
                 if (vMeFromStartLength > 0.1f)
                 {
@@ -232,7 +254,7 @@ public class StreetNavigationController : INavigator
                         dist = 0;
                         break;
                     }
-                    vPerfectMe = vPerfectStart + vuPerfectDirection * vPerfectMeScale;
+                    vPerfectMe = _ncp.VPerfectStart + vuPerfectDirection * vPerfectMeScale;
 
                     Vector2 vOff = (vPerfectMe - _vPos2);
                     float offLength = vOff.Length();
@@ -242,7 +264,7 @@ public class StreetNavigationController : INavigator
                     }
                     else
                     {
-                        vCurrentTarget = vPerfectTarget;
+                        vCurrentTarget = _ncp.VPerfectTarget;
                     }
                 }
 
@@ -266,7 +288,7 @@ public class StreetNavigationController : INavigator
                     /*
                      * Now check, how far it is from me to the perfect target
                      */
-                    var vPerfectDelta = vPerfectTarget - _vPos2;
+                    var vPerfectDelta = _ncp.VPerfectTarget - _vPos2;
                     float perfectDist2 = vPerfectDelta.LengthSquared();
                     if (perfectDist2 > 0.0025f)
                     {
@@ -283,7 +305,6 @@ public class StreetNavigationController : INavigator
                  * No, we do not have a proper way to go, look for the next street point.
                  */
 
-                _prevStart = _startPoint;
                 _startPoint = _targetPoint;
                 _targetPoint = null;
             }
@@ -300,10 +321,9 @@ public class StreetNavigationController : INavigator
             {
                 gonow = dist;
                 togo -= gonow;
-                _prevStart = _startPoint;
                 _startPoint = _targetPoint;
                 _targetPoint = null;
-                // loadStartPoint();
+                
                 continue;
             }
 
@@ -364,7 +384,6 @@ public class StreetNavigationController : INavigator
         _clusterDesc = clusterDesc0;
         _startPoint = startPoint0;
         _targetPoint = null;
-        _prevStart = null;
 
         _enumPath = new RandomPathEnumerator(_rnd, null, _startPoint);
         
