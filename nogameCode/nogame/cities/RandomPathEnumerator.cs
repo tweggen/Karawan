@@ -1,15 +1,32 @@
-#if false
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using builtin.tools;
 using engine.streets;
 using static builtin.Workarounds;
 using static engine.Logger;
 
 namespace nogame.cities;
 
-public class RandomPathEnumerator
+public class RandomPathEnumerator : System.Collections.Generic.IEnumerator<(Stroke,StreetPoint)>
 {
-    private StreetPoint _findNextStroke(StreetPoint spFrom, StreetPoint spBy)
+    public bool AvoidDeadEnds { init; get; } = false;
+
+
+    private RandomSource _rnd;
+
+    private Stroke _startStroke;
+    private StreetPoint _startStreetPoint;
+
+    private StreetPoint _previousStreetPoint = null;
+    
+    private Stroke _currentStartStroke;
+    private StreetPoint _currentStreetPoint;
+    
+    private (Stroke,StreetPoint) _findNextStroke(StreetPoint spFrom, StreetPoint spBy)
     {
         StreetPoint? spTo = null;
+        Stroke? strokeTo = null;
         
         /*
          * We select a random stroke and use its destination point.
@@ -30,31 +47,31 @@ public class RandomPathEnumerator
             ++nTries;
             var idx = (int)(_rnd.GetFloat() * strokes.Count);
 
-            _currentStroke = strokes[idx];
-            if (null == _currentStroke)
+            strokeTo = strokes[idx];
+            if (null == strokeTo)
             {
                 throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokes[{idx}] is null.");
             }
 
-            if (null == _currentStroke.A)
+            if (null == strokeTo.A)
             {
-                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): _currentStroke.A is null.");
+                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokeTo.A is null.");
             }
 
-            if (null == _currentStroke.B)
+            if (null == strokeTo.B)
             {
-                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): _currentStroke.B is null.");
+                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokeTo.B is null.");
             }
 
-            if (_currentStroke.A == spBy)
+            if (strokeTo.A == spBy)
             {
                 //_isAB = true;
-                spTo = _currentStroke.B;
+                spTo = strokeTo.B;
             }
             else
             {
                 //isAB = false;
-                spTo = _currentStroke.A;
+                spTo = strokeTo.A;
             }
 
             /*
@@ -74,12 +91,13 @@ public class RandomPathEnumerator
             /*
              * OK, target point is not the previous point amd not the only option.
              */
-            if (1 == targetStrokes.Count && _avoidDeadEnds)
+            if (1 == targetStrokes.Count && AvoidDeadEnds)
             {
 
                 if (nTries < strokes.Count)
                 {
                     spTo = null;
+                    strokeTo = null;
                     continue;
                 }
             }
@@ -91,7 +109,51 @@ public class RandomPathEnumerator
 
         }
 
-        return spTo;
+        return (strokeTo, spTo);
+    }
+
+
+    public bool MoveNext()
+    {
+        StreetPoint currentStreetPoint = _currentStreetPoint; 
+        (_currentStartStroke, _currentStreetPoint) = _findNextStroke(_previousStreetPoint, currentStreetPoint);
+        _previousStreetPoint = currentStreetPoint;
+        return true;
+    }
+
+    public void Reset()
+    {
+        _previousStreetPoint = null;
+        _currentStartStroke = _startStroke;
+        _currentStreetPoint = _startStreetPoint;
+    }
+
+    public (Stroke, StreetPoint) Current
+    {
+        get => (_currentStartStroke, _currentStreetPoint);
+    }
+
+    object IEnumerator.Current => Current;
+
+    
+    public void Dispose()
+    {
+        /*
+         * We do not have anything to dispose.
+         */
+        return;
+    }
+    
+    
+    public RandomPathEnumerator(RandomSource rnd, Stroke? startStroke, StreetPoint spStart)
+    {
+        _rnd = rnd;
+        _startStroke = startStroke;
+        _startStreetPoint = spStart;
+
+        // This is doubled reset code.
+        _previousStreetPoint = null;
+        _currentStartStroke = _startStroke;
+        _currentStreetPoint = _startStreetPoint;
     }
 }
-#endif

@@ -50,8 +50,6 @@ public class StreetNavigationController : INavigator
      */
     private float _height = 0f;
 
-    private bool _avoidDeadEnds;
-
     private ClusterDesc _clusterDesc;
     private StreetPoint _startPoint;
     private StreetPoint _prevStart;
@@ -80,100 +78,8 @@ public class StreetNavigationController : INavigator
     private Vector2 _lastDirection;
 
 
-    /**
-     * Given a streetpoint the vehicle came from, a streetpoint the vehicle
-     * #approaches and might diverse from, which is the streetpoint it should
-     * head to?
-     */
-    private (Stroke,StreetPoint) _findNextStroke(StreetPoint spFrom, StreetPoint spBy)
-    {
-        StreetPoint? spTo = null;
-        Stroke? strokeTo = null;
-        
-        /*
-         * We select a random stroke and use its destination point.
-         * If the destination point has one stroke only (which must be
-         * the one we origin from), we consider that street point only
-         * if dead ends are allowed.
-         */
-        IList<Stroke> strokes = spBy.GetAngleArray();
-        if (0 == strokes.Count)
-        {
-            ErrorThrow("Encountered empty street point.", m => new InvalidOperationException(m));
-        }
-
-        var nTries = 0;
-
-        while (true)
-        {
-            ++nTries;
-            var idx = (int)(_rnd.GetFloat() * strokes.Count);
-
-            strokeTo = strokes[idx];
-            if (null == strokeTo)
-            {
-                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokes[{idx}] is null.");
-            }
-
-            if (null == strokeTo.A)
-            {
-                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokeTo.A is null.");
-            }
-
-            if (null == strokeTo.B)
-            {
-                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokeTo.B is null.");
-            }
-
-            if (strokeTo.A == spBy)
-            {
-                //_isAB = true;
-                spTo = strokeTo.B;
-            }
-            else
-            {
-                //isAB = false;
-                spTo = strokeTo.A;
-            }
-
-            /*
-             * Is the target point the prevoius point?
-             * That's a valid path of course.
-             */
-            var targetStrokes = spTo.GetAngleArray();
-
-            /*
-             * There's no other path? Then take it.
-             */
-            if (strokes.Count == 1)
-            {
-                break;
-            }
-
-            /*
-             * OK, target point is not the previous point amd not the only option.
-             */
-            if (1 == targetStrokes.Count && _avoidDeadEnds)
-            {
-
-                if (nTries < strokes.Count)
-                {
-                    spTo = null;
-                    strokeTo = null;
-                    continue;
-                }
-            }
-
-            if (spTo != spFrom)
-            {
-                break;
-            }
-
-        }
-
-        return (strokeTo, spTo);
-    }
-
+    private RandomPathEnumerator _enumPath;
+    
 
     private void _loadStartPoint()
     {
@@ -210,15 +116,18 @@ public class StreetNavigationController : INavigator
                 {
                     if (null == _thenPoint)
                     {
-                        (_currentStroke, _targetPoint) = _findNextStroke(_prevStart, _startPoint);
-                        (_nextStroke, _thenPoint) = _findNextStroke(_startPoint, _targetPoint);
-                        
+                        _enumPath.MoveNext();
+                        (_currentStroke, _targetPoint) = _enumPath.Current;
+                        _enumPath.MoveNext();
+                        (_nextStroke, _thenPoint) = _enumPath.Current;
+
                     }
                     else
                     {
                         _currentStroke = _nextStroke;
                         _targetPoint = _thenPoint;
-                        (_nextStroke, _thenPoint) = _findNextStroke(_startPoint, _targetPoint);
+                        _enumPath.MoveNext();
+                        (_nextStroke, _thenPoint) = _enumPath.Current;
                     }
                     _prevStart = null;
                 }
@@ -226,7 +135,8 @@ public class StreetNavigationController : INavigator
                 {
                     if (null == _thenPoint)
                     {
-                        (_nextStroke, _thenPoint) = _findNextStroke(_startPoint, _targetPoint);
+                        _enumPath.MoveNext();
+                        (_nextStroke, _thenPoint) = _enumPath.Current;
                     }
                 }
 
@@ -410,13 +320,6 @@ public class StreetNavigationController : INavigator
     }
 
 
-    public bool AvoidDeadEnds
-    {
-        get => _avoidDeadEnds;
-        set => _avoidDeadEnds = value;
-    }
-
-
     public float Speed
     {
         get => _speed;
@@ -462,9 +365,11 @@ public class StreetNavigationController : INavigator
         _startPoint = startPoint0;
         _targetPoint = null;
         _prevStart = null;
+
+        _enumPath = new RandomPathEnumerator(_rnd, null, _startPoint);
+        
         _lastDirection = new Vector2(1f, 0f);
         _lastSpeed = new Vector3(1f, 0f, 0f);
-        _avoidDeadEnds = false;
 
         _speed = 2.7f * 15f;
 
