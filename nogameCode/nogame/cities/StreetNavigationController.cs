@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
-using engine;
 using engine.behave;
 using engine.world;
 using engine.streets;
@@ -9,6 +8,28 @@ using static engine.Logger;
 using static builtin.Workarounds;
 
 namespace nogame.cities;
+
+
+internal class NavigationSegment
+{
+    /*
+     * These numbers are constant per lane.
+     */
+    public Vector2 VStreetTarget;
+    public Vector2 VStreetStart;
+    public Vector2 VUStreetDirection;
+    public float StreetWidth;
+    public float RightLane;
+    
+    
+    /*
+     * These constants are per lane per vehicle.
+     */
+    public Vector2 VLaneOffset;
+    public Vector2 VPerfectTarget;
+    public Vector2 VPerfectStart;
+}
+
 
 public class StreetNavigationController : INavigator
 {
@@ -35,7 +56,17 @@ public class StreetNavigationController : INavigator
     private StreetPoint _startPoint;
     private StreetPoint _prevStart;
     private Stroke _currentStroke;
+    private Stroke _nextStroke;
+    
+    /**
+     * The point we are heading to right now.
+     */
     private StreetPoint _targetPoint;
+    
+    /**
+     * The point we will go to after we reach targetPoint.
+     */
+    private StreetPoint _thenPoint;
 
     /**
      * Contains the last directeion of the character, the length
@@ -49,59 +80,67 @@ public class StreetNavigationController : INavigator
     private Vector2 _lastDirection;
 
 
-    private void _loadNextPoint(StreetPoint previousPoint)
+    /**
+     * Given a streetpoint the vehicle came from, a streetpoint the vehicle
+     * #approaches and might diverse from, which is the streetpoint it should
+     * head to?
+     */
+    private (Stroke,StreetPoint) _findNextStroke(StreetPoint spFrom, StreetPoint spBy)
     {
+        StreetPoint? spTo = null;
+        Stroke? strokeTo = null;
+        
         /*
          * We select a random stroke and use its destination point.
          * If the destination point has one stroke only (which must be
          * the one we origin from), we consider that street point only
          * if dead ends are allowed.
          */
-        IList<Stroke> strokes = _startPoint.GetAngleArray();
+        IList<Stroke> strokes = spBy.GetAngleArray();
         if (0 == strokes.Count)
         {
             ErrorThrow("Encountered empty street point.", m => new InvalidOperationException(m));
         }
 
         var nTries = 0;
-        int tookIndex = -1;
+
         while (true)
         {
             ++nTries;
             var idx = (int)(_rnd.GetFloat() * strokes.Count);
-            tookIndex = idx;
-            _currentStroke = strokes[idx];
-            if (null == _currentStroke)
+
+            strokeTo = strokes[idx];
+            if (null == strokeTo)
             {
                 throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokes[{idx}] is null.");
             }
 
-            if (null == _currentStroke.A)
+            if (null == strokeTo.A)
             {
-                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): _currentStroke.A is null.");
+                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokeTo.A is null.");
             }
 
-            if (null == _currentStroke.B)
+            if (null == strokeTo.B)
             {
-                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): _currentStroke.B is null.");
+                throw new InvalidOperationException("CubeCharacter.loadNextPoint(): strokeTo.B is null.");
             }
 
-            if (_currentStroke.A == _startPoint)
+            if (strokeTo.A == spBy)
             {
                 //_isAB = true;
-                _targetPoint = _currentStroke.B;
+                spTo = strokeTo.B;
             }
             else
             {
                 //isAB = false;
-                _targetPoint = _currentStroke.A;
+                spTo = strokeTo.A;
             }
 
             /*
              * Is the target point the prevoius point?
              * That's a valid path of course.
              */
-            var targetStrokes = _targetPoint.GetAngleArray();
+            var targetStrokes = spTo.GetAngleArray();
 
             /*
              * There's no other path? Then take it.
@@ -119,18 +158,20 @@ public class StreetNavigationController : INavigator
 
                 if (nTries < strokes.Count)
                 {
-                    _targetPoint = null;
+                    spTo = null;
+                    strokeTo = null;
                     continue;
                 }
             }
 
-            if (_targetPoint != previousPoint)
+            if (spTo != spFrom)
             {
                 break;
             }
 
         }
-        // Trace($"took index {tookIndex}");
+
+        return (strokeTo, spTo);
     }
 
 
@@ -162,11 +203,37 @@ public class StreetNavigationController : INavigator
             float dist = 0.0f;
             while (true)
             {
+                /*
+                 * Ask the next point iterator for the next point.
+                 */
                 if (null == _targetPoint)
                 {
-                    _loadNextPoint(_prevStart);
+                    if (null == _thenPoint)
+                    {
+                        (_currentStroke, _targetPoint) = _findNextStroke(_prevStart, _startPoint);
+                        (_nextStroke, _thenPoint) = _findNextStroke(_startPoint, _targetPoint);
+                        
+                    }
+                    else
+                    {
+                        _currentStroke = _nextStroke;
+                        _targetPoint = _thenPoint;
+                        (_nextStroke, _thenPoint) = _findNextStroke(_startPoint, _targetPoint);
+                    }
                     _prevStart = null;
                 }
+                else
+                {
+                    if (null == _thenPoint)
+                    {
+                        (_nextStroke, _thenPoint) = _findNextStroke(_startPoint, _targetPoint);
+                    }
+                }
+
+                
+                Vector2 vStreetTarget = _targetPoint.Pos;
+                Vector2 vStreetStart = _startPoint.Pos;
+                Vector2 vuStreetDirection = V2Normalize(vStreetTarget - vStreetStart);
 
                 /*
                  * Compute a proper offset to emulate a bit
@@ -175,14 +242,10 @@ public class StreetNavigationController : INavigator
                  * tx is the target we move to, ux is the
                  * unit vector of the direction.
                  */
-                Vector2 vStreetTarget = _targetPoint.Pos;
-                Vector2 vStreetStart = _startPoint.Pos;
-                Vector2 vuStreetDirection = V2Normalize(vStreetTarget - vStreetStart);
-
                 /*
                  * Offset the target one unit towards the start point
                  * and one unit right-hand-side of start to target.
-                 * 
+                 *
                  * Figure out the street lane
                  *
                  * Yes, this navigation is lacking proper curves.
@@ -302,7 +365,6 @@ public class StreetNavigationController : INavigator
                          * However, return only what we can apply in the given direction.
                          */
                         dist = vDest.Length();
-                        //dist = Single.Sqrt(perfectDist2);
                         break;
                     }
                 }
