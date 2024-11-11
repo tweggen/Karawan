@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using static engine.Logger;
 
 namespace engine;
@@ -21,6 +22,32 @@ public class ObjectFactory<K, T> : IDisposable where K : IComparable
     private SortedDictionary<K, ObjectEntry<K, T> > _mapObjects = new();
 
 
+    public void RemoveIf(Func<K, T, bool> predicate)
+    {
+        lock (_lo)
+        {
+            List<K> deadkeys = _mapObjects
+                .Where(kvp =>
+                {
+                    if (kvp.Value.Instance != null)
+                    {
+                        return predicate(kvp.Key, kvp.Value.Instance);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                })
+                .Select(kvp => kvp.Key)
+                .ToList();
+            foreach (var key in deadkeys)
+            {
+                _mapObjects.Remove(key);
+            }
+        }
+
+    }
+    
     public T FindAdd(K key, T referenceObject)
     {
         lock (_lo)

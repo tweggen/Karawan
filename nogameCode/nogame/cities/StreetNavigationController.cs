@@ -11,20 +11,9 @@ namespace nogame.cities;
 
 
 /**
- * These numbers are constant per lane.
- */
-internal class NavigationStrokeProperties
-{
-    public Vector2 VStreetTarget;
-    public Vector2 VStreetStart;
-    public Vector2 VUStreetDirection;
-    public float StreetWidth;
-}
-
-/**
  * These constants are per lane per vehicle.
  */
-internal class NavigationStrokeCarProperties
+internal class DrivingStrokeCarProperties
 {
     public float RightLane;
     public Vector2 VLaneOffset;
@@ -81,8 +70,8 @@ public class StreetNavigationController : INavigator
 
     private RandomPathEnumerator _enumPath;
 
-    private NavigationStrokeProperties _nsp;
-    private NavigationStrokeCarProperties _ncp;
+    private DrivingStrokeProperties _nsp;
+    private DrivingStrokeCarProperties _ncp;
     
 
     private void _loadStartPoint()
@@ -138,7 +127,7 @@ public class StreetNavigationController : INavigator
                      * Compute the properties per stroke.
                      */
                     {
-                        NavigationStrokeProperties nsp = new();
+                        DrivingStrokeProperties nsp = new();
                         
                         nsp.StreetWidth = _currentStroke.StreetWidth();
                         nsp.VStreetTarget = _targetPoint.Pos;
@@ -153,7 +142,7 @@ public class StreetNavigationController : INavigator
                      * Compute the properties for this car per stroke.
                      */
                     {
-                        NavigationStrokeCarProperties ncp = new();
+                        DrivingStrokeCarProperties ncp = new();
                         
                         /*
                          * Compute a proper offset to emulate a bit
