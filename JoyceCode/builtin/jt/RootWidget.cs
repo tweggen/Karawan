@@ -148,11 +148,11 @@ public class RootWidget : Widget
         base.RemoveChild(child);
         child.Root = null;
     }
-    
 
-    public override void AddChild(Widget child)
+
+    internal void RegisterChild(Widget wChild)
     {
-        string id = child.GetAttr("id", "");
+        string id = wChild.GetAttr("id", "");
         lock (_lo)
         {
             if (!string.IsNullOrEmpty(id))
@@ -163,16 +163,32 @@ public class RootWidget : Widget
                 }
                 else
                 {
-                    _idMap[id] = child;
+                    _idMap[id] = wChild;
                 }
             }
         }
-        child.Root = this;
-        base.AddChild(child);
+        wChild.Root = this;
 
-        if (child.IsFocussed)
+        if (wChild.IsFocussed)
         {
-            SetFocussedChild(child);
+            SetFocussedChild(wChild);
+        }
+    }
+    
+
+    public override void AddChild(Widget wChild)
+    {
+        base.AddChild(wChild);
+
+        RootWidget wItsRoot = null;
+        lock (_lo)
+        {
+            wItsRoot = wChild.Root;
+        }
+
+        if (null == wItsRoot)
+        {
+            RegisterChild(wChild);
         }
     }
 

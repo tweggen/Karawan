@@ -522,6 +522,8 @@ public class Widget : IDisposable
 
             if (null != value)
             {
+                value.RegisterChild(this);
+                
                 /*
                  * Realize myself, if I am visible, so that children can
                  * realize themselves.
@@ -710,17 +712,17 @@ public class Widget : IDisposable
     private IWidgetImplementation? _impl;
     
     
-    public virtual void AddChild(Widget child)
+    public virtual void AddChild(Widget wChild)
     {
         lock (_lo)
         {
             if (null == _children) _children = new();
 
-            _children.Add(child);
+            _children.Add(wChild);
             _immutableChildren = null;
         }
 
-        child.Parent = this;
+        wChild.Parent = this;
     }
 
     

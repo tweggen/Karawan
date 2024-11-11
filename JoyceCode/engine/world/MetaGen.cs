@@ -292,7 +292,7 @@ public class MetaGen
      * Execute all world operators for this metagen.
      * This can be terrain generatation, cluster generation etc. .
      */
-    private void _applyOperators(MList<IWorldOperator> operators)
+    private void _applyWorldOperators(MList<IWorldOperator> operators)
     {
         Trace("WorldMetaGen: Calling operators...");
         Task applyTask = new Task(async () =>
@@ -329,7 +329,7 @@ public class MetaGen
      */
     public void SetupComplete()
     {
-        _applyOperators(WorldBuildingOperators);
+        _applyWorldOperators(WorldBuildingOperators);
     }
 
 
@@ -340,7 +340,7 @@ public class MetaGen
      */
     public void Populate()
     {
-        _applyOperators(WorldPopulatingOperators);
+        _applyWorldOperators(WorldPopulatingOperators);
     }
     
     
@@ -356,20 +356,6 @@ public class MetaGen
         MinPos = new Vector3(-MaxWidth / 2f + 1f, 0f, -MaxWidth / 2f + 1f);
 
         WorldBuildingOperators.Add(new engine.world.GenerateClustersOperator(_myKey));
-    }
-
-
-    public void WorldBuildingOperatorAdd(IWorldOperator worldOperator)
-    {
-        if (null == worldOperator)
-        {
-            ErrorThrow<ArgumentException>("Called with null operator.");
-            return;
-        }
-        lock (_lo)
-        {
-            WorldBuildingOperators.Add(worldOperator);
-        }
     }
 
 

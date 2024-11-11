@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using builtin.jt;
 using builtin.parts;
 using engine;
 using engine.joyce;
@@ -36,6 +37,7 @@ public class Scene : AModule, IScene
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
+        new SharedModule<builtin.jt.Factory>(),
         new SharedModule<nogame.modules.story.Narration>(),
         new MyModule<nogame.modules.menu.LoginMenuModule> { ShallActivate = false },
         new MyModule<TitleModule> { ShallActivate = false }
@@ -131,6 +133,9 @@ public class Scene : AModule, IScene
 
     private void _onAutoSaveSetup(GameState gs)
     {
+        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
+        wMenuLoginStatusText["text"] = "logged in.";
+
         _engine.QueueMainThreadAction(() => DeactivateMyModule<nogame.modules.menu.LoginMenuModule>());
         _engine.QueueMainThreadAction(() => _loadLoadingScene());
         _engine.QueueMainThreadAction(() => {
@@ -153,7 +158,8 @@ public class Scene : AModule, IScene
 
     private void _onAutoSaveError(string errorText)
     {
-        
+        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
+        wMenuLoginStatusText["text"] = "error logging in.";
     }
     
 
@@ -191,6 +197,9 @@ public class Scene : AModule, IScene
 
         I.Get<AutoSave>().SyncOnline = true;
 
+        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
+        wMenuLoginStatusText["text"] = "logging in...";
+        
         _startGame(false);
     }
     
@@ -204,6 +213,9 @@ public class Scene : AModule, IScene
         }
 
         I.Get<AutoSave>().SyncOnline = true;
+
+        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
+        wMenuLoginStatusText["text"] = "logging in...";
 
         _startGame(true);
     }

@@ -35,6 +35,7 @@
                     isDefaultFocus='return nogame:getConfig().WebToken ~= ""' 
                     onClick='joyce:ev("nogame.login.loginGlobally")'
             >global machine (online)</option>
+            <text id='menuLoginStatusText' color='#22aaee' width="120"></text>
             <option height="40" color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>
     </view>
