@@ -34,11 +34,11 @@ namespace engine.streets
          * between platforms due to rounding errors on floats.
          */
         public int probabilityNextStrokeForward { get; set; } = 252;
-        public int probabilityNextStrokeBranchWeightFactor { get; set; } = 90;
+        public int probabilityNextStrokeBranchWeightFactor { get; set; } = 150;
         public int probabilityNextStrokeRandomNegWeightFactor { get; set; } = 245;
         public int probabilityNextStrokeStraightDecreaseWeight { get; set; } = 5;
         public int probabilityNextStrokeStraightIncreaseWeight { get; set; } = 10;
-        public int probabilityNextStrokeBranchDecreaseWeight { get; set; } = 20;
+        public int probabilityNextStrokeBranchDecreaseWeight { get; set; } = 130;
         public int probabilityNextStrokeBranchIncreaseWeight { get; set; } = 3;
 
         public float  newStrokeMinimum { get; set; } = 60f;
@@ -618,19 +618,6 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     }
                 ;
 
-                newWeight = computeWeight(
-                    weightMax,
-                    probabilityNextStrokeStraightDecreaseWeight,
-                    probabilityNextStrokeStraightIncreaseWeight,
-                    weightDecreaseFactor,
-                    weightIncreaseFactor
-                );
-                
-                float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
-                if( newLength < newLengthMin ) {
-                    newLength = newLengthMin;
-                }
-
                 float newAngle = curr.Angle;
                 if (_rnd.Get8() < probabilityAngleSlightTurn ) {
                     newAngle = newAngle +_rnd.GetFloat()*2f*AngleSlightTurnMax-AngleSlightTurnMax;
@@ -640,65 +627,99 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                     doRandomDirection = true;
                 }
 
-                if( doForward ) {
-                    StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                    var forward = Stroke.CreateByAngleFrom(
-                        _clusterDesc,
-                        curr.B,
-                        newB,
-                        newAngle,
-                        newLength,
-                        curr.IsPrimary,
-                        newWeight
+                if (doForward || doRandomDirection) {
+                    newWeight = computeWeight(
+                        weightMax,
+                        probabilityNextStrokeStraightDecreaseWeight,
+                        probabilityNextStrokeStraightIncreaseWeight,
+                        weightDecreaseFactor,
+                        weightIncreaseFactor
                     );
-                    forward.PushCreator("forward");
-                    newB.PushCreator("forward");
-                    _addStrokeToDo(forward);
+                
+                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
+                    if( newLength < newLengthMin ) {
+                        newLength = newLengthMin;
+                    }
+
+                    if (doForward)
+                    {
+                        StreetPoint newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        var forward = Stroke.CreateByAngleFrom(
+                            _clusterDesc,
+                            curr.B,
+                            newB,
+                            newAngle,
+                            newLength,
+                            curr.IsPrimary,
+                            newWeight
+                        );
+                        forward.PushCreator("forward");
+                        newB.PushCreator("forward");
+                        _addStrokeToDo(forward);
+                    }
+
+                    if (doRandomDirection) {
+                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        var randStroke = Stroke.CreateByAngleFrom(
+                            _clusterDesc,
+                            curr.B,
+                            newB,
+                            _rnd.GetFloat()*(float)Math.PI*2f,
+                            newLength,
+                            curr.IsPrimary,
+                            newWeight
+                        );
+                        randStroke.PushCreator("randStroke");
+                        newB.PushCreator("randStroke");
+                        _addStrokeToDo(randStroke);
+                    }
                 }
-                if( doRight ) {
-                    var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                    var right = Stroke.CreateByAngleFrom(
-                        _clusterDesc,
-                        curr.B,
-                        newB,
-                        newAngle-(float)Math.PI/2f,
-                        newLength,
-                        !curr.IsPrimary,
-                        newWeight
+
+                if (doRight || doLeft)
+                {
+                    newWeight = computeWeight(
+                        weightMax,
+                        probabilityNextStrokeBranchDecreaseWeight,
+                        probabilityNextStrokeBranchIncreaseWeight,
+                        weightDecreaseFactor,
+                        weightIncreaseFactor
                     );
-                    right.PushCreator("right");
-                    newB.PushCreator("right");
-                    _addStrokeToDo(right);
-                }
-                if( doLeft ) {
-                    var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                    var left = Stroke.CreateByAngleFrom(
-                        _clusterDesc,
-                        curr.B,
-                        newB,
-                        newAngle+(float)Math.PI/2f,
-                        newLength,
-                        !curr.IsPrimary,
-                        newWeight
-                    );
-                    left.PushCreator("left");
-                    newB.PushCreator("left");
-                    _addStrokeToDo(left);
-                }
-                if( doRandomDirection ) {
-                    var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
-                    var randStroke = Stroke.CreateByAngleFrom(
-                        _clusterDesc,
-                        curr.B,
-                        newB,
-                        _rnd.GetFloat()*(float)Math.PI*2f,
-                        newLength,
-                        curr.IsPrimary,
-                        newWeight
-                    );
-                    randStroke.PushCreator("randStroke");
-                    newB.PushCreator("randStroke");
-                    _addStrokeToDo(randStroke);
+                
+                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
+                    if( newLength < newLengthMin ) {
+                        newLength = newLengthMin;
+                    }
+
+                    if( doRight ) {
+                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        var right = Stroke.CreateByAngleFrom(
+                            _clusterDesc,
+                            curr.B,
+                            newB,
+                            newAngle-(float)Math.PI/2f,
+                            newLength,
+                            !curr.IsPrimary,
+                            newWeight
+                        );
+                        right.PushCreator("right");
+                        newB.PushCreator("right");
+                        _addStrokeToDo(right);
+                    }
+                    if( doLeft ) {
+                        var newB = new StreetPoint() { ClusterId = _clusterDesc.Id };
+                        var left = Stroke.CreateByAngleFrom(
+                            _clusterDesc,
+                            curr.B,
+                            newB,
+                            newAngle+(float)Math.PI/2f,
+                            newLength,
+                            !curr.IsPrimary,
+                            newWeight
+                        );
+                        left.PushCreator("left");
+                        newB.PushCreator("left");
+                        _addStrokeToDo(left);
+                    }
                 }
             }
         }

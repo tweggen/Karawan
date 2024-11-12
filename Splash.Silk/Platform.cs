@@ -378,6 +378,7 @@ public class Platform : engine.IPlatform
 
     private void _onGamepadButtonDown(IGamepad gamepad, Button button)
     {
+        Trace($"button ${button.Name}");
         _pushTranslate(
             new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, $"{button.Name}")
             {

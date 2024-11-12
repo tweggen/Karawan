@@ -105,9 +105,9 @@ public class ClusterDesc
     private engine.geom.AABB _aabb;
 
     private float _initialOuterStreetLength;
-    private float _initialOuterStreetWeight = 1.7f;
+    private float _initialOuterStreetWeight = 1.2f;
     private float _initialInnerStreetLength;
-    private float _initialInnerStreetWeight = 1.4f;
+    private float _initialInnerStreetWeight = 1.1f;
 
     /** 
      * Each cluster has a stroke store associated that descirbes the 
