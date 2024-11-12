@@ -695,6 +695,14 @@ public class InputController : engine.AModule, engine.IInputPart
             case "RightStick":
                 _isGamepadRightStickPressed = true;
                 break;
+            case "DPadDown":
+                break;
+            case "DPadUp":
+                break;
+            case "DPadLeft":
+                break;
+            case "DPadRight":
+                break;
             default:
                 break;
         }

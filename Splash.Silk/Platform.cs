@@ -367,6 +367,7 @@ public class Platform : engine.IPlatform
 
     private void _onGamepadTriggerMoved(IGamepad gamepad, Trigger trigger)
     {
+        Trace($"trigger ${trigger.Index}");
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_GAMEPAD_TRIGGER_MOVED, "")
             {
