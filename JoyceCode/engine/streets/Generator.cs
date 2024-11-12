@@ -34,11 +34,12 @@ namespace engine.streets
          * between platforms due to rounding errors on floats.
          */
         public int probabilityNextStrokeForward { get; set; } = 252;
-        public int probabilityNextStrokeRightWeightFactor { get; set; } = 130;
-        public int probabilityNextStrokeLeftWeightFactor { get; set; } = 130;
+        public int probabilityNextStrokeBranchWeightFactor { get; set; } = 90;
         public int probabilityNextStrokeRandomNegWeightFactor { get; set; } = 245;
-        public int probabilityNextStrokeIncreaseWeight { get; set; } = 8;
-        public int probabilityNextStrokeDecreaseWeight { get; set; } = 77;
+        public int probabilityNextStrokeStraightDecreaseWeight { get; set; } = 5;
+        public int probabilityNextStrokeStraightIncreaseWeight { get; set; } = 10;
+        public int probabilityNextStrokeBranchDecreaseWeight { get; set; } = 20;
+        public int probabilityNextStrokeBranchIncreaseWeight { get; set; } = 3;
 
         public float  newStrokeMinimum { get; set; } = 60f;
         public float newStrokeSquaredWeight { get; set; } = 40f;
@@ -580,33 +581,54 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                  * Compute some options.
                  */
                 bool doForward = _rnd.Get8() < probabilityNextStrokeForward;
-                bool doRight = _rnd.Get8() < (int)(probabilityNextStrokeRightWeightFactor / ((int)(curr.Weight)+1) );
-                bool doLeft = _rnd.Get8() < (int)(probabilityNextStrokeLeftWeightFactor / ((int)(curr.Weight)+1) );
+                bool doRight = _rnd.Get8() < (int)(probabilityNextStrokeBranchWeightFactor / ((int)(curr.Weight)+1) );
+                bool doLeft = _rnd.Get8() < (int)(probabilityNextStrokeBranchWeightFactor / ((int)(curr.Weight)+1) );
                 bool doRandomDirection = _rnd.Get8() > (/*Std.int(curr.weight) * */ probabilityNextStrokeRandomNegWeightFactor);
-                bool doIncreaseWeight = _rnd.Get8() < probabilityNextStrokeIncreaseWeight;
-                bool doDecreaseWeight = _rnd.Get8() < probabilityNextStrokeDecreaseWeight;
 
                 float newWeight = curr.Weight;
+
+                var computeWeight = (
+                        float currentWeight, 
+                        float probDescrease, 
+                        float probIncrease, 
+                        float facDecrease, 
+                        float facIncrease
+                        ) =>
+                    {
+                        bool doDecreaseWeight = _rnd.Get8() < probDescrease;
+                        bool doIncreaseWeight = _rnd.Get8() < probIncrease;
+
+                        if( doDecreaseWeight ) {
+                            newWeight *= facDecrease;
+                        }
+                        if( doIncreaseWeight ) {
+                            newWeight *= facIncrease;
+                        }
+
+                        if( newWeight < weightMin ) {
+                            newWeight = weightMin;
+                        } else {
+                            if( newWeight > weightMax) {
+                                newWeight = weightMax;
+                            }
+                        }
+                        newWeight = (int)((newWeight)*1000f)/1000f;
+                        
+                        return currentWeight;
+                    }
+                ;
+
+                newWeight = computeWeight(
+                    weightMax,
+                    probabilityNextStrokeStraightDecreaseWeight,
+                    probabilityNextStrokeStraightIncreaseWeight,
+                    weightDecreaseFactor,
+                    weightIncreaseFactor
+                );
+                
                 float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
                 if( newLength < newLengthMin ) {
                     newLength = newLengthMin;
-                }
-
-                {
-                    if( doIncreaseWeight ) {
-                        newWeight *= weightIncreaseFactor;
-                    }
-                    if( doDecreaseWeight ) {
-                        newWeight *= weightDecreaseFactor;
-                    }
-                    if( newWeight < weightMin ) {
-                        newWeight = weightMin;
-                    } else {
-                        if( newWeight > weightMax) {
-                            newWeight = weightMax;
-                        }
-                    }
-                    newWeight = (int)((newWeight)*1000f)/1000f;
                 }
 
                 float newAngle = curr.Angle;
