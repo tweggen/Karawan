@@ -48,6 +48,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
 
 
+    public static readonly float[] _uvTris =
+    {
+        0.25f, 0.5f, 0.251f, 0.51f, 0.250f, 0.51f
+    };
+
     /**
      * Generate a polygon representing the street point.
      */
@@ -114,14 +119,16 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             //ng.p(ax + cx, h, ay + cy); ng.N(Vector3.UnitY);
             
             //g.UV(ax * uFactor + uOffset, ay * vFactor + vOffset);
-            g.UV(0.25f,0.5f);
+            g.UV(_uvTris[0],_uvTris[1]);
+            int uvIndex = 0;
             //ng.UV(0.25f,0.5f);
             foreach (var b in secArray)
             {
                 g.p(b.X + cx, h, b.Y + cy); g.N(Vector3.UnitY);
                 //ng.p(b.X + cx, h, b.Y + cy); ng.N(Vector3.UnitY);
                 //g.UV(b.X * uFactor + uOffset, b.Y * vFactor + vOffset);
-                g.UV(0.25f,0.5f);
+                g.UV(_uvTris[2+uvIndex],_uvTris[2+uvIndex+1]);
+                uvIndex = (uvIndex + 2) & 3;
                 //ng.UV(0.25f,0.5f);
             }
 
@@ -582,7 +589,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         if (damax > dbmin)
         {
-            if (_traceStreets) Trace($"Overlapping ends, no street run.");
+            if (true || _traceStreets) Trace($"Overlapping ends, no street run.");
             // TXWTODO: Write me.
             return true;
         }
