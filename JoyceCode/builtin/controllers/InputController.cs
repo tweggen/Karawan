@@ -684,24 +684,64 @@ public class InputController : engine.AModule, engine.IInputPart
     }
 
 
+    public void _onButtonPressed(Event ev)
+    {
+        Trace($"Button {ev.Code} pressed");
+
+        switch (ev.Code)
+        {
+            case "DPadDown":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, "(cursordown)"));
+                break;
+            case "DPadUp":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, "(cursorup)"));
+                break;
+            case "DPadLeft":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, "(cursorleft)"));
+                break;
+            case "DPadRight":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_PRESSED, "(cursorright)"));
+                break;
+            default:
+                break;
+        }
+    }
+    
+
+    public void _onButtonReleased(Event ev)
+    {
+        Trace($"Button {ev.Code} released");
+        
+        switch (ev.Code)
+        {
+            case "DPadDown":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(cursordown)"));
+                break;
+            case "DPadUp":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(cursorup)"));
+                break;
+            case "DPadLeft":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(cursorleft)"));
+                break;
+            case "DPadRight":
+                I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_KEY_RELEASED, "(cursorright)"));
+                break;
+            default:
+                break;
+        }
+    }
+    
+    
     private bool _isGamepadRightStickPressed = false;
     
     public void _onGamepadButtonPressed(Event ev)
     {
-        //Trace($"Button {ev.Code} pressed");
+        Trace($"Button {ev.Code} pressed");
 
         switch (ev.Code)
         {
             case "RightStick":
                 _isGamepadRightStickPressed = true;
-                break;
-            case "DPadDown":
-                break;
-            case "DPadUp":
-                break;
-            case "DPadLeft":
-                break;
-            case "DPadRight":
                 break;
             default:
                 break;
@@ -777,6 +817,8 @@ public class InputController : engine.AModule, engine.IInputPart
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_TRIGGER_MOVED)) _onTriggerMoved(ev);
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_BUTTON_PRESSED)) _onGamepadButtonPressed(ev);
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_BUTTON_RELEASED)) _onGamepadButtonReleased(ev);
+        if (ev.Type.StartsWith(Event.INPUT_BUTTON_PRESSED)) _onButtonPressed(ev);
+        if (ev.Type.StartsWith(Event.INPUT_BUTTON_RELEASED)) _onButtonReleased(ev);
         
     }
 

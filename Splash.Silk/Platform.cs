@@ -367,7 +367,7 @@ public class Platform : engine.IPlatform
 
     private void _onGamepadTriggerMoved(IGamepad gamepad, Trigger trigger)
     {
-        Trace($"trigger ${trigger.Index}");
+        // Trace($"trigger {trigger.Index}");
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_GAMEPAD_TRIGGER_MOVED, "")
             {
@@ -379,7 +379,7 @@ public class Platform : engine.IPlatform
 
     private void _onGamepadButtonDown(IGamepad gamepad, Button button)
     {
-        Trace($"button ${button.Name}");
+        // Trace($"button {button.Name}");
         _pushTranslate(
             new Event(Event.INPUT_GAMEPAD_BUTTON_PRESSED, $"{button.Name}")
             {
