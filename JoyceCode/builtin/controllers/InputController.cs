@@ -819,7 +819,6 @@ public class InputController : engine.AModule, engine.IInputPart
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_BUTTON_RELEASED)) _onGamepadButtonReleased(ev);
         if (ev.Type.StartsWith(Event.INPUT_BUTTON_PRESSED)) _onButtonPressed(ev);
         if (ev.Type.StartsWith(Event.INPUT_BUTTON_RELEASED)) _onButtonReleased(ev);
-        
     }
 
     

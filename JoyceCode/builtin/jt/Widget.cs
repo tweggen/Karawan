@@ -1175,6 +1175,49 @@ public class Widget : IDisposable
 
             return;
         }
+
+        var actionUp = (Event ev) =>
+        {
+            if (haveChildren && !isHorizontal)
+            {
+                _setOffsetFocus(-1);
+                ev.IsHandled = true;
+            }
+        };
+        var actionDown = (Event ev) =>
+        {
+            if (haveChildren && !isHorizontal)
+            {
+                _setOffsetFocus(1);
+                ev.IsHandled = true;
+            }
+        };
+        var actionLeft = (Event ev) =>
+        {
+            if (haveChildren && isHorizontal)
+            {
+                _setOffsetFocus(-1);
+                ev.IsHandled = true;
+            }
+        };
+        var actionRight = (Event ev) =>
+        {
+            if (haveChildren && isHorizontal)
+            {
+                _setOffsetFocus(1);
+                ev.IsHandled = true;
+            }
+        };
+        var actionSelect = (Event ev) =>
+        {
+            if (!haveChildren)
+            {
+                _emitSelected(ev);
+                ev.IsHandled = true;
+            }
+        };
+        
+        
         switch (ev.Type)
         {
             case engine.news.Event.INPUT_MOUSE_PRESSED:
@@ -1182,49 +1225,47 @@ public class Widget : IDisposable
                 _onClick(ev);
                 break;
             
+            case engine.news.Event.INPUT_BUTTON_PRESSED:
+                switch (ev.Code)
+                {
+                    case "<cursorup>":
+                        actionUp(ev);
+                        break;
+                    case "<cursordown>":
+                        actionDown(ev);
+                        break;
+                    case "<cursorleft>":
+                        actionLeft(ev);
+                        break;
+                    case "<cursorright>":
+                        actionRight(ev);
+                        break;
+                }
+                break;
+            
             case engine.news.Event.INPUT_KEY_PRESSED:
                 switch (ev.Code)
                 {
                     case "(cursorup)":
                     case "w":
-                        if (haveChildren && !isHorizontal)
-                        {
-                            _setOffsetFocus(-1);
-                            ev.IsHandled = true;
-                        }
+                        actionUp(ev);
                         break;
                     case "(cursordown)":
                     case "s":
-                        if (haveChildren && !isHorizontal)
-                        {
-                            _setOffsetFocus(1);
-                            ev.IsHandled = true;
-                        }
+                        actionDown(ev);
                         break;
                     case "(cursorleft)":
                     case "a":
-                        if (haveChildren && isHorizontal)
-                        {
-                            _setOffsetFocus(-1);
-                            ev.IsHandled = true;
-                        }
+                        actionLeft(ev);
                         break;
                     case "(cursorright)":
                     case "d":
-                        if (haveChildren && isHorizontal)
-                        {
-                            _setOffsetFocus(1);
-                            ev.IsHandled = true;
-                        }
+                        actionRight(ev);
                         break;
                     case " ":
                     case "e":
                     case "(enter)":
-                        if (!haveChildren)
-                        {
-                            _emitSelected(ev);
-                            ev.IsHandled = true;
-                        }
+                        actionSelect(ev);
                         break;
                     case "(tab)":
                         if (IsFocussed)
