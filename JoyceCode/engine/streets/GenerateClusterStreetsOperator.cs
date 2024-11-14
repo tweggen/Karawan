@@ -138,6 +138,15 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
 
 
+    private void _checkUV(float u, float v)
+    {
+        if (u < 0.5f || u > 0.75f || v < 0f || v > 1f)
+        {
+            int a = 1;
+        }
+    }
+    
+    
     /**
      * Generate the streets between any junctions.
      */
@@ -380,7 +389,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 //uint ni0 = ng.GetNextVertexIndex();
                 var cm = new Vector3(q.X, 0f, q.Y);
                 cm *= dar;
-                cm = cm + vam;
+                cm += vam;
                 var clx = cm.X - hsw * n.X;
                 var cly = cm.Z - hsw * n.Y;
                 var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
@@ -388,19 +397,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y));
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
-                //ng.p(alx, h, aly); ng.N(Vector3.UnitY);
-                g.UV(uval.X, uval.Y + vofs);
-                //ng.UV(uval.X, uval.Y + vofs);
+                _checkUV(uval.X, uval.Y + vofs); g.UV(uval.X, uval.Y + vofs);
                 g.p(clx, h, cly); g.N(Vector3.UnitY);
-                //ng.p(clx, h, cly); ng.N(Vector3.UnitY);
-                g.UV(uvcl.X, uvcl.Y + vofs);
-                //ng.UV(uvcl.X, uvcl.Y + vofs);
+                _checkUV(uvcl.X, uvcl.Y + vofs); g.UV(uvcl.X, uvcl.Y + vofs);
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
-                //ng.p(arx, h, ary); ng.N(Vector3.UnitY);
-                g.UV(uvar.X, uvar.Y + vofs);
-                //ng.UV(uvar.X, uvar.Y + vofs);
+                _checkUV(uvar.X, uvar.Y + vofs);g.UV(uvar.X, uvar.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
 #endif
         }
@@ -443,19 +445,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y));
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
-                //ng.p(arx, h, ary); ng.N(Vector3.UnitY);
-                g.UV(0.25f, 0.5f); //g.UV(uvar.X, uvar.Y + vofs));
-                //ng.UV(uvar.X, uvar.Y + vofs);
+                _checkUV(uvar.X, uvar.Y + vofs); g.UV(uvar.X, uvar.Y + vofs);
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
-                //ng.p(alx, h, aly); ng.N(Vector3.UnitY);
-                g.UV(0.25f, 0.5f); //g.UV(uval.X, uval.Y + vofs);
-                //ng.UV(uval.X, uval.Y + vofs);
+                _checkUV(uval.X, uval.Y + vofs); g.UV(uval.X, uval.Y + vofs);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
-                //ng.p(crx, h, cry); ng.N(Vector3.UnitY);
-                g.UV(0.25f, 0.5f); //g.UV(uvcr.X, uvcr.Y + vofs);
-                //ng.UV(uvcr.X, uvcr.Y + vofs);
+                _checkUV(uvcr.X, uvcr.Y + vofs); g.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
 #endif
         }
@@ -501,19 +496,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 float vofs = -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y));
                 g.p(blx, h, bly); g.N(Vector3.UnitY);
-                //ng.p(blx, h, bly); ng.N(Vector3.UnitY);
                 g.UV(uvbl.X, uvbl.Y + vofs);
-                //ng.UV(uvbl.X, uvbl.Y + vofs);
                 g.p(brx, h, bry); g.N(Vector3.UnitY);
-                //ng.p(brx, h, bry); ng.N(Vector3.UnitY);
                 g.UV(uvbr.X, uvbr.Y + vofs);
-                //ng.UV(uvbr.X, uvbr.Y + vofs);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
-                //ng.p(crx, h, cry); ng.N(Vector3.UnitY);
                 g.UV(uvcr.X, uvcr.Y + vofs);
-                //ng.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
 #endif
         }
