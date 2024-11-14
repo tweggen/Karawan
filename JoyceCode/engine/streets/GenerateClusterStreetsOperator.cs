@@ -353,7 +353,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             damax = dar;
             damin = dal;
-
+#if true
             /*
              * Look, what iteration of texture we start with to offset the v values.
              */
@@ -402,13 +402,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
-
+#endif
         }
         else
         {
             damax = dal;
             damin = dar;
-
+#if true
             /*
              * Look, what iteration of texture we start with to offset the v values.
              */
@@ -444,19 +444,20 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 float vofs = 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y));
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
                 //ng.p(arx, h, ary); ng.N(Vector3.UnitY);
-                g.UV(uvar.X, uvar.Y + vofs);
+                g.UV(0.25f, 0.5f); //g.UV(uvar.X, uvar.Y + vofs));
                 //ng.UV(uvar.X, uvar.Y + vofs);
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
                 //ng.p(alx, h, aly); ng.N(Vector3.UnitY);
-                g.UV(uval.X, uval.Y + vofs);
+                g.UV(0.25f, 0.5f); //g.UV(uval.X, uval.Y + vofs);
                 //ng.UV(uval.X, uval.Y + vofs);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
                 //ng.p(crx, h, cry); ng.N(Vector3.UnitY);
-                g.UV(uvcr.X, uvcr.Y + vofs);
+                g.UV(0.25f, 0.5f); //g.UV(uvcr.X, uvcr.Y + vofs);
                 //ng.UV(uvcr.X, uvcr.Y + vofs);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
+#endif
         }
 
         float dbmin, dbmax; 
@@ -465,7 +466,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             dbmin = dbl;
             dbmax = dbr;
-#if false
+#if true
             /*
              * Look, what iteration of texture we start with to offset the v values.
              */
@@ -520,7 +521,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             dbmin = dbr;
             dbmax = dbl;
-#if false
+#if true
             /*
              * Look, what iteration of texture we start with to offset the v values.
              */
