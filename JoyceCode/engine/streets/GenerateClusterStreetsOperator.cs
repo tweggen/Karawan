@@ -53,6 +53,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         0.25f, 0.5f, 0.251f, 0.51f, 0.250f, 0.51f
     };
 
+    
     /**
      * Generate a polygon representing the street point.
      */
@@ -107,29 +108,17 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * Now create the vertices and the uv values.
          * We start with a center point.
          */
-        float uFactor = (1f / 200f);
-        float uOffset = (0.125f);
-        float vFactor = (1f / 200f);
-        float vOffset = (0.5f);
-
         {
             uint i0 = g.GetNextVertexIndex();
-            //var ni0 = ng.GetNextVertexIndex();
             g.p(ax + cx, h, ay + cy); g.N(Vector3.UnitY);
-            //ng.p(ax + cx, h, ay + cy); ng.N(Vector3.UnitY);
             
-            //g.UV(ax * uFactor + uOffset, ay * vFactor + vOffset);
             g.UV(_uvTris[0],_uvTris[1]);
             int uvIndex = 0;
-            //ng.UV(0.25f,0.5f);
             foreach (var b in secArray)
             {
                 g.p(b.X + cx, h, b.Y + cy); g.N(Vector3.UnitY);
-                //ng.p(b.X + cx, h, b.Y + cy); ng.N(Vector3.UnitY);
-                //g.UV(b.X * uFactor + uOffset, b.Y * vFactor + vOffset);
                 g.UV(_uvTris[2+uvIndex],_uvTris[2+uvIndex+1]);
                 uvIndex = (uvIndex + 2) & 3;
-                //ng.UV(0.25f,0.5f);
             }
 
             /*
@@ -139,7 +128,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             {
                 uint knext = (k + 1) % l;
                 g.Idx(i0 + 0, i0 + 1 + knext, i0 + 1 + k);
-                //ng.Idx(ni0 + 0, ni0 + 1 + knext, ni0 + 1 + k);
             }
         }
 
@@ -160,7 +148,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Artefact a)
     {
         var g = a.g;
-        //var ng = a.ng;
         
         /*
          * We need the material to know the texture size in use.
@@ -472,12 +459,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             }
         }
 
-        float dbmin, dbmax;
+        float dbmin, dbmax; 
+        
         if (dbl < dbr)
         {
             dbmin = dbl;
             dbmax = dbr;
-
+#if false
             /*
              * Look, what iteration of texture we start with to offset the v values.
              */
@@ -526,12 +514,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
+#endif
         }
         else
         {
             dbmin = dbr;
             dbmax = dbl;
-
+#if false
             /*
              * Look, what iteration of texture we start with to offset the v values.
              */
@@ -580,6 +569,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
+#endif
         }
 
         if (_traceStreets) Trace($"d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
@@ -589,8 +579,26 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         if (damax > dbmin)
         {
-            if (true || _traceStreets) Trace($"Overlapping ends, no street run.");
-            // TXWTODO: Write me.
+            /*
+             * Now create the vertices and the uv values.
+             * We start with a center point.
+             */
+            if (false) 
+            {
+                uint i0 = g.GetNextVertexIndex();
+                g.p(alx, h, aly); g.N(Vector3.UnitY);
+                g.UV(0.125f, 0.25f);
+                g.p(arx, h, ary); g.N(Vector3.UnitY);
+                g.UV(0.128f, 0.25f);
+                g.p(blx, h, bly); g.N(Vector3.UnitY);
+                g.UV(0.125f, 0.26f);
+                g.p(brx, h, bry); g.N(Vector3.UnitY);
+                g.UV(0.128f, 0.26f);
+                
+                g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                g.Idx(i0 + 1, i0 + 3, i0 + 2);
+            }
+
             return true;
         }
 
