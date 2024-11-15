@@ -10,7 +10,7 @@ public class ClusterStorage
     
     private engine.EntityMap<engine.streets.StreetPoint> _mapStreetPoints = new();
 
-    public const int DbVersion = 1011;
+    public const int DbVersion = 1015;
     
     public const string DbName = "worldcache";
 

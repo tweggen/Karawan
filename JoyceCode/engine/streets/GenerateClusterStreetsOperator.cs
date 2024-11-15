@@ -138,9 +138,9 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
 
 
-    private void _checkUV(float u, float v)
+    private void _checkUV(in Vector2 uv)
     {
-        if (u < 0.5f || u > 0.75f || v < 0f || v > 1f)
+        if (uv.X < 0.5f || uv.X > 0.75f || uv.Y < 0f || uv.Y > 1f)
         {
             int a = 1;
         }
@@ -386,22 +386,22 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note that we start from the beginning in the texture.
                  */
                 uint i0 = g.GetNextVertexIndex();
-                //uint ni0 = ng.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y);
-                cm *= dar;
-                cm += vam;
+                var cm = new Vector3(q.X, 0f, q.Y) * dar + vam;
                 var clx = cm.X - hsw * n.X;
                 var cly = cm.Z - hsw * n.Y;
                 var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
                 var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
                 var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
-                float vofs = 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y));
+                var vofs = new Vector2(0f, 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y)));
+                uval += vofs;
+                uvcl += vofs;
+                uvar += vofs;
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
-                _checkUV(uval.X, uval.Y + vofs); g.UV(uval.X, uval.Y + vofs);
+                _checkUV(uval); g.UV(uval);
                 g.p(clx, h, cly); g.N(Vector3.UnitY);
-                _checkUV(uvcl.X, uvcl.Y + vofs); g.UV(uvcl.X, uvcl.Y + vofs);
+                _checkUV(uvcl); g.UV(uvcl);
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
-                _checkUV(uvar.X, uvar.Y + vofs);g.UV(uvar.X, uvar.Y + vofs);
+                _checkUV(uvar);g.UV(uvar);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
 #endif
@@ -434,22 +434,22 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                //uint ni0 = ng.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y);
-                cm *= dal;
-                cm += vam;
+                var cm = new Vector3(q.X, 0f, q.Y) * dal + vam; 
                 var crx = cm.X + hsw * n.X;
                 var cry = cm.Z + hsw * n.Y;
                 var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
                 var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
-                float vofs = 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y));
+                var vofs = new Vector2(0f, 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y)));
+                uvar += vofs;
+                uval += vofs;
+                uvcr += vofs;
                 g.p(arx, h, ary); g.N(Vector3.UnitY);
-                _checkUV(uvar.X, uvar.Y + vofs); g.UV(uvar.X, uvar.Y + vofs);
+                _checkUV(uvar); g.UV(uvar);
                 g.p(alx, h, aly); g.N(Vector3.UnitY);
-                _checkUV(uval.X, uval.Y + vofs); g.UV(uval.X, uval.Y + vofs);
+                _checkUV(uval); g.UV(uval);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
-                _checkUV(uvcr.X, uvcr.Y + vofs); g.UV(uvcr.X, uvcr.Y + vofs);
+                _checkUV(uvcr); g.UV(uvcr);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
 #endif
@@ -485,22 +485,22 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                //uint ni0 = ng.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y);
-                cm *= dbl;
-                cm += vam;
+                var cm = new Vector3(q.X, 0f, q.Y) * dbl + vam;
                 var crx = cm.X + hsw * n.X;
                 var cry = cm.Z + hsw * n.Y;
                 var uvbl = uvp.GetUV(new Vector3(blx, h, bly), 0f, vStart);
                 var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
-                float vofs = -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y));
+                var vofs = new Vector2(0f, -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y)));
+                uvbl += vofs;
+                uvbr += vofs;
+                uvcr += vofs;
                 g.p(blx, h, bly); g.N(Vector3.UnitY);
-                g.UV(uvbl.X, uvbl.Y + vofs);
+                _checkUV(uvbl); g.UV(uvbl);
                 g.p(brx, h, bry); g.N(Vector3.UnitY);
-                g.UV(uvbr.X, uvbr.Y + vofs);
+                _checkUV(uvbr); g.UV(uvbr);
                 g.p(crx, h, cry); g.N(Vector3.UnitY);
-                g.UV(uvcr.X, uvcr.Y + vofs);
+                _checkUV(uvcr); g.UV(uvcr);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
             }
 #endif
@@ -533,30 +533,23 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                //uint ni0 = ng.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y);
-                cm *= dbr;
-                cm += vam;
+                var cm = new Vector3(q.X, 0f, q.Y) * dbr + vam;
                 var clx = cm.X - hsw * n.X;
                 var cly = cm.Z - hsw * n.Y;
                 var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
                 var uvbl = uvp.GetUV(new Vector3(blx, h, bly), 0f, vStart);
                 var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
-                float vofs = -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y));
+                var vofs = new Vector2(0f, -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y)));
+                uvcl += vofs;
+                uvbl += vofs;
+                uvbr += vofs;
                 g.p(clx, h, cly); g.N(Vector3.UnitY);
-                //ng.p(clx, h, cly); ng.N(Vector3.UnitY);
-                g.UV(uvcl.X, uvcl.Y + vofs);
-                //ng.UV(uvcl.X, uvcl.Y + vofs);
+                _checkUV(uvcl); g.UV(uvcl);
                 g.p(blx, h, bly); g.N(Vector3.UnitY);
-                //ng.p(blx, h, bly); ng.N(Vector3.UnitY);
-                g.UV(uvbl.X, uvbl.Y + vofs);
-                //ng.UV(uvbl.X, uvbl.Y + vofs);
+                _checkUV(uvbl); g.UV(uvbl);
                 g.p(brx, h, bry); g.N(Vector3.UnitY);
-                //ng.p(brx, h, bry); ng.N(Vector3.UnitY);
-                g.UV(uvbr.X, uvbr.Y + vofs);
-                //ng.UV(uvbr.X, uvbr.Y + vofs);
+                _checkUV(uvbr); g.UV(uvbr);
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                //ng.Idx(ni0 + 0, ni0 + 1, ni0 + 2);
             }
 #endif
         }
