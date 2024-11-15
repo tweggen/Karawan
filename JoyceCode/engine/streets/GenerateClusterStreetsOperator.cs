@@ -439,11 +439,9 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note that we start from the beginning in the texture.
                  */
                 uint i0 = g.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y) * dar + vam;
-                var clx = cm.X - hsw * n.X;
-                var cly = cm.Z - hsw * n.Y;
+                var cl = vam + q3 * dar - n3 * hsw;
                 var uval = uvp.GetUV(al, 0f, vStart);
-                var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
+                var uvcl = uvp.GetUV(cl, 0f, vStart);
                 var uvar = uvp.GetUV(ar, 0f, vStart);
                 var vofs = new Vector2(0f, 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y)));
                 uval += vofs;
@@ -452,7 +450,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 if (_checkTriUV(uval, uvcl, uvar))
                 {
                     g.p(al); g.N(Vector3.UnitY); g.UV(uval);
-                    g.p(clx, h, cly); g.N(Vector3.UnitY); g.UV(uvcl);
+                    g.p(cl); g.N(Vector3.UnitY); g.UV(uvcl);
                     g.p(ar); g.N(Vector3.UnitY); g.UV(uvar);
                     g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 }
@@ -491,12 +489,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y) * dal + vam; 
-                var crx = cm.X + hsw * n.X;
-                var cry = cm.Z + hsw * n.Y;
+                var cr = vam + q3 * dal + n3 * hsw; 
                 var uvar = uvp.GetUV(ar, 0f, vStart);
                 var uval = uvp.GetUV(al, 0f, vStart);
-                var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
+                var uvcr = uvp.GetUV(cr, 0f, vStart);
                 var vofs = new Vector2(0f, 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y)));
                 uvar += vofs;
                 uval += vofs;
@@ -505,7 +501,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 {
                     g.p(ar); g.N(Vector3.UnitY); g.UV(uvar);
                     g.p(al); g.N(Vector3.UnitY); g.UV(uval);
-                    g.p(crx, h, cry); g.N(Vector3.UnitY); g.UV(uvcr);
+                    g.p(cr); g.N(Vector3.UnitY); g.UV(uvcr);
                     g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 }
                 else
@@ -546,12 +542,10 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y) * dbl + vam;
-                var crx = cm.X + hsw * n.X;
-                var cry = cm.Z + hsw * n.Y;
+                var cr = vam + q3 * dbl + n3 * hsw;
                 var uvbl = uvp.GetUV(bl, 0f, vStart);
                 var uvbr = uvp.GetUV(br, 0f, vStart);
-                var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
+                var uvcr = uvp.GetUV(cr, 0f, vStart);
                 var vofs = new Vector2(0f, -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y)));
                 uvbl += vofs;
                 uvbr += vofs;
@@ -560,7 +554,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 {
                     g.p(bl); g.N(Vector3.UnitY); g.UV(uvbl);
                     g.p(br); g.N(Vector3.UnitY); g.UV(uvbr);
-                    g.p(crx, h, cry); g.N(Vector3.UnitY); g.UV(uvcr);
+                    g.p(cr); g.N(Vector3.UnitY); g.UV(uvcr);
                     g.Idx(i0 + 0, i0 + 1, i0 + 2);
                 }
                 else
@@ -598,10 +592,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                  * Note, that we start from the beginning in the texture
                  */
                 uint i0 = g.GetNextVertexIndex();
-                var cm = new Vector3(q.X, 0f, q.Y) * dbr + vam;
-                var clx = cm.X - hsw * n.X;
-                var cly = cm.Z - hsw * n.Y;
-                var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
+                var cl = vam + q3 * dbr - n3 * hsw;
+                var uvcl = uvp.GetUV(cl, 0f, vStart);
                 var uvbl = uvp.GetUV(bl, 0f, vStart);
                 var uvbr = uvp.GetUV(br, 0f, vStart);
                 var vofs = new Vector2(0f, -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y)));
@@ -610,7 +602,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 uvbr += vofs;
                 if (_checkTriUV(uvcl, uvbl, uvbr))
                 {
-                    g.p(clx, h, cly); g.N(Vector3.UnitY); g.UV(uvcl);
+                    g.p(cl); g.N(Vector3.UnitY); g.UV(uvcl);
                     g.p(bl); g.N(Vector3.UnitY); g.UV(uvbl);
                     g.p(br); g.N(Vector3.UnitY); g.UV(uvbr);
                     g.Idx(i0 + 0, i0 + 1, i0 + 2);
