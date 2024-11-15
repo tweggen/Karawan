@@ -52,6 +52,24 @@ namespace builtin.tools
         private Vector2 _v2ProjectionFactorsUncorrected;
 
         
+        /**
+         * Project the given point into the UV space, given a certain u and v offset.
+         * Do not fix pixel offset, do not clamp the UVs.
+         */
+        public Vector2 ProjectUV(in Vector3 point, float uStart, float vStart)
+        {
+            Vector3 p = point - _o;
+            Vector2 uv = new Vector2(
+                Vector3.Dot(p, _u) * _v2ProjectionFactorsUncorrected.X - uStart,
+                Vector3.Dot(p, _v) * _v2ProjectionFactorsUncorrected.Y - vStart
+            ) + _uvOffset;
+            return uv;
+        }
+
+
+        /**
+         * Project the given point into the UV space, given a certain u and v offset.
+         */
         public Vector2 GetUV(in Vector3 point, float uStart, float vStart)
         {
             Vector3 p = point - _o;
@@ -68,7 +86,7 @@ namespace builtin.tools
             return uv;
         }
 
-
+        
         private void _computeFactors()
         {
             _uvMin = _uvOffset;

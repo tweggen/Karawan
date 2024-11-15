@@ -138,16 +138,48 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
 
 
-    private void _checkUV(in Vector2 uv)
+    private bool _checkUV(in Vector2 uv)
     {
         if (uv.X < 0.5f || uv.X > 0.75f || uv.Y < 0f || uv.Y > 1f)
         {
             int a = 1;
+            Trace($"uv out of range: {uv}.");
+            return false;
         }
+
+        return true;
     }
-    
-    
-    /**
+
+    private bool _checkTriUV(in Vector2 uva, in Vector2 uvb, in Vector2 uvc)
+    {
+        bool result = true;
+        result = result && _checkUV(uva);
+        result = result && _checkUV(uvb);
+        result = result && _checkUV(uvc);
+        if ( (uvb-uva).LengthSquared()<0.001f )
+        {
+            Trace($"uvb {uvb} too close to uva {uva}.");
+            int a = 1;
+            result = false;
+        }
+        if ( (uvc-uvb).LengthSquared()<0.001f )
+        {
+            Trace($"uvc {uvc} too close to uvb {uvb}.");
+            int a = 1;
+            result = false;
+        }
+        if ( (uva-uvc).LengthSquared()<0.001f )
+        {
+            Trace($"uva {uva} too close to uvc {uvc}.");
+            int a = 1;
+            result = false;
+        }
+
+        return result;
+    }
+
+
+   /**
      * Generate the streets between any junctions.
      */
     private bool _generateStreetRun(
@@ -176,8 +208,14 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         float sw = stroke.StreetWidth();
         float hsw = sw / 2f;
-        Vector2 n = stroke.Normal; 
+        Vector2 n = stroke.Normal;
+        Vector3 n3 = new(n.X, 0f, n.Y);
         Vector2 q = stroke.Unit;
+        Vector3 q3 = new(q.X, 0f, q.Y);
+        var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
+        Vector3 v3Cluster = new(cx, h, cy);
+
+
 
         var spA = stroke.A;
 
@@ -196,18 +234,21 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         /*
          * The exterior points of the street area.
          */
-        float alx, aly, arx, ary;
-        float blx, bly, brx, bry;
+        //float alx, aly, arx, ary;
+        //float blx, bly, brx, bry;
+        Vector3 al, ar, bl, br;
 
         /*
          * The linear logical part of the street.
          */
-        float amx, amy;
-        float bmx, bmy;
+        //float amx, amy;
+        //float bmx, bmy;
+        Vector3 am, bm;
 
-        amx = cx + spA.Pos.X;
-        amy = cy + spA.Pos.Y;
-        if (_traceStreets) Trace($"am = ({amx}; {amy});");
+        am = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y);
+        //amx = cx + spA.Pos.X;
+        //amy = cy + spA.Pos.Y;
+        if (_traceStreets) Trace($"am = ({am});");
         if (angArrA.Count > 1)
         {
             var idxA = angArrA.IndexOf(stroke);
@@ -236,10 +277,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              * The angle array is sorted in ascending angles with regard to outgoing
              * strokes, that is stroke.a is the point.
              */
-            alx = cx + secArrA[idxNextA].X;
-            aly = cy + secArrA[idxNextA].Y;
-            arx = cx + secArrA[idxA].X;
-            ary = cy + secArrA[idxA].Y;
+            al = v3Cluster + new Vector3(secArrA[idxNextA].X, 0f, secArrA[idxNextA].Y);
+            ar = v3Cluster + new Vector3(secArrA[idxA].X, 0f, secArrA[idxA].Y);
+            //alx = cx + secArrA[idxNextA].X;
+            //aly = cy + secArrA[idxNextA].Y;
+            //arx = cx + secArrA[idxA].X;
+            //ary = cy + secArrA[idxA].Y;
 
         }
         else
@@ -248,19 +291,23 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              * This is the end of the street, we need to manually compute the endpoints
              * using the street normal.
              */
-            alx = cx + spA.Pos.X - n.X * hsw;
-            aly = cy + spA.Pos.Y - n.Y * hsw;
-            arx = cx + spA.Pos.X + n.X * hsw;
-            ary = cy + spA.Pos.Y + n.Y * hsw;
+            al = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y) - n3 * hsw;
+            ar = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y) + n3 * hsw;
+            //alx = cx + spA.Pos.X - n.X * hsw;
+            //aly = cy + spA.Pos.Y - n.Y * hsw;
+            //arx = cx + spA.Pos.X + n.X * hsw;
+            //ary = cy + spA.Pos.Y + n.Y * hsw;
 
         }
 
         var spB = stroke.B;
         var angArrB = spB.GetAngleArray();
 
-        bmx = cx + spB.Pos.X;
-        bmy = cy + spB.Pos.Y;
-        if (_traceStreets) Trace($"bm = ({bmx}; {bmy});");
+        //bmx = cx + spB.Pos.X;
+        //bmy = cy + spB.Pos.Y;
+        bm = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y);
+
+        if (_traceStreets) Trace($"bm = ({bm});");
         if (angArrB.Count > 1)
         {
             var idxB = angArrB.IndexOf(stroke);
@@ -286,10 +333,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              * So this is the end on the street on the "other" side, left and right are
              * from a's point of view. So we have:
              */
-            blx = cx + secArrB[idxB].X;
-            bly = cy + secArrB[idxB].Y;
-            brx = cx + secArrB[idxNextB].X;
-            bry = cy + secArrB[idxNextB].Y;
+            bl = v3Cluster + new Vector3(secArrB[idxB].X, 0f, secArrB[idxB].Y);
+            br = v3Cluster + new Vector3(secArrB[idxNextB].X, 0f, secArrB[idxNextB].Y);
+            //blx = cx + secArrB[idxB].X;
+            //bly = cy + secArrB[idxB].Y;
+            //brx = cx + secArrB[idxNextB].X;
+            //bry = cy + secArrB[idxNextB].Y;
 
         }
         else
@@ -297,13 +346,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             /*
              * Create a street end from the normals.
              */
-            blx = cx + spB.Pos.X - n.X * hsw;
-            bly = cy + spB.Pos.Y - n.Y * hsw;
-            brx = cx + spB.Pos.X + n.X * hsw;
-            bry = cy + spB.Pos.Y + n.Y * hsw;
+            bl = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y) - n3 * hsw;
+            br = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y) + n3 * hsw;
+            //blx = cx + spB.Pos.X - n.X * hsw;
+            //bly = cy + spB.Pos.Y - n.Y * hsw;
+            //brx = cx + spB.Pos.X + n.X * hsw;
+            //bry = cy + spB.Pos.Y + n.Y * hsw;
         }
-
-        var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
 
         // TXWTODO: Factor out the code to triangulate and texture the street part.
 
@@ -316,8 +365,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * - the outer parts can be built of two triangles.
          *      which (TXWTODO) we force to fit into one texture.
          */
-        var vam = new Vector3(amx, h, amy);
-        var vambm = new Vector3(bmx - amx, 0f, bmy - amy);
+        var vam = am;
+        var vambm = bm - am;
 
         /*
          * Emit tris for am-bm.
@@ -350,14 +399,18 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          * These are the 4 edge points of the street, projected to street,
          * unit is meters.
          */
-        float dal = Vector3.Dot(new Vector3(alx - amx, 0f, aly - amy), vambm) / vambm.Length();
-        float dar = Vector3.Dot(new Vector3(arx - amx, 0f, ary - amy), vambm) / vambm.Length();
-        float dbl = Vector3.Dot(new Vector3(blx - amx, 0f, bly - amy), vambm) / vambm.Length();
-        float dbr = Vector3.Dot(new Vector3(brx - amx, 0f, bry - amy), vambm) / vambm.Length();
+        float dal = Vector3.Dot(al-am, vambm) / vambm.Length();
+        float dar = Vector3.Dot(ar-am, vambm) / vambm.Length();
+        float dbl = Vector3.Dot(bl-am, vambm) / vambm.Length();
+        float dbr = Vector3.Dot(br-am, vambm) / vambm.Length();
 
         float damax, damin;
         float dStart = 0f;
         float vStart = 0f;
+        
+        /*
+         * This is the triangles at the A point
+         */
         if (dal < dar)
         {
             damax = dar;
@@ -389,20 +442,24 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var cm = new Vector3(q.X, 0f, q.Y) * dar + vam;
                 var clx = cm.X - hsw * n.X;
                 var cly = cm.Z - hsw * n.Y;
-                var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
+                var uval = uvp.GetUV(al, 0f, vStart);
                 var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
-                var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
+                var uvar = uvp.GetUV(ar, 0f, vStart);
                 var vofs = new Vector2(0f, 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y)));
                 uval += vofs;
                 uvcl += vofs;
                 uvar += vofs;
-                g.p(alx, h, aly); g.N(Vector3.UnitY);
-                _checkUV(uval); g.UV(uval);
-                g.p(clx, h, cly); g.N(Vector3.UnitY);
-                _checkUV(uvcl); g.UV(uvcl);
-                g.p(arx, h, ary); g.N(Vector3.UnitY);
-                _checkUV(uvar);g.UV(uvar);
-                g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                if (_checkTriUV(uval, uvcl, uvar))
+                {
+                    g.p(al); g.N(Vector3.UnitY); g.UV(uval);
+                    g.p(clx, h, cly); g.N(Vector3.UnitY); g.UV(uvcl);
+                    g.p(ar); g.N(Vector3.UnitY); g.UV(uvar);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                }
+                else
+                {
+                    Trace($"Triangle UV problem.");
+                }
             }
 #endif
         }
@@ -437,20 +494,24 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var cm = new Vector3(q.X, 0f, q.Y) * dal + vam; 
                 var crx = cm.X + hsw * n.X;
                 var cry = cm.Z + hsw * n.Y;
-                var uvar = uvp.GetUV(new Vector3(arx, h, ary), 0f, vStart);
-                var uval = uvp.GetUV(new Vector3(alx, h, aly), 0f, vStart);
+                var uvar = uvp.GetUV(ar, 0f, vStart);
+                var uval = uvp.GetUV(al, 0f, vStart);
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 var vofs = new Vector2(0f, 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y)));
                 uvar += vofs;
                 uval += vofs;
                 uvcr += vofs;
-                g.p(arx, h, ary); g.N(Vector3.UnitY);
-                _checkUV(uvar); g.UV(uvar);
-                g.p(alx, h, aly); g.N(Vector3.UnitY);
-                _checkUV(uval); g.UV(uval);
-                g.p(crx, h, cry); g.N(Vector3.UnitY);
-                _checkUV(uvcr); g.UV(uvcr);
-                g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                if (_checkTriUV(uvar, uval, uvcr))
+                {
+                    g.p(ar); g.N(Vector3.UnitY); g.UV(uvar);
+                    g.p(al); g.N(Vector3.UnitY); g.UV(uval);
+                    g.p(crx, h, cry); g.N(Vector3.UnitY); g.UV(uvcr);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                }
+                else
+                {
+                    Trace($"Triangle UV problem.");
+                }
             }
 #endif
         }
@@ -488,20 +549,24 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var cm = new Vector3(q.X, 0f, q.Y) * dbl + vam;
                 var crx = cm.X + hsw * n.X;
                 var cry = cm.Z + hsw * n.Y;
-                var uvbl = uvp.GetUV(new Vector3(blx, h, bly), 0f, vStart);
-                var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
+                var uvbl = uvp.GetUV(bl, 0f, vStart);
+                var uvbr = uvp.GetUV(br, 0f, vStart);
                 var uvcr = uvp.GetUV(new Vector3(crx, h, cry), 0f, vStart);
                 var vofs = new Vector2(0f, -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y)));
                 uvbl += vofs;
                 uvbr += vofs;
                 uvcr += vofs;
-                g.p(blx, h, bly); g.N(Vector3.UnitY);
-                _checkUV(uvbl); g.UV(uvbl);
-                g.p(brx, h, bry); g.N(Vector3.UnitY);
-                _checkUV(uvbr); g.UV(uvbr);
-                g.p(crx, h, cry); g.N(Vector3.UnitY);
-                _checkUV(uvcr); g.UV(uvcr);
-                g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                if (_checkTriUV(uvbl, uvbr, uvcr))
+                {
+                    g.p(bl); g.N(Vector3.UnitY); g.UV(uvbl);
+                    g.p(br); g.N(Vector3.UnitY); g.UV(uvbr);
+                    g.p(crx, h, cry); g.N(Vector3.UnitY); g.UV(uvcr);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                }
+                else
+                {
+                    Trace($"Triangle UV problem.");
+                }
             }
 #endif
         }
@@ -537,19 +602,23 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 var clx = cm.X - hsw * n.X;
                 var cly = cm.Z - hsw * n.Y;
                 var uvcl = uvp.GetUV(new Vector3(clx, h, cly), 0f, vStart);
-                var uvbl = uvp.GetUV(new Vector3(blx, h, bly), 0f, vStart);
-                var uvbr = uvp.GetUV(new Vector3(brx, h, bry), 0f, vStart);
+                var uvbl = uvp.GetUV(bl, 0f, vStart);
+                var uvbr = uvp.GetUV(br, 0f, vStart);
                 var vofs = new Vector2(0f, -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y)));
                 uvcl += vofs;
                 uvbl += vofs;
                 uvbr += vofs;
-                g.p(clx, h, cly); g.N(Vector3.UnitY);
-                _checkUV(uvcl); g.UV(uvcl);
-                g.p(blx, h, bly); g.N(Vector3.UnitY);
-                _checkUV(uvbl); g.UV(uvbl);
-                g.p(brx, h, bry); g.N(Vector3.UnitY);
-                _checkUV(uvbr); g.UV(uvbr);
-                g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                if (_checkTriUV(uvcl, uvbl, uvbr))
+                {
+                    g.p(clx, h, cly); g.N(Vector3.UnitY); g.UV(uvcl);
+                    g.p(bl); g.N(Vector3.UnitY); g.UV(uvbl);
+                    g.p(br); g.N(Vector3.UnitY); g.UV(uvbr);
+                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
+                }
+                else
+                {
+                    Trace($"Triangle UV problem.");
+                }
             }
 #endif
         }
@@ -568,13 +637,13 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             if (false) 
             {
                 uint i0 = g.GetNextVertexIndex();
-                g.p(alx, h, aly); g.N(Vector3.UnitY);
+                g.p(al); g.N(Vector3.UnitY);
                 g.UV(0.125f, 0.25f);
-                g.p(arx, h, ary); g.N(Vector3.UnitY);
+                g.p(ar); g.N(Vector3.UnitY);
                 g.UV(0.128f, 0.25f);
-                g.p(blx, h, bly); g.N(Vector3.UnitY);
+                g.p(bl); g.N(Vector3.UnitY);
                 g.UV(0.125f, 0.26f);
-                g.p(brx, h, bry); g.N(Vector3.UnitY);
+                g.p(br); g.N(Vector3.UnitY);
                 g.UV(0.128f, 0.26f);
                 
                 g.Idx(i0 + 0, i0 + 1, i0 + 2);
