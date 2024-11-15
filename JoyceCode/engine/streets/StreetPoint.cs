@@ -543,6 +543,7 @@ public class StreetPoint
          * previous and the current stroke.
          *
          * Note: As we use the infinite lines, the in/out orientation does not matter.
+         * The angle array sorts the strokes counterclockwise in R2.
          */
         foreach (var curr in _angleArray)
         {
@@ -574,9 +575,9 @@ public class StreetPoint
             }
 
             /*
-             * Normals. Turn them in a way that, well
+             * Normals. 
              * If I move from outside to this street point, the normal shall point
-             * to the right side. That means, the normal points from the current to
+             * to the left side. That means, the normal points from the current to
              * the previous stroke.
              */
             Vector2 np = sp.Normal();
@@ -610,7 +611,7 @@ public class StreetPoint
             bool doUseSide = false;
             if (null == i0)
             {
-                if (myVerbose) Trace("no intersect");
+                if (true || myVerbose) Trace("no intersect");
                 doUseSide = true;
                 // Please the compiler and assign newI a value that later is overridden.
                 newI.X = newI.Y = 0;
@@ -630,24 +631,13 @@ public class StreetPoint
                 {
                     if (myVerbose) Trace("farout intersect");
                     /*
-                     * If this intersection is too far away, we use the point offset by the (angle)
+                     * If this intersection is too far away, we use the point offset by the 
                      * average of both normals.
                      */
                     var n = new Vector2(nc.X - np.X, nc.Y - np.Y);
                     n = n / n.Length();
                     var averW = (prevHalfStreetWidth + currHalfStreetWidth) / 2f;
                     newI = new Vector2(Pos.X + n.X * averW, Pos.Y + n.Y * averW);
-#if false
-                        var dist = Math.sqrt(dist2);
-                        var prevAngle = prev.getAngleSP(this);
-                        var currAngle = curr.getAngleSP(this);
-                        var junctionAngle = (currAngle - prevAngle)*180./Math.PI;
-                        Trace( 'When intersecting prev $sp and curr $sc (normals prev $np curr $nc): Far out intersection $i' );
-                        Trace( 'prevHalfStreetWidth is $prevHalfStreetWidth currHalfStreetWidth is $currHalfStreetWidth');
-                        traceAngles();
-                        throw ( 'getSectionArray(): Far out intersection $i {between ${prev.toStringSP(this)} and ${curr.toStringSP(this)}: $dist, $junctionAngle deg' );
-                        // doUseSide = true;   
-#endif
                 }
                 else
                 {
