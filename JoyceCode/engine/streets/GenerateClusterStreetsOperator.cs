@@ -443,26 +443,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         float dbl = Vector3.Dot(bl-am, vambm) / vambm.Length();
         float dbr = Vector3.Dot(br-am, vambm) / vambm.Length();
 
-        float damax, damin;
         float dStart = 0f;
         float vStart = 0f;
+        float damax, damin;
         
-        /*
-         * This is the triangles at the A point
-         */
         if (dal < dar)
         {
             damax = dar;
             damin = dal;
-            var cl = vam + q3 * dar - n3 * hsw;
-            _streetTriangle(uvp, vStart,al, cl, ar, a);
         }
         else
         {
             damax = dal;
             damin = dar;
-            var cr = vam + q3 * dal + n3 * hsw;
-            _streetTriangle(uvp, vStart,ar, al, cr, a);
         }
 
         float dbmin, dbmax; 
@@ -471,15 +464,11 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             dbmin = dbl;
             dbmax = dbr;
-            var cr = vam + q3 * dbl + n3 * hsw;
-            _streetTriangle(uvp, vStart,bl, br, cr, a);
         }
         else
         {
             dbmin = dbr;
             dbmax = dbl;
-            var cl = vam + q3 * dbr - n3 * hsw;
-            _streetTriangle(uvp, vStart,cl, bl, br, a);
         }
 
         if (_traceStreets) Trace($"d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
@@ -493,7 +482,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              * Now create the vertices and the uv values.
              * We start with a center point.
              */
-            {
+            if (true) {
                 uint i0 = g.GetNextVertexIndex();
                 g.p(al); g.N(Vector3.UnitY);
                 g.UV(0.125f, 0.25f);
@@ -512,6 +501,38 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              * Which is why we do not need to render a road at all.
              */
             return true;
+        }
+
+
+        /*
+         * This is the triangles at the A point
+         *
+         * Thje c points are the point at the side of the outermost a/b point
+         * at the height of the innermost one.
+         *
+         * Note the triangles appeaer clockwise in the xy plane, later, in the
+         * xz plane, they will be ccw.
+         */
+        if (dal < dar)
+        {
+            var cl = vam + q3 * dar - n3 * hsw;
+            _streetTriangle(uvp, vStart,al, cl, ar, a);
+        }
+        else
+        {
+            var cr = vam + q3 * dal + n3 * hsw;
+            _streetTriangle(uvp, vStart,ar, al, cr, a);
+        }
+        
+        if (dbl < dbr)
+        {
+            var cr = vam + q3 * dbl + n3 * hsw;
+            _streetTriangle(uvp, vStart,bl, br, cr, a);
+        }
+        else
+        {
+            var cl = vam + q3 * dbr - n3 * hsw;
+            _streetTriangle(uvp, vStart,bl, br, cl, a);
         }
 
         /*
