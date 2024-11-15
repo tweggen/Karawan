@@ -29,13 +29,26 @@ namespace engine.streets
         public float minPointToCandStrokeDistance { get; set; } = 30f;
         public float minPointToCandIntersectionDistance { get; set; } = 30f;
 
+        public float weightMin { get; set; } = 0.2f;
+        public float weightMax { get; set; } = 1.3f;
+        public float weightRange 
+        {
+            get => weightMax-weightMin;
+        }
+
+        public float normWeight(float weight)
+        {
+            return (weight - weightMin) / weightRange;
+        }
+
+
         /*
-         * All proabilities are given in the 0..256 range to avoid differrences 
+         * All proabilities are given in the 0..256 range to avoid differrences
          * between platforms due to rounding errors on floats.
          */
         public int probabilityNextStrokeForward { get; set; } = 252;
-        public int probabilityNextStrokeBranchWeightFactor { get; set; } = 150;
-        public int probabilityNextStrokeRandomNegWeightFactor { get; set; } = 245;
+        private int probabilityNextStrokeBranch(float weight) => (int)(150f / (1+4f * (1f-normWeight(weight))));
+        private int probabilityNextStrokeRandom(float weight) => (int)(80 - normWeight(weight)*60f);
         public int probabilityNextStrokeStraightDecreaseWeight { get; set; } = 5;
         public int probabilityNextStrokeStraightIncreaseWeight { get; set; } = 10;
         public int probabilityNextStrokeBranchDecreaseWeight { get; set; } = 130;
@@ -47,9 +60,6 @@ namespace engine.streets
 
         public float weightIncreaseFactor { get; set; } = 1.1f;
         public float weightDecreaseFactor { get; set; } = 0.9f;
-        public float weightMin { get; set; } = 0.1f;
-        public float weightMax { get; set; } = 1.3f;
-
         public float probabilityAngleSlightTurn { get; set; } = 30f;
         public int AngleSlightTurnMax { get; set; } = 6;
 
@@ -581,42 +591,39 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                  * Compute some options.
                  */
                 bool doForward = _rnd.Get8() < probabilityNextStrokeForward;
-                bool doRight = _rnd.Get8() < (int)(probabilityNextStrokeBranchWeightFactor / ((int)(curr.Weight)+1) );
-                bool doLeft = _rnd.Get8() < (int)(probabilityNextStrokeBranchWeightFactor / ((int)(curr.Weight)+1) );
-                bool doRandomDirection = _rnd.Get8() > (/*Std.int(curr.weight) * */ probabilityNextStrokeRandomNegWeightFactor);
-
-                float newWeight = curr.Weight;
+                bool doRight = _rnd.Get8() < (int)probabilityNextStrokeBranch(curr.Weight);
+                bool doLeft = _rnd.Get8() < (int)probabilityNextStrokeBranch(curr.Weight);
+                bool doRandomDirection = _rnd.Get8() < (int)probabilityNextStrokeRandom(curr.Weight);
 
                 var computeWeight = (
-                        float currentWeight, 
-                        float probDescrease, 
-                        float probIncrease, 
-                        float facDecrease, 
-                        float facIncrease
-                        ) =>
-                    {
-                        bool doDecreaseWeight = _rnd.Get8() < probDescrease;
-                        bool doIncreaseWeight = _rnd.Get8() < probIncrease;
+                    float currentWeight, 
+                    float probDescrease, 
+                    float probIncrease, 
+                    float facDecrease, 
+                    float facIncrease
+                ) => {
+                    float resultWeight = currentWeight;
+                    bool doDecreaseWeight = _rnd.Get8() < probDescrease;
+                    bool doIncreaseWeight = _rnd.Get8() < probIncrease;
 
-                        if( doDecreaseWeight ) {
-                            newWeight *= facDecrease;
-                        }
-                        if( doIncreaseWeight ) {
-                            newWeight *= facIncrease;
-                        }
-
-                        if( newWeight < weightMin ) {
-                            newWeight = weightMin;
-                        } else {
-                            if( newWeight > weightMax) {
-                                newWeight = weightMax;
-                            }
-                        }
-                        newWeight = (int)((newWeight)*1000f)/1000f;
-                        
-                        return currentWeight;
+                    if( doDecreaseWeight ) {
+                        resultWeight = resultWeight * facDecrease;
                     }
-                ;
+                    if( doIncreaseWeight ) {
+                        resultWeight = resultWeight * facIncrease;
+                    }
+
+                    if( resultWeight < weightMin ) {
+                        resultWeight = weightMin;
+                    } else {
+                        if( resultWeight > weightMax) {
+                            resultWeight = weightMax;
+                        }
+                    }
+                    resultWeight = (int)((resultWeight)*1000f)/1000f;
+                    
+                    return resultWeight;
+                };
 
                 float newAngle = curr.Angle;
                 if (_rnd.Get8() < probabilityAngleSlightTurn ) {
@@ -628,15 +635,15 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                 }
 
                 if (doForward || doRandomDirection) {
-                    newWeight = computeWeight(
-                        weightMax,
+                    var straightWeight = computeWeight(
+                        curr.Weight,
                         probabilityNextStrokeStraightDecreaseWeight,
                         probabilityNextStrokeStraightIncreaseWeight,
                         weightDecreaseFactor,
                         weightIncreaseFactor
                     );
                 
-                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
+                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (straightWeight*straightWeight))*10f)/10f;
                     if( newLength < newLengthMin ) {
                         newLength = newLengthMin;
                     }
@@ -651,7 +658,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             newAngle,
                             newLength,
                             curr.IsPrimary,
-                            newWeight
+                            straightWeight
                         );
                         forward.PushCreator("forward");
                         newB.PushCreator("forward");
@@ -667,7 +674,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             _rnd.GetFloat()*(float)Math.PI*2f,
                             newLength,
                             curr.IsPrimary,
-                            newWeight
+                            straightWeight
                         );
                         randStroke.PushCreator("randStroke");
                         newB.PushCreator("randStroke");
@@ -677,15 +684,15 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
 
                 if (doRight || doLeft)
                 {
-                    newWeight = computeWeight(
-                        weightMax,
+                    var branchWeight = computeWeight(
+                        curr.Weight,
                         probabilityNextStrokeBranchDecreaseWeight,
                         probabilityNextStrokeBranchIncreaseWeight,
                         weightDecreaseFactor,
                         weightIncreaseFactor
                     );
                 
-                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (newWeight*newWeight))*10f)/10f;
+                    float newLength = (int)((newStrokeMinimum + newStrokeSquaredWeight * (branchWeight*branchWeight))*10f)/10f;
                     if( newLength < newLengthMin ) {
                         newLength = newLengthMin;
                     }
@@ -699,7 +706,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             newAngle-(float)Math.PI/2f,
                             newLength,
                             !curr.IsPrimary,
-                            newWeight
+                            branchWeight
                         );
                         right.PushCreator("right");
                         newB.PushCreator("right");
@@ -714,7 +721,7 @@ Trace: [null file name]:0: WorkerQueue:RunPart: Trace: Left 1 actions in queue e
                             newAngle+(float)Math.PI/2f,
                             newLength,
                             !curr.IsPrimary,
-                            newWeight
+                            branchWeight
                         );
                         left.PushCreator("left");
                         newB.PushCreator("left");
