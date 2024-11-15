@@ -25,6 +25,9 @@ public class Quarter
         
     }
 
+    /**
+     * The delims are stored clockwise in the quarter.
+     */
     public void AddQuarterDelim(in QuarterDelim quarterDelim)
     {
         lock (_lo)
@@ -34,6 +37,9 @@ public class Quarter
         }
     }
 
+    /**
+     * The delims are stored clockwise in the quarter.
+     */
     public List<QuarterDelim> GetDelims()
     {
         lock (_lo)

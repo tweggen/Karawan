@@ -360,7 +360,7 @@ namespace builtin.tools
                     topPlane.Add(tp);
                 }
                 // Why? IDK, was wrong.
-                topPlane.Reverse();
+                // topPlane.Reverse();
                 /*
                  * We hard code the UV to be a bit next to zero to make up for any range problems
                  */
@@ -379,7 +379,7 @@ namespace builtin.tools
                     Vector3 tp = op;
                     bottomPlane.Add(tp);
                 }
-                // Why? IDK, was wrong.
+                // bottom plane is viewed from, well the bottom, so it has the opposite order.
                 bottomPlane.Reverse();
                 /*
                  * We hard code the UV to be a bit next to zero to make up for any range problems

@@ -10,6 +10,9 @@ namespace builtin.tools
 
     public class Triangulate
     {
+        /*
+         * By default, this method forces the contour to be cóunterclockwise.
+         */
         static public void ToMesh(in IList<Vector3> inPolyPoints, in Vector3 v3Normal, in Vector2 v2UV, in engine.joyce.Mesh mesh, bool clockwise = false)
         {
             LibTessDotNet.Tess tess = new LibTessDotNet.Tess();

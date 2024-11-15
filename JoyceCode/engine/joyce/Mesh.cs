@@ -119,7 +119,7 @@ public class Mesh : IComparable<Mesh>
         for (int i = 0; i < nIndices; i += 3)
         {
             /*
-             * Let's assume clockwise triangles.
+             * Let's assume clockwise(?????) triangles.
              */
             var v0 = (Vector3)Vertices[(int)Indices[i + 0]];
             var v1 = (Vector3)Vertices[(int)Indices[i + 1]];

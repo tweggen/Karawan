@@ -50,8 +50,10 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
 
         /*
          * Create the main poly, plus the edges.
+         * The quarters are clockwise, the extrude operator expects them counterclockwise. So inverse it.
+         * This happens automatically due to the coordinate change. (from y to z)
          */
-        for (int i=delimList.Count-1; i>=0; --i)
+        for (int i=0; i<delimList.Count; i++)
         {
             var delim = delimList[i];
             
