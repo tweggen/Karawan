@@ -493,8 +493,8 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.p(br); g.N(Vector3.UnitY);
                 g.UV(0.128f, 0.26f);
                 
-                g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                g.Idx(i0 + 1, i0 + 3, i0 + 2);
+                g.Idx(i0 + 0, i0 + 2, i0 + 1);
+                g.Idx(i0 + 1, i0 + 2, i0 + 3);
             }
 
             /*
