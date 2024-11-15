@@ -50,6 +50,7 @@ namespace builtin.tools
          * Not considering texture pixel adjustment.
          */
         private Vector2 _v2ProjectionFactorsUncorrected;
+        private Vector2 _v2ProjectionFactorsUnscaled;
 
         
         /**
@@ -60,12 +61,30 @@ namespace builtin.tools
         {
             Vector3 p = point - _o;
             Vector2 uv = new Vector2(
-                Vector3.Dot(p, _u) * _v2ProjectionFactorsUncorrected.X - uStart,
-                Vector3.Dot(p, _v) * _v2ProjectionFactorsUncorrected.Y - vStart
-            ) + _uvOffset;
+                Vector3.Dot(p, _u) * _v2ProjectionFactorsUnscaled.X - uStart,
+                Vector3.Dot(p, _v) * _v2ProjectionFactorsUnscaled.Y - vStart
+            );
             return uv;
         }
 
+
+        public Vector2 ScaleUV(in Vector2 uv)
+        {
+            return uv * _uvSize + _uvOffset;
+        }
+
+
+        public Vector2 PixelUV(in Vector2 uv)
+        {
+            return uv * _pixelScale + _pixelOffset;
+        }
+
+
+        public Vector2 ScalePixelUV(in Vector2 uv)
+        {
+            return ((uv * _uvSize) + _uvOffset) * _pixelScale + _pixelOffset;
+        }
+        
 
         /**
          * Project the given point into the UV space, given a certain u and v offset.
@@ -94,6 +113,10 @@ namespace builtin.tools
             _v2ProjectionFactorsUncorrected = new(
                  _uvSize.X/_u.LengthSquared(),
                 _uvSize.Y/_v.LengthSquared()
+            );
+            _v2ProjectionFactorsUnscaled = new(
+                1f/_u.LengthSquared(),
+                1f/_v.LengthSquared()
             );
             _pixelScale = new Vector2(1f - 1f / _textureSize.X, 1f - 1f / _textureSize.Y);
             _pixelOffset = new Vector2(0.5f / _textureSize.X, 0.5f / _textureSize.Y);

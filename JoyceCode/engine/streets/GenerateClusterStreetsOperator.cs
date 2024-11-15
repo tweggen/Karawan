@@ -1,8 +1,10 @@
 ﻿using engine.world;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks;
+using BepuUtilities;
 using engine.joyce;
 using engine.joyce.components;
 using engine.world.components;
@@ -140,7 +142,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
     private bool _checkUV(in Vector2 uv)
     {
-        if (uv.X < 0.5f || uv.X > 0.75f || uv.Y < 0f || uv.Y > 1f)
+        if (uv.X < 0f || uv.X > 1f || uv.Y < 0f || uv.Y > 1f)
         {
             int a = 1;
             Trace($"uv out of range: {uv}.");
@@ -156,19 +158,19 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         result = result && _checkUV(uva);
         result = result && _checkUV(uvb);
         result = result && _checkUV(uvc);
-        if ( (uvb-uva).LengthSquared()<0.001f )
+        if ( (uvb-uva).LengthSquared()<0.00001f )
         {
             Trace($"uvb {uvb} too close to uva {uva}.");
             int a = 1;
             result = false;
         }
-        if ( (uvc-uvb).LengthSquared()<0.001f )
+        if ( (uvc-uvb).LengthSquared()<0.000001f )
         {
             Trace($"uvc {uvc} too close to uvb {uvb}.");
             int a = 1;
             result = false;
         }
-        if ( (uva-uvc).LengthSquared()<0.001f )
+        if ( (uva-uvc).LengthSquared()<0.000001f )
         {
             Trace($"uva {uva} too close to uvc {uvc}.");
             int a = 1;
@@ -179,9 +181,72 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     }
 
 
-   /**
-     * Generate the streets between any junctions.
-     */
+    private void _streetTriangle(in builtin.tools.UVProjector uvp, float vStart, in Vector3 vA, in Vector3 vB,
+        in Vector3 vC, in Artefact a)
+    {
+        var g = a.g;
+
+        /*
+         * Emit triangle at a, run will start at height of dar.
+         * Tri: al, al @ height of dar (cl), ar
+         *
+         * Note that we start from the beginning in the texture.
+         */
+        uint i0 = g.GetNextVertexIndex();
+        var uvA = uvp.ProjectUV(vA, 0f, vStart);
+        var uvB = uvp.ProjectUV(vB, 0f, vStart);
+        var uvC = uvp.ProjectUV(vC, 0f, vStart);
+
+        /*
+         * Now all UVs are in the [0...1] space coordinate.
+         * U would be in range by program design, but V will
+         * probably wrap. So align everything on V = 0, scale
+         * down if larger.
+         */
+        var vMin = Single.Min(Single.Min(uvA.Y, uvB.Y), uvC.Y);
+        var vMax = Single.Max(Single.Max(uvA.Y, uvB.Y), uvC.Y);
+        var vSize = vMax - vMin;
+
+        if (vMin > 0f && vMax <= 1f)
+        {
+        }
+        else
+        {
+            /*
+             * Simple algorith, just clamp everything to 0f,
+             */
+            var uvOffset = new Vector2(0f, vMin);
+
+            Vector2 uvScale;
+            if (vSize > 1f)
+            {
+                uvScale = new Vector2(1f, 1f / vSize);
+            }
+            else
+            {
+                uvScale = Vector2.One;
+            }
+
+            uvA = (uvA - uvOffset) * uvScale;
+            uvB = (uvB - uvOffset) * uvScale;
+            uvC = (uvC - uvOffset) * uvScale;
+        }
+
+        uvA = uvp.ScalePixelUV(uvA);
+        uvB = uvp.ScalePixelUV(uvB);
+        uvC = uvp.ScalePixelUV(uvC);
+
+        // Debug.WriteIf(!_checkTriUV(uvA, uvB, uvC), "Triangle UV problem");
+        g.p(vA); g.N(Vector3.UnitY); g.UV(uvA);
+        g.p(vB); g.N(Vector3.UnitY); g.UV(uvB);
+        g.p(vC); g.N(Vector3.UnitY); g.UV(uvC);
+        g.Idx(i0 + 0, i0 + 1, i0 + 2);
+    }
+
+
+    /**
+      * Generate the streets between any junctions.
+      */
     private bool _generateStreetRun(
         world.Fragment worldFragment,
         float cx, float cy,
@@ -214,8 +279,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         Vector3 q3 = new(q.X, 0f, q.Y);
         var h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
         Vector3 v3Cluster = new(cx, h, cy);
-
-
+        
 
         var spA = stroke.A;
 
@@ -234,20 +298,14 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         /*
          * The exterior points of the street area.
          */
-        //float alx, aly, arx, ary;
-        //float blx, bly, brx, bry;
         Vector3 al, ar, bl, br;
 
         /*
          * The linear logical part of the street.
          */
-        //float amx, amy;
-        //float bmx, bmy;
         Vector3 am, bm;
 
         am = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y);
-        //amx = cx + spA.Pos.X;
-        //amy = cy + spA.Pos.Y;
         if (_traceStreets) Trace($"am = ({am});");
         if (angArrA.Count > 1)
         {
@@ -279,10 +337,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              */
             al = v3Cluster + new Vector3(secArrA[idxNextA].X, 0f, secArrA[idxNextA].Y);
             ar = v3Cluster + new Vector3(secArrA[idxA].X, 0f, secArrA[idxA].Y);
-            //alx = cx + secArrA[idxNextA].X;
-            //aly = cy + secArrA[idxNextA].Y;
-            //arx = cx + secArrA[idxA].X;
-            //ary = cy + secArrA[idxA].Y;
 
         }
         else
@@ -293,18 +347,12 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              */
             al = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y) - n3 * hsw;
             ar = v3Cluster + new Vector3(spA.Pos.X, 0f, spA.Pos.Y) + n3 * hsw;
-            //alx = cx + spA.Pos.X - n.X * hsw;
-            //aly = cy + spA.Pos.Y - n.Y * hsw;
-            //arx = cx + spA.Pos.X + n.X * hsw;
-            //ary = cy + spA.Pos.Y + n.Y * hsw;
 
         }
 
         var spB = stroke.B;
         var angArrB = spB.GetAngleArray();
 
-        //bmx = cx + spB.Pos.X;
-        //bmy = cy + spB.Pos.Y;
         bm = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y);
 
         if (_traceStreets) Trace($"bm = ({bm});");
@@ -335,11 +383,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              */
             bl = v3Cluster + new Vector3(secArrB[idxB].X, 0f, secArrB[idxB].Y);
             br = v3Cluster + new Vector3(secArrB[idxNextB].X, 0f, secArrB[idxNextB].Y);
-            //blx = cx + secArrB[idxB].X;
-            //bly = cy + secArrB[idxB].Y;
-            //brx = cx + secArrB[idxNextB].X;
-            //bry = cy + secArrB[idxNextB].Y;
-
         }
         else
         {
@@ -348,10 +391,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              */
             bl = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y) - n3 * hsw;
             br = v3Cluster + new Vector3(spB.Pos.X, 0f, spB.Pos.Y) + n3 * hsw;
-            //blx = cx + spB.Pos.X - n.X * hsw;
-            //bly = cy + spB.Pos.Y - n.Y * hsw;
-            //brx = cx + spB.Pos.X + n.X * hsw;
-            //bry = cy + spB.Pos.Y + n.Y * hsw;
         }
 
         // TXWTODO: Factor out the code to triangulate and texture the street part.
@@ -415,101 +454,15 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             damax = dar;
             damin = dal;
-#if true
-            /*
-             * Look, what iteration of texture we start with to offset the v values.
-             */
-            while ((damin - dStart) < 0f)
-            {
-                dStart -= texlen;
-                vStart -= 1f;
-            }
-
-            while ((damin - dStart) > texlen)
-            {
-                dStart += texlen;
-                vStart += 1f;
-            }
-
-            {
-                /*
-                 * Emit triangle at a, run will start at height of dar.
-                 * Tri: al, al @ height of dar (cl), ar
-                 *
-                 * Note that we start from the beginning in the texture.
-                 */
-                uint i0 = g.GetNextVertexIndex();
-                var cl = vam + q3 * dar - n3 * hsw;
-                var uval = uvp.GetUV(al, 0f, vStart);
-                var uvcl = uvp.GetUV(cl, 0f, vStart);
-                var uvar = uvp.GetUV(ar, 0f, vStart);
-                var vofs = new Vector2(0f, 1.0f - Single.Max(uval.Y, Single.Max(uvar.Y, uvcl.Y)));
-                uval += vofs;
-                uvcl += vofs;
-                uvar += vofs;
-                if (_checkTriUV(uval, uvcl, uvar))
-                {
-                    g.p(al); g.N(Vector3.UnitY); g.UV(uval);
-                    g.p(cl); g.N(Vector3.UnitY); g.UV(uvcl);
-                    g.p(ar); g.N(Vector3.UnitY); g.UV(uvar);
-                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                }
-                else
-                {
-                    Trace($"Triangle UV problem.");
-                }
-            }
-#endif
+            var cl = vam + q3 * dar - n3 * hsw;
+            _streetTriangle(uvp, vStart,al, cl, ar, a);
         }
         else
         {
             damax = dal;
             damin = dar;
-#if true
-            /*
-             * Look, what iteration of texture we start with to offset the v values.
-             */
-            while ((damin - dStart) < 0f)
-            {
-                dStart -= texlen;
-                vStart -= 1f;
-            }
-
-            while ((damin - dStart) > texlen)
-            {
-                dStart += texlen;
-                vStart += 1f;
-            }
-
-            {
-                /*
-                 * Emit triangle at a, run wil start at height dal
-                 * Tri: ar, al, ar @ height of dal (cr) .
-                 *
-                 * Note, that we start from the beginning in the texture
-                 */
-                uint i0 = g.GetNextVertexIndex();
-                var cr = vam + q3 * dal + n3 * hsw; 
-                var uvar = uvp.GetUV(ar, 0f, vStart);
-                var uval = uvp.GetUV(al, 0f, vStart);
-                var uvcr = uvp.GetUV(cr, 0f, vStart);
-                var vofs = new Vector2(0f, 1.0f - Single.Max(uvar.Y, Single.Max(uval.Y, uvcr.Y)));
-                uvar += vofs;
-                uval += vofs;
-                uvcr += vofs;
-                if (_checkTriUV(uvar, uval, uvcr))
-                {
-                    g.p(ar); g.N(Vector3.UnitY); g.UV(uvar);
-                    g.p(al); g.N(Vector3.UnitY); g.UV(uval);
-                    g.p(cr); g.N(Vector3.UnitY); g.UV(uvcr);
-                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                }
-                else
-                {
-                    Trace($"Triangle UV problem.");
-                }
-            }
-#endif
+            var cr = vam + q3 * dal + n3 * hsw;
+            _streetTriangle(uvp, vStart,ar, al, cr, a);
         }
 
         float dbmin, dbmax; 
@@ -518,101 +471,15 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         {
             dbmin = dbl;
             dbmax = dbr;
-#if true
-            /*
-             * Look, what iteration of texture we start with to offset the v values.
-             */
-            while ((dbmin - dStart) < 0f)
-            {
-                dStart -= texlen;
-                vStart -= 1f;
-            }
-
-            while ((dbmin - dStart) > texlen)
-            {
-                dStart += texlen;
-                vStart += 1f;
-            }
-
-            {
-                /*
-                 * Emit tri at b. It will be on line of dbmin, reaching out to br.
-                 * bl, br, br@dbl
-                 *
-                 * Note, that we start from the beginning in the texture
-                 */
-                uint i0 = g.GetNextVertexIndex();
-                var cr = vam + q3 * dbl + n3 * hsw;
-                var uvbl = uvp.GetUV(bl, 0f, vStart);
-                var uvbr = uvp.GetUV(br, 0f, vStart);
-                var uvcr = uvp.GetUV(cr, 0f, vStart);
-                var vofs = new Vector2(0f, -Single.Min(uvbr.Y,Single.Min(uvbl.Y, uvcr.Y)));
-                uvbl += vofs;
-                uvbr += vofs;
-                uvcr += vofs;
-                if (_checkTriUV(uvbl, uvbr, uvcr))
-                {
-                    g.p(bl); g.N(Vector3.UnitY); g.UV(uvbl);
-                    g.p(br); g.N(Vector3.UnitY); g.UV(uvbr);
-                    g.p(cr); g.N(Vector3.UnitY); g.UV(uvcr);
-                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                }
-                else
-                {
-                    Trace($"Triangle UV problem.");
-                }
-            }
-#endif
+            var cr = vam + q3 * dbl + n3 * hsw;
+            _streetTriangle(uvp, vStart,bl, br, cr, a);
         }
         else
         {
             dbmin = dbr;
             dbmax = dbl;
-#if true
-            /*
-             * Look, what iteration of texture we start with to offset the v values.
-             */
-            while ((dbmin - dStart) < 0f)
-            {
-                dStart -= texlen;
-                vStart -= 1f;
-            }
-
-            while ((dbmin - dStart) > texlen)
-            {
-                dStart += texlen;
-                vStart += 1f;
-            }
-
-            {
-                /*
-                 * Emit tri at b. It will be on line of dbmin, reaching out to bl.
-                 * bl@dbr, bl,br
-                 *
-                 * Note, that we start from the beginning in the texture
-                 */
-                uint i0 = g.GetNextVertexIndex();
-                var cl = vam + q3 * dbr - n3 * hsw;
-                var uvcl = uvp.GetUV(cl, 0f, vStart);
-                var uvbl = uvp.GetUV(bl, 0f, vStart);
-                var uvbr = uvp.GetUV(br, 0f, vStart);
-                var vofs = new Vector2(0f, -Single.Min(uvbl.Y,Single.Min(uvbr.Y, uvcl.Y)));
-                uvcl += vofs;
-                uvbl += vofs;
-                uvbr += vofs;
-                if (_checkTriUV(uvcl, uvbl, uvbr))
-                {
-                    g.p(cl); g.N(Vector3.UnitY); g.UV(uvcl);
-                    g.p(bl); g.N(Vector3.UnitY); g.UV(uvbl);
-                    g.p(br); g.N(Vector3.UnitY); g.UV(uvbr);
-                    g.Idx(i0 + 0, i0 + 1, i0 + 2);
-                }
-                else
-                {
-                    Trace($"Triangle UV problem.");
-                }
-            }
-#endif
+            var cl = vam + q3 * dbr - n3 * hsw;
+            _streetTriangle(uvp, vStart,cl, bl, br, a);
         }
 
         if (_traceStreets) Trace($"d[ab][min/max]: {damin}; {damax}; {dbmin}; {dbmax};");
@@ -626,7 +493,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
              * Now create the vertices and the uv values.
              * We start with a center point.
              */
-            if (false) 
             {
                 uint i0 = g.GetNextVertexIndex();
                 g.p(al); g.N(Vector3.UnitY);
@@ -642,6 +508,9 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
                 g.Idx(i0 + 1, i0 + 3, i0 + 2);
             }
 
+            /*
+             * Which is why we do not need to render a road at all.
+             */
             return true;
         }
 
@@ -651,7 +520,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
          */
         {
             uint i0 = g.GetNextVertexIndex();
-            //uint ni0 = ng.GetNextVertexIndex();
 
             /*
              * Count the number of rows to add tris.
