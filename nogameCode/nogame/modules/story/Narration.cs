@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using engine;
 using engine.draw;
+using engine.draw.components;
 using engine.geom;
 using engine.news;
 using Ink.Runtime;
@@ -20,6 +21,7 @@ public class Narration : AModule, IInputPart
 {
     private Story? _currentStory = null;
     private int _currentNChoices = 0;
+    public int _chosenOption = 0;
 
     private Boom.ISound _soundTty = null;
     
@@ -35,6 +37,7 @@ public class Narration : AModule, IInputPart
     public uint TextFill { get; set; } = 0x00000000;
     public uint ChoiceColor { get; set; } = 0xffbbdddd;
     public uint ChoiceFill { get; set; } = 0x00000000;
+
     
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
@@ -86,6 +89,31 @@ public class Narration : AModule, IInputPart
         });
         return eOption;
     }
+
+
+    /**
+     * Update the markers in a way that the currently chosen option is highlighted.
+     */
+    private void _updateOptions()
+    {
+        if (_currentNChoices > 0)
+        {
+            int idx = 0;
+            foreach (var eChoice in _listEOptions)
+            {
+                if (idx == _chosenOption)
+                {
+                    eChoice.Get<OSDText>().BorderColor = ChoiceColor; 
+                }
+                else
+                {
+                    eChoice.Get<OSDText>().BorderColor = 0;
+                }
+                idx++;
+            }
+        }
+    }
+    
 
     private void _prepareChoices()
     {
@@ -194,6 +222,8 @@ public class Narration : AModule, IInputPart
         _soundTty.Stop();
         _soundTty.Volume = 0.02f;
         _soundTty.Play();
+        
+        _updateOptions();
     }
     
     
@@ -314,20 +344,41 @@ public class Narration : AModule, IInputPart
             }
         }
 
+        bool doSelect = false;
+        bool doPrevious = false;
+        bool doNext = false;
+        int doNth = -1;
+
+        if (ev.Type == Event.INPUT_BUTTON_PRESSED)
+        {
+            switch (ev.Code)
+            {
+                case "<interact>":
+                    doSelect = true;
+                    break;
+                case "<cursorup>":
+                    doPrevious = true;
+                    break;
+                case "<cursordown>":
+                    doNext = true;
+                    break;
+            }
+        }
+        
         if (ev.Type == Event.INPUT_KEY_PRESSED)
         {
             switch (ev.Code)
             {
                 case " ":
-                    /*
-                     * If we are not awaiting options and have a story, we can continue.
-                     */
-                    if (0 == nChoices)
-                    {
-                        _onActionKey();
-                        ev.IsHandled = true;
-                    }
-
+                case "(enter)":
+                case "e":
+                    doSelect = true;
+                    break;
+                case "(cursorup)":
+                    doPrevious = true;
+                    break;
+                case "(cursordown)":
+                    doNext = true;
                     break;
                 default:
                     if (ev.Code.CompareTo("0") >= 0
@@ -341,11 +392,37 @@ public class Narration : AModule, IInputPart
                             {
                                 ev.IsHandled = true;
                                 _advanceChoice(number);
+                                return;
                             }
                         }
                     }
                     break;
             }
+        }
+
+        if (doSelect)
+        {
+            /*
+             * If we are not awaiting options and have a story, we can continue.
+             */
+            if (0 == nChoices)
+            {
+                ev.IsHandled = true;
+                _onActionKey();
+            }
+            else
+            {
+                ev.IsHandled = true;
+                _advanceChoice(_chosenOption+1);
+            }
+        }
+
+        if (_currentNChoices>0 && (doPrevious || doNext))
+        {
+            ev.IsHandled = true;
+            if (doPrevious) _chosenOption = (_chosenOption + _currentNChoices - 1) % _currentNChoices;
+            if (doNext) _chosenOption = (_chosenOption + 1) % _currentNChoices;
+            _updateOptions();
         }
     }
 

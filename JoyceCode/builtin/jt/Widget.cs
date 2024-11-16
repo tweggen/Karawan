@@ -1240,6 +1240,9 @@ public class Widget : IDisposable
                     case "<cursorright>":
                         actionRight(ev);
                         break;
+                    case "<interact>":
+                        actionSelect(ev);
+                        break;
                 }
                 break;
             
