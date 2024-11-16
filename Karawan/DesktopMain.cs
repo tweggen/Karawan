@@ -48,6 +48,7 @@ public class DesktopMain
     {
         // System.Environment.SetEnvironmentVariable("ALSOFT_LOGLEVEL", "3");
 
+        string jsonPath;
         /*
          * Setup globals and statics
          */
@@ -56,16 +57,28 @@ public class DesktopMain
         engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
         if (Directory.Exists("assets"))
         {
+            /*
+             * This is when we start installed on windows.
+             */
             engine.GlobalSettings.Set("Engine.ResourcePath", "./assets/");
+            jsonPath = "./";
         }
         else
         {
             if (Path.Exists("./models/nogame.json"))
             {
+                /*
+                 * I don't know this case.
+                 */
                 engine.GlobalSettings.Set("Engine.ResourcePath", "./nogame/");
+                jsonPath = "../models/";
             }
             else
             {
+                /*
+                 * This is when we start from the debugger on windows.
+                 */
+                jsonPath = "../models/";
                 engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
             }
         }
@@ -90,7 +103,7 @@ public class DesktopMain
                File.OpenRead(
                    Path.Combine(
                        engine.GlobalSettings.Get("Engine.ResourcePath"),
-                       "../models/nogame.json"))) 
+                       jsonPath+"nogame.json"))) 
         {
             cassetteLoader = new engine.casette.Loader(streamJson);
         }

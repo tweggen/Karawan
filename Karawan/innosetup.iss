@@ -11,13 +11,14 @@ UninstallDisplayIcon={app}\Karawan.exe
 Compression=lzma2
 SolidCompression=yes
 SourceDir=.\bin\Release\net8.0-windows10.0.17763.0\win-x64\
-OutputDir=..\..\..\..\Setup\
+OutputDir=..\..\..\..\..\Setup\
 OutputBaseFilename=InstallSiliconDesert2
 ArchitecturesInstallIn64BitMode=x64
 
 [Files]
 Source: "*.dll"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.runtimeconfig.json"; DestDir: "{app}\"; Flags: ignoreversion
+Source: "Karawan.deps.json"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.xml"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "Karawan.exe"; DestDir: "{app}\"; Flags: ignoreversion
 #include "..\nogame\generated\InnoResources.iss"
