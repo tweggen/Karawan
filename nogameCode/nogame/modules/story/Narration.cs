@@ -19,7 +19,6 @@ namespace nogame.modules.story;
 public class Narration : AModule, IInputPart
 {
     private Story? _currentStory = null;
-    private string _currentString = "";
     private int _currentNChoices = 0;
 
     private Boom.ISound _soundTty = null;
@@ -166,11 +165,9 @@ public class Narration : AModule, IInputPart
         float ytop;
         lock (_lo)
         {
-            strDisplay = _currentString;
-            nLFs = _countLF(_currentString);
-
+            strDisplay = _currentStory.currentText;
+            nLFs = _countLF(_currentStory.currentText);
             
-
             _currentNChoices = _currentStory.currentChoices.Count;
             int index = 1;
             ytop = BottomY - LineHeight * (nLFs + _currentNChoices + 1);
@@ -202,7 +199,6 @@ public class Narration : AModule, IInputPart
     
     private void _advanceStory()
     {
-        
         /*
          * Look for the next thing coming from the narration engine.
          */
@@ -238,7 +234,7 @@ public class Narration : AModule, IInputPart
             /*
              * If we have a current string, display it.
              */
-            _currentString = _currentStory.Continue();
+            _currentStory.Continue();
         }
             
         _displaySentence();
@@ -258,7 +254,7 @@ public class Narration : AModule, IInputPart
         {
             if (_currentStory != null)
             {
-                if (!_currentString.IsNullOrEmpty())
+                if (!_currentStory.currentText.IsNullOrEmpty())
                 {
                     nChoices = _currentStory.currentChoices.Count;
                 }
@@ -312,7 +308,7 @@ public class Narration : AModule, IInputPart
             {
                 return;
             }
-            if (!_currentString.IsNullOrEmpty())
+            if (!_currentStory.currentText.IsNullOrEmpty())
             {
                 nChoices = _currentStory.currentChoices.Count;
             }
@@ -401,7 +397,6 @@ public class Narration : AModule, IInputPart
                 return;
             }
             _currentStory = null;
-            _currentString = "";
             _currentNChoices = 0;
             
             using var stream = engine.Assets.Open("story1.json");
@@ -450,7 +445,7 @@ public class Narration : AModule, IInputPart
             /*
              * If this story just was created, make the first sentence ready.
              */
-            _currentString = _currentStory.Continue();           
+            _currentStory.Continue();           
         }
         
         /*

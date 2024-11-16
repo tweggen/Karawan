@@ -82,12 +82,15 @@ public class DesktopMain
                 engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
             }
         }
-        
-        engine.GlobalSettings.Set(
-            "Engine.RWPath",
-            System.Environment.GetFolderPath(
-                Environment.SpecialFolder.ApplicationData, 
-                Environment.SpecialFolderOption.Create));
+
+        {
+            string userRWPath = System.Environment.GetFolderPath(
+                Environment.SpecialFolder.ApplicationData);
+            string vendorRWPath = Path.Combine(userRWPath, "nassau records");
+            string appRWPath = Path.Combine(vendorRWPath, "silicondesert2");
+            System.IO.Directory.CreateDirectory(appRWPath);
+            engine.GlobalSettings.Set("Engine.RWPath", appRWPath);
+        }
         
         engine.GlobalSettings.Set("splash.touchControls", "false");
         engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
