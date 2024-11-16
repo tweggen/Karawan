@@ -82,7 +82,12 @@ public class DesktopMain
                 engine.GlobalSettings.Set("Engine.ResourcePath", "../../../../../nogame/");
             }
         }
-        engine.GlobalSettings.Set("Engine.RWPath", "./");
+        
+        engine.GlobalSettings.Set(
+            "Engine.RWPath",
+            System.Environment.GetFolderPath(
+                Environment.SpecialFolder.ApplicationData, 
+                Environment.SpecialFolderOption.Create));
         
         engine.GlobalSettings.Set("splash.touchControls", "false");
         engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");

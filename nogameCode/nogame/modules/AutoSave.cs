@@ -506,8 +506,8 @@ public class AutoSave : engine.AModule
             _loadCreateOffline();
         }
         
-        _startAutoSave();
         onInitialLoad(_gameState);
+        _startAutoSave();
     }
     
     
@@ -540,6 +540,7 @@ public class AutoSave : engine.AModule
             {
                 _afterLoad(gameState);
                 onInitialLoad(gameState);
+                _startAutoSave();
             });
             
         }
