@@ -314,6 +314,7 @@ namespace engine.elevation
         }
 
 
+        #if false
         public bool ElevationCacheRayCast(Vector3 v3Start, Vector3 v3Direction, float maxlen, out float intersect)
         {
             /*
@@ -321,6 +322,7 @@ namespace engine.elevation
              */
             
         }
+        #endif
 
 
         public CacheEntry ElevationCacheGetBelow(
