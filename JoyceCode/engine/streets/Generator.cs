@@ -51,7 +51,7 @@ namespace engine.streets
         private int probabilityNextStrokeRandom(float weight) => (int)(80 - normWeight(weight)*60f);
         public int probabilityNextStrokeStraightDecreaseWeight { get; set; } = 5;
         public int probabilityNextStrokeStraightIncreaseWeight { get; set; } = 10;
-        public int probabilityNextStrokeBranchDecreaseWeight { get; set; } = 130;
+        public int probabilityNextStrokeBranchDecreaseWeight { get; set; } = 190;
         public int probabilityNextStrokeBranchIncreaseWeight { get; set; } = 3;
 
         public float  newStrokeMinimum { get; set; } = 60f;
