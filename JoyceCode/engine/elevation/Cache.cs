@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Numerics;
 using engine.geom;
 using static engine.Logger;
 
@@ -310,6 +311,15 @@ namespace engine.elevation
              * We have the entry, and we entered it into the factory, now return.
              */
             return newEntry;
+        }
+
+
+        public bool ElevationCacheRayCast(Vector3 v3Start, Vector3 v3Direction, float maxlen, out float intersect)
+        {
+            /*
+             * Step along the grid one step at time
+             */
+            
         }
 
 
