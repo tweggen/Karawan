@@ -71,7 +71,7 @@ namespace engine.geom
              * Intersection by Cramer
              */
             var d = g1 * h2 - h1 * g2;
-            if ((float)Math.Abs(d) < 0.0000001f)
+            if ((float)Math.Abs(d) < 0.005f)
             {
                 // No close intersection.
                 // trace('Line.intersectInfinite(): near-zero determinant. No intersection.');

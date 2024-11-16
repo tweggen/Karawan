@@ -501,14 +501,25 @@ public class StreetPoint
     }
 
 
+    private bool _isDebugPoint()
+    {
+        Vector2[] arrPoints = { new( 93.1f - (-5.7f), -136.8f - 10f ) };
+        foreach (var v2Ref in arrPoints)
+        {
+            if ((v2Ref - this.Pos).LengthSquared() < 100)
+            {
+                int a = 1;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void _computeSectionArrayNoLock()
     {
         var myVerbose = false;
-        if (false && 115 == Id)
-        {
-            myVerbose = true;
-        }
-        // Trace( 'getSectionArray(): Called.' );
+        //var isMyPoint = _isDebugPoint();
 
         _sectionArray = new List<Vector2>();
         _sectionStrokeMap = new Dictionary<int, Vector2>();
