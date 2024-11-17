@@ -26,6 +26,17 @@ namespace engine.elevation
 
         private bool _traceCache = false;
 
+
+        public Index3 Pos3TerrainTile(in Vector3 v3Pos)
+        {
+            return new(
+                (int)Math.Floor((v3Pos.X + ess / 2f) / ess),
+                (int)Math.Floor((v3Pos.X + ess / 2f) / ess),
+                (int)Math.Floor((v3Pos.X + ess / 2f) / ess)
+            );
+        }
+        
+        
         private void _insertElevationFactoryEntryNoLock(
             in string id,
             in FactoryEntry elevationFactoryEntry
@@ -323,7 +334,7 @@ namespace engine.elevation
             intersect = 0f;
 
             Vector3 v3Major, v3Minor;
-            Index2 i2Major, i2Minor;
+            Index3 i3Major, i3Minor;
 
             if (v3Direction.X > 0f)
             {
@@ -335,16 +346,16 @@ namespace engine.elevation
                         // +X, +Y, x -> y
                         v3Major = Vector3.UnitX;
                         v3Minor = Vector3.UnitY;
-                        i2Major = new(1, 0);
-                        i2Minor = new(0, 1);
+                        i3Major = new(1, 0, 0);
+                        i3Minor = new(0, 0, 1);
                     }
                     else
                     {
                         // +X, +Y, y -> x
                         v3Major = Vector3.UnitY;
                         v3Minor = Vector3.UnitX;
-                        i2Major = new(0, 1);
-                        i2Minor = new(1, 0);
+                        i3Major = new(0, 0, 1);
+                        i3Minor = new(1, 0, 0);
                     }
                 }
                 else
@@ -355,16 +366,16 @@ namespace engine.elevation
                         // +X, -Y, x -> y
                         v3Major = Vector3.UnitX;
                         v3Minor = -Vector3.UnitY;
-                        i2Major = new(1, 0);
-                        i2Minor = new(0, -1);
+                        i3Major = new(1, 0, 0);
+                        i3Minor = new(0, 0, -1);
                     }
                     else
                     {
                         // +X, -Y, y -> x
                         v3Major = -Vector3.UnitY;
                         v3Minor = Vector3.UnitX;
-                        i2Major = new(0, -1);
-                        i2Minor = new(1, 0);
+                        i3Major = new(0, 0, -1);
+                        i3Minor = new(1, 0, 0);
                     }
                 }
             }
@@ -378,16 +389,16 @@ namespace engine.elevation
                         // -X, +Y, x -> y
                         v3Major = -Vector3.UnitX;
                         v3Minor = Vector3.UnitY;
-                        i2Major = new(-1, 0);
-                        i2Minor = new(0, 1);
+                        i3Major = new(-1, 0, 0);
+                        i3Minor = new(0, 0, 1);
                     }
                     else
                     {
                         // -X, +Y, y -> x
                         v3Major = Vector3.UnitY;
                         v3Minor = -Vector3.UnitX;
-                        i2Major = new(0, 1);
-                        i2Minor = new(-1, 0);
+                        i3Major = new(0, 0, 1);
+                        i3Minor = new(-1, 0, 0);
                     }
                 }
                 else
@@ -398,19 +409,32 @@ namespace engine.elevation
                         // -X, -Y, x -> y
                         v3Major = -Vector3.UnitX;
                         v3Minor = -Vector3.UnitY;
-                        i2Major = new(-1, 0);
-                        i2Minor = new(0, -1);
+                        i3Major = new(-1, 0, 0);
+                        i3Minor = new(0, 0, -1);
                     }
                     else
                     {
                         // -X, -Y, y -> x
                         v3Major = -Vector3.UnitY;
                         v3Minor = -Vector3.UnitX;
-                        i2Major = new(0, -1);
-                        i2Minor = new(-1, 0);
+                        i3Major = new(0, 0, -1);
+                        i3Minor = new(-1, 0, 0);
                     }
                 }
             }
+
+            var fs = world.MetaGen.FragmentSize;
+            var gr = world.MetaGen.GroundResolution;
+
+            /*
+             * The resulting step size, for either dimenstion between two points.
+             */
+            var ess = fs / gr;
+
+
+            Index3 i3TerrainStart = Pos3TerrainTile(v3Start); 
+
+            //Index3 i3Start = 
             
             return false;
         }
