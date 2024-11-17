@@ -80,13 +80,14 @@ public class Quest : AModule, IQuest
             {
                 ref var cMapIcon = ref e.Get<MapIcon>();
                 if (cMapIcon.Code != MapIcon.IconCode.Drink) continue;
-                var d2 = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation).LengthSquared();
-                if (d2 < mind2)
+                var v3D = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation);
+                var d2d2 = (new Vector2(v3D.X, v3D.Z)).LengthSquared();
+                if (d2d2 > 20f && d2d2 < mind2)
                 {
                     if (e.IsAlive && e.IsEnabled())
                     {
                         eClosest = e;
-                        mind2 = d2;
+                        mind2 = d2d2;
                     }
                 }
             }
