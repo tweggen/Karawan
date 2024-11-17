@@ -1,27 +1,12 @@
 ﻿using Android.App;
-using Android.App.Roles;
 using Android.Content.PM;
 using Android.OS;
-using Silk.NET.Windowing;
-using Silk.NET.Windowing.Sdl;
-using Silk.NET.Input.Sdl;
-
-using Android.Content.Res;
-using engine;
-using Silk.NET.GLFW;
-using Android.Media;
-using Wuka.Platforms.Android;
-using Java.Util;
-using System.Numerics;
 using Android;
 using Android.Runtime;
 using Android.Util;
 using Android.Widget;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
-using Xamarin.Essentials;
-using nogame;
-using GameState = Android.App.GameState;
 
 namespace Wuka
 {

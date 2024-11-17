@@ -3,6 +3,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Numerics;
 using engine.geom;
+using engine.joyce;
 using static engine.Logger;
 
 namespace engine.elevation
@@ -314,15 +315,105 @@ namespace engine.elevation
         }
 
 
-        #if false
         public bool ElevationCacheRayCast(Vector3 v3Start, Vector3 v3Direction, float maxlen, out float intersect)
         {
             /*
              * Step along the grid one step at time
              */
+            intersect = 0f;
+
+            Vector3 v3Major, v3Minor;
+            Index2 i2Major, i2Minor;
+
+            if (v3Direction.X > 0f)
+            {
+                if (v3Direction.Y > 0f)
+                {
+                    // +X, +Y
+                    if (v3Direction.X > v3Direction.Y)
+                    {
+                        // +X, +Y, x -> y
+                        v3Major = Vector3.UnitX;
+                        v3Minor = Vector3.UnitY;
+                        i2Major = new(1, 0);
+                        i2Minor = new(0, 1);
+                    }
+                    else
+                    {
+                        // +X, +Y, y -> x
+                        v3Major = Vector3.UnitY;
+                        v3Minor = Vector3.UnitX;
+                        i2Major = new(0, 1);
+                        i2Minor = new(1, 0);
+                    }
+                }
+                else
+                {
+                    // +X, -Y
+                    if (v3Direction.X > v3Direction.Y)
+                    {
+                        // +X, -Y, x -> y
+                        v3Major = Vector3.UnitX;
+                        v3Minor = -Vector3.UnitY;
+                        i2Major = new(1, 0);
+                        i2Minor = new(0, -1);
+                    }
+                    else
+                    {
+                        // +X, -Y, y -> x
+                        v3Major = -Vector3.UnitY;
+                        v3Minor = Vector3.UnitX;
+                        i2Major = new(0, -1);
+                        i2Minor = new(1, 0);
+                    }
+                }
+            }
+            else
+            {
+                if (v3Direction.Y > 0f)
+                {
+                    // -X, +Y
+                    if (-v3Direction.X > v3Direction.Y)
+                    {
+                        // -X, +Y, x -> y
+                        v3Major = -Vector3.UnitX;
+                        v3Minor = Vector3.UnitY;
+                        i2Major = new(-1, 0);
+                        i2Minor = new(0, 1);
+                    }
+                    else
+                    {
+                        // -X, +Y, y -> x
+                        v3Major = Vector3.UnitY;
+                        v3Minor = -Vector3.UnitX;
+                        i2Major = new(0, 1);
+                        i2Minor = new(-1, 0);
+                    }
+                }
+                else
+                {
+                    // -X, -Y
+                    if (-v3Direction.X > -v3Direction.Y)
+                    {
+                        // -X, -Y, x -> y
+                        v3Major = -Vector3.UnitX;
+                        v3Minor = -Vector3.UnitY;
+                        i2Major = new(-1, 0);
+                        i2Minor = new(0, -1);
+                    }
+                    else
+                    {
+                        // -X, -Y, y -> x
+                        v3Major = -Vector3.UnitY;
+                        v3Minor = -Vector3.UnitX;
+                        i2Major = new(0, -1);
+                        i2Minor = new(-1, 0);
+                    }
+                }
+            }
             
+            return false;
         }
-        #endif
 
 
         public CacheEntry ElevationCacheGetBelow(

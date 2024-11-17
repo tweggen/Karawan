@@ -118,6 +118,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\IdHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NavMesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyWatcher.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Index2.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TextureCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\LayerCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\MakeDisposable.cs" />
