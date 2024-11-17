@@ -543,18 +543,21 @@ public class FollowCameraController : IInputPart
         if (mapCollisions.Count > 0)
         {
             float l0 = mapCollisions.Keys.First();
-            CollisionProperties props = mapCollisions.Values.First();
+            //CollisionProperties props = mapCollisions.Values.First();
 
-#if false
-                if (null != props)
-                {
-                    Trace($"Found {l0}: {props.Name}, {props.DebugInfo}");
-                }
-                else
-                {
-                    Trace($"Found {l0}, no propsws");
-                }
-#endif
+            /*
+             * This is the real collision.
+             * Look, if our way from the carrot to here still would be
+             * obstructed by the floor
+             */
+            if (engine.elevation.Cache.Instance().ElevationCacheRayCast(
+                    vCarrotPosition, vDiff, l, out var lFloor))
+            {
+                /*
+                 * Yes, there is a floor intersection.
+                 */
+                l0 = lFloor;
+            }
 
             /*
              * Use the intersection point offset by 0.5m for the new camera.
@@ -572,7 +575,24 @@ public class FollowCameraController : IInputPart
         }
         else
         {
-            vClosestCameraPos = vCameraPos;
+            /*
+             * This is the real collision.
+             * Look, if our way from the carrot to here still would be
+             * obstructed by the floor
+             */
+            if (engine.elevation.Cache.Instance().ElevationCacheRayCast(
+                    vCarrotPosition, vDiff, l, out var lFloor))
+            {
+                /*
+                 * Yes, there is a floor intersection.
+                 */
+                vClosestCameraPos = vCarrotPosition + (lFloor - 0.5f / l) * vDiff;
+            }
+            else
+            {
+                vClosestCameraPos = vCameraPos;
+            }
+            // TXWTODO: from carrot to this position perform a raycast against the floor. 
         }
 
         vVisibleCameraPos = vClosestCameraPos;

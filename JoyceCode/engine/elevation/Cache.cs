@@ -58,7 +58,7 @@ namespace engine.elevation
 
         static public Index3 ToFragment(in Index3 idx)
         {
-            float gr = world.MetaGen.GroundResolution / 2f;
+            float gr = world.MetaGen.GroundResolution;
             float i = (float)idx.I + gr / 2f;
             float k = (float)idx.K + gr / 2f;
             i /= gr;
@@ -373,21 +373,21 @@ namespace engine.elevation
 
             if (v3Direction.X > 0f)
             {
-                if (v3Direction.Y > 0f)
+                if (v3Direction.Z > 0f)
                 {
                     // +X, +Y
-                    if (v3Direction.X > v3Direction.Y)
+                    if (v3Direction.X > v3Direction.Z)
                     {
                         // +X, +Y, x -> y
                         v3Major = Vector3.UnitX;
-                        v3Minor = Vector3.UnitY;
+                        v3Minor = Vector3.UnitZ;
                         i3Major = new(1, 0, 0);
                         i3Minor = new(0, 0, 1);
                     }
                     else
                     {
                         // +X, +Y, y -> x
-                        v3Major = Vector3.UnitY;
+                        v3Major = Vector3.UnitZ;
                         v3Minor = Vector3.UnitX;
                         i3Major = new(0, 0, 1);
                         i3Minor = new(1, 0, 0);
@@ -396,18 +396,18 @@ namespace engine.elevation
                 else
                 {
                     // +X, -Y
-                    if (v3Direction.X > v3Direction.Y)
+                    if (v3Direction.X > -v3Direction.Z)
                     {
                         // +X, -Y, x -> y
                         v3Major = Vector3.UnitX;
-                        v3Minor = -Vector3.UnitY;
+                        v3Minor = -Vector3.UnitZ;
                         i3Major = new(1, 0, 0);
                         i3Minor = new(0, 0, -1);
                     }
                     else
                     {
                         // +X, -Y, y -> x
-                        v3Major = -Vector3.UnitY;
+                        v3Major = -Vector3.UnitZ;
                         v3Minor = Vector3.UnitX;
                         i3Major = new(0, 0, -1);
                         i3Minor = new(1, 0, 0);
@@ -416,21 +416,21 @@ namespace engine.elevation
             }
             else
             {
-                if (v3Direction.Y > 0f)
+                if (v3Direction.Z > 0f)
                 {
                     // -X, +Y
-                    if (-v3Direction.X > v3Direction.Y)
+                    if (-v3Direction.X > v3Direction.Z)
                     {
                         // -X, +Y, x -> y
                         v3Major = -Vector3.UnitX;
-                        v3Minor = Vector3.UnitY;
+                        v3Minor = Vector3.UnitZ;
                         i3Major = new(-1, 0, 0);
                         i3Minor = new(0, 0, 1);
                     }
                     else
                     {
                         // -X, +Y, y -> x
-                        v3Major = Vector3.UnitY;
+                        v3Major = Vector3.UnitZ;
                         v3Minor = -Vector3.UnitX;
                         i3Major = new(0, 0, 1);
                         i3Minor = new(-1, 0, 0);
@@ -439,18 +439,18 @@ namespace engine.elevation
                 else
                 {
                     // -X, -Y
-                    if (-v3Direction.X > -v3Direction.Y)
+                    if (-v3Direction.X > -v3Direction.Z)
                     {
                         // -X, -Y, x -> y
                         v3Major = -Vector3.UnitX;
-                        v3Minor = -Vector3.UnitY;
+                        v3Minor = -Vector3.UnitZ;
                         i3Major = new(-1, 0, 0);
                         i3Minor = new(0, 0, -1);
                     }
                     else
                     {
                         // -X, -Y, y -> x
-                        v3Major = -Vector3.UnitY;
+                        v3Major = -Vector3.UnitZ;
                         v3Minor = -Vector3.UnitX;
                         i3Major = new(0, 0, -1);
                         i3Minor = new(-1, 0, 0);
@@ -467,19 +467,75 @@ namespace engine.elevation
             var ess = fs / gr;
 
 
-            Index3 i3FragmentStart = Fragment.PosToIndex3(v3Start); 
-            Index3 i3TileStart = Cache.PosToIndex3(v3Start);
-
             Index3 i3CacheFragment = new(0, 0, 0);
             CacheEntry ceCurrent = null;
+            Vector3 v3CacheFragment = Vector3.Zero;
+            
+            /*
+             * To setup iteration, we progress from v3Start to the closest
+             * elevation tile before or at the start.
+             * Closest means, it is the tile immediately before v3Start
+             * in terms of v3Major.
+             *
+             * That way, we would find out very early intersections with the
+             * terrain.
+             */
 
-            Vector3 v3CurrentPosition = v3Start;
-            Index3 i3TileCurrent = i3TileStart;
-            for (;;)
+            float lDirection = v3Direction.Length();
+            float fRayToDir = Vector3.Dot(v3Major, v3Direction) / lDirection;
+            
+            /*
+             * v3Ray advances one step in major direction and is a scaled
+             * version of v3Direction.
+             */
+            Vector3 v3Ray = v3Direction / Vector3.Dot(v3Major, v3Direction);
+
+            /*
+             * This is the actual major coordinate including major sign
+             * of the start of the ray.
+             */
+            float realMajorStart = Vector3.Dot(v3Start, v3Major);
+            
+            /*
+             * This is the actual start of the ray, starting at the grid
+             * before the ray.
+             */
+            float gridMajorStart = Single.Floor(realMajorStart);
+
+            /*
+             * This is the difference by which the grid start is before the actual start. 
+             */
+            float dStart = gridMajorStart - realMajorStart;
+
+            /*
+             * Inside this loop, we iterate in matters of elevation pixels aka tiles.
+             * We know that we started at an elevation pixel, so we just need to
+             * increment one step in the "major" direction.
+             *
+             * Also, in every step, we need to calculate the action "height" of the
+             * raycast beam.
+             *
+             * This is done with projection by means of the dot product.
+             *
+             * Also, for prevision reasons, we count the iterations in an integer variable.
+             * cnt == 0 means the start position "behind" the v3Start.
+             */
+            int cntMax = (int) Single.Ceiling(maxlen * world.MetaGen.GroundResolution / (world.MetaGen.FragmentSize));
+            for (int cnt=0; cnt<cntMax; cnt++ )
             {
                 /*
                  * Am I above or below where I am?
                  */
+
+                /*
+                 * What is the x/y coordinate of the dot product at this point?
+                 */
+                float dCurrent = - dStart 
+                                 + (float)cnt
+                                 * world.MetaGen.FragmentSize
+                                 / world.MetaGen.GroundResolution;
+                Vector3 v3RayEndCurrent = v3Start + v3Ray * dCurrent;
+                Index3 i3TileCurrent = PosToIndex3(v3RayEndCurrent);
                 
                 /*
                  * First make sure we can look up everything. 
@@ -489,13 +545,39 @@ namespace engine.elevation
                 {
                     ceCurrent = ElevationCacheGetAt(i3FragmentCurrent.I, i3FragmentCurrent.J, TOP_LAYER);
                     i3CacheFragment = i3FragmentCurrent;
+                    v3CacheFragment = Fragment.Index3ToPos(i3CacheFragment);
                 }
                 
                 /*
-                 * Now look, if we are above or below the gounds here.
+                 * Now look, if we are above or below the grounds here.
                  */
+                ElevationPixel epCurrent = ceCurrent.GetElevationPixelAt(v3RayEndCurrent-v3CacheFragment);
+                
+                float height = v3RayEndCurrent.Y;
+                float yTooMuch = epCurrent.Height - height;
+
+                if (yTooMuch>=0)
+                {
+                    if (v3Ray.Y > 0.01)
+                    {
+                        /*
+                         * Compute, where exactly the intersection would be.
+                         */
+                        float majorTooMuch = Vector3.Dot(v3Ray, v3Major) * yTooMuch / v3Ray.Y;
+
+                        // TXWTODO: This is inexact and does not consider the actual elwvation.
+                        intersect = (dCurrent-majorTooMuch) * fRayToDir / lDirection;
+                    }
+                    else
+                    {
+                        intersect = dCurrent * fRayToDir / lDirection;
+                    }
+
+                    return true;
+                }
             }
-            
+
+            intersect = 0f;
             return false;
         }
 
