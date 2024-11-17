@@ -224,13 +224,19 @@ public class ToSomewhere : AModule
     private void _stopRoute()
     {
         Route routeTarget;
+        Timer updateRouteTimer;
         lock (_lo)
         {
             routeTarget = _routeTarget;
+            updateRouteTimer = _updateRouteTimer;
         }
 
-        routeTarget.Suspend();
-        _updateRouteTimer.Dispose();
+        routeTarget?.Suspend();
+        if (null == updateRouteTimer)
+        {   
+            int a = 1;
+        }
+        updateRouteTimer?.Dispose();
         _deleteWaypoints();
     }
     
