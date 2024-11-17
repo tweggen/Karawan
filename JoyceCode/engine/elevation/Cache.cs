@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using engine.geom;
 using engine.joyce;
+using engine.world;
 using static engine.Logger;
 
 namespace engine.elevation
@@ -26,17 +27,51 @@ namespace engine.elevation
 
         private bool _traceCache = false;
 
-
-        public Index3 Pos3TerrainTile(in Vector3 v3Pos)
+        
+        static public Index3 PosToIndex3(in Vector3 pos)
         {
-            return new(
-                (int)Math.Floor((v3Pos.X + ess / 2f) / ess),
-                (int)Math.Floor((v3Pos.X + ess / 2f) / ess),
-                (int)Math.Floor((v3Pos.X + ess / 2f) / ess)
+            float ess = world.MetaGen.FragmentSize / world.MetaGen.GroundResolution;
+            
+            float x = pos.X + ess / 2f;
+            float z = pos.Z + ess / 2f;
+            x /= ess;
+            z /= ess;
+
+            return new Index3(
+                (int)Math.Floor(x),
+                0,
+                (int) Math.Floor(z)
             );
         }
-        
-        
+
+
+        static public Vector3 Index3ToPos(in Index3 idx)
+        {
+            float ess = world.MetaGen.FragmentSize / world.MetaGen.GroundResolution;
+            return new Vector3(
+                idx.I * ess,
+                0f,
+                idx.K * ess
+            );
+        }
+
+
+        static public Index3 ToFragment(in Index3 idx)
+        {
+            float gr = world.MetaGen.GroundResolution / 2f;
+            float i = (float)idx.I + gr / 2f;
+            float k = (float)idx.K + gr / 2f;
+            i /= gr;
+            k /= gr;
+
+            return new Index3(
+                (int)Math.Floor(i),
+                0,
+                (int) Math.Floor(k)
+            );
+        }
+
+
         private void _insertElevationFactoryEntryNoLock(
             in string id,
             in FactoryEntry elevationFactoryEntry
@@ -256,7 +291,6 @@ namespace engine.elevation
                  * We found an elevation operator.
                  */
                 var gr = world.MetaGen.GroundResolution;
-                var fs = world.MetaGen.FragmentSize;
                 var elevationSegment = new ElevationSegment(gr + 1, gr + 1);
 
                 world.MetaGen.GetFragmentRect(i, k, out elevationSegment.Rect2);
@@ -326,6 +360,7 @@ namespace engine.elevation
         }
 
 
+        // TXWTODO: THis should go to a convenience file.
         public bool ElevationCacheRayCast(Vector3 v3Start, Vector3 v3Direction, float maxlen, out float intersect)
         {
             /*
@@ -432,9 +467,34 @@ namespace engine.elevation
             var ess = fs / gr;
 
 
-            Index3 i3TerrainStart = Pos3TerrainTile(v3Start); 
+            Index3 i3FragmentStart = Fragment.PosToIndex3(v3Start); 
+            Index3 i3TileStart = Cache.PosToIndex3(v3Start);
 
-            //Index3 i3Start = 
+            Index3 i3CacheFragment = new(0, 0, 0);
+            CacheEntry ceCurrent = null;
+
+            Vector3 v3CurrentPosition = v3Start;
+            Index3 i3TileCurrent = i3TileStart;
+            for (;;)
+            {
+                /*
+                 * Am I above or below where I am?
+                 */
+                
+                /*
+                 * First make sure we can look up everything. 
+                 */
+                Index3 i3FragmentCurrent = ToFragment(i3TileCurrent);
+                if (null == ceCurrent || i3FragmentCurrent != i3CacheFragment)
+                {
+                    ceCurrent = ElevationCacheGetAt(i3FragmentCurrent.I, i3FragmentCurrent.J, TOP_LAYER);
+                    i3CacheFragment = i3FragmentCurrent;
+                }
+                
+                /*
+                 * Now look, if we are above or below the gounds here.
+                 */
+            }
             
             return false;
         }

@@ -13,6 +13,28 @@ public struct Index3
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator!= (Index3 obj1, Index3 obj2)
+    {
+        return !(
+            obj1.I == obj2.I 
+            && obj1.J == obj2.J 
+            && obj1.K == obj2.K
+        );
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator== (Index3 obj1, Index3 obj2)
+    {
+        return !(
+            obj1.I == obj2.I 
+            && obj1.J == obj2.J 
+            && obj1.K == obj2.K
+        );
+    }
+    
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vector3 AsVector3()
     {
         return new Vector3((float)I, (float)J, (float)K);

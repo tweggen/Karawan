@@ -10,10 +10,31 @@ public struct Index2
 
     public override string ToString() => $"({I}, {J})";
 
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Vector3 AsVector3()
+    public static bool operator!= (Index2 obj1, Index2 obj2)
     {
-        return new Vector3((float)I, (float)J);
+        return !(
+            obj1.I == obj2.I 
+            && obj1.J == obj2.J 
+        );
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool operator== (Index2 obj1, Index2 obj2)
+    {
+        return !(
+            obj1.I == obj2.I 
+            && obj1.J == obj2.J 
+        );
+    }
+    
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Vector2 AsVector3()
+    {
+        return new Vector2((float)I, (float)J);
     }
     
     
