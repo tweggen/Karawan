@@ -187,7 +187,7 @@ public class StreetNavigationController : INavigator
                             ncp.RightLane = _nsp.StreetWidth / 2f - 2f;
                         }
                 
-                        ncp.VLaneOffset = ncp.RightLane * new Vector2(-_nsp.VUStreetDirection.Y, -_nsp.VUStreetDirection.X);
+                        ncp.VLaneOffset = ncp.RightLane * new Vector2(-_nsp.VUStreetDirection.Y, _nsp.VUStreetDirection.X);
 
                         /*
                          * This is where we actually are heading to.
