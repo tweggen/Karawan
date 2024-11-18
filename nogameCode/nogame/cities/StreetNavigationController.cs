@@ -19,6 +19,12 @@ internal class DrivingStrokeCarProperties
     public Vector2 VLaneOffset;
     public Vector2 VPerfectTarget;
     public Vector2 VPerfectStart;
+    
+    /**
+     * How much shall we slow down before turning into the next segment?
+     * Ranges from 1, not at all, to zero, very much.
+     */
+    public float TurnSlowDown;
 }
 
 
@@ -27,9 +33,9 @@ public class StreetNavigationController : INavigator
     private builtin.tools.RandomSource _rnd;
 
     /*
-     * Coordinates are relative to cluster.
+     * Coordinates of the navigation relative to the cluster.
      */
-    private Vector2 _vPos2;
+    private Vector2 _v2Pos;
 
     /**
      * Meters per second.
@@ -60,25 +66,15 @@ public class StreetNavigationController : INavigator
      * Contains the last directeion of the character, the length
      * represents the meter per second.
      */
-    private Vector3 _lastSpeed;
+    private Vector3 _v2LastSpeed;
 
-    /**
-     * Unit vector of the last direction.
-     */
-    private Vector2 _lastDirection;
-
-
+    private Vector2 _vu2LastDirection;
+    
     private RandomPathEnumerator _enumPath;
 
     private DrivingStrokeProperties _nsp;
     private DrivingStrokeCarProperties _ncp;
     
-
-    private void _loadStartPoint()
-    {
-        _vPos2 = new Vector2(_startPoint.Pos.X, _startPoint.Pos.Y);
-    }
-
 
     public void NavigatorBehave(float difftime)
     {
@@ -98,7 +94,7 @@ public class StreetNavigationController : INavigator
              * Be sure to have a destination point and compute the vector
              * to it and its length to have the unit vector to it.
              */
-            Vector2 vuDest = Vector2.Zero;
+            Vector2 vu2Dest = Vector2.Zero;
             float dist = 0.0f;
             while (true)
             {
@@ -133,7 +129,7 @@ public class StreetNavigationController : INavigator
                         nsp.VStreetTarget = _targetPoint.Pos;
                         nsp.VStreetStart = _startPoint.Pos;
                         nsp.VUStreetDirection = V2Normalize(nsp.VStreetTarget - nsp.VStreetStart);
-
+                        
                         _nsp = nsp;
 
                     }
@@ -144,6 +140,15 @@ public class StreetNavigationController : INavigator
                     {
                         DrivingStrokeCarProperties ncp = new();
                         
+                        /*
+                         * we slow down before the junctions depending on the angle between
+                         * the strokes.
+                         *
+                         * We use the dot product aka cosine between the vectors.
+                         */
+                        ncp.TurnSlowDown =
+                            (Vector2.Dot(_currentStroke.Unit, _nextStroke.Unit) * 2f - 1f);
+
                         /*
                          * Compute a proper offset to emulate a bit
                          * of traffic on right-hand side.
@@ -224,55 +229,62 @@ public class StreetNavigationController : INavigator
                 /*
                  * Now compute the actual target for the current iteration.
                  */
-                Vector2 vCurrentTarget = _ncp.VPerfectTarget;
-                var vPerfectDirection = _ncp.VPerfectTarget - _ncp.VPerfectStart;
-                var vPerfectDirectionLength = vPerfectDirection.Length();
-                var vuPerfectDirection = vPerfectDirection / vPerfectDirectionLength;
+                Vector2 v2CurrentTarget = _ncp.VPerfectTarget;
+                var v2PerfectDirection = _ncp.VPerfectTarget - _ncp.VPerfectStart;
+                var v2PerfectDirectionLength = v2PerfectDirection.Length();
+                var vu2PerfectDirection = v2PerfectDirection / v2PerfectDirectionLength;
                 
-                Vector2 vPerfectMe = default;
-                Vector2 vMeFromStart = _vPos2 - _ncp.VPerfectStart;
-                float vMeFromStartLength = vMeFromStart.Length();
-                if (vMeFromStartLength > 0.1f)
+                Vector2 v2PerfectMe = default;
+                Vector2 v2MeFromStart = _v2Pos - _ncp.VPerfectStart;
+                float lMeFromStart = v2MeFromStart.Length();
+                
+                /*
+                 * If I am more than 10cm away from the start point, look from deviations
+                 * from the perfect route by projecting my location on the perfect line
+                 * between source and target.
+                 */
+                if (lMeFromStart > 0.1f)
                 {
-                    float vPerfectMeScale = 
-                        V2Dot(vMeFromStart, vPerfectDirection)
-                        / vPerfectDirectionLength;
+                    float lPerfectMeScale = 
+                        V2Dot(v2MeFromStart, v2PerfectDirection)
+                        / v2PerfectDirectionLength;
 
                     /*
-                     * If we already did overshoot, pick the next street point.
+                     * If we already did overshoot beyond target point, pick the next street point.
                      */
-                    if (vPerfectMeScale >= vPerfectDirectionLength)
+                    if (lPerfectMeScale >= v2PerfectDirectionLength)
                     {
                         dist = 0;
                         break;
                     }
-                    vPerfectMe = _ncp.VPerfectStart + vuPerfectDirection * vPerfectMeScale;
 
-                    Vector2 vOff = (vPerfectMe - _vPos2);
-                    float offLength = vOff.Length();
+                    v2PerfectMe = _ncp.VPerfectStart + vu2PerfectDirection * lPerfectMeScale;
+
+                    Vector2 v2Off = (v2PerfectMe - _v2Pos);
+                    float offLength = v2Off.Length();
                     if (offLength > 1f)
                     {
-                        vCurrentTarget = vPerfectMe + vuPerfectDirection/2f;
+                        v2CurrentTarget = v2PerfectMe + vu2PerfectDirection/2f;
                     }
                     else
                     {
-                        vCurrentTarget = _ncp.VPerfectTarget;
+                        v2CurrentTarget = _ncp.VPerfectTarget;
                     }
                 }
 
-                var vDest = vCurrentTarget - _vPos2;        
-                vuDest = V2Normalize(vDest);
+                var v2Dest = v2CurrentTarget - _v2Pos;
+                vu2Dest = V2Normalize(v2Dest);
 
                 {
                     /*
                      * Derive the current direction from the computed actual target.
                      */
-                    var vActualDelta = vCurrentTarget - _vPos2;
-                    float actualDist2 = vActualDelta.LengthSquared();
+                    var v2ActualDelta = v2CurrentTarget - _v2Pos;
+                    float actualDist2 = v2ActualDelta.LengthSquared();
                     if (actualDist2 > 0.0025f)
                     {
-                        _lastDirection = vuDest;
-                        _lastSpeed = new Vector3(vuDest.X * _speed, 0f, vuDest.Y * _speed);
+                        _vu2LastDirection = vu2Dest;
+                        _v2LastSpeed = new Vector3(vu2Dest.X * _speed, 0f, vu2Dest.Y * _speed);
                     }
                 }
 
@@ -280,15 +292,15 @@ public class StreetNavigationController : INavigator
                     /*
                      * Now check, how far it is from me to the perfect target
                      */
-                    var vPerfectDelta = _ncp.VPerfectTarget - _vPos2;
-                    float perfectDist2 = vPerfectDelta.LengthSquared();
+                    var v2PerfectDelta = _ncp.VPerfectTarget - _v2Pos;
+                    float perfectDist2 = v2PerfectDelta.LengthSquared();
                     if (perfectDist2 > 0.0025f)
                     {
                         /*
                          * Yes, there's still a way to go.
                          * However, return only what we can apply in the given direction.
                          */
-                        dist = vDest.Length();
+                        dist = v2Dest.Length();
                         break;
                     }
                 }
@@ -320,7 +332,7 @@ public class StreetNavigationController : INavigator
             }
 
             togo -= gonow;
-            _vPos2 += vuDest * gonow;
+            _v2Pos += vu2Dest * gonow;
         }
     }
 
@@ -344,13 +356,13 @@ public class StreetNavigationController : INavigator
         out Quaternion orientation)
     {
         var vYAxis = new Vector3(0f, 1f, 0f);
-        var vForward = _lastSpeed;
+        var vForward = _v2LastSpeed;
         Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vForward, vYAxis);
         orientation = Quaternion.CreateFromRotationMatrix(rot);
         position =new Vector3(
-            _vPos2.X + _clusterDesc.Pos.X,
+            _v2Pos.X + _clusterDesc.Pos.X,
             _clusterDesc.AverageHeight + _height,
-            _vPos2.Y + _clusterDesc.Pos.Z);
+            _v2Pos.Y + _clusterDesc.Pos.Z);
     }
 
 
@@ -360,9 +372,9 @@ public class StreetNavigationController : INavigator
     public void NavigatorSetTransformation(Vector3 vPos3, Quaternion qRotation)
     {
         vPos3 -= _clusterDesc.Pos;
-        _vPos2 = new Vector2(vPos3.X, vPos3.Z);
-        _lastSpeed = Vector3.Transform(new Vector3(0f, -1f, 0f), qRotation);
-        _lastDirection = new Vector2( _lastSpeed.X, _lastSpeed.Z);
+        _v2Pos = new Vector2(vPos3.X, vPos3.Z);
+        _v2LastSpeed = Vector3.Transform(new Vector3(0f, -1f, 0f), qRotation);
+        _vu2LastDirection = new Vector2( _v2LastSpeed.X, _v2LastSpeed.Z);
     }
     
 
@@ -375,16 +387,15 @@ public class StreetNavigationController : INavigator
         _rnd = new builtin.tools.RandomSource($"{clusterDesc0.Name}+{startPoint0.Pos}+{seed}");
         _clusterDesc = clusterDesc0;
         _startPoint = startPoint0;
+        _v2Pos = _startPoint.Pos;
         _targetPoint = null;
 
         _enumPath = new RandomPathEnumerator(_rnd, null, _startPoint);
         
-        _lastDirection = new Vector2(1f, 0f);
-        _lastSpeed = new Vector3(1f, 0f, 0f);
+        _vu2LastDirection = new Vector2(1f, 0f);
+        _v2LastSpeed = new Vector3(1f, 0f, 0f);
 
         _speed = 2.7f * 15f;
-
-        _loadStartPoint();
 
         // TXWTODO: Offload this.
         NavigatorBehave(1f / 60f);
