@@ -63,7 +63,7 @@ public class StreetNavigationController : INavigator
     private StreetPoint _thenPoint;
 
     /**
-     * Contains the last directeion of the character, the length
+     * Contains the last direction of the character, the length
      * represents the meter per second.
      */
     private Vector3 _v2LastSpeed;
@@ -78,7 +78,6 @@ public class StreetNavigationController : INavigator
 
     public void NavigatorBehave(float difftime)
     {
-
         /*
          * The meters to go.
          */
@@ -147,7 +146,7 @@ public class StreetNavigationController : INavigator
                          * We use the dot product aka cosine between the vectors.
                          */
                         ncp.TurnSlowDown =
-                            (Vector2.Dot(_currentStroke.Unit, _nextStroke.Unit) * 2f - 1f);
+                            (Vector2.Dot(_currentStroke.Unit, _nextStroke.Unit) / 2f + 0.5f);
 
                         /*
                          * Compute a proper offset to emulate a bit
@@ -257,11 +256,24 @@ public class StreetNavigationController : INavigator
                         dist = 0;
                         break;
                     }
-
+                    
+                    /*
+                     * This is where I should be on the street.
+                     */
                     v2PerfectMe = _ncp.VPerfectStart + vu2PerfectDirection * lPerfectMeScale;
 
+                    /*
+                     * This is how I'm off.
+                     */
                     Vector2 v2Off = (v2PerfectMe - _v2Pos);
                     float offLength = v2Off.Length();
+                    
+                    /*
+                     * So, if I'm further off than 1m, drive back to the street, heading a bit
+                     * into the proper direction.
+                     *
+                     * Otherwise just target the "proper" target.
+                     */
                     if (offLength > 1f)
                     {
                         v2CurrentTarget = v2PerfectMe + vu2PerfectDirection/2f;
@@ -272,35 +284,70 @@ public class StreetNavigationController : INavigator
                     }
                 }
 
+                /*
+                 * Compute the direction of the current path. Again, this might be back to
+                 * street or on the street.
+                 */
                 var v2Dest = v2CurrentTarget - _v2Pos;
                 vu2Dest = V2Normalize(v2Dest);
 
+                /*
+                 * Plus, we will need the distance to the final target.
+                 * Squared distance is fine.
+                 */
+                var v2PerfectDelta = _ncp.VPerfectTarget - _v2Pos;
+                float perfectDist2 = v2PerfectDelta.LengthSquared();
+
                 {
                     /*
-                     * Derive the current direction from the computed actual target.
+                     * Derive the current direction.
+                     * If I have more than 5cm to ride to the actual computed target, which is not necessarily
+                     * the next street node, use this
+                     * computed direction as current direction and use the current speed
+                     * as speed.
                      */
                     var v2ActualDelta = v2CurrentTarget - _v2Pos;
                     float actualDist2 = v2ActualDelta.LengthSquared();
                     if (actualDist2 > 0.0025f)
                     {
                         _vu2LastDirection = vu2Dest;
-                        _v2LastSpeed = new Vector3(vu2Dest.X * _speed, 0f, vu2Dest.Y * _speed);
+                    }
+                    else
+                    {
+                        /*
+                         * Otherwise, we would continue iterating to find the next street point.
+                         */
                     }
                 }
 
                 {
                     /*
-                     * Now check, how far it is from me to the perfect target
+                     * Now check, how far I am from the perfect target, which is the street node I
+                     * want to reach.
+                     *
+                     * If it's more than 5cm, tell the algorithm that I will still have dist to go.
+                     * Dist is the distance between the computed target and the current position.
+                     * And leave the loop, we figured out a new target.
                      */
-                    var v2PerfectDelta = _ncp.VPerfectTarget - _v2Pos;
-                    float perfectDist2 = v2PerfectDelta.LengthSquared();
                     if (perfectDist2 > 0.0025f)
                     {
                         /*
                          * Yes, there's still a way to go.
                          * However, return only what we can apply in the given direction.
+                         * If the current target is not the street node, because we just
+                         * use intermediate target e.g. after a collision, return that one.
+                         * We would eventually use a route that directs us to the perfect target.
                          */
+                        
+                        float effectiveSpeed = _speed;
+                        if (perfectDist2 < 100f)
+                        {
+                            effectiveSpeed = _speed / 3f + _ncp.TurnSlowDown * perfectDist2 / 100f * _speed * 2f / 3f;
+                        }
+
                         dist = v2Dest.Length();
+                        
+                        _v2LastSpeed = new Vector3(vu2Dest.X * effectiveSpeed, 0f, vu2Dest.Y * effectiveSpeed);
                         break;
                     }
                 }
@@ -356,8 +403,8 @@ public class StreetNavigationController : INavigator
         out Quaternion orientation)
     {
         var vYAxis = new Vector3(0f, 1f, 0f);
-        var vForward = _v2LastSpeed;
-        Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), vForward, vYAxis);
+        var v3Forward = new Vector3(_vu2LastDirection.X, 0f, _vu2LastDirection.Y);
+        Matrix4x4 rot = Matrix4x4.CreateWorld(new Vector3(0f, 0f, 0f), v3Forward, vYAxis);
         orientation = Quaternion.CreateFromRotationMatrix(rot);
         position =new Vector3(
             _v2Pos.X + _clusterDesc.Pos.X,
