@@ -38,9 +38,14 @@ public class StreetNavigationController : INavigator
     private Vector2 _v2Pos;
 
     /**
-     * Meters per second.
+     * The target speed.
      */
     private float _speed = 30f * 3.6f;
+    
+    /**
+     * The effective current speed.
+     */
+    private float _effectiveSpeed;
 
     /**
      * Meters above recommended riding level.
@@ -79,14 +84,14 @@ public class StreetNavigationController : INavigator
     public void NavigatorBehave(float difftime)
     {
         /*
-         * The meters to go.
-         */
-        float togo = _speed * difftime;
+         + The time to spend when going that expected way.
+         */ 
+        float tospend = difftime;
 
         /*
          * Iterate over movement until we used all the difftime.
          */
-        while (togo > 0.000001f)
+        while (tospend > 0.000001f)
         {
 
             /*
@@ -338,16 +343,27 @@ public class StreetNavigationController : INavigator
                          * use intermediate target e.g. after a collision, return that one.
                          * We would eventually use a route that directs us to the perfect target.
                          */
-                        
-                        float effectiveSpeed = _speed;
-                        if (perfectDist2 < 100f)
+
+                        const float breakDist = 81f;
+                        if (perfectDist2 < breakDist)
                         {
-                            effectiveSpeed = _speed / 3f + _ncp.TurnSlowDown * perfectDist2 / 100f * _speed * 2f / 3f;
+                            _effectiveSpeed =
+                                // a constant minimal speed
+                                _speed / 5f 
+                                // depending, on how much it shall slow down, a part depending on the distance to the node
+                                + (1f-_ncp.TurnSlowDown) * perfectDist2 / breakDist * _speed * 4f / 5f
+                                // and, the standard
+                                + (_ncp.TurnSlowDown) * _speed
+                                ;
+                        }
+                        else
+                        {
+                            _effectiveSpeed = _effectiveSpeed * 0.99f + _speed * 0.01f;
                         }
 
                         dist = v2Dest.Length();
                         
-                        _v2LastSpeed = new Vector3(vu2Dest.X * effectiveSpeed, 0f, vu2Dest.Y * effectiveSpeed);
+                        _v2LastSpeed = new Vector3(vu2Dest.X * _effectiveSpeed, 0f, vu2Dest.Y * _effectiveSpeed);
                         break;
                     }
                 }
@@ -363,22 +379,24 @@ public class StreetNavigationController : INavigator
             /*
              * move towards the target with the given speed
              */
-            var gonow = togo;
-
+            var gonow = tospend * _effectiveSpeed;
+            var spendNow = tospend;
             /*
              * Did we reach the end of the stroke? Then load the next.
              */
             if (gonow > dist)
             {
                 gonow = dist;
-                togo -= gonow;
+                spendNow = gonow / _effectiveSpeed;
+                tospend -= spendNow;
                 _startPoint = _targetPoint;
                 _targetPoint = null;
+                //_v2Pos += vu2Dest * gonow;
                 
                 continue;
             }
 
-            togo -= gonow;
+            tospend -= spendNow;
             _v2Pos += vu2Dest * gonow;
         }
     }
@@ -436,6 +454,7 @@ public class StreetNavigationController : INavigator
         _startPoint = startPoint0;
         _v2Pos = _startPoint.Pos;
         _targetPoint = null;
+        _effectiveSpeed = _speed;
 
         _enumPath = new RandomPathEnumerator(_rnd, null, _startPoint);
         
