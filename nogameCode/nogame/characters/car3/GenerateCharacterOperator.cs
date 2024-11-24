@@ -188,7 +188,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                 sw.Start();
 #endif
 
-                eTarget.Set(new engine.world.components.FragmentId(fragmentId));
+                eTarget.Set(new engine.world.components.Owner(fragmentId));
 
 #if DEBUG
                 float millisAfterFragmentId = (float)sw.Elapsed.TotalMilliseconds;

@@ -60,6 +60,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapIconManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapRangeEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\components\pickable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavCluster.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavClusterContent.cs" />
@@ -117,8 +118,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\LuaBindingFrame.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IdHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NavMesh.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\GameAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyWatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Index2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\IOwner.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\OwnerRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\PickableDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TextureCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\LayerCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\MakeDisposable.cs" />
@@ -335,7 +340,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\WorkerQueue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterDesc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\ClusterList.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\FragmentId.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\Owner.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\MapIcon.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\CreateTerrainMeshOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\CreateTerrainOperator.cs" />

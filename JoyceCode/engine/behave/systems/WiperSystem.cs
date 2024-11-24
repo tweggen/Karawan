@@ -9,7 +9,7 @@ namespace engine.behave.systems;
 
 [DefaultEcs.System.With(typeof(components.Behavior))]
 [DefaultEcs.System.With(typeof(joyce.components.Transform3ToWorld))]
-[DefaultEcs.System.With(typeof(FragmentId))]
+[DefaultEcs.System.With(typeof(Owner))]
 internal class WiperSystem : DefaultEcs.System.AEntitySetSystem<engine.geom.AABB>
 {
     private engine.Engine _engine;

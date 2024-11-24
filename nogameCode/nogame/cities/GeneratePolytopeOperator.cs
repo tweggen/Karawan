@@ -91,7 +91,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
         {
             var jInstanceDesc = modelBall.RootNode.InstanceDesc;
-            eTarget.Set(new engine.world.components.FragmentId(worldFragment.NumericalId));
+            eTarget.Set(new engine.world.components.Owner(worldFragment.NumericalId));
             eTarget.Set(new engine.joyce.components.Instance3(modelBall.RootNode.InstanceDesc));
             
             //eTarget.Set(new engine.audio.components.MovingSound(

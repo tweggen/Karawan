@@ -19,6 +19,7 @@ public class Main : AModule
         new SharedModule<nogame.modules.osd.Display>(),
         new SharedModule<nogame.modules.osd.Camera>(),
         new SharedModule<engine.news.ClickModule>(),
+        new SharedModule<engine.joyce.OwnerRegistry>(),
         new MyModule<nogame.modules.debugger.DebuggerToggle>()
     };
 

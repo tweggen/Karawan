@@ -160,7 +160,7 @@ internal class GenerateCharacterOperator : engine.world.IFragmentOperator
                         int fragmentId = worldFragment.NumericalId;
                         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
                         {
-                            eTarget.Set(new engine.world.components.FragmentId(fragmentId));
+                            eTarget.Set(new engine.world.components.Owner(fragmentId));
                             eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
                             eTarget.Set(new engine.behave.components.Behavior(
                                     new Behavior(wf.Engine, _clusterDesc, chosenStreetPoint, speed))

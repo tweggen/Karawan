@@ -347,12 +347,12 @@ public class Fragment : IDisposable
         // TXWTODO: As long we don't create after this step we're good.
 
         var enumDoomedEntities = Engine.GetEcsWorld().GetEntities()
-            .With<engine.world.components.FragmentId>()
+            .With<engine.world.components.Owner>()
             .AsEnumerable();
         List<DefaultEcs.Entity> listDoomedEntities = new();
         foreach (var entity in enumDoomedEntities)
         {
-            if (entity.Get<engine.world.components.FragmentId>().Id == _id)
+            if (entity.Get<engine.world.components.Owner>().Id == _id)
             {
                 listDoomedEntities.Add(entity);
             }
@@ -459,7 +459,7 @@ public class Fragment : IDisposable
                 /*
                  * Finally, remember the molecule to be able to remove its contents later again.
                  */
-                entity.Set(new engine.world.components.FragmentId(_id));
+                entity.Set(new engine.world.components.Owner(_id));
             });
         });
 
