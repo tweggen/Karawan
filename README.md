@@ -222,6 +222,79 @@ as anything else, they also can be outdated. This would happen if they are
 rendered from a framebuffer who is newer inside memory than on GPU. In that case
 the texture also would be uploaded by the renderer.
 
+## Entity lifecycle
+
+### Introduction
+
+Entities may be created by several different use cases:
+- as an effect of initializing a module internally, like a camera
+- as an effect of creatng a new game state or loading an existing one.
+- as an effect of dynamic entity based particle systems
+- as an effect of world-building operators
+- as an effect of fragment-building operators
+- built by character spawn behaviors
+- built by code from e.g. the scene sequencer.
+
+That is, to re-create the entity, the creating module possibly needs to
+assign a creator that is capable of setting up the entity from serializable
+data after reload.
+
+Also, each entity, no matter what creator it origins, may have a different
+life cycle: Characters' lifetimes may eventually be bound to their location
+relatively to the player's location. Static entities are possibly bound to
+the fragments they become loaded for, other eyntities, such as particles, may
+have a pre-determined, dynamic lifetime, as defined by their behaviours.
+Collectible items however, might have an infinite lifetime, only to be
+used at some point by the player.
+
+Therefore we introduce two concepts: creators, and owners.
+- Creators: Are capable of (re-)creating entities from serializable data. The 
+  data might be part of a save game state, or it may be part of the world
+  defining state. The creator id is required to find the right creator to restore 
+  a given entity or set of entities.
+- Owners: Are capable of determining the life-time of an object and responsible 
+  for disposing it after use.
+
+To make all this possible during init/load/save/garbage collect, each
+entity may be associated with the Owner component that contains both the
+creator and the owner id. During save/load/new/garbage collect cycles, the 
+engine this way can select the proper creator to setup the entity accordingly,
+during run-time, it can be deleted accordingly. 
+
+Copmponents have serialization information on their own: They can have the
+persistable attribute set
+
+### Use Cases
+
+#### Car Characters
+
+#### Player 
+
+#### Camera
+
+#### Buildings
+
+Owner: Fragment
+
+#### Polytopes
+
+Owner: Fragment
+
+#### Cubic stuff in the void
+
+Owner: Fragment
+
+#### Some pre-placed pickable item outside
+
+Owner: Play state setup
+
+#### Polytope particles
+
+Owner: Fragment
+
+#### Lights
+
+Owner: Static Scene Setup
 
 ## Save game integration
 

@@ -10,8 +10,17 @@ public struct Owner
     public const ushort OwnerId_HardcodeMax = 511;
         
     public int Id;
+    
+    /**
+     * The owner of an entity is responsible for deleting it.
+     */
     public ushort OwnerId;
-    public ushort _unused;
+    
+    /**
+     * The create of an entity is responsible for setting it up
+     * from serializable data.
+     */
+    public ushort CreatorId;
 
     public override string ToString()
     {
