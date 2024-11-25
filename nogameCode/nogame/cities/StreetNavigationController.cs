@@ -151,7 +151,7 @@ public class StreetNavigationController : INavigator
                          * We use the dot product aka cosine between the vectors.
                          */
                         ncp.TurnSlowDown =
-                            (Vector2.Dot(_currentStroke.Unit, _nextStroke.Unit) / 2f + 0.5f);
+                            (-Vector2.Dot(_currentStroke.Unit, _nextStroke.Unit) / 2f + 0.5f);
 
                         /*
                          * Compute a proper offset to emulate a bit
