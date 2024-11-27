@@ -7,6 +7,7 @@ using engine;
 using engine.meta;
 using engine.world;
 using static engine.Logger;
+using Loader = engine.casette.Loader;
 
 namespace nogame;
 
@@ -30,7 +31,10 @@ public class SetupMetaGen
 
         _worldMetaGen = I.Get<engine.world.MetaGen>();
 
-        engine.meta.ExecDesc edRoot = new()
+#if false
+        engine.meta.ExecDesc edRoot;
+        
+        edRoot = new()
         {
             Mode = ExecDesc.ExecMode.Sequence,
             Comment = "We need a top level sequence of executing things for the fragments."
@@ -129,10 +133,16 @@ public class SetupMetaGen
                 // ReferenceHandler = ReferenceHandler.Preserve,
                 WriteIndented = true,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
             string jsonEdRoot = JsonSerializer.Serialize(edRoot, options);
             Trace("MetaGen Configuration: ");
             Trace(jsonEdRoot);
+        }
+#endif
+        if (null == _worldMetaGen.EdRoot)
+        {
+            Error($"No edroot configured.");
         }
 
         _worldMetaGen.SetupComplete();

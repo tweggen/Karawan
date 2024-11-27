@@ -106,72 +106,72 @@
   {
     "fragmentOperators":
     {
-      "Mode": 4,
-      "Comment": "We need a top level sequence of executing things for the fragments.This is not much, but first we need to get the terrain height done.",
-      "Children": [
+      "mode": 4,
+      "comment": "We need a top level sequence of executing things for the fragments.This is not much, but first we need to get the terrain height done.",
+      "children": [
         {
-          "Mode": 1,
-          "Implementation": "engine.world.CreateTerrainOperator.InstantiateFragmentOperator"
+          "mode": 1,
+          "implementation": "engine.world.CreateTerrainOperator.InstantiateFragmentOperator"
         },
         {
-          "Mode": 2,
-          "Comment": "Now, there\u0027s no particular order to prepare the remaining things.",
-          "Children": [
+          "mode": 2,
+          "comment": "Now, there\u0027s no particular order to prepare the remaining things.",
+          "children": [
             {
-              "Mode": 1,
-              "Implementation": "engine.world.CreateTerrainMeshOperator.InstantiateFragmentOperator"
+              "mode": 1,
+              "implementation": "engine.world.CreateTerrainMeshOperator.InstantiateFragmentOperator"
             },
             {
-              "Mode": 1,
-              "Implementation": "nogame.terrain.PlaceDebrisOperator.InstantiateFragmentOperator"
+              "mode": 1,
+              "implementation": "nogame.terrain.PlaceDebrisOperator.InstantiateFragmentOperator"
             },
             {
-              "Mode": 3,
-              "Comment": "This includes all cluster operators.",
-              "Selector": "clusterDescList",
-              "Target": "clusterDesc",
-              "Children": [
+              "mode": 3,
+              "comment": "This includes all cluster operators.",
+              "selector": "clusterDescList",
+              "target": "clusterDesc",
+              "children": [
                 {
-                  "Mode": 2,
-                  "Children": [
+                  "mode": 2,
+                  "children": [
                     {
-                      "Mode": 1,
-                      "Implementation": "engine.streets.GenerateClusterStreetsOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "implementation": "engine.streets.GenerateClusterStreetsOperator.InstantiateFragmentOperator"
                     },
                     {
-                      "Mode": 1,
-                      "ConfigCondition": "nogame.CreateHouses",
-                      "Implementation": "nogame.cities.GenerateHousesOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "configCondition": "nogame.CreateHouses",
+                      "implementation": "nogame.cities.GenerateHousesOperator.InstantiateFragmentOperator"
                     },
                     {
-                      "Mode": 1,
-                      "ConfigCondition": "world.CreateClusterQuarters",
-                      "Implementation": "engine.streets.GenerateClusterQuartersOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "configCondition": "world.CreateClusterQuarters",
+                      "implementation": "engine.streets.GenerateClusterQuartersOperator.InstantiateFragmentOperator"
                     },
                     {
-                      "Mode": 1,
-                      "ConfigCondition": "world.CreateStreetAnnotations",
-                      "Implementation": "engine.streets.GenerateClusterStreetAnnotationsOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "configCondition": "world.CreateStreetAnnotations",
+                      "implementation": "engine.streets.GenerateClusterStreetAnnotationsOperator.InstantiateFragmentOperator"
                     },
                     {
-                      "Mode": 1,
-                      "ConfigCondition": "nogame.CreateTrees",
-                      "Implementation": "nogame.cities.GenerateTreesOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "configCondition": "nogame.CreateTrees",
+                      "implementation": "nogame.cities.GenerateTreesOperator.InstantiateFragmentOperator"
                     },
                     {
-                      "Mode": 1,
-                      "ConfigCondition": "nogame.CreatePolytopes",
-                      "Implementation": "nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "configCondition": "nogame.CreatePolytopes",
+                      "implementation": "nogame.cities.GeneratePolytopeOperator.InstantiateFragmentOperator"
                     },
                     {
-                      "Mode": 1,
-                      "ConfigCondition": "world.CreateCubeCharacters",
-                      "Implementation": "nogame.characters.cubes.GenerateCharacterOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "configCondition": "world.CreateCubeCharacters",
+                      "implementation": "nogame.characters.cubes.GenerateCharacterOperator.InstantiateFragmentOperator"
                     },
                     {
-                      "Mode": 1,
-                      "ConfigCondition": "world.CreateTramCharacters",
-                      "Implementation": "nogame.characters.tram.GenerateCharacterOperator.InstantiateFragmentOperator"
+                      "mode": 1,
+                      "configCondition": "world.CreateTramCharacters",
+                      "implementation": "nogame.characters.tram.GenerateCharacterOperator.InstantiateFragmentOperator"
                     }
                   ]
                 }
@@ -181,7 +181,6 @@
         }
       ]
     },
-
     "buildingOperators":
     [
       {

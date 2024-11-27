@@ -177,33 +177,43 @@ public class Loader
     }
 
 
-    private engine.meta.ExecDesc _loadExecNode(JsonElement je)
+    private ExecDesc _loadExecDesc(JsonElement je)
     {
         engine.meta.ExecDesc.ExecMode execMode = ExecDesc.ExecMode.Task;
         if (je.TryGetProperty("mode", out var jeMode))
         {
-            var str = je.GetString();
-            if (str != null)
+            switch (jeMode.ValueKind)
             {
-                switch (str)
-                {
-                    case "constant":
-                        execMode = ExecDesc.ExecMode.Constant;
-                        break;
-                    default:
-                    case "task":
-                        execMode = ExecDesc.ExecMode.Task;
-                        break;
-                    case "parallel":
-                        execMode = ExecDesc.ExecMode.Parallel;
-                        break;
-                    case "applyParallel":
-                        execMode = ExecDesc.ExecMode.ApplyParallel;
-                        break;
-                    case "sequence":
-                        execMode = ExecDesc.ExecMode.Sequence;
-                        break;
-                }
+                case JsonValueKind.String:
+                    var str = jeMode.GetString();
+                    if (str != null)
+                    {
+                        switch (str)
+                        {
+                            case "constant":
+                                execMode = ExecDesc.ExecMode.Constant;
+                                break;
+                            default:
+                            case "task":
+                                execMode = ExecDesc.ExecMode.Task;
+                                break;
+                            case "parallel":
+                                execMode = ExecDesc.ExecMode.Parallel;
+                                break;
+                            case "applyParallel":
+                                execMode = ExecDesc.ExecMode.ApplyParallel;
+                                break;
+                            case "sequence":
+                                execMode = ExecDesc.ExecMode.Sequence;
+                                break;
+                        }
+                    }
+                    break;
+                case JsonValueKind.Number:
+                    execMode = (ExecDesc.ExecMode) jeMode.GetInt32();
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -232,12 +242,18 @@ public class Loader
         }
 
         string implementation = null;
-        if (je.TryGetProperty)
-
-        List<ExecDesc> children = new();
-        foreach (var jeChild in je.EnumerateArray())
+        if (je.TryGetProperty("implementation", out var jeImplementation))
         {
-            children.Add(_loadExecNode(jeChild));
+            implementation = jeImplementation.GetString();
+        }
+
+        List<ExecDesc> children = new List<ExecDesc>();
+        if (je.TryGetProperty("children", out var jeChildren))
+        {
+            foreach (var jeChild in jeChildren.EnumerateArray())
+            {
+                children.Add(_loadExecDesc(jeChild));
+            }
         }
 
         if (children.Count == 0)
@@ -252,20 +268,25 @@ public class Loader
             ConfigCondition = configCondition,
             Selector = selector,
             Target = target,
-            Children = children
+            Children = children,
+            Implementation = implementation
         };
     }
+    
 
-    public void LoadFragmentOperators(JsonElement je)
+    public ExecDesc LoadFragmentOperators(JsonElement je)
     {
         try
         {
-            var en = _loadExecNode(je);
+            var edRoot = _loadExecDesc(je);
+            I.Get<MetaGen>().EdRoot = edRoot;
         }
         catch (Exception e)
         {
             Warning($"Error reading fragment operators: {e}.");
         }
+
+        return new ExecDesc();
     }
 
 
@@ -412,6 +433,11 @@ public class Loader
             if (je.TryGetProperty("populatingOperators", out var jePopulatingOperators))
             {
                 LoadPopulatingOperators(jePopulatingOperators);
+            }
+            
+            if (je.TryGetProperty("fragmentOperators", out var jeFragmentOperators))
+            {
+                LoadFragmentOperators(jeFragmentOperators);
             }
         }
         catch (Exception e)
@@ -567,6 +593,7 @@ public class Loader
                 {
                     throw new InvalidDataException("no uri specified in resource.");
                 }
+                
 
                 string? tag = null;
                 if (jeRes.TryGetProperty("tag", out var jpTag))
