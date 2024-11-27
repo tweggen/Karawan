@@ -315,6 +315,31 @@ public class Loader
     }
 
 
+    public void LoadClusterOperators(JsonElement je)
+    {
+        try
+        {
+            foreach (var jeOp in je.EnumerateArray())
+            {
+                string className = jeOp.GetProperty("className").GetString();
+                try
+                {
+                    IClusterOperator cop = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, className) as IClusterOperator;
+                    I.Get<MetaGen>().ClusterOperators.Add(cop);
+                }
+                catch (Exception e)
+                {
+                    Warning($"Unable to instantiate world building operator {className}: {e}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading implementations: {e}");
+        }
+    }
+
+
     public void LoadPopulatingOperators(JsonElement je)
     {
         try
@@ -428,6 +453,11 @@ public class Loader
             if (je.TryGetProperty("buildingOperators", out var jeBuildingOperators))
             {
                 LoadBuildingOperators(jeBuildingOperators);
+            }
+
+            if (je.TryGetProperty("clusterOperators", out var jeClusterOperators))
+            {
+                LoadClusterOperators(jeClusterOperators);
             }
 
             if (je.TryGetProperty("populatingOperators", out var jePopulatingOperators))

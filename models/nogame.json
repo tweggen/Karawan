@@ -195,6 +195,12 @@
       {
         "className": "nogame.characters.intercity.GenerateCharacterOperator"
       }      
+    ],
+    "clusterOperators":
+    [
+      {
+         "className": "nogame.cities.GenerateShopsOperator"
+      } 
     ]
   },
   "modules":

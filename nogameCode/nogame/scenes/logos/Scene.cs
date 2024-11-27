@@ -123,7 +123,6 @@ public class Scene : AModule, IScene
          */
         _engine.QueueMainThreadAction(() =>
         {
-            I.Get<MetaGen>().ClusterOperators.Add(new GenerateShopsOperator());
             I.Get<SetupMetaGen>().PrepareMetaGen(engine);
         });
 
