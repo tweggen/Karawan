@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Pipes;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
-using BepuPhysics.CollisionDetection;
 using builtin.map;
 using engine.joyce;
+using engine.meta;
 using engine.world;
 using static engine.Logger;
 
@@ -174,6 +173,98 @@ public class Loader
         catch (Exception e)
         {
             Warning($"Error reading implementations: {e}");
+        }
+    }
+
+
+    private engine.meta.ExecDesc _loadExecNode(JsonElement je)
+    {
+        engine.meta.ExecDesc.ExecMode execMode = ExecDesc.ExecMode.Task;
+        if (je.TryGetProperty("mode", out var jeMode))
+        {
+            var str = je.GetString();
+            if (str != null)
+            {
+                switch (str)
+                {
+                    case "constant":
+                        execMode = ExecDesc.ExecMode.Constant;
+                        break;
+                    default:
+                    case "task":
+                        execMode = ExecDesc.ExecMode.Task;
+                        break;
+                    case "parallel":
+                        execMode = ExecDesc.ExecMode.Parallel;
+                        break;
+                    case "applyParallel":
+                        execMode = ExecDesc.ExecMode.ApplyParallel;
+                        break;
+                    case "sequence":
+                        execMode = ExecDesc.ExecMode.Sequence;
+                        break;
+                }
+            }
+        }
+
+        string comment = null;
+        if (je.TryGetProperty("comment", out var jeComment))
+        {
+            comment = jeComment.GetString();
+        }
+
+        string configCondition = null;
+        if (je.TryGetProperty("configCondition", out var jeConfigCondition))
+        {
+            configCondition = jeConfigCondition.GetString();
+        }
+
+        string selector = null;
+        if (je.TryGetProperty("selector", out var jeSelector))
+        {
+            selector = jeSelector.GetString();
+        }
+
+        string target = null;
+        if (je.TryGetProperty("target", out var jeTarget))
+        {
+            target = jeTarget.GetString();
+        }
+
+        string implementation = null;
+        if (je.TryGetProperty)
+
+        List<ExecDesc> children = new();
+        foreach (var jeChild in je.EnumerateArray())
+        {
+            children.Add(_loadExecNode(jeChild));
+        }
+
+        if (children.Count == 0)
+        {
+            children = null;
+        }
+        
+        return new ExecDesc()
+        {
+            Mode = execMode,
+            Comment = comment,
+            ConfigCondition = configCondition,
+            Selector = selector,
+            Target = target,
+            Children = children
+        };
+    }
+
+    public void LoadFragmentOperators(JsonElement je)
+    {
+        try
+        {
+            var en = _loadExecNode(je);
+        }
+        catch (Exception e)
+        {
+            Warning($"Error reading fragment operators: {e}.");
         }
     }
 
