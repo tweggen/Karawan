@@ -112,7 +112,8 @@ public class AutoSave : engine.AModule
     {
         new SharedModule<Saver>(),
         new SharedModule<nogame.config.Module>(),
-        new SharedModule<DBStorage>()
+        new SharedModule<DBStorage>(),
+        new MyModule<builtin.EntitySaver>()
     };
 
 
