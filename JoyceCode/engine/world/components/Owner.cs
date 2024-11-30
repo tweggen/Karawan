@@ -8,19 +8,18 @@ public struct Owner
 {
     public const ushort OwnerId_Fragment = 0;
     public const ushort OwnerId_HardcodeMax = 511;
-        
+    
+    /**
+     * In the scope of the owning module, which id does this have?
+     */
     public int Id;
     
     /**
      * The owner of an entity is responsible for deleting it.
      */
     public ushort OwnerId;
-    
-    /**
-     * The create of an entity is responsible for setting it up
-     * from serializable data.
-     */
-    public ushort CreatorId;
+
+    public ushort _unused;
 
     public override string ToString()
     {

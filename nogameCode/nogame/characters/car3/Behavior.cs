@@ -10,10 +10,7 @@ namespace nogame.characters.car3;
 internal class Behavior : builtin.tools.SimpleNavigationBehavior
 {
     private engine.Engine _engine;
-    private engine.world.ClusterDesc _clusterDesc;
-    private engine.streets.StreetPoint _streetPoint;
     private StreetNavigationController _snc;
-    private Quaternion _qPrevRotation = Quaternion.Identity;
     private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
 
 
@@ -95,7 +92,5 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
     {
         _engine = engine0;
         _snc = Navigator as StreetNavigationController;
-        _clusterDesc = clusterDesc0;
-        _streetPoint = streetPoint0;
     }
 }
