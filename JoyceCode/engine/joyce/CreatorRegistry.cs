@@ -15,6 +15,7 @@ internal class CreatorEntry
 public class CreatorRegistry : AModule
 {
     private object _lo = new();
+    private SortedDictionary<string, CreatorEntry> _mapNames = new();
     private Dictionary<ICreator, CreatorEntry> _mapCreators = new();
     private SortedDictionary<ushort, CreatorEntry> _mapIds = new();
     private ushort _nextId = engine.world.components.Creator.CreatorId_HardcodeMax + 1;
@@ -46,6 +47,15 @@ public class CreatorRegistry : AModule
     }
     
     
+    public ICreator GetCreator(string strCreator)
+    {
+        lock (_lo)
+        {
+            return _mapNames[strCreator].Creator;
+        }
+    }
+    
+    
     public void UnregisterCreator(ICreator iCreator)
     {
         lock (_lo)
@@ -67,6 +77,7 @@ public class CreatorRegistry : AModule
                 Creator = iCreator
             };
             _mapIds[ce.Id] = ce;
+            _mapNames[iCreator.GetType().ToString()] = ce;
         }
     }
 }

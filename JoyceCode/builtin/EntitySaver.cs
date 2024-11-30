@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DefaultEcs.Serialization;
 using engine;
 using engine.joyce;
 using Creator = engine.world.components.Creator;
@@ -16,11 +18,30 @@ public class EntitySaver : AModule
     };
 
 
+    private class SaveComponentsReader : IComponentReader
+    {
+        public JsonObject JOComponents { get; }= new JsonObject();
+        public JsonSerializerOptions SerializerOptions { get; set; }
+        
+        public void OnRead<T>(in T component, in DefaultEcs.Entity e)
+        {
+            if (Attribute.IsDefined(typeof(T), typeof(engine.IsPersistable)))
+            {
+                JOComponents[typeof(T).ToString()] = JsonSerializer.SerializeToNode(component, SerializerOptions);
+            }
+        }
+    }
+
     public JsonNode SaveAll()
     {
         JsonNode jnAll = new JsonObject();
 
         var oreg = M<CreatorRegistry>();
+
+        JsonSerializerOptions serializerOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
         
         /*
          * Iterate through everything that has a creator associated. That way, it might
@@ -29,28 +50,44 @@ public class EntitySaver : AModule
         var enumCreated =
             I.Get<Engine>().GetEcsWorld().GetEntities()
                 .With<Creator>().AsEnumerable();
-        foreach (var eCreated in enumCreated) 
+        foreach (var eCreated in enumCreated)
         {
             /*
              * Save that we have an entity, with a certain id, that by
              * incident matches the id the actual entity has.
              */
             
-            // TXWTODO: Automatically persist all persistable components.
-            
+            var componentReader = new SaveComponentsReader() { SerializerOptions = serializerOptions };
+            eCreated.ReadAllComponents(componentReader);
+            jnAll[eCreated.ToString()]["components"] = componentReader.JOComponents;
             ref var cCreator = ref eCreated.Get<engine.world.components.Creator>();
             var iCreator = oreg.GetCreator(cCreator.CreatorId);
             iCreator.SaveEntityTo(eCreated, out var jnEntityByCreator);
 
-            jnAll[iCreator.GetType().ToString()][eCreated.ToString()] = jnEntityByCreator;
+            jnAll[eCreated.ToString()]["creator"][iCreator.GetType().ToString()] = jnEntityByCreator;
         }
         return jnAll;
     }
+    
     
     /**
      * Must be called from logical thread
      */
     public void RecreateAll(JsonElement jeAll)
     {
+        foreach (var jpCreator in jeAll.EnumerateObject().GetEnumerator())
+        {
+            var strCreatorType = jpCreator.Name;
+            var jeValue = jpCreator.Value;
+            
+            
+            foreach (var jpEntity in jeValue.EnumerateObject().GetEnumerator())
+            {
+                var strEntityId = jpEntity.Name;
+                var jeEntity = jpEntity.Value;
+                
+                
+            }
+        }
     }
 }
