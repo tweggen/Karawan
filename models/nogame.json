@@ -17,7 +17,7 @@
   {
     "builtin.modules.ScreenComposer": null,
     "engine.news.InputEventPipeline": null,
-    "engine.joyce.CreatorRegistry": null,
+    "engine.world.CreatorRegistry": null,
     "engine.Saver": null, 
     "engine.DBStorage": null,
     "engine.physics.ShapeFactory": null,

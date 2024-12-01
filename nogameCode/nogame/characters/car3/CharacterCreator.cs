@@ -224,7 +224,7 @@ class CharacterCreator : engine.world.ICreator
                 eTarget.Set(new engine.world.components.Creator()
                 {
                     Id = carIdx, 
-                    CreatorId = I.Get<CreatorRegistry>().FindCreatorId(I.Get<CharacterCreator>())
+                    CreatorId = (ushort) I.Get<CreatorRegistry>().FindCreatorId(I.Get<CharacterCreator>())
                 });
 #if DEBUG
                 float millisAfterBody = (float)sw.Elapsed.TotalMilliseconds;
