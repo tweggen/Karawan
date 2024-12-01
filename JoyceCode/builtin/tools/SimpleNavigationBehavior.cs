@@ -51,6 +51,7 @@ public class SimpleNavigationBehavior : ABehavior
     public override void SetupFrom(JsonObject jo)
     {
         _qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
+        _inav.SetupFrom(jo);
     }
 
     
@@ -59,6 +60,7 @@ public class SimpleNavigationBehavior : ABehavior
         JsonObject joSNO = new JsonObject();
         joSNO.Add("prevRotation", From(_qPrevRotation) );
         jo.Add("sno", joSNO);
+        _inav.SaveTo(ref jo);
     }
 
 

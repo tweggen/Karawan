@@ -18,9 +18,7 @@ using static engine.Logger;
 namespace nogame.characters.car3;
 
 
-class GenerateCharacterOperator : 
-    engine.world.IFragmentOperator, 
-    engine.joyce.ICreator
+class CharacterCreator : engine.joyce.ICreator
 {
     private class Context
     {
@@ -33,8 +31,8 @@ class GenerateCharacterOperator :
     static private readonly float PhysicsRadius = 5f;
     static public BodyInertia PInertiaSphere = 
         new BepuPhysics.Collidables.Sphere(
-            GenerateCharacterOperator.PhysicsRadius)
-        .ComputeInertia(GenerateCharacterOperator.PhysicsMass);
+            CharacterCreator.PhysicsRadius)
+        .ComputeInertia(CharacterCreator.PhysicsMass);
 
     private static object _classLock = new();
 
@@ -72,25 +70,7 @@ class GenerateCharacterOperator :
     }
     
     
-    private ClusterDesc _clusterDesc;
-    private string _myKey;
-
     private static bool _trace = false;
-
-    private int _characterIndex = 0;
-
-    
-    public string FragmentOperatorGetPath()
-    {
-        return $"7020/GenerateCar3CharacterOperatar/{_myKey}/{_clusterDesc.IdString}";
-    }
-    
-    
-    public void FragmentOperatorGetAABB(out engine.geom.AABB aabb)
-    {
-        _clusterDesc.GetAABB(out aabb);
-    }
-
 
     private static string _carFileName(int carIdx)
     {
@@ -241,7 +221,11 @@ class GenerateCharacterOperator :
                 /*
                  * Finally, remember us as the creator, so that the car will be recreated after loading.
                  */
-                eTarget.Set(new engine.world.components.Creator() { Id = carIdx, CreatorId = 100 });
+                eTarget.Set(new engine.world.components.Creator()
+                {
+                    Id = carIdx, 
+                    CreatorId = I.Get<CreatorRegistry>().FindCreatorId(I.Get<CharacterCreator>())
+                });
 #if DEBUG
                 float millisAfterBody = (float)sw.Elapsed.TotalMilliseconds;
                 sw.Stop();
@@ -291,94 +275,7 @@ class GenerateCharacterOperator :
         }
     }
 
-    public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
+    public CharacterCreator()
     {
-        if (0 == (visib.How & engine.world.FragmentVisibility.Visible3dAny))
-        {
-            return;
-        }
-        
-        float cx = _clusterDesc.Pos.X - worldFragment.Position.X;
-        float cz = _clusterDesc.Pos.Z - worldFragment.Position.Z;
-
-        /*
-         * We don't apply the operator if the fragment completely is
-         * outside our boundary box (the cluster)
-         */
-        {
-            {
-                float csh = _clusterDesc.Size / 2.0f;
-                float fsh = engine.world.MetaGen.FragmentSize / 2.0f;
-                if (
-                    (cx - csh) > (fsh)
-                    || (cx + csh) < (-fsh)
-                    || (cz - csh) > (fsh)
-                    || (cz + csh) < (-fsh)
-                )
-                {
-                    // trace( "Too far away: x="+_clusterDesc.x+", z="+_clusterDesc.z);
-                    return;
-                }
-            }
-        }
-
-        var ctx = new Context()
-        {
-            Rnd = new(_myKey),
-            Fragment = worldFragment
-        };
-
-        if (_trace) Trace($"cluster '{_clusterDesc.IdString}' ({_clusterDesc.Pos.X}, {_clusterDesc.Pos.Z}) in range");
-        
-        var strokeStore = _clusterDesc.StrokeStore();
-        IList<StreetPoint> streetPoints = strokeStore.GetStreetPoints();
-        if (streetPoints.Count == 0)
-        {
-            return;
-        }
-        int l = streetPoints.Count;
-        
-        /*
-         * Now, that we have read the cluster description that is associated, we
-         * can place the characters randomly on the streetpoints.
-         *
-         * TXWTODO: We would be more intersint to place them on the streets.
-         */
-
-        // TXWTODO: The target number of characters shall be a property of the spawnoperator.
-        int nCharacters = (int)((float)l * 8f / 10f);
-
-        for (int i = 0; i < nCharacters; i++)
-        {   
-            StreetPoint? chosenStreetPoint = ChooseStreetPoint(ctx.Rnd, worldFragment, _clusterDesc);
-
-            if (null != chosenStreetPoint)
-            {
-                if (_trace) Trace($"Starting on streetpoint $idxPoint ${chosenStreetPoint.Pos.X}, ${chosenStreetPoint.Pos.Y}.");
-
-                ++_characterIndex;
-                GenerateCharacter(ctx.Rnd, _clusterDesc, worldFragment, chosenStreetPoint);
-            }
-            else
-            {
-                if (_trace) Trace("No streetpoint found.");
-            }
-        }
-    });
-
-    
-    public GenerateCharacterOperator(
-        in ClusterDesc clusterDesc, in string strKey)
-    {
-        _clusterDesc = clusterDesc;
-        _myKey = strKey;
-    }
-    
-    
-    public static IFragmentOperator InstantiateFragmentOperator(IDictionary<string, object> p)
-    {
-        return new GenerateCharacterOperator(
-            (ClusterDesc)p["clusterDesc"],
-            (string)p["strKey"]);
     }
 }

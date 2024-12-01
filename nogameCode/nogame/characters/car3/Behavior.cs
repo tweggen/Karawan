@@ -42,7 +42,7 @@ internal class Behavior :
              */
             _engine.Simulation.Bodies.SetLocalInertia(
                 cCarBody.Reference.Handle,
-                GenerateCharacterOperator.PInertiaSphere);
+                CharacterCreator.PInertiaSphere);
         }
 
         /*

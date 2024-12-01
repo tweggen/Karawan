@@ -85,7 +85,8 @@
     "engine.behave.ClusterHeatMap": null,
     "builtin.loader.Obj": null,
     "engine.joyce.ModelCache": null,
-    "builtin.modules.satnav.Module": null
+    "builtin.modules.satnav.Module": null,
+    "nogame.characters.car3.CharacterCreator": null,
   },
   "mapProviders":
   {

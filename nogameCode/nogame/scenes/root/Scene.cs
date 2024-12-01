@@ -299,8 +299,10 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<SceneSequencer>().AddScene(0, this);
 
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-
-        M<CreatorRegistry>().RegisterCreator();
+        
+        // TXWTODO: Generatlize this
+        M<CreatorRegistry>().RegisterCreator(I.Get<nogame.characters.car3.CharacterCreator>());
+        
         // TXWTODO: Generalize this.
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         

@@ -15,6 +15,12 @@ static public class JsonObjectNumerics
     };
     
     
+    static public JsonObject From(in Vector2 v2) => new JsonObject
+    {
+        ["x"] = v2.X, ["y"] = v2.Y
+    };
+    
+    
     static public JsonObject From(in Quaternion q) => new JsonObject
     {
         ["x"] = q.X, ["y"] = q.Y, ["z"] = q.Z, ["w"] = q.W
@@ -34,6 +40,13 @@ static public class JsonObjectNumerics
     {
         var jo = jn.AsObject();
         return new Vector3((float)jo["x"], (float)jo["y"], (float)jo["z"]);
+    }
+    
+    
+    static public Vector2 ToVector2(in JsonNode jn)
+    {
+        var jo = jn.AsObject();
+        return new Vector2((float)jo["x"], (float)jo["y"]);
     }
     
     

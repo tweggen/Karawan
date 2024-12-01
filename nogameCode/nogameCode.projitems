@@ -12,7 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)LuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\AfterCrashBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\Behavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\GenerateCharacterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\CharacterCreator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\car3\SpawnOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\Behavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\characters\cubes\CubeVanishBehavior.cs" />

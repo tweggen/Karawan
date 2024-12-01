@@ -149,10 +149,10 @@ public class SpawnOperator : ISpawnOperator
                     engine.world.Fragment worldFragment;
                     if (_loader.TryGetFragment(idxFragment, out worldFragment))
                     {
-                        StreetPoint? chosenStreetPoint = GenerateCharacterOperator.ChooseStreetPoint(_rnd,  worldFragment, cd);
+                        StreetPoint? chosenStreetPoint = CharacterCreator.ChooseStreetPoint(_rnd,  worldFragment, cd);
                         if (chosenStreetPoint != null)
                         {
-                            eCharacter = await GenerateCharacterOperator.GenerateCharacter(
+                            eCharacter = await CharacterCreator.GenerateCharacter(
                                 _rnd, cd, worldFragment, chosenStreetPoint, _seed);
                             ++_seed;
                         }

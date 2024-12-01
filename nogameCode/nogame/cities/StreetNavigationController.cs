@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Text.Json.Nodes;
 using engine.behave;
 using engine.world;
 using engine.streets;
 using static engine.Logger;
 using static builtin.Workarounds;
+using static builtin.extensions.JsonObjectNumerics;
 
 namespace nogame.cities;
 
@@ -440,6 +442,22 @@ public class StreetNavigationController : INavigator
         _v2Pos = new Vector2(vPos3.X, vPos3.Z);
         _v2LastSpeed = Vector3.Transform(new Vector3(0f, -1f, 0f), qRotation);
         _vu2LastDirection = new Vector2( _v2LastSpeed.X, _v2LastSpeed.Z);
+    }
+
+    
+    public void SetupFrom(JsonObject jo)
+    {
+        //_qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
+    }
+
+    
+    public void SaveTo(ref JsonObject jo)
+    {
+        JsonObject joNav = new JsonObject();
+        joNav.Add("speed", _speed );
+        joNav.Add("height", _height );
+        joNav.Add("v2Pos", From(_v2Pos) );
+        jo.Add("nav", joNav);
     }
     
 
