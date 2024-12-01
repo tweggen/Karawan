@@ -7,5 +7,10 @@ namespace engine;
  */
 public class GameAction
 {
-    
+    public string Action { get; set; }
+
+    public GameAction(string action)
+    {
+        Action = action;
+    }
 }

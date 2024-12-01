@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text.Json;
 using builtin.map;
 using engine.joyce;
@@ -14,10 +15,16 @@ namespace engine.casette;
 
 public class Loader
 {
+    private object _lo = new();
+    
     private JsonElement _jeRoot;
     private string strDefaultLoaderAssembly = "";
     private bool _traceResources = false;
     private IAssetImplementation _iAssetImpl;
+
+
+    private SortedDictionary<string, ISerializable> _mapLoaders = new();
+    
     
     static public void SetJsonElement(in JsonElement je, Action<object> action)
     {
@@ -570,6 +577,38 @@ public class Loader
 
     public void LoadGameConfig(JsonElement je)
     {
+        foreach (var kvp in _mapLoaders)
+        {
+            String[] pathParts = kvp.Key.Split('.');
+            var jeCurr = je;
+            bool isInvalid = false;
+            foreach (var part in pathParts)
+            {
+                if (!jeCurr.TryGetProperty(part, out var jeNextPart))
+                {
+                    isInvalid = true;
+                    Error($"Unable to resolve loader {kvp.Key}: unable to find {part}.");
+                    break;
+                }
+
+                jeCurr = jeNextPart;
+            }
+
+            if (isInvalid)
+            {
+                continue;
+            }
+
+            try
+            {
+                kvp.Value.SetupFrom(jeCurr);
+            }
+            catch (Exception e)
+            {
+                Error($"Unable to load from {kvp.Value}: {e}.");
+            }
+        }
+        
         if (je.TryGetProperty("globalSettings", out var jeGlobalSettings))
         {
             LoadGlobalSettings(jeGlobalSettings);
@@ -698,7 +737,7 @@ public class Loader
         }
     }
     
-
+    
     private void _loadGameConfigFile(System.IO.Stream stream)
     {
         JsonDocument jdocGame = JsonDocument.Parse(stream, new()
@@ -761,7 +800,15 @@ public class Loader
          */
         e.QueueMainThreadAction(() => { mRoot.ModuleActivate();});
     }
-    
+
+
+    public void AddLoader(string path, ISerializable loader)
+    {
+        lock (_lo)
+        {
+            _mapLoaders.Add(path, loader);
+        }
+    }
 
     public Loader(System.IO.Stream stream)
     {
