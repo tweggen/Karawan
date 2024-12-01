@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using DefaultEcs;
 using engine.news;
@@ -22,7 +23,7 @@ public class ABehavior : IBehavior
     {
     }
 
-    public virtual void SetupFrom(JsonObject jo)
+    public virtual void SetupFrom(JsonElement je)
     {
     }
 

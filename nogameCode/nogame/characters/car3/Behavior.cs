@@ -1,6 +1,7 @@
 ﻿using System;
 using nogame.cities;
 using System.Numerics;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using engine.physics;
 using engine.world;
@@ -72,9 +73,9 @@ internal class Behavior :
     }
 
     
-    public override void SetupFrom(JsonObject jo)
+    public override void SetupFrom(JsonElement je)
     {
-        base.SetupFrom(jo);
+        base.SetupFrom(je);
     }
 
     

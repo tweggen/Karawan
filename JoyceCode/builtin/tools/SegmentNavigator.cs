@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using engine;
 using engine.behave;
@@ -165,7 +166,7 @@ public class SegmentNavigator : INavigator
     }
     
     
-    public void SetupFrom(JsonObject jo)
+    public void SetupFrom(JsonElement je)
     {
         //_qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
     }
@@ -173,11 +174,9 @@ public class SegmentNavigator : INavigator
     
     public void SaveTo(ref JsonObject jo)
     {
-        //JsonObject joNav = new JsonObject();
-        //joNav.Add("speed", _speed );
-        //joNav.Add("height", _height );
-        //joNav.Add("v2Pos", From(_v2Pos) );
-        //jo.Add("nav", joNav);
+        JsonObject joNav = new JsonObject();
+        joNav.Add("speed", _speed );
+        jo.Add("nav", joNav);
     }
     
 

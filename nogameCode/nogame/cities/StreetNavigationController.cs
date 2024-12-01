@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using engine.behave;
 using engine.world;
@@ -445,7 +446,7 @@ public class StreetNavigationController : INavigator
     }
 
     
-    public void SetupFrom(JsonObject jo)
+    public void SetupFrom(JsonElement je)
     {
         //_qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
     }
