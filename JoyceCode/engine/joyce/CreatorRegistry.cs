@@ -77,6 +77,7 @@ public class CreatorRegistry : AModule
                 Creator = iCreator
             };
             _mapIds[ce.Id] = ce;
+            _mapCreators[iCreator] = ce;
             _mapNames[iCreator.GetType().ToString()] = ce;
         }
     }

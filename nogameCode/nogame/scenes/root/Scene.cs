@@ -47,7 +47,6 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<builtin.controllers.InputController>(),
         new SharedModule<InputEventPipeline>(),
-        new SharedModule<CreatorRegistry>(),
     };
 
     private bool _isMapShown = false;
@@ -301,7 +300,7 @@ public class Scene : AModule, IScene, IInputPart
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         // TXWTODO: Generatlize this
-        M<CreatorRegistry>().RegisterCreator(I.Get<nogame.characters.car3.CharacterCreator>());
+        I.Get<CreatorRegistry>().RegisterCreator(I.Get<nogame.characters.car3.CharacterCreator>());
         
         // TXWTODO: Generalize this.
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());

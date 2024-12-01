@@ -84,7 +84,8 @@ public class EntitySaver : AModule
             {
                 var iCreator = oreg.GetCreator(cCreator.CreatorId);
                 iCreator.SaveEntityTo(eCreated, out var jnEntityByCreator);
-                if (jnEntityByCreator.GetValueKind() != JsonValueKind.Null &&
+                if (null != jnEntityByCreator &&
+                    jnEntityByCreator.GetValueKind() != JsonValueKind.Null &&
                     jnEntityByCreator.GetValueKind() != JsonValueKind.Undefined)
                 {
                     joCreator = new JsonObject();
