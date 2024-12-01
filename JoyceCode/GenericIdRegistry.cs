@@ -13,7 +13,7 @@ internal class RegistryEntry<T>
 
 
 
-public class GenericRegistry<T> : IDisposable
+public class GenericIdRegistry<T> : IDisposable
 {
     private object _lo = new();
     
@@ -78,7 +78,7 @@ public class GenericRegistry<T> : IDisposable
     }
 
     
-    public GenericRegistry(uint firstId)
+    public GenericIdRegistry(uint firstId)
     {
         _nextId = firstId;
     }

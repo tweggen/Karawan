@@ -86,7 +86,8 @@
     "builtin.loader.Obj": null,
     "engine.joyce.ModelCache": null,
     "builtin.modules.satnav.Module": null,
-    "nogame.characters.car3.CharacterCreator": null,
+    "builtin.modules.inventory.PickableDirectory": null,
+    "nogame.characters.car3.CharacterCreator": null
   },
   "mapProviders":
   {
@@ -262,40 +263,40 @@
   {
     "channels": {
       "emissive-trans": {
-        "file": "atlas-emissive-trans.json",
+        "file": "atlas-emissive-trans.json"
       },
       "emissive-half-trans": {
-        "file": "atlas-emissive-half-trans.json",
+        "file": "atlas-emissive-half-trans.json"
       },
       "albedo-trans": {
-        "file": "atlas-albedo-trans.json",
+        "file": "atlas-albedo-trans.json"
       },
       "emissive": {
-        "file": "atlas-emissive.json",
+        "file": "atlas-emissive.json"
       },
       "albedo":  {
-        "file": "atlas-albedo.json",
-      },
+        "file": "atlas-albedo.json"
+      }
     },
     "textures": {
       "drink-window": {
         "emissive": { "uri": "../models/brands/drink-window-emissive.png" },
-        "albedo": { "uri": "../models/brands/drink-window-albedo.png" },
+        "albedo": { "uri": "../models/brands/drink-window-albedo.png" }
       },
       "eat-window": {
         "emissive": { "uri": "../models/brands/eat-window-emissive.png" },
-        "albedo": { "uri": "../models/brands/eat-window-albedo.png" },
+        "albedo": { "uri": "../models/brands/eat-window-albedo.png" }
       },
       "fishmongers-window": {
         "emissive": { "uri": "../models/brands/fishmongers-window-emissive.png" },
-        "albedo": { "uri": "../models/brands/fishmongers-window-albedo.png" },
+        "albedo": { "uri": "../models/brands/fishmongers-window-albedo.png" }
       },
       "empty-window": {
         "emissive": { "uri": "../models/brands/empty-window-emissive.png" },
-        "albedo": { "uri": "../models/brands/empty-window-albedo.png" },
+        "albedo": { "uri": "../models/brands/empty-window-albedo.png" }
       },
       "rgba": {
-        "albedo": { "uri": "rgba" },
+        "albedo": { "uri": "rgba" }
       },
       
       "plentomatic": { "emissive-half-trans": { "uri": "../models/brands/plentomatic.png" } },
@@ -314,8 +315,8 @@
       "StudioOchi_SpringPeople.001": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
       "StudioOchi_SpringPeople.002": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.002.png" } },
       "StudioOchi_SpringPeople.003": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
-      "Studio Ochi Vehicles": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
-    },
+      "Studio Ochi Vehicles": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } }
+    }
   },
   "resources":
   {

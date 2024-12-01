@@ -7,7 +7,7 @@ namespace engine.world;
 
 public class CreatorRegistry : AModule
 {
-    private GenericRegistry<ICreator> _reg =
+    private GenericIdRegistry<ICreator> _reg =
         new(engine.world.components.Creator.CreatorId_HardcodeMax + 1);
 
     public uint FindCreatorId(ICreator iCreator) => _reg.FindId(iCreator);
