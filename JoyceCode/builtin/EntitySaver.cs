@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DefaultEcs.Serialization;
 using engine;
-using engine.joyce;
+using engine.world;
 using Creator = engine.world.components.Creator;
 
 namespace builtin;

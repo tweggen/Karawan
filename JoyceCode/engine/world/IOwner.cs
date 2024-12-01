@@ -1,4 +1,4 @@
-namespace engine.joyce;
+namespace engine.world;
 
 public interface IOwner
 {

@@ -7,6 +7,7 @@ using engine;
 using engine.behave;
 using engine.behave.systems;
 using engine.joyce;
+using engine.world;
 using engine.news;
 using nogame.modules;
 using nogame.modules.playerhover;

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using builtin.jt;
+using builtin.modules.inventory.components;
 using engine;
 using engine.news;
 using static engine.Logger;
@@ -57,6 +58,20 @@ public class Module : AModule, IInputPart
 
     }
 
+    
+    private void _buy(Event ev)
+    {
+        ev.IsHandled = true;
+        
+        /*
+         * Add an item to the world.
+         */
+        _engine.QueueEntitySetupAction("item", (e) =>
+        {
+            // TXWTODO: Create new pickable right here.
+            //e.Set();
+        });
+    }
 
     private void _closeShop(Event ev)
     {
@@ -87,6 +102,7 @@ public class Module : AModule, IInputPart
         _engine.GamePlayState = GamePlayStates.Paused;
 
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.shop.close", _closeShop);
+        I.Get<SubscriptionManager>().Subscribe("nogame.modules.shop.buy", _buy);
 
         try
         {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using static engine.Logger;
 
-namespace engine.joyce;
+namespace engine.world;
 
 
 internal class CreatorEntry

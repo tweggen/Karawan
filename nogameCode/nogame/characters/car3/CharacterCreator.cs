@@ -18,7 +18,7 @@ using static engine.Logger;
 namespace nogame.characters.car3;
 
 
-class CharacterCreator : engine.joyce.ICreator
+class CharacterCreator : engine.world.ICreator
 {
     private class Context
     {

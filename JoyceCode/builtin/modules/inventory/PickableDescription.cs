@@ -1,4 +1,6 @@
-namespace engine.joyce;
+namespace builtin.modules.inventory;
+
+using engine;
 
 public class PickableDescription
 {

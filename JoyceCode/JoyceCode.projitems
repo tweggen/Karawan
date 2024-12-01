@@ -63,6 +63,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\components\pickable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\PickableDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavCluster.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavClusterContent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavCursor.cs" />
@@ -111,6 +112,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Color.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\editor\components\Highlight.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\GameAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\PolyTool.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\SerializableQuaternion.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\SerializableVector3.cs" />
@@ -121,13 +123,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\ISerializable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\IsPersistable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\NavMesh.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\GameAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\HierarchyWatcher.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ICreator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Index2.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\IOwner.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\CreatorRegistry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\PickableDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\TextureCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\LayerCatalogue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\MakeDisposable.cs" />
@@ -171,10 +168,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\streets\ShopFront.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\ClusterId.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\components\Creator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\CreatorRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\FixedPosViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\FragmentVisibility.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IClusterOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\ICreator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOperator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\world\IOwner.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\IViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\PlayerViewer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\world\Tags.cs" />
