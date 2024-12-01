@@ -88,6 +88,53 @@ public class Loader
     }
 
 
+    private void _loadToSerializable(JsonElement jeCurr, object target)
+    {
+        var iSerializable = target as ISerializable;
+        if (null == iSerializable)
+        {
+            Error(
+                $"Trying to load config to object of type {target.GetType().Name} failed, not ISerializable.");
+            return;
+        }
+
+        try
+        {
+            iSerializable.SetupFrom(jeCurr);
+        }
+        catch (Exception e)
+        {
+            Error($"Unable to load from config: {e}.");
+        }
+    }
+
+
+    private void _loadToSerializable(string cassettePath, object target)
+    {
+        String[] pathParts = cassettePath.Split('.');
+        var jeCurr = _jeRoot;
+        bool isInvalid = false;
+        foreach (var part in pathParts)
+        {
+            if (!jeCurr.TryGetProperty(part, out var jeNextPart))
+            {
+                isInvalid = true;
+                Error($"Unable to resolve config path {cassettePath}: unable to find {part}.");
+                break;
+            }
+
+            jeCurr = jeNextPart;
+        }
+
+        if (isInvalid)
+        {
+            return;
+        }
+
+        _loadToSerializable(jeCurr, target);
+    }
+
+
     public void LoadImplementations(JsonElement jeImplementations)
     {
         try
@@ -97,13 +144,28 @@ public class Loader
                 string interfaceName = pair.Name;
                 string implementationName = null;
                 Action<object> setupProperties = null;
+                string cassettePath = null;
+                JsonElement jeConfig = default;
+                bool haveConfig = true;
                 
                 if (pair.Value.ValueKind == JsonValueKind.Object)
                 {
+                    if (pair.Value.TryGetProperty("config", out jeConfig)
+                        && jeConfig.ValueKind == JsonValueKind.Object)
+                    {
+                        haveConfig = true;
+                    }
+                    
                     if (pair.Value.TryGetProperty("className", out var jeClassName)
                         && jeClassName.ValueKind == JsonValueKind.String)
                     {
                         implementationName = pair.Value.GetProperty("className").GetString();
+                    }
+
+                    if (pair.Value.TryGetProperty("cassettePath", out var jeCassettePath)
+                        && jeCassettePath.ValueKind == JsonValueKind.String)
+                    {
+                        cassettePath = pair.Value.GetProperty("cassettePath").GetString();
                     }
 
                     if (pair.Value.TryGetProperty("properties", out var jeProperties) 
@@ -158,6 +220,8 @@ public class Loader
                         I.Instance.RegisterFactory(type, () => { 
                             var i = Activator.CreateInstance(type);
                             if (null != setupProperties) setupProperties(i);
+                            if (haveConfig) _loadToSerializable(jeConfig, i);
+                            if (null != cassettePath) _loadToSerializable(cassettePath, i);
                             return i;
                         });
                     }
@@ -167,6 +231,8 @@ public class Loader
                         {
                             var i = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName);
                             if (null != setupProperties) setupProperties(i);
+                            if (haveConfig) _loadToSerializable(jeConfig, i);
+                            if (null != cassettePath) _loadToSerializable(cassettePath, i);
                             return i;
                         });
                     }
@@ -577,38 +643,6 @@ public class Loader
 
     public void LoadGameConfig(JsonElement je)
     {
-        foreach (var kvp in _mapLoaders)
-        {
-            String[] pathParts = kvp.Key.Split('.');
-            var jeCurr = je;
-            bool isInvalid = false;
-            foreach (var part in pathParts)
-            {
-                if (!jeCurr.TryGetProperty(part, out var jeNextPart))
-                {
-                    isInvalid = true;
-                    Error($"Unable to resolve loader {kvp.Key}: unable to find {part}.");
-                    break;
-                }
-
-                jeCurr = jeNextPart;
-            }
-
-            if (isInvalid)
-            {
-                continue;
-            }
-
-            try
-            {
-                kvp.Value.SetupFrom(jeCurr);
-            }
-            catch (Exception e)
-            {
-                Error($"Unable to load from {kvp.Value}: {e}.");
-            }
-        }
-        
         if (je.TryGetProperty("globalSettings", out var jeGlobalSettings))
         {
             LoadGlobalSettings(jeGlobalSettings);
