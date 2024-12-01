@@ -17,8 +17,10 @@ using static engine.Logger;
 
 namespace nogame.scenes.logos;
 
-public class Scene : AModule, IScene 
+public class Scene : AModule, IScene
 {
+    private const uint CameraMask = 0x02000000;
+    
     private engine.joyce.TransformApi _aTransform;
 
     private DefaultEcs.Entity _eCamera;
@@ -299,8 +301,8 @@ public class Scene : AModule, IScene
                     StartReference = TimepointTitlesongStarted,
                     StartOffset = TimeSpan.FromMilliseconds(500),
                     EndReference = TimepointTitlesongStarted,
-                    EndOffset = TimeSpan.FromMilliseconds(1200),
-                    Duration = 700,
+                    EndOffset = TimeSpan.FromMilliseconds(3000),
+                    Duration = 2500,
                     Flags = (uint)TitleCard.F.FadeoutEnd,
                     FadeOutTime = 500f,
                     Size = new(14f, 7f),
@@ -308,17 +310,17 @@ public class Scene : AModule, IScene
                         new Texture(
                             "aihao-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("aihao-emissive.png"),
                     StartTransform = new engine.joyce.components.Transform3(
-                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
+                        true, CameraMask, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f),
                     EndTransform = new engine.joyce.components.Transform3(
-                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f)
+                        true, CameraMask, Quaternion.Identity, new Vector3(0f, 0f, 0f), Vector3.One * 1.3f)
                 });
                 modTitle.Add(new TitleCard()
                 {
                     StartReference = TimepointTitlesongStarted,
-                    StartOffset = TimeSpan.FromMilliseconds(1400),
+                    StartOffset = TimeSpan.FromMilliseconds(2400),
                     EndReference = TimepointTitlesongStarted,
-                    EndOffset = TimeSpan.FromMilliseconds(2900),
-                    Duration = 700,
+                    EndOffset = TimeSpan.FromMilliseconds(3900),
+                    Duration = 1500,
                     Flags = (uint)TitleCard.F.JitterEnd,
                     Size = new(64f, 64f / 1280f * 220f),
                     AlbedoTexture =
@@ -328,9 +330,9 @@ public class Scene : AModule, IScene
                         new Texture(
                             "silicondesert-emissive.png"), // I.Get<TextureCatalogue>().FindTexture("silicondesert-emissive.png"),
                     StartTransform = new engine.joyce.components.Transform3(
-                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
+                        true, CameraMask, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f),
                     EndTransform = new engine.joyce.components.Transform3(
-                        true, 0x01000000, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
+                        true, CameraMask, Quaternion.Identity, new Vector3(0f, -4.9f, -7f), Vector3.One * 0.64f)
                 });
             }
 
@@ -388,10 +390,10 @@ public class Scene : AModule, IScene
              * We need to be as far away as the skycube is. Plus a bonus.
              */
             cCamera.FarFrustum = (float)100f;
-            cCamera.CameraMask = 0x01000000;
+            cCamera.CameraMask = CameraMask;
             _eCamera.Set(cCamera);
             _aTransform.SetVisible(_eCamera, true);
-            _aTransform.SetCameraMask(_eCamera, 0x01000000);
+            _aTransform.SetCameraMask(_eCamera, CameraMask);
             _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
         }
 
