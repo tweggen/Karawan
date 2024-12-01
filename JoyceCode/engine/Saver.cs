@@ -54,9 +54,13 @@ public class Saver : AModule
         {
             return;
         }
-        
-        OnBeforeSaveGame?.Invoke(this, reason);
-        SaveAction();
+
+        _engine.RunMainThread(() =>
+        {
+
+            OnBeforeSaveGame?.Invoke(this, reason);
+            SaveAction();
+        });
     }
 
 

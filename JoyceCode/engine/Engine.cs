@@ -570,6 +570,23 @@ public class Engine
     }
 
 
+    /**
+     * Run the given method either synchronously in the main thread
+     * or queue it async.
+     */
+    public void RunMainThread(Action action)
+    {
+        if (Thread.CurrentThread == _logicalThread)
+        {
+            action();
+        }
+        else
+        {
+            QueueMainThreadAction(action);
+        }
+    }
+    
+
     public void QueueMainThreadAction(Action action)
     {
         _workerMainThreadActions.Enqueue(action);

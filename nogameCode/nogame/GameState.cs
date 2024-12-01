@@ -21,6 +21,8 @@ public class GameState
 
     public string Story { get; set; } = "";
     
+    public string Entities { get; set; } = "";
+    
     private DateTime _gameNow = GameT0;
     public DateTime GameNow
     {

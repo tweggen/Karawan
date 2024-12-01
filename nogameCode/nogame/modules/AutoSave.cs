@@ -392,7 +392,19 @@ public class AutoSave : engine.AModule
     private void _doSave()
     {
         _setSaving(true);
+
+        var jnAllEntities = M<builtin.EntitySaver>().SaveAll();
+        
         var gs = _gameState;
+        gs.Entities = JsonSerializer.Serialize(
+            jnAllEntities,
+            new JsonSerializerOptions()
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            }
+        );
+        Trace($"Saving entities json: {gs.Entities}");
         M<DBStorage>().SaveGameState(gs);
         
         _triggerCloudSave(gs);
@@ -605,7 +617,7 @@ public class AutoSave : engine.AModule
 
     private void _handleTriggerSave()
     {
-        _save();
+        _doSave();
     }
 
 
