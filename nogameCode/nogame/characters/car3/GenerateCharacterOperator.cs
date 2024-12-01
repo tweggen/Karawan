@@ -243,6 +243,10 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                  */
                 eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0, Matrix4x4.CreateTranslation(worldFragment.Position)));
 
+                /*
+                 * Finally, remember us as the creator, so that the car will be recreated after loading.
+                 */
+                eTarget.Set(new engine.world.components.Creator() { Id = carIdx, CreatorId = 100 });
 #if DEBUG
                 float millisAfterBody = (float)sw.Elapsed.TotalMilliseconds;
                 sw.Stop();

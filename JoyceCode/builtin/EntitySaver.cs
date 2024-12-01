@@ -20,6 +20,7 @@ public class EntitySaver : AModule
 
     private class SaveComponentsReader : IComponentReader
     {
+        public bool IsEmpty = true;
         public JsonObject JOComponents { get; }= new JsonObject();
         public JsonSerializerOptions SerializerOptions { get; set; }
         
@@ -27,7 +28,11 @@ public class EntitySaver : AModule
         {
             if (Attribute.IsDefined(typeof(T), typeof(engine.IsPersistable)))
             {
-                JOComponents[typeof(T).ToString()] = JsonSerializer.SerializeToNode(component, SerializerOptions);
+                IsEmpty = true;
+                JOComponents.Add(
+                    typeof(T).ToString(),
+                    JsonSerializer.SerializeToNode(component, SerializerOptions)
+                );
             }
         }
     }
@@ -56,15 +61,42 @@ public class EntitySaver : AModule
              * Save that we have an entity, with a certain id, that by
              * incident matches the id the actual entity has.
              */
-            
+
+            string strEntity = eCreated.ToString();
+            var joAll = jnAll.AsObject();
+
             var componentReader = new SaveComponentsReader() { SerializerOptions = serializerOptions };
             eCreated.ReadAllComponents(componentReader);
-            jnAll[eCreated.ToString()]["components"] = componentReader.JOComponents;
-            ref var cCreator = ref eCreated.Get<engine.world.components.Creator>();
-            var iCreator = oreg.GetCreator(cCreator.CreatorId);
-            iCreator.SaveEntityTo(eCreated, out var jnEntityByCreator);
+            
+            JsonNode jnEntity;
+            JsonObject joEntity;
+            if (!joAll.TryGetPropertyValue(strEntity, out jnEntity))
+            {
+                joEntity = new JsonObject();
+                jnEntity = joEntity;
+                joAll.Add(strEntity, joEntity);
+            }
+            else
+            {
+                jnEntity = joAll[strEntity];
+                joEntity = jnEntity.AsObject();
+            }
 
-            jnAll[eCreated.ToString()]["creator"][iCreator.GetType().ToString()] = jnEntityByCreator;
+            if (!componentReader.IsEmpty)
+            {
+                joEntity.Add("components", componentReader.JOComponents);
+            }
+
+            ref var cCreator = ref eCreated.Get<engine.world.components.Creator>();
+            if (cCreator.CreatorId > Creator.CreatorId_HardcodeMax)
+            {
+                var iCreator = oreg.GetCreator(cCreator.CreatorId);
+                iCreator.SaveEntityTo(eCreated, out var jnEntityByCreator);
+
+                JsonObject joCreator = new JsonObject();
+                joCreator.Add(iCreator.GetType().ToString(), jnEntityByCreator);
+                joEntity.Add("creator", joCreator);
+            }
         }
         return jnAll;
     }
