@@ -401,7 +401,7 @@ public class AutoSave : engine.AModule
             new JsonSerializerOptions()
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
+                WriteIndented = false
             }
         );
         Trace($"Saving entities json: {gs.Entities}");

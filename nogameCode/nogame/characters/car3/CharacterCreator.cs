@@ -256,7 +256,7 @@ class CharacterCreator : engine.joyce.ICreator
 
     public void SaveEntityTo(DefaultEcs.Entity eCar, out JsonNode jn)
     {
-        if (!eCar.Has<Behavior>())
+        if (!eCar.Has<engine.behave.components.Behavior>())
         {
             jn = null;
             return;
