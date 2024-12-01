@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using builtin.jt;
+using builtin.modules.inventory;
 using builtin.modules.inventory.components;
 using engine;
 using engine.news;
@@ -69,7 +70,10 @@ public class Module : AModule, IInputPart
         _engine.QueueEntitySetupAction("item", (e) =>
         {
             // TXWTODO: Create new pickable right here.
-            //e.Set();
+            e.Set(new Pickable()
+            {
+                Description = I.Get<PickableDirectory>().Get("sunglasses")
+            });
         });
     }
 

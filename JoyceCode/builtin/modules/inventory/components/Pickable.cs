@@ -12,5 +12,5 @@ public struct Pickable
     /**
      * What is that we are picking up?
      */
-    public PickableDescription Desciption;
+    public PickableDescription Description;
 }

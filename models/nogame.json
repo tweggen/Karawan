@@ -86,7 +86,16 @@
     "builtin.loader.Obj": null,
     "engine.joyce.ModelCache": null,
     "builtin.modules.satnav.Module": null,
-    "builtin.modules.inventory.PickableDirectory": null,
+    "builtin.modules.inventory.PickableDirectory": {
+      "config": {
+        "sunglasses": {
+          "name": "BB Sunglasses",
+          "description": "This is the infamous sunglasses from the X2 fame.",
+          "weight": 20.0,
+          "volume": 1.0
+        }
+      }
+    },
     "nogame.characters.car3.CharacterCreator": null
   },
   "mapProviders":
