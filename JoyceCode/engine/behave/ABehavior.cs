@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using DefaultEcs;
 using engine.news;
 using engine.physics;
@@ -20,6 +21,16 @@ public class ABehavior : IBehavior
     public virtual void Sync(in Entity entity)
     {
     }
+
+    public virtual void SetupFrom(JsonObject jo)
+    {
+    }
+
+    
+    public virtual void SaveTo(ref JsonObject jo)
+    {
+    }
+
 
     public virtual void OnDetach(in Entity entity)
     {

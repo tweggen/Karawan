@@ -61,30 +61,22 @@ public class EntitySaver : AModule
              * Save that we have an entity, with a certain id, that by
              * incident matches the id the actual entity has.
              */
-
             string strEntity = eCreated.ToString();
             var joAll = jnAll.AsObject();
 
             var componentReader = new SaveComponentsReader() { SerializerOptions = serializerOptions };
             eCreated.ReadAllComponents(componentReader);
-            
-            JsonNode jnEntity;
-            JsonObject joEntity;
-            if (!joAll.TryGetPropertyValue(strEntity, out jnEntity))
-            {
-                joEntity = new JsonObject();
-                jnEntity = joEntity;
-                joAll.Add(strEntity, joEntity);
-            }
-            else
-            {
-                jnEntity = joAll[strEntity];
-                joEntity = jnEntity.AsObject();
-            }
 
+            /*
+             * This is what we might need to store. We take care to save a record only for entities
+             * that do exist in some way.
+             */
+            JsonObject joComponents = null;
+            JsonObject joCreator = null;
+            
             if (!componentReader.IsEmpty)
             {
-                joEntity.Add("components", componentReader.JOComponents);
+                joComponents = componentReader.JOComponents;
             }
 
             ref var cCreator = ref eCreated.Get<engine.world.components.Creator>();
@@ -92,10 +84,32 @@ public class EntitySaver : AModule
             {
                 var iCreator = oreg.GetCreator(cCreator.CreatorId);
                 iCreator.SaveEntityTo(eCreated, out var jnEntityByCreator);
+                if (jnEntityByCreator.GetValueKind() != JsonValueKind.Null &&
+                    jnEntityByCreator.GetValueKind() != JsonValueKind.Undefined)
+                {
+                    joCreator = new JsonObject();
+                    joCreator.Add(iCreator.GetType().ToString(), jnEntityByCreator);
+                }
+            }
 
-                JsonObject joCreator = new JsonObject();
-                joCreator.Add(iCreator.GetType().ToString(), jnEntityByCreator);
-                joEntity.Add("creator", joCreator);
+            if (joComponents != null || joCreator != null)
+            {
+                JsonNode jnEntity;
+                JsonObject joEntity;
+                if (!joAll.TryGetPropertyValue(strEntity, out jnEntity))
+                {
+                    joEntity = new JsonObject();
+                    jnEntity = joEntity;
+                    joAll.Add(strEntity, joEntity);
+                }
+                else
+                {
+                    jnEntity = joAll[strEntity];
+                    joEntity = jnEntity.AsObject();
+                }
+
+                if (joComponents != null) joEntity.Add("components", joComponents);
+                if (joCreator != null) joEntity.Add("creator", joCreator);
             }
         }
         return jnAll;

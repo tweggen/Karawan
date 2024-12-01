@@ -1,18 +1,16 @@
+using System.Linq;
 using System.Numerics;
-using engine;
+using System.Text.Json.Nodes;
 using engine.behave;
-using engine.behave.components;
 using engine.physics;
-using engine.world;
 using static engine.Logger;
+using static builtin.extensions.JsonObjectNumerics;
 
 namespace builtin.tools;
 
 public class SimpleNavigationBehavior : ABehavior
 {
     engine.Engine _engine;
-    engine.world.ClusterDesc _clusterDesc;
-    engine.streets.StreetPoint _streetPoint;
     INavigator _inav;
     private Quaternion _qPrevRotation = Quaternion.Identity;
 
@@ -22,16 +20,12 @@ public class SimpleNavigationBehavior : ABehavior
         get => _inav;
     }
     
+    
     public override void OnCollision(ContactEvent cev)
     {
     }
 
     
-    public override void Sync(in DefaultEcs.Entity entity)
-    {
-    }
-
-
     public override void Behave(in DefaultEcs.Entity entity, float dt)
     {
         _inav.NavigatorBehave(dt);
@@ -49,6 +43,25 @@ public class SimpleNavigationBehavior : ABehavior
     }
 
     
+    public override void Sync(in DefaultEcs.Entity entity)
+    {
+    }
+
+
+    public override void SetupFrom(JsonObject jo)
+    {
+        _qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
+    }
+
+    
+    public override void SaveTo(ref JsonObject jo)
+    {
+        JsonObject joSNO = new JsonObject();
+        joSNO.Add("prevRotation", From(_qPrevRotation) );
+        jo.Add("sno", joSNO);
+    }
+
+
     public SimpleNavigationBehavior(
         in engine.Engine engine0,
         in INavigator inav

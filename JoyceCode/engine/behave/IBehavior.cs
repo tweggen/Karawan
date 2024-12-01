@@ -1,9 +1,10 @@
 ﻿
 using System;
+using System.Text.Json.Nodes;
 
 namespace engine.behave;
 
-public interface IBehavior
+public interface IBehavior : engine.ISerializable
 {
     public void OnCollision(engine.physics.ContactEvent cev);
 
@@ -11,7 +12,7 @@ public interface IBehavior
      * Called per logical frame: Do your behavior.
      */
     public void Behave(in DefaultEcs.Entity entity, float dt);
-    
+
     /**
      * Called after a given period of inactivity: Sync with reality before
      * continueing your behavior.

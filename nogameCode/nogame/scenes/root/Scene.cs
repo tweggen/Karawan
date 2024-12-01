@@ -46,7 +46,8 @@ public class Scene : AModule, IScene, IInputPart
         new MyModule<builtin.modules.Stats>() { ShallActivate = false },
         new SharedModule<nogame.modules.story.Narration>(),
         new SharedModule<builtin.controllers.InputController>(),
-        new SharedModule<InputEventPipeline>()
+        new SharedModule<InputEventPipeline>(),
+        new SharedModule<CreatorRegistry>(),
     };
 
     private bool _isMapShown = false;
@@ -299,6 +300,8 @@ public class Scene : AModule, IScene, IInputPart
 
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
+        M<CreatorRegistry>().RegisterCreator();
+        // TXWTODO: Generalize this.
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);

@@ -1,18 +1,19 @@
 ﻿using System;
 using nogame.cities;
 using System.Numerics;
+using System.Text.Json.Nodes;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
 
 namespace nogame.characters.car3;
 
-internal class Behavior : builtin.tools.SimpleNavigationBehavior
+internal class Behavior :
+    builtin.tools.SimpleNavigationBehavior
 {
     private engine.Engine _engine;
     private StreetNavigationController _snc;
     private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
-
 
     /**
      * Handle my collisions as a kinematic object.
@@ -70,7 +71,19 @@ internal class Behavior : builtin.tools.SimpleNavigationBehavior
         }
     }
 
+    
+    public override void SetupFrom(JsonObject jo)
+    {
+        base.SetupFrom(jo);
+    }
 
+    
+    public override void SaveTo(ref JsonObject jo)
+    {
+        base.SaveTo(ref jo);
+    }
+
+    
     public float Speed
     {
         get => _snc.Speed;

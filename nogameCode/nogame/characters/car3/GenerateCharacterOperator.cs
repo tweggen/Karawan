@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using engine;
 using engine.joyce;
@@ -16,7 +18,9 @@ using static engine.Logger;
 namespace nogame.characters.car3;
 
 
-class GenerateCharacterOperator : engine.world.IFragmentOperator
+class GenerateCharacterOperator : 
+    engine.world.IFragmentOperator, 
+    engine.joyce.ICreator
 {
     private class Context
     {
@@ -39,14 +43,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     private static List<string> _primarycolors = new List<string>()
     {
-#if false
-        "#ff88ee33",
-        "#ff224411",
-        "#ff444433",
-        "#ffcc2244",
-        "#ff164734",
-        "#ff209897"
-#else
         "#ff000000",
         "#ff0000ff",
         "#ff00ff00",
@@ -55,7 +51,6 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
         "#ffff00ff",
         "#ffffff00"
         //"#ffffffff"
-#endif
     };
 
     private static engine.audio.Sound _getCar3Sound(int i)
@@ -84,6 +79,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
     private int _characterIndex = 0;
 
+    
     public string FragmentOperatorGetPath()
     {
         return $"7020/GenerateCar3CharacterOperatar/{_myKey}/{_clusterDesc.IdString}";
@@ -100,8 +96,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     {
         return $"car{5 + carIdx}.obj";
     }
-
-
+    
 
     static public StreetPoint? ChooseStreetPoint(builtin.tools.RandomSource rnd, Fragment worldFragment, ClusterDesc clusterDesc)
     {
@@ -265,6 +260,36 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
     }
 
 
+    // ICreator
+    public void SetupEntityFrom(DefaultEcs.Entity eLoaded, in JsonElement je)
+    {
+        /*
+         * We might have cars serialized we do want to have restored.
+         * Get them restored.
+         */        
+    }
+
+
+    public void SaveEntityTo(DefaultEcs.Entity eCar, out JsonNode jn)
+    {
+        if (!eCar.Has<Behavior>())
+        {
+            jn = null;
+            return;
+        }
+        ref var cBehavior = ref eCar.Get<engine.behave.components.Behavior>();
+                
+        /*
+         * We might want to save some cars.
+         * If we are here, we previously marked them with a Creator tag.
+         */
+        var jo = new JsonObject();
+        jn = jo;
+        if (cBehavior.Provider != null)
+        {
+            cBehavior.Provider.SaveTo(ref jo);
+        }
+    }
 
     public Func<Task> FragmentOperatorApply(engine.world.Fragment worldFragment, FragmentVisibility visib) => new (async () =>
     {
