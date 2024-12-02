@@ -218,6 +218,7 @@ class CharacterCreator : engine.world.ICreator
                  */
                 eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0, Matrix4x4.CreateTranslation(worldFragment.Position)));
 
+#if false
                 /*
                  * Finally, remember us as the creator, so that the car will be recreated after loading.
                  */
@@ -226,6 +227,7 @@ class CharacterCreator : engine.world.ICreator
                     Id = carIdx, 
                     CreatorId = (ushort) I.Get<CreatorRegistry>().FindCreatorId(I.Get<CharacterCreator>())
                 });
+#endif
 #if DEBUG
                 float millisAfterBody = (float)sw.Elapsed.TotalMilliseconds;
                 sw.Stop();
