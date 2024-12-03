@@ -91,8 +91,20 @@
         "sunglasses": {
           "name": "BB Sunglasses",
           "description": "This is the infamous sunglasses from the X2 fame.",
-          "weight": 20.0,
-          "volume": 1.0
+          "weight": 0.01,
+          "volume": 0.2
+        },
+        "fakesilverwatch": {
+          "name": "Silver Looking Watching",
+          "description": "This watch might have had better days, but it appears to reflect the neon lights and feels cold at your wrist.",
+          "weight": 0.02,
+          "volume": 0.1
+        },
+        "necklace": {
+          "name": "Comic necklace",
+          "description": "This necklace comes with a thing attached that looks like an otherworldly comic franchise.",
+          "weight": 0.01,
+          "volume": 0.05
         }
       }
     },

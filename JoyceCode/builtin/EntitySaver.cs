@@ -120,19 +120,33 @@ public class EntitySaver : AModule
     /**
      * Must be called from logical thread
      */
-    public void SetupFrom(JsonElement jeAll)
+    public void LoadAll(JsonElement jeAll)
     {
-        foreach (var jpEntity in jeValue.EnumerateObject().GetEnumerator())
+        foreach (var jpEntity in jeAll.EnumerateObject())
         {
             var strEntityId = jpEntity.Name;
             var jeEntity = jpEntity.Value;
 
-            if (jeEntity.)
-            foreach (var jpCreator in jeAll.EnumerateObject().GetEnumerator())
+            var e = I.Get<Engine>().GetEcsWorld().CreateEntity();
+
+            if (jeEntity.TryGetProperty("components", out var jeComponents))
             {
-                var strCreatorType = jpCreator.Name;
-                var jeValue = jpCreator.Value;
+                foreach (var jpComponent in jeComponents.EnumerateObject())
+                {
+                    var strComponentName = jpComponent.Name;
+                    var jeComponent = jpComponent.Value;
+
+                    var type = Type.GetType(strComponentName);
+                    JsonSerializer.Deserialize(jeComponent.GetRawText(), type);
+                    
+                    
+                }
             }
+
+            if (jeEntity.TryGetProperty("creator", out var jeCreator))
+            {
+            }
+            
         }
     }
 }

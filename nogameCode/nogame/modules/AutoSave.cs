@@ -404,6 +404,7 @@ public class AutoSave : engine.AModule
                 WriteIndented = false
             }
         );
+
         Trace($"Saving entities json: {gs.Entities}");
         M<DBStorage>().SaveGameState(gs);
         
@@ -449,6 +450,22 @@ public class AutoSave : engine.AModule
 
     private void _afterLoad(GameState gs)
     {
+        try
+        {
+            JsonDocument jdocGameState = JsonDocument.Parse(gs.Entities, 
+                new()
+                {
+                    AllowTrailingCommas = true
+                });
+            var jeRoot = jdocGameState.RootElement;
+
+            M<builtin.EntitySaver>().LoadAll(jeRoot);
+        }
+        catch (Exception e)
+        {
+            Error($"Unable to restore entites from game state: {e}.");
+        }
+
         M<Saver>().CallAfterLoad(gs);
     }
     

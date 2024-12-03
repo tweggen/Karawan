@@ -115,6 +115,15 @@ public class ObjectFactory<K, T> : IDisposable where K : IComparable
             _mapObjects[name] = instanceEntry;
         }
     }
+
+
+    public bool Has(K name)
+    {
+        lock (_lo)
+        {
+            return _mapObjects.ContainsKey(name);
+        }
+    }
     
     
     public T Get(K name)

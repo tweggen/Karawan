@@ -64,6 +64,14 @@ public class Module : AModule, IInputPart
     private void _buy(Event ev)
     {
         ev.IsHandled = true;
+        /*
+         * Do we know the item?
+         */
+        if (!I.Get<PickableDirectory>().Has(ev.Code))
+        {
+            Error($"Configuration error: Unable to find item with the given code.");
+            return;
+        }
         
         /*
          * Add an item to the world.
