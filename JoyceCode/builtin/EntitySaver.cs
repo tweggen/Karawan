@@ -120,20 +120,18 @@ public class EntitySaver : AModule
     /**
      * Must be called from logical thread
      */
-    public void RecreateAll(JsonElement jeAll)
+    public void SetupFrom(JsonElement jeAll)
     {
-        foreach (var jpCreator in jeAll.EnumerateObject().GetEnumerator())
+        foreach (var jpEntity in jeValue.EnumerateObject().GetEnumerator())
         {
-            var strCreatorType = jpCreator.Name;
-            var jeValue = jpCreator.Value;
-            
-            
-            foreach (var jpEntity in jeValue.EnumerateObject().GetEnumerator())
+            var strEntityId = jpEntity.Name;
+            var jeEntity = jpEntity.Value;
+
+            if (jeEntity.)
+            foreach (var jpCreator in jeAll.EnumerateObject().GetEnumerator())
             {
-                var strEntityId = jpEntity.Name;
-                var jeEntity = jpEntity.Value;
-                
-                
+                var strCreatorType = jpCreator.Name;
+                var jeValue = jpCreator.Value;
             }
         }
     }
