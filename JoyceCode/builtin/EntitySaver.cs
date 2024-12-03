@@ -28,7 +28,7 @@ public class EntitySaver : AModule
         {
             if (Attribute.IsDefined(typeof(T), typeof(engine.IsPersistable)))
             {
-                IsEmpty = true;
+                IsEmpty = false;
                 JOComponents.Add(
                     typeof(T).ToString(),
                     JsonSerializer.SerializeToNode(component, SerializerOptions)

@@ -6,6 +6,7 @@ using builtin.modules.inventory;
 using builtin.modules.inventory.components;
 using engine;
 using engine.news;
+using engine.world.components;
 using static engine.Logger;
 
 namespace nogame.modules.shop;
@@ -74,6 +75,7 @@ public class Module : AModule, IInputPart
             {
                 Description = I.Get<PickableDirectory>().Get("sunglasses")
             });
+            e.Set(new Creator(Creator.CreatorId_Hardcoded));
         });
     }
 

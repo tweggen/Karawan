@@ -7,6 +7,7 @@ namespace builtin.modules.inventory.components;
  * If this component is attached to some entity, the entity can be
  * detached from its current parent and become attached to the inventory entity. 
  */
+[engine.IsPersistable]
 public struct Pickable
 {
     /**
