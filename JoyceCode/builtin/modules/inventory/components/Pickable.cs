@@ -1,3 +1,4 @@
+using engine;
 using engine.joyce;
 
 namespace builtin.modules.inventory.components;
@@ -13,5 +14,13 @@ public struct Pickable
     /**
      * What is that we are picking up?
      */
+    public string PickableId {
+        get => Description.Path;
+        set
+        {
+            Description = I.Get<PickableDirectory>().Get(value);
+        }
+    }
+
     public PickableDescription Description;
 }
