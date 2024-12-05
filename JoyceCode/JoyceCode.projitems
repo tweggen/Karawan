@@ -113,6 +113,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\CameraInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\casette\Loader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\Color.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\draw\DoubleBufferedFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\editor\components\Highlight.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\GameAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\geom\PolyTool.cs" />

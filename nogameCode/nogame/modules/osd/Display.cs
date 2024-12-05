@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using engine;
@@ -19,36 +19,18 @@ public class Display : engine.AModule
     
     private engine.joyce.TransformApi _aTransform;
 
-    /**
-     * This is the standard framebuffer we draw into.
-     */
-    private engine.draw.IFramebuffer _framebuffer;
-    
-    /**
-     * This is the 3d mesh textured with this framebuffer. 
-     */
-    DefaultEcs.Entity _eFramebuffer;
-
-    /**
-     * Default draw context.
-     */
+    private engine.draw.DoubleBufferedFramebuffer _framebuffer;
+    private DefaultEcs.Entity _eFramebuffer;
     private engine.draw.Context _drawContext;
+    private engine.joyce.Texture _textureFramebuffer;
     
     private uint _fbpos = 0;
 
     private readonly uint _width = 768;
-    public uint Width
-    {
-        get => _width;
-    }
+    public uint Width => _width;
     
     private readonly uint _height = 768*9/16;
-
-    public uint Height
-    {
-        get => _height;
-    }
-
+    public uint Height => _height;
 
     private engine.news.Event _osdClickEventFactory(
         DefaultEcs.Entity e, 
@@ -61,18 +43,6 @@ public class Display : engine.AModule
             .AsEnumerable();
         
         Vector2 v2OsdPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
-        //List<Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event>> listClickables = new();
-
-        #if false
-        foreach (var eCand in clickableEntities)
-        {
-            ref var cOSDText = ref eCand.Get<engine.draw.components.OSDText>();
-
-            if (cOSDText.ScreenPos.X == -1000f) continue;
-
-            Trace($"have clickable {cOSDText.Position} + {cOSDText.Size}: cOSDText");
-        }
-        #endif
 
         Trace($"Handling relative click {v2OsdPos}");
         foreach (var eCand in clickableEntities)
@@ -85,14 +55,11 @@ public class Display : engine.AModule
                 continue;
             }
 
-            //Trace($"testing {v2ScreenPos} + {cOsdText.Size}: cOSDText {cOsdText.Text}");
             if (v2OsdPos.X >= v2ScreenPos.X
                 && v2OsdPos.Y >= v2ScreenPos.Y
                 && v2OsdPos.X < (v2ScreenPos.X + cOsdText.Size.X)
                 && v2OsdPos.Y < (v2ScreenPos.Y + cOsdText.Size.Y))
             {
-                // Trace($"matching {v2ScreenPos} + {cOsdText.Size}: cOSDText");
-                //listClickables.Add(eCand.Get<Clickable>().ClickEventFactory);
                 return eCand.Get<Clickable>().ClickEventFactory(e, cev, v2OsdPos);
             }
         }
@@ -100,27 +67,27 @@ public class Display : engine.AModule
         return null;
     }
 
-
     private void _setupOSD()
     {
-            
         _drawContext = new engine.draw.Context();
-        _framebuffer = new engine.ross.SkiaSharpFramebuffer("fbOsd", _width, _height);
+        
+        var buffer1 = new engine.ross.SkiaSharpFramebuffer("fbOsd_1", _width, _height);
+        var buffer2 = new engine.ross.SkiaSharpFramebuffer("fbOsd_2", _width, _height);
+        _framebuffer = new engine.draw.DoubleBufferedFramebuffer(buffer1, buffer2);
 
         {
             _eFramebuffer = _engine.CreateEntity("Framebuffer");
             
-            // engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreateCubeMesh(4f);
             engine.joyce.Mesh meshFramebuffer = engine.joyce.mesh.Tools.CreatePlaneMesh(
                 "osd", new Vector2(2f, 2f*9f/16f));
             meshFramebuffer.UploadImmediately = true;
-            engine.joyce.Texture textureFramebuffer = new(_framebuffer)
+            _textureFramebuffer = new(_framebuffer.GetDisplayBuffer())
             {
                 FilteringMode = engine.joyce.Texture.FilteringModes.Framebuffer
             };
             engine.joyce.Material materialFramebuffer = new();
             materialFramebuffer.UploadImmediately = true;
-            materialFramebuffer.EmissiveTexture = textureFramebuffer;
+            materialFramebuffer.EmissiveTexture = _textureFramebuffer;
             materialFramebuffer.HasTransparency = true;
 
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(materialFramebuffer, meshFramebuffer), 100f);
@@ -136,7 +103,6 @@ public class Display : engine.AModule
         }
     }
     
-
     private uint _frameCounter = 0;
     private readonly uint _renderSubDiv = 2;
     private float _dtTotal = 0f;
@@ -159,37 +125,27 @@ public class Display : engine.AModule
             renderOsdSystem.ReferencePosition = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
         }
         renderOsdSystem.Update(dtTotal);
+        
+        // Update texture after the render system has swapped buffers
+        _textureFramebuffer.Framebuffer = _framebuffer.GetDisplayBuffer();
     }
-
     
     public override void ModuleDeactivate()
     {
         DeactivateMyModule<RenderOSDSystem>();
-
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogical;
-
         base.ModuleDeactivate();
     }
-
     
     public override void ModuleActivate()
     {
         base.ModuleActivate();
- 
-        /*
-         * local shortcuts.
-         */
         _aTransform = I.Get<engine.joyce.TransformApi>();
-
-
         _engine.AddModule(this);
-
         _engine.OnLogicalFrame += _onLogical;
-        
         _setupOSD();
         M<RenderOSDSystem>().SetFramebuffer(_framebuffer);
         ActivateMyModule<RenderOSDSystem>();
-
     }
 }

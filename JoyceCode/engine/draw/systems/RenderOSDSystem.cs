@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using builtin.tools;
@@ -9,30 +9,19 @@ using static engine.Logger;
 
 namespace engine.draw.systems;
 
-
-/**
- * Straightforward implementation that renders every frame entirely without any optimization.
- */
 [DefaultEcs.System.With(typeof(draw.components.OSDText))]
 public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModule
 {
     private object _lo = new();
-    
     protected ModuleTracker _moduleTracker;
-    
     private engine.Engine _engine;
-    private IFramebuffer? _framebuffer = null;
-
+    private DoubleBufferedFramebuffer? _framebuffer = null;
     private draw.Context _dc;
-
     private Vector2 _vOSDViewSize;
-
     private bool _clearWholeScreen = true;
     private builtin.tools.CameraWatcher _cameraWatcher;
-
     public Vector3 ReferencePosition = Vector3.Zero;
-    
-    
+
     protected override void Update(double dt, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
         if (null == _framebuffer)
@@ -236,9 +225,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
         }
 
         _cameraWatcher = I.Get<CameraWatcher>();
-
         _vOSDViewSize = new Vector2(_framebuffer.Width, _framebuffer.Height);
-
         _framebuffer.BeginModification();
 
         if (_clearWholeScreen)
@@ -248,7 +235,6 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
                 new Vector2(0, 0),
                 new Vector2(_framebuffer.Width, _framebuffer.Height));
         }
-
     }
 
     protected override void PostUpdate(double dt)
@@ -260,8 +246,31 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
         _framebuffer.EndModification();
     }
 
-    
-    protected T M<T>() where T : class => _moduleTracker.M<T>();
+    public void SetFramebuffer(DoubleBufferedFramebuffer framebuffer)
+    {
+        _framebuffer = framebuffer;
+        
+        if (framebuffer == null)
+        {
+            return;
+        }
+        
+        // Initial clear of both buffers
+        _dc.FillColor = 0x00000000;
+        _framebuffer.BeginModification();
+        _framebuffer.ClearRectangle(_dc,
+            new Vector2(0, 0), 
+            new Vector2(_framebuffer.Width-1f, _framebuffer.Height-1f));
+        _framebuffer.EndModification();
+        
+        _framebuffer.BeginModification();
+        _framebuffer.ClearRectangle(_dc,
+            new Vector2(0, 0), 
+            new Vector2(_framebuffer.Width-1f, _framebuffer.Height-1f));
+        _framebuffer.EndModification();
+    }
+
+    public T M<T>() where T : class => _moduleTracker.M<T>();
 
     public virtual IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -269,20 +278,14 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
     };
     
     public virtual void ModuleDeactivate() => _moduleTracker.ModuleDeactivate();
-
     
     public virtual void ModuleActivate() 
     {
-        /*
-         * Generate the dependencies on demand. This is not possible at construction time.
-         */
         _moduleTracker.ModuleDependencies = ModuleDepends();
         _moduleTracker.ModuleActivate();  
     } 
     
-    
     public virtual bool IsModuleActive() => _moduleTracker._isActivated;
-
     
     public override void Dispose()
     {
@@ -290,32 +293,11 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
         base.Dispose();
     }
 
-
-    public void SetFramebuffer(IFramebuffer framebuffer)
-    {
-        _framebuffer = framebuffer;
-        if (null == _framebuffer)
-        {
-            return;
-        }
-        
-        /*
-         * Do an initial clear of the framebuffer,
-         */
-        _dc.FillColor = 0x00000000;
-        _framebuffer.ClearRectangle( _dc,
-            new Vector2(0, 0), 
-            new Vector2(_framebuffer.Width-1f, _framebuffer.Height-1f));
-        
-    }
-    
-    
     public RenderOSDSystem()
         : base(I.Get<Engine>().GetEcsWorld())
     {
         _engine = I.Get<Engine>();
         _moduleTracker = new() { Module = this };
-
         _dc = new();
     }
 }
