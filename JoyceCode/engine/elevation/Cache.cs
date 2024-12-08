@@ -557,8 +557,8 @@ namespace engine.elevation
              * Also, for prevision reasons, we count the iterations in an integer variable.
              * cnt == 0 means the start position "behind" the v3Start.
              */
-            int cntMax = (int) Single.Ceiling(maxlen * world.MetaGen.GroundResolution / (world.MetaGen.FragmentSize));
-            for (int cnt=1; cnt<cntMax; cnt++ )
+            int cntMax = (int) Single.Ceiling((maxlen+dStart) * world.MetaGen.GroundResolution / (world.MetaGen.FragmentSize));
+            for (int cnt=1; cnt<=cntMax; cnt++ )
             {
                 /*
                  * Am I above or below where I am?
@@ -609,7 +609,6 @@ namespace engine.elevation
             in string layer
         )
         {
-
             // TXWTODO: Double code, also in CacheGetAt.
             var fs = world.MetaGen.FragmentSize;
             world.MetaGen.GetFragmentRect(i, k, out var rect2Fragment);

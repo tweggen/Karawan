@@ -543,14 +543,13 @@ public class FollowCameraController : IInputPart
         if (mapCollisions.Count > 0)
         {
             float l0 = mapCollisions.Keys.First();
-            //CollisionProperties props = mapCollisions.Values.First();
 
             /*
              * This is the real collision.
              * Look, if our way from the carrot to here still would be
              * obstructed by the floor
              */
-            if (false && engine.elevation.Cache.Instance().ElevationCacheRayCast(
+            if (engine.elevation.Cache.Instance().ElevationCacheRayCast(
                     vCarrotPosition, vDiff, l, out var lFloor))
             {
                 /*
