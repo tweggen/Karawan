@@ -47,6 +47,10 @@
             
             <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuInventory")'>Inventory...</option>
             
+            <for>
+                <text color="#666666">Test line</text>
+            </for>
+            
             <option color='#999999' onClick='os.exit()'>Exit...</option>
         </vbox>
     </view>

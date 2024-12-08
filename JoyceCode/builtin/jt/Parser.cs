@@ -377,8 +377,10 @@ public class Parser
                 var items = new List<int>() { 1, 2, 3 };
                 foreach (var item in items)
                 {
-                    w = BuildWidget(xWidget);
-                    wParent.AddChild(w);
+                    foreach (XmlNode xnChild in xWidget.ChildNodes)
+                    {
+                        BuildChildNode(xnChild, wParent);
+                    }
                 }
                 break;
             case "if":
