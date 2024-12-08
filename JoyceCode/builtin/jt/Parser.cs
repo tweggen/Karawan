@@ -34,6 +34,12 @@ public class TypeDescriptor
 }
 
 
+public class StructureDescriptor
+{
+    public Action<XmlNode, Widget> BuildAction;
+}
+
+
 public class Parser
 {
     private XmlDocument _xDoc;
@@ -70,7 +76,13 @@ public class Parser
             }
         }
     }
+    
+    
+    private readonly SortedDictionary<string, StructureDescriptor> _mapStructDesc = new()
+    {
 
+    };
+    
 
     private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
     {
@@ -83,6 +95,17 @@ public class Parser
                 {
                     { "focussable", false },
                 } 
+            }
+        },
+        {
+            "for", new ()
+            {
+                WidgetType = typeof(builtin.jt.Widget),
+                ParentType = null,
+                TemplateProperties = new()
+                {
+                    { "focussable", false }
+                }
             }
         },
         {
@@ -241,13 +264,20 @@ public class Parser
     {
         w["parser"] = this;
     }
+
+
+    public bool TryGetTDesc(XmlElement xWidget, out TypeDescriptor tdesc)
+    {
+        string strType = xWidget.LocalName;
+        return _mapTypes.TryGetValue(strType, out tdesc);
+    }
     
     
     public Widget BuildSelfWidget(XmlElement xWidget, out TypeDescriptor tdesc)
     {
         string strType = xWidget.LocalName;
         
-        if (!_mapTypes.TryGetValue(strType, out tdesc))
+        if (!TryGetTDesc(xWidget, out tdesc))
         {
             ErrorThrow<ArgumentException>($"Invalid type {strType}.");
             return null;
@@ -331,42 +361,73 @@ public class Parser
     }
 
 
-    public Widget BuildText(XmlText xText)
+    public void BuildText(XmlText xText, Widget wParent)
     {
-        return null;
     }
     
+    
+    public void BuildChildElement(XmlElement xWidget, Widget wParent)
+    {
+        string strNode = xWidget.LocalName;
+        Widget w;
 
-    public Widget BuildWidget(XmlElement xWidget)
+        switch (strNode)
+        {
+            case "for":
+                var items = new List<int>() { 1, 2, 3 };
+                foreach (var item in items)
+                {
+                    w = BuildWidget(xWidget);
+                    wParent.AddChild(w);
+                }
+                break;
+            case "if":
+                break;
+            default:
+                w = BuildWidget(xWidget);
+                wParent.AddChild(w);
+                break;
+        }
+    }
+
+
+    public void BuildChildNode(XmlNode xnChild, Widget wParent)
+    {
+        switch (xnChild.NodeType)
+        {
+            case XmlNodeType.None:
+            case XmlNodeType.Attribute:
+                break;
+            case XmlNodeType.Text:
+                BuildText(xnChild as XmlText, wParent);
+                break;
+            case XmlNodeType.Element:
+                BuildChildElement(xnChild as XmlElement, wParent);
+                break;
+        }
+    }
+
+
+    public void BuildChildrenElements(XmlElement xParent, Widget wParent)
+    {
+        /*
+         * Then iterate through its children.
+         */
+        foreach (XmlNode xnChild in xParent.ChildNodes)
+        {
+            BuildChildNode(xnChild, wParent);
+        }
+    }
+
+
+    public Widget? BuildWidget(XmlElement xWidget)
     {
         /*
          * Create the widget on its own
          */
         Widget w = BuildSelfWidget(xWidget, out var tdesc);
-        
-        /*
-         * Then iterate through its children.
-         */
-        foreach (XmlNode xnChild in xWidget.ChildNodes)
-        {
-             
-            switch (xnChild.NodeType)
-            {
-                case XmlNodeType.None:
-                    break;
-                case XmlNodeType.Element:
-                    Widget wChildElement = BuildWidget(xnChild as XmlElement);
-                    w.AddChild(wChildElement);
-                    break;
-                case XmlNodeType.Attribute:
-                    break;
-                case XmlNodeType.Text:
-                    /*
-                     * Plain text is added to the text property of the parent widget.
-                     */
-                    break;
-            }
-        }
+
+        BuildChildrenElements(xWidget, w);
         
         /*
          * Finally, the type specific operator, after all children and attributes
