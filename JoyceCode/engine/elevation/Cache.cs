@@ -507,6 +507,43 @@ namespace engine.elevation
              */
             float dStart = realMajorStart - gridMajorStart;
             
+            ElevationPixel epCurrent;
+            var getElevationPixel = (in Vector3 v3Abs) =>
+            {
+                Index3 i3TileCurrent = PosToIndex3(v3Abs);
+                
+                /*
+                 * First make sure we can look up everything.
+                 */
+                Index3 i3FragmentCurrent = ToFragment(i3TileCurrent);
+                if (null == ceCurrent || i3FragmentCurrent != i3CacheFragment)
+                {
+                    ceCurrent = ElevationCacheGetAt(i3FragmentCurrent.I, i3FragmentCurrent.K, TOP_LAYER);
+                    i3CacheFragment = i3FragmentCurrent;
+                    v3CacheFragment = Fragment.Index3ToPos(i3CacheFragment);
+                }
+                
+                /*
+                 * Now look, if we are above or below the grounds here.
+                 */
+                return ceCurrent.GetElevationPixelAt(v3Abs-v3CacheFragment);
+            };
+            
+
+            /*
+             * Before the loop, we need to find out if the precise starting location
+             * is below or above the ground.
+             */
+            epCurrent = getElevationPixel(v3Start);
+            if (epCurrent.Height > v3Start.Y)
+            {
+                /*
+                 * Starting point already below surface, violaring the condiotions.
+                 */
+                intersect = 0f;
+                return true;
+            }
+                
             /*
              * Inside this loop, we iterate in matters of elevation pixels aka tiles.
              * We know that we started at an elevation pixel, so we just need to
@@ -521,7 +558,7 @@ namespace engine.elevation
              * cnt == 0 means the start position "behind" the v3Start.
              */
             int cntMax = (int) Single.Ceiling(maxlen * world.MetaGen.GroundResolution / (world.MetaGen.FragmentSize));
-            for (int cnt=0; cnt<cntMax; cnt++ )
+            for (int cnt=1; cnt<cntMax; cnt++ )
             {
                 /*
                  * Am I above or below where I am?
@@ -535,37 +572,22 @@ namespace engine.elevation
                                  * world.MetaGen.FragmentSize
                                  / world.MetaGen.GroundResolution;
                 Vector3 v3RayEndCurrent = v3Start + v3Ray * dCurrent;
-                Index3 i3TileCurrent = PosToIndex3(v3RayEndCurrent);
+
+                epCurrent = getElevationPixel(v3RayEndCurrent);
                 
-                /*
-                 * First make sure we can look up everything. 
-                 */
-                Index3 i3FragmentCurrent = ToFragment(i3TileCurrent);
-                if (null == ceCurrent || i3FragmentCurrent != i3CacheFragment)
-                {
-                    ceCurrent = ElevationCacheGetAt(i3FragmentCurrent.I, i3FragmentCurrent.K, TOP_LAYER);
-                    i3CacheFragment = i3FragmentCurrent;
-                    v3CacheFragment = Fragment.Index3ToPos(i3CacheFragment);
-                }
-                
-                /*
-                 * Now look, if we are above or below the grounds here.
-                 */
-                ElevationPixel epCurrent = ceCurrent.GetElevationPixelAt(v3RayEndCurrent-v3CacheFragment);
-                
-                 float height = v3RayEndCurrent.Y;
+                float height = v3RayEndCurrent.Y;
                 float yTooMuch = epCurrent.Height - height;
 
                 if (yTooMuch>=0)
                 {
-                    if (v3Ray.Y > 0.01)
+                    if (v3Ray.Y > 0.01f)
                     {
                         /*
                          * Compute, where exactly the intersection would be.
                          */
                         float majorTooMuch = Vector3.Dot(v3Ray, v3Major) * yTooMuch / v3Ray.Y;
 
-                        // TXWTODO: This is inexact and does not consider the actual elwvation.
+                        // TXWTODO: Look, if this is "before" the current dStart 
                         intersect = (dCurrent-majorTooMuch) * fRayToDir / lDirection;
                     }
                     else
