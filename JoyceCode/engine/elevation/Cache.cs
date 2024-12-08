@@ -500,13 +500,13 @@ namespace engine.elevation
              * This is the actual start of the ray, starting at the grid
              * before the ray.
              */
-            float gridMajorStart = Single.Floor(realMajorStart);
+            float gridMajorStart = Single.Floor((realMajorStart+ess/2)/ess)*ess-ess/2;
 
             /*
              * This is the difference by which the grid start is before the actual start. 
              */
-            float dStart = gridMajorStart - realMajorStart;
-
+            float dStart = realMajorStart - gridMajorStart;
+            
             /*
              * Inside this loop, we iterate in matters of elevation pixels aka tiles.
              * We know that we started at an elevation pixel, so we just need to
@@ -543,7 +543,7 @@ namespace engine.elevation
                 Index3 i3FragmentCurrent = ToFragment(i3TileCurrent);
                 if (null == ceCurrent || i3FragmentCurrent != i3CacheFragment)
                 {
-                    ceCurrent = ElevationCacheGetAt(i3FragmentCurrent.I, i3FragmentCurrent.J, TOP_LAYER);
+                    ceCurrent = ElevationCacheGetAt(i3FragmentCurrent.I, i3FragmentCurrent.K, TOP_LAYER);
                     i3CacheFragment = i3FragmentCurrent;
                     v3CacheFragment = Fragment.Index3ToPos(i3CacheFragment);
                 }
@@ -553,7 +553,7 @@ namespace engine.elevation
                  */
                 ElevationPixel epCurrent = ceCurrent.GetElevationPixelAt(v3RayEndCurrent-v3CacheFragment);
                 
-                float height = v3RayEndCurrent.Y;
+                 float height = v3RayEndCurrent.Y;
                 float yTooMuch = epCurrent.Height - height;
 
                 if (yTooMuch>=0)

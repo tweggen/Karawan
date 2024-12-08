@@ -550,7 +550,7 @@ public class FollowCameraController : IInputPart
              * Look, if our way from the carrot to here still would be
              * obstructed by the floor
              */
-            if (engine.elevation.Cache.Instance().ElevationCacheRayCast(
+            if (false && engine.elevation.Cache.Instance().ElevationCacheRayCast(
                     vCarrotPosition, vDiff, l, out var lFloor))
             {
                 /*
