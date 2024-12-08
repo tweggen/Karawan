@@ -17,7 +17,7 @@ namespace engine.elevation
         public const string TOP_LAYER = "TOP_LAYER";
 
         public const string LAYER_BASE = "/000000";
-
+        
         private readonly object _lo = new();
         private string _maxLayer;
 

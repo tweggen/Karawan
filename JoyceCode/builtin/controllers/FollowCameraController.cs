@@ -561,7 +561,7 @@ public class FollowCameraController : IInputPart
             /*
              * Use the intersection point offset by 0.5m for the new camera.
              */
-            Vector3 vHit = vCarrotPosition + (l0 - 0.5f / l) * vDiff;
+            Vector3 vHit = vCarrotPosition + (l0) * vDiff;
             if (l0 < 2f)
             {
                 _computeNotTooClose(vHit, out var vNotTooClose);
@@ -585,7 +585,7 @@ public class FollowCameraController : IInputPart
                 /*
                  * Yes, there is a floor intersection.
                  */
-                vClosestCameraPos = vCarrotPosition + (lFloor - 0.5f / l) * vDiff;
+                vClosestCameraPos = vCarrotPosition + (lFloor) * vDiff;
             }
             else
             {
