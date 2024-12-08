@@ -543,6 +543,10 @@ namespace engine.elevation
                 intersect = 0f;
                 return true;
             }
+            
+            Vector3 v3RayEndPrev = v3Start;
+            float dPrevious = 0f;
+            var epPrevious = epCurrent;
                 
             /*
              * Inside this loop, we iterate in matters of elevation pixels aka tiles.
@@ -580,23 +584,43 @@ namespace engine.elevation
 
                 if (yTooMuch>=0)
                 {
-                    if (v3Ray.Y > 0.01f)
+                    if (Single.Abs(v3Ray.Y) > 0.01f)
                     {
                         /*
+                         * This is not a horizontal ray.
                          * Compute, where exactly the intersection would be.
+                         *
+                         * For sake of siplicity, just consider the major axis.
                          */
-                        float majorTooMuch = Vector3.Dot(v3Ray, v3Major) * yTooMuch / v3Ray.Y;
 
-                        // TXWTODO: Look, if this is "before" the current dStart 
-                        intersect = (dCurrent-majorTooMuch) * fRayToDir / lDirection;
+                        float cry = v3RayEndCurrent.Y;
+                        float pry = v3RayEndPrev.Y;
+                        float cey = epCurrent.Height;
+                        float pey = epPrevious.Height;
+                        
+                        /*
+                         * This is the local intersection between the dPrevious
+                         * and dCurrent.
+                         */
+                        float li = (pey - pry) /*  * ess */ / ((cry - pry) - (cey - pey));
+
+                        float dInter = dPrevious + li * (dCurrent - dPrevious);
+
+                        intersect = dInter * fRayToDir / lDirection;
                     }
                     else
                     {
+                        /*
+                         * This is a horizontal ray.
+                         */
                         intersect = dCurrent * fRayToDir / lDirection;
                     }
 
                     return true;
                 }
+
+                v3RayEndPrev = v3RayEndCurrent;
+                dPrevious = dCurrent;
             }
 
             intersect = 0f;
