@@ -65,7 +65,7 @@ public class Main : AModule
         // TXWTODO: Looks a bit out of place, looks more like platform specific.
         I.Get<Boom.ISoundAPI>().SetupDone();
         
-        I.Get<engine.gongzuo.API>().AddDefaultBinding("nogame", new LuaBindings());
+        I.Get<engine.gongzuo.API>().AddDefaultBinding("nogame", () => new LuaBindings());
         
         _setupScreenComposition();
         

@@ -55,12 +55,8 @@ public class Widget : IDisposable
      * Stores the user accessible property data.
      */
     private SortedDictionary<string, object>? _properties = null;
-    
-    /**
-     * Contains anything we compile the properties to after user acesses it.
-     */
-    private SortedDictionary<string, IDisposable>? _compiledProperties = null;
 
+    private Lazy<CompiledCache> _compiledCache = new(() => new CompiledCache());
     
     public virtual (float Width, float Height) SizeHint()
     {
@@ -85,75 +81,7 @@ public class Widget : IDisposable
     {
         return 0f;
     }
-    
 
-    private void _invalidateCompiled(string key)
-    {
-        IDisposable? oCompiled = null;
-        lock (_lo)
-        {
-            if (null == _compiledProperties) return;
-            if (_compiledProperties.TryGetValue(key, out oCompiled))
-            {
-                _compiledProperties.Remove(key);
-            }
-        }
-
-        if (oCompiled != null)
-        {
-            oCompiled.Dispose();
-        }
-    }
-
-
-    private void _storeCompiled(string key, IDisposable oCompiled)
-    {
-        IDisposable? oOldCompiled = null;
-        lock (_lo)
-        {
-            if (null == _compiledProperties)
-            {
-                _compiledProperties = new();
-            }
-            if (_compiledProperties.TryGetValue(key, out oOldCompiled))
-            {
-                if (oCompiled == oOldCompiled) return;
-                _compiledProperties.Remove(key);
-            }
-            _compiledProperties[key] = oCompiled;
-        }
-
-        if (oOldCompiled != null)
-        {
-            oOldCompiled.Dispose();
-        }
-    }
-    
-    
-    private void _storeCompiled_nl(string key, IDisposable oCompiled)
-    {
-        if (null == _compiledProperties)
-        {
-            _compiledProperties = new();
-        }
-        _compiledProperties[key] = oCompiled;
-    }
-    
-    
-    public void _invalidateCompiled_nl(string key, out IDisposable? oldCompiled)
-    {
-        if (null == _compiledProperties)
-        {
-            oldCompiled = null;
-            return;
-        }
-        if (_compiledProperties.TryGetValue(key, out oldCompiled))
-        {
-            _compiledProperties.Remove(key);
-        }
-    }
-    
-    
     public virtual object this[string key]
     {
         get
@@ -196,7 +124,7 @@ public class Widget : IDisposable
                     _properties.TryGetValue(key, out oldValue);
                     if (oldValue != newValue)
                     {
-                        _invalidateCompiled_nl(key, out oldCompiled);
+                        _compiledCache.Value.Invalidate(key, out oldCompiled);
                     }
                 }
                 _properties[key] = value;
@@ -1018,64 +946,60 @@ public class Widget : IDisposable
 
     protected object _syncLuaScript(string _propName, LuaScriptEntry lse, string script)
     {
+        /*
+         * First, compile the script (this compiles only if required, checks for a change, again).
+         */
         lse.LuaScript = script;
-        object[] results = lse.Call();
-        if (results != null && results.Length >= 1) return results[0];
-        return "";
+
+        object? result = lse.CallSingleResult();
+        if (null == result)
+        {
+            return "";
+        }
+        else
+        {
+            return result;
+        }
     }
 
 
-    /**
-     * Create a symbol binding frame for this widget.
-     */
     internal void PushBindings(LuaScriptEntry lse)
     {
+        LuaBindingFrame lbf = new()
+        {
+            MapBindings = new SortedDictionary<string, object>() { { "widget", new LuaWidgetContext(this) } } 
+        };
+
+        lse.PushBinding(lbf);
+    }
+    
+
+    internal void PushContext(LuaScriptEntry lse)
+    {
+        /*
+         * We need the bindings from the engine...
+         */
+        I.Get<engine.gongzuo.API>().PushBindings(lse);
+        
+        /*
+         * ...the bindings as defined by the parser for the jt context...
+         */
         Parser? parser = this["parser"] as Parser;
         if (null != parser)
         {
             parser.PushBindings(lse);
         }
 
-        var mapBindings = 
-            new SortedDictionary<string, object>(I.Get<engine.gongzuo.API>().GetDefaultBindingMap());
-        mapBindings.Add("widget", new LuaWidgetContext(this));
-        
-        LuaBindingFrame lbf = new()
-        {
-            MapBindings = mapBindings
-        };
-        lse.PushBinding(lbf);
-
+        /*
+         * And finally, the bindings specifically for this widget.
+         */
+        PushBindings(lse);
     }
 
 
     protected LuaScriptEntry _findLuaScriptEntry(string evType, string script)
-    {
-        LuaScriptEntry? lse = null;
-        lock (_lo)
-        {
-            if (null != _compiledProperties && _compiledProperties.TryGetValue(evType, out var oCompiled))
-            {
-                lse = oCompiled as LuaScriptEntry;
-            }
-            else
-            {
-                lse = new LuaScriptEntry();
-
-                /*
-                 * Push the bindings for this widget on the binding stack.
-                 */
-                PushBindings(lse);
-                #if false
-                lse.Bind("_context", _luaWidgetContext.Value);
-                #endif
-                _storeCompiled_nl(evType, lse);
-            }
-        }
-
-        return lse;
-    }
-
+        => _compiledCache.Value.Find(evType, script, lse => PushContext(lse));
+    
 
     protected object _evaluateProperty(string propName)
     {

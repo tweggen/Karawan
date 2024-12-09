@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -7,12 +8,15 @@ namespace engine.gongzuo;
 public class API
 {
     private SortedDictionary<string, object> _mapTemplateBindings = new();
+    private LuaBindingFrame _luaBindingFrame;
+    private JoyceBindings _joyceBindings;
 
     public void AddDefaultBinding(string key, Func<object> bindingFactory)
     {
         if (!_mapTemplateBindings.ContainsKey(key))
         {
             _mapTemplateBindings[key] = bindingFactory();
+            _luaBindingFrame = null;
         }
     }
 
@@ -20,18 +24,35 @@ public class API
     public void RemoveDefaultBinding(string key, object bindings)
     {
         _mapTemplateBindings.Remove(key);
+        _luaBindingFrame = null;
     }
-    
-    
-    public IEnumerable<object> GetDefaultBindings()
+
+
+    private void _createFrame()
     {
-        return _mapTemplateBindings.Values.ToImmutableList();
+        if (null == _luaBindingFrame)
+        {
+            _luaBindingFrame = new LuaBindingFrame()
+            {
+                MapBindings = _mapTemplateBindings.ToFrozenDictionary()
+            };
+
+        }
     }
-    
-    
-    public SortedDictionary<string, object> GetDefaultBindingMap()
+
+
+    public void PushBindings(LuaScriptEntry lse)
     {
-        return _mapTemplateBindings;
+        _createFrame();
+        
+        lse.PushBinding(_luaBindingFrame);
+    }
+
+
+    public API()
+    {
+        _joyceBindings = new JoyceBindings();
+        _mapTemplateBindings["joyce"] = _joyceBindings;
     }
 }
 

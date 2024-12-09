@@ -439,7 +439,17 @@ public class Parser
          */
         lse.PushBinding(_lbf);
     }
-    
+
+
+    internal void PushContext(LuaScriptEntry lse)
+    {
+        /*
+         * We need the bindings from the engine...
+         */
+        I.Get<engine.gongzuo.API>().PushBindings(lse);
+
+        PushBindings(lse);
+    }
     
     /**
      * Build a meaningful display from the xml input.
@@ -474,11 +484,8 @@ public class Parser
         {
             MapBindings = new SortedDictionary<string, object>()
             {
-                { "jt", new JtBindings(factory,this) },
-                { "joyce", new engine.gongzuo.JoyceBindings() }
-            }.Concat(I.Get<engine.gongzuo.API>().GetDefaultBindingMap())
-                .ToDictionary(x => x.Key, y => y.Value)
-                .ToFrozenDictionary()
+                { "jt", new JtBindings(factory,this) }
+            }.ToFrozenDictionary()
         };
     }
 }

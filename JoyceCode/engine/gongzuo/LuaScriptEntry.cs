@@ -37,7 +37,7 @@ public class LuaScriptEntry : IDisposable
         try
         {
             Initialize();
-            _compile(luaScript);
+            _doCompile(luaScript);
         }
         catch (Exception e)
         {
@@ -46,7 +46,7 @@ public class LuaScriptEntry : IDisposable
     }
 
 
-    private int _compile(string luaScript)
+    private int _doCompile(string luaScript)
     {
         if (null == luaScript)
         {
@@ -140,6 +140,7 @@ public class LuaScriptEntry : IDisposable
 
     private object[] _emptyResult = new object[0];
 
+    
     public object[] Call()
     {
         if (null == _luaFunction)
@@ -149,5 +150,13 @@ public class LuaScriptEntry : IDisposable
         }
 
         return _luaFunction.Call();
+    }
+
+
+    public object CallSingleResult()
+    {
+        object[] results = _luaFunction.Call();
+        if (results != null && results.Length >= 1) return results[0];
+        return null;
     }
 }
