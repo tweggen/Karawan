@@ -167,4 +167,21 @@ public class LuaScriptEntry : IDisposable
         if (results != null && results.Length >= 1) return results[0];
         return null;
     }
+    
+    
+    public object CallStringResult()
+    {
+        _ensureCompiled();
+        
+        object[] results = _luaFunction.Call();
+        if (results != null && results.Length >= 1)
+        {
+            if (results[0] != null)
+            {
+                return results[0];
+            }
+        }
+
+        return "";
+    }
 }

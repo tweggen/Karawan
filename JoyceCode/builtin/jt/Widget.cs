@@ -929,29 +929,6 @@ public class Widget : IDisposable
         }
     }
     
-    
-    protected void _queueLuaScript(string evType, LuaScriptEntry lse)
-    {
-        /*
-         * Then, execute.
-         */
-        lse.Call();
-    }
-
-
-    protected object _syncLuaScript(string _propName, LuaScriptEntry lse)
-    {
-        object? result = lse.CallSingleResult();
-        if (null == result)
-        {
-            return "";
-        }
-        else
-        {
-            return result;
-        }
-    }
-
 
     internal void PushBindings(LuaScriptEntry lse)
     {
@@ -1010,7 +987,7 @@ public class Widget : IDisposable
         /*
          * Finally execute the script.
          */
-        return _syncLuaScript(propName, lse);
+        return lse.CallStringResult();
         
     }
     
@@ -1034,7 +1011,7 @@ public class Widget : IDisposable
         /*
          * Finally execute the script.
          */
-        _queueLuaScript(evType, lse);
+        lse.Call();
     }
 
 
