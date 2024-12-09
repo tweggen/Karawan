@@ -100,17 +100,6 @@ public class Parser
             }
         },
         {
-            "for", new ()
-            {
-                WidgetType = typeof(builtin.jt.Widget),
-                ParentType = null,
-                TemplateProperties = new()
-                {
-                    { "focussable", false }
-                }
-            }
-        },
-        {
             "view", new()
             {
                 WidgetType = typeof(builtin.jt.Widget),
