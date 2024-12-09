@@ -622,7 +622,7 @@ public class StreetPoint
             bool doUseSide = false;
             if (null == i0)
             {
-                if (true || myVerbose) Trace("no intersect");
+                if (myVerbose) Trace("no intersect");
                 doUseSide = true;
                 // Please the compiler and assign newI a value that later is overridden.
                 newI.X = newI.Y = 0;
