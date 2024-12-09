@@ -930,13 +930,8 @@ public class Widget : IDisposable
     }
     
     
-    protected void _queueLuaScript(string evType, LuaScriptEntry lse, string script)
+    protected void _queueLuaScript(string evType, LuaScriptEntry lse)
     {
-        /*
-         * First, compile the script (this compiles only if required, checks for a change, again).
-         */
-        lse.LuaScript = script;
-        
         /*
          * Then, execute.
          */
@@ -944,13 +939,8 @@ public class Widget : IDisposable
     }
 
 
-    protected object _syncLuaScript(string _propName, LuaScriptEntry lse, string script)
+    protected object _syncLuaScript(string _propName, LuaScriptEntry lse)
     {
-        /*
-         * First, compile the script (this compiles only if required, checks for a change, again).
-         */
-        lse.LuaScript = script;
-
         object? result = lse.CallSingleResult();
         if (null == result)
         {
@@ -1020,7 +1010,7 @@ public class Widget : IDisposable
         /*
          * Finally execute the script.
          */
-        return _syncLuaScript(propName, lse, script);
+        return _syncLuaScript(propName, lse);
         
     }
     
@@ -1044,7 +1034,7 @@ public class Widget : IDisposable
         /*
          * Finally execute the script.
          */
-        _queueLuaScript(evType, lse, script);
+        _queueLuaScript(evType, lse);
     }
 
 

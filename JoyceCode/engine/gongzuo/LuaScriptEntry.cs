@@ -31,35 +31,23 @@ public class LuaScriptEntry : IDisposable
 
     private void _setLuaScript(string luaScript)
     {
-        if (luaScript == _luaScript && _setScriptVersion == _compiledScriptVersion) return;
-        Shutdown();
-        int res = -1;
-        try
-        {
-            Initialize();
-            _doCompile(luaScript);
-        }
-        catch (Exception e)
-        {
-            Error($"Exception while loading lua script: {e}");
-        }
+        if (luaScript == _luaScript) return;
+        _luaScript = luaScript;
+        ++_setScriptVersion;
     }
 
 
-    private int _doCompile(string luaScript)
+    private int _doCompile()
     {
-        if (null == luaScript)
+        if (null == _luaScript)
         {
+            Error($"No script setup.");
             return -1;
         }
 
         try
         {
-            // TXWTODO: Add prebound script content, kind of global declarations
-
-            _luaFunction = _luaState.LoadString(luaScript, "component lua script");
-            _luaScript = luaScript;
-            ++_setScriptVersion;
+            _luaFunction = _luaState.LoadString(_luaScript, "component lua script");
             _compiledScriptVersion = _setScriptVersion;
             return 0;
         }
@@ -67,6 +55,28 @@ public class LuaScriptEntry : IDisposable
         {
             Error($"Exception parsing script: {e}.");
             return -1;
+        }
+    }
+
+
+    private void _ensureCompiled()
+    {
+        if (_setScriptVersion == _compiledScriptVersion) return;
+
+        Shutdown();
+        try
+        {
+            Initialize();
+            _doCompile();
+
+        }
+        catch (Exception e)
+        {
+            Error($"Exception while loading lua script: {e}");
+        }
+        if (null == _luaFunction)
+        {
+            ErrorThrow<InvalidOperationException>($"No lua function compiled.");
         }
     }
 
@@ -143,11 +153,7 @@ public class LuaScriptEntry : IDisposable
     
     public object[] Call()
     {
-        if (null == _luaFunction)
-        {
-            ErrorThrow<InvalidOperationException>($"No lua function loaded.");
-            return _emptyResult;
-        }
+        _ensureCompiled();
 
         return _luaFunction.Call();
     }
@@ -155,6 +161,8 @@ public class LuaScriptEntry : IDisposable
 
     public object CallSingleResult()
     {
+        _ensureCompiled();
+        
         object[] results = _luaFunction.Call();
         if (results != null && results.Length >= 1) return results[0];
         return null;
