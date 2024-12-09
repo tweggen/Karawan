@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Linq;
 using engine.gongzuo;
 using System.Xml;
+using engine;
 using ObjLoader.Loader.Common;
 using static engine.Logger;
 
@@ -485,7 +487,9 @@ public class Parser
             {
                 { "jt", new JtBindings(factory,this) },
                 { "joyce", new engine.gongzuo.JoyceBindings() }
-            }.ToFrozenDictionary()
+            }.Concat(I.Get<engine.gongzuo.API>().GetDefaultBindingMap())
+                .ToDictionary(x => x.Key, y => y.Value)
+                .ToFrozenDictionary()
         };
     }
 }

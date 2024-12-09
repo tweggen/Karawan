@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -7,9 +8,12 @@ public class API
 {
     private SortedDictionary<string, object> _mapTemplateBindings = new();
 
-    public void AddDefaultBinding(string key, object bindings)
+    public void AddDefaultBinding(string key, Func<object> bindingFactory)
     {
-        _mapTemplateBindings[key] = bindings;
+        if (!_mapTemplateBindings.ContainsKey(key))
+        {
+            _mapTemplateBindings[key] = bindingFactory();
+        }
     }
 
 

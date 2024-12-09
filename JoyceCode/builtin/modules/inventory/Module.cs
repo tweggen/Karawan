@@ -22,6 +22,7 @@ public class Module : AModule
     public override void ModuleActivate()
     {
         base.ModuleActivate();
+        I.Get<engine.gongzuo.API>().AddDefaultBinding("inv", () => new InvLuaBindings())
         _engine.AddModule(this);
     }
 } 
