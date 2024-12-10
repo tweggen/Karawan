@@ -48,6 +48,7 @@ public class Widget : IDisposable
     private static object _classLock = new();
     private static uint _nextId = 0;
     public uint Id;
+    public LuaBindingFrame? BuildLuaBindingFrame = null;
 
     private string _widgetEventPath;
     
@@ -82,6 +83,38 @@ public class Widget : IDisposable
         return 0f;
     }
 
+
+    private object _resolvePropertyValue(string strProperty, object oLiteralValue)
+    {
+        if (oLiteralValue is string)
+        {
+            string strLiteralValue = (string)oLiteralValue;
+            if (!String.IsNullOrEmpty(strLiteralValue) && strLiteralValue[0] == '{')
+            {
+                int l = strLiteralValue.Length;
+                if (l > 1 && strLiteralValue[1] == '{' || l<2)
+                {
+                    return oLiteralValue;
+                }
+
+                // TXWTODO: Cache the lookup.
+                string strScript = strLiteralValue.Substring(1, l - 2);
+
+                var lse = _compiledCache.Value.Find(strProperty, strScript, lse => PushContext(lse));
+                return lse.CallSingleResult();
+            }
+            else
+            {
+                return oLiteralValue;
+            }
+        }
+        else
+        {
+            return oLiteralValue;
+        }
+    }
+    
+
     public virtual object this[string key]
     {
         get
@@ -92,7 +125,7 @@ public class Widget : IDisposable
                 {
                     if (_properties.TryGetValue(key, out object value))
                     {
-                        return value;
+                        return _resolvePropertyValue(key, value);
                     }
                 }
 
@@ -172,7 +205,7 @@ public class Widget : IDisposable
 
             if (_properties.TryGetValue(name, out var objValue))
             {
-                return GetTypedAttribute<T>(objValue);
+                return GetTypedAttribute<T>(_resolvePropertyValue(name, objValue));
             }
             else
             {
@@ -932,6 +965,11 @@ public class Widget : IDisposable
 
     internal void PushBindings(LuaScriptEntry lse)
     {
+        if (BuildLuaBindingFrame != null)
+        {
+            lse.PushBinding(BuildLuaBindingFrame);
+        }
+
         LuaBindingFrame lbf = new()
         {
             MapBindings = new SortedDictionary<string, object>() { { "widget", new LuaWidgetContext(this) } } 

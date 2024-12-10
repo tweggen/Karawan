@@ -47,8 +47,8 @@
             
             <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuInventory")'>Inventory...</option>
             
-            <for items="inv:getItems()">
-                <text color="#666666">Test line</text>
+            <for items='{return [{text = "First"}, {text = "Second"}, {text = "Third"}]}'>
+                <text color="#666666" text="{text}"/>
             </for>
             
             <option color='#999999' onClick='os.exit()'>Exit...</option>

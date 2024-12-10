@@ -10,7 +10,7 @@ public class CompiledCache
     /**
      * Contains anything we compile the properties to after user acesses it.
      */
-    private SortedDictionary<string, IDisposable> _compiledProperties = new();
+    private Dictionary<object, IDisposable> _compiledProperties = new();
 
 
     public LuaScriptEntry Find(string evType, string script, Action<LuaScriptEntry> fLseSetup)

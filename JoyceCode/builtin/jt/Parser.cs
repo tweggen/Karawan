@@ -45,7 +45,7 @@ public class StructureDescriptor
 public class Parser
 {
     private XmlDocument _xDoc;
-
+    private Lazy<CompiledCache> _compiledCache = new(() => new CompiledCache());
 
     private readonly SortedDictionary<string, Type> _mapAttributeTypes = new()
     {
@@ -357,34 +357,60 @@ public class Parser
     }
     
     
-    public void BuildChildElement(XmlElement xWidget, Widget wParent)
+    public void BuildChildElement(XmlElement xWidget, Widget wParent, LuaBindingFrame? lbfParent)
     {
         string strNode = xWidget.LocalName;
         Widget w;
+        int nFor = 0;
 
         switch (strNode)
         {
             case "for":
-                var items = new List<int>() { 1, 2, 3 };
-                foreach (var item in items)
+                if (xWidget.HasAttribute("items"))
                 {
-                    foreach (XmlNode xnChild in xWidget.ChildNodes)
+                    string strItems = xWidget.GetAttribute("items");
+                    var l = strItems.Length;
+                    ++nFor;
+                    if (l > 2 && strItems[0] == '{' && strItems[1] != '{' && strItems[l-1] == '}')
                     {
-                        BuildChildNode(xnChild, wParent);
+                        var lseItemArray = _compiledCache.Value.Find(
+                            $"{wParent.Id}.for#{nFor}",
+                            strItems.Substring(1, l-2), 
+                            (lse) => PushContext(lse));
+                        object[] arrResult = lseItemArray.Call();
+                    
+                        foreach (var item in arrResult)
+                        {
+                            LuaBindingFrame? lbfWidget = null;
+                            var dictItem = item as IDictionary<string, object>;
+                            if (null != dictItem)
+                            {
+                                // TXWTODO: Honor parent binding frame.
+                                lbfWidget = new()
+                                {
+                                    MapBindings = dictItem.ToFrozenDictionary()
+                                };
+                            }
+
+                            foreach (XmlNode xnChild in xWidget.ChildNodes)
+                            {
+                                BuildChildNode(xnChild, wParent, lbfWidget);
+                            }
+                        }
                     }
                 }
                 break;
             case "if":
                 break;
             default:
-                w = BuildWidget(xWidget);
+                w = BuildWidget(xWidget, lbfParent);
                 wParent.AddChild(w);
                 break;
         }
     }
 
 
-    public void BuildChildNode(XmlNode xnChild, Widget wParent)
+    public void BuildChildNode(XmlNode xnChild, Widget wParent, LuaBindingFrame lbfWidget)
     {
         switch (xnChild.NodeType)
         {
@@ -395,32 +421,36 @@ public class Parser
                 BuildText(xnChild as XmlText, wParent);
                 break;
             case XmlNodeType.Element:
-                BuildChildElement(xnChild as XmlElement, wParent);
+                BuildChildElement(xnChild as XmlElement, wParent, lbfWidget);
                 break;
         }
     }
 
 
-    public void BuildChildrenElements(XmlElement xParent, Widget wParent)
+    public void BuildChildrenElements(XmlElement xParent, Widget wParent, LuaBindingFrame? lbfParent)
     {
         /*
          * Then iterate through its children.
          */
         foreach (XmlNode xnChild in xParent.ChildNodes)
         {
-            BuildChildNode(xnChild, wParent);
+            BuildChildNode(xnChild, wParent, lbfParent);
         }
     }
 
 
-    public Widget? BuildWidget(XmlElement xWidget)
+    public Widget? BuildWidget(XmlElement xWidget, LuaBindingFrame? lbfParent)
     {
         /*
          * Create the widget on its own
          */
         Widget w = BuildSelfWidget(xWidget, out var tdesc);
+        if (lbfParent != null)
+        {
+            w.BuildLuaBindingFrame = lbfParent;
+        }
 
-        BuildChildrenElements(xWidget, w);
+        BuildChildrenElements(xWidget, w, lbfParent);
         
         /*
          * Finally, the type specific operator, after all children and attributes
@@ -472,7 +502,7 @@ public class Parser
             ErrorThrow<ArgumentException>("No widget found.");
         }
 
-        return BuildWidget(xWidget);
+        return BuildWidget(xWidget, null);
     }
         
     
