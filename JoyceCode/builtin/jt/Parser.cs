@@ -5,6 +5,7 @@ using System.Linq;
 using engine.gongzuo;
 using System.Xml;
 using engine;
+using NLua;
 using ObjLoader.Loader.Common;
 using static engine.Logger;
 
@@ -382,7 +383,7 @@ public class Parser
                         foreach (var item in arrResult)
                         {
                             LuaBindingFrame? lbfWidget = null;
-                            var dictItem = item as IDictionary<string, object>;
+                            var dictItem = item as LuaTable;
                             if (null != dictItem)
                             {
                                 // TXWTODO: Honor parent binding frame.
