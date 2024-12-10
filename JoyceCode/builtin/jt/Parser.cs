@@ -383,9 +383,10 @@ public class Parser
                         foreach (var item in arrResult)
                         {
                             LuaBindingFrame? lbfWidget = null;
-                            var dictItem = item as LuaTable;
-                            if (null != dictItem)
+                            var tableItem = item as LuaTable;
+                            if (null != tableItem)
                             {
+                                var dict = new SortedDictionary<object, object>(tableItem.GetEnumerator());
                                 // TXWTODO: Honor parent binding frame.
                                 lbfWidget = new()
                                 {
