@@ -356,6 +356,50 @@ public class Parser
     public void BuildText(XmlText xText, Widget wParent)
     {
     }
+
+    private List<SortedDictionary<string, object>> _needListOfMaps(object lseLuaItems)
+    {
+        if (null == lseLuaItems)
+        {
+            return null;
+        }
+        if (lseLuaItems.GetType() == typeof(List<SortedDictionary<string, object>>))
+        {
+            return lseLuaItems as List<SortedDictionary<string, object>>;
+        }
+
+        // TXWTODO: Use Enumerable or other interfaces.
+        
+        {
+            LuaTable ltTop = lseLuaItems as LuaTable;
+            if (null == ltTop) return null;
+
+            List<SortedDictionary<string, object>> listOfMaps = new();
+            foreach (var listItem in ltTop.Values)
+            {
+                {
+                    LuaTable ltItem = listItem as LuaTable;
+                    if (ltItem != null)
+                    {
+                        SortedDictionary<string, object> dictProps = new();
+                        foreach (var itemKey in ltItem.Keys)
+                        {
+                            string strItemKey = itemKey as string;
+                            if (strItemKey != null)
+                            {
+                                dictProps.Add(strItemKey, ltItem[itemKey]);
+                            }
+                        }
+
+                        listOfMaps.Add(dictProps);
+                    }
+                } 
+            }
+
+            return listOfMaps;
+        }
+        
+    }
     
     
     public void BuildChildElement(XmlElement xWidget, Widget wParent, LuaBindingFrame? lbfParent)
@@ -378,31 +422,18 @@ public class Parser
                             $"{wParent.Id}.for#{nFor}",
                             strItems.Substring(1, l - 2),
                             (lse) => PushContext(lse));
-                        LuaTable? luatableItems = lseItemArray.CallSingleResult() as LuaTable;
 
-                        if (luatableItems != null)
+                        var listOfMaps = _needListOfMaps(lseItemArray.CallSingleResult());
+
+                        if (listOfMaps != null)
                         {
-                            foreach (var keyItem in luatableItems.Keys)
+                            foreach (var item in listOfMaps)
                             {
                                 LuaBindingFrame? lbfWidget = null;
 
-                                LuaTable? luatableBindings = luatableItems[keyItem] as LuaTable;
-                                if (null != luatableBindings)
+                                if (item.Count != 0)
                                 {
-                                    SortedDictionary<string, object> dictBindings = new();
-                                    foreach (var keyBinding in luatableBindings.Keys)
-                                    {
-                                        string strKeyBinding = keyBinding as string;
-                                        if (strKeyBinding != null)
-                                        {
-                                            dictBindings.Add(strKeyBinding, luatableBindings[keyBinding]);
-                                        }
-                                    }
-
-                                    if (dictBindings.Count != 0)
-                                    {
-                                        lbfWidget = new() { MapBindings = dictBindings.ToFrozenDictionary() };
-                                    }
+                                    lbfWidget = new() { MapBindings = item.ToFrozenDictionary() };
                                 }
                                 foreach (XmlNode xnChild in xWidget.ChildNodes)
                                 {

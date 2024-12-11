@@ -128,9 +128,11 @@ public class Factory : AModule
         {
             Error($"No widget to close with id {id} in layer {layername}");
         }
-
-        wVictim.Parent = null;
-        wVictim.Dispose();
+        else
+        {
+            wVictim.Parent = null;
+            wVictim.Dispose();
+        }
     }
 
 
