@@ -372,33 +372,45 @@ public class Parser
                     string strItems = xWidget.GetAttribute("items");
                     var l = strItems.Length;
                     ++nFor;
-                    if (l > 2 && strItems[0] == '{' && strItems[1] != '{' && strItems[l-1] == '}')
+                    if (l > 2 && strItems[0] == '{' && strItems[1] != '{' && strItems[l - 1] == '}')
                     {
                         var lseItemArray = _compiledCache.Value.Find(
                             $"{wParent.Id}.for#{nFor}",
-                            strItems.Substring(1, l-2), 
+                            strItems.Substring(1, l - 2),
                             (lse) => PushContext(lse));
-                        object[] arrResult = lseItemArray.Call();
-                    
-                        foreach (var item in arrResult)
-                        {
-                            LuaBindingFrame? lbfWidget = null;
-                            var tableItem = item as LuaTable;
-                            if (null != tableItem)
-                            {
-                                var dict = new SortedDictionary<object, object>(tableItem.GetEnumerator());
-                                // TXWTODO: Honor parent binding frame.
-                                lbfWidget = new()
-                                {
-                                    MapBindings = dictItem.ToFrozenDictionary()
-                                };
-                            }
+                        LuaTable? luatableItems = lseItemArray.CallSingleResult() as LuaTable;
 
-                            foreach (XmlNode xnChild in xWidget.ChildNodes)
+                        if (luatableItems != null)
+                        {
+                            foreach (var keyItem in luatableItems.Keys)
                             {
-                                BuildChildNode(xnChild, wParent, lbfWidget);
+                                LuaBindingFrame? lbfWidget = null;
+
+                                LuaTable? luatableBindings = luatableItems[keyItem] as LuaTable;
+                                if (null != luatableBindings)
+                                {
+                                    SortedDictionary<string, object> dictBindings = new();
+                                    foreach (var keyBinding in luatableBindings.Keys)
+                                    {
+                                        string strKeyBinding = keyBinding as string;
+                                        if (strKeyBinding != null)
+                                        {
+                                            dictBindings.Add(strKeyBinding, luatableBindings[keyBinding]);
+                                        }
+                                    }
+
+                                    if (dictBindings.Count != 0)
+                                    {
+                                        lbfWidget = new() { MapBindings = dictBindings.ToFrozenDictionary() };
+                                    }
+                                }
+                                foreach (XmlNode xnChild in xWidget.ChildNodes)
+                                {
+                                    BuildChildNode(xnChild, wParent, lbfWidget);
+                                }
                             }
                         }
+
                     }
                 }
                 break;
