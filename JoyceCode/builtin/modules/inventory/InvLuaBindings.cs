@@ -7,8 +7,20 @@ namespace builtin.modules.inventory;
  */
 public class InvLuaBindings
 {
-    public List<string> getItems()
+    public List<SortedDictionary<string, string>> getItemTextList()
     {
-        return new List<string>() { "alpha", "beta", "gamma" };
+        return new List<SortedDictionary<string, string>>()
+        {
+            new ()
+            {
+                { "text", "Sunglasses" },
+                { "id", "inv-1" }
+            },
+            new ()
+            {
+                { "text", "Empry Ramen" },
+                { "id", "inv-2" }
+            },
+        };
     }
 }

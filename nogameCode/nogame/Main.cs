@@ -66,6 +66,7 @@ public class Main : AModule
         I.Get<Boom.ISoundAPI>().SetupDone();
         
         I.Get<engine.gongzuo.API>().AddDefaultBinding("nogame", () => new LuaBindings());
+        I.Get<engine.gongzuo.API>().AddDefaultBinding("inv", () => new builtin.modules.inventory.InvLuaBindings());
         
         _setupScreenComposition();
         
