@@ -122,6 +122,11 @@ public class EntitySaver : AModule
      */
     public void LoadAll(JsonElement jeAll)
     {
+        JsonSerializerOptions serializerOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         foreach (var jpEntity in jeAll.EnumerateObject())
         {
             var strEntityId = jpEntity.Name;
@@ -136,10 +141,12 @@ public class EntitySaver : AModule
                     var strComponentName = jpComponent.Name;
                     var jeComponent = jpComponent.Value;
 
-                    var type = Type.GetType(strComponentName);
-                    JsonSerializer.Deserialize(jeComponent.GetRawText(), type);
-                    
-                    
+                    var type = Type.GetType(strComponentName)!;
+                    var comp = JsonSerializer.Deserialize(jeComponent.GetRawText(), type, serializerOptions)!;
+                    // TXWTODO: The only way I know to call set on entity is via reflection.
+                    var baseMethod = typeof(DefaultEcs.Entity).GetMethod(nameof(DefaultEcs.Entity.Set), new object[] {type})!;
+                    var genericMethod = baseMethod.MakeGenericMethod(type);
+                    genericMethod.Invoke(e, new object[] {comp});
                 }
             }
 
