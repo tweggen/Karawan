@@ -81,7 +81,7 @@ public class Module : AModule, IInputPart
             // TXWTODO: Create new pickable right here.
             e.Set(new Pickable()
             {
-                Description = I.Get<PickableDirectory>().Get("sunglasses")
+                Description = I.Get<PickableDirectory>().Get(ev.Code)
             });
             e.Set(new Creator(Creator.CreatorId_Hardcoded));
         });
