@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using DefaultEcs.Serialization;
 using engine;
 using engine.world;
+using BindingFlags = System.Reflection.BindingFlags;
 using Creator = engine.world.components.Creator;
 
 namespace builtin;
@@ -144,7 +147,9 @@ public class EntitySaver : AModule
                     var type = Type.GetType(strComponentName)!;
                     var comp = JsonSerializer.Deserialize(jeComponent.GetRawText(), type, serializerOptions)!;
                     // TXWTODO: The only way I know to call set on entity is via reflection.
-                    var baseMethod = typeof(DefaultEcs.Entity).GetMethod(nameof(DefaultEcs.Entity.Set), new object[] {type})!;
+                    MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
+                        .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
+                        .FirstOrDefault(m => true);
                     var genericMethod = baseMethod.MakeGenericMethod(type);
                     genericMethod.Invoke(e, new object[] {comp});
                 }
