@@ -185,7 +185,7 @@ public class Parser
                 TemplateProperties = new()
                 {
                     { "selector", "vertical" },
-                    { "focussable", "true" }
+                    { "focussable", false }
                 },
             }
         },
@@ -197,7 +197,7 @@ public class Parser
                 TemplateProperties = new()
                 {
                     { "selector", "horizontal" },
-                    { "focussable", "true" }
+                    { "focussable", false }
                 }
             }
         },

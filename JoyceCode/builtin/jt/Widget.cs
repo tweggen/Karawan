@@ -1489,29 +1489,17 @@ public class Widget : IDisposable
              * if it also is below me,
              */
             wOldFocus = FindMyChild(wOldFocus);
-        }
-        
-        if (null == wOldFocus)
-        {
-            /*
-             * If we did not have a focus at all, or if the focus
-             * was outside my scope, take the first
-             * element in the desired direction.
-             */
-            return FindOffsetFocussableChild(this, ori, dir);
-        }
-        else
-        {
-            Widget? wNewFocus = FindOffsetFocussableChild(wOldFocus, ori, dir);
-            if (null == wNewFocus)
+            if (null != wOldFocus)
             {
-                return FindOffsetFocussableChild(this, ori, dir);
-            }
-            else
-            {
-                return wNewFocus;
+                Widget? wNewFocus = FindOffsetFocussableChild(wOldFocus, ori, dir);
+                if (null != wNewFocus)
+                {
+                    return wNewFocus;
+                }
             }
         }
+
+        return FindOffsetFocussableChild(this, ori, dir);
     }
     
     
