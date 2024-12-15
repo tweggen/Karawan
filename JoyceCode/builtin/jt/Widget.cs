@@ -222,6 +222,18 @@ public class Widget : IDisposable
     }
 
 
+    public OffsetOrientation GetSelector()
+    {
+        switch (GetAttr("selector", ""))
+        {
+            case "horizontal": return OffsetOrientation.Horizontal;
+            case "vertical": return OffsetOrientation.Vertical;
+            default:
+                return OffsetOrientation.DontCare;
+        }
+    }
+
+
     public bool HasAttr(string name)
     {
         lock (_lo)
@@ -1295,7 +1307,7 @@ public class Widget : IDisposable
 
     public Widget? FindFirstDefaultFocussedChild(Widget wTop)
     {
-        return FindNextChild(wTop, 1,
+        return FindNextChild(wTop, OffsetOrientation.DontCare, 1,
             w =>
                 w.FocusState == FocusStates.Focussable
                 && (w.GetAttr("defaultFocus", "false") == "true"
@@ -1341,7 +1353,7 @@ public class Widget : IDisposable
      * - then move on to our next sibling. Call ourselfes recursive.
      * - if no child was left
      */
-    public Widget? FindNextChild(Widget wCurrent, int dir, Func<Widget, bool> condition)
+    public Widget? FindNextChild(Widget wCurrent, OffsetOrientation ori, int dir, Func<Widget, bool> condition)
     {
         if (null == wCurrent)
         {
@@ -1363,10 +1375,17 @@ public class Widget : IDisposable
                 {
                     return wFirstChild;
                 }
-                wMatch = FindNextChild(wFirstChild, dir, condition);
-                if (wMatch != null)
+                
+                /*
+                 * Only descend, if the selector orientation matches. 
+                 */
+                if (ori == OffsetOrientation.DontCare || wFirstChild.GetSelector() == ori)
                 {
-                    return wMatch;
+                    wMatch = FindNextChild(wFirstChild, ori, dir, condition);
+                    if (wMatch != null)
+                    {
+                        return wMatch;
+                    }
                 }
             }
         }
@@ -1393,7 +1412,7 @@ public class Widget : IDisposable
                     return wSibling;
                 }
 
-                wMatch = FindNextChild(wSibling, dir, condition);
+                wMatch = FindNextChild(wSibling, ori, dir, condition);
                 if (wMatch != null)
                 {
                     return wMatch;
@@ -1435,7 +1454,7 @@ public class Widget : IDisposable
                     {
                         return wParentSibling;
                     }
-                    wMatch = FindNextChild(wParentSibling, dir, condition);
+                    wMatch = FindNextChild(wParentSibling, ori, dir, condition);
                     if (wMatch != null)
                     {
                         return wMatch;
@@ -1464,7 +1483,7 @@ public class Widget : IDisposable
 
     public Widget? FindOffsetFocussableChild(Widget? wStart, OffsetOrientation ori, int dir)
     {
-        return FindNextChild(wStart, dir, w => w.FocusState == FocusStates.Focussable);
+        return FindNextChild(wStart, ori, dir, w => w.FocusState == FocusStates.Focussable);
     }
 
 

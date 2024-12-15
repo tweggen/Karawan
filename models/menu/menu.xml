@@ -38,7 +38,7 @@
             <text id='menuLoginStatusText' color='#22aaee' width="120"></text>
             <option height="40" color='#999999' onClick='os.exit()'>Exit...</option>
         </vmenu>
-    </view>f
+    </view>
     <view layer='pausemenu' id='menuOptions'>
         <vbox width='250' x='200' y='200'>
             <text color='#666666' height='40'>Options</text>
