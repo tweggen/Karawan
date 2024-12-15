@@ -1366,6 +1366,9 @@ public class Widget : IDisposable
         /*
          * First traverse down to our children.
          */
+        if (ori == OffsetOrientation.DontCare 
+            || wCurrent.GetSelector() == OffsetOrientation.DontCare 
+            || wCurrent.GetSelector() == ori)
         {
             var currentChildren = wCurrent.Children;
             if (null != currentChildren && currentChildren.Count > 0)
@@ -1376,16 +1379,10 @@ public class Widget : IDisposable
                     return wFirstChild;
                 }
                 
-                /*
-                 * Only descend, if the selector orientation matches. 
-                 */
-                if (ori == OffsetOrientation.DontCare || wFirstChild.GetSelector() == ori)
+                wMatch = FindNextChild(wFirstChild, ori, dir, condition);
+                if (wMatch != null)
                 {
-                    wMatch = FindNextChild(wFirstChild, ori, dir, condition);
-                    if (wMatch != null)
-                    {
-                        return wMatch;
-                    }
+                    return wMatch;
                 }
             }
         }
