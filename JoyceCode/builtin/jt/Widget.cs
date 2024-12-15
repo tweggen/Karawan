@@ -389,7 +389,7 @@ public class Widget : IDisposable
              * Collect current data, short circuit if everything is
              * done.
              */
-            IReadOnlyList<Widget>? children;
+            ImmutableList<Widget>? children;
             RootWidget root;
             lock (_lo)
             {
@@ -459,7 +459,7 @@ public class Widget : IDisposable
         {
             Widget? oldRoot = null;
             bool isVisible = false;
-            IReadOnlyList<Widget> children = null;
+            ImmutableList<Widget> children = null;
             RootWidget root = value;
             ALayout layout = null;
             
@@ -558,8 +558,8 @@ public class Widget : IDisposable
     
     private List<Widget>? _children;
 
-    private IReadOnlyList<Widget>? _immutableChildren;
-    private IReadOnlyList<Widget>? _immutableChildrenNL()
+    private ImmutableList<Widget>? _immutableChildren;
+    private ImmutableList<Widget>? _immutableChildrenNL()
     {
         if (null == _children)
         {
@@ -575,7 +575,7 @@ public class Widget : IDisposable
     }
 
     
-    public IReadOnlyList<Widget>? Children
+    public ImmutableList<Widget>? Children
     {
         get
         {
@@ -862,7 +862,7 @@ public class Widget : IDisposable
 
     public void UnrealizeChildren()
     {
-        IReadOnlyList<Widget> children;
+        ImmutableList<Widget> children;
         lock (_lo)
         {
             children = _immutableChildrenNL();
@@ -889,7 +889,7 @@ public class Widget : IDisposable
 
     public void RealizeChildren(RootWidget root)
     {
-        IReadOnlyList<Widget> children;
+        ImmutableList<Widget> children;
         lock (_lo)
         {
             children = _immutableChildrenNL();
@@ -1506,8 +1506,12 @@ public class Widget : IDisposable
             }
         }
     }
-
-
+    
+    
+    /**
+     * Perform the movement when we shall select the next or previous
+     * of my siblings, like navigating with a tab in a dialog.
+     */
     private void _setOffsetFocus(int dir)
     {
         RootWidget? wRoot = Root;
@@ -1523,6 +1527,86 @@ public class Widget : IDisposable
         }
     }
 
+
+    /**
+     * Perform the navigation like when navigating in a menu.
+     * This works like focus my previous or next direct child.
+     */
+    private Widget? _findMenuFocus(int dir)
+    {
+        RootWidget? wRoot = Root;
+        if (null == wRoot)
+        {
+            return null;
+        }
+
+        ImmutableList<Widget> children = Children;
+        if (null == children)
+        {
+            return null;
+        }
+
+        int l = children.Count;
+        if (l == 1)
+        {
+            return children[0];
+        }
+
+        Widget? wOldFocus = wRoot.GetFocussedChild();
+        Widget? wMyOldFocussedChild = null;
+
+        {
+            /*
+             * Find my child that is ancestor of the currently focussed widget.
+             */
+            if (null != wOldFocus)
+            {
+                wMyOldFocussedChild = FindMyChild(wOldFocus);
+            }
+        }
+        if (wMyOldFocussedChild != null)
+        {
+            /*
+             * Find the next/previous direct child.
+             */
+            int currentIndex = children.IndexOf(wMyOldFocussedChild);
+            if (-1 != currentIndex)
+            {
+                return children[(currentIndex + dir) % l];
+            }
+        }
+        
+        {
+            /*
+             * Select the last / first child
+             */
+            if (dir > 0)
+            {
+                return children[l-1];
+            }
+            else
+            {
+                return children[0];
+            }
+        }
+    } 
+    
+    
+    private void _setMenuFocus(int dir)
+    {
+        RootWidget? wRoot = Root;
+        if (null == wRoot)
+        {
+            return;
+        }
+
+        Widget? wNewFocus = _findMenuFocus(dir);
+        if (wNewFocus != null)
+        {
+            wRoot.SetFocussedChild(wNewFocus);
+        }
+    }
+    
 
     public void OnInit()
     {

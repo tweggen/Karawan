@@ -54,7 +54,11 @@
         <vbox width='250' x='200' y='100'>
             <text color='#666666' height='40'>Inventory</text>
             <for items='{return inv:getItemTextList()}'>
-                <text color="#999999" text="{return text}"/>
+                <hbox height="40">
+                    <option color='#999999' onClick='joyce:ev("nogame.modules.menuInventory.showDetail", id)' text="{return text}"/>
+                    <option color='#999999' onClick='joyce:ev("nogame.modules.menuInventory.useItem", id)'>Use</option>
+                    <option color='#999999' onClick='joyce:ev("nogame.modules.menuInventory.dropItem", id)'>Drop</option>
+                </hbox>
             </for>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>
         </vbox>
