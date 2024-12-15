@@ -81,12 +81,6 @@ public class Parser
     }
     
     
-    private readonly SortedDictionary<string, StructureDescriptor> _mapStructDesc = new()
-    {
-
-    };
-    
-
     private readonly SortedDictionary<string, TypeDescriptor> _mapTypes = new()
     {
         {
@@ -194,7 +188,31 @@ public class Parser
                 }, 
                 TypeSetup = _setupAnyBox
             }
-        }
+        },
+        {
+            "vmenu", new()
+            {
+                WidgetType = typeof(builtin.jt.Widget),
+                ParentType = "vbox",
+                TemplateProperties = new()
+                {
+                    { "selector", "vertical" },
+                    { "focussable", "true" }
+                },
+            }
+        },
+        {
+            "hmenu", new()
+            {
+                WidgetType = typeof(builtin.jt.Widget),
+                ParentType = "hbox",
+                TemplateProperties = new()
+                {
+                    { "selector", "horizontal" },
+                    { "focussable", "true" }
+                }
+            }
+        },
     };
 
     

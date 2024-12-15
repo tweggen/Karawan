@@ -1547,8 +1547,12 @@ public class Widget : IDisposable
         }
 
         int l = children.Count;
-        if (l == 1)
+        if (l <= 1)
         {
+            if (0 == l)
+            {
+                return null;
+            }
             return children[0];
         }
 
@@ -1569,10 +1573,24 @@ public class Widget : IDisposable
             /*
              * Find the next/previous direct child.
              */
-            int currentIndex = children.IndexOf(wMyOldFocussedChild);
-            if (-1 != currentIndex)
+            int oldIndex = children.IndexOf(wMyOldFocussedChild);
+            if (-1 != oldIndex)
             {
-                return children[(currentIndex + dir) % l];
+                for (int i = 1; i < l; i++)
+                {
+                    int newIndex = (oldIndex + Int32.Sign(dir) * i + l)%l;
+                    
+                    /*
+                     * Now, to select this item, we would need to find the first
+                     * focussable child.
+                     */
+                    Widget wSibling = children[newIndex];
+                    Widget? wFirstFocussable = wSibling.FindFirstFocussableChild();
+                    if (null != wFirstFocussable)
+                    {
+                        return wFirstFocussable;
+                    }
+                }
             }
         }
         

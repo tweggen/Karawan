@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <jt>
     <view layer='pausemenu' id='menuLogin'>
-        <vbox width='250' x='200' y='80'>
+        <vmenu width='250' x='200' y='80'>
             <text height='40' color='#666666'>Choose system to connect to...</text>
             <option height='40' color='#999999' onClick='joyce:ev("nogame.login.loginLocally")'>local machine (offline)</option>
             <text color='#666666' height='40' vAlign='bottom'>use these credentials to connect to...</text>
@@ -23,12 +23,12 @@
                        onInit='widget["text"]=nogame:getConfig().Password'
                        onChange='nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
-            <hbox height="40">
+            <hmenu height="40">
                 <text color='#999999' width="120">new (globally)</text>
                 <option color='#999999' width="40">no</option>
                 <option color='#999999' width="140" onClick='joyce:ev("nogame.login.newGlobally")'>yes, destroy old</option>
                 <option color='#999999' width="40">nay</option>
-            </hbox>
+            </hmenu>
             <option 
                     height="40" 
                     color='#999999' 
@@ -37,7 +37,7 @@
             >global machine (online)</option>
             <text id='menuLoginStatusText' color='#22aaee' width="120"></text>
             <option height="40" color='#999999' onClick='os.exit()'>Exit...</option>
-        </vbox>
+        </vmenu>
     </view>f
     <view layer='pausemenu' id='menuOptions'>
         <vbox width='250' x='200' y='200'>
