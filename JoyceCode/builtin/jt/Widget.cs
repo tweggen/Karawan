@@ -588,13 +588,14 @@ public class Widget : IDisposable
              */
             if (null == value)
             {
-                (oldRoot as RootWidget)?.UnfocusChild(this);
+                RootWidget? wRoot = (oldRoot as RootWidget);
+                wRoot?.UnfocusChild(this);
                 UnrealizeSelf();
                 {
                     string strFocusFor = GetAttr("focusFor", "");
                     if (!strFocusFor.IsNullOrEmpty())
                     {
-                        value.RemoveFocusFor(strFocusFor, GetAttr("id", ""));
+                        wRoot?.RemoveFocusFor(strFocusFor, GetAttr("id", ""));
                     }
                 }
             }
