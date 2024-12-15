@@ -154,18 +154,6 @@ public class Parser
             }
         },
         {
-            "box", new ()
-            {
-                WidgetType = typeof(builtin.jt.Widget),
-                ParentType = "view",
-                TemplateProperties = new()
-                {
-                    { "direction", "vertical" }
-                }, 
-                TypeSetup = _setupAnyBox
-            }
-        },
-        {
             "vbox", new()
             {
                 WidgetType = typeof(builtin.jt.Widget),

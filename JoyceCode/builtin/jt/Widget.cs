@@ -51,6 +51,13 @@ public class Widget : IDisposable
     public LuaBindingFrame? BuildLuaBindingFrame = null;
 
     private string _widgetEventPath;
+
+    public enum OffsetOrientation
+    {
+        DontCare,
+        Horizontal,
+        Vertical
+    };
     
     /**
      * Stores the user accessible property data.
@@ -1109,7 +1116,7 @@ public class Widget : IDisposable
         {
             if (haveChildren && !isHorizontal)
             {
-                _setOffsetFocus(-1);
+                _setOffsetFocus(OffsetOrientation.Vertical, -1);
                 ev.IsHandled = true;
             }
         };
@@ -1117,7 +1124,7 @@ public class Widget : IDisposable
         {
             if (haveChildren && !isHorizontal)
             {
-                _setOffsetFocus(1);
+                _setOffsetFocus(OffsetOrientation.Vertical, 1);
                 ev.IsHandled = true;
             }
         };
@@ -1125,7 +1132,7 @@ public class Widget : IDisposable
         {
             if (haveChildren && isHorizontal)
             {
-                _setOffsetFocus(-1);
+                _setOffsetFocus(OffsetOrientation.Horizontal, -1);
                 ev.IsHandled = true;
             }
         };
@@ -1133,7 +1140,7 @@ public class Widget : IDisposable
         {
             if (haveChildren && isHorizontal)
             {
-                _setOffsetFocus(1);
+                _setOffsetFocus(OffsetOrientation.Horizontal, 1);
                 ev.IsHandled = true;
             }
         };
@@ -1205,7 +1212,7 @@ public class Widget : IDisposable
                             wRoot = Root;
                             if (wRoot != null)
                             {
-                                var wNewFocus = wRoot.FindOffsetFocussableChild(this, 1);
+                                var wNewFocus = wRoot.FindOffsetFocussableChild(this, OffsetOrientation.DontCare, 1);
                                 if (wNewFocus != null)
                                 {
                                     wRoot.SetFocussedChild(wNewFocus);
@@ -1299,7 +1306,7 @@ public class Widget : IDisposable
 
     public Widget? FindFirstFocussableChild()
     {
-        return FindOffsetFocussableChild(this, 1);
+        return FindOffsetFocussableChild(this, OffsetOrientation.DontCare, 1);
     }
 
     
@@ -1455,7 +1462,7 @@ public class Widget : IDisposable
     }
 
 
-    public Widget? FindOffsetFocussableChild(Widget? wStart, int dir)
+    public Widget? FindOffsetFocussableChild(Widget? wStart, OffsetOrientation ori, int dir)
     {
         return FindNextChild(wStart, dir, w => w.FocusState == FocusStates.Focussable);
     }
@@ -1466,7 +1473,7 @@ public class Widget : IDisposable
      * within this parent.
      * If it is not, select the first / last focussable child.
      */
-    private Widget? _findOffsetFocus(int dir)
+    private Widget? _findOffsetFocus(OffsetOrientation ori, int dir)
     {
         RootWidget? wRoot = Root;
         if (null == wRoot)
@@ -1491,14 +1498,14 @@ public class Widget : IDisposable
              * was outside my scope, take the first
              * element in the desired direction.
              */
-            return FindOffsetFocussableChild(this, dir);
+            return FindOffsetFocussableChild(this, ori, dir);
         }
         else
         {
-            Widget? wNewFocus = FindOffsetFocussableChild(wOldFocus, dir);
+            Widget? wNewFocus = FindOffsetFocussableChild(wOldFocus, ori, dir);
             if (null == wNewFocus)
             {
-                return FindOffsetFocussableChild(this, dir);
+                return FindOffsetFocussableChild(this, ori, dir);
             }
             else
             {
@@ -1512,7 +1519,7 @@ public class Widget : IDisposable
      * Perform the movement when we shall select the next or previous
      * of my siblings, like navigating with a tab in a dialog.
      */
-    private void _setOffsetFocus(int dir)
+    private void _setOffsetFocus(OffsetOrientation ori, int dir)
     {
         RootWidget? wRoot = Root;
         if (null == wRoot)
@@ -1520,7 +1527,7 @@ public class Widget : IDisposable
             return;
         }
 
-        Widget? wNewFocus = _findOffsetFocus(dir);
+        Widget? wNewFocus = _findOffsetFocus(ori, dir);
         if (wNewFocus != null)
         {
             wRoot.SetFocussedChild(wNewFocus);
