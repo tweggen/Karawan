@@ -1,9 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using static engine.Logger;
 
 namespace builtin.jt;
+
+class FocusForEntry
+{
+    public string TargetId;
+    public List<string> ProxyIdList = new();
+}
 
 /**
  * Top level widget that associates a widget with a factory.
@@ -12,6 +19,8 @@ public class RootWidget : Widget
 {
     private SortedDictionary<string, Widget> _idMap = new();
     private Widget? _wFocussedChild = null;
+
+    private SortedDictionary<string, FocusForEntry> _mapFocusFor = new();
     
     private ImplementationFactory _implementationFactory; 
     public required ImplementationFactory ImplementationFactory
@@ -29,6 +38,61 @@ public class RootWidget : Widget
             {
                 return _implementationFactory;
             }
+        }
+    }
+
+
+    public IReadOnlyList<string>? GetFocussedFor(string strTargetId)
+    {
+        lock (_lo)
+        {
+            if (_mapFocusFor.TryGetValue(strTargetId, out var ffe))
+            {
+                if (ffe.ProxyIdList.Count > 0)
+                {
+                    return ffe.ProxyIdList.ToImmutableList();
+                }
+            }
+        }
+
+        return null;
+    }
+
+
+    public void AddFocusFor(string strTargetId, string strProxyId)
+    {
+        FocusForEntry ffe;
+        lock (_lo)
+        {
+            if (!_mapFocusFor.TryGetValue(strTargetId, out ffe))
+            {
+                ffe = new FocusForEntry() { TargetId = strTargetId };
+            }
+
+            // Trace($"Added focus for target {strTargetId} proxy {strProxyId}");
+            ffe.ProxyIdList.Add(strProxyId);
+            _mapFocusFor.Add(strTargetId, ffe);
+        }
+    }
+
+
+    public void RemoveFocusFor(string strTargetId, string strProxyId)
+    {
+        FocusForEntry ffe;
+        lock (_lo)
+        {
+            if (!_mapFocusFor.TryGetValue(strTargetId, out ffe))
+            {
+                Error($"Unable to RemoveFocusFor target {strTargetId}, proxy {strProxyId}: Target not found.");
+                return;
+            }
+
+            if (!ffe.ProxyIdList.Remove(strProxyId))
+            {
+                Error($"Unable to remove target {strTargetId}, proxy {strProxyId}: Proxy not found.");
+                return;
+            }
+            // Trace($"Removed focus for target {strTargetId} proxy {strProxyId}");
         }
     }
 

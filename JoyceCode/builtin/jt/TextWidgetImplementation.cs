@@ -7,6 +7,7 @@ using engine;
 using engine.draw;
 using engine.draw.components;
 using engine.news;
+using Java.Nio.Channels;
 
 namespace builtin.jt;
 
@@ -130,8 +131,8 @@ public class TextWidgetImplementation : IWidgetImplementation
             string strColor = _widget.GetAttr("color", "#ff000000");
             uint color = _color(strColor);
 
-            uint finalTextColor = _widget.IsFocussed ? 0xff22aaee : _widget.IsSelected ? 0xff22aa55 : color;
-            uint finalFillColor = _widget.IsFocussed ? 0xff777777 : 0x00000000;
+            uint finalTextColor = isVisuallyFocussed ? 0xff22aaee : _widget.IsSelected ? 0xff22aa55 : color;
+            uint finalFillColor = isVisuallyFocussed ? 0xff777777 : 0x00000000;
 
             cOsdText.TextColor = finalTextColor;
             cOsdText.FillColor = finalFillColor;
@@ -175,7 +176,7 @@ public class TextWidgetImplementation : IWidgetImplementation
         ref var cOSDText = ref _eText.Get<OSDText>();
         cOSDText.Text = text;
     }
-    
+
 
     private SortedDictionary<string, AttributeEntry> _mapAttributes = new()
     {
@@ -254,16 +255,17 @@ public class TextWidgetImplementation : IWidgetImplementation
         {
             "focussed", new()
             {
-                Name = "focussed", DefaultValue = (object) false, ApplyFunction = (impl, ae, o) =>
+                Name = "focussed", DefaultValue = (object)false, ApplyFunction = (impl, ae, o) =>
                 {
                     impl._updateOsdText();
+                    impl._updateFocussedFor();
                 }
             }
         },
         {
             "selected", new()
             {
-                Name = "selected", DefaultValue = (object) false, ApplyFunction = (impl, ae, o) =>
+                Name = "selected", DefaultValue = (object)false, ApplyFunction = (impl, ae, o) =>
                 {
                     impl._updateOsdText();
                 }
@@ -272,20 +274,20 @@ public class TextWidgetImplementation : IWidgetImplementation
         {
             "visible", new()
             {
-                Name = "visible", DefaultValue = (object) true, ApplyFunction = (impl, ae, o) =>
+                Name = "visible", DefaultValue = (object)true, ApplyFunction = (impl, ae, o) =>
                 {
                 }
             }
         },
         {
-            "text", new ()
+            "text", new()
             {
-                Name = "text", DefaultValue = (object) "", ApplyFunction = (impl, ae, o) =>
+                Name = "text", DefaultValue = (object)"", ApplyFunction = (impl, ae, o) =>
                 {
                     impl._updateOsdText();
-                } 
+                }
             }
-        }
+        },
     };
 
 
@@ -294,10 +296,6 @@ public class TextWidgetImplementation : IWidgetImplementation
         if (_mapAttributes.TryGetValue(key, out var ae))
         {
             ae.ApplyFunction(this, ae, newValue);
-        }
-        else
-        {
-            // I don't know that property.
         }
     }
 
@@ -315,6 +313,37 @@ public class TextWidgetImplementation : IWidgetImplementation
     {
         Unrealize();
         _widget = null;
+    }
+
+
+    private void _updateFocussedFor()
+    {
+        var w = _widget;
+        var wRoot = w.Root;
+        if (null == wRoot) return;
+        IReadOnlyList<string>? listFocussedFor = wRoot.GetFocussedFor(w.GetAttr("id", ""));
+        if (null == listFocussedFor) return;
+        foreach (var strProxyId in listFocussedFor)
+        {
+            if (wRoot.GetChild(strProxyId, out var wProxy))
+            {
+                builtin.jt.ImplementationFactory? factory = wRoot.ImplementationFactory;
+                if (factory != null)
+                {
+                    if (factory.TryGetImplementation(wProxy, out var impl))
+                    {
+                        if (impl != this)
+                        {
+                            var twi = impl as TextWidgetImplementation;
+                            if (null != twi)
+                            {
+                                twi._updateOsdText();
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
 

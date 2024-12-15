@@ -4,9 +4,16 @@ namespace builtin.jt;
 
 public class ImplementationFactory
 {
+    private object _lo = new();
+    
+    private Dictionary<Widget, IWidgetImplementation> _mapWidgetImplementations = new();
+    
     public void Unrealize(Widget widget, IWidgetImplementation impl)
     {
-        
+        lock (_lo)
+        {
+            _mapWidgetImplementations.Remove(widget);
+        }
     }
 
 
@@ -14,6 +21,15 @@ public class ImplementationFactory
     {
         // TXWTODO: This is a wild guess. We would need to establish some interface for that.
         return (12*text.Length, 20);
+    }
+
+
+    public bool TryGetImplementation(Widget w, out IWidgetImplementation impl)
+    {
+        lock (_lo)
+        {
+            return _mapWidgetImplementations.TryGetValue(w, out impl);
+        }
     }
     
 
@@ -23,6 +39,7 @@ public class ImplementationFactory
      */
     public IWidgetImplementation? Realize(Widget w)
     {
+        IWidgetImplementation impl; 
         switch (w.Type)
         {
             case "text":
@@ -30,15 +47,22 @@ public class ImplementationFactory
                 /*
                  * Text is interpreted as an OSDText entity.
                  */
-                return new TextWidgetImplementation(w);
+                impl = new TextWidgetImplementation(w);
                 break;
             
             case "input":
-                return new InputWidgetImplementation(w);
+                impl = new InputWidgetImplementation(w);
                 break;
+            
+            default:
+                return null;
         }
 
-        return null;
+        lock (_lo)
+        {
+            _mapWidgetImplementations.Add(w, impl);   
+        }
+        return impl;
     }
     
 

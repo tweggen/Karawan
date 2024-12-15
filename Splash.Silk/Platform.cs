@@ -449,12 +449,10 @@ public class Platform : engine.IPlatform
         {
             if (value)
             {
-                Trace("Enabling keyboard.");
                 _iInputContext.Keyboards[i].BeginInput();
             }
             else
             {
-                Trace("Disabling keyboard.");
                 _iInputContext.Keyboards[i].EndInput();
             }
         }

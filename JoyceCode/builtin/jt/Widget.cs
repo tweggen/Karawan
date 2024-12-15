@@ -120,7 +120,31 @@ public class Widget : IDisposable
             return oLiteralValue;
         }
     }
-    
+
+
+    private void _tryRemoveFocusFor(object oldValue)
+    {
+        var strOldValue = oldValue as string;
+        if (null == strOldValue) return;
+
+        RootWidget? wRoot = Root;
+        if (null == wRoot) return;
+        
+        wRoot.RemoveFocusFor(strOldValue, GetAttr("id", ""));
+    }
+
+
+    private void _tryAddFocusFor(object newValue)
+    {
+        var strNewValue = newValue as string;
+        if (null == strNewValue) return;
+
+        RootWidget? wRoot = Root;
+        if (null == wRoot) return;
+        
+        wRoot.AddFocusFor(strNewValue, GetAttr("id", ""));
+    }
+
 
     public virtual object this[string key]
     {
@@ -135,6 +159,12 @@ public class Widget : IDisposable
                         return _resolvePropertyValue(key, value);
                     }
                 }
+                
+                const string strId = "id";
+                if (strId == key)
+                {
+                    return $"{Id}";
+                }
 
                 ErrorThrow<KeyNotFoundException>($"Unable to find key {key} in widget.");
                 return null;
@@ -143,6 +173,7 @@ public class Widget : IDisposable
         set
         {
             const string strId = "id";
+            const string strFocusFor = "focusFor";
             if (key == strId && Root != null)
             {
                 Error($"It is not allowed to change the id string if the widget is belonging to a root.");
@@ -181,6 +212,15 @@ public class Widget : IDisposable
             {
                 impl.OnPropertyChanged(key, oldValue, newValue);
             }
+
+            if (key == strFocusFor)
+            {
+                if (oldValue != newValue)
+                {
+                    _tryRemoveFocusFor(oldValue);
+                    _tryAddFocusFor(newValue);
+                }
+            }
         }
     }
 
@@ -201,23 +241,25 @@ public class Widget : IDisposable
     }
     
     
-    public T GetAttr<T>(string name, T defaultValue)
+    public T GetAttr<T>(string key, T defaultValue)
     {
         lock (_lo)
         {
-            if (null == _properties)
+            if (null != _properties)
             {
-                return defaultValue;
+                if (_properties.TryGetValue(key, out object value))
+                {
+                    return GetTypedAttribute<T>(_resolvePropertyValue(key, value));
+                }
+            }
+                
+            const string strId = "id";
+            if (strId == key)
+            {
+                return GetTypedAttribute<T>($"{Id}");
             }
 
-            if (_properties.TryGetValue(name, out var objValue))
-            {
-                return GetTypedAttribute<T>(_resolvePropertyValue(name, objValue));
-            }
-            else
-            {
-                return defaultValue;
-            }
+            return defaultValue;
         }
     }
 
@@ -503,6 +545,13 @@ public class Widget : IDisposable
             if (null != value)
             {
                 value.RegisterChild(this);
+                {
+                    string strFocusFor = GetAttr("focusFor", "");
+                    if (!strFocusFor.IsNullOrEmpty())
+                    {
+                        value.AddFocusFor(strFocusFor, GetAttr("id", ""));
+                    }
+                }
                 
                 /*
                  * Realize myself, if I am visible, so that children can
@@ -541,6 +590,13 @@ public class Widget : IDisposable
             {
                 (oldRoot as RootWidget)?.UnfocusChild(this);
                 UnrealizeSelf();
+                {
+                    string strFocusFor = GetAttr("focusFor", "");
+                    if (!strFocusFor.IsNullOrEmpty())
+                    {
+                        value.RemoveFocusFor(strFocusFor, GetAttr("id", ""));
+                    }
+                }
             }
         }
     }
