@@ -146,6 +146,11 @@ public class Widget : IDisposable
     }
 
 
+    protected virtual void _onPropertyChanged(string key, object oldValue, object newValue)
+    {
+        
+    }
+
     public virtual object this[string key]
     {
         get
@@ -197,6 +202,11 @@ public class Widget : IDisposable
                     {
                         _compiledCache.Value.Invalidate(key, out oldCompiled);
                     }
+                    else
+                    {
+                        // TXWTODO: It must work that way as well!!
+                        // return;
+                    }
                 }
                 _properties[key] = value;
 
@@ -208,6 +218,8 @@ public class Widget : IDisposable
                 oldCompiled.Dispose();
             }
 
+            _onPropertyChanged(key, oldValue, newValue);
+            
             if (null != impl)
             {
                 impl.OnPropertyChanged(key, oldValue, newValue);

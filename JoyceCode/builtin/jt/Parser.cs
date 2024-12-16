@@ -180,7 +180,7 @@ public class Parser
         {
             "vmenu", new()
             {
-                WidgetType = typeof(builtin.jt.Widget),
+                WidgetType = typeof(builtin.jt.MenuWidget),
                 ParentType = "vbox",
                 TemplateProperties = new()
                 {
@@ -192,7 +192,7 @@ public class Parser
         {
             "hmenu", new()
             {
-                WidgetType = typeof(builtin.jt.Widget),
+                WidgetType = typeof(builtin.jt.MenuWidget),
                 ParentType = "hbox",
                 TemplateProperties = new()
                 {

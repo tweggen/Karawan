@@ -14,6 +14,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\MenuWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\InvLuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\PickableDirectory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
