@@ -1013,7 +1013,7 @@ public class Widget : IDisposable
     }
 
 
-    internal Widget? _findSiblingNL(Widget wStart, int dir)
+    internal Widget? _findSiblingNL(Widget wStart, OffsetOrientation ori, int dir)
     {
         if (null == _children)
         {
@@ -1032,21 +1032,26 @@ public class Widget : IDisposable
             return null;
         }
 
-        int siblingIndex = startIndex + dir;
-        if (siblingIndex >= 0 && siblingIndex < l)
+        if (ori == OffsetOrientation.DontCare
+            || GetSelector() == OffsetOrientation.DontCare
+            || GetSelector() == ori)
         {
-            return _children[siblingIndex];
+            int siblingIndex = startIndex + dir;
+            if (siblingIndex >= 0 && siblingIndex < l)
+            {
+                return _children[siblingIndex];
+            }
         }
 
         return null;
     }
 
 
-    internal Widget? _findSibling(Widget wStart, int dir)
+    internal Widget? _findSibling(Widget wStart, OffsetOrientation ori, int dir)
     {
         lock (_lo)
         {
-            return _findSiblingNL(wStart, dir);
+            return _findSiblingNL(wStart, ori, dir);
         }
     }
     
@@ -1179,6 +1184,7 @@ public class Widget : IDisposable
         
         bool haveChildren = HasChildren;
         bool isHorizontal = GetAttr("direction", "vertical") == "horizontal";
+        var selector = GetSelector();
 
         if (ev.Type.StartsWith(_widgetEventPath))
         {
@@ -1470,7 +1476,7 @@ public class Widget : IDisposable
         }
 
         {
-            var wSibling = wCurrentParent._findSibling(wCurrent, dir);
+            var wSibling = wCurrentParent._findSibling(wCurrent, ori, dir);
             if (wSibling != null)
             {
                 if (condition(wSibling))
@@ -1512,7 +1518,7 @@ public class Widget : IDisposable
                     return null;
                 }
 
-                Widget? wParentSibling = wParentParent._findSibling(wCurrentParent, dir);
+                Widget? wParentSibling = wParentParent._findSibling(wCurrentParent, ori, dir);
 
                 if (null != wParentSibling)
                 {
