@@ -28,6 +28,8 @@ public class SkiaSharpFramebuffer : IFramebuffer
     public uint Height { get => _height; }
     public uint Generation { get => _generation; }
 
+    private const bool IsTextAntiAlias = true;
+
     private byte[] _superfluousBackBuffer;
     
     
@@ -94,7 +96,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         var paint = new SKPaint
         {
             Color = context.Color,
-            IsAntialias = false,
+            IsAntialias = IsTextAntiAlias,
             Style = SKPaintStyle.Stroke
         };
         lock (_lo)
@@ -221,7 +223,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         var paint = new SKPaint(font)
         {
             Color = context.TextColor,
-            IsAntialias = true,
+            IsAntialias = false,
             Style = SKPaintStyle.Fill,
             TextAlign = _toSkiaTextAlign(context.HAlign),
             TextSize = fontSize
@@ -246,7 +248,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         var paint = new SKPaint(font)
         {
             Color = context.TextColor,
-            IsAntialias = true,
+            IsAntialias = IsTextAntiAlias,
             Style = SKPaintStyle.Fill,
             TextAlign = _toSkiaTextAlign(context.HAlign),
             TextSize = fontSize
