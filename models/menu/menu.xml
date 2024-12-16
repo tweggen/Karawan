@@ -54,10 +54,10 @@
         <vmenu width='250' x='200' y='100'>
             <text color='#666666' height='40'>Inventory</text>
             <for items='{return inv:getItemTextList()}'>
-                <hmenu height="40">
-                    <option color='#999999' onClick='joyce:ev("nogame.modules.menuInventory.showDetail", id)' text="{return text}"/>
-                    <option color='#999999' onClick='joyce:ev("nogame.modules.menuInventory.useItem", id)'>Use</option>
-                    <option color='#999999' onClick='joyce:ev("nogame.modules.menuInventory.dropItem", id)'>Drop</option>
+                <hmenu height="20">
+                    <option color='#999999' width='120' onClick='joyce:ev("nogame.modules.menuInventory.showDetail", id)' text="{return text}"/>
+                    <option color='#999999' width='40' onClick='joyce:ev("nogame.modules.menuInventory.useItem", id)'>Use</option>
+                    <option color='#999999' width='40' onClick='joyce:ev("nogame.modules.menuInventory.dropItem", id)'>Drop</option>
                 </hmenu>
             </for>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuOptions")'>Back...</option>

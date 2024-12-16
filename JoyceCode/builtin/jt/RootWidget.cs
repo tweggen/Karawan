@@ -221,9 +221,21 @@ public class RootWidget : Widget
         {
             if (!string.IsNullOrEmpty(id))
             {
-                if (_idMap.TryGetValue(id, out var _))
+                if (_idMap.TryGetValue(id, out var wOldWithId))
                 {
-                    Error($"Unable to add widget with id \"{id}\", id already in use.");
+                    if (wOldWithId == wChild)
+                    {
+                        /*
+                       * Well, we most probably are subject to self-recursion.
+                       * While technically not 100% correct, because this still
+                       * could be a wrong double register, just ignore that
+                       * call.
+                       */
+                    }
+                    else
+                    {
+                        Error($"Unable to add widget with id \"{id}\", id already in use.");
+                    }
                 }
                 else
                 {
