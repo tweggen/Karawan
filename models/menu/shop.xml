@@ -4,11 +4,7 @@
         <vbox width='600' x='200' y='200'>
             <text color='#666666' height='40'>welcome to the shop!</text>
             <text color='#999999'>You can purchase or sell items here.</text>
-            <!-- hbox width='600'>
-                <text color='#666666'>Item 1</text>
-                <text color='#666666'>Item 2</text>
-                <text color='#666666'>Item 3</text>
-            </hbox-->
+
             <option color='#999999' onClick='joyce:ev("nogame.modules.shop.buy", "sunglasses")'>Sunglasses</option>
             <option color='#999999' onClick='joyce:ev("nogame.modules.shop.buy", "fakesilverwatch")'>Silver Looking Watch</option>
             <option color='#999999' onClick='joyce:ev("nogame.modules.shop.buy", "necklace")'>Necklace</option>

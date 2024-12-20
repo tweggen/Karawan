@@ -346,7 +346,7 @@ public class Parser
          * Then, the special text attribute
          */
         {
-            string text = xWidget.InnerText;
+            string text = xWidget.InnerText.Trim();
             if (!text.IsNullOrEmpty())
             {
                 w["text"] = text;
@@ -363,6 +363,7 @@ public class Parser
     {
     }
 
+    
     private List<SortedDictionary<string, object>> _needListOfMaps(object lseLuaItems)
     {
         if (null == lseLuaItems)

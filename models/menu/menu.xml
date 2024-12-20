@@ -6,7 +6,9 @@
             <option height='40' color='#999999' onClick='joyce:ev("nogame.login.loginLocally")'>local machine (offline)</option>
             <text color='#666666' height='40' vAlign='bottom'>use these credentials to connect to...</text>
             <hbox height="40">
-                <text color='#999999' width="120" focusFor="ui.username">eMail</text>
+                <text color='#999999' width="120" focusFor="ui.username">
+                    eMail
+                </text>
                 <input
                         id="ui.username"
                         width="120"
@@ -15,7 +17,9 @@
                         onChange='nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
             <hbox height="40">
-                <text color='#999999' width="120" focusFor="ui.password">Password</text>
+                <text color='#999999' width="120" focusFor="ui.password">
+                    Password
+                </text>
                 <input id="ui.password"
                        width="120"
                        color='#448822'
@@ -24,19 +28,31 @@
                        onChange='nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
             <hmenu height="40" id='ui.newGlobally'>
-                <text color='#999999' width="120" focusFor='ui.newGlobally'>new (globally)</text>
-                <option color='#999999' width="40">no</option>
-                <option color='#999999' width="140" onClick='joyce:ev("nogame.login.newGlobally")'>yes, destroy old</option>
-                <option color='#999999' width="40">nay</option>
+                <text color='#999999' width="120" focusFor='ui.newGlobally'>
+                    new (globally)
+                </text>
+                <option color='#999999' width="40">
+                    no
+                </option>
+                <option color='#999999' width="140" onClick='joyce:ev("nogame.login.newGlobally")'>
+                    yes, destroy old
+                </option>
+                <option color='#999999' width="40">
+                    nay
+                </option>
             </hmenu>
             <option 
                     height="40" 
                     color='#999999' 
                     isDefaultFocus='return nogame:getConfig().WebToken ~= ""' 
                     onClick='joyce:ev("nogame.login.loginGlobally")'
-            >global machine (online)</option>
+            >
+                global machine (online)
+            </option>
             <text id='menuLoginStatusText' color='#22aaee' width="120"></text>
-            <option height="40" color='#999999' onClick='os.exit()'>Exit...</option>
+            <option height="40" color='#999999' onClick='os.exit()'>
+                Exit...
+            </option>
         </vmenu>
     </view>
     <view layer='pausemenu' id='menuOptions'>
