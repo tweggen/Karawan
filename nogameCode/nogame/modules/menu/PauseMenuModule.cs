@@ -55,7 +55,7 @@ public class PauseMenuModule : AModule, IInputPart
     {
         M<InputEventPipeline>().RemoveInputPart(this);
 
-        M<Factory>().CloseOSD(_layerDefinition.Name, "menuOptions");
+        M<Factory>().CloseAll(_layerDefinition.Name);
         
         _engine.DisablePause();
         

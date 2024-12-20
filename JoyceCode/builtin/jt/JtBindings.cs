@@ -14,7 +14,6 @@ public class JtBindings
 
     public readonly Factory Factory;
     public readonly Parser Parser;
-
     
     /**
      * open a certain menu.
