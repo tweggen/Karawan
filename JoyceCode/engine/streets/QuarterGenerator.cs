@@ -106,6 +106,33 @@ namespace engine.streets
 
             float minHouseSide = Single.MaxValue;
 
+            float maxHeight;
+            float downtownness =
+                _clusterDesc.GetAttributeIntensity(
+                     _clusterDesc.Pos + new Vector3(v2QuarterCenter.X, 0f, v2QuarterCenter.Y),
+                    ClusterDesc.LocationAttributes.Downtown);
+
+            /*
+             * Generate a random sidewalk width.
+             * TXWTODO: High buildings might have a larger entrace area, don't they?
+             * This strangely is measured in tenth meters.
+             */
+            float sidewalkWidth;
+
+            if (downtownness < 0.2f)
+            {
+                sidewalkWidth = 1f*10f;
+            } else if (downtownness < 0.5f)
+            {
+                sidewalkWidth = 2f * 10f;
+            } else if (downtownness < 0.7f)
+            {
+                sidewalkWidth = 4f * 10f;
+            } else 
+            {
+                sidewalkWidth = 6f * 10f;
+            }
+
             List<IntPoint> polyPoints = new();
             List<List<IntPoint>> polyList = new();
             polyList.Add(polyPoints);
@@ -118,15 +145,6 @@ namespace engine.streets
                 clipperOffset.AddPaths(polyList, JoinType.jtMiter, EndType.etClosedPolygon);
                 List<List<IntPoint>> solution2 = new();
 
-                /*
-                 * Generate a random sidewalk width.
-                 * TXWTODO: High buildings might have a larger entrace area, don't they?
-                 * This strangely is measured in tenth meters. 
-                 */
-                float sidewalkWidth = 4f*10f;
-                {
-                    //sidewalkWidth = rndQuarter.getFloat()*75. + 25.;
-                }
                 clipperOffset.Execute(ref solution2, -sidewalkWidth);
 
                 var strPoints = "";
@@ -202,11 +220,6 @@ namespace engine.streets
 
             var building = new streets.Building() { ClusterDesc = _clusterDesc };
             building.AddPoints(p);
-            float maxHeight;
-            float downtownness =
-                _clusterDesc.GetAttributeIntensity(
-                    p[0] + _clusterDesc.Pos,
-                    ClusterDesc.LocationAttributes.Downtown);
             if (minHouseSide <= 2.0f || downtownness < 0.3f)
             {
                 maxHeight = 1f * _storyHeight;
@@ -226,6 +239,7 @@ namespace engine.streets
 
             var height = _storyHeight * (int)((15f + rndQuarter.GetFloat() * 250f)/ _storyHeight);
             if (height > maxHeight) height = maxHeight;
+
             building.SetHeight(height);
 
             quarter.AddDebugTag("haveBuilding", "true");

@@ -427,7 +427,8 @@ public class Module : engine.AModule
         if (null != startCluster)
         {
             
-            startCluster.FindStartPosition(out v3Start, out qStart); 
+            startCluster.FindStartPosition(out v3Start, out qStart);
+            v3Start += startCluster.Pos;
             Trace($"Startposition is {v3Start} {qStart}");
         }
         else
