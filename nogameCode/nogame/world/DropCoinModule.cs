@@ -18,7 +18,7 @@ public class DropCoinModule : AModule, IWorldOperator
 
     public string WorldOperatorGetPath() => "nogame/world/coins";
     
-    public Func<Task> WorldOperatorApply() => M<nogame.inv.coin.Factory>().CreateAt(new Vector3(0, 80f, 0f));
+    public Func<Task> WorldOperatorApply() => M<nogame.inv.coin.Factory>().CreateAt(new Vector3(160, 80f, 190f));
     
 
     public override void ModuleActivate()

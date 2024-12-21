@@ -568,7 +568,27 @@ public class Engine
     {
         _workerCleanupActions.Enqueue(action);
     }
-
+    
+    
+    public Task TaskMainThread(Action action)
+    {
+        if (Thread.CurrentThread == _logicalThread)
+        {
+            action();
+            return Task.CompletedTask;
+        }
+        else
+        {
+            TaskCompletionSource<int> tcsAction = new();
+            QueueMainThreadAction(() =>
+            {
+                action();
+                tcsAction.SetResult(0);
+            });
+            return tcsAction.Task;
+        }
+    }
+    
 
     /**
      * Run the given method either synchronously in the main thread

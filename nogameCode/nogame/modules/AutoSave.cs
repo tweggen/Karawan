@@ -434,6 +434,9 @@ public class AutoSave : engine.AModule
     }
 
 
+    /**
+     * Must be called in logical thread.
+     */
     private void _afterLoad(GameState gs)
     {
         try
@@ -459,17 +462,29 @@ public class AutoSave : engine.AModule
     /**
      * Called as a fallback if no online state could be found
      * or if the game was started new.
-     * This by definition is running in the logical thread.
+     * This can run in any thread.
      */
-    private void _loadCreateOffline()
+    private async Task _loadCreateOffline()
     {
         bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
         if (false == haveGameState)
         {
             Trace($"Creating new gamestate");
             gameState = new GameState();
-            M<Saver>().CallOnCreateNewGame(gameState);
-            M<DBStorage>().SaveGameState(gameState);
+            
+            /*
+             * Well, this is supposed to be started from just about anywhere, as it might want
+             * to use logical thread operations.
+             * TXWTODO: How to wait for it?
+             */
+            await M<Saver>().CallOnCreateNewGame(gameState)();
+            
+            _gameState = gameState;
+
+            /*
+             * After everything has been initialized, fire off the save of the initial game state.
+             */
+            _doSave();
         }
         else
         {
@@ -483,7 +498,7 @@ public class AutoSave : engine.AModule
 
         _gameState = gameState;
 
-        _afterLoad(gameState);
+        await _engine.TaskMainThread(() => _afterLoad(gameState));
     }
 
 
@@ -498,7 +513,7 @@ public class AutoSave : engine.AModule
     }
 
 
-    private async void _onLoadGameResponse(
+    private async Task _onLoadGameResponse(
         HttpResponseMessage httpResponseMessage,
         Action<GameState> onInitialLoad)
     {
@@ -518,24 +533,23 @@ public class AutoSave : engine.AModule
 
                 _gameState = gs;
                 haveGameState = true;
-                _afterLoad(gs);
+                
+                await _engine.TaskMainThread(() => _afterLoad(gs));
             }
         }
 
-        _engine.QueueMainThreadAction(() =>
+        if (!haveGameState)
         {
-            if (!haveGameState)
-            {
-                Trace($"Using fallback to local gamestate");
-                _loadCreateOffline();
-            }
-
-            _engine.Run(() =>
-            {
-                onInitialLoad(_gameState);
-                _startAutoSave();
-            });
+            Trace($"Using fallback to local gamestate");
+            await _loadCreateOffline();
+        }
+        
+        await _engine.TaskMainThread(() =>
+        {
+            onInitialLoad(_gameState);
         });
+        
+        _startAutoSave();
     }
     
     
@@ -544,7 +558,7 @@ public class AutoSave : engine.AModule
      * No previous save game could be found, the offline game
      * state is loaded or a new one is created.
      */
-    private void _triggerInitialOnlineLoad(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
+    private async Task _triggerInitialOnlineLoad(bool reset, Action<GameState> onInitialLoad, Action<string> onError)
     {
         if (!reset)
         {
@@ -561,12 +575,25 @@ public class AutoSave : engine.AModule
         {
             Trace($"Reset game.");
             var gameState = new GameState();
-            M<DBStorage>().SaveGameState(gameState);
+            
+            /*
+             * Well, this is supposed to be started from just about anywhere, as it might want
+             * to use logical thread operations.
+             * TXWTODO: How to wait for it?
+             */
+            await M<Saver>().CallOnCreateNewGame(gameState)();
+
             _gameState = gameState;
+
+            /*
+             * After everything has been initialized, fire off the save of the initial game state.
+             */
             _doSave();
+            
+            await _engine.TaskMainThread(() => _afterLoad(gameState));
+            
             _engine.Run(() =>
             {
-                _afterLoad(gameState);
                 onInitialLoad(gameState);
                 _startAutoSave();
             });
@@ -575,14 +602,16 @@ public class AutoSave : engine.AModule
     }
     
 
-    private void _triggerInitialOfflineLoad(Action<GameState> onInitialLoad, Action<string> _onError)
+    private async Task _triggerInitialOfflineLoad(Action<GameState> onInitialLoad, Action<string> _onError)
     {
-        _engine.QueueMainThreadAction(() =>
+        await _loadCreateOffline();
+        
+        await _engine.TaskMainThread(() =>
         {
-            _loadCreateOffline();
             onInitialLoad(_gameState);
-            _startAutoSave();
         });
+        
+        _startAutoSave();
     }
     
 
@@ -593,7 +622,7 @@ public class AutoSave : engine.AModule
             _triggerInitialOnlineLoad(reset, onInitialLoad, onError);
         }
         else
-        {
+        { 
             _triggerInitialOfflineLoad(onInitialLoad, onError);
         }
     }
