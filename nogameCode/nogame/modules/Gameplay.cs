@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DefaultEcs;
 using engine;
 using engine.news;
+using nogame.world;
 
 namespace nogame.modules;
 
@@ -27,12 +28,37 @@ public class Gameplay : AModule, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<InputEventPipeline>(),
+        
+        /*
+         * Global modules for generic behaviours
+         */
         new MyModule<nogame.modules.daynite.FogColor>(),
+
+        /*
+         * Modules to populate the world after world-building.
+         */
+        new MyModule<DropCoinModule>()
     };
 
 
     private void _onRootKickoff(Event ev)
     {
+        M<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+
+        if (_engine.TryGetCameraEntity(out var eCamera))
+        {
+            _onNewCamera(this, eCamera);
+        }
+
+        if (_engine.TryGetPlayerEntity(out var ePlayer))
+        {
+            _onNewPlayer(this, ePlayer);
+        }
+        _engine.OnCameraEntityChanged += _onNewCamera;
+        _engine.OnPlayerEntityChanged += _onNewPlayer;
+        
+        _engine.OnLogicalFrame += _onLogicalFrame;
+
         builtin.controllers.FollowCameraController fcc;
         lock (_lo)
         {
@@ -270,23 +296,9 @@ public class Gameplay : AModule, IInputPart
     public override void ModuleActivate()
     {
         base.ModuleActivate();
-        M<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.AddModule(this);
 
         I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
         
-        if (_engine.TryGetCameraEntity(out var eCamera))
-        {
-            _onNewCamera(this, eCamera);
-        }
-
-        if (_engine.TryGetPlayerEntity(out var ePlayer))
-        {
-            _onNewPlayer(this, ePlayer);
-        }
-        _engine.OnCameraEntityChanged += _onNewCamera;
-        _engine.OnPlayerEntityChanged += _onNewPlayer;
-        
-        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

@@ -109,7 +109,9 @@
       }
     },
     "nogame.characters.car3.CharacterCreator": null,
-    "nogame.inv.coin.Factory": null
+    "nogame.modules.Gameplay": null,
+    "nogame.inv.coin.Factory": null,
+    "nogame.world.DropCoinModule": null
   },
   "mapProviders":
   {
@@ -250,7 +252,7 @@
     "nogame.characters.car3.maxDistance": 800.0,
     "nogame.characters.tram.maxDistance": 1600.0,
     "nogame.CutCollision": false,
-    "nogame.musicVolume": 1.0
+    "nogame.musicVolume": 0.0
   },
   "quests":
   {
@@ -385,6 +387,7 @@
       { "uri": "../models/sfx/tramnoise.ogg" },
       { "uri": "../models/furniture/polytope-ball-only.mtl" },
       { "uri": "../models/furniture/polytope-stand-only.mtl" },
+      { "uri": "../models/inv/coin.mtl" },
       { "uri": "../models/newcars/car5/car5.mtl" },
       { "uri": "../models/newcars/car6/car6.mtl" },
       { "uri": "../models/newcars/car7/car7.mtl" },

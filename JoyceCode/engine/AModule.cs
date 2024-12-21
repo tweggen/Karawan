@@ -28,6 +28,7 @@ public class ModuleTracker : IDisposable
         }
         else
         {
+            Error($"Unable to find module {typeof(T)}");
             return null;
         }
     }

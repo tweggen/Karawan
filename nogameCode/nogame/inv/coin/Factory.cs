@@ -14,7 +14,7 @@ public class Factory : AModule
     public System.Func<Task> CreateAt(Vector3 v3Pos) => new (async () =>
     {
         Model model = await I.Get<ModelCache>().Instantiate(
-            "tram1.obj", null, new InstantiateModelParams()
+            "coin.obj", null, new InstantiateModelParams()
             {
                 GeomFlags = 0
                             | InstantiateModelParams.CENTER_X
@@ -36,7 +36,9 @@ public class Factory : AModule
                     new Behavior())
                 { MaxDistance = (short)_coinMaxDistance }
             );
-            I.Get<TransformApi>().SetTransform(eTarget, Quaternion.Identity, v3Pos);
+            I.Get<TransformApi>().SetTransforms(
+                eTarget, true, 0x00000001, Quaternion.Identity, v3Pos
+                );
             tcsEntity.SetResult(eTarget);
         });
 

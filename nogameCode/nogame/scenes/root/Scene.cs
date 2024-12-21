@@ -34,10 +34,11 @@ public class Scene : AModule, IScene, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.World>(),
+        
         new SharedModule<AutoSave>(),
+        
         new SharedModule<engine.behave.SpawnModule>(),
         new MyModule<nogame.modules.playerhover.Module>(),
-        new MyModule<nogame.modules.Gameplay>(),
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),

@@ -29,7 +29,7 @@ public class Saver : AModule
 
     public event EventHandler<object> OnAfterLoadGame;
 
-    public List<IWorldOperator> OnCreateNewGame;
+    public List<IWorldOperator> OnCreateNewGame = new();
 
     public void EnableSave()
     {

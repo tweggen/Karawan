@@ -38,6 +38,11 @@ public class Scene : AModule, IScene
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
+        /*
+         * We will activate gameplay from startup.
+         */
+        new SharedModule<nogame.modules.Gameplay>() { ShallActivate = false },
+
         new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<builtin.jt.Factory>(),
         new SharedModule<nogame.modules.story.Narration>(),
@@ -170,7 +175,11 @@ public class Scene : AModule, IScene
          * Give us a short delay to render some frames.
          */
         I.Get<engine.Timeline>().RunIn(TimeSpan.FromMilliseconds(200),
-            () => M<AutoSave>().StartAutoSave(reset, _onAutoSaveSetup, _onAutoSaveError));
+            () =>
+            {
+                // ActivateMyModule<Gameplay>();
+                M<AutoSave>().StartAutoSave(reset, _onAutoSaveSetup, _onAutoSaveError);
+            });
     }
 
 
@@ -353,7 +362,7 @@ public class Scene : AModule, IScene
     {
         base.ModuleActivate();
 
-    /*
+        /*
          * Some local shortcuts
          */
         _aTransform = I.Get<engine.joyce.TransformApi>();
