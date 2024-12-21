@@ -1,5 +1,7 @@
+using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using builtin.modules.inventory.components;
 using engine;
 
@@ -12,7 +14,7 @@ public class PickableDirectory : ObjectFactory<string, PickableDescription>, eng
         throw new System.NotImplementedException();
     }
 
-    public void SetupFrom(JsonElement je)
+    public Func<Task> SetupFrom(JsonElement je) => new (async () =>
     {
         foreach (var jp in je.EnumerateObject())
         {
@@ -32,5 +34,5 @@ public class PickableDirectory : ObjectFactory<string, PickableDescription>, eng
 
             FindAdd(path, pd);
         }
-    }
+    });
 }

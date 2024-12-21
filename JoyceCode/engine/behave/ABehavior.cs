@@ -1,5 +1,7 @@
+using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using DefaultEcs;
 using engine.news;
 using engine.physics;
@@ -23,8 +25,9 @@ public class ABehavior : IBehavior
     {
     }
 
-    public virtual void SetupFrom(JsonElement je)
+    public virtual Func<Task> SetupFrom(JsonElement je)
     {
+        return new Func<Task>(async () => { });
     }
 
     

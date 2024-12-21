@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using engine.news;
+using engine.world;
 using static engine.Logger;
 
 namespace engine;
@@ -25,6 +29,7 @@ public class Saver : AModule
 
     public event EventHandler<object> OnAfterLoadGame;
 
+    public List<IWorldOperator> OnCreateNewGame;
 
     public void EnableSave()
     {
@@ -68,6 +73,14 @@ public class Saver : AModule
     {
         OnAfterLoadGame?.Invoke(this, gs);
     }
+
+
+    public Func<Task> CallOnCreateNewGame(object gs)
+    {
+        return () => Task.WhenAll(
+            OnCreateNewGame.Select(worldOperator => worldOperator.WorldOperatorApply()()));
+    }
+    
 
     private void _handleTriggerSave(Event ev)
     {

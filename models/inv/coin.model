@@ -1,0 +1,9 @@
+# Made using Asset Forge (2.4.1)
+
+:materials
+
+[name:_defaultMat;color:RGBA(0.933, 0.667, 0.133, 1.000);scale:(1.0, 1.0);shader:Default;mapping:0;valueA:0.35;valueB:0.25;]
+
+:models
+
+[name:;collection:Bricks;type:brickRound_1x1%;position:(0.0000, 0.0000, -1.0000);rotation:(270.0000, 0.0000, 0.0000);scale:(1.0000, 0.1000, 1.0000);group:;locked:False;hidden:False;materials:_defaultMat;]

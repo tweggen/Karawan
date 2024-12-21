@@ -434,20 +434,6 @@ public class AutoSave : engine.AModule
     }
 
 
-    private void _save()
-    {
-        lock (_lo)
-        {
-            if (!_isAutoSaveActive)
-            {
-                Error($"Unable to save right now.");
-                return;
-            }
-        }
-        _doSave();
-    }
-
-
     private void _afterLoad(GameState gs)
     {
         try
@@ -470,6 +456,11 @@ public class AutoSave : engine.AModule
     }
     
 
+    /**
+     * Called as a fallback if no online state could be found
+     * or if the game was started new.
+     * This by definition is running in the logical thread.
+     */
     private void _loadCreateOffline()
     {
         bool haveGameState = M<DBStorage>().LoadGameState(out GameState gameState);
@@ -477,6 +468,7 @@ public class AutoSave : engine.AModule
         {
             Trace($"Creating new gamestate");
             gameState = new GameState();
+            M<Saver>().CallOnCreateNewGame(gameState);
             M<DBStorage>().SaveGameState(gameState);
         }
         else
@@ -530,14 +522,20 @@ public class AutoSave : engine.AModule
             }
         }
 
-        if (!haveGameState)
+        _engine.QueueMainThreadAction(() =>
         {
-            Trace($"Using fallback to local gamestate");
-            _loadCreateOffline();
-        }
-        
-        onInitialLoad(_gameState);
-        _startAutoSave();
+            if (!haveGameState)
+            {
+                Trace($"Using fallback to local gamestate");
+                _loadCreateOffline();
+            }
+
+            _engine.Run(() =>
+            {
+                onInitialLoad(_gameState);
+                _startAutoSave();
+            });
+        });
     }
     
     
@@ -579,9 +577,9 @@ public class AutoSave : engine.AModule
 
     private void _triggerInitialOfflineLoad(Action<GameState> onInitialLoad, Action<string> _onError)
     {
-        _loadCreateOffline();
         _engine.QueueMainThreadAction(() =>
         {
+            _loadCreateOffline();
             onInitialLoad(_gameState);
             _startAutoSave();
         });
@@ -627,7 +625,7 @@ public class AutoSave : engine.AModule
             }
             _isAutoSaveActive = true;
         }
-
+        
         _triggerInitialLoad(reset, onInitialLoad, onError);
     }
     

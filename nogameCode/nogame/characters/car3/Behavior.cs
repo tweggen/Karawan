@@ -3,6 +3,7 @@ using nogame.cities;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
@@ -73,10 +74,8 @@ internal class Behavior :
     }
 
     
-    public override void SetupFrom(JsonElement je)
-    {
-        base.SetupFrom(je);
-    }
+    public override Func<Task> SetupFrom(JsonElement je) => base.SetupFrom(je);
+    
 
     
     public override void SaveTo(ref JsonObject jo)

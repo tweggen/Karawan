@@ -1,7 +1,9 @@
+using System;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using engine.behave;
 using engine.physics;
 using static engine.Logger;
@@ -49,11 +51,11 @@ public class SimpleNavigationBehavior : ABehavior
     }
 
 
-    public override void SetupFrom(JsonElement je)
+    public override Func<Task> SetupFrom(JsonElement je) => new (async () =>
     {
         _qPrevRotation = ToQuaternion(je.GetProperty("sno").GetProperty("prevRotation"));
         _inav.SetupFrom(je);
-    }
+    });
 
     
     public override void SaveTo(ref JsonObject jo)

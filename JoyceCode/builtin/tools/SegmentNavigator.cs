@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using engine;
 using engine.behave;
 using static engine.Logger;
@@ -164,12 +165,12 @@ public class SegmentNavigator : INavigator
                 _vuForward, 
                 new Vector3(0f, 1f, 0f)));
     }
-    
-    
-    public void SetupFrom(JsonElement je)
+
+
+    public Func<Task> SetupFrom(JsonElement je) => new(async () =>
     {
         //_qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
-    }
+    });
 
     
     public void SaveTo(ref JsonObject jo)

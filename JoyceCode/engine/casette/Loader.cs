@@ -16,6 +16,7 @@ namespace engine.casette;
 public class Loader
 {
     private object _lo = new();
+    private Engine _engine;
     
     private JsonElement _jeRoot;
     private string strDefaultLoaderAssembly = "";
@@ -90,6 +91,8 @@ public class Loader
 
     private void _loadToSerializable(JsonElement jeCurr, object target)
     {
+        _engine = I.Get<Engine>();
+
         var iSerializable = target as ISerializable;
         if (null == iSerializable)
         {
@@ -100,7 +103,7 @@ public class Loader
 
         try
         {
-            iSerializable.SetupFrom(jeCurr);
+            _engine.Run(iSerializable.SetupFrom(jeCurr));
         }
         catch (Exception e)
         {
@@ -834,13 +837,13 @@ public class Loader
 
     public void StartGame()
     {
-        var e = I.Get<Engine>();
         IModule mRoot = LoadRootModule();
+        _engine = I.Get<Engine>();
         
         /*
          * Start the root module in the main thread.
          */
-        e.QueueMainThreadAction(() => { mRoot.ModuleActivate();});
+        _engine.QueueMainThreadAction(() => { mRoot.ModuleActivate();});
     }
 
 

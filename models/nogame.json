@@ -108,7 +108,8 @@
         }
       }
     },
-    "nogame.characters.car3.CharacterCreator": null
+    "nogame.characters.car3.CharacterCreator": null,
+    "nogame.inv.coin.Factory": null
   },
   "mapProviders":
   {
@@ -390,6 +391,7 @@
       { "uri": "../models/newcars/car8/car8.mtl" },
       { "uri": "../models/furniture/polytope-ball-only.obj" },
       { "uri": "../models/furniture/polytope-stand-only.obj" },
+      { "uri": "../models/inv/coin.obj" },
       { "uri": "../models/newcars/car5/car5.obj" },
       { "uri": "../models/newcars/car6/car6.obj" },
       { "uri": "../models/newcars/car7/car7.obj" },

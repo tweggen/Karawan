@@ -42,6 +42,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\GameState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\intercity\IntercityTrackElevationOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\intercity\Network.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\inv\coin\Behavior.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\inv\coin\Factory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\Main.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\MapFramebuffer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapClusterProvider.cs" />
@@ -83,6 +85,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\GroundOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\terrain\PlaceDebrisOperator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapFragmentProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\world\DropCoinModule.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)story.md" />
