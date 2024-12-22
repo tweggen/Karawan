@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using engine;
 using engine.joyce;
+using engine.world.components;
 using static engine.Logger;
 
 namespace nogame.inv.coin;
@@ -39,6 +40,7 @@ public class Factory : AModule
             I.Get<TransformApi>().SetTransforms(
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos
                 );
+            eTarget.Set(new Creator(Creator.CreatorId_Hardcoded));
             tcsEntity.SetResult(eTarget);
         });
 

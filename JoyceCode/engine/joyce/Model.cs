@@ -36,7 +36,7 @@ namespace engine.joyce
 
         public string Hash()
         {
-            return $"InstantiateModelParams({GeomFlags},{MaxDistance})";
+            return $"{{\"geomFlags\": {GeomFlags}, \"maxDistance\": {MaxDistance} }}";
         }
     }
 

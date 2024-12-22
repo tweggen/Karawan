@@ -31,9 +31,21 @@ public class ModelCache
         ModelProperties modelProperties,
         in InstantiateModelParams? p)
     {
-        string mpHash = (modelProperties != null) ? modelProperties.ToString() : "null";
-        string pHash = (p != null) ? p.Hash() : "null";
-        return $"FromFile('{url}'),{mpHash},{pHash}";
+        string hash = "{";
+        hash += $"\"url\": \"{url}\"";
+        if (modelProperties != null)
+        {
+            string mpHash = modelProperties.ToString();
+            hash += $", \"modelProperties\": {mpHash}";
+        }
+
+        if (p != null)
+        {
+            string pHash = p.Hash();
+            hash += $", \"instantiateModelParams\": {pHash}";
+        }
+        hash += "}";
+        return hash;
     }
 
 

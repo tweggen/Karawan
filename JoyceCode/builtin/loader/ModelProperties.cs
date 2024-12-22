@@ -18,7 +18,7 @@ public class ModelProperties
 
     public override string ToString()
     {
-        string toString = "ModelProperties: {";
+        string toString = "{";
         bool isFirst = true;
         foreach (var kvp in Properties)
         {
@@ -32,6 +32,8 @@ public class ModelProperties
             }
             toString += $"\"{kvp.Key}\": \"{kvp.Value}\"";
         }
+
+        toString += '}';
 
         return toString;
     }
