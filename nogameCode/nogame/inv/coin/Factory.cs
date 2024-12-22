@@ -24,7 +24,7 @@ public class Factory : AModule
                             | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                 MaxDistance = _coinMaxDistance,
             });
-        engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
+        engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc!;
 
         TaskCompletionSource<DefaultEcs.Entity> tcsEntity = new();
         
@@ -35,7 +35,7 @@ public class Factory : AModule
             eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             eTarget.Set(new engine.behave.components.Behavior(
                     new Behavior())
-                { MaxDistance = (short)_coinMaxDistance }
+                { MaxDistance = (short) jInstanceDesc.MaxDistance }
             );
             I.Get<TransformApi>().SetTransforms(
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos

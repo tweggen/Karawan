@@ -46,6 +46,26 @@ public class InstanceDesc
     private bool _haveAABBMerged = true;
     private bool _haveAABBTransformed = false;
 
+    private string? _json = null;
+
+    public string Json
+    {
+        get => _json;
+        set
+        {
+            I.Get<ModelCache>().Instantiate()
+                // TXWTODO: This is not an async api. we need an async api to restore components
+        }
+    }
+
+    /**
+     * Access method for an instance builder to set the original creation id of the
+     * json model.
+     */
+    public void SetJson(string json)
+    {
+        _json = json;
+    }
 
     private Vector3 _vCenter;
     public Vector3 Center

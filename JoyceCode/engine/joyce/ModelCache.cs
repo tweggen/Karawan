@@ -111,6 +111,8 @@ public class ModelCache
             {
                 ErrorThrow($"Reading url {url} model does not have a root model instance defined.", m => new ArgumentException(m));
             }
+
+            model.RootNode.InstanceDesc.SetJson(_hash(url, modelProperties, p));
         }
 
         model = await _instantiateModelParams(model, modelProperties, p);

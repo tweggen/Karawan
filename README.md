@@ -82,9 +82,9 @@ same scene, they are rendered using a single render call.
 
 When working with models, even more hierarchial models, this
 becomes a bit more confusing: each node of a hierarchial model
-is represented using a single entity of its. If the node carries
+is represented using a single entity of its own. If the node carries
 mesh information, the mesh and the materials are represented using
-a InstanceDesc object.
+an InstanceDesc object.
 
 If, in the end, several similar objects are in the scene, the individual
 parts will be rendered with a single drawinstance call.
