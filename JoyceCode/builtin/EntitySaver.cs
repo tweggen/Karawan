@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using DefaultEcs.Serialization;
 using engine;
 using engine.world;
-using BindingFlags = System.Reflection.BindingFlags;
 using Creator = engine.world.components.Creator;
+
+using static engine.Logger;
 
 namespace builtin;
 
@@ -24,11 +27,14 @@ public class EntitySaver : AModule
     private class SaveComponentsReader : IComponentReader
     {
         public bool IsEmpty = true;
-        public JsonObject JOComponents { get; }= new JsonObject();
+        public JsonObject JOComponents { get; } = new JsonObject();
         public JsonSerializerOptions SerializerOptions { get; set; }
         
         public void OnRead<T>(in T component, in DefaultEcs.Entity e)
         {
+            /*
+             * First serialize all fields to the object.
+             */
             if (Attribute.IsDefined(typeof(T), typeof(engine.IsPersistable)))
             {
                 IsEmpty = false;
@@ -36,6 +42,16 @@ public class EntitySaver : AModule
                     typeof(T).ToString(),
                     JsonSerializer.SerializeToNode(component, SerializerOptions)
                 );
+            }
+            
+            /*
+             * Then, if we have a serialization method, use it.
+             */
+            Type componentType = typeof(T);
+            MethodInfo? saveToMethod = componentType.GetMethod("SaveTo");
+            if (null != saveToMethod)
+            {
+                saveToMethod.Invoke(component, new object[] { JOComponents });
             }
         }
     }
@@ -118,12 +134,12 @@ public class EntitySaver : AModule
         }
         return jnAll;
     }
-    
-    
+
+
     /**
      * Must be called from logical thread
      */
-    public void LoadAll(JsonElement jeAll)
+    public Func<Task> LoadAll(JsonElement jeAll) => new(async () =>
     {
         JsonSerializerOptions serializerOptions = new()
         {
@@ -151,14 +167,32 @@ public class EntitySaver : AModule
                         .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
                         .FirstOrDefault(m => true);
                     var genericMethod = baseMethod.MakeGenericMethod(type);
-                    genericMethod.Invoke(e, new object[] {comp});
+                    genericMethod.Invoke(e, new object[] { comp });
+
+                    MethodInfo? setupFromMethod = type.GetMethod("SetupFrom");
+                    if (null != setupFromMethod)
+                    {
+                        Func<Task>? taskSetup;
+                        try
+                        {
+                             taskSetup = (Func<Task>)setupFromMethod.Invoke(comp, new object[] { jeComponent });
+                             if (null != taskSetup)
+                             {
+                                 await taskSetup();
+                             }
+                        }
+                        catch (Exception exception)
+                        {
+                            Error($"Unable to create and execute deser method for {type.Name}: {exception}");
+                        }
+                    }
                 }
             }
 
             if (jeEntity.TryGetProperty("creator", out var jeCreator))
             {
             }
-            
+
         }
-    }
+    });
 }

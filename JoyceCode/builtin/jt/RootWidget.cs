@@ -226,11 +226,11 @@ public class RootWidget : Widget
                     if (wOldWithId == wChild)
                     {
                         /*
-                       * Well, we most probably are subject to self-recursion.
-                       * While technically not 100% correct, because this still
-                       * could be a wrong double register, just ignore that
-                       * call.
-                       */
+                        * Well, we most probably are subject to self-recursion.
+                        * While technically not 100% correct, because this still
+                        * could be a wrong double register, just ignore that
+                        * call.
+                        */
                     }
                     else
                     {

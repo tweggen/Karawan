@@ -2,6 +2,9 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using BepuUtilities;
 using engine.geom;
 using engine.joyce;
@@ -14,7 +17,7 @@ namespace engine.joyce;
  * Describe one specific instance of a 3d object (aka Instance3 components)
  * Note that this is only a descriptor, not a lifetime object.
  */
-public class InstanceDesc
+public class InstanceDesc : ISerializable
 {
     private Matrix4x4 _m = Matrix4x4.Identity;
 
@@ -46,18 +49,9 @@ public class InstanceDesc
     private bool _haveAABBMerged = true;
     private bool _haveAABBTransformed = false;
 
-    private string? _json = null;
 
-    public string Json
-    {
-        get => _json;
-        set
-        {
-            I.Get<ModelCache>().Instantiate()
-                // TXWTODO: This is not an async api. we need an async api to restore components
-        }
-    }
-
+    private string _json;
+    
     /**
      * Access method for an instance builder to set the original creation id of the
      * json model.
@@ -66,6 +60,18 @@ public class InstanceDesc
     {
         _json = json;
     }
+
+    
+    public void SaveTo(ref JsonObject jo)
+    {
+        
+    }
+
+
+    public System.Func<Task> SetupFrom(JsonElement je) => new(async () =>
+    {
+    });
+
 
     private Vector3 _vCenter;
     public Vector3 Center

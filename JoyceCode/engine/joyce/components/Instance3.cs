@@ -1,13 +1,11 @@
-﻿using System;
-using System.Numerics;
-using System.Collections.Generic;
-
+﻿
 namespace engine.joyce.components
 {
     public struct Instance3
     {
         public InstanceDesc InstanceDesc;
 
+ 
         public override string ToString()
         {
             return $"{InstanceDesc.ToString()}";
