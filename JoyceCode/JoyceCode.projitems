@@ -66,7 +66,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapIconManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapRangeEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\map\MapViewer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\components\pickable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\components\Pickable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\PickableDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\desc\NavCluster.cs" />
