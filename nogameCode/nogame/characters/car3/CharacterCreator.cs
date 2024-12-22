@@ -273,7 +273,7 @@ class CharacterCreator : engine.world.ICreator
         jn = jo;
         if (cBehavior.Provider != null)
         {
-            cBehavior.Provider.SaveTo(ref jo);
+            cBehavior.Provider.SaveTo(jo);
         }
     }
 

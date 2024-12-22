@@ -1,23 +1,38 @@
 ﻿
-namespace engine.joyce.components
+using System;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+
+namespace engine.joyce.components;
+
+[engine.IsPersistable]
+public struct Instance3
 {
-    public struct Instance3
+    public InstanceDesc InstanceDesc;
+
+    public Func<Task>? SetupFrom(JsonElement je) => InstanceDesc.SetupFrom(je.GetProperty("instanceDesc"));
+
+    public void SaveTo(JsonObject jo)
     {
-        public InstanceDesc InstanceDesc;
+        JsonObject joInstance3 = new();
+        JsonObject joInstanceDesc = new();
+        InstanceDesc.SaveTo(joInstanceDesc);
+        joInstance3.Add("instanceDesc", joInstanceDesc);
+        jo.Add("instance3", joInstance3);
+    }
 
- 
-        public override string ToString()
-        {
-            return $"{InstanceDesc.ToString()}";
-        }
+    public override string ToString()
+    {
+        return $"{{ instanceDesc: {InstanceDesc.ToString()} }}";
+    }
 
-        /**
-         * Construct a new instance3.
-         * Caution: This uses the lists from the description.
-         */
-        public Instance3(in engine.joyce.InstanceDesc instanceDesc)
-        {
-            InstanceDesc = instanceDesc;
-        }
+    /**
+     * Construct a new instance3.
+     * Caution: This uses the lists from the description.
+     */
+    public Instance3(in engine.joyce.InstanceDesc instanceDesc)
+    {
+        InstanceDesc = instanceDesc;
     }
 }

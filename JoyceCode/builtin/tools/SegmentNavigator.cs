@@ -173,7 +173,7 @@ public class SegmentNavigator : INavigator
     });
 
     
-    public void SaveTo(ref JsonObject jo)
+    public void SaveTo(JsonObject jo)
     {
         JsonObject joNav = new JsonObject();
         joNav.Add("speed", _speed );

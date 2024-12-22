@@ -31,7 +31,7 @@ public class ABehavior : IBehavior
     }
 
     
-    public virtual void SaveTo(ref JsonObject jo)
+    public virtual void SaveTo(JsonObject jo)
     {
     }
 

@@ -62,9 +62,9 @@ public class InstanceDesc : ISerializable
     }
 
     
-    public void SaveTo(ref JsonObject jo)
+    public void SaveTo(JsonObject jo)
     {
-        
+        jo.Add("json", _json);
     }
 
 

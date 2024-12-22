@@ -58,12 +58,12 @@ public class SimpleNavigationBehavior : ABehavior
     });
 
     
-    public override void SaveTo(ref JsonObject jo)
+    public override void SaveTo(JsonObject jo)
     {
         JsonObject joSNO = new JsonObject();
         joSNO.Add("prevRotation", From(_qPrevRotation) );
         jo.Add("sno", joSNO);
-        _inav.SaveTo(ref jo);
+        _inav.SaveTo(jo);
     }
 
 

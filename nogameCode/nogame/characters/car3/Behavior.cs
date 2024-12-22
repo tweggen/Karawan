@@ -78,9 +78,9 @@ internal class Behavior :
     
 
     
-    public override void SaveTo(ref JsonObject jo)
+    public override void SaveTo(JsonObject jo)
     {
-        base.SaveTo(ref jo);
+        base.SaveTo(jo);
     }
 
     
