@@ -11,11 +11,24 @@ using static engine.Logger;
 
 namespace engine.joyce;
 
+
 public class ModelCache
 {
     private object _lo = new();
     private engine.Engine _engine = I.Get<engine.Engine>();
     
+    internal class ModelCacheEntry
+    {
+        public enum EntryState
+        {
+            Placeholder,
+            PlaceholderLoading,
+            Loaded
+        };
+        public Model Model;
+        public EntryState State;
+    };
+
     /**
      * This is the per-model semaphore
      */
@@ -24,7 +37,7 @@ public class ModelCache
     /**
      * This is the actual cache of models we keep.
      */
-    private readonly ConcurrentDictionary<string, Model> _cache = new ConcurrentDictionary<string, Model>();
+    private readonly ConcurrentDictionary<string, ModelCacheEntry> _cache = new ConcurrentDictionary<string, ModelCacheEntry>();
     
     
     private static string _hash(string url,
@@ -145,13 +158,20 @@ public class ModelCache
         try
         {
             // try to get Store from cache
-            if (!_cache.TryGetValue(hash, out model))
+            if (!_cache.TryGetValue(hash, out var modelCacheEntry))
             {
+                modelCacheEntry = new();
                 // if value isn't cached, get it from the DB asynchronously
                 model = await _obtain(url, modelProperties, p).ConfigureAwait(false);
 
+                modelCacheEntry.Model = model;
+                modelCacheEntry.State = ModelCacheEntry.EntryState.Loaded;
                 // cache value
-                _cache.TryAdd(hash, model);
+                _cache.TryAdd(hash, modelCacheEntry);
+            }
+            else
+            {
+                model = modelCacheEntry.Model;
             }
         }
         finally
@@ -170,27 +190,31 @@ public class ModelCache
     public Model InstantiatePlaceholder(ModelCacheParams mcp)
     {
         string hash = _hash(mcp.Url, mcp.Properties, mcp.Params);
+        Model model;
         
-        Model model = new();
         var keyLock = _keyLocks.GetOrAdd(hash, x => new SemaphoreSlim(1));
         keyLock.Wait();
         try
         {
             // try to get Store from cache
-            if (!_cache.TryGetValue(hash, out model))
+            if (!_cache.TryGetValue(hash, out var modelCacheEntry))
             {
+                modelCacheEntry = new();
                 // if value isn't cached, get it from the DB asynchronously
                 var id = new InstanceDesc(mcp);
                 model = new Model(id);
+                modelCacheEntry.Model = model;
+                modelCacheEntry.State = ModelCacheEntry.EntryState.Placeholder;
 
                 // cache value
-                _cache.TryAdd(hash, model);
+                _cache.TryAdd(hash, modelCacheEntry);
             }
             else
             {
                 /*
                  * Return the model from the cache.
                  */
+                model = modelCacheEntry.Model;
             }
         }
         finally
