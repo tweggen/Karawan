@@ -1,5 +1,7 @@
 using System;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using DefaultEcs;
 using engine;
 using engine.behave;
@@ -7,6 +9,7 @@ using engine.joyce;
  
 
 namespace nogame.inv.coin;
+
 
 public class Behavior : ABehavior
 {
