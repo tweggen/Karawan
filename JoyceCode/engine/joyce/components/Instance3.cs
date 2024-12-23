@@ -9,8 +9,9 @@ namespace engine.joyce.components;
 [engine.IsPersistable]
 public struct Instance3
 {
-    public InstanceDesc InstanceDesc;
+    public InstanceDesc InstanceDesc { get; set; }
 
+    #if false
     public Func<Task>? SetupFrom(JsonElement je) => InstanceDesc.SetupFrom(je.GetProperty("instanceDesc"));
 
     public void SaveTo(JsonObject jo)
@@ -21,6 +22,7 @@ public struct Instance3
         joInstance3.Add("instanceDesc", joInstanceDesc);
         jo.Add("instance3", joInstance3);
     }
+    #endif
 
     public override string ToString()
     {

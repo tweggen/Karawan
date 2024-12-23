@@ -2,10 +2,11 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using BepuUtilities;
 using engine.geom;
 using engine.joyce;
 using static engine.Logger;
@@ -13,11 +14,34 @@ using static engine.Logger;
 
 namespace engine.joyce;
 
+public class InstanceDescConverter : JsonConverter<InstanceDesc>
+{
+    public override InstanceDesc Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        var mcpObject = JsonSerializer.Deserialize(ref reader, typeof(ModelCacheParams), options);
+        var mcp = mcpObject as ModelCacheParams;
+        var model = I.Get<ModelCache>().InstantiatePlaceholder(mcp);
+        var id = model.RootNode.InstanceDesc;
+        return id;
+    }
+        
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        InstanceDesc id,
+        JsonSerializerOptions options) =>
+        writer.WriteRawValue(JsonSerializer.Serialize<ModelCacheParams>(id.ModelCacheParams, options));
+}
+
 /**
  * Describe one specific instance of a 3d object (aka Instance3 components)
  * Note that this is only a descriptor, not a lifetime object.
  */
-public class InstanceDesc : ISerializable
+[JsonConverter(typeof(InstanceDescConverter))]
+public class InstanceDesc
 {
     private Matrix4x4 _m = Matrix4x4.Identity;
 
@@ -49,29 +73,7 @@ public class InstanceDesc : ISerializable
     private bool _haveAABBMerged = true;
     private bool _haveAABBTransformed = false;
 
-
-    private string _json;
-    
-    /**
-     * Access method for an instance builder to set the original creation id of the
-     * json model.
-     */
-    public void SetJson(string json)
-    {
-        _json = json;
-    }
-
-    
-    public void SaveTo(JsonObject jo)
-    {
-        jo.Add("json", _json);
-    }
-
-
-    public System.Func<Task> SetupFrom(JsonElement je) => new(async () =>
-    {
-    });
-
+    public ModelCacheParams ModelCacheParams;
 
     private Vector3 _vCenter;
     public Vector3 Center
@@ -81,7 +83,7 @@ public class InstanceDesc : ISerializable
             if (!_haveCenter)
             {
                 _computeCenter();
-                _haveCenter = true;
+                _haveCenter = true; 
             }
 
             return _vCenter;
@@ -344,7 +346,13 @@ public class InstanceDesc : ISerializable
             m *= Matrix4x4.CreateRotationZ(Single.Pi * rotZ / 2f);
         }
     }
-        
+
+
+    public InstanceDesc(ModelCacheParams mcp)
+    {
+        ModelCacheParams = mcp;
+    }
+    
     
     public InstanceDesc(
         in IList<engine.joyce.Mesh> meshes,

@@ -5,7 +5,7 @@ namespace builtin.loader;
 
 public class ModelProperties
 {
-    public SortedDictionary<string, string> Properties = new();
+    public SortedDictionary<string, string> Properties { get; set; } = new();
 
     public string this[string key]
     {

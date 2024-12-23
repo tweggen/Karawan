@@ -112,7 +112,11 @@ public class ModelCache
                 ErrorThrow($"Reading url {url} model does not have a root model instance defined.", m => new ArgumentException(m));
             }
 
-            model.RootNode.InstanceDesc.SetJson(_hash(url, modelProperties, p));
+            model.RootNode.InstanceDesc.ModelCacheParams =
+                new()
+                {
+                    Url = url, Properties = modelProperties, Params = p
+                };
         }
 
         model = await _instantiateModelParams(model, modelProperties, p);
@@ -133,8 +137,8 @@ public class ModelCache
         string url, ModelProperties modelProperties, InstantiateModelParams? p = null)
     {
         string hash = _hash(url, modelProperties, p);
+        
         Model model;
-
         var keyLock = _keyLocks.GetOrAdd(hash, x => new SemaphoreSlim(1));
         await keyLock.WaitAsync().ConfigureAwait(false);
 
@@ -157,6 +161,37 @@ public class ModelCache
 
         return model;
     }
-    
 
+
+    /**
+     * Immediately return a model which has an instance desc that we
+     * already can use even if it has not been filled with content.
+     */
+    public Model InstantiatePlaceholder(ModelCacheParams mcp)
+    {
+        string hash = _hash(mcp.Url, mcp.Properties, mcp.Params);
+        
+        Model model;
+        var keyLock = _keyLocks.GetOrAdd(hash, x => new SemaphoreSlim(1));
+        keyLock.Wait();
+        try
+        {
+            // try to get Store from cache
+            if (!_cache.TryGetValue(hash, out model))
+            {
+                // if value isn't cached, get it from the DB asynchronously
+                var id = new InstanceDesc(mcp);
+                model = new Model(id);
+
+                // cache value
+                _cache.TryAdd(hash, model);
+            }
+        }
+        finally
+        {
+            keyLock.Release();
+        }
+
+        return model;
+    }
 }

@@ -31,8 +31,8 @@ namespace engine.joyce
          */
         public static int NO_CONTROLLABLE_ROOT = 0x20000;
     
-        public int GeomFlags = 0;
-        public float MaxDistance = 10f;
+        public int GeomFlags { get; set; }= 0;
+        public float MaxDistance { get; set; } = 10f;
 
         public string Hash()
         {

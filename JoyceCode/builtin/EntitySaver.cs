@@ -38,10 +38,16 @@ public class EntitySaver : AModule
             if (Attribute.IsDefined(typeof(T), typeof(engine.IsPersistable)))
             {
                 IsEmpty = false;
-                JOComponents.Add(
-                    typeof(T).ToString(),
-                    JsonSerializer.SerializeToNode(component, SerializerOptions)
-                );
+                try
+                {
+                    var jnComponent = JsonSerializer.SerializeToNode(component, SerializerOptions);
+                    JOComponents.Add(
+                        typeof(T).ToString(), jnComponent);
+                }
+                catch (Exception exception)
+                {
+                    Error($"Unable to serialize component {typeof(T)} for entity {e}: {exception}");
+                }
             }
             
             /*
@@ -137,9 +143,10 @@ public class EntitySaver : AModule
 
 
     /**
-     * Must be called from logical thread
+     * Must be called from logical thread, returns atomically for main thread operation, will
+     * triggger streaming operations.
      */
-    public Func<Task> LoadAll(JsonElement jeAll) => new(async () =>
+    public void LoadAll(JsonElement jeAll)
     {
         JsonSerializerOptions serializerOptions = new()
         {
@@ -160,15 +167,28 @@ public class EntitySaver : AModule
                     var strComponentName = jpComponent.Name;
                     var jeComponent = jpComponent.Value;
 
-                    var type = Type.GetType(strComponentName)!;
-                    var comp = JsonSerializer.Deserialize(jeComponent.GetRawText(), type, serializerOptions)!;
-                    // TXWTODO: The only way I know to call set on entity is via reflection.
-                    MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
-                        .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
-                        .FirstOrDefault(m => true);
-                    var genericMethod = baseMethod.MakeGenericMethod(type);
-                    genericMethod.Invoke(e, new object[] { comp });
+                    try
+                    {
+                        var type = Type.GetType(strComponentName)!;
+                        string rawText = jeComponent.GetRawText();
+                        var comp = JsonSerializer.Deserialize(rawText, type, serializerOptions)!;
 
+                        /*
+                         * Set the deserialized component to the entity.
+                         */
+                        MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
+                            .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
+                            .FirstOrDefault(m => true);
+                        var genericMethod = baseMethod.MakeGenericMethod(type);
+                        genericMethod.Invoke(e, new object[] { comp });
+                    }
+                    catch (Exception exception)
+                    {
+                        Error($"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}");
+                        continue;
+                    }
+
+#if false
                     MethodInfo? setupFromMethod = type.GetMethod("SetupFrom");
                     if (null != setupFromMethod)
                     {
@@ -186,6 +206,7 @@ public class EntitySaver : AModule
                             Error($"Unable to create and execute deser method for {type.Name}: {exception}");
                         }
                     }
+                    #endif
                 }
             }
 
@@ -194,5 +215,5 @@ public class EntitySaver : AModule
             }
 
         }
-    });
+    }
 }

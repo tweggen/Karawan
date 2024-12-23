@@ -437,7 +437,7 @@ public class AutoSave : engine.AModule
     /**
      * Must be called in logical thread.
      */
-    private void _afterLoad(GameState gs)
+    private void _restoreEntityAndConfigFromLoad(GameState gs)
     {
         try
         {
@@ -455,7 +455,7 @@ public class AutoSave : engine.AModule
             Error($"Unable to restore entites from game state: {e}.");
         }
 
-        M<Saver>().CallAfterLoad(gs);
+        _afterCreateOrLoad(gs);
     }
     
 
@@ -485,6 +485,8 @@ public class AutoSave : engine.AModule
              * After everything has been initialized, fire off the save of the initial game state.
              */
             _doSave();
+            
+            _afterCreate(gameState);
         }
         else
         {
@@ -494,11 +496,16 @@ public class AutoSave : engine.AModule
                 Trace($"... fixing existing gamestate");
                 gameState.Fix();
             }
+
+            _gameState = gameState;
+
+            _engine.QueueMainThreadAction(() => _restoreEntityAndConfigFromLoad(gameState));
+            
         }
 
-        _gameState = gameState;
-
-        await _engine.TaskMainThread(() => _afterLoad(gameState));
+        /*
+         * Caller will call on initial load and start autosave.
+         */
     }
 
 
@@ -534,7 +541,7 @@ public class AutoSave : engine.AModule
                 _gameState = gs;
                 haveGameState = true;
                 
-                await _engine.TaskMainThread(() => _afterLoad(gs));
+                _engine.QueueMainThreadAction(() => _restoreEntityAndConfigFromLoad(gs));
             }
         }
 
@@ -550,6 +557,24 @@ public class AutoSave : engine.AModule
         });
         
         _startAutoSave();
+    }
+
+
+    private void _afterCreateOrLoad(GameState gs)
+    {
+        M<Saver>().CallAfterLoad(gs);
+    }
+    
+    
+    private void _afterCreate(GameState gs)
+    {
+        _afterCreateOrLoad(gs);
+    }
+
+
+    private void _createNew()
+    {
+        
     }
     
     
@@ -589,8 +614,8 @@ public class AutoSave : engine.AModule
              * After everything has been initialized, fire off the save of the initial game state.
              */
             _doSave();
-            
-            await _engine.TaskMainThread(() => _afterLoad(gameState));
+
+            _afterCreate(gameState);
             
             _engine.Run(() =>
             {
