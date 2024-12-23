@@ -1,8 +1,10 @@
 ﻿namespace engine.joyce.components;
 
+[engine.IsPersistable]
+
 public struct EntityName
 {
-    public string Name;
+    public string Name { get; set; }
 
     public override string ToString()
     {
