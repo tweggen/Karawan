@@ -171,7 +171,7 @@ public class ModelCache
     {
         string hash = _hash(mcp.Url, mcp.Properties, mcp.Params);
         
-        Model model;
+        Model model = new();
         var keyLock = _keyLocks.GetOrAdd(hash, x => new SemaphoreSlim(1));
         keyLock.Wait();
         try
@@ -185,6 +185,12 @@ public class ModelCache
 
                 // cache value
                 _cache.TryAdd(hash, model);
+            }
+            else
+            {
+                /*
+                 * Return the model from the cache.
+                 */
             }
         }
         finally
