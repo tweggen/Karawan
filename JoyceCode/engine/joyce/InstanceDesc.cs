@@ -71,11 +71,32 @@ public class InstanceDesc
 
     private bool _haveCenter = false;
     private bool _haveAABBMerged = true;
+    private AABB _aabbMerged;
     private bool _haveAABBTransformed = false;
-
+    private AABB _aabbTransformed;
     public ModelCacheParams ModelCacheParams;
-
     private Vector3 _vCenter;
+
+
+    public void SetFrom(InstanceDesc o)
+    {
+        _m = o._m;
+        MaxDistance = o.MaxDistance;
+        _meshes = o._meshes;
+        Meshes = o.Meshes;
+        _meshMaterials = o._meshMaterials;
+        MeshMaterials = o.MeshMaterials;
+        _materials = o._materials;
+        Materials = o.Materials;
+        _haveCenter = o._haveCenter;
+        _haveAABBMerged = o._haveAABBMerged;
+        _aabbMerged = o._aabbMerged;
+        _haveAABBTransformed = o._haveAABBTransformed;
+        _aabbTransformed = o._aabbTransformed;
+        ModelCacheParams = o.ModelCacheParams;
+        _vCenter = o._vCenter;
+    }
+    
     public Vector3 Center
     {
         get
@@ -91,7 +112,6 @@ public class InstanceDesc
     }
     
     
-    private AABB _aabbMerged;
     public AABB AABBMerged
     {
         get
@@ -113,7 +133,6 @@ public class InstanceDesc
         }
     }
 
-    private AABB _aabbTransformed;
     public AABB AABBTransformed
     {
         get

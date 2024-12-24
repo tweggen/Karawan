@@ -137,7 +137,7 @@ public class ModelCache
     {
         var mcp = mce.ModelCacheParams;
         lock (mce.LockObject)
-        {
+        { 
             /*
              * Only start loading if the model is in placeholder state.
              */
@@ -155,8 +155,7 @@ public class ModelCache
 
             lock (mce.LockObject)
             {
-                // TXWTODO: Assign the model and the instance desc contents to the structure in the cache.
-                // TXWTODO: Trigger the monitor.
+                mce.Model.FillPlaceholderFrom(model);
                 mce.State = ModelCacheEntry.EntryState.Loaded;
                 Monitor.PulseAll(mce.LockObject);
             }
@@ -176,7 +175,6 @@ public class ModelCache
     private ModelCacheEntry _triggerInstantiate(ModelCacheParams mcp)
     {
         string hash = mcp.GetHashCode();
-        Model model;
         bool tryLoad = false;
 
         ModelCacheEntry modelCacheEntry;
@@ -194,10 +192,8 @@ public class ModelCache
             if (!_cache.TryGetValue(hash, out modelCacheEntry))
             {
                 modelCacheEntry = new(mcp);
-                // if value isn't cached, get it from the DB asynchronously
                 var id = new InstanceDesc(mcp);
-                model = new Model(id);
-                modelCacheEntry.Model = model;
+                modelCacheEntry.Model = new Model(id);
                 modelCacheEntry.State = ModelCacheEntry.EntryState.Placeholder;
                 _cache.TryAdd(hash, modelCacheEntry);
                 
@@ -209,9 +205,8 @@ public class ModelCache
             else
             {
                 /*
-                 * Return the model from the cache.
+                 * Then we have the modelCacheEntry
                  */
-                model = modelCacheEntry.Model;
             }
         }
         finally
@@ -263,8 +258,8 @@ public class ModelCache
             lock (mce.LockObject)
             {
                 for (;;)
-                {
-                    if (mce.State != ModelCacheEntry.EntryState.PlaceholderLoading)
+                { // need to go on looping for "placeholder" as well.
+                    if (mce.State != ModelCacheEntry.EntryState.Placeholder && mce.State != ModelCacheEntry.EntryState.PlaceholderLoading)
                     {
                         break;
                     }

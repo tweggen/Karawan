@@ -81,7 +81,28 @@ namespace engine.joyce
             };
             RootNode = mnRoot;
         }
-    
+
+
+        /**
+         * Fill my model structure and my root instance desc with the
+         * contents from the other model.
+         */
+        public void FillPlaceholderFrom(Model other)
+        {
+            /*
+             * We need to fill this placeholder instancedesc.
+             */
+            InstanceDesc idPlaceholder = RootNode.InstanceDesc;
+            idPlaceholder.SetFrom(other.RootNode.InstanceDesc);
+            
+            /*
+             * We will use their rootnode and their name, however use our InstanceDesc
+             * as we already gave out our instanceDesc to clients.
+             */
+            RootNode = other.RootNode;
+            Name = other.Name;
+            RootNode.InstanceDesc = idPlaceholder;
+        }
     
         public Model()
         {
