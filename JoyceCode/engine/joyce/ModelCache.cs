@@ -14,54 +14,43 @@ namespace engine.joyce;
 
 public class ModelCache
 {
-    private object _lo = new();
     private engine.Engine _engine = I.Get<engine.Engine>();
+    
     
     internal class ModelCacheEntry
     {
+        public object LockObject = new();
+        
         public enum EntryState
         {
             Placeholder,
             PlaceholderLoading,
-            Loaded
+            Loaded,
+            Error
         };
         public Model Model;
         public EntryState State;
+        public readonly ModelCacheParams ModelCacheParams;
+
+        public ModelCacheEntry(ModelCacheParams mcp)
+        {
+            ModelCacheParams = mcp;
+        }
     };
 
+    
     /**
-     * This is the per-model semaphore
+     * This protects the dictionary.
      */
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _keyLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
+    
     /**
      * This is the actual cache of models we keep.
      */
     private readonly ConcurrentDictionary<string, ModelCacheEntry> _cache = new ConcurrentDictionary<string, ModelCacheEntry>();
     
     
-    private static string _hash(string url,
-        ModelProperties modelProperties,
-        in InstantiateModelParams? p)
-    {
-        string hash = "{";
-        hash += $"\"url\": \"{url}\"";
-        if (modelProperties != null)
-        {
-            string mpHash = modelProperties.ToString();
-            hash += $", \"modelProperties\": {mpHash}";
-        }
-
-        if (p != null)
-        {
-            string pHash = p.Hash();
-            hash += $", \"instantiateModelParams\": {pHash}";
-        }
-        hash += "}";
-        return hash;
-    }
-
-
     private Task<Model> _instantiateModelParams(
         Model model,
         ModelProperties modelProperties,
@@ -113,26 +102,23 @@ public class ModelCache
     }
 
 
-    private async Task<Model> _obtain(
-        string url, ModelProperties modelProperties, InstantiateModelParams p)
+    private async Task<Model> _obtain(ModelCacheEntry mce)
     {
-        var model = await _fromFile(url, modelProperties);
+        var mcp = mce.ModelCacheParams;
+        var model = await _fromFile(mcp.Url, mcp.Properties);
 
-        if ((p.GeomFlags & InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC) != 0)
+        if (mcp.Params != null && (mcp.Params.GeomFlags & InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC) != 0)
         {
             if (null == model.RootNode || null == model.RootNode.InstanceDesc)
             {
-                ErrorThrow($"Reading url {url} model does not have a root model instance defined.", m => new ArgumentException(m));
+                ErrorThrow($"Reading url {mcp.Url} model does not have a root model instance defined.",
+                    m => new ArgumentException(m));
             }
 
-            model.RootNode.InstanceDesc.ModelCacheParams =
-                new()
-                {
-                    Url = url, Properties = modelProperties, Params = p
-                };
+            model.RootNode.InstanceDesc.ModelCacheParams = mcp;
         }
 
-        model = await _instantiateModelParams(model, modelProperties, p);
+        model = await _instantiateModelParams(model, mcp.Properties, mcp.Params);
 
         model = FindLights.Process(model);
         
@@ -140,74 +126,85 @@ public class ModelCache
     }
 
 
-    /**
-     * Create an instance of the given model.
-     *
-     * The model might be loaded, generated or just replicated
-     * from memory.
-     */
-    public async Task<Model> Instantiate(
-        string url, ModelProperties modelProperties, InstantiateModelParams? p = null)
+    private SemaphoreSlim _sem(string hash)
     {
-        string hash = _hash(url, modelProperties, p);
-        
-        Model model;
         var keyLock = _keyLocks.GetOrAdd(hash, x => new SemaphoreSlim(1));
-        await keyLock.WaitAsync().ConfigureAwait(false);
+        return keyLock;
+    }
+    
+    
+    async Task _tryLoad(ModelCacheEntry mce)
+    {
+        var mcp = mce.ModelCacheParams;
+        lock (mce.LockObject)
+        {
+            /*
+             * Only start loading if the model is in placeholder state.
+             */
+            if (mce.State != ModelCacheEntry.EntryState.Placeholder)
+            {
+                return;
+            }
+
+            mce.State = ModelCacheEntry.EntryState.PlaceholderLoading;
+        }
 
         try
         {
-            // try to get Store from cache
-            if (!_cache.TryGetValue(hash, out var modelCacheEntry))
-            {
-                modelCacheEntry = new();
-                // if value isn't cached, get it from the DB asynchronously
-                model = await _obtain(url, modelProperties, p).ConfigureAwait(false);
+            Model model = await _obtain(mce);
 
-                modelCacheEntry.Model = model;
-                modelCacheEntry.State = ModelCacheEntry.EntryState.Loaded;
-                // cache value
-                _cache.TryAdd(hash, modelCacheEntry);
-            }
-            else
+            lock (mce.LockObject)
             {
-                model = modelCacheEntry.Model;
+                // TXWTODO: Assign the model and the instance desc contents to the structure in the cache.
+                // TXWTODO: Trigger the monitor.
+                mce.State = ModelCacheEntry.EntryState.Loaded;
+                Monitor.PulseAll(mce.LockObject);
             }
+            
         }
-        finally
+        catch (Exception exception)
         {
-            keyLock.Release();
+            Error($"Unable to load model {mcp}: {exception}.");
+            lock (mce.LockObject)
+            {
+                mce.State = ModelCacheEntry.EntryState.Error;
+                Monitor.PulseAll(mce.LockObject);
+            }
         }
-
-        return model;
     }
 
-
-    /**
-     * Immediately return a model which has an instance desc that we
-     * already can use even if it has not been filled with content.
-     */
-    public Model InstantiatePlaceholder(ModelCacheParams mcp)
+    private ModelCacheEntry _triggerInstantiate(ModelCacheParams mcp)
     {
-        string hash = _hash(mcp.Url, mcp.Properties, mcp.Params);
+        string hash = mcp.GetHashCode();
         Model model;
-        
-        var keyLock = _keyLocks.GetOrAdd(hash, x => new SemaphoreSlim(1));
+        bool tryLoad = false;
+
+        ModelCacheEntry modelCacheEntry;
+
+        var keyLock = _sem(hash);
         keyLock.Wait();
         try
         {
-            // try to get Store from cache
-            if (!_cache.TryGetValue(hash, out var modelCacheEntry))
+            /*
+             * Obtain an existing model structure or create a new one.
+             * Note, that both of these operations are atomic and return
+             * a valid model structure. Which, however, might change
+             * asynchronously.
+             */
+            if (!_cache.TryGetValue(hash, out modelCacheEntry))
             {
-                modelCacheEntry = new();
+                modelCacheEntry = new(mcp);
                 // if value isn't cached, get it from the DB asynchronously
                 var id = new InstanceDesc(mcp);
                 model = new Model(id);
                 modelCacheEntry.Model = model;
                 modelCacheEntry.State = ModelCacheEntry.EntryState.Placeholder;
-
-                // cache value
                 _cache.TryAdd(hash, modelCacheEntry);
+                
+                /*
+                 * Trigger async loading of item.
+                 */
+                tryLoad = true;
             }
             else
             {
@@ -222,6 +219,81 @@ public class ModelCache
             keyLock.Release();
         }
 
-        return model;
+        
+        /*
+         * If the model had not been loaded before, trigger loading of the model.
+         */
+        if (tryLoad)
+        {
+            Task.Run(() =>
+            {
+                _tryLoad(modelCacheEntry);
+            });
+        }
+
+        return modelCacheEntry;
     }
+
+    
+    /**
+     * Immediately return a model which has an instance desc that we
+     * already can use even if it has not been filled with content.
+     */
+    public Model InstantiatePlaceholder(ModelCacheParams mcp)
+    {
+        var mce = _triggerInstantiate(mcp);
+        lock (mce.LockObject)
+        {
+            return mce.Model;
+        }
+    }
+    
+    
+    /**
+     * Create an instance of the given model.
+     *
+     * The model might be loaded, generated or just replicated
+     * from memory.
+     */
+    public Task<Model> Instantiate(ModelCacheParams mcp)
+    {
+        ModelCacheEntry mce = _triggerInstantiate(mcp);
+        return Task.Run(() =>
+        {
+            lock (mce.LockObject)
+            {
+                for (;;)
+                {
+                    if (mce.State != ModelCacheEntry.EntryState.PlaceholderLoading)
+                    {
+                        break;
+                    }
+
+                    Monitor.Wait(mce.LockObject);
+                }
+
+                switch (mce.State)
+                {
+                    case ModelCacheEntry.EntryState.Error:
+                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                        return mce.Model;
+                    case ModelCacheEntry.EntryState.Loaded:
+                        return mce.Model;
+                    default:
+                        return mce.Model;
+                }
+            }
+        });
+    }
+
+    public Task<Model> Instantiate(
+        string url,
+        ModelProperties? modelProperties,
+        InstantiateModelParams? p) =>
+        Instantiate(new ModelCacheParams()
+        {
+            Url = url,
+            Properties = modelProperties,
+            Params = p
+        });
 }
