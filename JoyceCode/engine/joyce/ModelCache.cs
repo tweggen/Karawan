@@ -15,11 +15,19 @@ namespace engine.joyce;
 public class ModelCache
 {
     private engine.Engine _engine = I.Get<engine.Engine>();
+
+
+    internal class ConsumerEntry
+    {
+        public SemaphoreSlim Sem = new(0);
+    }
     
     
     internal class ModelCacheEntry
     {
         public object LockObject = new();
+
+        public List<ConsumerEntry> ConsumerList = new();
         
         public enum EntryState
         {
@@ -157,9 +165,12 @@ public class ModelCache
             {
                 mce.Model.FillPlaceholderFrom(model);
                 mce.State = ModelCacheEntry.EntryState.Loaded;
-                Monitor.PulseAll(mce.LockObject);
+                foreach (var ce in mce.ConsumerList)
+                {
+                    ce.Sem.Release();
+                }
+                mce.ConsumerList.Clear();
             }
-            
         }
         catch (Exception exception)
         {
@@ -167,7 +178,11 @@ public class ModelCache
             lock (mce.LockObject)
             {
                 mce.State = ModelCacheEntry.EntryState.Error;
-                Monitor.PulseAll(mce.LockObject);
+                foreach (var ce in mce.ConsumerList)
+                {
+                    ce.Sem.Release();
+                }
+                mce.ConsumerList.Clear();
             }
         }
     }
@@ -201,6 +216,7 @@ public class ModelCache
                  * Trigger async loading of item.
                  */
                 tryLoad = true;
+
             }
             else
             {
@@ -242,53 +258,76 @@ public class ModelCache
             return mce.Model;
         }
     }
-    
-    
+
+
     /**
      * Create an instance of the given model.
      *
      * The model might be loaded, generated or just replicated
      * from memory.
      */
-    public Task<Model> Instantiate(ModelCacheParams mcp)
+    public async Task<Model> Instantiate(ModelCacheParams mcp)
     {
         ModelCacheEntry mce = _triggerInstantiate(mcp);
-        return Task.Run(() =>
+
+        ConsumerEntry ce;
+        
+        /*
+         * Look, if we already can return, because the entry has the right type.
+         */
+        lock (mce.LockObject)
         {
-            lock (mce.LockObject)
+            // need to go on looping for "placeholder" as well.
+            switch (mce.State)
             {
-                for (;;)
-                { // need to go on looping for "placeholder" as well.
-                    if (mce.State != ModelCacheEntry.EntryState.Placeholder && mce.State != ModelCacheEntry.EntryState.PlaceholderLoading)
-                    {
-                        break;
-                    }
-
-                    Monitor.Wait(mce.LockObject);
-                }
-
-                switch (mce.State)
-                {
-                    case ModelCacheEntry.EntryState.Error:
-                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
-                        return mce.Model;
-                    case ModelCacheEntry.EntryState.Loaded:
-                        return mce.Model;
-                    default:
-                        return mce.Model;
-                }
+                case ModelCacheEntry.EntryState.Error:
+                    ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                    return mce.Model;
+                case ModelCacheEntry.EntryState.Loaded:
+                    return mce.Model;
             }
-        });
+
+            ce = new();
+            mce.ConsumerList.Add(ce);
+        }
+
+        /*
+         * Wait, until someone wakes are callers up.
+         */
+        await ce.Sem.WaitAsync();
+        /*
+         * Look, if we already can return, because the entry has the right type.
+         */
+        lock (mce.LockObject)
+        {
+            // need to go on looping for "placeholder" as well.
+            switch (mce.State)
+            {
+                default:
+                    ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                    return mce.Model;
+                case ModelCacheEntry.EntryState.Error:
+                    ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                    return mce.Model;
+                case ModelCacheEntry.EntryState.Loaded:
+                    return mce.Model;
+            }
+        }
     }
 
-    public Task<Model> Instantiate(
+    
+    public async Task<Model> Instantiate(
         string url,
         ModelProperties? modelProperties,
-        InstantiateModelParams? p) =>
-        Instantiate(new ModelCacheParams()
+        InstantiateModelParams? p)
+    {
+        Task<Model> tModel = Instantiate(new ModelCacheParams()
         {
             Url = url,
             Properties = modelProperties,
             Params = p
         });
+        Model model = await tModel;
+        return model;
+    }
 }

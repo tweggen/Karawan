@@ -90,18 +90,22 @@ namespace engine.joyce
         public void FillPlaceholderFrom(Model other)
         {
             /*
-             * We need to fill this placeholder instancedesc.
-             */
-            InstanceDesc idPlaceholder = RootNode.InstanceDesc;
-            idPlaceholder.SetFrom(other.RootNode.InstanceDesc);
-            
-            /*
              * We will use their rootnode and their name, however use our InstanceDesc
              * as we already gave out our instanceDesc to clients.
              */
             RootNode = other.RootNode;
             Name = other.Name;
+
+            /*
+             * We need to fill this placeholder instancedesc.
+             */
+            InstanceDesc idPlaceholder = RootNode.InstanceDesc;
+            if (idPlaceholder != null)
+            {
+                idPlaceholder.SetFrom(other.RootNode.InstanceDesc);
+            }
             RootNode.InstanceDesc = idPlaceholder;
+
         }
     
         public Model()
