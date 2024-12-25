@@ -3,11 +3,13 @@ using BepuPhysics.Collidables;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using DefaultEcs;
 using engine;
 using engine.draw;
 using engine.gongzuo;
 using engine.joyce;
+using engine.joyce.components;
 using engine.news;
 using engine.physics;
 using engine.world;
@@ -299,7 +301,8 @@ public class Module : engine.AModule
 
     private void _onLogicalFrame(object? sender, float dt)
     {
-        Matrix4x4 mShip = _eShip.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
+        if (!_eShip.Has<Transform3ToWorld>()) return;
+        Matrix4x4 mShip = _eShip.Get<Transform3ToWorld>().Matrix;
         Vector3 velShip = _prefShip.Velocity.Linear;
         Vector3 posShip = mShip.Translation;
 
@@ -472,10 +475,8 @@ public class Module : engine.AModule
     }
 
 
-    public override void ModuleActivate()
+    private async Task _setupPlayer()
     {
-        base.ModuleActivate();
-
         _aTransform = I.Get<engine.joyce.TransformApi>();
 
         _aSound = I.Get<Boom.ISoundAPI>();
@@ -484,32 +485,44 @@ public class Module : engine.AModule
             _soundCrash = _aSound.FindSound($"car-collision.ogg");
         }
 
+        {
+            _polyballSound = _aSound.FindSound("polyball.ogg");
+            _polyballSound.Volume = 0.03f;
+            _soundMyEngine = _aSound.FindSound("sd_my_engine.ogg");
+            _soundMyEngine.Volume = 0f;
+            _soundMyEngine.IsLooped = true;
+            _soundMyEngine.Speed = 0.81f;
+            _soundMyEngine.SoundMask = 0xffffffff;
+        }
+
+
+        InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
+
+        Model model = await I.Get<ModelCache>().Instantiate(
+            ModelUrl,
+            null, instantiateModelParams);
+
+
+        var gameState = M<AutoSave>().GameState;
+        Vector3 v3Ship = gameState.PlayerPosition;
+        Quaternion qShip = Quaternion.Normalize(gameState.PlayerOrientation);
+        if (v3Ship == Vector3.Zero)
+        {
+            Error($"Unbelievably could not come up with a valid start position, so generate one here.");
+            _findStartPosition(out v3Ship, out qShip);
+        }
+
         /*
-         * Create a ship
+         * Create the ship entiiies. This needs to run in logical thread.
          */
+        _engine.QueueMainThreadAction(() =>
         {
             _eShip = _engine.CreateEntity("RootScene.playership");
-
-            var gameState = M<AutoSave>().GameState;
-            Vector3 v3Ship = gameState.PlayerPosition;
-            Quaternion qShip = Quaternion.Normalize(gameState.PlayerOrientation);
-            if (v3Ship == Vector3.Zero)
-            {
-                Error($"Unbelievably could not come up with a valid start position, so generate one here.");
-                _findStartPosition(out v3Ship, out qShip);
-            }
 
             _aTransform.SetPosition(_eShip, v3Ship);
             _aTransform.SetRotation(_eShip, qShip);
             _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
             _aTransform.SetCameraMask(_eShip, 0x0000ffff);
-
-            InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
-
-            var tModel = _engine.Run(() => I.Get<ModelCache>().Instantiate(
-                ModelUrl,
-                null, instantiateModelParams));
-            Model model = tModel.GetAwaiter().GetResult().GetAwaiter().GetResult();
 
             {
                 builtin.tools.ModelBuilder modelBuilder = new(_engine, model, instantiateModelParams);
@@ -550,12 +563,13 @@ public class Module : engine.AModule
             engine.physics.Object po;
             lock (_engine.Simulation)
             {
-                uint uintShape = (uint) engine.physics.actions.CreateSphereShape.Execute(
+                uint uintShape = (uint)engine.physics.actions.CreateSphereShape.Execute(
                     _engine.PLog, _engine.Simulation,
-                    Single.Max(1.4f, bodyRadius), out var pbody); 
+                    Single.Max(1.4f, bodyRadius), out var pbody);
                 var inertia = pbody.ComputeInertia(MassShip);
                 po = new engine.physics.Object(_engine, _eShip,
-                    v3Ship, qShip, inertia, new TypedIndex() { Packed = uintShape }) { CollisionProperties = collisionProperties}.AddContactListener();
+                        v3Ship, qShip, inertia, new TypedIndex() { Packed = uintShape })
+                    { CollisionProperties = collisionProperties }.AddContactListener();
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             }
 
@@ -572,46 +586,34 @@ public class Module : engine.AModule
                 Quaternion.Identity, new Vector3(0f, 0f, 0f));
             _eMapShip.Set(new engine.world.components.MapIcon()
                 { Code = engine.world.components.MapIcon.IconCode.Player0 });
-        }
 
-        _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
-        _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
+            _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
+            _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
 
-        I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
-        I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
-        I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
-        I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+            if (_engine.TryGetCameraEntity(out var eCam))
+            {
+                _onCameraEntityChanged(this, eCam);
+            }
 
+            _engine.OnCameraEntityChanged += _onCameraEntityChanged;
+            _engine.OnLogicalFrame += _onLogicalFrame;
+
+            _engine.SetPlayerEntity(GetShipEntity());
+
+            /*
+             * Create a viewer for the player itself, defining what parts
+             * of the world shall be loaded.
+             */
+            _playerViewer = new(_engine);
+            I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
+        }); // End of queue mainthread action.
+    }
+
+
+    public override void ModuleActivate()
+    {
+        base.ModuleActivate();
         _engine.AddModule(this);
-        _engine.OnLogicalFrame += _onLogicalFrame;
-        if (_engine.TryGetCameraEntity(out var eCam))
-        {
-            _onCameraEntityChanged(this, eCam);
-        }
-
-        _engine.OnCameraEntityChanged += _onCameraEntityChanged;
-
-        {
-            _polyballSound = _aSound.FindSound("polyball.ogg");
-            _polyballSound.Volume = 0.03f;
-            _soundMyEngine = _aSound.FindSound("sd_my_engine.ogg");
-            _soundMyEngine.Volume = 0f;
-            _soundMyEngine.IsLooped = true;
-            _soundMyEngine.Speed = 0.81f;
-            _soundMyEngine.SoundMask = 0xffffffff;
-        }
-
-        _engine.SetPlayerEntity(GetShipEntity());
-
-        /*
-         * Create a viewer for the player itself, defining what parts
-         * of the world shall be loaded.
-         */
-        _playerViewer = new(_engine);
-        I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
+        _engine.Run(_setupPlayer);
     }
 }
