@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace engine.world.components;
 
 [engine.IsPersistable]
@@ -5,17 +7,17 @@ public struct Creator
 {
     public const ushort CreatorId_Hardcoded = 0;
     public const ushort CreatorId_HardcodeMax = 511;
-    
+
     /**
      * In the scope of the creating unit, which id does this have?
      * This may stay constant across saves.
      */
-    public int Id { get; set; }
-    
+    [JsonInclude] public int Id;
+
     /**
      * The owner of an entity is responsible for deleting it.
      */
-    public ushort CreatorId { get; set; }
+    [JsonInclude] public ushort CreatorId;
     
     /**
      * The create of an entity is responsible for setting it up

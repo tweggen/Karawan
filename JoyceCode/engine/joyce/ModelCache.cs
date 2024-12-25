@@ -161,16 +161,24 @@ public class ModelCache
         {
             Model model = await _obtain(mce);
 
-            lock (mce.LockObject)
+            /*
+             * transition to the proper state and notify the owners.
+             */
+            await _engine.TaskMainThread(() =>
             {
-                mce.Model.FillPlaceholderFrom(model);
-                mce.State = ModelCacheEntry.EntryState.Loaded;
+                lock (mce.LockObject)
+                {
+                    mce.Model.FillPlaceholderFrom(model);
+                    mce.State = ModelCacheEntry.EntryState.Loaded;
+                }
                 foreach (var ce in mce.ConsumerList)
                 {
                     ce.Sem.Release();
                 }
+
                 mce.ConsumerList.Clear();
-            }
+            });
+
         }
         catch (Exception exception)
         {
@@ -316,11 +324,15 @@ public class ModelCache
     }
 
     
+    static int nextReqId = 0;
+
     public async Task<Model> Instantiate(
         string url,
         ModelProperties? modelProperties,
         InstantiateModelParams? p)
     {
+        int reqId = ++nextReqId; 
+        Trace($"Requested #{reqId} {url}");
         Task<Model> tModel = Instantiate(new ModelCacheParams()
         {
             Url = url,
@@ -328,6 +340,7 @@ public class ModelCache
             Params = p
         });
         Model model = await tModel;
+        Trace($"Have #{reqId} {url}");
         return model;
     }
 }

@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace engine.behave.components;
 
 [engine.IsPersistable]
 public struct Behavior
 {
-    public IBehavior Provider { get; set; }
-    public short MaxDistance { get; set; } = 150; 
-    public ushort Flags { get; set; }
+    [JsonInclude] public IBehavior Provider;
+    [JsonInclude] public short MaxDistance = 150;
+    [JsonInclude] public ushort Flags;
 
     [Flags]
     public enum BehaviorFlags

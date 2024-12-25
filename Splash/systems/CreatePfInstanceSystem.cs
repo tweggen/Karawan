@@ -43,7 +43,12 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
         foreach (var entity in entities)
         {
             var cInstance3 = entity.Get<engine.joyce.components.Instance3>();
-            engine.joyce.InstanceDesc id = cInstance3.InstanceDesc;
+            engine.joyce.InstanceDesc? id = cInstance3.InstanceDesc;
+            
+            /*
+             * The instance might be incompletely loaded yet.
+             */
+            if (null == id || null == id.Meshes) continue;
 
             var nMeshes = id.Meshes.Count;
             var nMeshMaterials = id.MeshMaterials.Count;

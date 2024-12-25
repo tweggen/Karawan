@@ -1,5 +1,5 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
+using System.Text.Json.Serialization;
 
 namespace engine.joyce.components;
 
@@ -21,10 +21,15 @@ namespace engine.joyce.components;
  */
 public struct Transform3
 {
+    [JsonInclude]
     public bool IsVisible;
+    [JsonInclude]
     public uint CameraMask;
+    [JsonInclude]
     public Quaternion Rotation;
+    [JsonInclude]
     public Vector3 Position;
+    [JsonInclude]
     public Vector3 Scale;
 
 
