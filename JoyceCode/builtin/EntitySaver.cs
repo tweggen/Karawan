@@ -70,8 +70,9 @@ public class EntitySaver : AModule
 
         JsonSerializerOptions serializerOptions = new()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
+        serializerOptions.Converters.Add(new Matrix4x4JsonConverter());
         
         /*
          * Iterate through everything that has a creator associated. That way, it might
@@ -152,6 +153,7 @@ public class EntitySaver : AModule
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+        serializerOptions.Converters.Add(new Matrix4x4JsonConverter());
 
         foreach (var jpEntity in jeAll.EnumerateObject())
         {
