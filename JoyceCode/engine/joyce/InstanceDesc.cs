@@ -12,42 +12,6 @@ using static engine.Logger;
 namespace engine.joyce;
 
 
-public class InterfacePointerConverter : JsonConverter<IBehavior>
-{
-    public override IBehavior Read(
-        ref Utf8JsonReader reader,
-        Type typeToConvert,
-        JsonSerializerOptions options)
-    {
-        var mcpObject = JsonSerializer.Deserialize(ref reader, typeof(ModelCacheParams), options);
-        var mcp = mcpObject as ModelCacheParams;
-        var model = I.Get<ModelCache>().InstantiatePlaceholder(mcp);
-        var id = model.RootNode.InstanceDesc;
-        return id;
-    }
-
-
-    //writer.WriteRawValue(JsonSerializer.Serialize<ModelCacheParams>(id.ModelCacheParams, options));
-
-    public override void Write(
-        Utf8JsonWriter writer,
-        IBehavior iBehavior,
-        JsonSerializerOptions options)
-    {
-        writer.WriteStartObject();
-        if (null != iBehavior)
-        {
-            writer.WriteString("implementationClass", iBehavior.GetType().FullName);
-        }
-        else
-        {
-            writer.WritePropertyName("implementation");
-            writer.WriteRawValue(JsonSerializer.Serialize(iBehavior, iBehavior.GetType(), options))
-        }
-        writer.WriteEndObject();
-    }
-}
-
 public class InstanceDescConverter : JsonConverter<InstanceDesc>
 {
     public override InstanceDesc Read(
@@ -74,11 +38,11 @@ public class InstanceDescConverter : JsonConverter<InstanceDesc>
  * Describe one specific instance of a 3d object (aka Instance3 components)
  * Note that this is only a descriptor, not a lifetime object.
  */
-[JsonConverter(typeof(InstanceDescConverter))]
 public class InstanceDesc
 {
     private Matrix4x4 _m = Matrix4x4.Identity;
 
+    [JsonIgnore]
     public Matrix4x4 ModelTransform
     {
         get => _m;
@@ -108,6 +72,8 @@ public class InstanceDesc
     private AABB _aabbMerged;
     private bool _haveAABBTransformed = false;
     private AABB _aabbTransformed;
+    
+    [JsonInclude]
     public ModelCacheParams ModelCacheParams;
     private Vector3 _vCenter;
 
@@ -131,6 +97,7 @@ public class InstanceDesc
         _vCenter = o._vCenter;
     }
     
+    [JsonIgnore]
     public Vector3 Center
     {
         get
@@ -146,6 +113,7 @@ public class InstanceDesc
     }
     
     
+    [JsonIgnore]
     public AABB AABBMerged
     {
         get
@@ -167,6 +135,7 @@ public class InstanceDesc
         }
     }
 
+    [JsonIgnore]
     public AABB AABBTransformed
     {
         get
@@ -279,14 +248,33 @@ public class InstanceDesc
     }
 
 
+    private void _setup()
+    {
+        _meshes = new List<Mesh>();
+        Meshes = new ReadOnlyCollection<Mesh>(_meshes);
+        _meshMaterials = new List<int>();
+        MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
+        _materials = new List<Material>();
+        Materials = new ReadOnlyCollection<Material>(_materials);
+    }
+
+
+    public InstanceDesc()
+    {
+        _m = Matrix4x4.Identity;
+        MaxDistance = 200f;
+    }
+
+    
     /**
      * Create a new instance desc from the matmesh given.
      */
     public static InstanceDesc CreateFromMatMesh(MatMesh matmesh, float maxDistance)
     {
         InstanceDesc id = new();
-
+        id._setup();
         int materialIndex = 0;
+        
         foreach (var kvp in matmesh.Tree)
         {
             id._materials.Add(kvp.Key);
@@ -319,19 +307,6 @@ public class InstanceDesc
         return id;
     }
     
-    
-    private InstanceDesc()
-    {
-        _m = Matrix4x4.Identity;
-        _meshes = new List<Mesh>();
-        Meshes = new ReadOnlyCollection<Mesh>(_meshes);
-        _meshMaterials = new List<int>();
-        MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
-        _materials = new List<Material>();
-        Materials = new ReadOnlyCollection<Material>(_materials);
-        MaxDistance = 200f;
-    }
-
     
     public InstanceDesc TransformedCopy(in Matrix4x4 m)
     {

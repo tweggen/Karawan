@@ -195,6 +195,7 @@ namespace engine.joyce
 
         public void AppendRotation(Entity entity, in Quaternion qRotateBy)
         {
+            if (!entity.Has<Transform3>()) return;
             ref var cT3 = ref entity.Get<Transform3>();
             cT3.Rotation = Quaternion.Concatenate(cT3.Rotation, qRotateBy);
             _writeTransformToParent(entity, cT3);

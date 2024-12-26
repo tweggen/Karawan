@@ -73,6 +73,8 @@ public class EntitySaver : AModule
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
         serializerOptions.Converters.Add(new Matrix4x4JsonConverter());
+        serializerOptions.Converters.Add(new Vector3JsonConverter());
+        serializerOptions.Converters.Add(new QuaternionJsonConverter());
         
         /*
          * Iterate through everything that has a creator associated. That way, it might
@@ -154,6 +156,8 @@ public class EntitySaver : AModule
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
         serializerOptions.Converters.Add(new Matrix4x4JsonConverter());
+        serializerOptions.Converters.Add(new Vector3JsonConverter());
+        serializerOptions.Converters.Add(new QuaternionJsonConverter());
 
         foreach (var jpEntity in jeAll.EnumerateObject())
         {
@@ -186,7 +190,7 @@ public class EntitySaver : AModule
                     }
                     catch (Exception exception)
                     {
-                        Error($"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}");
+                        Error($"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}: {exception}");
                         continue;
                     }
 

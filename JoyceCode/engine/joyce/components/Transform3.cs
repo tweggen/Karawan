@@ -19,6 +19,7 @@ namespace engine.joyce.components;
  * set the positiions using the API. I mean, if you're in the thousands
  * of entities.
  */
+[engine.IsPersistable]
 public struct Transform3
 {
     [JsonInclude]

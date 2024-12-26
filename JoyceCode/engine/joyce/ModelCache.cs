@@ -176,7 +176,7 @@ public class ModelCache
                     }
 
                     mce.ConsumerList.Clear();
-                    Trace($"Resolved #{mcp.Url}");
+                    // Trace($"Resolved #{mcp.Url}");
                 }
             });
 
@@ -333,7 +333,7 @@ public class ModelCache
         InstantiateModelParams? p)
     {
         int reqId = ++nextReqId; 
-        Trace($"Requested #{reqId} {url}");
+        // Trace($"Requested #{reqId} {url}");
         Task<Model> tModel = Instantiate(new ModelCacheParams()
         {
             Url = url,
@@ -341,7 +341,7 @@ public class ModelCache
             Params = p
         });
         Model model = await tModel;
-        Trace($"Have #{reqId} {url}");
+        // Trace($"Have #{reqId} {url}");
         return model;
     }
 }
