@@ -168,6 +168,10 @@ public class ModelCache
             {
                 lock (mce.LockObject)
                 {
+                    if (mcp.Url == "coin.obj")
+                    {
+                        int a = 1;
+                    }
                     mce.Model.FillPlaceholderFrom(model);
                     mce.State = ModelCacheEntry.EntryState.Loaded;
                     foreach (var ce in mce.ConsumerList)
@@ -261,6 +265,7 @@ public class ModelCache
      */
     public Model InstantiatePlaceholder(ModelCacheParams mcp)
     {
+        Trace($"Called with url {mcp.Url}");
         var mce = _triggerInstantiate(mcp);
         lock (mce.LockObject)
         {

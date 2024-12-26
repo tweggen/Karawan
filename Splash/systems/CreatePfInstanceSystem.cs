@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Numerics;
 using engine;
+using engine.joyce.components;
 using static engine.Logger;
 
 
@@ -45,6 +46,13 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
             var cInstance3 = entity.Get<engine.joyce.components.Instance3>();
             engine.joyce.InstanceDesc? id = cInstance3.InstanceDesc;
             
+            if (entity.Has<EntityName>() && entity.Get<EntityName>().Name == "nogame.inv.coin")
+            {
+                if (null != id && null != id.Meshes)
+                {
+                    int a = 1;
+                }
+            }
             /*
              * The instance might be incompletely loaded yet.
              */

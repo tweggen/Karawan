@@ -38,6 +38,7 @@ public class InstanceDescConverter : JsonConverter<InstanceDesc>
  * Describe one specific instance of a 3d object (aka Instance3 components)
  * Note that this is only a descriptor, not a lifetime object.
  */
+[JsonConverter(typeof(InstanceDescConverter))]
 public class InstanceDesc
 {
     private Matrix4x4 _m = Matrix4x4.Identity;
