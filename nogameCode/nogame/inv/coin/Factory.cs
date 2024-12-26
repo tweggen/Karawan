@@ -1,8 +1,10 @@
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
+//using BepuPhysics;
 using engine;
 using engine.joyce;
+using engine.physics;
 using engine.world.components;
 using static engine.Logger;
 
@@ -11,6 +13,7 @@ namespace nogame.inv.coin;
 public class Factory : AModule
 {
     private static short _coinMaxDistance = 200;
+    private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
 
     public System.Func<Task> CreateAt(Vector3 v3Pos) => new (async () =>
     {
@@ -41,6 +44,28 @@ public class Factory : AModule
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos
                 );
             eTarget.Set(new Creator(Creator.CreatorId_Hardcoded));
+#if true             
+            BepuPhysics.BodyReference prefSphere;
+            engine.physics.Object po;
+            lock (_engine.Simulation)
+            {
+                po = new(_engine, eTarget,
+                    _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius))
+                {
+                    CollisionProperties = new CollisionProperties
+                    { 
+                        Entity = eTarget,
+                        Name = "nogame.inv.coin",
+                        Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable,
+                        LayerMask = 0x0004,
+                    }
+                };
+                //po.AddContactListener();
+                prefSphere = _engine.Simulation.Bodies.GetBodyReference(new BepuPhysics.BodyHandle(po.IntHandle));
+            }
+            eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+#endif
+            
             tcsEntity.SetResult(eTarget);
         });
 
