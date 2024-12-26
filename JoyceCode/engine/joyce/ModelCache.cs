@@ -170,13 +170,14 @@ public class ModelCache
                 {
                     mce.Model.FillPlaceholderFrom(model);
                     mce.State = ModelCacheEntry.EntryState.Loaded;
-                }
-                foreach (var ce in mce.ConsumerList)
-                {
-                    ce.Sem.Release();
-                }
+                    foreach (var ce in mce.ConsumerList)
+                    {
+                        ce.Sem.Release();
+                    }
 
-                mce.ConsumerList.Clear();
+                    mce.ConsumerList.Clear();
+                    Trace($"Resolved #{mcp.Url}");
+                }
             });
 
         }

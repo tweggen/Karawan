@@ -2,17 +2,51 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using engine.behave;
 using engine.geom;
-using engine.joyce;
 using static engine.Logger;
 
 
 namespace engine.joyce;
+
+
+public class InterfacePointerConverter : JsonConverter<IBehavior>
+{
+    public override IBehavior Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        var mcpObject = JsonSerializer.Deserialize(ref reader, typeof(ModelCacheParams), options);
+        var mcp = mcpObject as ModelCacheParams;
+        var model = I.Get<ModelCache>().InstantiatePlaceholder(mcp);
+        var id = model.RootNode.InstanceDesc;
+        return id;
+    }
+
+
+    //writer.WriteRawValue(JsonSerializer.Serialize<ModelCacheParams>(id.ModelCacheParams, options));
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        IBehavior iBehavior,
+        JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        if (null != iBehavior)
+        {
+            writer.WriteString("implementationClass", iBehavior.GetType().FullName);
+        }
+        else
+        {
+            writer.WritePropertyName("implementation");
+            writer.WriteRawValue(JsonSerializer.Serialize(iBehavior, iBehavior.GetType(), options))
+        }
+        writer.WriteEndObject();
+    }
+}
 
 public class InstanceDescConverter : JsonConverter<InstanceDesc>
 {
@@ -175,20 +209,24 @@ public class InstanceDesc
     {
         _vCenter = Vector3.Zero;
         int n = 0;
-        foreach (var jm in Meshes)
+        if (null != Meshes)
         {
-            int nv = jm.Vertices.Count;
-            for (int iv = 0; iv < nv; ++iv)
+            foreach (var jm in Meshes)
             {
-                _vCenter += jm.Vertices[iv];
+                int nv = jm.Vertices.Count;
+                for (int iv = 0; iv < nv; ++iv)
+                {
+                    _vCenter += jm.Vertices[iv];
+                }
+
+                n += nv;
             }
 
-            n += nv;
-        }
-
-        if (0 != n)
-        {
-            _vCenter /= n;
+            if (0 != n)
+            {
+                _vCenter /= n;
+            }
+            
         }
     }
     

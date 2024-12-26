@@ -14,6 +14,7 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePtr.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\MenuWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Matrix4x4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\InvLuaBindings.cs" />
