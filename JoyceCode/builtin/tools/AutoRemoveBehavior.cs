@@ -3,7 +3,7 @@ using engine;
 using engine.behave;
 using engine.physics;
 
-namespace Joyce.builtin.tools;
+namespace builtin.tools;
 
 public class AutoRemoveBehavior : ABehavior
 {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text.Json.Serialization;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using static engine.Logger;
@@ -26,9 +27,12 @@ public class Object : IDisposable
     public const uint IsDeleted = 128;
 
     public DefaultEcs.Entity Entity = default;
+    [JsonInclude]
     public uint Flags = 0;
     public int IntHandle = -1;
     public IList<Action>? ReleaseActions = null;
+    
+    // Shall be persisted
     public CollisionProperties? CollisionProperties { get; set; } = null;
     
     /**
@@ -39,13 +43,14 @@ public class Object : IDisposable
     /*
      * Whereas this is more class specific.
      */
-    
+    [Newtonsoft.Json.JsonIgnore]
     public Action<ContactEvent>? OnCollision { get; set; } = null;
     
     /**
      * The maximal distance to the player where these objects actually should be
      * part of the physics system.
      */
+    [JsonInclude]
     public float MaxDistance = 50f;
 
 
@@ -231,6 +236,12 @@ public class Object : IDisposable
     {
         RemoveContactListener();
     }
+
+
+    public Object()
+    {
+        Engine = I.Get<Engine>();
+    }
     
     
     public Object(DefaultEcs.Entity entity, BepuPhysics.StaticHandle sh)
@@ -287,5 +298,4 @@ public class Object : IDisposable
         Entity = entity;
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Vector3.Zero, Quaternion.Identity, shape);
     }
-
 }

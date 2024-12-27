@@ -14,6 +14,10 @@
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\Context.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\ConverterFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\ConverterRegistry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePointerConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\InterfacePtr.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\jt\MenuWidget.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Matrix4x4JsonConverter.cs" />
@@ -92,7 +96,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\IWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\ScreenComposer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\Stats.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\parts.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleCard.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\TitleModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\SortedMultiValue.cs" />

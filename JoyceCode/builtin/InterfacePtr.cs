@@ -1,4 +1,4 @@
-namespace Joyce.builtin;
+namespace builtin;
 
 public class InterfacePtr
 {

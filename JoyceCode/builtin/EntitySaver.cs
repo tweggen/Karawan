@@ -6,6 +6,7 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using builtin.entitySaver;
 using DefaultEcs.Serialization;
 using engine;
 using engine.world;
@@ -20,6 +21,7 @@ public class EntitySaver : AModule
 {
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
+        new SharedModule<ConverterRegistry>() {},
         new SharedModule<CreatorRegistry>() {}
     };
 
@@ -67,14 +69,13 @@ public class EntitySaver : AModule
         JsonNode jnAll = new JsonObject();
 
         var oreg = M<CreatorRegistry>();
+        var context = new Context();
 
         JsonSerializerOptions serializerOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new ConverterFactory(M<ConverterRegistry>(), context) }
         };
-        serializerOptions.Converters.Add(new Matrix4x4JsonConverter());
-        serializerOptions.Converters.Add(new Vector3JsonConverter());
-        serializerOptions.Converters.Add(new QuaternionJsonConverter());
         
         /*
          * Iterate through everything that has a creator associated. That way, it might
@@ -85,6 +86,8 @@ public class EntitySaver : AModule
                 .With<Creator>().AsEnumerable();
         foreach (var eCreated in enumCreated)
         {
+            context.Entity = eCreated;
+            
             /*
              * Save that we have an entity, with a certain id, that by
              * incident matches the id the actual entity has.
@@ -151,20 +154,19 @@ public class EntitySaver : AModule
      */
     public void LoadAll(JsonElement jeAll)
     {
+        var context = new Context();
         JsonSerializerOptions serializerOptions = new()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new ConverterFactory(M<ConverterRegistry>(), context) }
         };
-        serializerOptions.Converters.Add(new Matrix4x4JsonConverter());
-        serializerOptions.Converters.Add(new Vector3JsonConverter());
-        serializerOptions.Converters.Add(new QuaternionJsonConverter());
-
         foreach (var jpEntity in jeAll.EnumerateObject())
         {
             var strEntityId = jpEntity.Name;
             var jeEntity = jpEntity.Value;
 
             var e = I.Get<Engine>().GetEcsWorld().CreateEntity();
+            context.Entity = e;
 
             if (jeEntity.TryGetProperty("components", out var jeComponents))
             {

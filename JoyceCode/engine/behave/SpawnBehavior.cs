@@ -3,7 +3,7 @@ using engine;
 using engine.behave;
 using engine.news;
 
-namespace Joyce.builtin.tools;
+namespace builtin.tools;
 
 
 /**

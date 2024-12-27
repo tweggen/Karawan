@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Joyce.builtin.tools;
+namespace builtin.tools;
 
 public class MultiMap<K,V> : System.Collections.Generic.IDictionary<K,V>
 {

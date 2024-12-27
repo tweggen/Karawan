@@ -8,7 +8,7 @@ using engine;
 using engine.behave;
 using static engine.Logger;
 
-namespace Joyce.builtin.tools;
+namespace builtin.tools;
 
 public class SegmentEnd
 {
