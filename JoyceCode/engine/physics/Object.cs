@@ -14,7 +14,6 @@ public class Object : IDisposable
      * Still not happy with the design. All of the
      * following is instance specific.
      */
-
     Engine Engine = I.Get<Engine>();
     
     public const uint IsReleased = 1;
@@ -33,6 +32,7 @@ public class Object : IDisposable
     public IList<Action>? ReleaseActions = null;
     
     // Shall be persisted
+    [JsonInclude]
     public CollisionProperties? CollisionProperties { get; set; } = null;
     
     /**

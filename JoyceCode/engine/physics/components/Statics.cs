@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 
 namespace engine.physics.components;
 
 
+[IsPersistable]
 public struct Statics
 {
     /**
      * If this one catches collisions, it might have a physics object attached.
      */
-    public physics.Object? PhysicsObject;
+    [JsonInclude] public physics.Object? PhysicsObject;
     
     /**
      * Static handles associated with this component
