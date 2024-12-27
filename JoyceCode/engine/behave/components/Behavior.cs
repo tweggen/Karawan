@@ -14,7 +14,6 @@ namespace engine.behave.components;
 public struct Behavior
 {
     [JsonInclude] public IBehavior Provider;
-    
     [JsonInclude] public short MaxDistance = 150;
     [JsonInclude] public ushort Flags;
 

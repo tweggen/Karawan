@@ -13,6 +13,8 @@ public class InterfacePointerConverter<T> : JsonConverter<T> where T : class
     private static readonly byte[] s_implementationClassUtf8 = Encoding.UTF8.GetBytes("implementationClass");
     private static readonly byte[] s_implementationUtf8 = Encoding.UTF8.GetBytes("implementation");
 
+    private bool _disableNext = false;
+
     public override T Read(
         ref Utf8JsonReader reader,
         Type typeToConvert,
@@ -113,7 +115,8 @@ public class InterfacePointerConverter<T> : JsonConverter<T> where T : class
             writer.WriteString("implementationAssembly", type.Assembly.FullName);
             writer.WriteString("implementationClass", type.FullName);
             writer.WritePropertyName("implementation");
-            writer.WriteRawValue(JsonSerializer.Serialize(iBehavior, înputType: , options));
+            writer.WriteRawValue(JsonSerializer.Serialize(
+                iBehavior, type, options));
         }
         else
         {

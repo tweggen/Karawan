@@ -53,6 +53,7 @@ public class ConverterRegistry : AModule
     
     public bool CanConvert(Type type)
     {
+        Trace($"CanConvert {type}");
         lock (_lo)
         {
             if (_roConverters.ContainsKey(type))
