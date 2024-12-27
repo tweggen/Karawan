@@ -92,10 +92,19 @@ namespace engine.physics
                     break;
                 
                 case CollidableMobility.Static:
-                    // TXWTODO: Read/store collision properties for static objects.
-                    doACollide = true;
-                    doADetect = true;
-                    aLayerMask = 0xffff;
+                    if (I.Get<engine.physics.API>().GetCollisionProperties(a.BodyHandle, out propsA))
+                    {
+                        doACollide = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsTangible);
+                        doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
+                        aLayerMask = propsA.LayerMask;
+                    }
+                    else
+                    {
+                        doACollide = true;
+                        doADetect = true;
+                        aLayerMask = 0xffff;
+                    }
+
                     break;
             }
 
@@ -118,9 +127,9 @@ namespace engine.physics
                     }
 
                     break;
-                
+
                 case CollidableMobility.Kinematic:
-                    if(I.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
+                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
                     {
                         doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
@@ -129,9 +138,19 @@ namespace engine.physics
 
                     break;
                 case CollidableMobility.Static:
-                    doBCollide = true;
-                    doBDetect = true;
-                    bLayerMask = 0xffff;
+                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
+                    {
+                        doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
+                        doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
+                        bLayerMask = propsB.LayerMask;
+                    }
+                    else
+                    {
+                        doBCollide = true;
+                       doBDetect = true;
+                        bLayerMask = 0xffff;
+                    }
+                    
                     break;
             }
 

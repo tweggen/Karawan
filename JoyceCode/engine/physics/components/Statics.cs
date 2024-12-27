@@ -7,7 +7,7 @@ using BepuPhysics.Collidables;
 namespace engine.physics.components;
 
 
-internal struct Statics
+public struct Statics
 {
     /**
      * Static handles associated with this component
@@ -40,5 +40,17 @@ internal struct Statics
         {
             ReleaseActions = null;
         }
+    }
+
+    public Statics(StaticHandle sh)
+    {
+        Handles = new List<StaticHandle>() { sh };
+        ReleaseActions = new List<Action>()
+        {
+            () =>
+            {
+                // FIXME: Release the sh.
+            }
+        };
     }
 }

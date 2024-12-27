@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
+using BepuPhysics;
 //using BepuPhysics;
 using engine;
 using engine.joyce;
@@ -44,13 +45,18 @@ public class Factory : AModule
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos
                 );
             eTarget.Set(new Creator(Creator.CreatorId_Hardcoded));
-#if true             
-            BepuPhysics.BodyReference prefSphere;   
+
+            StaticHandle staticHandle;   
             engine.physics.Object po;
             lock (_engine.Simulation)
             {
-                po = new(_engine, eTarget,
-                    _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius))
+                staticHandle = _engine.Simulation.Statics.Add(
+                    new StaticDescription(
+                        v3Pos,
+                        Quaternion.Identity,
+                        _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius)
+                    )); 
+                po = new(eTarget, staticHandle)
                 {
                     CollisionProperties = new CollisionProperties
                     { 
@@ -63,10 +69,9 @@ public class Factory : AModule
                     }
                 };
                 po.AddContactListener();
-                prefSphere = _engine.Simulation.Bodies.GetBodyReference(new BepuPhysics.BodyHandle(po.IntHandle));
             }
-            eTarget.Set(new engine.physics.components.Body(po, prefSphere));
-#endif
+            eTarget.Set(new engine.physics.components.Statics(staticHandle));
+
             
             tcsEntity.SetResult(eTarget);
         });

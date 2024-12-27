@@ -57,6 +57,10 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
 
             ref var cBehavior = ref entity.Get<behave.components.Behavior>();
 
+            if (cBehavior.Provider != null && cBehavior.Provider.GetType().FullName == "nogame.inv.coin.Behavior")
+            {
+                int a = 1;
+            }
             
             if (hadWorldTransform3 && hadTransform3)
             {
