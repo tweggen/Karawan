@@ -68,7 +68,6 @@ public class Player
                 try
                 {
                     physAction.Execute(this, simulation);
-                    int a = 1;
                 }
                 catch (Exception e)
                 {
@@ -78,7 +77,6 @@ public class Player
             if (_nextAction >= _nActions)
             {
                 // Simulation is done.
-                int a = 1;
             }
         }
     }

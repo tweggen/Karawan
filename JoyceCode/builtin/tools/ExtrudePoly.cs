@@ -487,14 +487,6 @@ namespace builtin.tools
                                         f |= 8;
                                     }
                                 }
-
-                                if (f == 15)
-                                {
-                                    /*
-                                   * We hit a break point here, i.e. a point of our break list is inside the poly.
-                                   */
-                                    int a = 1;
-                                }
                             }
                             
                             int l = convexPoly.Count;
@@ -579,11 +571,6 @@ namespace builtin.tools
                               */
                                 int a = 1;
                             }
-                        }
-
-                        if (87 == staticHandle.Value)
-                        {
-                            int a = 1;
                         }
 
                         // Return release shapes function.

@@ -222,10 +222,6 @@ public class SubscriptionManager
 
     public void Subscribe(string path, Action<Event> handler, DistanceFunction distanceFunc = null)
     {
-        if (path.Contains("widget"))
-        {
-            int a = 1;
-        }
         var listPath = _createList(path);
         if (null == listPath)
         {

@@ -47,10 +47,6 @@ public class LuaScriptEntry : IDisposable
 
         try
         {
-            if (_luaScript == "text")
-            {
-                int a = 1;
-            }
             _luaFunction = _luaState.LoadString(_luaScript, "component lua script");
             _compiledScriptVersion = _setScriptVersion;
             return 0;

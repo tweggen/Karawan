@@ -71,11 +71,6 @@ namespace Splash.Silk
                     _silkThreeD.SetFogColor(new Vector3(cCameraParams.Fog.X, cCameraParams.Fog.Y, cCameraParams.Fog.Z));
                 }
 
-                if (cCameraParams.CameraMask == 0x00800000)
-                {
-                    int a = 1;
-                }
-                
                 Renderbuffer renderbuffer = renderPart.PfRenderbuffer.Renderbuffer;
                 SkRenderbufferEntry skRenderbufferEntry = renderPart.PfRenderbuffer.RenderbufferEntry as SkRenderbufferEntry;
                 

@@ -431,12 +431,6 @@ public class SkTexture : IDisposable
             height = img.Height;
             _haveMipmap = true;
 
-
-            if (_backHandle == 9)
-            {
-                int a = 1;
-            }
-
             /*
              * Now, first step, allocate the textures.
              */
@@ -640,10 +634,6 @@ public class SkTexture : IDisposable
         {
             _liveBound = true; 
         }
-        else
-        {
-            int a = 1;
-        }
     }
 
 
@@ -668,10 +658,6 @@ public class SkTexture : IDisposable
         if (err == 0)
         {
             _liveBound = false;
-        }
-        else
-        {
-            int a = 1;
         }
     }
     

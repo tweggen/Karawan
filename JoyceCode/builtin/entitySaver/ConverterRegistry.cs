@@ -23,7 +23,7 @@ public class ConverterRegistry : AModule
 
     public JsonConverter CreateConverter(Context context, Type type, JsonSerializerOptions options)
     {
-        Trace($"CreateConverter {type}");
+        // Trace($"CreateConverter {type}");
         lock (_lo)
         {
             if (!_roConverters.TryGetValue(type, out var factory))
@@ -59,7 +59,7 @@ public class ConverterRegistry : AModule
     
     public bool CanConvert(Type type)
     {
-        Trace($"CanConvert {type}");
+        // Trace($"CanConvert {type}");
         lock (_lo)
         {
             if (_roConverters.ContainsKey(type))

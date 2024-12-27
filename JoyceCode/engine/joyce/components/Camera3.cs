@@ -86,10 +86,6 @@ public struct Camera3
      */
     public void ToScreenPosition(Vector4 v4View, out Vector2 v2Screen)
     {
-        if (CameraMask == 0x00800000)
-        {
-            int a = 1;
-        }
         v2Screen.X = v4View.X / v4View.W;
         v2Screen.Y = v4View.Y / v4View.W;
         

@@ -189,10 +189,6 @@ public class Mesh : IComparable<Mesh>
         {
            
         }
-        else
-        {
-            int a = 1;
-        }
         UVs.Insert(WriteIndexUVs++, uv);
     }
 

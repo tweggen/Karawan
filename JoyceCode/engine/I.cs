@@ -93,11 +93,7 @@ public sealed class I
             }
 
             instanceEntry.Instance = instanceEntry.FactoryFunction();
-            if (null == instanceEntry.Instance)
-            {
-                int a = 1;
-            }
-
+            
             return instanceEntry.Instance;
         }
     }

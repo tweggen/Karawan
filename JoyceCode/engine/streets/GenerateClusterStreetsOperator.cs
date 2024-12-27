@@ -144,7 +144,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
     {
         if (uv.X < 0f || uv.X > 1f || uv.Y < 0f || uv.Y > 1f)
         {
-            int a = 1;
             Trace($"uv out of range: {uv}.");
             return false;
         }
@@ -161,19 +160,16 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         if ( (uvb-uva).LengthSquared()<0.00001f )
         {
             Trace($"uvb {uvb} too close to uva {uva}.");
-            int a = 1;
             result = false;
         }
         if ( (uvc-uvb).LengthSquared()<0.000001f )
         {
             Trace($"uvc {uvc} too close to uvb {uvb}.");
-            int a = 1;
             result = false;
         }
         if ( (uva-uvc).LengthSquared()<0.000001f )
         {
             Trace($"uva {uva} too close to uvc {uvc}.");
-            int a = 1;
             result = false;
         }
 

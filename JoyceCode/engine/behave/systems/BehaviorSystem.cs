@@ -62,10 +62,6 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
             {
                 if (Vector3.DistanceSquared(v3WorldPosition, vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
                 {
-                    if (cBehavior.MaxDistance == 16)
-                    {
-                        int a = 1;
-                    }
                     if (0 != (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
                     {
                         cBehavior.Provider?.OutOfRange(_engine, entity);
@@ -87,10 +83,6 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
                 }
                 else
                 {
-                    if (cBehavior.MaxDistance == 16)
-                    {
-                        int a = 1;
-                    }
                     if (0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.InRange))
                     {
                         cBehavior.Provider?.InRange(_engine, entity);
@@ -105,10 +97,6 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
             }
             else
             {
-                if (cBehavior.MaxDistance == 16)
-                {
-                    int a = 1;
-                }
             }
 
             if (cBehavior.Provider == null)

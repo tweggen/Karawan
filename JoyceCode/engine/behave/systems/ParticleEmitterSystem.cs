@@ -37,17 +37,6 @@ public class ParticleEmitterSystem : DefaultEcs.System.AEntitySetSystem<float>
                 continue;
             }
 
-            #if false
-            if (entity.Has<joyce.components.EntityName>())
-            {
-                ref string name = ref entity.Get<joyce.components.EntityName>().Name;
-                if (name == "shopping")
-                {
-                    int a = 1;
-                }
-            }
-            #endif
-
             ref var cTransform3ToWorld = ref entity.Get<Transform3ToWorld>();
             ref var cParticleEmitter = ref entity.Get<ParticleEmitter>();
             if (0 >= cParticleEmitter.EmitterTimeToLive)

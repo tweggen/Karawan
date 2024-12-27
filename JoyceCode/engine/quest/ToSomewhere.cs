@@ -232,10 +232,6 @@ public class ToSomewhere : AModule
         }
 
         routeTarget?.Suspend();
-        if (null == updateRouteTimer)
-        {   
-            int a = 1;
-        }
         updateRouteTimer?.Dispose();
         _deleteWaypoints();
     }

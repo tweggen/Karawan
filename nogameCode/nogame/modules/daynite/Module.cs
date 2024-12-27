@@ -67,17 +67,8 @@ public class Module : AModule
                 }
                 var sinceStartGameMilliSeconds = (value - GameStart).TotalMilliseconds;
                 
-                if (sinceStartGameMilliSeconds > 365*3600*24)
-                {
-                    int a = 1;
-                }
-
                 var sinceStartRealMilliSeconds = sinceStartGameMilliSeconds * RealSecondsPerGameDay / (24 * 60 * 60);
                 _realWorldStart = DateTime.UtcNow - TimeSpan.FromMilliseconds(sinceStartRealMilliSeconds);
-                if (_realWorldStart.Year > 2024)
-                {
-                    int a = 1;
-                }
             }
         }
     }

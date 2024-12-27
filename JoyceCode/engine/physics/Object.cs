@@ -72,17 +72,19 @@ public class Object : IDisposable
             Flags &= ~HaveContactListener;
         }
     }
-    
-    
+
+
     public void Activate()
     {
         lock (this.Engine.Simulation)
         {
             if ((Flags & IsActivated) != 0)
             {
-                ErrorThrow($"Entity {Entity} was supposed not to be activated.", m => new InvalidOperationException(m));
+                ErrorThrow($"Entity {Entity} was supposed not to be activated.",
+                    m => new InvalidOperationException(m));
                 return;
             }
+
             Flags |= IsActivated;
 
             if ((Flags & NeedContactListener) != 0)
@@ -90,15 +92,17 @@ public class Object : IDisposable
                 _doAddContactListenerNoLock();
             }
         }
+
         if (CollisionProperties != null)
         {
             BodyHandle bh = new(IntHandle);
             I.Get<engine.physics.API>().AddCollisionEntry(bh, CollisionProperties);
         }
+
         I.Get<engine.physics.ObjectCatalogue>().AddObject(this);
     }
-    
-    
+
+
     public void Dispose()
     {
         I.Get<engine.physics.ObjectCatalogue>().RemoveObject(this);

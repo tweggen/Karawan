@@ -221,10 +221,6 @@ public class Loader
                     if (interfaceName == implementationName)
                     {
                         I.Instance.RegisterFactory(type, () => {
-                            if (haveConfig)
-                            {
-                                int a = 1;
-                            }
                             var i = Activator.CreateInstance(type);
                             if (null != setupProperties) setupProperties(i);
                             if (haveConfig) _loadToSerializable(jeConfig, i);
@@ -236,10 +232,6 @@ public class Loader
                     {
                         I.Instance.RegisterFactory(type, () =>
                         {
-                            if (haveConfig)
-                            {
-                                int a = 1;
-                            }
                             var i = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName);
                             if (null != setupProperties) setupProperties(i);
                             if (haveConfig) _loadToSerializable(jeConfig, i);

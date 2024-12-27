@@ -59,11 +59,6 @@ public class NavClusterContent
         }
 
         var clusterSize = _aabb.Radius;
-        if (0 == clusterSize)
-        {
-            int a = 1;
-        }
-
         /*
          * Now generate the ocrrees with the adequate sizes.
          */

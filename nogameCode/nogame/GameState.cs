@@ -32,10 +32,6 @@ public class GameState
         }
         set
         {
-            if (value.Year >= 1983)
-            {
-                int a = 1;
-            }
             _gameNow = value;
         }
     }

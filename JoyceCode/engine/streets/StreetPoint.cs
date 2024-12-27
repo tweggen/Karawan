@@ -508,7 +508,6 @@ public class StreetPoint
         {
             if ((v2Ref - this.Pos).LengthSquared() < 100)
             {
-                int a = 1;
                 return true;
             }
         }

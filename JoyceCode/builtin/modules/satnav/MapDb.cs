@@ -29,10 +29,6 @@ public class MapDB : AModule
             var indB = jMesh.Indices[i * 3 + 1];
             var indC = jMesh.Indices[i * 3 + 2];
 
-            if (indA > jMesh.Vertices.Count)
-            {
-                int a = 1;
-            }
             tri.A = jMesh.Vertices[(int)indA];
             tri.B = jMesh.Vertices[(int)indB];
             tri.C = jMesh.Vertices[(int)indC];
