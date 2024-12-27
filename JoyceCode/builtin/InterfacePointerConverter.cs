@@ -113,7 +113,7 @@ public class InterfacePointerConverter<T> : JsonConverter<T> where T : class
             writer.WriteString("implementationAssembly", type.Assembly.FullName);
             writer.WriteString("implementationClass", type.FullName);
             writer.WritePropertyName("implementation");
-            writer.WriteRawValue(JsonSerializer.Serialize(iBehavior, type, options));
+            writer.WriteRawValue(JsonSerializer.Serialize(iBehavior, înputType: , options));
         }
         else
         {

@@ -56,11 +56,13 @@ public class Factory : AModule
                     { 
                         Entity = eTarget,
                         Name = "nogame.inv.coin",
-                        Flags = CollisionProperties.CollisionFlags.IsTangible | CollisionProperties.CollisionFlags.IsDetectable,
+                        Flags = 
+                            /*CollisionProperties.CollisionFlags.IsTangible 
+                            | */ CollisionProperties.CollisionFlags.IsDetectable,
                         LayerMask = 0x0004,
                     }
                 };
-                //po.AddContactListener();
+                po.AddContactListener();
                 prefSphere = _engine.Simulation.Bodies.GetBodyReference(new BepuPhysics.BodyHandle(po.IntHandle));
             }
             eTarget.Set(new engine.physics.components.Body(po, prefSphere));
