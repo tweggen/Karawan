@@ -164,10 +164,15 @@ internal class Manager
             ErrorThrow("world must not be null.", (m) => new ArgumentException(m));
         }
         
-        var entities = world.GetEntities().With<components.Body>().AsEnumerable();
-        foreach (DefaultEcs.Entity entity in entities)
+        var dynamicEntities = world.GetEntities().With<components.Body>().AsEnumerable();
+        foreach (DefaultEcs.Entity entity in dynamicEntities)
         {
             _onBodyAdded(entity, entity.Get<components.Body>());
+        }
+        var staticEntities = world.GetEntities().With<components.Statics>().AsEnumerable();
+        foreach (DefaultEcs.Entity entity in staticEntities)
+        {
+            _onStaticsAdded(entity, entity.Get<components.Statics>());
         }
 
 

@@ -70,7 +70,7 @@ public class Factory : AModule
                 };
                 po.AddContactListener();
             }
-            eTarget.Set(new engine.physics.components.Statics(staticHandle));
+            eTarget.Set(new engine.physics.components.Statics(po, staticHandle));
 
             
             tcsEntity.SetResult(eTarget);

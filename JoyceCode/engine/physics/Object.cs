@@ -109,8 +109,15 @@ public class Object : IDisposable
 
         if (CollisionProperties != null)
         {
-            BodyHandle bh = new(IntHandle);
-            I.Get<engine.physics.API>().AddCollisionEntry(bh, CollisionProperties);
+            if ((Flags & IsStatic) == 0)
+            {
+                BodyHandle bh = new(IntHandle);
+                I.Get<engine.physics.API>().AddCollisionEntry(bh, CollisionProperties);
+            }
+            else
+            {
+                I.Get<engine.physics.API>().AddCollisionEntry(new StaticHandle(IntHandle), CollisionProperties);
+            }
         }
 
         I.Get<engine.physics.ObjectCatalogue>().AddObject(this);
@@ -127,8 +134,15 @@ public class Object : IDisposable
         }
         if (CollisionProperties != null)
         {
-            BodyHandle bh = new(IntHandle);
-            I.Get<engine.physics.API>().RemoveCollisionEntry(bh);
+            if ((Flags & IsStatic) == 0)
+            {
+                BodyHandle bh = new(IntHandle);
+                I.Get<engine.physics.API>().RemoveCollisionEntry(bh);
+            }
+            else
+            {
+                I.Get<engine.physics.API>().RemoveCollisionEntry(new StaticHandle(IntHandle));
+            }
         }
         lock (Engine.Simulation)
         {
@@ -149,6 +163,7 @@ public class Object : IDisposable
             {
                 BepuPhysics.StaticHandle sh = new(IntHandle);
                 Engine.Simulation.Statics.Remove(sh);
+                _doRemoveContactListenerNoLock();
             }
             else
             {
