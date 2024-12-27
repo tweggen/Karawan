@@ -17,7 +17,8 @@ public class ConverterRegistry : AModule
     private Dictionary<Type, Func<Context, JsonConverter>> _mapConverters = new();
     private FrozenDictionary<Type, Func<Context, JsonConverter>> _roConverters;
     private Dictionary<Type, Func<Context, JsonConverter>> _mapInterfaceConverters = new();
-
+    private HashSet<Type> _setCantConvert = new();
+    
     public JsonConverter CreateConverter(Context context, Type type, JsonSerializerOptions options)
     {
         lock (_lo)
@@ -39,7 +40,8 @@ public class ConverterRegistry : AModule
             if (kvp.Key.IsAssignableFrom(type))
             {
                 factory = kvp.Value;
-                _mapInterfaceConverters[type] = kvp.Value;
+                _mapConverters[type] = kvp.Value;
+                _roConverters = _mapConverters.ToFrozenDictionary(); 
                 return true;
             }
         }
@@ -58,10 +60,17 @@ public class ConverterRegistry : AModule
                 return true;
             }
 
+            if (_setCantConvert.Contains(type))
+            {
+                return false;
+            }
+
             if (_tryMatchInterface(type, out var _))
             {
                 return true;
             }
+
+            _setCantConvert.Add(type);
         }
 
         return false;
@@ -74,6 +83,7 @@ public class ConverterRegistry : AModule
         {
             _mapConverters.Add(type, factory);
             _roConverters = _mapConverters.ToFrozenDictionary();
+            _setCantConvert.Clear();
         }
     }
 
@@ -83,6 +93,7 @@ public class ConverterRegistry : AModule
         lock (_lo)
         {
             _mapInterfaceConverters.Add(type, factory);
+            _setCantConvert.Clear();
         }
     }
     
