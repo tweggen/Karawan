@@ -21,7 +21,7 @@ public class DropCoinModule : AModule, IWorldOperator
     public Func<Task> WorldOperatorApply() => new(() =>
     {
         List<Task> all = new();
-        for (int i = 50; i < 100; i += 10)
+        for (int i = 45; i < 100; i += 3)
         {
             all.Add(M<nogame.inv.coin.Factory>().CreateAt(new Vector3(160, i, 190f))());
         }
