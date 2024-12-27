@@ -29,8 +29,10 @@ internal class Manager
     
     private void _removeStaticsNoLock(in components.Statics statics)
     {
+        int poHandle = -1;
         if (statics.PhysicsObject != null)
         {
+            poHandle = statics.PhysicsObject.IntHandle;
             statics.PhysicsObject.MarkDeleted();
             statics.PhysicsObject.Dispose();
         }
@@ -39,7 +41,10 @@ internal class Manager
         {
             foreach (var handle in statics.Handles)
             {
-                _engine.Simulation.Statics.Remove(handle);
+                if (handle.Value != poHandle)
+                {
+                    _engine.Simulation.Statics.Remove(handle);
+                }
             }
         }
 
