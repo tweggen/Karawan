@@ -10,6 +10,11 @@ namespace engine.physics.components;
 public struct Statics
 {
     /**
+     * If this one catches collisions, it might have a physics object attached.
+     */
+    public physics.Object? PhysicsObject;
+    
+    /**
      * Static handles associated with this component
      */
     public IList<StaticHandle> Handles;
@@ -53,4 +58,19 @@ public struct Statics
             }
         };
     }
+    
+    
+    public Statics(Object? po, StaticHandle sh)
+    {
+        PhysicsObject = po;
+        Handles = new List<StaticHandle>() { sh };
+        ReleaseActions = new List<Action>()
+        {
+            () =>
+            {
+                // FIXME: Release the sh.
+            }
+        };
+    }
+
 }

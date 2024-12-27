@@ -58,7 +58,14 @@ public class Object : IDisposable
     {
         if ((Flags & HaveContactListener) == 0)
         {
-            I.Get<engine.physics.API>().AddContactListener(Entity);
+            if ((Flags & IsStatic) == 0)
+            {
+                I.Get<engine.physics.API>().AddDynamicContactListener(Entity);
+            }
+            else
+            {
+                I.Get<engine.physics.API>().AddStaticContactListener(Entity);
+            }
             Flags |= HaveContactListener;
         }
     }
@@ -68,7 +75,14 @@ public class Object : IDisposable
     {
         if ((Flags & HaveContactListener) != 0)
         {
-            I.Get<engine.physics.API>().RemoveContactListener(Entity, new BodyHandle(IntHandle));
+            if ((Flags & IsStatic) == 0)
+            {
+                I.Get<engine.physics.API>().RemoveDynamicContactListener(Entity, new BodyHandle(IntHandle));
+            } else
+            {
+                I.Get<engine.physics.API>().RemoveStaticsContactListener(Entity);
+            }
+
             Flags &= ~HaveContactListener;
         }
     }

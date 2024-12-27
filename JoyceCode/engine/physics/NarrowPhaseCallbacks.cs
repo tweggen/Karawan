@@ -92,7 +92,7 @@ namespace engine.physics
                     break;
                 
                 case CollidableMobility.Static:
-                    if (I.Get<engine.physics.API>().GetCollisionProperties(a.BodyHandle, out propsA))
+                    if (I.Get<engine.physics.API>().GetCollisionProperties(a.StaticHandle, out propsA))
                     {
                         doACollide = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doADetect = 0 != (propsA.Flags & CollisionProperties.CollisionFlags.IsDetectable);
@@ -138,7 +138,7 @@ namespace engine.physics
 
                     break;
                 case CollidableMobility.Static:
-                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.BodyHandle, out propsB))
+                    if (I.Get<engine.physics.API>().GetCollisionProperties(b.StaticHandle, out propsB))
                     {
                         doBCollide = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsTangible);
                         doBDetect = 0 != (propsB.Flags & CollisionProperties.CollisionFlags.IsDetectable);
@@ -147,7 +147,7 @@ namespace engine.physics
                     else
                     {
                         doBCollide = true;
-                       doBDetect = true;
+                        doBDetect = true;
                         bLayerMask = 0xffff;
                     }
                     

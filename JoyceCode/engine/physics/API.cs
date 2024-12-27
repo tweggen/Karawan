@@ -291,23 +291,29 @@ public class API
         _engine.QueueMainThreadAction(() => RayCastSync(origin, target, length, action));
     }
 
-    private SortedSet<int> _setRegisteredEntities = new();
+    private SortedSet<int> _setRegisteredDynamics = new();
+    private SortedSet<int> _setRegisteredStatics = new();
     
     /**
      * Register a listener who is notified on callbacks.
      */
-    public void AddContactListener(in DefaultEcs.Entity entity)
+    public void AddDynamicContactListener(in DefaultEcs.Entity entity)
     {
+        if (!entity.Has<physics.components.Body>())
+        {
+            ErrorThrow<InvalidOperationException>($"entity {entity} does not have Body component.");
+        }
+        
         var handle = entity.Get<physics.components.Body>().Reference.Handle;
 
         lock (_lo)
         {
-            if (_setRegisteredEntities.Contains(handle.Value))
+            if (_setRegisteredDynamics.Contains(handle.Value))
             {
                 ErrorThrow<ArgumentException>($"Trying to add a contact that already is registered.");
             }
 
-            _setRegisteredEntities.Add(handle.Value);
+            _setRegisteredDynamics.Add(handle.Value);
         }
 
         lock (_engine.Simulation)
@@ -319,11 +325,42 @@ public class API
         }
     }
 
-    
+
+    /**
+     * Register a listener who is notified on callbacks.
+     */
+    public void AddStaticContactListener(in DefaultEcs.Entity entity)
+    {
+        if (!entity.Has<physics.components.Statics>())
+        {
+            ErrorThrow<InvalidOperationException>($"entity {entity} does not have statics component.");
+        }
+        
+        ref var cStatics = ref entity.Get<physics.components.Statics>();
+        foreach (var handle in cStatics.Handles)
+        {
+            lock (_lo)
+            {
+                if (_setRegisteredStatics.Contains(handle.Value))
+                {
+                    ErrorThrow<ArgumentException>($"Trying to add a contact that already is registered.");
+                }
+
+                _setRegisteredStatics.Add(handle.Value);
+            }
+            lock (_engine.Simulation)
+            {
+                _contactEvents.RegisterListener(
+                    new CollidableReference(handle));
+            }
+        }
+    }
+
+
     /**
      * Unregister a notify listener.
      */
-    public void RemoveContactListener(
+    public void RemoveDynamicContactListener(
         in DefaultEcs.Entity entity, 
         in BepuPhysics.BodyHandle bodyHandle)
     {
@@ -333,12 +370,12 @@ public class API
 
             lock (_lo)
             {
-                if (!_setRegisteredEntities.Contains(handle.Value))
+                if (!_setRegisteredDynamics.Contains(handle.Value))
                 {
                     ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
                 }
 
-                _setRegisteredEntities.Remove(handle.Value);
+                _setRegisteredDynamics.Remove(handle.Value);
             }
         }
 
@@ -348,6 +385,35 @@ public class API
                 new CollidableReference(
                     CollidableMobility.Dynamic,
                     bodyHandle));
+        }
+    }
+    
+    
+    /**
+     * Unregister a notify listener.
+     */
+    public void RemoveStaticsContactListener(
+        in DefaultEcs.Entity entity)
+    {
+        if (entity.IsAlive && entity.Has<physics.components.Statics>())
+        {
+            ref var cStatics = ref entity.Get<physics.components.Statics>();
+            foreach (var handle in cStatics.Handles)
+            {
+                lock (_lo)
+                {
+                    if (!_setRegisteredStatics.Contains(handle.Value))
+                    {
+                        ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
+                    }
+
+                    _setRegisteredStatics.Remove(handle.Value);
+                }
+                lock (_engine.Simulation)
+                {
+                    _contactEvents.UnregisterListener(new CollidableReference(handle));
+                }
+            }
         }
     }
     

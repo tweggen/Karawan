@@ -16,9 +16,25 @@ internal class Manager
     private engine.Engine _engine;
 
     private IDisposable? _subscriptions;
+    
 
+    private void _addStaticsNoLock(in components.Statics statics)
+    {
+        if (statics.PhysicsObject != null)
+        {
+            statics.PhysicsObject.Activate();
+        }
+    }
+    
+    
     private void _removeStaticsNoLock(in components.Statics statics)
     {
+        if (statics.PhysicsObject != null)
+        {
+            statics.PhysicsObject.MarkDeleted();
+            statics.PhysicsObject.Dispose();
+        }
+        
         if (statics.Handles != null)
         {
             foreach (var handle in statics.Handles)
@@ -44,6 +60,7 @@ internal class Manager
         {
             // We need to assume the user added the new entity.
             _removeStaticsNoLock(cOldStatics);
+            _addStaticsNoLock(cNewStatics);
         }
     }
 
@@ -56,6 +73,15 @@ internal class Manager
         }
     }
 
+
+    private void _onStaticsAdded(in Entity entity, in components.Statics cStatics)
+    {
+        lock (_engine.Simulation)
+        {
+            _addStaticsNoLock(cStatics);
+        }
+    }
+    
 
     private void _removeBodyNoLock(in Entity entity, in components.Body cBody)
     {
@@ -127,6 +153,7 @@ internal class Manager
             yield return w.SubscribeEntityComponentAdded<components.Body>(_onBodyAdded);
             yield return w.SubscribeEntityComponentChanged<components.Body>(_onBodyChanged);
             yield return w.SubscribeEntityComponentRemoved<components.Body>(_onBodyRemoved);
+            yield return w.SubscribeEntityComponentAdded<components.Statics>(_onStaticsAdded);
             yield return w.SubscribeEntityComponentChanged<components.Statics>(_onStaticsChanged);
             yield return w.SubscribeEntityComponentRemoved<components.Statics>(_onStaticsRemoved);
         }
