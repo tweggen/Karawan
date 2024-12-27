@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using engine.behave;
 using static engine.Logger;
 
 namespace builtin;
@@ -115,8 +116,7 @@ public class InterfacePointerConverter<T> : JsonConverter<T> where T : class
             writer.WriteString("implementationAssembly", type.Assembly.FullName);
             writer.WriteString("implementationClass", type.FullName);
             writer.WritePropertyName("implementation");
-            writer.WriteRawValue(JsonSerializer.Serialize(
-                iBehavior, type, options));
+            writer.WriteRawValue(JsonSerializer.Serialize(iBehavior, inputType: iBehavior.GetType(), options));
         }
         else
         {

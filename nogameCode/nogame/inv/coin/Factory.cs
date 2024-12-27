@@ -45,7 +45,7 @@ public class Factory : AModule
                 );
             eTarget.Set(new Creator(Creator.CreatorId_Hardcoded));
 #if true             
-            BepuPhysics.BodyReference prefSphere;
+            BepuPhysics.BodyReference prefSphere;   
             engine.physics.Object po;
             lock (_engine.Simulation)
             {

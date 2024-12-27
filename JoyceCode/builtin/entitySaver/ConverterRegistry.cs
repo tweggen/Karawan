@@ -18,9 +18,12 @@ public class ConverterRegistry : AModule
     private FrozenDictionary<Type, Func<Context, JsonConverter>> _roConverters;
     private Dictionary<Type, Func<Context, JsonConverter>> _mapInterfaceConverters = new();
     private HashSet<Type> _setCantConvert = new();
-    
+
+    private readonly bool SupportInterfaces = false;
+
     public JsonConverter CreateConverter(Context context, Type type, JsonSerializerOptions options)
     {
+        Trace($"CreateConverter {type}");
         lock (_lo)
         {
             if (!_roConverters.TryGetValue(type, out var factory))
@@ -35,14 +38,17 @@ public class ConverterRegistry : AModule
 
     private bool _tryMatchInterface(Type type, out Func<Context, JsonConverter> factory)
     {
-        foreach (var kvp in _mapInterfaceConverters)
+        if (SupportInterfaces)
         {
-            if (kvp.Key.IsAssignableFrom(type))
+            foreach (var kvp in _mapInterfaceConverters)
             {
-                factory = kvp.Value;
-                _mapConverters[type] = kvp.Value;
-                _roConverters = _mapConverters.ToFrozenDictionary(); 
-                return true;
+                if (kvp.Key.IsAssignableFrom(type))
+                {
+                    factory = kvp.Value;
+                    _mapConverters[type] = kvp.Value;
+                    _roConverters = _mapConverters.ToFrozenDictionary();
+                    return true;
+                }
             }
         }
 
@@ -65,8 +71,8 @@ public class ConverterRegistry : AModule
             {
                 return false;
             }
-
-            if (_tryMatchInterface(type, out var _))
+            
+            if (SupportInterfaces && _tryMatchInterface(type, out var _))
             {
                 return true;
             }
@@ -109,8 +115,9 @@ public class ConverterRegistry : AModule
         _mapConverters.Add(typeof(Quaternion), context => new QuaternionJsonConverter());
 
         _mapConverters.Add(typeof(engine.joyce.InstanceDesc), context => new engine.joyce.InstanceDescConverter());
+        _mapConverters.Add(typeof(engine.behave.IBehavior), context => new InterfacePointerConverter<IBehavior>());
 
-        _mapInterfaceConverters.Add(typeof(IBehavior), context => new InterfacePointerConverter<IBehavior>());
+        // _mapInterfaceConverters.Add(typeof(IBehavior), context => new InterfacePointerConverter<IBehavior>());
         
         _roConverters = _mapConverters.ToFrozenDictionary();
     }
