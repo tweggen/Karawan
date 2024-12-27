@@ -64,7 +64,8 @@ public class Factory : AModule
                         Name = "nogame.inv.coin",
                         Flags = 
                             /*CollisionProperties.CollisionFlags.IsTangible 
-                            | */ CollisionProperties.CollisionFlags.IsDetectable,
+                            | */ CollisionProperties.CollisionFlags.IsDetectable
+                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
                         LayerMask = 0x0004,
                     }
                 };

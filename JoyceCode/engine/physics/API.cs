@@ -63,8 +63,12 @@ public class API
                     ahandle = (uint) pair.A.BodyHandle.Value;
                     break;
                 case CollidableMobility.Static:
-                    ahandle = (uint)0x80000000 | (uint) pair.A.StaticHandle.Value; 
                     _mapStaticCollisionProperties.TryGetValue(pair.A.StaticHandle.Value, out propsA);
+                    ahandle = (uint)0x80000000 | (uint) pair.A.StaticHandle.Value; 
+                    if (propsA.Name == "nogame.inv.coin")
+                    {
+                        int a = 1;
+                    }
                     break;
             }
             
@@ -78,6 +82,10 @@ public class API
                 case CollidableMobility.Static:
                     _mapStaticCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out propsB);
                     bhandle = (uint)0x80000000 | (uint) pair.B.StaticHandle.Value;
+                    if (propsB.Name == "nogame.inv.coin")
+                    {
+                        int a = 1;
+                    }
                     break;
             }
         }

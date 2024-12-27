@@ -7,17 +7,29 @@ namespace engine.physics;
 public class ObjectCatalogue
 {
     private object _lo = new();
-    private SortedDictionary<int, Object> _mapPhysics = new();
+    private SortedDictionary<uint, Object> _mapPhysics = new();
+
+    private uint _fullHandle(Object po)
+    {
+        if ((po.Flags & Object.IsStatic) == 0)
+        {
+            return (uint)po.IntHandle;
+        }
+        else
+        {
+            return 0x80000000 | (uint)po.IntHandle;
+        }
+    }
 
     public void AddObject(Object po)
     {
         lock (_lo)
         {
-            if (_mapPhysics.TryGetValue(po.IntHandle, out var oldpo))
+            if (_mapPhysics.TryGetValue(_fullHandle(po), out var oldpo))
             {
                 ErrorThrow<InvalidOperationException>($"Already added physics {po.IntHandle}.");
             }
-            _mapPhysics.Add(po.IntHandle, po);
+            _mapPhysics.Add(_fullHandle(po), po);
         }
     }
 
@@ -26,12 +38,12 @@ public class ObjectCatalogue
     {
         lock (_lo)
         {
-            if (!_mapPhysics.TryGetValue(po.IntHandle, out var oldpo))
+            if (!_mapPhysics.TryGetValue(_fullHandle(po), out var oldpo))
             {
                 ErrorThrow<InvalidOperationException>($"Did not add physics before for {po.IntHandle}.");
             }
             
-            _mapPhysics.Remove(po.IntHandle);
+            _mapPhysics.Remove(_fullHandle(po));
         }
     }
 
@@ -40,15 +52,22 @@ public class ObjectCatalogue
     {
         lock (_lo)
         {
-            if (_mapPhysics.TryGetValue(handle, out po))
+            if (_mapPhysics.TryGetValue((uint)handle, out po))
             {
-                return true;
+                if ((po.Flags & Object.IsStatic) == 0)
+                {
+                    return true;
+                }
             }
-            else
+            if (_mapPhysics.TryGetValue(0x80000000|(uint)handle, out po))
             {
-                po = null;
-                return false;
+                if ((po.Flags & Object.IsStatic) != 0)
+                {
+                    return true;
+                }
             }
+            po = null;
+            return false;
         }
     }
 }
