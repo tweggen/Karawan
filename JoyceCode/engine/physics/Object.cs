@@ -31,6 +31,14 @@ public class Object : IDisposable
     public int IntHandle = -1;
     public IList<Action>? ReleaseActions = null;
     
+    
+    /*
+     * Now, to create an actual physics object, we use these opcodes
+     */
+    [JsonInclude]
+    public List<actions.ABase>? CreateOpcodes;  
+    
+    
     // Shall be persisted
     [JsonInclude]
     public CollisionProperties? CollisionProperties { get; set; } = null;

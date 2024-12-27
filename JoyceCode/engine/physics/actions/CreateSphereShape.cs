@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 
@@ -6,8 +7,8 @@ namespace engine.physics.actions;
 
 public class CreateSphereShape : ABase
 {
-    public uint ResultPackedTypeIndex;
-    public float Radius;
+    [JsonInclude] public uint ResultPackedTypeIndex;
+    [JsonInclude] public float Radius;
     
     static public int Execute(Log? plog, Simulation simulation, float radius, out BepuPhysics.Collidables.Sphere body)
     {
