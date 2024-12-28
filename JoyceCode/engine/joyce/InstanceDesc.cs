@@ -72,6 +72,18 @@ public class InstanceDesc
     private AABB _aabbMerged;
     private bool _haveAABBTransformed = false;
     private AABB _aabbTransformed;
+
+
+    /**
+     * If we have been created from a model, this is the corresponding model.
+     */
+    public Model Model;
+    
+    /**
+     * If we have been constructed from a model, this is the model node
+     * we have been created from.
+     */
+    public ModelNode ModelNode;
     
     [JsonInclude]
     public ModelCacheParams ModelCacheParams;

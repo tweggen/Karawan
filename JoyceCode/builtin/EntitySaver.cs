@@ -196,7 +196,6 @@ public class EntitySaver : AModule
                         continue;
                     }
 
-#if false
                     MethodInfo? setupFromMethod = type.GetMethod("SetupFrom");
                     if (null != setupFromMethod)
                     {
@@ -214,7 +213,6 @@ public class EntitySaver : AModule
                             Error($"Unable to create and execute deser method for {type.Name}: {exception}");
                         }
                     }
-                    #endif
                 }
             }
 

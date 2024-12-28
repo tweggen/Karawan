@@ -24,6 +24,7 @@ public class Object : IDisposable
     public const uint NeedContactListener = 32;
     public const uint IsActivated = 64;
     public const uint IsDeleted = 128;
+    public const uint IsGenerated = 256;
 
     public DefaultEcs.Entity Entity = default;
     [JsonInclude]

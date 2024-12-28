@@ -83,7 +83,7 @@ internal class Behavior :
         base.SaveTo(jo);
     }
 
-    
+   
     public float Speed
     {
         get => _snc.Speed;
