@@ -53,15 +53,19 @@ public class GeneratePolytopeOperator : IFragmentOperator
          * We need to create two instances, one for the stand and one for the ball.
          * The stand will be static, the ball will not be, as it can be consumed.
          */
-        Model modelStand = await I.Get<ModelCache>().Instantiate(
-            $"polytope-stand-only.obj", new builtin.loader.ModelProperties(), new InstantiateModelParams()
+        Model modelStand = await I.Get<ModelCache>().LoadModel(
+            new ModelCacheParams() 
             {
-                GeomFlags = 0
-                            | InstantiateModelParams.CENTER_X
-                            | InstantiateModelParams.CENTER_Z
-                            ,
-                MaxDistance = 800f
-            });
+                Url = $"polytope-stand-only.obj", 
+                Properties = new builtin.loader.ModelProperties(),
+                Params = new InstantiateModelParams()
+                {
+                    GeomFlags = 0
+                                | InstantiateModelParams.CENTER_X
+                                | InstantiateModelParams.CENTER_Z
+                                ,
+                    MaxDistance = 800f
+                }});
         var vPos =
             (_clusterDesc.Pos - worldFragment.Position +
             estate.GetCenter()) with { Y = _clusterDesc.AverageHeight + 2.5f };

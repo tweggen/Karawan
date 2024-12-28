@@ -131,8 +131,13 @@ class CharacterCreator : engine.world.ICreator
                 MaxDistance = propMaxDistance
             };
 
-            Model model = await I.Get<ModelCache>().Instantiate(
-                _carFileName(carIdx), props, instantiateModelParams);
+            Model model = await I.Get<ModelCache>().LoadModel(
+                new ModelCacheParams()
+                {
+                    Url =_carFileName(carIdx),
+                    Properties = props,
+                    Params = instantiateModelParams
+                });
             InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
 
             var wf = worldFragment;

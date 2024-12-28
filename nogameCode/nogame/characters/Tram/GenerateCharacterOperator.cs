@@ -133,8 +133,9 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
 
                 ++_characterIndex;
                 {
-                    Model model = await I.Get<ModelCache>().Instantiate(
-                        "tram1.obj", null, new InstantiateModelParams()
+                    Model model = await I.Get<ModelCache>().LoadModel( new ModelCacheParams() {
+                        Url = "tram1.obj", 
+                        Params = new ()
                         {
                             GeomFlags = 0
                                         | InstantiateModelParams.CENTER_X
@@ -142,7 +143,7 @@ class GenerateCharacterOperator : engine.world.IFragmentOperator
                                         | InstantiateModelParams.ROTATE_Y180
                                         | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                             MaxDistance = propMaxDistance,
-                        });
+                        }});
                     engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
 
                     var wf = worldFragment;

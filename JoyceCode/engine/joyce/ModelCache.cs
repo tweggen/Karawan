@@ -199,7 +199,8 @@ public class ModelCache
         }
     }
 
-    private ModelCacheEntry _triggerInstantiate(ModelCacheParams mcp)
+    
+    private ModelCacheEntry _triggerLoad(ModelCacheParams mcp)
     {
         string hash = mcp.GetHashCode();
         bool tryLoad = false;
@@ -262,10 +263,10 @@ public class ModelCache
      * Immediately return a model which has an instance desc that we
      * already can use even if it has not been filled with content.
      */
-    public Model InstantiatePlaceholder(ModelCacheParams mcp)
+    public Model InstantiatePlaceholder(DefaultEcs.Entity eTarget, ModelCacheParams mcp)
     {
         Trace($"Called with url {mcp.Url}");
-        var mce = _triggerInstantiate(mcp);
+        var mce = _triggerLoad(mcp);
         lock (mce.LockObject)
         {
             return mce.Model;
@@ -279,11 +280,12 @@ public class ModelCache
      * The model might be loaded, generated or just replicated
      * from memory.
      */
-    public async Task<Model> Instantiate(ModelCacheParams mcp)
+    public async Task<Model> LoadModel(ModelCacheParams mcp)
     {
-        ModelCacheEntry mce = _triggerInstantiate(mcp);
+        ModelCacheEntry mce = _triggerLoad(mcp);
 
-        ConsumerEntry ce;
+        ConsumerEntry ce = null;
+        Model? model = null;
         
         /*
          * Look, if we already can return, because the entry has the right type.
@@ -295,57 +297,74 @@ public class ModelCache
             {
                 case ModelCacheEntry.EntryState.Error:
                     ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
-                    return mce.Model;
+                    // ErrorThrow never returns
+                    break;
+                
                 case ModelCacheEntry.EntryState.Loaded:
-                    return mce.Model;
+                    model = mce.Model;
+                    break;
+                case ModelCacheEntry.EntryState.PlaceholderLoading:
+                    /*
+                     * Still loading, make ourselves wait.
+                     */
+                    ce = new();
+                    mce.ConsumerList.Add(ce);
+                    break;
             }
-
-            ce = new();
-            mce.ConsumerList.Add(ce);
         }
 
         /*
-         * Wait, until someone wakes are callers up.
+         * We already have a model? Then trigger per instance work.
          */
-        await ce.Sem.WaitAsync();
-        /*
-         * Look, if we already can return, because the entry has the right type.
-         */
-        lock (mce.LockObject)
+        if (model == null)
         {
-            // need to go on looping for "placeholder" as well.
-            switch (mce.State)
+            /*
+             * Wait, until someone wakes are callers up.
+             */
+            await ce.Sem.WaitAsync();
+            /*
+             * Look, if we already can return, because the entry has the right type.
+             */
+            lock (mce.LockObject)
             {
-                default:
-                    ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
-                    return mce.Model;
-                case ModelCacheEntry.EntryState.Error:
-                    ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
-                    return mce.Model;
-                case ModelCacheEntry.EntryState.Loaded:
-                    return mce.Model;
+                // need to go on looping for "placeholder" as well.
+                switch (mce.State)
+                {
+                    default:
+                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                        break;
+
+                    case ModelCacheEntry.EntryState.Error:
+                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                        break;
+
+                    case ModelCacheEntry.EntryState.Loaded:
+                        model = mce.Model;
+                        break;
+                }
             }
         }
+        return model;
     }
 
 
     /**
-     * Build the model's physics into the actual model's root. 
+     * Build the model's physics into the actual model's root.
      */
-    public void BuildRootPhyiscs(in DefaultEcs.Entity eRoot, Model model, ModelCacheParams mcp)
+    public void BuildPerInstance(in DefaultEcs.Entity eRoot, Model model, ModelCacheParams mcp)
     {
         if (model.RootNode == null || model.RootNode.InstanceDesc == null) return;
         InstanceDesc id = model.RootNode.InstanceDesc;
-            
+
         ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
-        StaticHandle staticHandle;   
+        StaticHandle staticHandle;
         engine.physics.Object po;
         lock (_engine.Simulation)
         {
             if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_STATIC) != 0)
             {
                 Vector3 v3Pos = Vector3.Zero;
-                
+
                 /*
                  * Statics must be placed absolute, they are not dynamically moved.
                  * So we fall back on the transform 3 property, which probably is not the best idea.
@@ -354,7 +373,7 @@ public class ModelCache
                 {
                     v3Pos = eRoot.Get<Transform3>().Position;
                 }
-                
+
                 /*
                  * Naming physics makes them identifiable. Pull the name from the
                  * entity name if no name has been given.
@@ -364,7 +383,7 @@ public class ModelCache
                 {
                     strPhysicsName = eRoot.Get<EntityName>().Name;
                 }
-                    
+
                 staticHandle = _engine.Simulation.Statics.Add(
                     new StaticDescription(
                         v3Pos,
@@ -386,8 +405,7 @@ public class ModelCache
                                 : 0)
                             | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
                                 ? CollisionProperties.CollisionFlags.TriggersCallbacks
-                                : 0)
-                            ,
+                                : 0),
                         LayerMask = 0x0004
                     }
                 };
@@ -395,29 +413,9 @@ public class ModelCache
                 {
                     po.AddContactListener();
                 }
+
                 eRoot.Set(new engine.physics.components.Statics(po, staticHandle));
             }
         }
-    }
-    
-    
-    static int nextReqId = 0;
-
-    public async Task<Model> Instantiate(
-        string url,
-        ModelProperties? modelProperties,
-        InstantiateModelParams? p)
-    {
-        int reqId = ++nextReqId; 
-        // Trace($"Requested #{reqId} {url}");
-        Task<Model> tModel = Instantiate(new ModelCacheParams()
-        {
-            Url = url,
-            Properties = modelProperties,
-            Params = p
-        });
-        Model model = await tModel;
-        // Trace($"Have #{reqId} {url}");
-        return model;
     }
 }

@@ -498,9 +498,10 @@ public class Module : engine.AModule
 
         InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
 
-        Model model = await I.Get<ModelCache>().Instantiate(
-            ModelUrl,
-            null, instantiateModelParams);
+        Model model = await I.Get<ModelCache>().LoadModel( 
+            new ModelCacheParams() {
+            Url = ModelUrl,
+            Params = instantiateModelParams});
 
 
         var gameState = M<AutoSave>().GameState;

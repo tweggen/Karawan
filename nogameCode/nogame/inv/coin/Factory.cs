@@ -35,7 +35,7 @@ public class Factory : AModule
                 MaxDistance = _coinMaxDistance,
             }
         };
-        Model model = await I.Get<ModelCache>().Instantiate(mcp);
+        Model model = await I.Get<ModelCache>().LoadModel(mcp);
         engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc!;
 
         TaskCompletionSource<DefaultEcs.Entity> tcsEntity = new();
@@ -54,36 +54,7 @@ public class Factory : AModule
                 );
             eTarget.Set(new Creator(Creator.CreatorId_Hardcoded));
 
-            I.Get<ModelCache>().BuildRootPhyiscs(eTarget, model, mcp);
-#if false
-            StaticHandle staticHandle;   
-            engine.physics.Object po;
-            lock (_engine.Simulation)
-            {
-                staticHandle = _engine.Simulation.Statics.Add(
-                    new StaticDescription(
-                        v3Pos,
-                        Quaternion.Identity,
-                        _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius)
-                    )); 
-                po = new(eTarget, staticHandle)
-                {
-                    CollisionProperties = new CollisionProperties
-                    { 
-                        Entity = eTarget,
-                        Name = "nogame.inv.coin",
-                        Flags = 
-                            /*CollisionProperties.CollisionFlags.IsTangible 
-                            | */ CollisionProperties.CollisionFlags.IsDetectable
-                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                        LayerMask = 0x0004,
-                    }
-                };
-                po.AddContactListener();
-            }
-            eTarget.Set(new engine.physics.components.Statics(po, staticHandle));
-#endif
-
+            I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
             
             tcsEntity.SetResult(eTarget);
         });
