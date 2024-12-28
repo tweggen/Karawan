@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using engine.behave;
 using engine.geom;
 using static engine.Logger;
 
@@ -14,6 +13,8 @@ namespace engine.joyce;
 
 public class InstanceDescConverter : JsonConverter<InstanceDesc>
 {
+    public required builtin.entitySaver.Context Context;
+    
     public override InstanceDesc Read(
         ref Utf8JsonReader reader,
         Type typeToConvert,
@@ -21,7 +22,7 @@ public class InstanceDescConverter : JsonConverter<InstanceDesc>
     {
         var mcpObject = JsonSerializer.Deserialize(ref reader, typeof(ModelCacheParams), options);
         var mcp = mcpObject as ModelCacheParams;
-        var model = I.Get<ModelCache>().InstantiatePlaceholder(mcp);
+        var model = I.Get<ModelCache>().InstantiatePlaceholder(Context.Entity, mcp);
         var id = model.RootNode.InstanceDesc;
         return id;
     }

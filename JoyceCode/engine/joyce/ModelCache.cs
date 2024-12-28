@@ -258,19 +258,103 @@ public class ModelCache
         return modelCacheEntry;
     }
 
+
+    private void _triggerBuildEntities(DefaultEcs.Entity eTarget, Model model, ModelCacheParams mcp)
+    {
+        _engine.QueueMainThreadAction(() =>
+        {
+            BuildPerInstance(eTarget, model, mcp);
+        });
+    }
+    
     
     /**
      * Immediately return a model which has an instance desc that we
      * already can use even if it has not been filled with content.
+     * Build this instance asynchronously in the background.
      */
     public Model InstantiatePlaceholder(DefaultEcs.Entity eTarget, ModelCacheParams mcp)
     {
         Trace($"Called with url {mcp.Url}");
-        var mce = _triggerLoad(mcp);
+        ModelCacheEntry mce = _triggerLoad(mcp);
+
+        ConsumerEntry ce = null;
+        Model? model = null;
+        bool wasLoaded = false;
+        
         lock (mce.LockObject)
         {
-            return mce.Model;
+            /*
+             * Look, if we already can return, because the entry has the right type.
+             */
+            lock (mce.LockObject)
+            {
+                // need to go on looping for "placeholder" as well.
+                switch (mce.State)
+                {
+                    case ModelCacheEntry.EntryState.Error:
+                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                        // ErrorThrow never returns
+                        break;
+                
+                    case ModelCacheEntry.EntryState.Loaded:
+                        model = mce.Model;
+                        wasLoaded = true;
+                        break;
+                    case ModelCacheEntry.EntryState.PlaceholderLoading:
+                        /*
+                         * Still loading, make ourselves wait.
+                         */
+                        ce = new();
+                        mce.ConsumerList.Add(ce);
+                        model = mce.Model;
+                        wasLoaded = false;
+                        break;
+                }
+            }
         }
+        
+        
+        if (wasLoaded)
+        {
+            /*
+             * Was loaded? Then trigger building per instance right now.
+             */
+            _triggerBuildEntities(eTarget, model, mcp);
+        } 
+        else
+        {
+
+            /*
+             * Not loaded yet? then wait async.
+             */
+
+            ce.Sem.WaitAsync().ContinueWith(tWait =>
+            {
+                /*
+                 * Look, if we already can return, because the entry has the right type.
+                 */
+                lock (mce.LockObject)
+                {
+                    // need to go on looping for "placeholder" as well.
+                    switch (mce.State)
+                    {
+                        case ModelCacheEntry.EntryState.Error:
+                        default:
+                            ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                            // TXWTODO: We would need to invalidate the model that already had been returned.
+                            break;
+
+                        case ModelCacheEntry.EntryState.Loaded:
+                            break;
+                    }
+                }
+                _triggerBuildEntities(eTarget, model, mcp);
+            });
+        }
+
+
+        return model;
     }
 
 
@@ -282,6 +366,7 @@ public class ModelCache
      */
     public async Task<Model> LoadModel(ModelCacheParams mcp)
     {
+        Trace($"Called with url {mcp.Url}");
         ModelCacheEntry mce = _triggerLoad(mcp);
 
         ConsumerEntry ce = null;
@@ -303,6 +388,8 @@ public class ModelCache
                 case ModelCacheEntry.EntryState.Loaded:
                     model = mce.Model;
                     break;
+                
+                case ModelCacheEntry.EntryState.Placeholder:
                 case ModelCacheEntry.EntryState.PlaceholderLoading:
                     /*
                      * Still loading, make ourselves wait.
@@ -318,6 +405,10 @@ public class ModelCache
          */
         if (model == null)
         {
+            if (null == ce)
+            {
+                int a = 1;
+            }
             /*
              * Wait, until someone wakes are callers up.
              */
@@ -331,11 +422,9 @@ public class ModelCache
                 switch (mce.State)
                 {
                     default:
-                        ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
-                        break;
-
                     case ModelCacheEntry.EntryState.Error:
                         ErrorThrow<InvalidOperationException>($"Unable to load model {mcp}.");
+                        // TXWTODO: We would need to invalidate the model that already had been returned.
                         break;
 
                     case ModelCacheEntry.EntryState.Loaded:

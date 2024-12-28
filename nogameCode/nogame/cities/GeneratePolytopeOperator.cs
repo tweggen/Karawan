@@ -76,8 +76,11 @@ public class GeneratePolytopeOperator : IFragmentOperator
         // Trace($"in frag {worldFragment.GetId()} Placing polytope @{worldFragment.Position+vPos}");
         
 
-        Model modelBall = await I.Get<ModelCache>().Instantiate(
-            $"polytope-ball-only.obj", new builtin.loader.ModelProperties(), new InstantiateModelParams()
+        Model modelBall = await I.Get<ModelCache>().LoadModel( new ModelCacheParams() 
+            {
+            Url = "polytope-ball-only.obj", 
+            Properties = new builtin.loader.ModelProperties(),
+            Params = new InstantiateModelParams()
             {
                 GeomFlags = 0
                             | InstantiateModelParams.CENTER_X
@@ -86,7 +89,7 @@ public class GeneratePolytopeOperator : IFragmentOperator
                 //| InstantiateModelParams.ROTATE_Y180
                 ,
                 MaxDistance = 800f
-            });
+            }});
 
         /*
          * Now, a bit more work for the ball, which is a dynamic entity that can
