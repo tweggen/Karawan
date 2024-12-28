@@ -36,18 +36,18 @@ public class Factory : AModule
             }
         };
         Model model = await I.Get<ModelCache>().LoadModel(mcp);
-        engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc!;
 
         TaskCompletionSource<DefaultEcs.Entity> tcsEntity = new();
         
         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
         {
+            eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
+
             // Notice they are not owned by the fragment and hence not removed if the fragment goes away.
             // eTarget.Set(new engine.world.components.Owner(fragmentId));
-            eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             eTarget.Set(new engine.behave.components.Behavior(
                     new Behavior())
-                { MaxDistance = (short) jInstanceDesc.MaxDistance }
+                { MaxDistance = (short) mcp.Params.MaxDistance }
             );
             I.Get<TransformApi>().SetTransforms(
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos

@@ -114,7 +114,8 @@ public class ConverterRegistry : AModule
         _mapConverters.Add(typeof(Vector3), context => new Vector3JsonConverter());
         _mapConverters.Add(typeof(Quaternion), context => new QuaternionJsonConverter());
 
-        _mapConverters.Add(typeof(engine.joyce.InstanceDesc), context => new engine.joyce.InstanceDescConverter() { Context = context });
+        // _mapConverters.Add(typeof(engine.joyce.InstanceDesc), context => new engine.joyce.InstanceDescConverter() { Context = context });
+        _mapConverters.Add(typeof(engine.joyce.components.FromModel), context => new engine.joyce.components.FromModelConverter() { Context =  context });
         _mapConverters.Add(typeof(engine.behave.IBehavior), context => new InterfacePointerConverter<IBehavior>());
 
         // _mapInterfaceConverters.Add(typeof(IBehavior), context => new InterfacePointerConverter<IBehavior>());

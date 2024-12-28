@@ -185,9 +185,11 @@ internal class GenerateCharacterOperator : engine.world.IFragmentOperator
                                 prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
                             }
 
+                            eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+
                             eTarget.Set(new engine.audio.components.MovingSound(
                                 _getCubeSound(), 150f));
-                            eTarget.Set(new engine.physics.components.Body(po, prefSphere));
+
                         });
 
                         wf.Engine.QueueEntitySetupAction("nogame.characters.cube", tSetupEntity);

@@ -100,14 +100,12 @@ class CharacterCreator : engine.world.ICreator
     }
 
     
-    public static async void GenerateCharacter(ClusterDesc clusterDesc, Fragment worldFragment)
-    {
-        
-    }
-
-
     public static async Task<DefaultEcs.Entity> GenerateCharacter(
-        builtin.tools.RandomSource rnd, ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint chosenStreetPoint, int seed=0)
+        builtin.tools.RandomSource rnd, 
+        ClusterDesc clusterDesc, 
+        Fragment worldFragment, 
+        StreetPoint chosenStreetPoint, 
+        int seed=0)
     {
         TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
         Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;

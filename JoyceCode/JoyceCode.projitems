@@ -26,6 +26,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\QuaternionJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\FromModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCacheParams.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GenericIdRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />

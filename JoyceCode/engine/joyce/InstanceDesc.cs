@@ -11,6 +11,7 @@ using static engine.Logger;
 namespace engine.joyce;
 
 
+#if false
 public class InstanceDescConverter : JsonConverter<InstanceDesc>
 {
     public required builtin.entitySaver.Context Context;
@@ -34,6 +35,7 @@ public class InstanceDescConverter : JsonConverter<InstanceDesc>
         JsonSerializerOptions options) =>
         writer.WriteRawValue(JsonSerializer.Serialize<ModelCacheParams>(id.ModelCacheParams, options));
 }
+#endif
 
 /**
  * Describe one specific instance of a 3d object (aka Instance3 components)
@@ -86,11 +88,10 @@ public class InstanceDesc
      */
     public ModelNode ModelNode;
     
-    [JsonInclude]
-    public ModelCacheParams ModelCacheParams;
     private Vector3 _vCenter;
 
 
+    #if false
     public void SetFrom(InstanceDesc o)
     {
         _m = o._m;
@@ -106,9 +107,9 @@ public class InstanceDesc
         _aabbMerged = o._aabbMerged;
         _haveAABBTransformed = o._haveAABBTransformed;
         _aabbTransformed = o._aabbTransformed;
-        ModelCacheParams = o.ModelCacheParams;
         _vCenter = o._vCenter;
     }
+    #endif
     
     [JsonIgnore]
     public Vector3 Center
@@ -393,12 +394,6 @@ public class InstanceDesc
     }
 
 
-    public InstanceDesc(ModelCacheParams mcp)
-    {
-        ModelCacheParams = mcp;
-    }
-    
-    
     public InstanceDesc(
         in IList<engine.joyce.Mesh> meshes,
         in IList<int> meshMaterials,

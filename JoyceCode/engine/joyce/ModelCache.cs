@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BepuPhysics;
 using builtin.loader;
+using builtin.tools;
 using engine;
 using engine.joyce.components;
 using engine.physics;
@@ -125,8 +126,6 @@ public class ModelCache
                 ErrorThrow($"Reading url {mcp.Url} model does not have a root model instance defined.",
                     m => new ArgumentException(m));
             }
-
-            model.RootNode.InstanceDesc.ModelCacheParams = mcp;
         }
 
         model = await _instantiateModelParams(model, mcp.Properties, mcp.Params);
@@ -220,8 +219,7 @@ public class ModelCache
             if (!_cache.TryGetValue(hash, out modelCacheEntry))
             {
                 modelCacheEntry = new(mcp);
-                var id = new InstanceDesc(mcp);
-                modelCacheEntry.Model = new Model(id);
+                modelCacheEntry.Model = new Model();
                 modelCacheEntry.State = ModelCacheEntry.EntryState.Placeholder;
                 _cache.TryAdd(hash, modelCacheEntry);
                 
@@ -261,10 +259,18 @@ public class ModelCache
 
     private void _triggerBuildEntities(DefaultEcs.Entity eTarget, Model model, ModelCacheParams mcp)
     {
+#if true
         _engine.QueueMainThreadAction(() =>
         {
+            /*
+             * Actually build it up.
+             */
             BuildPerInstance(eTarget, model, mcp);
         });
+#else
+        ModelBuilder modelBuilder = new(_engine, model, mcp.Params);
+        modelBuilder.BuildEntity(eTarget);
+#endif
     }
     
     
@@ -301,6 +307,8 @@ public class ModelCache
                         model = mce.Model;
                         wasLoaded = true;
                         break;
+                    
+                    case ModelCacheEntry.EntryState.Placeholder:
                     case ModelCacheEntry.EntryState.PlaceholderLoading:
                         /*
                          * Still loading, make ourselves wait.
@@ -314,6 +322,13 @@ public class ModelCache
             }
         }
         
+        /*
+         * Remember what we are built from.
+         */
+        _engine.QueueMainThreadAction(() =>
+        {
+            eTarget.Set(new FromModel() { Model = model, ModelCacheParams = mcp });
+        });
         
         if (wasLoaded)
         {
@@ -352,8 +367,7 @@ public class ModelCache
                 _triggerBuildEntities(eTarget, model, mcp);
             });
         }
-
-
+        
         return model;
     }
 
@@ -405,10 +419,6 @@ public class ModelCache
          */
         if (model == null)
         {
-            if (null == ce)
-            {
-                int a = 1;
-            }
             /*
              * Wait, until someone wakes are callers up.
              */
@@ -442,68 +452,96 @@ public class ModelCache
      */
     public void BuildPerInstance(in DefaultEcs.Entity eRoot, Model model, ModelCacheParams mcp)
     {
-        if (model.RootNode == null || model.RootNode.InstanceDesc == null) return;
-        InstanceDesc id = model.RootNode.InstanceDesc;
+        if (model.RootNode == null || model.RootNode.InstanceDesc == null)
+        {
+            int a = 1;
+            return;
+        }
 
+        ModelBuilder modelBuilder = new(_engine, model, mcp.Params);
+        
+        /*
+         * Create the geometry into eTarget.
+         */
+        // TXWTODO: Not only build geometry, but also physics and sound.
+        modelBuilder.BuildEntity(eRoot);
+
+        /*
+         * Create the physics into eTarget based on a lot of assumptions.
+         */
         ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
         StaticHandle staticHandle;
         engine.physics.Object po;
-        lock (_engine.Simulation)
+
+        if ((mcp.Params.GeomFlags & InstantiateModelParams.BUILD_PHYSICS) != 0)
         {
-            if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_STATIC) != 0)
+            /*
+             * Naming physics makes them identifiable. Pull the name from the
+             * entity name if no name has been given.
+             */
+            string strPhysicsName = "unnamed";
+            if (eRoot.Has<EntityName>())
             {
-                Vector3 v3Pos = Vector3.Zero;
+                strPhysicsName = eRoot.Get<EntityName>().Name;
+            }
 
-                /*
-                 * Statics must be placed absolute, they are not dynamically moved.
-                 * So we fall back on the transform 3 property, which probably is not the best idea.
-                 */
-                if (eRoot.Has<Transform3>())
-                {
-                    v3Pos = eRoot.Get<Transform3>().Position;
-                }
+            // TXWTODO: Find a smart way to build the physics inside the modelbuilder.
+            float radius = 1f;
+            if (model.RootNode != null && model.RootNode.InstanceDesc != null)
+            {
+                radius = model.RootNode.InstanceDesc.AABBTransformed.Radius;
+            }
 
-                /*
-                 * Naming physics makes them identifiable. Pull the name from the
-                 * entity name if no name has been given.
-                 */
-                string strPhysicsName = "unnamed";
-                if (eRoot.Has<EntityName>())
-                {
-                    strPhysicsName = eRoot.Get<EntityName>().Name;
-                }
+            var collisionProperties = new CollisionProperties
+            {
+                Entity = eRoot,
+                Name = strPhysicsName,
+                Flags =
+                    (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_TANGIBLE) != 0)
+                        ? CollisionProperties.CollisionFlags.IsTangible
+                        : 0)
+                    | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_DETECTABLE) != 0)
+                        ? CollisionProperties.CollisionFlags.IsDetectable
+                        : 0)
+                    | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
+                        ? CollisionProperties.CollisionFlags.TriggersCallbacks
+                        : 0),
+                LayerMask = 0x0004
+            };
 
-                staticHandle = _engine.Simulation.Statics.Add(
-                    new StaticDescription(
-                        v3Pos,
-                        Quaternion.Identity,
-                        _shapeFactory.GetSphereShape(id.AABBTransformed.Radius)
-                    ));
-                po = new(eRoot, staticHandle)
+            lock (_engine.Simulation)
+            {
+                if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_STATIC) != 0)
                 {
-                    CollisionProperties = new CollisionProperties
+                    Vector3 v3Pos = Vector3.Zero;
+
+                    /*
+                     * Statics must be placed absolute, they are not dynamically moved.
+                     * So we fall back on the transform 3 property, which probably is not the best idea.
+                     */
+                    if (eRoot.Has<Transform3>())
                     {
-                        Entity = eRoot,
-                        Name = strPhysicsName,
-                        Flags =
-                            (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_TANGIBLE) != 0)
-                                ? CollisionProperties.CollisionFlags.IsTangible
-                                : 0)
-                            | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_DETECTABLE) != 0)
-                                ? CollisionProperties.CollisionFlags.IsDetectable
-                                : 0)
-                            | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
-                                ? CollisionProperties.CollisionFlags.TriggersCallbacks
-                                : 0),
-                        LayerMask = 0x0004
+                        v3Pos = eRoot.Get<Transform3>().Position;
                     }
-                };
-                if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
-                {
-                    po.AddContactListener();
-                }
 
-                eRoot.Set(new engine.physics.components.Statics(po, staticHandle));
+                    staticHandle = _engine.Simulation.Statics.Add(
+                        new StaticDescription(
+                            v3Pos,
+                            Quaternion.Identity,
+                            _shapeFactory.GetSphereShape(radius)
+                        ));
+                    
+                    po = new(eRoot, staticHandle)
+                    {
+                        CollisionProperties = collisionProperties
+                    };
+                    if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
+                    {
+                        po.AddContactListener();
+                    }
+
+                    eRoot.Set(new engine.physics.components.Statics(po, staticHandle));
+                }
             }
         }
     }

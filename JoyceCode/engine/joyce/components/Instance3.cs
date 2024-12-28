@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace engine.joyce.components;
 
-[engine.IsPersistable]
 public struct Instance3
 {
     public InstanceDesc InstanceDesc { get; set; }
