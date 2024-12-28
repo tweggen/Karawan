@@ -466,15 +466,16 @@ public class ModelCache
         // TXWTODO: Not only build geometry, but also physics and sound.
         modelBuilder.BuildEntity(eRoot);
 
-        /*
-         * Create the physics into eTarget based on a lot of assumptions.
-         */
-        ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
-        StaticHandle staticHandle;
-        engine.physics.Object po;
 
         if ((mcp.Params.GeomFlags & InstantiateModelParams.BUILD_PHYSICS) != 0)
         {
+            /*
+             * Create the physics into eTarget based on a lot of assumptions.
+             */
+            ShapeFactory shapeFactory = I.Get<ShapeFactory>();
+
+            engine.physics.Object po;
+
             /*
              * Naming physics makes them identifiable. Pull the name from the
              * entity name if no name has been given.
@@ -513,6 +514,10 @@ public class ModelCache
             {
                 if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_STATIC) != 0)
                 {
+                    /*
+                     * build a static physics object.
+                     */
+                    
                     Vector3 v3Pos = Vector3.Zero;
 
                     /*
@@ -524,23 +529,59 @@ public class ModelCache
                         v3Pos = eRoot.Get<Transform3>().Position;
                     }
 
-                    staticHandle = _engine.Simulation.Statics.Add(
+                    StaticHandle staticHandle = _engine.Simulation.Statics.Add(
                         new StaticDescription(
                             v3Pos,
                             Quaternion.Identity,
-                            _shapeFactory.GetSphereShape(radius)
+                            shapeFactory.GetSphereShape(radius)
                         ));
                     
                     po = new(eRoot, staticHandle)
                     {
                         CollisionProperties = collisionProperties
                     };
-                    if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
+                    
+                    if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_OWN_CALLBACKS) != 0)
                     {
                         po.AddContactListener();
                     }
 
                     eRoot.Set(new engine.physics.components.Statics(po, staticHandle));
+                }
+                else
+                {
+                    /*
+                     * Build a non-static object.
+                     * Depending on the mass, this is a dynamic or kinetmatic object.
+                     * Be on the save side and try to assign it to a position as taken from a
+                     * TransformToWorld.
+                     */
+
+                    Vector3 v3Pos = Vector3.Zero;
+
+                    if (eRoot.Has<Transform3ToWorld>())
+                    {
+                        v3Pos = eRoot.Get<Transform3ToWorld>().Matrix.Translation;
+                    }
+
+                    BodyReference prefSphere;
+                    
+                    var shape = shapeFactory.GetSphereShape(radius);
+                    po = new(_engine, default, v3Pos, Quaternion.Identity, shape)
+                    {
+                        Entity = eRoot,
+                        CollisionProperties = collisionProperties
+                    };
+                    
+                    if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_OWN_CALLBACKS) != 0)
+                    {
+                        po.AddContactListener();
+                    }
+                    
+                    prefSphere = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                    prefSphere.Awake = false;
+                    
+                    eRoot.Set(new engine.physics.components.Body(po, prefSphere));
                 }
             }
         }

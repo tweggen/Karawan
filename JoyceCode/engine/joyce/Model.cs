@@ -56,6 +56,10 @@ namespace engine.joyce
          */
         public static int PHYSICS_CALLBACKS = 0x400000;
         
+        /**
+         * Shall we trigger callbacks?
+         */
+        public static int PHYSICS_OWN_CALLBACKS = 0x800000;
     
         public int GeomFlags { get; set; }= 0;
         public float MaxDistance { get; set; } = 10f;

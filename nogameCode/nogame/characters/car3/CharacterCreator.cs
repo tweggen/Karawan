@@ -26,7 +26,7 @@ class CharacterCreator : engine.world.ICreator
         public engine.world.Fragment Fragment;
     }
     
-    static public readonly string PhysicsName = "nogame.characters.car3";
+    static public readonly string EntityName = "nogame.characters.car3";
     static private readonly float PhysicsMass = 500f;
     static private readonly float PhysicsRadius = 5f;
     static public BodyInertia PInertiaSphere = 
@@ -99,108 +99,89 @@ class CharacterCreator : engine.world.ICreator
         return listInFragment[idxPoint];
     }
 
-    
+
     public static async Task<DefaultEcs.Entity> GenerateCharacter(
-        builtin.tools.RandomSource rnd, 
-        ClusterDesc clusterDesc, 
-        Fragment worldFragment, 
-        StreetPoint chosenStreetPoint, 
-        int seed=0)
+        builtin.tools.RandomSource rnd,
+        ClusterDesc clusterDesc,
+        Fragment worldFragment,
+        StreetPoint chosenStreetPoint,
+        int seed = 0)
     {
         TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
         Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
-        
+
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
+        
+        int carIdx = (int)(rnd.GetFloat() * 4f);
+        int colorIdx = (int)(rnd.GetFloat() * (float)_primarycolors.Count);
 
+
+        ModelCacheParams mcp = new()
         {
-            int carIdx = (int)(rnd.GetFloat() * 4f);
-            int colorIdx = (int)(rnd.GetFloat() * (float)_primarycolors.Count);
-
-            builtin.loader.ModelProperties props = new()
+            Url = _carFileName(carIdx),
+            Properties = new()
             {
                 ["primarycolor"] = _primarycolors[colorIdx],
-            };
-            InstantiateModelParams instantiateModelParams = new()
+            },
+            Params = new()
             {
                 GeomFlags = 0 | InstantiateModelParams.CENTER_X
                               | InstantiateModelParams.CENTER_Z
                               | InstantiateModelParams.ROTATE_Y180
-                              | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
+                              | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
+                              | InstantiateModelParams.BUILD_PHYSICS
+                              | InstantiateModelParams.PHYSICS_DETECTABLE
+                              | InstantiateModelParams.PHYSICS_TANGIBLE
+                              | InstantiateModelParams.PHYSICS_CALLBACKS
+                              ,
                 MaxDistance = propMaxDistance
-            };
-
-            Model model = await I.Get<ModelCache>().LoadModel(
-                new ModelCacheParams()
-                {
-                    Url =_carFileName(carIdx),
-                    Properties = props,
-                    Params = instantiateModelParams
-                });
-            InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
-
-            var wf = worldFragment;
-
-            int fragmentId = worldFragment.NumericalId;
-
-            /*
-             * Now, first, from any of the worker threads, prepare the physics.
-             * There's no contact listeners etc added and they're off, so no worries.
-             */
-            engine.physics.Object po;
-            BodyReference prefSphere;
-            lock (wf.Engine.Simulation)
-            {
-                var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
-                po = new engine.physics.Object(wf.Engine, default, Vector3.Zero, Quaternion.Identity, shape);
-                prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-                prefSphere.Awake = false;
             }
+        };
+        
+        Model model = await I.Get<ModelCache>().LoadModel(mcp);
 
-            /*
-             * Now, using the prepared physics, add the actual entity components.
-             */
-            var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
+        var wf = worldFragment;
+
+        int fragmentId = worldFragment.NumericalId;
+
+#if false
+        /*
+         * Now, first, from any of the worker threads, prepare the physics.
+         * There's no contact listeners etc added and they're off, so no worries.
+         */
+        engine.physics.Object po;
+        BodyReference prefSphere;
+        lock (wf.Engine.Simulation)
+        {
+            var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
+            po = new engine.physics.Object(wf.Engine, default, Vector3.Zero, Quaternion.Identity, shape);
+            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+            prefSphere.Awake = false;
+        }
+#endif
+        /*
+         * Now, using the prepared physics, add the actual entity components.
+         */
+        var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
+        {
+            eTarget.Set(new engine.world.components.Owner(fragmentId));
+
+            eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
+
+            eTarget.Set(new engine.behave.components.Behavior(
+                new car3.Behavior(wf.Engine, clusterDesc, chosenStreetPoint, seed)
+                {
+                    Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
+                })
             {
-#if DEBUG
-                Stopwatch sw = new();
-                sw.Start();
-#endif
+                MaxDistance = (short)propMaxDistance
+            });
 
-                eTarget.Set(new engine.world.components.Owner(fragmentId));
-
-#if DEBUG
-                float millisAfterFragmentId = (float)sw.Elapsed.TotalMilliseconds;
-#endif
-
-                {
-                    builtin.tools.ModelBuilder modelBuilder = new(worldFragment.Engine, model, instantiateModelParams);
-                    modelBuilder.BuildEntity(eTarget);
-                }
-#if DEBUG
-                float millisAfterBuild = (float)sw.Elapsed.TotalMilliseconds;
-#endif
-
-                eTarget.Set(new engine.behave.components.Behavior(
-                    new car3.Behavior(wf.Engine, clusterDesc, chosenStreetPoint, seed)
-                    {
-                        Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
-                    })
-                {
-                    MaxDistance = (short)propMaxDistance
-                });
-
-#if DEBUG
-                float millisAfterBehavior = (float)sw.Elapsed.TotalMilliseconds;
-#endif
-
-                eTarget.Set(new engine.audio.components.MovingSound(
-                    _getCar3Sound(carIdx), 150f));
-
-#if DEBUG
-                float millisAfterMovingSound = (float)sw.Elapsed.TotalMilliseconds;
-#endif
+            eTarget.Set(new engine.audio.components.MovingSound(
+                _getCar3Sound(carIdx), 150f));
 
 
+#if false
                 engine.physics.CollisionProperties collisionProperties =
                     new engine.physics.CollisionProperties
                     {
@@ -215,11 +196,12 @@ class CharacterCreator : engine.world.ICreator
                 po.CollisionProperties = collisionProperties;
                 po.Entity = eTarget;
                 eTarget.Set(new engine.physics.components.Body(po, prefSphere));
-                
-                /*
-                 * We need to set a preliminary Transform3World asset. Invisible, but inside the fragment.
-                 */
-                eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0, Matrix4x4.CreateTranslation(worldFragment.Position)));
+#endif
+            /*
+             * We need to set a preliminary Transform3World asset. Invisible, but inside the fragment.
+             */
+            eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
+                Matrix4x4.CreateTranslation(worldFragment.Position)));
 
 #if false
                 /*
@@ -231,20 +213,14 @@ class CharacterCreator : engine.world.ICreator
                     CreatorId = (ushort) I.Get<CreatorRegistry>().FindCreatorId(I.Get<CharacterCreator>())
                 });
 #endif
-#if DEBUG
-                float millisAfterBody = (float)sw.Elapsed.TotalMilliseconds;
-                sw.Stop();
-                if (sw.Elapsed.TotalMilliseconds > 3f)
-                {
-                    int a;
-                }
-#endif
-                taskCompletionSource.SetResult(eTarget);
+            I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
+            
+            taskCompletionSource.SetResult(eTarget);
 
-            });
-            wf.Engine.QueueEntitySetupAction("nogame.characters.car3", tSetupEntity);
+        });
+        wf.Engine.QueueEntitySetupAction(EntityName, tSetupEntity);
 
-        }
+
         return taskResult.Result;
     }
 
