@@ -19,6 +19,7 @@ namespace builtin.loader;
 
 public class GlTF
 {
+    private Model _jModel;
     private Gltf _gltfModel;
     private byte[] _gltfBinary;
     private SortedDictionary<int, ModelNode> _dictNodes;
@@ -308,7 +309,7 @@ public class GlTF
                 gltfNode.Rotation[2], gltfNode.Rotation[3]));
         m *= Matrix4x4.CreateTranslation(
             gltfNode.Translation[0], gltfNode.Translation[1], gltfNode.Translation[2]);
-        mn = new();
+        mn = new() { Model = _jModel };
         mn.Transform = new Transform3ToParent(
             true, 0xffffffff, m
             );
@@ -320,7 +321,10 @@ public class GlTF
         {
             Trace("Reading a mesh.");
             _readMesh(_gltfModel.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
-            mn.InstanceDesc = InstanceDesc.CreateFromMatMesh(matMesh, 200f);
+            var id = InstanceDesc.CreateFromMatMesh(matMesh, 200f);
+            id.Model = _jModel;
+            id.ModelNode = mn;
+            mn.InstanceDesc = id;
         }
         else
         {
@@ -413,7 +417,8 @@ public class GlTF
         {
             ModelNode mnRoot = new()
             {
-                Children = rootNodes
+                Children = rootNodes,
+                Model = jModel
             };
             jModel.RootNode = mnRoot;
         }
@@ -421,6 +426,8 @@ public class GlTF
         {
             ErrorThrow($"Root node has no children!?", m => new InvalidOperationException(m));
         }
+
+        _jModel = jModel;
     }
     
     

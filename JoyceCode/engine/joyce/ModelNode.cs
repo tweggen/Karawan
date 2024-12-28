@@ -12,6 +12,11 @@ namespace engine.joyce;
 public class ModelNode
 {
     /**
+     * The root of this model.
+     */
+    public Model Model;
+    
+    /**
      * If non-null, contains a list of children of this node.
      */
     public IList<ModelNode>? Children;

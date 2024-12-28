@@ -30,6 +30,22 @@ namespace engine.joyce
          * conttrolled.
          */
         public static int NO_CONTROLLABLE_ROOT = 0x20000;
+
+        /**
+         * Have the builder create physics as well
+         */
+        public static int BUILD_PHYSICS = 0x80000;
+
+        /**
+         * Have the physics be detectable by means of collision detection etc.
+         */
+        public static int PHYSICS_DETECTABLE = 0x100000;
+    
+        /**
+         * Have the physics be tangible by means of collision detection etc.
+         */
+        public static int PHYSICS_TANGIBLE = 0x100000;
+        
     
         public int GeomFlags { get; set; }= 0;
         public float MaxDistance { get; set; } = 10f;
@@ -76,6 +92,7 @@ namespace engine.joyce
         {
             ModelNode mnRoot = new()
             {
+                Model = this,
                 InstanceDesc = instanceDesc,
                 Transform = new(true, 0xffff, Matrix4x4.Identity)
             };

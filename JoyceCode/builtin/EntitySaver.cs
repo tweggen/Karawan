@@ -174,10 +174,10 @@ public class EntitySaver : AModule
                 {
                     var strComponentName = jpComponent.Name;
                     var jeComponent = jpComponent.Value;
+                    var type = Type.GetType(strComponentName)!;
 
                     try
                     {
-                        var type = Type.GetType(strComponentName)!;
                         string rawText = jeComponent.GetRawText();
                         var comp = JsonSerializer.Deserialize(rawText, type, serializerOptions)!;
 
@@ -196,23 +196,6 @@ public class EntitySaver : AModule
                         continue;
                     }
 
-                    MethodInfo? setupFromMethod = type.GetMethod("SetupFrom");
-                    if (null != setupFromMethod)
-                    {
-                        Func<Task>? taskSetup;
-                        try
-                        {
-                             taskSetup = (Func<Task>)setupFromMethod.Invoke(comp, new object[] { jeComponent });
-                             if (null != taskSetup)
-                             {
-                                 await taskSetup();
-                             }
-                        }
-                        catch (Exception exception)
-                        {
-                            Error($"Unable to create and execute deser method for {type.Name}: {exception}");
-                        }
-                    }
                 }
             }
 

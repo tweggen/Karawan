@@ -21,6 +21,10 @@ namespace builtin.tools;
  * As models are hierarchial, they are decomposed into entities related
  * to each other using the Hierary API.
  * The geometry is added using Instance3 components.
+ *
+ * These entities are filled with geometrical information.
+ * In addition, the modelbuilder can generate
+ * - Physics information.
  */
 public class ModelBuilder
 {
