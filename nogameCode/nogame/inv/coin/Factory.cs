@@ -16,10 +16,12 @@ public class Factory : AModule
     private static short _coinMaxDistance = 200;
     private ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
 
-    public System.Func<Task> CreateAt(Vector3 v3Pos) => new (async () =>
+    public System.Func<Task> CreateAt(Vector3 v3Pos) => new(async () =>
     {
-        Model model = await I.Get<ModelCache>().Instantiate(
-            "coin.obj", null, new InstantiateModelParams()
+        ModelCacheParams mcp = new()
+        {
+            Url = "coin.obj",
+            Params = new InstantiateModelParams()
             {
                 GeomFlags = 0
                             | InstantiateModelParams.CENTER_X
@@ -27,11 +29,13 @@ public class Factory : AModule
                             | InstantiateModelParams.ROTATE_Y180
                             | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                             | InstantiateModelParams.BUILD_PHYSICS
+                            | InstantiateModelParams.PHYSICS_STATIC
                             | InstantiateModelParams.PHYSICS_DETECTABLE
-                            | InstantiateModelParams.PHYSICS_CALLBACKS
-                            ,
+                            | InstantiateModelParams.PHYSICS_CALLBACKS,
                 MaxDistance = _coinMaxDistance,
-            });
+            }
+        };
+        Model model = await I.Get<ModelCache>().Instantiate(mcp);
         engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc!;
 
         TaskCompletionSource<DefaultEcs.Entity> tcsEntity = new();
@@ -49,6 +53,8 @@ public class Factory : AModule
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos
                 );
             eTarget.Set(new Creator(Creator.CreatorId_Hardcoded));
+
+            I.Get<ModelCache>().BuildRootPhyiscs(eTarget, model, mcp);
 #if false
             StaticHandle staticHandle;   
             engine.physics.Object po;
