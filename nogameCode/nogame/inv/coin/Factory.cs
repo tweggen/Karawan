@@ -25,7 +25,11 @@ public class Factory : AModule
                             | InstantiateModelParams.CENTER_X
                             | InstantiateModelParams.CENTER_Z
                             | InstantiateModelParams.ROTATE_Y180
-                            | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
+                            | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
+                            | InstantiateModelParams.BUILD_PHYSICS
+                            | InstantiateModelParams.PHYSICS_DETECTABLE
+                            | InstantiateModelParams.PHYSICS_CALLBACKS
+                            ,
                 MaxDistance = _coinMaxDistance,
             });
         engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc!;
@@ -45,7 +49,7 @@ public class Factory : AModule
                 eTarget, true, 0x00000001, Quaternion.Identity, v3Pos
                 );
             eTarget.Set(new Creator(Creator.CreatorId_Hardcoded));
-
+#if false
             StaticHandle staticHandle;   
             engine.physics.Object po;
             lock (_engine.Simulation)
@@ -72,6 +76,7 @@ public class Factory : AModule
                 po.AddContactListener();
             }
             eTarget.Set(new engine.physics.components.Statics(po, staticHandle));
+#endif
 
             
             tcsEntity.SetResult(eTarget);

@@ -5,8 +5,11 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using BepuPhysics;
 using builtin.loader;
 using engine;
+using engine.joyce.components;
+using engine.physics;
 using static engine.Logger;
 
 namespace engine.joyce;
@@ -88,7 +91,7 @@ public class ModelCache
         });
     }
     
-
+    
     private Task<Model> _fromFile(
         string url, ModelProperties modelProperties)
     {
@@ -325,6 +328,78 @@ public class ModelCache
         }
     }
 
+
+    /**
+     * Build the model's physics into the actual model's root. 
+     */
+    public void BuildRootPhyiscs(in DefaultEcs.Entity eRoot, Model model, ModelCacheParams mcp)
+    {
+        if (model.RootNode == null || model.RootNode.InstanceDesc == null) return;
+        InstanceDesc id = model.RootNode.InstanceDesc;
+            
+        ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
+        StaticHandle staticHandle;   
+        engine.physics.Object po;
+        lock (_engine.Simulation)
+        {
+            if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_STATIC) != 0)
+            {
+                Vector3 v3Pos = Vector3.Zero;
+                
+                /*
+                 * Statics must be placed absolute, they are not dynamically moved.
+                 * So we fall back on the transform 3 property, which probably is not the best idea.
+                 */
+                if (eRoot.Has<Transform3>())
+                {
+                    v3Pos = eRoot.Get<Transform3>().Position;
+                }
+                
+                /*
+                 * Naming physics makes them identifiable. Pull the name from the
+                 * entity name if no name has been given.
+                 */
+                string strPhysicsName = "unnamed";
+                if (eRoot.Has<EntityName>())
+                {
+                    strPhysicsName = eRoot.Get<EntityName>().Name;
+                }
+                    
+                staticHandle = _engine.Simulation.Statics.Add(
+                    new StaticDescription(
+                        v3Pos,
+                        Quaternion.Identity,
+                        _shapeFactory.GetSphereShape(id.AABBTransformed.Radius)
+                    ));
+                po = new(eRoot, staticHandle)
+                {
+                    CollisionProperties = new CollisionProperties
+                    {
+                        Entity = eRoot,
+                        Name = strPhysicsName,
+                        Flags =
+                            (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_TANGIBLE) != 0)
+                                ? CollisionProperties.CollisionFlags.IsTangible
+                                : 0)
+                            | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_DETECTABLE) != 0)
+                                ? CollisionProperties.CollisionFlags.IsDetectable
+                                : 0)
+                            | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
+                                ? CollisionProperties.CollisionFlags.TriggersCallbacks
+                                : 0)
+                            ,
+                        LayerMask = 0x0004
+                    }
+                };
+                if ((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
+                {
+                    po.AddContactListener();
+                }
+                eRoot.Set(new engine.physics.components.Statics(po, staticHandle));
+            }
+        }
+    }
+    
     
     static int nextReqId = 0;
 

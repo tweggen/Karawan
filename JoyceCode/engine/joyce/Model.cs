@@ -45,6 +45,16 @@ namespace engine.joyce
          * Have the physics be tangible by means of collision detection etc.
          */
         public static int PHYSICS_TANGIBLE = 0x100000;
+
+        /**
+         * Are the physics intended to be static (as opposed to kinematic or dynamic)?
+         */
+        public static int PHYSICS_STATIC = 0x200000;
+        
+        /**
+         * Shall we trigger callbacks?
+         */
+        public static int PHYSICS_CALLBACKS = 0x400000;
         
     
         public int GeomFlags { get; set; }= 0;
