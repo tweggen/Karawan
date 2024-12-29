@@ -258,7 +258,7 @@ public class Main
             {
                 if (ImGui.BeginListBox("Clusters"))
                 {
-                    var clusterList = new List<ClusterDesc>(ClusterList.Instance().GetClusterList());
+                    var clusterList = new List<ClusterDesc>(I.Get<ClusterList>().GetClusterList());
                     clusterList.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
                     foreach (var clusterDesc in clusterList)
                     {

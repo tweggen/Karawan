@@ -145,7 +145,7 @@ public class MetaGen
                         },
                         new Dictionary<string, Func<IEnumerable<object>>>()
                         {
-                            { "clusterDescList", engine.world.ClusterList.Instance().GetClusterList }
+                            { "clusterDescList", I.Get<ClusterList>().GetClusterList }
                         }
                     )
                 );

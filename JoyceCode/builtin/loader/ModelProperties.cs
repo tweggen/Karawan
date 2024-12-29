@@ -5,7 +5,7 @@ namespace builtin.loader;
 
 public class ModelProperties
 {
-    public SortedDictionary<string, string> Properties { get; set; } = new();
+    public SortedDictionary<string, string> Properties { get; set; }
 
     public string this[string key]
     {
@@ -36,5 +36,17 @@ public class ModelProperties
         toString += '}';
 
         return toString;
+    }
+    
+
+    public ModelProperties()
+    {
+        Properties = new();
+    }
+
+
+    public ModelProperties(ModelProperties? o)
+    {
+        Properties = o != null ? new(o.Properties) : new();
     }
 }

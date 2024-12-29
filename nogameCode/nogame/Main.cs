@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using engine;
+using engine.world;
 
 namespace nogame;
 
@@ -61,7 +62,8 @@ public class Main : AModule
     {
         base.ModuleActivate();
         _engine.AddModule(this);
-        
+
+        I.Register<engine.world.ClusterList>(() => new engine.world.ClusterList());
         // TXWTODO: Looks a bit out of place, looks more like platform specific.
         I.Get<Boom.ISoundAPI>().SetupDone();
         

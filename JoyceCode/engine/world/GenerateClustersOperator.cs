@@ -299,7 +299,7 @@ public class GenerateClustersOperator : world.IWorldOperator
          * Create the cluster list. The cluster list will make itself a global
          * entity available in the catalogue.
          */
-        var clusterList = ClusterList.Instance();
+        var clusterList = I.Get<ClusterList>();
         clusterList.SetFrom(acd);
     }
 

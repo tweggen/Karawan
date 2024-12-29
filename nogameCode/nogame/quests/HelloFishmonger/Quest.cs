@@ -1,14 +1,23 @@
 using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
 using engine;
-using engine.behave.components;
+using engine.joyce;
+using engine.joyce.components;
 using engine.quest;
+using engine.streets;
+using engine.world;
+using nogame.characters.car3;
 using Silk.NET.Core.Native;
 using static engine.Logger;
+using Behavior = engine.behave.components.Behavior;
 
 namespace nogame.quests.HelloFishmonger;
 
 public class Quest : AModule, IQuest
 {
+    private ModelCacheParams _mcp;
+    private Model _model;
     private bool _isActive = false;
 
     private engine.quest.TrailVehicle _questTarget;  
@@ -52,20 +61,20 @@ public class Quest : AModule, IQuest
     }
 
 
-    private void _pickActivateCar()
+    private DefaultEcs.Entity _pickExistingCar()
     {
         /*
          * Randomly chose a destination car.
          */
         DefaultEcs.Entity eVictim = default;
         var listCandidates = _engine.GetEcsWorld().GetEntities()
-            .With<engine.behave.components.Behavior>()
-            .With<engine.joyce.components.Transform3ToWorld>()
-            .AsEnumerable()
-            .Where(i => 
-                i.IsAlive
-                && i.Get<Behavior>().Provider != null 
-                && i.Get<Behavior>().Provider.GetType() == typeof(nogame.characters.car3.Behavior))
+                .With<engine.behave.components.Behavior>()
+                .With<engine.joyce.components.Transform3ToWorld>()
+                .AsEnumerable()
+                .Where(i => 
+                    i.IsAlive
+                    && i.Get<Behavior>().Provider != null 
+                    && i.Get<Behavior>().Provider.GetType() == typeof(nogame.characters.car3.Behavior))
             ;
 
         foreach (var e in listCandidates)
@@ -76,6 +85,14 @@ public class Quest : AModule, IQuest
             break;
         }
 
+        return eVictim;
+    }
+    
+    
+    private void _pickActivateCar()
+    {
+        var eVictim = _pickExistingCar();
+        
         if (eVictim == default)
         {
             Error($"No victim found.");
@@ -92,14 +109,98 @@ public class Quest : AModule, IQuest
         _engine.Run(_questTarget.ModuleActivate);
     }
 
+
+    private void _selectStartPoint(
+        out ClusterDesc clusterDesc,
+        out Fragment worldFragment,
+        out StreetPoint streetPoint)
+    {
+        float minDist = 100f;
+        float minDist2 = minDist * minDist;
+
+        clusterDesc = I.Get<engine.world.ClusterList>().GetClusterAt(Vector3.Zero);
+        Vector3 v3Cluster = clusterDesc.Pos;
+        var listStreetPoints = clusterDesc.StrokeStore().GetStreetPoints();
+        _engine.TryGetPlayerEntity(out var ePlayer);
+
+        StreetPoint? spStart = listStreetPoints.FirstOrDefault(
+            sp =>
+                (sp.Pos3 with { Y = 0f } - ePlayer.Get<Transform3ToWorld>().Matrix.Translation with { Y = 0 })
+                .LengthSquared() >= minDist2
+                && I.Get<MetaGen>().Loader.TryGetFragment(
+                    Fragment.PosToIndex3(sp.Pos3 + v3Cluster), out _));
+        if (null == spStart)
+        {
+            spStart = listStreetPoints.First();
+        }
+
+        I.Get<MetaGen>().Loader.TryGetFragment(Fragment.PosToIndex3(spStart.Pos3 + v3Cluster), out worldFragment);
+        streetPoint = spStart;
+    }
+
+
+    private DefaultEcs.Entity _createCarAt(ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint streetPoint)
+    {
+        DefaultEcs.Entity entity = CharacterCreator.GenerateCharacter(
+            clusterDesc, worldFragment, streetPoint, 
+            _model, _mcp,
+            new characters.car3.Behavior(_engine, clusterDesc, streetPoint, 100)
+            {
+                Speed = 35f
+            },
+            null
+        );
+        return entity;
+    }
+
+
+    private async Task _startQuest()
+    {
+        /*
+         * Load and configure model in arbitrary thread.
+         */
+        _mcp = new()
+        {
+            Url = "car6.obj",
+            Properties = new()
+            {
+                ["primarycolor"] = "#ffffff00"
+            },
+            Params = new()
+            {
+                GeomFlags = 0 | InstantiateModelParams.CENTER_X
+                              | InstantiateModelParams.CENTER_Z
+                              | InstantiateModelParams.ROTATE_Y180
+                              | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
+                              | InstantiateModelParams.BUILD_PHYSICS
+                              | InstantiateModelParams.PHYSICS_DETECTABLE
+                              | InstantiateModelParams.PHYSICS_TANGIBLE
+                              | InstantiateModelParams.PHYSICS_CALLBACKS
+                ,
+                MaxDistance = 150,
+                CollisionLayers = 0x0002,
+            }
+        };
+        
+        _model = await I.Get<ModelCache>().LoadModel(_mcp);
+        
+        /*
+         * ... then kick off the action in the logical thread.
+         */
+        _engine.QueueMainThreadAction(() =>
+        {
+            _selectStartPoint(out var clusterDesc, out var worldFragment, out var streetPoint);
+            _createCarAt(clusterDesc, worldFragment, streetPoint);
+        });
+    }
+    
+
     public override void ModuleActivate()
     {
         base.ModuleActivate();
         _isActive = true;
         _engine.AddModule(this);
 
-        
-        _engine.QueueMainThreadAction(_pickActivateCar);
-        
+        _engine.Run(_startQuest);
     }
 }

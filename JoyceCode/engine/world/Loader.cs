@@ -446,7 +446,7 @@ namespace engine.world
             /*
              * Are we in a cluster? Do an inefficient search.
              */
-            ClusterDesc cluster = ClusterList.Instance().GetClusterAt(position);
+            ClusterDesc cluster = I.Get<ClusterList>().GetClusterAt(position);
             if (cluster != null)
             {
                 return cluster.AverageHeight + MetaGen.ClusterNavigationHeight;

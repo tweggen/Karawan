@@ -281,7 +281,7 @@ public class ModelCache
      */
     public Model InstantiatePlaceholder(DefaultEcs.Entity eTarget, ModelCacheParams mcp)
     {
-        Trace($"Called with url {mcp.Url}");
+        // Trace($"Called with url {mcp.Url}");
         ModelCacheEntry mce = _triggerLoad(mcp);
 
         ConsumerEntry ce = null;
@@ -380,7 +380,7 @@ public class ModelCache
      */
     public async Task<Model> LoadModel(ModelCacheParams mcp)
     {
-        Trace($"Called with url {mcp.Url}");
+        // Trace($"Called with url {mcp.Url}");
         ModelCacheEntry mce = _triggerLoad(mcp);
 
         ConsumerEntry ce = null;
@@ -507,7 +507,7 @@ public class ModelCache
                     | (((mcp.Params.GeomFlags & InstantiateModelParams.PHYSICS_CALLBACKS) != 0)
                         ? CollisionProperties.CollisionFlags.TriggersCallbacks
                         : 0),
-                LayerMask = 0x0004
+                LayerMask = mcp.Params.CollisionLayers
             };
 
             lock (_engine.Simulation)

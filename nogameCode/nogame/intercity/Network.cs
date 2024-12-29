@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
+using engine;
 using engine.world;
 
 
@@ -154,7 +155,7 @@ public class Network
         Vector3 stationAPos = _getStationPosition_nolock(clusterA, clusterB, out var postfixA);
         Vector3 stationBPos = _getStationPosition_nolock(clusterB, clusterA, out var postfixB);
 
-        var listTouchedClusters = ClusterList.Instance().IntersectsCluster(stationAPos, stationBPos);
+        var listTouchedClusters = I.Get<ClusterList>().IntersectsCluster(stationAPos, stationBPos);
         if (listTouchedClusters != null) 
         {
             /*
@@ -199,7 +200,7 @@ public class Network
             _mapStations = new();
             _mapClusterStations = new();
 
-            var clusterList = ClusterList.Instance().GetClusterList();
+            var clusterList = I.Get<ClusterList>().GetClusterList();
             foreach (ClusterDesc clusterDesc in clusterList)
             {
                 int maxNTrams = 5;

@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using builtin.loader;
 using engine;
 using engine.joyce;
 using engine.physics;
@@ -100,29 +101,32 @@ class CharacterCreator
     }
 
 
-    public static async Task<DefaultEcs.Entity> GenerateCharacter(
+    public static async Task<DefaultEcs.Entity> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
         StreetPoint chosenStreetPoint,
         int seed = 0)
     {
-        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
-        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
-
-        float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
-        
         int carIdx = (int)(rnd.GetFloat() * 4f);
         int colorIdx = (int)(rnd.GetFloat() * (float)_primarycolors.Count);
-
-
+        var modelProperties = new ModelProperties()
+        {
+            ["primarycolor"] = _primarycolors[colorIdx],
+        };
+        string strModel = _carFileName(carIdx);
+        float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
+        
+        engine.behave.IBehavior iBehavior = 
+            new car3.Behavior(worldFragment.Engine, clusterDesc, chosenStreetPoint, seed)
+            {
+                Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
+            };
+        var sound = _getCar3Sound(carIdx);
         ModelCacheParams mcp = new()
         {
-            Url = _carFileName(carIdx),
-            Properties = new()
-            {
-                ["primarycolor"] = _primarycolors[colorIdx],
-            },
+            Url = strModel,
+            Properties = new(modelProperties),
             Params = new()
             {
                 GeomFlags = 0 | InstantiateModelParams.CENTER_X
@@ -133,12 +137,31 @@ class CharacterCreator
                               | InstantiateModelParams.PHYSICS_DETECTABLE
                               | InstantiateModelParams.PHYSICS_TANGIBLE
                               | InstantiateModelParams.PHYSICS_CALLBACKS
-                              ,
-                MaxDistance = propMaxDistance
+                ,
+                MaxDistance = propMaxDistance,
+                
+                CollisionLayers = 0x0002,
             }
         };
         
         Model model = await I.Get<ModelCache>().LoadModel(mcp);
+
+        return GenerateCharacter(
+            clusterDesc, worldFragment, chosenStreetPoint, 
+            model, mcp, iBehavior, sound);
+    }
+
+    public static DefaultEcs.Entity GenerateCharacter(
+        ClusterDesc clusterDesc,
+        Fragment worldFragment,
+        StreetPoint chosenStreetPoint,
+        Model model,
+        ModelCacheParams mcp,
+        engine.behave.IBehavior? iBehavior,
+        engine.audio.Sound? sound)
+    {
+        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
+        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
 
         var wf = worldFragment;
 
@@ -157,18 +180,21 @@ class CharacterCreator
              */
             eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
 
-            eTarget.Set(new engine.behave.components.Behavior(
-                new car3.Behavior(wf.Engine, clusterDesc, chosenStreetPoint, seed)
-                {
-                    Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
-                })
+            if (iBehavior != null)
             {
-                MaxDistance = (short)propMaxDistance
-            });
+                eTarget.Set(new engine.behave.components.Behavior()
+                {
+                    Provider = iBehavior,
+                    MaxDistance = (short) mcp.Params.MaxDistance
+                });
+            }
 
-            eTarget.Set(new engine.audio.components.MovingSound(
-                _getCar3Sound(carIdx), 150f));
-            
+            if (sound != null)
+            {
+                eTarget.Set(new engine.audio.components.MovingSound(
+                    sound, mcp.Params.MaxDistance));
+            }
+
             /*
              * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
              * That way, the character will not be cleaned up immediately.
