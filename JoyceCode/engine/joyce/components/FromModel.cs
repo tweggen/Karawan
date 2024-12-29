@@ -31,6 +31,8 @@ public class FromModelConverter : JsonConverter<FromModel>
 
 /**
  * This component defines how that entity shall be constructed.
+ * Components of this type shall be added to entities if they
+ * require to be reconstructed after loading.
  */
 [engine.IsPersistable]
 public struct FromModel

@@ -61,13 +61,12 @@ public class GenerateCharacterOperator : IWorldOperator
             LoopSegments = true,
             Speed = 60f
         };
-        
-        Model model = await I.Get<ModelCache>().LoadModel( 
-            new ModelCacheParams()
-            {
-                
-            
-            Url = "tram1.obj", 
+
+        var mcp = new ModelCacheParams()
+        {
+
+
+            Url = "tram1.obj",
             Params = new InstantiateModelParams()
             {
                 GeomFlags = 0
@@ -76,13 +75,13 @@ public class GenerateCharacterOperator : IWorldOperator
                             | InstantiateModelParams.ROTATE_Y180
                             | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC,
                 MaxDistance = 1000f,
-            }});
-        engine.joyce.InstanceDesc jInstanceDesc = model.RootNode.InstanceDesc;
-
+            }
+        };
+        Model model = await I.Get<ModelCache>().LoadModel(mcp); 
+            
 
         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
         {
-            eTarget.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             eTarget.Set(new engine.behave.components.Behavior(
                 new builtin.tools.SimpleNavigationBehavior(_engine, segnav))
                 {
@@ -92,10 +91,12 @@ public class GenerateCharacterOperator : IWorldOperator
                     MaxDistance = (short)MetaGen.MaxWidth
                 }
             );
+            
             eTarget.Set(new engine.audio.components.MovingSound(
                 nogame.characters.tram.GenerateCharacterOperator.GetTramSound(), 
                 450f));
-
+            
+            I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
         });
 
         _engine.QueueEntitySetupAction("nogame.characters.intercity", tSetupEntity);

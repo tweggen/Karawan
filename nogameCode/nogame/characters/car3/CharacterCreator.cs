@@ -18,7 +18,7 @@ using static engine.Logger;
 namespace nogame.characters.car3;
 
 
-class CharacterCreator : engine.world.ICreator
+class CharacterCreator
 {
     private class Context
     {
@@ -144,21 +144,6 @@ class CharacterCreator : engine.world.ICreator
 
         int fragmentId = worldFragment.NumericalId;
 
-#if false
-        /*
-         * Now, first, from any of the worker threads, prepare the physics.
-         * There's no contact listeners etc added and they're off, so no worries.
-         */
-        engine.physics.Object po;
-        BodyReference prefSphere;
-        lock (wf.Engine.Simulation)
-        {
-            var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
-            po = new engine.physics.Object(wf.Engine, default, Vector3.Zero, Quaternion.Identity, shape);
-            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-            prefSphere.Awake = false;
-        }
-#endif
         /*
          * Now, using the prepared physics, add the actual entity components.
          */
@@ -179,40 +164,14 @@ class CharacterCreator : engine.world.ICreator
 
             eTarget.Set(new engine.audio.components.MovingSound(
                 _getCar3Sound(carIdx), 150f));
-
-
-#if false
-                engine.physics.CollisionProperties collisionProperties =
-                    new engine.physics.CollisionProperties
-                    {
-                        Entity = eTarget,
-                        Flags =
-                            CollisionProperties.CollisionFlags.IsTangible
-                            | CollisionProperties.CollisionFlags.IsDetectable
-                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                        Name = PhysicsName,
-                        LayerMask = 0x0002,
-                    };
-                po.CollisionProperties = collisionProperties;
-                po.Entity = eTarget;
-                eTarget.Set(new engine.physics.components.Body(po, prefSphere));
-#endif
+            
             /*
-             * We need to set a preliminary Transform3World asset. Invisible, but inside the fragment.
+             * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
+             * That way, the character will not be cleaned up immediately.
              */
             eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
                 Matrix4x4.CreateTranslation(worldFragment.Position)));
 
-#if false
-                /*
-                 * Finally, remember us as the creator, so that the car will be recreated after loading.
-                 */
-                eTarget.Set(new engine.world.components.Creator()
-                {
-                    Id = carIdx, 
-                    CreatorId = (ushort) I.Get<CreatorRegistry>().FindCreatorId(I.Get<CharacterCreator>())
-                });
-#endif
             I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
             
             taskCompletionSource.SetResult(eTarget);
@@ -222,41 +181,5 @@ class CharacterCreator : engine.world.ICreator
 
 
         return taskResult.Result;
-    }
-
-
-    // ICreator
-    public void SetupEntityFrom(DefaultEcs.Entity eLoaded, in JsonElement je)
-    {
-        /*
-         * We might have cars serialized we do want to have restored.
-         * Get them restored.
-         */        
-    }
-
-
-    public void SaveEntityTo(DefaultEcs.Entity eCar, out JsonNode jn)
-    {
-        if (!eCar.Has<engine.behave.components.Behavior>())
-        {
-            jn = null;
-            return;
-        }
-        ref var cBehavior = ref eCar.Get<engine.behave.components.Behavior>();
-                
-        /*
-         * We might want to save some cars.
-         * If we are here, we previously marked them with a Creator tag.
-         */
-        var jo = new JsonObject();
-        jn = jo;
-        if (cBehavior.Provider != null)
-        {
-            cBehavior.Provider.SaveTo(jo);
-        }
-    }
-
-    public CharacterCreator()
-    {
     }
 }

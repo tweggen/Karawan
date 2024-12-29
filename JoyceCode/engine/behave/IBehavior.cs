@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 
 namespace engine.behave;
 
-public interface IBehavior : engine.ISerializable
+public interface IBehavior
 {
     public void OnCollision(engine.physics.ContactEvent cev);
 
