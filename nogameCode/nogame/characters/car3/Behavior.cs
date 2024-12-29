@@ -45,6 +45,8 @@ internal class Behavior :
             _engine.Simulation.Bodies.SetLocalInertia(
                 cCarBody.Reference.Handle,
                 CharacterCreator.PInertiaSphere);
+            // TXWTODO: I would like to have the object stop more realistic. This is why I have a physics engine.
+            cCarBody.Reference.MotionState.Velocity = Vector3.Zero;
         }
 
         /*
