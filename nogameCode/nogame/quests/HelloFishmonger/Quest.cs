@@ -52,30 +52,25 @@ public class Quest : AModule, IQuest
     }
 
 
-    public override void ModuleActivate()
+    private void _pickActivateCar()
     {
-        base.ModuleActivate();
-        _isActive = true;
-        _engine.AddModule(this);
-
         /*
          * Randomly chose a destination car.
          */
         DefaultEcs.Entity eVictim = default;
-        var behaving = _engine.GetEcsWorld().GetEntities()
+        var listCandidates = _engine.GetEcsWorld().GetEntities()
             .With<engine.behave.components.Behavior>()
             .With<engine.joyce.components.Transform3ToWorld>()
-            .AsEnumerable();
+            .AsEnumerable()
+            .Where(i => 
+                i.IsAlive
+                && i.Get<Behavior>().Provider != null 
+                && i.Get<Behavior>().Provider.GetType() == typeof(nogame.characters.car3.Behavior))
+            ;
 
-        foreach (var e in behaving)
+        foreach (var e in listCandidates)
         {
-            if (!e.IsAlive) continue;
             ref var cBehavior = ref e.Get<Behavior>();
-            if (cBehavior.Provider.GetType() != typeof(nogame.characters.car3.Behavior))
-            {
-                continue;
-            }
-
             cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
             eVictim = e;
             break;
@@ -83,7 +78,7 @@ public class Quest : AModule, IQuest
 
         if (eVictim == default)
         {
-            Error($"No victim found after a lot of tries.");
+            Error($"No victim found.");
             return;
         }
 
@@ -94,6 +89,17 @@ public class Quest : AModule, IQuest
             ParentEntity = eVictim,
             OnReachTarget = _onReachTarget
         };
-        _questTarget.ModuleActivate();
+        _engine.Run(_questTarget.ModuleActivate);
+    }
+
+    public override void ModuleActivate()
+    {
+        base.ModuleActivate();
+        _isActive = true;
+        _engine.AddModule(this);
+
+        
+        _engine.QueueMainThreadAction(_pickActivateCar);
+        
     }
 }

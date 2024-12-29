@@ -151,6 +151,10 @@ class CharacterCreator
         {
             eTarget.Set(new engine.world.components.Owner(fragmentId));
 
+            /*
+             * We already setup the FromModel in case we utilize one of the characters as
+             * subject of a Quest.
+             */
             eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
 
             eTarget.Set(new engine.behave.components.Behavior(
