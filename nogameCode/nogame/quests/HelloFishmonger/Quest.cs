@@ -196,6 +196,8 @@ public class Quest : AModule, IQuest, ICreator
             ref var cBehavior = ref eTarget.Get<Behavior>();
             cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
 
+            eTarget.Set(new engine.world.components.Creator(engine.world.components.Creator.CreatorId_Hardcoded));
+
             /*
              * ... create quest marker and run it.
              */
