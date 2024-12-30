@@ -58,12 +58,11 @@
     <view layer='pausemenu' id='menuOptions'>
         <vbox width='250' x='200' y='200'>
             <text color='#666666' height='40'>Options</text>
+            <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuInventory")'>Inventory...</option>
             <option color='#999999' onClick='joyce:ev("nogame.modules.menu.toggleMenu")'>Continue</option>
             <option color='#999999' onClick='jt:replaceAll("pausemenu", "menuHelp")'>Help...</option>
-            
-            <option color="#999999" onClick='jt:replaceAll("pausemenu", "menuInventory")'>Inventory...</option>
-            
-            <option color='#999999' onClick='os.exit()'>Exit...</option>
+            <option color='#999999' onClick='os.exit()'>Exit to desktop...</option>
+            <option color='#999999' onClick='joyce:ev("nogame.modules.menu.save")'>Quicksave</option>
         </vbox>
     </view>
     <view layer='pausemenu' id='menuInventory'>

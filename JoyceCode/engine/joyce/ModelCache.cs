@@ -380,7 +380,7 @@ public class ModelCache
      */
     public async Task<Model> LoadModel(ModelCacheParams mcp)
     {
-        Trace($"Called with url {mcp.Url}");
+        // Trace($"Called with url {mcp.Url}");
         ModelCacheEntry mce = _triggerLoad(mcp);
 
         ConsumerEntry ce = null;

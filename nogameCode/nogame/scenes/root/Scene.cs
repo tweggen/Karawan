@@ -36,6 +36,7 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<nogame.modules.World>(),
         
         new SharedModule<AutoSave>(),
+        new SharedModule<Saver>(),
         
         new SharedModule<engine.behave.SpawnModule>(),
         new MyModule<nogame.modules.playerhover.Module>(),
@@ -66,7 +67,6 @@ public class Scene : AModule, IScene, IInputPart
     private engine.joyce.TransformApi _aTransform;
 
 
-    
     private void _triggerPauseMenu()
     {
         if (!_engine.HasModule(M<modules.menu.PauseMenuModule>()))
@@ -78,9 +78,14 @@ public class Scene : AModule, IScene, IInputPart
             DeactivateMyModule<modules.menu.PauseMenuModule>();
         }
     }
-
-    private void _triggerPauseMenu(engine.news.Event ev) => _triggerPauseMenu();
     
+    private void _triggerPauseMenu(engine.news.Event ev) => _triggerPauseMenu();
+
+
+    private void _triggerSave(engine.news.Event ev)
+    {
+        M<Saver>().Save("Quicksave");
+    }
     
     private void _toggleMap(Event ev)
     {
@@ -307,6 +312,7 @@ public class Scene : AModule, IScene, IInputPart
         // TXWTODO: Generalize this.
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         
+        I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.save", _triggerSave);
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
         I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.setAmbientLight", _onSetAmbientLight);
         
