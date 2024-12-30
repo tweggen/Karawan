@@ -95,7 +95,7 @@ public class ObjectFactory<K, T> : IDisposable where K : IComparable
     }
 
 
-    public void RegisterFactory(K name, Func<K, T> factory)
+    public virtual void RegisterFactory(K name, Func<K, T> factory)
     {
         lock (_lo)
         {

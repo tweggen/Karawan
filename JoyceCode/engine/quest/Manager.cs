@@ -13,15 +13,22 @@ using static engine.Logger;
 namespace engine.quest;
 
 
-public class Manager : ObjectFactory<string, IQuest> /* , ICreator */ 
+public class Manager : ObjectFactory<string, IQuest>, ICreator  
 {
     private Object _lo = new();
     private SortedDictionary<string, IQuest> _mapOpenQuests = new();
+    private List<string> _listAvailableQuests = new();
 
     
     private string _questEntityName(string questName)
     {
         return $"quest {questName}";
+    }
+
+
+    public override void RegisterFactory(string name, Func<string, IQuest> factory)
+    {
+        _listAvailableQuests.Add(name);
     }
     
     
@@ -31,6 +38,11 @@ public class Manager : ObjectFactory<string, IQuest> /* , ICreator */
         if (null == quest)
         {
             ErrorThrow<ArgumentException>($"Requested to start unknown quest {questName}");
+        }
+
+        if (quest.Name != questName)
+        {
+            ErrorThrow<InvalidOperationException>($"Error while execution: Quest has wrong name.");
         }
 
         try
@@ -46,7 +58,10 @@ public class Manager : ObjectFactory<string, IQuest> /* , ICreator */
             {
                 e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
                 e.Set(new engine.world.components.Creator()
-                    { CreatorId = I.Get<CreatorRegistry>().FindCreatorId(quest as ICreator) });
+                {
+                    CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this),
+                    Id = _listAvailableQuests.IndexOf(quest.Name)
+                });
             });
         }
         catch (Exception e)
@@ -91,16 +106,25 @@ public class Manager : ObjectFactory<string, IQuest> /* , ICreator */
     }
 
 
-    #if false
+
     public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
     {
+        /*
+         * We are called because we are the creator. However, we want to delegate that call.
+         */
     });
 
     
+    /**
+     * We register this manager as the creator of quests. We use this to
+     * assign the entity properly to the quest objects, which might need
+     * to be factored.
+     */
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
-        jn = JsonValue.Create("no content here yet.");
+        var cQuest = eLoader.Get<engine.quest.components.Quest>();
+        jn = new JsonObject();
     }
-    #endif
+
 }
 
