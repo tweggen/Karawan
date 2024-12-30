@@ -615,6 +615,16 @@ public class Module : engine.AModule
     {
         base.ModuleActivate();
         _engine.AddModule(this);
+
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+
         _engine.Run(_setupPlayer);
     }
 }

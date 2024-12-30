@@ -172,6 +172,10 @@ public class Quest : AModule, IQuest
         _selectStartPoint(out var clusterDesc, out var worldFragment, out var streetPoint);
         _engine.QueueEntitySetupAction(CharacterCreator.EntityName, eTarget =>
         {
+
+            /*
+             * Create the basic car.
+             */
             CharacterCreator.SetupCharacterMT(
                 eTarget,
                 clusterDesc, worldFragment, streetPoint, 
@@ -182,6 +186,24 @@ public class Quest : AModule, IQuest
                 },
                 null
             );
+            
+            /*
+             * Make it mission critical, so that it is not purged due to unloaded fragments.
+             */
+            ref var cBehavior = ref eTarget.Get<Behavior>();
+            cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
+
+            /*
+             * ... create quest marker and run it.
+             */
+            _questTarget = new engine.quest.TrailVehicle()
+            {
+                SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+                MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+                ParentEntity = eTarget,
+                OnReachTarget = _onReachTarget
+            };
+            _engine.Run(_questTarget.ModuleActivate);
         });
     }
     
