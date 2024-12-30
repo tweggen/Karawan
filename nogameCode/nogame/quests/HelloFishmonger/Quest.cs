@@ -1,6 +1,9 @@
 using System.Linq;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using DefaultEcs;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -14,7 +17,7 @@ using Behavior = engine.behave.components.Behavior;
 
 namespace nogame.quests.HelloFishmonger;
 
-public class Quest : AModule, IQuest
+public class Quest : AModule, IQuest, ICreator
 {
     private ModelCacheParams _mcp;
     private Model _model;
@@ -215,5 +218,26 @@ public class Quest : AModule, IQuest
         _engine.AddModule(this);
 
         _engine.Run(_startQuest);
+    }
+
+    
+    /**
+     * Re-create this quest's entities while deserializing.
+     * We noted ourselves as creator to the car we need to chase.
+     * Therefore serialization will have taken care to serialize
+     * the basic car entity.
+     */
+    public void SetupEntityFrom(Entity eLoaded, in JsonElement je)
+    {
+    }
+
+    
+    /**
+     * Serialize non-basic information about this quest's entities.
+     * This mostly 
+     */
+    public void SaveEntityTo(Entity eLoader, out JsonNode jn)
+    {
+        throw new System.NotImplementedException();
     }
 }
