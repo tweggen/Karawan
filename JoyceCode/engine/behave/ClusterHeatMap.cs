@@ -43,7 +43,7 @@ public class ClusterHeatMap : AHeatMap
         /*
          * Now add the clusters to the list.
          */
-        var clusterList = ClusterList.Instance().GetClusterList();
+        var clusterList = I.Get<ClusterList>().GetClusterList();
         foreach (var cd in clusterList)
         {
             AABB aabbCluster = cd.AABB;

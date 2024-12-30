@@ -333,7 +333,7 @@ public class Module : engine.AModule
          * Look up the zone we are in.
          */
         bool newZone = false;
-        ClusterDesc foundCluster = ClusterList.Instance().GetClusterAt(posShip);
+        ClusterDesc foundCluster = I.Get<ClusterList>().GetClusterAt(posShip);
         if (foundCluster != null)
         {
             if (_currentCluster != foundCluster)
@@ -426,7 +426,7 @@ public class Module : engine.AModule
      */
     private void _findStartPosition(out Vector3 v3Start, out Quaternion qStart)
     {
-        ClusterDesc startCluster = ClusterList.Instance().GetClusterAt(Vector3.Zero);
+        ClusterDesc startCluster = I.Get<ClusterList>().GetClusterAt(Vector3.Zero);
         if (null != startCluster)
         {
             
@@ -615,6 +615,16 @@ public class Module : engine.AModule
     {
         base.ModuleActivate();
         _engine.AddModule(this);
+
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+        I.Get<SubscriptionManager>().Subscribe(
+            Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+
         _engine.Run(_setupPlayer);
     }
 }

@@ -88,7 +88,7 @@ public class GenerateNavMapOperator : engine.world.IWorldOperator
             Cluster = ncTop
         };
         
-        var clusterList = ClusterList.Instance().GetClusterList();
+        var clusterList = I.Get<ClusterList>().GetClusterList();
 
         foreach (var clusterDesc in clusterList)
         {

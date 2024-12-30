@@ -7,6 +7,10 @@ using engine;
 
 namespace builtin.modules.inventory;
 
+
+/**
+ * The directory of available pickables. Contains the descriptions.
+ */
 public class PickableDirectory : ObjectFactory<string, PickableDescription>, engine.ISerializable
 {
     public void SaveTo(JsonObject jo)

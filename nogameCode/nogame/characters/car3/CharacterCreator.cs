@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using builtin.loader;
 using engine;
 using engine.joyce;
 using engine.physics;
@@ -18,7 +19,7 @@ using static engine.Logger;
 namespace nogame.characters.car3;
 
 
-class CharacterCreator : engine.world.ICreator
+class CharacterCreator
 {
     private class Context
     {
@@ -100,29 +101,32 @@ class CharacterCreator : engine.world.ICreator
     }
 
 
-    public static async Task<DefaultEcs.Entity> GenerateCharacter(
+    public static async Task<DefaultEcs.Entity> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
         StreetPoint chosenStreetPoint,
         int seed = 0)
     {
-        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
-        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
-
-        float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
-        
         int carIdx = (int)(rnd.GetFloat() * 4f);
         int colorIdx = (int)(rnd.GetFloat() * (float)_primarycolors.Count);
-
-
+        var modelProperties = new ModelProperties()
+        {
+            ["primarycolor"] = _primarycolors[colorIdx],
+        };
+        string strModel = _carFileName(carIdx);
+        float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
+        
+        engine.behave.IBehavior iBehavior = 
+            new car3.Behavior(worldFragment.Engine, clusterDesc, chosenStreetPoint, seed)
+            {
+                Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
+            };
+        var sound = _getCar3Sound(carIdx);
         ModelCacheParams mcp = new()
         {
-            Url = _carFileName(carIdx),
-            Properties = new()
-            {
-                ["primarycolor"] = _primarycolors[colorIdx],
-            },
+            Url = strModel,
+            Properties = new(modelProperties),
             Params = new()
             {
                 GeomFlags = 0 | InstantiateModelParams.CENTER_X
@@ -133,130 +137,93 @@ class CharacterCreator : engine.world.ICreator
                               | InstantiateModelParams.PHYSICS_DETECTABLE
                               | InstantiateModelParams.PHYSICS_TANGIBLE
                               | InstantiateModelParams.PHYSICS_CALLBACKS
-                              ,
-                MaxDistance = propMaxDistance
+                ,
+                MaxDistance = propMaxDistance,
+                
+                CollisionLayers = 0x0002,
             }
         };
         
         Model model = await I.Get<ModelCache>().LoadModel(mcp);
 
+        return GenerateCharacter(
+            clusterDesc, worldFragment, chosenStreetPoint, 
+            model, mcp, iBehavior, sound);
+    }
+
+    
+    public static void SetupCharacterMT(
+        DefaultEcs.Entity eTarget,
+        ClusterDesc clusterDesc,
+        Fragment worldFragment,
+        StreetPoint chosenStreetPoint,
+        Model model,
+        ModelCacheParams mcp,
+        engine.behave.IBehavior? iBehavior,
+        engine.audio.Sound? sound)
+    {
+        var wf = worldFragment;
+        int fragmentId = worldFragment.NumericalId;
+
+        eTarget.Set(new engine.world.components.Owner(fragmentId));
+
+        /*
+         * We already setup the FromModel in case we utilize one of the characters as
+         * subject of a Quest.
+         */
+        eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
+
+        if (iBehavior != null)
+        {
+            eTarget.Set(new engine.behave.components.Behavior()
+            {
+                Provider = iBehavior,
+                MaxDistance = (short) mcp.Params.MaxDistance
+            });
+        }
+
+        if (sound != null)
+        {
+            eTarget.Set(new engine.audio.components.MovingSound(
+                sound, mcp.Params.MaxDistance));
+        }
+
+        /*
+         * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
+         * That way, the character will not be cleaned up immediately.
+         */
+        eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
+            Matrix4x4.CreateTranslation(worldFragment.Position)));
+
+        I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
+    }
+    
+    
+    public static DefaultEcs.Entity GenerateCharacter(
+        ClusterDesc clusterDesc,
+        Fragment worldFragment,
+        StreetPoint chosenStreetPoint,
+        Model model,
+        ModelCacheParams mcp,
+        engine.behave.IBehavior? iBehavior,
+        engine.audio.Sound? sound)
+    {
+        TaskCompletionSource<DefaultEcs.Entity> taskCompletionSource = new();
+        Task<DefaultEcs.Entity> taskResult = taskCompletionSource.Task;
+
         var wf = worldFragment;
 
         int fragmentId = worldFragment.NumericalId;
 
-#if false
-        /*
-         * Now, first, from any of the worker threads, prepare the physics.
-         * There's no contact listeners etc added and they're off, so no worries.
-         */
-        engine.physics.Object po;
-        BodyReference prefSphere;
-        lock (wf.Engine.Simulation)
+        wf.Engine.QueueEntitySetupAction(EntityName, eTarget =>
         {
-            var shape = _shapeFactory.GetSphereShape(jInstanceDesc.AABBTransformed.Radius);
-            po = new engine.physics.Object(wf.Engine, default, Vector3.Zero, Quaternion.Identity, shape);
-            prefSphere = wf.Engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-            prefSphere.Awake = false;
-        }
-#endif
-        /*
-         * Now, using the prepared physics, add the actual entity components.
-         */
-        var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
-        {
-            eTarget.Set(new engine.world.components.Owner(fragmentId));
-
-            eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
-
-            eTarget.Set(new engine.behave.components.Behavior(
-                new car3.Behavior(wf.Engine, clusterDesc, chosenStreetPoint, seed)
-                {
-                    Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
-                })
-            {
-                MaxDistance = (short)propMaxDistance
-            });
-
-            eTarget.Set(new engine.audio.components.MovingSound(
-                _getCar3Sound(carIdx), 150f));
-
-
-#if false
-                engine.physics.CollisionProperties collisionProperties =
-                    new engine.physics.CollisionProperties
-                    {
-                        Entity = eTarget,
-                        Flags =
-                            CollisionProperties.CollisionFlags.IsTangible
-                            | CollisionProperties.CollisionFlags.IsDetectable
-                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                        Name = PhysicsName,
-                        LayerMask = 0x0002,
-                    };
-                po.CollisionProperties = collisionProperties;
-                po.Entity = eTarget;
-                eTarget.Set(new engine.physics.components.Body(po, prefSphere));
-#endif
-            /*
-             * We need to set a preliminary Transform3World asset. Invisible, but inside the fragment.
-             */
-            eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
-                Matrix4x4.CreateTranslation(worldFragment.Position)));
-
-#if false
-                /*
-                 * Finally, remember us as the creator, so that the car will be recreated after loading.
-                 */
-                eTarget.Set(new engine.world.components.Creator()
-                {
-                    Id = carIdx, 
-                    CreatorId = (ushort) I.Get<CreatorRegistry>().FindCreatorId(I.Get<CharacterCreator>())
-                });
-#endif
-            I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
-            
+            SetupCharacterMT(eTarget,
+                clusterDesc, worldFragment, chosenStreetPoint,
+                model, mcp, iBehavior, sound);
             taskCompletionSource.SetResult(eTarget);
-
         });
-        wf.Engine.QueueEntitySetupAction(EntityName, tSetupEntity);
-
-
+        
         return taskResult.Result;
     }
 
-
-    // ICreator
-    public void SetupEntityFrom(DefaultEcs.Entity eLoaded, in JsonElement je)
-    {
-        /*
-         * We might have cars serialized we do want to have restored.
-         * Get them restored.
-         */        
-    }
-
-
-    public void SaveEntityTo(DefaultEcs.Entity eCar, out JsonNode jn)
-    {
-        if (!eCar.Has<engine.behave.components.Behavior>())
-        {
-            jn = null;
-            return;
-        }
-        ref var cBehavior = ref eCar.Get<engine.behave.components.Behavior>();
-                
-        /*
-         * We might want to save some cars.
-         * If we are here, we previously marked them with a Creator tag.
-         */
-        var jo = new JsonObject();
-        jn = jo;
-        if (cBehavior.Provider != null)
-        {
-            cBehavior.Provider.SaveTo(jo);
-        }
-    }
-
-    public CharacterCreator()
-    {
-    }
 }

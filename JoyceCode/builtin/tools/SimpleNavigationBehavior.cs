@@ -51,22 +51,6 @@ public class SimpleNavigationBehavior : ABehavior
     }
 
 
-    public override Func<Task> SetupFrom(JsonElement je) => new (async () =>
-    {
-        _qPrevRotation = ToQuaternion(je.GetProperty("sno").GetProperty("prevRotation"));
-        _inav.SetupFrom(je);
-    });
-
-    
-    public override void SaveTo(JsonObject jo)
-    {
-        JsonObject joSNO = new JsonObject();
-        joSNO.Add("prevRotation", From(_qPrevRotation) );
-        jo.Add("sno", joSNO);
-        _inav.SaveTo(jo);
-    }
-
-
     public SimpleNavigationBehavior(
         in engine.Engine engine0,
         in INavigator inav

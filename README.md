@@ -255,6 +255,14 @@ Therefore we introduce two concepts: creators, and owners.
 - Owners: Are capable of determining the life-time of an object and responsible 
   for disposing it after use.
 
+The easiest and preferrable way is to have an entity recreated using automatic
+generic deserialization. Generic deser is applied to all entities that
+carry a creator id.
+
+In addition, if the creator id is > CreatorId_HardcodeMax, the ICreator that
+is registered for this id is asked to serialize / deserialize that particular
+interface.
+
 To make all this possible during init/load/save/garbage collect, each
 entity may be associated with the Owner component that contains both the
 creator and the owner id. During save/load/new/garbage collect cycles, the 
@@ -262,7 +270,8 @@ engine this way can select the proper creator to setup the entity accordingly,
 during run-time, it can be deleted accordingly. 
 
 Copmponents have serialization information on their own: They can have the
-persistable attribute set
+persistable attribute set.
+
 
 ### Use Cases
 
@@ -306,3 +315,12 @@ itself with the Saver module, using its OnBeforeSaveGame and OnAfterLoadGame hoo
 
 The narration is based on inky. It hooks into the savegame system to be able to 
 restore itself.
+
+## Pickable objects
+
+All pickable objects are kept inside the PickableDirectory. This holds the
+descriptions and the associated actions for the objects. The Pickabledirectory 
+is populated from the game definition json.
+During serialization, pickable objects refer to their description using a 
+string path.
+

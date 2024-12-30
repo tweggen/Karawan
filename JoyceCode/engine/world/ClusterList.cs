@@ -114,23 +114,10 @@ namespace engine.world
         }
         
 
-        private ClusterList() 
+        public ClusterList() 
         {
             _listClusters = new List<ClusterDesc>();
             _octreeClusters = new( MetaGen.MaxWidth, Vector3.Zero, 100f, 1.2f);
-        }
-
-        
-        public static ClusterList Instance()
-        {
-            lock( _lockObject)
-            {
-                if( null==_instance )
-                {
-                    _instance = new ClusterList();
-                }
-                return _instance;
-            }
         }
     }
 }

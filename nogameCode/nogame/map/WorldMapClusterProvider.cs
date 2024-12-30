@@ -22,7 +22,8 @@ public class WorldMapClusterProvider : IWorldMapProvider
     public void WorldMapCreateEntities(Entity parentEntity, uint cameraMask)
     {
         var e = I.Get<engine.Engine>();
-        var clusterList = engine.world.ClusterList.Instance();
+        ClusterList clusterList;
+        clusterList = I.Get<ClusterList>();
         foreach (var clusterDesc in clusterList.GetClusterList())
         {
             float width = 240f;
@@ -93,7 +94,7 @@ public class WorldMapClusterProvider : IWorldMapProvider
         m2fb *= Matrix3x2.CreateTranslation(
             fbWidth/2f, fbHeight/2f);
         
-        var clusterList = engine.world.ClusterList.Instance();
+        var clusterList = I.Get<ClusterList>();
         foreach (var clusterDesc in clusterList.GetClusterList())
         {
             _drawClusterBase(target, clusterDesc, m2fb);

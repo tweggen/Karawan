@@ -152,7 +152,7 @@ public class SpawnOperator : ISpawnOperator
                         StreetPoint? chosenStreetPoint = CharacterCreator.ChooseStreetPoint(_rnd,  worldFragment, cd);
                         if (chosenStreetPoint != null)
                         {
-                            eCharacter = await CharacterCreator.GenerateCharacter(
+                            eCharacter = await CharacterCreator.GenerateRandomCharacter(
                                 _rnd, cd, worldFragment, chosenStreetPoint, _seed);
                             ++_seed;
                         }
