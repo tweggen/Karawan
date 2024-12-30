@@ -257,8 +257,12 @@
   },
   "quests":
   {
-    "nogame.quests.VisitAgentTwelve.Quest": null,
-    "nogame.quests.HelloFishmonger.Quest": null
+    "nogame.quests.VisitAgentTwelve.Quest": {
+      "implementation": "nogame.quests.VisitAgentTwelve.Quest.Instantiate"
+    },
+    "nogame.quests.HelloFishmonger.Quest": {
+      "implementation": "nogame.quests.HelloFishmonger.Quest.Instantiate"
+    }
   },
   "layers":
   {

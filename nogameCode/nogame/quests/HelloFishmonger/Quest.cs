@@ -18,7 +18,7 @@ using Behavior = engine.behave.components.Behavior;
 
 namespace nogame.quests.HelloFishmonger;
 
-public class Quest : AModule, IQuest
+public class Quest : AModule, IQuest, ICreator
 {
     private ModelCacheParams _mcp;
     private Model _model;
@@ -41,7 +41,7 @@ public class Quest : AModule, IQuest
     }
 
 
-    public string Name { get; set; }
+    public string Name { get; set; } = typeof(Quest).FullName;
 
     public Description GetDescription()
     {
@@ -228,6 +228,12 @@ public class Quest : AModule, IQuest
     }
 
 
+    internal void _prepare()
+    {
+        _engine = I.Get<Engine>();
+    }
+    
+
     /**
      * Re-create this quest's entities while deserializing.
      * We noted ourselves as creator to the car we need to chase.
@@ -248,5 +254,14 @@ public class Quest : AModule, IQuest
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
         jn = JsonValue.Create("no additional info from HelloFishmonger yet"); 
+    }
+
+    public static IQuest Instantiate()
+    {
+        var quest = new Quest();
+        // TXWTODO: How to unregister?
+        I.Get<CreatorRegistry>().RegisterCreator(quest);
+        quest._prepare();
+        return quest;
     }
 }

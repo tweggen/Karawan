@@ -38,7 +38,7 @@ public class Quest : AModule, IQuest, ICreator
     }
 
     
-    public string Name { get; set; }
+    public string Name { get; set; } = typeof(Quest).FullName;
 
     public Description GetDescription()
     {
@@ -139,13 +139,18 @@ public class Quest : AModule, IQuest, ICreator
         
         _engine.QueueMainThreadAction(() =>
         {
-            DestinationPosition = _computeTargetLocationLT();
-
             /*
              * Create a destination marker.
              */
             _createToLocation(DestinationPosition);
         });
+    }
+
+
+    private void _prepare()
+    {
+        _engine = I.Get<Engine>();
+        DestinationPosition = _computeTargetLocationLT();
     }
     
 
@@ -180,4 +185,15 @@ public class Quest : AModule, IQuest, ICreator
     {
         jn = JsonValue.Create("no additional info from VisitAgentTwelve yet.");
     }
+
+
+    public static IQuest Instantiate()
+    {
+        var quest = new Quest();
+        // TXWTODO: How to unregister?
+        I.Get<CreatorRegistry>().RegisterCreator(quest);
+        quest._prepare();
+        return quest;
+    }
 }
+

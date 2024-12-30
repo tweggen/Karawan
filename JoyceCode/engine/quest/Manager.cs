@@ -27,7 +27,7 @@ public class Manager : ObjectFactory<string, IQuest> /* , ICreator */
     
     public void ActivateQuest(string questName)
     {
-        engine.quest.IQuest quest = I.Get<engine.quest.Manager>().Get(questName);
+        engine.quest.IQuest quest = Get(questName);
         if (null == quest)
         {
             ErrorThrow<ArgumentException>($"Requested to start unknown quest {questName}");

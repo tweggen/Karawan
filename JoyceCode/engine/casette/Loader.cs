@@ -5,9 +5,11 @@ using System.Numerics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Android.Security.Keystore;
 using builtin.map;
 using engine.joyce;
 using engine.meta;
+using engine.quest;
 using engine.world;
 using static engine.Logger;
 
@@ -599,6 +601,123 @@ public class Loader
     }
 
 
+    enum CreationType
+    {
+        Undefined = 0,
+        FactoryMethod,
+        Constructor
+    }
+    
+    /**
+     * Return a factory method according to the description in the element.
+     */
+    private Func<object> _createFactoryMethod(string key, JsonElement jeValue)
+    {
+        string strClassName = default;
+        string strMethodName = default;
+        CreationType creationType = CreationType.Undefined;
+        
+        if (jeValue.ValueKind == JsonValueKind.Object)
+        {
+            if(jeValue.TryGetProperty("implementation", out var jeImplementation))
+            {
+                string? strImplementation = jeImplementation.GetString();
+                if (!String.IsNullOrWhiteSpace(strImplementation))
+                {
+                    strMethodName = strImplementation;
+                    creationType = CreationType.FactoryMethod;
+                }
+            }
+            
+            if(jeValue.TryGetProperty("className", out var jeClassName))
+            {
+                string? strClassNameCand = jeClassName.GetString();
+                if (!String.IsNullOrWhiteSpace(strClassNameCand))
+                {
+                    strMethodName = strClassNameCand;
+                    creationType = CreationType.Constructor;
+                }
+            }
+        }
+        
+        if (creationType == CreationType.Undefined)
+        {
+            strClassName = key;
+            creationType = CreationType.Constructor;
+        }
+
+        switch (creationType)
+        {
+            default:
+            case CreationType.Undefined:
+                ErrorThrow<ArgumentException>($"Invalid factory definition for {jeValue.ToString()}");
+                return () => 
+                    null;
+            
+            case CreationType.Constructor:
+                return () => engine.rom.Loader.LoadClass(
+                    strDefaultLoaderAssembly, strClassName);
+            
+            case CreationType.FactoryMethod:
+                return () =>
+                {
+                    int lastDot = strMethodName.LastIndexOf('.');
+                    if (-1 == lastDot)
+                    {
+                        ErrorThrow(
+                            $"Invalid implementation name string \"{strMethodName}\": Does not contain a last dot to mark the method.",
+                            m => new ArgumentException(m));
+                    }
+
+                    string className = strMethodName.Substring(0, lastDot);
+                    if (className.Length == 0)
+                    {
+                        ErrorThrow($"Invalid empty class name \"{strMethodName}\".",
+                            m => new ArgumentException(m));
+                    }
+
+                    string methodName = strMethodName.Substring(lastDot + 1);
+                    if (methodName.Length == 0)
+                    {
+                        ErrorThrow($"Invalid empty method name \"{strMethodName}\".",
+                            m => new ArgumentException(m));
+                    }
+
+                    Type t = Type.GetType(className);
+                    if (t == null)
+                    {
+                        foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+                        {
+                            t = a.GetType(className);
+                            if (t != null)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    if (null == t)
+                    {
+                        ErrorThrow($"Class \"{className}\" not found.",
+                            m => new ArgumentException(m));
+                    }
+
+                    var methodInfo = t.GetMethod(methodName);
+                    if (null == methodInfo)
+                    {
+                        ErrorThrow(
+                            $"Method \"{methodName}\"(IDictionary<string, object>) not found in class \"{className}\".",
+                            m => new ArgumentException(m));
+                    }
+        
+                    /*
+                     * Finally, create the instance of the object we shall call.
+                     */
+                    return methodInfo.Invoke(null, new object[] {});
+                };
+        }
+    }
+
+
     public void LoadQuests(JsonElement jeQuests)
     {
         try
@@ -608,32 +727,7 @@ public class Loader
                 try
                 {
                     string questName = pair.Name;
-                    string implementationName = null;
-                    if (pair.Value.ValueKind == JsonValueKind.Object)
-                    {
-                        implementationName = pair.Value.GetProperty("className").GetString();
-                    }
-                    if (String.IsNullOrWhiteSpace(implementationName))
-                    {
-                        implementationName = questName;
-                    }
-                    
-                    I.Get<engine.quest.Manager>().RegisterFactory(questName, (_) =>
-                        {
-                            quest.IQuest quest = null;
-                            try
-                            {
-                                quest = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName)
-                                    as engine.quest.IQuest;
-                                quest.Name = questName;
-                            }
-                            catch (Exception e)
-                            {
-                                Error($"Unable to load quest {questName}, exception {e}.");
-                            }
-
-                            return quest;
-                        });
+                    I.Get<engine.quest.Manager>().RegisterFactory(questName, _ => _createFactoryMethod(pair.Name, pair.Value)() as engine.quest.IQuest);
                 }
                 catch (Exception e)
                 {

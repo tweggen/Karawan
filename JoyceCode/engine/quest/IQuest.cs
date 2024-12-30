@@ -20,4 +20,10 @@ public interface IQuest : IModule
      * Is the quest active right now?
      */
     public bool IsActive { get; set; }
+    
+    
+    // TXWTODO: let the quest have a validation method on startup
+    // public bool ValidateWorld();
 }
+
+
