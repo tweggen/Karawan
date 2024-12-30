@@ -151,6 +151,54 @@ class CharacterCreator
             model, mcp, iBehavior, sound);
     }
 
+    
+    public static void SetupCharacterMT(
+        DefaultEcs.Entity eTarget,
+        ClusterDesc clusterDesc,
+        Fragment worldFragment,
+        StreetPoint chosenStreetPoint,
+        Model model,
+        ModelCacheParams mcp,
+        engine.behave.IBehavior? iBehavior,
+        engine.audio.Sound? sound)
+    {
+        var wf = worldFragment;
+        int fragmentId = worldFragment.NumericalId;
+
+        eTarget.Set(new engine.world.components.Owner(fragmentId));
+
+        /*
+         * We already setup the FromModel in case we utilize one of the characters as
+         * subject of a Quest.
+         */
+        eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
+
+        if (iBehavior != null)
+        {
+            eTarget.Set(new engine.behave.components.Behavior()
+            {
+                Provider = iBehavior,
+                MaxDistance = (short) mcp.Params.MaxDistance
+            });
+        }
+
+        if (sound != null)
+        {
+            eTarget.Set(new engine.audio.components.MovingSound(
+                sound, mcp.Params.MaxDistance));
+        }
+
+        /*
+         * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
+         * That way, the character will not be cleaned up immediately.
+         */
+        eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
+            Matrix4x4.CreateTranslation(worldFragment.Position)));
+
+        I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
+    }
+    
+    
     public static DefaultEcs.Entity GenerateCharacter(
         ClusterDesc clusterDesc,
         Fragment worldFragment,
@@ -167,49 +215,15 @@ class CharacterCreator
 
         int fragmentId = worldFragment.NumericalId;
 
-        /*
-         * Now, using the prepared physics, add the actual entity components.
-         */
-        var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
+        wf.Engine.QueueEntitySetupAction(EntityName, eTarget =>
         {
-            eTarget.Set(new engine.world.components.Owner(fragmentId));
-
-            /*
-             * We already setup the FromModel in case we utilize one of the characters as
-             * subject of a Quest.
-             */
-            eTarget.Set(new engine.joyce.components.FromModel() { Model = model, ModelCacheParams = mcp });
-
-            if (iBehavior != null)
-            {
-                eTarget.Set(new engine.behave.components.Behavior()
-                {
-                    Provider = iBehavior,
-                    MaxDistance = (short) mcp.Params.MaxDistance
-                });
-            }
-
-            if (sound != null)
-            {
-                eTarget.Set(new engine.audio.components.MovingSound(
-                    sound, mcp.Params.MaxDistance));
-            }
-
-            /*
-             * We need to set a preliminary Transform3World component. Invisible, but inside the fragment.
-             * That way, the character will not be cleaned up immediately.
-             */
-            eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
-                Matrix4x4.CreateTranslation(worldFragment.Position)));
-
-            I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
-            
+            SetupCharacterMT(eTarget,
+                clusterDesc, worldFragment, chosenStreetPoint,
+                model, mcp, iBehavior, sound);
             taskCompletionSource.SetResult(eTarget);
-
         });
-        wf.Engine.QueueEntitySetupAction(EntityName, tSetupEntity);
-
-
+        
         return taskResult.Result;
     }
+
 }

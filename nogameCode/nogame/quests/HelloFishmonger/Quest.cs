@@ -139,21 +139,6 @@ public class Quest : AModule, IQuest
     }
 
 
-    private DefaultEcs.Entity _createCarAt(ClusterDesc clusterDesc, Fragment worldFragment, StreetPoint streetPoint)
-    {
-        DefaultEcs.Entity entity = CharacterCreator.GenerateCharacter(
-            clusterDesc, worldFragment, streetPoint, 
-            _model, _mcp,
-            new characters.car3.Behavior(_engine, clusterDesc, streetPoint, 100)
-            {
-                Speed = 35f
-            },
-            null
-        );
-        return entity;
-    }
-
-
     private async Task _startQuest()
     {
         /*
@@ -184,13 +169,19 @@ public class Quest : AModule, IQuest
         
         _model = await I.Get<ModelCache>().LoadModel(_mcp);
         
-        /*
-         * ... then kick off the action in the logical thread.
-         */
-        _engine.QueueMainThreadAction(() =>
+        _selectStartPoint(out var clusterDesc, out var worldFragment, out var streetPoint);
+        _engine.QueueEntitySetupAction(CharacterCreator.EntityName, eTarget =>
         {
-            _selectStartPoint(out var clusterDesc, out var worldFragment, out var streetPoint);
-            _createCarAt(clusterDesc, worldFragment, streetPoint);
+            CharacterCreator.SetupCharacterMT(
+                eTarget,
+                clusterDesc, worldFragment, streetPoint, 
+                _model, _mcp,
+                new characters.car3.Behavior(_engine, clusterDesc, streetPoint, 100)
+                {
+                    Speed = 35f
+                },
+                null
+            );
         });
     }
     
