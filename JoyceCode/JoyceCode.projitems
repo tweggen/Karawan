@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)builtin\map\systems\" />
-    <Folder Include="$(MSBuildThisFileDirectory)engine\quest\components\" />
     <Folder Include="$(MSBuildThisFileDirectory)engine\world\systems\" />
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +29,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\FromModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstantiateModelParams.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCacheParams.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GenericIdRegistry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FollowCameraController.cs" />

@@ -1,5 +1,7 @@
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using engine.news;
 using static engine.Logger;
 
@@ -9,10 +11,16 @@ namespace engine.quest;
 public class Manager : ObjectFactory<string, IQuest>
 {
     private Object _lo = new();
+    private SortedDictionary<string, IQuest> _mapOpenQuests = new();
+
     
-    private IQuest? _currentQuest = null;
+    private string _questEntityName(string questName)
+    {
+        return $"quest {questName}";
+    }
     
-    public IQuest ActivateQuest(string questName)
+    
+    public void ActivateQuest(string questName)
     {
         engine.quest.IQuest quest = I.Get<engine.quest.Manager>().Get(questName);
         if (null == quest)
@@ -20,33 +28,57 @@ public class Manager : ObjectFactory<string, IQuest>
             ErrorThrow<ArgumentException>($"Requested to start unknown quest {questName}");
         }
 
-        quest.ModuleActivate();
-
-        lock (_lo)
+        try
         {
-            _currentQuest = quest;
-        }
-        
-        return quest;
-    }
-
-
-    public void DeactivateQuest(IQuest quest)
-    {
-        lock (_lo)
-        {
-            if (quest != _currentQuest)
+            quest.ModuleActivate();
+            lock (_lo)
             {
-                return;
+                _mapOpenQuests.Add(questName, quest);
             }
 
-            _currentQuest = null;
+            I.Get<Engine>().QueueEntitySetupAction(_questEntityName(questName), e =>
+            {
+                e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
+            });
+        }
+        catch (Exception e)
+        {
+            Error($"Exception activating quest: {e}.");
+        }
+
+    }
+
+    
+    public void DeactivateQuest(IQuest quest)
+    {
+        string questName = quest.Name;
+        lock (_lo)
+        {
+            if (!_mapOpenQuests.ContainsKey(questName))
+            {
+                Error($"Asked to close quest that had not been open.");
+                return;
+            }
         }
         
         quest.ModuleDeactivate();
-        quest.Dispose();
+        
+        /*
+         * Finally, remove the quest from the entity database.
+         * Note, that we do not dispose the quest object.
+         */
+        I.Get<Engine>().QueueMainThreadAction(() =>
+        {
+            DefaultEcs.Entity eQuest = I.Get<Engine>().GetEcsWorld().GetEntities()
+                .With<engine.quest.components.Quest>()
+                .With<engine.joyce.components.EntityName>()
+                .AsEnumerable()
+                .FirstOrDefault(e => e.Get<engine.joyce.components.EntityName>().Name == _questEntityName(questName));
 
-        I.Get<Saver>().Save("quest deactivated");
+            eQuest.Dispose();
+            
+            I.Get<Saver>().Save("quest deactivated");
+        });
     }
 }
 

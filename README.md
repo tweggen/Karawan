@@ -272,6 +272,20 @@ during run-time, it can be deleted accordingly.
 Copmponents have serialization information on their own: They can have the
 persistable attribute set.
 
+### Deserialization
+
+#### First pass
+
+First, all entities are deserialized by creating the objects with the default
+ctor and setting the properties from json. Alternatively, a custom defined
+JsonConverter is used to setup the entity. After the component has been  setup
+that way, any SetupFrom function is called on the component if it exists.
+
+Finally, if the entity had a creator tag serialized, the ICreator of this 
+component is called.
+
+The setup logic takes care that the ICreator SetupFrom is called only after
+all individual SetupFrom Tasks have terminated.
 
 ### Use Cases
 

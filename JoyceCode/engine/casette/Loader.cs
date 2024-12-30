@@ -609,7 +609,7 @@ public class Loader
                 {
                     string questName = pair.Name;
                     string implementationName = null;
-                    if (pair.Value.ValueKind == JsonValueKind.String)
+                    if (pair.Value.ValueKind == JsonValueKind.Object)
                     {
                         implementationName = pair.Value.GetProperty("className").GetString();
                     }
@@ -618,7 +618,22 @@ public class Loader
                         implementationName = questName;
                     }
                     
-                    I.Get<engine.quest.Manager>().RegisterFactory(questName, (_) => engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName) as engine.quest.IQuest);
+                    I.Get<engine.quest.Manager>().RegisterFactory(questName, (_) =>
+                        {
+                            quest.IQuest quest = null;
+                            try
+                            {
+                                quest = engine.rom.Loader.LoadClass(strDefaultLoaderAssembly, implementationName)
+                                    as engine.quest.IQuest;
+                                quest.Name = questName;
+                            }
+                            catch (Exception e)
+                            {
+                                Error($"Unable to load quest {questName}, exception {e}.");
+                            }
+
+                            return quest;
+                        });
                 }
                 catch (Exception e)
                 {

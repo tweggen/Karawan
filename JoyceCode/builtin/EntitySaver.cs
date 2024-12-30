@@ -110,6 +110,10 @@ public class EntitySaver : AModule
                 joComponents = componentReader.JOComponents;
             }
 
+            /*
+             * Now, if we have a creator, have it save everything it wants to this
+             * object.
+             */
             ref var cCreator = ref eCreated.Get<engine.world.components.Creator>();
             if (cCreator.CreatorId > Creator.CreatorId_HardcodeMax)
             {
@@ -152,8 +156,10 @@ public class EntitySaver : AModule
      * Must be called from logical thread, returns atomically for main thread operation, will
      * triggger streaming operations.
      */
-    public void LoadAll(JsonElement jeAll)
+    public Task LoadAll(JsonElement jeAll)
     {
+        List<Task> listSetupTasks = new();
+        
         var context = new Context();
         JsonSerializerOptions serializerOptions = new()
         {
@@ -170,39 +176,74 @@ public class EntitySaver : AModule
 
             if (jeEntity.TryGetProperty("components", out var jeComponents))
             {
+                /*
+                 * First, setup all components from json.
+                 */
                 foreach (var jpComponent in jeComponents.EnumerateObject())
                 {
                     var strComponentName = jpComponent.Name;
                     var jeComponent = jpComponent.Value;
                     var type = Type.GetType(strComponentName)!;
 
+                    Object comp = null;
                     try
                     {
                         string rawText = jeComponent.GetRawText();
-                        var comp = JsonSerializer.Deserialize(rawText, type, serializerOptions)!;
-
-                        /*
-                         * Set the deserialized component to the entity.
-                         */
-                        MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
-                            .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
-                            .FirstOrDefault(m => true);
-                        var genericMethod = baseMethod.MakeGenericMethod(type);
-                        genericMethod.Invoke(e, new object[] { comp });
+                        comp = JsonSerializer.Deserialize(rawText, type, serializerOptions)!;
                     }
                     catch (Exception exception)
                     {
-                        Error($"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}: {exception}");
+                        Error(
+                            $"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}: {exception}");
                         continue;
+                    }
+
+                    /*
+                     * If creating an object from properties failed or no properties had been given.
+                     */
+                    if (null == comp)
+                    {
+                        comp = Activator.CreateInstance(type);
+                    }
+
+                    /*
+                     * Set the deserialized component to the entity.
+                     */
+                    MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
+                        .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
+                        .FirstOrDefault(m => true);
+                    var genericMethod = baseMethod.MakeGenericMethod(type);
+                    genericMethod.Invoke(e, new object[] { comp });
+
+                    /*
+                     * Finally, call setupfrom for each component that defines it.
+                     */
+                    MethodInfo? setupFromMethod = type.GetMethod("SetupFrom");
+                    if (null != setupFromMethod)
+                    {
+                        try
+                        {
+                            Func<Task>? taskSetup;
+                            taskSetup = (Func<Task>)setupFromMethod.Invoke(comp, new object[] { jeComponent });
+                            if (null != taskSetup)
+                            {
+                                listSetupTasks.Add(taskSetup());
+                            }
+                        }
+                        catch (Exception exception)
+                        {
+                            Error($"Unable to create and execute deser method for {type.Name}: {exception}");
+                        }
                     }
 
                 }
             }
-
+        
             if (jeEntity.TryGetProperty("creator", out var jeCreator))
             {
             }
 
         }
+        return Task.WhenAll(listSetupTasks);
     }
 }

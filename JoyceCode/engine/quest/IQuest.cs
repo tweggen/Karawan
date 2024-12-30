@@ -9,6 +9,11 @@ public class Description
 
 public interface IQuest : IModule
 {
+    /**
+     * A quest name for internal operations. 
+     */
+    public string Name { get; set;  }
+    
     Description GetDescription();
 
     /**

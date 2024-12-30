@@ -31,6 +31,8 @@ public class Quest : AModule, IQuest
         I.Get<nogame.modules.story.Narration>().TriggerPath("agent12");
     }
 
+    
+    public string Name { get; set; }
 
     public Description GetDescription()
     {

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
@@ -12,13 +13,12 @@ using engine.streets;
 using engine.world;
 using nogame.characters.car3;
 using nogame.cities;
-using Silk.NET.Core.Native;
 using static engine.Logger;
 using Behavior = engine.behave.components.Behavior;
 
 namespace nogame.quests.HelloFishmonger;
 
-public class Quest : AModule, IQuest, ICreator
+public class Quest : AModule, IQuest
 {
     private ModelCacheParams _mcp;
     private Model _model;
@@ -40,6 +40,8 @@ public class Quest : AModule, IQuest, ICreator
         I.Get<nogame.modules.story.Narration>().TriggerPath("firstPubSecEncounter");
     }
 
+
+    public string Name { get; set; }
 
     public Description GetDescription()
     {
@@ -224,24 +226,26 @@ public class Quest : AModule, IQuest, ICreator
         _engine.Run(_startQuest);
     }
 
-    
+
     /**
      * Re-create this quest's entities while deserializing.
      * We noted ourselves as creator to the car we need to chase.
      * Therefore serialization will have taken care to serialize
      * the basic car entity.
      */
-    public void SetupEntityFrom(Entity eLoaded, in JsonElement je)
+    public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
     {
-    }
+        // TXWTODO: This should setup our mission car.
+        return;
+    });
 
     
     /**
      * Serialize non-basic information about this quest's entities.
-     * This mostly 
+     * This is used to save e.g. our mission car. 
      */
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
-        throw new System.NotImplementedException();
+        jn = JsonValue.Create("no additional info yet");
     }
 }
