@@ -49,11 +49,12 @@ public class Quest : AModule, IQuest
     }
 
     
-    public bool IsActive()
+    public bool IsActive
     {
-        return _isActive;
+        get => _isActive;
+        set => _isActive = value;
     }
-
+    
 
     public override void ModuleDeactivate()
     {
@@ -246,6 +247,6 @@ public class Quest : AModule, IQuest
      */
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
-        jn = JsonValue.Create("no additional info yet");
+        jn = JsonValue.Create("no additional info from HelloFishmonger yet"); 
     }
 }

@@ -13,7 +13,7 @@ using static engine.Logger;
 namespace engine.quest;
 
 
-public class Manager : ObjectFactory<string, IQuest>, ICreator
+public class Manager : ObjectFactory<string, IQuest> /* , ICreator */ 
 {
     private Object _lo = new();
     private SortedDictionary<string, IQuest> _mapOpenQuests = new();
@@ -35,6 +35,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
 
         try
         {
+            quest.IsActive = true;
             quest.ModuleActivate();
             lock (_lo)
             {
@@ -45,7 +46,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             {
                 e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
                 e.Set(new engine.world.components.Creator()
-                    { CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this) });
+                    { CreatorId = I.Get<CreatorRegistry>().FindCreatorId(quest as ICreator) });
             });
         }
         catch (Exception e)
@@ -68,6 +69,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             }
         }
         
+        quest.IsActive = false;
         quest.ModuleDeactivate();
         
         /*
@@ -88,13 +90,17 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
         });
     }
 
+
+    #if false
     public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
     {
     });
 
+    
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
         jn = JsonValue.Create("no content here yet.");
     }
+    #endif
 }
 

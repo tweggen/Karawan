@@ -1,6 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using DefaultEcs;
 using engine;
 using engine.joyce.components;
 using engine.quest;
@@ -12,10 +15,6 @@ namespace nogame.quests.VisitAgentTwelve;
 
 public class Quest : AModule, IQuest, ICreator
 {
-    private bool _isActive = false;
-    
-    private engine.quest.ToLocation _questTarget;
-    
     private Description _description = new()
     {
         Title = "Come to the location.",
@@ -25,6 +24,12 @@ public class Quest : AModule, IQuest, ICreator
     };
 
 
+    private bool _isActive = false;
+
+    public Vector3 DestinationPosition { get; set; }
+    
+    private engine.quest.ToLocation _questTarget;
+    
     private void _onReachTarget()
     {
         // TXWTODO: Is this the proper way to advance the logic?
@@ -41,30 +46,38 @@ public class Quest : AModule, IQuest, ICreator
     }
 
     
-    public bool IsActive()
+    public bool IsActive
     {
-        return _isActive;
+        get => _isActive;
+        set => _isActive = value;
+    }
+
+    /**
+     * Create the ToLocation submodule, including the quest marker.
+     * This is based on the destination point given to us.
+     */
+    private void _createToLocation(Vector3 v3Marker)
+    {
+        var v3Target = v3Marker with
+        {
+            Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(v3Marker) +
+                engine.world.MetaGen.ClusterNavigationHeight
+        };
+
+        _questTarget = new engine.quest.ToLocation()
+        {
+            RelativePosition = v3Target,
+            SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+            SensitiveRadius = 10f,
+            MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+            OnReachTarget = _onReachTarget
+        };
+        _questTarget.ModuleActivate();
     }
 
 
-    public override void ModuleDeactivate()
+    private Vector3 _computeTargetLocationLT()
     {
-        _questTarget?.ModuleDeactivate();
-        _questTarget?.Dispose();
-        _questTarget = null;
-        
-        _engine.RemoveModule(this);
-        _isActive = false;
-        base.ModuleDeactivate();
-    }
-
-
-    public override void ModuleActivate()
-    {
-        base.ModuleActivate();
-        _isActive = true;
-        _engine.AddModule(this);
-        
         /*
          * Test code: Find any bar.
          * This is not smart. We just look for the one closest to the player.
@@ -98,43 +111,64 @@ public class Quest : AModule, IQuest, ICreator
 
         if (default == eClosest)
         {
-            Error($"Unable to find any mark close to player entity.");           
+            Error($"Unable to find any mark close to player entity.");
+            return Vector3.Zero;
         }
 
-        /*
-         * Create a destination marker.
-         */
+        return eClosest.Get<Transform3ToWorld>().Matrix.Translation;
+    }
+    
+
+    public override void ModuleDeactivate()
+    {
+        _questTarget?.ModuleDeactivate();
+        _questTarget?.Dispose();
+        _questTarget = null;
+        
+        _engine.RemoveModule(this);
+        _isActive = false;
+        base.ModuleDeactivate();
+    }
+
+
+    public override void ModuleActivate()
+    {
+        base.ModuleActivate();
+        _isActive = true;
+        _engine.AddModule(this);
+        
+        _engine.QueueMainThreadAction(() =>
         {
-            var v3Marker = eClosest.Get<Transform3ToWorld>().Matrix.Translation;
-            var v3Target = v3Marker with
-            {
-                Y = I.Get<engine.world.MetaGen>().Loader.GetHeightAt(v3Marker) +
-                    engine.world.MetaGen.ClusterNavigationHeight
-            };
+            DestinationPosition = _computeTargetLocationLT();
 
-            _questTarget = new engine.quest.ToLocation()
-            {
-                RelativePosition = v3Target,
-                SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-                SensitiveRadius = 10f,
-                MapCameraMask = nogame.modules.map.Module.MapCameraMask,
-                OnReachTarget = _onReachTarget
-            };
-            _questTarget.ModuleActivate();
-        }
+            /*
+             * Create a destination marker.
+             */
+            _createToLocation(DestinationPosition);
+        });
     }
     
 
     /**
      * Re-create this quest's entities while deserializing.
-     * We noted ourselves as creator to the car we need to chase.
-     * Therefore serialization will have taken care to serialize
-     * the basic car entity.
+     *
+     * This quest requires a quest target marker that is supposed to be
+     * recreated. Until this fully is automated, I recreate it manually.
      */
-        public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
+    public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
     {
-        // TXWTODO: This should setup our mission car.
-        return;
+        /*
+         * No additional data to use.
+         *
+         * If the quest is active:
+         * - Create the ToLocation based on the Destination.
+         */
+
+        if (IsActive)
+        {
+            // TXWTODO: The use cases for creation and restore do not make sense yet.
+            _engine.QueueMainThreadAction(() => _createToLocation(DestinationPosition));
+        }
     });
 
     
@@ -144,7 +178,6 @@ public class Quest : AModule, IQuest, ICreator
      */
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
-        jn = JsonValue.Create("no additional info yet");
+        jn = JsonValue.Create("no additional info from VisitAgentTwelve yet.");
     }
-
 }

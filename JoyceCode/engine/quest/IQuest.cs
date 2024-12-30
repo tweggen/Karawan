@@ -14,10 +14,10 @@ public interface IQuest : IModule
      */
     public string Name { get; set;  }
     
-    Description GetDescription();
+    public Description GetDescription();
 
     /**
      * Is the quest active right now?
      */
-    bool IsActive();
+    public bool IsActive { get; set; }
 }
