@@ -36,6 +36,24 @@ namespace engine.world
         }
 
 
+        public ClusterDesc GetCluster(int clusterId)
+        {
+            // TXWTODO: Introduce a map if requiired.-
+            lock (_lo)
+            {
+                foreach (ClusterDesc cluster in _listClusters)
+                {
+                    if (cluster.Id == clusterId)
+                    {
+                        return cluster;
+                    }
+                }
+
+                return null;
+            }
+        }
+        
+
         private List<ClusterDesc> _listColliding = new ();
         public List<ClusterDesc> IntersectsCluster(in Vector3 va, in Vector3 vb)
         {
@@ -85,20 +103,6 @@ namespace engine.world
         }
         
         
-        /**
-         * Add a new cluster to the list of cluster. 
-         * To keep everything consistent, this method is responsible for adding
-         * the cluster to the catalogue.
-         */
-        public void AddCluster(ClusterDesc clusterDesc)
-        {
-            lock (_lo)
-            {
-                _addClusterNoLock(clusterDesc);
-            }
-        }
-
-
         /**
          * Use the clusters given in this clusterList atomically.
          */

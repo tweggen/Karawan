@@ -48,6 +48,19 @@ public class SegmentNavigator : INavigator
 
     private int _idxNextSegment;
     private List<SegmentEnd> _listSegments;
+    public List<SegmentEnd> ListSegments
+    {
+        get => _listSegments;
+        set
+        {
+            if (value.Count < 2)
+            {
+                ErrorThrow("List of segments must contain at least 2 items.", m => new ArgumentException(m));
+            }
+
+            _listSegments = value;
+        }
+    }
 
 
     private bool _loopSegments;
@@ -167,27 +180,8 @@ public class SegmentNavigator : INavigator
     }
 
 
-    public Func<Task> SetupFrom(JsonElement je) => new(async () =>
+    public void NavigatorLoad()
     {
-        //_qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
-    });
-
-    
-    public void SaveTo(JsonObject jo)
-    {
-        JsonObject joNav = new JsonObject();
-        joNav.Add("speed", _speed );
-        jo.Add("nav", joNav);
-    }
-    
-
-    public SegmentNavigator(List<SegmentEnd> listSegments)
-    {
-        if (listSegments.Count < 2)
-        {
-            ErrorThrow("List of segments must contain at least 2 items.", m => new ArgumentException(m));
-        }
-        _listSegments = listSegments;
         _resetTravel();
     }
 }

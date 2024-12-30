@@ -54,10 +54,17 @@ public class StreetNavigationController : INavigator
     /**
      * Meters above recommended riding level.
      */
-    private float _height = 0f;
+    private float _height = MetaGen.ClusterNavigationHeight;
 
     private ClusterDesc _clusterDesc;
     private StreetPoint _startPoint;
+    
+    public StreetPoint StartPoint
+    {
+        get => _startPoint;
+        set => _startPoint = value;
+    }
+    
     private Stroke _currentStroke;
     private Stroke _nextStroke;
     
@@ -65,11 +72,22 @@ public class StreetNavigationController : INavigator
      * The point we are heading to right now.
      */
     private StreetPoint _targetPoint;
+
+    public StreetPoint TargetPoint
+    {
+        get => _targetPoint; 
+        set => _targetPoint = value;
+    }
     
     /**
      * The point we will go to after we reach targetPoint.
      */
     private StreetPoint _thenPoint;
+    public StreetPoint ThenPoint
+    {
+        get => _thenPoint;
+        set => _thenPoint = value;
+    }
 
     /**
      * Contains the last direction of the character, the length
@@ -446,23 +464,13 @@ public class StreetNavigationController : INavigator
         _vu2LastDirection = new Vector2( _v2LastSpeed.X, _v2LastSpeed.Z);
     }
 
-    
-    public Func<Task> SetupFrom(JsonElement je) => new (async () =>
-    {
-        //_qPrevRotation = ToQuaternion(jo["sno"]["prevRotation"]);
-    });
 
-    
-    public void SaveTo(JsonObject jo)
+    public void NavigatorLoad()
     {
-        JsonObject joNav = new JsonObject();
-        joNav.Add("speed", _speed );
-        joNav.Add("height", _height );
-        joNav.Add("v2Pos", From(_v2Pos) );
-        jo.Add("nav", joNav);
+        NavigatorBehave(1f / 60f);
     }
     
-
+    
     public StreetNavigationController(
         ClusterDesc clusterDesc0,
         StreetPoint startPoint0,
@@ -483,7 +491,5 @@ public class StreetNavigationController : INavigator
 
         _speed = 2.7f * 15f;
 
-        // TXWTODO: Offload this.
-        NavigatorBehave(1f / 60f);
     }
 }

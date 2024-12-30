@@ -111,6 +111,7 @@ public class ConverterRegistry : AModule
          * Builtin types
          */
         _mapConverters.Add(typeof(Matrix4x4), context => new Matrix4x4JsonConverter());
+        _mapConverters.Add(typeof(Vector2), context => new Vector2JsonConverter());
         _mapConverters.Add(typeof(Vector3), context => new Vector3JsonConverter());
         _mapConverters.Add(typeof(Quaternion), context => new QuaternionJsonConverter());
 

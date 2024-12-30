@@ -13,6 +13,7 @@ using engine.joyce;
 using engine.physics;
 using engine.world;
 using engine.streets;
+using nogame.cities;
 using static engine.Logger;   
 
 
@@ -118,9 +119,12 @@ class CharacterCreator
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.car3.maxDistance", 800f);
         
         engine.behave.IBehavior iBehavior = 
-            new car3.Behavior(worldFragment.Engine, clusterDesc, chosenStreetPoint, seed)
+            new car3.Behavior()
             {
-                Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f
+                Navigator = new StreetNavigationController(clusterDesc, chosenStreetPoint, seed)
+                {
+                    Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f    
+                }
             };
         var sound = _getCar3Sound(carIdx);
         ModelCacheParams mcp = new()

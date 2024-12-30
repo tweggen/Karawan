@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Octree;
 using static engine.Logger;
@@ -38,7 +39,6 @@ public class StrokeStore
      */
     public StrokeIntersection IntersectsMayTouchClosest(in Stroke cand, in StreetPoint refSP)
     {
-#if true
         // TXWTODO: This gives the same result.
         _computeStrokeBoundingBox(cand, out var bb);
         if (!_octreeStrokes.GetCollidingNonAlloc(_tmpStrokeList, bb))
@@ -48,9 +48,6 @@ public class StrokeStore
 
         List<Stroke> strokesToCheck = _tmpStrokeList;
         _tmpStrokeList = new();
-#else
-            List<Stroke> strokesToCheck = _listStrokes;
-#endif
         StrokeIntersection closestIntersection = null;
         float closestDist2 = 100000000.0f;
 
@@ -123,7 +120,6 @@ public class StrokeStore
         float minDist,
         in StreetPoint spNot)
     {
-#if true
         // This does not modify the result.
         if (_octreeSP.GetNearbyNonAlloc(sp0.Pos3, minDist, _tmpListNearby))
         {
@@ -161,38 +157,12 @@ public class StrokeStore
         {
             return null;
         }
-#else
-            float minDist2 = minDist * minDist;
-            float minDiff2 = 100000000f;
-            StreetPoint? minSp = null;
-            foreach(var sp in _listPoints )
-            {
-                if (sp0 != sp && spNot != sp)
-                {
-                    var dx = (x - sp.Pos.X);
-                    var dy = (y - sp.Pos.Y);
-                    var dist2 = dx * dx + dy * dy;
-                    if (sp0 != null && sp != null && 539 == sp0.Id && 505 == sp.Id)
-                    {
-                        // trace( $"dist2 is {dist2}");
-                    }
-                    if (dist2 < minDist2)
-                    {
-                        if (dist2 < minDiff2)
-                        {
-                            // trace('from sp0: ${sp0.pos} : sp: ${sp.pos} with $dist2');
-                            minDiff2 = dist2;
-                            minSp = sp;
-                        }
-                    }
-                }
-            }
-            if (null != minSp)
-            {
-                // trace('Returning from sp0: ${sp0.pos} : sp: ${minSp.pos} with $minDiff2');
-            }
-            return minSp;
-#endif
+    }
+
+
+    public StreetPoint GetStreetPoint(int id)
+    {
+        return _listPoints.FirstOrDefault(sp => sp.Id == id);
     }
 
 
@@ -205,7 +175,6 @@ public class StrokeStore
     public StrokeIntersection? GetClosestStroke(
         in StreetPoint sp, float maxDistance)
     {
-#if true
         // TXWTODO: This gives the same result.
         /*
          * Optimized: iterate only through strokes within a reasonable neighbourhood.
@@ -223,12 +192,6 @@ public class StrokeStore
 
         List<Stroke> strokesToIterate = _tmpStrokeList;
         _tmpStrokeList = new();
-#else
-            /*
-             * Unoptimized: Iterate through all strokes
-             */
-            List<Stroke> strokesToIterate = _listStrokes;
-#endif
         if (_traceStrokes) Trace($"Testing point {sp.Pos.ToString()}");
         float closestDist = 100000f; // 100km
         Stroke closestStroke = null;
@@ -279,7 +242,6 @@ public class StrokeStore
      */
     public StrokeIntersection GetClosestPoint(in Stroke stroke, float maxDistance)
     {
-#if true
         // This does not modify the result.
         /*
          * To opimize, we raycast into the octree for points.
@@ -293,9 +255,6 @@ public class StrokeStore
 
         List<StreetPoint> pointsToSearch = _tmpListNearby;
         _tmpListNearby = new();
-#else
-            List<StreetPoint> pointsToSearch = _listPoints;
-#endif
         if (_traceStrokes) Trace($"Testing stroke {stroke.ToString()}");
         float closestDist = 100000f; // 100km
         StreetPoint? closestPoint = null;

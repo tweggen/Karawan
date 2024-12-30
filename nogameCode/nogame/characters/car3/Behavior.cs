@@ -4,6 +4,8 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using DefaultEcs;
+using engine;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
@@ -13,7 +15,6 @@ namespace nogame.characters.car3;
 internal class Behavior :
     builtin.tools.SimpleNavigationBehavior
 {
-    private engine.Engine _engine;
     private StreetNavigationController _snc;
     private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
 
@@ -74,38 +75,9 @@ internal class Behavior :
             _snc.NavigatorSetTransformation(vPos3, qRotation);
         }
     }
-
-    
-    public override Func<Task> SetupFrom(JsonElement je) => base.SetupFrom(je);
     
 
-    
-    public override void SaveTo(JsonObject jo)
+    public Behavior()
     {
-        base.SaveTo(jo);
-    }
-
-   
-    public float Speed
-    {
-        get => _snc.Speed;
-        set => _snc.Speed = value;
-    }
-    
-    
-    public Behavior(
-        in engine.Engine engine0,
-        in engine.world.ClusterDesc clusterDesc0,
-        in engine.streets.StreetPoint streetPoint0,
-        int seed
-    ) : base(
-        engine0, 
-        new StreetNavigationController(clusterDesc0, streetPoint0, seed)
-        {
-            Height = MetaGen.ClusterNavigationHeight
-        })
-    {
-        _engine = engine0;
-        _snc = Navigator as StreetNavigationController;
     }
 }

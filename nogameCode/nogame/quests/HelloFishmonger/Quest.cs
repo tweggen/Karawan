@@ -11,6 +11,7 @@ using engine.quest;
 using engine.streets;
 using engine.world;
 using nogame.characters.car3;
+using nogame.cities;
 using Silk.NET.Core.Native;
 using static engine.Logger;
 using Behavior = engine.behave.components.Behavior;
@@ -175,17 +176,18 @@ public class Quest : AModule, IQuest, ICreator
         _selectStartPoint(out var clusterDesc, out var worldFragment, out var streetPoint);
         _engine.QueueEntitySetupAction(CharacterCreator.EntityName, eTarget =>
         {
-
             /*
              * Create the basic car.
              */
             CharacterCreator.SetupCharacterMT(
                 eTarget,
-                clusterDesc, worldFragment, streetPoint, 
+                clusterDesc, worldFragment, streetPoint,
                 _model, _mcp,
-                new characters.car3.Behavior(_engine, clusterDesc, streetPoint, 100)
+                new characters.car3.Behavior()
                 {
-                    Speed = 35f
+                    Navigator = new StreetNavigationController(clusterDesc, streetPoint, 100) {
+                        Speed = 35f
+                    }
                 },
                 null
             );

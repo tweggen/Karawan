@@ -4,6 +4,8 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using DefaultEcs;
+using engine;
 using engine.behave;
 using engine.physics;
 using static engine.Logger;
@@ -13,7 +15,6 @@ namespace builtin.tools;
 
 public class SimpleNavigationBehavior : ABehavior
 {
-    engine.Engine _engine;
     INavigator _inav;
     private Quaternion _qPrevRotation = Quaternion.Identity;
 
@@ -21,6 +22,7 @@ public class SimpleNavigationBehavior : ABehavior
     public INavigator Navigator
     {
         get => _inav;
+        set => _inav = value;
     }
     
     
@@ -51,12 +53,9 @@ public class SimpleNavigationBehavior : ABehavior
     }
 
 
-    public SimpleNavigationBehavior(
-        in engine.Engine engine0,
-        in INavigator inav
-    )
+    public override void OnAttach(in Engine engine0, in Entity entity)
     {
-        _engine = engine0;
-        _inav = inav;
+        base.OnAttach(engine0, entity);
+        _inav.NavigatorLoad();
     }
 }

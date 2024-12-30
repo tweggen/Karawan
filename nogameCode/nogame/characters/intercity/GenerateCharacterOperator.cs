@@ -56,8 +56,9 @@ public class GenerateCharacterOperator : IWorldOperator
             }
         };
         
-        SegmentNavigator segnav = new SegmentNavigator(listSegments)
+        SegmentNavigator segnav = new SegmentNavigator()
         {
+            ListSegments = listSegments,
             LoopSegments = true,
             Speed = 60f
         };
@@ -83,8 +84,10 @@ public class GenerateCharacterOperator : IWorldOperator
         var tSetupEntity = new Action<DefaultEcs.Entity>((DefaultEcs.Entity eTarget) =>
         {
             eTarget.Set(new engine.behave.components.Behavior(
-                new builtin.tools.SimpleNavigationBehavior(_engine, segnav))
+                new builtin.tools.SimpleNavigationBehavior()
                 {
+                    Navigator = segnav
+                }) {
                     /*
                      * This means, the behavior always is called.
                      */

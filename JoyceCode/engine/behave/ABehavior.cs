@@ -10,6 +10,7 @@ namespace engine.behave;
 
 public class ABehavior : IBehavior
 {
+    protected Engine _engine;
     public string DetachEventType = null;
     public string DetachEventCode = null;
     
@@ -49,6 +50,7 @@ public class ABehavior : IBehavior
 
     public virtual void OnAttach(in Engine engine0, in Entity entity)
     {
+        _engine = engine0;
     }
 
     public virtual void InRange(in Engine engine0, in Entity entity)
