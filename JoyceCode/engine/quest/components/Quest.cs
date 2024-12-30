@@ -6,5 +6,5 @@ namespace engine.quest.components;
 [IsPersistable]
 public struct Quest
 {
-    public IQuest ActiveQuest;
+    public IQuest ActiveQuest { get; set; }
 }

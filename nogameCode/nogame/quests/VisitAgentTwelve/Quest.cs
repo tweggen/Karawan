@@ -4,12 +4,13 @@ using System.Numerics;
 using engine;
 using engine.joyce.components;
 using engine.quest;
+using engine.world;
 using engine.world.components;
 using static engine.Logger;
 
 namespace nogame.quests.VisitAgentTwelve;
 
-public class Quest : AModule, IQuest
+public class Quest : AModule, IQuest, ICreator
 {
     private bool _isActive = false;
     
@@ -122,4 +123,28 @@ public class Quest : AModule, IQuest
             _questTarget.ModuleActivate();
         }
     }
+    
+
+    /**
+     * Re-create this quest's entities while deserializing.
+     * We noted ourselves as creator to the car we need to chase.
+     * Therefore serialization will have taken care to serialize
+     * the basic car entity.
+     */
+        public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
+    {
+        // TXWTODO: This should setup our mission car.
+        return;
+    });
+
+    
+    /**
+     * Serialize non-basic information about this quest's entities.
+     * This is used to save e.g. our mission car.
+     */
+    public void SaveEntityTo(Entity eLoader, out JsonNode jn)
+    {
+        jn = JsonValue.Create("no additional info yet");
+    }
+
 }

@@ -2,13 +2,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using DefaultEcs;
 using engine.news;
+using engine.world;
 using static engine.Logger;
 
 namespace engine.quest;
 
 
-public class Manager : ObjectFactory<string, IQuest>
+public class Manager : ObjectFactory<string, IQuest>, ICreator
 {
     private Object _lo = new();
     private SortedDictionary<string, IQuest> _mapOpenQuests = new();
@@ -39,6 +44,8 @@ public class Manager : ObjectFactory<string, IQuest>
             I.Get<Engine>().QueueEntitySetupAction(_questEntityName(questName), e =>
             {
                 e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
+                e.Set(new engine.world.components.Creator()
+                    { CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this) });
             });
         }
         catch (Exception e)
@@ -79,6 +86,15 @@ public class Manager : ObjectFactory<string, IQuest>
             
             I.Get<Saver>().Save("quest deactivated");
         });
+    }
+
+    public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
+    {
+    });
+
+    public void SaveEntityTo(Entity eLoader, out JsonNode jn)
+    {
+        jn = JsonValue.Create("no content here yet.");
     }
 }
 
