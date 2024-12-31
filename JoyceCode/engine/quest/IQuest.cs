@@ -24,6 +24,20 @@ public interface IQuest : IModule
     
     // TXWTODO: let the quest have a validation method on startup
     // public bool ValidateWorld();
+    
+    /*
+     * Prepare the world for the quest and start it.
+     * If created within the game, this is the way to create
+     * the quest.
+     *
+     * If deserilizating the quest from disk, we define that the world
+     * shall contain everything that is required by just recreating all
+     * entities and the corresponding quest object.
+     *
+     * In other words: Everything that is initialited in prepare
+     * must be inside entities later on.
+     */
+    // static IQuest Instantiate()
 }
 
 

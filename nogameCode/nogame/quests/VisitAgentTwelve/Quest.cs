@@ -160,7 +160,7 @@ public class Quest : AModule, IQuest, ICreator
      * This quest requires a quest target marker that is supposed to be
      * recreated. Until this fully is automated, I recreate it manually.
      */
-    public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
+    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => new(async () =>
     {
         /*
          * No additional data to use.
@@ -187,11 +187,17 @@ public class Quest : AModule, IQuest, ICreator
     }
 
 
+    public Quest()
+    {
+        // TXWTODO: Be clear about where to initialize engine.
+        _engine = I.Get<Engine>();
+    }
+
+    
     public static IQuest Instantiate()
     {
         var quest = new Quest();
-        // TXWTODO: How to unregister?
-        I.Get<CreatorRegistry>().RegisterCreator(quest);
+        
         quest._prepare();
         return quest;
     }

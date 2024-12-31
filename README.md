@@ -245,7 +245,7 @@ relatively to the player's location. Static entities are possibly bound to
 the fragments they become loaded for, other eyntities, such as particles, may
 have a pre-determined, dynamic lifetime, as defined by their behaviours.
 Collectible items however, might have an infinite lifetime, only to be
-used at some point by the player.
+wused at some point by the player.
 
 Therefore we introduce two concepts: creators, and owners.
 - Creators: Are capable of (re-)creating entities from serializable data. The 

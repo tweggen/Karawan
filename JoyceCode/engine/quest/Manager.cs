@@ -17,7 +17,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
 {
     private Object _lo = new();
     private SortedDictionary<string, IQuest> _mapOpenQuests = new();
-    private List<string> _listAvailableQuests = new();
+    // private List<string> _listAvailableQuests = new();
 
     
     private string _questEntityName(string questName)
@@ -28,7 +28,8 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
 
     public override void RegisterFactory(string name, Func<string, IQuest> factory)
     {
-        _listAvailableQuests.Add(name);
+        // _listAvailableQuests.Add(name);
+        base.RegisterFactory(name, factory);
     }
     
     
@@ -60,7 +61,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
                 e.Set(new engine.world.components.Creator()
                 {
                     CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this),
-                    Id = _listAvailableQuests.IndexOf(quest.Name)
+                    Id = 0
                 });
             });
         }
@@ -106,15 +107,47 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
     }
 
 
-
-    public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
+    /**
+     * Called after all entities are initialized. Called because of the Creator component
+     * in the entity.
+     */
+    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je)
     {
         /*
-         * We are called because we are the creator. However, we want to delegate that call.
+         * We are called because we are the creator. However, we want to delegate that call
+         * to allow the individual quest to initialize itself-
          */
-    });
 
-    
+        try
+        {
+            /*
+             * The entity does have a Quest object with a quest instantiated. Load that.
+             */
+            engine.quest.components.Quest cQuest = eLoaded.Get<engine.quest.components.Quest>();
+            var quest = cQuest.ActiveQuest;
+            if (null == quest)
+            {
+                ErrorThrow<InvalidOperationException>($"Found null quest.");
+            }
+
+            /*
+             * So if the quest is a creator by itself, ask it to initialize.
+             */
+            ICreator iCreator = quest as ICreator;
+            if (iCreator != null)
+            {
+                return iCreator.SetupEntityFrom(eLoaded, je);
+            }
+        }
+        catch (Exception e)
+        {
+            Error($"Error while forwarding setup call to quest: {e}");
+        }
+
+        return async () => {};
+    }
+
+
     /**
      * We register this manager as the creator of quests. We use this to
      * assign the entity properly to the quest objects, which might need
@@ -126,5 +159,10 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
         jn = new JsonObject();
     }
 
+
+    public Manager()
+    {
+        I.Get<CreatorRegistry>().RegisterCreator(this);
+    }
 }
 

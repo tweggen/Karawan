@@ -240,7 +240,7 @@ public class Quest : AModule, IQuest, ICreator
      * Therefore serialization will have taken care to serialize
      * the basic car entity.
      */
-    public Func<Task> SetupEntityFrom(Entity eLoaded, in JsonElement je) => new(async () =>
+    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => new(async () =>
     {
         // TXWTODO: This should setup our mission car.
         return;
@@ -259,8 +259,6 @@ public class Quest : AModule, IQuest, ICreator
     public static IQuest Instantiate()
     {
         var quest = new Quest();
-        // TXWTODO: How to unregister?
-        I.Get<CreatorRegistry>().RegisterCreator(quest);
         quest._prepare();
         return quest;
     }
