@@ -31,6 +31,35 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
         // _listAvailableQuests.Add(name);
         base.RegisterFactory(name, factory);
     }
+
+
+    public void ActivateQuest(IQuest quest)
+    {
+        try
+        {
+            quest.IsActive = true;
+            quest.ModuleActivate();
+            lock (_lo)
+            {
+                _mapOpenQuests.Add(quest.Name, quest);
+            }
+
+            I.Get<Engine>().QueueEntitySetupAction(_questEntityName(quest.Name), e =>
+            {
+                e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
+                e.Set(new engine.world.components.Creator()
+                {
+                    CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this),
+                    Id = 0
+                });
+            });
+        }
+        catch (Exception e)
+        {
+            Error($"Exception activating quest: {e}.");
+        }
+
+    }
     
     
     public void ActivateQuest(string questName)
@@ -46,30 +75,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             ErrorThrow<InvalidOperationException>($"Error while execution: Quest has wrong name.");
         }
 
-        try
-        {
-            quest.IsActive = true;
-            quest.ModuleActivate();
-            lock (_lo)
-            {
-                _mapOpenQuests.Add(questName, quest);
-            }
-
-            I.Get<Engine>().QueueEntitySetupAction(_questEntityName(questName), e =>
-            {
-                e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
-                e.Set(new engine.world.components.Creator()
-                {
-                    CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this),
-                    Id = 0
-                });
-            });
-        }
-        catch (Exception e)
-        {
-            Error($"Exception activating quest: {e}.");
-        }
-
+        ActivateQuest(quest);
     }
 
     
@@ -111,7 +117,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
      * Called after all entities are initialized. Called because of the Creator component
      * in the entity.
      */
-    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je)
+    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => (async () =>
     {
         /*
          * We are called because we are the creator. However, we want to delegate that call
@@ -123,6 +129,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             /*
              * The entity does have a Quest object with a quest instantiated. Load that.
              */
+            // TXWTODO: This is suppsed to be in the logical thread.
             engine.quest.components.Quest cQuest = eLoaded.Get<engine.quest.components.Quest>();
             var quest = cQuest.ActiveQuest;
             if (null == quest)
@@ -136,7 +143,12 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             ICreator iCreator = quest as ICreator;
             if (iCreator != null)
             {
-                return iCreator.SetupEntityFrom(eLoaded, je);
+                await iCreator.SetupEntityFrom(eLoaded, je)();
+            }
+
+            if (quest.IsActive)
+            {
+                ActivateQuest(quest);
             }
         }
         catch (Exception e)
@@ -144,8 +156,8 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             Error($"Error while forwarding setup call to quest: {e}");
         }
 
-        return async () => {};
-    }
+        return;
+    });
 
 
     /**

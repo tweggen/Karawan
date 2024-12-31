@@ -54,6 +54,7 @@ public class EntityObserver
             {
                 return;
             }
+            Trace("New value for player set up.");
             _currentValue = newValue;
             if (_listWithActions.Count > 0)
             {
@@ -64,6 +65,26 @@ public class EntityObserver
             listOnChange = _listOnChange.ToImmutableList();
         }
 
+        
+        /*
+         * First call all modules that might update themselves on a regular basis.
+         */
+        foreach (var a in listOnChange)
+        {
+            try
+            {
+                a(newValue);
+            }
+            catch (Exception e)
+            {
+                Error($"Error notifying on change action: {e}");
+            }
+        }
+        
+        
+        /*
+         * Only then call the one-time initializations.
+         */
         if (null != listWithActions)
         {
             foreach (var a in listWithActions)
@@ -76,18 +97,6 @@ public class EntityObserver
                 {
                     Error($"Error notifying with entity action: {e}");
                 }
-            }
-        }
-
-        foreach (var a in listOnChange)
-        {
-            try
-            {
-                a(newValue);
-            }
-            catch (Exception e)
-            {
-                Error($"Error notifying on change action: {e}");
             }
         }
     }

@@ -88,7 +88,7 @@ public class Quest : AModule, IQuest, ICreator
         
     
         DefaultEcs.Entity eClosest = default;
-
+        
         if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
         {
             var v3Player = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
@@ -137,13 +137,14 @@ public class Quest : AModule, IQuest, ICreator
         _isActive = true;
         _engine.AddModule(this);
         
-        _engine.QueueMainThreadAction(() =>
+        _engine.Player.CallWithEntity(e => 
+            _engine.QueueMainThreadAction(() =>
         {
             /*
              * Create a destination marker.
              */
             _createToLocation(DestinationPosition);
-        });
+        }));
     }
 
 
@@ -164,16 +165,7 @@ public class Quest : AModule, IQuest, ICreator
     {
         /*
          * No additional data to use.
-         *
-         * If the quest is active:
-         * - Create the ToLocation based on the Destination.
          */
-
-        if (IsActive)
-        {
-            // TXWTODO: The use cases for creation and restore do not make sense yet.
-            _engine.QueueMainThreadAction(() => _createToLocation(DestinationPosition));
-        }
     });
 
     
