@@ -128,7 +128,7 @@ public class Quest : AModule, IQuest, ICreator
         clusterDesc = I.Get<engine.world.ClusterList>().GetClusterAt(Vector3.Zero);
         Vector3 v3Cluster = clusterDesc.Pos;
         var listStreetPoints = clusterDesc.StrokeStore().GetStreetPoints();
-        _engine.TryGetPlayerEntity(out var ePlayer);
+        _engine.Player.TryGet(out var ePlayer);
 
         StreetPoint? spStart = listStreetPoints.FirstOrDefault(
             sp =>

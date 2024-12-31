@@ -193,7 +193,7 @@ public class Module : AModule, IInputPart
         Vector3 v3PlayerPos = default;
         ref var cCamera3 = ref _eCamMap.Get<Camera3>();
         {
-            if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+            if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
             {
                 lock (_engine.Simulation)
                 {
@@ -261,7 +261,7 @@ public class Module : AModule, IInputPart
         Vector3 v3PlayerPos = default;
         ref var cCamera3 = ref _eCamMap.Get<Camera3>();
         {
-            if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
+            if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
             {
                 lock (_engine.Simulation)
                 {

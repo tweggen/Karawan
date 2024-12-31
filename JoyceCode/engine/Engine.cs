@@ -97,11 +97,9 @@ public class Engine
 
     public event EventHandler<float> OnLogicalFrame;
     public event EventHandler<float> OnAfterPhysics;
-    public event EventHandler<float> OnPhysicalFrame;
 
     public event EventHandler<float> OnImGuiRender;
 
-    private Entity _cameraEntity;
     private CameraInfo? _cameraInfo;
 
     public CameraInfo CameraInfo
@@ -114,10 +112,9 @@ public class Engine
             }
         }
     }
-    
-    public event EventHandler<DefaultEcs.Entity> OnCameraEntityChanged;
-    private Entity _playerEntity;
-    public event EventHandler<DefaultEcs.Entity> OnPlayerEntityChanged;
+
+    public readonly EntityObserver Camera = new();
+    public readonly EntityObserver Player = new();
 
 
     private builtin.tools.FPSMonitor _fpsPhysicalMonitor = new("physical");
@@ -281,61 +278,13 @@ public class Engine
     }
 
 
-    public bool TryGetCameraEntity(out DefaultEcs.Entity eCamera) =>
-        _tryGetMemberEntity<engine.joyce.components.Camera3>(out eCamera, ref _cameraEntity);
-
-
-    public bool TryGetPlayerEntity(out DefaultEcs.Entity ePlayer)  =>
-        _tryGetMemberEntity(out ePlayer, ref _playerEntity);
-
-
     public void BeamTo(Vector3 vPos, Quaternion qStart)
     {
         lock (_lo)
         {
-            var pref = _playerEntity.Get<engine.physics.components.Body>().Reference;
+            var pref = Player.Value.Get<engine.physics.components.Body>().Reference;
             pref.Pose.Position = vPos;
             pref.Pose.Orientation = qStart;
-        }
-    }
-
-
-    public void SetCameraEntity(in DefaultEcs.Entity entity)
-    {
-        bool entityChanged = false;
-        lock (_lo)
-        {
-            if (_cameraEntity != entity)
-            {
-                entityChanged = true;
-                _cameraEntity = entity;
-            }
-        }
-
-        if (entityChanged)
-        {
-            OnCameraEntityChanged?.Invoke(this, entity);
-            
-            PLog?.Dump();
-        }
-    }
-
-
-    public void SetPlayerEntity(in DefaultEcs.Entity entity)
-    {
-        bool entityChanged = false;
-        lock (_lo)
-        {
-            if (_playerEntity != entity)
-            {
-                entityChanged = true;
-                _playerEntity = entity;
-            }
-        }
-
-        if (entityChanged)
-        {
-            OnPlayerEntityChanged?.Invoke(this, entity);
         }
     }
 
@@ -618,8 +567,6 @@ public class Engine
      */
     public void CallOnPhysicalFrame(float dt)
     {
-        OnPhysicalFrame?.Invoke(this, dt);
-
         lock (_lo)
         {
             /*
@@ -756,7 +703,7 @@ public class Engine
          */
         lock (_lo)
         {
-            _cameraInfo = new CameraInfo(_cameraEntity);
+            _cameraInfo = new CameraInfo(Camera.Value);
         }
         
         /*
@@ -1139,7 +1086,7 @@ public class Engine
         _managerMapIcons = new();
         _managerMapIcons.Manage(_ecsWorld);
 
-        _cameraInfo = new CameraInfo(_cameraEntity);
+        _cameraInfo = new CameraInfo(Camera.Value);
 
         _logicalThread = new Thread(_logicalThreadFunction);
         _logicalThread.Priority = ThreadPriority.AboveNormal;

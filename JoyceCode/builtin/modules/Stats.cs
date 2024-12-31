@@ -66,7 +66,7 @@ public class Stats : engine.AModule
     }
     
     
-    private void _onPlayerEntityChanged(object? sender, DefaultEcs.Entity entity)
+    private void _onPlayerEntityChanged(DefaultEcs.Entity entity)
     {
         bool isChanged = false;
         lock (_lo)
@@ -91,7 +91,7 @@ public class Stats : engine.AModule
     public override void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        _engine.OnPlayerEntityChanged -= _onPlayerEntityChanged;
+        _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
 
         
         I.Get<SubscriptionManager>().Unsubscribe(
@@ -115,11 +115,11 @@ public class Stats : engine.AModule
 
         _engine.AddModule(this);
         
-        if (_engine.TryGetPlayerEntity(out var ePlayer))
+        if (_engine.Player.TryGet(out var ePlayer))
         {
-            _onPlayerEntityChanged(_engine, ePlayer);
+            _onPlayerEntityChanged(ePlayer);
         }
-        _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
+        _engine.Player.AddOnChange(_onPlayerEntityChanged);
         
         _engine.OnLogicalFrame += _onLogicalFrame;
     }

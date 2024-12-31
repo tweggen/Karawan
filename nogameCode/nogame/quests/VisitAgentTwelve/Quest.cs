@@ -89,7 +89,7 @@ public class Quest : AModule, IQuest, ICreator
     
         DefaultEcs.Entity eClosest = default;
 
-        if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
+        if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
         {
             var v3Player = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
             foreach (var e in withIcon)

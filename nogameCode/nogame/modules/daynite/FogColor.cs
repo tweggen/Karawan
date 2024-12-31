@@ -39,7 +39,7 @@ public class FogColor : AModule
 
     private void _updateFog(TimeSpan now)
     {
-        if (!_engine.TryGetCameraEntity(out EFogCamera))
+        if (!_engine.Camera.TryGet(out EFogCamera))
         {
             return;
         }

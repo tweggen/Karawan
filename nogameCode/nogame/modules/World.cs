@@ -25,7 +25,7 @@ public class World : AModule
     private void _triggerLoadWorld()
     {
         DefaultEcs.Entity eCamScene;
-        if (!_engine.TryGetCameraEntity(out eCamScene) || !eCamScene.Has<Transform3ToWorld>())
+        if (!_engine.Camera.TryGet(out eCamScene) || !eCamScene.Has<Transform3ToWorld>())
         {
             return;
         }

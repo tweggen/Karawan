@@ -544,7 +544,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     }
     
 
-    private void _onCameraEntityChanged(object? sender, DefaultEcs.Entity entity)
+    private void _onCameraEntityChanged(DefaultEcs.Entity entity)
     {
         bool isChanged = false;
         lock (_lo)
@@ -566,7 +566,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     }
 
 
-    private void _onPlayerEntityChanged(object? sender, DefaultEcs.Entity entity)
+    private void _onPlayerEntityChanged(DefaultEcs.Entity entity)
     {
         bool isChanged = false;
         lock (_lo)
@@ -609,16 +609,16 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
         _api = api;
         Thread audioThread = new Thread(_audioThread);
         audioThread.Start();
-        _engine.OnCameraEntityChanged += _onCameraEntityChanged;
-        _engine.OnPlayerEntityChanged += _onPlayerEntityChanged;
-        if (_engine.TryGetCameraEntity(out var eCamera))
+        _engine.Camera.AddOnChange(_onCameraEntityChanged);
+        _engine.Player.AddOnChange(_onPlayerEntityChanged);
+        if (_engine.Camera.TryGet(out var eCamera))
         {
-            _onCameraEntityChanged(_engine, eCamera);
+            _onCameraEntityChanged(eCamera);
         }
 
-        if (_engine.TryGetPlayerEntity(out var ePlayer))
+        if (_engine.Player.TryGet(out var ePlayer))
         {
-            _onPlayerEntityChanged(_engine, ePlayer);
+            _onPlayerEntityChanged(ePlayer);
         }
     }
 }

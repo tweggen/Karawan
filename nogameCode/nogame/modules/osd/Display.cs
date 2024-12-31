@@ -120,7 +120,7 @@ public class Display : engine.AModule
         _frameCounter = 0;
         
         var renderOsdSystem = M<RenderOSDSystem>();
-        if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
+        if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
         {
             renderOsdSystem.ReferencePosition = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
         }

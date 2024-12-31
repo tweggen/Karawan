@@ -213,7 +213,7 @@ public class Module : engine.AModule
     }
 
 
-    private void _onCameraEntityChanged(object? sender, DefaultEcs.Entity entity)
+    private void _onCameraEntityChanged(DefaultEcs.Entity entity)
     {
         bool isChanged = false;
         lock (_lo)
@@ -457,7 +457,7 @@ public class Module : engine.AModule
         I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
         
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        _engine.OnCameraEntityChanged -= _onCameraEntityChanged;
+        _engine.Camera.RemoveOnChange(_onCameraEntityChanged);
 
         
         I.Get<SubscriptionManager>().Unsubscribe(
@@ -591,15 +591,15 @@ public class Module : engine.AModule
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
             _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
 
-            if (_engine.TryGetCameraEntity(out var eCam))
+            if (_engine.Camera.TryGet(out var eCam))
             {
-                _onCameraEntityChanged(this, eCam);
+                _onCameraEntityChanged(eCam);
             }
 
-            _engine.OnCameraEntityChanged += _onCameraEntityChanged;
+            _engine.Camera.AddOnChange(_onCameraEntityChanged);
             _engine.OnLogicalFrame += _onLogicalFrame;
 
-            _engine.SetPlayerEntity(GetShipEntity());
+            _engine.Player.Value = GetShipEntity();
 
             /*
              * Create a viewer for the player itself, defining what parts

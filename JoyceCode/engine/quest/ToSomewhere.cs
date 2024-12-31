@@ -274,7 +274,7 @@ public class ToSomewhere : AModule
     
     private void _createRoute()
     {
-        if (!_engine.TryGetPlayerEntity(out var ePlayer))
+        if (!_engine.Player.TryGet(out var ePlayer))
         {
             ErrorThrow<InvalidOperationException>("No player defined currently.");
         }

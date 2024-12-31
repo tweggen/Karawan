@@ -9,13 +9,13 @@ public class UpdateEmissionContext : AModule
     {
         var ectx = new engine.news.EmissionContext();
         {
-            if (_engine.TryGetPlayerEntity(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
+            if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
             {
                 ectx.PlayerPos = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
             }
         }
         {
-            if (_engine.TryGetCameraEntity(out var eCamera))
+            if (_engine.Camera.TryGet(out var eCamera))
             {
                 ectx.CameraPos = eCamera.Get<Transform3ToWorld>().Matrix.Translation;
             }

@@ -148,7 +148,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
         base.PreUpdate(dt);
         _havePlayerPosition = false;
-        if (_engine.TryGetPlayerEntity(out _ePlayer))
+        if (_engine.Player.TryGet(out _ePlayer))
         {
             if (_ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
             {

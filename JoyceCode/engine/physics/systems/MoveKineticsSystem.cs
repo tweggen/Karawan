@@ -167,7 +167,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
     {
         _aTransform = I.Get<engine.joyce.TransformApi>();
         _havePlayerPosition = false;
-        if (_engine.TryGetPlayerEntity(out _ePlayer))
+        if (_engine.Player.TryGet(out _ePlayer))
         {
             if (_ePlayer.Has<engine.joyce.components.Transform3ToWorld>())
             {

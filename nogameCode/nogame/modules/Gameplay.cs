@@ -45,17 +45,17 @@ public class Gameplay : AModule, IInputPart
     {
         M<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
-        if (_engine.TryGetCameraEntity(out var eCamera))
+        if (_engine.Camera.TryGet(out var eCamera))
         {
-            _onNewCamera(this, eCamera);
+            _onNewCamera(eCamera);
         }
 
-        if (_engine.TryGetPlayerEntity(out var ePlayer))
+        if (_engine.Player.TryGet(out var ePlayer))
         {
-            _onNewPlayer(this, ePlayer);
+            _onNewPlayer(ePlayer);
         }
-        _engine.OnCameraEntityChanged += _onNewCamera;
-        _engine.OnPlayerEntityChanged += _onNewPlayer;
+        _engine.Camera.AddOnChange(_onNewCamera);
+        _engine.Player.AddOnChange(_onNewPlayer);
         
         _engine.OnLogicalFrame += _onLogicalFrame;
 
@@ -221,7 +221,7 @@ public class Gameplay : AModule, IInputPart
     }
     
     
-    private void _onNewCamera(object? sender, Entity eNewCamera)
+    private void _onNewCamera(Entity eNewCamera)
     {
         lock (_lo)
         {
@@ -237,7 +237,7 @@ public class Gameplay : AModule, IInputPart
     }
 
 
-    private void _onNewPlayer(object? sender, Entity eNewPlayer)
+    private void _onNewPlayer(Entity eNewPlayer)
     {
         lock (_lo)
         {
@@ -282,8 +282,8 @@ public class Gameplay : AModule, IInputPart
     public override void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        _engine.OnCameraEntityChanged -= _onNewCamera;
-        _engine.OnPlayerEntityChanged -= _onNewPlayer;
+        _engine.Camera.RemoveOnChange(_onNewCamera);
+        _engine.Player.RemoveOnChange(_onNewPlayer);
         
         I.Get<SubscriptionManager>().Unsubscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
         _engine.RemoveModule(this);

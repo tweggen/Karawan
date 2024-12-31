@@ -242,7 +242,7 @@ public class Scene : AModule, IScene, IInputPart
             I.Get<TransformApi>().SetVisible(_eCamScene, true);
             // No set position, done by controller
         }
-        _engine.SetCameraEntity(_eCamScene);
+        _engine.Camera.Value = _eCamScene;
         
     }
     

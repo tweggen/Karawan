@@ -224,7 +224,7 @@ public class ClickableHandler
          * would be performed at all.
          */
         
-        if (false && _engine.TryGetCameraEntity(out var eMainCamera))
+        if (false && _engine.Camera.TryGet(out var eMainCamera))
         {
             ref var cCamTransform = ref eMainCamera.Get<engine.joyce.components.Transform3ToWorld>();
             ref var cCamera = ref eMainCamera.Get<engine.joyce.components.Camera3>();

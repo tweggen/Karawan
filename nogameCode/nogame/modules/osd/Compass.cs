@@ -18,7 +18,7 @@ public class Compass : engine.AModule
     private void _onLogical(object? sender, float dt)
     {
         DefaultEcs.Entity ePlayer;
-        if (!_engine.TryGetPlayerEntity(out ePlayer) || !ePlayer.Has<Transform3ToWorld>())
+        if (!_engine.Player.TryGet(out ePlayer) || !ePlayer.Has<Transform3ToWorld>())
         {
             return;
         }

@@ -34,7 +34,7 @@ public class Flyalong : AModule
         {
             _detachSubject();
             DefaultEcs.Entity eCam;
-            if (!_engine.TryGetCameraEntity(out eCam)) 
+            if (!_engine.Camera.TryGet(out eCam)) 
             {
                 Task.Delay(50).ContinueWith(t => _attachNewSubject(sender, e));
                 return;
