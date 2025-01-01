@@ -16,7 +16,7 @@ namespace engine.quest;
 public class Manager : ObjectFactory<string, IQuest>, ICreator  
 {
     private Object _lo = new();
-    private SortedDictionary<string, IQuest> _mapOpenQuests = new();
+    private SortedDictionary<string, IQuest> _mapLoadedQuests = new();
     // private List<string> _listAvailableQuests = new();
 
     
@@ -39,20 +39,7 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
         {
             quest.IsActive = true;
             quest.ModuleActivate();
-            lock (_lo)
-            {
-                _mapOpenQuests.Add(quest.Name, quest);
-            }
 
-            I.Get<Engine>().QueueEntitySetupAction(_questEntityName(quest.Name), e =>
-            {
-                e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
-                e.Set(new engine.world.components.Creator()
-                {
-                    CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this),
-                    Id = 0
-                });
-            });
         }
         catch (Exception e)
         {
@@ -62,7 +49,11 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
     }
     
     
-    public void ActivateQuest(string questName)
+    /**
+     * Create a quest.
+     * This creates an entity and the quest object required to activate the quest.
+     */
+    public IQuest CreateQuest(string questName)
     {
         engine.quest.IQuest quest = Get(questName);
         if (null == quest)
@@ -75,16 +66,81 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             ErrorThrow<InvalidOperationException>($"Error while execution: Quest has wrong name.");
         }
 
-        ActivateQuest(quest);
+        lock (_lo)
+        {
+            _mapLoadedQuests[quest.Name] = quest;
+        }
+
+        I.Get<Engine>().QueueEntitySetupAction(_questEntityName(quest.Name), e =>
+        {
+            var eExistingQuest = I.Get<Engine>().GetEcsWorld().GetEntities().With<components.Quest>()
+                .AsEnumerable().FirstOrDefault(e => e.Get<components.Quest>().ActiveQuest?.Name == questName);
+            
+            if (eExistingQuest.IsAlive)
+            {
+                Error($"Quest {quest} already exists. Using existing entity.");
+                var cExistingQuest = eExistingQuest.Get<components.Quest>();
+                if (cExistingQuest.ActiveQuest != quest)
+                {
+                    Error($"Existing quest {cExistingQuest.ActiveQuest.Name} was different to our quest {quest.Name}.");
+                    if (quest.IsActive)
+                    {
+                        Error($"Exiting quest {quest.Name} was found active, so it probably should be activated.");
+                    }
+                }
+                e.Dispose();
+                e = eExistingQuest;
+            }
+
+            e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
+            e.Set(new engine.world.components.Creator()
+            {
+                CreatorId = I.Get<CreatorRegistry>().FindCreatorId(this),
+                Id = 0
+            });
+        });
+
+        return quest;
     }
 
+
+    public IQuest TriggerQuest(string questName)
+    {
+        engine.quest.IQuest quest = FindQuest(questName);
+        if (!quest.IsActive)
+        {
+            ActivateQuest(quest);
+        }
+        else
+        {
+            Warning($"Triggering a quest that already was active.");
+        }
+
+        return quest;
+    }
+    
+
+    public IQuest FindQuest(string questName)
+    {
+        lock (_lo)
+        {
+            if (_mapLoadedQuests.TryGetValue(questName, out var iQuest))
+            {
+                return iQuest;
+            }
+        }
+
+        // TXWTODO: Yes, this obviously is a race condition.
+        return CreateQuest(questName);
+    }
+    
     
     public void DeactivateQuest(IQuest quest)
     {
         string questName = quest.Name;
         lock (_lo)
         {
-            if (!_mapOpenQuests.ContainsKey(questName))
+            if (!_mapLoadedQuests.ContainsKey(questName))
             {
                 Error($"Asked to close quest that had not been open.");
                 return;
@@ -137,6 +193,12 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
                 ErrorThrow<InvalidOperationException>($"Found null quest.");
             }
 
+            lock (_lo)
+            {
+                // TXWTODO: Check if it existed.
+                _mapLoadedQuests[quest.Name] = quest;
+            }
+
             /*
              * So if the quest is a creator by itself, ask it to initialize.
              */
@@ -146,6 +208,10 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
                 await iCreator.SetupEntityFrom(eLoaded, je)();
             }
 
+            
+            /*
+             * Finally, if the quest is marked active, activate it now.
+             */
             if (quest.IsActive)
             {
                 ActivateQuest(quest);

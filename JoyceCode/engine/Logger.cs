@@ -159,5 +159,17 @@ namespace engine
                 _logTarget = logTarget;
             }
         }
+
+        public static void CatchAll(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                Error($"Caught exception {e}");
+            }
+        }
     }
 }

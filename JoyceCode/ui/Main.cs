@@ -22,6 +22,7 @@ public class Main
 
     private int _currentEntityId = -1;
     private DefaultEcs.Entity _currentEntity = default;
+    private ImGuiTreeNodeFlags _inspectorHeaderFlags = 0;
     private DefaultEcs.Entity _previousEntity = default;
     private string _currentClusterId = "";
     private byte[] _currentEntityFilterBytes = new byte[128];
@@ -156,10 +157,10 @@ public class Main
     {
         _setStyle();
         
-        ImGui.SetNextWindowPos(new Vector2(0, 20), ImGuiCond.Appearing);
+        ImGui.SetNextWindowPos(new Vector2(0, 20));
+        var mainViewportSize = ImGui.GetMainViewport().Size;
         ImGui.SetNextWindowSize(
-            ImGui.GetMainViewport().Size with {X = 500} - new Vector2(0, 20),
-            ImGuiCond.Appearing);
+            mainViewportSize with {X = 500} - new Vector2(0, 20));
         if (ImGui.Begin("selector", 0
                 |ImGuiWindowFlags.NoCollapse
                 |ImGuiWindowFlags.NoMove
@@ -347,19 +348,21 @@ public class Main
                 }
 
                 ImGui.InputText("Filter", _currentEntityFilterBytes, (uint) _currentEntityFilterBytes.Length);
-                string utfString = Encoding.UTF8.GetString(_currentEntityFilterBytes, 0, _currentEntityFilterBytes.Length).TrimEnd((Char)0);
+                string utf8FilterText = Encoding.UTF8.GetString(_currentEntityFilterBytes, 0, _currentEntityFilterBytes.Length).TrimEnd((Char)0);
                 
                 if (ImGui.BeginListBox("Entities"))
                 {
                     foreach (var entity in entities)
                     {
+                        if (!entity.IsAlive) continue;
                         var id = entity.GetId();
                         
                         bool isSelected = _currentEntityId == id;
                         string entityString;
+                        string entityName = "";
                         if (entity.Has<engine.joyce.components.EntityName>())
                         {
-                            string entityName = entity.Get<engine.joyce.components.EntityName>().Name;
+                            entityName = entity.Get<engine.joyce.components.EntityName>().Name;
                             string displayName;
                             int lastDot = entityName.LastIndexOf('.'); 
                             if (lastDot != -1)
@@ -378,7 +381,7 @@ public class Main
                         }
 
 
-                        if (_currentEntityFilterBytes[0] != 0 && !entityString.Contains(utfString))
+                        if (_currentEntityFilterBytes[0] != 0 && !entityName.ToUpper().Contains(utf8FilterText.ToUpper()))
                         {
                             continue;
                         }
@@ -421,11 +424,13 @@ public class Main
                         Flags = (byte)Highlight.StateFlags.IsSelected,
                         Color = 0xff33ffcc
                     });
+
+                    _inspectorHeaderFlags |= ImGuiTreeNodeFlags.DefaultOpen;
                 }
                 _previousEntity = _currentEntity;
             }
             
-            if (ImGui.CollapsingHeader("Inspector"))
+            if (ImGui.CollapsingHeader("Inspector", _inspectorHeaderFlags))
             {
                 if (-1 == _currentEntityId)
                 {
