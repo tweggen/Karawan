@@ -14,7 +14,7 @@
                         width="120"
                         color='#448822'
                         onInit='widget["text"]=nogame:getConfig().Username'
-                        onChange='nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
+                        onChange='nogame:getConfig().WebToken = ""; nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
             <hbox height="40">
                 <text color='#999999' width="120" focusFor="ui.password">
@@ -25,7 +25,7 @@
                        color='#448822'
                        type="password"
                        onInit='widget["text"]=nogame:getConfig().Password'
-                       onChange='nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
+                       onChange='nogame:getConfig().WebToken = ""; nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
             <hmenu height="40" id='ui.newGlobally'>
                 <text color='#999999' width="120" focusFor='ui.newGlobally'>
