@@ -2,10 +2,18 @@
 <jt>
     <view layer='pausemenu' id='menuLogin'>
         <vmenu width='250' x='200' y='80'>
-            <text height='40' color='#666666'>Choose system to connect to...</text>
-            <option height='40' color='#999999' onClick='joyce:ev("nogame.login.loginLocally")'>local machine (offline)</option>
-            <text color='#666666' height='40' vAlign='bottom'>use these credentials to connect to...</text>
-            <hbox height="40">
+            <text height='40' color='#666666' vAlign='center'>Choose system to connect to...</text>
+            <option
+                    height="20"
+                    color='#999999'
+                    isDefaultFocus='return nogame:getConfig().WebToken ~= ""'
+                    onClick='joyce:ev("nogame.login.loginGlobally")'
+            >
+                global machine (online)
+            </option>
+            <option height='20' color='#999999' onClick='joyce:ev("nogame.login.loginLocally")'>local machine (offline)</option>
+            <text color='#666666' height='40' vAlign='center'>use these credentials to connect to...</text>
+            <hbox height="20">
                 <text color='#999999' width="120" focusFor="ui.username">
                     eMail
                 </text>
@@ -16,7 +24,7 @@
                         onInit='widget["text"]=nogame:getConfig().Username'
                         onChange='nogame:getConfig().WebToken = ""; nogame:getConfig().Username = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
-            <hbox height="40">
+            <hbox height="20">
                 <text color='#999999' width="120" focusFor="ui.password">
                     Password
                 </text>
@@ -27,7 +35,7 @@
                        onInit='widget["text"]=nogame:getConfig().Password'
                        onChange='nogame:getConfig().WebToken = ""; nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
-            <hmenu height="40" id='ui.newGlobally'>
+            <hmenu height="20" id='ui.newGlobally'>
                 <text color='#999999' width="120" focusFor='ui.newGlobally'>
                     new (globally)
                 </text>
@@ -41,16 +49,8 @@
                     nay
                 </option>
             </hmenu>
-            <option 
-                    height="40" 
-                    color='#999999' 
-                    isDefaultFocus='return nogame:getConfig().WebToken ~= ""' 
-                    onClick='joyce:ev("nogame.login.loginGlobally")'
-            >
-                global machine (online)
-            </option>
-            <text id='menuLoginStatusText' color='#22aaee' width="120"></text>
-            <option height="40" color='#999999' onClick='os.exit()'>
+            <!-- text height="20" vAlign="center" id='menuLoginStatusText' color='#448822' width="120"></text --> 
+            <option height="40" color='#999999'  vAlign='center' onClick='os.exit()'>
                 Exit...
             </option>
         </vmenu>
