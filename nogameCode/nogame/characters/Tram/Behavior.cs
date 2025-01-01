@@ -35,6 +35,7 @@ internal class Behavior : ABehavior
             }
         );
     }
+    
 
     public Behavior SetSpeed(float speed)
     {
@@ -42,11 +43,20 @@ internal class Behavior : ABehavior
         return this;
     }
     
+    
     public Behavior SetHeight(float height)
     {
         _height = height;
         return this;
     }
+    
+    
+    public override void OnAttach(in engine.Engine engine0, in DefaultEcs.Entity entity)
+    {
+        base.OnAttach(in engine0, in entity);
+        _snc.NavigatorLoad();
+    }
+    
     
     public Behavior(
         in engine.Engine engine0,
@@ -57,6 +67,10 @@ internal class Behavior : ABehavior
         _engine = engine0;
         _clusterDesc = clusterDesc0;
         _streetPoint = streetPoint0;
-        _snc = new StreetNavigationController(_clusterDesc, _streetPoint);
+        _snc = new StreetNavigationController()
+        {
+            ClusterDesc = clusterDesc0,
+            StartPoint = _streetPoint
+        };
     }
 }

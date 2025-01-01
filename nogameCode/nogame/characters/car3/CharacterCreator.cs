@@ -121,8 +121,11 @@ class CharacterCreator
         engine.behave.IBehavior iBehavior = 
             new car3.Behavior()
             {
-                Navigator = new StreetNavigationController(clusterDesc, chosenStreetPoint, seed)
+                Navigator = new StreetNavigationController()
                 {
+                    ClusterDesc = clusterDesc,
+                    StartPoint = chosenStreetPoint,
+                    Seed = seed,
                     Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f    
                 }
             };

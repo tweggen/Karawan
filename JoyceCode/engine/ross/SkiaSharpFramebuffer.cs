@@ -272,7 +272,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
          * To compute vAlign, we need to count the number of linefeed.
          * The number of lines is the number of line feeds + one.
          */
-        int nLines = 0;
+        int nLines = 1;
         {
             int l = text.Length;
             while (l > 0)
@@ -296,9 +296,15 @@ public class SkiaSharpFramebuffer : IFramebuffer
             }
         }
 
-        var heightOffset = (metrics.Leading + metrics.Descent - metrics.Ascent) * (nLines);
+        var textHeight = (metrics.Leading + metrics.Descent - metrics.Ascent) * (nLines);
         
         float y = ul.Y - metrics.Ascent;
+        float h = lr.Y - ul.Y;
+        
+        /*
+         * The amount we can align vertically is the difference between the
+         * textheight and the actual height,
+         */
 
         switch (context.VAlign)
         {
@@ -307,10 +313,10 @@ public class SkiaSharpFramebuffer : IFramebuffer
                 // Leave y as is.
                 break;
             case VAlign.Bottom:
-                y -= heightOffset;
+                y += (h-textHeight);
                 break;
             case VAlign.Center:
-                y -= heightOffset / 2;
+                y += (h-textHeight) / 2;
                 break;
         }
         

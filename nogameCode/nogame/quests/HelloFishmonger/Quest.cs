@@ -188,7 +188,11 @@ public class Quest : AModule, IQuest, ICreator
                 _model, _mcp,
                 new characters.car3.Behavior()
                 {
-                    Navigator = new StreetNavigationController(clusterDesc, streetPoint, 100) {
+                    Navigator = new StreetNavigationController()
+                    {
+                        ClusterDesc = clusterDesc, 
+                        StartPoint = streetPoint,
+                        Seed = 100,
                         Speed = 35f
                     }
                 },
@@ -203,18 +207,25 @@ public class Quest : AModule, IQuest, ICreator
 
             eTarget.Set(new engine.world.components.Creator(engine.world.components.Creator.CreatorId_Hardcoded));
 
-            /*
-             * ... create quest marker and run it.
-             */
-            _questTarget = new engine.quest.TrailVehicle()
-            {
-                SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-                MapCameraMask = nogame.modules.map.Module.MapCameraMask,
-                ParentEntity = eTarget,
-                OnReachTarget = _onReachTarget
-            };
-            // TXWTODO: Run only with player available
-            _engine.Run(_questTarget.ModuleActivate);
+            _engine.Player.CallWithEntity(e =>
+                _engine.QueueMainThreadAction(() =>
+                {
+                    /*
+                     * Create a destination marker.
+                     */
+                    /*
+                     * ... create quest marker and run it.
+                     */
+                    _questTarget = new engine.quest.TrailVehicle()
+                    {
+                        SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+                        MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+                        ParentEntity = eTarget,
+                        OnReachTarget = _onReachTarget
+                    };
+                    // TXWTODO: Run only with player available
+                    _questTarget.ModuleActivate();
+                }));
         });
     }
     

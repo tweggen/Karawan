@@ -137,10 +137,18 @@ public class Scene : AModule, IScene
     }
 
 
+    private void _displayLoginStatus(string status)
+    {
+        if (M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText))
+        {
+            wMenuLoginStatusText["text"] = status;
+        }
+    }
+    
+
     private void _onAutoSaveSetup(GameState gs)
     {
-        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
-        wMenuLoginStatusText["text"] = "logged in.";
+        _displayLoginStatus("logged in.");
 
         _engine.QueueMainThreadAction(() => DeactivateMyModule<nogame.modules.menu.LoginMenuModule>());
         _engine.QueueMainThreadAction(() => _loadLoadingScene());
@@ -164,8 +172,7 @@ public class Scene : AModule, IScene
 
     private void _onAutoSaveError(string errorText)
     {
-        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
-        wMenuLoginStatusText["text"] = "error logging in.";
+        _displayLoginStatus("error logging in.");
     }
     
 
@@ -207,8 +214,7 @@ public class Scene : AModule, IScene
 
         I.Get<AutoSave>().SyncOnline = true;
 
-        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
-        wMenuLoginStatusText["text"] = "logging in...";
+        _displayLoginStatus("logging in...");
         
         _startGame(false);
     }
@@ -224,9 +230,8 @@ public class Scene : AModule, IScene
 
         I.Get<AutoSave>().SyncOnline = true;
 
-        M<Factory>().Layer("pausemenu").GetChild("menuLoginStatusText", out var wMenuLoginStatusText);
-        wMenuLoginStatusText["text"] = "logging in...";
-
+        _displayLoginStatus("logging in...");
+            
         _startGame(true);
     }
     

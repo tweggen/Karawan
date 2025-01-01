@@ -55,10 +55,17 @@ public class StreetNavigationController : INavigator
      * Meters above recommended riding level.
      */
     private float _height = MetaGen.ClusterNavigationHeight;
-
-    private ClusterDesc _clusterDesc;
-    private StreetPoint _startPoint;
     
+    private ClusterDesc _clusterDesc;
+
+    public ClusterDesc ClusterDesc
+    {
+        get => _clusterDesc;
+        set => _clusterDesc = value;
+    }
+    
+    private StreetPoint _startPoint;
+
     public StreetPoint StartPoint
     {
         get => _startPoint;
@@ -88,6 +95,8 @@ public class StreetNavigationController : INavigator
         get => _thenPoint;
         set => _thenPoint = value;
     }
+    
+    public int Seed { get; set; }
 
     /**
      * Contains the last direction of the character, the length
@@ -467,25 +476,19 @@ public class StreetNavigationController : INavigator
 
     public void NavigatorLoad()
     {
-        NavigatorBehave(1f / 60f);
-    }
-    
-    
-    public StreetNavigationController(
-        ClusterDesc clusterDesc0,
-        StreetPoint startPoint0,
-        int seed = 0
-    )
-    {
-        _rnd = new builtin.tools.RandomSource($"{clusterDesc0.Name}+{startPoint0.Pos}+{seed}");
-        _clusterDesc = clusterDesc0;
-        _startPoint = startPoint0;
+        _rnd = new builtin.tools.RandomSource($"{_clusterDesc.Name}+{_startPoint.Pos}+{Seed}");
+        _enumPath = new RandomPathEnumerator(_rnd, null, _startPoint);
+
         _v2Pos = _startPoint.Pos;
         _targetPoint = null;
         _effectiveSpeed = _speed;
 
-        _enumPath = new RandomPathEnumerator(_rnd, null, _startPoint);
-        
+        NavigatorBehave(1f / 60f);
+    }
+    
+    
+    public StreetNavigationController()
+    {
         _vu2LastDirection = new Vector2(1f, 0f);
         _v2LastSpeed = new Vector3(1f, 0f, 0f);
 

@@ -1,5 +1,7 @@
 ﻿using nogame.cities;
 using System.Numerics;
+using DefaultEcs;
+using engine;
 using engine.behave;
 using engine.physics;
 using engine.world;
@@ -33,8 +35,15 @@ namespace nogame.characters.cubes
                 }
             );
         }
-        
 
+
+        public override void OnAttach(in Engine engine0, in Entity entity)
+        {
+            base.OnAttach(in engine0, in entity);
+            _snc.NavigatorLoad();
+        }
+
+        
         public Behavior(
             in engine.Engine engine0,
             in engine.world.ClusterDesc clusterDesc0,
@@ -45,7 +54,11 @@ namespace nogame.characters.cubes
             _engine = engine0;
             _clusterDesc = clusterDesc0;
             _streetPoint = streetPoint0;
-            _snc = new StreetNavigationController(_clusterDesc, _streetPoint);
+            _snc = new StreetNavigationController()
+            {
+                ClusterDesc = _clusterDesc,
+                StartPoint = _streetPoint
+            };
             _snc.Speed = speed;
         }
     }
