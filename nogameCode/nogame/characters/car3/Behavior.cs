@@ -9,13 +9,13 @@ using engine;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
+using engine.behave;
 
 namespace nogame.characters.car3;
 
 internal class Behavior :
     builtin.tools.SimpleNavigationBehavior
 {
-    private StreetNavigationController _snc;
     private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
 
     /**
@@ -66,13 +66,18 @@ internal class Behavior :
             ErrorThrow($"I was expecting that {entity} has  no body component.", m => new InvalidOperationException(m));
             return;
         }
-
+        var iNavigator = Navigator;
+        if (null == iNavigator)
+        {
+            Error("No navigator assigned yet, unable to sync.");
+            return;
+        }
         lock (_engine.Simulation)
         {
             var prefTarget = entity.Get<engine.physics.components.Body>().Reference;
             Vector3 vPos3 = prefTarget.Pose.Position;
             Quaternion qRotation = prefTarget.Pose.Orientation;
-            _snc.NavigatorSetTransformation(vPos3, qRotation);
+            Navigator.NavigatorSetTransformation(vPos3, qRotation);
         }
     }
     

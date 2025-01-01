@@ -116,7 +116,7 @@ public class AfterCrashBehavior : ABehavior
                     prefTarget.Awake = false;
                     prefTarget.BecomeKinematic();
                 }
-
+                // TXWTODO: Test old behavior for being non-NULL.
                 entity.Get<engine.behave.components.Behavior>().Provider = _oldBehavior;
                 _oldBehavior.Sync(entity);
             }

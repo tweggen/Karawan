@@ -213,6 +213,7 @@ public class Quest : AModule, IQuest, ICreator
                 ParentEntity = eTarget,
                 OnReachTarget = _onReachTarget
             };
+            // TXWTODO: Run only with player available
             _engine.Run(_questTarget.ModuleActivate);
         });
     }
