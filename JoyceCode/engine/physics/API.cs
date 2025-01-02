@@ -369,22 +369,16 @@ public class API
      * Unregister a notify listener.
      */
     public void RemoveDynamicContactListener(
-        in DefaultEcs.Entity entity, 
         in BepuPhysics.BodyHandle bodyHandle)
     {
-        if (entity.IsAlive && entity.Has<physics.components.Body>())
+        lock (_lo)
         {
-            var handle = entity.Get<physics.components.Body>().Reference.Handle;
-
-            lock (_lo)
+            if (!_setRegisteredDynamics.Contains(bodyHandle.Value))
             {
-                if (!_setRegisteredDynamics.Contains(handle.Value))
-                {
-                    ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
-                }
-
-                _setRegisteredDynamics.Remove(handle.Value);
+                ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
             }
+
+            _setRegisteredDynamics.Remove(bodyHandle.Value);
         }
 
         lock (_engine.Simulation)

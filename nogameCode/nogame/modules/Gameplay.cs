@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using DefaultEcs;
 using engine;
+using engine.joyce.components;
 using engine.news;
 using nogame.world;
+using static engine.Logger;
 
 namespace nogame.modules;
 
@@ -82,6 +85,13 @@ public class Gameplay : AModule, IInputPart
             _ctrlFollowCamera.EnableInput(shallBeEnabled);
             _wasEnabled = shallBeEnabled;
         }
+
+        if (!_eCurrentTarget.IsAlive || !_eCurrentTarget.Has<Transform3ToWorld>() ||
+            !_eCurrentTarget.Get<Transform3ToWorld>().IsVisible)
+        {
+            Trace($"Changing demo mode subject.");
+            _reviewShot();
+        }
     }
     
 
@@ -138,6 +148,20 @@ public class Gameplay : AModule, IInputPart
     }
 
 
+    /**
+     * Compute desired camera entity and desired target entity and
+     * store it in member variables _desiredCamera and _desiredTarget.
+     *
+     * This function behaves differently if it is in demo mode or
+     * standard gameplay mode:
+     *
+     * - in demo mode, it picks the _eLatestCamera as desired camersa.
+     *   As a carrot, it selects a random entity that is called "car".
+     *   If it cannot find any carrot in demo mode, the player's car
+     *   is selected as a fallback.
+     * - in gameplay mode, also _eLatest is selected as a camera, and
+     *   the player entity is selected as a carrot.
+     */
     private bool _computeDesiredCamera()
     {
         /*
