@@ -148,13 +148,6 @@ public class Quest : AModule, IQuest, ICreator
     }
 
 
-    private void _prepare()
-    {
-        _engine = I.Get<Engine>();
-        DestinationPosition = _computeTargetLocationLT();
-    }
-    
-
     /**
      * Re-create this quest's entities while deserializing.
      *
@@ -179,9 +172,14 @@ public class Quest : AModule, IQuest, ICreator
     }
 
 
+    public async Task CreateEntities()
+    {
+        DestinationPosition = _computeTargetLocationLT();
+    }
+    
+
     public Quest()
     {
-        // TXWTODO: Be clear about where to initialize engine.
         _engine = I.Get<Engine>();
     }
 
@@ -190,7 +188,6 @@ public class Quest : AModule, IQuest, ICreator
     {
         var quest = new Quest();
         
-        quest._prepare();
         return quest;
     }
 }

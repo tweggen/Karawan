@@ -11,6 +11,7 @@ using engine.joyce.components;
 using engine.quest;
 using engine.streets;
 using engine.world;
+using engine.world.components;
 using nogame.characters.car3;
 using nogame.cities;
 using static engine.Logger;
@@ -24,6 +25,7 @@ public class Quest : AModule, IQuest, ICreator
     private Model _model;
     private bool _isActive = false;
 
+    private DefaultEcs.Entity _eTarget;
     private engine.quest.TrailVehicle _questTarget;  
     
     private Description _description = new()
@@ -43,6 +45,9 @@ public class Quest : AModule, IQuest, ICreator
 
     public string Name { get; set; } = typeof(Quest).FullName;
 
+
+    private string _targetCarName = "Fishmonger's car";
+    
     public Description GetDescription()
     {
         return _description;
@@ -55,67 +60,6 @@ public class Quest : AModule, IQuest, ICreator
         set => _isActive = value;
     }
     
-
-    public override void ModuleDeactivate()
-    {
-        _questTarget?.ModuleDeactivate();
-        _questTarget?.Dispose();
-        _questTarget = null;
-        
-        _engine.RemoveModule(this);
-        _isActive = false;
-        base.ModuleDeactivate();
-    }
-
-
-    private DefaultEcs.Entity _pickExistingCar()
-    {
-        /*
-         * Randomly chose a destination car.
-         */
-        DefaultEcs.Entity eVictim = default;
-        var listCandidates = _engine.GetEcsWorld().GetEntities()
-                .With<engine.behave.components.Behavior>()
-                .With<engine.joyce.components.Transform3ToWorld>()
-                .AsEnumerable()
-                .Where(i => 
-                    i.IsAlive
-                    && i.Get<Behavior>().Provider != null 
-                    && i.Get<Behavior>().Provider.GetType() == typeof(nogame.characters.car3.Behavior))
-            ;
-
-        foreach (var e in listCandidates)
-        {
-            ref var cBehavior = ref e.Get<Behavior>();
-            cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
-            eVictim = e;
-            break;
-        }
-
-        return eVictim;
-    }
-    
-    
-    private void _pickActivateCar()
-    {
-        var eVictim = _pickExistingCar();
-        
-        if (eVictim == default)
-        {
-            Error($"No victim found.");
-            return;
-        }
-
-        _questTarget = new engine.quest.TrailVehicle()
-        {
-            SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-            MapCameraMask = nogame.modules.map.Module.MapCameraMask,
-            ParentEntity = eVictim,
-            OnReachTarget = _onReachTarget
-        };
-        _engine.Run(_questTarget.ModuleActivate);
-    }
-
 
     private void _selectStartPoint(
         out ClusterDesc clusterDesc,
@@ -146,7 +90,107 @@ public class Quest : AModule, IQuest, ICreator
     }
 
 
-    private async Task _startQuest()
+    private void _startQuest()
+    {
+        _engine.Player.CallWithEntity(e =>
+            _engine.QueueMainThreadAction(() =>
+            {
+                /*
+                 * Create a destination marker.
+                 */
+                /*
+                 * ... create quest marker and run it.
+                 */
+                _questTarget = new engine.quest.TrailVehicle()
+                {
+                    SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+                    MapCameraMask = nogame.modules.map.Module.MapCameraMask,
+                    ParentEntity = _eTarget,
+                    OnReachTarget = _onReachTarget
+                };
+                // TXWTODO: Run only with player available
+                _questTarget.ModuleActivate();
+            }));
+    }
+    
+
+    public override void ModuleDeactivate()
+    {
+        _questTarget?.ModuleDeactivate();
+        _questTarget?.Dispose();
+        _questTarget = null;
+        
+        _engine.RemoveModule(this);
+        _isActive = false;
+        base.ModuleDeactivate();
+    }
+
+
+    public override void ModuleActivate()
+    {
+        base.ModuleActivate();
+        _isActive = true;
+        _engine.AddModule(this);
+
+        _engine.Run(_startQuest);
+    }
+
+    
+    /**
+     * Re-create this quest's entities while deserializing.
+     * We noted ourselves as creator to the car we need to chase.
+     * Therefore serialization will have taken care to serialize
+     * the basic car entity.
+     */
+    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => new(async () =>
+    {
+        /*
+         * WE have the basic car entity and the quest object. The quest object,
+         * however, does neither have the TrailVehicle objecz set up nor the
+         * cat entity associated.
+         */
+
+        var quest = eLoaded.Get<engine.quest.components.Quest>().ActiveQuest;
+        if (quest.IsActive == false)
+        {
+            /*
+             * No need to setup anything if the quest is not active.
+             */
+            return;
+        }
+        
+        
+        /*
+         * Find our car to set it up.
+         */
+        var eTarget = _engine.GetEcsWorld().GetEntities()
+            .With<Creator>().With<Behavior>().With<EntityName>()
+            .AsEnumerable().FirstOrDefault(e =>
+                e.Get<EntityName>().Name == _targetCarName);
+
+        if (eTarget == default)
+        {
+            ErrorThrow<InvalidOperationException>("Unable to find target car in data set.");
+            return;
+        }
+        return;
+    });
+
+    
+    /**
+     * Serialize non-basic information about this quest's entities.
+     * This is used to save e.g. our mission car. 
+     */
+    public void SaveEntityTo(Entity eLoader, out JsonNode jn)
+    {
+        jn = JsonValue.Create("no additional info from HelloFishmonger yet"); 
+    }
+
+
+    /**
+     * Create the car entity that we are supposed to chase.
+     */
+    public async Task CreateEntities()
     {
         /*
          * Load and configure model in arbitrary thread.
@@ -171,26 +215,30 @@ public class Quest : AModule, IQuest, ICreator
                 ,
                 MaxDistance = 150,
                 CollisionLayers = 0x0002,
+                Name = _targetCarName
             }
         };
         
         _model = await I.Get<ModelCache>().LoadModel(_mcp);
         
         _selectStartPoint(out var clusterDesc, out var worldFragment, out var streetPoint);
-        _engine.QueueEntitySetupAction(CharacterCreator.EntityName, eTarget =>
+
+        await _engine.TaskMainThread(() =>
         {
+            _eTarget = _engine.CreateEntity(_targetCarName);
+            
             /*
              * Create the basic car.
              */
             CharacterCreator.SetupCharacterMT(
-                eTarget,
+                _eTarget,
                 clusterDesc, worldFragment, streetPoint,
                 _model, _mcp,
                 new characters.car3.Behavior()
                 {
                     Navigator = new StreetNavigationController()
                     {
-                        ClusterDesc = clusterDesc, 
+                        ClusterDesc = clusterDesc,
                         StartPoint = streetPoint,
                         Seed = 100,
                         Speed = 35f
@@ -198,80 +246,35 @@ public class Quest : AModule, IQuest, ICreator
                 },
                 null
             );
-            
+
+            /*
+             * Make it our car.
+             */
+            _eTarget.Set(new Creator()
+            {
+                Id = I.Get<CreatorRegistry>().FindCreatorId(I.Get<engine.quest.Manager>())
+            });
+
             /*
              * Make it mission critical, so that it is not purged due to unloaded fragments.
              */
-            ref var cBehavior = ref eTarget.Get<Behavior>();
+            var cBehavior = _eTarget.Get<Behavior>();
             cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
 
-            eTarget.Set(new engine.world.components.Creator(engine.world.components.Creator.CreatorId_Hardcoded));
-
-            _engine.Player.CallWithEntity(e =>
-                _engine.QueueMainThreadAction(() =>
-                {
-                    /*
-                     * Create a destination marker.
-                     */
-                    /*
-                     * ... create quest marker and run it.
-                     */
-                    _questTarget = new engine.quest.TrailVehicle()
-                    {
-                        SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
-                        MapCameraMask = nogame.modules.map.Module.MapCameraMask,
-                        ParentEntity = eTarget,
-                        OnReachTarget = _onReachTarget
-                    };
-                    // TXWTODO: Run only with player available
-                    _questTarget.ModuleActivate();
-                }));
+            _eTarget.Set(new engine.world.components.Creator(engine.world.components.Creator.CreatorId_Hardcoded));
         });
     }
-    
-
-    public override void ModuleActivate()
-    {
-        base.ModuleActivate();
-        _isActive = true;
-        _engine.AddModule(this);
-
-        _engine.Run(_startQuest);
-    }
 
 
-    internal void _prepare()
+    public Quest()
     {
         _engine = I.Get<Engine>();
     }
     
-
-    /**
-     * Re-create this quest's entities while deserializing.
-     * We noted ourselves as creator to the car we need to chase.
-     * Therefore serialization will have taken care to serialize
-     * the basic car entity.
-     */
-    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => new(async () =>
-    {
-        // TXWTODO: This should setup our mission car.
-        return;
-    });
-
     
-    /**
-     * Serialize non-basic information about this quest's entities.
-     * This is used to save e.g. our mission car. 
-     */
-    public void SaveEntityTo(Entity eLoader, out JsonNode jn)
-    {
-        jn = JsonValue.Create("no additional info from HelloFishmonger yet"); 
-    }
-
     public static IQuest Instantiate()
     {
         var quest = new Quest();
-        quest._prepare();
         return quest;
     }
 }

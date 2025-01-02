@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace engine.quest;
 
 public class Description
@@ -38,6 +40,13 @@ public interface IQuest : IModule
      * must be inside entities later on.
      */
     // static IQuest Instantiate()
+
+    
+    /**
+     * Create everything that is reflected in entities if the quest is
+     * not restored from disk.
+     */
+    public Task CreateEntities();
 }
 
 

@@ -481,7 +481,7 @@ public class Narration : AModule, IInputPart
             string jsonStory = sr.ReadToEnd();
             _currentStory = new Story(jsonStory);
             _currentStory.BindExternalFunction("triggerQuest",
-                (string questName) => CatchAll(() => I.Get<engine.quest.Manager>().TriggerQuest(questName)));
+                (string questName) => CatchAll(() => I.Get<engine.quest.Manager>().TriggerQuest(questName, true)));
         }
     }
     

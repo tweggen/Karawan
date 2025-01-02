@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using builtin.loader;
+using DefaultEcs;
 using engine;
 using engine.joyce;
 using engine.physics;
@@ -222,7 +223,13 @@ class CharacterCreator
 
         int fragmentId = worldFragment.NumericalId;
 
-        wf.Engine.QueueEntitySetupAction(EntityName, eTarget =>
+        string name = mcp.Params?.Name;
+        if (String.IsNullOrWhiteSpace(name))
+        {
+            name = EntityName;
+        }
+
+        wf.Engine.QueueEntitySetupAction(name, eTarget =>
         {
             SetupCharacterMT(eTarget,
                 clusterDesc, worldFragment, chosenStreetPoint,

@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using DefaultEcs;
 using engine.news;
+using engine.quest.components;
 using engine.world;
 using static engine.Logger;
 
@@ -53,9 +54,9 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
      * Create a quest.
      * This creates an entity and the quest object required to activate the quest.
      */
-    public IQuest CreateQuest(string questName)
+    private async Task<IQuest> _createQuest(string questName)
     {
-        engine.quest.IQuest quest = Get(questName);
+        var quest = Get(questName); 
         if (null == quest)
         {
             ErrorThrow<ArgumentException>($"Requested to start unknown quest {questName}");
@@ -71,14 +72,16 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             _mapLoadedQuests[quest.Name] = quest;
         }
 
-        I.Get<Engine>().QueueEntitySetupAction(_questEntityName(quest.Name), e =>
+        await I.Get<Engine>().TaskMainThread(() =>
         {
             var eExistingQuest = I.Get<Engine>().GetEcsWorld().GetEntities().With<components.Quest>()
                 .AsEnumerable().FirstOrDefault(e => e.Get<components.Quest>().ActiveQuest?.Name == questName);
+
+            DefaultEcs.Entity e;
             
             if (eExistingQuest.IsAlive)
             {
-                Error($"Quest {quest} already exists. Using existing entity.");
+                Error($"Quest {questName} already exists. Using existing entity.");
                 var cExistingQuest = eExistingQuest.Get<components.Quest>();
                 if (cExistingQuest.ActiveQuest != quest)
                 {
@@ -87,9 +90,12 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
                     {
                         Error($"Exiting quest {quest.Name} was found active, so it probably should be activated.");
                     }
-                }
-                e.Dispose();
+                } 
                 e = eExistingQuest;
+            }
+            else
+            {
+                e = I.Get<Engine>().CreateEntity(quest.Name);
             }
 
             e.Set(new engine.quest.components.Quest() { ActiveQuest = quest });
@@ -100,41 +106,45 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             });
         });
 
+        await quest.CreateEntities();
+        
         return quest;
     }
 
 
-    public IQuest TriggerQuest(string questName)
+    private async Task<IQuest> _findQuest(string questName)
     {
-        engine.quest.IQuest quest = FindQuest(questName);
-        if (!quest.IsActive)
-        {
-            ActivateQuest(quest);
-        }
-        else
-        {
-            Warning($"Triggering a quest that already was active.");
-        }
-
-        return quest;
-    }
-    
-
-    public IQuest FindQuest(string questName)
-    {
+        IQuest quest;
         lock (_lo)
         {
-            if (_mapLoadedQuests.TryGetValue(questName, out var iQuest))
+            if (_mapLoadedQuests.TryGetValue(questName, out quest))
             {
-                return iQuest;
+                return quest;
             }
         }
 
         // TXWTODO: Yes, this obviously is a race condition.
-        return CreateQuest(questName);
+        return await _createQuest(questName);
     }
     
     
+    public async Task TriggerQuest(string questName, bool activate)
+    {  
+        var quest = await _findQuest(questName);
+        if (activate)
+        {
+            if (!quest.IsActive)
+            {
+                ActivateQuest(quest);
+            }
+            else
+            {
+                Warning($"Triggering a quest that already was active.");
+            }
+        }
+    }
+    
+
     public void DeactivateQuest(IQuest quest)
     {
         string questName = quest.Name;

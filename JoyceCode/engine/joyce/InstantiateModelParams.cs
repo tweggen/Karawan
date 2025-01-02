@@ -59,6 +59,13 @@ public class InstantiateModelParams
 
     public ushort CollisionLayers { get; set; } = 0x0004;
 
+    
+    /**
+     * THe name for this entity. This can be used to identify
+     * e.g. quest specific objects or characters.
+     */
+    public string Name { get; set; } = "";
+    
     public string Hash()
     {
         return $"{{\"geomFlags\": {GeomFlags}, \"maxDistance\": {MaxDistance} }}";
