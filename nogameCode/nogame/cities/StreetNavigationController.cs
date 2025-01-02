@@ -73,7 +73,20 @@ public class StreetNavigationController : INavigator
     }
     
     private Stroke _currentStroke;
+
+    public Stroke CurrentStroke
+    {
+        get => _currentStroke;
+        set => _currentStroke = value;
+    }
+    
     private Stroke _nextStroke;
+
+    public Stroke NextStroke
+    {
+        get => _nextStroke;
+        set => _nextStroke = value;
+    }
     
     /**
      * The point we are heading to right now.

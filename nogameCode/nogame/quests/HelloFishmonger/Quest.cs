@@ -163,12 +163,12 @@ public class Quest : AModule, IQuest, ICreator
         /*
          * Find our car to set it up.
          */
-        var eTarget = _engine.GetEcsWorld().GetEntities()
+        _eTarget = _engine.GetEcsWorld().GetEntities()
             .With<Creator>().With<Behavior>().With<EntityName>()
             .AsEnumerable().FirstOrDefault(e =>
                 e.Get<EntityName>().Name == _targetCarName);
 
-        if (eTarget == default)
+        if (_eTarget == default)
         {
             ErrorThrow<InvalidOperationException>("Unable to find target car in data set.");
             return;
@@ -258,7 +258,7 @@ public class Quest : AModule, IQuest, ICreator
             /*
              * Make it mission critical, so that it is not purged due to unloaded fragments.
              */
-            var cBehavior = _eTarget.Get<Behavior>();
+            ref var cBehavior = ref _eTarget.Get<Behavior>();
             cBehavior.Flags |= (ushort)Behavior.BehaviorFlags.MissionCritical;
 
             _eTarget.Set(new engine.world.components.Creator(engine.world.components.Creator.CreatorId_Hardcoded));

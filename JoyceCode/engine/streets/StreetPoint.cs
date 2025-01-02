@@ -17,8 +17,6 @@ namespace engine.streets;
  */
 public class StreetPointConverter : JsonConverter<StreetPoint>
 {
-    public required builtin.entitySaver.Context Context;
-    
     public override StreetPoint Read(
         ref Utf8JsonReader reader,
         System.Type typeToConvert,
@@ -31,8 +29,6 @@ public class StreetPointConverter : JsonConverter<StreetPoint>
 
         int id = default;
         int clusterId = default;
-        Vector2 pos = default;
-        string creator = default;
 
         while (reader.Read())
         {
@@ -73,7 +69,7 @@ public class StreetPointConverter : JsonConverter<StreetPoint>
         StreetPoint sp,
         JsonSerializerOptions options)
     {
-        writer.WriteStartArray();
+        writer.WriteStartObject();
         writer.WriteNumber(nameof(StreetPoint.Id), sp.Id);
         writer.WriteNumber(nameof(StreetPoint.ClusterId), sp.ClusterId);
         writer.WriteString(nameof(StreetPoint.Creator), sp.Creator);

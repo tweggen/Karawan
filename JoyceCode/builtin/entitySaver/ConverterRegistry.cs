@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using engine;
 using engine.behave;
+using engine.streets;
 using static engine.Logger;
 
 
@@ -115,6 +116,9 @@ public class ConverterRegistry : AModule
         _mapConverters.Add(typeof(Vector3), context => new Vector3JsonConverter());
         _mapConverters.Add(typeof(Quaternion), context => new QuaternionJsonConverter());
 
+        _mapConverters.Add(typeof(StreetPoint), context => new engine.streets.StreetPointConverter());
+        _mapConverters.Add(typeof(Stroke), context => new engine.streets.StrokeConverter());
+        
         // _mapConverters.Add(typeof(engine.joyce.InstanceDesc), context => new engine.joyce.InstanceDescConverter() { Context = context });
         _mapConverters.Add(typeof(engine.joyce.components.FromModel), context => new engine.joyce.components.FromModelConverter() { Context =  context });
         _mapConverters.Add(typeof(engine.behave.IBehavior), context => new InterfacePointerConverter<IBehavior>());

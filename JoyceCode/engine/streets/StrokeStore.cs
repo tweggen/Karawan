@@ -162,12 +162,21 @@ public class StrokeStore
 
     public StreetPoint GetStreetPoint(int id)
     {
+        // TXWTODO: Inefficient!!!
         return _listPoints.FirstOrDefault(sp => sp.Id == id);
+    }
+
+
+    public Stroke GetStroke(int sid)
+    {
+        // TXWTODO: Inefficient
+        return _listStrokes.FirstOrDefault(stroke => stroke.Sid == sid);
     }
 
 
     private List<Stroke> _tmpStrokeList = new();
 
+    
     /**
      * Return the closest stroke to the given street point,
      * which is closer than maxDistance.
@@ -327,6 +336,7 @@ public class StrokeStore
 
     private List<StreetPoint> _tmpListNearby = new();
 
+    
     private void AddPoint(in StreetPoint sp)
     {
         if (sp.InStore)
