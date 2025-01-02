@@ -118,6 +118,7 @@ public class ConverterRegistry : AModule
 
         _mapConverters.Add(typeof(StreetPoint), context => new engine.streets.StreetPointConverter());
         _mapConverters.Add(typeof(Stroke), context => new engine.streets.StrokeConverter());
+        _mapConverters.Add(typeof(engine.world.ClusterDesc), context => new engine.world.ClusterDescConverter());
         
         // _mapConverters.Add(typeof(engine.joyce.InstanceDesc), context => new engine.joyce.InstanceDescConverter() { Context = context });
         _mapConverters.Add(typeof(engine.joyce.components.FromModel), context => new engine.joyce.components.FromModelConverter() { Context =  context });
