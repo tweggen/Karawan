@@ -86,7 +86,10 @@ public class Object : IDisposable
         {
             if ((Flags & IsStatic) == 0)
             {
-                I.Get<engine.physics.API>().RemoveDynamicContactListener(Entity, new BodyHandle(IntHandle));
+                /*
+                 * We do not pass the entity, because in many cases it might not exist any more.
+                 */
+                I.Get<engine.physics.API>().RemoveDynamicContactListener(new BodyHandle(IntHandle));
             } else
             {
                 I.Get<engine.physics.API>().RemoveStaticsContactListener(Entity);
