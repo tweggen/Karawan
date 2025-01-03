@@ -294,7 +294,7 @@ public class RenderOSDSystem : DefaultEcs.System.AEntitySetSystem<double>, IModu
     }
 
     public RenderOSDSystem()
-        : base(I.Get<Engine>().GetEcsWorld())
+        : base(I.Get<Engine>().GetEcsWorldNoAssert())
     {
         _engine = I.Get<Engine>();
         _moduleTracker = new() { Module = this };

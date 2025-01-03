@@ -91,7 +91,7 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
 
 
     public PropagateTranslationSystem()
-        : base(I.Get<Engine>().GetEcsWorld())
+        : base(I.Get<Engine>().GetEcsWorldNoAssert())
     {
         _engine = I.Get<Engine>();
     }

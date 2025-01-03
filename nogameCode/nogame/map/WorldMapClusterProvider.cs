@@ -24,25 +24,27 @@ public class WorldMapClusterProvider : IWorldMapProvider
         var e = I.Get<engine.Engine>();
         ClusterList clusterList;
         clusterList = I.Get<ClusterList>();
-        foreach (var clusterDesc in clusterList.GetClusterList())
+        e.QueueMainThreadAction(() =>
         {
-            float width = 240f;
-            DefaultEcs.Entity eCity = e.CreateEntity($"nogame.map.city {clusterDesc.Name}");
-            I.Get<TransformApi>().SetTransforms(eCity, true, 0x00800000, 
-                Quaternion.Identity, clusterDesc.Pos with { Y = ClusterNameY });
-            eCity.Set(new engine.draw.components.OSDText(
-                new Vector2(0f , -8f),
-                new Vector2(width, 18f),
-                $"{clusterDesc.Name}",
-                10,
-                0xff22aaee,
-                0x00000000,
-                HAlign.Left)
+            foreach (var clusterDesc in clusterList.GetClusterList())
             {
-                MaxDistance = 100000f
-            });
-        }
-        
+                float width = 240f;
+                DefaultEcs.Entity eCity = e.CreateEntity($"nogame.map.city {clusterDesc.Name}");
+                I.Get<TransformApi>().SetTransforms(eCity, true, 0x00800000,
+                    Quaternion.Identity, clusterDesc.Pos with { Y = ClusterNameY });
+                eCity.Set(new engine.draw.components.OSDText(
+                    new Vector2(0f, -8f),
+                    new Vector2(width, 18f),
+                    $"{clusterDesc.Name}",
+                    10,
+                    0xff22aaee,
+                    0x00000000,
+                    HAlign.Left)
+                {
+                    MaxDistance = 100000f
+                });
+            }
+        });
     }
 
 

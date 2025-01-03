@@ -813,18 +813,21 @@ public class Platform : engine.IPlatform
         _silkThreeD = I.Get<IThreeD>() as SilkThreeD;
         _silkThreeD.SetupDone();
 
-        /*
-         * Internal helpers managing various entities.
-         */
-        _instanceManager = I.Get<InstanceManager>();
-        _instanceManager.Manage(_engine.GetEcsWorld());
-        _cameraManager = I.Get<CameraManager>();
-        _cameraManager.Manage(_engine.GetEcsWorld());
+        _engine.RunMainThread(() =>
+        {
+            /*
+             * Internal helpers managing various entities.
+             */
+            _instanceManager = I.Get<InstanceManager>();
+            _instanceManager.Manage(_engine.GetEcsWorld());
+            _cameraManager = I.Get<CameraManager>();
+            _cameraManager.Manage(_engine.GetEcsWorld());
 
-        /*
-         * Create the main screen renderer.
-         */
-        _logicalRenderer = I.Get<LogicalRenderer>();
+            /*
+             * Create the main screen renderer.
+             */
+            _logicalRenderer = I.Get<LogicalRenderer>();
+        });
 
         _renderer = new SilkRenderer();
     }

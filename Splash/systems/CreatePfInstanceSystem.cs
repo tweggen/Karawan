@@ -69,7 +69,7 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
     }
 
     public unsafe CreatePfInstanceSystem()
-        : base(I.Get<Engine>().GetEcsWorld())
+        : base(I.Get<Engine>().GetEcsWorldNoAssert())
     {
         _engine = I.Get<Engine>();
     }

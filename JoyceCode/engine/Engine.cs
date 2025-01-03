@@ -52,6 +52,7 @@ public class Engine
     private HashSet<DefaultEcs.Entity> _setDoomedEntities = new();
     #endif
 
+    private bool _isSingleThreaded = true;
 
     private int _requireEntityIdArrays = 0;
     private DefaultEcs.Entity[] _arrayEntityIds = new DefaultEcs.Entity[0];
@@ -193,6 +194,7 @@ public class Engine
         }
     }
 
+    
     public EventHandler<GamePlayStates> OnGamePlayStateChanged;
 
 
@@ -250,6 +252,7 @@ public class Engine
     }
 
 
+#if false
     private bool _tryGetMemberEntity(out DefaultEcs.Entity eReturn, ref DefaultEcs.Entity myMember)
     {
         lock (_lo)
@@ -276,16 +279,17 @@ public class Engine
 
         return haveMember;
     }
+#endif
 
 
     public void BeamTo(Vector3 vPos, Quaternion qStart)
     {
-        lock (_lo)
+        QueueMainThreadAction(() =>
         {
             var pref = Player.Value.Get<engine.physics.components.Body>().Reference;
             pref.Pose.Position = vPos;
             pref.Pose.Orientation = qStart;
-        }
+        });
     }
 
 
@@ -297,21 +301,34 @@ public class Engine
         }
     }
 
-
+    
     public DefaultEcs.World GetEcsWorld()
+    {
+        Debug.Assert(_isSingleThreaded || Thread.CurrentThread == _logicalThread, "not in logical threead.");
+        return _ecsWorld;
+    }
+
+
+    /**
+     * Read the ecs world from a non-logical thread. This is valid, if the world is not about to be used.
+     */
+    public DefaultEcs.World GetEcsWorldNoAssert()
     {
         return _ecsWorld;
     }
 
 
+#if false
     public DefaultEcs.Command.WorldRecord GetEcsWorldRecord()
     {
+        Debug.Assert(Thread.CurrentThread == _logicalThread, "not in logical threead.");
         return _entityCommandRecorder.Record(_ecsWorld);
     }
 
 
     public void ApplyEcsRecorder(in DefaultEcs.Command.EntityCommandRecorder recorder)
     {
+        Debug.Assert(Thread.CurrentThread == _logicalThread, "not in logical threead.");
         recorder.Execute();
     }
 
@@ -320,8 +337,9 @@ public class Engine
     {
         _entityCommandRecorder.Execute();
     }
+#endif
 
-
+    
     private void _executeDoomedEntities()
     {
 #if !DEBUG
@@ -417,7 +435,7 @@ public class Engine
     #if DEBUG
     public DefaultEcs.Entity CreateEntity(string name)
     {
-        Debug.Assert(System.Threading.Thread.CurrentThread == _logicalThread, "Not called from logical thread.");
+        Debug.Assert(_isSingleThreaded || System.Threading.Thread.CurrentThread == _logicalThread, "Not called from logical thread.");
         DefaultEcs.Entity entity = _ecsWorld.CreateEntity();
         entity.Set(new joyce.components.EntityName(name));
         return entity;
@@ -771,10 +789,12 @@ public class Engine
          */
         _systemMoveKinetics.Update(dt);
 
+        #if false
         /*
          * Write back all entity modifications to the objects.
          */
         _commitWorldRecord();
+        #endif
 
         /*
          * If no new frame has been created, read all geom entities for rendering
@@ -958,8 +978,31 @@ public class Engine
     }
 
 
+    private void _startLogicalThreadServices()
+    {
+        _systemParticle = new();
+        _systemParticleEmitter = new();
+        _systemBehave = new();
+        _systemApplyPoses = new();
+        _systemMoveKinetics = new();
+        _systemMovingSounds = new();
+        _managerPhysics = new physics.Manager();
+        _managerPhysics.Manage(this);
+        _managerBehavior = new behave.Manager();
+        _managerBehavior.Manage(this);
+        _managerLuaScript = new();
+        _managerLuaScript.Manage(_ecsWorld);
+        _managerMapIcons = new();
+        _managerMapIcons.Manage(_ecsWorld);
+
+        _cameraInfo = new CameraInfo(Camera.Value);
+    }
+
+
     private void _logicalThreadFunction()
     {
+        _startLogicalThreadServices();
+        
         float invFps = 1f / 60f;
         float accumulator = 0f;
 
@@ -1070,23 +1113,6 @@ public class Engine
         _aPhysics = I.Get<engine.physics.API>();
         _aTransform = I.Get<engine.joyce.TransformApi>();
         _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
-
-        _systemParticle = new();
-        _systemParticleEmitter = new();
-        _systemBehave = new();
-        _systemApplyPoses = new();
-        _systemMoveKinetics = new();
-        _systemMovingSounds = new();
-        _managerPhysics = new physics.Manager();
-        _managerPhysics.Manage(this);
-        _managerBehavior = new behave.Manager();
-        _managerBehavior.Manage(this);
-        _managerLuaScript = new();
-        _managerLuaScript.Manage(_ecsWorld);
-        _managerMapIcons = new();
-        _managerMapIcons.Manage(_ecsWorld);
-
-        _cameraInfo = new CameraInfo(Camera.Value);
 
         _logicalThread = new Thread(_logicalThreadFunction);
         _logicalThread.Priority = ThreadPriority.AboveNormal;
@@ -1219,8 +1245,8 @@ public class Engine
     public Engine(engine.IPlatform platform)
     {
         _taskScheduler = new LimitedConcurrencyLevelTaskScheduler(
-            Int32.Max(3, Environment.ProcessorCount - 2)
-            //2
+            //Int32.Max(3, Environment.ProcessorCount - 2)
+            20
             );
         _taskFactory = new TaskFactory(_taskScheduler);
         
@@ -1230,7 +1256,7 @@ public class Engine
         _nextId = 0;
         _platform = platform;
         _ecsWorld = new DefaultEcs.World();
-        _entityCommandRecorder = new(4096, 1024 * 1024);
+        // _entityCommandRecorder = new(4096, 1024 * 1024);
         
         I.Register<engine.ModuleFactory>(() => new engine.ModuleFactory());
         
@@ -1262,6 +1288,8 @@ public class Engine
             };
         }
 #endif
+
+        _isSingleThreaded = false;
         
         State = EngineState.Starting;
 

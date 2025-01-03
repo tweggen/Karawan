@@ -499,7 +499,7 @@ public class AutoSave : engine.AModule
 
             _gameState = gameState;
 
-            await _restoreEntityAndConfigFromLoad(gameState));
+            await _restoreEntityAndConfigFromLoad(gameState);
             
         }
 

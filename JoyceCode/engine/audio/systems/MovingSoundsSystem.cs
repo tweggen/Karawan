@@ -127,7 +127,7 @@ namespace engine.audio.systems
         
         
         public MovingSoundsSystem()
-            : base(I.Get<Engine>().GetEcsWorld())
+            : base(I.Get<Engine>().GetEcsWorldNoAssert())
         {
             _engine = I.Get<Engine>();
         }

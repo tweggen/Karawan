@@ -48,7 +48,7 @@ sealed public class CreateMusicSystem : DefaultEcs.System.AEntitySetSystem<float
 
 
     public CreateMusicSystem()
-        : base(I.Get<Engine>().GetEcsWorld())
+        : base(I.Get<Engine>().GetEcsWorldNoAssert())
     {
         _engine = I.Get<Engine>();
         _api = I.Get<Boom.ISoundAPI>() as Boom.OpenAL.API;

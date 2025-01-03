@@ -17,10 +17,10 @@ public class LogicalRenderer
 
     private readonly IThreeD _threeD;
     
-    private readonly systems.CreatePfInstanceSystem _createPfInstanceSystem;
-    private readonly systems.CreatePfRenderbufferSystem _createPfRenderbufferSystem;
-    private readonly systems.DrawInstancesSystem _drawInstancesSystem;
-    private readonly systems.DrawSkyboxesSystem _drawSkyboxesSystem;
+    private systems.CreatePfInstanceSystem _createPfInstanceSystem;
+    private systems.CreatePfRenderbufferSystem _createPfRenderbufferSystem;
+    private systems.DrawInstancesSystem _drawInstancesSystem;
+    private systems.DrawSkyboxesSystem _drawSkyboxesSystem;
 
     private uint _logicalFrameNumber;
     
@@ -219,10 +219,13 @@ public class LogicalRenderer
     {
         _engine = I.Get<Engine>();
         _threeD = I.Get<IThreeD>();
- 
-        _createPfInstanceSystem = new();
-        _createPfRenderbufferSystem = new();
-        _drawInstancesSystem = new();
-        _drawSkyboxesSystem = new();
+
+        _engine.RunMainThread(() =>
+        {
+            _createPfInstanceSystem = new();
+            _createPfRenderbufferSystem = new();
+            _drawInstancesSystem = new();
+            _drawSkyboxesSystem = new();
+        });
     }
 }

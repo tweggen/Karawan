@@ -55,7 +55,7 @@ public class ParticleSystem : DefaultEcs.System.AEntitySetSystem<float>
     }
 
     public ParticleSystem()
-        : base(I.Get<Engine>().GetEcsWorld())
+        : base(I.Get<Engine>().GetEcsWorldNoAssert())
     {
         _engine = I.Get<Engine>();
     }

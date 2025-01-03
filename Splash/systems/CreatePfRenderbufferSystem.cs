@@ -47,7 +47,7 @@ public class CreatePfRenderbufferSystem : DefaultEcs.System.AEntitySetSystem<eng
     }
 
     public unsafe CreatePfRenderbufferSystem()
-        : base(I.Get<Engine>().GetEcsWorld())
+        : base(I.Get<Engine>().GetEcsWorldNoAssert())
     {
         _engine = I.Get<Engine>();
     }
