@@ -95,26 +95,30 @@ public class ToSomewhere : AModule
     {
         if (cev.ContactInfo.PropertiesB?.Name?.StartsWith(SensitivePhysicsName) ?? false)
         {
+
             /*
              * At this point we can call whatever has been reached.
              */
             Trace("Called onCollision of ToLocation.");
             // TXWTODO: LT
-            _eMeshMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
             if (OnReachTarget != default)
             {
                 OnReachTarget();
-                _destroyTargetInstance();
             }
+            _engine.QueueMainThreadAction(() =>
+            {
+                _eMeshMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
+                _destroyTargetInstanceLT();
+            });
         }
     }
 
 
-    private void _destroyTargetInstance()
+    private void _destroyTargetInstanceLT()
     {
         if (_eGoal.IsAlive)
         {
-            _engine.QueueMainThreadAction(() => I.Get<HierarchyApi>().Delete(ref _eGoal));
+             I.Get<HierarchyApi>().Delete(ref _eGoal);
         }
     }
     
@@ -356,7 +360,10 @@ public class ToSomewhere : AModule
 
     private void _destroyGoal()
     {
-        _destroyTargetInstance();
+        _engine.QueueMainThreadAction(() =>
+        {
+            _destroyTargetInstanceLT();
+        });
     }
     
     
