@@ -374,7 +374,7 @@ public class AutoSave : engine.AModule
             gamedata = JsonSerializer.Serialize(gs)
         };
 
-        Trace($"Save game data is {saveGameObject.gamedata}");
+//        Trace($"Save game data is {saveGameObject.gamedata}");
 
         _withWebToken(() =>
         {
@@ -389,11 +389,11 @@ public class AutoSave : engine.AModule
     }
     
 
-    private void _doSave()
+    private async void _doSave()
     {
         _setSaving(true);
 
-        var jnAllEntities = M<builtin.EntitySaver>().SaveAll();
+        var jnAllEntities = await M<builtin.EntitySaver>().SaveAll();
         
         var gs = _gameState;
         gs.Entities = JsonSerializer.Serialize(
@@ -405,7 +405,7 @@ public class AutoSave : engine.AModule
             }
         );
 
-        Trace($"Saving entities json: {gs.Entities}");
+        //Trace($"Saving entities json: {gs.Entities}");
         M<DBStorage>().SaveGameState(gs);
         
         _triggerCloudSave(gs);
@@ -437,7 +437,7 @@ public class AutoSave : engine.AModule
     /**
      * Must be called in logical thread.
      */
-    private void _restoreEntityAndConfigFromLoad(GameState gs)
+    private async Task _restoreEntityAndConfigFromLoad(GameState gs)
     {
         try
         {
@@ -448,7 +448,7 @@ public class AutoSave : engine.AModule
                 });
             var jeRoot = jdocGameState.RootElement;
 
-            M<builtin.EntitySaver>().LoadAll(jeRoot);
+            await M<builtin.EntitySaver>().LoadAll(jeRoot);
         }
         catch (Exception e)
         {
@@ -499,7 +499,7 @@ public class AutoSave : engine.AModule
 
             _gameState = gameState;
 
-            _engine.QueueMainThreadAction(() => _restoreEntityAndConfigFromLoad(gameState));
+            await _restoreEntityAndConfigFromLoad(gameState));
             
         }
 
@@ -541,7 +541,7 @@ public class AutoSave : engine.AModule
                 _gameState = gs;
                 haveGameState = true;
                 
-                _engine.QueueMainThreadAction(() => _restoreEntityAndConfigFromLoad(gs));
+                await _restoreEntityAndConfigFromLoad(gs);
             }
         }
 
@@ -686,6 +686,9 @@ public class AutoSave : engine.AModule
 
     private void _handleTriggerSave()
     {
+        /*
+         * This is just a trigger. We can very well trigger an async call.
+         */
         _doSave();
     }
 

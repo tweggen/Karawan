@@ -65,10 +65,8 @@ public class EntitySaver : AModule
         }
     }
 
-    public JsonNode SaveAll()
+    public async Task<JsonNode> SaveAll()
     {
-        JsonNode jnAll = new JsonObject();
-
         var oreg = M<CreatorRegistry>();
         var context = new Context();
 
@@ -78,86 +76,93 @@ public class EntitySaver : AModule
             Converters = { new ConverterFactory(M<ConverterRegistry>(), context) }
         };
         
-        /*
-         * Iterate through everything that has a creator associated. That way, it might
-         * be subject to later recreation.
-         */
-        var enumCreated =
-            I.Get<Engine>().GetEcsWorld().GetEntities()
-                .With<Creator>().AsEnumerable();
-        foreach (var eCreated in enumCreated)
+        
+        JsonNode jnAll = new JsonObject();
+
+        await _engine.TaskMainThread(async () =>
         {
-            context.Entity = eCreated;
-            
             /*
-             * Save that we have an entity, with a certain id, that by
-             * incident matches the id the actual entity has.
+             * Iterate through everything that has a creator associated. That way, it might
+             * be subject to later recreation.
              */
-            string strEntity = eCreated.ToString();
-            var joAll = jnAll.AsObject();
-
-            var componentReader = new SaveComponentsReader() { SerializerOptions = serializerOptions };
-            eCreated.ReadAllComponents(componentReader);
-
-            /*
-             * This is what we might need to store. We take care to save a record only for entities
-             * that do exist in some way.
-             */
-            JsonObject joComponents = null;
-            JsonObject joCreator = null;
-            
-            if (!componentReader.IsEmpty)
+            var enumCreated =
+                I.Get<Engine>().GetEcsWorld().GetEntities()
+                    .With<Creator>().AsEnumerable();
+            foreach (var eCreated in enumCreated)
             {
-                joComponents = componentReader.JOComponents;
-            }
+                context.Entity = eCreated;
 
-            /*
-             * Now, if we have a creator, have it save everything it wants to this
-             * object.
-             */
-            ref var cCreator = ref eCreated.Get<engine.world.components.Creator>();
-            if (cCreator.CreatorId > Creator.CreatorId_HardcodeMax)
-            {
-                var iCreator = oreg.GetCreator(cCreator.CreatorId);
-                iCreator.SaveEntityTo(eCreated, out var jnEntityByCreator);
-                if (null != jnEntityByCreator &&
-                    jnEntityByCreator.GetValueKind() != JsonValueKind.Null &&
-                    jnEntityByCreator.GetValueKind() != JsonValueKind.Undefined)
-                {
-                    joCreator = new JsonObject();
-                    joCreator.Add(iCreator.GetType().ToString(), jnEntityByCreator);
-                }
-            }
+                /*
+                 * Save that we have an entity, with a certain id, that by
+                 * incident matches the id the actual entity has.
+                 */
+                string strEntity = eCreated.ToString();
+                var joAll = jnAll.AsObject();
 
-            if (joComponents != null || joCreator != null)
-            {
-                JsonNode jnEntity;
-                JsonObject joEntity;
-                if (!joAll.TryGetPropertyValue(strEntity, out jnEntity))
+                var componentReader = new SaveComponentsReader() { SerializerOptions = serializerOptions };
+                eCreated.ReadAllComponents(componentReader);
+
+                /*
+                 * This is what we might need to store. We take care to save a record only for entities
+                 * that do exist in some way.
+                 */
+                JsonObject joComponents = null;
+                JsonObject joCreator = null;
+
+                if (!componentReader.IsEmpty)
                 {
-                    joEntity = new JsonObject();
-                    jnEntity = joEntity;
-                    joAll.Add(strEntity, joEntity);
-                }
-                else
-                {
-                    jnEntity = joAll[strEntity];
-                    joEntity = jnEntity.AsObject();
+                    joComponents = componentReader.JOComponents;
                 }
 
-                if (joComponents != null) joEntity.Add("components", joComponents);
-                if (joCreator != null) joEntity.Add("creator", joCreator);
+                /*
+                 * Now, if we have a creator, have it save everything it wants to this
+                 * object.
+                 */
+                var cCreator = eCreated.Get<engine.world.components.Creator>();
+                if (cCreator.CreatorId > Creator.CreatorId_HardcodeMax)
+                {
+                    var iCreator = oreg.GetCreator(cCreator.CreatorId);
+                    iCreator.SaveEntityTo(eCreated, out var jnEntityByCreator);
+                    if (null != jnEntityByCreator &&
+                        jnEntityByCreator.GetValueKind() != JsonValueKind.Null &&
+                        jnEntityByCreator.GetValueKind() != JsonValueKind.Undefined)
+                    {
+                        joCreator = new JsonObject();
+                        joCreator.Add(iCreator.GetType().ToString(), jnEntityByCreator);
+                    }
+                }
+
+                if (joComponents != null || joCreator != null)
+                {
+                    JsonNode jnEntity;
+                    JsonObject joEntity;
+                    if (!joAll.TryGetPropertyValue(strEntity, out jnEntity))
+                    {
+                        joEntity = new JsonObject();
+                        jnEntity = joEntity;
+                        joAll.Add(strEntity, joEntity);
+                    }
+                    else
+                    {
+                        jnEntity = joAll[strEntity];
+                        joEntity = jnEntity.AsObject();
+                    }
+
+                    if (joComponents != null) joEntity.Add("components", joComponents);
+                    if (joCreator != null) joEntity.Add("creator", joCreator);
+                }
             }
-        }
+        });
+
+
         return jnAll;
     }
 
 
     /**
-     * Must be called from logical thread, returns atomically for main thread operation, will
-     * triggger streaming operations.
+     * Load all entities. See readme
      */
-    public Task LoadAll(JsonElement jeAll)
+    public async Task LoadAll(JsonElement jeAll)
     {
         List<Task> listSetupTasks = new();
         List<(DefaultEcs.Entity, JsonElement)> listCreatorEntites = new();
@@ -168,86 +173,91 @@ public class EntitySaver : AModule
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Converters = { new ConverterFactory(M<ConverterRegistry>(), context) }
         };
-        foreach (var jpEntity in jeAll.EnumerateObject())
+
+        await _engine.TaskMainThread(async () =>
         {
-            var strEntityId = jpEntity.Name;
-            var jeEntity = jpEntity.Value;
-
-            var e = I.Get<Engine>().GetEcsWorld().CreateEntity();
-            context.Entity = e;
-
-            if (jeEntity.TryGetProperty("components", out var jeComponents))
+            foreach (var jpEntity in jeAll.EnumerateObject())
             {
-                /*
-                 * First, setup all components from json.
-                 */
-                foreach (var jpComponent in jeComponents.EnumerateObject())
+                var strEntityId = jpEntity.Name;
+                var jeEntity = jpEntity.Value;
+
+                var e = I.Get<Engine>().GetEcsWorld().CreateEntity();
+                context.Entity = e;
+
+                if (jeEntity.TryGetProperty("components", out var jeComponents))
                 {
-                    var strComponentName = jpComponent.Name;
-                    var jeComponent = jpComponent.Value;
-                    var type = Type.GetType(strComponentName)!;
-
-                    Object comp = null;
-                    try
-                    {
-                        string rawText = jeComponent.GetRawText();
-                        comp = JsonSerializer.Deserialize(rawText, type, serializerOptions)!;
-                    }
-                    catch (Exception exception)
-                    {
-                        Error(
-                            $"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}: {exception}");
-                        continue;
-                    }
-
                     /*
-                     * If creating an object from properties failed or no properties had been given.
+                     * First, setup all components from json.
                      */
-                    if (null == comp)
+                    foreach (var jpComponent in jeComponents.EnumerateObject())
                     {
-                        comp = Activator.CreateInstance(type);
-                    }
+                        var strComponentName = jpComponent.Name;
+                        var jeComponent = jpComponent.Value;
+                        var type = Type.GetType(strComponentName)!;
 
-                    /*
-                     * Set the deserialized component to the entity.
-                     */
-                    MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
-                        .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
-                        .FirstOrDefault(m => true);
-                    var genericMethod = baseMethod.MakeGenericMethod(type);
-                    genericMethod.Invoke(e, new object[] { comp });
-
-                    /*
-                     * Finally, call setupfrom for each component that defines it.
-                     */
-                    MethodInfo? setupFromMethod = type.GetMethod("SetupFrom");
-                    if (null != setupFromMethod)
-                    {
+                        Object comp = null;
                         try
                         {
-                            Func<Task>? taskSetup;
-                            taskSetup = (Func<Task>)setupFromMethod.Invoke(comp, new object[] { jeComponent });
-                            if (null != taskSetup)
-                            {
-                                listSetupTasks.Add(taskSetup());
-                            }
+                            string rawText = jeComponent.GetRawText();
+                            comp = JsonSerializer.Deserialize(rawText, type, serializerOptions)!;
                         }
                         catch (Exception exception)
                         {
-                            Error($"Unable to create and execute deser method for {type.Name}: {exception}");
+                            Error(
+                                $"Unable to deserialize entity component {strComponentName} from {jeComponent.GetRawText()}: {exception}");
+                            continue;
                         }
+
+                        /*
+                         * If creating an object from properties failed or no properties had been given.
+                         */
+                        if (null == comp)
+                        {
+                            comp = Activator.CreateInstance(type);
+                        }
+
+                        /*
+                         * Set the deserialized component to the entity.
+                         */
+                        MethodInfo baseMethod = typeof(DefaultEcs.Entity).GetMethods()
+                            .Where(m => m.Name == "Set" && m.GetParameters().Length == 1)
+                            .FirstOrDefault(m => true);
+                        var genericMethod = baseMethod.MakeGenericMethod(type);
+                        genericMethod.Invoke(e, new object[] { comp });
+
+                        /*
+                         * Finally, call setupfrom for each component that defines it.
+                         */
+                        MethodInfo? setupFromMethod = type.GetMethod("SetupFrom");
+                        if (null != setupFromMethod)
+                        {
+                            try
+                            {
+                                Func<Task>? taskSetup;
+                                taskSetup = (Func<Task>)setupFromMethod.Invoke(comp, new object[] { jeComponent });
+                                if (null != taskSetup)
+                                {
+                                    listSetupTasks.Add(taskSetup());
+                                }
+                            }
+                            catch (Exception exception)
+                            {
+                                Error($"Unable to create and execute deser method for {type.Name}: {exception}");
+                            }
+                        }
+
                     }
 
                 }
-                
+
+                if (jeEntity.TryGetProperty("creator", out var jeCreator))
+                {
+                    listCreatorEntites.Add((e, jeCreator));
+                }
             }
-            
-            if (jeEntity.TryGetProperty("creator", out var jeCreator))
-            {
-                listCreatorEntites.Add((e, jeCreator));
-            }
-        }
-        return Task.WhenAll(listSetupTasks).ContinueWith(tAll =>
+        });
+        
+        await Task.WhenAll(listSetupTasks).ContinueWith(tAll =>
         {
             List<Task> listSetupEntityTasks = new();
             

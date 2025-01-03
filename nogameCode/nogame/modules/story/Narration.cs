@@ -452,7 +452,7 @@ public class Narration : AModule, IInputPart
         {
             if (null == _currentStory)
             {
-                ErrorThrow<InvalidOperationException>($"Requestd story {strPath}, but no story had been loaded.");
+                ErrorThrow<InvalidOperationException>($"Requested story {strPath}, but no story had been loaded.");
                 return;
             }
 
