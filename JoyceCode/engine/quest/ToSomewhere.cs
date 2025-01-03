@@ -99,6 +99,7 @@ public class ToSomewhere : AModule
              * At this point we can call whatever has been reached.
              */
             Trace("Called onCollision of ToLocation.");
+            // TXWTODO: LT
             _eMeshMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
             if (OnReachTarget != default)
             {
@@ -113,7 +114,7 @@ public class ToSomewhere : AModule
     {
         if (_eGoal.IsAlive)
         {
-            I.Get<HierarchyApi>().Delete(ref _eGoal);
+            _engine.QueueMainThreadAction(() => I.Get<HierarchyApi>().Delete(ref _eGoal));
         }
     }
     
@@ -203,7 +204,7 @@ public class ToSomewhere : AModule
     {
         if (_eRouteParent != default)
         {
-            I.Get<HierarchyApi>().Delete(ref _eRouteParent);
+            _engine.QueueMainThreadAction(() => I.Get<HierarchyApi>().Delete(ref _eRouteParent));
         }
 
     }
@@ -237,7 +238,7 @@ public class ToSomewhere : AModule
     }
     
 
-    private void _startRoute()
+    private void _startRouteLT()
     {
         Route routeTarget;
         lock (_lo)
@@ -272,7 +273,7 @@ public class ToSomewhere : AModule
     }
     
     
-    private void _createRoute()
+    private void _createRouteLT()
     {
         if (!_engine.Player.TryGet(out var ePlayer))
         {
@@ -314,7 +315,7 @@ public class ToSomewhere : AModule
     /**
      * Create goal is called from the main thread.
      */
-    private void _createGoal()
+    private void _createGoalLT()
     {
         BodyReference prefCylinder;
         BodyHandle phandleCylinder;
@@ -388,12 +389,12 @@ public class ToSomewhere : AModule
         
         _engine.QueueMainThreadAction(() =>
         {
-            _createGoal();
+            _createGoalLT();
         });
         _engine.QueueMainThreadAction(() =>
         {
-            _createRoute();
-            _startRoute();
+            _createRouteLT();
+            _startRouteLT();
         });
         _engine.AddModule(this);
     }

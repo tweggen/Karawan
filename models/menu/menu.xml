@@ -35,7 +35,7 @@
                        onInit='widget["text"]=nogame:getConfig().Password'
                        onChange='nogame:getConfig().WebToken = ""; nogame:getConfig().Password = widget["text"]; joyce:ev("nogame.config.save")'/>
             </hbox>
-            <hmenu height="20" id='ui.newGlobally'>
+            <hmenu height="40" vAlign='center' id='ui.newGlobally'>
                 <text color='#999999' width="120" focusFor='ui.newGlobally'>
                     new (globally)
                 </text>

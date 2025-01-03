@@ -26,8 +26,8 @@ public class Quest : AModule, IQuest, ICreator
     private bool _isActive = false;
 
     private DefaultEcs.Entity _eTarget;
-    private engine.quest.TrailVehicle _questTarget;  
-    
+    private engine.quest.TrailVehicle _questTarget;
+
     private Description _description = new()
     {
         Title = "Trail the car.",
@@ -47,19 +47,19 @@ public class Quest : AModule, IQuest, ICreator
 
 
     private string _targetCarName = "Fishmonger's car";
-    
+
     public Description GetDescription()
     {
         return _description;
     }
 
-    
+
     public bool IsActive
     {
         get => _isActive;
         set => _isActive = value;
     }
-    
+
 
     private void _selectStartPoint(
         out ClusterDesc clusterDesc,
@@ -112,14 +112,14 @@ public class Quest : AModule, IQuest, ICreator
                 _questTarget.ModuleActivate();
             }));
     }
-    
+
 
     public override void ModuleDeactivate()
     {
         _questTarget?.ModuleDeactivate();
         _questTarget?.Dispose();
         _questTarget = null;
-        
+
         _engine.RemoveModule(this);
         _isActive = false;
         base.ModuleDeactivate();
@@ -135,14 +135,14 @@ public class Quest : AModule, IQuest, ICreator
         _engine.Run(_startQuest);
     }
 
-    
+
     /**
      * Re-create this quest's entities while deserializing.
      * We noted ourselves as creator to the car we need to chase.
      * Therefore serialization will have taken care to serialize
      * the basic car entity.
      */
-    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => new(async () =>
+    public Func<Task> SetupEntityFrom(Entity eLoaded, JsonElement je) => new(() => _engine.TaskMainThread(() =>
     {
         /*
          * WE have the basic car entity and the quest object. The quest object,
@@ -158,8 +158,8 @@ public class Quest : AModule, IQuest, ICreator
              */
             return;
         }
-        
-        
+
+
         /*
          * Find our car to set it up.
          */
@@ -173,13 +173,14 @@ public class Quest : AModule, IQuest, ICreator
             ErrorThrow<InvalidOperationException>("Unable to find target car in data set.");
             return;
         }
-        return;
-    });
 
-    
+        return;
+    }));
+
+
     /**
      * Serialize non-basic information about this quest's entities.
-     * This is used to save e.g. our mission car. 
+     * This is used to save e.g. our mission car.
      */
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {

@@ -76,46 +76,54 @@ public class Quest : AModule, IQuest, ICreator
     }
 
 
-    private Vector3 _computeTargetLocationLT()
+    private async Task<Vector3> _computeTargetLocationLT()
     {
-        /*
-         * Test code: Find any bar.
-         * This is not smart. We just look for the one closest to the player.
-         */
-        var withIcon = 
-            _engine.GetEcsWorld().GetEntities().With<Transform3ToWorld>().With<MapIcon>().AsEnumerable();
-        float mind2 = Single.MaxValue;
+        Vector3 v3Pos = default;
         
-    
-        DefaultEcs.Entity eClosest = default;
-        
-        if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
+        await _engine.TaskMainThread(() =>
         {
-            var v3Player = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
-            foreach (var e in withIcon)
+
+            /*
+             * Test code: Find any bar.
+             * This is not smart. We just look for the one closest to the player.
+             */
+            var withIcon =
+                _engine.GetEcsWorld().GetEntities().With<Transform3ToWorld>().With<MapIcon>().AsEnumerable();
+            float mind2 = Single.MaxValue;
+
+
+            DefaultEcs.Entity eClosest = default;
+
+            if (_engine.Player.TryGet(out var ePlayer) && ePlayer.Has<Transform3ToWorld>())
             {
-                ref var cMapIcon = ref e.Get<MapIcon>();
-                if (cMapIcon.Code != MapIcon.IconCode.Drink) continue;
-                var v3D = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation);
-                var d2d2 = (new Vector2(v3D.X, v3D.Z)).LengthSquared();
-                if (d2d2 > 20f && d2d2 < mind2)
+                var v3Player = ePlayer.Get<Transform3ToWorld>().Matrix.Translation;
+                foreach (var e in withIcon)
                 {
-                    if (e.IsAlive && e.IsEnabled())
+                    ref var cMapIcon = ref e.Get<MapIcon>();
+                    if (cMapIcon.Code != MapIcon.IconCode.Drink) continue;
+                    var v3D = (v3Player - e.Get<Transform3ToWorld>().Matrix.Translation);
+                    var d2d2 = (new Vector2(v3D.X, v3D.Z)).LengthSquared();
+                    if (d2d2 > 20f && d2d2 < mind2)
                     {
-                        eClosest = e;
-                        mind2 = d2d2;
+                        if (e.IsAlive && e.IsEnabled())
+                        {
+                            eClosest = e;
+                            mind2 = d2d2;
+                        }
                     }
                 }
             }
-        }
 
-        if (default == eClosest)
-        {
-            Error($"Unable to find any mark close to player entity.");
-            return Vector3.Zero;
-        }
+            if (default == eClosest)
+            {
+                Error($"Unable to find any mark close to player entity.");
+                v3Pos = Vector3.Zero;
+            }
 
-        return eClosest.Get<Transform3ToWorld>().Matrix.Translation;
+            v3Pos = eClosest.Get<Transform3ToWorld>().Matrix.Translation;
+        });
+        
+        return v3Pos;
     }
     
 
@@ -174,7 +182,7 @@ public class Quest : AModule, IQuest, ICreator
 
     public async Task CreateEntities()
     {
-        DestinationPosition = _computeTargetLocationLT();
+        DestinationPosition = await _computeTargetLocationLT();
     }
     
 

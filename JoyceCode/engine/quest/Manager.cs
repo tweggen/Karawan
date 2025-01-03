@@ -14,8 +14,9 @@ using static engine.Logger;
 namespace engine.quest;
 
 
-public class Manager : ObjectFactory<string, IQuest>, ICreator  
+public class Manager : ObjectFactory<string, IQuest>, ICreator
 {
+    private Engine _engine;
     private Object _lo = new();
     private SortedDictionary<string, IQuest> _mapLoadedQuests = new();
     // private List<string> _listAvailableQuests = new();
@@ -189,16 +190,22 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
          * We are called because we are the creator. However, we want to delegate that call
          * to allow the individual quest to initialize itself-
          */
-
         try
         {
-            /*
-             * The entity does have a Quest object with a quest instantiated. Load that.
-             */
-            // TXWTODO: This is suppsed to be in the logical thread.
-            engine.quest.components.Quest cQuest = eLoaded.Get<engine.quest.components.Quest>();
-            var quest = cQuest.ActiveQuest;
-            if (null == quest)
+            engine.quest.components.Quest cQuest;
+            IQuest iQuest = default;
+            
+            await _engine.TaskMainThread(() =>
+            {
+                /*
+                 * The entity does have a Quest object with a quest instantiated. Load that.
+                 */
+                // TXWTODO: This is suppsed to be in the logical thread.
+                engine.quest.components.Quest cQuest = eLoaded.Get<engine.quest.components.Quest>();
+                iQuest = cQuest.ActiveQuest;
+            });
+
+            if (null == iQuest)
             {
                 ErrorThrow<InvalidOperationException>($"Found null quest.");
             }
@@ -206,13 +213,13 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             lock (_lo)
             {
                 // TXWTODO: Check if it existed.
-                _mapLoadedQuests[quest.Name] = quest;
+                _mapLoadedQuests[iQuest.Name] = iQuest;
             }
 
             /*
              * So if the quest is a creator by itself, ask it to initialize.
              */
-            ICreator iCreator = quest as ICreator;
+            ICreator iCreator = iQuest as ICreator;
             if (iCreator != null)
             {
                 await iCreator.SetupEntityFrom(eLoaded, je)();
@@ -222,9 +229,9 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
             /*
              * Finally, if the quest is marked active, activate it now.
              */
-            if (quest.IsActive)
+            if (iQuest.IsActive)
             {
-                ActivateQuest(quest);
+                ActivateQuest(iQuest);
             }
         }
         catch (Exception e)
@@ -243,13 +250,14 @@ public class Manager : ObjectFactory<string, IQuest>, ICreator
      */
     public void SaveEntityTo(Entity eLoader, out JsonNode jn)
     {
-        var cQuest = eLoader.Get<engine.quest.components.Quest>();
+        // var cQuest = eLoader.Get<engine.quest.components.Quest>();
         jn = new JsonObject();
     }
 
 
     public Manager()
     {
+        _engine = I.Get<Engine>();
         I.Get<CreatorRegistry>().RegisterCreator(this);
     }
 }
