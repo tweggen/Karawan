@@ -61,7 +61,7 @@ public class Quest : AModule, IQuest, ICreator
     }
 
 
-    private void _selectStartPoint(
+    private void _selectStartPointLT(
         out ClusterDesc clusterDesc,
         out Fragment worldFragment,
         out StreetPoint streetPoint)
@@ -108,7 +108,7 @@ public class Quest : AModule, IQuest, ICreator
                     ParentEntity = _eTarget,
                     OnReachTarget = _onReachTarget
                 };
-                // TXWTODO: Run only with player available
+
                 _questTarget.ModuleActivate();
             }));
     }
@@ -222,10 +222,10 @@ public class Quest : AModule, IQuest, ICreator
         
         _model = await I.Get<ModelCache>().LoadModel(_mcp);
         
-        _selectStartPoint(out var clusterDesc, out var worldFragment, out var streetPoint);
-
         await _engine.TaskMainThread(() =>
         {
+            _selectStartPointLT(out var clusterDesc, out var worldFragment, out var streetPoint);
+
             _eTarget = _engine.CreateEntity(_targetCarName);
             
             /*
