@@ -1001,6 +1001,8 @@ public class Engine
 
     private void _logicalThreadFunction()
     {
+        DefaultEcs.Entity.OkThread = System.Threading.Thread.CurrentThread;
+
         _startLogicalThreadServices();
         
         float invFps = 1f / 60f;

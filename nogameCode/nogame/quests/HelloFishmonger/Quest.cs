@@ -247,7 +247,12 @@ public class Quest : AModule, IQuest, ICreator
                 },
                 null
             );
-
+            
+            /*
+             * We need to be able to identify it.
+             */
+            _eTarget.Set(new EntityName(_targetCarName));
+            
             /*
              * Make it our car.
              */

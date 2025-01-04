@@ -86,8 +86,9 @@ public class Gameplay : AModule, IInputPart
             _wasEnabled = shallBeEnabled;
         }
 
-        if (!_eCurrentTarget.IsAlive || !_eCurrentTarget.Has<Transform3ToWorld>() ||
-            !_eCurrentTarget.Get<Transform3ToWorld>().IsVisible)
+        if (_isDemoActive
+            && (!_eCurrentTarget.IsAlive || !_eCurrentTarget.Has<Transform3ToWorld>() ||
+            !_eCurrentTarget.Get<Transform3ToWorld>().IsVisible) )
         {
             Trace($"Changing demo mode subject.");
             _reviewShot();
