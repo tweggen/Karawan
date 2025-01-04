@@ -3,4 +3,6 @@
     <color name="colorPrimary">#000000</color>
     <color name="colorPrimaryDark">#222224</color>
     <color name="colorAccent">#222233</color>
+    <color name="sd_launcher_background">#000000</color>
+    
 </resources>

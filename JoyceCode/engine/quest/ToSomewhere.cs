@@ -95,21 +95,26 @@ public class ToSomewhere : AModule
     {
         if (cev.ContactInfo.PropertiesB?.Name?.StartsWith(SensitivePhysicsName) ?? false)
         {
+            /*
+             * Before anyone kills it, trigger the vanishing behavior
+             */
+            // TXWTODO: I believe this is completely pointless, as we delete _eMeshMarker is a grandchild of eGoal very soon below.
+            _engine.QueueMainThreadAction(() =>
+            {
+                _eMeshMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
+            });
 
             /*
              * At this point we can call whatever has been reached.
              */
             Trace("Called onCollision of ToLocation.");
-            // TXWTODO: LT
+            
             if (OnReachTarget != default)
             {
                 OnReachTarget();
             }
-            _engine.QueueMainThreadAction(() =>
-            {
-                _eMeshMarker.Get<engine.behave.components.Behavior>().Provider = new GoalMarkerVanishBehavior();
-                _destroyTargetInstanceLT();
-            });
+            
+            // TXWTODO: ModuleDeactivate is probably called by the user in OnReachTarget, so why would we additionally deletee the target marker?
         }
     }
 
