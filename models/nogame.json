@@ -253,7 +253,7 @@
     "nogame.characters.car3.maxDistance": 800.0,
     "nogame.characters.tram.maxDistance": 1600.0,
     "nogame.CutCollision": false,
-    "nogame.musicVolume": 0.0
+    "nogame.musicVolume": 1.0
   },
   "quests":
   {

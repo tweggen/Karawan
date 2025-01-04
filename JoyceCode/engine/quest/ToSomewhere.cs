@@ -53,6 +53,10 @@ public class ToSomewhere : AModule
     
     public Action OnReachTarget = default;
 
+    /**
+     * We let ourselves know if we are not supposed to continue.
+     */
+    private bool _isStopped = false;
     private System.Threading.Timer _updateRouteTimer;
 
     /**
@@ -114,11 +118,20 @@ public class ToSomewhere : AModule
                 OnReachTarget();
             }
             
-            // TXWTODO: ModuleDeactivate is probably called by the user in OnReachTarget, so why would we additionally deletee the target marker?
+            // TXWTODO: ModuleDeactivate is probably called by the user in OnReachTarget, so why would we additionally delete the target marker?
         }
     }
 
+    
+    private void _deleteWaypointsLT()
+    {
+        if (_eRouteParent != default)
+        {
+            I.Get<HierarchyApi>().Delete(ref _eRouteParent);
+        }
+    }
 
+    
     private void _destroyTargetInstanceLT()
     {
         if (_eGoal.IsAlive)
@@ -164,9 +177,18 @@ public class ToSomewhere : AModule
 
     private void _onJunctions(List<NavLane> listLanes)
     {
+        if (_isStopped) return;
         _engine.QueueMainThreadAction(() =>
         {
-            _deleteWaypoints();
+            /*
+             * Delete any old waypoints, if still there.
+             */
+            _deleteWaypointsLT();
+            
+            /*
+             * Do not create new routes.
+             */
+            if (_isStopped) return;
 
             _eRouteParent = _engine.CreateEntity("routeparent");
             I.Get<TransformApi>().SetTransforms(_eRouteParent,
@@ -209,15 +231,6 @@ public class ToSomewhere : AModule
     }
 
 
-    private void _deleteWaypoints()
-    {
-        if (_eRouteParent != default)
-        {
-            _engine.QueueMainThreadAction(() => I.Get<HierarchyApi>().Delete(ref _eRouteParent));
-        }
-
-    }
-
 
     private void _updateRoute(Object state)
     {
@@ -243,7 +256,7 @@ public class ToSomewhere : AModule
 
         routeTarget?.Suspend();
         updateRouteTimer?.Dispose();
-        _deleteWaypoints();
+        _engine.QueueMainThreadAction(_deleteWaypointsLT);
     }
     
 
@@ -380,6 +393,7 @@ public class ToSomewhere : AModule
 
     public override void ModuleDeactivate()
     {
+        _isStopped = true;
         _engine.RemoveModule(this);
         _stopRoute();
         _destroyRoute();

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="de.nassau_records.silicondesert2" android:versionCode="152" android:versionName="Give it a try.">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools" package="de.nassau_records.silicondesert2" android:versionCode="153" android:versionName="Solid. Or is it?">
 	<application android:allowBackup="true"  android:roundIcon="@mipmap/sd_launcher_round" android:icon="@mipmap/sd_launcher" android:supportsRtl="true" android:hardwareAccelerated="true" android:label="silicon desert 2"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
