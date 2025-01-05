@@ -161,7 +161,7 @@ namespace engine.world
                     // Mark as used.
                     if (world.MetaGen.TRACE_WORLD_LOADER)
                     {
-                        Trace($"Using existing version of {visib}");
+                        // Trace($"Using existing version of {visib}");
                     }
 
                     fragment.LastIteration = _lastLoadedIteration;
@@ -296,6 +296,7 @@ namespace engine.world
                          */
                         if (frag.LastIteration < _lastLoadedIteration)
                         {
+                            Trace($"Purging fragment {frag.Visibility}");
                             eraseList.Add(kvp.Key);
                         }
                     }

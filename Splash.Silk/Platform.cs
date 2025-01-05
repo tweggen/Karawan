@@ -584,7 +584,17 @@ public class Platform : engine.IPlatform
         {
             _triggerWaitMonitor();
 
-            renderFrame = _logicalRenderer.WaitNextRenderFrame();
+            if (null != _logicalRenderer)
+            {
+                renderFrame = _logicalRenderer.WaitNextRenderFrame();
+            }
+            else
+            {
+                renderFrame = null;
+                // TXWTODO: Render black?
+                return;
+            }
+
             if (null == renderFrame)
             {
                 Trace($"No frame.");

@@ -156,8 +156,12 @@ public class LocalPathfinder
     }
     
     
-    public List<NavLane> Pathfind()
+    public List<NavLane>? Pathfind()
     {
+        if (Start == null || Target == null)
+        {
+            return null;
+        }
         var nStart = _startNode(Start.Junction);
         _dictNodes.Add(Start.Junction, nStart);
         _listNodes.Add(nStart.TotalCost(), nStart);

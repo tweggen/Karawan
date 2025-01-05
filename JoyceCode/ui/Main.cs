@@ -419,10 +419,13 @@ public class Main
 
                 if (_currentEntity != default)
                 {
-                    _currentEntity.Set(new engine.editor.components.Highlight()
+                    _engine.QueueMainThreadAction(() =>
                     {
-                        Flags = (byte)Highlight.StateFlags.IsSelected,
-                        Color = 0xff33ffcc
+                        _currentEntity.Set(new engine.editor.components.Highlight()
+                        {
+                            Flags = (byte)Highlight.StateFlags.IsSelected,
+                            Color = 0xff33ffcc
+                        });
                     });
 
                     _inspectorHeaderFlags |= ImGuiTreeNodeFlags.DefaultOpen;

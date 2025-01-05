@@ -75,8 +75,10 @@ public class Route : IDisposable
                 _pathfinder = new LocalPathfinder(navCursors[0], navCursors[1]);
 
                 listLanes = _pathfinder.Pathfind();
-
-                _engine.Run(() => onPath(listLanes));
+                if (null != listLanes)
+                {
+                    _engine.Run(() => onPath(listLanes));
+                }
             }
             catch (Exception e)
             {

@@ -10,6 +10,7 @@ using DefaultEcs;
 using engine.joyce;
 using engine.news;
 using engine.Resource;
+using engine.rom;
 using static engine.Logger;
 
 namespace engine;
@@ -810,9 +811,14 @@ public class Engine
         }
 
         /*
-         * Now work on the main thread queues.
+         * A bit of homework. In 7 of 8 cases, execute queues. In number eight, check the current fragment.
          */
+        if ((_frameNumber & 7) != 0)
         {
+            /*
+             * Now work on the main thread queues.
+             */
+
             bool executeCleanups = timeLeft > 0.005;
             bool executeActions = timeLeft > 0.002;
 
@@ -846,7 +852,17 @@ public class Engine
             {
                 _workerCleanupActions.RunPart(0.001f);
             }
+
         }
+        else // if ((_frameNumber & 7) != 0)
+        {
+            /*
+             * Finally make sure the world is loaded for all viewers. We
+             * are a little bit lazy on that.
+             */
+            I.Get<world.MetaGen>().Loader?.WorldLoaderProvideFragments();
+        }
+
     }
 
 
@@ -916,6 +932,18 @@ public class Engine
     
     public void Execute()
     {
+        /*
+         * Now, that the config is loaded, start the logical thread
+         * and the actual execution.
+         */
+        _logicalThread = new Thread(_logicalThreadFunction);
+        _logicalThread.Priority = ThreadPriority.AboveNormal;
+
+        /*
+         * Start the reality as soon the platform also is set up.
+         */
+        _logicalThread.Start();
+
         _platform.Execute();
     }
 
@@ -1116,8 +1144,6 @@ public class Engine
         _aTransform = I.Get<engine.joyce.TransformApi>();
         _aHierarchy = I.Get<engine.joyce.HierarchyApi>();
 
-        _logicalThread = new Thread(_logicalThreadFunction);
-        _logicalThread.Priority = ThreadPriority.AboveNormal;
         //I.Get<ModuleFactory>().FindModule<InputEventPipeline>();
     }
 
@@ -1206,11 +1232,6 @@ public class Engine
     {
         _sceneSequencer = I.Get<SceneSequencer>();
         State = EngineState.Running;
-
-        /*
-         * Start the reality as soon the platform also is set up.
-         */
-        _logicalThread.Start();
     }
 
 
