@@ -4,13 +4,13 @@ using static engine.Logger;
 
 namespace builtin.tools.kanshu;
 
-public class Pattern<TNodeLabel, TEdgeLabel>
+public class Pattern<TNodePredicate, TEdgePredicate>
 {
     public List<PatternNode> Nodes { get; set; } = new();
 
     public class PatternNode
     {
-        public TNodeLabel Label { get; set; }
+        public TNodePredicate Label { get; set; }
         public List<PatternEdge> RequiredConnections { get; set; } = new();
         
         public int Id { get; set; }
@@ -18,13 +18,13 @@ public class Pattern<TNodeLabel, TEdgeLabel>
 
     public class PatternEdge
     {
-        public TEdgeLabel Label { get; set; }
+        public TEdgePredicate Label { get; set; }
         public int TargetNodeIndex { get; set; } // Index in pattern's Nodes list
     }
     
-    static public Pattern<TNodeLabel, TEdgeLabel> Create(List<NodeDescriptor<TNodeLabel>> nodes, List<EdgeDescriptor<TEdgeLabel>> edges)
+    static public Pattern<TNodePredicate, TEdgePredicate> Create(List<NodeDescriptor<TNodePredicate>> nodes, List<EdgeDescriptor<TEdgePredicate>> edges)
     {
-        var pattern = new Pattern<TNodeLabel, TEdgeLabel>();
+        var pattern = new Pattern<TNodePredicate, TEdgePredicate>();
         
         /*
          * First create the nodes, then add the edges from the desciptors.

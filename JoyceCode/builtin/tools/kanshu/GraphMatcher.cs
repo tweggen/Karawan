@@ -3,15 +3,17 @@ using System.Linq;
 
 namespace builtin.tools.kanshu;
 
-public class GraphMatcher<TNodeLabel, TEdgeLabel> {
+public class GraphMatcher<
+    TNodeLabel, TEdgeLabel,
+    TNodePredicate, TEdgePredicate> {
     private Graph<TNodeLabel, TEdgeLabel> graph;
-    private Pattern<TNodeLabel, TEdgeLabel> pattern;
+    private Pattern<TNodePredicate, TEdgePredicate> pattern;
     private Dictionary<int, Graph<TNodeLabel, TEdgeLabel>.Node> mapping;
     private HashSet<Graph<TNodeLabel, TEdgeLabel>.Node> mappedGraphNodes;
 
     public bool FindMatch(
         Graph<TNodeLabel, TEdgeLabel> graph,
-        Pattern<TNodeLabel, TEdgeLabel> pattern,
+        Pattern<TNodePredicate, TEdgePredicate> pattern,
         out Dictionary<int, Graph<TNodeLabel, TEdgeLabel>.Node> mapping
     ) {
         this.graph = graph;
@@ -54,10 +56,10 @@ public class GraphMatcher<TNodeLabel, TEdgeLabel> {
         return false;
     }
 
-    private bool IsCompatible(Pattern<TNodeLabel, TEdgeLabel>.PatternNode patternNode, 
+    private bool IsCompatible(Pattern<TNodePredicate, TEdgePredicate>.PatternNode patternNode, 
                             Graph<TNodeLabel, TEdgeLabel>.Node graphNode) {
         // Check label match
-        if (!patternNode.Label.Equals(graphNode.Label)) return false;
+        if (!patternNode.Label.Matches(graphNode.Label)) return false;
 
         // Check if required connections can be satisfied
         foreach (var reqEdge in patternNode.RequiredConnections) {
