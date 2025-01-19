@@ -16,7 +16,7 @@ public class Graph<TNodeLabel, TEdgeLabel> {
     }
 
 
-    public List<Node> Nodes;
+    public List<Node> Nodes = new();
 
     
     /**

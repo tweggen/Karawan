@@ -21,6 +21,7 @@ public class Unit : IDisposable
     public void RunStartupTest()
     {
         Trace("Running startup unit tests...");
+        builtin.tools.kanshu.Api.UnitTest();
         engine.news.SubscriptionManager.Unit();
         builtin.loader.Fbx.Unit();
         // builtin.loader.GlTF.Unit();

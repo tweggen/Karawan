@@ -528,7 +528,7 @@ public class AutoSave : engine.AModule
         if (httpResponseMessage.IsSuccessStatusCode)
         {
             string strSave = await httpResponseMessage.Content.ReadAsStringAsync();
-            Trace($"Load game response is {strSave}");
+            // Trace($"Load game response is {strSave}");
             var save = JsonSerializer.Deserialize<SaveGameGetResult>(strSave);
             var gs = JsonSerializer.Deserialize<GameState>(save.save.gamedata);
             if (null != gs)

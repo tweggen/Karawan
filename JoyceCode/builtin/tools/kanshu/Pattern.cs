@@ -6,7 +6,7 @@ namespace builtin.tools.kanshu;
 
 public class Pattern<TNodeLabel, TEdgeLabel>
 {
-    public List<PatternNode> Nodes { get; set; }
+    public List<PatternNode> Nodes { get; set; } = new();
 
     public class PatternNode
     {
