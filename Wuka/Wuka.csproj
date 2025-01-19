@@ -184,5 +184,11 @@
 	  </Content>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="..\models\kanshu\">
+	    <Link>models\kanshu</Link>
+	  </Folder>
+	</ItemGroup>
+
 
 </Project>
