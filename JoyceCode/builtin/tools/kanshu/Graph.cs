@@ -16,28 +16,13 @@ public class Graph<TNodeLabel, TEdgeLabel> {
     }
 
 
-    public class NodeDescriptor
-    {
-        public TNodeLabel Label { get; set; }
-        public int Id { get; set; } = -1;
-    }
-    
-
-    public class EdgeDescriptor
-    {
-        public TEdgeLabel Label { get; set; }
-        public int NodeFrom { get; set; }
-        public int NodeTo { get; set; }
-    }
-
-    
     public List<Node> Nodes;
 
     
     /**
      * Given two lists of descriptions, create a graph.
      */
-    static public Graph<TNodeLabel, TEdgeLabel> Create(List<NodeDescriptor> nodes, List<EdgeDescriptor> edges)
+    static public Graph<TNodeLabel, TEdgeLabel> Create(List<NodeDescriptor<TNodeLabel>> nodes, List<EdgeDescriptor<TEdgeLabel>> edges)
     {
         var graph = new Graph<TNodeLabel, TEdgeLabel>();
         
