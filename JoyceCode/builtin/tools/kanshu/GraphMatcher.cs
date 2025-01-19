@@ -1,19 +1,19 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace builtin.tools.kanshu;
 
 public class GraphMatcher<
-    TNodeLabel, TEdgeLabel,
-    TNodePredicate, TEdgePredicate> {
+    TNodeLabel, TEdgeLabel> {
     private Graph<TNodeLabel, TEdgeLabel> graph;
-    private Pattern<TNodePredicate, TEdgePredicate> pattern;
+    private Pattern<TNodeLabel, TEdgeLabel> pattern;
     private Dictionary<int, Graph<TNodeLabel, TEdgeLabel>.Node> mapping;
     private HashSet<Graph<TNodeLabel, TEdgeLabel>.Node> mappedGraphNodes;
 
     public bool FindMatch(
         Graph<TNodeLabel, TEdgeLabel> graph,
-        Pattern<TNodePredicate, TEdgePredicate> pattern,
+        Pattern<TNodeLabel, TEdgeLabel> pattern,
         out Dictionary<int, Graph<TNodeLabel, TEdgeLabel>.Node> mapping
     ) {
         this.graph = graph;
@@ -56,10 +56,10 @@ public class GraphMatcher<
         return false;
     }
 
-    private bool IsCompatible(Pattern<TNodePredicate, TEdgePredicate>.PatternNode patternNode, 
+    private bool IsCompatible(Pattern<TNodeLabel, TEdgeLabel>.PatternNode patternNode, 
                             Graph<TNodeLabel, TEdgeLabel>.Node graphNode) {
         // Check label match
-        if (!patternNode.Label.Matches(graphNode.Label)) return false;
+        if (!patternNode.Predicate(graphNode.Label)) return false;
 
         // Check if required connections can be satisfied
         foreach (var reqEdge in patternNode.RequiredConnections) {
@@ -68,7 +68,7 @@ public class GraphMatcher<
             // If target is already mapped, check if connection exists
             if (mapping.ContainsKey(reqEdge.TargetNodeIndex)) {
                 var targetGraphNode = mapping[reqEdge.TargetNodeIndex];
-                if (!HasMatchingEdge(graphNode, targetGraphNode, reqEdge.Label)) {
+                if (!HasMatchingEdge(graphNode, targetGraphNode, reqEdge.Predicate)) {
                     return false;
                 }
             }
@@ -77,8 +77,8 @@ public class GraphMatcher<
                 bool hasCandidate = false;
                 foreach (var adj in graphNode.Adjacency) {
                     if (!mappedGraphNodes.Contains(adj.Value) && 
-                        adj.Key.Label.Equals(reqEdge.Label) &&
-                        adj.Value.Label.Equals(targetPatternNode.Label)) {
+                        adj.Key.Label.Equals(reqEdge.Predicate) &&
+                        adj.Value.Label.Equals(targetPatternNode.Predicate)) {
                         hasCandidate = true;
                         break;
                     }
@@ -93,9 +93,9 @@ public class GraphMatcher<
     private bool HasMatchingEdge(
         Graph<TNodeLabel, TEdgeLabel>.Node from,
         Graph<TNodeLabel, TEdgeLabel>.Node to,
-        TEdgeLabel label
+        Predicate<TEdgeLabel> predicate
     ) {
         return from.Adjacency.Any(adj => 
-            adj.Value == to && adj.Key.Label.Equals(label));
+            adj.Value == to && predicate(adj.Key.Label));
     }
 }

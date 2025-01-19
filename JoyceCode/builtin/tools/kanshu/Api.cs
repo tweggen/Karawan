@@ -76,12 +76,12 @@ public class Api
                         NodeFrom = 3, NodeTo = 0 },
                     
                 });
-            var pattern = Pattern<Predicate<Properties>, Predicate<Properties>>.Create(
+            var pattern = Pattern<Properties,Properties>.Create(
                 new()
                 {
                     new()
                     {
-                        Label = PropertiesPredicate.Create(new ()
+                        Predicate = PropertiesPredicate.Create(new ()
                         {
                             { "type", "Town" }
                         }), 
@@ -89,7 +89,7 @@ public class Api
                     },
                     new()
                     {
-                        Label = PropertiesPredicate.Create(new ()
+                        Predicate = PropertiesPredicate.Create(new ()
                         {
                             { "type", "Town" }
                         }), 
@@ -100,7 +100,7 @@ public class Api
                 {
                     new()
                     {
-                        Label = PropertiesPredicate.Create(new()
+                        Predicate = PropertiesPredicate.Create(new()
                         {
                             { "type", "Journey" }  
                         }),
@@ -108,7 +108,7 @@ public class Api
                     }
                 });
 
-            GraphMatcher<Properties, Properties, Predicate<Properties>, Predicate<Properties>> gm = new();
+            GraphMatcher<Properties, Properties> gm = new();
             gm.FindMatch(graph, pattern, out var dictFound);
             Trace($"Unit test for graph results: dictFound = {dictFound}");
         }

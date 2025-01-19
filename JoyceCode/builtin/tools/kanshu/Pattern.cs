@@ -4,13 +4,13 @@ using static engine.Logger;
 
 namespace builtin.tools.kanshu;
 
-public class Pattern<TNodePredicate, TEdgePredicate>
+public class Pattern<TNodeLabel, TEdgeLabel>
 {
     public List<PatternNode> Nodes { get; set; } = new();
 
     public class PatternNode
     {
-        public TNodePredicate Label { get; set; }
+        public Predicate<TNodeLabel> Predicate { get; set; }
         public List<PatternEdge> RequiredConnections { get; set; } = new();
         
         public int Id { get; set; }
@@ -18,13 +18,13 @@ public class Pattern<TNodePredicate, TEdgePredicate>
 
     public class PatternEdge
     {
-        public TEdgePredicate Label { get; set; }
+        public Predicate<TEdgeLabel> Predicate { get; set; }
         public int TargetNodeIndex { get; set; } // Index in pattern's Nodes list
     }
     
-    static public Pattern<TNodePredicate, TEdgePredicate> Create(List<NodeDescriptor<TNodePredicate>> nodes, List<EdgeDescriptor<TEdgePredicate>> edges)
+    static public Pattern<TNodeLabel, TEdgeLabel> Create(List<NodePredicateDescriptor<TNodeLabel>> nodes, List<EdgePredicateDescriptor<TEdgeLabel>> edges)
     {
-        var pattern = new Pattern<TNodePredicate, TEdgePredicate>();
+        var pattern = new Pattern<TNodeLabel, TEdgeLabel>();
         
         /*
          * First create the nodes, then add the edges from the desciptors.
@@ -35,7 +35,7 @@ public class Pattern<TNodePredicate, TEdgePredicate>
             pattern.Nodes.Add(new()
             {
                 Id = nodeDesc.Id>=0?nodeDesc.Id:idx,
-                Label = nodeDesc.Label
+                Predicate = nodeDesc.Predicate
             });
             idx++;
         }
@@ -53,7 +53,7 @@ public class Pattern<TNodePredicate, TEdgePredicate>
 
             PatternEdge edge = new ()
             {
-                Label = edgeDesc.Label,
+                Predicate = edgeDesc.Predicate,
                 TargetNodeIndex = edgeDesc.NodeTo
                 
             };
