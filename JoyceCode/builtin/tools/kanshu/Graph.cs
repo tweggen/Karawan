@@ -9,10 +9,39 @@ public class Graph<TNodeLabel, TEdgeLabel> {
         public TNodeLabel Label { get; set; }
         public Dictionary<Edge, Node> Adjacency { get; set; } = new();
         public int Id { get; set; }  // Unique identifier helps with matching
+
+        public override string ToString()
+        {
+            string str = "{";
+            str += $"\"id\": {Id},";
+            str += $"\"label\": {Label},";
+            str += "\"edges\": [";
+            bool isFirst = true;
+            foreach (var kvp in Adjacency)
+            {
+                if (!isFirst) str += ",";
+                else isFirst = false;
+                str += "{";
+                str += $"\"destId\": {kvp.Value.Id},";
+                str += $"\"label\": {kvp.Key}";
+                str += "}";
+            }
+            str += "]";
+            str += "}";
+            return str;
+        }
     }
 
     public class Edge {
         public TEdgeLabel Label { get; set; }
+
+        public override string ToString()
+        {
+            string str = "{";
+            str += $"\"label\": {Label}";
+            str += "}";
+            return str;
+        }
     }
 
 

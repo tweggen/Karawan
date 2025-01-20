@@ -13,6 +13,20 @@ public class Properties
         get => Value[key];
     }
 
+    public override string ToString()
+    {
+        string str = "{";
+        bool isFirst = true;
+        foreach (var kvp in Value)
+        {
+            if (!isFirst) str += ",";
+            else isFirst = false;
+            str += $"\"{kvp.Key}\": \"{kvp.Value}\"";
+        }
+        str += "}";
+        return str;
+    }
+    
     public Properties(SortedDictionary<string, string> props)
     {
         Value = new SortedDictionary<string, string>(props);
