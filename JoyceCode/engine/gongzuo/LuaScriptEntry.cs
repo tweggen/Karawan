@@ -29,6 +29,10 @@ public class LuaScriptEntry : IDisposable
 
     private List<LuaBindingFrame>? _luaBindings = null;
 
+    
+    /**
+     * Assign a lua script to this script entry
+     */
     private void _setLuaScript(string luaScript)
     {
         if (luaScript == _luaScript) return;
@@ -81,6 +85,9 @@ public class LuaScriptEntry : IDisposable
     }
 
 
+    /**
+     * Apply a single frame of bindings to the luastate.
+     */
     private void _applyBindingFrame(LuaBindingFrame? lbf)
     {
         if (lbf != null && lbf.MapBindings != null)
@@ -93,7 +100,10 @@ public class LuaScriptEntry : IDisposable
 
     }
 
-
+    
+    /**
+     * Apply the previously stored bindings to the newly created lua state.
+     */
     private void _applyBindings()
     {
         if (_luaBindings != null)
@@ -106,6 +116,10 @@ public class LuaScriptEntry : IDisposable
     }
 
 
+    /**
+     * Apply the given binding frame (containing a map of bindings)
+     * to the current script entry.
+     */
     public void PushBinding(LuaBindingFrame lbf)
     {
         if (null == _luaState)
@@ -151,6 +165,9 @@ public class LuaScriptEntry : IDisposable
     private object[] _emptyResult = new object[0];
 
     
+    /**
+     * Call the function represented by this script entry.
+     */
     public object[] Call()
     {
         _ensureCompiled();
@@ -159,6 +176,10 @@ public class LuaScriptEntry : IDisposable
     }
 
 
+    /**
+     * Call the function represented by this script entry, taking the
+     * first result as the only result.
+     */
     public object CallSingleResult()
     {
         _ensureCompiled();
@@ -171,7 +192,11 @@ public class LuaScriptEntry : IDisposable
         return null;
     }
     
-    
+
+    /**
+     * Call the function represented by this script entry, taking the
+     * first result as the only result, interpreting it as a string.
+     */
     public object CallStringResult()
     {
         _ensureCompiled();
