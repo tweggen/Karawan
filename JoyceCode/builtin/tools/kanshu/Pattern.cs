@@ -10,7 +10,7 @@ public class Pattern<TNodeLabel, TEdgeLabel>
 
     public class PatternNode
     {
-        public Predicate<TNodeLabel> Predicate { get; set; }
+        public Func<TNodeLabel, bool> Predicate { get; set; }
         public List<PatternEdge> RequiredConnections { get; set; } = new();
         
         public int Id { get; set; }
@@ -18,11 +18,13 @@ public class Pattern<TNodeLabel, TEdgeLabel>
 
     public class PatternEdge
     {
-        public Predicate<TEdgeLabel> Predicate { get; set; }
+        public Func<TEdgeLabel, bool> Predicate { get; set; }
         public int TargetNodeIndex { get; set; } // Index in pattern's Nodes list
     }
     
-    static public Pattern<TNodeLabel, TEdgeLabel> Create(List<NodePredicateDescriptor<TNodeLabel>> nodes, List<EdgePredicateDescriptor<TEdgeLabel>> edges)
+    static public Pattern<TNodeLabel, TEdgeLabel> Create(
+        List<NodePredicateDescriptor<TNodeLabel>> nodes, 
+        List<EdgePredicateDescriptor<TEdgeLabel>> edges)
     {
         var pattern = new Pattern<TNodeLabel, TEdgeLabel>();
         

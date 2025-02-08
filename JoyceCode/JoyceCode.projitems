@@ -33,7 +33,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\GraphMatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\NodeDescriptor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Pattern.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Properties.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Labels.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Rule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector2JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />

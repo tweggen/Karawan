@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace builtin.tools.kanshu;
 
-public class Properties
+public class Labels
 {
     public SortedDictionary<string, string> Value { get; init; }
 
@@ -27,7 +27,7 @@ public class Properties
         return str;
     }
     
-    public Properties(SortedDictionary<string, string> props)
+    public Labels(SortedDictionary<string, string> props)
     {
         Value = new SortedDictionary<string, string>(props);
     }

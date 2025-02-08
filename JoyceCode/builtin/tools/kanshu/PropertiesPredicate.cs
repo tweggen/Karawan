@@ -10,9 +10,9 @@ namespace builtin.tools.kanshu;
  */
 public class PropertiesPredicate
 {
-    public static Predicate<Properties> Create(SortedDictionary<string, string> props)
+    public static Predicate<Labels> Create(SortedDictionary<string, string> props)
     {
-        return (Properties label) =>
+        return (Labels label) =>
         {
             foreach (var kvp in props)
             {

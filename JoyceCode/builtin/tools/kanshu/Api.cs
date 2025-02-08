@@ -6,30 +6,51 @@ namespace builtin.tools.kanshu;
 
 public class Api
 {
+    public static bool ApplyRuleset<TNodeLabel, TEdgeLabel>(
+        Graph<TNodeLabel, TEdgeLabel> graph, 
+        List<Rule<TNodeLabel, TEdgeLabel>> rules)
+    {
+        bool hadMatch = false;
+        
+        foreach (var rule in rules)
+        {
+            GraphMatcher<TNodeLabel, TEdgeLabel> gm = new();
+            if (gm.FindMatch(graph, rule.Pattern, out var matchResult))
+            {
+                // TXWTODO: Replace match.
+            }
+            
+            // TXWTODO: Continue iteration or restart iteration depending on depth-first or breadth first
+        }
+
+        return true;
+    }
+    
+    
     public static void UnitTest()
     {
         try
         {
-            var graph = Graph<Properties, Properties>.Create(
+            var graph = Graph<Labels, Labels>.Create(
                 new()
                 {
                     new() {
-                        Label = new Properties( new()
+                        Label = new Labels( new()
                     {
                         { "type", "Town" }, { "name", "Hannover" }
                     }) },
                     new() {
-                        Label = new Properties( new()
+                        Label = new Labels( new()
                     {
                         { "type", "Town" }, { "name", "Linden" }
                     }) },
                     new() { 
-                        Label = new Properties( new()
+                        Label = new Labels( new()
                     {
                         { "type", "Mall" }, { "name", "Ihmezentrum" }
                     }) },
                     new() {
-                        Label = new Properties( new()
+                        Label = new Labels( new()
                     {
                         { "type", "Mall" }, { "name", "EAG" }
                     }) }
@@ -76,7 +97,7 @@ public class Api
                         NodeFrom = 3, NodeTo = 0 },
                     
                 });
-            var pattern = Pattern<Properties,Properties>.Create(
+            var pattern = Pattern<Labels,Labels>.Create(
                 new()
                 {
                     new()
@@ -108,7 +129,7 @@ public class Api
                     }
                 });
 
-            GraphMatcher<Properties, Properties> gm = new();
+            GraphMatcher<Labels, Labels> gm = new();
             gm.FindMatch(graph, pattern, out var dictFound);
             Trace($"Unit test for graph results: dictFound = {dictFound}");
         }

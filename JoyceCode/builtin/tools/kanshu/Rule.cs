@@ -17,7 +17,7 @@ public class Rule<TNodeLabel,TEdgeLabel>
     /**
      * Only if this condition matches, the rule matches.
      */
-    public Func<Properties, bool> Condition { get; set; }
+    public Func<Labels, bool> Condition { get; set; }
 
 
     // TXWTODO: Define call context as done for lsystems.
@@ -35,5 +35,5 @@ public class Rule<TNodeLabel,TEdgeLabel>
      * @returns
      *     a graph to replace the original patter with.
      */
-    public Func<Properties, Graph<TNodeLabel, TEdgeLabel>> Replacement { get; set; }
+    public Func<Labels, Graph<TNodeLabel, TEdgeLabel>> Replacement { get; set; }
 }

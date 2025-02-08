@@ -102,7 +102,7 @@ public class GraphMatcher<
     private bool HasMatchingEdge(
         Graph<TNodeLabel, TEdgeLabel>.Node from,
         Graph<TNodeLabel, TEdgeLabel>.Node to,
-        Predicate<TEdgeLabel> predicate
+        Func<TEdgeLabel, bool> predicate
     ) {
         return from.Adjacency.Any(adj => 
             adj.Value == to 
