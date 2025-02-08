@@ -1,8 +1,8 @@
 namespace builtin.tools.kanshu;
 
-public class EdgeDescriptor<TEdgeLabel>
+public class EdgeDescriptor
 {
-    public TEdgeLabel Label { get; set; }
+    public Labels Label { get; set; }
     public int NodeFrom { get; set; }
     public int NodeTo { get; set; }
 }

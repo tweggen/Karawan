@@ -4,9 +4,9 @@ using static engine.Logger;
 
 namespace builtin.tools.kanshu;
 
-public class Graph<TNodeLabel, TEdgeLabel> {
+public class Graph {
     public class Node {
-        public TNodeLabel Label { get; set; }
+        public Labels Label { get; set; }
         public Dictionary<Edge, Node> Adjacency { get; set; } = new();
         public int Id { get; set; }  // Unique identifier helps with matching
 
@@ -33,7 +33,7 @@ public class Graph<TNodeLabel, TEdgeLabel> {
     }
 
     public class Edge {
-        public TEdgeLabel Label { get; set; }
+        public Labels Label { get; set; }
 
         public override string ToString()
         {
@@ -51,9 +51,11 @@ public class Graph<TNodeLabel, TEdgeLabel> {
     /**
      * Given two lists of descriptions, create a graph.
      */
-    static public Graph<TNodeLabel, TEdgeLabel> Create(List<NodeDescriptor<TNodeLabel>> nodes, List<EdgeDescriptor<TEdgeLabel>> edges)
+    static public Graph Create(
+        List<NodeDescriptor> nodes, 
+        List<EdgeDescriptor> edges)
     {
-        var graph = new Graph<TNodeLabel, TEdgeLabel>();
+        var graph = new Graph();
         
         /*
          * First create the nodes, then add the edges from the desciptors.

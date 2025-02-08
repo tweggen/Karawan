@@ -6,15 +6,15 @@ namespace builtin.tools.kanshu;
 
 public class Api
 {
-    public static bool ApplyRuleset<TNodeLabel, TEdgeLabel>(
-        Graph<TNodeLabel, TEdgeLabel> graph, 
-        List<Rule<TNodeLabel, TEdgeLabel>> rules)
+    public static bool ApplyRuleset(
+        Graph graph, 
+        List<Rule> rules)
     {
         bool hadMatch = false;
         
         foreach (var rule in rules)
         {
-            GraphMatcher<TNodeLabel, TEdgeLabel> gm = new();
+            GraphMatcher gm = new();
             if (gm.FindMatch(graph, rule.Pattern, out var matchResult))
             {
                 // TXWTODO: Replace match.
@@ -31,7 +31,7 @@ public class Api
     {
         try
         {
-            var graph = Graph<Labels, Labels>.Create(
+            var graph = Graph.Create(
                 new()
                 {
                     new() {
@@ -97,7 +97,7 @@ public class Api
                         NodeFrom = 3, NodeTo = 0 },
                     
                 });
-            var pattern = Pattern<Labels,Labels>.Create(
+            var pattern = Pattern.Create(
                 new()
                 {
                     new()
@@ -129,7 +129,7 @@ public class Api
                     }
                 });
 
-            GraphMatcher<Labels, Labels> gm = new();
+            GraphMatcher gm = new();
             gm.FindMatch(graph, pattern, out var dictFound);
             Trace($"Unit test for graph results: dictFound = {dictFound}");
         }

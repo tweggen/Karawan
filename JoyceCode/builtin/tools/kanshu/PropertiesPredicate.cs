@@ -10,7 +10,7 @@ namespace builtin.tools.kanshu;
  */
 public class PropertiesPredicate
 {
-    public static Predicate<Labels> Create(SortedDictionary<string, string> props)
+    public static Func<Labels, bool> Create(SortedDictionary<string, string> props)
     {
         return (Labels label) =>
         {

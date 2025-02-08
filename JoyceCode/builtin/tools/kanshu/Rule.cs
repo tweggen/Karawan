@@ -2,7 +2,7 @@ using System;
 
 namespace builtin.tools.kanshu;
 
-public class Rule<TNodeLabel,TEdgeLabel>
+public class Rule
 {
     /**
      * Lindenmayer rules are matched directly by name.
@@ -24,7 +24,7 @@ public class Rule<TNodeLabel,TEdgeLabel>
     // TXWTODO: Unify the context for lua calls, the context for Lsystems and this
     // TXWTODO: Decide when to stop all these genericsd.
     // public Func<bool> Condition;
-    public Pattern<TNodeLabel, TEdgeLabel> Pattern { get; set; }
+    public Pattern Pattern { get; set; }
     
     /**
      * A function replacing the input parts with a given replacement
@@ -35,5 +35,5 @@ public class Rule<TNodeLabel,TEdgeLabel>
      * @returns
      *     a graph to replace the original patter with.
      */
-    public Func<Labels, Graph<TNodeLabel, TEdgeLabel>> Replacement { get; set; }
+    public Func<Labels, Graph> Replacement { get; set; }
 }

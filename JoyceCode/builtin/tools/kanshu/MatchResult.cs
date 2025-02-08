@@ -2,10 +2,10 @@ using System.Collections.Generic;
 
 namespace builtin.tools.kanshu;
 
-public class MatchResult<TNodeLabel, TEdgeLabel>
+public class MatchResult
 {
     // TXWTODO: This should include bindings, shouldn't it`?
-    public Dictionary<int, Graph<TNodeLabel, TEdgeLabel>.Node> Nodes { get; set; }
+    public Dictionary<int, Graph.Node> Nodes { get; set; }
 
     public override string ToString()
     {

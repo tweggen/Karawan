@@ -2,9 +2,9 @@ using System;
 
 namespace builtin.tools.kanshu;
 
-public class NodePredicateDescriptor<TEdgeLabel>
+public class NodePredicateDescriptor
 {
-    public Func<TEdgeLabel, bool> Predicate { get; set; }
+    public Func<Labels, bool> Predicate { get; set; }
     public int NodeFrom { get; set; }
     public int NodeTo { get; set; }
     public int Id { get; set; } = -1;
