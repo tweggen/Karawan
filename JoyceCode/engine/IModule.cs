@@ -134,7 +134,7 @@ public class SharedModule<T> : AModuleDependency where T: class
     public SharedModule()
     {
         ModuleType = typeof(T);
-        _implementation = new(() => I.Get<ModuleFactory>().FindModule(ModuleType));
+        _implementation = new(() => I.Get<ModuleFactory>().FindModule(ModuleType, ShallActivate));
     }
 }
 

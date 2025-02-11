@@ -148,6 +148,11 @@ public class Scene : AModule, IScene
 
     private void _onAutoSaveSetup(GameState gs)
     {
+        /*
+         * After we have a game state, start the gameplay.
+         */
+        M<Gameplay>().ModuleActivate();
+        
         _displayLoginStatus("logged in.");
 
         _engine.QueueMainThreadAction(() => DeactivateMyModule<nogame.modules.menu.LoginMenuModule>());
@@ -184,7 +189,6 @@ public class Scene : AModule, IScene
         I.Get<engine.Timeline>().RunIn(TimeSpan.FromMilliseconds(200),
             () =>
             {
-                // ActivateMyModule<Gameplay>();
                 M<AutoSave>().StartAutoSave(reset, _onAutoSaveSetup, _onAutoSaveError);
             });
     }

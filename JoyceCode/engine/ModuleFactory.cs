@@ -30,9 +30,9 @@ public sealed class ModuleFactory
     private Dictionary<Type, Entry> _mapImplementations = new();
 
 
-    public IModule FindModule<T>() => FindModule(typeof(T));
+    public IModule FindModule<T>(bool shallActivate) => FindModule(typeof(T), shallActivate);
 
-    public IModule FindModule(System.Type type)
+    public IModule FindModule(System.Type type, bool shallActivate)
     {
         Trace($"Trying to find module {type.ToString()}");
         var keyLock = _keyLocks.GetOrAdd(type, x => new SemaphoreSlim(1));
@@ -77,7 +77,10 @@ public sealed class ModuleFactory
                 
                 entry.Implementation = module;
 
-                module.ModuleActivate();
+                if (shallActivate)
+                {
+                    module.ModuleActivate();
+                }
             }
         }
         catch (Exception e)
