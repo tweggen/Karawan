@@ -131,7 +131,7 @@ public class Api
                 });
 
             GraphMatcher gm = new();
-            gm.FindMatch(graph, pattern, out var dictFound);
+            var match = gm.FindMatch(graph, pattern, out var dictFound);
             Trace($"Unit test for graph results: dictFound = {dictFound}");
         }
         catch (Exception e)

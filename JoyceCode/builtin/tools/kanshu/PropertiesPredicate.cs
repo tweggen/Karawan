@@ -10,7 +10,7 @@ namespace builtin.tools.kanshu;
  */
 public class PropertiesPredicate
 {
-    public static Func<Match, Labels, bool> Create(
+    public static Func<Match, Labels, Match> Create(
         SortedDictionary<string, string>? constantProps = null,
         SortedDictionary<string, string>? boundProps = null)
     {

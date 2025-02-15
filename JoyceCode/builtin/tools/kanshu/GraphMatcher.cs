@@ -36,21 +36,20 @@ public class GraphMatcher
         return _matchResult;
     }
 
-    public bool FindMatch()
+    public Match? FindMatch()
     {
         Match matchRoot = new();
-        bool success = MatchRecursive(matchRoot, 0, out var matchLeaf);
-        return success;
+        Match? match = MatchRecursive(matchRoot, 0);
+        return match;
     }
 
     
-    private bool MatchRecursive(Match currentMatch, int patternNodeIndex, out Match matchLeaf) 
+    private Match MatchRecursive(Match currentMatch, int patternNodeIndex) 
     {
         // Base case: all pattern nodes matched
         if (patternNodeIndex >= _pattern.Nodes.Count)
         {
-            matchLeaf = currentMatch;
-            return true;
+            return currentMatch;
         }
 
         var patternNode = _pattern.Nodes[patternNodeIndex];
@@ -60,18 +59,18 @@ public class GraphMatcher
         {
             if (_mappedGraphNodes.Contains(graphNode)) continue;
 
-            Match matchTry = new Match() { Parent = currentMatch };
-            if (IsCompatible(matchTry, patternNode, graphNode))
+            var matchTry = IsCompatible(currentMatch, patternNode, graphNode); 
+            if (null != matchTry)
             {
                 // Try this mapping
                 _mapping[patternNodeIndex] = graphNode;
                 _mappedGraphNodes.Add(graphNode);
 
-                
-                if (MatchRecursive(matchTry, patternNodeIndex + 1, out var newMatch)) 
+
+                var mightMatch = MatchRecursive(matchTry, patternNodeIndex + 1);
+                if (null != mightMatch) 
                 {
-                    matchLeaf = newMatch;
-                    return true;
+                    return mightMatch;
                 }
 
                 // Backtrack
@@ -80,20 +79,23 @@ public class GraphMatcher
             }
         }
 
-        matchLeaf = currentMatch;
-        return false;
+        return null;
     }
     
 
-    private bool IsCompatible(
-        Match matchTry,
+    /**
+     * Test if that real given node matches the one given in the pattern.
+     */
+    private Match IsCompatible(
+        Match matchCurrent,
         Pattern.PatternNode patternNode, 
         Graph.Node graphNode) 
     {
         // Check label match
-        if (!patternNode.Predicate(matchTry, graphNode.Label))
+        var matchGraphNode = patternNode.Predicate(matchCurrent, graphNode.Label); 
+        if (null == matchGraphNode)
         {
-            return false;
+            return null;
         }
 
         // Check if required connections can be satisfied
@@ -107,9 +109,10 @@ public class GraphMatcher
                  */
 
                 var targetGraphNode = _mapping[reqEdge.TargetNodeIndex];
-                if (!HasMatchingEdge(graphNode, targetGraphNode, matchTry, reqEdge.Predicate)) 
+                var matchGraphEdge = HasMatchingEdge(graphNode, targetGraphNode, matchGraphNode, reqEdge.Predicate); 
+                if (null == matchGraphEdge) 
                 {
-                    return false;
+                    return null;
                 }
             }
             else
@@ -148,17 +151,35 @@ public class GraphMatcher
      * look if a real connection exists between these nodes that matches
      * the given edge predicate
      */
-    private bool HasMatchingEdge(
+    private Match HasMatchingEdge(
         Graph.Node from,
         Graph.Node to,
-        Match matchTry,
-        Func<Match, Labels, bool> predicate
+        Match matchCurrent,
+        Func<Match, Labels, Match> predicate
     )
     {
+        #if false
         return from.Adjacency.Any(adj => 
             adj.Value == to 
             && 
             predicate(matchTry, adj.Key.Label)
         );
+        #else
+        foreach (var adj in from.Adjacency)
+        {
+            if (adj.Value == to)
+            {
+                /*
+                 * Obviously, we return first match. What happens with the other matches?
+                 */
+                var matchAdj = predicate(matchCurrent, adj.Key.Label);
+                if (null != matchAdj)
+                {
+                    return matchAdj;
+                }
+            }
+        }
+        return null;
+        #endif
     }
 }
