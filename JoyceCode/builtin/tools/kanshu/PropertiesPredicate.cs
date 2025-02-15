@@ -10,22 +10,51 @@ namespace builtin.tools.kanshu;
  */
 public class PropertiesPredicate
 {
-    public static Func<Labels, bool> Create(SortedDictionary<string, string> props)
+    public static Func<Match, Labels, bool> Create(
+        SortedDictionary<string, string>? constantProps = null,
+        SortedDictionary<string, string>? boundProps = null)
     {
-        return (Labels label) =>
+        return (Match match, Labels label) =>
         {
-            foreach (var kvp in props)
+            /*
+             * First match the plain constants
+             */
+            if (constantProps != null)
             {
-                if (label.Value.TryGetValue(kvp.Key, out var value))
+                foreach (var kvp in constantProps)
                 {
-                    if (kvp.Value != value)
+                    if (label.Value.TryGetValue(kvp.Key, out var value))
+                    {
+                        if (kvp.Value != value)
+                        {
+                            return false;
+                        }
+                    }
+                    else
                     {
                         return false;
                     }
                 }
-                else
+            }
+            
+            /*
+             * Then match the bindings 
+             */
+            if (boundProps != null)
+            {
+                foreach (var kvp in boundProps)
                 {
-                    return false;
+                    if (label.Value.TryGetValue(kvp.Key, out var value))
+                    {
+                        if (!match.TryAddBinding(kvp.Key, value))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
             }
 

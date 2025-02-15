@@ -8,7 +8,8 @@ namespace builtin.tools.kanshu;
  */
 public class Match
 {
-    public Dictionary<int, Graph.Node> Nodes { get; set; }
+    public Match Parent;
+    public Dictionary<int, Graph.Node> Nodes;
     public SortedDictionary<string, string>? Bindings = null;
 
     public Rule Rule;
@@ -19,6 +20,7 @@ public class Match
      */
     public bool TryAddBinding(string key, string value)
     {
+        // TXWTODO: We have to include checks if the parent match contains a result.
         if (Bindings != null)
         {
             if (Bindings.TryGetValue(key, out var oldValue))

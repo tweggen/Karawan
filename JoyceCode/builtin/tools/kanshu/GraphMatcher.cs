@@ -27,6 +27,7 @@ public class GraphMatcher
         return success;
     }
 
+    
     private bool MatchRecursive(int patternNodeIndex) 
     {
         // Base case: all pattern nodes matched
@@ -61,6 +62,7 @@ public class GraphMatcher
 
         return false;
     }
+    
 
     private bool IsCompatible(
         Pattern.PatternNode patternNode, 
