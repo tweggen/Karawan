@@ -486,12 +486,12 @@ public class Platform : engine.IPlatform
             _iInputContext.Keyboards[i].KeyChar += _onKeyChar;
         }
 
-        if (_iInputContext.Gamepads.Count > 0)
+        for (int i = 0; i < _iInputContext.Gamepads.Count; i++)
         {
-            _iInputContext.Gamepads[0].ButtonDown += _onGamepadButtonDown;
-            _iInputContext.Gamepads[0].ButtonUp += _onGamepadButtonUp;
-            _iInputContext.Gamepads[0].ThumbstickMoved += _onGamepadThumbstickMoved;
-            _iInputContext.Gamepads[0].TriggerMoved += _onGamepadTriggerMoved;
+            _iInputContext.Gamepads[i].ButtonDown += _onGamepadButtonDown;
+            _iInputContext.Gamepads[i].ButtonUp += _onGamepadButtonUp;
+            _iInputContext.Gamepads[i].ThumbstickMoved += _onGamepadThumbstickMoved;
+            _iInputContext.Gamepads[i].TriggerMoved += _onGamepadTriggerMoved;
         }
         
         int maxMice;
