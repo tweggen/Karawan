@@ -14,7 +14,7 @@ public class GraphMatcher
     public bool FindMatch(
         Graph graph,
         Pattern pattern,
-        out MatchResult match
+        out Match match
     ) 
     {
         this._graph = graph;

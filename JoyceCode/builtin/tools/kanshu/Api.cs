@@ -15,9 +15,10 @@ public class Api
         foreach (var rule in rules)
         {
             GraphMatcher gm = new();
-            if (gm.FindMatch(graph, rule.Pattern, out var matchResult))
+            if (gm.FindMatch(graph, rule.Pattern, out Match match))
             {
-                // TXWTODO: Replace match.
+                match.Rule = rule;
+                
             }
             
             // TXWTODO: Continue iteration or restart iteration depending on depth-first or breadth first

@@ -8,10 +8,10 @@ namespace builtin.tools.kanshu;
  */
 public class Match
 {
+    public Dictionary<int, Graph.Node> Nodes { get; set; }
     public SortedDictionary<string, string>? Bindings = null;
 
     public Rule Rule;
-
     
     /**
      * Try to add the given binding.
@@ -21,7 +21,20 @@ public class Match
     {
         if (Bindings != null)
         {
-            
+            if (Bindings.TryGetValue(key, out var oldValue))
+            {
+                if (value != oldValue)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            else
+            {
+                Bindings.Add(key, value);
+                return true;
+            }
         }
         else
         {
@@ -29,5 +42,20 @@ public class Match
             Bindings.Add(key, value);
             return true;
         }
+    }
+    
+    public override string ToString()
+    {
+        string str = "[";
+        bool isFirst = true; 
+        foreach (var kvp in Nodes)
+        {
+            if (!isFirst) str += ",";
+            else isFirst = false;
+            str += $"{kvp.Value}";
+        }
+
+        str += "]";
+        return str;
     }
 }
