@@ -91,9 +91,11 @@ public class GraphMatcher
         Pattern.PatternNode patternNode, 
         Graph.Node graphNode) 
     {
-        // Check label match
-        var matchGraphNode = patternNode.Predicate(matchCurrent, graphNode.Label); 
-        if (null == matchGraphNode)
+        /*
+         * Does the node match the pattern?
+         */
+        matchCurrent = patternNode.Predicate(matchCurrent, graphNode.Label); 
+        if (null == matchCurrent)
         {
             return null;
         }
@@ -109,11 +111,13 @@ public class GraphMatcher
                  */
 
                 var targetGraphNode = _mapping[reqEdge.TargetNodeIndex];
-                var matchGraphEdge = HasMatchingEdge(graphNode, targetGraphNode, matchGraphNode, reqEdge.Predicate); 
+                var matchGraphEdge = HasMatchingEdge(graphNode, targetGraphNode, matchCurrent, reqEdge.Predicate); 
                 if (null == matchGraphEdge) 
                 {
                     return null;
                 }
+
+                matchCurrent = matchGraphEdge;
             }
             else
             {
@@ -121,28 +125,40 @@ public class GraphMatcher
                  * If target not mapped yet, check if there exists at least one possible match
                  */
                 bool hasCandidate = false;
+                Match? matchCandidate = null;
                 foreach (var adj in graphNode.Adjacency) 
                 {
-                    if (!_mappedGraphNodes.Contains(adj.Value) &&
-                        reqEdge.Predicate(matchTry, adj.Key.Label) && 
-                        // adj.Key.Label.Equals(reqEdge.Predicate) &&
-                        // adj.Value.Label.Equals(targetPatternNode.Predicate))
-                        targetPatternNode.Predicate(matchTry, adj.Value.Label)
-                        )
+                    matchCandidate = matchCurrent;
+                    if (!_mappedGraphNodes.Contains(adj.Value))
                     {
-                        hasCandidate = true;
-                        break;
+                        matchCandidate = reqEdge.Predicate(matchCandidate, adj.Key.Label);
+                        if (null != matchCandidate)
+                        {
+                            matchCandidate = targetPatternNode.Predicate(matchCandidate, adj.Value.Label);
+                            // adj.Key.Label.Equals(reqEdge.Predicate) &&
+                            // adj.Value.Label.Equals(targetPatternNode.Predicate))
+                            //targetPatternNode.Predicate(matchTry, adj.Value.Label)
+                            if (null != matchCandidate)
+                            {
+                                hasCandidate = true;
+                                break;
+                            }
+                        }
                     }
                 }
 
-                if (!hasCandidate)
+                if (hasCandidate)
                 {
-                    return false;
+                    return matchCandidate;
+                }
+                else
+                {
+                    return null;
                 }
             }
         }
 
-        return true;
+        return null;
     }
 
     

@@ -27,12 +27,12 @@ public class PropertiesPredicate
                     {
                         if (kvp.Value != value)
                         {
-                            return false;
+                            return null;
                         }
                     }
                     else
                     {
-                        return false;
+                        return null;
                     }
                 }
             }
@@ -46,19 +46,21 @@ public class PropertiesPredicate
                 {
                     if (label.Value.TryGetValue(kvp.Key, out var value))
                     {
+                        bool hasMatch = match.HasBinding(kvp.Key, out string oldValue);
+                        #error foo we need to continue here
                         if (!match.TryAddBinding(kvp.Key, value))
                         {
-                            return false;
+                            return null;
                         }
                     }
                     else
                     {
-                        return false;
+                        return null;
                     }
                 }
             }
 
-            return true;
+            return match;
         };
     }
 }
