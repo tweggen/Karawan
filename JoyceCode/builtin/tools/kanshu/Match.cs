@@ -8,11 +8,32 @@ namespace builtin.tools.kanshu;
  */
 public class Match
 {
-    public Match Parent;
-    public Dictionary<int, Graph.Node> Nodes;
+    public Match? Parent = null;
     public SortedDictionary<string, string>? Bindings = null;
 
-    public Rule Rule;
+
+    public bool HasBinding(string key, out string value)
+    {
+        if (Parent != null)
+        {
+            if (Parent.HasBinding(key, out value))
+            {
+                return true;
+            }
+        }
+
+        if (Bindings != null)
+        {
+
+            if (Bindings.TryGetValue(key, out value))
+            {
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
     
     /**
      * Try to add the given binding.
@@ -20,6 +41,21 @@ public class Match
      */
     public bool TryAddBinding(string key, string value)
     {
+        string parentValue = default;
+        if (Parent != null && Parent.HasBinding(key, out parentValue))
+        {
+            if (parentValue == value)
+            {
+                return true;
+            }
+            else
+            {
+                /*
+                 * Parent has different value, does not match.
+                 */
+                return false;
+            }
+        }
         // TXWTODO: We have to include checks if the parent match contains a result.
         if (Bindings != null)
         {
