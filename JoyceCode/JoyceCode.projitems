@@ -25,6 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\QuaternionJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Api.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\EdgePredicateDescriptor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Match.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\MatchResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\NodePredicateDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\PropertiesPredicate.cs" />
