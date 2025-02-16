@@ -115,7 +115,7 @@ public class LabelsPredicate
                                 newFrame = new() { Parent = match, Bindings = new() };
                             }
 
-                            newFrame.Bindings.Add(labelName, subjectLabelValue);
+                            newFrame.Bindings.Add(bindingName, subjectLabelValue);
                         }
                     }
                 }

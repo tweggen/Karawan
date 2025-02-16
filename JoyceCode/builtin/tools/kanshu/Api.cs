@@ -123,11 +123,32 @@ public class Api
                     {
                         new()
                         {
-                            Predicate = LabelsPredicate.Create(new()
-                            {
-                                { "type", "Journey" }  
-                            }),
+                            Predicate = LabelsPredicate.Create(
+                                new()
+                                {
+                                    { "type", "Journey" }  
+                                },
+                                new ()
+                                {
+                                    { "kind", "Kind" }
+                                }
+                            ),
                             NodeFrom = 0, NodeTo = 1,
+                        },
+                        new()
+                        {
+                            Predicate = LabelsPredicate.Create(
+                                new()
+                                {
+                                    { "type", "Journey" }  
+                                },
+                                new ()
+                                {
+                                    { "kind", "Kind" }
+                                }
+                            ),
+                            
+                            NodeFrom = 1, NodeTo = 0,
                         }
                     }),
                 Replacement = (labels) => default

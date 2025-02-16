@@ -8,8 +8,8 @@ namespace builtin.tools.kanshu;
  */
 public class Scope
 {
-    public Scope? Parent = null;
-    public SortedDictionary<string, string>? Bindings = null;
+    public Scope? Parent { get; set; } = null;
+    public SortedDictionary<string, string>? Bindings { get; set; } = null;
 
 
     public bool HasBinding(string key, out string value)
@@ -33,30 +33,5 @@ public class Scope
 
         value = default;
         return false;
-    }
-    
-    
-    public override string ToString()
-    {
-        string strParent;
-        if (Parent != null)
-        {
-            strParent = Parent.ToString();
-        }
-        else
-        {
-            strParent = "null";
-        }
-
-        string str = $"{{\"parent\": {strParent}, \"bindings\": {{";
-        bool isFirst = true; 
-        foreach (var kvp in Bindings)
-        {
-            if (!isFirst) str += ",";
-            else isFirst = false;
-            str += $"\"{kvp.Key}\": \"{kvp.Value}\"";
-        }
-        str += "}";
-        return str;
     }
 }

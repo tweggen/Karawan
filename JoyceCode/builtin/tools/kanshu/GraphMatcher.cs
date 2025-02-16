@@ -45,7 +45,8 @@ public class GraphMatcher
             _matchResult = new MatchResult()
             {
                 Rule = _rule,
-                Nodes = _mapping
+                Nodes = _mapping,
+                Scope = scope
             };
             return _matchResult;
         }
