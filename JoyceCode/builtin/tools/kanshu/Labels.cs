@@ -29,6 +29,36 @@ public class Labels
 
         return new Labels(mapValues);
     }
+    
+    
+    public static Labels FromDollars(SortedDictionary<string, string> map)
+    {
+        SortedDictionary<string, Value> mapValues = new();
+        foreach (var kvp in map)
+        {
+            Value value;
+            if (kvp.Value.Length > 1 && kvp.Value[0] == '$')
+            {
+                if (kvp.Value[1] != '$')
+                {
+                    value = new BoundValue(kvp.Value.Substring(1));
+                }
+                else
+                {
+                    value = new ConstantValue(kvp.Value.Substring(2));
+                }
+            }
+            else
+            {
+                value = new ConstantValue(kvp.Value);
+            }
+            
+            mapValues.Add(kvp.Key, value);    
+        }
+
+        return new Labels(mapValues);
+    }
+
 }
 
  
