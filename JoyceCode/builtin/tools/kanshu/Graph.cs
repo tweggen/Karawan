@@ -11,6 +11,7 @@ public class Graph {
         public Dictionary<Edge, Node> Adjacency = new();
         public int Id { get; set; } // Unique identifier helps with matching
     }
+    
 
     public class Edge {
         public Labels Label { get; set; }

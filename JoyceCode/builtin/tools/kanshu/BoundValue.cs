@@ -25,5 +25,6 @@ public class BoundValue : Value
     public override string GetUnbound()
     {
         ErrorThrow<ArgumentException>($"Unable to return unbound value for {BindingName}, is a binding.");
+        return default;
     }
 }

@@ -25,7 +25,7 @@ public class LabelsPredicate
         SortedDictionary<string, string>? constantProps = null,
         SortedDictionary<string, string>? boundProps = null)
     {
-        return (Scope match, Labels label) =>
+        return (Scope scope, Labels label) =>
         {
             /*
              * First match the plain constants
@@ -38,7 +38,7 @@ public class LabelsPredicate
                     string labelValue = kvp.Value;
                     if (label.Map.TryGetValue(labelName, out var value))
                     {
-                        if (labelValue != value)
+                        if (labelValue != value.GetUnbound())
                         {
                             return null;
                         }
@@ -69,6 +69,7 @@ public class LabelsPredicate
                     string labelName = kvp.Key;
                     if (label.Map.TryGetValue(labelName, out var subjectLabelValue))
                     {
+                        string subjectLabelUnbound = subjectLabelValue.GetUnbound();
                         /*
                          * subjectLabelValue is the value as stored in the graph that we should scan
                          * for patterns.
@@ -85,9 +86,9 @@ public class LabelsPredicate
                          * - If there is a contradicting one, fail.
                          * - If there is a matching one, also succeed.
                          */
-                        if (match.HasBinding(bindingName, out string existingValue))
+                        if (scope.HasBinding(bindingName, out string existingValue))
                         {
-                            if (existingValue == subjectLabelValue)
+                            if (existingValue == subjectLabelUnbound)
                             {
                                 /*
                                  * We already have bound that one, continue.
@@ -112,21 +113,21 @@ public class LabelsPredicate
                              */
                             if (null == newFrame)
                             {
-                                newFrame = new() { Parent = match, Bindings = new() };
+                                newFrame = new() { Parent = scope, Bindings = new() };
                             }
 
-                            newFrame.Bindings.Add(bindingName, subjectLabelValue);
+                            newFrame.Bindings.Add(bindingName, subjectLabelUnbound);
                         }
                     }
                 }
 
                 if (newFrame != null)
                 {
-                    match = newFrame;
+                    scope = newFrame;
                 }
             }
 
-            return match;
+            return scope;
         };
     }
 }
