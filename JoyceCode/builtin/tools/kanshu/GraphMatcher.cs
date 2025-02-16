@@ -23,33 +23,45 @@ public class GraphMatcher
         _pattern = rule.Pattern;
         _mapping = new Dictionary<int, Graph.Node>();
         _mappedGraphNodes = new HashSet<Graph.Node>();
-        _matchResult = new()
-        {
-            Rule = rule,
-            Nodes = _mapping
-        };
-
     }
     
-    public MatchResult GetResult()
+    public MatchResult? GetResult()
     {
         return _matchResult;
     }
 
-    public Match? FindMatch()
+    public MatchResult? FindMatch()
     {
-        Match matchRoot = new();
-        Match? match = MatchRecursive(matchRoot, 0);
-        return match;
+        Scope scopeRoot = new();
+        Scope? scope = MatchRecursive(scopeRoot, 0);
+
+        if (null != scope)
+        {
+            /*
+             * if scope is null, there is no match.
+             * If scope is non-null, we built the result node mapping in
+             * mappedGraphNodes.
+             */
+            _matchResult = new MatchResult()
+            {
+                Rule = _rule,
+                Nodes = _mapping
+            };
+            return _matchResult;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     
-    private Match MatchRecursive(Match currentMatch, int patternNodeIndex) 
+    private Scope MatchRecursive(Scope currentScope, int patternNodeIndex) 
     {
         // Base case: all pattern nodes matched
         if (patternNodeIndex >= _pattern.Nodes.Count)
         {
-            return currentMatch;
+            return currentScope;
         }
 
         var patternNode = _pattern.Nodes[patternNodeIndex];
@@ -59,7 +71,7 @@ public class GraphMatcher
         {
             if (_mappedGraphNodes.Contains(graphNode)) continue;
 
-            var matchTry = IsCompatible(currentMatch, patternNode, graphNode); 
+            var matchTry = IsCompatible(currentScope, patternNode, graphNode); 
             if (null != matchTry)
             {
                 // Try this mapping
@@ -86,16 +98,16 @@ public class GraphMatcher
     /**
      * Test if that real given node matches the one given in the pattern.
      */
-    private Match IsCompatible(
-        Match matchCurrent,
+    private Scope IsCompatible(
+        Scope scopeCurrent,
         Pattern.PatternNode patternNode, 
         Graph.Node graphNode) 
     {
         /*
          * Does the node match the pattern?
          */
-        matchCurrent = patternNode.Predicate(matchCurrent, graphNode.Label); 
-        if (null == matchCurrent)
+        scopeCurrent = patternNode.Predicate(scopeCurrent, graphNode.Label); 
+        if (null == scopeCurrent)
         {
             return null;
         }
@@ -111,13 +123,13 @@ public class GraphMatcher
                  */
 
                 var targetGraphNode = _mapping[reqEdge.TargetNodeIndex];
-                var matchGraphEdge = HasMatchingEdge(graphNode, targetGraphNode, matchCurrent, reqEdge.Predicate); 
+                var matchGraphEdge = HasMatchingEdge(graphNode, targetGraphNode, scopeCurrent, reqEdge.Predicate); 
                 if (null == matchGraphEdge) 
                 {
                     return null;
                 }
 
-                matchCurrent = matchGraphEdge;
+                scopeCurrent = matchGraphEdge;
             }
             else
             {
@@ -125,20 +137,20 @@ public class GraphMatcher
                  * If target not mapped yet, check if there exists at least one possible match
                  */
                 bool hasCandidate = false;
-                Match? matchCandidate = null;
+                Scope? scopeCandidate = null;
                 foreach (var adj in graphNode.Adjacency) 
                 {
-                    matchCandidate = matchCurrent;
+                    scopeCandidate = scopeCurrent;
                     if (!_mappedGraphNodes.Contains(adj.Value))
                     {
-                        matchCandidate = reqEdge.Predicate(matchCandidate, adj.Key.Label);
-                        if (null != matchCandidate)
+                        scopeCandidate = reqEdge.Predicate(scopeCandidate, adj.Key.Label);
+                        if (null != scopeCandidate)
                         {
-                            matchCandidate = targetPatternNode.Predicate(matchCandidate, adj.Value.Label);
+                            scopeCandidate = targetPatternNode.Predicate(scopeCandidate, adj.Value.Label);
                             // adj.Key.Label.Equals(reqEdge.Predicate) &&
                             // adj.Value.Label.Equals(targetPatternNode.Predicate))
                             //targetPatternNode.Predicate(matchTry, adj.Value.Label)
-                            if (null != matchCandidate)
+                            if (null != scopeCandidate)
                             {
                                 hasCandidate = true;
                                 break;
@@ -147,18 +159,16 @@ public class GraphMatcher
                     }
                 }
 
-                if (hasCandidate)
-                {
-                    return matchCandidate;
-                }
-                else
+                if (!hasCandidate)
                 {
                     return null;
                 }
+
+                scopeCurrent = scopeCandidate;
             }
         }
 
-        return null;
+        return scopeCurrent;
     }
 
     
@@ -167,11 +177,11 @@ public class GraphMatcher
      * look if a real connection exists between these nodes that matches
      * the given edge predicate
      */
-    private Match HasMatchingEdge(
+    private Scope HasMatchingEdge(
         Graph.Node from,
         Graph.Node to,
-        Match matchCurrent,
-        Func<Match, Labels, Match> predicate
+        Scope scopeCurrent,
+        Func<Scope, Labels, Scope> predicate
     )
     {
         #if false
@@ -188,7 +198,7 @@ public class GraphMatcher
                 /*
                  * Obviously, we return first match. What happens with the other matches?
                  */
-                var matchAdj = predicate(matchCurrent, adj.Key.Label);
+                var matchAdj = predicate(scopeCurrent, adj.Key.Label);
                 if (null != matchAdj)
                 {
                     return matchAdj;

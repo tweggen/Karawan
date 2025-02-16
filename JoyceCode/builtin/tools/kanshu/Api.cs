@@ -1,30 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using static engine.Logger;
 
 namespace builtin.tools.kanshu;
 
 public class Api
 {
-    public static bool ApplyRuleset(
+    public static void ApplyRuleset(
         Graph graph, 
         List<Rule> rules)
     {
-        bool hadMatch = false;
-        
         foreach (var rule in rules)
         {
-            GraphMatcher gm = new();
-            if (gm.FindMatch(graph, rule.Pattern, out Match match))
+            GraphMatcher gm = new(graph, rule);
+            var matchResult = gm.FindMatch();
+            if (null != matchResult)
             {
-                match.Rule = rule;
-                
+                Trace($"rule matched with match {JsonSerializer.Serialize(matchResult)}");
             }
-            
-            // TXWTODO: Continue iteration or restart iteration depending on depth-first or breadth first
         }
-
-        return true;
     }
     
     
@@ -98,41 +93,47 @@ public class Api
                         NodeFrom = 3, NodeTo = 0 },
                     
                 });
-            var pattern = Pattern.Create(
-                new()
-                {
-                    new()
-                    {
-                        Predicate = PropertiesPredicate.Create(new ()
-                        {
-                            { "type", "Town" }
-                        }), 
-                        Id = 0
-                    },
-                    new()
-                    {
-                        Predicate = PropertiesPredicate.Create(new ()
-                        {
-                            { "type", "Town" }
-                        }), 
-                        Id = 1
-                    },
-                },
-                new()
-                {
-                    new()
-                    {
-                        Predicate = PropertiesPredicate.Create(new()
-                        {
-                            { "type", "Journey" }  
-                        }),
-                        NodeFrom = 0, NodeTo = 1,
-                    }
-                });
 
-            GraphMatcher gm = new();
-            var match = gm.FindMatch(graph, pattern, out var dictFound);
-            Trace($"Unit test for graph results: dictFound = {dictFound}");
+            Rule ruleTest = new()
+            {
+                Name = "RuleTest",
+                Probability = 1.0f,
+                Condition = Rule.Always,
+                Pattern = Pattern.Create(
+                    new()
+                    {
+                        new()
+                        {
+                            Predicate = LabelsPredicate.Create(new ()
+                            {
+                                { "type", "Town" }
+                            }), 
+                            Id = 0
+                        },
+                        new()
+                        {
+                            Predicate = LabelsPredicate.Create(new ()
+                            {
+                                { "type", "Town" }
+                            }), 
+                            Id = 1
+                        },
+                    },
+                    new()
+                    {
+                        new()
+                        {
+                            Predicate = LabelsPredicate.Create(new()
+                            {
+                                { "type", "Journey" }  
+                            }),
+                            NodeFrom = 0, NodeTo = 1,
+                        }
+                    }),
+                Replacement = (labels) => default
+            };
+
+            ApplyRuleset(graph, new() { ruleTest });
         }
         catch (Exception e)
         {

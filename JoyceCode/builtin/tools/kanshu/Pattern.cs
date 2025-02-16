@@ -10,7 +10,7 @@ public class Pattern
 
     public class PatternNode
     {
-        public Func<Match, Labels, Match> Predicate { get; set; }
+        public Func<Scope, Labels, Scope> Predicate;
         public List<PatternEdge> RequiredConnections { get; set; } = new();
         
         public int Id { get; set; }
@@ -18,7 +18,7 @@ public class Pattern
 
     public class PatternEdge
     {
-        public Func<Match, Labels, Match> Predicate { get; set; }
+        public Func<Scope, Labels, Scope> Predicate;
         public int TargetNodeIndex { get; set; } // Index in pattern's Nodes list
     }
     

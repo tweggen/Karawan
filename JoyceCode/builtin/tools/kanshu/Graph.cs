@@ -5,48 +5,20 @@ using static engine.Logger;
 namespace builtin.tools.kanshu;
 
 public class Graph {
-    public class Node {
+    public class Node
+    {
         public Labels Label { get; set; }
-        public Dictionary<Edge, Node> Adjacency { get; set; } = new();
-        public int Id { get; set; }  // Unique identifier helps with matching
-
-        public override string ToString()
-        {
-            string str = "{";
-            str += $"\"id\": {Id},";
-            str += $"\"label\": {Label},";
-            str += "\"edges\": [";
-            bool isFirst = true;
-            foreach (var kvp in Adjacency)
-            {
-                if (!isFirst) str += ",";
-                else isFirst = false;
-                str += "{";
-                str += $"\"destId\": {kvp.Value.Id},";
-                str += $"\"label\": {kvp.Key}";
-                str += "}";
-            }
-            str += "]";
-            str += "}";
-            return str;
-        }
+        public Dictionary<Edge, Node> Adjacency = new();
+        public int Id { get; set; } // Unique identifier helps with matching
     }
 
     public class Edge {
         public Labels Label { get; set; }
-
-        public override string ToString()
-        {
-            string str = "{";
-            str += $"\"label\": {Label}";
-            str += "}";
-            return str;
-        }
     }
 
 
-    public List<Node> Nodes = new();
-
+    public List<Node> Nodes { get; set; } = new();
+        
     
     /**
      * Given two lists of descriptions, create a graph.
