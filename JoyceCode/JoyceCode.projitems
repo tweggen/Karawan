@@ -24,6 +24,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\PickableDirectory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\QuaternionJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Api.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\BoundValue.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\ConstantReplacement.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\ConstantValue.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\EdgePredicateDescriptor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Scope.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\MatchResult.cs" />
@@ -36,6 +39,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Pattern.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Labels.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Rule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Value.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector2JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityObserver.cs" />

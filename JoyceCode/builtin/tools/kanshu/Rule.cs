@@ -45,5 +45,5 @@ public class Rule
      * @returns
      *     a graph to replace the original patter with.
      */
-    public Func<Labels, Graph> Replacement;
+    public Func<Graph, MatchResult, Graph?> Replacement;
 }

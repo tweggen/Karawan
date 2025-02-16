@@ -38,7 +38,7 @@ public class Graph {
             graph.Nodes.Add(new()
             {
                 Id = nodeDesc.Id>=0?nodeDesc.Id:idx,
-                Label = nodeDesc.Label
+                Label = nodeDesc.Labels
             });
             idx++;
         }
@@ -47,7 +47,7 @@ public class Graph {
         {
             Edge edge = new ()
             {
-                Label = edgeDesc.Label
+                Label = edgeDesc.Labels
             };
             if (edgeDesc.NodeFrom < 0 || edgeDesc.NodeFrom >= graph.Nodes.Count)
             {

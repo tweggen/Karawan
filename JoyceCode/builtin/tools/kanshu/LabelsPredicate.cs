@@ -36,7 +36,7 @@ public class LabelsPredicate
                 {
                     string labelName = kvp.Key;
                     string labelValue = kvp.Value;
-                    if (label.Value.TryGetValue(labelName, out var value))
+                    if (label.Map.TryGetValue(labelName, out var value))
                     {
                         if (labelValue != value)
                         {
@@ -67,7 +67,7 @@ public class LabelsPredicate
                      * kvp.Value contains the name of the binding.
                      */
                     string labelName = kvp.Key;
-                    if (label.Value.TryGetValue(labelName, out var subjectLabelValue))
+                    if (label.Map.TryGetValue(labelName, out var subjectLabelValue))
                     {
                         /*
                          * subjectLabelValue is the value as stored in the graph that we should scan

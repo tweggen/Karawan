@@ -1,21 +1,33 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace builtin.tools.kanshu;
 
 public class Labels
 {
-    public SortedDictionary<string, string> Value { get; init; }
+    public SortedDictionary<string, Value> Map { get; init; }
 
-    public string this[string key]
+    public Value this[string key]
     {
-        get => Value[key];
+        get => Map[key];
     }
 
-    public Labels(SortedDictionary<string, string> props)
+    public Labels(SortedDictionary<string, Value> map)
     {
-        Value = new SortedDictionary<string, string>(props);
+        Map = new SortedDictionary<string, Value>(map);
+    }
+
+    public static Labels FromStrings(SortedDictionary<string, string> map)
+    {
+        SortedDictionary<string, Value> mapValues = new();
+        foreach (var kvp in map)
+        {
+            mapValues.Add(kvp.Key, new ConstantValue(kvp.Value));    
+        }
+
+        return new Labels(mapValues);
     }
 }
 

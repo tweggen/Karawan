@@ -11,6 +11,8 @@ public class Api
         Graph graph, 
         List<Rule> rules)
     {
+        List<MatchResult> listMatchingResults = new();
+        
         foreach (var rule in rules)
         {
             GraphMatcher gm = new(graph, rule);
@@ -18,7 +20,20 @@ public class Api
             if (null != matchResult)
             {
                 Trace($"rule matched with match {JsonSerializer.Serialize(matchResult)}");
+                listMatchingResults.Add(matchResult);
             }
+        }
+        
+        // TXWTODO: Select by probability instead of simply picking the first
+        if (listMatchingResults.Count > 0)
+        {
+            var matchingResult = listMatchingResults[0];
+            
+            /*
+             * Finally, replace the graph we have found by a new one using the
+             * previously created bindings.
+             */
+            Graph? newGraph = matchingResult.Rule.Replacement(graph, matchingResult);
         }
     }
     
@@ -31,22 +46,22 @@ public class Api
                 new()
                 {
                     new() {
-                        Label = new Labels( new()
+                        Labels = Labels.FromStrings( new()
                     {
                         { "type", "Town" }, { "name", "Hannover" }
                     }) },
                     new() {
-                        Label = new Labels( new()
+                        Labels = Labels.FromStrings( new()
                     {
                         { "type", "Town" }, { "name", "Linden" }
                     }) },
                     new() { 
-                        Label = new Labels( new()
+                        Labels = Labels.FromStrings( new()
                     {
                         { "type", "Mall" }, { "name", "Ihmezentrum" }
                     }) },
                     new() {
-                        Label = new Labels( new()
+                        Labels = Labels.FromStrings( new()
                     {
                         { "type", "Mall" }, { "name", "EAG" }
                     }) }
@@ -54,39 +69,39 @@ public class Api
                 new()
                 {
                     new() { 
-                        Label = new ( new()
+                        Labels = Labels.FromStrings( new()
                         {
                             { "type", "Journey" }, { "kind", "any" }
                         }), 
                         NodeFrom = 0, NodeTo = 1 },
                     new() {
-                        Label = new ( new()
+                        Labels = Labels.FromStrings( new()
                         {
                             { "type", "Journey" }, { "kind", "any" }
                         }), 
                         NodeFrom = 1, NodeTo = 0 },
                     
                     new() {
-                        Label = new ( new()
+                        Labels = Labels.FromStrings ( new()
                         {
                             { "type", "Journey" }, { "kind", "by feet" }
                         }),
                         NodeFrom = 1, NodeTo = 2 },
                     new() {
-                        Label = new ( new()
+                        Labels = Labels.FromStrings ( new()
                         {
                             { "type", "Journey" }, { "kind", "by feet" }
                         }), 
                         NodeFrom = 2, NodeTo = 1 },
                     
                     new() { 
-                        Label = new ( new()
+                        Labels = Labels.FromStrings ( new()
                         {
                             { "type", "Journey" }, { "kind", "by feet" }
                         }),
                         NodeFrom = 0, NodeTo = 3 },
                     new() { 
-                        Label = new ( new()
+                        Labels = Labels.FromStrings ( new()
                         {
                             { "type", "Journey" }, { "kind", "by feet" }
                         }), 
@@ -151,7 +166,7 @@ public class Api
                             NodeFrom = 1, NodeTo = 0,
                         }
                     }),
-                Replacement = (labels) => default
+                Replacement = ConstantReplacement.Create()
             };
 
             ApplyRuleset(graph, new() { ruleTest });
