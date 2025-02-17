@@ -4,7 +4,21 @@ using static engine.Logger;
 
 namespace builtin.tools.kanshu;
 
+
+/**
+ * Represent a gfraph.
+ *
+ * How to replace a set of nodes together with its edges
+ * in the graph:
+ *
+ * 1. We do want to replace a set of nodes. We will also replace the edges
+ *    origining from those nodes. We will not replace edges origining from
+ *    nodes that are not part of the substitute set.
+ * 2. We decide that it is best to provide methods for altering the graph
+ *    in this data structure to abstract as much functionality as possible.
+ */
 public class Graph {
+    
     public class Node
     {
         public Labels Label { get; set; }
@@ -19,7 +33,20 @@ public class Graph {
 
 
     public List<Node> Nodes { get; set; } = new();
-        
+
+    
+    /**
+     * Replace the node in the current graph with a new node based on the template
+     * given. Have the flags specify the way the labels are combined.
+     *
+     * While replacing, the values of the labels can be bound if desired. 
+     */
+    public void AlterNode(Scope scope, Graph.Node old, Graph.Node template, Labels.AlterationFlags flags)
+    {
+        Node node = new();
+        node.Label = Labels.FromMerge(scope, old.Label, template.Label, flags);
+    }
+    
     
     /**
      * Given two lists of descriptions, create a graph.

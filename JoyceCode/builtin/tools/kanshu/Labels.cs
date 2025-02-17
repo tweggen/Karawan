@@ -1,12 +1,20 @@
+using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Collections.ObjectModel;
-using System.Linq;
+using System.Security.Cryptography;
 
 namespace builtin.tools.kanshu;
 
 public class Labels
 {
+    [Flags]
+    public enum AlterationFlags
+    {
+        ConsiderOld = 1,
+        PriorizeNew = 2,
+        BindValues = 4
+    };
+
+
     public SortedDictionary<string, Value> Map { get; init; }
 
     public Value this[string key]
@@ -16,9 +24,57 @@ public class Labels
 
     public Labels(SortedDictionary<string, Value> map)
     {
-        Map = new SortedDictionary<string, Value>(map);
+        Map = map;
     }
 
+
+    static private void _mergeFrom(Scope scope, SortedDictionary<string, Value> to,
+        SortedDictionary<string, Value> from, AlterationFlags flags)
+    {
+        foreach (var kvp in from)
+        {
+            Value v;
+            if ((flags & AlterationFlags.BindValues) != 0)
+            {
+                v = kvp.Value.GetBoundValue(scope);
+            }
+            else
+            {
+                v = kvp.Value;
+            }
+
+            to.Add(kvp.Key, v);
+        }
+    }
+    
+    
+    public static Labels FromMerge(Scope scope, Labels old, Labels template, AlterationFlags flags)
+    {
+        Labels l = new(new());
+
+        if ((flags & AlterationFlags.PriorizeNew) != 0)
+        {
+            if ((flags & AlterationFlags.ConsiderOld) != 0)
+            {
+                _mergeFrom(scope, l.Map, old.Map, flags);
+            }
+
+            _mergeFrom(scope, l.Map, template.Map, flags);
+        }
+        else
+        {
+            _mergeFrom(scope, l.Map, template.Map, flags);
+            
+            if ((flags & AlterationFlags.ConsiderOld) != 0)
+            {
+                _mergeFrom(scope, l.Map, old.Map, flags);
+            }
+        }
+
+        return l;
+    }
+    
+    
     public static Labels FromStrings(SortedDictionary<string, string> map)
     {
         SortedDictionary<string, Value> mapValues = new();

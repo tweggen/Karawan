@@ -18,4 +18,9 @@ public class ConstantValue : Value
     {
         return Constant;
     }
+
+    public override Value GetBoundValue(Scope _)
+    {
+        return this;
+    }
 }

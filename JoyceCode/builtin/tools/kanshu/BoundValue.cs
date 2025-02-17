@@ -27,4 +27,9 @@ public class BoundValue : Value
         ErrorThrow<ArgumentException>($"Unable to return unbound value for {BindingName}, is a binding.");
         return default;
     }
+
+    public override Value GetBoundValue(Scope scope)
+    {
+        return new ConstantValue(GetBound(scope));
+    }
 }
