@@ -21,36 +21,59 @@ public class Graph {
     
     public class Node
     {
-        public Labels Label { get; set; }
+        public Labels Label { get; init; }
         public Dictionary<Edge, Node> Adjacency = new();
         // public int Id { get; set; } // Unique identifier helps with matching
     }
     
 
     public class Edge {
-        public Labels Label { get; set; }
+        public Labels Labels { get; init; }
     }
 
 
-    public List<Node> Nodes { get; set; } = new();
+    public List<Node> Nodes { get; init; } = new();
 
-    
+
     /**
-     * Replace the node in the current graph with a new node based on the template
-     * given. Have the flags specify the way the labels are combined.
-     *
-     * While replacing, the values of the labels can be bound if desired. 
+     * Create a graph as a copy from this with the given modification.
+     * @param mapReplaceNodes
+     *     The list of nodes to be replaced. If the value is null, the corresponsing
+     *     node is not used in the new graph.
+     * @param listNewNodes
+     *     The list of new nodes to add to the graph.
      */
-    static public Node FromTemplate(Scope scope, Graph.Node old, Graph.Node template, Labels.AlterationFlags flags)
+    public Graph DuplicateReplacing(
+        IDictionary<Graph.Node, Graph.Node?> mapReplaceNodes,
+        IEnumerable<Graph.Node> listNewNodes)
     {
-        /*
-         * Create a new node, containing the labels as requested by the caller.
-         */
-        Node node = new();
-        node.Label = Labels.FromMerge(scope, old.Label, template.Label, flags);
-        return node;
+        List<Node> newNodes = new();
+        foreach (var node in Nodes)
+        {
+            if (mapReplaceNodes.TryGetValue(node, out var newNode))
+            {
+                if (newNode != null)
+                {
+                    newNodes.Add(newNode);
+                }
+            }
+            else
+            {
+                newNodes.Add(node);
+            }
+        }
+
+        foreach (var node in listNewNodes)
+        {
+            newNodes.Add(node);
+        }
+
+        return new Graph()
+        {
+            Nodes = newNodes
+        };
     }
-    
+
     
     /**
      * Given two lists of descriptions, create a graph.
@@ -79,7 +102,7 @@ public class Graph {
         {
             Edge edge = new ()
             {
-                Label = edgeDesc.Labels
+                Labels = edgeDesc.Labels
             };
             if (edgeDesc.NodeFrom < 0 || edgeDesc.NodeFrom >= graph.Nodes.Count)
             {

@@ -17,7 +17,6 @@ public class ConstantReplacement
      */
     public static Func<Graph, MatchResult, Graph?> Create(
         SortedDictionary<int, Graph.Node> replaceByNodes,
-        SortedDictionary<int, Graph.Edge> replaceByEdges,
         List<NodeDescriptor> newNodes,
         List<EdgeDescriptor> newEdges)
     {
@@ -48,6 +47,8 @@ public class ConstantReplacement
             int nReplacedNodes = replaceByNodes.Count;
             Debug.Assert(nReplacedNodes == matchResult.Nodes.Count);
 
+            Dictionary<Graph.Node, Graph.Node?> dictReplaceNodes = new();
+            
             for (int i=0; i<matchResult.Rule.Pattern.Nodes.Count; i++)
             {
                 var nodeReplacement = new Graph.Node()
@@ -61,6 +62,8 @@ public class ConstantReplacement
                         |Labels.AlterationFlags.ConsiderOld)
                 };
                 listNodes.Add(nodeReplacement);
+
+                dictReplaceNodes.Add(matchResult.Nodes[i], nodeReplacement);
             }
             
             /*
@@ -76,6 +79,23 @@ public class ConstantReplacement
                 listNodes.Add(node);
             }
             
+            /*
+             * Now add the edges. 
+             */
+            int nEdges = newEdges.Count;
+            for (int i = 0; i < nEdges; ++i)
+            {
+                EdgeDescriptor desc = newEdges[i];
+                var edge = new Graph.Edge() { Labels = desc.Labels };
+                
+                /*
+                 * Add the edge into the node.
+                 */ 
+                Debug.Assert(desc.NodeFrom < listNodes.Count);
+                Debug.Assert(desc.NodeTo < listNodes.Count);
+                
+                listNodes[desc.NodeFrom].Adjacency.Add(edge, listNodes[desc.NodeTo]);
+            }
             return null;
         };
     }

@@ -144,7 +144,7 @@ public class GraphMatcher
                     scopeCandidate = scopeCurrent;
                     if (!_mappedGraphNodes.Contains(adj.Value))
                     {
-                        scopeCandidate = reqEdge.Predicate(scopeCandidate, adj.Key.Label);
+                        scopeCandidate = reqEdge.Predicate(scopeCandidate, adj.Key.Labels);
                         if (null != scopeCandidate)
                         {
                             scopeCandidate = targetPatternNode.Predicate(scopeCandidate, adj.Value.Label);
@@ -199,7 +199,7 @@ public class GraphMatcher
                 /*
                  * Obviously, we return first match. What happens with the other matches?
                  */
-                var matchAdj = predicate(scopeCurrent, adj.Key.Label);
+                var matchAdj = predicate(scopeCurrent, adj.Key.Labels);
                 if (null != matchAdj)
                 {
                     return matchAdj;
