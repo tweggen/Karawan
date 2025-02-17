@@ -56,7 +56,7 @@ public class Labels
         {
             if ((flags & AlterationFlags.ConsiderOld) != 0)
             {
-                _mergeFrom(scope, l.Map, old.Map, flags);
+                _mergeFrom(scope, l.Map, old.Map, flags & ~AlterationFlags.BindValues);
             }
 
             _mergeFrom(scope, l.Map, template.Map, flags);
@@ -67,7 +67,7 @@ public class Labels
             
             if ((flags & AlterationFlags.ConsiderOld) != 0)
             {
-                _mergeFrom(scope, l.Map, old.Map, flags);
+                _mergeFrom(scope, l.Map, old.Map, flags & ~AlterationFlags.BindValues);
             }
         }
 

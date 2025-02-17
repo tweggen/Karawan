@@ -23,7 +23,7 @@ public class Graph {
     {
         public Labels Label { get; set; }
         public Dictionary<Edge, Node> Adjacency = new();
-        public int Id { get; set; } // Unique identifier helps with matching
+        // public int Id { get; set; } // Unique identifier helps with matching
     }
     
 
@@ -41,10 +41,14 @@ public class Graph {
      *
      * While replacing, the values of the labels can be bound if desired. 
      */
-    public void AlterNode(Scope scope, Graph.Node old, Graph.Node template, Labels.AlterationFlags flags)
+    static public Node FromTemplate(Scope scope, Graph.Node old, Graph.Node template, Labels.AlterationFlags flags)
     {
+        /*
+         * Create a new node, containing the labels as requested by the caller.
+         */
         Node node = new();
         node.Label = Labels.FromMerge(scope, old.Label, template.Label, flags);
+        return node;
     }
     
     
@@ -65,7 +69,7 @@ public class Graph {
         {
             graph.Nodes.Add(new()
             {
-                Id = nodeDesc.Id>=0?nodeDesc.Id:idx,
+                // Id = nodeDesc.Id>=0?nodeDesc.Id:idx,
                 Label = nodeDesc.Labels
             });
             idx++;
