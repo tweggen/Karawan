@@ -330,6 +330,23 @@ itself with the Saver module, using its OnBeforeSaveGame and OnAfterLoadGame hoo
 The narration is based on inky. It hooks into the savegame system to be able to 
 restore itself.
 
+## What do I want?
+
+I want to ride through the waste land.
+I want to sometimes encounter TRON like sail ships.
+I want to cross data highways.
+I want to see entraces to tunnels.
+I want to see digital trees.
+I want to see beautiful landscape
+I want to see skylines
+I want to see busy-ness in the cities.
+I want to uncover a story by narration elements
+I want to buy/sell things
+I want to earn money by transporting persons
+I want to earn monry by transporting things
+I want to be able to be part of something
+I want to sometimes fly
+
 ## Pickable objects
 
 All pickable objects are kept inside the PickableDirectory. This holds the
