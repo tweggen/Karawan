@@ -346,6 +346,26 @@ I want to earn money by transporting persons
 I want to earn monry by transporting things
 I want to be able to be part of something
 I want to sometimes fly
+I want to look out of a window when resting
+I want to know that there are sewers / dungeons below the city
+I want to use public transport
+I want riding to consume fuel
+I want to get out of the car
+I want to have a closer work in the city's green parks
+I want long travels to require different means of transport
+I want to have at least one city - the second one - beautifully set in a valley
+I want to ride in a digital sail thing across the void
+I want to buy a house to have flowers grow on the outside of the building
+I want to earn money to give live to the world
+I want to encounter digital beings in the void
+I want to have hurds of birds flying across the sky
+I want to have a couple of birds once and then on the floor that eventually get disturbed a fly away
+I would love to see a being build of segments like in old-school games (r-type)
+I want to see equalizer vu meters once and then
+I might need to fight virusses or code worms
+
+
+
 
 ## Pickable objects
 
