@@ -82,7 +82,35 @@ public class Graph
     {
         public Labels Labels;
         public Dictionary<Edge, Node> Adjacency = new();
-        // public int Id { get; set; } // Unique identifier helps with matching
+
+        public Node DuplicateReplacing(
+            IDictionary<Graph.Node, Graph.Node?> mapReplaceNodes
+        )
+        {
+            Dictionary<Edge, Node> newadj = new();
+            bool haveChange = false;
+            foreach (var adj in Adjacency)
+            {
+                if (mapReplaceNodes.TryGetValue(adj.Value, out var newNode))
+                {
+                    newadj.Add(adj.Key, newNode);
+                    haveChange = true;
+                }
+                else
+                {
+                    newadj.Add(adj.Key, adj.Value);
+                }
+            }
+
+            if (haveChange)
+            {
+                return new Node() { Adjacency = newadj };
+            }
+            else
+            {
+                return new Node() { Adjacency = Adjacency };
+            }
+        }
     }
     
 
@@ -119,7 +147,7 @@ public class Graph
             }
             else
             {
-                newNodes.Add(node);
+                newNodes.Add(node.DuplicateReplacing(mapReplaceNodes));
             }
         }
 
