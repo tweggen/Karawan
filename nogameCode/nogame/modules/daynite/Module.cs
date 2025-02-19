@@ -132,14 +132,19 @@ public class Module : AModule
          * might not be correct. Anyway, this represents the game starting in this very second.
          */
         _realWorldStart = DateTime.UtcNow;
-        _eClockDisplay = _engine.CreateEntity("OsdClockDisplay");
         
-        /*
-         * Recall the current game time from the one in the save file.
-         * This will modify _realWorldStart
-         */
-        GameNow = M<AutoSave>().GameState.GameNow;
-        _engine.OnLogicalFrame += _onLogicalFrame;
+        _engine.QueueMainThreadAction(() =>
+        {
+            _eClockDisplay = _engine.CreateEntity("OsdClockDisplay");
+
+            /*
+             * Recall the current game time from the one in the save file.
+             * This will modify _realWorldStart
+             */
+            GameNow = M<AutoSave>().GameState.GameNow;
+            _engine.OnLogicalFrame += _onLogicalFrame;
+        });
+        
     }
 
     public Module()
