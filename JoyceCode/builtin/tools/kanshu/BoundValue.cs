@@ -9,6 +9,7 @@ public class BoundValue : Value
     {
         BindingName = bindingName;
     }
+    
     public string BindingName { get; set; }
 
     public override string GetBound(Scope scope)

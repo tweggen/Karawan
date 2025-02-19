@@ -115,6 +115,18 @@ public class Labels
         return new Labels(mapValues);
     }
 
+
+    public Labels ToBound(Scope scope)
+    {
+        SortedDictionary<string, Value> mapValues = new();
+        foreach (var kvp in Map)
+        {
+            mapValues.Add(kvp.Key, kvp.Value.GetBoundValue(scope));
+        }
+        
+        Labels boundLabels = new(mapValues);
+        return boundLabels;
+    }
 }
 
  

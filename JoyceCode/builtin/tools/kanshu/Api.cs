@@ -34,6 +34,10 @@ public class Api
              * previously created bindings.
              */
             Graph? newGraph = matchingResult.Rule.Replacement(graph, matchingResult);
+            if (newGraph != null)
+            {
+                Trace($"resulting graph is {JsonSerializer.Serialize(newGraph)}");
+            }
         }
     }
     
@@ -166,7 +170,69 @@ public class Api
                             NodeFrom = 1, NodeTo = 0,
                         }
                     }),
-                //Replacement = ConstantReplacement.Create()
+                Replacement = ConstantReplacement.Create(
+                    new()
+                    {
+                        new()
+                        {
+                            Labels = Labels.FromStrings ( new())
+                        },
+                        new()
+                        {
+                            Labels = Labels.FromStrings ( new())
+                        },
+                    },
+                    new()
+                    {
+                        new()
+                        {
+                            Labels = Labels.FromDollars( new()
+                            {
+                                {"type", "Hub"},
+                                {"kind", "$Kind" }
+                            })
+                        }
+                    },
+                    new()
+                    {
+                        new()
+                        {
+                            Labels = Labels.FromDollars(new ()
+                            {
+                                { "type", "Journey" },
+                                { "kind", "$Kind" }
+                            }),
+                            NodeFrom = 0, NodeTo = 2,
+                        },
+                        new()
+                        {
+                            Labels = Labels.FromDollars(new ()
+                            {
+                                { "type", "Journey" },
+                                { "kind", "$Kind" }
+                            }),
+                            NodeFrom = 2, NodeTo = 0,
+                        },
+                        new()
+                        {
+                            Labels = Labels.FromDollars(new ()
+                            {
+                                { "type", "Journey" },
+                                { "kind", "$Kind" }
+                            }),
+                            NodeFrom = 0, NodeTo = 1,
+                        },
+                        new()
+                        {
+                            Labels = Labels.FromDollars(new ()
+                            {
+                                { "type", "Journey" },
+                                { "kind", "$Kind" }
+                            }),
+                            NodeFrom = 1, NodeTo = 0,
+                        },
+                    })
+                
             };
 
             ApplyRuleset(graph, new() { ruleTest });

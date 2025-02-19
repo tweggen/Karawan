@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using static engine.Logger;
 
 namespace builtin.tools.kanshu;
 
 
 /**
- * Represent a gfraph.
+ * Represent a graph.
  *
  * How to replace a set of nodes together with its edges
  * in the graph:
@@ -17,22 +19,80 @@ namespace builtin.tools.kanshu;
  * 2. We decide that it is best to provide methods for altering the graph
  *    in this data structure to abstract as much functionality as possible.
  */
-public class Graph {
+public class Graph
+{
+    public SortedDictionary<int, Labels> NodeList
+    {
+        get
+        {
+            var nodeList = new SortedDictionary<int, Labels>();
+            int idx = 0;
+            foreach (var node in Nodes)
+            {
+                nodeList.Add(idx, node.Labels);
+                ++idx;
+            }
+
+            return nodeList;
+        }
+    }
+
+    public class EdgeListEntry
+    {
+        public Labels Labels { get; }
+        public int FromNode { get; }
+        public int ToNode { get; }
+
+        public EdgeListEntry(int from, int to, Labels labels)
+        {
+            Labels = labels;
+            FromNode = from;
+            ToNode = to;
+        }
+    }
+    
+    public SortedDictionary<int, EdgeListEntry> EdgeList
+    {
+        get
+        {
+            var edgeList = new SortedDictionary<int, EdgeListEntry>();
+            int nodeIdx = 0;
+            int edgeIdx = 0;
+            foreach (var node in Nodes)
+            {
+                foreach (var kvp in node.Adjacency)
+                {
+                    edgeList.Add(edgeIdx, 
+                        new (
+                            Nodes.IndexOf(node), 
+                            Nodes.IndexOf(kvp.Value), 
+                            kvp.Key.Labels));
+                    ++edgeIdx;
+                }
+
+                ++nodeIdx;
+            }
+
+            return edgeList;
+        }
+    }    
+
     
     public class Node
     {
-        public Labels Labels { get; init; }
+        public Labels Labels;
         public Dictionary<Edge, Node> Adjacency = new();
         // public int Id { get; set; } // Unique identifier helps with matching
     }
     
 
-    public class Edge {
-        public Labels Labels { get; init; }
+    public class Edge
+    {
+        public Labels Labels;
     }
 
 
-    public List<Node> Nodes { get; init; } = new();
+    public List<Node> Nodes = new();
 
 
     /**

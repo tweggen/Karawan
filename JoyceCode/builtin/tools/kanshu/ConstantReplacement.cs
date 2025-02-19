@@ -19,7 +19,10 @@ public class ConstantReplacement
     public static Func<Graph, MatchResult, Graph?> Create(
         List<NodeDescriptor> replaceByNodes,
         List<NodeDescriptor> newNodes,
-        List<EdgeDescriptor> newEdges)
+        List<EdgeDescriptor> newEdges,
+        Labels.AlterationFlags replaceNodesAlterationFlags = Labels.AlterationFlags.BindValues
+                                                             |Labels.AlterationFlags.PriorizeNew
+                                                             |Labels.AlterationFlags.ConsiderOld)
     {
         return (graph, matchResult) =>
         {
@@ -75,7 +78,7 @@ public class ConstantReplacement
             {
                 var node = new Graph.Node()
                 {
-                    Labels = newNodes[i].Labels,
+                    Labels = newNodes[i].Labels.ToBound(matchResult.Scope),
                 };
                 listNodes.Add(node);
             }
@@ -87,7 +90,7 @@ public class ConstantReplacement
             for (int i = 0; i < nEdges; ++i)
             {
                 EdgeDescriptor desc = newEdges[i];
-                var edge = new Graph.Edge() { Labels = desc.Labels };
+                var edge = new Graph.Edge() { Labels = desc.Labels.ToBound(matchResult.Scope) };
                 
                 /*
                  * Add the edge into the node.
