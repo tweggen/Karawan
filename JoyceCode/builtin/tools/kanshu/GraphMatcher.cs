@@ -107,7 +107,7 @@ public class GraphMatcher
         /*
          * Does the node match the pattern?
          */
-        scopeCurrent = patternNode.Predicate(scopeCurrent, graphNode.Label); 
+        scopeCurrent = patternNode.Predicate(scopeCurrent, graphNode.Labels); 
         if (null == scopeCurrent)
         {
             return null;
@@ -147,7 +147,7 @@ public class GraphMatcher
                         scopeCandidate = reqEdge.Predicate(scopeCandidate, adj.Key.Labels);
                         if (null != scopeCandidate)
                         {
-                            scopeCandidate = targetPatternNode.Predicate(scopeCandidate, adj.Value.Label);
+                            scopeCandidate = targetPatternNode.Predicate(scopeCandidate, adj.Value.Labels);
                             // adj.Key.Label.Equals(reqEdge.Predicate) &&
                             // adj.Value.Label.Equals(targetPatternNode.Predicate))
                             //targetPatternNode.Predicate(matchTry, adj.Value.Label)

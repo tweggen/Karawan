@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using BepuPhysics.Trees;
 
 namespace builtin.tools.kanshu;
 
@@ -16,7 +17,7 @@ public class ConstantReplacement
      *     Node i from the pattern shall be replaced by the given node.
      */
     public static Func<Graph, MatchResult, Graph?> Create(
-        SortedDictionary<int, Graph.Node> replaceByNodes,
+        List<NodeDescriptor> replaceByNodes,
         List<NodeDescriptor> newNodes,
         List<EdgeDescriptor> newEdges)
     {
@@ -53,10 +54,10 @@ public class ConstantReplacement
             {
                 var nodeReplacement = new Graph.Node()
                 {
-                    Label = Labels.FromMerge(
+                    Labels = Labels.FromMerge(
                         matchResult.Scope,
-                        matchResult.Nodes[i].Label,
-                        replaceByNodes[i].Label,
+                        matchResult.Nodes[i].Labels,
+                        replaceByNodes[i].Labels,
                         Labels.AlterationFlags.BindValues
                         |Labels.AlterationFlags.PriorizeNew
                         |Labels.AlterationFlags.ConsiderOld)
@@ -74,7 +75,7 @@ public class ConstantReplacement
             {
                 var node = new Graph.Node()
                 {
-                    Label = newNodes[i].Labels,
+                    Labels = newNodes[i].Labels,
                 };
                 listNodes.Add(node);
             }
@@ -96,7 +97,15 @@ public class ConstantReplacement
                 
                 listNodes[desc.NodeFrom].Adjacency.Add(edge, listNodes[desc.NodeTo]);
             }
-            return null;
+            
+            /*
+             * Now we have the association from old to new nodes, the new nodes containing the
+             * new edges and the merged labels.
+             *
+             * We now need to construct a new graph from all of this data.
+             */
+            
+            return graph.DuplicateReplacing(dictReplaceNodes, listNodes.GetRange(nReplacedNodes, nNewNodes));
         };
     }
 }

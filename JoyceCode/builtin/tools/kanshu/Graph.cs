@@ -21,7 +21,7 @@ public class Graph {
     
     public class Node
     {
-        public Labels Label { get; init; }
+        public Labels Labels { get; init; }
         public Dictionary<Edge, Node> Adjacency = new();
         // public int Id { get; set; } // Unique identifier helps with matching
     }
@@ -93,7 +93,7 @@ public class Graph {
             graph.Nodes.Add(new()
             {
                 // Id = nodeDesc.Id>=0?nodeDesc.Id:idx,
-                Label = nodeDesc.Labels
+                Labels = nodeDesc.Labels
             });
             idx++;
         }
