@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using engine;
@@ -28,8 +29,54 @@ public class FbxModel : IDisposable
             //_assimp = new(Silk.NET.Assimp.Assimp.CreateDefaultContext(customAssimpLibraryNameContainer.GetLibraryNames()));
         }
     }
-    
 
+
+    private unsafe string GetMetadata(Scene* scene, string key, string defaultValue="")
+    {
+        if (null == scene || null == scene->MMetaData)
+        {
+            return defaultValue;
+        }
+
+        Metadata* metadata = scene->MMetaData;
+        for (uint i = 0; i < metadata->MNumProperties; i++)
+        {
+            if (key == metadata->MKeys[i].ToString())
+            {
+                void* p = metadata->MValues[i].MData;
+                switch (metadata->MValues[i].MType)
+                {
+                    case MetadataType.Bool:
+                        return (*(bool*)p).ToString();
+                    
+                    case MetadataType.Int32:
+                        return (*(int*)p).ToString();
+
+                    case MetadataType.Uint64:
+                        return (*(ulong*)p).ToString();
+
+                    case MetadataType.Float:
+                        return (*(float*)p).ToString();
+
+                    case MetadataType.Double:
+                        return (*(double*)p).ToString();
+                    
+                    case MetadataType.Aistring:
+                    case MetadataType.Aivector3D: 
+                    case MetadataType.Aimetadata:
+                        return defaultValue;
+                    
+                    case MetadataType.Int64:
+                        return (*(long*)p).ToString();
+                    case MetadataType.Uint32:
+                        return (*(uint*)p).ToString();
+                }
+            }
+        }
+        return defaultValue;
+    }
+
+    
     unsafe public void Load(string path, out engine.joyce.Model model)
     {
         model = new engine.joyce.Model();
@@ -53,6 +100,10 @@ public class FbxModel : IDisposable
 
         model.RootNode = ProcessNode(pScene->MRootNode, pScene);
         
+        var strUnitscale = GetMetadata(pScene, "UnitScaleFactor", "1.");
+        float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
+        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
+
         // TXWTODO: How to free scene?
     }
     
@@ -92,10 +143,12 @@ public class FbxModel : IDisposable
                 mn.Children.Add(ProcessNode(node->MChildren[i], scene));
             }
         }
+
+        var mToParent = Matrix4x4.Transpose(node->MTransformation);
         
         mn.Transform = new Transform3ToParent(
-            true, 0xffffffff, Matrix4x4.Transpose(node->MTransformation));
-        Trace($"My transform is {mn.Transform.Matrix}");
+            true, 0xffffffff, mToParent);
+        // Trace($"My transform is {mn.Transform.Matrix}");
         
         return mn;
     }
