@@ -63,7 +63,7 @@ public class Module : engine.AModule
     public float MassShip { get; set; } = 500f;
 
     
-    #if true
+    #if false
     //public string ModelUrl { get; set; } = "car6.obj";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.CENTER_X
@@ -72,7 +72,8 @@ public class Module : engine.AModule
                                               | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                                               ;
     #else
-    public string ModelUrl { get; set; } = "U5.glb";
+    //public string ModelUrl { get; set; } = "U5.glb";
+    public string ModelUrl { get; set; } = "U5.fbx";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.CENTER_X
                                               | InstantiateModelParams.CENTER_Z

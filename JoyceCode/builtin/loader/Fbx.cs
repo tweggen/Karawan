@@ -26,8 +26,7 @@ public class Fbx
 
         using (var fbxModel = new fbx.FbxModel())
         {
-            model = new Model(instanceDesc);
-            fbxModel.Load(url);
+            fbxModel.Load(url, out model);
         }
     }
     

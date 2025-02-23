@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using engine;
+using engine.joyce;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
+using Material = Silk.NET.Assimp.Material;
 
 namespace builtin.loader.fbx;
 
@@ -13,8 +16,6 @@ public class FbxModel : IDisposable
     static  private Assimp _assimp;
     private List<Texture> _texturesLoaded = new List<Texture>();
     public string Directory { get; protected set; } = string.Empty;
-    public List<Mesh> Meshes { get; protected set; } = new List<Mesh>();
-
 
     private static void _needAssimp()
     {
@@ -27,12 +28,12 @@ public class FbxModel : IDisposable
     }
     
 
-    unsafe public void Load(string path)
+    unsafe public void Load(string path, out engine.joyce.Model model)
     {
-        
+        model = new engine.joyce.Model();
+
         Directory = path;
         _needAssimp();
-        
 
         FileIO fileIO = fbx.Assets.Get();
         Scene* pScene = null;
@@ -48,26 +49,48 @@ public class FbxModel : IDisposable
             throw new Exception(error);
         }
 
-        ProcessNode(pScene->MRootNode, pScene);
+        model.RootNode = ProcessNode(pScene->MRootNode, pScene);
         
         // TXWTODO: How to free scene?
     }
     
     
-    private unsafe void ProcessNode(Node* node, Scene* scene)
+    private unsafe engine.joyce.ModelNode ProcessNode(Node* node, Scene* scene)
     {
-        
-        for (var i = 0; i < node->MNumMeshes; i++)
-        {
-            var mesh = scene->MMeshes[node->MMeshes[i]];
-            Meshes.Add(ProcessMesh(mesh, scene));
+        engine.joyce.ModelNode mn = new();
 
+        /*
+         * If there are meshes, add them.
+         */
+        if (node->MNumMeshes > 0)
+        {
+            engine.joyce.MatMesh matMesh = new();
+            for (var i = 0; i < node->MNumMeshes; i++)
+            {
+                var pMesh = scene->MMeshes[node->MMeshes[i]];
+                if (pMesh != null)
+                {
+                    var fbxMesh = ProcessMesh(pMesh, scene);
+                    fbxMesh.AddToMatmesh(matMesh);
+                }
+            }
+
+            mn.InstanceDesc = InstanceDesc.CreateFromMatMesh(matMesh, 400f);
         }
 
-        for (var i = 0; i < node->MNumChildren; i++)
+        /*
+         * If there are children, add them.
+         */
+        if (node->MNumChildren > 0)
         {
-            ProcessNode(node->MChildren[i], scene);
+            mn.Children = new List<ModelNode>();
+            for (var i = 0; i < node->MNumChildren; i++)
+            {
+                mn.Children.Add(ProcessNode(node->MChildren[i], scene));
+            }
         }
+
+        return mn;
     }
     
 
@@ -203,11 +226,6 @@ public class FbxModel : IDisposable
 
     public void Dispose()
     {
-        foreach (var mesh in Meshes)
-        {
-            mesh.Dispose();
-        }
-
         _texturesLoaded = null;
     }
 
