@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using engine;
 using engine.joyce;
+using engine.joyce.components;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using Material = Silk.NET.Assimp.Material;
@@ -89,7 +90,10 @@ public class FbxModel : IDisposable
                 mn.Children.Add(ProcessNode(node->MChildren[i], scene));
             }
         }
-
+        
+        mn.Transform = new Transform3ToParent(
+            true, 0xffffffff, node->MTransformation);
+        
         return mn;
     }
     

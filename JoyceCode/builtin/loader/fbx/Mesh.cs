@@ -50,6 +50,7 @@ public class Mesh : IDisposable
                 indices.Add(idx);
             }
             engine.joyce.Mesh jMesh = new("fromFbx", vertices, indices, uvs);
+            jMesh.GenerateCCWNormals();
             matMesh.Add(new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888)}, jMesh);
         }
     }
