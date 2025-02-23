@@ -415,6 +415,7 @@
       { "uri": "../models/menu/shop.xml" },
       { "uri": "../models/nogame.json" },
       { "uri": "../models/models/u/U5.fbx" },
+      { "uri": "../models/models/u/U5.glb" },
       { "uri": "../models/models/people/Spring Boy.fbx" }
     ]
   }

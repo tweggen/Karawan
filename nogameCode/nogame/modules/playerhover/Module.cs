@@ -62,12 +62,25 @@ public class Module : engine.AModule
 
     public float MassShip { get; set; } = 500f;
 
-    public string ModelUrl { get; set; } = "car6.obj";
+    
+    #if true
+    //public string ModelUrl { get; set; } = "car6.obj";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.CENTER_X
                                               | InstantiateModelParams.CENTER_Z
                                               | InstantiateModelParams.ROTATE_Y180
-                                              | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC;
+                                              | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
+                                              ;
+    #else
+    public string ModelUrl { get; set; } = "U5.glb";
+    public int ModelGeomFlags { get; set; } = 0
+                                              | InstantiateModelParams.CENTER_X
+                                              | InstantiateModelParams.CENTER_Z
+                                              // | InstantiateModelParams.ROTATE_Y180
+                                              | InstantiateModelParams.ROTATE_X90
+                                              | InstantiateModelParams.ROTATE_Z180
+                                              ;
+    #endif
 
     private ClusterDesc _currentCluster = null;
 
