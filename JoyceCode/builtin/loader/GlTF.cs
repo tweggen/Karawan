@@ -332,6 +332,17 @@ public class GlTF
         }
         
         /*
+         * Is there a skin for this node? Then read it.
+         */
+        if (gltfNode.Skin != null)
+        {
+            Trace("Reading a skin.");
+            _readSkin(_gltfModel.Skins[gltfNode.Skin.Value], out Skin skin);
+            // TXWTODO: Where should I store the skin?
+            mn.Skin = skin;
+        }
+        
+        /*
          * Finally, recurse to children nodes.
          */
         if (gltfNode.Children != null)

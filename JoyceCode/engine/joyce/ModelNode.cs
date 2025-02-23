@@ -28,6 +28,11 @@ public class ModelNode
     public InstanceDesc? InstanceDesc;
 
     /**
+     * If non-null describes the skin.
+     */
+    public Skin? Skin;
+    
+    /**
      * If non-null, contains a transformation relative to the parent.
      */
     public engine.joyce.components.Transform3ToParent Transform;
