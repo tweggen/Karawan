@@ -441,7 +441,7 @@ public class Main
                 }
                 else
                 {
-                    DefaultEcs.Entity entity = _engine.GetEcsWorld().FindEntity(_currentEntityId);
+                    DefaultEcs.Entity entity = _engine.GetEcsWorldDangerous().FindEntity(_currentEntityId);
                     if (!entity.IsAlive)
                     {
                         ImGui.Text("(entity has ceased)");
@@ -449,7 +449,7 @@ public class Main
                     else
                     {
                         engine.EntityComponentTypeReader reader = new(entity);
-                        _engine.GetEcsWorld().ReadAllComponentTypes(reader);
+                        _engine.GetEcsWorldDangerous().ReadAllComponentTypes(reader);
                         
                         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(2f, 2f));
                         if (ImGui.BeginTable("split", 2, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.Resizable))

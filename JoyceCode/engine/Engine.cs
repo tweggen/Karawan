@@ -310,6 +310,12 @@ public class Engine
     }
 
 
+    public DefaultEcs.World GetEcsWorldDangerous()
+    {
+        return _ecsWorld;
+    }
+
+
     /**
      * Read the ecs world from a non-logical thread. This is valid, if the world is not about to be used.
      */

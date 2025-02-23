@@ -8,6 +8,7 @@ using engine.joyce.components;
 using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using Material = Silk.NET.Assimp.Material;
+using static engine.Logger;
 
 namespace builtin.loader.fbx;
 
@@ -84,6 +85,7 @@ public class FbxModel : IDisposable
          */
         if (node->MNumChildren > 0)
         {
+            Trace($"{node->MNumChildren} chilrren.");
             mn.Children = new List<ModelNode>();
             for (var i = 0; i < node->MNumChildren; i++)
             {
@@ -92,7 +94,8 @@ public class FbxModel : IDisposable
         }
         
         mn.Transform = new Transform3ToParent(
-            true, 0xffffffff, node->MTransformation);
+            true, 0xffffffff, Matrix4x4.Transpose(node->MTransformation));
+        Trace($"My transform is {mn.Transform.Matrix}");
         
         return mn;
     }
