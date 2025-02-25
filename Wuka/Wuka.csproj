@@ -151,6 +151,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AssimpNet.Mobile.Native.Android" Version="5.1.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
 		<PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.22.0" />
@@ -158,7 +159,6 @@
 		<PackageReference Include="Silk.NET.SDL" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.22.0" />
-		<PackageReference Include="Ultz.Native.Assimp" Version="5.4.1" />
 		<PackageReference Include="Ultz.Native.SDL" Version="2.30.8" />
 		<PackageReference Include="Xamarin.Essentials" Version="1.8.1" />
 	</ItemGroup>

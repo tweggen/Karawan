@@ -23,7 +23,7 @@ public class Fbx
             new List<int>(),
             new List<engine.joyce.Material>(),
             400f);
-
+        
         using (var fbxModel = new fbx.FbxModel())
         {
             fbxModel.Load(url, out model);
