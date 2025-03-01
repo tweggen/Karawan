@@ -19,6 +19,7 @@ public class FbxModel : IDisposable
     static  private Assimp _assimp;
     private List<Texture> _texturesLoaded = new List<Texture>();
     public string Directory { get; protected set; } = string.Empty;
+    public Model? _model = null;
 
     private static void _needAssimp()
     {
@@ -79,7 +80,11 @@ public class FbxModel : IDisposable
     
     unsafe public void Load(string path, out engine.joyce.Model model)
     {
-        model = new engine.joyce.Model();
+        if (null != _model)
+        {
+            ErrorThrow<InvalidOperationException>($"Unable to load model {path}. model already loaded.");
+        }
+        _model = model = new engine.joyce.Model();
 
         Directory = path;
         _needAssimp();
@@ -228,23 +233,34 @@ public class FbxModel : IDisposable
             textures.AddRange(heightMaps);
 
         /*
+         * return a mesh object created from the extracted mesh data
+         */
+        var jMesh = new Mesh(BuildVertices(vertices), BuildIndices(indices), textures);
+
+        /*
          * If there is a bone, create it.
          */
         if (mesh->MNumBones > 0 && mesh->MBones != null)
         {
+            var skeleton = _model.FindSkeleton(); 
             for (int i = 0; i < mesh->MNumBones; ++i)
             {
-                engine.joyce.Bone jBone = new();
                 var aiBone = mesh->MBones[i];
+
+                var jBone = skeleton.FindBone(aiBone->MName.ToString());
                 jBone.InverseMatrix = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
                 var nVertices = aiBone->MNumWeights;
+                var boneMesh = jBone.FindBoneMesh(jMesh);
+                for (int j = 0; j < nVertices; ++j)
+                {
+                    boneMesh.SetVertexWeight(aiBone->MWeights[j].MVertexId, aiBone->MWeights[j].MWeight);
+                }
             }
         }
         
-        // return a mesh object created from the extracted mesh data
-        var result = new Mesh(BuildVertices(vertices), BuildIndices(indices), textures);
-        return result;
+        return jMesh;
     }
+    
 
     private unsafe List<Texture> LoadMaterialTextures(Material* mat, TextureType type, string typeName)
     {

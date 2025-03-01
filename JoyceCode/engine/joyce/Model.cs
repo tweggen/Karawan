@@ -30,6 +30,7 @@ public class Skin
 public class Model
 {
     public ModelNode RootNode;
+    public Skeleton? Skeleton = null;
     public string Name;
 
     /**
@@ -61,6 +62,17 @@ public class Model
         Name = other.Name;
     }
 
+
+    public Skeleton FindSkeleton()
+    {
+        if (null == Skeleton)
+        {
+            Skeleton = new();
+        }
+
+        return Skeleton;
+    }
+    
 
     public Model()
     {

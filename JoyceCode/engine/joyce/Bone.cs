@@ -34,25 +34,31 @@ public class Bone
     public Dictionary<Mesh, BoneMesh>? _mapBoneMeshes = null;
 
 
-    public void AddWeight(engine.joyce.Mesh mesh, uint vertexIndex, float weight)
+    public BoneMesh FindBoneMesh(Mesh jMesh)
     {
         BoneMesh boneMesh;
         if (null == _mapBoneMeshes)
         {
             _mapBoneMeshes = new();
-            boneMesh = new(mesh);
-            _mapBoneMeshes.Add(mesh, boneMesh);
+            boneMesh = new(jMesh);
+            _mapBoneMeshes.Add(jMesh, boneMesh);
         }
         else
         {
-            if (!_mapBoneMeshes.TryGetValue(mesh, out boneMesh))
+            if (!_mapBoneMeshes.TryGetValue(jMesh, out boneMesh))
             {
-                boneMesh = new(mesh);
-                _mapBoneMeshes.Add(mesh, boneMesh);
+                boneMesh = new(jMesh);
+                _mapBoneMeshes.Add(jMesh, boneMesh);
             }
         }
-        
-        boneMesh.SetVertexWeight(vertexIndex, weight);
+
+        return boneMesh;
+    }
+    
+
+    public void AddWeight(engine.joyce.Mesh jMesh, uint vertexIndex, float weight)
+    {
+        FindBoneMesh(jMesh).SetVertexWeight(vertexIndex, weight);
     }
 }
 
