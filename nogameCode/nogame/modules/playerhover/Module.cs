@@ -73,7 +73,8 @@ public class Module : engine.AModule
                                               ;
     #else
     //public string ModelUrl { get; set; } = "U5.glb";
-    public string ModelUrl { get; set; } = "U5.fbx";
+    //public string ModelUrl { get; set; } = "U5.fbx";
+    public string ModelUrl { get; set; } =  "Spring Boy.fbx";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.CENTER_X
                                               | InstantiateModelParams.CENTER_Z

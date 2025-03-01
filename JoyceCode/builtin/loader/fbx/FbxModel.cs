@@ -227,6 +227,20 @@ public class FbxModel : IDisposable
         if (heightMaps.Any())
             textures.AddRange(heightMaps);
 
+        /*
+         * If there is a bone, create it.
+         */
+        if (mesh->MNumBones > 0 && mesh->MBones != null)
+        {
+            for (int i = 0; i < mesh->MNumBones; ++i)
+            {
+                engine.joyce.Bone jBone = new();
+                var aiBone = mesh->MBones[i];
+                jBone.InverseMatrix = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
+                var nVertices = aiBone->MNumWeights;
+            }
+        }
+        
         // return a mesh object created from the extracted mesh data
         var result = new Mesh(BuildVertices(vertices), BuildIndices(indices), textures);
         return result;
