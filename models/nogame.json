@@ -343,8 +343,8 @@
       
       "StudioOchi_SpringPeople.001": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
       "StudioOchi_SpringPeople.002": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.002.png" } },
-      "StudioOchi_SpringPeople.003": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
-      "Studio Ochi Vehicles": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } }
+      "StudioOchi_SpringPeople.003": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.003.png" } },
+      "Studio Ochi Vehicles": { "albedo": { "uri":  "../models/models/people/Studio Ochi Vehicles 01.png" } }
     }
   },
   "resources":

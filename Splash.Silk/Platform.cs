@@ -786,12 +786,6 @@ public class Platform : engine.IPlatform
      */
     public void SetupDone()
     {
-        #if true
-        // THis is test code only, remove me later.
-        string[] libs = new[] { "libassimp.so.5" };
-        var ul = new UnmanagedLibrary(libs);        
-        #endif
-        
         _common = new();
         engine.GlobalSettings.Set("view.size", "320x200");
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using engine;
@@ -10,6 +11,7 @@ using Silk.NET.Assimp;
 using AssimpMesh = Silk.NET.Assimp.Mesh;
 using Material = Silk.NET.Assimp.Material;
 using static engine.Logger;
+using static builtin.extensions.Vector4Extensions;
 
 namespace builtin.loader.fbx;
 
@@ -152,7 +154,42 @@ public class FbxModel : IDisposable
         /*if (heightMaps.Any())
             textures.AddRange(heightMaps);*/
 
-        engine.joyce.Material jMaterial = new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888) };
+        // new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888) };
+        engine.joyce.Material jMaterial = new();
+        if (diffuseMaps.Any())
+        {
+            var path = diffuseMaps[0].Path;
+            engine.joyce.Texture? jTexture = null;
+            
+            /*
+             * First try to find the texture in the atlas, with and without extension
+             * ... only then load it without atlas.
+             */
+            if (
+                !I.Get<TextureCatalogue>().TryGetTexture(
+                    Path.GetFileNameWithoutExtension(path), null, out jTexture)
+                && 
+                !I.Get<TextureCatalogue>().TryGetTexture(
+                    path, null, out jTexture)
+                &&
+                !I.Get<TextureCatalogue>().TryGetTexture(
+                    diffuseMaps[0].Path, null, out jTexture))
+            {
+                jTexture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888);
+            }
+
+            jMaterial.Texture = jTexture;
+        }
+
+        if (colorsBuffer != null)
+        {
+            if (colorsBuffer->Element0 != null)
+            {
+                Vector4 c4Albedo = *(colorsBuffer->Element0);
+                jMaterial.AlbedoColor = c4Albedo.ToRGBA32();
+            }
+        }
+
         return jMaterial;
     }
     
@@ -178,6 +215,8 @@ public class FbxModel : IDisposable
                      * Now find the material associated with the mesh
                      */
                     var jMaterial = FindMaterial(pMesh->MMaterialIndex, &pMesh->MColors);
+                    
+                    matMesh.Add(jMaterial, jMesh);
 
                 }
             }
@@ -190,7 +229,7 @@ public class FbxModel : IDisposable
          */
         if (node->MNumChildren > 0)
         {
-            Trace($"{node->MNumChildren} chilrren.");
+            Trace($"{node->MNumChildren} children.");
             mn.Children = new List<ModelNode>();
             for (var i = 0; i < node->MNumChildren; i++)
             {

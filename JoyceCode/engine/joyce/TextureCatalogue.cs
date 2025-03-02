@@ -121,28 +121,20 @@ public class TextureCatalogue
 
         return jTexture;
     }
-    
-    
-    /**
-     * Look up a texture for the given texture tag.
-     */
-    public Texture FindTexture(string tag, Action<Texture>? action = null)
+
+
+    public bool TryGetTexture(string tag, Action<Texture>? action, out Texture jTexture)
     {
         TextureAtlasEntry tae;
         lock (_lo)
         {
             if (!_dictTextures.TryGetValue(tag, out tae))
             {
-                tae = null;
+                jTexture = null;
+                return false;
             }
         }
 
-        if (null == tae)
-        {
-            return new Texture(Texture.BLACK);
-        }
-        
-        Texture jTexture;
         jTexture = new Texture(tae.TextureAtlas.AtlasTag)
         {
             UVOffset = tae.UVOffset,
@@ -156,6 +148,20 @@ public class TextureCatalogue
             action(jTexture);
         }
         
+        return true;
+    }
+    
+    
+    /**
+     * Look up a texture for the given texture tag.
+     */
+    public Texture FindTexture(string tag, Action<Texture>? action = null)
+    {
+        if (!TryGetTexture(tag, action, out var jTexture))
+        {
+            return new Texture(Texture.BLACK);
+        }
+
         return jTexture;
     }
 }

@@ -37,7 +37,6 @@ public class SetupMetaGen
         }
 
         _worldMetaGen.SetupComplete();
-
         _worldLoader = new engine.world.Loader();
         _worldMetaGen.SetLoader(_worldLoader);
         
