@@ -17,6 +17,11 @@ public class ModelNode
     public Model Model;
     
     /**
+     * A possible node name.
+     */
+    public string Name;
+    
+    /**
      * If non-null, contains a list of children of this node.
      */
     public IList<ModelNode>? Children;

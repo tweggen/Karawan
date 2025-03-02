@@ -29,9 +29,11 @@ public class Skin
  */
 public class Model
 {
+    public string Name;
+
     public ModelNode RootNode;
     public Skeleton? Skeleton = null;
-    public string Name;
+    public SortedDictionary<string, ModelAnimation> MapAnimations; 
 
     /**
      * Convenience method to create a model from a single InstanceDesc

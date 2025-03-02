@@ -107,12 +107,23 @@ public class FbxModel : IDisposable
         }
 
         model.RootNode = ProcessNode(_scene->MRootNode);
+
+        _loadAnimations();
         
         var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
         model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
 
         // TXWTODO: How to free scene?
+    }
+
+
+    private unsafe void _loadAnimations()
+    {
+        if (null == _scene->MAnimations)
+        {
+            return;
+        }
     }
 
 
@@ -186,7 +197,12 @@ public class FbxModel : IDisposable
             if (colorsBuffer->Element0 != null)
             {
                 Vector4 c4Albedo = *(colorsBuffer->Element0);
-                jMaterial.AlbedoColor = c4Albedo.ToRGBA32();
+                /*
+                * It would be correct to consider the albedocolor,
+                * however, our lighting model would add the color
+                * rather than multiplying.
+                */
+//                 jMaterial.AlbedoColor = c4Albedo.ToRGBA32();
             }
         }
 
@@ -198,9 +214,11 @@ public class FbxModel : IDisposable
     {
         engine.joyce.ModelNode mn = new();
 
+        mn.Name = node->MName.ToString(); 
+        
         /*
-         * If there are meshes, add them.
-         */
+        * If there are meshes, add them.
+        */
         if (node->MNumMeshes > 0)
         {
             engine.joyce.MatMesh matMesh = new();
