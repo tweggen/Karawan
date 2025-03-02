@@ -47,6 +47,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Bone.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\BYte4.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\ModelDescriptor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\FromModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstantiateModelParams.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimation.cs" />

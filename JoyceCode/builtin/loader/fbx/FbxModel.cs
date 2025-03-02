@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using Android.Text.Format;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -124,6 +125,94 @@ public class FbxModel : IDisposable
         {
             return;
         }
+        uint nAnimations = _scene->MNumAnimations;
+
+        for (int i = 0; i < nAnimations; ++i)
+        {
+            var aiAnim = _scene->MAnimations[i];
+            if (null == aiAnim || 0 == aiAnim->MNumChannels)
+            {
+                continue;
+            }
+
+            uint nChannels = aiAnim->MNumChannels;
+
+            ModelAnimation ma = new()
+            {
+                Name = aiAnim->MName.ToString(),
+                Duration = (float)aiAnim->MDuration,
+                TicksPerSecond = (float)aiAnim->MTicksPerSecond,
+                MapChannels = new(),
+                Channels = new ModelAnimChannel[nChannels]
+            };
+
+            for (int j = 0; j < nChannels; ++j)
+            {
+                var aiChannel = aiAnim->MChannels[j];
+                if (null == aiChannel)
+                {
+                    continue;
+                }
+
+                uint nPositionKeys = aiChannel->MNumPositionKeys;
+                uint nScalingKeys = aiChannel->MNumScalingKeys;
+                uint nRotationKeys = aiChannel->MNumRotationKeys;
+
+                if (0 == nPositionKeys && 0 == nScalingKeys && 0 == nRotationKeys)
+                {
+                    continue;
+                }
+
+                ModelAnimChannel mac = new()
+                {
+                    Positions = (nPositionKeys!=0)?new PositionKey[nPositionKeys]:null,
+                    Scalings = (nScalingKeys!=0)?new ScalingKey[nScalingKeys]:null,
+                    Rotations = (nRotationKeys!=0)?new RotationKey[nRotationKeys]:null
+                };
+
+                for (int l = 0; l < nPositionKeys; ++l)
+                {
+                    mac.Positions[l] = new()
+                    {
+                        Time = (float)aiChannel->MPositionKeys[l].MTime,
+                        Position = aiChannel->MPositionKeys[l].MValue
+                    };
+                }
+                
+                for (int l = 0; l < nScalingKeys; ++l)
+                {
+                    mac.Scalings[l] = new()
+                    {
+                        Time = (float)aiChannel->MScalingKeys[l].MTime,
+                        Scaling = aiChannel->MScalingKeys[l].MValue
+                    };
+                }
+                
+                for (int l = 0; l < nRotationKeys; ++l)
+                {
+                    mac.Rotations[l] = new()
+                    {
+                        Time = (float)aiChannel->MRotationKeys[l].MTime,
+                        Rotation = aiChannel->MRotationKeys[l].MValue
+                    };
+                }
+                
+                string channelNodeName = aiChannel->MNodeName.ToString();
+                if (!_model.MapNodes.ContainsKey(channelNodeName))
+                {
+                    Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
+                    continue;
+                }
+                ModelNode channelNode = _model.MapNodes[channelNodeName];
+
+                if (ma.MapChannels.ContainsKey(channelNode))
+                {
+                    Warning($"Found duplicatre animation channel for {channelNodeName}, ignoring.");
+                    continue;
+                }
+                ma.MapChannels[channelNode] = mac;
+            }
+        }
     }
 
 
@@ -214,7 +303,8 @@ public class FbxModel : IDisposable
     {
         engine.joyce.ModelNode mn = new();
 
-        mn.Name = node->MName.ToString(); 
+        mn.Name = node->MName.ToString();
+        _model!.MapNodes[mn.Name] = mn;
         
         /*
         * If there are meshes, add them.

@@ -33,7 +33,8 @@ public class Model
 
     public ModelNode RootNode;
     public Skeleton? Skeleton = null;
-    public SortedDictionary<string, ModelAnimation> MapAnimations; 
+    public SortedDictionary<string, ModelAnimation> MapAnimations;
+    public SortedDictionary<string, ModelNode> MapNodes = new();
 
     /**
      * Convenience method to create a model from a single InstanceDesc

@@ -11,5 +11,5 @@ public class ModelAnimation
     public float Duration;
     public float TicksPerSecond;
     public SortedDictionary<ModelNode, ModelAnimChannel> MapChannels;
-    public ModelAnimChannel[] Channel;
+    public ModelAnimChannel[] Channels;
 }
