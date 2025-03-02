@@ -19,7 +19,9 @@ public class FbxModel : IDisposable
     static  private Assimp _assimp;
     private List<Texture> _texturesLoaded = new List<Texture>();
     public string Directory { get; protected set; } = string.Empty;
-    public Model? _model = null;
+    private Model? _model = null;
+    private unsafe Scene* _scene = null;
+    
 
     private static void _needAssimp()
     {
@@ -32,14 +34,14 @@ public class FbxModel : IDisposable
     }
 
 
-    private unsafe string GetMetadata(Scene* scene, string key, string defaultValue="")
+    private unsafe string GetMetadata(string key, string defaultValue="")
     {
-        if (null == scene || null == scene->MMetaData)
+        if (null == _scene->MMetaData)
         {
             return defaultValue;
         }
 
-        Metadata* metadata = scene->MMetaData;
+        Metadata* metadata = _scene->MMetaData;
         for (uint i = 0; i < metadata->MNumProperties; i++)
         {
             if (key == metadata->MKeys[i].ToString())
@@ -90,30 +92,72 @@ public class FbxModel : IDisposable
         _needAssimp();
 
         FileIO fileIO = fbx.Assets.Get();
-        Scene* pScene = null;
         FileIO* pFileIO = &fileIO;
-        pScene = _assimp.ImportFileEx(
+        _scene = _assimp.ImportFileEx(
             path,
             (uint)PostProcessSteps.Triangulate,
             pFileIO
         );
-        if (pScene == null || pScene->MFlags == Assimp.SceneFlagsIncomplete || pScene->MRootNode == null)
+        if (_scene == null || _scene->MFlags == Assimp.SceneFlagsIncomplete || _scene->MRootNode == null)
         {
             var error = _assimp.GetErrorStringS();
             throw new Exception(error);
         }
 
-        model.RootNode = ProcessNode(pScene->MRootNode, pScene);
+        model.RootNode = ProcessNode(_scene->MRootNode);
         
-        var strUnitscale = GetMetadata(pScene, "UnitScaleFactor", "1.");
+        var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
         model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
 
         // TXWTODO: How to free scene?
     }
+
+
+    private unsafe engine.joyce.Material FindMaterial(uint materialIndex, AssimpMesh.MColorsBuffer* colorsBuffer)
+    {
+        /*
+         * We create a new material looking it up in our internal cache
+         */
+        if (materialIndex >= _scene->MNumMaterials)
+        {
+            Error($"Material index {materialIndex} is out of range.");
+            return new();
+        }
+        
+        // process materials
+        Material* aiMat = _scene->MMaterials[materialIndex];
+        // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
+        // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
+        // Same applies to other texture as the following list summarizes:
+        // diffuse: texture_diffuseN
+        // specular: texture_specularN
+        // normal: texture_normalN
+
+        // 1. diffuse maps
+        var diffuseMaps = LoadMaterialTextures(aiMat, TextureType.Diffuse, "texture_diffuse");
+        
+        /*if (diffuseMaps.Any())
+            textures.AddRange(diffuseMaps);*/
+        // 2. specular maps
+        var specularMaps = LoadMaterialTextures(aiMat, TextureType.Specular, "texture_specular");
+        /*if (specularMaps.Any())
+            textures.AddRange(specularMaps);*/
+        // 3. normal maps
+        var normalMaps = LoadMaterialTextures(aiMat, TextureType.Height, "texture_normal");
+        /*if (normalMaps.Any())
+            textures.AddRange(normalMaps);*/
+        // 4. height maps
+        var heightMaps = LoadMaterialTextures(aiMat, TextureType.Ambient, "texture_height");
+        /*if (heightMaps.Any())
+            textures.AddRange(heightMaps);*/
+
+        engine.joyce.Material jMaterial = new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888) };
+        return jMaterial;
+    }
     
     
-    private unsafe engine.joyce.ModelNode ProcessNode(Node* node, Scene* scene)
+    private unsafe engine.joyce.ModelNode ProcessNode(Node* node)
     {
         engine.joyce.ModelNode mn = new();
 
@@ -125,11 +169,16 @@ public class FbxModel : IDisposable
             engine.joyce.MatMesh matMesh = new();
             for (var i = 0; i < node->MNumMeshes; i++)
             {
-                var pMesh = scene->MMeshes[node->MMeshes[i]];
+                var pMesh = _scene->MMeshes[node->MMeshes[i]];
                 if (pMesh != null)
                 {
-                    var fbxMesh = ProcessMesh(pMesh, scene);
-                    fbxMesh.AddToMatmesh(matMesh);
+                    var jMesh = ProcessMesh(pMesh);
+                    
+                    /*
+                     * Now find the material associated with the mesh
+                     */
+                    var jMaterial = FindMaterial(pMesh->MMaterialIndex, &pMesh->MColors);
+
                 }
             }
 
@@ -145,7 +194,7 @@ public class FbxModel : IDisposable
             mn.Children = new List<ModelNode>();
             for (var i = 0; i < node->MNumChildren; i++)
             {
-                mn.Children.Add(ProcessNode(node->MChildren[i], scene));
+                mn.Children.Add(ProcessNode(node->MChildren[i]));
             }
         }
 
@@ -158,45 +207,8 @@ public class FbxModel : IDisposable
         return mn;
     }
 
-
-    private unsafe void ProcessMeshBones(AssimpMesh* mesh, Scene* scene)
-    {
-    }
     
-
-    private unsafe Material ProcessMeshMaterial(AssimpMesh* mesh, Scene* scene)
-    {
-        // process materials
-        Material* material = scene->MMaterials[mesh->MMaterialIndex];
-        // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-        // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
-        // Same applies to other texture as the following list summarizes:
-        // diffuse: texture_diffuseN
-        // specular: texture_specularN
-        // normal: texture_normalN
-
-        // 1. diffuse maps
-        var diffuseMaps = LoadMaterialTextures(material, TextureType.Diffuse, "texture_diffuse");
-        if (diffuseMaps.Any())
-            textures.AddRange(diffuseMaps);
-        // 2. specular maps
-        var specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_specular");
-        if (specularMaps.Any())
-            textures.AddRange(specularMaps);
-        // 3. normal maps
-        var normalMaps = LoadMaterialTextures(material, TextureType.Height, "texture_normal");
-        if (normalMaps.Any())
-            textures.AddRange(normalMaps);
-        // 4. height maps
-        var heightMaps = LoadMaterialTextures(material, TextureType.Ambient, "texture_height");
-        if (heightMaps.Any())
-            textures.AddRange(heightMaps);
-        
-        return null:
-    }
-    
-
-    private unsafe engine.joyce.Mesh ProcessMesh(AssimpMesh* mesh, Scene* scene)
+    private unsafe engine.joyce.Mesh ProcessMesh(AssimpMesh* mesh)
     {
         // data to fill
         List<Vertex> vertices = new List<Vertex>();
@@ -282,8 +294,12 @@ public class FbxModel : IDisposable
             
             // TXWTODO: Write this
             
+            /*
+             * Now write the actual weights and bone indices to the actual mesh data structure.
+             */
             uint nBones = UInt32.Min(4, mesh->MNumBones);
             jMesh.BoneIndices = new List<Byte4>((int)nMeshVertices);
+            jMesh.BoneWeights = new List<Vector4>((int)nMeshVertices);
             for (int j = 0; j < nBones; j++)
             {
                 for (int k = 0; k < nMeshVertices; ++k)

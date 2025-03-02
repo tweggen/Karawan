@@ -58,14 +58,14 @@ public class Bone
         if (null == _mapBoneMeshes)
         {
             _mapBoneMeshes = new();
-            boneMesh = new(jMesh);
+            boneMesh = new(this, (uint) jMesh.Vertices.Count);
             _mapBoneMeshes.Add(jMesh, boneMesh);
         }
         else
         {
             if (!_mapBoneMeshes.TryGetValue(jMesh, out boneMesh))
             {
-                boneMesh = new(jMesh);
+                boneMesh = new(this, (uint) jMesh.Vertices.Count);
                 _mapBoneMeshes.Add(jMesh, boneMesh);
             }
         }
