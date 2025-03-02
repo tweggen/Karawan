@@ -125,8 +125,15 @@ public class FbxModel : IDisposable
         {
             return;
         }
+        
         uint nAnimations = _scene->MNumAnimations;
+        if (0 == nAnimations)
+        {
+            return;
+        }
 
+        _model.MapAnimations = new();
+        
         for (int i = 0; i < nAnimations; ++i)
         {
             var aiAnim = _scene->MAnimations[i];
@@ -211,7 +218,10 @@ public class FbxModel : IDisposable
                     continue;
                 }
                 ma.MapChannels[channelNode] = mac;
+                mac.Target = channelNode;
             }
+
+            _model.MapAnimations[ma.Name] = ma;
         }
     }
 
