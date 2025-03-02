@@ -5,13 +5,14 @@ namespace engine.joyce;
 public class Skeleton
 {
     private SortedDictionary<string, Bone> _mapBones = new ();
+    private uint _nextBoneIndex = 0;
     
     public Bone FindBone(string name)
     {
         Bone bone;
         if (!_mapBones.TryGetValue(name, out bone))
         {
-            bone = new();
+            bone = new() { Index = _nextBoneIndex++ };
             _mapBones.Add(name, bone);
         }
 

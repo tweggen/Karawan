@@ -11,10 +11,27 @@ public struct VertexWeight
 public class BoneMesh
 {
     public VertexWeight[] VertexWeights;
+    private float _totalWeight = 0f;
+    public Bone Bone;
 
-    public BoneMesh(engine.joyce.Mesh mesh)
+
+    public float GetAverageWeight()
     {
-        VertexWeights = new VertexWeight[mesh.Vertices.Count];
+        int l = VertexWeights.Length;
+        if (l > 0)
+        {
+            return _totalWeight / l; 
+        }
+        else
+        {
+            return 0f;
+        }
+    }
+    
+    
+    public BoneMesh(engine.joyce.Bone bone, uint nVertices)
+    {
+        VertexWeights = new VertexWeight[nVertices];
     }
 
 
@@ -23,6 +40,7 @@ public class BoneMesh
         if (vertexIndex < VertexWeights.Length)
         {
             VertexWeights[vertexIndex].Weight = weight;
+            _totalWeight += weight;
         }
     }
     
@@ -32,7 +50,7 @@ public class Bone
 {
     public Matrix4x4 InverseMatrix;
     public Dictionary<Mesh, BoneMesh>? _mapBoneMeshes = null;
-
+    public uint Index;
 
     public BoneMesh FindBoneMesh(Mesh jMesh)
     {

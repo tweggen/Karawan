@@ -77,6 +77,16 @@ public class Mesh : IComparable<Mesh>
      */
     public IList<Vector3> Normals;
 
+    /**
+     * Indexable array of bone indices per Vertex.
+     */
+    public IList<Byte4>? BoneIndices;
+
+    /**
+     * Indexable array of bone weightys
+     */
+    public IList<Vector4>? BoneWeights;
+
     public bool UploadImmediately = false;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

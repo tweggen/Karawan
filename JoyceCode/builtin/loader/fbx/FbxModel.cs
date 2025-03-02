@@ -157,17 +157,55 @@ public class FbxModel : IDisposable
         
         return mn;
     }
+
+
+    private unsafe void ProcessMeshBones(AssimpMesh* mesh, Scene* scene)
+    {
+    }
     
 
-    private unsafe Mesh ProcessMesh(AssimpMesh* mesh, Scene* scene)
+    private unsafe Material ProcessMeshMaterial(AssimpMesh* mesh, Scene* scene)
+    {
+        // process materials
+        Material* material = scene->MMaterials[mesh->MMaterialIndex];
+        // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
+        // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
+        // Same applies to other texture as the following list summarizes:
+        // diffuse: texture_diffuseN
+        // specular: texture_specularN
+        // normal: texture_normalN
+
+        // 1. diffuse maps
+        var diffuseMaps = LoadMaterialTextures(material, TextureType.Diffuse, "texture_diffuse");
+        if (diffuseMaps.Any())
+            textures.AddRange(diffuseMaps);
+        // 2. specular maps
+        var specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_specular");
+        if (specularMaps.Any())
+            textures.AddRange(specularMaps);
+        // 3. normal maps
+        var normalMaps = LoadMaterialTextures(material, TextureType.Height, "texture_normal");
+        if (normalMaps.Any())
+            textures.AddRange(normalMaps);
+        // 4. height maps
+        var heightMaps = LoadMaterialTextures(material, TextureType.Ambient, "texture_height");
+        if (heightMaps.Any())
+            textures.AddRange(heightMaps);
+        
+        return null:
+    }
+    
+
+    private unsafe engine.joyce.Mesh ProcessMesh(AssimpMesh* mesh, Scene* scene)
     {
         // data to fill
         List<Vertex> vertices = new List<Vertex>();
         List<uint> indices = new List<uint>();
-        List<Texture> textures = new List<Texture>();
+        
+        uint nMeshVertices = mesh->MNumVertices;
 
         // walk through each of the mesh's vertices
-        for (uint i = 0; i < mesh->MNumVertices; i++)
+        for (uint i = 0; i < nMeshVertices; i++)
         {
             Vertex vertex = new Vertex();
             vertex.BoneIds = new int[Vertex.MAX_BONE_INFLUENCE];
@@ -206,54 +244,56 @@ public class FbxModel : IDisposable
                 indices.Add(face.MIndices[j]);
         }
 
-        // process materials
-        Material* material = scene->MMaterials[mesh->MMaterialIndex];
-        // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-        // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
-        // Same applies to other texture as the following list summarizes:
-        // diffuse: texture_diffuseN
-        // specular: texture_specularN
-        // normal: texture_normalN
-
-        // 1. diffuse maps
-        var diffuseMaps = LoadMaterialTextures(material, TextureType.Diffuse, "texture_diffuse");
-        if (diffuseMaps.Any())
-            textures.AddRange(diffuseMaps);
-        // 2. specular maps
-        var specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_specular");
-        if (specularMaps.Any())
-            textures.AddRange(specularMaps);
-        // 3. normal maps
-        var normalMaps = LoadMaterialTextures(material, TextureType.Height, "texture_normal");
-        if (normalMaps.Any())
-            textures.AddRange(normalMaps);
-        // 4. height maps
-        var heightMaps = LoadMaterialTextures(material, TextureType.Ambient, "texture_height");
-        if (heightMaps.Any())
-            textures.AddRange(heightMaps);
-
+        
         /*
          * return a mesh object created from the extracted mesh data
          */
-        var jMesh = new Mesh(BuildVertices(vertices), BuildIndices(indices), textures);
-
+        var fbxMesh = new Mesh(BuildVertices(vertices), BuildIndices(indices) /* , textures */);
+        var jMesh = fbxMesh.ToJoyceMesh();
+        
+       
         /*
          * If there is a bone, create it.
          */
         if (mesh->MNumBones > 0 && mesh->MBones != null)
         {
+            BoneMesh[] boneMeshes = new BoneMesh [mesh->MNumBones];
             var skeleton = _model.FindSkeleton(); 
+            
             for (int i = 0; i < mesh->MNumBones; ++i)
             {
                 var aiBone = mesh->MBones[i];
 
                 var jBone = skeleton.FindBone(aiBone->MName.ToString());
                 jBone.InverseMatrix = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
-                var nVertices = aiBone->MNumWeights;
-                var boneMesh = jBone.FindBoneMesh(jMesh);
-                for (int j = 0; j < nVertices; ++j)
+                var nBoneVertices = aiBone->MNumWeights;
+                boneMeshes[i] = new BoneMesh(jBone, nBoneVertices);
+            
+                for (int j = 0; j < nBoneVertices; ++j)
                 {
-                    boneMesh.SetVertexWeight(aiBone->MWeights[j].MVertexId, aiBone->MWeights[j].MWeight);
+                    boneMeshes[i].SetVertexWeight(aiBone->MWeights[j].MVertexId, aiBone->MWeights[j].MWeight);
+                }
+            }
+            
+            /*
+             * Now, if this is more than the maximum of bones per mesh,
+             * take only the four most important.
+             */
+            
+            // TXWTODO: Write this
+            
+            uint nBones = UInt32.Min(4, mesh->MNumBones);
+            jMesh.BoneIndices = new List<Byte4>((int)nMeshVertices);
+            for (int j = 0; j < nBones; j++)
+            {
+                for (int k = 0; k < nMeshVertices; ++k)
+                {
+                    var b4 = jMesh.BoneIndices[k];
+                    b4[j] = (byte)boneMeshes[j].Bone.Index;
+                    jMesh.BoneIndices[k] = b4;
+                    var w4 = jMesh.BoneWeights[k];
+                    w4[j] = boneMeshes[j].VertexWeights[k].Weight;
+                    jMesh.BoneWeights[k] = w4;
                 }
             }
         }
@@ -309,11 +349,13 @@ public class FbxModel : IDisposable
         return vertices.ToArray();
     }
 
+    
     private uint[] BuildIndices(List<uint> indices)
     {
         return indices.ToArray();
     }
 
+    
     public void Dispose()
     {
         _texturesLoaded = null;
