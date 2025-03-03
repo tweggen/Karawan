@@ -301,7 +301,7 @@ public class FbxModel : IDisposable
     
     private unsafe engine.joyce.ModelNode ProcessNode(Node* node)
     {
-        engine.joyce.ModelNode mn = new();
+        engine.joyce.ModelNode mn = _model.CreateNode();
 
         mn.Name = node->MName.ToString();
         _model!.MapNodes[mn.Name] = mn;
