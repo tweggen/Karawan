@@ -476,8 +476,7 @@ public class Fragment : IDisposable
      */
     public void EnsureVisibility(FragmentVisibility visib)
     {
-        byte visibChanges;
-        byte visibNow;
+        byte visibToLoad;
 
         lock (_lo)
         {
@@ -486,11 +485,12 @@ public class Fragment : IDisposable
                 return;
             }
 
-            visibChanges = (byte)(visib.How ^ Visibility.How);
-            visibNow = visib.How;
+            /*
+             * We shall load what was not visible before but shall be right now.
+             */
+            visibToLoad = (byte)(visib.How & ~Visibility.How);
         }
 
-        byte visibToLoad = (byte)(visibChanges & visibNow);
         if ((visibToLoad & (FragmentVisibility.Visible3dNow|FragmentVisibility.Visible2dNow)) != 0)
         {
             I.Get<engine.world.MetaGen>().ApplyFragmentOperators(this, visib);

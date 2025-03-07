@@ -7,6 +7,7 @@ namespace engine.joyce;
  */
 public class ModelAnimation
 {
+    public int Index;
     public string Name;
     public float Duration;
     public float TicksPerSecond;

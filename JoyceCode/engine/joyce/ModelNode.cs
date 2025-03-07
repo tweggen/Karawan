@@ -20,6 +20,11 @@ public class ModelNode
      * A possible node name.
      */
     public string Name;
+
+    /**
+     * A node index unique within the parent model.
+     */
+    public int Index;
     
     /**
      * If non-null, contains a list of children of this node.

@@ -32,6 +32,8 @@ public class Model
     public string Name;
 
     public ModelNode RootNode;
+    private int _nextNodeIndex = 1;
+    private int _nextAnimIndex = 1;
     public Skeleton? Skeleton = null;
     public SortedDictionary<string, ModelAnimation> MapAnimations;
     public SortedDictionary<string, ModelNode> MapNodes = new();
@@ -48,6 +50,25 @@ public class Model
             Transform = new(true, 0xffff, Matrix4x4.Identity)
         };
         RootNode = mnRoot;
+    }
+
+
+    public ModelNode CreateNode()
+    {
+        return new()
+        {
+            Model = this,
+            Index = _nextNodeIndex++
+        };
+    }
+
+
+    public ModelAnimation CreateAnimation()
+    {
+        return new ModelAnimation()
+        {
+            Index = _nextAnimIndex++
+        };
     }
 
 
