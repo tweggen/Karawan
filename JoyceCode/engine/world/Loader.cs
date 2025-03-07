@@ -384,6 +384,7 @@ namespace engine.world
                     byte newHow = (byte) (visib.How | oldVisib.How);
                     if (newHow > oldVisib.How)
                     {
+                        setVisib.Remove(oldVisib);
                         oldVisib.How = newHow;
                         setVisib.Add(oldVisib);
                     }
