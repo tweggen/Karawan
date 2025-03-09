@@ -72,6 +72,67 @@ public class Model
         };
     }
 
+
+    /**
+     * Bake all animations for the given node.
+     */
+    private void _bakeRecursive(ModelNode me, Matrix4x4 m4ParentTransform)
+    {
+        /*
+         * we have the absolute matrix of the parent
+         */
+        Matrix4x4 m4MyTransform = m4ParentTransform * me.Transform.Matrix;
+        
+        /*
+         * Do we have a bone with animation data associated?
+         */
+        foreach (var kvpMa in MapAnimations)
+        {
+            ModelAnimation ma = kvpMa.Value;
+
+            ModelAnimChannel? mac; 
+            if (ma.MapChannels.TryGetValue(me, out mac))
+            {
+                /*
+                 * We do have an animation channel for this node.
+                 * So consider the animation below.
+                 */
+            }
+            else
+            {
+                mac = null;
+            }
+            
+            
+            /*
+             * Now we have room 
+             */
+            if (null != mac)
+            {
+                /*
+                 * Apply the animation to this frame
+                 */
+            }
+            else
+            {
+                /*
+                 * Store a constant value for this node for all frames.
+                 */
+            }
+
+            if (me.Children != null)
+            {
+                /*
+                 * Now call ourselves recursively for each of our children
+                 * recursively
+                 */
+                foreach (var child in me.Children)
+                {
+                    _bakeRecursive(child, m4MyTransform);
+                }
+            }
+        }
+    }
     
 
     /**
@@ -86,6 +147,10 @@ public class Model
 
         var skeleton = FindSkeleton();
 
+        /*
+         * First, for all animations, create the arrays of matrices for
+         * each bone per frame.,
+         */
         foreach (var kvp in MapAnimations)
         {
             ModelAnimation ma = kvp.Value;
@@ -108,12 +173,15 @@ public class Model
                  * Now we have the space to compute the position of each and every bone.
                  */
                 var nBones = skeleton.NBones;
-                for (uint boneno = 0; boneno < nBones; ++boneno)
-                {
-                    // TXWTODO: This cries maximal inefficiency
-                }
             }
         }
+        
+        // TXWTODO: Check the matrix
+        /*
+         * We hvae the containers, fill them with data for all nodes, applying animations
+         * along the way.
+         */
+        _bakeRecursive(RootNode, Matrix4x4.Identity);
     }
     
 
