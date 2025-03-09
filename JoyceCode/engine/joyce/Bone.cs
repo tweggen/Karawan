@@ -61,6 +61,7 @@ public class BoneMesh
 
 public class Bone
 {
+    public string Name;
     public Matrix4x4 InverseMatrix;
     public Dictionary<Mesh, BoneMesh>? _mapBoneMeshes = null;
     public uint Index;

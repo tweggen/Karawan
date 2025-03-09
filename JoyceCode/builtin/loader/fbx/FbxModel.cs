@@ -125,6 +125,7 @@ public class FbxModel : IDisposable
         {
             return;
         }
+        var skeleton = _model.FindSkeleton(); 
         
         uint nAnimations = _scene->MNumAnimations;
         if (0 == nAnimations)
@@ -159,6 +160,11 @@ public class FbxModel : IDisposable
                 {
                     continue;
                 }
+                
+                /*
+                 * Check, if we already have a bone data structure for this bone
+                 */
+                var bone = skeleton.FindBone(aiChannel->MNodeName.ToString());
 
                 uint nPositionKeys = aiChannel->MNumPositionKeys;
                 uint nScalingKeys = aiChannel->MNumScalingKeys;

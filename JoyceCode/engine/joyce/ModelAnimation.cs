@@ -3,9 +3,17 @@ using System.Numerics;
 
 namespace engine.joyce;
 
+
+/*
+ * A model baked frame contains matrices for the
+ * transformations of all bones in an animation frame.
+ */
 public class ModelBakedFrame
 {
-    public Matrix4x4[] BonePositions;
+    /**
+     * Array of actual transformations. This contains model->NBones members
+     */
+    public Matrix4x4[] BoneTransformations;
 }
 
 /**

@@ -84,6 +84,8 @@ public class Model
             return;
         }
 
+        var skeleton = FindSkeleton();
+
         foreach (var kvp in MapAnimations)
         {
             ModelAnimation ma = kvp.Value;
@@ -99,12 +101,17 @@ public class Model
             {
                 ModelBakedFrame bakedFrame = new()
                 {
-                    BonePositions = new Matrix4x4[Skeleton.NBones]
+                    BoneTransformations = new Matrix4x4[Skeleton.NBones]
                 };
                 
                 /*
                  * Now we have the space to compute the position of each and every bone.
                  */
+                var nBones = skeleton.NBones;
+                for (uint boneno = 0; boneno < nBones; ++boneno)
+                {
+                    // TXWTODO: This cries maximal inefficiency
+                }
             }
         }
     }
