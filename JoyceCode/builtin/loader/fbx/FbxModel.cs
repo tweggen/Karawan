@@ -13,6 +13,7 @@ using AssimpMesh = Silk.NET.Assimp.Mesh;
 using Material = Silk.NET.Assimp.Material;
 using static engine.Logger;
 using static builtin.extensions.Vector4Extensions;
+using VertexWeight = engine.joyce.VertexWeight;
 
 namespace builtin.loader.fbx;
 
@@ -214,7 +215,7 @@ public class FbxModel : IDisposable
 
                 if (ma.MapChannels.ContainsKey(channelNode))
                 {
-                    Warning($"Found duplicatre animation channel for {channelNodeName}, ignoring.");
+                    Warning($"Found duplicate animation channel for {channelNodeName}, ignoring.");
                     continue;
                 }
                 ma.MapChannels[channelNode] = mac;
@@ -426,6 +427,11 @@ public class FbxModel : IDisposable
          */
         if (mesh->MNumBones > 0 && mesh->MBones != null)
         {
+            /*
+             * For this mesh, there a bones given that influence the mesh.
+             * So collect the information about each individual bone.
+             * This gathers the vertex and weight infos of each of the bones.
+             */
             BoneMesh[] boneMeshes = new BoneMesh [mesh->MNumBones];
             var skeleton = _model.FindSkeleton(); 
             
@@ -448,24 +454,39 @@ public class FbxModel : IDisposable
              * Now, if this is more than the maximum of bones per mesh,
              * take only the four most important.
              */
+            uint nBones = UInt32.Min(4, mesh->MNumBones);
             
             // TXWTODO: Write this
             
             /*
-             * Now write the actual weights and bone indices to the actual mesh data structure.
+             * Now read the first nBones bones back into the influence lists for each of the
+             * vertices.
              */
-            uint nBones = UInt32.Min(4, mesh->MNumBones);
-            jMesh.BoneIndices = new List<Byte4>((int)nMeshVertices);
-            jMesh.BoneWeights = new List<Vector4>((int)nMeshVertices);
+            jMesh.BoneIndices = new List<Byte4>(new Byte4[nMeshVertices]);
+            jMesh.BoneWeights = new List<Vector4>(new Vector4[nMeshVertices]);
             for (int j = 0; j < nBones; j++)
             {
-                for (int k = 0; k < nMeshVertices; ++k)
+                var boneMesh = boneMeshes[j];
+                
+                uint boneIndex = boneMesh.Bone.Index;
+                int nBoneVertices = (boneMesh.VertexWeights != null)?(boneMesh.VertexWeights.Length):0;
+                
+                for (int k = 0; k < nBoneVertices; ++k)
                 {
-                    var b4 = jMesh.BoneIndices[k];
-                    b4[j] = (byte)boneMeshes[j].Bone.Index;
+                    Byte4 b4;
+                    Vector4 w4;
+
+                    ref VertexWeight vw = ref boneMesh.VertexWeights[k];
+                    int vertexIndex = (int) vw.VertexIndex;
+                    float weight = vw.Weight;
+                    
+                    b4 = jMesh.BoneIndices[vertexIndex];
+                    w4 = jMesh.BoneWeights[vertexIndex];
+                    
+                    b4[j] = (byte)boneIndex;
+                    w4[j] = weight;
+
                     jMesh.BoneIndices[k] = b4;
-                    var w4 = jMesh.BoneWeights[k];
-                    w4[j] = boneMeshes[j].VertexWeights[k].Weight;
                     jMesh.BoneWeights[k] = w4;
                 }
             }

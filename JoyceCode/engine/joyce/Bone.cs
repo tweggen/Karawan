@@ -6,11 +6,23 @@ namespace engine.joyce;
 public struct VertexWeight
 {
     public float Weight;
+    public uint VertexIndex;
 }
 
+/**
+ * Carry the weight and vertex data of a given bone for a single mesh.
+ * A bone may very well influence other meshes as well.
+ * Also other bones may influence this mesh as well.
+ *
+ * However, we allow a maximum of 4 bones to influence a given mesh.
+ *
+ * While loading meshes, we build up this data structure to gather
+ * the weight information per mesh.
+ */
 public class BoneMesh
 {
     public VertexWeight[] VertexWeights;
+    private int _nextVertexWeight = 0;
     private float _totalWeight = 0f;
     public Bone Bone;
 
@@ -32,16 +44,17 @@ public class BoneMesh
     public BoneMesh(engine.joyce.Bone bone, uint nVertices)
     {
         VertexWeights = new VertexWeight[nVertices];
+        Bone = bone;
     }
 
 
     public void SetVertexWeight(uint vertexIndex, float weight)
     {
-        if (vertexIndex < VertexWeights.Length)
+        if (_nextVertexWeight == VertexWeights.Length)
         {
-            VertexWeights[vertexIndex].Weight = weight;
-            _totalWeight += weight;
+            return;
         }
+        VertexWeights[_nextVertexWeight++] = new VertexWeight() { Weight = weight, VertexIndex = vertexIndex };
     }
     
 }
