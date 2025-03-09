@@ -118,8 +118,7 @@ public class FbxModel : IDisposable
 
         // TXWTODO: How to free scene?
     }
-
-
+    
     private unsafe void _loadAnimations()
     {
         if (null == _scene->MAnimations)
@@ -145,14 +144,13 @@ public class FbxModel : IDisposable
 
             uint nChannels = aiAnim->MNumChannels;
 
-            ModelAnimation ma = new()
-            {
-                Name = aiAnim->MName.ToString(),
-                Duration = (float)aiAnim->MDuration,
-                TicksPerSecond = (float)aiAnim->MTicksPerSecond,
-                MapChannels = new(),
-                Channels = new ModelAnimChannel[nChannels]
-            };
+            ModelAnimation ma = _model.CreateAnimation();
+            ma.Name = aiAnim->MName.ToString();
+            ma.Duration = (float)aiAnim->MDuration;
+            ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
+            ma.NTicks = (aiAnim->MTicksPerSecond < 0.015f) ? 1 : (uint)(aiAnim->MDuration / aiAnim->MTicksPerSecond);
+            ma.MapChannels = new();
+            ma.Channels = new ModelAnimChannel[nChannels];
 
             for (int j = 0; j < nChannels; ++j)
             {

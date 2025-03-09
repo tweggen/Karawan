@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -71,6 +72,43 @@ public class Model
         };
     }
 
+    
+
+    /**
+     * Compute frame accurate interpolations for all bones for all animations.
+     */
+    public void BakeAnimations()
+    {
+        if (null == MapAnimations || null == Skeleton)
+        {
+            return;
+        }
+
+        foreach (var kvp in MapAnimations)
+        {
+            ModelAnimation ma = kvp.Value;
+            
+            /*
+             * How many real frames does this animation have?
+             */
+            float duration = ma.Duration;
+            uint nFrames = UInt32.Min((uint)(duration / 60f), 1);
+            ma.NFrames = nFrames;
+            ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
+            for (int frameno = 0; frameno < nFrames; ++frameno)
+            {
+                ModelBakedFrame bakedFrame = new()
+                {
+                    BonePositions = new Matrix4x4[Skeleton.NBones]
+                };
+                
+                /*
+                 * Now we have the space to compute the position of each and every bone.
+                 */
+            }
+        }
+    }
+    
 
     /**
      * Fill my model structure and my root instance desc with the

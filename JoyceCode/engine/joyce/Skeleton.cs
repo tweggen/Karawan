@@ -7,6 +7,11 @@ public class Skeleton
     private SortedDictionary<string, Bone> _mapBones = new ();
     private uint _nextBoneIndex = 0;
     
+    public uint NBones
+    {
+        get => _nextBoneIndex;
+    }
+    
     public Bone FindBone(string name)
     {
         Bone bone;
