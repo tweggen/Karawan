@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using Android.Text.Format;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -115,9 +114,11 @@ public class FbxModel : IDisposable
         var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
         model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
-
+        
+        model.BakeAnimations();
         // TXWTODO: How to free scene?
     }
+    
     
     private unsafe void _loadAnimations()
     {
