@@ -110,14 +110,14 @@ public class Model
             if (null != mac)
             {
                 /*
-                 * Apply the animation to this frame
-                 */
+                * Apply the animation to this frame
+                */
             }
             else
             {
                 /*
-                 * Store a constant value for this node for all frames.
-                 */
+                * Store a constant value for this node for all frames.
+                */
             }
 
             if (me.Children != null)

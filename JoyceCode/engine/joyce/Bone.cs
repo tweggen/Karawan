@@ -61,7 +61,15 @@ public class BoneMesh
 
 public class Bone
 {
+    /**
+     * The name of the bone. This corresponds with the name of the node it shall transform.
+     */
     public string Name;
+    
+    /**
+     * This matrix transforms from model space to bone space.
+     * As such, it shall be the first part of any bone transformation.
+     */
     public Matrix4x4 InverseMatrix;
     public Dictionary<Mesh, BoneMesh>? _mapBoneMeshes = null;
     public uint Index;
