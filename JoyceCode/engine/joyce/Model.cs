@@ -76,64 +76,70 @@ public class Model
     /**
      * Bake all animations for the given node.
      */
-    private void _bakeRecursive(ModelNode me, Matrix4x4 m4ParentTransform)
+    private void _bakeRecursive(ModelNode me, Matrix4x4 m4ParentTransform, ModelAnimation ma, uint frameno)
     {
+        var skeleton = Skeleton!;
+        
         /*
          * we have the absolute matrix of the parent
          */
         Matrix4x4 m4MyTransform = m4ParentTransform * me.Transform.Matrix;
         
         /*
-         * Do we have a bone with animation data associated?
+         * Find the appropriate bone.  
          */
-        foreach (var kvpMa in MapAnimations)
+        Bone? bone = null;
+        uint boneIndex = 0; 
+        Matrix4x4 m4Model2Bone;
+        if (skeleton.MapBones.TryGetValue(me.Name, out bone))
         {
-            ModelAnimation ma = kvpMa.Value;
+            m4Model2Bone = bone.Model2Bone;
+            boneIndex = bone.Index;
+        }
+        else
+        {
+            m4Model2Bone = Matrix4x4.Identity;
+        }
+        
+        Matrix4x4 m4Frame = m4Model2Bone * m4MyTransform;
 
-            ModelAnimChannel? mac; 
-            if (ma.MapChannels.TryGetValue(me, out mac))
-            {
-                /*
-                 * We do have an animation channel for this node.
-                 * So consider the animation below.
-                 */
-            }
-            else
-            {
-                mac = null;
-            }
-            
-            
+        if (ma.MapChannels.TryGetValue(me, out var mac))
+        {
             /*
-             * Now we have room 
+             * We do have an animation channel for this node.
+             * So consider the animation below.
+             *
+             * Apply it to the matrix.
              */
-            if (null != mac)
-            {
-                /*
-                * Apply the animation to this frame
-                */
-            }
-            else
-            {
-                /*
-                * Store a constant value for this node for all frames.
-                */
-            }
+            Vector3 v3LerpPosition = mac.LerpPosition(frameno);
+            Quaternion q4SlerpRotation = max.SlerpRotation(frameno);
+            Vector v3LerpScaling = mac.LerpScaling(frameno);
+        }
+        
+        
+        /*
+         * Store resulting matrix if we have a bone that carries it.
+         * Otherwise, just pass it on to the children.
+         */
+        if (bone != null)
+        {
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Frame;
+        }
 
-            if (me.Children != null)
+
+        if (me.Children != null)
+        {
+            /*
+             * Now call ourselves recursively for each of our children
+             * recursively
+             */
+            foreach (var child in me.Children)
             {
-                /*
-                 * Now call ourselves recursively for each of our children
-                 * recursively
-                 */
-                foreach (var child in me.Children)
-                {
-                    _bakeRecursive(child, m4MyTransform);
-                }
+                _bakeRecursive(child, m4MyTransform, ma, frameno);
             }
         }
     }
-    
+
 
     /**
      * Compute frame accurate interpolations for all bones for all animations.
@@ -154,7 +160,7 @@ public class Model
         foreach (var kvp in MapAnimations)
         {
             ModelAnimation ma = kvp.Value;
-            
+
             /*
              * How many real frames does this animation have?
              */
@@ -168,22 +174,24 @@ public class Model
                 {
                     BoneTransformations = new Matrix4x4[Skeleton.NBones]
                 };
-                
+
                 /*
                  * Now we have the space to compute the position of each and every bone.
                  */
                 var nBones = skeleton.NBones;
             }
+
+            /*
+             * Now for this animation, for every frame, recurse throught the bones.
+             */
+            for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
+            {
+                _bakeRecursive(RootNode, Matrix4x4.Identity, ma, frameno);
+
+            }
         }
-        
-        // TXWTODO: Check the matrix
-        /*
-         * We hvae the containers, fill them with data for all nodes, applying animations
-         * along the way.
-         */
-        _bakeRecursive(RootNode, Matrix4x4.Identity);
     }
-    
+
 
     /**
      * Fill my model structure and my root instance desc with the

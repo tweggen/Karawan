@@ -445,7 +445,7 @@ public class FbxModel : IDisposable
                 var aiBone = mesh->MBones[i];
 
                 var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                jBone.InverseMatrix = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
+                jBone.Model2Bone = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
                 var nBoneVertices = aiBone->MNumWeights;
                 boneMeshes[i] = new BoneMesh(jBone, nBoneVertices);
             

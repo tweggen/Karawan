@@ -70,7 +70,7 @@ public class Bone
      * This matrix transforms from model space to bone space.
      * As such, it shall be the first part of any bone transformation.
      */
-    public Matrix4x4 InverseMatrix;
+    public Matrix4x4 Model2Bone;
     public Dictionary<Mesh, BoneMesh>? _mapBoneMeshes = null;
     public uint Index;
 
