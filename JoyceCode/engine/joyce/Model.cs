@@ -113,7 +113,7 @@ public class Model
              */
             Vector3 v3LerpPosition = mac.LerpPosition(frameno);
             Quaternion q4SlerpRotation = max.SlerpRotation(frameno);
-            Vector v3LerpScaling = mac.LerpScaling(frameno);
+            Vector3 v3LerpScaling = mac.LerpScaling(frameno);
         }
         
         
