@@ -198,7 +198,7 @@ public class FbxModel : IDisposable
 
                 for (int l = 0; l < nPositionKeys; ++l)
                 {
-                    mac.Positions[l] = new()
+                    mac.Positions![l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime,
                         Value = aiChannel->MPositionKeys[l].MValue
@@ -207,7 +207,7 @@ public class FbxModel : IDisposable
                 
                 for (int l = 0; l < nScalingKeys; ++l)
                 {
-                    mac.Scalings[l] = new()
+                    mac.Scalings![l] = new()
                     {
                         Time = (float)aiChannel->MScalingKeys[l].MTime,
                         Value = aiChannel->MScalingKeys[l].MValue
@@ -216,7 +216,7 @@ public class FbxModel : IDisposable
                 
                 for (int l = 0; l < nRotationKeys; ++l)
                 {
-                    mac.Rotations[l] = new()
+                    mac.Rotations![l] = new()
                     {
                         Time = (float)aiChannel->MRotationKeys[l].MTime,
                         Value = aiChannel->MRotationKeys[l].MValue

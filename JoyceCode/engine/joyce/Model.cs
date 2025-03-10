@@ -81,11 +81,6 @@ public class Model
         var skeleton = Skeleton!;
         
         /*
-         * we have the absolute matrix of the parent
-         */
-        Matrix4x4 m4MyTransform = m4ParentTransform * me.Transform.Matrix;
-        
-        /*
          * Find the appropriate bone.  
          */
         Bone? bone = null;
@@ -101,8 +96,7 @@ public class Model
             m4Model2Bone = Matrix4x4.Identity;
         }
         
-        Matrix4x4 m4Frame = m4Model2Bone * m4MyTransform;
-
+        Matrix4x4 m4Anim;
         if (ma.MapChannels.TryGetValue(me, out var mac))
         {
             /*
@@ -111,11 +105,26 @@ public class Model
              *
              * Apply it to the matrix.
              */
-            Vector3 v3LerpPosition = mac.LerpPosition(frameno);
-            Quaternion q4SlerpRotation = mac.SlerpRotation(frameno);
-            Vector3 v3LerpScaling = mac.LerpScaling(frameno);
+            var kfPosition = mac.LerpPosition(frameno);
+            var kfRotation = mac.SlerpRotation(frameno);
+            var kfScaling = mac.LerpScaling(frameno); 
+            mac.Positions[frameno] = kfPosition;
+            mac.Rotations[frameno] = kfRotation;
+            mac.Scalings[frameno] = kfScaling;
+            m4Anim =
+                Matrix4x4.CreateFromQuaternion(kfRotation.Value)
+                * Matrix4x4.CreateScale(kfScaling.Value)
+                * Matrix4x4.CreateTranslation(kfPosition.Value);
+        }
+        else
+        {
+            m4Anim = Matrix4x4.Identity;
         }
         
+        /*
+         * This is the complete transformation of this node,
+         */
+        Matrix4x4 m4MyTransform = m4ParentTransform * me.Transform.Matrix * m4Anim;
         
         /*
          * Store resulting matrix if we have a bone that carries it.
@@ -123,7 +132,7 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Frame;
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Model2Bone * m4MyTransform;
         }
 
 
