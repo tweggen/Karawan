@@ -31,4 +31,20 @@ public class ModelAnimation
     public ModelAnimChannel[] Channels;
 
     public ModelBakedFrame[] BakedFrames;
+
+    public ModelAnimChannel CreateChannel(ModelNode modelNode,
+        KeyFrame<Vector3>[]? positions,
+        KeyFrame<Quaternion>[]? rotations,
+        KeyFrame<Vector3>[]? scalings
+        )
+    {
+        return new ModelAnimChannel()
+        {
+            ModelAnimation = this,
+            Target = modelNode,
+            Positions = positions,
+            Rotations = rotations,
+            Scalings = scalings
+        };
+    }
 }

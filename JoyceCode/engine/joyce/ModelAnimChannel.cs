@@ -5,48 +5,15 @@ using System.Numerics;
 namespace engine.joyce;
 
 
-public struct PositionKey
-{
-    public float Time; 
-    public Vector3 Position;
-}
-
-
-public struct ScalingKey
-{
-    public float Time; 
-    public Vector3 Scaling;
-}
-
-
-public struct RotationKey
+public struct KeyFrame<T>
 {
     public float Time;
-    public Quaternion Rotation;
+    public T Value;
 }
 
-
-public class PositionKeyTimeComparer : IComparer<PositionKey>
+public class KeyFrameTimeComparer<T> : IComparer<KeyFrame<T>>
 {
-    public int Compare(PositionKey x, PositionKey y)
-    {
-        return x.Time.CompareTo(y.Time);
-    }
-}
-
-
-public class ScalingKeyTimeComparer : IComparer<ScalingKey>
-{
-    public int Compare(ScalingKey x, ScalingKey y)
-    {
-        return x.Time.CompareTo(y.Time);
-    }
-}
-
-
-public class RotationKeyTimeComparer : IComparer<RotationKey>
-{
-    public int Compare(RotationKey x, RotationKey y)
+    public int Compare(KeyFrame<T> x, KeyFrame<T> y)
     {
         return x.Time.CompareTo(y.Time);
     }
@@ -55,33 +22,67 @@ public class RotationKeyTimeComparer : IComparer<RotationKey>
 
 public class ModelAnimChannel
 {
-    public ModelNode Target;
-    public PositionKey[]? Positions;
-    public ScalingKey[]? Scalings;
-    public RotationKey[]? Rotations;
-    
-    
-    public Vector3 LerpPosition(uint frameno)
-    {
-        float frametime = 0f;
-        PositionKey key = new PositionKey() { Time = frametime };
+    public required ModelAnimation ModelAnimation;
+    public required ModelNode Target;
+    public KeyFrame<Vector3>[]? Positions;
+    public KeyFrame<Quaternion>[]? Rotations;
+    public KeyFrame<Vector3>[]? Scalings;
 
-        var idx = Array.BinarySearch<PositionKey>(
-            Positions!, key, new PositionKeyTimeComparer());
-        
-        return Vector3.Zero;
+
+    private Vector3 _lerpVector3(ref KeyFrame<Vector3>[] keyframes, uint frameno)
+    {
+        float frametime = Single.Max(frameno / 60f, ModelAnimation.Duration);
+        var key = new KeyFrame<Vector3>() { Time = frametime };
+
+        var idx = Array.BinarySearch<KeyFrame<Vector3>>(keyframes, key, new KeyFrameTimeComparer<Vector3>());
+        if (idx <= 0)
+        {
+            return keyframes[0].Value;
+        }
+        else if (idx == keyframes.Length)
+        {
+            return keyframes[idx - 1].Value;
+        }
+        else
+        {
+            ref KeyFrame<Vector3> prevKey = ref keyframes[idx - 1];
+            ref KeyFrame<Vector3> nextKey = ref keyframes[idx];
+            float t = (frametime - prevKey.Time) / (nextKey.Time - prevKey.Time);
+            return Vector3.Lerp(prevKey.Value, nextKey.Value, t);
+        }
     }
 
-    
-    public Quaternion SlerpRotation(uint frameno)
+
+    private Quaternion _slerpQuaternion(ref KeyFrame<Quaternion>[] keyframes, uint frameno)
     {
-        return Quaternion.Identity;
+        float frametime = Single.Max(frameno / 60f, ModelAnimation.Duration);
+        var key = new KeyFrame<Quaternion>() { Time = frametime };
+
+        var idx = Array.BinarySearch<KeyFrame<Quaternion>>(keyframes, key, new KeyFrameTimeComparer<Quaternion>());
+        if (idx <= 0)
+        {
+            return keyframes[0].Value;
+        }
+        else if (idx == keyframes.Length)
+        {
+            return keyframes[idx - 1].Value;
+        }
+        else
+        {
+            ref KeyFrame<Quaternion> prevKey = ref keyframes[idx - 1];
+            ref KeyFrame<Quaternion> nextKey = ref keyframes[idx];
+            float t = (frametime - prevKey.Time) / (nextKey.Time - prevKey.Time);
+            return Quaternion.Slerp(prevKey.Value, nextKey.Value, t);
+        }
     }
 
+
+    public Vector3 LerpPosition(uint frameno) => _lerpVector3(ref Positions, frameno);
+
     
-    public Vector3 LerpScaling(uint frameno)
-    {
-        return Vector3.One;
-    }
-    
+    public Quaternion SlerpRotation(uint frameno) => _slerpQuaternion(ref Rotations, frameno);
+
+
+    public Vector3 LerpScaling(uint frameno) => _lerpVector3(ref Scalings, frameno);
+
 }

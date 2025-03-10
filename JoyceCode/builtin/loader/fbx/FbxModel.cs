@@ -162,6 +162,20 @@ public class FbxModel : IDisposable
                     continue;
                 }
                 
+                string channelNodeName = aiChannel->MNodeName.ToString();
+                if (!_model.MapNodes.ContainsKey(channelNodeName))
+                {
+                    Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
+                    continue;
+                }
+                ModelNode channelNode = _model.MapNodes[channelNodeName];
+
+                if (ma.MapChannels.ContainsKey(channelNode))
+                {
+                    Warning($"Found duplicate animation channel for {channelNodeName}, ignoring.");
+                    continue;
+                }
+
                 /*
                  * Check, if we already have a bone data structure for this bone
                  */
@@ -176,19 +190,18 @@ public class FbxModel : IDisposable
                     continue;
                 }
 
-                ModelAnimChannel mac = new()
-                {
-                    Positions = (nPositionKeys!=0)?new PositionKey[nPositionKeys]:null,
-                    Scalings = (nScalingKeys!=0)?new ScalingKey[nScalingKeys]:null,
-                    Rotations = (nRotationKeys!=0)?new RotationKey[nRotationKeys]:null
-                };
+                ModelAnimChannel mac = ma.CreateChannel(channelNode,
+                    (nPositionKeys != 0) ? new KeyFrame<Vector3>[nPositionKeys] : null,
+                    (nRotationKeys != 0) ? new KeyFrame<Quaternion>[nRotationKeys] : null,
+                    (nScalingKeys != 0) ? new KeyFrame<Vector3>[nScalingKeys] : null
+                );
 
                 for (int l = 0; l < nPositionKeys; ++l)
                 {
                     mac.Positions[l] = new()
                     {
                         Time = (float)aiChannel->MPositionKeys[l].MTime,
-                        Position = aiChannel->MPositionKeys[l].MValue
+                        Value = aiChannel->MPositionKeys[l].MValue
                     };
                 }
                 
@@ -197,7 +210,7 @@ public class FbxModel : IDisposable
                     mac.Scalings[l] = new()
                     {
                         Time = (float)aiChannel->MScalingKeys[l].MTime,
-                        Scaling = aiChannel->MScalingKeys[l].MValue
+                        Value = aiChannel->MScalingKeys[l].MValue
                     };
                 }
                 
@@ -206,23 +219,10 @@ public class FbxModel : IDisposable
                     mac.Rotations[l] = new()
                     {
                         Time = (float)aiChannel->MRotationKeys[l].MTime,
-                        Rotation = aiChannel->MRotationKeys[l].MValue
+                        Value = aiChannel->MRotationKeys[l].MValue
                     };
                 }
                 
-                string channelNodeName = aiChannel->MNodeName.ToString();
-                if (!_model.MapNodes.ContainsKey(channelNodeName))
-                {
-                    Warning($"Found animation channel for unknown node {channelNodeName}, ignoring.");
-                    continue;
-                }
-                ModelNode channelNode = _model.MapNodes[channelNodeName];
-
-                if (ma.MapChannels.ContainsKey(channelNode))
-                {
-                    Warning($"Found duplicate animation channel for {channelNodeName}, ignoring.");
-                    continue;
-                }
                 ma.MapChannels[channelNode] = mac;
                 mac.Target = channelNode;
             }

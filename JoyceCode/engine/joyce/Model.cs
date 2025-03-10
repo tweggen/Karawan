@@ -112,7 +112,7 @@ public class Model
              * Apply it to the matrix.
              */
             Vector3 v3LerpPosition = mac.LerpPosition(frameno);
-            Quaternion q4SlerpRotation = max.SlerpRotation(frameno);
+            Quaternion q4SlerpRotation = mac.SlerpRotation(frameno);
             Vector3 v3LerpScaling = mac.LerpScaling(frameno);
         }
         
