@@ -5,12 +5,17 @@ layout(location = 1) in vec2 vertexTexCoord;
 layout(location = 2) in vec2 vertexTexCoord2;
 layout(location = 3) in vec3 vertexNormal;
 layout(location = 4) in vec4 vertexColor;
-//layout(location = 5) in ivec4 vertexBoneIds;
-//layout(location = 6) in vec4 vertexWeights;
+layout(location = 5) in vec4 vertexWeights;
+layout(location = 6) in ivec4 vertexBoneIds;
 in mat4 instanceTransform;
+
+
+const int MAX_BONES = 100;
 
 // Input uniform values
 uniform mat4 mvp;
+uniform mat4 m4BoneMatrices[MAX_BONES]; 
+uniform uint iVertexFlags;
 // uniform mat4 matNormal;
 
 // Output vertex attributes (to fragment shader)
@@ -25,12 +30,6 @@ out vec3 v3FragUp;
 out vec3 v3FragRight;
 out vec3 v3FragFront;
 
-// NOTE: Add here your custom variables
-
-const int MAX_BONES = 100;
-const int MAX_BONE_INFLUENCE = 4;
-uniform mat4 finalBonesMatrices[MAX_BONES];
-
 void main()
 {
     //vec4 totalPosition = vec4(0.0f);
@@ -43,9 +42,9 @@ void main()
     //        totalPosition = vec4(pos,1.0f);
     //        break;
     //    }
-    //    vec4 localPosition = finalBonesMatrices[vertexBoneIds[i]] * vec4(pos,1.0f);
+    //    vec4 localPosition = m4BoneMatrices[vertexBoneIds[i]] * vec4(pos,1.0f);
     //    totalPosition += localPosition * vertexWeights[i];
-    //    vec3 localNormal = mat3(finalBonesMatrices[vertexBoneIds[i]]) * vertexNormal;
+    //    vec3 localNormal = mat3(m4BoneMatrices[vertexBoneIds[i]]) * vertexNormal;
     //}
         
     // instanceTransform = mat4(1.0);

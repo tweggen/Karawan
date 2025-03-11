@@ -14,6 +14,8 @@ namespace Splash.Silk
         public float[] Normals = null;
         public float[] UVs = null;
         public ushort[] Indices = null;
+        public float[] BoneWeights = null;
+        public int[] BoneIndices = null;
 
         private static int _nMeshes = 0;
 

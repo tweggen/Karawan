@@ -27,11 +27,22 @@ namespace Splash.Silk
             skMeshEntry.UVs = new float[nVertices*2];
             skMeshEntry.Indices = new ushort[nIndices];
             skMeshEntry.Normals = new float[nVertices*3];
-            
-            for(int v=0; v<nVertices; v++)
+
+            bool haveBones = mesh.BoneWeights != null && mesh.BoneIndices != null; 
+            if (haveBones)
             {
-                Vector3 vertex = (Vector3) mesh.Vertices[v];
+                skMeshEntry.BoneWeights = new float[nVertices * 4];
+                skMeshEntry.BoneIndices = new int[nVertices * 4];
+            }
+
+            for (int v = 0; v < nVertices; v++)
+            {
+                Vector3 vertex = (Vector3)mesh.Vertices[v];
                 Vector2 uv = (Vector2)mesh.UVs[v];
+                Vector4 bw = (Vector4)mesh.BoneWeights[v];
+
+                engine.joyce.Byte4 bi = (engine.joyce.Byte4)mesh.BoneIndices[v];
+
                 uv *= skMeshEntry.Params.UVScale;
                 uv += skMeshEntry.Params.UVOffset;
                 Vector3 normals = (Vector3)mesh.Normals[v];
@@ -43,8 +54,19 @@ namespace Splash.Silk
                 skMeshEntry.Normals[v * 3 + 0] = normals.X;
                 skMeshEntry.Normals[v * 3 + 1] = normals.Y;
                 skMeshEntry.Normals[v * 3 + 2] = normals.Z;
-
+                if (haveBones)
+                {
+                    skMeshEntry.BoneWeights[v * 4 + 0] = bw.X;
+                    skMeshEntry.BoneWeights[v * 4 + 1] = bw.Y;
+                    skMeshEntry.BoneWeights[v * 4 + 2] = bw.Z;
+                    skMeshEntry.BoneWeights[v * 4 + 3] = bw.W;
+                    skMeshEntry.BoneIndices[v * 4 + 0] = bi.B0;
+                    skMeshEntry.BoneIndices[v * 4 + 1] = bi.B1;
+                    skMeshEntry.BoneIndices[v * 4 + 2] = bi.B2;
+                    skMeshEntry.BoneIndices[v * 4 + 3] = bi.B3;
+                }
             }
+
             for (int i=0; i<nIndices; ++i)
             {
                 /*

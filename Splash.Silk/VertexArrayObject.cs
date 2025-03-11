@@ -16,6 +16,8 @@ public class VertexArrayObject : IDisposable
     private BufferObject<float> _bVertices = null;
     private BufferObject<float> _bNormals = null;
     private BufferObject<float> _bUVs = null;
+    private BufferObject<float> _bBoneWeights = null;
+    private BufferObject<int> _bBoneIndices = null;
 
     public uint Handle
     {
@@ -28,6 +30,8 @@ public class VertexArrayObject : IDisposable
          * We need the GL instance.
          */
         _gl = gl;
+
+        bool haveBones = skMeshEntry.BoneWeights != null && skMeshEntry.BoneIndices != null;
         
         /*
          * Now create buffer objects for all properties of the mesh entry. 
@@ -37,6 +41,12 @@ public class VertexArrayObject : IDisposable
         _bNormals = new BufferObject<float>(_gl, skMeshEntry.Normals, BufferTargetARB.ArrayBuffer);
         _bUVs = new BufferObject<float>(_gl, skMeshEntry.UVs, BufferTargetARB.ArrayBuffer);
 
+        if (haveBones)
+        {
+            _bBoneWeights = new BufferObject<float>(_gl, skMeshEntry.BoneWeights, BufferTargetARB.ArrayBuffer);
+            _bBoneIndices = new BufferObject<int>(_gl, skMeshEntry.BoneIndices, BufferTargetARB.ArrayBuffer);
+        }
+        
         //Setting out handle and binding the VBO and EBO to this VAO.
         _handle = _gl.GenVertexArray();
         BindVertexArray();
@@ -75,9 +85,29 @@ public class VertexArrayObject : IDisposable
             false,
             0,
             (void*) 0);
-        //_bIndices.BindBuffer();
         _gl.VertexAttrib4(4, new Vector4(1f, 1f, 1f, 1f));
         _gl.DisableVertexAttribArray(4);
+        if (haveBones)
+        {
+            _bBoneWeights.BindBuffer();   
+            _gl.EnableVertexAttribArray(5);
+            _gl.VertexAttribPointer(
+                5,
+                4,
+                VertexAttribPointerType.Float,
+                false,
+                0,
+                (void*) 0);
+            _bBoneIndices.BindBuffer();   
+            _gl.EnableVertexAttribArray(6);
+            _gl.VertexAttribPointer(
+                6,
+                4,
+                VertexAttribPointerType.Int,
+                false,
+                0,
+                (void*) 0);
+        }
     }
     
     
@@ -87,6 +117,7 @@ public class VertexArrayObject : IDisposable
         _gl.BindVertexArray(_handle);
         _bIndices.BindBuffer();
     }
+    
 
     public void Dispose()
     {
@@ -101,5 +132,15 @@ public class VertexArrayObject : IDisposable
         _bNormals = null;
         _bIndices.Dispose();
         _bIndices = null;
+        if (null != _bBoneWeights)
+        {
+            _bBoneWeights.Dispose();
+            _bBoneWeights = null;
+        }
+        if (null != _bBoneIndices)
+        {
+            _bBoneIndices.Dispose();
+            _bBoneIndices = null;
+        }
     }
 }

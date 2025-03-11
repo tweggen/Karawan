@@ -282,7 +282,9 @@ public class SilkThreeD : IThreeD
          * Also load the locations for some programs from the shader.
          */
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
+        _locBoneMatrices = shader.GetAttrib("m4BoneMatrices");
         _locMvp = shader.GetUniform("mvp");
+        _locVertexFlags = shader.GetUniform("iVertexFlags");
     }
 
     
@@ -290,7 +292,8 @@ public class SilkThreeD : IThreeD
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,
         in Span<Matrix4x4> spanMatrices,
-        in int nMatrices)
+        in int nMatrices,
+        ModelBakedFrame? modelBakedFrame)
     {
         var gl = _getGL();
         
@@ -324,6 +327,21 @@ public class SilkThreeD : IThreeD
             return;
         }
 
+        if (modelBakedFrame != null)
+        {
+            // TXWTODO: Are we supposed to load the bone transformations for this frame?
+            /*
+            GLint location = get_uniform_location(name.c_str());
+            glUniformMatrix4fv(location, value.size(), GL_FALSE, glm::value_ptr(value[0]));
+            */
+            _gl.UniformMatrix4(_locBoneMatrices, modelBakedFrame.BoneTransformations.Length,
+                false, modelBakedFrame.BoneTransformations);
+            sh.SetUniform(_locVertexFlags, 1);
+        }
+        else
+        {
+            sh.SetUniform(_locVertexFlags, 0);
+        }
         /*
          * 1) Bind the vao and
          * 2) upload the matrix instance buffer.
@@ -679,6 +697,8 @@ public class SilkThreeD : IThreeD
 
 
     private int _locInstanceMatrices = 0;
+    private int _locBoneMatrices = 0;
+    private int _locVertexFlags = 0;
     private int _locMvp = 0;
 
     public void SetCameraPos(in Vector3 vCamera)

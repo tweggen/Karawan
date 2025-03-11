@@ -140,7 +140,6 @@ public class Model
         {
             /*
              * Now call ourselves recursively for each of our children
-             * recursively
              */
             foreach (var child in me.Children)
             {
