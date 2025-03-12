@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using BepuPhysics.Constraints;
 using engine;
@@ -329,13 +330,11 @@ public class SilkThreeD : IThreeD
 
         if (modelBakedFrame != null)
         {
-            // TXWTODO: Are we supposed to load the bone transformations for this frame?
             /*
-            GLint location = get_uniform_location(name.c_str());
-            glUniformMatrix4fv(location, value.size(), GL_FALSE, glm::value_ptr(value[0]));
-            */
-            _gl.UniformMatrix4(_locBoneMatrices, modelBakedFrame.BoneTransformations.Length,
-                false, modelBakedFrame.BoneTransformations);
+             * If we are supposed to load bone animations, let's do that.
+             */
+            Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
+            _gl.UniformMatrix4((int) _locBoneMatrices, (uint) modelBakedFrame.BoneTransformations.Length, false, span);
             sh.SetUniform(_locVertexFlags, 1);
         }
         else
