@@ -231,7 +231,7 @@ public class CameraOutput
 #else
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
-                    threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, spanMatrices, nMatrices);
+                    threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, spanMatrices, nMatrices, null);
                     _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
                 }
                 else

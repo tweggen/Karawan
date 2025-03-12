@@ -39,9 +39,7 @@ namespace Splash.Silk
             {
                 Vector3 vertex = (Vector3)mesh.Vertices[v];
                 Vector2 uv = (Vector2)mesh.UVs[v];
-                Vector4 bw = (Vector4)mesh.BoneWeights[v];
-
-                engine.joyce.Byte4 bi = (engine.joyce.Byte4)mesh.BoneIndices[v];
+                
 
                 uv *= skMeshEntry.Params.UVScale;
                 uv += skMeshEntry.Params.UVOffset;
@@ -56,6 +54,9 @@ namespace Splash.Silk
                 skMeshEntry.Normals[v * 3 + 2] = normals.Z;
                 if (haveBones)
                 {
+                    Vector4 bw = (Vector4)mesh.BoneWeights[v];
+                    engine.joyce.Byte4 bi = (engine.joyce.Byte4)mesh.BoneIndices[v];
+
                     skMeshEntry.BoneWeights[v * 4 + 0] = bw.X;
                     skMeshEntry.BoneWeights[v * 4 + 1] = bw.Y;
                     skMeshEntry.BoneWeights[v * 4 + 2] = bw.Z;

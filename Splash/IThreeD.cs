@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using engine.joyce;
 
 namespace Splash;
 
@@ -52,7 +53,8 @@ public interface IThreeD
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,
         in Span<Matrix4x4> spanMatrices,
-        in int nMatrices);
+        in int nMatrices,
+        ModelBakedFrame? modelBakedFrame);
 
     public void FinishUploadOnly(in AMeshEntry aMeshEntry);
 
