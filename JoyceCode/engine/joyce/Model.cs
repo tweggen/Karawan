@@ -182,6 +182,7 @@ public class Model
                 {
                     BoneTransformations = new Matrix4x4[Skeleton.NBones]
                 };
+                ma.BakedFrames[frameno] = bakedFrame;
 
                 /*
                  * Now we have the space to compute the position of each and every bone.
