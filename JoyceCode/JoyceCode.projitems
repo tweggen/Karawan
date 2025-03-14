@@ -53,6 +53,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimChannel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCacheParams.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelInstance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Skeleton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GenericIdRegistry.cs" />
