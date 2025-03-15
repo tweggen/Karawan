@@ -108,9 +108,9 @@ public class Model
             var kfPosition = mac.LerpPosition(frameno);
             var kfRotation = mac.SlerpRotation(frameno);
             var kfScaling = mac.LerpScaling(frameno); 
-            mac.Positions[frameno] = kfPosition;
-            mac.Rotations[frameno] = kfRotation;
-            mac.Scalings[frameno] = kfScaling;
+            //mac.Positions[frameno] = kfPosition;
+            //mac.Rotations[frameno] = kfRotation;
+            //mac.Scalings[frameno] = kfScaling;
             m4Anim =
                 Matrix4x4.CreateFromQuaternion(kfRotation.Value)
                 * Matrix4x4.CreateScale(kfScaling.Value)
@@ -172,8 +172,8 @@ public class Model
             /*
              * How many real frames does this animation have?
              */
-            float duration = ma.Duration;
-            uint nFrames = UInt32.Min((uint)(duration / 60f), 1);
+            float duration = ma.Duration / ma.TicksPerSecond;
+            uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
             for (int frameno = 0; frameno < nFrames; ++frameno)
