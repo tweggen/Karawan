@@ -42,6 +42,7 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
                 }
 
                 cAnimationState.ModelAnimationFrame = frameno;
+                entity.Set(cAnimationState);
             }
         }
 

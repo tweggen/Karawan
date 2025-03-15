@@ -465,13 +465,7 @@ public class FbxModel : IDisposable
                 }
             }
             
-            /*
-             * Now, if this is more than the maximum of bones per mesh,
-             * take only the four most important.
-             */
-            uint nBones = UInt32.Min(4, mesh->MNumBones);
             // TXWTODO: MNumBones seems to contain most of the bones and not just the ones relevant for this mesh.
-            // TXWTODO: Write this
             
             /*
              * Now read the first nBones bones back into the influence lists for each of the
@@ -484,28 +478,49 @@ public class FbxModel : IDisposable
             }
             
             jMesh.BoneWeights = new List<Vector4>(new Vector4[nMeshVertices]);
-            for (int j = 0; j < nBones; j++)
+            for (int j = 0; j < mesh->MNumBones; j++)
             {
                 var boneMesh = boneMeshes[j];
                 
                 uint boneIndex = boneMesh.Bone.Index;
                 int nBoneVertices = (boneMesh.VertexWeights != null)?(boneMesh.VertexWeights.Length):0;
-                
+
                 for (int k = 0; k < nBoneVertices; ++k)
                 {
                     Int4 i4;
                     Vector4 w4;
 
                     ref VertexWeight vw = ref boneMesh.VertexWeights[k];
-                    int vertexIndex = (int) vw.VertexIndex;
+                    int vertexIndex = (int)vw.VertexIndex;
                     float weight = vw.Weight;
-                    
+
                     i4 = jMesh.BoneIndices[vertexIndex];
                     w4 = jMesh.BoneWeights[vertexIndex];
-                    
-                    i4[j] = (byte)boneIndex;
-                    w4[j] = weight;
 
+                    int l;
+                    for (l = 0; l < 4; ++l)
+                    {
+                        if (-1 == i4[l])
+                        {
+                            i4[l] = (int)boneIndex;
+                            w4[l] = weight;
+                            break;
+                        }
+                    }
+
+                    if (4 == l)
+                    {
+                        for (l = 0; l < 4; ++l)
+                        {
+                            if (w4[l] < weight) 
+                            {
+                                i4[l] = (int)boneIndex;
+                                w4[l] = weight;
+                                break;
+                            }
+                        }
+                    }
+                    
                     jMesh.BoneIndices[vertexIndex] = i4;
                     jMesh.BoneWeights[vertexIndex] = w4;
                 }
