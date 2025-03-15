@@ -482,7 +482,7 @@ public class FbxModel : IDisposable
             for (int j = 0; j < nBones; j++)
             {
                 /*
-                 * Reset all bones to unused.
+                 * Reset all bones to unused.Ö
                  */
                 jMesh.BoneIndices[j] = new Int4(-1);
 

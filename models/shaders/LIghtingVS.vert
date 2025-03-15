@@ -52,9 +52,8 @@ void main()
                 }
                 if (vertexBoneIds[i] >= MAX_BONES)
                 {
-                    // v4TotalPosition = vec4(vertexPosition, 1.0);
-                    v3TotalNormal = vertexNormal;
                     v4TotalPosition = v4Vertex;
+                    v3TotalNormal = vertexNormal;
                     break;
                 }
 
