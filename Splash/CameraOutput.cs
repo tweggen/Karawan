@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using engine;
 using engine.joyce;
+using engine.world;
 using static engine.Logger;
 
 namespace Splash;
@@ -190,17 +191,41 @@ public class CameraOutput
 
                 if (!preloadOnly)
                 {
-                    var nMatrices = meshItem.Matrices.Count;
-                    /*
-                     * I must draw using the instanced call because I only use an instanced shader.
-                     */
+                    IEnumerable<AnimationBatch> listAnimationBatches = meshItem.ListAnimationBatches;
+                    if (null == listAnimationBatches)
+                    {
+                        listAnimationBatches = meshItem.AnimationBatches.Values;
+                    }
+
+                    foreach (var animationItem in listAnimationBatches)
+                    {
+                        var nMatrices = animationItem.Matrices.Count;
+                        /*
+                         * I must draw using the instanced call because I only use an instanced shader.
+                         */
 #if NET6_0_OR_GREATER
-                    var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(meshItem.Matrices);
+                        var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(animationItem.Matrices);
 #else
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
-                    threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, spanMatrices, nMatrices, null);
-                    _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
+                        ModelBakedFrame modelBakedFrame = null;
+                        var modelAnimation = animationItem.AnimationState.ModelAnimation; 
+                        if (modelAnimation != null)
+                        {
+                            var modelBakedFrames = modelAnimation.BakedFrames;
+                            if (modelBakedFrames != null)
+                            {
+                                uint frameno = animationItem.AnimationState.ModelAnimationFrame; 
+                                if (frameno < (uint) modelBakedFrames.Length)
+                                {
+                                    modelBakedFrame = modelBakedFrames[frameno];
+                                }
+                            }
+                        }
+                        threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, spanMatrices,
+                            nMatrices, modelBakedFrame);
+                        _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
+                    }
                 }
                 else
                 {
@@ -258,9 +283,21 @@ public class CameraOutput
         }
 
         /*
+         * And do we have an entry for the animationstate?
+         */
+        AnimationBatch animationBatch;
+        meshBatch.AnimationBatches.TryGetValue(cAnimationState, out animationBatch);
+        if (null == animationBatch)
+        {
+            animationBatch = new AnimationBatch(cAnimationState);
+            meshBatch.AnimationBatches[cAnimationState] = animationBatch;
+            _frameStats.NAnimations++;
+        }
+        
+        /*
          * Now we can add our matrix to the list of matrices.
          */
-        meshBatch.Matrices.Add(matrix);
+        animationBatch.Matrices.Add(matrix);
 
         /*
          * In particular when rendering transparency, we need to have average

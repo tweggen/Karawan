@@ -322,7 +322,6 @@ public class GlTF
             Trace("Reading a mesh.");
             _readMesh(_gltfModel.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
             var id = InstanceDesc.CreateFromMatMesh(matMesh, 200f);
-            id.Model = _jModel;
             id.ModelNode = mn;
             mn.InstanceDesc = id;
         }

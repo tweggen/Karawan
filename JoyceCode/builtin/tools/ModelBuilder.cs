@@ -33,11 +33,9 @@ public class ModelBuilder
     private readonly HierarchyApi _aHierarchy;
     private readonly InstantiateModelParams _instantiateModelParams;
     private readonly bool _isHierarchical;
-    private ModelInstance _modelInstance;
-
+    
     private void _buildInstanceDescInto(in DefaultEcs.Entity eNode, in InstanceDesc id)
     {
-        id.ModelInstance = _modelInstance;
         eNode.Set(new Instance3(id));
     }
     
@@ -194,11 +192,5 @@ public class ModelBuilder
         _instantiateModelParams = instantiateModelParams;
         _aHierarchy = I.Get<HierarchyApi>();
         _isHierarchical = (_jModel.RootNode.Children != null && _jModel.RootNode.Children.Count > 0);
-        _modelInstance = new()
-        {
-            Model = jModel,
-            AnimationName = "",
-            AnimationFrameNumber = 0
-        };
     }
 }

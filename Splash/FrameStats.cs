@@ -6,6 +6,7 @@ public class FrameStats
     public int NMeshes = 0;
     public int NMaterials = 0;
     public int NInstances = 0;
+    public int NAnimations = 0;
     public int NSkippedMeshes = 0;
     public int NSkippedMaterials = 0;
     public int NTriangles = 0;

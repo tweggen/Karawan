@@ -10,7 +10,7 @@ namespace Splash;
 public class MeshBatch
 {
     public readonly AMeshEntry AMeshEntry;
-    public readonly List<Matrix4x4> Matrices = new();
+    // public readonly List<Matrix4x4> Matrices = new();
 
     public readonly Dictionary<AnimationState, AnimationBatch> AnimationBatches = new();
     public List<AnimationBatch> ListAnimationBatches;
