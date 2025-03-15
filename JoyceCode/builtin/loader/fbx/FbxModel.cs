@@ -470,7 +470,7 @@ public class FbxModel : IDisposable
              * take only the four most important.
              */
             uint nBones = UInt32.Min(4, mesh->MNumBones);
-            
+            // TXWTODO: MNumBones seems to contain most of the bones and not just the ones relevant for this mesh.
             // TXWTODO: Write this
             
             /*
@@ -478,14 +478,14 @@ public class FbxModel : IDisposable
              * vertices.
              */
             jMesh.BoneIndices = new List<Int4>(new Int4[nMeshVertices]);
+            for (int j = 0; j < nMeshVertices; ++j)
+            {
+                jMesh.BoneIndices[j] = new Int4(-1);
+            }
+            
             jMesh.BoneWeights = new List<Vector4>(new Vector4[nMeshVertices]);
             for (int j = 0; j < nBones; j++)
             {
-                /*
-                 * Reset all bones to unused.Ö
-                 */
-                jMesh.BoneIndices[j] = new Int4(-1);
-
                 var boneMesh = boneMeshes[j];
                 
                 uint boneIndex = boneMesh.Bone.Index;
@@ -506,8 +506,8 @@ public class FbxModel : IDisposable
                     i4[j] = (byte)boneIndex;
                     w4[j] = weight;
 
-                    jMesh.BoneIndices[k] = i4;
-                    jMesh.BoneWeights[k] = w4;
+                    jMesh.BoneIndices[vertexIndex] = i4;
+                    jMesh.BoneWeights[vertexIndex] = w4;
                 }
             }
         }
