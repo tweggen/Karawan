@@ -16,7 +16,7 @@ const int MAX_BONE_INFLUENCE = 4;
 // Input uniform values
 uniform mat4 mvp;
 uniform mat4 m4BoneMatrices[MAX_BONES]; 
-uniform uint iVertexFlags;
+uniform int iVertexFlags;
 // uniform mat4 matNormal;
 
 // Output vertex attributes (to fragment shader)
