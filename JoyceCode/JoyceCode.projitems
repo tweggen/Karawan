@@ -43,6 +43,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Value.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector2JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\AnimationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Bone.cs" />

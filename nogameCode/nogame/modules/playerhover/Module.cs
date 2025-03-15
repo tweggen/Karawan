@@ -2,6 +2,7 @@
 using BepuPhysics.Collidables;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using DefaultEcs;
@@ -37,9 +38,12 @@ public class Module : engine.AModule
     private CollisionProperties _cpFacingObject = null;
 
     private DefaultEcs.Entity _eShip;
+    private DefaultEcs.Entity _eAnimations;
     private BepuPhysics.BodyReference _prefShip;
     private Entity _eMapShip;
 
+    private Model _model;
+    
     private PlayerViewer _playerViewer;
     
     /**
@@ -514,7 +518,7 @@ public class Module : engine.AModule
 
         InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
 
-        Model model = await I.Get<ModelCache>().LoadModel( 
+        _model = await I.Get<ModelCache>().LoadModel( 
             new ModelCacheParams() {
             Url = ModelUrl,
             Params = instantiateModelParams});
@@ -542,8 +546,24 @@ public class Module : engine.AModule
             _aTransform.SetCameraMask(_eShip, 0x0000ffff);
 
             {
-                builtin.tools.ModelBuilder modelBuilder = new(_engine, model, instantiateModelParams);
+                builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, instantiateModelParams);
                 modelBuilder.BuildEntity(_eShip);
+                _eAnimations = modelBuilder.GetAnimationsEntity();
+            }
+
+            if (default != _eAnimations)
+            {
+                var mapAnimations = _model.MapAnimations;
+                if (mapAnimations != null && mapAnimations.Count > 0)
+                {
+                    var animation = mapAnimations.Values.First();
+                    _eAnimations.Set(new AnimationState
+                    {
+                        ModelAnimation = animation,
+                        ModelAnimationFrame = 0
+                    });
+                    Trace($"Setting up animation {animation.Name}");
+                }
             }
 
             _eShip.Set(new engine.joyce.components.PointLight(
@@ -562,8 +582,8 @@ public class Module : engine.AModule
              * thing bounces away to nirvana very soon.
              * Therefore we set the previously hard coded 1.4 as a lower limit.
              */
-            float bodyRadius = model.RootNode.InstanceDesc != null
-                ? model.RootNode.InstanceDesc.AABBTransformed.Radius
+            float bodyRadius = _model.RootNode.InstanceDesc != null
+                ? _model.RootNode.InstanceDesc.AABBTransformed.Radius
                 : 1.4f;
 
             engine.physics.CollisionProperties collisionProperties =

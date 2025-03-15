@@ -63,7 +63,7 @@ public class MaterialBatch
                     break;
                 }
 
-                mb.Sort(v3CameraPos);
+                mb.Sort(v3CameraPos, v3CameraZ, angleCamera);
             }
 
         }

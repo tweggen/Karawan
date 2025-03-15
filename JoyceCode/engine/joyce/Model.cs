@@ -212,6 +212,12 @@ public class Model
          * We will use their rootnode and their name, however use our InstanceDesc
          * as we already gave out our instanceDesc to clients.
          */
+        Name = other.Name;
+        _nextNodeIndex = other._nextNodeIndex;
+        _nextAnimIndex = other._nextAnimIndex;
+        Skeleton = other.Skeleton;
+        MapAnimations = other.MapAnimations;
+        MapNodes = other.MapNodes;
         RootNode = other.RootNode;
         Name = other.Name;
     }

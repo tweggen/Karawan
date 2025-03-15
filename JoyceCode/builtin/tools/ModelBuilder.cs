@@ -33,7 +33,16 @@ public class ModelBuilder
     private readonly HierarchyApi _aHierarchy;
     private readonly InstantiateModelParams _instantiateModelParams;
     private readonly bool _isHierarchical;
-    
+
+    /**
+     * Today, we use the topmost modelnode containing an instancedesc
+     * as the place to hook the animations into.
+     *
+     * Until we know a more precise way to attach the animations to the
+     * hierarchy of the model.
+     */
+    private DefaultEcs.Entity _eAnimations = default;
+
     private void _buildInstanceDescInto(in DefaultEcs.Entity eNode, in InstanceDesc id)
     {
         eNode.Set(new Instance3(id));
@@ -57,6 +66,14 @@ public class ModelBuilder
         if (mn.InstanceDesc != null)
         {
             _buildInstanceDescInto(eNode, mn.InstanceDesc);
+            
+            /*
+             * This is the first entity to contain animations remember it.  
+             */
+            if (mn.Model.MapAnimations != null && _eAnimations == default)
+            {
+                _eAnimations = eNode;
+            }
         }
 
         if (mn.Children != null)
@@ -124,9 +141,11 @@ public class ModelBuilder
          * Now find the first instance desc that we compute our adjustment from.
          */
         ModelNode mnAdjust = null;
+
+        ModelNode mnFirstInstanceDesc = _findFirstInstanceDesc(mnRoot); 
         if (_isHierarchical)
         {
-            mnAdjust = _findFirstInstanceDesc(mnRoot);
+            mnAdjust = mnFirstInstanceDesc;
         }
         
         Matrix4x4 mAdjust = Matrix4x4.Identity;
@@ -183,7 +202,12 @@ public class ModelBuilder
 
         return eUserRoot.Value;
     }
-    
+
+
+    public DefaultEcs.Entity GetAnimationsEntity()
+    {
+        return _eAnimations;
+    }
     
     public ModelBuilder(Engine engine, Model jModel, InstantiateModelParams? instantiateModelParams)
     {

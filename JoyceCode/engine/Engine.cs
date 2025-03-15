@@ -77,6 +77,7 @@ public class Engine
     private physics.systems.ApplyPosesSystem _systemApplyPoses;
     private physics.systems.MoveKineticsSystem _systemMoveKinetics;
     private audio.systems.MovingSoundsSystem _systemMovingSounds;
+    private behave.systems.AnimationSystem _systemAnimation;
 
     private IReadOnlyCollection<IModule> _roListModules = null;
     private List<IModule> _listModules = new();
@@ -688,6 +689,10 @@ public class Engine
              * - input from user, already processed by Transform System
              */
             _systemMoveKinetics.Update(dt);
+            
+            /*
+             * We don't call animation before the first frame, only after it.
+             */
         }
 
         /*
@@ -869,6 +874,10 @@ public class Engine
             I.Get<world.MetaGen>().Loader?.WorldLoaderProvideFragments();
         }
 
+        /*
+         * After all other things, take care to load the next animation frame.
+         */
+        _systemAnimation.Update(dt);
     }
 
 
@@ -1020,6 +1029,7 @@ public class Engine
         _systemApplyPoses = new();
         _systemMoveKinetics = new();
         _systemMovingSounds = new();
+        _systemAnimation = new();
         _managerPhysics = new physics.Manager();
         _managerPhysics.Manage(this);
         _managerBehavior = new behave.Manager();
