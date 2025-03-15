@@ -283,7 +283,7 @@ public class SilkThreeD : IThreeD
          * Also load the locations for some programs from the shader.
          */
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
-        _locBoneMatrices = shader.GetAttrib("m4BoneMatrices");
+        _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
         _locMvp = shader.GetUniform("mvp");
         _locVertexFlags = shader.GetUniform("iVertexFlags");
     }
