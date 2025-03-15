@@ -81,7 +81,7 @@ public class InstanceDesc
      * we have been created from.
      */
     public ModelNode ModelNode;
-
+    
     private Vector3 _vCenter;
 
 

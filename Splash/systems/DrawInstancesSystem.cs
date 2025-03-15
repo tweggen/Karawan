@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using engine;
 using engine.geom;
+using engine.joyce;
 using static engine.Logger;
 
 namespace Splash.systems;
@@ -79,8 +80,19 @@ sealed class DrawInstancesSystem : DefaultEcs.System.AEntitySetSystem<CameraOutp
                     if (aabb.SignedDistance(_bottomFrustum) < 0) continue;
                 }
 
+                engine.joyce.components.AnimationState cAnimationState;
+                if (entity.Has<engine.joyce.components.AnimationState>())
+                {
+                    cAnimationState = entity.Get<engine.joyce.components.AnimationState>();
+                }
+                else
+                {
+                    cAnimationState.ModelAnimation = null;
+                    cAnimationState.ModelAnimationFrame = 0;
+                }
+                
                 _nInstancesAppended++;
-                cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix);
+                cameraOutput.AppendInstance(pfInstance, transform3ToWorld.Matrix, cAnimationState);
             }
         }
     }

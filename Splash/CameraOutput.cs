@@ -11,38 +11,6 @@ using static engine.Logger;
 namespace Splash;
 
 
-/**
- * Helper that is used in the material batch.
- * Defines the mergability of a material entry.
- * Two materials are equal in the sense of this, if they share the same shader
- * properties and the same texture.
- */
-internal struct MaterialBatchKey : IEquatable<MaterialBatchKey>
-{
-    public AMaterialEntry AMaterialEntry;
-
-    public bool Equals(MaterialBatchKey other)
-    {
-        return AMaterialEntry.JMaterial.IsMergableEqual(other.AMaterialEntry.JMaterial);
-    }
-
-    public override bool Equals(object obj)
-    {
-        return obj is MaterialBatchKey other && Equals(other);
-    }
-
-    public override int GetHashCode()
-    {
-        return (AMaterialEntry != null ? AMaterialEntry.JMaterial.GetMergableHashCode() : 0);
-    }
-
-    public MaterialBatchKey(AMaterialEntry aMaterialEntry)
-    {
-        AMaterialEntry = aMaterialEntry;
-    }
-} 
-
-
 public class CameraOutput
 {
     private object _lo = new();
@@ -246,7 +214,8 @@ public class CameraOutput
     private void _appendInstanceNoLock(
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,
-        in Matrix4x4 matrix)
+        in Matrix4x4 matrix,
+        in engine.joyce.components.AnimationState cAnimationState)
     {
         _frameStats.NEntities++;
         bool trackPositions;
@@ -363,7 +332,10 @@ public class CameraOutput
     }
 
 
-    public void AppendInstance(in Splash.components.PfInstance pfInstance, Matrix4x4 transform3ToWorld)
+    public void AppendInstance(
+        in Splash.components.PfInstance pfInstance, 
+        in Matrix4x4 transform3ToWorld,
+        in engine.joyce.components.AnimationState cAnimationState)
     {
         lock (_lo)
         {
@@ -429,19 +401,24 @@ public class CameraOutput
                 {
                     if (!aMaterialEntry.JMaterial.IsUnscalable)
                     {
-                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
-                            id.ModelTransform * transform3ToWorld);
+                        _appendInstanceNoLock(
+                            aMeshEntry, aMaterialEntry,
+                            id.ModelTransform * transform3ToWorld,
+                            cAnimationState);
                     }
                     else
                     {
-                        _appendInstanceNoLock(aMeshEntry, aMaterialEntry,
-                            _mUnscale * id.ModelTransform * transform3ToWorld);
+                        _appendInstanceNoLock(
+                            aMeshEntry, aMaterialEntry,
+                            _mUnscale * id.ModelTransform * transform3ToWorld,
+                            cAnimationState
+                            );
                     }
                 }
                 else
                 {
                     _computeInverseBillboardMatrix(aMaterialEntry, aMeshEntry, transform3ToWorld, id, out var m);
-                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, m);
+                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, m, cAnimationState);
                 }
             }
         }

@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using builtin.tools.kanshu;
 using DefaultEcs;
 using engine;
+using engine.joyce;
 using static engine.Logger;
 
 namespace Splash;
@@ -118,9 +120,14 @@ public class InstanceManager : IDisposable
             for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
                 engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
+                
                 // TXWTODO: somehow derive the UV scale from the material
                 Resource<AMeshEntry> meshResource;
-                AMeshParams meshParams = new() { JMesh = value.InstanceDesc.Meshes[i] };
+                AMeshParams meshParams = new()
+                {
+                    JMesh = value.InstanceDesc.Meshes[i]
+                };
+                
                 engine.joyce.Texture jTexture = jMeshMaterial.Texture;
                 if (null == jTexture)
                 {

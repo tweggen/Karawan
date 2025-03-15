@@ -47,13 +47,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Bone.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\BYte4.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\AnimationState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\ModelDescriptor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\components\FromModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\InstantiateModelParams.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelAnimChannel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelCacheParams.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\ModelInstance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\joyce\Skeleton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\quest\components\Quest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GenericIdRegistry.cs" />
