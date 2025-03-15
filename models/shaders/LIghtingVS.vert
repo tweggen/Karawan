@@ -48,16 +48,20 @@ void main()
             {
                 if (vertexBoneIds[i] == -1)
                 {
+                    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
                     continue;
                 }
-                if (vertexBoneIds[i] >= MAX_BONES)
+                int boneId = vertexBoneIds[i]; 
+                if (boneId >= MAX_BONES)
                 {
                     v4TotalPosition = v4Vertex;
+                    // v4TotalPosition = vec4(100.0, 100.0, 0.0, 1.0);
                     v3TotalNormal = vertexNormal;
+                    fragColor = vec4(0.0, 1.0, 0.0, 1.0);
                     break;
                 }
 
-                mat4 m4BoneMatrix = m4BoneMatrices[vertexBoneIds[i]];
+                mat4 m4BoneMatrix = m4BoneMatrices[boneId];
 
                 vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
                 v4TotalPosition += v4LocalPosition * vertexWeights[i];

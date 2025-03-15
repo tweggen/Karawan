@@ -478,13 +478,14 @@ public class FbxModel : IDisposable
             }
             
             jMesh.BoneWeights = new List<Vector4>(new Vector4[nMeshVertices]);
+            uint maxBoneIndex = 0;
             for (int j = 0; j < mesh->MNumBones; j++)
             {
                 var boneMesh = boneMeshes[j];
                 
                 uint boneIndex = boneMesh.Bone.Index;
                 int nBoneVertices = (boneMesh.VertexWeights != null)?(boneMesh.VertexWeights.Length):0;
-
+                maxBoneIndex = UInt32.Max(boneIndex, maxBoneIndex);
                 for (int k = 0; k < nBoneVertices; ++k)
                 {
                     Int4 i4;
