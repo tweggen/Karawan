@@ -390,13 +390,21 @@ public class FbxModel : IDisposable
 
             // normals
             if (mesh->MNormals != null)
+            {
                 vertex.Normal = mesh->MNormals[i];
+            }
+
             // tangent
             if (mesh->MTangents != null)
+            {
                 vertex.Tangent = mesh->MTangents[i];
+            }
+
             // bitangent
             if (mesh->MBitangents != null)
+            {
                 vertex.Bitangent = mesh->MBitangents[i];
+            }
 
             // texture coordinates
             if (mesh->MTextureCoords[0] != null) // does the mesh contain texture coordinates?
@@ -416,7 +424,9 @@ public class FbxModel : IDisposable
             Face face = mesh->MFaces[i];
             // retrieve all indices of the face and store them in the indices vector
             for (uint j = 0; j < face.MNumIndices; j++)
+            {
                 indices.Add(face.MIndices[j]);
+            }
         }
 
         
@@ -467,10 +477,15 @@ public class FbxModel : IDisposable
              * Now read the first nBones bones back into the influence lists for each of the
              * vertices.
              */
-            jMesh.BoneIndices = new List<Byte4>(new Byte4[nMeshVertices]);
+            jMesh.BoneIndices = new List<Int4>(new Int4[nMeshVertices]);
             jMesh.BoneWeights = new List<Vector4>(new Vector4[nMeshVertices]);
             for (int j = 0; j < nBones; j++)
             {
+                /*
+                 * Reset all bones to unused.
+                 */
+                jMesh.BoneIndices[j] = new Int4(-1);
+
                 var boneMesh = boneMeshes[j];
                 
                 uint boneIndex = boneMesh.Bone.Index;
@@ -478,20 +493,20 @@ public class FbxModel : IDisposable
                 
                 for (int k = 0; k < nBoneVertices; ++k)
                 {
-                    Byte4 b4;
+                    Int4 i4;
                     Vector4 w4;
 
                     ref VertexWeight vw = ref boneMesh.VertexWeights[k];
                     int vertexIndex = (int) vw.VertexIndex;
                     float weight = vw.Weight;
                     
-                    b4 = jMesh.BoneIndices[vertexIndex];
+                    i4 = jMesh.BoneIndices[vertexIndex];
                     w4 = jMesh.BoneWeights[vertexIndex];
                     
-                    b4[j] = (byte)boneIndex;
+                    i4[j] = (byte)boneIndex;
                     w4[j] = weight;
 
-                    jMesh.BoneIndices[k] = b4;
+                    jMesh.BoneIndices[k] = i4;
                     jMesh.BoneWeights[k] = w4;
                 }
             }

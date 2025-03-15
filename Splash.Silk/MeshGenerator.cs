@@ -55,7 +55,7 @@ namespace Splash.Silk
                 if (haveBones)
                 {
                     Vector4 bw = (Vector4)mesh.BoneWeights[v];
-                    engine.joyce.Byte4 bi = (engine.joyce.Byte4)mesh.BoneIndices[v];
+                    engine.joyce.Int4 bi = (engine.joyce.Int4)mesh.BoneIndices[v];
 
                     skMeshEntry.BoneWeights[v * 4 + 0] = bw.X;
                     skMeshEntry.BoneWeights[v * 4 + 1] = bw.Y;

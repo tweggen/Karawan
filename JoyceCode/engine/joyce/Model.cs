@@ -196,7 +196,6 @@ public class Model
             for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
             {
                 _bakeRecursive(RootNode, Matrix4x4.Identity, ma, frameno);
-
             }
         }
     }

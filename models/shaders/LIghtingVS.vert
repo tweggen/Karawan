@@ -11,6 +11,7 @@ in mat4 instanceTransform;
 
 
 const int MAX_BONES = 100;
+const int MAX_BONE_INFLUENCE = 4;
 
 // Input uniform values
 uniform mat4 mvp;
@@ -32,34 +33,58 @@ out vec3 v3FragFront;
 
 void main()
 {
-    //vec4 totalPosition = vec4(0.0f);
-    //for(int i = 0 ; i < MAX_BONE_INFLUENCE ; i++)
-    //{
-    //    if(vertexBoneIds[i] == -1) 
-    //        continue;
-    //    if(vertexBoneIds[i] >=MAX_BONES) 
-    //    {
-    //        totalPosition = vec4(pos,1.0f);
-    //        break;
-    //    }
-    //    vec4 localPosition = m4BoneMatrices[vertexBoneIds[i]] * vec4(pos,1.0f);
-    //    totalPosition += localPosition * vertexWeights[i];
-    //    vec3 localNormal = mat3(m4BoneMatrices[vertexBoneIds[i]]) * vertexNormal;
-    //}
+    vec4 v4TotalPosition;
+    vec3 v3TotalNormal;
+
+    {
+        vec4 v4Vertex = vec4(vertexPosition, 1.0);
+
+        // if ((int(iVertexFlags) & 1) != 0)
+        if (int(iVertexFlags) == 1)
+        {
+            v4TotalPosition = vec4(0.0);
+            v3TotalNormal = vec3(0.0);
+            for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
+            {
+                if (vertexBoneIds[i] == -1)
+                {
+                    continue;
+                }
+                if (vertexBoneIds[i] >= MAX_BONES)
+                {
+                    // v4TotalPosition = vec4(vertexPosition, 1.0);
+                    v3TotalNormal = vertexNormal;
+                    v4TotalPosition = v4Vertex;
+                    break;
+                }
+
+                mat4 m4BoneMatrix = m4BoneMatrices[vertexBoneIds[i]];
+
+                vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
+                v4TotalPosition += v4LocalPosition * vertexWeights[i];
+                vec3 v3LocalNormal = mat3(m4BoneMatrix) * vertexNormal;
+                v3TotalNormal += v3LocalNormal * vertexWeights[i];
+            }
+            
+        } else
+        {
+            v4TotalPosition = v4Vertex;
+            v3TotalNormal = vertexNormal;
+        }
+    }
         
     // instanceTransform = mat4(1.0);
     // Compute MVP for current instance
     mat4 mvpi = mvp * instanceTransform;
-    v4InstancePosition = vec4(instanceTransform[3].xyz,1.0);
-    vec4 vertex = vec4(vertexPosition, 1.0);
+    v4InstancePosition = vec4(instanceTransform[3].xyz,1.0f);
 
     // Send vertex attributes to fragment shader
-    v4FragPosition = instanceTransform * vertex;
-    v4FragFlatPosition = instanceTransform * vertex;
+    v4FragPosition = instanceTransform * v4TotalPosition;
+    v4FragFlatPosition = instanceTransform * v4TotalPosition;
     fragTexCoord = vertexTexCoord;
     fragTexCoord2 = vertexTexCoord2;
     fragColor = vertexColor;
-    v3FragNormal = normalize(vec3(instanceTransform * vec4(vertexNormal, 0.0)));
+    v3FragNormal = normalize(vec3(instanceTransform * vec4(v3TotalNormal, 0.0)));
 
     v3FragUp = vec3(0.0, 1.0, 0.0);
     //v3FragFront = vec3(0.0,0.0,1.0); 
@@ -67,6 +92,6 @@ void main()
     // v3FragRight = vec3(1.0,0.0,0.0); 
     v3FragRight = cross(v3FragFront, v3FragUp);
     // Calculate final vertex position
-    gl_Position = mvpi*vertex;
+    gl_Position = mvpi*v4TotalPosition;
 }
 

@@ -80,7 +80,7 @@ public class Mesh : IComparable<Mesh>
     /**
      * Indexable array of bone indices per Vertex.
      */
-    public IList<Byte4>? BoneIndices;
+    public IList<Int4>? BoneIndices;
 
     /**
      * Indexable array of bone weightys
