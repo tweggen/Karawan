@@ -109,7 +109,7 @@ public class Model
         }
         
         Matrix4x4 m4Anim;
-        if (false && ma.MapChannels.TryGetValue(me, out var mac))
+        if (ma.MapChannels.TryGetValue(me, out var mac))
         {
             /*
              * We do have an animation channel for this node.
@@ -117,9 +117,9 @@ public class Model
              *
              * Apply it to the matrix.
              */
-            var kfPosition = mac.LerpPosition(frameno);
-            var kfRotation = mac.SlerpRotation(frameno);
-            var kfScaling = mac.LerpScaling(frameno); 
+            var kfPosition = mac.LerpPosition(0 /* frameno */);
+            var kfRotation = mac.SlerpRotation(0 /* frameno */);
+            var kfScaling = mac.LerpScaling(0 /* frameno */); 
 
             m4Anim =
                 Matrix4x4.CreateFromQuaternion(kfRotation.Value)
@@ -128,13 +128,13 @@ public class Model
         }
         else
         {
-            m4Anim = Matrix4x4.Identity;
+            m4Anim = me.Transform.Matrix;
         }
         
         /*
          * This is the complete transformation of this node,
          */
-        Matrix4x4 m4MyTransform = m4Anim * me.Transform.Matrix * m4ParentTransform;
+        Matrix4x4 m4MyTransform = m4Anim * m4ParentTransform;
         
         /*
          * Store resulting matrix if we have a bone that carries it.
@@ -142,7 +142,7 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4MyTransform;
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Model2Bone * m4MyTransform;
         }
 
 
@@ -193,15 +193,10 @@ public class Model
                     BoneTransformations = new Matrix4x4[Skeleton.NBones]
                 };
                 ma.BakedFrames[frameno] = bakedFrame;
-
-                /*
-                 * Now we have the space to compute the position of each and every bone.
-                 */
-                var nBones = skeleton.NBones;
             }
 
             /*
-             * Now for this animation, for every frame, recurse throught the bones.
+             * Now for this animation, for every frame, recurse through the bones.
              */
             for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
             {

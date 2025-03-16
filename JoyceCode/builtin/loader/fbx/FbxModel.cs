@@ -361,7 +361,7 @@ public class FbxModel : IDisposable
             }
         }
 
-        var mToParent = Matrix4x4.Transpose(node->MTransformation);
+        var mToParent = /* Matrix4x4.Transpose( */ node->MTransformation /* ) */;
         
         mn.Transform = new Transform3ToParent(
             true, 0xffffffff, mToParent);
@@ -455,7 +455,7 @@ public class FbxModel : IDisposable
                 var aiBone = mesh->MBones[i];
 
                 var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                jBone.Model2Bone = Matrix4x4.Transpose(aiBone->MOffsetMatrix);
+                jBone.Model2Bone = /* Matrix4x4.Transpose (*/ aiBone->MOffsetMatrix /*)*/ ;
                 var nBoneVertices = aiBone->MNumWeights;
                 boneMeshes[i] = new BoneMesh(jBone, nBoneVertices);
             
