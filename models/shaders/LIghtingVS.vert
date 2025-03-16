@@ -47,16 +47,16 @@ void main()
             v3TotalNormal = vec3(0.0);
             for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
             {
-                if (vertexBoneIds[i] == -1)
+                int boneId = vertexBoneIds[i];
+                if (boneId == -1)
                 {
                     continue;
                 }
-                int boneId = vertexBoneIds[i]; 
                 if (boneId >= MAX_BONES)
                 {
                     v4TotalPosition = v4Vertex;
-                    // v4TotalPosition = vec4(100.0, 100.0, 0.0, 1.0);
                     v3TotalNormal = vertexNormal;
+                    // v4TotalPosition = vec4(100.0, 100.0, 0.0, 1.0);
                     break;
                 }
 

@@ -32,13 +32,25 @@ public class Model
 {
     public string Name;
 
-    public ModelNode RootNode;
+    private ModelNode _mnRoot; 
+    public ModelNode RootNode
+    {
+        get => _mnRoot;
+        set
+        {
+            _mnRoot = value;
+            _m4InverseGlobal = _mnRoot.Transform.Matrix;
+            
+        } 
+    }
     private int _nextNodeIndex = 1;
     private int _nextAnimIndex = 1;
     public Skeleton? Skeleton = null;
     public SortedDictionary<string, ModelAnimation> MapAnimations;
     public SortedDictionary<string, ModelNode> MapNodes = new();
 
+    public Matrix4x4 _m4InverseGlobal;
+    
     /**
      * Convenience method to create a model from a single InstanceDesc
      */
@@ -108,9 +120,7 @@ public class Model
             var kfPosition = mac.LerpPosition(frameno);
             var kfRotation = mac.SlerpRotation(frameno);
             var kfScaling = mac.LerpScaling(frameno); 
-            //mac.Positions[frameno] = kfPosition;
-            //mac.Rotations[frameno] = kfRotation;
-            //mac.Scalings[frameno] = kfScaling;
+
             m4Anim =
                 Matrix4x4.CreateFromQuaternion(kfRotation.Value)
                 * Matrix4x4.CreateScale(kfScaling.Value)
@@ -118,13 +128,13 @@ public class Model
         }
         else
         {
-            m4Anim = Matrix4x4.Identity;
+            m4Anim = me.Transform.Matrix;
         }
         
         /*
          * This is the complete transformation of this node,
          */
-        Matrix4x4 m4MyTransform = m4ParentTransform * me.Transform.Matrix * m4Anim;
+        Matrix4x4 m4MyTransform = m4Anim * m4ParentTransform;
         
         /*
          * Store resulting matrix if we have a bone that carries it.
