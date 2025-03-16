@@ -117,9 +117,9 @@ public class Model
              *
              * Apply it to the matrix.
              */
-            var kfPosition = mac.LerpPosition(0 /* frameno */);
-            var kfRotation = mac.SlerpRotation(0 /* frameno */);
-            var kfScaling = mac.LerpScaling(0 /* frameno */); 
+            var kfPosition = mac.LerpPosition(frameno);
+            var kfRotation = mac.SlerpRotation(frameno);
+            var kfScaling = mac.LerpScaling(frameno); 
 
             m4Anim =
                 Matrix4x4.CreateFromQuaternion(kfRotation.Value)
