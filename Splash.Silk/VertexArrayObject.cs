@@ -28,7 +28,7 @@ public class VertexArrayObject : IDisposable
     {
         /*
          * We need the GL instance.
-         */
+         */ 
         _gl = gl;
 
         bool haveBones = skMeshEntry.BoneWeights != null && skMeshEntry.BoneIndices != null;
@@ -43,8 +43,8 @@ public class VertexArrayObject : IDisposable
 
         if (haveBones)
         {
-            _bBoneWeights = new BufferObject<float>(_gl, skMeshEntry.BoneWeights, BufferTargetARB.ArrayBuffer);
             _bBoneIndices = new BufferObject<int>(_gl, skMeshEntry.BoneIndices, BufferTargetARB.ArrayBuffer);
+            _bBoneWeights = new BufferObject<float>(_gl, skMeshEntry.BoneWeights, BufferTargetARB.ArrayBuffer);
         }
         
         //Setting out handle and binding the VBO and EBO to this VAO.
@@ -85,25 +85,24 @@ public class VertexArrayObject : IDisposable
             false,
             0,
             (void*) 0);
-        _gl.VertexAttrib4(4, new Vector4(1f, 1f, 1f, 1f));
-        _gl.DisableVertexAttribArray(4);
+        // _gl.VertexAttrib4(4, new Vector4(1f, 1f, 1f, 1f));
+        // _gl.DisableVertexAttribArray(4);
         if (haveBones)
         {
+            _bBoneIndices.BindBuffer();   
+            _gl.EnableVertexAttribArray(4);
+            _gl.VertexAttribIPointer(
+                4,
+                4,
+                VertexAttribIType.Int,
+                0,
+                (void*) 0);
             _bBoneWeights.BindBuffer();   
             _gl.EnableVertexAttribArray(5);
             _gl.VertexAttribPointer(
                 5,
                 4,
                 VertexAttribPointerType.Float,
-                false,
-                0,
-                (void*) 0);
-            _bBoneIndices.BindBuffer();   
-            _gl.EnableVertexAttribArray(6);
-            _gl.VertexAttribPointer(
-                6,
-                4,
-                VertexAttribPointerType.Int,
                 false,
                 0,
                 (void*) 0);

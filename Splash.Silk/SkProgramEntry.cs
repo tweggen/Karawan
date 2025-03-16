@@ -17,7 +17,7 @@ public class SkProgramEntry : IDisposable
 
     public SortedDictionary<string, ShaderLocs> ShaderUseCases = new();
 
-    private const bool _checkErrors = true;
+    private const bool _checkErrors = false;
     
     public void SetUniform(int location, int value)
     {

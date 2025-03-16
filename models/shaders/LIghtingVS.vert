@@ -4,9 +4,10 @@ layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoord;
 layout(location = 2) in vec2 vertexTexCoord2;
 layout(location = 3) in vec3 vertexNormal;
-layout(location = 4) in vec4 vertexColor;
+// layout(location = 4) in vec4 vertexColor;
+layout(location = 4) in ivec4 vertexBoneIds;
 layout(location = 5) in vec4 vertexWeights;
-layout(location = 6) in ivec4 vertexBoneIds;
+
 in mat4 instanceTransform;
 
 
@@ -48,7 +49,6 @@ void main()
             {
                 if (vertexBoneIds[i] == -1)
                 {
-                    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
                     continue;
                 }
                 int boneId = vertexBoneIds[i]; 
@@ -57,7 +57,6 @@ void main()
                     v4TotalPosition = v4Vertex;
                     // v4TotalPosition = vec4(100.0, 100.0, 0.0, 1.0);
                     v3TotalNormal = vertexNormal;
-                    fragColor = vec4(0.0, 1.0, 0.0, 1.0);
                     break;
                 }
 
@@ -86,7 +85,7 @@ void main()
     v4FragFlatPosition = instanceTransform * v4TotalPosition;
     fragTexCoord = vertexTexCoord;
     fragTexCoord2 = vertexTexCoord2;
-    fragColor = vertexColor;
+    fragColor = vec4(1.0,1.0,1.0,1.0);
     v3FragNormal = normalize(vec3(instanceTransform * vec4(v3TotalNormal, 0.0)));
 
     v3FragUp = vec3(0.0, 1.0, 0.0);
