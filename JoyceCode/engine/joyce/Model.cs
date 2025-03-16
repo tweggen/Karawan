@@ -182,7 +182,7 @@ public class Model
             /*
              * How many real frames does this animation have?
              */
-            float duration = ma.Duration / ma.TicksPerSecond;
+            float duration = ma.Duration;
             uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];

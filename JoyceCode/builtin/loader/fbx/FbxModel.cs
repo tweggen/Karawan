@@ -148,7 +148,7 @@ public class FbxModel : IDisposable
 
             ModelAnimation ma = _model.CreateAnimation();
             ma.Name = aiAnim->MName.ToString();
-            ma.Duration = (float)aiAnim->MDuration;
+            ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
             ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
             ma.NTicks = (aiAnim->MTicksPerSecond < 0.015f) ? 1 : (uint)(aiAnim->MDuration / aiAnim->MTicksPerSecond);
             ma.MapChannels = new();
@@ -200,7 +200,7 @@ public class FbxModel : IDisposable
                 {
                     mac.Positions![l] = new()
                     {
-                        Time = (float)aiChannel->MPositionKeys[l].MTime,
+                        Time = (float)aiChannel->MPositionKeys[l].MTime / ma.TicksPerSecond,
                         Value = aiChannel->MPositionKeys[l].MValue
                     };
                 }
@@ -209,7 +209,7 @@ public class FbxModel : IDisposable
                 {
                     mac.Scalings![l] = new()
                     {
-                        Time = (float)aiChannel->MScalingKeys[l].MTime,
+                        Time = (float)aiChannel->MScalingKeys[l].MTime / ma.TicksPerSecond,
                         Value = aiChannel->MScalingKeys[l].MValue
                     };
                 }
@@ -218,7 +218,7 @@ public class FbxModel : IDisposable
                 {
                     mac.Rotations![l] = new()
                     {
-                        Time = (float)aiChannel->MRotationKeys[l].MTime,
+                        Time = (float)aiChannel->MRotationKeys[l].MTime / ma.TicksPerSecond,
                         Value = aiChannel->MRotationKeys[l].MValue
                     };
                 }

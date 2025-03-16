@@ -219,6 +219,7 @@ public class CameraOutput
                                 if (frameno < (uint) modelBakedFrames.Length)
                                 {
                                     modelBakedFrame = modelBakedFrames[frameno];
+                                    Trace($"modelBakedFrame[{frameno}].BoneTransformations[0] {modelBakedFrame.BoneTransformations[0]}");
                                 }
                             }
                         }
