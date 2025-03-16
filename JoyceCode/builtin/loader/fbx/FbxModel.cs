@@ -526,6 +526,36 @@ public class FbxModel : IDisposable
                     jMesh.BoneWeights[vertexIndex] = w4;
                 }
             }
+            
+            /*
+             * Finally, normalize the weights
+             */
+            for (int j = 0; j < nMeshVertices; ++j)
+            {
+                float totalWeight = 0f;
+                var i4 = jMesh.BoneIndices[j];
+                var w4 = jMesh.BoneWeights[j];
+                for (int l = 0; l < 4; ++l)
+                {
+                    if (i4[l] != -1)
+                    {
+                        totalWeight += w4[l];
+                    }
+                }
+
+                if (totalWeight != 0f)
+                {
+                    float inv = 1f / totalWeight;
+                    for (int l = 0; l < 4; ++l)
+                    {
+                        if (i4[l] != -1)
+                        {
+                            w4[l] *= inv;
+                        }
+                    }
+
+                }
+            }
         }
         
         return jMesh;

@@ -34,8 +34,8 @@ public class SilkThreeD : IThreeD
     /*
      * Sort of shader parameters. Where to?
      */
-    private Matrix4x4 _matView;
-    private Matrix4x4 _matProjection;
+    private Matrix4x4 _m4View;
+    private Matrix4x4 _m4Projection;
     private Vector3 _vCamera;
     private float _fogDistance;
     private Vector3 _v3FogColor = new(0.2f, 0.18f, 0.2f); 
@@ -398,8 +398,8 @@ public class SilkThreeD : IThreeD
         // Vector4 v0 = Vector4.Transform(new Vector4( skMeshEntry.JMesh.Vertices[0], 0f), matTotal);
         if (_useInstanceRendering) 
         {
-            Matrix4x4 mvp = _matView * _matProjection;
-            sh.SetUniform(_locMvp, mvp);
+            Matrix4x4 m4Mvp = _m4View * _m4Projection;
+            sh.SetUniform(_locMvp, m4Mvp);
             if (jMesh.Vertices.Count > 65535)
             {
                 Error($"Trying to render mesh {skMeshEntry.vao.Handle} with too much mesh vertices at once ({jMesh.Vertices.Count})");
@@ -433,7 +433,7 @@ public class SilkThreeD : IThreeD
 
             for (int i = 0; i < nMatrices; ++i)
             {
-                Matrix4x4 mvpi = Matrix4x4.Transpose(spanMatrices[i]) * _matView * _matProjection;
+                Matrix4x4 mvpi = Matrix4x4.Transpose(spanMatrices[i]) * _m4View * _m4Projection;
                 sh.SetUniform(_locMvp, mvpi);
                 if (_checkGLErrors) CheckError(gl,"upload mvpi");
                 gl.DrawElements(
@@ -755,7 +755,7 @@ public class SilkThreeD : IThreeD
      */
     public void SetViewMatrix(in Matrix4x4 matView)
     {
-        _matView = matView;
+        _m4View = matView;
     }
 
 
@@ -766,7 +766,7 @@ public class SilkThreeD : IThreeD
      */
     public void SetProjectionMatrix(in Matrix4x4 matProjection)
     {
-        _matProjection = matProjection;
+        _m4Projection = matProjection;
     }
 
     

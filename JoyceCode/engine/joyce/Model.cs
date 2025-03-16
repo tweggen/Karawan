@@ -109,7 +109,7 @@ public class Model
         }
         
         Matrix4x4 m4Anim;
-        if (ma.MapChannels.TryGetValue(me, out var mac))
+        if (false && ma.MapChannels.TryGetValue(me, out var mac))
         {
             /*
              * We do have an animation channel for this node.
@@ -128,13 +128,13 @@ public class Model
         }
         else
         {
-            m4Anim = me.Transform.Matrix;
+            m4Anim = Matrix4x4.Identity;
         }
         
         /*
          * This is the complete transformation of this node,
          */
-        Matrix4x4 m4MyTransform = m4Anim * m4ParentTransform;
+        Matrix4x4 m4MyTransform = m4Anim * me.Transform.Matrix * m4ParentTransform;
         
         /*
          * Store resulting matrix if we have a bone that carries it.
@@ -142,7 +142,7 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Model2Bone * m4MyTransform;
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4MyTransform;
         }
 
 
