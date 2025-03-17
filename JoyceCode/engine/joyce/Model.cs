@@ -211,7 +211,11 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = (m4Model2Bone*Scale) * m4MyTransform /* * m4InverseGlobalTransform */;
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = 
+                (m4Model2Bone /* *Scale */) 
+                * m4MyTransform 
+                                  /* * m4InverseGlobalTransform */
+                ;
         }
 
 

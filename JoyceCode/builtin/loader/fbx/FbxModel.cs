@@ -516,15 +516,19 @@ public class FbxModel : IDisposable
 
                     if (4 == l)
                     {
+                        int minL = -1;
+                        float minW = Single.MaxValue;
                         for (l = 0; l < 4; ++l)
                         {
-                            if (w4[l] < weight) 
+                            if (w4[l] < minW)
                             {
-                                i4[l] = (int)boneIndex;
-                                w4[l] = weight;
-                                break;
+                                minL = l;
+                                minW = w4[l];
                             }
                         }
+
+                        w4[minL] = weight;
+                        i4[minL] = (int)boneIndex;
                     }
                     
                     jMesh.BoneIndices[vertexIndex] = i4;
@@ -558,8 +562,10 @@ public class FbxModel : IDisposable
                             w4[l] *= inv;
                         }
                     }
-
                 }
+                jMesh.BoneIndices[j] = i4;
+                jMesh.BoneWeights[j] = w4;
+
             }
         }
         

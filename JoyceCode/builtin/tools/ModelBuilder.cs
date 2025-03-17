@@ -197,13 +197,12 @@ public class ModelBuilder
              * If we have children, we add the adjustment to one additional layer.
              */
             var cTransformToParent = eRoot.Get<Transform3ToParent>();
+            cTransformToParent.Matrix *= v4GlobalTransform;
             if (mnAdjust != null)
             {
                 cTransformToParent.Matrix *= mAdjust;
             }
-
-            cTransformToParent.Matrix *= v4GlobalTransform;
-
+            
             eRoot.Set(cTransformToParent);
         }
         else

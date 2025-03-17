@@ -252,7 +252,9 @@ unsafe public class API : Boom.ISoundAPI
         _openDevice();
         _al.DistanceModel(DistanceModel.InverseDistance);
         _checkForErrors("DistanceModel");
-        _al.SetListenerProperty(ListenerFloat.Gain, 4f);
+        _al.SetListenerProperty(
+            ListenerFloat.Gain, 
+            4f * (float) engine.Props.Get("nogame.volume", 1.0));
         _checkForErrors("SetListenerProperty");
         _updateMovingSoundsSystem = new(_engine, this);
     }
