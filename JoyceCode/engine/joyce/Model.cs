@@ -34,7 +34,7 @@ public class Skin
 public class Model
 {
     public string Name;
-
+    
     private ModelNode _mnRoot; 
     public ModelNode RootNode
     {
@@ -50,6 +50,8 @@ public class Model
     public SortedDictionary<string, ModelAnimation> MapAnimations;
     public SortedDictionary<string, ModelNode> MapNodes = new();
 
+    public float Scale = 1.0f;
+    
     /**
      * Convenience method to create a model from a single InstanceDesc
      */
@@ -209,7 +211,7 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Model2Bone * m4MyTransform * m4InverseGlobalTransform;
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = (m4Model2Bone*Scale) * m4MyTransform /* * m4InverseGlobalTransform */;
         }
 
 

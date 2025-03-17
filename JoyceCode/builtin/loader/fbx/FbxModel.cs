@@ -112,15 +112,15 @@ public class FbxModel : IDisposable
 
         _loadAnimations();
         
+        var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
+        float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
+        model.Scale = unitscale / 100f;
+        model.RootNode.Transform.Matrix *= Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
+
         /*
          * Baking animations must include the root matrix corrections.
          */
         model.BakeAnimations();
-
-        var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
-        float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
-        model.RootNode.Transform.Matrix *= Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
-
 
     }
     
