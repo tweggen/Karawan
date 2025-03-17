@@ -71,6 +71,9 @@ public class Bone
      * As such, it shall be the first part of any bone transformation.
      */
     public Matrix4x4 Model2Bone;
+
+    public Matrix4x4 Bone2Model;
+    
     public Dictionary<Mesh, BoneMesh>? _mapBoneMeshes = null;
     public uint Index;
 

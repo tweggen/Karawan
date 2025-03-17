@@ -57,7 +57,7 @@ public struct AABB
     {
         if (!m.IsIdentity)
         {
-            bool ok = Matrix4x4.Decompose(m, out var scale, out var rot, out var pos);
+            // bool ok = Matrix4x4.Decompose(m, out var scale, out var rot, out var pos);
             Vector3 newAA = new(m.M41, m.M42, m.M43);
             Vector3 newBB = new(m.M41, m.M42, m.M43);
 

@@ -14,7 +14,12 @@ public class ModelNode
     /**
      * The root of this model.
      */
-    public Model Model;
+    public required Model Model;
+
+    /**
+     * The parent model node
+     */
+    public required ModelNode? Parent;
     
     /**
      * A possible node name.
@@ -30,6 +35,16 @@ public class ModelNode
      * If non-null, contains a list of children of this node.
      */
     public IList<ModelNode>? Children;
+
+    public void AddChild(ModelNode mnChild)
+    {
+        if (null == Children)
+        {
+            Children = new List<ModelNode>();
+        }
+        Children.Add(mnChild);
+        mnChild.Parent = this;
+    }
 
     /**
      * If non-null, contains a instance desc with meshes and

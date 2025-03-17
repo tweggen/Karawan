@@ -86,30 +86,38 @@ public class ModelBuilder
             }
         }
     }
-
-
-    private ModelNode _findFirstInstanceDesc(ModelNode mnRoot)
+    
+    
+    /**
+     * Return the first instance desc below the given root node, returning the global transform
+     * accumulated up to and including the root node.
+     */
+    private ModelNode _findFirstInstanceDesc(ModelNode mnRoot, out Matrix4x4 m4GlobalTransform)
     {
         if (null != mnRoot.InstanceDesc)
         {
+            m4GlobalTransform = mnRoot.Transform.Matrix;
             return mnRoot;
         }
 
 
         if (null == mnRoot.Children)
         {
+            m4GlobalTransform = mnRoot.Transform.Matrix;
             return null;
         }
 
         foreach (var mnChild in mnRoot.Children)
         {
-            var mnFirst = _findFirstInstanceDesc(mnChild);
+            var mnFirst = _findFirstInstanceDesc(mnChild, out var m4ChildTransform);
             if (null != mnFirst)
             {
+                m4GlobalTransform = m4ChildTransform * mnRoot.Transform.Matrix;
                 return mnFirst;
             }
         }
 
+        m4GlobalTransform = Matrix4x4.Identity;
         return null;
     }
     
@@ -142,7 +150,7 @@ public class ModelBuilder
          */
         ModelNode mnAdjust = null;
 
-        ModelNode mnFirstInstanceDesc = _findFirstInstanceDesc(mnRoot); 
+        ModelNode mnFirstInstanceDesc = _findFirstInstanceDesc(mnRoot, out var v4GlobalTransform); 
         if (_isHierarchical)
         {
             mnAdjust = mnFirstInstanceDesc;
@@ -160,11 +168,13 @@ public class ModelBuilder
          */
         if (_isHierarchical)
         {
+            #if false
             if (0 != (_instantiateModelParams.GeomFlags & InstantiateModelParams.NO_CONTROLLABLE_ROOT))
             {
                 eRoot = eUserRoot.Value;
             }
             else
+            #endif
             {
                 eRoot = _engine.CreateEntity($"ba {_jModel.Name}");
                 _aHierarchy.SetParent(eRoot, eUserRoot);
@@ -177,27 +187,30 @@ public class ModelBuilder
 
         _buildNodeInto(eRoot, mnRoot);
 
-        if (mnAdjust != null)
+        if (_isHierarchical)
         {
-            if (_isHierarchical)
+            /*
+             * If we are hierarchical, we need to find the first root node to compute
+             * the adjustment from.
+             */
+            /*
+             * If we have children, we add the adjustment to one additional layer.
+             */
+            var cTransformToParent = eRoot.Get<Transform3ToParent>();
+            if (mnAdjust != null)
             {
-                /*
-                 * If we are hierarchical, we need to find the first root node to compute
-                 * the adjustment from.
-                 */
-                /*
-                 * If we have children, we add the adjustment to one additional layer.
-                 */
-                var cTransformToParent = eRoot.Get<Transform3ToParent>();
                 cTransformToParent.Matrix *= mAdjust;
-                eRoot.Set(cTransformToParent);
             }
-            else
-            {
-                /*
-                 * If we do not have children, we assume it's already inside the InstanceDesc.
-                 */
-            }
+
+            cTransformToParent.Matrix *= v4GlobalTransform;
+
+            eRoot.Set(cTransformToParent);
+        }
+        else
+        {
+            /*
+             * If we do not have children, we assume it's already inside the InstanceDesc.
+             */
         }
 
         return eUserRoot.Value;

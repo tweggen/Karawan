@@ -22,7 +22,7 @@ public class InstantiateModelParams
      * can be added to the entity to have it
      * conttrolled.
      */
-    public static int NO_CONTROLLABLE_ROOT = 0x20000;
+    // public static int NO_CONTROLLABLE_ROOT = 0x20000;
 
     /**
      * Have the builder create physics as well

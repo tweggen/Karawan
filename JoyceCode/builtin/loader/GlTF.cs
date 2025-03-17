@@ -290,7 +290,7 @@ public class GlTF
     /**
      * Read one node from the gltf. One node translates to one entity.
      */
-    private void _readNode(glTFLoader.Schema.Node gltfNode, out ModelNode mn)
+    private void _readNode(glTFLoader.Schema.Node gltfNode, ModelNode mnParent, out ModelNode mn)
     {
         var mf = gltfNode.Matrix;
         Matrix4x4 m = new(
@@ -309,7 +309,7 @@ public class GlTF
                 gltfNode.Rotation[2], gltfNode.Rotation[3]));
         m *= Matrix4x4.CreateTranslation(
             gltfNode.Translation[0], gltfNode.Translation[1], gltfNode.Translation[2]);
-        mn = new() { Model = _jModel };
+        mn = new() { Model = _jModel, Parent = mnParent };
         mn.Transform = new Transform3ToParent(
             true, 0xffffffff, m
             );
@@ -346,12 +346,12 @@ public class GlTF
          */
         if (gltfNode.Children != null)
         {
-            mn.Children = new List<ModelNode>();
+            
             foreach (var idxChildNode in gltfNode.Children)
             {
                 var nChild = _gltfModel.Nodes[idxChildNode];
-                _readNode(nChild, out var mnChild);
-                mn.Children.Add(mnChild);
+                _readNode(nChild, mn, out var mnChild);
+                mn.AddChild(mnChild);
             }
         }
     }
@@ -408,7 +408,7 @@ public class GlTF
         List<ModelNode> rootNodes = new();
         foreach (var idxRootNode in scene.Nodes)
         {
-            _readNode(_gltfModel.Nodes[idxRootNode], out var mnNode);
+            _readNode(_gltfModel.Nodes[idxRootNode], null, out var mnNode);
             _dictNodes[idxRootNode] = mnNode;
             rootNodes.Add(mnNode);
         }
@@ -427,10 +427,15 @@ public class GlTF
         {
             ModelNode mnRoot = new()
             {
+                Parent = null,
                 Children = rootNodes,
                 Model = jModel
             };
             jModel.RootNode = mnRoot;
+            foreach (var mnRootChild in rootNodes)
+            {
+                mnRootChild.Parent = mnRoot;
+            }
         }
         else
         {

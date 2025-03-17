@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using builtin.extensions;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -110,12 +111,12 @@ public class FbxModel : IDisposable
         model.RootNode = ProcessNode(_scene->MRootNode);
 
         _loadAnimations();
+        model.BakeAnimations();
         
         var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
         model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
         
-        model.BakeAnimations();
         // TXWTODO: How to free scene?
     }
     
@@ -179,8 +180,6 @@ public class FbxModel : IDisposable
                 /*
                  * Check, if we already have a bone data structure for this bone
                  */
-                var bone = skeleton.FindBone(aiChannel->MNodeName.ToString());
-
                 uint nPositionKeys = aiChannel->MNumPositionKeys;
                 uint nScalingKeys = aiChannel->MNumScalingKeys;
                 uint nRotationKeys = aiChannel->MNumRotationKeys;
@@ -353,11 +352,11 @@ public class FbxModel : IDisposable
          */
         if (node->MNumChildren > 0)
         {
-            Trace($"{node->MNumChildren} children.");
-            mn.Children = new List<ModelNode>();
+            // Trace($"{node->MNumChildren} children.");
+            
             for (var i = 0; i < node->MNumChildren; i++)
             {
-                mn.Children.Add(ProcessNode(node->MChildren[i]));
+                mn.AddChild(ProcessNode(node->MChildren[i]));
             }
         }
 
@@ -456,6 +455,8 @@ public class FbxModel : IDisposable
 
                 var jBone = skeleton.FindBone(aiBone->MName.ToString());
                 jBone.Model2Bone = /* Matrix4x4.Transpose (*/ aiBone->MOffsetMatrix /*)*/ ;
+                jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
+                
                 var nBoneVertices = aiBone->MNumWeights;
                 boneMeshes[i] = new BoneMesh(jBone, nBoneVertices);
             

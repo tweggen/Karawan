@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Numerics;
+using builtin.extensions;
+using static engine.Logger;
 
 namespace engine.joyce;
 
@@ -39,8 +42,6 @@ public class Model
         set
         {
             _mnRoot = value;
-            _m4InverseGlobal = _mnRoot.Transform.Matrix;
-            
         } 
     }
     private int _nextNodeIndex = 1;
@@ -49,8 +50,6 @@ public class Model
     public SortedDictionary<string, ModelAnimation> MapAnimations;
     public SortedDictionary<string, ModelNode> MapNodes = new();
 
-    public Matrix4x4 _m4InverseGlobal;
-    
     /**
      * Convenience method to create a model from a single InstanceDesc
      */
@@ -59,6 +58,7 @@ public class Model
         ModelNode mnRoot = new()
         {
             Model = this,
+            Parent = null,
             InstanceDesc = instanceDesc,
             Transform = new(true, 0xffff, Matrix4x4.Identity)
         };
@@ -70,6 +70,7 @@ public class Model
     {
         return new()
         {
+            Parent = null,
             Model = this,
             Index = _nextNodeIndex++
         };
@@ -86,9 +87,72 @@ public class Model
 
 
     /**
+     * For the classic skinned animation, find the first InstanceDesc node below the given root node.
+     */
+    private static ModelNode? _findInstanceDescNodeBelow(ModelNode mn)
+    {
+        if (mn.InstanceDesc != null)
+        {
+            return mn;
+        }
+
+        foreach (var mnChild in mn.Children)
+        {
+            var mnInstanceDescNode = _findInstanceDescNodeBelow(mnChild);
+            if (mnInstanceDescNode != null)
+            {
+                return mnInstanceDescNode;
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Find the closest instance desc node close to the animation node.
+     */
+    private static ModelNode? _findClosestInstanceDesc(ModelNode mn)
+    {
+        ModelNode? mnCurr = mn;
+
+        while (mnCurr != null)
+        {
+            ModelNode? mnBelowCurr = _findInstanceDescNodeBelow(mnCurr);
+            if (null != mnBelowCurr)
+            {
+                return mnBelowCurr;
+            }
+
+            mnCurr = mnCurr.Parent;
+        }
+
+        return null;
+    }
+
+
+    private static Matrix4x4 _computeGlobalTransform(ModelNode mn)
+    {
+        Matrix4x4 m4ParentTransform;
+        if (mn.Parent != null)
+        {
+            m4ParentTransform = _computeGlobalTransform(mn.Parent);
+        }
+        else
+        {
+            m4ParentTransform = Matrix4x4.Identity;
+        }
+
+        m4ParentTransform = m4ParentTransform * mn.Transform.Matrix;
+
+        return m4ParentTransform;
+    }
+    
+    
+    /**
      * Bake all animations for the given node.
      */
-    private void _bakeRecursive(ModelNode me, Matrix4x4 m4ParentTransform, ModelAnimation ma, uint frameno)
+    private void _bakeRecursive(ModelNode me, in Matrix4x4 m4ParentTransform, in Matrix4x4 m4InverseGlobalTransform, ModelAnimation ma, uint frameno)
     {
         var skeleton = Skeleton!;
         
@@ -98,14 +162,17 @@ public class Model
         Bone? bone = null;
         uint boneIndex = 0; 
         Matrix4x4 m4Model2Bone;
+        Matrix4x4 m4Bone2Model;
         if (skeleton.MapBones.TryGetValue(me.Name, out bone))
         {
             m4Model2Bone = bone.Model2Bone;
+            m4Bone2Model = bone.Bone2Model;
             boneIndex = bone.Index;
         }
         else
         {
             m4Model2Bone = Matrix4x4.Identity;
+            m4Bone2Model = Matrix4x4.Identity;
         }
         
         Matrix4x4 m4Anim;
@@ -142,7 +209,7 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Model2Bone * m4MyTransform;
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Model2Bone * m4MyTransform * m4InverseGlobalTransform;
         }
 
 
@@ -153,7 +220,7 @@ public class Model
              */
             foreach (var child in me.Children)
             {
-                _bakeRecursive(child, m4MyTransform, ma, frameno);
+                _bakeRecursive(child, m4MyTransform, m4InverseGlobalTransform, ma, frameno);
             }
         }
     }
@@ -170,6 +237,27 @@ public class Model
         }
 
         var skeleton = FindSkeleton();
+            
+        /*
+         * We assume there is only one instancedesc. Don't know if this is true
+         * for all formats.
+         */
+        Matrix4x4 m4GlobalTransform;
+        {
+            ModelNode? mnInstanceDesc = _findInstanceDescNodeBelow(_mnRoot);
+            if (null == mnInstanceDesc)
+            {
+                /*
+                 * Well, if there is no instancedesc, there is no need to bake anything.
+                 */
+                Trace($"No instance desc for animation");
+                return;
+            }
+
+            m4GlobalTransform = _computeGlobalTransform(mnInstanceDesc);
+        }
+        
+        Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
 
         /*
          * First, for all animations, create the arrays of matrices for
@@ -200,7 +288,7 @@ public class Model
              */
             for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
             {
-                _bakeRecursive(RootNode, Matrix4x4.Identity, ma, frameno);
+                _bakeRecursive(RootNode, Matrix4x4.Identity, m4InverseGlobalTransform, ma, frameno);
             }
         }
     }
