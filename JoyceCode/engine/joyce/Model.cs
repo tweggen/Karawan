@@ -154,7 +154,7 @@ public class Model
     /**
      * Bake all animations for the given node.
      */
-    private void _bakeRecursive(ModelNode me, in Matrix4x4 m4ParentTransform, in Matrix4x4 m4InverseGlobalTransform, ModelAnimation ma, uint frameno)
+    private void _bakeRecursive(ModelNode me, in Matrix4x4 m4ParentTransform, in Matrix4x4 m4GlobalTransform, ModelAnimation ma, uint frameno)
     {
         var skeleton = Skeleton!;
         
@@ -212,9 +212,9 @@ public class Model
         if (bone != null)
         {
             ma.BakedFrames[frameno].BoneTransformations[boneIndex] = 
-                (m4Model2Bone * (1f/Scale)) 
+                m4Model2Bone /* * (1f/Scale) */ 
                 * m4MyTransform 
-                                  /* * m4InverseGlobalTransform */
+                /* * m4InverseGlobalTransform */
                 ;
         }
 
@@ -226,7 +226,7 @@ public class Model
              */
             foreach (var child in me.Children)
             {
-                _bakeRecursive(child, m4MyTransform, m4InverseGlobalTransform, ma, frameno);
+                _bakeRecursive(child, m4MyTransform, m4GlobalTransform, ma, frameno);
             }
         }
     }
@@ -263,7 +263,7 @@ public class Model
             m4GlobalTransform = _computeGlobalTransform(mnInstanceDesc);
         }
         
-        Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
+        // Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
 
         /*
          * First, for all animations, create the arrays of matrices for
@@ -294,7 +294,7 @@ public class Model
              */
             for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
             {
-                _bakeRecursive(RootNode, Matrix4x4.Identity, m4InverseGlobalTransform, ma, frameno);
+                _bakeRecursive(RootNode, Matrix4x4.Identity * Scale, m4GlobalTransform, ma, frameno);
             }
         }
     }
