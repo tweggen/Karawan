@@ -557,7 +557,7 @@ public class Module : engine.AModule
                 var mapAnimations = _model.MapAnimations;
                 if (mapAnimations != null && mapAnimations.Count > 0)
                 {
-                    var animation = mapAnimations.Values.First();
+                    var animation = mapAnimations["Metarig Boy|Run Mid"];
                     _eAnimations.Set(new AnimationState
                     {
                         ModelAnimation = animation,
