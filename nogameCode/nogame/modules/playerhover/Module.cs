@@ -85,7 +85,7 @@ public class Module : engine.AModule
                                               // | InstantiateModelParams.CENTER_X
                                               // | InstantiateModelParams.CENTER_Z
                                               // | InstantiateModelParams.ROTATE_Y180
-                                              //    | InstantiateModelParams.ROTATE_X90
+                                                 | InstantiateModelParams.ROTATE_X90
                                               // | InstantiateModelParams.ROTATE_Z180
                                               ;
     #endif

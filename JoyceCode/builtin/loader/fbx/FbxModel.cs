@@ -121,7 +121,7 @@ public class FbxModel : IDisposable
          */
         model.BakeAnimations();
 
-        model.RootNode.Transform.Matrix *= Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
+        model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
     }
     
     
@@ -364,7 +364,7 @@ public class FbxModel : IDisposable
             }
         }
 
-        var mToParent = /* Matrix4x4.Transpose( */ node->MTransformation /* ) */;
+        var mToParent = Matrix4x4.Transpose(node->MTransformation);
         
         mn.Transform = new Transform3ToParent(
             true, 0xffffffff, mToParent);
@@ -458,7 +458,7 @@ public class FbxModel : IDisposable
                 var aiBone = mesh->MBones[i];
 
                 var jBone = skeleton.FindBone(aiBone->MName.ToString());
-                jBone.Model2Bone = /* Matrix4x4.Transpose (*/ aiBone->MOffsetMatrix /*)*/ ;
+                jBone.Model2Bone = Matrix4x4.Transpose (aiBone->MOffsetMatrix) ;
                 jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
                 
                 var nBoneVertices = aiBone->MNumWeights;

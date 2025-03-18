@@ -145,7 +145,7 @@ public class Model
             m4ParentTransform = Matrix4x4.Identity;
         }
 
-        m4ParentTransform = m4ParentTransform * mn.Transform.Matrix;
+        m4ParentTransform = mn.Transform.Matrix * m4ParentTransform;
 
         return m4ParentTransform;
     }
@@ -190,6 +190,7 @@ public class Model
             var kfRotation = mac.SlerpRotation(frameno);
             var kfScaling = mac.LerpScaling(frameno); 
 
+            var m4Translate = Matrix4x4.CreateTranslation(kfPosition.Value);
             m4Anim =
                 Matrix4x4.CreateFromQuaternion(kfRotation.Value)
                 * Matrix4x4.CreateScale(kfScaling.Value)
@@ -212,7 +213,7 @@ public class Model
         if (bone != null)
         {
             ma.BakedFrames[frameno].BoneTransformations[boneIndex] =
-                /* m4GlobalTransform * */
+                m4GlobalTransform * 
                 m4Model2Bone /* * (1f/Scale) */ 
                 * m4MyTransform 
                 /* * m4InverseGlobalTransform */
