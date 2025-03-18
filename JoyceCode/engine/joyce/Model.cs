@@ -211,7 +211,8 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = 
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] =
+                /* m4GlobalTransform * */
                 m4Model2Bone /* * (1f/Scale) */ 
                 * m4MyTransform 
                 /* * m4InverseGlobalTransform */
@@ -263,7 +264,7 @@ public class Model
             m4GlobalTransform = _computeGlobalTransform(mnInstanceDesc);
         }
         
-        // Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
+        Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
 
         /*
          * First, for all animations, create the arrays of matrices for
@@ -294,7 +295,13 @@ public class Model
              */
             for (uint frameno = 0; frameno < ma.NFrames; ++frameno)
             {
-                _bakeRecursive(RootNode, Matrix4x4.Identity * Scale, m4GlobalTransform, ma, frameno);
+                /*
+                 * I need to start with the inverse transform, as it will be reapplied in the end again
+                 * by the renderer.
+                 *
+                 * Plus, I need to apply the scale (which I also could do later).
+                 */
+                _bakeRecursive(RootNode, m4InverseGlobalTransform * Scale, m4GlobalTransform, ma, frameno);
             }
         }
     }

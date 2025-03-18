@@ -82,11 +82,11 @@ public class Module : engine.AModule
     public string ModelUrl { get; set; } =  "Studio Ochi Spring Boy_ANIM.fbx";
     public int ModelGeomFlags { get; set; } = 0
                                               
-                                              | InstantiateModelParams.CENTER_X
-                                              | InstantiateModelParams.CENTER_Z
+                                              // | InstantiateModelParams.CENTER_X
+                                              // | InstantiateModelParams.CENTER_Z
                                               // | InstantiateModelParams.ROTATE_Y180
                                               //    | InstantiateModelParams.ROTATE_X90
-                                              | InstantiateModelParams.ROTATE_Z180
+                                              // | InstantiateModelParams.ROTATE_Z180
                                               ;
     #endif
 
