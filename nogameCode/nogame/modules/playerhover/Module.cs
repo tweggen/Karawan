@@ -67,7 +67,7 @@ public class Module : engine.AModule
     public float MassShip { get; set; } = 500f;
 
     
-    #if false
+    #if true
     public string ModelUrl { get; set; } = "car6.obj";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.CENTER_X
