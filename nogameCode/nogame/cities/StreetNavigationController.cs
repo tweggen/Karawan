@@ -321,6 +321,7 @@ public class StreetNavigationController : INavigator
                     /*
                      * Compute the properties for this car per stroke.
                      */
+                    _ncp = CreateStrokeProperties(nsp, _speed, _currentStroke, _nextStroke);
                 }
                 else
                 {
