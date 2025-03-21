@@ -94,6 +94,7 @@ public class CharacterCreator
             {
                 Navigator = new StreetNavigationController()
                 {
+                    Height = 2.0f,
                     ClusterDesc = clusterDesc,
                     StartPoint = chosenStreetPoint,
                     Seed = seed,
@@ -108,7 +109,7 @@ public class CharacterCreator
             Params = new()
             {
                 GeomFlags = 0 | InstantiateModelParams.CENTER_X
-                              | InstantiateModelParams.CENTER_Z
+                              // | InstantiateModelParams.CENTER_Z
                               | InstantiateModelParams.ROTATE_X90
                               | InstantiateModelParams.ROTATE_Y180
                               // | InstantiateModelParams.BUILD_PHYSICS
