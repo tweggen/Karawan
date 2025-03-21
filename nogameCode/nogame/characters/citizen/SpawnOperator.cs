@@ -20,7 +20,7 @@ public class SpawnOperator : ISpawnOperator
     private ClusterHeatMap _clusterHeatMap = I.Get<engine.behave.ClusterHeatMap>();
     private engine.world.Loader _loader = I.Get<engine.world.MetaGen>().Loader;
     private engine.Engine _engine = I.Get<engine.Engine>();
-    private builtin.tools.RandomSource _rnd = new("car3");
+    private builtin.tools.RandomSource _rnd = new("citizen");
     
     public engine.geom.AABB AABB
     {

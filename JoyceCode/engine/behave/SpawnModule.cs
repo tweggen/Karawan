@@ -135,7 +135,15 @@ public class SpawnModule : AModule
                 opStatus = perFragmentStats.SpawnStatus;
                 if (null == opStatus)
                 {
-                    opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
+                    try
+                    {
+                        opStatus = op.GetFragmentSpawnStatus(kvpBehavior.Key, kvpFrag.Key);
+                    }
+                    catch (Exception e)
+                    {
+                        Warning($"Exception while callinng GetFragmentSpawnStatus on ISpawnOperator: {e}");
+                    }
+
                     perFragmentStats.SpawnStatus = opStatus;
                 }
 
@@ -252,7 +260,14 @@ public class SpawnModule : AModule
                                 if (cBehavior.MayBePurged())
                                 {
                                     cBehavior.MaxDistance = -1;
-                                    op.TerminateCharacter(kvpFrag.Key, si.Entity);
+                                    try
+                                    {
+                                        op.TerminateCharacter(kvpFrag.Key, si.Entity);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Warning($"Exception while TerminateCharacter on SpawnOperator: {e}");
+                                    }
                                 }
                                 else
                                 {
@@ -311,7 +326,14 @@ public class SpawnModule : AModule
 
         foreach (var op in ops)
         {
-            op.PurgeFragment(idxFragment);
+            try
+            {
+                op.PurgeFragment(idxFragment);
+            }
+            catch (Exception e)
+            {
+                Warning($"Exception while calling PurgeFragment on SpawnOperator: {e}");
+            }
         }
     }
     

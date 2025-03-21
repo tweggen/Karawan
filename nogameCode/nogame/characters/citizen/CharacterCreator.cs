@@ -7,10 +7,12 @@ using BepuPhysics;
 using builtin.loader;
 using engine;
 using engine.joyce;
+using engine.joyce.components;
 using engine.physics;
 using engine.streets;
 using engine.world;
 using nogame.cities;
+using static engine.Logger;
 
 namespace nogame.characters.citizen;
 
@@ -88,14 +90,14 @@ public class CharacterCreator
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
         
         engine.behave.IBehavior iBehavior = 
-            new car3.Behavior()
+            new citizen.Behavior()
             {
                 Navigator = new StreetNavigationController()
                 {
                     ClusterDesc = clusterDesc,
                     StartPoint = chosenStreetPoint,
                     Seed = seed,
-                    Speed = (4f + rnd.GetFloat() * 2f) / 3.6f    
+                    Speed = (6f + rnd.GetFloat() * 2f) / 3.6f    
                 }
             };
         // var sound = _getCitizenSound(carIdx);
@@ -108,6 +110,7 @@ public class CharacterCreator
                 GeomFlags = 0 | InstantiateModelParams.CENTER_X
                               | InstantiateModelParams.CENTER_Z
                               | InstantiateModelParams.ROTATE_X90
+                              | InstantiateModelParams.ROTATE_Y180
                               // | InstantiateModelParams.BUILD_PHYSICS
                               // | InstantiateModelParams.PHYSICS_DETECTABLE
                               // | InstantiateModelParams.PHYSICS_TANGIBLE
@@ -170,7 +173,31 @@ public class CharacterCreator
         eTarget.Set(new engine.joyce.components.Transform3ToWorld(0, 0,
             Matrix4x4.CreateTranslation(worldFragment.Position)));
 
-        I.Get<ModelCache>().BuildPerInstance(eTarget, model, mcp);
+        DefaultEcs.Entity eAnimations;
+        
+        {
+            builtin.tools.ModelBuilder modelBuilder = new(I.Get<Engine>(), model, mcp.Params);
+            modelBuilder.BuildEntity(eTarget);
+            I.Get<ModelCache>().BuildPerInstancePhysics(eTarget, modelBuilder, model, mcp);
+            eAnimations = modelBuilder.GetAnimationsEntity();
+        }
+
+        if (default != eAnimations)
+        {
+            var mapAnimations = model.MapAnimations;
+            if (mapAnimations != null && mapAnimations.Count > 0)
+            {
+                var animation = mapAnimations["Metarig Boy|Run Mid"];
+                eAnimations.Set(new AnimationState
+                {
+                    ModelAnimation = animation,
+                    ModelAnimationFrame = 0
+                });
+                Trace($"Setting up animation {animation.Name}");
+            }
+        }
+
+ 
     }
     
     

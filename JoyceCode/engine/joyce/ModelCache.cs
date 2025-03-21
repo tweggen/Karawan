@@ -447,25 +447,13 @@ public class ModelCache
     }
 
 
-    /**
-     * Build the model's physics into the actual model's root.
-     */
-    public void BuildPerInstance(in DefaultEcs.Entity eRoot, Model model, ModelCacheParams mcp)
+    public void BuildPerInstancePhysics(in DefaultEcs.Entity eRoot,
+        ModelBuilder modelBuilder, Model model, ModelCacheParams mcp)
     {
         if (model.RootNode == null || model.RootNode.InstanceDesc == null)
         {
-            int a = 1;
             return;
         }
-
-        ModelBuilder modelBuilder = new(_engine, model, mcp.Params);
-        
-        /*
-         * Create the geometry into eTarget.
-         */
-        // TXWTODO: Not only build geometry, but also physics and sound.
-        modelBuilder.BuildEntity(eRoot);
-
 
         if ((mcp.Params.GeomFlags & InstantiateModelParams.BUILD_PHYSICS) != 0)
         {
@@ -585,5 +573,27 @@ public class ModelCache
                 }
             }
         }
+    }
+
+
+    /**
+     * Build the model's physics into the actual model's root.
+     */
+    public void BuildPerInstance(in DefaultEcs.Entity eRoot, Model model, ModelCacheParams mcp)
+    {
+        if (model.RootNode == null || model.RootNode.InstanceDesc == null)
+        {
+            return;
+        }
+
+        ModelBuilder modelBuilder = new(_engine, model, mcp.Params);
+
+        /*
+         * Create the geometry into eTarget.
+         */
+        // TXWTODO: Not only build geometry, but also physics and sound.
+        modelBuilder.BuildEntity(eRoot);
+        
+        BuildPerInstancePhysics(eRoot, modelBuilder, model, mcp);
     }
 }
