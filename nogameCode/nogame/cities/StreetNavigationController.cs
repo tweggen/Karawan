@@ -17,7 +17,7 @@ namespace nogame.cities;
 /**
  * These constants are per lane per vehicle.
  */
-internal class DrivingStrokeCarProperties
+public class DrivingStrokeCarProperties
 {
     public float RightLane;
     public Vector2 VLaneOffset;
@@ -108,6 +108,142 @@ public class StreetNavigationController : INavigator
         get => _thenPoint;
         set => _thenPoint = value;
     }
+
+
+    public DrivingStrokeCarProperties ComputePedestrianProperties(DrivingStrokeProperties nsp, float speed, Stroke currentStroke, Stroke nextStroke)
+    {
+        DrivingStrokeCarProperties ncp = new();
+
+        /*
+         * we slow down before the junctions depending on the angle between
+         * the strokes.
+         *
+         * We use the dot product aka cosine between the vectors.
+         */
+        ncp.TurnSlowDown = 1.0f;
+
+        /*
+         * Have the pedestrian walk on the sidewalk.
+         *
+         * tx is the target we move to, ux is the
+         * unit vector of the direction.
+         */
+        /*
+         * Offset the target one unit towards the start point
+         * and one unit right-hand-side of start to target.
+         *
+         * Figure out the street lane
+         *
+         * Yes, this navigation is lacking proper curves.
+         */
+        ncp.RightLane = nsp.StreetWidth / 2f - 1f;
+
+        ncp.VLaneOffset = ncp.RightLane * new Vector2(-nsp.VUStreetDirection.Y, nsp.VUStreetDirection.X);
+
+        /*
+         * This is where we actually are heading to.
+         */
+        ncp.VPerfectTarget = nsp.VStreetTarget
+                             /*
+                              * Not quite to the center of the junction
+                              */
+                             - nsp.VUStreetDirection * nsp.StreetWidth / 2f
+                             /*
+                              * And up to the right lane.
+                              */
+                             + ncp.VLaneOffset;
+
+        ncp.VPerfectStart = nsp.VStreetStart + ncp.VLaneOffset;
+
+        return ncp;
+    }
+
+        
+    public DrivingStrokeCarProperties ComputeCarProperties(DrivingStrokeProperties nsp, float speed, Stroke currentStroke, Stroke nextStroke)
+    {
+        DrivingStrokeCarProperties ncp = new();
+
+        /*
+         * we slow down before the junctions depending on the angle between
+         * the strokes.
+         *
+         * We use the dot product aka cosine between the vectors.
+         */
+        ncp.TurnSlowDown =
+            (-Vector2.Dot(currentStroke.Unit, nextStroke.Unit) / 2f + 0.5f);
+
+        /*
+         * Compute a proper offset to emulate a bit
+         * of traffic on right-hand side.
+         *
+         * tx is the target we move to, ux is the
+         * unit vector of the direction.
+         */
+        /*
+         * Offset the target one unit towards the start point
+         * and one unit right-hand-side of start to target.
+         *
+         * Figure out the street lane
+         *
+         * Yes, this navigation is lacking proper curves.
+         */
+        if (nsp.StreetWidth >= 16f)
+        {
+            /*
+             * On larger streets, select lane according to speed.
+             */
+            if (speed >= (65f / 3.6f))
+            {
+                /*
+                 * fast? Drive on the Left hand side.
+                 */
+                ncp.RightLane = nsp.StreetWidth / 2f - 5f;
+            }
+            else
+            {
+                /*
+                 * Slow? Drive on the right hand side.
+                 */
+                ncp.RightLane = nsp.StreetWidth / 2f - 2f;
+            }
+        }
+        else
+        {
+            /*
+             * On small streets, just drive on the right.
+             */
+            ncp.RightLane = nsp.StreetWidth / 2f - 2f;
+        }
+
+        ncp.VLaneOffset = ncp.RightLane * new Vector2(-nsp.VUStreetDirection.Y, nsp.VUStreetDirection.X);
+
+        /*
+         * This is where we actually are heading to.
+         */
+        ncp.VPerfectTarget = nsp.VStreetTarget
+                             /*
+                              * Not quite to the center of the junction
+                              */
+                             - nsp.VUStreetDirection * nsp.StreetWidth / 2f
+                             /*
+                              * And up to the right lane.
+                              */
+                             + ncp.VLaneOffset;
+
+        ncp.VPerfectStart = nsp.VStreetStart + ncp.VLaneOffset;
+
+        return ncp;
+    }
+
+
+    /**
+     * Define how the car operates on the street.
+     */
+    public Func<DrivingStrokeProperties, float, Stroke, Stroke, DrivingStrokeCarProperties> CreateStrokeProperties
+    {
+        get;
+        set;
+    }
     
     public int Seed { get; set; }
 
@@ -121,7 +257,7 @@ public class StreetNavigationController : INavigator
     
     private RandomPathEnumerator _enumPath;
 
-    private DrivingStrokeProperties _nsp;
+    private DrivingStrokeProperties nsp;
     private DrivingStrokeCarProperties _ncp;
     
 
@@ -178,87 +314,13 @@ public class StreetNavigationController : INavigator
                         nsp.VStreetStart = _startPoint.Pos;
                         nsp.VUStreetDirection = V2Normalize(nsp.VStreetTarget - nsp.VStreetStart);
                         
-                        _nsp = nsp;
+                        this.nsp = nsp;
 
                     }
                     
                     /*
                      * Compute the properties for this car per stroke.
                      */
-                    {
-                        DrivingStrokeCarProperties ncp = new();
-                        
-                        /*
-                         * we slow down before the junctions depending on the angle between
-                         * the strokes.
-                         *
-                         * We use the dot product aka cosine between the vectors.
-                         */
-                        ncp.TurnSlowDown =
-                            (-Vector2.Dot(_currentStroke.Unit, _nextStroke.Unit) / 2f + 0.5f);
-
-                        /*
-                         * Compute a proper offset to emulate a bit
-                         * of traffic on right-hand side.
-                         *
-                         * tx is the target we move to, ux is the
-                         * unit vector of the direction.
-                         */
-                        /*
-                         * Offset the target one unit towards the start point
-                         * and one unit right-hand-side of start to target.
-                         *
-                         * Figure out the street lane
-                         *
-                         * Yes, this navigation is lacking proper curves.
-                         */
-                        if (_nsp.StreetWidth >= 16f)
-                        {
-                            /*
-                             * On larger streets, select lane according to speed.
-                             */
-                            if (_speed >= (65f / 3.6f))
-                            {
-                                /*
-                                 * fast? Drive on the Left hand side.
-                                 */
-                                ncp.RightLane = _nsp.StreetWidth / 2f - 5f;
-                            }
-                            else
-                            {
-                                /*
-                                 * Slow? Drive on the right hand side.
-                                 */
-                                ncp.RightLane = _nsp.StreetWidth / 2f - 2f;
-                            }
-                        }
-                        else
-                        {
-                            /*
-                             * On small streets, just drive on the right.
-                             */
-                            ncp.RightLane = _nsp.StreetWidth / 2f - 2f;
-                        }
-                
-                        ncp.VLaneOffset = ncp.RightLane * new Vector2(-_nsp.VUStreetDirection.Y, _nsp.VUStreetDirection.X);
-
-                        /*
-                         * This is where we actually are heading to.
-                         */
-                        ncp.VPerfectTarget = _nsp.VStreetTarget
-                                             /*
-                                              * Not quite to the center of the junction
-                                              */
-                                             - _nsp.VUStreetDirection * _nsp.StreetWidth / 2f
-                                             /*
-                                              * And up to the right lane.
-                                              */
-                                             + ncp.VLaneOffset;
-                        
-                        ncp.VPerfectStart = _nsp.VStreetStart + ncp.VLaneOffset;
-
-                        _ncp = ncp;
-                    }
                 }
                 else
                 {
@@ -506,6 +568,6 @@ public class StreetNavigationController : INavigator
         _v2LastSpeed = new Vector3(1f, 0f, 0f);
 
         _speed = 2.7f * 15f;
-
+        CreateStrokeProperties = ComputeCarProperties;
     }
 }

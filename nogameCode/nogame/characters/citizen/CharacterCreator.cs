@@ -88,19 +88,23 @@ public class CharacterCreator
         };
         string strModel = "Studio Ochi Spring Boy_ANIM.fbx";
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
+
+        var snc = new StreetNavigationController()
+        {
+            Height = 2.0f,
+            ClusterDesc = clusterDesc,
+            StartPoint = chosenStreetPoint,
+            Seed = seed,
+            Speed = (6f + rnd.GetFloat() * 2f) / 3.6f
+        };
+        snc.CreateStrokeProperties = snc.ComputePedestrianProperties;
         
         engine.behave.IBehavior iBehavior = 
             new citizen.Behavior()
             {
-                Navigator = new StreetNavigationController()
-                {
-                    Height = 2.0f,
-                    ClusterDesc = clusterDesc,
-                    StartPoint = chosenStreetPoint,
-                    Seed = seed,
-                    Speed = (6f + rnd.GetFloat() * 2f) / 3.6f    
-                }
+                Navigator = snc
             };
+         
         // var sound = _getCitizenSound(carIdx);
         ModelCacheParams mcp = new()
         {
