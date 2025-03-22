@@ -88,7 +88,7 @@ public class CharacterCreator
 
         var snc = new StreetNavigationController()
         {
-            Height = 2.0f,
+            Height = 2.5f,
             ClusterDesc = clusterDesc,
             StartPoint = chosenStreetPoint,
             Seed = seed,

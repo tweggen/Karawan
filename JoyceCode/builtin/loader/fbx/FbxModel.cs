@@ -312,7 +312,7 @@ public class FbxModel : IDisposable
                 * rather than multiplying.
                 */
 //                 jMaterial.AlbedoColor = c4Albedo.ToRGBA32();
-                jMaterial.AlbedoColor = 0xffffffff;
+                // jMaterial.AlbedoColor = 0xffffffff;
             }
         }
 
