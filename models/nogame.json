@@ -7,7 +7,8 @@
   "globalSettings": 
   {
     "nogame.CreateOSD": true,
-    "nogame.framebuffer.resolution": "368x207",
+    "nogame.framebuffer.resolution": "1600x900",
+    "alt.nogame.framebuffer.resolution": "368x207",
     "nogame.CreateMap": true,
     "nogame.CreateMiniMap": true,
     "nogame.LogosScene.PlayTitleMusic": "true",

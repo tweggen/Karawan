@@ -80,11 +80,8 @@ public class CharacterCreator
         StreetPoint chosenStreetPoint,
         int seed = 0)
     {
-        int carIdx = (int)(rnd.GetFloat() * 4f);
-        int colorIdx = (int)(rnd.GetFloat() * (float)_primarycolors.Count);
         var modelProperties = new ModelProperties()
         {
-            ["primarycolor"] = _primarycolors[colorIdx],
         };
         string strModel = "Studio Ochi Spring Boy_ANIM.fbx";
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
@@ -198,7 +195,7 @@ public class CharacterCreator
                     ModelAnimation = animation,
                     ModelAnimationFrame = 0
                 });
-                Trace($"Setting up animation {animation.Name}");
+                // Trace($"Setting up animation {animation.Name}");
             }
         }
 

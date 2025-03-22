@@ -136,7 +136,7 @@ public class StreetNavigationController : INavigator
          *
          * Yes, this navigation is lacking proper curves.
          */
-        ncp.RightLane = nsp.StreetWidth / 2f - 1f;
+        ncp.RightLane = nsp.StreetWidth / 2f + 1.5f;
 
         ncp.VLaneOffset = ncp.RightLane * new Vector2(-nsp.VUStreetDirection.Y, nsp.VUStreetDirection.X);
 

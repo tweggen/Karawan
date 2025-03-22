@@ -298,6 +298,7 @@ public class FbxModel : IDisposable
             }
 
             jMaterial.Texture = jTexture;
+            jMaterial.Name = path;
         }
 
         if (colorsBuffer != null)
@@ -315,7 +316,7 @@ public class FbxModel : IDisposable
             }
         }
 
-        return jMaterial;
+        return I.Get<ObjectRegistry<engine.joyce.Material>>().FindLike(jMaterial);
     }
     
     
@@ -614,6 +615,9 @@ public class FbxModel : IDisposable
             vertices.Add(vertex.Position.X);
             vertices.Add(vertex.Position.Y);
             vertices.Add(vertex.Position.Z);
+            vertices.Add(vertex.Normal.X);
+            vertices.Add(vertex.Normal.Y);
+            vertices.Add(vertex.Normal.Z);
             vertices.Add(vertex.TexCoords.X);
             vertices.Add(vertex.TexCoords.Y);
         }

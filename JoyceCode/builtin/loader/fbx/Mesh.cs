@@ -15,7 +15,7 @@ public class Mesh : IDisposable
      */
     public float[] Vertices { get; private set; }
 
-    private const int FLOATS_PER_VERTEX = 5;
+    private const int FLOATS_PER_VERTEX = 8; // vertex, normal, uv
     public uint[] Indices { get; private set; }
     // public IReadOnlyList<Texture> Textures { get; private set; }
 
@@ -35,11 +35,15 @@ public class Mesh : IDisposable
         {
             List<Vector3> vertices = new();
             List<Vector2> uvs = new();
+            List<Vector3> normals = new();
+
             for (int i = 0; i < nVertices; i++)
             {
                 vertices.Add(new Vector3(Vertices[i * FLOATS_PER_VERTEX + 0], Vertices[i * FLOATS_PER_VERTEX + 1],
                     Vertices[i * FLOATS_PER_VERTEX + 2]));
-                uvs.Add(new Vector2(Vertices[i * FLOATS_PER_VERTEX + 3], Vertices[i * FLOATS_PER_VERTEX + 4]));
+                normals.Add(new Vector3(Vertices[i * FLOATS_PER_VERTEX + 3], Vertices[i * FLOATS_PER_VERTEX + 4],
+                    Vertices[i * FLOATS_PER_VERTEX + 5]));
+                uvs.Add(new Vector2(Vertices[i * FLOATS_PER_VERTEX + 6], Vertices[i * FLOATS_PER_VERTEX + 7]));
             }
 
             List<uint> indices = new();
@@ -50,8 +54,8 @@ public class Mesh : IDisposable
                 indices.Add(idx);
             }
 
-            engine.joyce.Mesh jMesh = new("fromFbx", vertices, indices, uvs);
-            jMesh.GenerateCCWNormals();
+            engine.joyce.Mesh jMesh = new("fromFbx", vertices, indices, uvs, normals);
+            
             return jMesh;
         }
         else
@@ -61,6 +65,7 @@ public class Mesh : IDisposable
     }
     
     
+    #if false
     public void AddToMatmesh(MatMesh matMesh)
     {
         int nVertices = Vertices.Length / FLOATS_PER_VERTEX;
@@ -88,6 +93,7 @@ public class Mesh : IDisposable
             matMesh.Add(new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888)}, jMesh);
         }
     }
+    #endif
 
 
     public Mesh(float[] vertices, uint[] indices /* , List<Texture> textures */)
