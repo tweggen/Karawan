@@ -92,6 +92,7 @@ public class InstanceManager : IDisposable
     {
         IList<AMeshEntry> aMeshEntries = new List<AMeshEntry>();
         IList<AMaterialEntry> aMaterialEntries = new List<AMaterialEntry>();
+        AAnimationsEntry? aAnimationsEntry = null;
 
         lock (_lo)
         {
@@ -181,16 +182,18 @@ public class InstanceManager : IDisposable
                 }
             }
 
-            if (value.InstanceDesc.ModelNode != null && value.InstanceDesc.ModelNode.Model != null && value.InstanceDesc.ModelNode.Model.AllBakedMatrices != null)
+            engine.joyce.Model? jModel;
+            if (value.InstanceDesc.ModelNode != null && value.InstanceDesc.ModelNode.Model != null &&
+                value.InstanceDesc.ModelNode.Model.AllBakedMatrices != null)
             {
-                engine.joyce.Model jModel = value.InstanceDesc.ModelNode.Model;
+                jModel = value.InstanceDesc.ModelNode.Model;
                 Resource<AAnimationsEntry> animResource;
                 if (!_animationsResources.TryGetValue(jModel, out animResource))
                 {
                     try
                     {
-                        AAnimationsEntry aAnimEntry = _loadAnimations(jModel);
-                        animResource = new Resource<AAnimationsEntry>(aAnimEntry);
+                        aAnimationsEntry = _loadAnimations(jModel);
+                        animResource = new Resource<AAnimationsEntry>(aAnimationsEntry);
                         _animationsResources.Add(jModel, animResource);
                     }
                     catch (Exception e)
@@ -206,8 +209,10 @@ public class InstanceManager : IDisposable
         /*
          * Finally, assign these arrays to the entity.
          */
-        entity.Get<Splash.components.PfInstance>().AMaterialEntries = aMaterialEntries;
-        entity.Get<Splash.components.PfInstance>().AMeshEntries = aMeshEntries;
+        ref var pfInstance = ref entity.Get<Splash.components.PfInstance>(); 
+        pfInstance.AMaterialEntries = aMaterialEntries;
+        pfInstance.AMeshEntries = aMeshEntries;
+        pfInstance.AAnimationsEntry = aAnimationsEntry;
     }
 
 
@@ -361,6 +366,7 @@ public class InstanceManager : IDisposable
         _threeD = I.Get<IThreeD>();
         _meshResources = new Dictionary<AMeshParams, Resource<AMeshEntry>>();
         _materialResources = new Dictionary<engine.joyce.Material, Resource<AMaterialEntry>>();
+        _animationsResources = new Dictionary<Model, Resource<AAnimationsEntry>>();
     }
 }
 

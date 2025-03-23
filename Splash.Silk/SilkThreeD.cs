@@ -305,7 +305,7 @@ public class SilkThreeD : IThreeD
 
         SkMaterialEntry skMaterialEntry = ((SkMaterialEntry)aMaterialEntry);
         SkAnimationsEntry? skAnimationsEntry = null;
-        if (aAnimationsEntry != null)
+        if (aAnimationsEntry != null && aAnimationsEntry != NullAnimationsEntry.Instance())
         {
             skAnimationsEntry = ((SkAnimationsEntry)aAnimationsEntry);
         }
@@ -518,9 +518,13 @@ public class SilkThreeD : IThreeD
         });
     }
 
-
-    public AAnimationsEntry CreateAnimationsEntry(in engine.joyce.Model jModel)
+    public AAnimationsEntry CreateAnimationsEntry(in engine.joyce.Model? jModel)
     {
+        if (null == jModel)
+        {
+            return NullAnimationsEntry.Instance();
+        }
+
         var skAnimationsEntry = new SkAnimationsEntry(_getGL(), jModel);
         return skAnimationsEntry;
     }

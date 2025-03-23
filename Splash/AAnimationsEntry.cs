@@ -5,7 +5,7 @@ namespace Splash;
 
 public abstract class AAnimationsEntry : IDisposable
 {
-    public readonly engine.joyce.Model Model;
+    public readonly engine.joyce.Model? Model;
 
     public abstract bool IsUploaded();
 
@@ -13,8 +13,10 @@ public abstract class AAnimationsEntry : IDisposable
     
     public abstract void Dispose();
 
-    protected AAnimationsEntry(in engine.joyce.Model m)
+    protected AAnimationsEntry(in engine.joyce.Model? m)
     {
         Model = m;
     }
 }
+
+

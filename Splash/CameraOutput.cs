@@ -225,7 +225,7 @@ public class CameraOutput
     private void _appendInstanceNoLock(
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,
-        in AAnimationsEntry? aAnimationsEntry,
+        AAnimationsEntry? aAnimationsEntry,
         in Matrix4x4 matrix,
         in engine.joyce.components.AnimationState cAnimationState)
     {
@@ -269,22 +269,15 @@ public class CameraOutput
             _frameStats.NMeshes++;
         }
 
+        if (null == aAnimationsEntry)
+        {
+            aAnimationsEntry = NullAnimationsEntry.Instance();
+        }
+                
         /*
          * And do we have an entry for the animationstate?
          */
-        AnimationBatch animationBatch;
-        meshBatch.AnimationBatches.TryGetValue(aAnimationsEntry!, out animationBatch);
-        if (null == animationBatch)
-        {
-            animationBatch = new AnimationBatch(aAnimationsEntry);
-            meshBatch.AnimationBatches[aAnimationsEntry] = animationBatch;
-            _frameStats.NAnimations++;
-        }
-        
-        /*
-         * Now we can add our matrix to the list of matrices.
-         */
-        animationBatch.Matrices.Add(matrix);
+        meshBatch.Add(aAnimationsEntry, matrix, 0);
 
         /*
          * In particular when rendering transparency, we need to have average

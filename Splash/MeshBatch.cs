@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Numerics;
 using engine.joyce.components;
 
@@ -76,9 +77,28 @@ public class MeshBatch
     }
 
 
+    public void Add(AAnimationsEntry? aAnimationsEntry, in Matrix4x4 matrix, uint frameno)
+    {
+        AnimationBatch animationBatch;
+        AnimationBatches.TryGetValue(aAnimationsEntry, out animationBatch);
+        if (null == animationBatch)
+        {
+            animationBatch = new AnimationBatch(aAnimationsEntry);
+            AnimationBatches[aAnimationsEntry] = animationBatch;
+        }
+        
+        /*
+         * Now we can add our matrix to the list of matrices.
+         */
+        animationBatch.Matrices.Add(matrix);
+        animationBatch.FrameNos.Add(frameno);
+    }
+    
+    
     public MeshBatch(in AMeshEntry aMeshEntry)
     {
         AMeshEntry = aMeshEntry;
+        
     }
 
 }
