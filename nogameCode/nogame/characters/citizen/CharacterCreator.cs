@@ -36,18 +36,6 @@ public class CharacterCreator
 
     private static ShapeFactory _shapeFactory = I.Get<ShapeFactory>();
 
-    private static List<string> _primarycolors = new List<string>()
-    {
-        "#ff000000",
-        "#ff0000ff",
-        "#ff00ff00",
-        // "#ff00ffff",
-        "#ffff0000",
-        "#ffff00ff",
-        "#ffffff00"
-        //"#ffffffff"
-    };
-
     private static bool _trace = false;
     
     
@@ -83,8 +71,37 @@ public class CharacterCreator
         var modelProperties = new ModelProperties()
         {
         };
-        string strModel = "Studio Ochi Spring Boy_ANIM.fbx";
-        float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
+        string[] strModels =
+        {
+            "Studio Ochi Spring Boy_ANIM.fbx",
+            "Studio Ochi Spring Man B_ANIM.fbx",
+            "Studio Ochi Spring Woman C_ANIM.fbx"
+        };
+
+        string strModel;
+        string strAnimation = null;
+        float which = rnd.GetFloat();
+        float speed;
+        if (which < 0.2f)
+        {
+            strModel = strModels[0];
+            speed = (6f + rnd.GetFloat() * 2f) / 3.6f;
+            strAnimation = "Metarig Boy|Run Mid";
+        }
+        else if (which < 0.6f)
+        {
+            strModel = strModels[1];
+            speed = (6.5f + rnd.GetFloat() * 2f) / 3.6f;
+            strAnimation = "Metarig Man B|Run Mid";
+        }
+        else
+        {
+            strModel = strModels[2];
+            speed = (6f + rnd.GetFloat() * 2f) / 3.6f;
+            strAnimation = "Metarig Woman C|Run Mid";
+        }
+
+        float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 50f);
 
         var snc = new StreetNavigationController()
         {
@@ -92,7 +109,7 @@ public class CharacterCreator
             ClusterDesc = clusterDesc,
             StartPoint = chosenStreetPoint,
             Seed = seed,
-            Speed = (6f + rnd.GetFloat() * 2f) / 3.6f
+            Speed = speed
         };
         snc.CreateStrokeProperties = snc.ComputePedestrianProperties;
         
@@ -126,19 +143,20 @@ public class CharacterCreator
         
         Model model = await I.Get<ModelCache>().LoadModel(mcp);
 
-        return GenerateCharacter(
+        return _generateCharacter(
             clusterDesc, worldFragment, chosenStreetPoint, 
-            model, mcp, iBehavior, null);
+            model, mcp, strAnimation, iBehavior, null);
     }
 
     
-    public static void SetupCharacterMT(
+    private static void _setupCharacterMT(
         DefaultEcs.Entity eTarget,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
         StreetPoint chosenStreetPoint,
         Model model,
         ModelCacheParams mcp,
+        string strAnimation,
         engine.behave.IBehavior? iBehavior,
         engine.audio.Sound? sound)
     {
@@ -189,7 +207,7 @@ public class CharacterCreator
             var mapAnimations = model.MapAnimations;
             if (mapAnimations != null && mapAnimations.Count > 0)
             {
-                var animation = mapAnimations["Metarig Boy|Run Mid"];
+                var animation = mapAnimations[strAnimation];
                 eAnimations.Set(new AnimationState
                 {
                     ModelAnimation = animation,
@@ -203,12 +221,13 @@ public class CharacterCreator
     }
     
     
-    public static DefaultEcs.Entity GenerateCharacter(
+    private static DefaultEcs.Entity _generateCharacter(
         ClusterDesc clusterDesc,
         Fragment worldFragment,
         StreetPoint chosenStreetPoint,
         Model model,
         ModelCacheParams mcp,
+        string strAnimation,
         engine.behave.IBehavior? iBehavior,
         engine.audio.Sound? sound)
     {
@@ -227,9 +246,9 @@ public class CharacterCreator
 
         wf.Engine.QueueEntitySetupAction(name, eTarget =>
         {
-            SetupCharacterMT(eTarget,
+            _setupCharacterMT(eTarget,
                 clusterDesc, worldFragment, chosenStreetPoint,
-                model, mcp, iBehavior, sound);
+                model, mcp, strAnimation, iBehavior, sound);
             taskCompletionSource.SetResult(eTarget);
         });
         
