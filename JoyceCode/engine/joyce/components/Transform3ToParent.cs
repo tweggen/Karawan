@@ -8,6 +8,7 @@ namespace engine.joyce.components;
 public struct Transform3ToParent
 {
     [JsonInclude] public bool IsVisible;
+    [JsonInclude] public bool PassVisibility;
     [JsonInclude] public uint CameraMask;
     [JsonInclude] public Matrix4x4 Matrix;
 

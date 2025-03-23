@@ -24,6 +24,8 @@ public struct Transform3
 {
     [JsonInclude]
     public bool IsVisible;
+    [JsonInclude] 
+    public bool PassToChildren;
     [JsonInclude]
     public uint CameraMask;
     [JsonInclude]

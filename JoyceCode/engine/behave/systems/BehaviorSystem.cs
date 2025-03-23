@@ -57,11 +57,11 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
 
             ref var cBehavior = ref entity.Get<behave.components.Behavior>();
 
-            if (cBehavior.Provider != null && cBehavior.Provider.GetType().FullName == "nogame.inv.coin.Behavior")
+            if (11f == cBehavior.MaxDistance)
             {
                 int a = 1;
             }
-            
+          
             if (hadWorldTransform3 && hadTransform3)
             {
                 if (Vector3.DistanceSquared(v3WorldPosition, vPlayerPos) >= cBehavior.MaxDistance * cBehavior.MaxDistance)
@@ -74,7 +74,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
 
                     if (oldTransform.IsVisible && 0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.DontVisibInRange))
                     {
-                        I.Get<engine.joyce.TransformApi>().SetVisible(entity, false);
+                        I.Get<engine.joyce.TransformApi>().SetVisible(entity, false, true);
                     }
 
                     if (0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.MissionCritical))
@@ -95,7 +95,7 @@ internal class BehaviorSystem : DefaultEcs.System.AEntitySetSystem<float>
 
                     if (!oldTransform.IsVisible && 0 == (cBehavior.Flags & (ushort)components.Behavior.BehaviorFlags.DontVisibInRange))
                     {
-                        I.Get<engine.joyce.TransformApi>().SetVisible(entity, true);
+                        I.Get<engine.joyce.TransformApi>().SetVisible(entity, true, false);
                     }
                 }
             }

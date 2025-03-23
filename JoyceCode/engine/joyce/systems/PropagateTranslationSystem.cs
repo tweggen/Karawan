@@ -20,42 +20,60 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
      * Compute the child's object to world matrix, given the parent's
      * object to world matrix and the child.
      * (Over-)Write the child's object to world matrix.
+     *
+     * @param shallBeVisible
+     *     If parent allows its childEntity to be visible at all.
      */
-    private void _updateChildToWorld(
+    private bool _updateChildToWorld(
         in components.Transform3ToWorld cParentTransform3ToWorld,
         DefaultEcs.Entity childEntity,
-        ref components.Transform3ToWorld cChildTransform3ToWorld)
+        ref components.Transform3ToWorld cChildTransform3ToWorld,
+        bool shallBeVisible)
     {
-        var cTransform3 = childEntity.Get<Transform3ToParent>();
-
+        ref var cTransform3 = ref childEntity.Get<Transform3ToParent>();
+        if (cTransform3.PassVisibility && !cTransform3.IsVisible)
+        {
+            shallBeVisible = false;
+        }
+        
         /*
          * New mode of operation: Child's camera is not affected by parents or children, just left as is.
          */
         cChildTransform3ToWorld.CameraMask = cTransform3.CameraMask;
-        cChildTransform3ToWorld.IsVisible = cTransform3.IsVisible; 
+        cChildTransform3ToWorld.IsVisible = shallBeVisible; 
         cChildTransform3ToWorld.Matrix =
             cTransform3.Matrix * cParentTransform3ToWorld.Matrix;
         childEntity.Set<Transform3ToWorld>(cChildTransform3ToWorld);
+        return shallBeVisible;
     }
 
 
+    /**
+     * Recurse into the children of this entity.
+     * Given
+     * - entity: The entity to recurse into
+     * - shallBeVisible: If we (the entity) are supposed to be visible at all. We can become invisible if an
+     *   entity has PassVisibility set and is invisible.
+     */
     private void _recurseChildren(
         in components.Transform3ToWorld cParentTransform3ToWorld,
-        DefaultEcs.Entity entity)
+        DefaultEcs.Entity entity,
+        bool shallBeVisible)
     {
         var children = entity.Get<joyce.components.Children>().Entities;
-        // Console.WriteLine("nChildren = {0}", children.Count);
+        
         foreach (var childEntity in children)
         {
             if (childEntity.IsAlive)
             {
                 var cChildTransform3ToWorld = new Transform3ToWorld();
-                _updateChildToWorld(cParentTransform3ToWorld, childEntity, ref cChildTransform3ToWorld);
-
+                bool shallChildrenBeVisible = _updateChildToWorld(
+                    cParentTransform3ToWorld, childEntity, ref cChildTransform3ToWorld, shallBeVisible);
+                
                 if (childEntity.Has<joyce.components.Children>()
                     && childEntity.Has<Transform3ToParent>())
                 {
-                    _recurseChildren(cChildTransform3ToWorld, childEntity);
+                    _recurseChildren(cChildTransform3ToWorld, childEntity, shallChildrenBeVisible);
                 }
             }
         }
@@ -72,14 +90,33 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
          */
         foreach (var entity in entities)
         {
+            ref var cTransform3 = ref entity.Get<Transform3ToParent>();
+            bool shallBeVisible;
+
+            if (cTransform3.IsVisible)
+            {
+                shallBeVisible = true;
+            }
+            else
+            {
+                if (cTransform3.PassVisibility)
+                {
+                    shallBeVisible = false;
+                }
+                else
+                {
+                    shallBeVisible = true;
+                }
+            }
+
             /*
              * Update the root itself. The root's parent always is visible.
              */
             var cChildTransform3ToWorld = new Transform3ToWorld();
-            _updateChildToWorld(cRootTransform3World, entity, ref cChildTransform3ToWorld);
+            _updateChildToWorld(cRootTransform3World, entity, ref cChildTransform3ToWorld, shallBeVisible);
             if (entity.Has<joyce.components.Children>())
             {
-                _recurseChildren(cChildTransform3ToWorld, entity);
+                _recurseChildren(cChildTransform3ToWorld, entity, shallBeVisible);
             }
         }
     }

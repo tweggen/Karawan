@@ -168,6 +168,23 @@ namespace engine.joyce
         }
 
         
+        public void SetVisible(Entity entity, bool isVisible, bool passToChildren)
+        {
+            ref Transform3 cT3 = ref _findT3(entity);
+            if (cT3.IsVisible != isVisible || cT3.PassToChildren != passToChildren)
+            {
+                /*
+                 * No need to recompute transform matrix.
+                 */
+                cT3.IsVisible = isVisible;
+                cT3.PassToChildren = passToChildren;
+                ref var p3 = ref _findP3(entity, cT3);
+                p3.IsVisible = isVisible;
+                p3.PassVisibility = passToChildren;
+            }
+        }
+
+        
         public void SetCameraMask(Entity entity, uint cameraMask) 
         {
             ref Transform3 cT3 = ref _findT3(entity);
