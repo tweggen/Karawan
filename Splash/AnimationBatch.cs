@@ -6,7 +6,16 @@ namespace Splash;
 
 public class AnimationBatch
 {
-    public readonly AnimationState AnimationState;
+    public readonly AAnimationsEntry? AAnimationsEntry;
+
+    /**
+     * The animation frame numbers of the models to render.
+     */
+    public readonly List<uint> FrameNos = new();
+    
+    /**
+     * The transformations of the individual meshes. 
+     */
     public readonly List<Matrix4x4> Matrices = new();
 
 
@@ -40,8 +49,8 @@ public class AnimationBatch
         }
     }
 
-    public AnimationBatch(in AnimationState animationState)
+    public AnimationBatch(in AAnimationsEntry aAnimationsEntry)
     {
-        AnimationState = animationState;
+        AAnimationsEntry = aAnimationsEntry;
     }
 }

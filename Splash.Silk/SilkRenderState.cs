@@ -11,6 +11,7 @@ public class SilkRenderState
     public SilkTextureChannelState Texture0;
     public SilkTextureChannelState Texture2;
 
+    public BufferObject<float>? BoneMatrices; 
     
     private void _unloadProgramEntry()
     {
@@ -26,6 +27,16 @@ public class SilkRenderState
         _gl.UseProgram(pe.Handle);
     }
 
+    
+    public void UseBoneMatrices(BufferObject<float>? boneMatrices)
+    {
+        if (BoneMatrices == boneMatrices) return;
+
+        BoneMatrices = boneMatrices;
+        
+        boneMatrices.BindBufferBase(0);
+    }
+    
     
     public void UseProgramEntry(SkProgramEntry sh, Action<SkProgramEntry> firstTimeFunc)
     {

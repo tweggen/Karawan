@@ -39,6 +39,12 @@ public class BufferObject<TDataType> : IDisposable
         }
     }
 
+
+    public void BindBufferBase(uint slot)
+    {
+        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, slot, _handle);
+    }
+    
     
     public void BindBuffer()
     {

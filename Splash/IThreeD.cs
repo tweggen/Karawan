@@ -35,6 +35,11 @@ public interface IThreeD
 
     public AMaterialEntry GetDefaultMaterial();
 
+    public AAnimationsEntry CreateAnimationsEntry(in engine.joyce.Model jModel);
+    public void FillAnimationsEntry(in AAnimationsEntry aAnimationsEntry);
+    public void UnloadAnimationsEntry(in AAnimationsEntry aAnimationsEntry);
+    
+    
     public AMaterialEntry CreateMaterialEntry(in engine.joyce.Material jMaterial);
     public void FillMaterialEntry(in AMaterialEntry aMaterialEntry);
     public void UnloadMaterialEntry(in AMaterialEntry aMaterialEntry);
@@ -43,7 +48,7 @@ public interface IThreeD
     public void FillTextureEntry(in ATextureEntry aTextureEntry);
     public void UploadTextureEntry(in ATextureEntry aTextureEntry);
 
-    public ARenderbufferEntry CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer);
+    public ARenderbufferEntry CreateRenderbuffer(in en+gine.joyce.Renderbuffer jRenderbuffer);
     public void UploadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
     public void UnloadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
     
@@ -52,6 +57,7 @@ public interface IThreeD
     public void DrawMeshInstanced(
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,
+        in AAnimationsEntry aAnimationsEntry,
         in Span<Matrix4x4> spanMatrices,
         in int nMatrices,
         ModelBakedFrame? modelBakedFrame);

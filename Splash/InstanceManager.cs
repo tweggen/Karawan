@@ -33,18 +33,33 @@ public class InstanceManager : IDisposable
     private readonly IThreeD _threeD;
     private readonly Dictionary<AMeshParams, Resource<AMeshEntry>> _meshResources;
     private readonly Dictionary<engine.joyce.Material, Resource<AMaterialEntry>> _materialResources;
+    private readonly Dictionary<engine.joyce.Model, Resource<AAnimationsEntry>> _animationsResources;
 
+
+    private void _unloadAnim(Resource<AAnimationsEntry> animResource)
+    {
+        _threeD.UnloadAnimationsEntry(animResource.Value);
+    }
+    
 
     private void _unloadMesh(Resource<AMeshEntry> meshResource)
     {
         _threeD.UnloadMeshEntry(meshResource.Value);
     }
 
+    
     private void _unloadMaterial(Resource<AMaterialEntry> materialResource)
     {
         _threeD.UnloadMaterialEntry(materialResource.Value);
     }
 
+
+    private AAnimationsEntry _loadAnimations(Model jModel)
+    {
+        var aAnimationsEntry = _threeD.CreateAnimationsEntry(jModel);
+        return aAnimationsEntry;
+    }
+    
 
     private AMeshEntry _loadMesh(AMeshParams meshParams)
     {
@@ -163,6 +178,25 @@ public class InstanceManager : IDisposable
                 {
                     aMeshEntries.Add(meshResource.Value);
                     meshResource.AddReference();
+                }
+            }
+
+            if (value.InstanceDesc.ModelNode != null && value.InstanceDesc.ModelNode.Model != null && value.InstanceDesc.ModelNode.Model.AllBakedMatrices != null)
+            {
+                engine.joyce.Model jModel = value.InstanceDesc.ModelNode.Model;
+                Resource<AAnimationsEntry> animResource;
+                if (!_animationsResources.TryGetValue(jModel, out animResource))
+                {
+                    try
+                    {
+                        AAnimationsEntry aAnimEntry = _loadAnimations(jModel);
+                        animResource = new Resource<AAnimationsEntry>(aAnimEntry);
+                        _animationsResources.Add(jModel, animResource);
+                    }
+                    catch (Exception e)
+                    {
+                        Error("Exception loading animation: {e}");
+                    }
                 }
             }
 

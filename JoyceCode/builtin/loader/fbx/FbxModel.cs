@@ -158,6 +158,9 @@ public class FbxModel : IDisposable
             ma.NTicks = (aiAnim->MTicksPerSecond < 0.015f) ? 1 : (uint)(aiAnim->MDuration / aiAnim->MTicksPerSecond);
             ma.MapChannels = new();
             ma.Channels = new ModelAnimChannel[nChannels];
+            uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
+            ma.NFrames = nFrames;
+            _model.PushAnimFrames(nFrames);
 
             for (int j = 0; j < nChannels; ++j)
             {

@@ -46,10 +46,19 @@ public class Model
     }
     private int _nextNodeIndex = 1;
     private int _nextAnimIndex = 1;
+    private uint _nextAnimFrame = 0;
+
+    public void PushAnimFrames(uint nFrames)
+    {
+        _nextAnimFrame += nFrames;
+    }
+    
     public Skeleton? Skeleton = null;
     public SortedDictionary<string, ModelAnimation> MapAnimations;
     public SortedDictionary<string, ModelNode> MapNodes = new();
 
+    public Matrix4x4[]? AllBakedMatrices = null; 
+    
     public float Scale = 1.0f;
     
     /**
@@ -83,7 +92,8 @@ public class Model
     {
         return new ModelAnimation()
         {
-            Index = _nextAnimIndex++
+            Index = _nextAnimIndex++,
+            FirstFrame = _nextAnimFrame,
         };
     }
 
@@ -212,12 +222,13 @@ public class Model
          */
         if (bone != null)
         {
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] =
-                m4GlobalTransform * 
-                m4Model2Bone /* * (1f/Scale) */ 
-                * m4MyTransform 
-                /* * m4InverseGlobalTransform */
-                ;
+            Matrix4x4 m4Baked =
+                    m4GlobalTransform *
+                    m4Model2Bone /* * (1f/Scale) */
+                    * m4MyTransform
+                /* * m4InverseGlobalTransform */;
+            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Baked;
+            AllBakedMatrices[frameno * Skeleton.NBones + boneIndex] = m4Baked;
         }
 
 
@@ -282,6 +293,7 @@ public class Model
             uint nFrames = UInt32.Max((uint)(duration * 60f), 1);
             ma.NFrames = nFrames;
             ma.BakedFrames = new ModelBakedFrame[ma.NFrames];
+            // ma.AllBakedFrames = new Matrix4x4[ma.NFrames * Skeleton.NBones];
             for (int frameno = 0; frameno < nFrames; ++frameno)
             {
                 ModelBakedFrame bakedFrame = new()
@@ -290,6 +302,8 @@ public class Model
                 };
                 ma.BakedFrames[frameno] = bakedFrame;
             }
+
+            AllBakedMatrices = new Matrix4x4[nFrames * Skeleton.NBones];
 
             /*
              * Now for this animation, for every frame, recurse through the bones.

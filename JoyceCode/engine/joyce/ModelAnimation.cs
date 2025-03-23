@@ -25,6 +25,7 @@ public class ModelAnimation
     public string Name;
     public float Duration;
     public float TicksPerSecond;
+    public uint FirstFrame;
     public uint NTicks;
     public uint NFrames;
     public Dictionary<ModelNode, ModelAnimChannel> MapChannels;

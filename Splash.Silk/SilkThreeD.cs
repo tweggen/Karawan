@@ -292,6 +292,7 @@ public class SilkThreeD : IThreeD
     public unsafe void DrawMeshInstanced(
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,
+        in AAnimationsEntry? aAnimationsEntry,
         in Span<Matrix4x4> spanMatrices,
         in int nMatrices,
         ModelBakedFrame? modelBakedFrame)
@@ -303,7 +304,12 @@ public class SilkThreeD : IThreeD
         //VertexArrayObject skMesh = skMeshEntry.vao;
 
         SkMaterialEntry skMaterialEntry = ((SkMaterialEntry)aMaterialEntry);
-
+        SkAnimationsEntry? skAnimationsEntry = null;
+        if (aAnimationsEntry != null)
+        {
+            skAnimationsEntry = ((SkAnimationsEntry)aAnimationsEntry);
+        }
+        
         /*
          * 1. set shader uniforms if the material has changed
          * 2. Actually draw mesh.
@@ -328,18 +334,27 @@ public class SilkThreeD : IThreeD
             return;
         }
 
-        if (modelBakedFrame != null)
+        if (skAnimationsEntry != null)
         {
-            /*
-             * If we are supposed to load bone animations, let's do that.
-             */
-            Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
-            _gl.UniformMatrix4((int) _locBoneMatrices, (uint) modelBakedFrame.BoneTransformations.Length, false, span);
             sh.SetUniform(_locVertexFlags, 1);
-        }
-        else
+            _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
+        } 
+        
         {
-            sh.SetUniform(_locVertexFlags, 0);
+            if (modelBakedFrame != null)
+            {
+                /*
+                 * If we are supposed to load bone animations, let's do that.
+                 */
+                Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
+                _gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
+                    span);
+                sh.SetUniform(_locVertexFlags, 1);
+            }
+            else
+            {
+                sh.SetUniform(_locVertexFlags, 0);
+            }
         }
         /*
          * 1) Bind the vao and
@@ -503,7 +518,32 @@ public class SilkThreeD : IThreeD
         });
     }
 
+
+    public AAnimationsEntry CreateAnimationsEntry(in engine.joyce.Model jModel)
+    {
+        var skAnimationsEntry = new SkAnimationsEntry(_getGL(), jModel);
+        return skAnimationsEntry;
+    }
     
+
+    public void FillAnimationsEntry(in AAnimationsEntry aAnimationsEntry)
+    {
+        
+    }
+
+    public void UnloadAnimationsEntry(in AAnimationsEntry aAnimationsEntry)
+    {
+        SkAnimationsEntry skAnimationsEntry = (SkAnimationsEntry)aAnimationsEntry;
+        _graphicsThreadActions.Enqueue(() =>
+        {
+            if (skAnimationsEntry.IsUploaded())
+            {
+                skAnimationsEntry.Release();
+            }
+        });
+    }
+    
+
     public AMaterialEntry GetDefaultMaterial()
     {
         lock (_lo)

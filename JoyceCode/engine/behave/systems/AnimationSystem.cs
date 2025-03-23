@@ -15,6 +15,7 @@ public class AnimationSystem : DefaultEcs.System.AEntitySetSystem<float>
     protected override void Update(
         float dt, ReadOnlySpan<Entity> entities)
     {
+        return;
         Span<Entity> copiedEntities = stackalloc Entity[entities.Length];
         entities.CopyTo(copiedEntities);
 

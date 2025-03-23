@@ -39,7 +39,7 @@ public class SpawnModule : AModule
 
     private Loader _loader;
 
-    private bool _trace = false;
+    private bool _trace = true;
     
     BehaviorStats _behaviorStats = new();
 

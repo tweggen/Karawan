@@ -209,6 +209,7 @@ public class CameraOutput
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
                         ModelBakedFrame modelBakedFrame = null;
+                        Matrix4x4[]? allBakedFrames = null;
                         var modelAnimation = animationItem.AnimationState.ModelAnimation; 
                         if (modelAnimation != null)
                         {
@@ -381,12 +382,26 @@ public class CameraOutput
             int nMeshes = pfInstance.AMeshEntries.Count;
             int nMaterialIndices = id.MeshMaterials.Count;
             int nMaterials = pfInstance.AMaterialEntries.Count;
+            AAnimationsEntry? aAnimationsEntry = pfInstance.AAnimationsEntry;
+            if (aAnimationsEntry != null)
+            {
+                if (!aAnimationsEntry.IsFilled())
+                {
+                    _threeD.FillAnimationsEntry(aAnimationsEntry);
+                }
 
+                if (!aAnimationsEntry.IsFilled())
+                {
+                    Error($"AAnimationsEntry is Not filled!");
+                    // return;
+                }
+            }
+            
             for (int i = 0; i < nMeshes; ++i)
             {
                 AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
                 AMaterialEntry aMaterialEntry = null;
-
+                
                 if (i < nMaterialIndices)
                 {
                     int materialIndex = id.MeshMaterials[i];
@@ -440,14 +455,14 @@ public class CameraOutput
                     if (!aMaterialEntry.JMaterial.IsUnscalable)
                     {
                         _appendInstanceNoLock(
-                            aMeshEntry, aMaterialEntry,
+                            aMeshEntry, aMaterialEntry, aAnimationsEntry,
                             id.ModelTransform * transform3ToWorld,
                             cAnimationState);
                     }
                     else
                     {
                         _appendInstanceNoLock(
-                            aMeshEntry, aMaterialEntry,
+                            aMeshEntry, aMaterialEntry, aAnimationsEntry,
                             _mUnscale * id.ModelTransform * transform3ToWorld,
                             cAnimationState
                             );

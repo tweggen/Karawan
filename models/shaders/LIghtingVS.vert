@@ -1,5 +1,7 @@
 
-// Input vertex attributes
+/*
+ *Input vertex attributes
+ */
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoord;
 layout(location = 2) in vec2 vertexTexCoord2;
@@ -7,6 +9,10 @@ layout(location = 3) in vec3 vertexNormal;
 // layout(location = 4) in vec4 vertexColor;
 layout(location = 4) in ivec4 vertexBoneIds;
 layout(location = 5) in vec4 vertexWeights;
+
+/*
+ * Uniforms
+ */
 
 in mat4 instanceTransform;
 
@@ -31,6 +37,13 @@ out vec3 v3FragNormal;
 out vec3 v3FragUp;
 out vec3 v3FragRight;
 out vec3 v3FragFront;
+
+/*
+ * SSBOs.
+ */
+layout(binding = 0) buffer BoneMatrices {
+    mat4 matrices[]; // An array of 4x4 matrices
+};
 
 void main()
 {
