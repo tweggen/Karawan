@@ -295,7 +295,7 @@ public class SilkThreeD : IThreeD
         in AMaterialEntry aMaterialEntry,
         in AAnimationsEntry? aAnimationsEntry,
         in Span<Matrix4x4> spanMatrices,
-        in Span<uint>? spanFramenos,
+        in Span<uint> spanFramenos,
         in int nMatrices,
         ModelBakedFrame? modelBakedFrame)
     {
@@ -399,12 +399,13 @@ public class SilkThreeD : IThreeD
                 if (_checkGLErrors) CheckError(gl,"attrib divisor");
             }
 
+            #if false
             if (spanFramenos != null)
             {
                 /*
                  * Upload the frame number array for instanced rendering
                  */
-                bFramenos = new BufferObject<uint>(_gl, spanFramenos.Value, BufferTargetARB.ArrayBuffer);
+                bFramenos = new BufferObject<uint>(_gl, spanFramenos, BufferTargetARB.ArrayBuffer);
                 if (_checkGLErrors) CheckError(gl,"New frameno Buffer Object");
                 gl.EnableVertexAttribArray((uint) _locFrameno);
                 if (_checkGLErrors) CheckError(gl,"Enable vertex array in framenos");
@@ -414,13 +415,7 @@ public class SilkThreeD : IThreeD
                 gl.VertexAttribDivisor((uint) _locFrameno, 1);
                 if (_checkGLErrors) CheckError(gl,"attrib frameno divisor");
             }
-
-            /*
-             * Disable buffers again.
-             * TXWTODO: Why that????
-             */
-            // gl.BindVertexArray(0);
-            // gl.BindBuffer(GLEnum.ElementArrayBuffer, 0);
+            #endif
         }
         else
         {
@@ -492,7 +487,11 @@ public class SilkThreeD : IThreeD
         if (null != bMatrices)
         {
             _silkFrame.ListFrameDisposables.Add(bMatrices);
-            // bMatrices.Dispose();
+        }
+
+        if (null != bFramenos)
+        {
+            _silkFrame.ListFrameDisposables.Add(bFramenos);
         }
 
     }   

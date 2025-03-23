@@ -205,11 +205,13 @@ public class CameraOutput
                          */
 #if NET6_0_OR_GREATER
                         var spanMatrices = CollectionsMarshal.AsSpan<Matrix4x4>(animationItem.Matrices);
+                        var spanFramenos = CollectionsMarshal.AsSpan<uint>(animationItem.FrameNos);
 #else
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
+                        Span<uint> spanFramenos = meshItem.Value.Framenos.ToArray();
 #endif
-                        threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry, spanMatrices,
-                            nMatrices, null);
+                        threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry, 
+                            spanMatrices, spanFramenos, nMatrices, null);
                         _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
                     }
                 }
