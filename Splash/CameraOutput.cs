@@ -269,15 +269,24 @@ public class CameraOutput
             _frameStats.NMeshes++;
         }
 
+        uint frameno = 0;
         if (null == aAnimationsEntry)
         {
             aAnimationsEntry = NullAnimationsEntry.Instance();
         }
-                
+        else
+        {
+            ModelAnimation? ma = cAnimationState.ModelAnimation;
+            if (ma != null)
+            {
+                frameno = ma.FirstFrame + cAnimationState.ModelAnimationFrame;
+            }
+        }
+        
         /*
          * And do we have an entry for the animationstate?
          */
-        meshBatch.Add(aAnimationsEntry, matrix, 0);
+        meshBatch.Add(aAnimationsEntry, matrix, frameno);
 
         /*
          * In particular when rendering transparency, we need to have average
