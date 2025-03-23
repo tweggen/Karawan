@@ -15,7 +15,7 @@ layout(location = 5) in vec4 vertexWeights;
  */
 
 in mat4 instanceTransform;
-
+in uint frameno;
 
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;

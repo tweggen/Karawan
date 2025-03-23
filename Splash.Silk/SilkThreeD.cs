@@ -283,6 +283,7 @@ public class SilkThreeD : IThreeD
          * Also load the locations for some programs from the shader.
          */
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
+        _locFrameno = shader.GetAttrib("frameno");
         _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
         _locMvp = shader.GetUniform("mvp");
         _locVertexFlags = shader.GetUniform("iVertexFlags");
@@ -294,6 +295,7 @@ public class SilkThreeD : IThreeD
         in AMaterialEntry aMaterialEntry,
         in AAnimationsEntry? aAnimationsEntry,
         in Span<Matrix4x4> spanMatrices,
+        in Span<uint>? spanFramenos,
         in int nMatrices,
         ModelBakedFrame? modelBakedFrame)
     {
@@ -363,16 +365,23 @@ public class SilkThreeD : IThreeD
 
         // TXWTODO: Only re-bind it if it has changed since the last call.
         BufferObject<Matrix4x4>? bMatrices = null;
+        BufferObject<uint>? bFramenos = null;
 
         if (_useInstanceRendering)
         {
+            /*
+             * Bind the mesh itself.
+             */
             skMeshEntry.vao.BindVertexArray();
             if (_checkGLErrors) CheckError(gl,"Bind Vertex Array");
+            
             _silkFrame.RegisterInstanceBuffer(spanMatrices);
+            
+            /*
+             * Upload the matrix array for instanced rendering.
+             */
             bMatrices = new BufferObject<Matrix4x4>(_gl, spanMatrices, BufferTargetARB.ArrayBuffer);
-            if (_checkGLErrors) CheckError(gl,"New Buffer Object");
-            //bMatrices.BindBuffer();
-            // if (_checkGLErrors) CheckError(gl,"Bind Buffer");
+            if (_checkGLErrors) CheckError(gl,"New matrix Buffer Object");
             for (uint i = 0; i < 4; ++i)
             {
                 gl.EnableVertexAttribArray((uint) _locInstanceMatrices + i);
@@ -388,6 +397,22 @@ public class SilkThreeD : IThreeD
                 if (_checkGLErrors) CheckError(gl,"Enable vertex attribute pointer n");
                 gl.VertexAttribDivisor((uint) _locInstanceMatrices + i, 1);
                 if (_checkGLErrors) CheckError(gl,"attrib divisor");
+            }
+
+            if (spanFramenos != null)
+            {
+                /*
+                 * Upload the frame number array for instanced rendering
+                 */
+                bFramenos = new BufferObject<uint>(_gl, spanFramenos.Value, BufferTargetARB.ArrayBuffer);
+                if (_checkGLErrors) CheckError(gl,"New frameno Buffer Object");
+                gl.EnableVertexAttribArray((uint) _locFrameno);
+                if (_checkGLErrors) CheckError(gl,"Enable vertex array in framenos");
+                gl.VertexAttribIPointer((uint)_locFrameno, 4, 
+                    VertexAttribIType.Int, 0, (void*) 0);
+                if (_checkGLErrors) CheckError(gl,"Enable vertex attribute frameno ipointer n");
+                gl.VertexAttribDivisor((uint) _locFrameno, 1);
+                if (_checkGLErrors) CheckError(gl,"attrib frameno divisor");
             }
 
             /*
@@ -743,6 +768,7 @@ public class SilkThreeD : IThreeD
     private int _locBoneMatrices = 0;
     private int _locVertexFlags = 0;
     private int _locMvp = 0;
+    private int _locFrameno = 0;
 
     public void SetCameraPos(in Vector3 vCamera)
     {

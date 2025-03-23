@@ -59,6 +59,7 @@ public interface IThreeD
         in AMaterialEntry aMaterialEntry,
         in AAnimationsEntry aAnimationsEntry,
         in Span<Matrix4x4> spanMatrices,
+        in Span<uint> spanFramenos,
         in int nMatrices,
         ModelBakedFrame? modelBakedFrame);
 
