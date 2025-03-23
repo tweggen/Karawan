@@ -208,24 +208,8 @@ public class CameraOutput
 #else
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
 #endif
-                        ModelBakedFrame modelBakedFrame = null;
-                        Matrix4x4[]? allBakedFrames = null;
-                        var modelAnimation = animationItem.AnimationState.ModelAnimation; 
-                        if (modelAnimation != null)
-                        {
-                            var modelBakedFrames = modelAnimation.BakedFrames;
-                            if (modelBakedFrames != null)
-                            {
-                                uint frameno = animationItem.AnimationState.ModelAnimationFrame; 
-                                if (frameno < (uint) modelBakedFrames.Length)
-                                {
-                                    modelBakedFrame = modelBakedFrames[frameno];
-                                    // Trace($"modelBakedFrame[{frameno}].BoneTransformations[0] {modelBakedFrame.BoneTransformations[0]}");
-                                }
-                            }
-                        }
-                        threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, spanMatrices,
-                            nMatrices, modelBakedFrame);
+                        threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry, spanMatrices,
+                            nMatrices, null);
                         _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
                     }
                 }
@@ -241,6 +225,7 @@ public class CameraOutput
     private void _appendInstanceNoLock(
         in AMeshEntry aMeshEntry,
         in AMaterialEntry aMaterialEntry,
+        in AAnimationsEntry? aAnimationsEntry,
         in Matrix4x4 matrix,
         in engine.joyce.components.AnimationState cAnimationState)
     {
@@ -288,11 +273,11 @@ public class CameraOutput
          * And do we have an entry for the animationstate?
          */
         AnimationBatch animationBatch;
-        meshBatch.AnimationBatches.TryGetValue(cAnimationState, out animationBatch);
+        meshBatch.AnimationBatches.TryGetValue(aAnimationsEntry!, out animationBatch);
         if (null == animationBatch)
         {
-            animationBatch = new AnimationBatch(cAnimationState);
-            meshBatch.AnimationBatches[cAnimationState] = animationBatch;
+            animationBatch = new AnimationBatch(aAnimationsEntry);
+            meshBatch.AnimationBatches[aAnimationsEntry] = animationBatch;
             _frameStats.NAnimations++;
         }
         
@@ -471,7 +456,7 @@ public class CameraOutput
                 else
                 {
                     _computeInverseBillboardMatrix(aMaterialEntry, aMeshEntry, transform3ToWorld, id, out var m);
-                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, m, cAnimationState);
+                    _appendInstanceNoLock(aMeshEntry, aMaterialEntry, aAnimationsEntry, m, cAnimationState);
                 }
             }
         }

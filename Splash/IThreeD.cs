@@ -48,7 +48,7 @@ public interface IThreeD
     public void FillTextureEntry(in ATextureEntry aTextureEntry);
     public void UploadTextureEntry(in ATextureEntry aTextureEntry);
 
-    public ARenderbufferEntry CreateRenderbuffer(in en+gine.joyce.Renderbuffer jRenderbuffer);
+    public ARenderbufferEntry CreateRenderbuffer(in engine.joyce.Renderbuffer jRenderbuffer);
     public void UploadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
     public void UnloadRenderbuffer(in ARenderbufferEntry aRenderbufferEntry);
     
