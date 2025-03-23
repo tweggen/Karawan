@@ -92,7 +92,7 @@ void applyLightPoint(in vec3 v3Normal, in Light light, inout vec3 col3TotalLight
     if (light.param1 > -1.0)
     {
         // This is a directional v3nDirLight, consider the target.
-        // Minus, because we care about the angle at t he v3nDirLight.
+        // Minus, because we care about the angle at the v3nDirLight.
         float dotTarget = -dot(light.target,v3nDirLight);
         if (dotTarget > light.param1)
         {
@@ -402,11 +402,8 @@ void main()
     vec4 col4AmbientTotal = col4Ambient;
 
     vec4 col4Unfogged =
-        //vec4(0.1 * col3TotalLight, 0)
-        vec4((col4DiffuseTotal.xyz+col4AmbientTotal.xyz) * col3TotalLight, col4DiffuseTotal.w)
-        //+ col4DiffuseTotal * vec4(col3TotalLight,0.0)
+        vec4(col4DiffuseTotal.xyz * (col4AmbientTotal.xyz+col3TotalLight), col4DiffuseTotal.w)
         + col4EmissiveTotal
-        //+ col4AmbientTotal 
         ;
 
     if (fogDistance > 1.0)
@@ -429,4 +426,5 @@ void main()
     
     // Gamma correction
     // finalColor = pow(finalColor, vec4(1.0/2.2));
+    // finalColor += vec4(v3FragNormal,0);
 }

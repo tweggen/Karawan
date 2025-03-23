@@ -77,7 +77,8 @@ namespace engine.joyce
             } 
         }
         
-        public int Width, Height;
+        public int Width { get; set; }
+        public int Height { get; set; }
         
         public Vector2 Size2
         {

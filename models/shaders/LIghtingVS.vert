@@ -75,6 +75,9 @@ void main()
             v4TotalPosition = v4Vertex;
             v3TotalNormal = vertexNormal;
         }
+
+        v4TotalPosition.xyz /= v4TotalPosition.w;
+        v4TotalPosition.w = 1.0;
     }
         
     // instanceTransform = mat4(1.0);

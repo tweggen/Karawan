@@ -380,6 +380,7 @@ public class SkTexture : IDisposable
 
     private unsafe void _uploadImage(Image<Rgba32> img, string path, bool isAtlas)
     {
+        Trace($"Uploading {path}");
         int width, height;
         _backData = true;
 
@@ -506,6 +507,7 @@ public class SkTexture : IDisposable
             #else
             I.Get<Engine>().Run( ()=>
             {
+                Trace($"Loading {path}");
                 System.IO.Stream streamImage = engine.Assets.Open(path);
                 var img = Image.Load<Rgba32>(streamImage);
                 I.Get<IThreeD>().Execute(() =>

@@ -198,12 +198,13 @@ public class Scene : AModule, IScene, IInputPart
         /*
          * Directional light
          */
-        {
+        
+        if (true) {
             _eLightMain = _engine.CreateEntity("RootScene.DirectionalLight");
             _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.7f, 0.8f, 0.9f, 0.0f)));
             _aTransform.SetRotation(_eLightMain, Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), 45f * (float)Math.PI / 180f));
         }
-        {
+        if (true) {
             _eLightBack = _engine.CreateEntity("RootScene.OtherLight");
             _eLightBack.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.2f, 0.2f, 0.0f, 0.0f)));
             _aTransform.SetRotation(_eLightBack, Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), 180f * (float)Math.PI / 180f));
@@ -212,9 +213,21 @@ public class Scene : AModule, IScene, IInputPart
         /*
          * Ambient light
          */
-        {
+        if (true) {
             _eAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
             _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.01f, 0.01f, 0.01f, 0.0f)));
+        }
+
+        if (false)
+        {
+            /*
+             * Debug lights
+             */
+            _eAmbientLight = _engine.CreateEntity("RootScene.AmbientLight");
+            _eAmbientLight.Set(new engine.joyce.components.AmbientLight(new Vector4(0.1f, 0.1f, 0.1f, 0.0f)));
+            _eLightMain = _engine.CreateEntity("RootScene.DirectionalLight");
+            _eLightMain.Set(new engine.joyce.components.DirectionalLight(new Vector4(0.8f, 0.8f, 0.8f, 0.0f)));
+            _aTransform.SetPosition(_eLightMain, Vector3.Zero);
         }
 
         /*
@@ -307,7 +320,7 @@ public class Scene : AModule, IScene, IInputPart
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         // TXWTODO: Generalize this.
-        // M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
+        M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
         M<SpawnModule>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
         
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.save", _triggerSave);
