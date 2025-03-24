@@ -283,7 +283,8 @@ public class SilkThreeD : IThreeD
          * Also load the locations for some programs from the shader.
          */
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
-        _locFrameno = shader.GetAttrib("frameno");
+        _locFrameno = shader.GetAttrib("instanceFrameno");
+        _locNBones = shader.GetUniform("nBones");
         _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
         _locMvp = shader.GetUniform("mvp");
         _locVertexFlags = shader.GetUniform("iVertexFlags");
@@ -338,7 +339,7 @@ public class SilkThreeD : IThreeD
 
         if (skAnimationsEntry != null)
         {
-            sh.SetUniform(_locVertexFlags, 1);
+            sh.SetUniform(_locVertexFlags, 2);
             _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
         } 
         
@@ -399,9 +400,11 @@ public class SilkThreeD : IThreeD
                 if (_checkGLErrors) CheckError(gl,"attrib divisor");
             }
 
-            #if false
+            #if true
             if (spanFramenos != null)
             {
+                uint nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
+                sh.SetUniform(_locNBones, nBones);
                 /*
                  * Upload the frame number array for instanced rendering
                  */
@@ -409,7 +412,7 @@ public class SilkThreeD : IThreeD
                 if (_checkGLErrors) CheckError(gl,"New frameno Buffer Object");
                 gl.EnableVertexAttribArray((uint) _locFrameno);
                 if (_checkGLErrors) CheckError(gl,"Enable vertex array in framenos");
-                gl.VertexAttribIPointer((uint)_locFrameno, 4, 
+                gl.VertexAttribIPointer((uint)_locFrameno, 1, 
                     VertexAttribIType.Int, 0, (void*) 0);
                 if (_checkGLErrors) CheckError(gl,"Enable vertex attribute frameno ipointer n");
                 gl.VertexAttribDivisor((uint) _locFrameno, 1);
@@ -768,6 +771,7 @@ public class SilkThreeD : IThreeD
     private int _locVertexFlags = 0;
     private int _locMvp = 0;
     private int _locFrameno = 0;
+    private int _locNBones = 0;
 
     public void SetCameraPos(in Vector3 vCamera)
     {

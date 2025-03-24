@@ -10,21 +10,21 @@ layout(location = 3) in vec3 vertexNormal;
 layout(location = 4) in ivec4 vertexBoneIds;
 layout(location = 5) in vec4 vertexWeights;
 
-/*
- * Uniforms
- */
-
-in mat4 instanceTransform;
-in uint frameno;
+layout(location = 6) in mat4 instanceTransform;
+layout(location = 10) in uint instanceFrameno;
 
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;
 
-// Input uniform values
+
+/*
+ * Input uniforms
+ */
+
 uniform mat4 mvp;
+uniform uint nBones;
 uniform mat4 m4BoneMatrices[MAX_BONES]; 
 uniform int iVertexFlags;
-// uniform mat4 matNormal;
 
 // Output vertex attributes (to fragment shader)
 out vec4 v4FragPosition;
@@ -42,7 +42,7 @@ out vec3 v3FragFront;
  * SSBOs.
  */
 layout(binding = 0) buffer BoneMatrices {
-    mat4 matrices[]; // An array of 4x4 matrices
+    mat4 allBakedMatrices[]; // An array of 4x4 matrices
 };
 
 void main()
@@ -53,8 +53,37 @@ void main()
     {
         vec4 v4Vertex = vec4(vertexPosition, 1.0);
 
-        // if ((int(iVertexFlags) & 1) != 0)
-        if (int(iVertexFlags) == 1)
+        if (int(iVertexFlags) == 2)
+        {
+            v4TotalPosition = vec4(0.0);
+            v3TotalNormal = vec3(0.0);
+            for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
+            {
+                int boneId = vertexBoneIds[i];
+                if (boneId == -1)
+                {
+                    continue;
+                }
+                if (boneId >= MAX_BONES)
+                {
+                    v4TotalPosition = v4Vertex;
+                    v3TotalNormal = vertexNormal;
+                    // v4TotalPosition = vec4(100.0, 100.0, 0.0, 1.0);
+                    break;
+                }
+                
+                uint matrixIndex = instanceFrameno * nBones + boneId;
+                mat4 m4BoneMatrix = allBakedMatrices[matrixIndex];
+
+                vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
+                // vec4 v4LocalPosition = v4Vertex * m4BoneMatrix;
+                v4TotalPosition += v4LocalPosition * vertexWeights[i];
+                vec3 v3LocalNormal = mat3(m4BoneMatrix) * vertexNormal;
+                // vec3 v3LocalNormal = vertexNormal * mat3(m4BoneMatrix);
+                v3TotalNormal += v3LocalNormal * vertexWeights[i];
+            }
+
+        } else if (int(iVertexFlags) == 1)
         {
             v4TotalPosition = vec4(0.0);
             v3TotalNormal = vec3(0.0);
