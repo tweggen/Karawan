@@ -280,6 +280,10 @@ public class CameraOutput
         uint frameno = 0;
         if (null == aAnimationsEntry)
         {
+            if (cAnimationState.ModelAnimation != null && cAnimationState.ModelAnimationFrame != 0)
+            {
+                int a = 1;
+            }
             aAnimationsEntry = NullAnimationsEntry.Instance();
         }
         else

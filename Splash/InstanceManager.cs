@@ -205,7 +205,6 @@ public class InstanceManager : IDisposable
 
         }
 
-        // TXWTODO: Looks inefficient
         /*
          * Finally, assign these arrays to the entity.
          */

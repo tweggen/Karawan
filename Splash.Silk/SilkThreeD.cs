@@ -393,7 +393,10 @@ public class SilkThreeD : IThreeD
                 uint nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
                 if (nBones > 1)
                 {
-                    int a = 1;
+                    if (skAnimationsEntry == null)
+                    {
+                        int a = 1;
+                    }
                 }
                 sh.SetUniform(_locNBones, (uint)nBones);
                 if (_checkGLErrors) CheckError(gl,"setting nbones uniform");

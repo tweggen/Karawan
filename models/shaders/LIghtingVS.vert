@@ -88,6 +88,7 @@ void main()
         } else if (iVertexFlags==0)
         {
             v4TotalPosition = v4Vertex;
+            v4TotalPosition.x = v4TotalPosition.x;
             v3TotalNormal = vertexNormal;
         } else
         {

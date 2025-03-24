@@ -22,7 +22,7 @@ public class SkProgramEntry : IDisposable
     public void SetUniform(int location, int value)
     {
         if (-1 == location) return;
-        _gl.Uniform1(location, value);
+        _gl.Uniform1(location, (int)value);
         if (_checkErrors)
         {
             var err = _gl.GetError();
@@ -36,7 +36,7 @@ public class SkProgramEntry : IDisposable
     public void SetUniform(int location, uint value)
     {
         if (-1 == location) return;
-        _gl.Uniform1(location, value);
+        _gl.Uniform1(location, (uint)value);
         if (_checkErrors)
         {
             var err = _gl.GetError();

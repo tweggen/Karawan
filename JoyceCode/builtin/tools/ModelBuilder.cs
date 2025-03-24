@@ -168,13 +168,6 @@ public class ModelBuilder
          */
         if (_isHierarchical)
         {
-            #if false
-            if (0 != (_instantiateModelParams.GeomFlags & InstantiateModelParams.NO_CONTROLLABLE_ROOT))
-            {
-                eRoot = eUserRoot.Value;
-            }
-            else
-            #endif
             {
                 eRoot = _engine.CreateEntity($"ba {_jModel.Name}");
                 _aHierarchy.SetParent(eRoot, eUserRoot);
