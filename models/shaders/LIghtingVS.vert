@@ -52,7 +52,7 @@ void main()
     {
         vec4 v4Vertex = vec4(vertexPosition, 1.0);
 
-        if (iVertexFlags == 2)
+        if (iVertexFlags == 3)
         {
             v4TotalPosition = vec4(0.0);
             v3TotalNormal = vec3(0.0);
@@ -85,7 +85,7 @@ void main()
             //v4Vertex = vec4(0.0,0.0,0.0,0.0);
             v4TotalPosition.w = v4TotalPosition.w / 2.0;
 
-        } else if (iVertexFlags==0)
+        } else if (iVertexFlags==4)
         {
             v4TotalPosition = v4Vertex;
             v4TotalPosition.x = v4TotalPosition.x;

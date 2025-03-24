@@ -357,12 +357,12 @@ public class SilkThreeD : IThreeD
             
             if (skAnimationsEntry != null)
             {
-                sh.SetUniform(_locVertexFlags, (int)2);
+                sh.SetUniform(_locVertexFlags, (int)3);
                 _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
             }
             else
             {
-                sh.SetUniform(_locVertexFlags, (int)0);
+                sh.SetUniform(_locVertexFlags, (int)4);
             }
 
             /*
