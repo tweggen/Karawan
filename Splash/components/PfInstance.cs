@@ -9,7 +9,7 @@ public struct PfInstance
     //public Matrix4x4 ModelTransform;
     public IList<AMeshEntry> AMeshEntries;
     public IList<AMaterialEntry> AMaterialEntries;
-    public AAnimationsEntry AAnimationsEntry;
+    public IList<AAnimationsEntry> AAnimationsEntries;
     public InstanceDesc InstanceDesc;
 
 
@@ -20,6 +20,7 @@ public struct PfInstance
         //ModelTransform = modelTransform;
         AMeshEntries = new List<AMeshEntry>();
         AMaterialEntries = new List<AMaterialEntry>();
+        AAnimationsEntries = new List<AAnimationsEntry>();
         InstanceDesc = instanceDesc;
     }
 }

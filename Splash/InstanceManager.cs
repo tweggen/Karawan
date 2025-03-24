@@ -92,7 +92,7 @@ public class InstanceManager : IDisposable
     {
         IList<AMeshEntry> aMeshEntries = new List<AMeshEntry>();
         IList<AMaterialEntry> aMaterialEntries = new List<AMaterialEntry>();
-        AAnimationsEntry? aAnimationsEntry = null;
+        IList<AAnimationsEntry> aAnimationsEntries = new List<AAnimationsEntry>();
 
         lock (_lo)
         {
@@ -192,9 +192,10 @@ public class InstanceManager : IDisposable
                 {
                     try
                     {
-                        aAnimationsEntry = _loadAnimations(jModel);
+                        var aAnimationsEntry = _loadAnimations(jModel);
                         animResource = new Resource<AAnimationsEntry>(aAnimationsEntry);
                         _animationsResources.Add(jModel, animResource);
+                        aAnimationsEntries.Add(aAnimationsEntry);
                     }
                     catch (Exception e)
                     {
@@ -211,7 +212,7 @@ public class InstanceManager : IDisposable
         ref var pfInstance = ref entity.Get<Splash.components.PfInstance>(); 
         pfInstance.AMaterialEntries = aMaterialEntries;
         pfInstance.AMeshEntries = aMeshEntries;
-        pfInstance.AAnimationsEntry = aAnimationsEntry;
+        pfInstance.AAnimationsEntries = aAnimationsEntries;
     }
 
 
