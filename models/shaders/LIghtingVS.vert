@@ -85,10 +85,13 @@ void main()
             //v4Vertex = vec4(0.0,0.0,0.0,0.0);
             v4TotalPosition.w = v4TotalPosition.w / 2.0;
 
-        } else
+        } else if (iVertexFlags==0)
         {
             v4TotalPosition = v4Vertex;
             v3TotalNormal = vertexNormal;
+        } else
+        {
+            v4TotalPosition.w *= 2.0;
         }
 
         v4TotalPosition.xyz /= v4TotalPosition.w;
