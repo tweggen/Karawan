@@ -285,7 +285,6 @@ public class SilkThreeD : IThreeD
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
         _locFrameno = shader.GetAttrib("instanceFrameno");
         _locNBones = shader.GetUniform("nBones");
-        _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
         _locMvp = shader.GetUniform("mvp");
         _locVertexFlags = shader.GetUniform("iVertexFlags");
     }
@@ -337,25 +336,6 @@ public class SilkThreeD : IThreeD
             return;
         }
 
-        #if false
-        else  
-        {
-            if (modelBakedFrame != null)
-            {
-                /*
-                 * If we are supposed to load bone animations, let's do that.
-                 */
-                Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
-                _gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
-                    span);
-                sh.SetUniform(_locVertexFlags, 1);
-            }
-            else
-            {
-                sh.SetUniform(_locVertexFlags, 0);
-            }
-        }
-        #endif
         /*
          * 1) Bind the vao and
          * 2) upload the matrix instance buffer.
@@ -377,12 +357,12 @@ public class SilkThreeD : IThreeD
             
             if (skAnimationsEntry != null)
             {
-                sh.SetUniform(_locVertexFlags, 2);
+                sh.SetUniform(_locVertexFlags, (int)2);
                 _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
             }
             else
             {
-                sh.SetUniform(_locVertexFlags, 0);
+                sh.SetUniform(_locVertexFlags, (int)0);
             }
 
             /*
@@ -783,7 +763,6 @@ public class SilkThreeD : IThreeD
 
 
     private int _locInstanceMatrices = 0;
-    private int _locBoneMatrices = 0;
     private int _locVertexFlags = 0;
     private int _locMvp = 0;
     private int _locFrameno = 0;

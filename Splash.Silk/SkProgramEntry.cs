@@ -10,7 +10,7 @@ public class SkProgramEntry : IDisposable
 {
     public SkSingleShaderEntry SkVertexShader;
     public SkSingleShaderEntry SkFragmentShader;
-    private bool _traceShader = false;
+    private bool _traceShader = true;
 
     private GL _gl;
     public uint Handle = 0xffffffff;

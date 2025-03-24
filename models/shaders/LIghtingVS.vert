@@ -23,7 +23,6 @@ const int MAX_BONE_INFLUENCE = 4;
 
 uniform mat4 mvp;
 uniform uint nBones;
-uniform mat4 m4BoneMatrices[MAX_BONES]; 
 uniform int iVertexFlags;
 
 // Output vertex attributes (to fragment shader)
@@ -53,7 +52,7 @@ void main()
     {
         vec4 v4Vertex = vec4(vertexPosition, 1.0);
 
-        if (int(iVertexFlags) == 2)
+        if (iVertexFlags == 2)
         {
             v4TotalPosition = vec4(0.0);
             v3TotalNormal = vec3(0.0);
@@ -82,37 +81,10 @@ void main()
                 // vec3 v3LocalNormal = vertexNormal * mat3(m4BoneMatrix);
                 v3TotalNormal += v3LocalNormal * vertexWeights[i];
             }
-            v4TotalPosition.w /= 2.0;
+            //v4TotalPosition = vec4(0.0,0.0,0.0,0.0);
+            //v4Vertex = vec4(0.0,0.0,0.0,0.0);
+            v4TotalPosition.w = v4TotalPosition.w / 2.0;
 
-        } else if (int(iVertexFlags) == 1)
-        {
-            v4TotalPosition = vec4(0.0);
-            v3TotalNormal = vec3(0.0);
-            for (int i = 0; i < MAX_BONE_INFLUENCE; i++)
-            {
-                int boneId = vertexBoneIds[i];
-                if (boneId == -1)
-                {
-                    continue;
-                }
-                if (boneId >= MAX_BONES)
-                {
-                    v4TotalPosition = v4Vertex;
-                    v3TotalNormal = vertexNormal;
-                    // v4TotalPosition = vec4(100.0, 100.0, 0.0, 1.0);
-                    break;
-                }
-
-                mat4 m4BoneMatrix = m4BoneMatrices[boneId];
-
-                vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
-                // vec4 v4LocalPosition = v4Vertex * m4BoneMatrix;
-                v4TotalPosition += v4LocalPosition * vertexWeights[i];
-                vec3 v3LocalNormal = mat3(m4BoneMatrix) * vertexNormal;
-                // vec3 v3LocalNormal = vertexNormal * mat3(m4BoneMatrix);
-                v3TotalNormal += v3LocalNormal * vertexWeights[i];
-            }
-            
         } else
         {
             v4TotalPosition = v4Vertex;
