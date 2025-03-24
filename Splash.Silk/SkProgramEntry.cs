@@ -28,7 +28,21 @@ public class SkProgramEntry : IDisposable
             var err = _gl.GetError();
             if (err != GLEnum.NoError)
             {
-                if (_traceShader) Error($"Error setting uniform {location}: {err}");
+                if (_traceShader) Error($"Error setting uniform int {location}: {err}");
+            }
+        }
+    }
+
+    public void SetUniform(int location, uint value)
+    {
+        if (-1 == location) return;
+        _gl.Uniform1(location, value);
+        if (_checkErrors)
+        {
+            var err = _gl.GetError();
+            if (err != GLEnum.NoError)
+            {
+                if (_traceShader) Error($"Error setting uniform uint {location}: {err}");
             }
         }
     }
@@ -42,7 +56,7 @@ public class SkProgramEntry : IDisposable
             var err = _gl.GetError();
             if (err != GLEnum.NoError)
             {
-                if (_traceShader) Error($"Error setting uniform {location}: {err}");
+                if (_traceShader) Error($"Error setting uniform float {location}: {err}");
             }
         }
     }

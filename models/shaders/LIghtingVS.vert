@@ -82,6 +82,7 @@ void main()
                 // vec3 v3LocalNormal = vertexNormal * mat3(m4BoneMatrix);
                 v3TotalNormal += v3LocalNormal * vertexWeights[i];
             }
+            v4TotalPosition.w /= 2.0;
 
         } else if (int(iVertexFlags) == 1)
         {

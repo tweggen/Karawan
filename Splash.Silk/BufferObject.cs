@@ -35,7 +35,7 @@ public class BufferObject<TDataType> : IDisposable
 
         if (_checkErrors && _gl.GetError() != GLEnum.NoError)
         {
-            Trace("Error uploading mesh.");
+            Trace("Error uploading bufferobject.");
         }
     }
 

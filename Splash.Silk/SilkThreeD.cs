@@ -337,11 +337,8 @@ public class SilkThreeD : IThreeD
             return;
         }
 
-        if (skAnimationsEntry != null)
-        {
-            sh.SetUniform(_locVertexFlags, 2);
-            _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
-        } else  
+        #if false
+        else  
         {
             if (modelBakedFrame != null)
             {
@@ -358,6 +355,7 @@ public class SilkThreeD : IThreeD
                 sh.SetUniform(_locVertexFlags, 0);
             }
         }
+        #endif
         /*
          * 1) Bind the vao and
          * 2) upload the matrix instance buffer.
@@ -377,6 +375,16 @@ public class SilkThreeD : IThreeD
             
             _silkFrame.RegisterInstanceBuffer(spanMatrices);
             
+            if (skAnimationsEntry != null)
+            {
+                sh.SetUniform(_locVertexFlags, 2);
+                _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
+            }
+            else
+            {
+                sh.SetUniform(_locVertexFlags, 0);
+            }
+
             /*
              * Upload the matrix array for instanced rendering.
              */
@@ -407,7 +415,7 @@ public class SilkThreeD : IThreeD
                 {
                     int a = 1;
                 }
-                sh.SetUniform(_locNBones, nBones);
+                sh.SetUniform(_locNBones, (uint)nBones);
                 if (_checkGLErrors) CheckError(gl,"setting nbones uniform");
 
                 /*
