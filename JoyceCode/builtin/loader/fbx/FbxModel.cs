@@ -354,6 +354,7 @@ public class FbxModel : IDisposable
             }
 
             mn.InstanceDesc = InstanceDesc.CreateFromMatMesh(matMesh, 400f);
+            mn.InstanceDesc.ModelNode = mn;
         }
 
         /*

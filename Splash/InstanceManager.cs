@@ -182,7 +182,7 @@ public class InstanceManager : IDisposable
                 }
             }
 
-            engine.joyce.Model? jModel;
+            engine.joyce.Model? jModel = null;
             if (value.InstanceDesc.ModelNode != null && value.InstanceDesc.ModelNode.Model != null &&
                 value.InstanceDesc.ModelNode.Model.AllBakedMatrices != null)
             {
@@ -285,6 +285,33 @@ public class InstanceManager : IDisposable
                     }
                 }
             }
+            
+            engine.joyce.Model? jModel = null;
+            if (value.InstanceDesc.ModelNode != null && value.InstanceDesc.ModelNode.Model != null &&
+                value.InstanceDesc.ModelNode.Model.AllBakedMatrices != null)
+            {
+                jModel = value.InstanceDesc.ModelNode.Model;
+                Resource<AAnimationsEntry> animResource;
+                if (!_animationsResources.TryGetValue(jModel, out animResource))
+                {
+                    Error("Unknown animations to unreference");
+                }
+                else
+                {
+                    if (animResource.RemoveReference())
+                    {
+                        try
+                        {
+                            _unloadAnim(animResource);
+                        }
+                        finally
+                        {
+                            _animationsResources.Remove(jModel);
+                        }
+                    }
+                }
+            }
+
         }
     }
     
@@ -355,8 +382,14 @@ public class InstanceManager : IDisposable
             _unloadMaterial(pair.Value);
         }
 
+        foreach (KeyValuePair<engine.joyce.Model, Resource<AAnimationsEntry>> pair in _animationsResources)
+        {
+            _unloadAnim(pair.Value);
+        }
+
         _meshResources.Clear();
         _materialResources.Clear();
+        _animationsResources.Clear();
     }
 
 

@@ -46,7 +46,7 @@ public class SilkThreeD : IThreeD
     
     private readonly engine.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
 
-    private bool _checkGLErrors = false;
+    private bool _checkGLErrors = true;
 
     public bool CheckGLErrors
     {
@@ -405,6 +405,8 @@ public class SilkThreeD : IThreeD
             {
                 uint nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
                 sh.SetUniform(_locNBones, nBones);
+                if (_checkGLErrors) CheckError(gl,"setting nbones uniform");
+
                 /*
                  * Upload the frame number array for instanced rendering
                  */

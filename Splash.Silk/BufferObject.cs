@@ -17,7 +17,7 @@ public class BufferObject<TDataType> : IDisposable
     private uint _handle;
     private BufferTargetARB _bufferType;
     private GL _gl;
-    private const bool _checkErrors = false;  
+    private const bool _checkErrors = true;  
 
     public unsafe BufferObject(GL gl, Span<TDataType> data, BufferTargetARB bufferType)
     {
