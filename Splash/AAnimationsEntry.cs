@@ -9,10 +9,13 @@ public abstract class AAnimationsEntry : IDisposable
 
     public abstract bool IsUploaded();
 
-    public abstract bool IsFilled();
     
     public abstract void Dispose();
 
+
+    public abstract void Upload();
+
+    
     protected AAnimationsEntry(in engine.joyce.Model? m)
     {
         Model = m;

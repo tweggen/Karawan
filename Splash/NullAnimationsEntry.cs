@@ -10,12 +10,13 @@ public class NullAnimationsEntry : AAnimationsEntry
     {
     }
 
-    public override bool IsUploaded()
-    {
-        return _isUploaded;
-    }
 
-    public override bool IsFilled()
+    public override void Upload()
+    {
+        _isUploaded = true;
+    }
+    
+    public override bool IsUploaded()
     {
         return _isUploaded;
     }

@@ -200,6 +200,12 @@ public class CameraOutput
                     foreach (var animationItem in listAnimationBatches)
                     {
                         var nMatrices = animationItem.Matrices.Count;
+
+                        if (!animationItem.AAnimationsEntry.IsUploaded())
+                        {
+                            _threeD.UploadAnimationsEntry(animationItem.AAnimationsEntry);
+                        }
+                        
                         /*
                          * I must draw using the instanced call because I only use an instanced shader.
                          */
@@ -372,19 +378,6 @@ public class CameraOutput
             int nMaterialIndices = id.MeshMaterials.Count;
             int nMaterials = pfInstance.AMaterialEntries.Count;
             AAnimationsEntry? aAnimationsEntry = pfInstance.AAnimationsEntry;
-            if (aAnimationsEntry != null)
-            {
-                if (!aAnimationsEntry.IsFilled())
-                {
-                    _threeD.FillAnimationsEntry(aAnimationsEntry);
-                }
-
-                if (!aAnimationsEntry.IsFilled())
-                {
-                    Error($"AAnimationsEntry is Not filled!");
-                    // return;
-                }
-            }
             
             for (int i = 0; i < nMeshes; ++i)
             {

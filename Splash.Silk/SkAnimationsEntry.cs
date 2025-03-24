@@ -20,7 +20,7 @@ public class SkAnimationsEntry : AAnimationsEntry
     /**
      * Upload the mesh to the GPU.
      */
-    public void Upload()
+    public override void Upload()
     {
         if (Model != null)
         {
@@ -78,19 +78,6 @@ public class SkAnimationsEntry : AAnimationsEntry
         }
 
         return _isUploaded == true;
-    }
-
-
-    public override bool IsFilled()
-    {
-        if (Model != null)
-        {
-            return SSBOAnimations != null;
-        }
-        else
-        {
-            return true;
-        }
     }
 
 

@@ -36,7 +36,7 @@ public interface IThreeD
     public AMaterialEntry GetDefaultMaterial();
 
     public AAnimationsEntry CreateAnimationsEntry(in engine.joyce.Model jModel);
-    public void FillAnimationsEntry(in AAnimationsEntry aAnimationsEntry);
+    public void UploadAnimationsEntry(in AAnimationsEntry aAnimationsEntry);
     public void UnloadAnimationsEntry(in AAnimationsEntry aAnimationsEntry);
     
     

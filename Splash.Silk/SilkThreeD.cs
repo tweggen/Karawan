@@ -341,8 +341,7 @@ public class SilkThreeD : IThreeD
         {
             sh.SetUniform(_locVertexFlags, 2);
             _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
-        } 
-        
+        } else  
         {
             if (modelBakedFrame != null)
             {
@@ -404,6 +403,10 @@ public class SilkThreeD : IThreeD
             if (spanFramenos != null)
             {
                 uint nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
+                if (nBones > 1)
+                {
+                    int a = 1;
+                }
                 sh.SetUniform(_locNBones, nBones);
                 if (_checkGLErrors) CheckError(gl,"setting nbones uniform");
 
@@ -559,9 +562,12 @@ public class SilkThreeD : IThreeD
     }
     
 
-    public void FillAnimationsEntry(in AAnimationsEntry aAnimationsEntry)
+    public void UploadAnimationsEntry(in AAnimationsEntry aAnimationsEntry)
     {
-        
+        if (!aAnimationsEntry.IsUploaded())
+        {
+            aAnimationsEntry.Upload();
+        }
     }
 
     public void UnloadAnimationsEntry(in AAnimationsEntry aAnimationsEntry)
