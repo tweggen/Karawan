@@ -83,7 +83,7 @@ public class Mesh : IComparable<Mesh>
     public IList<Int4>? BoneIndices;
 
     /**
-     * Indexable array of bone weightys
+     * Indexable array of bone weights
      */
     public IList<Vector4>? BoneWeights;
 

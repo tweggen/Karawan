@@ -11,32 +11,6 @@ using static engine.Logger;
 namespace engine.joyce;
 
 
-#if false
-public class InstanceDescConverter : JsonConverter<InstanceDesc>
-{
-    public required builtin.entitySaver.Context Context;
-    
-    public override InstanceDesc Read(
-        ref Utf8JsonReader reader,
-        Type typeToConvert,
-        JsonSerializerOptions options)
-    {
-        var mcpObject = JsonSerializer.Deserialize(ref reader, typeof(ModelCacheParams), options);
-        var mcp = mcpObject as ModelCacheParams;
-        var model = I.Get<ModelCache>().InstantiatePlaceholder(Context.Entity, mcp);
-        var id = model.RootNode.InstanceDesc;
-        return id;
-    }
-        
-
-    public override void Write(
-        Utf8JsonWriter writer,
-        InstanceDesc id,
-        JsonSerializerOptions options) =>
-        writer.WriteRawValue(JsonSerializer.Serialize<ModelCacheParams>(id.ModelCacheParams, options));
-}
-#endif
-
 /**
  * Describe one specific instance of a 3d object (aka Instance3 components)
  * Note that this is only a descriptor, not a lifetime object.
@@ -69,42 +43,25 @@ public class InstanceDesc
     
     private IList<engine.joyce.Material> _materials;
     public ReadOnlyCollection<Material> Materials;
-
+    
+    /**
+     * In lack of a dedicated Animation data structure (on the level of material),
+     * we abuse the modelNode to reference the corresponding model, per mesh by index.
+     */
+    private IList<engine.joyce.ModelNode> _modelNodes;
+    public ReadOnlyCollection<ModelNode> ModelNodes;
+    
+    
     private bool _haveCenter = false;
     private bool _haveAABBMerged = true;
     private AABB _aabbMerged;
     private bool _haveAABBTransformed = false;
     private AABB _aabbTransformed;
 
-    /**
-     * If we have been constructed from a model, this is the model node
-     * we have been created from.
-     */
-    public ModelNode ModelNode;
     
     private Vector3 _vCenter;
 
 
-    #if false
-    public void SetFrom(InstanceDesc o)
-    {
-        _m = o._m;
-        MaxDistance = o.MaxDistance;
-        _meshes = o._meshes;
-        Meshes = o.Meshes;
-        _meshMaterials = o._meshMaterials;
-        MeshMaterials = o.MeshMaterials;
-        _materials = o._materials;
-        Materials = o.Materials;
-        _haveCenter = o._haveCenter;
-        _haveAABBMerged = o._haveAABBMerged;
-        _aabbMerged = o._aabbMerged;
-        _haveAABBTransformed = o._haveAABBTransformed;
-        _aabbTransformed = o._aabbTransformed;
-        _vCenter = o._vCenter;
-    }
-    #endif
-    
     [JsonIgnore]
     public Vector3 Center
     {
@@ -264,6 +221,8 @@ public class InstanceDesc
         MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
         _materials = new List<Material>();
         Materials = new ReadOnlyCollection<Material>(_materials);
+        _modelNodes = new List<ModelNode>();
+        ModelNodes = new ReadOnlyCollection<ModelNode>(_modelNodes);
     }
 
 
@@ -286,7 +245,7 @@ public class InstanceDesc
         foreach (var kvp in matmesh.Tree)
         {
             id._materials.Add(kvp.Key);
-            foreach (var me in kvp.Value)
+            foreach (var (me,mn) in kvp.Value)
             {
                 if (me.Vertices.Count > 65535)
                 {
@@ -302,6 +261,7 @@ public class InstanceDesc
                 id._meshes.Add(me);
                 id._aabbMerged.Add(me.AABB);
                 id._meshMaterials.Add(materialIndex);
+                id._modelNodes(mn);
             }
 
             ++materialIndex;
@@ -387,11 +347,12 @@ public class InstanceDesc
         }
     }
 
-
-    public InstanceDesc(
+    
+    private void _ctor(         
         in IList<engine.joyce.Mesh> meshes,
         in IList<int> meshMaterials,
         in IList<engine.joyce.Material> materials,
+        in IList<engine.joyce.ModelNode> modelNodes,
         float maxDistance
     )
     {
@@ -402,8 +363,29 @@ public class InstanceDesc
         MeshMaterials = new ReadOnlyCollection<int>(_meshMaterials);
         _materials = materials;
         Materials = new ReadOnlyCollection<Material>(_materials);
+        _modelNodes = modelNodes;
+        ModelNodes = new ReadOnlyCollection<ModelNode>(_modelNodes);
         _haveAABBMerged = false;
         _haveAABBTransformed = false;
     }
+
+    private static List<ModelNode> _emptyModelNodeList = new();
+
+    
+    public InstanceDesc(
+        in IList<engine.joyce.Mesh> meshes,
+        in IList<int> meshMaterials,
+        in IList<engine.joyce.Material> materials,
+        float maxDistance
+    ) => _ctor(meshes, meshMaterials, materials, _emptyModelNodeList, maxDistance);
+
+    
+    public InstanceDesc(
+        in IList<engine.joyce.Mesh> meshes,
+        in IList<int> meshMaterials,
+        in IList<engine.joyce.Material> materials,
+        in IList<engine.joyce.ModelNode> modelNodes,
+        float maxDistance
+    ) => _ctor(meshes, meshMaterials, materials, modelNodes, maxDistance);
 }
     

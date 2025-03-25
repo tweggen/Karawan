@@ -136,6 +136,7 @@ public class InstanceManager : IDisposable
             for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
                 engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
+                engine.joyce.ModelNode jModelNode = value.InstanceDesc.ModelNodes[i];
                 
                 // TXWTODO: somehow derive the UV scale from the material
                 Resource<AMeshEntry> meshResource;
@@ -180,29 +181,29 @@ public class InstanceManager : IDisposable
                     aMeshEntries.Add(meshResource.Value);
                     meshResource.AddReference();
                 }
-            }
 
-            engine.joyce.Model? jModel = null;
-            if (value.InstanceDesc.ModelNode != null && value.InstanceDesc.ModelNode.Model != null &&
-                value.InstanceDesc.ModelNode.Model.AllBakedMatrices != null)
-            {
-                jModel = value.InstanceDesc.ModelNode.Model;
-                Resource<AAnimationsEntry> animResource;
-                if (!_animationsResources.TryGetValue(jModel, out animResource))
+                
+                if (jModelNode != null && jModelNode.Model.AllBakedMatrices != null)
                 {
-                    try
+                    var jModel = jModelNode.Model;
+                    Resource<AAnimationsEntry> animResource;
+                    if (!_animationsResources.TryGetValue(jModel, out animResource))
                     {
-                        var aAnimationsEntry = _loadAnimations(jModel);
-                        animResource = new Resource<AAnimationsEntry>(aAnimationsEntry);
-                        _animationsResources.Add(jModel, animResource);
-                        aAnimationsEntries.Add(aAnimationsEntry);
-                    }
-                    catch (Exception e)
-                    {
-                        Error("Exception loading animation: {e}");
+                        try
+                        {
+                            var aAnimationsEntry = _loadAnimations(jModel);
+                            animResource = new Resource<AAnimationsEntry>(aAnimationsEntry);
+                            _animationsResources.Add(jModel, animResource);
+                            aAnimationsEntries.Add(aAnimationsEntry);
+                        }
+                        catch (Exception e)
+                        {
+                            Error("Exception loading animation: {e}");
+                        }
                     }
                 }
             }
+
 
         }
 
@@ -286,11 +287,10 @@ public class InstanceManager : IDisposable
                 }
             }
             
-            engine.joyce.Model? jModel = null;
-            if (value.InstanceDesc.ModelNode != null && value.InstanceDesc.ModelNode.Model != null &&
-                value.InstanceDesc.ModelNode.Model.AllBakedMatrices != null)
+            for (int i = 0; i < value.InstanceDesc.ModelNodes.Count; ++i)
             {
-                jModel = value.InstanceDesc.ModelNode.Model;
+                var mn = value.InstanceDesc.ModelNodes[i];
+                var jModel = mn.Model;
                 Resource<AAnimationsEntry> animResource;
                 if (!_animationsResources.TryGetValue(jModel, out animResource))
                 {

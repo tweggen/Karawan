@@ -348,13 +348,12 @@ public class FbxModel : IDisposable
                      */
                     var jMaterial = FindMaterial(pMesh->MMaterialIndex, &pMesh->MColors);
                     
-                    matMesh.Add(jMaterial, jMesh);
+                    matMesh.Add(jMaterial, jMesh, mn);
 
                 }
             }
 
             mn.InstanceDesc = InstanceDesc.CreateFromMatMesh(matMesh, 400f);
-            mn.InstanceDesc.ModelNode = mn;
         }
 
         /*
