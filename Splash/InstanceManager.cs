@@ -136,7 +136,16 @@ public class InstanceManager : IDisposable
             for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
             {
                 engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
-                engine.joyce.ModelNode jModelNode = value.InstanceDesc.ModelNodes[i];
+                int nModelNodes = 0;
+                if (value.InstanceDesc.ModelNodes != null)
+                {
+                    nModelNodes = value.InstanceDesc.ModelNodes.Count;
+                }; 
+                engine.joyce.ModelNode jModelNode = null;
+                if (i < nModelNodes)
+                {
+                    jModelNode = value.InstanceDesc.ModelNodes[i];
+                }
                 
                 // TXWTODO: somehow derive the UV scale from the material
                 Resource<AMeshEntry> meshResource;
@@ -182,7 +191,8 @@ public class InstanceManager : IDisposable
                     meshResource.AddReference();
                 }
 
-                
+
+                bool haveEntry = false;
                 if (jModelNode != null && jModelNode.Model.AllBakedMatrices != null)
                 {
                     var jModel = jModelNode.Model;
@@ -195,6 +205,7 @@ public class InstanceManager : IDisposable
                             animResource = new Resource<AAnimationsEntry>(aAnimationsEntry);
                             _animationsResources.Add(jModel, animResource);
                             aAnimationsEntries.Add(aAnimationsEntry);
+                            haveEntry = true;
                         }
                         catch (Exception e)
                         {
@@ -202,9 +213,13 @@ public class InstanceManager : IDisposable
                         }
                     }
                 }
+
+                if (false == haveEntry)
+                {
+                    aAnimationsEntries.Add(null);
+                }
             }
-
-
+            
         }
 
         /*
@@ -290,23 +305,26 @@ public class InstanceManager : IDisposable
             for (int i = 0; i < value.InstanceDesc.ModelNodes.Count; ++i)
             {
                 var mn = value.InstanceDesc.ModelNodes[i];
-                var jModel = mn.Model;
-                Resource<AAnimationsEntry> animResource;
-                if (!_animationsResources.TryGetValue(jModel, out animResource))
+                if (mn != null)
                 {
-                    Error("Unknown animations to unreference");
-                }
-                else
-                {
-                    if (animResource.RemoveReference())
+                    var jModel = mn.Model;
+                    Resource<AAnimationsEntry> animResource;
+                    if (!_animationsResources.TryGetValue(jModel, out animResource))
                     {
-                        try
+                        Error("Unknown animations to unreference");
+                    }
+                    else
+                    {
+                        if (animResource.RemoveReference())
                         {
-                            _unloadAnim(animResource);
-                        }
-                        finally
-                        {
-                            _animationsResources.Remove(jModel);
+                            try
+                            {
+                                _unloadAnim(animResource);
+                            }
+                            finally
+                            {
+                                _animationsResources.Remove(jModel);
+                            }
                         }
                     }
                 }

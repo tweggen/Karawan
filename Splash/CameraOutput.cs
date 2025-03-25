@@ -381,12 +381,14 @@ public class CameraOutput
             int nMeshes = pfInstance.AMeshEntries.Count;
             int nMaterialIndices = id.MeshMaterials.Count;
             int nMaterials = pfInstance.AMaterialEntries.Count;
-            AAnimationsEntry? aAnimationsEntry = pfInstance.AAnimationsEntries.Count > 0 ? pfInstance.AAnimationsEntries[0] : null;
+            int nAnimations = pfInstance.AAnimationsEntries.Count;
+            //AAnimationsEntry? aAnimationsEntry = pfInstance.AAnimationsEntries.Count > 0 ? pfInstance.AAnimationsEntries[0] : null;
             
             for (int i = 0; i < nMeshes; ++i)
             {
                 AMeshEntry aMeshEntry = pfInstance.AMeshEntries[i];
                 AMaterialEntry aMaterialEntry = null;
+                AAnimationsEntry? aAnimationsEntry = null;
                 
                 if (i < nMaterialIndices)
                 {
@@ -405,6 +407,11 @@ public class CameraOutput
                 {
                     Error($"Invalid index ({i} >= nMaterialIndices=={nMaterialIndices}");
                     continue;
+                }
+
+                if (i < nAnimations)
+                {
+                    aAnimationsEntry = pfInstance.AAnimationsEntries[i];
                 }
 
                 /*

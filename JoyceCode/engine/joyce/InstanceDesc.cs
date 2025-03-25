@@ -261,7 +261,7 @@ public class InstanceDesc
                 id._meshes.Add(me);
                 id._aabbMerged.Add(me.AABB);
                 id._meshMaterials.Add(materialIndex);
-                id._modelNodes(mn);
+                id._modelNodes.Add(mn);
             }
 
             ++materialIndex;

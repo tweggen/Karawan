@@ -214,7 +214,7 @@ public class GlTF
     }
 
 
-    private void _readMesh(glTFLoader.Schema.Mesh fbxMesh, out MatMesh matMesh)
+    private void _readMesh(ModelNode mn, glTFLoader.Schema.Mesh fbxMesh, out MatMesh matMesh)
     {
         matMesh = new();
         foreach (var fbxMeshPrimitive in fbxMesh.Primitives)
@@ -282,7 +282,7 @@ public class GlTF
 
             _readTriangles(_gltfModel.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
             
-            matMesh.Add(new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888)}, jMesh);
+            matMesh.Add(new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888)}, jMesh, mn);
         }
     }
 
@@ -320,9 +320,8 @@ public class GlTF
         if (gltfNode.Mesh != null)
         {
             Trace("Reading a mesh.");
-            _readMesh(_gltfModel.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
+            _readMesh(mn, _gltfModel.Meshes[gltfNode.Mesh.Value], out MatMesh matMesh);
             var id = InstanceDesc.CreateFromMatMesh(matMesh, 200f);
-            id.ModelNode = mn;
             mn.InstanceDesc = id;
         }
         else
