@@ -41,7 +41,9 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
 
     protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
-        foreach (var entity in entities)
+        Span<DefaultEcs.Entity> copiedEntities = stackalloc DefaultEcs.Entity[entities.Length];
+        entities.CopyTo(copiedEntities);
+        foreach (var entity in copiedEntities)
         {
             var cInstance3 = entity.Get<engine.joyce.components.Instance3>();
             engine.joyce.InstanceDesc? id = cInstance3.InstanceDesc;
