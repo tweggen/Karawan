@@ -1,11 +1,13 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Numerics;
 using builtin.tools.kanshu;
 using DefaultEcs;
 using engine;
 using engine.joyce;
+using Splash.components;
 using static engine.Logger;
 
 namespace Splash;
@@ -88,7 +90,7 @@ public class InstanceManager : IDisposable
     private void _onRemoved(in Entity entity, in Splash.components.PfInstance value) => _remove(entity, value);
 
 
-    private void _add(in Entity entity, in Splash.components.PfInstance value)
+    public PfInstance CreatePfInstance(InstanceDesc id)
     {
         IList<AMeshEntry> aMeshEntries = new List<AMeshEntry>();
         IList<AMaterialEntry> aMaterialEntries = new List<AMaterialEntry>();
@@ -101,10 +103,10 @@ public class InstanceManager : IDisposable
              * We need the material entries first, because we need to know how we resolve
              * the textures to create the mesh.
              */
-            for (int i = 0; i < value.InstanceDesc.Materials.Count; ++i)
+            for (int i = 0; i < id.Materials.Count; ++i)
             {
                 Resource<AMaterialEntry> materialResource;
-                engine.joyce.Material jMaterial = value.InstanceDesc.Materials[i];
+                engine.joyce.Material jMaterial = id.Materials[i];
                 if (!_materialResources.TryGetValue(jMaterial, out materialResource))
                 {
                     try
@@ -133,25 +135,25 @@ public class InstanceManager : IDisposable
             }
 
             
-            for (int i = 0; i < value.InstanceDesc.Meshes.Count; ++i)
+            for (int i = 0; i < id.Meshes.Count; ++i)
             {
-                engine.joyce.Material jMeshMaterial = value.InstanceDesc.Materials[value.InstanceDesc.MeshMaterials[i]];
+                engine.joyce.Material jMeshMaterial = id.Materials[id.MeshMaterials[i]];
                 int nModelNodes = 0;
-                if (value.InstanceDesc.ModelNodes != null)
+                if (id.ModelNodes != null)
                 {
-                    nModelNodes = value.InstanceDesc.ModelNodes.Count;
+                    nModelNodes = id.ModelNodes.Count;
                 }; 
                 engine.joyce.ModelNode jModelNode = null;
                 if (i < nModelNodes)
                 {
-                    jModelNode = value.InstanceDesc.ModelNodes[i];
+                    jModelNode = id.ModelNodes[i];
                 }
                 
                 // TXWTODO: somehow derive the UV scale from the material
                 Resource<AMeshEntry> meshResource;
                 AMeshParams meshParams = new()
                 {
-                    JMesh = value.InstanceDesc.Meshes[i]
+                    JMesh = id.Meshes[i]
                 };
                 
                 engine.joyce.Texture jTexture = jMeshMaterial.Texture;
@@ -204,14 +206,15 @@ public class InstanceManager : IDisposable
                             var aAnimationsEntry = _loadAnimations(jModel);
                             animResource = new Resource<AAnimationsEntry>(aAnimationsEntry);
                             _animationsResources.Add(jModel, animResource);
-                            aAnimationsEntries.Add(aAnimationsEntry);
-                            haveEntry = true;
                         }
                         catch (Exception e)
                         {
                             Error("Exception loading animation: {e}");
                         }
                     }
+                    
+                    aAnimationsEntries.Add(animResource.Value);
+                    haveEntry = true;
                 }
 
                 if (false == haveEntry)
@@ -225,10 +228,21 @@ public class InstanceManager : IDisposable
         /*
          * Finally, assign these arrays to the entity.
          */
-        ref var pfInstance = ref entity.Get<Splash.components.PfInstance>(); 
-        pfInstance.AMaterialEntries = aMaterialEntries;
-        pfInstance.AMeshEntries = aMeshEntries;
-        pfInstance.AAnimationsEntries = aAnimationsEntries;
+        return new PfInstance(
+            id,
+            aMeshEntries.ToImmutableList(),
+            aMaterialEntries.ToImmutableList(),
+            aAnimationsEntries.ToImmutableList()
+        );
+    }
+    
+
+    private void _add(in Entity entity, in Splash.components.PfInstance value)
+    {
+        /*
+         * We do not do anything on add because we assume, the data was created
+         * using FillPfInstance
+         */
     }
 
 

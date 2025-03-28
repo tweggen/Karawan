@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Numerics;
 using engine.joyce;
 
@@ -7,20 +8,21 @@ namespace Splash.components;
 public struct PfInstance
 {
     //public Matrix4x4 ModelTransform;
-    public IList<AMeshEntry> AMeshEntries;
-    public IList<AMaterialEntry> AMaterialEntries;
-    public IList<AAnimationsEntry> AAnimationsEntries;
+    public readonly ImmutableList<AMeshEntry> AMeshEntries;
+    public readonly ImmutableList<AMaterialEntry> AMaterialEntries;
+    public readonly ImmutableList<AAnimationsEntry> AAnimationsEntries;
     public InstanceDesc InstanceDesc;
 
 
     public PfInstance(
-        InstanceDesc instanceDesc/*,
-        in Matrix4x4 modelTransform*/)
+        InstanceDesc instanceDesc,
+        ImmutableList<AMeshEntry> aMeshEntries,
+        ImmutableList<AMaterialEntry> aMaterialEntries,
+        ImmutableList<AAnimationsEntry> aAnimationsEntries)
     {
-        //ModelTransform = modelTransform;
-        AMeshEntries = new List<AMeshEntry>();
-        AMaterialEntries = new List<AMaterialEntry>();
-        AAnimationsEntries = new List<AAnimationsEntry>();
         InstanceDesc = instanceDesc;
+        AMeshEntries = aMeshEntries;
+        AMaterialEntries = aMaterialEntries;
+        AAnimationsEntries = aAnimationsEntries;
     }
 }

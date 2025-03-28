@@ -278,7 +278,7 @@ public class InstanceDesc
     
     public InstanceDesc TransformedCopy(in Matrix4x4 m)
     {
-        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials, this.MaxDistance);
+        InstanceDesc id = new InstanceDesc(Meshes, MeshMaterials, Materials, ModelNodes, this.MaxDistance);
         id._m = _m * m;
         return id;
     }
@@ -371,13 +371,15 @@ public class InstanceDesc
 
     private static List<ModelNode> _emptyModelNodeList = new();
 
-    
+
+    #if false
     public InstanceDesc(
         in IList<engine.joyce.Mesh> meshes,
         in IList<int> meshMaterials,
         in IList<engine.joyce.Material> materials,
         float maxDistance
     ) => _ctor(meshes, meshMaterials, materials, _emptyModelNodeList, maxDistance);
+    #endif
 
     
     public InstanceDesc(

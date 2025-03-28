@@ -22,6 +22,7 @@ public class Fbx
             new List<engine.joyce.Mesh>(),
             new List<int>(),
             new List<engine.joyce.Material>(),
+            new List<engine.joyce.ModelNode>(),
             400f);
         
         using (var fbxModel = new fbx.FbxModel())

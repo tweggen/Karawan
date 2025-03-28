@@ -382,7 +382,6 @@ public class CameraOutput
             int nMaterialIndices = id.MeshMaterials.Count;
             int nMaterials = pfInstance.AMaterialEntries.Count;
             int nAnimations = pfInstance.AAnimationsEntries.Count;
-            //AAnimationsEntry? aAnimationsEntry = pfInstance.AAnimationsEntries.Count > 0 ? pfInstance.AAnimationsEntries[0] : null;
             
             for (int i = 0; i < nMeshes; ++i)
             {

@@ -61,7 +61,7 @@ public class Obj
     {
         return (n.Length >= 12 && n.Substring(0, 12) == "primarycolor");
     }
-    
+
 
     public void LoadModelInstanceSync(string url,
         ModelProperties modelProperties,
@@ -70,7 +70,7 @@ public class Obj
         var objLoader = _objLoaderFactory.Create(_materialStreamProvider);
         var fileStream = engine.Assets.Open(url);
         var loadedObject = objLoader.Load(fileStream);
-        
+
         uint[] tri = new uint[3];
 
         engine.geom.AABB aabb = new();
@@ -80,8 +80,18 @@ public class Obj
         List<engine.joyce.Mesh> meshes = new();
         List<engine.joyce.Material> materials = new();
         List<int> meshMaterials = new();
-        
+        List<ModelNode> modelNodes = new();
+
         List<ObjLoader.Loader.Data.Material> listMaterials = new();
+
+        model = new Model();
+        ModelNode mnRoot = new()
+        {
+            Model = model,
+            Parent = null,
+            Transform = new(true, 0xffff, Matrix4x4.Identity)
+        };
+
 
         string primarycolor = "";
         if (modelProperties != null && modelProperties.Properties.TryGetValue("primarycolor", out var col))
@@ -93,7 +103,7 @@ public class Obj
         {
             engine.joyce.Material jMaterial = new();
             jMaterial.Name = loadedMaterial.Name;
-            
+
             /*
              * Handle special materials
              */
@@ -221,20 +231,17 @@ public class Obj
             }
 
             meshes.Add(jMesh);
+            modelNodes.Add(mnRoot);
             int idxMaterial = listMaterials.IndexOf(loadedGroup.Material);
             meshMaterials.Add(idxMaterial);
         }
 
-        /*
-         * finally, wrap it up in a model data structure.
-         */
-        
+        mnRoot.InstanceDesc = new(meshes, meshMaterials, materials, modelNodes, 100f);
+        model.RootNode = mnRoot;   
         // TXWTODO: read the maximal distance from some properties
-        InstanceDesc instanceDesc = new(meshes, meshMaterials, materials, 100f);
-        model = new Model(instanceDesc);
     }
-    
-    
+
+
     public Task<Model> LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return _engine.Run(() =>

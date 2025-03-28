@@ -28,16 +28,20 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
 {
     private engine.Engine _engine;
 
+    
     private int _runNumber = 0;
 
+    
     protected override void PreUpdate(engine.Engine state)
     {
         ++_runNumber;
     }
+    
 
     protected override void PostUpdate(engine.Engine state)
     {
     }
+    
 
     protected override void Update(engine.Engine state, ReadOnlySpan<DefaultEcs.Entity> entities)
     {
@@ -65,7 +69,7 @@ sealed class CreatePfInstanceSystem : DefaultEcs.System.AEntitySetSystem<engine.
             /*
              * Create the platform entity. It will be filled by the instance manager.
              */
-            entity.Set(new components.PfInstance(id));
+            entity.Set(I.Get<InstanceManager>().CreatePfInstance(id));
         }
     }
 
