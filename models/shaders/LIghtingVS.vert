@@ -40,7 +40,7 @@ out vec3 v3FragFront;
 /*
  * SSBOs.
  */
-layout(binding = 0) buffer BoneMatrices {
+layout(std430, binding = 0) buffer BoneMatrices {
     mat4 allBakedMatrices[]; // An array of 4x4 matrices
 };
 
@@ -73,6 +73,7 @@ void main()
                 
                 uint matrixIndex = instanceFrameno * nBones + boneId;
                 mat4 m4BoneMatrix = allBakedMatrices[matrixIndex];
+                m4BoneMatrix = m4BoneMatrix /* + mat4(1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0)*/;
 
                 vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
                 // vec4 v4LocalPosition = v4Vertex * m4BoneMatrix;
@@ -84,6 +85,7 @@ void main()
             //v4TotalPosition = vec4(0.0,0.0,0.0,0.0);
             //v4Vertex = vec4(0.0,0.0,0.0,0.0);
             //v4TotalPosition.w = v4TotalPosition.w / 2.0;
+            // v4TotalPosition.w = v4TotalPosition.w / 100.0;
 
         } else if (iVertexFlags==4)
         {

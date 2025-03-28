@@ -409,7 +409,7 @@ public class SilkThreeD : IThreeD
                 gl.EnableVertexAttribArray((uint) _locFrameno);
                 if (_checkGLErrors) CheckError(gl,"Enable vertex array in framenos");
                 gl.VertexAttribIPointer((uint)_locFrameno, 1, 
-                    VertexAttribIType.Int, 0, (void*) 0);
+                    VertexAttribIType.UnsignedInt, 0, (void*) 0);
                 if (_checkGLErrors) CheckError(gl,"Enable vertex attribute frameno ipointer n");
                 gl.VertexAttribDivisor((uint) _locFrameno, 1);
                 if (_checkGLErrors) CheckError(gl,"attrib frameno divisor");

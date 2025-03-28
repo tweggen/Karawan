@@ -14,7 +14,7 @@ public class SkAnimationsEntry : AAnimationsEntry
 
     private static int _nAnimations = 0;
 
-    private bool _traceAnimations = false;
+    private bool _traceAnimations = true;
 
 
     /**

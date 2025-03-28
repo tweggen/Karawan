@@ -228,7 +228,7 @@ public class Model
                     * m4MyTransform
                 /* * m4InverseGlobalTransform */;
             ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Baked;
-            AllBakedMatrices[frameno * Skeleton.NBones + boneIndex] = m4Baked;
+            AllBakedMatrices[(ma.FirstFrame+frameno) * Skeleton.NBones + boneIndex] = m4Baked;
         }
 
 
@@ -277,6 +277,8 @@ public class Model
         }
         
         Matrix4x4 m4InverseGlobalTransform = MatrixInversion.Invert(m4GlobalTransform);
+        
+        AllBakedMatrices = new Matrix4x4[_nextAnimFrame * Skeleton.NBones];
 
         /*
          * First, for all animations, create the arrays of matrices for
@@ -302,8 +304,6 @@ public class Model
                 };
                 ma.BakedFrames[frameno] = bakedFrame;
             }
-
-            AllBakedMatrices = new Matrix4x4[nFrames * Skeleton.NBones];
 
             /*
              * Now for this animation, for every frame, recurse through the bones.
