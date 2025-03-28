@@ -322,22 +322,25 @@ public class InstanceManager : IDisposable
                 if (mn != null)
                 {
                     var jModel = mn.Model;
-                    Resource<AAnimationsEntry> animResource;
-                    if (!_animationsResources.TryGetValue(jModel, out animResource))
+                    if (jModel.AllBakedMatrices != null)
                     {
-                        Error("Unknown animations to unreference");
-                    }
-                    else
-                    {
-                        if (animResource.RemoveReference())
+                        Resource<AAnimationsEntry> animResource;
+                        if (!_animationsResources.TryGetValue(jModel, out animResource))
                         {
-                            try
+                            Error("Unknown animations to unreference");
+                        }
+                        else
+                        {
+                            if (animResource.RemoveReference())
                             {
-                                _unloadAnim(animResource);
-                            }
-                            finally
-                            {
-                                _animationsResources.Remove(jModel);
+                                try
+                                {
+                                    _unloadAnim(animResource);
+                                }
+                                finally
+                                {
+                                    _animationsResources.Remove(jModel);
+                                }
                             }
                         }
                     }
