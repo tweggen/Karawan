@@ -77,7 +77,7 @@ public class MeshBatch
     }
 
 
-    public void Add(AAnimationsEntry? aAnimationsEntry, in Matrix4x4 matrix, uint frameno)
+    public void Add(AAnimationsEntry? aAnimationsEntry, in Matrix4x4 matrix, uint frameno, FrameStats frameStats)
     {
         AnimationBatch animationBatch;
         AnimationBatches.TryGetValue(aAnimationsEntry, out animationBatch);
@@ -85,6 +85,7 @@ public class MeshBatch
         {
             animationBatch = new AnimationBatch(aAnimationsEntry);
             AnimationBatches[aAnimationsEntry] = animationBatch;
+            frameStats.NAnimations++;
         }
         
         /*

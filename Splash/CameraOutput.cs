@@ -298,7 +298,7 @@ public class CameraOutput
         /*
          * And do we have an entry for the animationstate?
          */
-        meshBatch.Add(aAnimationsEntry, matrix, frameno);
+        meshBatch.Add(aAnimationsEntry, matrix, frameno, _frameStats);
 
         /*
          * In particular when rendering transparency, we need to have average

@@ -21,7 +21,8 @@ public class FrameStats
             NInstances = a.NInstances + b.NInstances,
             NSkippedMeshes = a.NSkippedMeshes + b.NSkippedMeshes,
             NSkippedMaterials = a.NSkippedMaterials + b.NSkippedMaterials,
-            NTriangles = a.NTriangles + b.NTriangles
+            NTriangles = a.NTriangles + b.NTriangles,
+            NAnimations = a.NAnimations + b.NAnimations
         };
     }
 
@@ -36,7 +37,8 @@ public class FrameStats
             NInstances = a.NInstances - b.NInstances,
             NSkippedMeshes = a.NSkippedMeshes - b.NSkippedMeshes,
             NSkippedMaterials = a.NSkippedMaterials - b.NSkippedMaterials,
-            NTriangles = a.NTriangles - b.NTriangles
+            NTriangles = a.NTriangles - b.NTriangles,
+            NAnimations = a.NAnimations - b.NAnimations
         };
     }
 
@@ -51,14 +53,15 @@ public class FrameStats
             NInstances = a.NInstances / n,
             NSkippedMeshes = a.NSkippedMeshes / n,
             NSkippedMaterials = a.NSkippedMaterials / n,
-            NTriangles = a.NTriangles / n
+            NTriangles = a.NTriangles / n,
+            NAnimations = a.NAnimations / n
         };
     }
 
 
     public override string ToString()
     {
-        return $"{NEntities} en, {NMaterials} mat, {NMeshes} mesh, {NInstances} inst, {NTriangles} tri, 1 sha.";
+        return $"{NEntities} en, {NMaterials} mat, {NMeshes} mesh, {NAnimations} anim, {NInstances} inst, {NTriangles} tri";
     }
 
 
@@ -75,6 +78,7 @@ public class FrameStats
         NInstances = a.NInstances;
         NSkippedMeshes = a.NSkippedMeshes;
         NSkippedMaterials = a.NSkippedMaterials;
+        NAnimations = a.NAnimations;
         NTriangles = a.NTriangles;
     }
 }
