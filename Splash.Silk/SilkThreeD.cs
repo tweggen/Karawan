@@ -46,7 +46,7 @@ public class SilkThreeD : IThreeD
     
     private readonly engine.WorkerQueue _graphicsThreadActions = new("Splash.silk.graphicsThreadActions");
 
-    private bool _checkGLErrors = true;
+    private bool _checkGLErrors = false;
 
     public bool CheckGLErrors
     {
