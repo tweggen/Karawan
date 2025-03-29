@@ -237,7 +237,8 @@ public class Obj
         }
 
         mnRoot.InstanceDesc = new(meshes, meshMaterials, materials, modelNodes, 100f);
-        model.RootNode = mnRoot;   
+        model.RootNode = mnRoot;
+        model.Polish();
         // TXWTODO: read the maximal distance from some properties
     }
 

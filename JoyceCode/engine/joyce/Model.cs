@@ -352,6 +352,32 @@ public class Model
 
         return Skeleton;
     }
+
+
+    private void _polishChildrenRecursively(ModelNode mn)
+    {
+        if (mn.InstanceDesc != null)
+        {
+            mn.EntityData = 1;
+        }
+        if (mn.Children != null)
+        {
+            foreach (var mnChild in mn.Children)
+            {
+                _polishChildrenRecursively(mnChild);
+                mn.EntityData |= mnChild.EntityData;
+            }
+        }
+    }
+    
+
+    /**
+     * Finish the model for use.
+     */
+    public void Polish()
+    {
+        _polishChildrenRecursively(RootNode);
+    }
     
 
     public Model()

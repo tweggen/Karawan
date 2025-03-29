@@ -198,7 +198,7 @@ public class CharacterCreator
         {
             builtin.tools.ModelBuilder modelBuilder = new(I.Get<Engine>(), model, mcp.Params);
             modelBuilder.BuildEntity(eTarget);
-            I.Get<ModelCache>().BuildPerInstancePhysics(eTarget, modelBuilder, model, mcp);
+            // I.Get<ModelCache>().BuildPerInstancePhysics(eTarget, modelBuilder, model, mcp);
             eAnimations = modelBuilder.GetAnimationsEntity();
         }
 

@@ -30,6 +30,11 @@ public class ModelNode
      * A node index unique within the parent model.
      */
     public int Index;
+
+    /**
+     * What kind of entity relevant data does this one carry below in its children?
+     */
+    public uint EntityData = 0;
     
     /**
      * If non-null, contains a list of children of this node.

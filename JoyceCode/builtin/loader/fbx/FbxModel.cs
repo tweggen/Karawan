@@ -122,6 +122,8 @@ public class FbxModel : IDisposable
         model.BakeAnimations();
 
         model.RootNode.Transform.Matrix = Matrix4x4.CreateScale((unitscale)/100f) * model.RootNode.Transform.Matrix;
+
+        model.Polish();
     }
     
     

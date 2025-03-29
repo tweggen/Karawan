@@ -80,9 +80,16 @@ public class ModelBuilder
         {
             foreach (var mnChild in mn.Children)
             {
-                DefaultEcs.Entity eChild = _engine.CreateEntity($"bc {_jModel.Name}");
-                _aHierarchy.SetParent(eChild, eNode);
-                _buildNodeInto(eChild, mnChild);
+                /*
+                 * Only consider children with entity relevant data.
+                 */
+
+                if (mnChild.EntityData != 0)
+                {
+                    DefaultEcs.Entity eChild = _engine.CreateEntity($"bc {_jModel.Name}");
+                    _aHierarchy.SetParent(eChild, eNode);
+                    _buildNodeInto(eChild, mnChild);
+                }
             }
         }
     }
