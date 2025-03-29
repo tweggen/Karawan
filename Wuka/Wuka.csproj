@@ -94,32 +94,25 @@
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\android\armeabi-v7a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libopenal.so" />
+	  <None Remove="Platforms\Android\libs\arm64-v8a\libassimp.so" />
 	  <None Remove="Platforms\Android\libs\arm64-v8a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libs\arm64-v8a\libopenal.so" />
+	  <None Remove="Platforms\Android\libs\armeabi-v7a\libassimp.so" />
 	  <None Remove="Platforms\Android\libs\armeabi-v7a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libs\armeabi-v7a\libopenal.so" />
 	  <None Remove="Platforms\Android\mapicons.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon_android.png" />
 	  <None Remove="Platforms\Android\Prototype.ttf" />
 	  <None Remove="Resources\Splash\splash_nassau.svg" />
+	  <AndroidLibrary Include="Platforms\Android\libs\arm64-v8a\libassimp.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidLibrary>
+	  <AndroidLibrary Include="Platforms\Android\libs\armeabi-v7a\libassimp.so">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </AndroidLibrary>
 	</ItemGroup>
 
 	<Import Project="../nogame/generated/AndroidResources.xml" />
-
-	<ItemGroup>
-	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libassimp.so.5">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidNativeLibrary>
-	  <AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libassimp.so.5">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidNativeLibrary>
-	  <AndroidNativeLibrary Include="Platforms\Android\libs\arm64-v8a\libassimp.so.5">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidNativeLibrary>
-	  <AndroidNativeLibrary Include="Platforms\Android\libs\armeabi-v7a\libassimp.so.5">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidNativeLibrary>
-	</ItemGroup>
 	
 	<ItemGroup>
 	  <AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libopenal.so">
@@ -147,11 +140,9 @@
 	  <AndroidResource Include="Platforms\Android\mipmap-xhdpi\appicon_foreground.png" />
 	  <AndroidResource Include="Platforms\Android\mipmap-xxhdpi\appicon_foreground.png" />
 	  <AndroidResource Include="Platforms\Android\mipmap-xxxhdpi\appicon_foreground.png" />
-
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AssimpNet.Mobile.Native.Android" Version="5.1.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
 		<PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.22.0" />

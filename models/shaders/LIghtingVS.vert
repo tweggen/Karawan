@@ -71,7 +71,7 @@ void main()
                     break;
                 }
                 
-                uint matrixIndex = instanceFrameno * nBones + boneId;
+                uint matrixIndex = uint(instanceFrameno) * uint(nBones) + uint(boneId);
                 mat4 m4BoneMatrix = allBakedMatrices[matrixIndex];
                 m4BoneMatrix = m4BoneMatrix /* + mat4(1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0)*/;
 
