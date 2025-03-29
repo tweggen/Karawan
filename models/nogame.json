@@ -343,10 +343,15 @@
       "buildingalphadiffuse2": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse2.png" } },
       "buildingalphadiffuse3": { "albedo": { "uri": "../models/buildings/buildingalphadiffuse3.png" } },
       
-      "StudioOchi_SpringPeople.001": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.001.png" } },
-      "StudioOchi_SpringPeople.002": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.002.png" } },
-      "StudioOchi_SpringPeople.003": { "albedo": { "uri":  "../models/models/people/StudioOchi_SpringPeople.003.png" } }
-      
+      "StudioOchi_SpringPeople.001": { "albedo": { 
+        "uri":  "../models/models/people/StudioOchi_SpringPeople.001.16.png",
+        "tag":  "StudioOchi_SpringPeople.001.png"  } },
+      "StudioOchi_SpringPeople.002": { "albedo": { 
+        "uri":  "../models/models/people/StudioOchi_SpringPeople.002.16.png",
+        "tag":  "StudioOchi_SpringPeople.002.png"  } },
+      "StudioOchi_SpringPeople.003": { "albedo": {
+        "uri":  "../models/models/people/StudioOchi_SpringPeople.003.16.png",
+        "tag":  "StudioOchi_SpringPeople.003.png" } }
     }
   },
   "resources":

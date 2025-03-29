@@ -101,7 +101,7 @@ public class CharacterCreator
             strAnimation = "Metarig Woman C|Run Mid";
         }
 
-        float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 50f);
+        float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
 
         var snc = new StreetNavigationController()
         {
