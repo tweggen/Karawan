@@ -68,6 +68,9 @@ public class SilkThreeD : IThreeD
 
     private SkMaterialEntry _lastMaterialEntry = null;
     private SilkRenderState _silkRenderState;
+
+
+    Flags.GLAnimBuffers AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
     
     
     /**
@@ -285,6 +288,7 @@ public class SilkThreeD : IThreeD
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
         _locFrameno = shader.GetAttrib("instanceFrameno");
         _locNBones = shader.GetUniform("nBones");
+        _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
         _locMvp = shader.GetUniform("mvp");
         _locVertexFlags = shader.GetUniform("iVertexFlags");
     }
@@ -357,8 +361,34 @@ public class SilkThreeD : IThreeD
             
             if (skAnimationsEntry != null)
             {
-                sh.SetUniform(_locVertexFlags, (int)3);
-                _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
+                /*
+                 * Adjust the rendering method according to the platform
+                 */
+                if (skAnimationsEntry.AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
+                {
+                    /*
+                     * SSBO: We just use the ssbo previously uploaded.
+                     */
+                    sh.SetUniform(_locVertexFlags, (int)3);
+                    _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
+                }
+                else if (skAnimationsEntry.AnimStrategy == Flags.GLAnimBuffers.AnimUBO)
+                {
+                    if (modelBakedFrame != null)
+                    {
+                        /*
+                         * We upload the per frame data.
+                         */
+                        sh.SetUniform(_locVertexFlags, (int)2);
+
+                        /*
+                         * If we are supposed to load bone animations, let's do that.
+                         */
+                        Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
+                        _gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length,
+                            false, span);
+                    }
+                }
             }
             else
             {
@@ -548,7 +578,7 @@ public class SilkThreeD : IThreeD
             return NullAnimationsEntry.Instance();
         }
 
-        var skAnimationsEntry = new SkAnimationsEntry(_getGL(), jModel);
+        var skAnimationsEntry = new SkAnimationsEntry(_getGL(), jModel, AnimStrategy);
         return skAnimationsEntry;
     }
     
@@ -770,7 +800,9 @@ public class SilkThreeD : IThreeD
     private int _locMvp = 0;
     private int _locFrameno = 0;
     private int _locNBones = 0;
+    private int _locBoneMatrices = 0;
 
+    
     public void SetCameraPos(in Vector3 vCamera)
     {
         _vCamera = vCamera;
@@ -900,5 +932,20 @@ public class SilkThreeD : IThreeD
     {
         _engine = I.Get<Engine>();
         _listShaderUseCases.Add(new LightShaderUseCase());
+        string api = engine.GlobalSettings.Get("platform.threeD.API");
+        if (api == "OpenGL")
+        {
+            AnimStrategy = Flags.GLAnimBuffers.AnimSSBO;
+        }
+        else if (api == "OpenGLES")
+        {
+            AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
+        }
+        else
+        {
+            ErrorThrow($"Invalid graphics API setup in global config \"platform.threeD.API\": \"{api}\".",
+                m => new InvalidOperationException(m));
+            return;
+        }
     }
 }

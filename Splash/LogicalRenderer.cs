@@ -94,6 +94,20 @@ public class LogicalRenderer
                 scene, _threeD, 
                 renderPartTransform3ToWorld.Matrix,
                 renderPartCamera3, renderFrame.FrameStats);
+
+            // TXWTODO: Replace this by a feature flag
+            {
+                string api = engine.GlobalSettings.Get("platform.threeD.API");
+                if (false && api != "OpenGL")
+                {
+                    cameraOutput.AnimBatching = Flags.AnimBatching.ByAnimation|Flags.AnimBatching.ByFrameno;
+                }
+                else
+                {
+                    cameraOutput.AnimBatching = 0;
+                }
+            }
+
             renderPart.CameraOutput = cameraOutput;
             
             /*

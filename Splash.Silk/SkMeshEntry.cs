@@ -21,7 +21,6 @@ namespace Splash.Silk
 
         private bool _traceMesh = false;
         
-        
         /**
          * Upload the mesh to the GPU.
          */

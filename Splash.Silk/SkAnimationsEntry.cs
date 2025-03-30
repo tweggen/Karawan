@@ -16,27 +16,34 @@ public class SkAnimationsEntry : AAnimationsEntry
 
     private bool _traceAnimations = true;
 
+    public Flags.GLAnimBuffers AnimStrategy;
+
 
     /**
      * Upload the mesh to the GPU.
      */
     public override void Upload()
     {
-        if (Model != null)
+        /*
+         * If we are using anim buffer object, create and upload it here once.
+         */
+        if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
         {
-            Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AllBakedMatrices);
-            //_gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
-
-            SSBOAnimations = new BufferObject<float>(_gl, span, BufferTargetARB.ShaderStorageBuffer);
-
-            if (_traceAnimations) Trace($"Uploaded Animations");
-            ++_nAnimations;
-            if (_nAnimations > 5000)
+            if (Model != null)
             {
-                Warning($"Uploaded {_nAnimations} more than 5000 animations.");
+                Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AllBakedMatrices);
+                //_gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
+
+                SSBOAnimations = new BufferObject<float>(_gl, span, BufferTargetARB.ShaderStorageBuffer);
+
+                ++_nAnimations;
+                if (_nAnimations > 5000)
+                {
+                    Warning($"Uploaded {_nAnimations} more than 5000 animations.");
+                }
             }
         }
-
+        if (_traceAnimations) Trace($"Uploaded Animations");
         _isUploaded = true;
     }
 
@@ -47,9 +54,12 @@ public class SkAnimationsEntry : AAnimationsEntry
         if (Model != null)
         {
             if (_traceAnimations) Trace($"Releasing Animations");
-            SSBOAnimations!.Dispose();
-            SSBOAnimations = null;
-            --_nAnimations;
+            if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
+            {
+                SSBOAnimations!.Dispose();
+                SSBOAnimations = null;
+                --_nAnimations;
+            }
         }
     }
 
@@ -81,9 +91,10 @@ public class SkAnimationsEntry : AAnimationsEntry
     }
 
 
-    public SkAnimationsEntry(GL gl, engine.joyce.Model? jModel)
+    public SkAnimationsEntry(GL gl, engine.joyce.Model? jModel, Flags.GLAnimBuffers animStrategy)
         : base(jModel)
     {
         _gl = gl;
+        AnimStrategy = animStrategy;
     }
 }

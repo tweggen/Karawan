@@ -11,7 +11,9 @@ public class SilkRenderState
     public SilkTextureChannelState Texture0;
     public SilkTextureChannelState Texture2;
 
-    public BufferObject<float>? BoneMatrices; 
+    public BufferObject<float>? BoneMatrices;
+
+    private int _silkAnimMethod = -1;
     
     private void _unloadProgramEntry()
     {
@@ -22,6 +24,7 @@ public class SilkRenderState
 
         var pe = _lastProgramEntry;
         _lastProgramEntry = null;
+        _silkAnimMethod = -1;
         
         // TXWTODO: Why is that? That is wrong.
         _gl.UseProgram(pe.Handle);

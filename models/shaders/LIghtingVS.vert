@@ -13,7 +13,7 @@ layout(location = 5) in vec4 vertexWeights;
 layout(location = 6) in mat4 instanceTransform;
 layout(location = 10) in uint instanceFrameno;
 
-const int MAX_BONES = 100;
+const int MAX_BONES = 63;
 const int MAX_BONE_INFLUENCE = 4;
 
 
@@ -23,6 +23,7 @@ const int MAX_BONE_INFLUENCE = 4;
 
 uniform mat4 mvp;
 uniform uint nBones;
+uniform mat4 m4BoneMatrices[63];
 uniform int iVertexFlags;
 
 // Output vertex attributes (to fragment shader)
@@ -52,7 +53,7 @@ void main()
     {
         vec4 v4Vertex = vec4(vertexPosition, 1.0);
 
-        if (iVertexFlags == 3)
+        if (iVertexFlags < 4)
         {
             v4TotalPosition = vec4(0.0);
             v3TotalNormal = vec3(0.0);
@@ -71,37 +72,33 @@ void main()
                     break;
                 }
                 
-                uint matrixIndex = uint(instanceFrameno) * uint(nBones) + uint(boneId);
-                mat4 m4BoneMatrix = allBakedMatrices[matrixIndex];
-                m4BoneMatrix = m4BoneMatrix /* + mat4(1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0)*/;
-
+                mat4 m4BoneMatrix;
+                if (iVertexFlags == 3)
+                {
+                    uint matrixIndex = uint(instanceFrameno) * uint(nBones) + uint(boneId);
+                    m4BoneMatrix = allBakedMatrices[matrixIndex];
+                } else if (iVertexFlags == 2)
+                {
+                    m4BoneMatrix = m4BoneMatrices[boneId];                    
+                }
+                        
                 vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
-                // vec4 v4LocalPosition = v4Vertex * m4BoneMatrix;
                 v4TotalPosition += v4LocalPosition * vertexWeights[i];
                 vec3 v3LocalNormal = mat3(m4BoneMatrix) * vertexNormal;
-                // vec3 v3LocalNormal = vertexNormal * mat3(m4BoneMatrix);
                 v3TotalNormal += v3LocalNormal * vertexWeights[i];
             }
-            //v4TotalPosition = vec4(0.0,0.0,0.0,0.0);
-            //v4Vertex = vec4(0.0,0.0,0.0,0.0);
-            //v4TotalPosition.w = v4TotalPosition.w / 2.0;
-            // v4TotalPosition.w = v4TotalPosition.w / 100.0;
 
         } else if (iVertexFlags==4)
         {
             v4TotalPosition = v4Vertex;
             v4TotalPosition.x = v4TotalPosition.x;
             v3TotalNormal = vertexNormal;
-        } else
-        {
-            //v4TotalPosition.w *= 2.0;
         }
 
         v4TotalPosition.xyz /= v4TotalPosition.w;
         v4TotalPosition.w = 1.0;
     }
         
-    // instanceTransform = mat4(1.0);
     // Compute MVP for current instance
     mat4 mvpi = mvp * instanceTransform;
     v4InstancePosition = vec4(instanceTransform[3].xyz,1.0f);

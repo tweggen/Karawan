@@ -12,12 +12,14 @@ public class MeshBatch
 {
     public readonly AMeshEntry AMeshEntry;
 
-    public readonly Dictionary<AAnimationsEntry, AnimationBatch> AnimationBatches = new();
+    public readonly Dictionary<AnimationsBatchKey, AnimationBatch> AnimationBatches = new();
     public List<AnimationBatch> ListAnimationBatches;
     
     public int NMeshes = 0;
     public Vector3 SumOfPositions = Vector3.Zero;
 
+    private Flags.AnimBatching _animBatching;
+    
     public Vector3 AveragePosition
     {
         get => NMeshes > 0 ? SumOfPositions / NMeshes : Vector3.Zero;
@@ -77,14 +79,31 @@ public class MeshBatch
     }
 
 
-    public void Add(AAnimationsEntry? aAnimationsEntry, in Matrix4x4 matrix, uint frameno, FrameStats frameStats)
+    public void Add(
+        AAnimationsEntry? aAnimationsEntry, AnimationState cAnimationState, 
+        in Matrix4x4 matrix, uint frameno,
+        FrameStats frameStats)
     {
         AnimationBatch animationBatch;
-        AnimationBatches.TryGetValue(aAnimationsEntry, out animationBatch);
+        if ((_animBatching & Flags.AnimBatching.ByAnimation) == 0)
+        {
+            cAnimationState.ModelAnimation = null;
+        }
+
+        if ((_animBatching & Flags.AnimBatching.ByFrameno) == 0)
+        {
+            cAnimationState.ModelAnimationFrame = 0;
+        }
+        
+        AnimationsBatchKey key = new(aAnimationsEntry, cAnimationState);
+        AnimationBatches.TryGetValue(key, out animationBatch);
         if (null == animationBatch)
         {
-            animationBatch = new AnimationBatch(aAnimationsEntry);
-            AnimationBatches[aAnimationsEntry] = animationBatch;
+            animationBatch = new AnimationBatch(aAnimationsEntry)
+            {
+                AnimationState = cAnimationState
+            };
+            AnimationBatches.Add(key, animationBatch);
             frameStats.NAnimations++;
         }
         
@@ -96,10 +115,11 @@ public class MeshBatch
     }
     
     
-    public MeshBatch(in AMeshEntry aMeshEntry)
+    public MeshBatch(in AMeshEntry aMeshEntry,
+        Flags.AnimBatching animBatching)
     {
         AMeshEntry = aMeshEntry;
-        
+        _animBatching = animBatching;
     }
 
 }

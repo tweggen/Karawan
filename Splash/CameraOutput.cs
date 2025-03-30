@@ -28,6 +28,8 @@ public class CameraOutput
         get => _camera3;
     }
 
+    public Flags.AnimBatching AnimBatching = 0;
+
     public Matrix4x4 TransformToWorld;
     private Matrix4x4 _mInverseCameraRotation;
     private Vector3 _v3CameraPos;
@@ -216,8 +218,20 @@ public class CameraOutput
                         Span<Matrix4x4> spanMatrices = meshItem.Value.Matrices.ToArray();
                         Span<uint> spanFramenos = meshItem.Value.Framenos.ToArray();
 #endif
+                        ModelBakedFrame? modelBakedFrame;
+                        if (animationItem.AnimationState.ModelAnimation != null
+                            && animationItem.AnimationState.ModelAnimation.BakedFrames != null)
+                        {
+                            modelBakedFrame =
+                                animationItem.AnimationState.ModelAnimation.BakedFrames[
+                                    animationItem.AnimationState.ModelAnimationFrame];
+                        }
+                        else
+                        {
+                            modelBakedFrame = null;
+                        }
                         threeD.DrawMeshInstanced(meshItem.AMeshEntry, materialItem.AMaterialEntry, animationItem.AAnimationsEntry, 
-                            spanMatrices, spanFramenos, nMatrices, null);
+                            spanMatrices, spanFramenos, nMatrices, modelBakedFrame);
                         _frameStats.NTriangles += nMatrices * jMesh.Indices.Count / 3;
                     }
                 }
@@ -272,7 +286,7 @@ public class CameraOutput
         materialBatch.MeshBatches.TryGetValue(aMeshEntry, out meshBatch);
         if (null == meshBatch)
         {
-            meshBatch = new MeshBatch(aMeshEntry);
+            meshBatch = new MeshBatch(aMeshEntry, AnimBatching);
             materialBatch.MeshBatches[aMeshEntry] = meshBatch;
             _frameStats.NMeshes++;
         }
@@ -295,10 +309,7 @@ public class CameraOutput
             }
         }
         
-        /*
-         * And do we have an entry for the animationstate?
-         */
-        meshBatch.Add(aAnimationsEntry, matrix, frameno, _frameStats);
+        meshBatch.Add(aAnimationsEntry, cAnimationState, matrix, frameno, _frameStats);
 
         /*
          * In particular when rendering transparency, we need to have average

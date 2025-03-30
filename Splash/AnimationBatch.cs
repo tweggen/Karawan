@@ -7,6 +7,14 @@ namespace Splash;
 public class AnimationBatch
 {
     public readonly AAnimationsEntry? AAnimationsEntry;
+    
+    /**
+     * If we have a specific animation state in thie batch, this is it.
+     * This is valid if we group animation batches by animation or animation plus frame.
+     * We might want to this fore timed LOD or due to constraints of the
+     * underlying rendering layer.
+     */
+    public AnimationState AnimationState;
 
     /**
      * The animation frame numbers of the models to render.
