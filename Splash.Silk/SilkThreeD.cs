@@ -258,20 +258,20 @@ public class SilkThreeD : IThreeD
 
     private void _setupProgramGlobals(SkProgramEntry shader)
     {
-        shader.Use();        
-        
+        shader.Use();
+
         /*
          * Before using the shader at all, make sure all our use cases are
          * resolved
          */
         _resolveProgramUseCases(shader);
-        
+
         /*
          * Now specific calls.
          * FIXME: This needs a more beautiful API.
          */
         {
-            LightShaderUseCaseLocs uc = 
+            LightShaderUseCaseLocs uc =
                 shader.ShaderUseCases[LightShaderUseCase.StaticName]
                     as LightShaderUseCaseLocs;
             uc.Apply(_getGL(), shader, _silkFrame.RenderFrame.LightCollector);
@@ -281,14 +281,21 @@ public class SilkThreeD : IThreeD
 
         shader.SetUniform("v3AbsPosView", _vCamera);
         shader.SetUniform("frameNo", _frameno);
-        
+
         /*
          * Also load the locations for some programs from the shader.
          */
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
-        _locFrameno = shader.GetAttrib("instanceFrameno");
-        _locNBones = shader.GetUniform("nBones");
-        _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
+        if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
+        {
+            _locFrameno = shader.GetAttrib("instanceFrameno");
+            _locNBones = shader.GetUniform("nBones");
+        }
+
+        if (AnimStrategy == Flags.GLAnimBuffers.AnimUBO) {
+            _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
+        }
+
         _locMvp = shader.GetUniform("mvp");
         _locVertexFlags = shader.GetUniform("iVertexFlags");
     }
