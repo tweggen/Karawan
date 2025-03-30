@@ -98,7 +98,7 @@ public class LogicalRenderer
             // TXWTODO: Replace this by a feature flag
             {
                 string api = engine.GlobalSettings.Get("platform.threeD.API");
-                if (false && api != "OpenGL")
+                if (api != "OpenGL")
                 {
                     cameraOutput.AnimBatching = Flags.AnimBatching.ByAnimation|Flags.AnimBatching.ByFrameno;
                 }
