@@ -393,7 +393,7 @@ public class SilkThreeD : IThreeD
                          */
                         Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
                         _gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length,
-                            false, span);
+                            true, span);
                     }
                 }
             }
