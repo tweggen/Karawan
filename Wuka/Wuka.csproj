@@ -90,26 +90,22 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="Platforms\Android\android\arm64-v8a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
-	  <None Remove="Platforms\Android\android\armeabi-v7a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libopenal.so" />
 	  <None Remove="Platforms\Android\libs\arm64-v8a\libassimp.so" />
-	  <None Remove="Platforms\Android\libs\arm64-v8a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libs\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\libs\armeabi-v7a\libassimp.so" />
-	  <None Remove="Platforms\Android\libs\armeabi-v7a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libs\armeabi-v7a\libopenal.so" />
 	  <None Remove="Platforms\Android\mapicons.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon_android.png" />
 	  <None Remove="Platforms\Android\Prototype.ttf" />
 	  <None Remove="Resources\Splash\splash_nassau.svg" />
-	  <AndroidLibrary Include="Platforms\Android\libs\arm64-v8a\libassimp.so">
+	  <AndroidNativeLibrary Include="Platforms\Android\libs\arm64-v8a\libassimp.so">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidLibrary>
-	  <AndroidLibrary Include="Platforms\Android\libs\armeabi-v7a\libassimp.so">
+	  </AndroidNativeLibrary>
+	  <AndroidNativeLibrary Include="Platforms\Android\libs\armeabi-v7a\libassimp.so">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidLibrary>
+	  </AndroidNativeLibrary>
 	</ItemGroup>
 
 	<Import Project="../nogame/generated/AndroidResources.xml" />

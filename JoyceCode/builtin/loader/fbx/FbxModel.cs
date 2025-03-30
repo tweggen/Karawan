@@ -25,20 +25,33 @@ public class FbxModel : IDisposable
     public string Directory { get; protected set; } = string.Empty;
     private Model? _model = null;
     private unsafe Scene* _scene = null;
-    
+
+    private static object _slo = new();
 
     private static void _needAssimp()
     {
-        if (null == _assimp)
+        lock (_slo)
         {
-            System.Console.WriteLine("Loading assimp...");
-            //_assimp = Assimp.GetApi();
-            var customAssimpLibraryNameContainer = new CustomAssimpLibraryNameContainer();
-            _assimp = new(Silk.NET.Assimp.Assimp.CreateDefaultContext(customAssimpLibraryNameContainer.GetLibraryNames()));
-        }
-        else
-        {
-            System.Console.WriteLine("Assimp previously had been loaded...");
+            try
+            {
+
+                if (null == _assimp)
+                {
+                    System.Console.WriteLine("Loading assimp...");
+                    _assimp = Assimp.GetApi();
+                    //var customAssimpLibraryNameContainer = new CustomAssimpLibraryNameContainer();
+                    //_assimp = new(Silk.NET.Assimp.Assimp.CreateDefaultContext(customAssimpLibraryNameContainer.GetLibraryNames()));
+                }
+                else
+                {
+                    System.Console.WriteLine("Assimp previously had been loaded...");
+                }
+            }
+            catch (Exception e)
+            {
+                System.Console.WriteLine("Exception instantiating assimp: "+e);
+            }
+
         }
     }
 
