@@ -11,7 +11,9 @@ layout(location = 4) in ivec4 vertexBoneIds;
 layout(location = 5) in vec4 vertexWeights;
 
 layout(location = 6) in mat4 instanceTransform;
+#if USE_ANIM_SSBO
 layout(location = 10) in uint instanceFrameno;
+#endif
 
 const int MAX_BONES = 63;
 const int MAX_BONE_INFLUENCE = 4;
@@ -22,8 +24,12 @@ const int MAX_BONE_INFLUENCE = 4;
  */
 
 uniform mat4 mvp;
+#if USE_ANIM_SSBO
 uniform uint nBones;
+#endif
+#if USE_ANIM_UBO
 uniform mat4 m4BoneMatrices[63];
+#endif
 uniform int iVertexFlags;
 
 // Output vertex attributes (to fragment shader)
@@ -38,12 +44,14 @@ out vec3 v3FragUp;
 out vec3 v3FragRight;
 out vec3 v3FragFront;
 
+#if USE_ANIM_SSBO
 /*
  * SSBOs.
  */
 layout(std430, binding = 0) buffer BoneMatrices {
     mat4 allBakedMatrices[]; // An array of 4x4 matrices
 };
+#endif
 
 void main()
 {
@@ -73,14 +81,19 @@ void main()
                 }
                 
                 mat4 m4BoneMatrix;
+#if USE_ANIM_SSBO
                 if (iVertexFlags == 3)
                 {
                     uint matrixIndex = uint(instanceFrameno) * uint(nBones) + uint(boneId);
                     m4BoneMatrix = allBakedMatrices[matrixIndex];
-                } else if (iVertexFlags == 2)
+                } 
+#endif
+#if USE_ANIM_UBO
+                if (iVertexFlags == 2)
                 {
                     m4BoneMatrix = m4BoneMatrices[boneId];                    
                 }
+#endif
                         
                 vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
                 v4TotalPosition += v4LocalPosition * vertexWeights[i];

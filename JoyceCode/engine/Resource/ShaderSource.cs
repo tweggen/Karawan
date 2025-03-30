@@ -30,11 +30,19 @@ public class ShaderSource : IDisposable
         string api = engine.GlobalSettings.Get("platform.threeD.API");
         if (api == "OpenGL")
         {
-            _shaderCode = "#version 430\n\n" + strShader;
+            _shaderCode = "#version 430\n"+
+                          "#define USE_ANIM_SSBO 1\n"+
+                          "#define USE_ANIM_UBO 0\n"+
+                          "\n"+
+                          strShader;
         }
         else if (api == "OpenGLES")
         {
-            _shaderCode = "#version 310 es\n\n" + strShader;
+            _shaderCode = "#version 310 es\n\n"+
+                          "#define USE_ANIM_SSBO 0\n"+
+                          "#define USE_ANIM_UBO 1\n"+
+                          "\n"+
+                          strShader;
         }
         else
         {
