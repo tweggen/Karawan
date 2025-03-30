@@ -424,34 +424,36 @@ public class SilkThreeD : IThreeD
                 if (_checkGLErrors) CheckError(gl,"attrib divisor");
             }
 
-            #if true
-            if (spanFramenos != null)
+            if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
             {
-                uint nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
-                if (nBones > 1)
+                if (spanFramenos != null)
                 {
-                    if (skAnimationsEntry == null)
+                    uint nBones = aAnimationsEntry?.Model?.Skeleton?.NBones ?? 1;
+                    if (nBones > 1)
                     {
-                        int a = 1;
+                        if (skAnimationsEntry == null)
+                        {
+                            int a = 1;
+                        }
                     }
-                }
-                sh.SetUniform(_locNBones, (uint)nBones);
-                if (_checkGLErrors) CheckError(gl,"setting nbones uniform");
 
-                /*
-                 * Upload the frame number array for instanced rendering
-                 */
-                bFramenos = new BufferObject<uint>(_gl, spanFramenos, BufferTargetARB.ArrayBuffer);
-                if (_checkGLErrors) CheckError(gl,"New frameno Buffer Object");
-                gl.EnableVertexAttribArray((uint) _locFrameno);
-                if (_checkGLErrors) CheckError(gl,"Enable vertex array in framenos");
-                gl.VertexAttribIPointer((uint)_locFrameno, 1, 
-                    VertexAttribIType.UnsignedInt, 0, (void*) 0);
-                if (_checkGLErrors) CheckError(gl,"Enable vertex attribute frameno ipointer n");
-                gl.VertexAttribDivisor((uint) _locFrameno, 1);
-                if (_checkGLErrors) CheckError(gl,"attrib frameno divisor");
-            }
-            #endif
+                    sh.SetUniform(_locNBones, (uint)nBones);
+                    if (_checkGLErrors) CheckError(gl, "setting nbones uniform");
+
+                    /*
+                     * Upload the frame number array for instanced rendering
+                     */
+                    bFramenos = new BufferObject<uint>(_gl, spanFramenos, BufferTargetARB.ArrayBuffer);
+                    if (_checkGLErrors) CheckError(gl, "New frameno Buffer Object");
+                    gl.EnableVertexAttribArray((uint)_locFrameno);
+                    if (_checkGLErrors) CheckError(gl, "Enable vertex array in framenos");
+                    gl.VertexAttribIPointer((uint)_locFrameno, 1,
+                        VertexAttribIType.UnsignedInt, 0, (void*)0);
+                    if (_checkGLErrors) CheckError(gl, "Enable vertex attribute frameno ipointer n");
+                    gl.VertexAttribDivisor((uint)_locFrameno, 1);
+                    if (_checkGLErrors) CheckError(gl, "attrib frameno divisor");
+                }
+            } 
         }
         else
         {
