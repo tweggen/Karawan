@@ -1,3 +1,4 @@
+precision highp float;
 
 /*
  *Input vertex attributes
@@ -57,8 +58,8 @@ layout(std430, binding = 0) buffer BoneMatrices {
 /*
  * UBO per frame.
  */
-layout(std140, binding = 0) uniform BoneMatrices {
-    mat4 m4BoneMatrices[63]; // An array of 4x4 matrices
+layout(std140, column_major, binding = 0) uniform BoneMatrices {
+    highp mat4 m4BoneMatrices[63]; // An array of 4x4 matrices
 };
 
 #endif

@@ -18,7 +18,7 @@ public class SilkRenderState
 
     private bool _isBoundModelBakedFrame = false;
     private ModelBakedFrame _modelBakedFrame;
-    private BufferObject<float>? _bufferBakedFrame;
+    private BufferObject<Matrix4x4>? _bufferBakedFrame;
 
     private int _silkAnimMethod = -1;
     
@@ -56,8 +56,8 @@ public class SilkRenderState
             
             if (modelBakedFrame != null)
             {
-                Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
-                _bufferBakedFrame = new BufferObject<float>(_gl, span, BufferTargetARB.UniformBuffer);
+                // Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
+                _bufferBakedFrame = new BufferObject<Matrix4x4>(_gl, modelBakedFrame.BoneTransformations, BufferTargetARB.UniformBuffer);
                 _modelBakedFrame = modelBakedFrame;
                 _isBoundModelBakedFrame = false;
             }
