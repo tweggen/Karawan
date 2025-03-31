@@ -370,6 +370,7 @@ public class SilkThreeD : IThreeD
             
             _silkFrame.RegisterInstanceBuffer(spanMatrices);
 
+            int vertexFlags = 4;
             if (skAnimationsEntry != null)
             {
                 /*
@@ -382,7 +383,7 @@ public class SilkThreeD : IThreeD
                         /*
                          * SSBO: We just use the ssbo previously uploaded.
                          */
-                        sh.SetUniform(_locVertexFlags, (int)3);
+                        vertexFlags = 3;
                         _silkRenderState.UseBoneMatricesSSBO(skAnimationsEntry.SSBOAnimations);
                     }
                         break;
@@ -393,7 +394,7 @@ public class SilkThreeD : IThreeD
                             /*
                              * We upload the per frame data.
                              */
-                            sh.SetUniform(_locVertexFlags, (int)2);
+                            vertexFlags = 2;
 
                             /*
                              * If we are supposed to load bone animations, let's do that.
@@ -409,16 +410,18 @@ public class SilkThreeD : IThreeD
                     case Flags.GLAnimBuffers.AnimUBO:
                         if (modelBakedFrame != null)
                         {
-                            sh.SetUniform(_locVertexFlags, (int)1);
+                            vertexFlags = 1;
                             _silkRenderState.UseBoneMatricesFrameUBO(modelBakedFrame);
                         }
 
                         break;
                     default:
-                        sh.SetUniform(_locVertexFlags, (int)4);
+                        vertexFlags = 4;
                         break;
                 }
+                
             }
+            sh.SetUniform(_locVertexFlags, vertexFlags);
 
             /*
              * Upload the matrix array for instanced rendering.
