@@ -52,7 +52,7 @@ public class DesktopMain
         /*
          * Setup globals and statics
          */
-        engine.GlobalSettings.Set("platform.threeD.API", "OpenGL");
+        engine.GlobalSettings.Set("platform.threeD.API", "OpenGLES");
         engine.GlobalSettings.Set("platform.threeD.API.version", "330");
         engine.GlobalSettings.Set("engine.NailLogicalFPS", "true");
         if (Directory.Exists("assets"))

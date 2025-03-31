@@ -1,3 +1,6 @@
+using System.Numerics;
+using System.Runtime.InteropServices;
+using engine.joyce;
 using Silk.NET.OpenGL;
 
 namespace Splash.Silk;
@@ -13,6 +16,10 @@ public class SilkRenderState
 
     public BufferObject<float>? BoneMatrices;
 
+    private bool _isBoundModelBakedFrame = false;
+    private ModelBakedFrame _modelBakedFrame;
+    private BufferObject<float>? _bufferBakedFrame;
+
     private int _silkAnimMethod = -1;
     
     private void _unloadProgramEntry()
@@ -25,13 +32,43 @@ public class SilkRenderState
         var pe = _lastProgramEntry;
         _lastProgramEntry = null;
         _silkAnimMethod = -1;
+        _isBoundModelBakedFrame = false;
         
         // TXWTODO: Why is that? That is wrong.
         _gl.UseProgram(pe.Handle);
     }
 
+
+    public void UseBoneMatricesFrameUBO(engine.joyce.ModelBakedFrame modelBakedFrame)
+    {
+        /*
+         * Create appropriate buffer object if not done yet.
+         */
+        if (_modelBakedFrame != modelBakedFrame)
+        {
+            if (_bufferBakedFrame != null)
+            {
+                // TXWTODO: Add to frame disposals.
+                _bufferBakedFrame.Dispose();
+                _bufferBakedFrame = null;
+                
+                Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
+                _bufferBakedFrame = new BufferObject<float>(_gl, span, BufferTargetARB.UniformBuffer);
+                _isBoundModelBakedFrame = false;
+            }
+        }
+        
+        /*
+         * Bind buffer object if not done yet.
+         */
+        if (!_isBoundModelBakedFrame)
+        {
+            _bufferBakedFrame.BindBufferBase(0);
+        }
+    }
     
-    public void UseBoneMatrices(BufferObject<float>? boneMatrices)
+    
+    public void UseBoneMatricesSSBO(BufferObject<float>? boneMatrices)
     {
         if (BoneMatrices == boneMatrices) return;
 
@@ -55,6 +92,7 @@ public class SilkRenderState
         _unloadProgramEntry();
     }
 
+    
     public SilkRenderState(GL gl)
     {
         _gl = gl;

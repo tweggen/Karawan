@@ -1284,8 +1284,8 @@ public class Engine
     public Engine(engine.IPlatform platform)
     {
         _taskScheduler = new LimitedConcurrencyLevelTaskScheduler(
-            Int32.Max(3, Environment.ProcessorCount - 2)
-            //20
+            Int32.Max(3, 
+                Environment.ProcessorCount - 2)
             );
         _taskFactory = new TaskFactory(_taskScheduler);
         

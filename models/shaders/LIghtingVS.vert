@@ -27,7 +27,7 @@ uniform mat4 mvp;
 #if USE_ANIM_SSBO
 uniform uint nBones;
 #endif
-#if USE_ANIM_UBO
+#if USE_ANIM_UNIFORM
 uniform mat4 m4BoneMatrices[63];
 #endif
 uniform int iVertexFlags;
@@ -46,11 +46,21 @@ out vec3 v3FragFront;
 
 #if USE_ANIM_SSBO
 /*
- * SSBOs.
+ * SSBO for all frames.
  */
 layout(std430, binding = 0) buffer BoneMatrices {
     mat4 allBakedMatrices[]; // An array of 4x4 matrices
 };
+#endif
+
+#if USE_ANIM_UBO
+/*
+ * UBO per frame.
+ */
+layout(std140, binding = 0) uniform BoneMatrices {
+    mat4 m4BoneMatrices[63]; // An array of 4x4 matrices
+};
+
 #endif
 
 void main()
@@ -88,7 +98,7 @@ void main()
                     m4BoneMatrix = allBakedMatrices[matrixIndex];
                 } 
 #endif
-#if USE_ANIM_UBO
+#if USE_ANIM_UNIFORM
                 if (iVertexFlags == 2)
                 {
                     m4BoneMatrix = m4BoneMatrices[boneId];                    

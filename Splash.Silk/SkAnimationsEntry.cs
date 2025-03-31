@@ -27,21 +27,27 @@ public class SkAnimationsEntry : AAnimationsEntry
         /*
          * If we are using anim buffer object, create and upload it here once.
          */
-        if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
+        switch (AnimStrategy)
         {
-            if (Model != null)
-            {
-                Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AllBakedMatrices);
-                //_gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
-
-                SSBOAnimations = new BufferObject<float>(_gl, span, BufferTargetARB.ShaderStorageBuffer);
-
-                ++_nAnimations;
-                if (_nAnimations > 5000)
+            case Flags.GLAnimBuffers.AnimSSBO:
+                if (Model != null)
                 {
-                    Warning($"Uploaded {_nAnimations} more than 5000 animations.");
+                    Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(Model.AllBakedMatrices);
+                    //_gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length, false,
+
+                    SSBOAnimations = new BufferObject<float>(_gl, span, BufferTargetARB.ShaderStorageBuffer);
+
+                    ++_nAnimations;
+                    if (_nAnimations > 5000)
+                    {
+                        Warning($"Uploaded {_nAnimations} more than 5000 animations.");
+                    }
                 }
-            }
+
+                break;
+            default:
+                // Might be uniform based.
+                break;
         }
         if (_traceAnimations) Trace($"Uploaded Animations");
         _isUploaded = true;

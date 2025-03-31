@@ -32,6 +32,7 @@ public class ShaderSource : IDisposable
         {
             _shaderCode = "#version 430\n"+
                           "#define USE_ANIM_SSBO 1\n"+
+                          "#define USE_ANIM_UNIFORM 0\n"+
                           "#define USE_ANIM_UBO 0\n"+
                           "\n"+
                           strShader;
@@ -40,6 +41,7 @@ public class ShaderSource : IDisposable
         {
             _shaderCode = "#version 310 es\n\n"+
                           "#define USE_ANIM_SSBO 0\n"+
+                          "#define USE_ANIM_UNIFORM 0\n"+
                           "#define USE_ANIM_UBO 1\n"+
                           "\n"+
                           strShader;

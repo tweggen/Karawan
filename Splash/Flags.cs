@@ -7,7 +7,8 @@ public class Flags
     public enum GLAnimBuffers
     {
         AnimSSBO = 0,
-        AnimUBO = 1
+        AnimUniform = 1,
+        AnimUBO = 2,
     };
 
     [Flags]

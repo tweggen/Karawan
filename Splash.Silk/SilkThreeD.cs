@@ -70,7 +70,7 @@ public class SilkThreeD : IThreeD
     private SilkRenderState _silkRenderState;
 
 
-    Flags.GLAnimBuffers AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
+    Flags.GLAnimBuffers AnimStrategy = Flags.GLAnimBuffers.AnimUniform;
     
     
     /**
@@ -286,14 +286,19 @@ public class SilkThreeD : IThreeD
          * Also load the locations for some programs from the shader.
          */
         _locInstanceMatrices = shader.GetAttrib("instanceTransform");
-        if (AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
-        {
-            _locFrameno = shader.GetAttrib("instanceFrameno");
-            _locNBones = shader.GetUniform("nBones");
-        }
 
-        if (AnimStrategy == Flags.GLAnimBuffers.AnimUBO) {
-            _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
+        switch (AnimStrategy)
+        {
+            case Flags.GLAnimBuffers.AnimSSBO:
+                _locFrameno = shader.GetAttrib("instanceFrameno");
+                _locNBones = shader.GetUniform("nBones");
+                break;
+            case Flags.GLAnimBuffers.AnimUniform:
+            case Flags.GLAnimBuffers.AnimUBO:                
+                _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
+                break;
+            default:
+                break;
         }
 
         _locMvp = shader.GetUniform("mvp");
@@ -365,41 +370,51 @@ public class SilkThreeD : IThreeD
             if (_checkGLErrors) CheckError(gl,"Bind Vertex Array");
             
             _silkFrame.RegisterInstanceBuffer(spanMatrices);
-            
+
             if (skAnimationsEntry != null)
             {
                 /*
                  * Adjust the rendering method according to the platform
                  */
-                if (skAnimationsEntry.AnimStrategy == Flags.GLAnimBuffers.AnimSSBO)
+                switch (skAnimationsEntry.AnimStrategy)
                 {
-                    /*
-                     * SSBO: We just use the ssbo previously uploaded.
-                     */
-                    sh.SetUniform(_locVertexFlags, (int)3);
-                    _silkRenderState.UseBoneMatrices(skAnimationsEntry.SSBOAnimations);
-                }
-                else if (skAnimationsEntry.AnimStrategy == Flags.GLAnimBuffers.AnimUBO)
-                {
-                    if (modelBakedFrame != null)
+                    case Flags.GLAnimBuffers.AnimSSBO:
                     {
                         /*
-                         * We upload the per frame data.
+                         * SSBO: We just use the ssbo previously uploaded.
                          */
-                        sh.SetUniform(_locVertexFlags, (int)2);
-
-                        /*
-                         * If we are supposed to load bone animations, let's do that.
-                         */
-                        Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
-                        _gl.UniformMatrix4((int)_locBoneMatrices, (uint)modelBakedFrame.BoneTransformations.Length,
-                            true, span);
+                        sh.SetUniform(_locVertexFlags, (int)3);
+                        _silkRenderState.UseBoneMatricesSSBO(skAnimationsEntry.SSBOAnimations);
                     }
+                        break;
+                    case Flags.GLAnimBuffers.AnimUniform:
+                    {
+                        if (modelBakedFrame != null)
+                        {
+                            /*
+                             * We upload the per frame data.
+                             */
+                            sh.SetUniform(_locVertexFlags, (int)2);
+
+                            /*
+                             * If we are supposed to load bone animations, let's do that.
+                             */
+                            Span<float> span =
+                                MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
+                            _gl.UniformMatrix4((int)_locBoneMatrices,
+                                (uint)modelBakedFrame.BoneTransformations.Length,
+                                false, span);
+                        }
+                    }
+                        break;
+                    case Flags.GLAnimBuffers.AnimUBO:
+                        sh.SetUniform(_locVertexFlags, (int)1);
+                        _silkRenderState.UseBoneMatricesFrameUBO(modelBakedFrame);   
+                        break;
+                    default:
+                        sh.SetUniform(_locVertexFlags, (int)4);
+                        break;
                 }
-            }
-            else
-            {
-                sh.SetUniform(_locVertexFlags, (int)4);
             }
 
             /*
@@ -948,7 +963,7 @@ public class SilkThreeD : IThreeD
         }
         else if (api == "OpenGLES")
         {
-            AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
+            AnimStrategy = Flags.GLAnimBuffers.AnimUniform;
         }
         else
         {
