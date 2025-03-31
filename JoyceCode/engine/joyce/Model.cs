@@ -225,10 +225,11 @@ public class Model
         if (bone != null)
         {
             Matrix4x4 m4Baked =
-                    m4GlobalTransform *
-                    m4Model2Bone /* * (1f/Scale) */
-                    * m4MyTransform
-                /* * m4InverseGlobalTransform */;
+                m4GlobalTransform 
+                * m4Model2Bone
+                * m4MyTransform
+                ;
+            
             /*
              * For some strange reason, transferring matrices via ssbo does transpose the
              * matrix whereas passing matrix as uniform doesnt, or vice cersea.
@@ -244,8 +245,7 @@ public class Model
             }
             AllBakedMatrices[(ma.FirstFrame+frameno) * Skeleton.NBones + boneIndex] = m4Baked;
         }
-
-
+        
         if (me.Children != null)
         {
             /*
