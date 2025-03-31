@@ -36,7 +36,7 @@ public class BufferObject<TDataType> : IDisposable
 
     public void BindBufferBase(uint slot)
     {
-        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, slot, _handle);
+        _gl.BindBufferBase(_bufferType, slot, _handle);
         CheckError(_gl,$"BindBufferBase.");
     }
     

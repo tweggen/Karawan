@@ -51,9 +51,14 @@ public class SilkRenderState
                 // TXWTODO: Add to frame disposals.
                 _bufferBakedFrame.Dispose();
                 _bufferBakedFrame = null;
-                
+                _isBoundModelBakedFrame = false;
+            }
+            
+            if (modelBakedFrame != null)
+            {
                 Span<float> span = MemoryMarshal.Cast<Matrix4x4, float>(modelBakedFrame.BoneTransformations);
                 _bufferBakedFrame = new BufferObject<float>(_gl, span, BufferTargetARB.UniformBuffer);
+                _modelBakedFrame = modelBakedFrame;
                 _isBoundModelBakedFrame = false;
             }
         }

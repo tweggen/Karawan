@@ -294,7 +294,6 @@ public class SilkThreeD : IThreeD
                 _locNBones = shader.GetUniform("nBones");
                 break;
             case Flags.GLAnimBuffers.AnimUniform:
-            case Flags.GLAnimBuffers.AnimUBO:                
                 _locBoneMatrices = shader.GetUniform("m4BoneMatrices");
                 break;
             default:
@@ -408,8 +407,12 @@ public class SilkThreeD : IThreeD
                     }
                         break;
                     case Flags.GLAnimBuffers.AnimUBO:
-                        sh.SetUniform(_locVertexFlags, (int)1);
-                        _silkRenderState.UseBoneMatricesFrameUBO(modelBakedFrame);   
+                        if (modelBakedFrame != null)
+                        {
+                            sh.SetUniform(_locVertexFlags, (int)1);
+                            _silkRenderState.UseBoneMatricesFrameUBO(modelBakedFrame);
+                        }
+
                         break;
                     default:
                         sh.SetUniform(_locVertexFlags, (int)4);
@@ -963,7 +966,7 @@ public class SilkThreeD : IThreeD
         }
         else if (api == "OpenGLES")
         {
-            AnimStrategy = Flags.GLAnimBuffers.AnimUniform;
+            AnimStrategy = Flags.GLAnimBuffers.AnimUBO;
         }
         else
         {

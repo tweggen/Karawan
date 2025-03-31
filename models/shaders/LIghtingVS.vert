@@ -98,6 +98,12 @@ void main()
                     m4BoneMatrix = allBakedMatrices[matrixIndex];
                 } 
 #endif
+#if USE_ANIM_UBO
+                if (iVertexFlags == 1)
+                {
+                    m4BoneMatrix = m4BoneMatrices[boneId];
+                }
+#endif
 #if USE_ANIM_UNIFORM
                 if (iVertexFlags == 2)
                 {
