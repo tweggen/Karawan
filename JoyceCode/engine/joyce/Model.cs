@@ -34,6 +34,8 @@ public class Skin
 public class Model
 {
     public string Name;
+
+    public uint MAX_BONES = 60;
     
     private ModelNode _mnRoot; 
     public ModelNode RootNode
@@ -232,7 +234,14 @@ public class Model
              * matrix whereas passing matrix as uniform doesnt, or vice cersea.
              * So we must adjust for that.
              */
-            ma.BakedFrames[frameno].BoneTransformations[boneIndex] = m4Baked;
+
+            {
+                var arr = ma.BakedFrames[frameno].BoneTransformations;
+                if (boneIndex < arr.Length)
+                {
+                    arr[boneIndex] = m4Baked;
+                }
+            }
             AllBakedMatrices[(ma.FirstFrame+frameno) * Skeleton.NBones + boneIndex] = m4Baked;
         }
 
@@ -305,7 +314,7 @@ public class Model
             {
                 ModelBakedFrame bakedFrame = new()
                 {
-                    BoneTransformations = new Matrix4x4[Skeleton.NBones]
+                    BoneTransformations = new Matrix4x4[UInt32.Max(Skeleton.NBones, MAX_BONES)]
                 };
                 ma.BakedFrames[frameno] = bakedFrame;
             }

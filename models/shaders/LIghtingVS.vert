@@ -16,7 +16,7 @@ layout(location = 6) in mat4 instanceTransform;
 layout(location = 10) in uint instanceFrameno;
 #endif
 
-const int MAX_BONES = 63;
+const int MAX_BONES = 60;
 const int MAX_BONE_INFLUENCE = 4;
 
 
@@ -29,7 +29,7 @@ uniform mat4 mvp;
 uniform uint nBones;
 #endif
 #if USE_ANIM_UNIFORM
-uniform mat4 m4BoneMatrices[63];
+uniform mat4 m4BoneMatrices[MAX_BONES];
 #endif
 uniform int iVertexFlags;
 
@@ -59,7 +59,7 @@ layout(std430, binding = 0) buffer BoneMatrices {
  * UBO per frame.
  */
 layout(std140, column_major, binding = 0) uniform BoneMatrices {
-    highp mat4 m4BoneMatrices[63]; // An array of 4x4 matrices
+    highp mat4 m4BoneMatrices[MAX_BONES]; // An array of 4x4 matrices
 };
 
 #endif
