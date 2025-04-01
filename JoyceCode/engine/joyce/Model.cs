@@ -165,8 +165,13 @@ public class Model
     
     /**
      * Bake all animations for the given node.
+     *
+     * @param m4ParentTransform
+     *     How do I transform from the model to my parent.
+     * @param m4GlobalTransform
+     *     How do I transform from root to the mesh.
      */
-    private void _bakeRecursive(ModelNode me, in Matrix4x4 m4ParentTransform, in Matrix4x4 m4GlobalTransform, ModelAnimation ma, uint frameno)
+    private void _bakeRecursive(ModelNode me, in Matrix4x4 m4ParentTransform, in Matrix4x4 m4GlobalTransform, Matrix4x4 m4BoneToModel, ModelAnimation ma, uint frameno)
     {
         var skeleton = Skeleton!;
         
@@ -175,21 +180,25 @@ public class Model
          */
         Bone? bone = null;
         uint boneIndex = 0; 
-        Matrix4x4 m4Model2Bone;
-        Matrix4x4 m4Bone2Model;
+        // Matrix4x4 m4Model2Bone;
+        // Matrix4x4 m4Bone2Model;
         if (skeleton.MapBones.TryGetValue(me.Name, out bone))
         {
-            m4Model2Bone = bone.Model2Bone;
-            m4Bone2Model = bone.Bone2Model;
+            // m4Model2Bone = bone.Model2Bone;
+            // m4Bone2Model = bone.Bone2Model;
             boneIndex = bone.Index;
         }
         else
         {
-            m4Model2Bone = Matrix4x4.Identity;
-            m4Bone2Model = Matrix4x4.Identity;
+            // m4Model2Bone = Matrix4x4.Identity;
+            // m4Bone2Model = Matrix4x4.Identity;
         }
         
         Matrix4x4 m4Anim;
+        Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
+        // Note: Inverse
+        Matrix4x4 m4MyBoneToModel = m4InverseBone * m4BoneToModel; 
+
         if (ma.MapChannels.TryGetValue(me, out var mac))
         {
             /*
@@ -216,6 +225,7 @@ public class Model
         /*
          * This is the complete transformation of this node,
          */
+        // Note: Inverse
         Matrix4x4 m4MyTransform = m4Anim * m4ParentTransform;
         
         /*
@@ -224,9 +234,36 @@ public class Model
          */
         if (bone != null)
         {
+            /*
+             * baked shall define how I come from mesh local position to bone
+             * transformed mesh position
+             *
+             * Warning: For reasons I do not understand now, I wrote this in M*V order instead
+             * of the usual V*M order in this project. Hence, the vertex shader also multiplies
+             * M*V.
+             *
+             * Input to this matrix is the mesh before model to world transformation.
+             * Ultimately, we want to apply the transformation of all bones in that space.
+             *
+             * 1- So first, m4MyTransform is the inverse mesh global transformation plus the transformations
+             * to bone space until and including me.
+             *
+             * 2- m4Model2Bone is questionable and differs between platforms. Actually I would want to transform
+             * from bone space back to mesh space.
+             *
+             * 3- Finally we apply the global transform from mesh space to model space and we're back.
+             *
+             * Unfortunately, as the "bone to model" matrix does not exist, we need to construct
+             * it from the static matrices defining the pose transformation in the bones.
+             */
             Matrix4x4 m4Baked =
-                m4GlobalTransform 
-                * m4Model2Bone
+                /*
+                 * Go from global space to bone 
+                 */
+                m4MyBoneToModel
+                /*
+                 * 
+                 */
                 * m4MyTransform
                 ;
             
@@ -253,7 +290,8 @@ public class Model
              */
             foreach (var child in me.Children)
             {
-                _bakeRecursive(child, m4MyTransform, m4GlobalTransform, ma, frameno);
+                _bakeRecursive(child, m4MyTransform, m4GlobalTransform, 
+                    m4MyBoneToModel, ma, frameno);
             }
         }
     }
@@ -330,7 +368,11 @@ public class Model
                  *
                  * Plus, I need to apply the scale (which I also could do later).
                  */
-                _bakeRecursive(RootNode, m4InverseGlobalTransform * Scale, m4GlobalTransform, ma, frameno);
+                _bakeRecursive(RootNode, 
+                    m4InverseGlobalTransform * Scale, 
+                    m4GlobalTransform, 
+                    m4InverseGlobalTransform, 
+                    ma, frameno);
             }
         }
     }
