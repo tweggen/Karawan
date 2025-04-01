@@ -17,7 +17,6 @@ using VertexWeight = engine.joyce.VertexWeight;
 
 namespace builtin.loader.fbx;
 
-
 public class FbxModel : IDisposable
 {
     static  private Assimp _assimp;

@@ -173,7 +173,7 @@ public class Model
      *     How do I transform from root to the mesh.
      */
     private void _bakeRecursive(ModelNode me, 
-        in Matrix4x4 m4ModelSpaceToPoseSpace, 
+        Matrix4x4 m4ModelSpaceToPoseSpace, 
         Matrix4x4 m4BoneSpaceToModelSpace, 
         ModelAnimation ma, uint frameno)
     {
