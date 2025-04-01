@@ -66,10 +66,6 @@ public class FbxModel : IDisposable
         Metadata* metadata = _scene->MMetaData;
         for (uint i = 0; i < metadata->MNumProperties; i++)
         {
-            var k = metadata->MKeys[i];
-            var v = metadata->MValues[i];
-            int a = 1;
-#if false
             if (key == metadata->MKeys[i].ToString())
             {
                 void* p = metadata->MValues[i].MData;
@@ -101,7 +97,6 @@ public class FbxModel : IDisposable
                         return (*(uint*)p).ToString();
                 }
             }
-#endif
         }
         return defaultValue;
     }
