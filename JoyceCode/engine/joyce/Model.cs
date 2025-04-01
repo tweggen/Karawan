@@ -245,13 +245,8 @@ public class Model
              * Input to this matrix is the mesh before model to world transformation.
              * Ultimately, we want to apply the transformation of all bones in that space.
              *
-             * 1- So first, m4MyTransform is the inverse mesh global transformation plus the transformations
-             * to bone space until and including me.
-             *
-             * 2- m4Model2Bone is questionable and differs between platforms. Actually I would want to transform
-             * from bone space back to mesh space.
-             *
-             * 3- Finally we apply the global transform from mesh space to model space and we're back.
+             * - apply my bone transformations until the moved me.
+             * - apply the inverse to get back to the model
              *
              * Unfortunately, as the "bone to model" matrix does not exist, we need to construct
              * it from the static matrices defining the pose transformation in the bones.
@@ -369,9 +364,9 @@ public class Model
                  * Plus, I need to apply the scale (which I also could do later).
                  */
                 _bakeRecursive(RootNode, 
-                    m4InverseGlobalTransform * Scale, 
+                    Matrix4x4.Identity, 
                     m4GlobalTransform, 
-                    m4InverseGlobalTransform, 
+                    Matrix4x4.Identity,  
                     ma, frameno);
             }
         }
