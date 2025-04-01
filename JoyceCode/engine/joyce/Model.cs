@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Numerics;
+using BepuUtilities;
 using builtin.extensions;
 using static engine.Logger;
 
@@ -157,7 +158,7 @@ public class Model
             m4ParentTransform = Matrix4x4.Identity;
         }
 
-        m4ParentTransform = mn.Transform.Matrix * m4ParentTransform;
+        m4ParentTransform = m4ParentTransform * mn.Transform.Matrix ;
 
         return m4ParentTransform;
     }
@@ -171,7 +172,10 @@ public class Model
      * @param m4GlobalTransform
      *     How do I transform from root to the mesh.
      */
-    private void _bakeRecursive(ModelNode me, in Matrix4x4 m4ParentTransform, in Matrix4x4 m4GlobalTransform, Matrix4x4 m4BoneToModel, ModelAnimation ma, uint frameno)
+    private void _bakeRecursive(ModelNode me, 
+        in Matrix4x4 m4ModelSpaceToPoseSpace, 
+        Matrix4x4 m4BoneSpaceToModelSpace, 
+        ModelAnimation ma, uint frameno)
     {
         var skeleton = Skeleton!;
         
@@ -180,25 +184,15 @@ public class Model
          */
         Bone? bone = null;
         uint boneIndex = 0; 
-        // Matrix4x4 m4Model2Bone;
-        // Matrix4x4 m4Bone2Model;
         if (skeleton.MapBones.TryGetValue(me.Name, out bone))
         {
-            // m4Model2Bone = bone.Model2Bone;
-            // m4Bone2Model = bone.Bone2Model;
             boneIndex = bone.Index;
         }
         else
         {
-            // m4Model2Bone = Matrix4x4.Identity;
-            // m4Bone2Model = Matrix4x4.Identity;
         }
-        
-        Matrix4x4 m4Anim;
-        Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
-        // Note: Inverse
-        Matrix4x4 m4MyBoneToModel = m4InverseBone * m4BoneToModel; 
 
+        Matrix4x4 m4Anim;
         if (ma.MapChannels.TryGetValue(me, out var mac))
         {
             /*
@@ -211,23 +205,23 @@ public class Model
             var kfRotation = mac.SlerpRotation(frameno);
             var kfScaling = mac.LerpScaling(frameno); 
 
-            var m4Translate = Matrix4x4.CreateTranslation(kfPosition.Value);
             m4Anim =
-                Matrix4x4.CreateFromQuaternion(kfRotation.Value)
-                * Matrix4x4.CreateScale(kfScaling.Value)
-                * Matrix4x4.CreateTranslation(kfPosition.Value);
+                Matrix4x4.CreateScale(kfScaling.Value)
+                * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
+                * Matrix4x4.CreateTranslation(kfPosition.Value)
+                ;
         }
         else
         {
             m4Anim = me.Transform.Matrix;
         }
-        
-        /*
-         * This is the complete transformation of this node,
-         */
-        // Note: Inverse
-        Matrix4x4 m4MyTransform = m4Anim * m4ParentTransform;
-        
+
+        Matrix4x4.Invert(m4Anim, out var m4InverseAnim);
+        Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
+
+        Matrix4x4 m4MyBoneSpaceToModelSpace = m4BoneSpaceToModelSpace * m4Anim; 
+        Matrix4x4 m4MyModelSpaceToPoseSpace = m4ModelSpaceToPoseSpace * m4InverseBone; 
+
         /*
          * Store resulting matrix if we have a bone that carries it.
          * Otherwise, just pass it on to the children.
@@ -253,13 +247,14 @@ public class Model
              */
             Matrix4x4 m4Baked =
                 /*
-                 * Go from global space to bone 
+                 * First from model coordinate space to bone local coordinate space
                  */
-                m4MyBoneToModel
+                m4MyModelSpaceToPoseSpace * 
+                
                 /*
-                 * 
+                 * Go from global space to bone
                  */
-                * m4MyTransform
+                m4MyBoneSpaceToModelSpace
                 ;
             
             /*
@@ -285,8 +280,8 @@ public class Model
              */
             foreach (var child in me.Children)
             {
-                _bakeRecursive(child, m4MyTransform, m4GlobalTransform, 
-                    m4MyBoneToModel, ma, frameno);
+                _bakeRecursive(child, m4MyModelSpaceToPoseSpace,  
+                    m4MyBoneSpaceToModelSpace, ma, frameno);
             }
         }
     }
@@ -364,9 +359,8 @@ public class Model
                  * Plus, I need to apply the scale (which I also could do later).
                  */
                 _bakeRecursive(RootNode, 
-                    Matrix4x4.Identity, 
-                    m4GlobalTransform, 
-                    Matrix4x4.Identity,  
+                     m4InverseGlobalTransform, 
+                    m4GlobalTransform,  
                     ma, frameno);
             }
         }

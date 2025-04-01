@@ -112,9 +112,9 @@ void main()
                 }
 #endif
                         
-                vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
+                vec4 v4LocalPosition = v4Vertex * m4BoneMatrix;
                 v4TotalPosition += v4LocalPosition * vertexWeights[i];
-                vec3 v3LocalNormal = mat3(m4BoneMatrix) * vertexNormal;
+                vec3 v3LocalNormal = vertexNormal * mat3(m4BoneMatrix);
                 v3TotalNormal += v3LocalNormal * vertexWeights[i];
             }
 
