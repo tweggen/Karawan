@@ -203,13 +203,14 @@ public class Model
              */
             var kfPosition = mac.LerpPosition(frameno);
             var kfRotation = mac.SlerpRotation(frameno);
-            var kfScaling = mac.LerpScaling(frameno); 
+            var kfScaling = mac.LerpScaling(frameno);
 
             m4Anim =
                 Matrix4x4.CreateScale(kfScaling.Value)
                 * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
                 * Matrix4x4.CreateTranslation(kfPosition.Value)
                 ;
+            
         }
         else
         {
@@ -220,7 +221,7 @@ public class Model
         Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
 
         Matrix4x4 m4MyBoneSpaceToModelSpace = m4BoneSpaceToModelSpace * m4Anim; 
-        Matrix4x4 m4MyModelSpaceToPoseSpace = m4ModelSpaceToPoseSpace * m4InverseBone; 
+        Matrix4x4 m4MyModelSpaceToPoseSpace = m4InverseBone * m4ModelSpaceToPoseSpace; 
 
         /*
          * Store resulting matrix if we have a bone that carries it.
