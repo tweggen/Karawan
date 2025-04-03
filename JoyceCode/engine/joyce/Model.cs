@@ -158,7 +158,7 @@ public class Model
             m4ParentTransform = Matrix4x4.Identity;
         }
 
-        m4ParentTransform = m4ParentTransform * mn.Transform.Matrix ;
+        m4ParentTransform = mn.Transform.Matrix * m4ParentTransform;
 
         return m4ParentTransform;
     }
