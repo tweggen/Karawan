@@ -360,8 +360,10 @@ public class Model
                  * Plus, I need to apply the scale (which I also could do later).
                  */
                 _bakeRecursive(RootNode, 
-                     m4InverseGlobalTransform, 
-                    m4GlobalTransform,  
+                    Matrix4x4.Identity,
+                    Matrix4x4.Identity,
+                    // m4InverseGlobalTransform, 
+                    // m4GlobalTransform,  
                     ma, frameno);
             }
         }
