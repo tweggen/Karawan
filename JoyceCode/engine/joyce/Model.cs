@@ -265,6 +265,7 @@ public class Model
                 m4MyBoneSpaceToModelSpace
                 ;
             // m4Baked = Matrix4x4.Transpose(m4Baked);
+            // Matrix4x4.Invert(m4Baked, out var m4InverseBaked);
             
             /*
              * For some strange reason, transferring matrices via ssbo does transpose the
