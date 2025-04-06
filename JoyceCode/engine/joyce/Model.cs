@@ -220,8 +220,8 @@ public class Model
         Matrix4x4.Invert(m4Anim, out var m4InverseAnim);
         Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
 
-        Matrix4x4 m4MyBoneSpaceToModelSpace = m4BoneSpaceToModelSpace * m4Anim; 
-        Matrix4x4 m4MyModelSpaceToPoseSpace = m4InverseBone * m4ModelSpaceToPoseSpace; 
+        Matrix4x4 m4MyBoneSpaceToModelSpace = m4Anim * m4BoneSpaceToModelSpace; 
+        Matrix4x4 m4MyModelSpaceToPoseSpace = m4ModelSpaceToPoseSpace * m4InverseBone;
 
         /*
          * Store resulting matrix if we have a bone that carries it.
@@ -257,6 +257,7 @@ public class Model
                  */
                 m4MyBoneSpaceToModelSpace
                 ;
+            // m4Baked = Matrix4x4.Transpose(m4Baked);
             
             /*
              * For some strange reason, transferring matrices via ssbo does transpose the
@@ -359,11 +360,13 @@ public class Model
                  *
                  * Plus, I need to apply the scale (which I also could do later).
                  */
-                _bakeRecursive(RootNode, 
-                    Matrix4x4.Identity,
-                    Matrix4x4.Identity,
-                    // m4InverseGlobalTransform, 
-                    // m4GlobalTransform,  
+                _bakeRecursive(RootNode,
+                    m4GlobalTransform,
+                    m4InverseGlobalTransform,
+                     //Matrix4x4.Identity,
+                     //Matrix4x4.Identity,
+                     // m4InverseGlobalTransform, 
+                    //  m4GlobalTransform,  
                     ma, frameno);
             }
         }
