@@ -271,8 +271,20 @@ public class Model
                 {
                     arr[boneIndex] = m4Baked;
                 }
+                else
+                {
+                    // Does not trigger.
+                    int a = 1;
+                }
             }
             AllBakedMatrices[(ma.FirstFrame+frameno) * Skeleton.NBones + boneIndex] = m4Baked;
+
+            if (me.Children == null || me.Children.Count == 0)
+            {
+                // TXWTODO: We have problems with the hands, let's look if the terminal leaf case is a problem.
+                // Does not trigger at all
+                int a = 1;
+            }
         }
         
         if (me.Children != null)
