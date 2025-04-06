@@ -190,6 +190,10 @@ public class Model
         }
         else
         {
+            /*
+             * In case there is a bone missing.
+             */
+            int a = 1;
         }
 
         Matrix4x4 m4Anim;
@@ -206,14 +210,17 @@ public class Model
             var kfScaling = mac.LerpScaling(frameno);
 
             m4Anim =
-                Matrix4x4.CreateScale(kfScaling.Value)
-                * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
+                Matrix4x4.CreateFromQuaternion(kfRotation.Value)
+                * Matrix4x4.CreateScale(kfScaling.Value)
                 * Matrix4x4.CreateTranslation(kfPosition.Value)
                 ;
             
         }
         else
         {
+            /*
+             * In case my node cannot be found in the list of animation channels.
+             */
             m4Anim = me.Transform.Matrix;
         }
 
