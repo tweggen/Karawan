@@ -209,9 +209,9 @@ public class Model
             var kfRotation = mac.SlerpRotation(frameno);
             var kfScaling = mac.LerpScaling(frameno);
 
-            m4Anim =
-                Matrix4x4.CreateFromQuaternion(kfRotation.Value)
-                * Matrix4x4.CreateScale(kfScaling.Value)
+            m4Anim = 
+                Matrix4x4.CreateScale(kfScaling.Value)
+                * Matrix4x4.CreateFromQuaternion(kfRotation.Value)
                 * Matrix4x4.CreateTranslation(kfPosition.Value)
                 ;
             
@@ -257,11 +257,11 @@ public class Model
                 /*
                  * First from model coordinate space to bone local coordinate space
                  */
-                m4MyModelSpaceToPoseSpace * 
+                m4MyModelSpaceToPoseSpace *
                 
                 /*
                  * Go from global space to bone
-                 */
+                  */
                 m4MyBoneSpaceToModelSpace
                 ;
             // m4Baked = Matrix4x4.Transpose(m4Baked);

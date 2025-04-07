@@ -560,6 +560,7 @@ public class FbxModel : IDisposable
                 }
             }
             
+            
             /*
              * Finally, normalize the weights
              */
