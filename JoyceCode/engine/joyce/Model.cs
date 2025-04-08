@@ -173,6 +173,7 @@ public class Model
      *     How do I transform from root to the mesh.
      */
     private void _bakeRecursive(ModelNode me, 
+        Matrix4x4 m4GlobalTransform,
         Matrix4x4 m4ModelSpaceToPoseSpace, 
         Matrix4x4 m4BoneSpaceToModelSpace, 
         ModelAnimation ma, uint frameno)
@@ -264,11 +265,13 @@ public class Model
              * it from the static matrices defining the pose transformation in the bones.
              */
             Matrix4x4 m4Baked =
+                m4GlobalTransform *
+                
                 /*
                  * First from model coordinate space to bone local coordinate space
                  */
                 //m4MyModelSpaceToPoseSpace *
-                m4Model2Bone * 100f * 
+                m4Model2Bone * 
                 
                 /*
                  * Go from global space to bone
@@ -313,7 +316,9 @@ public class Model
              */
             foreach (var child in me.Children)
             {
-                _bakeRecursive(child, m4MyModelSpaceToPoseSpace,  
+                _bakeRecursive(child,
+                    m4GlobalTransform,
+                    m4MyModelSpaceToPoseSpace,  
                     m4MyBoneSpaceToModelSpace, ma, frameno);
             }
         }
@@ -393,7 +398,8 @@ public class Model
                  */
                 _bakeRecursive(RootNode,
                     m4GlobalTransform,
-                    m4InverseGlobalTransform,
+                    m4GlobalTransform,
+                    m4InverseGlobalTransform * Scale,
                      //Matrix4x4.Identity,
                      //Matrix4x4.Identity,
                      // m4InverseGlobalTransform, 

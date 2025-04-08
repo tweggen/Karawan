@@ -126,14 +126,10 @@ public class CharacterCreator
             Properties = new(modelProperties),
             Params = new()
             {
-                GeomFlags = 0 | InstantiateModelParams.CENTER_X
-                              // | InstantiateModelParams.CENTER_Z
-                              | InstantiateModelParams.ROTATE_X90
-                              | InstantiateModelParams.ROTATE_Y180
-                              // | InstantiateModelParams.BUILD_PHYSICS
-                              // | InstantiateModelParams.PHYSICS_DETECTABLE
-                              // | InstantiateModelParams.PHYSICS_TANGIBLE
-                              // | InstantiateModelParams.PHYSICS_CALLBACKS
+                GeomFlags = 0
+                            //| InstantiateModelParams.CENTER_X
+                            //| InstantiateModelParams.ROTATE_X90
+                            //| InstantiateModelParams.ROTATE_Y180
                 ,
                 MaxDistance = propMaxDistance,
                 
