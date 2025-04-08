@@ -184,12 +184,22 @@ public class Model
          */
         Bone? bone = null;
         uint boneIndex = 0; 
+        
+        
+        Matrix4x4 m4Model2Bone;
+        Matrix4x4 m4Bone2Model;
+        
         if (skeleton.MapBones.TryGetValue(me.Name, out bone))
         {
+            m4Model2Bone = bone.Model2Bone;
+            m4Bone2Model = bone.Bone2Model;
             boneIndex = bone.Index;
         }
         else
         {
+            m4Model2Bone = Matrix4x4.Identity;
+            m4Bone2Model = Matrix4x4.Identity;
+        
             /*
              * In case there is a bone missing.
              */
@@ -226,7 +236,7 @@ public class Model
 
         Matrix4x4.Invert(m4Anim, out var m4InverseAnim);
         Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
-
+    
         Matrix4x4 m4MyBoneSpaceToModelSpace = m4Anim * m4BoneSpaceToModelSpace; 
         Matrix4x4 m4MyModelSpaceToPoseSpace = m4ModelSpaceToPoseSpace * m4InverseBone;
 
@@ -257,7 +267,8 @@ public class Model
                 /*
                  * First from model coordinate space to bone local coordinate space
                  */
-                m4MyModelSpaceToPoseSpace *
+                //m4MyModelSpaceToPoseSpace *
+                m4Model2Bone * 100f * 
                 
                 /*
                  * Go from global space to bone
