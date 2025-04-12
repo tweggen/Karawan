@@ -5,9 +5,9 @@ using Silk.NET.Core.Loader;
 /// <summary>Contains the library name of native Assimp libraries that can be customized.</summary>
 public class CustomAssimpLibraryNameContainer : SearchPathContainer
 {
-    private string[] _linux = new string[] { "libassimp.so.5" };
+    private string[] _linux = new string[] { "libassimp.so" };
     private string[] _macOS = new string[] { "libassimp.5.dylib" };
-    private string[] _android = new string[] { "libassimp.so.5", "libassimp.so", "assimp", "lib/arm64-v8a/libassimp.so", "lib/armeabi-v7a/libassimp.so" };
+    private string[] _android = new string[] { "libassimp.so", "lib/arm64-v8a/libassimp.so", "lib/armeabi-v7a/libassimp.so" };
     private string[] _iOS = new string[] { "__Internal" };
     private string[] _windows64 = new string[] { "Assimp64.dll" };
     private string[] _windows86 = new string[] { "Assimp32.dll" };

@@ -36,10 +36,10 @@ public class FbxModel : IDisposable
 
                 if (null == _assimp)
                 {
-                    //System.Console.WriteLine("Loading assimp...");
-                    //_assimp = Assimp.GetApi();
-                    var customAssimpLibraryNameContainer = new CustomAssimpLibraryNameContainer();
-                    _assimp = new(Silk.NET.Assimp.Assimp.CreateDefaultContext(customAssimpLibraryNameContainer.GetLibraryNames()));
+                    System.Console.WriteLine("Loading assimp...");
+                    _assimp = Assimp.GetApi();
+                    //var customAssimpLibraryNameContainer = new CustomAssimpLibraryNameContainer();
+                    //_assimp = new(Silk.NET.Assimp.Assimp.CreateDefaultContext(customAssimpLibraryNameContainer.GetLibraryNames()));
                 }
                 else
                 {

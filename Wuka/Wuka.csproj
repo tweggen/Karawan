@@ -92,20 +92,36 @@
 	<ItemGroup>
 	  <None Remove="Platforms\Android\android\arm64-v8a\libopenal.so" />
 	  <None Remove="Platforms\Android\libopenal.so" />
-	  <None Remove="Platforms\Android\libs\arm64-v8a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libs\arm64-v8a\libopenal.so" />
-	  <None Remove="Platforms\Android\libs\armeabi-v7a\libassimp.so.5" />
 	  <None Remove="Platforms\Android\libs\armeabi-v7a\libopenal.so" />
 	  <None Remove="Platforms\Android\mapicons.png" />
 	  <None Remove="Platforms\Android\mipmap\appicon_android.png" />
 	  <None Remove="Platforms\Android\Prototype.ttf" />
 	  <None Remove="Resources\Splash\splash_nassau.svg" />
-	  <AndroidNativeLibrary Include="Platforms\Android\libs\arm64-v8a\libassimp.so.5">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidNativeLibrary>
-	  <AndroidNativeLibrary Include="Platforms\Android\libs\armeabi-v7a\libassimp.so.5">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libc++_shared.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</AndroidNativeLibrary>
+	  	<AndroidNativeLibrary Include="Platforms\Android\android\arm64-v8a\libassimp.so">
+		    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libc++_shared.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="Platforms\Android\android\armeabi-v7a\libassimp.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</AndroidNativeLibrary>
+	  	<AndroidNativeLibrary Include="Platforms\Android\libs\arm64-v8a\libc++_shared.so">
+	    	<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  	</AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="Platforms\Android\libs\arm64-v8a\libassimp.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</AndroidNativeLibrary>
+		<AndroidNativeLibrary Include="Platforms\Android\libs\armeabi-v7a\libc++_shared.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</AndroidNativeLibrary>
+	  	<AndroidNativeLibrary Include="Platforms\Android\libs\armeabi-v7a\libassimp.so">
+	    	<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  	</AndroidNativeLibrary>
 	</ItemGroup>
 
 	<Import Project="../nogame/generated/AndroidResources.xml" />
