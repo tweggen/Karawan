@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using BepuPhysics;
 using builtin.loader;
+using builtin.tools;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
@@ -39,33 +40,115 @@ public class CharacterCreator
     private static bool _trace = false;
     
     
-    static public StreetPoint? ChooseStreetPoint(builtin.tools.RandomSource rnd, Fragment worldFragment, ClusterDesc clusterDesc)
+    static public void ChooseQuarterDelimPointPos(
+        builtin.tools.RandomSource rnd, Fragment worldFragment, ClusterDesc clusterDesc,
+        out Quarter quarter, out QuarterDelim delim, out float relativePos)
     {
-        /*
-         * Load all prerequisites
-         */
-        StreetPoint chosenStreetPoint = null;
-
-        /*
-         * First, generate the set of street points within this fragemnt.
-         */
-        var listInFragment = clusterDesc.GetStreetPointsInFragment(worldFragment.IdxFragment);
-        var nStreetPoints = listInFragment.Count(); 
-        if (nStreetPoints == 0)
+        quarter = null;
+        delim = null;
+        relativePos = 0f;
+        
+        var quarterStore = clusterDesc.QuarterStore();
+        if (null == quarterStore)
         {
-            return null;
+            return;
         }
 
-        var idxPoint = rnd.GetInt(nStreetPoints - 1);
-        return listInFragment[idxPoint];
+        var quartersList = quarterStore.GetQuarters();
+        if (null == quartersList)
+        {
+            return;
+        }
+
+        int nQuarters = quartersList.Count;
+        if (nQuarters == 0)
+        {
+            return;
+        }
+
+        int idxQuarter = (int)(rnd.GetFloat() * nQuarters);
+        quarter = quartersList[idxQuarter];
+        if (null == quarter)
+        {
+            return;
+        }
+
+        var quarterDelims = quarter.GetDelims();
+        if (null == quarterDelims || quarterDelims.Count <= 1)
+        {
+            quarter = null;
+            return;
+        }
+
+        int nDelims = quarterDelims.Count;
+        int idxDelim = (int)(rnd.GetFloat() * nDelims);
+        delim = quarterDelims[idxDelim];
+        relativePos = rnd.GetFloat();
+        return;
     }
 
+
+    private static engine.behave.IBehavior _createDefaultBehavior(
+        RandomSource rnd,
+        ClusterDesc clusterDesc, 
+        Quarter quarter, QuarterDelim delim, float relativePosition)
+    {
+        List<builtin.tools.SegmentEnd> listSegments = new();
+
+        var delims = quarter.GetDelims();
+        int l = delims.Count;
+
+        int startIndex = 0;
+        for (int i = 0; i < l; ++i)
+        {
+            var dlThis = delims[i];
+            var dlNext = delims[(i + 1) % l];
+
+            if (delim == dlThis)
+            {
+                startIndex = i;
+            }
+            
+            var v3This = new Vector3(dlThis.StartPoint.X, clusterDesc.AverageHeight + 2.5f, dlThis.StartPoint.Y );
+            var v3Next = new Vector3(dlNext.StartPoint.X, clusterDesc.AverageHeight + 2.5f, dlNext.StartPoint.Y);
+            v3This += clusterDesc.Pos;
+            v3Next += clusterDesc.Pos;
+            var vu3Forward = Vector3.Normalize(v3Next - v3This);
+            var vu3Up = Vector3.UnitY;
+            
+            listSegments.Add(
+                new()
+                {
+                    Position = v3This,
+                    Up = vu3Up,
+                    Right = Vector3.Cross(vu3Forward, vu3Up)
+                });
+        }
+
+
+        builtin.tools.SegmentNavigator segnav = new ()
+        {
+            ListSegments = listSegments,
+            StartIndex = startIndex,
+            StartRelative = rnd.GetFloat(),
+            LoopSegments = true,
+            Speed = 4f
+        };
+
+        return new SimpleNavigationBehavior()
+        {
+            Navigator = segnav
+        };
+    }
+    
 
     public static async Task<DefaultEcs.Entity> GenerateRandomCharacter(
         builtin.tools.RandomSource rnd,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
-        StreetPoint chosenStreetPoint,
+        Quarter quarter,
+        QuarterDelim delim,
+        float relativePos,
         int seed = 0)
     {
         var modelProperties = new ModelProperties()
@@ -103,21 +186,7 @@ public class CharacterCreator
 
         float propMaxDistance = (float)engine.Props.Get("nogame.characters.citizen.maxDistance", 100f);
 
-        var snc = new StreetNavigationController()
-        {
-            Height = 2.5f,
-            ClusterDesc = clusterDesc,
-            StartPoint = chosenStreetPoint,
-            Seed = seed,
-            Speed = speed
-        };
-        snc.CreateStrokeProperties = snc.ComputePedestrianProperties;
-        
-        engine.behave.IBehavior iBehavior = 
-            new citizen.Behavior()
-            {
-                Navigator = snc
-            };
+        engine.behave.IBehavior iBehavior = _createDefaultBehavior(rnd, clusterDesc, quarter, delim, relativePos);
          
         // var sound = _getCitizenSound(carIdx);
         ModelCacheParams mcp = new()
@@ -140,7 +209,7 @@ public class CharacterCreator
         Model model = await I.Get<ModelCache>().LoadModel(mcp);
 
         return _generateCharacter(
-            clusterDesc, worldFragment, chosenStreetPoint, 
+            clusterDesc, worldFragment,  
             model, mcp, strAnimation, iBehavior, null);
     }
 
@@ -149,7 +218,6 @@ public class CharacterCreator
         DefaultEcs.Entity eTarget,
         ClusterDesc clusterDesc,
         Fragment worldFragment,
-        StreetPoint chosenStreetPoint,
         Model model,
         ModelCacheParams mcp,
         string strAnimation,
@@ -220,7 +288,6 @@ public class CharacterCreator
     private static DefaultEcs.Entity _generateCharacter(
         ClusterDesc clusterDesc,
         Fragment worldFragment,
-        StreetPoint chosenStreetPoint,
         Model model,
         ModelCacheParams mcp,
         string strAnimation,
@@ -243,7 +310,7 @@ public class CharacterCreator
         wf.Engine.QueueEntitySetupAction(name, eTarget =>
         {
             _setupCharacterMT(eTarget,
-                clusterDesc, worldFragment, chosenStreetPoint,
+                clusterDesc, worldFragment, 
                 model, mcp, strAnimation, iBehavior, sound);
             taskCompletionSource.SetResult(eTarget);
         });
