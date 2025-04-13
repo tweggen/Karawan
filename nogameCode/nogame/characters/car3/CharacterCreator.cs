@@ -126,6 +126,7 @@ class CharacterCreator
                 {
                     ClusterDesc = clusterDesc,
                     StartPoint = chosenStreetPoint,
+                    InitialOffsetTime = rnd.GetFloat() * 0.5f,
                     Seed = seed,
                     Speed = (30f + rnd.GetFloat() * 20f + (float)carIdx * 20f) / 3.6f    
                 }
