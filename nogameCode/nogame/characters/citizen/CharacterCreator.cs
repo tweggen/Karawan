@@ -111,15 +111,13 @@ public class CharacterCreator
             
             var v3This = new Vector3(dlThis.StartPoint.X, clusterDesc.AverageHeight + 2.5f, dlThis.StartPoint.Y );
             var v3Next = new Vector3(dlNext.StartPoint.X, clusterDesc.AverageHeight + 2.5f, dlNext.StartPoint.Y);
-            v3This += clusterDesc.Pos;
-            v3Next += clusterDesc.Pos;
             var vu3Forward = Vector3.Normalize(v3Next - v3This);
             var vu3Up = Vector3.UnitY;
             
             listSegments.Add(
                 new()
                 {
-                    Position = v3This,
+                    Position = v3This + clusterDesc.Pos,
                     Up = vu3Up,
                     Right = Vector3.Cross(vu3Forward, vu3Up)
                 });
