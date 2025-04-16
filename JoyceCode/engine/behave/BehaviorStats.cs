@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static engine.Logger;
 
 namespace engine.behave;
 
@@ -38,7 +39,7 @@ public class BehaviorStats
         PerBehaviorStats perBehaviorStats;
         if (MapPerBehaviorStats.TryGetValue(behaviorType, out perBehaviorStats))
         {
-            
+            Trace($"Added behavior stats for type {behaviorType.FullName}");
         }
         else
         {
