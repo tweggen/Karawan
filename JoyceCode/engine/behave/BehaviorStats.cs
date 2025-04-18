@@ -39,7 +39,7 @@ public class BehaviorStats
         PerBehaviorStats perBehaviorStats;
         if (MapPerBehaviorStats.TryGetValue(behaviorType, out perBehaviorStats))
         {
-            Trace($"Added behavior stats for type {behaviorType.FullName}");
+            // Trace($"Added behavior stats for type {behaviorType.FullName}");
         }
         else
         {

@@ -172,8 +172,7 @@ public class SegmentNavigator : INavigator
         }
 
         float relativePos = _absolutePos / _distance;
-        _vPosition = _a.Position + (_b.Position - _a.Position) * relativePos 
-                                   + _a.Right * 5.0f;
+        _vPosition = _a.Position + (_b.Position - _a.Position) * relativePos;
         _qOrientation = Quaternion.CreateFromRotationMatrix(
             Matrix4x4.CreateWorld(
                 Vector3.Zero, 

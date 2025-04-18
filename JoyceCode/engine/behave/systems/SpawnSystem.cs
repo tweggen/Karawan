@@ -78,7 +78,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
                             Vector3 v3Relative = si.Position - _cameraInfo.Position;
                             bool isFarAway = v3Relative.LengthSquared() > cBehavior.MaxDistance*cBehavior.MaxDistance;
                             bool isBehind = Vector3.Dot(_cameraInfo.Front, v3Relative) <= 0.7f;
-                            if (isFarAway || isBehind) 
+                            if (isFarAway /* || isBehind*/) 
                             {
                                 perFragmentStats.NeedVictims().Add(si);
                             }
