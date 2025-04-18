@@ -18,6 +18,19 @@ using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
+
+/**
+ * This contains player-related glue code.
+ *
+ * - testing what the player is seeing in front of them
+ * - handling player - polytope collision
+ * - playback the proper song depending on the current cluster
+ * - playback sounds on player environment collisions
+ * - creating particle effect on player collision
+ * - playback sounds on player cube collisions
+ * - manage the sound of my own car.
+ * - create the ship player entity
+ */
 public class Module : engine.AModule
 {
     static public readonly string PhysicsName = "nogame.playerhover";
@@ -27,15 +40,8 @@ public class Module : engine.AModule
         new SharedModule<nogame.modules.AutoSave>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>()
     };
-
-
+    
     private engine.joyce.TransformApi _aTransform;
-
-    private DefaultEcs.Entity _eCamera;
-
-    private DateTime _timestampFacingObject = DateTime.Now;
-    private string _strFacingObject = "";
-    private CollisionProperties _cpFacingObject = null;
 
     private DefaultEcs.Entity _eShip;
     private DefaultEcs.Entity _eAnimations;
@@ -50,11 +56,6 @@ public class Module : engine.AModule
      * Display the current cluster name.
      */
     private DefaultEcs.Entity _eClusterDisplay;
-
-    /**
-     * Display the object we are facing.
-     */
-    private DefaultEcs.Entity _eTargetDisplay;
 
     /**
      * Sound API
@@ -234,58 +235,6 @@ public class Module : engine.AModule
     }
 
 
-    private void _onCameraEntityChanged(DefaultEcs.Entity entity)
-    {
-        bool isChanged = false;
-        lock (_lo)
-        {
-            if (_eCamera != entity)
-            {
-                _eCamera = entity;
-                isChanged = true;
-            }
-        }
-    }
-
-
-    private void _onCenterRayHit(
-        CollidableReference collidableReference,
-        CollisionProperties collisionProperties,
-        float t,
-        Vector3 vNormal)
-    {
-        if (null != collisionProperties)
-        {
-            lock (_lo)
-            {
-                _timestampFacingObject = DateTime.Now;
-                if (_cpFacingObject != collisionProperties)
-                {
-                    _cpFacingObject = collisionProperties;
-                    _strFacingObject =
-                        $"{collisionProperties.Entity} {collisionProperties.Name} ({collisionProperties.DebugInfo})";
-                }
-            }
-        }
-    }
-
-
-    private void _testResetFacingObject()
-    {
-        lock (_lo)
-        {
-            if (_cpFacingObject != null)
-            {
-                if ((DateTime.Now - _timestampFacingObject).TotalMilliseconds > 1000)
-                {
-                    _cpFacingObject = null;
-                    _strFacingObject = "";
-                }
-            }
-        }
-    }
-
-
     private bool _isMyEnginePlaying = false;
     private void _updateSound(in Vector3 velShip)
     {
@@ -328,28 +277,6 @@ public class Module : engine.AModule
         Vector3 posShip = mShip.Translation;
 
         
-        /*
-         * Look up the object we are facing.
-         */
-        if (false) {
-            if (_eCamera.IsAlive)
-            {
-                if (_eCamera.Has<engine.joyce.components.Transform3ToWorld>() &&
-                    _eCamera.Has<engine.joyce.components.Camera3>())
-                {
-                    var cCamTransform = _eCamera.Get<engine.joyce.components.Transform3ToWorld>();
-                    var cCamera = _eCamera.Get<engine.joyce.components.Camera3>();
-                    var mCameraToWorld = cCamTransform.Matrix;
-                    Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
-                    var vCamPosition = mCameraToWorld.Translation;
-
-                    I.Get<engine.physics.API>().RayCast(vCamPosition, -vZ, 200f, _onCenterRayHit);
-                }
-            }
-
-            _testResetFacingObject();
-        }
-
         /*
          * Look up the zone we are in.
          */
@@ -394,24 +321,6 @@ public class Module : engine.AModule
         else
         {
             displayName = "void";
-        }
-
-        if (false) {
-            string strFacingObject;
-            lock (_lo)
-            {
-                strFacingObject = _strFacingObject;
-            }
-
-            float width = 320f;
-            _eTargetDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2((786f - width) / 2f, 360f),
-                new Vector2(width, 18f),
-                $"{strFacingObject}",
-                10,
-                0xff22aaee,
-                0x00000000,
-                HAlign.Center));
         }
 
         if (newZone)
@@ -478,17 +387,16 @@ public class Module : engine.AModule
         I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
         
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        _engine.Camera.RemoveOnChange(_onCameraEntityChanged);
-
+        
         
         I.Get<SubscriptionManager>().Unsubscribe(
-            Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+            DriveCarBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
-            Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+            DriveCarBehavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
-            Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+            DriveCarBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
-            Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+            DriveCarBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
 
         _engine.RemoveModule(this);
 
@@ -612,7 +520,7 @@ public class Module : engine.AModule
             }
 
             _eShip.Set(new engine.physics.components.Body(po, _prefShip));
-            _eShip.Set(new engine.behave.components.Behavior(new Behavior(MassShip)));
+            _eShip.Set(new engine.behave.components.Behavior(new DriveCarBehavior() { MassShip = MassShip }));
 
             /*
              * Now add an entity as a child that will display in the map
@@ -626,14 +534,7 @@ public class Module : engine.AModule
                 { Code = engine.world.components.MapIcon.IconCode.Player0 });
 
             _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
-            _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
 
-            if (_engine.Camera.TryGet(out var eCam))
-            {
-                _onCameraEntityChanged(eCam);
-            }
-
-            _engine.Camera.AddOnChange(_onCameraEntityChanged);
             _engine.OnLogicalFrame += _onLogicalFrame;
 
             _engine.Player.Value = GetShipEntity();
@@ -654,13 +555,13 @@ public class Module : engine.AModule
         _engine.AddModule(this);
 
         I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+            DriveCarBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
         I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+            DriveCarBehavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
         I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+            DriveCarBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
         I.Get<SubscriptionManager>().Subscribe(
-            Behavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+            DriveCarBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
 
         _engine.Run(_setupPlayer);
     }
