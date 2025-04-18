@@ -40,6 +40,7 @@ public class Module : engine.AModule
         new SharedModule<nogame.modules.AutoSave>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsModule>(),
+        new MyModule<nogame.modules.playerhover.ClusterMusicModule>()
     };
     
     private engine.joyce.TransformApi _aTransform;
@@ -53,11 +54,6 @@ public class Module : engine.AModule
     
     private PlayerViewer _playerViewer;
     
-    /**
-     * Display the current cluster name.
-     */
-    private DefaultEcs.Entity _eClusterDisplay;
-
     /**
      * Sound API
      */
@@ -74,33 +70,11 @@ public class Module : engine.AModule
                                               | InstantiateModelParams.ROTATE_Y180
                                               | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                                               ;
-    private ClusterDesc _currentCluster = null;
-
-    private string _getClusterSound(ClusterDesc clusterDesc)
-    {
-        if (null == clusterDesc)
-        {
-            return "lvl-6.ogg";
-        }
-        else
-        {
-            if (clusterDesc.Pos.Length() > 200)
-            {
-                return "lvl-1-01c.ogg";
-            }
-            else
-            {
-                return "shaklengokhsi.ogg";
-            }
-        }
-    }
-
-
+    
     public DefaultEcs.Entity GetShipEntity()
     {
         return _eShip;
     }
-
     
 
     private bool _isMyEnginePlaying = false;
@@ -140,80 +114,13 @@ public class Module : engine.AModule
     private void _onLogicalFrame(object? sender, float dt)
     {
         if (!_eShip.Has<Transform3ToWorld>()) return;
-        Matrix4x4 mShip = _eShip.Get<Transform3ToWorld>().Matrix;
         Vector3 velShip = _prefShip.Velocity.Linear;
-        Vector3 posShip = mShip.Translation;
 
         
-        /*
-         * Look up the zone we are in.
-         */
-        bool newZone = false;
-        ClusterDesc foundCluster = I.Get<ClusterList>().GetClusterAt(posShip);
-        if (foundCluster != null)
-        {
-            if (_currentCluster != foundCluster)
-            {
-                /*
-                 * We entered a new cluster. Trigger cluster song.
-                 */
-
-                /*
-                 * Remember new cluster.
-                 */
-                _currentCluster = foundCluster;
-                newZone = true;
-            }
-        }
-        else
-        {
-            if (_currentCluster != null)
-            {
-                /*
-                 * We just left a cluster. Trigger void music.
-                 */
-
-                /*
-                 * Remember we are outside.
-                 */
-                _currentCluster = null;
-                newZone = true;
-            }
-        }
-
-        string displayName;
-        if (_currentCluster != null)
-        {
-            displayName = $"{_currentCluster.Name}";
-        }
-        else
-        {
-            displayName = "void";
-        }
-
-        if (newZone)
-        {
-            _eClusterDisplay.Set(new engine.draw.components.OSDText(
-                new Vector2(768f/2f - 64f - 48f - 96f, 48f),
-                new Vector2(96f, 18f),
-                $"{displayName}",
-                10,
-                0xff448822,
-                0x00000000,
-                HAlign.Right));
-
-
-            I.Get<Boom.Jukebox>().LoadThenPlaySong(
-                _getClusterSound(_currentCluster), 0.05f, true, () => { }, () => { });
-        }
-
         /*
          * Adjust the sound pitch.
          */
         _updateSound(velShip);
-
-        var gameState = M<AutoSave>().GameState;
-
     }
 
 
@@ -238,11 +145,6 @@ public class Module : engine.AModule
             qStart = Quaternion.Identity;
             Trace($"No start cluster found, using default startposition is {v3Start} {qStart}");
         }
-    }
-
-
-    public override void Dispose()
-    {
     }
 
 
@@ -382,8 +284,6 @@ public class Module : engine.AModule
                 Quaternion.Identity, new Vector3(0f, 0f, 0f));
             _eMapShip.Set(new engine.world.components.MapIcon()
                 { Code = engine.world.components.MapIcon.IconCode.Player0 });
-
-            _eClusterDisplay = _engine.CreateEntity("OsdClusterDisplay");
 
             _engine.OnLogicalFrame += _onLogicalFrame;
 

@@ -163,6 +163,7 @@ public class DriveCarCollisionsModule : AModule
         }
     }
 
+    
     private void _onLogicalFrame(object? sender, float dt)
     {
         if (_ePlayer == default)
@@ -177,6 +178,7 @@ public class DriveCarCollisionsModule : AModule
         }
     }
 
+    
     public override void Dispose()
     {
         _soundCrash.Dispose();
