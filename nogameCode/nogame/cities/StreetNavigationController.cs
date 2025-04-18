@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using engine.behave;
 using engine.world;
@@ -250,6 +251,7 @@ public class StreetNavigationController : INavigator
     /**
      * Define how the car operates on the street.
      */
+    [JsonIgnore]
     public Func<DrivingStrokeProperties, float, Stroke, Stroke, DrivingStrokeCarProperties> CreateStrokeProperties
     {
         get;
