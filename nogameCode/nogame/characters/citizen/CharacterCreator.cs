@@ -19,6 +19,13 @@ namespace nogame.characters.citizen;
 
 public class CharacterCreator
 {
+    /**
+     * If this is one, all animations of one character are using the same frame at any given time.
+     * Setting this to two limits this to two different animation phases. That way on mobile platforms
+     * that do not upload animation tables to gpu but require distinct draw calls, draw calls are saved.
+     */
+    public static uint NDrawCallsPerCharacterBatch { get; set; } = 2;
+    
     private class Context
     {
         public builtin.tools.RandomSource Rnd;
@@ -275,7 +282,9 @@ public class CharacterCreator
                 eAnimations.Set(new AnimationState
                 {
                     ModelAnimation = animation,
-                    ModelAnimationFrame = 0
+                    ModelAnimationFrame = (NDrawCallsPerCharacterBatch>0)?
+                        (I.Get<Engine>().FrameNumber % (animation.NFrames/NDrawCallsPerCharacterBatch+1))
+                        :0
                 });
                 // Trace($"Setting up animation {animation.Name}");
             }
