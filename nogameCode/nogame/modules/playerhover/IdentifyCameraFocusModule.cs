@@ -25,8 +25,6 @@ public class IdentifyCameraFocusModule : engine.AModule
      */
     private DefaultEcs.Entity _eTargetDisplay;
 
-
-    
     
     private void _onCameraEntityChanged(DefaultEcs.Entity entity)
     {
