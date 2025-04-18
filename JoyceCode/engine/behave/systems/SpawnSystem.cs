@@ -36,10 +36,12 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
         foreach (var entity in entities)
         {
             ref Behavior cBehavior = ref entity.Get<Behavior>();
-            if (cBehavior.MaxDistance < 0f) continue;
             if (null == cBehavior.Provider) continue;
+            if (cBehavior.MaxDistance < 0f) continue;
 
+            //var behaviorType = cBehavior.Provider.GetType();
             var perBehaviorStats = behaviorStats.GetPerBehaviorStats(cBehavior.Provider.GetType());
+            //Trace($"Entity behavior type: {behaviorType.FullName}, Found perBehaviorStats: {perBehaviorStats != null}");
 
             /*
              * Only count behaviors that are tracked by spawn operators.
