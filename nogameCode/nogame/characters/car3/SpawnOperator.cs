@@ -38,7 +38,7 @@ public class SpawnOperator : ISpawnOperator
 
     public System.Type BehaviorType
     {
-        get => typeof(Behavior);
+        get => typeof(nogame.characters.car3.Behavior);
     }
 
 
