@@ -147,11 +147,15 @@ public class SpawnOperator : ISpawnOperator
                     engine.world.Fragment worldFragment;
                     if (_loader.TryGetFragment(idxFragment, out worldFragment))
                     {
-                        StreetPoint? chosenStreetPoint = CharacterCreator.ChooseStreetPoint(_rnd,  worldFragment, cd);
-                        if (chosenStreetPoint != null)
+                        CharacterCreator.ChooseQuarterDelimPointPos(_rnd, worldFragment, cd,
+                            out var quarter, out var delim , out var relativePos);
+
+                        if (quarter != null)
                         {
                             eCharacter = await CharacterCreator.GenerateRandomCharacter(
-                                _rnd, cd, worldFragment, chosenStreetPoint, _seed);
+                                _rnd, cd, worldFragment,
+                                quarter, delim, relativePos,
+                                _seed);
                             ++_seed;
                         }
                         else

@@ -110,6 +110,17 @@ public class StreetNavigationController : INavigator
     }
 
 
+    /**
+     * Some time to skip after the initial ionitialization to
+     * spread the cars across the street.
+     */
+    public float InitialOffsetTime
+    {
+        get;
+        set;
+    } = 0f;
+    
+
     public DrivingStrokeCarProperties ComputePedestrianProperties(DrivingStrokeProperties nsp, float speed, Stroke currentStroke, Stroke nextStroke)
     {
         DrivingStrokeCarProperties ncp = new();
@@ -559,7 +570,7 @@ public class StreetNavigationController : INavigator
         _targetPoint = null;
         _effectiveSpeed = _speed;
 
-        NavigatorBehave(1f / 60f);
+        NavigatorBehave(1f / 60f + InitialOffsetTime);
     }
     
     

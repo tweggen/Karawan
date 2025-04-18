@@ -29,7 +29,6 @@ public class SegmentNavigator : INavigator
 {
     private float _speed = 50f;
 
-    private float _relativePos = 0f;
     private float _absolutePos = 0f;
 
     /*
@@ -62,6 +61,9 @@ public class SegmentNavigator : INavigator
         }
     }
 
+    public int StartIndex = 0;
+    public float StartRelative = 0f; 
+
 
     private bool _loopSegments;
     public bool LoopSegments
@@ -93,18 +95,17 @@ public class SegmentNavigator : INavigator
 
     private void _resetTravel()
     {
-        _idxNextSegment = 0;
         _a = null;
         _b = null;
     }
 
 
-    private void _prepareSegment()
+    private void _prepareSegment(float relativePosition = 0)
     {
         _vForward = (_b.Position - _a.Position);
         _distance = (_b.Position - _a.Position).Length();
         _vuForward = _vForward / _distance;
-        _absolutePos = 0;
+        _absolutePos = relativePosition * _distance;
     }
     
 
@@ -113,9 +114,10 @@ public class SegmentNavigator : INavigator
      */
     private void _setStartSegment()
     {
-        _a = _listSegments[0];
-        _b = _listSegments[1];
-        _idxNextSegment = 2 % _listSegments.Count;
+        int l = _listSegments.Count;
+        _a = _listSegments[(StartIndex+0) % l];
+        _b = _listSegments[(StartIndex+1) % l];
+        _idxNextSegment = (StartIndex+2) % l;
     }
 
 
@@ -140,7 +142,7 @@ public class SegmentNavigator : INavigator
         if (null == _a)
         {
             _setStartSegment();
-            _prepareSegment();
+            _prepareSegment(StartRelative);
         }
             
         while (totalTogo > 0.001)
@@ -169,8 +171,8 @@ public class SegmentNavigator : INavigator
             }
         }
 
-        _relativePos = _absolutePos / _distance;
-        _vPosition = _a.Position + (_b.Position - _a.Position) * _relativePos 
+        float relativePos = _absolutePos / _distance;
+        _vPosition = _a.Position + (_b.Position - _a.Position) * relativePos 
                                    + _a.Right * 5.0f;
         _qOrientation = Quaternion.CreateFromRotationMatrix(
             Matrix4x4.CreateWorld(

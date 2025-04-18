@@ -39,7 +39,7 @@ public class SpawnModule : AModule
 
     private Loader _loader;
 
-    private bool _trace = false;
+    private bool _trace = true;
     
     BehaviorStats _behaviorStats = new();
 
@@ -196,6 +196,13 @@ public class SpawnModule : AModule
                      * The number of characters too much.
                      */
                     int basicallyTooMuch = nLivingCharacters - opStatus.MaxCharacters;
+
+                    if (_trace)
+                    {
+                        Trace($"@{kvpFrag.Key}: id {opStatus.Id} basicallyTooMuch {basicallyTooMuch} type {kvpBehavior.Key.FullName} "
+                              + $"found {perFragmentStats.NumberEntities} creat {opStatus.InCreation} "
+                              + $"dead {opStatus.Dead} min {opStatus.MinCharacters}");
+                    }
 
                     /*
                      * We would be able to kill that much.

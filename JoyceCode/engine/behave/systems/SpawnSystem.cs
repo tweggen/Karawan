@@ -28,6 +28,10 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
     private CameraInfo _cameraInfo;
     
 
+    /**
+     * This system iterates through all living entity by behaviors and checks
+     * if they are supposed to be killed according to the spawn rules.
+     */
     protected override void Update(BehaviorStats behaviorStats, ReadOnlySpan<Entity> entities)
     {
         /*
@@ -50,7 +54,7 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
             {
                 ref Transform3ToWorld cTransformWorld = ref entity.Get<Transform3ToWorld>();
                 Index3 idxEntity = Fragment.PosToIndex3(cTransformWorld.Matrix.Translation);
-            
+
                 PerFragmentStats perFragmentStats = perBehaviorStats.FindPerFragmentStats(idxEntity);
 
                 /*
