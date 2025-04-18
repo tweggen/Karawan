@@ -133,7 +133,7 @@ public class CharacterCreator
             Speed = 4f
         };
 
-        return new SimpleNavigationBehavior()
+        return new nogame.characters.citizen.Behavior()
         {
             Navigator = segnav
         };

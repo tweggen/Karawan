@@ -186,7 +186,7 @@ public class SpawnOperator : ISpawnOperator
         {
             entity.Disable();
             spawnStatus.IsDying--;
-            _engine.AddDoomedEntity(entity);
+            I.Get<HierarchyApi>().Delete(ref entity);
         });
     }
 }

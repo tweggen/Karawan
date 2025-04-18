@@ -59,7 +59,8 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
 
                 /*
                  * If we might need to kill some in this fragment, track the list of entities of that kind
-                 * in a list to decide whom we should kill. Don't consider anything in front of the camera.
+                 * in a list to decide whom we should kill. Don't consider anything in front of the camera,
+                 * unless it is too far away from the camera.
                  * (in a wild guess, we set the opening angle to 90 degrees
                  */
                 if (perFragmentStats.ToKill > 0)
@@ -74,7 +75,10 @@ public class SpawnSystem : DefaultEcs.System.AEntitySetSystem<BehaviorStats>
                     {
                         if (cBehavior.MayBePurged())
                         {
-                            if (Vector3.Dot(_cameraInfo.Front, si.Position - _cameraInfo.Position) <= 0.7f)
+                            Vector3 v3Relative = si.Position - _cameraInfo.Position;
+                            bool isFarAway = v3Relative.LengthSquared() > cBehavior.MaxDistance*cBehavior.MaxDistance;
+                            bool isBehind = Vector3.Dot(_cameraInfo.Front, v3Relative) <= 0.7f;
+                            if (isFarAway || isBehind) 
                             {
                                 perFragmentStats.NeedVictims().Add(si);
                             }
