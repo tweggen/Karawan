@@ -165,10 +165,10 @@ public class GlTF
         {
             arr.Add(new Int4
             {
-                B0 = (int) _gltfBinary[ofs+j+0],
-                B1 = (int) _gltfBinary[ofs+j+1],
-                B2 = (int) _gltfBinary[ofs+j+2],
-                B3 = (int) _gltfBinary[ofs+j+3]
+                B0 = (int) _gltfBinary[ofs+4*j+0],
+                B1 = (int) _gltfBinary[ofs+4*j+1],
+                B2 = (int) _gltfBinary[ofs+4*j+2],
+                B3 = (int) _gltfBinary[ofs+4*j+3]
             });
         }
     }
@@ -181,10 +181,10 @@ public class GlTF
         {
             arr.Add(new Int4
             {
-                B0 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+0),
-                B1 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+1),
-                B2 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+2),
-                B3 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+3)
+                B0 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+sizeof(ushort)*(4*j+0)),
+                B1 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+sizeof(ushort)*(4*j+1)),
+                B2 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+sizeof(ushort)*(4*j+2)),
+                B3 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+sizeof(ushort)*(4*j+3))
             });
         }
     }
@@ -197,10 +197,10 @@ public class GlTF
         {
             arr.Add(new Int4
             {
-                B0 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+0),
-                B1 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+1),
-                B2 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+2),
-                B3 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+3)
+                B0 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+sizeof(uint)*(4*j+0)),
+                B1 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+sizeof(uint)*(4*j+1)),
+                B2 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+sizeof(uint)*(4*j+2)),
+                B3 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+sizeof(uint)*(4*j+3))
             });
         }
     }
