@@ -344,13 +344,13 @@ public class GlTF
 
     private void _readJointsWeights(in Accessor accJoints, Accessor accWeights, engine.joyce.Mesh jMesh)
     {
-        if (accJoints.Type != Accessor.TypeEnum.SCALAR)
+        if (accJoints.Type != Accessor.TypeEnum.VEC4)
         {
             ErrorThrow<InvalidDataException>($"Unexpected joint type {accJoints.Type}");
         }
-        if (accWeights.Type != Accessor.TypeEnum.SCALAR)
+        if (accWeights.Type != Accessor.TypeEnum.VEC4)
         {
-            ErrorThrow<InvalidDataException>($"Unexpected weights type {accJoints.Type}");
+            ErrorThrow<InvalidDataException>($"Unexpected weights type {accWeights.Type}");
         }
 
         jMesh.BoneIndices = new List<Int4>();
@@ -528,24 +528,11 @@ public class GlTF
         }
         else
         {
-            Trace("Encountered node without mesh.");
+            // Trace("Encountered node without mesh.");
         }
         
         /*
-         * Is there a skin for this node? Then read it.
-         */
-        if (gltfNode.Skin != null)
-        {
-            if (gltfNode.Mesh != null)
-            {
-                Warning("Encountered a skin without a mesh");
-            }
-            Trace("Reading a skin.");
-            _readSkin(mnParent, _gltfModel.Skins[gltfNode.Skin.Value]);
-        }
-        
-        /*
-         * Finally, recurse to children nodes.
+         * Recurse to children nodes.
          */
         if (gltfNode.Children != null)
         {
@@ -557,8 +544,8 @@ public class GlTF
             }
         }
     }
-
-
+    
+    
     private void _readSkin(ModelNode mnParent, glTFLoader.Schema.Skin gltfSkin)
     {
         int idxMatrix = 0;
@@ -582,7 +569,7 @@ public class GlTF
         {
             if (!_dictNodesByGltf.TryGetValue(idxJoint, out var mnJointNode))
             {
-                Warning($"Invalid joint noded index {idxJoint} discovered.");
+                Warning($"Invalid joint node index {idxJoint} discovered.");
                 continue;
             }
             
@@ -602,6 +589,39 @@ public class GlTF
         }
     }
 
+
+    private void _readSkins(int idxGltfNode, engine.joyce.ModelNode mn)
+    {
+        var gltfNode = _gltfModel.Nodes[idxGltfNode];
+        
+        /*
+         * Is there a skin for this node? Then read it.
+         */
+        if (gltfNode.Skin != null)
+        {
+            if (gltfNode.Mesh != null)
+            {
+                Warning("Encountered a skin without a mesh");
+            }
+            Trace("Reading a skin.");
+            _readSkin(mn, _gltfModel.Skins[gltfNode.Skin.Value]);
+        }
+
+        /*
+         * Recurse to children nodes.
+         */
+        if (gltfNode.Children != null)
+        {
+            
+            foreach (var idxChildNode in gltfNode.Children)
+            {
+                var mnChild = _dictNodesByGltf[idxChildNode];
+                _readSkins(idxChildNode, mnChild);
+            }
+        }
+        
+    }
+    
 
     class SamplerKeyframes
     {
@@ -656,7 +676,7 @@ public class GlTF
             {
                 Error("No data for sampler.");
             }
-            int l = Int32.Max(TimeDomain.Length, Vector3.Count);
+            int l = Int32.Max(TimeDomain.Length, Vector4.Count);
             var arr = new KeyFrame<Quaternion>[l];
 
             for (int i = 0; i < l; ++i)
@@ -709,6 +729,7 @@ public class GlTF
                 Accessor accInput = _gltfModel.Accessors[glSampler.Input];
                 List<float> arrTimeDomain = new List<float>(accInput.Count);
                 _readFloatArray(accInput, arrTimeDomain);
+                mak.TimeDomain = arrTimeDomain.ToArray();
                 
                 Accessor accOutput = _gltfModel.Accessors[glSampler.Output];
                 BufferView bvwOutput = _gltfModel.BufferViews[accOutput.BufferView.Value];
@@ -758,6 +779,7 @@ public class GlTF
                     var jTargetNode = _dictNodesByGltf[glAnimChannel.Target.Node.Value];
                     mac = ma.CreateChannel(jTargetNode, null, null, null);
                     ma.MapChannels.Add(jTargetNode, mac);
+                    mapNodeAnimChannel.Add(glAnimChannel.Target.Node.Value, mac);
                 }
 
                 switch (glAnimChannel.Target.Path)
@@ -810,6 +832,7 @@ public class GlTF
     private void _readScene(glTFLoader.Schema.Scene scene, out Model jModel)
     {
         _dictNodesByGltf = new();
+        _jModel = jModel = new();
         
         /*
          * First read the actual model's nodes.
@@ -820,13 +843,14 @@ public class GlTF
             _readNode(idxRootNode, null, out var mnNode);
             rootNodes.Add(mnNode);
         }
+        foreach (var idxRootNode in scene.Nodes)
+        {
+            _readSkins(idxRootNode, _dictNodesByGltf[idxRootNode]);
+        }
         
         /*
-         * Check, if we read all the nodes
+         * If there is exactly one root node, make it the child of the entity.  
          */
-        // TXWTODO: do it
-
-        jModel = new();
         if (rootNodes.Count == 1)
         {
             jModel.RootNode = rootNodes[0];
@@ -849,8 +873,6 @@ public class GlTF
         {
             ErrorThrow($"Root node has no children!?", m => new InvalidOperationException(m));
         }
-
-        _jModel = jModel;
     }
     
     
@@ -860,6 +882,8 @@ public class GlTF
         {
             _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], out var jModel);
             _loadAnimations(jModel);
+            jModel.BakeAnimations();
+            jModel.Polish();
             return jModel;
         }
 

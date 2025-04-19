@@ -63,6 +63,7 @@ public class Module : engine.AModule
     public float MassShip { get; set; } = 500f;
 
     
+    #if false
     public string ModelUrl { get; set; } = "car6.obj";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.CENTER_X
@@ -70,6 +71,11 @@ public class Module : engine.AModule
                                               | InstantiateModelParams.ROTATE_Y180
                                               | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                                               ;
+    #else
+    public string ModelUrl { get; set; } = "player.glb";
+    public int ModelGeomFlags { get; set; } = 0
+        ;
+    #endif
     
     public DefaultEcs.Entity GetShipEntity()
     {
