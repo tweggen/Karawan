@@ -26,7 +26,8 @@ public class GlTF
     private Gltf _gltfModel;
     private byte[] _gltfBinary;
     private SortedDictionary<int, ModelNode> _dictNodesByGltf;
-    
+
+    private SortedDictionary<int, engine.joyce.Material> _dictMaterialsByGltf; 
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void _readVector2(int ofs, out Vector2 v2)
@@ -441,10 +442,11 @@ public class GlTF
     }
 
 
-    private void _readMesh(ModelNode mn, glTFLoader.Schema.Mesh fbxMesh, out MatMesh matMesh)
+    private void _readMesh(ModelNode mn, glTFLoader.Schema.Mesh glMesh, out MatMesh matMesh)
     {
         matMesh = new();
-        foreach (var fbxMeshPrimitive in fbxMesh.Primitives)
+
+        foreach (var glMeshPrimitive in glMesh.Primitives)
         {
             int idxPosition = -1;
             int idxNormal = -1;
@@ -455,24 +457,24 @@ public class GlTF
             /*
              * Collect the attributes
              */
-            foreach (var fbxAttr in fbxMeshPrimitive.Attributes)
+            foreach (var glAtr in glMeshPrimitive.Attributes)
             {
-                switch (fbxAttr.Key)
+                switch (glAtr.Key)
                 {
                     case "POSITION":
-                        idxPosition = fbxAttr.Value;
+                        idxPosition = glAtr.Value;
                         break;
                     case "NORMAL":
-                        idxNormal = fbxAttr.Value;
+                        idxNormal = glAtr.Value;
                         break;
                     case "TEXCOORD_0":
-                        idxTexcoord0 = fbxAttr.Value;
+                        idxTexcoord0 = glAtr.Value;
                         break;
                     case "JOINTS_0":
-                        idxJoints0 = fbxAttr.Value;
+                        idxJoints0 = glAtr.Value;
                         break;
                     case "WEIGHTS_0":
-                        idxWeights0 = fbxAttr.Value;
+                        idxWeights0 = glAtr.Value;
                         break;
                     default:
                         break;
@@ -488,7 +490,7 @@ public class GlTF
                 continue;
             }
 
-            if (null == fbxMeshPrimitive.Indices)
+            if (null == glMeshPrimitive.Indices)
             {
                 Warning("Found mesh without indices (null pointer).");
                 /*
@@ -499,7 +501,7 @@ public class GlTF
 
             engine.joyce.Mesh jMesh = new("gltf", new List<Vector3>(), new List<uint>(), new List<Vector2>());
             jMesh.Normals = new List<Vector3>();
-            
+
             /*
              * Now let's iterate through the vertex positions, adding normals and
              * texcoords, if we have any.
@@ -520,9 +522,21 @@ public class GlTF
                 _readJointsWeights(_gltfModel.Accessors[idxJoints0], _gltfModel.Accessors[idxWeights0], jMesh);
             }
 
-            _readTriangles(_gltfModel.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
-            
-            matMesh.Add(new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888)}, jMesh, mn);
+            _readTriangles(_gltfModel.Accessors[glMeshPrimitive.Indices.Value], jMesh);
+
+            engine.joyce.Material jMaterial;
+            if (glMeshPrimitive.Material.HasValue)
+            {
+                jMaterial = _dictMaterialsByGltf[glMeshPrimitive.Material.Value];
+            }
+            else
+            {
+                // TXWTODO: Make this somehow more a global default material.
+                jMaterial = I.Get<MaterialCache>().FindMaterial(new()
+                    { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888) });
+            }
+
+            matMesh.Add(jMaterial, jMesh, mn);
         }
     }
 
@@ -921,12 +935,37 @@ public class GlTF
             ErrorThrow($"Root node has no children!?", m => new InvalidOperationException(m));
         }
     }
+
+
+    private void _readMaterials()
+    {
+        _dictMaterialsByGltf = new();
+        int realIndex = 0;
+        foreach (var glMaterial in _gltfModel.Materials)
+        {
+            engine.joyce.Material jMaterial = new();
+            if (glMaterial.DoubleSided)
+            {
+                // TXWTODO: Add double-sided flag.
+            }
+
+            var pbr = glMaterial.PbrMetallicRoughness;
+            var mat = I.Get<MaterialCache>().FindMaterial(new()
+            {
+                AlbedoColor   = new Vector4(pbr.BaseColorFactor[0], pbr.BaseColorFactor[1], pbr.BaseColorFactor[2], pbr.BaseColorFactor[3]).ToRGBA32(),
+                EmissiveColor = new Vector4(glMaterial.EmissiveFactor[0], glMaterial.EmissiveFactor[1], glMaterial.EmissiveFactor[2], 1.0f).ToRGBA32()
+            });
+            _dictMaterialsByGltf.Add(realIndex, mat);
+            realIndex++;
+        }
+    }
     
     
     private Model? _read()
     {
         if (null != _gltfModel.Scene)
         {
+            _readMaterials();
             _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], out var jModel);
             _loadAnimations(jModel);
             jModel.BakeAnimations();

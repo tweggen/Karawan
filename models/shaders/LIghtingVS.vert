@@ -83,6 +83,11 @@ void main()
                 {
                     continue;
                 }
+                float weight = vertexWeights[i];
+                if (weight == 0.0)
+                {
+                    continue;
+                }
                 if (boneId >= MAX_BONES)
                 {
                     v4TotalPosition = v4Vertex;
@@ -113,9 +118,9 @@ void main()
 #endif
                         
                 vec4 v4LocalPosition = m4BoneMatrix * v4Vertex;
-                v4TotalPosition += v4LocalPosition * vertexWeights[i];
+                v4TotalPosition += v4LocalPosition * weight;
                 vec3 v3LocalNormal = mat3(m4BoneMatrix) * vertexNormal;
-                v3TotalNormal += v3LocalNormal * vertexWeights[i];
+                v3TotalNormal += v3LocalNormal * weight;
             }
 
         } else if (iVertexFlags==4)
