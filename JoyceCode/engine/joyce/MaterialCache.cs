@@ -1,3 +1,4 @@
+#if false
 using System;
 using System.Collections.Generic;
 using static engine.Logger;
@@ -8,3 +9,4 @@ public class MaterialCache : ObjectRegistry<Material>
 {
     public Material FindMaterial(in Material referenceMaterial) => FindLike(referenceMaterial);
 }
+#endif
