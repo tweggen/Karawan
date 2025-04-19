@@ -71,6 +71,47 @@ public class GlTF
             f[12], f[13], f[14], f[15]);
     }
 
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readMatrix3x3(int ofs, out Matrix4x4 m)
+    {
+        float[] f = new float[9];
+        for (int i = 0; i < 9; ++i)
+        {
+            f[i] = BitConverter.ToSingle(_gltfBinary, ofs + i * sizeof(float));
+        }
+
+        m = new(
+            f[0], f[1], f[2], 0f,
+            f[3], f[4], f[5], 0f,
+            f[6], f[7], f[8], 0f,
+            0f, 0f, 0f, 1f);
+    }
+
+
+    private void _readMatrix4x4Array(in Accessor acc, in Matrix4x4[] arr)
+    {
+            
+        BufferView bvw = _gltfModel.BufferViews[acc.BufferView.Value];
+        int ofs = bvw.ByteOffset;
+        int length = acc.Count;
+
+        if (acc.Type == Accessor.TypeEnum.MAT4)
+        {
+            for (int j = 0; j < length; ++j)
+            {
+                _readMatrix4x4(ofs + 16 * sizeof(float) * j, out arr[j]);
+            }
+        }
+        else
+        {
+            for (int j = 0; j < length; ++j)
+            {
+                _readMatrix3x3(ofs + 9 * sizeof(float) * j, out arr[j]);
+            }
+        }
+    }
+        
     
     private void _readVector2Array(in Accessor acc, in IList<Vector2> arr)
     {
@@ -552,9 +593,12 @@ public class GlTF
         var skeleton = _jModel.FindSkeleton();
 
         Accessor? accMatrix = null;
+        Matrix4x4[]? mInverseBindMatrices = null;
         if (gltfSkin.InverseBindMatrices != null)
         {
             accMatrix = _gltfModel.Accessors[gltfSkin.InverseBindMatrices.Value];
+            mInverseBindMatrices = new Matrix4x4[accMatrix.Count];
+            _readMatrix4x4Array(accMatrix, mInverseBindMatrices);
         }
 
         /*
@@ -576,9 +620,9 @@ public class GlTF
             var nodeJoint = _gltfModel.Nodes[idxJoint];
 
             var jBone = skeleton.FindBone(nodeJoint.Name);
-            if (accMatrix != null)
+            if (mInverseBindMatrices != null)
             {
-                _readMatrixFromArray(accMatrix, out jBone.Model2Bone);
+                jBone.Model2Bone = mInverseBindMatrices[realIndex];
                 jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
             }
             /*
