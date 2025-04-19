@@ -699,6 +699,8 @@ public class GlTF
             return;
         }
 
+        jModel.MapAnimations = new();
+
         foreach (var glAnimation in glAnimations)
         {
             ModelAnimation ma = jModel.CreateAnimation();
@@ -825,6 +827,7 @@ public class GlTF
             ma.NTicks = (uint)(tMax * 60f);
             ma.NFrames = (uint)(tMax * 60f + 0.5f); 
             jModel.PushAnimFrames(ma.NFrames);
+            jModel.MapAnimations[ma.Name] = ma;
         }
     }
     

@@ -72,6 +72,7 @@ public class Module : engine.AModule
                                               | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                                               ;
     #else
+    public string AnimName { get; set; } = "Walk_Loop";
     public string ModelUrl { get; set; } = "player.glb";
     public int ModelGeomFlags { get; set; } = 0
         ;
@@ -223,13 +224,21 @@ public class Module : engine.AModule
                 var mapAnimations = _model.MapAnimations;
                 if (mapAnimations != null && mapAnimations.Count > 0)
                 {
-                    var animation = mapAnimations["Metarig Boy|Run Mid"];
-                    _eAnimations.Set(new AnimationState
+                    if (mapAnimations.TryGetValue(AnimName, out var animation))
                     {
-                        ModelAnimation = animation,
-                        ModelAnimationFrame = 0
-                    });
-                    Trace($"Setting up animation {animation.Name}");
+
+                        _eAnimations.Set(new AnimationState
+                        {
+                            ModelAnimation = animation,
+                            ModelAnimationFrame = 0
+                        });
+                        Trace($"Setting up animation {animation.Name}");
+                    }
+                    else
+                    {
+                        Trace($"Test animation {AnimName} not found.");
+                    }
+                        
                 }
             }
 

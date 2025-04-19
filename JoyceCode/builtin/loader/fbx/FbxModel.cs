@@ -151,7 +151,6 @@ public class FbxModel : IDisposable
         {
             return;
         }
-        var skeleton = _model.FindSkeleton(); 
         
         uint nAnimations = _scene->MNumAnimations;
         if (0 == nAnimations)
