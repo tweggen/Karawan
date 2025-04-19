@@ -34,8 +34,7 @@ public class Skin
  */
 public class Model
 {
-    public string Name;
-
+    public string Name = "";
     public uint MAX_BONES = 60;
     
     private ModelNode _mnRoot; 
@@ -334,6 +333,7 @@ public class Model
         {
             return;
         }
+        Trace($"Baking animations for {Name}");
 
         var skeleton = FindSkeleton();
             
@@ -367,6 +367,7 @@ public class Model
         foreach (var kvp in MapAnimations)
         {
             ModelAnimation ma = kvp.Value;
+            Trace($"Loading animation {kvp.Key}");
 
             /*
              * How many real frames does this animation have?

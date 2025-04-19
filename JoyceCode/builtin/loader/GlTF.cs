@@ -858,8 +858,8 @@ public class GlTF
     {
         if (null != _gltfModel.Scene)
         {
-            _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], 
-                out var jModel);
+            _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], out var jModel);
+            _loadAnimations(jModel);
             return jModel;
         }
 
@@ -867,7 +867,7 @@ public class GlTF
     }
 
 
-    static public void LoadModelInstanceSync(
+    public static void LoadModelInstanceSync(
         string url,
         ModelProperties modelProperties,
         out Model jModel)
@@ -909,6 +909,7 @@ public class GlTF
         try
         {
             jModel = g._read();
+            jModel.Name = url;
         }
         catch (Exception e)
         {
@@ -925,7 +926,7 @@ public class GlTF
     }
     
     
-    static public Task<Model> 
+    public static Task<Model> 
         LoadModelInstance(string url, ModelProperties modelProperties)
     {
         return Task.Run(() =>
@@ -934,10 +935,4 @@ public class GlTF
             return model;
         });
     }   
-    
-    
-    public static void Unit()
-    {
-        LoadModelInstanceSync("u.glb", new ModelProperties(), out var _);
-    }
 }

@@ -108,6 +108,7 @@ public class FbxModel : IDisposable
             ErrorThrow<InvalidOperationException>($"Unable to load model {path}. model already loaded.");
         }
         _model = model = new engine.joyce.Model();
+        _model.Name = path;
 
         Directory = path;
         _needAssimp();
@@ -176,7 +177,6 @@ public class FbxModel : IDisposable
             ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
             ma.NTicks = (aiAnim->MTicksPerSecond < 0.015f) ? 1 : (uint)(aiAnim->MDuration / aiAnim->MTicksPerSecond);
             ma.MapChannels = new();
-            ma.Channels = new ModelAnimChannel[nChannels];
             uint nFrames = UInt32.Max((uint)(ma.Duration * 60f), 1);
             ma.NFrames = nFrames;
             _model.PushAnimFrames(nFrames);

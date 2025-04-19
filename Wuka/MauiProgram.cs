@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+﻿//using Microsoft.Extensions.Logging;
 
 namespace Wuka
 {
@@ -15,9 +15,9 @@ namespace Wuka
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-#if DEBUG
-		builder.Logging.AddDebug();
-#endif
+//#if DEBUG
+//		builder.Logging.AddDebug();
+//#endif
 
             return builder.Build();
         }
