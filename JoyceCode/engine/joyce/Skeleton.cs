@@ -39,14 +39,4 @@ public class Skeleton
 
         return bone;
     }
-    
-    #if false
-    /**
-     * Add a weighted association to a bone to a given vertex.
-     */
-    public void AddWeight(engine.joyce.Mesh jMesh, uint vertexIndex, engine.joyce.Bone bone, float weight)
-    {
-        bone.AddWeight(jMesh, vertexIndex, weight);
-    }
-    #endif
 }

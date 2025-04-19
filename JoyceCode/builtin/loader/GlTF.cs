@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Net.Http.Headers;
 using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using builtin.extensions;
 using engine;
 using engine.geom;
 using engine.joyce;
@@ -43,6 +46,16 @@ public class GlTF
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readVector4(int ofs, out Vector4 v4)
+    {
+        v4.X = BitConverter.ToSingle(_gltfBinary, ofs);
+        v4.Y = BitConverter.ToSingle(_gltfBinary, ofs + sizeof(float));
+        v4.Z = BitConverter.ToSingle(_gltfBinary, ofs + 2*sizeof(float));
+        v4.W = BitConverter.ToSingle(_gltfBinary, ofs + 3*sizeof(float));
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void _readMatrix4x4(int ofs, out Matrix4x4 m)
     {
         float[] f = new float[16];
@@ -59,18 +72,12 @@ public class GlTF
     }
 
     
-    private void _readVector3Array(int ofs, int length, ref IList<Vector3> arr)
+    private void _readVector2Array(in Accessor acc, in IList<Vector2> arr)
     {
-        for (int j = 0; j < length; ++j)
-        {
-            _readVector3(ofs+j*3*sizeof(float), out var v3);
-            arr.Add(v3);
-        }
-    }
-    
-    
-    private void _readVector2Array(int ofs, int length, ref IList<Vector2> arr)
-    {
+        BufferView bvw = _gltfModel.BufferViews[acc.BufferView.Value];
+        int ofs = bvw.ByteOffset;
+        int length = acc.Count;
+        
         for (int j = 0; j < length; ++j)
         {
             _readVector2(ofs+j*2*sizeof(float), out var v2);
@@ -79,35 +86,209 @@ public class GlTF
     }
 
 
-    private void _readTri16Array(int ofs, int length, ref IList<uint> arr)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readVector3Array(in Accessor acc, in IList<Vector3> arr)
     {
-        int l = (length / 3) * 3;
-        for (int j = 0; j < l; ++j)
+        BufferView bvw = _gltfModel.BufferViews[acc.BufferView.Value];
+        int ofs = bvw.ByteOffset;
+        int length = acc.Count;
+        
+        for (int j = 0; j < length; ++j)
+        {
+            _readVector3(ofs+j*3*sizeof(float), out var v3);
+            arr.Add(v3);
+        }
+    }
+    
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readVector4Array(in Accessor acc, in IList<Vector4> arr)
+    {
+        BufferView bvw = _gltfModel.BufferViews[acc.BufferView.Value];
+        int ofs = bvw.ByteOffset;
+        int length = acc.Count;
+        
+        for (int j = 0; j < length; ++j)
+        {
+            _readVector4(ofs+j*4*sizeof(float), out var v4);
+            arr.Add(v4);
+        }
+    }
+    
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readInt4ArrayFromUint8(int ofs, int length, in IList<Int4> arr)
+    {
+        for (int j = 0; j < length; ++j)
+        {
+            arr.Add(new Int4
+            {
+                B0 = (int) _gltfBinary[ofs+j+0],
+                B1 = (int) _gltfBinary[ofs+j+1],
+                B2 = (int) _gltfBinary[ofs+j+2],
+                B3 = (int) _gltfBinary[ofs+j+3]
+            });
+        }
+    }
+
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readInt4ArrayFromUint16(int ofs, int length, in IList<Int4> arr)
+    {
+        for (int j = 0; j < length; ++j)
+        {
+            arr.Add(new Int4
+            {
+                B0 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+0),
+                B1 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+1),
+                B2 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+2),
+                B3 = (int) BitConverter.ToUInt16(_gltfBinary, ofs+4*sizeof(ushort)+3)
+            });
+        }
+    }
+
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readInt4ArrayFromUint32(int ofs, int length, in IList<Int4> arr)
+    {
+        for (int j = 0; j < length; ++j)
+        {
+            arr.Add(new Int4
+            {
+                B0 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+0),
+                B1 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+1),
+                B2 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+2),
+                B3 = (int) BitConverter.ToUInt32(_gltfBinary, ofs+4*sizeof(uint)+3)
+            });
+        }
+    }
+
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readUint8Array(int ofs, int length, in IList<uint> arr)
+    {
+        for (int j = 0; j < length; ++j)
+        {
+            arr.Add(_gltfBinary[ofs+j]);
+        }        
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readUint16Array(int ofs, int length, in IList<uint> arr)
+    {
+        for (int j = 0; j < length; ++j)
         {
             arr.Add((uint)BitConverter.ToUInt16(_gltfBinary, ofs + j * sizeof(ushort)));
         }        
     }
 
 
-    private void _readTri32Array(int ofs, int length, ref IList<uint> arr)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readUint32Array(int ofs, int length, in IList<uint> arr)
     {
-        int l = (length / 3) * 3;
-        for (int j = 0; j < l; ++j)
+        for (int j = 0; j < length; ++j)
         {
             arr.Add(BitConverter.ToUInt32(_gltfBinary, ofs + j * sizeof(uint)));
         }        
     }
 
 
-    private void _readVertices(Accessor acc, engine.joyce.Mesh jMesh)
+    private void _readInt4Array(in Accessor acc, in IList<Int4> arr)
     {
-        BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
+        BufferView bvw = _gltfModel.BufferViews[acc.BufferView.Value];
+        if (acc.Type == Accessor.TypeEnum.VEC4)
+        {
+            switch (acc.ComponentType)
+            {
+                case Accessor.ComponentTypeEnum.UNSIGNED_SHORT:
+                    _readInt4ArrayFromUint16(bvw.ByteOffset,acc.Count, arr);
+                    break;
+                case Accessor.ComponentTypeEnum.UNSIGNED_INT:
+                    _readInt4ArrayFromUint32(bvw.ByteOffset,acc.Count, arr);
+                    break;
+                case Accessor.ComponentTypeEnum.UNSIGNED_BYTE:
+                    _readInt4ArrayFromUint8(bvw.ByteOffset,acc.Count, arr);
+                    break;
+                default:
+                    ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+                    break;
+            }
+        }
+        else
+        {
+            ErrorThrow<InvalidDataException>($"Unsupported type {acc.Type}.");
+        }
+    }
 
+
+    private void _readUintArray(in Accessor acc, in IList<uint> arr)
+    {
+        BufferView bvw = _gltfModel.BufferViews[acc.BufferView.Value];
+        if (acc.Type == Accessor.TypeEnum.SCALAR)
+        {
+            switch (acc.ComponentType)
+            {
+                case Accessor.ComponentTypeEnum.UNSIGNED_SHORT:
+                    _readUint16Array(bvw.ByteOffset,acc.Count, arr);
+                    break;
+                case Accessor.ComponentTypeEnum.UNSIGNED_INT:
+                    _readUint32Array(bvw.ByteOffset,acc.Count, arr);
+                    break;
+                case Accessor.ComponentTypeEnum.UNSIGNED_BYTE:
+                    _readUint8Array(bvw.ByteOffset,acc.Count, arr);
+                    break;
+                default:
+                    ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+                    break;
+            }
+        }
+        else
+        {
+            ErrorThrow<InvalidDataException>($"Unsupported type {acc.Type}.");
+        }
+    }
+    
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void _readSingleArray(int ofs, int length, in IList<float> arr)
+    {
+        for (int j = 0; j < length; ++j)
+        {
+            arr.Add((float)BitConverter.ToSingle(_gltfBinary, ofs + j * sizeof(float)));
+        }        
+    }
+
+
+    private void _readFloatArray(in Accessor acc, in IList<float> arr)
+    {
+        BufferView bvw = _gltfModel.BufferViews[acc.BufferView.Value];
+        if (acc.Type == Accessor.TypeEnum.SCALAR)
+        {
+            switch (acc.ComponentType)
+            {
+                case Accessor.ComponentTypeEnum.FLOAT:
+                    _readSingleArray(bvw.ByteOffset,acc.Count, arr);
+                    break;
+                default:
+                    ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+                    break;
+            }
+        }
+        else
+        {
+            ErrorThrow<InvalidDataException>($"Unsupported type {acc.Type}.");
+        }
+    }
+    
+    
+    private void _readVertices(in Accessor acc, engine.joyce.Mesh jMesh)
+    {
         if (acc.Type == Accessor.TypeEnum.VEC3)
         {
             if (acc.ComponentType == Accessor.ComponentTypeEnum.FLOAT)
             {
-                _readVector3Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Vertices);
+                _readVector3Array(acc, ref jMesh.Vertices);
             }
             else
             {
@@ -121,15 +302,13 @@ public class GlTF
     }
 
 
-    private void _readNormals(Accessor acc, engine.joyce.Mesh jMesh)
+    private void _readNormals(in Accessor acc, engine.joyce.Mesh jMesh)
     {
-        BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
-
         if (acc.Type == Accessor.TypeEnum.VEC3)
         {
             if (acc.ComponentType == Accessor.ComponentTypeEnum.FLOAT)
             {
-                _readVector3Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Normals);
+                _readVector3Array(acc, ref jMesh.Normals);
             }
             else
             {
@@ -143,29 +322,45 @@ public class GlTF
     }
 
 
-    private void _readTexcoords0(Accessor acc, engine.joyce.Mesh jMesh)
+    private void _readTexcoords0(in Accessor acc, engine.joyce.Mesh jMesh)
     {
-        BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
-
         if (acc.Type == Accessor.TypeEnum.VEC2)
         {
             if (acc.ComponentType == Accessor.ComponentTypeEnum.FLOAT)
             {
-                _readVector2Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.UVs);
+                _readVector2Array(acc, ref jMesh.UVs);
             }
             else
             {
-                ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
+                ErrorThrow<InvalidDataException>($"Unsupported component type {acc.ComponentType}.");
             }
         }
         else
         {
-            ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
+            ErrorThrow<InvalidDataException>($"Unsupported type {acc.Type}.");
         }
     }
 
 
-    private void _readMatrixFromArray(Accessor acc, out Matrix4x4 m)
+    private void _readJointsWeights(in Accessor accJoints, Accessor accWeights, engine.joyce.Mesh jMesh)
+    {
+        if (accJoints.Type != Accessor.TypeEnum.SCALAR)
+        {
+            ErrorThrow<InvalidDataException>($"Unexpected joint type {accJoints.Type}");
+        }
+        if (accWeights.Type != Accessor.TypeEnum.SCALAR)
+        {
+            ErrorThrow<InvalidDataException>($"Unexpected weights type {accJoints.Type}");
+        }
+
+        jMesh.BoneIndices = new List<Int4>();
+        jMesh.BoneWeights = new List<Vector4>();
+        _readInt4Array(accJoints, ref jMesh.BoneIndices);
+        _readVector4Array(accWeights, ref jMesh.BoneWeights);
+    }
+    
+
+    private void _readMatrixFromArray(in Accessor acc, out Matrix4x4 m)
     {
         BufferView bvwMatrices = _gltfModel.BufferViews[acc.BufferView.Value];
         if (acc.Type == Accessor.TypeEnum.MAT4)
@@ -186,30 +381,21 @@ public class GlTF
             m = new();
         }
     }
-    
-    
-    private void _readTriangles(Accessor acc, engine.joyce.Mesh jMesh)
+
+
+    private void _readTriangles(in Accessor acc, engine.joyce.Mesh jMesh)
     {
         BufferView bvwVertices = _gltfModel.BufferViews[acc.BufferView.Value];
 
-        if (acc.Type == Accessor.TypeEnum.SCALAR)
+        _readUintArray(acc, ref jMesh.Indices);
+        
+        /*
+         * For triangles, make sure we are a count dividale by 3.
+         */
+        int overhead = jMesh.Indices.Count % 3;
+        for (int i = 0; i < overhead; ++i)
         {
-            switch (acc.ComponentType)
-            {
-                case Accessor.ComponentTypeEnum.UNSIGNED_SHORT:
-                    _readTri16Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Indices);
-                    break;
-                case Accessor.ComponentTypeEnum.UNSIGNED_INT:
-                    _readTri32Array(bvwVertices.ByteOffset,acc.Count, ref jMesh.Indices);
-                    break;
-                default:
-                    ErrorThrow($"Unsupported component type {acc.ComponentType}.", m => new InvalidDataException(m));
-                    break;
-            }
-        }
-        else
-        {
-            ErrorThrow($"Unsupported type {acc.Type}.", m => new InvalidDataException(m));
+            jMesh.Indices.RemoveAt(jMesh.Indices.Count-1);
         }
     }
 
@@ -222,6 +408,8 @@ public class GlTF
             int idxPosition = -1;
             int idxNormal = -1;
             int idxTexcoord0 = -1;
+            int idxJoints0 = -1;
+            int idxWeights0 = -1;
 
             /*
              * Collect the attributes
@@ -238,6 +426,12 @@ public class GlTF
                         break;
                     case "TEXCOORD_0":
                         idxTexcoord0 = fbxAttr.Value;
+                        break;
+                    case "JOINTS_0":
+                        idxJoints0 = fbxAttr.Value;
+                        break;
+                    case "WEIGHTS_0":
+                        idxWeights0 = fbxAttr.Value;
                         break;
                     default:
                         break;
@@ -280,6 +474,11 @@ public class GlTF
                 _readTexcoords0(_gltfModel.Accessors[idxTexcoord0], jMesh);
             }
 
+            if (idxJoints0 != -1 && idxWeights0 != -1)
+            {
+                _readJointsWeights(_gltfModel.Accessors[idxJoints0], _gltfModel.Accessors[idxWeights0], jMesh);
+            }
+
             _readTriangles(_gltfModel.Accessors[fbxMeshPrimitive.Indices.Value], jMesh);
             
             matMesh.Add(new() { Texture = I.Get<TextureCatalogue>().FindColorTexture(0xff888888)}, jMesh, mn);
@@ -299,6 +498,7 @@ public class GlTF
             mf[8], mf[9], mf[10], mf[11],
             mf[12], mf[13], mf[14], mf[15]
         );
+        
         /*
          * Now apply the explicit transformation etc.
          */
@@ -334,10 +534,12 @@ public class GlTF
          */
         if (gltfNode.Skin != null)
         {
+            if (gltfNode.Mesh != null)
+            {
+                Warning("Encountered a skin without a mesh");
+            }
             Trace("Reading a skin.");
-            _readSkin(_gltfModel.Skins[gltfNode.Skin.Value], out Skin skin);
-            // TXWTODO: Where should I store the skin?
-            mn.Skin = skin;
+            _readSkin(mnParent, _gltfModel.Skins[gltfNode.Skin.Value]);
         }
         
         /*
@@ -356,12 +558,10 @@ public class GlTF
     }
 
 
-    private void _readSkin(glTFLoader.Schema.Skin gltfSkin, out Skin jSkin)
+    private void _readSkin(ModelNode mnParent, glTFLoader.Schema.Skin gltfSkin)
     {
-        jSkin = new();
-        jSkin.Joints = new List<Joint>();
-
         int idxMatrix = 0;
+        var skeleton = _jModel.FindSkeleton();
 
         Accessor? accMatrix = null;
         if (gltfSkin.InverseBindMatrices != null)
@@ -370,29 +570,117 @@ public class GlTF
         }
 
         /*
-         * The joints are store a bit while spread
+         * For each node containing a mesh, a skin may be defined.
+         * The skin consists of
+         * - an array of nodes, each defining a transformation and hierarchy.
+         * - an array of inverse bind matrices, each defining the model to bone transformation.
          */
+
+        uint realIndex = 0;
         foreach (var idxJoint in gltfSkin.Joints)
         {
-            /*
-             * joint info also is stored inside the nodes we already read.
-             * So we just need to use the references.
-             */
-            var nJoint = _gltfModel.Nodes[idxJoint];
-            Joint joint = new();
-            jSkin.Joints.Add(joint);
+            if (!_dictNodes.TryGetValue(idxJoint, out var mnJointNode))
+            {
+                Warning($"Invalid joint noded index {idxJoint} discovered.");
+                continue;
+            }
+            
+            var nodeJoint = _gltfModel.Nodes[idxJoint];
+
+            var jBone = skeleton.FindBone(nodeJoint.Name);
             if (accMatrix != null)
             {
-                _readMatrixFromArray(accMatrix, out joint.InverseBindMatrix);
+                _readMatrixFromArray(accMatrix, out jBone.Model2Bone);
+                jBone.Bone2Model = MatrixInversion.Invert(jBone.Model2Bone);
             }
-            ModelNode mnJoint = _dictNodes[idxJoint];
-            foreach (int idxControlled in nJoint.Children)
+            /*
+             * This is relying on two independent counters. Let's be safe.
+             */
+            Debug.Assert(realIndex == jBone.Index);
+            ++realIndex;
+        }
+    }
+
+
+    class SamplerKeyframes
+    {
+        public float[] TimeDomain;
+        public List<Vector3> Vector3 = null;
+        public List<Vector4> Vector4 = null;
+    }
+    
+
+    private void _loadAnimations(Model jModel)
+    {
+        var glAnimations = _gltfModel.Animations;
+        if (null == glAnimations)
+        {
+            return;
+        }
+
+        foreach (var glAnimation in glAnimations)
+        {
+            ModelAnimation ma = jModel.CreateAnimation();
+            ma.Name = glAnimation.Name;
+            
+            /*
+             * A gltf animation contains "samplers", contaning the actual
+             * time sampled values over time, and "channels", building the association
+             * between an animation target and a sampler.
+             */
+
+            foreach (var glSampler in glAnimation.Samplers)
             {
-                var nControlled = _gltfModel.Nodes[idxControlled];
-                var mnControlled = _dictNodes[idxControlled];
-                joint.ControlledNodes.Add(mnControlled);
+                SamplerKeyframes mak = new();
+                
+                /*
+                 * glSampler.input contains the index of the accessor of a float array
+                 * containing the time domain values.
+                 *
+                 * glSampler.output contains a Vector3 or Vector4 array of data. It is
+                 * associated with the proper channel later on.
+                 */
+                Accessor accInput = _gltfModel.Accessors[glSampler.Input];
+                List<float> arrTimeDomain = new List<float>(accInput.Count);
+                _readFloatArray(accInput, arrTimeDomain);
+                
+                Accessor accOutput = _gltfModel.Accessors[glSampler.Output];
+                BufferView bvwOutput = _gltfModel.BufferViews[accOutput.BufferView.Value];
+
+                switch (accOutput.Type)
+                {
+                    case Accessor.TypeEnum.VEC3:
+                        mak.Vector3 = new List<Vector3>(accOutput.Count);
+                        _readVector3Array(accOutput, mak.Vector3);
+                        break;
+                    case Accessor.TypeEnum.VEC4:
+                        mak.Vector4 = new List<Vector4>(accOutput.Count);
+                        _readVector4Array(accOutput, mak.Vector4);
+                        break;
+                    default:
+                        continue;
+                }
             }
-            ++idxMatrix;
+            
+            var glChannels = glAnimation.Channels;
+            ma.MapChannels = new();
+            ma.Channels = new ModelAnimChannel[glChannels.Length];
+            
+            foreach (var glAnimChannel in glChannels)
+            {
+                ModelNode mn = null;
+                KeyFrame<Vector3>[]? kfPositions = null;
+                KeyFrame<Quaternion>[]? kfRotations = null;
+                KeyFrame<Vector3>[]? kfScalings = null;
+                ModelAnimChannel mac = ma.CreateChannel(mn, kfPositions, kfRotations, kfScalings);
+            }
+            
+            // ma.Duration =
+            // ma.TicksPerSecond = 
+            // ma.NTicks = 
+            
+            // ma.NFrames =
+            jModel.PushAnimFrames(ma.NFrames);
         }
     }
     
