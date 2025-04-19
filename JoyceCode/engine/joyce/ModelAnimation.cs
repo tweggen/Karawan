@@ -29,7 +29,6 @@ public class ModelAnimation
     public uint NTicks;
     public uint NFrames;
     public Dictionary<ModelNode, ModelAnimChannel> MapChannels;
-    public ModelAnimChannel[] Channels;
 
     public ModelBakedFrame[] BakedFrames;
 

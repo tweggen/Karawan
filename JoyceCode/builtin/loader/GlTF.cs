@@ -25,7 +25,7 @@ public class GlTF
     private Model _jModel;
     private Gltf _gltfModel;
     private byte[] _gltfBinary;
-    private SortedDictionary<int, ModelNode> _dictNodes;
+    private SortedDictionary<int, ModelNode> _dictNodesByGltf;
     
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -489,8 +489,9 @@ public class GlTF
     /**
      * Read one node from the gltf. One node translates to one entity.
      */
-    private void _readNode(glTFLoader.Schema.Node gltfNode, ModelNode mnParent, out ModelNode mn)
+    private void _readNode(int idxGltfNode, ModelNode mnParent, out ModelNode mn)
     {
+        var gltfNode = _gltfModel.Nodes[idxGltfNode];
         var mf = gltfNode.Matrix;
         Matrix4x4 m = new(
             mf[0], mf[1], mf[2], mf[3],
@@ -509,7 +510,8 @@ public class GlTF
                 gltfNode.Rotation[2], gltfNode.Rotation[3]));
         m *= Matrix4x4.CreateTranslation(
             gltfNode.Translation[0], gltfNode.Translation[1], gltfNode.Translation[2]);
-        mn = new() { Model = _jModel, Parent = mnParent };
+        mn = new() { Model = _jModel, Parent = mnParent, Name = gltfNode.Name };
+        _dictNodesByGltf[idxGltfNode] = mn;
         mn.Transform = new Transform3ToParent(
             true, 0xffffffff, m
             );
@@ -550,8 +552,7 @@ public class GlTF
             
             foreach (var idxChildNode in gltfNode.Children)
             {
-                var nChild = _gltfModel.Nodes[idxChildNode];
-                _readNode(nChild, mn, out var mnChild);
+                _readNode(idxChildNode, mn, out var mnChild);
                 mn.AddChild(mnChild);
             }
         }
@@ -579,7 +580,7 @@ public class GlTF
         uint realIndex = 0;
         foreach (var idxJoint in gltfSkin.Joints)
         {
-            if (!_dictNodes.TryGetValue(idxJoint, out var mnJointNode))
+            if (!_dictNodesByGltf.TryGetValue(idxJoint, out var mnJointNode))
             {
                 Warning($"Invalid joint noded index {idxJoint} discovered.");
                 continue;
@@ -607,6 +608,66 @@ public class GlTF
         public float[] TimeDomain;
         public List<Vector3> Vector3 = null;
         public List<Vector4> Vector4 = null;
+        
+        public KeyFrame<Vector3>[] AsVector3Keyframes()
+        {
+            if (null == TimeDomain)
+            {
+                Error("No time domain for sampler.");
+                return null;
+            }
+
+            if (null == Vector3 && null == Vector4)
+            {
+                Error("No data for sampler.");
+            }
+            int l = Int32.Max(TimeDomain.Length, Vector3.Count);
+            var arr = new KeyFrame<Vector3>[l];
+
+            if (null != Vector3)
+            {
+                for (int i = 0; i < l; ++i)
+                {
+                    arr[i].Time = TimeDomain[i];
+                    arr[i].Value = Vector3[i];
+                }
+            } else if (null != Vector4)
+            {
+                for (int i = 0; i < l; ++i)
+                {
+                    arr[i].Time = TimeDomain[i];
+                    arr[i].Value = new Vector3(Vector4[i].X, Vector4[i].Y, Vector4[i].Z);
+                }
+            }
+
+            return arr;
+        }
+
+        
+        public KeyFrame<Quaternion>[] AsQuaternionKeyframes()
+        {
+            if (null == TimeDomain)
+            {
+                Error("No time domain for sampler.");
+                return null;
+            }
+
+            if (null == Vector4)
+            {
+                Error("No data for sampler.");
+            }
+            int l = Int32.Max(TimeDomain.Length, Vector3.Count);
+            var arr = new KeyFrame<Quaternion>[l];
+
+            for (int i = 0; i < l; ++i)
+            {
+                arr[i].Time = TimeDomain[i];
+                arr[i].Value = new Quaternion(Vector4[i].X, Vector4[i].Y, Vector4[i].Z, Vector4[i].W);
+            }
+
+            return arr;
+        }
+
     }
     
 
@@ -629,9 +690,14 @@ public class GlTF
              * between an animation target and a sampler.
              */
 
+            SamplerKeyframes[] samplerKeyframes = new SamplerKeyframes[glAnimation.Samplers.Length];
+
+            uint idxSampler = 0; 
             foreach (var glSampler in glAnimation.Samplers)
             {
                 SamplerKeyframes mak = new();
+                samplerKeyframes[idxSampler] = mak;
+                ++idxSampler;
                 
                 /*
                  * glSampler.input contains the index of the accessor of a float array
@@ -661,25 +727,81 @@ public class GlTF
                         continue;
                 }
             }
-            
+
+            /*
+             * Now read all anim channels in the gltf sense, mapping one sampler
+             * to one node and some property of it.
+             */
+            SortedDictionary<int, ModelAnimChannel> mapNodeAnimChannel = new();
+
             var glChannels = glAnimation.Channels;
             ma.MapChannels = new();
-            ma.Channels = new ModelAnimChannel[glChannels.Length];
             
             foreach (var glAnimChannel in glChannels)
             {
-                ModelNode mn = null;
-                KeyFrame<Vector3>[]? kfPositions = null;
-                KeyFrame<Quaternion>[]? kfRotations = null;
-                KeyFrame<Vector3>[]? kfScalings = null;
-                ModelAnimChannel mac = ma.CreateChannel(mn, kfPositions, kfRotations, kfScalings);
+                ModelAnimChannel mac;
+                if (glAnimChannel.Sampler < 0 || glAnimChannel.Sampler >= samplerKeyframes.Length)
+                {
+                    Error($"Invalid sampler index {glAnimChannel.Sampler} encountered.");
+                    continue;
+                }
+
+                var skf = samplerKeyframes[glAnimChannel.Sampler];
+                if (null == skf)
+                {
+                    Error($"Referencing unknown sampler {glAnimChannel.Sampler}");
+                    continue;
+                }
+                
+                if (!mapNodeAnimChannel.TryGetValue(glAnimChannel.Target.Node.Value, out mac))
+                {
+                    var jTargetNode = _dictNodesByGltf[glAnimChannel.Target.Node.Value];
+                    mac = ma.CreateChannel(jTargetNode, null, null, null);
+                    ma.MapChannels.Add(jTargetNode, mac);
+                }
+
+                switch (glAnimChannel.Target.Path)
+                {
+                    case AnimationChannelTarget.PathEnum.translation:
+                        mac.Positions = skf.AsVector3Keyframes();
+                        break;
+                    case AnimationChannelTarget.PathEnum.rotation:
+                        mac.Rotations = skf.AsQuaternionKeyframes();
+                        break;
+                    case AnimationChannelTarget.PathEnum.scale:
+                        mac.Scalings = skf.AsVector3Keyframes();
+                        break;
+                    default:
+                        break;
+                }
             }
-            
-            // ma.Duration =
-            // ma.TicksPerSecond = 
-            // ma.NTicks = 
-            
-            // ma.NFrames =
+
+            /*
+             * After we read all channels, we need to compute the duration etc. of the animation.
+             * Unfortunately, we need to look at the end time of each of the channels to find out
+             * the total running duration.
+             */
+            float tMax = 0f;
+            foreach (var skf in samplerKeyframes)
+            {
+                if (skf.TimeDomain == null)
+                {
+                    continue;
+                }
+
+                var l = skf.TimeDomain.Length;
+                if (0 == l)
+                {
+                    continue;
+                }
+
+                tMax = Single.Max(skf.TimeDomain[l - 1], tMax);
+            }
+
+            ma.Duration = tMax;
+            ma.TicksPerSecond = 60;
+            ma.NTicks = (uint)(tMax * 60f);
+            ma.NFrames = (uint)(tMax * 60f + 0.5f); 
             jModel.PushAnimFrames(ma.NFrames);
         }
     }
@@ -687,7 +809,7 @@ public class GlTF
     
     private void _readScene(glTFLoader.Schema.Scene scene, out Model jModel)
     {
-        _dictNodes = new();
+        _dictNodesByGltf = new();
         
         /*
          * First read the actual model's nodes.
@@ -695,8 +817,7 @@ public class GlTF
         List<ModelNode> rootNodes = new();
         foreach (var idxRootNode in scene.Nodes)
         {
-            _readNode(_gltfModel.Nodes[idxRootNode], null, out var mnNode);
-            _dictNodes[idxRootNode] = mnNode;
+            _readNode(idxRootNode, null, out var mnNode);
             rootNodes.Add(mnNode);
         }
         
@@ -737,7 +858,8 @@ public class GlTF
     {
         if (null != _gltfModel.Scene)
         {
-            _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], out var jModel);
+            _readScene(_gltfModel.Scenes[_gltfModel.Scene.Value], 
+                out var jModel);
             return jModel;
         }
 
