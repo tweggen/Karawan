@@ -668,6 +668,8 @@ public class SkTexture : IDisposable
         _trace("_bindBack");
         _trace($"bind {_backHandle}");
         if (_checkGLErrors) _checkError("flush");
+        // TXWTODO: This is a bit ugly. But don't mess up the main texture channel by our background operations.
+        _gl.ActiveTexture(TextureUnit.Texture3);
         _gl.BindTexture(TextureTarget.Texture2D, _backHandle);
         int err = _checkGLErrors?_checkError("_bindBack Texture"):0;
         if (err < 0)
@@ -683,6 +685,8 @@ public class SkTexture : IDisposable
     private void _unbindBack()
     {
         _trace($"Unbind back {_backHandle}");
+        // TXWTODO: This is a bit ugly. But don't mess up the main texture channel by our background operations.
+        _gl.ActiveTexture(TextureUnit.Texture3);
         _gl.BindTexture(TextureTarget.Texture2D, 0);
         _backBound = false;
     }
