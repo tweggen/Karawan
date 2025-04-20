@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -565,6 +566,8 @@ public class StreetNavigationController : INavigator
 
     public void NavigatorLoad()
     {
+        Debug.Assert(_startPoint != null);
+        Debug.Assert(_clusterDesc != null);
         _rnd = new builtin.tools.RandomSource($"{_clusterDesc.Name}+{_startPoint.Pos}+{Seed}");
         _enumPath = new RandomPathEnumerator(_rnd, null, _startPoint);
 
