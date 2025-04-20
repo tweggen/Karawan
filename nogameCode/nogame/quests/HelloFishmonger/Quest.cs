@@ -103,7 +103,7 @@ public class Quest : AModule, IQuest, ICreator
                  */
                 _questTarget = new engine.quest.TrailVehicle()
                 {
-                    SensitivePhysicsName = nogame.modules.playerhover.Module.PhysicsName,
+                    SensitivePhysicsName = nogame.modules.playerhover.MainPlayModule.PhysicsName,
                     MapCameraMask = nogame.modules.map.Module.MapCameraMask,
                     ParentEntity = _eTarget,
                     OnReachTarget = _onReachTarget

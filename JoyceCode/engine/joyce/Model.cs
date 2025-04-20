@@ -35,7 +35,7 @@ public class Skin
 public class Model
 {
     public string Name = "";
-    public uint MAX_BONES = 60;
+    public uint MAX_BONES = 70;
     
     private ModelNode _mnRoot; 
     public ModelNode RootNode

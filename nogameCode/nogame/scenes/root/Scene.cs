@@ -39,7 +39,7 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<Saver>(),
         
         new SharedModule<engine.behave.SpawnModule>(),
-        new MyModule<nogame.modules.playerhover.Module>(),
+        new MyModule<nogame.modules.playerhover.MainPlayModule>(),
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),

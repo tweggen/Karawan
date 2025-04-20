@@ -1,69 +1,48 @@
-﻿using BepuPhysics;
-using BepuPhysics.Collidables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using BepuPhysics;
+using BepuPhysics.Collidables;
 using DefaultEcs;
 using engine;
-using engine.draw;
 using engine.gongzuo;
 using engine.joyce;
 using engine.joyce.components;
-using engine.news;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
-
-/**
- * This contains player-related glue code.
- *
- * - testing what the player is seeing in front of them
- * - handling player - polytope collision
- * - playback the proper song depending on the current cluster
- * - playback sounds on player environment collisions
- * - creating particle effect on player collision
- * - playback sounds on player cube collisions
- * - manage the sound of my own car.
- * - create the ship player entity
- */
-public class Module : engine.AModule
+public class HoverModule : AModule
 {
     static public readonly string PhysicsName = "nogame.playerhover";
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<nogame.modules.AutoSave>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsModule>(),
-        new MyModule<nogame.modules.playerhover.ClusterMusicModule>()
+        new MyModule<nogame.modules.playerhover.MainPlayModule>() { ShallActivate =  false }
     };
-    
-    private engine.joyce.TransformApi _aTransform;
 
     private DefaultEcs.Entity _eShip;
     private DefaultEcs.Entity _eAnimations;
     private BepuPhysics.BodyReference _prefShip;
     private Entity _eMapShip;
 
+    private TransformApi _aTransform;
+    
     private Model _model;
-    
-    private PlayerViewer _playerViewer;
-    
-    /**
-     * Sound API
-     */
-    private Boom.ISoundAPI _aSound;
-    private Boom.ISound _soundMyEngine = null;
     
     public float MassShip { get; set; } = 500f;
 
+    public Vector3 StartPosition { get; set; } = Vector3.Zero;
+    public Quaternion StartOrientation { get; set; } = Quaternion.Identity;
     
-    #if false
+    
+#if false
+    public string AnimName { get; set; } = "";
     public string ModelUrl { get; set; } = "car6.obj";
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.CENTER_X
@@ -71,18 +50,18 @@ public class Module : engine.AModule
                                               | InstantiateModelParams.ROTATE_Y180
                                               | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
                                               ;
-    #else
+#else
     public string AnimName { get; set; } = "Walk_Loop";
     public string ModelUrl { get; set; } = "player.glb";
     public int ModelGeomFlags { get; set; } = 0
         ;
-    #endif
+#endif
     
-    public DefaultEcs.Entity GetShipEntity()
-    {
-        return _eShip;
-    }
-    
+    /**
+      * Sound API
+      */
+    private Boom.ISoundAPI _aSound;
+    private Boom.ISound _soundMyEngine = null;
 
     private bool _isMyEnginePlaying = false;
     private void _updateSound(in Vector3 velShip)
@@ -116,7 +95,7 @@ public class Module : engine.AModule
             }
         }
     }
-    
+
 
     private void _onLogicalFrame(object? sender, float dt)
     {
@@ -131,36 +110,10 @@ public class Module : engine.AModule
     }
 
 
-    /**
-     * Find and return a suitable start position for the player.
-     * We know there is a cluster around 0/0, so find it, and find an estate
-     * within without a house build upon it.
-     */
-    private void _findStartPosition(out Vector3 v3Start, out Quaternion qStart)
-    {
-        ClusterDesc startCluster = I.Get<ClusterList>().GetClusterAt(Vector3.Zero);
-        if (null != startCluster)
-        {
-            
-            startCluster.FindStartPosition(out v3Start, out qStart);
-            v3Start += startCluster.Pos;
-            Trace($"Startposition is {v3Start} {qStart}");
-        }
-        else
-        {
-            v3Start = new Vector3(0f, 200f, 0f);
-            qStart = Quaternion.Identity;
-            Trace($"No start cluster found, using default startposition is {v3Start} {qStart}");
-        }
-    }
 
-
+    
     public override void ModuleDeactivate()
     {
-        // TXWTODO: Deactivate player entity. But we don't remove the player entity at all...
-        // _engine.SetPlayerEntity(new DefaultEcs.Entity());
-        I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
-        
         _engine.OnLogicalFrame -= _onLogicalFrame;
         
         _engine.RemoveModule(this);
@@ -191,15 +144,8 @@ public class Module : engine.AModule
             Url = ModelUrl,
             Params = instantiateModelParams});
 
-
-        var gameState = M<AutoSave>().GameState;
-        Vector3 v3Ship = gameState.PlayerPosition;
-        Quaternion qShip = Quaternion.Normalize(gameState.PlayerOrientation);
-        if (v3Ship == Vector3.Zero)
-        {
-            Error($"Unbelievably could not come up with a valid start position, so generate one here.");
-            _findStartPosition(out v3Ship, out qShip);
-        }
+        Vector3 v3Ship = StartPosition;
+        Quaternion qShip = StartOrientation;
 
         /*
          * Create the ship entiiies. This needs to run in logical thread.
@@ -302,14 +248,8 @@ public class Module : engine.AModule
 
             _engine.OnLogicalFrame += _onLogicalFrame;
 
-            _engine.Player.Value = GetShipEntity();
+            _engine.Player.Value = _eShip;
 
-            /*
-             * Create a viewer for the player itself, defining what parts
-             * of the world shall be loaded.
-             */
-            _playerViewer = new(_engine);
-            I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
         }); // End of queue mainthread action.
     }
 
