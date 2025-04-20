@@ -41,7 +41,7 @@ public class HoverModule : AModule
     public Quaternion StartOrientation { get; set; } = Quaternion.Identity;
     
     
-#if false
+#if true
     public string AnimName { get; set; } = "";
     public string ModelUrl { get; set; } = "car6.obj";
     public int ModelGeomFlags { get; set; } = 0
