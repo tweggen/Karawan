@@ -51,6 +51,15 @@ public class SkTexture : IDisposable
     {
         get => _generation;
     }
+    
+    #if false
+    #error
+    /*
+     * We create two default textures which are bound to a texture slot while
+     * the real image still is loaded, one transparent and one intransparent one.
+     * They are used until the image completely has loaded.
+     */
+    #endif
 
     public ATextureEntry.ResourceState ResourceState
     {
