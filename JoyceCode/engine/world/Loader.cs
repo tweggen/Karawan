@@ -438,6 +438,23 @@ namespace engine.world
         }
 
 
+        public float GetWalkingHeightAt(in Vector3 position)
+        {
+            /*
+             * Are we in a cluster? Do an inefficient search.
+             */
+            ClusterDesc cluster = I.Get<ClusterList>().GetClusterAt(position);
+            if (cluster != null)
+            {
+                return cluster.AverageHeight + 1.5f;
+            }
+            else
+            {
+                return GetHeightAt(position.X, position.Z) + 0.1f;
+            }
+        }
+        
+
         /**
          * Return the default navigational height for a given
          * position. This is the terrain's height, if no road

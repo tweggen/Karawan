@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using engine;
+using engine.joyce.components;
 using engine.world;
 using static engine.Logger;
 
@@ -36,9 +37,23 @@ public class WalkController : AModule
 
 
     private BepuPhysics.BodyReference _prefTarget;
+    private DefaultEcs.Entity _eCamera = default;
 
-
-
+    
+    private void _onCameraEntityChanged(DefaultEcs.Entity entity)
+    {
+        bool isChanged = false;
+        lock (_lo)
+        {
+            if (_eCamera != entity)
+            {
+                _eCamera = entity;
+                isChanged = true;
+            }
+        }
+    }
+    
+    
     private void _onLogicalFrame(object sender, float dt)
     {
         if (_engine.State != Engine.EngineState.Running) return;
@@ -54,9 +69,65 @@ public class WalkController : AModule
             vTargetVelocity = _prefTarget.Velocity.Linear;
             vTargetAngularVelocity = _prefTarget.Velocity.Angular;
             qTargetOrientation = _prefTarget.Pose.Orientation;
-            Trace($"vTargetVelocity = {vTargetVelocity}, vTargetPos = {vTargetPos}");
+            //Trace($"vTargetVelocity = {vTargetVelocity}, vTargetPos = {vTargetPos}");
         }
 
+        var vuFront = -Vector3.UnitZ;
+        var vuUp = Vector3.UnitY;
+        var vuRight = Vector3.UnitX;
+
+        /*
+         * In a perfect world, front and up are derived from the camera.
+         * If we have a camera, load the camera orientation.
+         */
+        Quaternion qCameraOrientation = qTargetOrientation;
+        if (_eCamera != default && _eCamera.IsAlive && _eCamera.IsEnabled())
+        {
+            if (_eCamera.Has<engine.physics.components.Body>())
+            {
+                ref var cBody = ref _eCamera.Get<engine.physics.components.Body>();
+                lock (_engine.Simulation)
+                {
+                    qCameraOrientation = cBody.Reference.Pose.Orientation;
+                    qTargetOrientation = qCameraOrientation;
+                }
+            }
+
+            if (_eCamera.Has<Transform3ToWorld>())
+            {
+                ref var cTransform = ref _eCamera.Get<Transform3ToWorld>();
+                vuRight = new Vector3(cTransform.Matrix.M11, cTransform.Matrix.M12, cTransform.Matrix.M13);
+                vuRight.Y = 0f;
+                
+                /*
+                 * Emergency workaround.
+                 */
+                if (vuRight.LengthSquared() == 0f)
+                {
+                    vuRight = Vector3.UnitX;
+                }
+
+                vuRight = Vector3.Normalize(vuRight);
+                vuUp = Vector3.UnitY;
+                vuFront = -Vector3.Cross(vuRight, vuUp);
+            }
+        } else
+        if (_eTarget.Has<engine.joyce.components.Transform3ToParent>())
+        {
+            /*
+             * First read target position/orientation
+             */
+            var cToParent = _eTarget.Get<engine.joyce.components.Transform3ToParent>();
+
+            /*
+             * We cheat a bit, reading the matrix for the direction matrix,
+             * applying the position change to the transform parameters,
+             * applying rotation directly to the transform parameters.
+             */
+            vuFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
+            vuUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
+            vuRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
+        }
 
         /*
          * Keep player in bounds.
@@ -74,20 +145,6 @@ public class WalkController : AModule
 
             return;
         }
-
-        /*
-         * Apply controls
-         */
-        var cToParent = _eTarget.Get<engine.joyce.components.Transform3ToParent>();
-
-        /*
-         * We cheat a bit, reading the matrix for the direction matrix,
-         * applying the position change to the transform parameters,
-         * applying rotation directly to the transform parameters.
-         */
-        var vuFront = new Vector3(-cToParent.Matrix.M31, -cToParent.Matrix.M32, -cToParent.Matrix.M33);
-        var vuUp = new Vector3(cToParent.Matrix.M21, cToParent.Matrix.M22, cToParent.Matrix.M23);
-        var vuRight = new Vector3(cToParent.Matrix.M11, cToParent.Matrix.M12, cToParent.Matrix.M13);
 
         I.Get<builtin.controllers.InputController>().GetControllerState(out var controllerState);
 
@@ -126,7 +183,7 @@ public class WalkController : AModule
          * If the player is above ground, let gravity do it's thing,
          * capping velocity to vFallMax.
          */
-        float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetNavigationHeightAt(vTargetPos);
+        float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetWalkingHeightAt(vTargetPos);
 
         {
             var properDeltaY = 0;
@@ -172,6 +229,8 @@ public class WalkController : AModule
     {
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
+
+        _engine.Camera.AddOnChange(_onCameraEntityChanged);
         base.ModuleDeactivate();
     }
 
@@ -186,6 +245,10 @@ public class WalkController : AModule
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 
         _engine.AddModule(this);
+        
+        _eCamera = _engine.Camera.Value;
+        _engine.Camera.AddOnChange(_onCameraEntityChanged);
         _engine.OnLogicalFrame += _onLogicalFrame;
+        
     }
 }

@@ -162,9 +162,9 @@ public class ClusterMusicModule : AModule
         base.ModuleActivate();
         _engine.AddModule(this);
 
-        _engine.Camera.AddOnChange(_onPlayerEntityChanged);
-
-
+        _ePlayer = _engine.Player.Value;
+        _engine.Player.AddOnChange(_onPlayerEntityChanged);
+        
         _engine.QueueEntitySetupAction("OsdClusterDisplay", e => { _eClusterDisplay = e; });
 
         _engine.OnLogicalFrame += _onLogicalFrame;
