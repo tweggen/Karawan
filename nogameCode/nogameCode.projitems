@@ -76,6 +76,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlingPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\UpdateEmissionContext.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WalkModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\shop\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\skybox\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\Narration.cs" />

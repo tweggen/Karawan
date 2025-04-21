@@ -34,7 +34,8 @@ public class DefaultRayHitHandler : IRayHitHandler
                 _api.GetCollisionProperties(collidable.BodyHandle, out collisionProperties);
                 if (collisionProperties != null)
                 {
-                    if (collisionProperties.Name == "nogame.playerhover")
+                    // TXWTODO: Remove this dependency
+                    if (collisionProperties.Name.StartsWith( "nogame.playerhover"))
                     {
                         return false;
                     }

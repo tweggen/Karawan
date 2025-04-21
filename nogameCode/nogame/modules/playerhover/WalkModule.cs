@@ -11,16 +11,15 @@ using engine.joyce;
 using engine.joyce.components;
 using engine.news;
 using engine.physics;
-using engine.world;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
-public class HoverModule : AModule, IInputPart
+public class WalkModule : AModule, IInputPart
 {
     public static float MY_Z_ORDER = 25f;
 
-    static public readonly string PhysicsName = "nogame.playerhover.ship";
+    static public readonly string PhysicsName = "nogame.playerhover.person";
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -29,78 +28,34 @@ public class HoverModule : AModule, IInputPart
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsModule>(),
     };
 
-    private DefaultEcs.Entity _eShip;
+    private DefaultEcs.Entity _ePerson;
     private DefaultEcs.Entity _eAnimations;
-    private BepuPhysics.BodyReference _prefShip;
-    private Entity _eMapShip;
+    private BepuPhysics.BodyReference _prefPerson;
+    private Entity _eMapPerson;
 
     private TransformApi _aTransform;
     
     private Model _model;
     
-    public float MassShip { get; set; } = 500f;
+    public float MassPerson { get; set; } = 100f;
 
     public Vector3 StartPosition { get; set; } = Vector3.Zero;
     public Quaternion StartOrientation { get; set; } = Quaternion.Identity;
     
-    
-#if true
-    public string AnimName { get; set; } = "";
-    public string ModelUrl { get; set; } = "car6.obj";
-    public int ModelGeomFlags { get; set; } = 0
-                                              | InstantiateModelParams.CENTER_X
-                                              | InstantiateModelParams.CENTER_Z
-                                              | InstantiateModelParams.ROTATE_Y180
-                                              | InstantiateModelParams.REQUIRE_ROOT_INSTANCEDESC
-                                              ;
-#else
     public string AnimName { get; set; } = "Walk_Loop";
     public string ModelUrl { get; set; } = "player.glb";
     public int ModelGeomFlags { get; set; } = 0
+        | InstantiateModelParams.ROTATE_Y180
         ;
-#endif
     
     /**
       * Sound API
       */
     private Boom.ISoundAPI _aSound;
-    private Boom.ISound _soundMyEngine = null;
+    
+    // TXWTODO: Add tap sound
 
-    private bool _isMyEnginePlaying = false;
-    private void _updateSound(in Vector3 velShip)
-    {
-
-        float vel = Single.Clamp(velShip.Length(), 0f, 200f) / 256f;
-        if (vel < 0.05f)
-        {
-            if (_isMyEnginePlaying)
-            {
-                _soundMyEngine.Stop();
-                _isMyEnginePlaying = false;
-            }
-
-            _soundMyEngine.Volume = 0f;
-            _soundMyEngine.Speed = 0.8f;
-        }
-        else
-        {
-            if ((_aSound.SoundMask & 0x00000001) != 0)
-            {
-                _soundMyEngine.Speed = 0.1f + vel * 4f;
-                float vol = Single.Clamp(0.1f + vel * 3.0f, 0f, 1f);
-                _soundMyEngine.Volume = 0.2f * vol;
-
-                if (!_isMyEnginePlaying)
-                {
-                    _isMyEnginePlaying = true;
-                    _soundMyEngine.Play();
-                }
-            }
-        }
-    }
-
-
-    private bool _isGetOutTriggered = false;
+    private bool _isGetInTriggered = false;
     public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type != Event.INPUT_BUTTON_PRESSED)
@@ -113,11 +68,12 @@ public class HoverModule : AModule, IInputPart
             /*
              * We are supposed to get out of the car.
              */
-            if (false == _isGetOutTriggered)
+            if (false == _isGetInTriggered)
             {
-                _isGetOutTriggered = true;
+                // TXWTODO: Check if we are even close
+                _isGetInTriggered = true;
                 ev.IsHandled = true;
-                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetOutOfHover, ""));
+                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetIntoHover, ""));
             }
         }
     }
@@ -125,37 +81,15 @@ public class HoverModule : AModule, IInputPart
     
     private void _onLogicalFrame(object? sender, float dt)
     {
-        if (!_eShip.Has<Transform3ToWorld>()) return;
-        Vector3 velShip = _prefShip.Velocity.Linear;
-
-        
-        /*
-         * Adjust the sound pitch.
-         */
-        _updateSound(velShip);
     }
 
 
-    private void _stopHoverSound()
-    {
-        if (_isMyEnginePlaying)
-        {
-            _soundMyEngine.Stop();
-            _isMyEnginePlaying = false;
-        }
-        _soundMyEngine.Volume = 0f;
-        _soundMyEngine.Speed = 0.8f;
-        _soundMyEngine.Dispose();
-        _soundMyEngine = null;
-    }
-
-    
     private void _cleanupPlayer()
     {
         _engine.Player.Value = default;
-        I.Get<HierarchyApi>().Delete(ref _eShip);
+        I.Get<HierarchyApi>().Delete(ref _ePerson);
         
-        I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsOutOfHover, ""));
+        I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsPersonDeactivated, ""));
     }
     
     
@@ -163,8 +97,6 @@ public class HoverModule : AModule, IInputPart
     {
         M<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
-
-        _stopHoverSound();
 
         _engine.QueueMainThreadAction(_cleanupPlayer);
         
@@ -180,15 +112,6 @@ public class HoverModule : AModule, IInputPart
 
         _aSound = I.Get<Boom.ISoundAPI>();
 
-        {
-            _soundMyEngine = _aSound.FindSound("sd_my_engine.ogg");
-            _soundMyEngine.Volume = 0f;
-            _soundMyEngine.IsLooped = true;
-            _soundMyEngine.Speed = 0.81f;
-            _soundMyEngine.SoundMask = 0xffffffff;
-        }
-
-
         InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
 
         _model = await I.Get<ModelCache>().LoadModel( 
@@ -196,24 +119,24 @@ public class HoverModule : AModule, IInputPart
             Url = ModelUrl,
             Params = instantiateModelParams});
 
-        Vector3 v3Ship = StartPosition;
-        Quaternion qShip = StartOrientation;
+        Vector3 v3Person = StartPosition;
+        Quaternion qPerson = StartOrientation;
 
         /*
-         * Create the ship entiiies. This needs to run in logical thread.
+         * Create the ship entities. This needs to run in logical thread.
          */
         _engine.QueueMainThreadAction(() =>
         {
-            _eShip = _engine.CreateEntity("RootScene.playership");
+            _ePerson = _engine.CreateEntity("RootScene.playerperson");
 
-            _aTransform.SetPosition(_eShip, v3Ship);
-            _aTransform.SetRotation(_eShip, qShip);
-            _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
-            _aTransform.SetCameraMask(_eShip, 0x0000ffff);
+            _aTransform.SetPosition(_ePerson, v3Person);
+            _aTransform.SetRotation(_ePerson, qPerson);
+            _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
+            _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
 
             {
                 builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, instantiateModelParams);
-                modelBuilder.BuildEntity(_eShip);
+                modelBuilder.BuildEntity(_ePerson);
                 _eAnimations = modelBuilder.GetAnimationsEntity();
             }
 
@@ -240,11 +163,11 @@ public class HoverModule : AModule, IInputPart
                 }
             }
 
-            _eShip.Set(new engine.joyce.components.PointLight(
+            _ePerson.Set(new engine.joyce.components.PointLight(
                 new Vector3(0f, 0f, -1f),
                 new Vector4(1.0f, 0.95f, 0.9f, 1f),
                 10f, 0.9f));
-            _eShip.Set(
+            _ePerson.Set(
                 new engine.gongzuo.components.LuaScript(
                     new LuaScriptEntry()
                     {
@@ -263,7 +186,7 @@ public class HoverModule : AModule, IInputPart
             engine.physics.CollisionProperties collisionProperties =
                 new engine.physics.CollisionProperties
                 {
-                    Entity = _eShip,
+                    Entity = _ePerson,
                     Flags =
                         CollisionProperties.CollisionFlags.IsTangible
                         | CollisionProperties.CollisionFlags.IsDetectable
@@ -277,30 +200,30 @@ public class HoverModule : AModule, IInputPart
                 uint uintShape = (uint)engine.physics.actions.CreateSphereShape.Execute(
                     _engine.PLog, _engine.Simulation,
                     Single.Max(1.4f, bodyRadius), out var pbody);
-                var inertia = pbody.ComputeInertia(MassShip);
-                po = new engine.physics.Object(_engine, _eShip,
-                        v3Ship, qShip, inertia, new TypedIndex() { Packed = uintShape })
+                var inertia = pbody.ComputeInertia(MassPerson);
+                po = new engine.physics.Object(_engine, _ePerson,
+                        v3Person, qPerson, inertia, new TypedIndex() { Packed = uintShape })
                     { CollisionProperties = collisionProperties }.AddContactListener();
-                _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             }
 
-            _eShip.Set(new engine.physics.components.Body(po, _prefShip));
-            _eShip.Set(new engine.behave.components.Behavior(new DriveCarBehavior() { MassShip = MassShip }));
+            _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
+            _ePerson.Set(new engine.behave.components.Behavior(new DriveCarBehavior() { MassShip = MassPerson }));
 
             /*
              * Now add an entity as a child that will display in the map
              */
-            _eMapShip = _engine.CreateEntity("RootScene.playership.map");
-            I.Get<HierarchyApi>().SetParent(_eMapShip, _eShip);
-            I.Get<TransformApi>().SetTransforms(_eMapShip, true,
+            _eMapPerson = _engine.CreateEntity("RootScene.playership.map");
+            I.Get<HierarchyApi>().SetParent(_eMapPerson, _ePerson);
+            I.Get<TransformApi>().SetTransforms(_eMapPerson, true,
                 nogame.modules.map.Module.MapCameraMask,
                 Quaternion.Identity, new Vector3(0f, 0f, 0f));
-            _eMapShip.Set(new engine.world.components.MapIcon()
+            _eMapPerson.Set(new engine.world.components.MapIcon()
                 { Code = engine.world.components.MapIcon.IconCode.Player0 });
 
             _engine.OnLogicalFrame += _onLogicalFrame;
 
-            _engine.Player.Value = _eShip;
+            _engine.Player.Value = _ePerson;
 
             M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 

@@ -35,12 +35,11 @@ public class MainPlayModule : engine.AModule, IInputPart
 {
     public static float MY_Z_ORDER = 24.9f;
 
-    static public readonly string PhysicsName = "nogame.playerhover";
-
-    static public readonly string EventCodeGetOutOfHover = "nogame.module.playerhover.GetOutOfHover";
-    static public readonly string EventCodeGetIntoHover = "nogame.module.playerhover.GetIntoHover";
-    static public readonly string EventCodeIsInHover = "nogame.module.playerhover.IsInHover";
-    static public readonly string EventCodeIsOutOfHover = "nogame.module.playerhover.IsOutOfHover";
+    public static readonly string EventCodeGetOutOfHover = "nogame.module.playerhover.GetOutOfHover";
+    public static readonly string EventCodeGetIntoHover = "nogame.module.playerhover.GetIntoHover";
+    public static readonly string EventCodeIsInHover = "nogame.module.playerhover.IsInHover";
+    public static readonly string EventCodeIsOutOfHover = "nogame.module.playerhover.IsOutOfHover";
+    public static readonly string EventCodeIsPersonDeactivated = "nogame.module.playerhover.IsPersonDeactivated";
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
