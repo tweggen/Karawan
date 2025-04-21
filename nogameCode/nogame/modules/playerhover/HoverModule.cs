@@ -135,13 +135,39 @@ public class HoverModule : AModule, IInputPart
          */
         _updateSound(velShip);
     }
+
+
+    private void _stopHoverSound()
+    {
+        if (_isMyEnginePlaying)
+        {
+            _soundMyEngine.Stop();
+            _isMyEnginePlaying = false;
+        }
+        _soundMyEngine.Volume = 0f;
+        _soundMyEngine.Speed = 0.8f;
+        _soundMyEngine.Dispose();
+        _soundMyEngine = null;
+    }
+
+    
+    private void _cleanupPlayer()
+    {
+        _engine.Player.Value = default;
+        I.Get<HierarchyApi>().Delete(ref _eShip);
+        
+        I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsOutOfHover, ""));
+    }
     
     
     public override void ModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
-
         _engine.OnLogicalFrame -= _onLogicalFrame;
+
+        _stopHoverSound();
+
+        _engine.QueueMainThreadAction(_cleanupPlayer);
         
         _engine.RemoveModule(this);
 

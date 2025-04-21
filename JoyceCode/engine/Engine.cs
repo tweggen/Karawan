@@ -515,7 +515,7 @@ public class Engine
             queueLeft = _queueEntitySetupActions.Count;
         }
 
-        if (0 < queueLeft)
+        if (30 < queueLeft)
         {
             Trace($"Left {queueLeft} items in setup actions queue.");
         }

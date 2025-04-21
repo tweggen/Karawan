@@ -40,6 +40,7 @@ public class MainPlayModule : engine.AModule, IInputPart
     static public readonly string EventCodeGetOutOfHover = "nogame.module.playerhover.GetOutOfHover";
     static public readonly string EventCodeGetIntoHover = "nogame.module.playerhover.GetIntoHover";
     static public readonly string EventCodeIsInHover = "nogame.module.playerhover.IsInHover";
+    static public readonly string EventCodeIsOutOfHover = "nogame.module.playerhover.IsOutOfHover";
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -125,6 +126,11 @@ public class MainPlayModule : engine.AModule, IInputPart
     {
         Trace("Called.");
         DeactivateMyModule<HoverModule>();
+    }
+
+
+    private void _onIsOutOfHover(Event ev)
+    {
         lock (_lo)
         {
             // Send is outside event?
@@ -168,7 +174,8 @@ public class MainPlayModule : engine.AModule, IInputPart
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetIntoHover, _onGetIntoHover);
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsInHover, _onIsInHover);
-        
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsOutOfHover, _onIsOutOfHover);
+
         _engine.RemoveModule(this);
 
         base.ModuleDeactivate();
@@ -214,6 +221,7 @@ public class MainPlayModule : engine.AModule, IInputPart
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
         I.Get<SubscriptionManager>().Subscribe(EventCodeIsInHover, _onIsInHover);
+        I.Get<SubscriptionManager>().Subscribe(EventCodeIsOutOfHover, _onIsOutOfHover);
         
         _engine.Run(_setupPlayer);
     }

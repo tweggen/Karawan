@@ -67,7 +67,7 @@ namespace engine
                         {
                             _stopwatch.Stop();
                             int queueLeft = _queueActions.Count;
-                            if (10 < queueLeft)
+                            if (20 < queueLeft)
                             {
                                 Trace($"Left {queueLeft} actions in queue {_name}");
                             }
