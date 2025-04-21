@@ -53,9 +53,6 @@ public class WalkModule : AModule, IInputPart
       */
     private Boom.ISoundAPI _aSound;
     
-    // TXWTODO: Add tap sound
-
-    private bool _isGetInTriggered = false;
     public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type != Event.INPUT_BUTTON_PRESSED)
@@ -68,13 +65,8 @@ public class WalkModule : AModule, IInputPart
             /*
              * We are supposed to get out of the car.
              */
-            if (false == _isGetInTriggered)
-            {
-                // TXWTODO: Check if we are even close
-                _isGetInTriggered = true;
-                ev.IsHandled = true;
-                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetIntoHover, ""));
-            }
+            ev.IsHandled = true;
+            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetIntoHover, ""));
         }
     }
 

@@ -100,7 +100,6 @@ public class HoverModule : AModule, IInputPart
     }
 
 
-    private bool _isGetOutTriggered = false;
     public void InputPartOnInputEvent(Event ev)
     {
         if (ev.Type != Event.INPUT_BUTTON_PRESSED)
@@ -110,15 +109,8 @@ public class HoverModule : AModule, IInputPart
 
         if (ev.Code == "<change>")
         {
-            /*
-             * We are supposed to get out of the car.
-             */
-            if (false == _isGetOutTriggered)
-            {
-                _isGetOutTriggered = true;
                 ev.IsHandled = true;
                 I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetOutOfHover, ""));
-            }
         }
     }
 

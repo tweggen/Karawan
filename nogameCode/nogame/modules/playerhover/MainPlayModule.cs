@@ -71,7 +71,7 @@ public class MainPlayModule : engine.AModule, IInputPart
     {
         Deactivated,
         Activating,
-        Activated,ssddd
+        Activated,
         Deactivating
     }
 
