@@ -200,7 +200,7 @@ public class WalkModule : AModule, IInputPart
             }
 
             _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
-            _ePerson.Set(new engine.behave.components.Behavior(new DriveCarBehavior() { MassShip = MassPerson }));
+            _ePerson.Set(new engine.behave.components.Behavior(new WalkBehavior() { MassTarget = MassPerson }));
 
             /*
              * Now add an entity as a child that will display in the map

@@ -13,7 +13,7 @@ namespace nogame.modules.playerhover;
  * - registers collisions with cubes, polytopes and other cars.
  * - creates the underlying wasd controller that actually controls the car.
  */
-public class DriveCarBehavior : ABehavior
+public class HoverBehavior : ABehavior
 {
     public static string PLAYER_COLLISION_ANONYMOUS = "nogame.playerhover.collision.anonymous";
     public static string PLAYER_COLLISION_CUBE = "nogame.playerhover.collision.cube";
@@ -21,11 +21,10 @@ public class DriveCarBehavior : ABehavior
     public static string PLAYER_COLLISION_POLYTOPE = "nogame.playerhover.collision.polytope";
     
     private HoverController _controllerHoverController = null;
-    private engine.Engine _engine = null;
-    private DefaultEcs.Entity _eShip;
+    private DefaultEcs.Entity _eTarget;
     private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
 
-    public required float MassShip { get; init; }
+    public required float MassTarget { get; init; }
     
     public override void OnCollision(ContactEvent cev)
     {
@@ -77,18 +76,17 @@ public class DriveCarBehavior : ABehavior
     public override void OnAttach(in engine.Engine engine0, in Entity entity)
     {
         _engine = engine0;
-        _eShip = entity;
+        _eTarget = entity;
         
         /*
          * And the ship's controller
          */
-        
-        _controllerHoverController = new HoverController(_eShip, MassShip);
+
+        _controllerHoverController = new HoverController()
+        {
+            Target = _eTarget,
+            MassTarget = MassTarget
+        };
         _controllerHoverController.ModuleActivate();
-    }
-
-
-    public DriveCarBehavior()
-    {
     }
 }

@@ -1,6 +1,7 @@
 ﻿using DefaultEcs;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Formats.Tar;
 using System.Numerics;
 using engine;
@@ -23,10 +24,13 @@ internal class HoverController : AModule
     
     
     private DefaultEcs.Entity _eTarget;
+    public DefaultEcs.Entity Target { get => _eTarget; set => _eTarget = value; }
+
+
+    private float _massTarget;
+    public float MassTarget { get => _massTarget; set => _massTarget = value; }
 
     private BepuPhysics.BodyReference _prefTarget;
-
-    private float _massShip;
 
     public float LinearThrust { get; set; } = 15f;
     public float AngularThrust { get; set; } = 40.0f;
@@ -328,8 +332,8 @@ internal class HoverController : AModule
             /*
              * First apply all impulses, angular and linear.
              */
-            _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massShip, new Vector3(0f, 0f, 0f));
-            _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massShip);
+            _prefTarget.ApplyImpulse(vTotalImpulse * dt * _massTarget, new Vector3(0f, 0f, 0f));
+            _prefTarget.ApplyAngularImpulse(vTotalAngular * dt * _massTarget);
             
             /*
              * Now manipulate the velocity according to the spec.
@@ -375,25 +379,14 @@ internal class HoverController : AModule
 
     public override void ModuleActivate()
     {
+        Debug.Assert(_eTarget != default);
+        Debug.Assert(_massTarget != 0f);
+        
         base.ModuleActivate();
 
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
-    }
-
-
-    public void InputPartOnInputEvent(engine.news.Event ev)
-    {
-    }
-
-
-    public HoverController(
-        in DefaultEcs.Entity eTarget,
-        in float massShip)
-    {
-        _eTarget = eTarget;
-        _massShip = massShip;
     }
 }

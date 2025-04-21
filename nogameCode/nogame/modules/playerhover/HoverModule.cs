@@ -109,8 +109,8 @@ public class HoverModule : AModule, IInputPart
 
         if (ev.Code == "<change>")
         {
-                ev.IsHandled = true;
-                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetOutOfHover, ""));
+            ev.IsHandled = true;
+            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetOutOfHover, ""));
         }
     }
 
@@ -277,7 +277,7 @@ public class HoverModule : AModule, IInputPart
             }
 
             _eShip.Set(new engine.physics.components.Body(po, _prefShip));
-            _eShip.Set(new engine.behave.components.Behavior(new DriveCarBehavior() { MassShip = MassShip }));
+            _eShip.Set(new engine.behave.components.Behavior(new HoverBehavior() { MassTarget = MassShip }));
 
             /*
              * Now add an entity as a child that will display in the map

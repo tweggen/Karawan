@@ -146,6 +146,8 @@ public class DriveCarCollisionsModule : AModule
         var other = cev.ContactInfo.PropertiesB;
 
         _playCollisionSound();
+        
+        // TXWTODO: This shall be dependent on the person you are in the moment.
         _decreaseHealth(17);
     }
     
@@ -193,13 +195,13 @@ public class DriveCarCollisionsModule : AModule
         _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
         
         I.Get<SubscriptionManager>().Unsubscribe(
-            DriveCarBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+            HoverBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
-            DriveCarBehavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+            HoverBehavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
-            DriveCarBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+            HoverBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
-            DriveCarBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+            HoverBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
 
         _engine.RemoveModule(this);
 
@@ -228,13 +230,13 @@ public class DriveCarCollisionsModule : AModule
         _engine.AddModule(this);
 
         I.Get<SubscriptionManager>().Subscribe(
-            DriveCarBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
+            HoverBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
         I.Get<SubscriptionManager>().Subscribe(
-            DriveCarBehavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
+            HoverBehavior.PLAYER_COLLISION_CUBE, _onCubeCollision);
         I.Get<SubscriptionManager>().Subscribe(
-            DriveCarBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
+            HoverBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
         I.Get<SubscriptionManager>().Subscribe(
-            DriveCarBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
+            HoverBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
         
         _engine.Camera.AddOnChange(_onPlayerEntityChanged);
         
