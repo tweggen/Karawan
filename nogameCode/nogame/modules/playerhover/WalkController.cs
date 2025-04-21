@@ -47,12 +47,14 @@ public class WalkController : AModule
         Vector3 vTargetVelocity;
         Quaternion qTargetOrientation;
         Vector3 vTargetAngularVelocity;
+        Vector3 vTargetPosAdjust = Vector3.Zero;
         lock (_engine.Simulation)
         {
             vTargetPos = _prefTarget.Pose.Position;
             vTargetVelocity = _prefTarget.Velocity.Linear;
             vTargetAngularVelocity = _prefTarget.Velocity.Angular;
             qTargetOrientation = _prefTarget.Pose.Orientation;
+            Trace($"vTargetVelocity = {vTargetVelocity}, vTargetPos = {vTargetPos}");
         }
 
 
@@ -104,14 +106,18 @@ public class WalkController : AModule
         {
             vTargetVelocity = -vuFront * (5f / 3.6f);
         }
+        else
+        {
+            vTargetVelocity = Vector3.Zero;
+        }
 
         if (rightMotion > 0.2f)
         {
-            vTargetVelocity = 0.8f * vTargetVelocity + vuRight * (2f / 3.6f);
+            vTargetVelocity = 0.8f * Vector3.Dot(vTargetVelocity, vuFront) * vuFront + vuRight * (2f / 3.6f);
         }
         else if (rightMotion < -0.2f)
         {
-            vTargetVelocity = 0.8f * vTargetVelocity - vuRight * (2f / 3.6f);
+            vTargetVelocity = 0.8f * Vector3.Dot(vTargetVelocity, vuFront) * vuFront - vuRight * (2f / 3.6f);
         }
 
         /*
@@ -133,7 +139,8 @@ public class WalkController : AModule
                  * Are we below ground?
                  */
                 // TXWTODO: Emit ground hit if I was above                
-                vTargetPos.Y = heightAtTarget;
+                vTargetPosAdjust.Y = heightAtTarget - vTargetPos.Y;
+                vTargetVelocity.Y = 0;
             }
             else
             {
@@ -150,12 +157,13 @@ public class WalkController : AModule
             // TXWTODO: Add jump.
         }
         
-        lock (_engine.Simulation) 
+        lock (_engine.Simulation)
         {
             _prefTarget.Velocity.Linear = vTargetVelocity;
             _prefTarget.Velocity.Angular = vTargetAngularVelocity;
-            _prefTarget.Pose.Position = vTargetPos;
+            _prefTarget.Pose.Position += vTargetPosAdjust;
             _prefTarget.Pose.Orientation = qTargetOrientation;
+            _prefTarget.Awake = true;
         }
     }
 

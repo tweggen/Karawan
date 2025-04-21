@@ -155,17 +155,6 @@ public class WalkModule : AModule, IInputPart
                 }
             }
 
-            _ePerson.Set(new engine.joyce.components.PointLight(
-                new Vector3(0f, 0f, -1f),
-                new Vector4(1.0f, 0.95f, 0.9f, 1f),
-                10f, 0.9f));
-            _ePerson.Set(
-                new engine.gongzuo.components.LuaScript(
-                    new LuaScriptEntry()
-                    {
-                        LuaScript = "print(\"Script successfully has been loaded.\")"
-                    }));
-
             /*
              * I have absolutely no clue why, but with the real radius of the model (1.039f) the
              * thing bounces away to nirvana very soon.
