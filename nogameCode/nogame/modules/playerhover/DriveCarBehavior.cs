@@ -20,7 +20,7 @@ public class DriveCarBehavior : ABehavior
     public static string PLAYER_COLLISION_CAR3 = "nogame.playerhover.collision.car3";
     public static string PLAYER_COLLISION_POLYTOPE = "nogame.playerhover.collision.polytope";
     
-    private WASDPhysics _controllerWASDPhysics = null;
+    private HoverController _controllerHoverController = null;
     private engine.Engine _engine = null;
     private DefaultEcs.Entity _eShip;
     private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
@@ -67,9 +67,9 @@ public class DriveCarBehavior : ABehavior
 
     public override void OnDetach(in Entity entity)
     {
-        _controllerWASDPhysics.ModuleDeactivate();
-        _controllerWASDPhysics.Dispose();
-        _controllerWASDPhysics = null;
+        _controllerHoverController.ModuleDeactivate();
+        _controllerHoverController.Dispose();
+        _controllerHoverController = null;
         _engine = null;
     }
     
@@ -83,8 +83,8 @@ public class DriveCarBehavior : ABehavior
          * And the ship's controller
          */
         
-        _controllerWASDPhysics = new WASDPhysics(_eShip, MassShip);
-        _controllerWASDPhysics.ModuleActivate();
+        _controllerHoverController = new HoverController(_eShip, MassShip);
+        _controllerHoverController.ModuleActivate();
     }
 
 

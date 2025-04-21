@@ -9,18 +9,22 @@ using engine;
 using engine.gongzuo;
 using engine.joyce;
 using engine.joyce.components;
+using engine.news;
 using engine.physics;
 using engine.world;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
-public class HoverModule : AModule
+public class HoverModule : AModule, IInputPart
 {
+    public static float MY_Z_ORDER = 25f;
+
     static public readonly string PhysicsName = "nogame.playerhover";
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
+        new SharedModule<InputEventPipeline>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsModule>(),
         new MyModule<nogame.modules.playerhover.MainPlayModule>() { ShallActivate =  false }
@@ -97,6 +101,29 @@ public class HoverModule : AModule
     }
 
 
+    private bool _isGetOutTriggered = false;
+    public void InputPartOnInputEvent(Event ev)
+    {
+        if (ev.Type != Event.INPUT_BUTTON_PRESSED)
+        {
+            return;
+        }
+
+        if (ev.Code == "<change>")
+        {
+            /*
+             * We are supposed to get out of the car.
+             */
+            if (false == _isGetOutTriggered)
+            {
+                _isGetOutTriggered = true;
+                ev.IsHandled = true;
+                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeGetOutOfHover, ""));
+            }
+        }
+    }
+
+    
     private void _onLogicalFrame(object? sender, float dt)
     {
         if (!_eShip.Has<Transform3ToWorld>()) return;
@@ -108,12 +135,12 @@ public class HoverModule : AModule
          */
         _updateSound(velShip);
     }
-
-
-
+    
     
     public override void ModuleDeactivate()
     {
+        M<InputEventPipeline>().RemoveInputPart(this);
+
         _engine.OnLogicalFrame -= _onLogicalFrame;
         
         _engine.RemoveModule(this);
@@ -250,6 +277,12 @@ public class HoverModule : AModule
 
             _engine.Player.Value = _eShip;
 
+            M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+
+            /*
+             * Finally, we are boarded.
+             */
+            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsInHover, ""));
         }); // End of queue mainthread action.
     }
 

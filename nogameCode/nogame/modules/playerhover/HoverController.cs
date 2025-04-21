@@ -12,14 +12,13 @@ using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
-internal class WASDPhysics : AModule, IInputPart
+internal class HoverController : AModule
 {
     public static float MY_Z_ORDER = 25f;
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<nogame.modules.AutoSave>(),
-        new SharedModule<InputEventPipeline>()        
+        new SharedModule<nogame.modules.AutoSave>()
     };
     
     
@@ -370,7 +369,6 @@ internal class WASDPhysics : AModule, IInputPart
     {
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        M<InputEventPipeline>().RemoveInputPart(this);
         base.ModuleDeactivate();
     }
 
@@ -381,7 +379,6 @@ internal class WASDPhysics : AModule, IInputPart
 
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 
-        M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
@@ -392,7 +389,7 @@ internal class WASDPhysics : AModule, IInputPart
     }
 
 
-    public WASDPhysics(
+    public HoverController(
         in DefaultEcs.Entity eTarget,
         in float massShip)
     {

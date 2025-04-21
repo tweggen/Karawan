@@ -31,10 +31,16 @@ namespace nogame.modules.playerhover;
  * - manage the sound of my own car.
  * - create the ship player entity
  */
-public class MainPlayModule : engine.AModule
+public class MainPlayModule : engine.AModule, IInputPart
 {
+    public static float MY_Z_ORDER = 24f;
+
     static public readonly string PhysicsName = "nogame.playerhover";
 
+    static public readonly string EventCodeGetOutOfHover = "nogame.module.playerhover.GetOutOfHover";
+    static public readonly string EventCodeGetIntoHover = "nogame.module.playerhover.GetIntoHover";
+    static public readonly string EventCodeIsInHover = "nogame.module.playerhover.IsInHover";
+    
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
@@ -45,6 +51,47 @@ public class MainPlayModule : engine.AModule
     
     private PlayerViewer _playerViewer;
     
+    enum PlayerState {
+        Setup,
+        InHover,
+        GettingOut,
+        Outside,
+        GettingInHover
+    }
+    
+    PlayerState _playerState = PlayerState.Setup;
+    
+    
+    public void InputPartOnInputEvent(Event ev)
+    {
+        lock (_lo)
+        {
+            switch (_playerState)
+            {
+                case PlayerState.Outside:
+                    if (ev.Type != Event.INPUT_BUTTON_PRESSED)
+                    {
+                        return;
+                    }
+
+                    if (ev.Code == "<change>")
+                    {
+                        /*
+                         * We are supposed to get out of the car.
+                         */
+                        _playerState = PlayerState.GettingInHover;
+
+                        I.Get<EventQueue>().Push(new Event(EventCodeGetIntoHover, ""));
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+
     private void _onLogicalFrame(object? sender, float dt)
     {
     }
@@ -74,6 +121,42 @@ public class MainPlayModule : engine.AModule
     }
 
 
+    private void _onGetOutOfHover(Event ev)
+    {
+        Trace("Called.");
+        DeactivateMyModule<HoverModule>();
+        lock (_lo)
+        {
+            // Send is outside event?
+            _playerState = PlayerState.Outside;
+        }
+    }
+
+
+    private void _onGetIntoHover(Event ev)
+    {
+        Trace("Called.");
+        DeactivateMyModule<HoverModule>();
+        /*
+         * We will change state as soon we received the boarded event.
+         */
+    }
+
+
+    private void _onIsInHover(Event ev)
+    {
+        Trace("Called.");
+        /*
+         * The module successfully has been activated,
+         * change state.
+         */
+        lock (_lo)
+        {
+            _playerState = PlayerState.InHover;
+        }
+    }
+
+
     public override void ModuleDeactivate()
     {
         // TXWTODO: Deactivate player entity. But we don't remove the player entity at all...
@@ -81,6 +164,10 @@ public class MainPlayModule : engine.AModule
         I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
         
         _engine.OnLogicalFrame -= _onLogicalFrame;
+        
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetIntoHover, _onGetIntoHover);
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsInHover, _onIsInHover);
         
         _engine.RemoveModule(this);
 
@@ -123,6 +210,11 @@ public class MainPlayModule : engine.AModule
         base.ModuleActivate();
         _engine.AddModule(this);
 
+ 
+        I.Get<SubscriptionManager>().Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
+        I.Get<SubscriptionManager>().Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
+        I.Get<SubscriptionManager>().Subscribe(EventCodeIsInHover, _onIsInHover);
+        
         _engine.Run(_setupPlayer);
     }
 }

@@ -171,6 +171,9 @@ public class Platform : engine.IPlatform
             case Key.E:
                 code = "e";
                 break;
+            case Key.F:
+                code = "f";
+                break;
             case Key.S:
                 code = "s";
                 break;
