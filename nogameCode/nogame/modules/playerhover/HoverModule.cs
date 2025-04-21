@@ -155,7 +155,7 @@ public class HoverModule : AModule, IInputPart
         _engine.Player.Value = default;
         I.Get<HierarchyApi>().Delete(ref _eShip);
         
-        I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsOutOfHover, ""));
+        I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsHoverDeactivated, ""));
     }
     
     
@@ -307,7 +307,7 @@ public class HoverModule : AModule, IInputPart
             /*
              * Finally, we are boarded.
              */
-            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsInHover, ""));
+            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsHoverActivated, ""));
         }); // End of queue mainthread action.
     }
 

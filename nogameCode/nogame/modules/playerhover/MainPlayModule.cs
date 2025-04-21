@@ -37,9 +37,11 @@ public class MainPlayModule : engine.AModule, IInputPart
 
     public static readonly string EventCodeGetOutOfHover = "nogame.module.playerhover.GetOutOfHover";
     public static readonly string EventCodeGetIntoHover = "nogame.module.playerhover.GetIntoHover";
-    public static readonly string EventCodeIsInHover = "nogame.module.playerhover.IsInHover";
-    public static readonly string EventCodeIsOutOfHover = "nogame.module.playerhover.IsOutOfHover";
+    
+    public static readonly string EventCodeIsHoverActivated = "nogame.module.playerhover.IsHoverActivated";
+    public static readonly string EventCodeIsPersonActivated = "nogame.module.playerhover.IsPersonActivated";
     public static readonly string EventCodeIsPersonDeactivated = "nogame.module.playerhover.IsPersonDeactivated";
+    public static readonly string EventCodeIsHoverDeactivated = "nogame.module.playerhover.IsHoverDeactivated";
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -47,7 +49,8 @@ public class MainPlayModule : engine.AModule, IInputPart
         new SharedModule<InputEventPipeline>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.ClusterMusicModule>(),
-        new MyModule<nogame.modules.playerhover.HoverModule>() { ShallActivate =  false }
+        new MyModule<nogame.modules.playerhover.HoverModule>() { ShallActivate =  false },
+        new MyModule<nogame.modules.playerhover.WalkModule>() { ShallActivate =  false }
     };
     
     private PlayerViewer _playerViewer;
@@ -55,12 +58,25 @@ public class MainPlayModule : engine.AModule, IInputPart
     enum PlayerState {
         Setup,
         InHover,
-        GettingOut,
+        WaitingForHoverDeactivated,
+        WaitingForPersonActivated,
         Outside,
-        GettingInHover
+        WaitingForPersonDeactivated,
+        WaitingForHoverActivated
     }
     
     PlayerState _playerState = PlayerState.Setup;
+
+    enum FigureState
+    {
+        Deactivated,
+        Activating,
+        Activated,ssddd
+        Deactivating
+    }
+
+    private FigureState _hoverState = FigureState.Deactivated;
+    private FigureState _personState = FigureState.Deactivated;
     
     
     public void InputPartOnInputEvent(Event ev)
@@ -128,19 +144,34 @@ public class MainPlayModule : engine.AModule, IInputPart
                 return;
             }
 
-            _playerState = PlayerState.GettingOut;
+            _playerState = PlayerState.WaitingForHoverDeactivated;
         }
         DeactivateMyModule<HoverModule>();
     }
 
 
-    private void _onIsOutOfHover(Event ev)
+    private void _onIsHoverDeactivated(Event ev)
     {
         lock (_lo)
         {
-            if (_playerState != PlayerState.GettingOut)
+            if (_playerState != PlayerState.WaitingForHoverDeactivated)
             {
-                Warning($"Expected state PlayerState.GettingOut, had {_playerState}");
+                Warning($"Expected state PlayerState.WaitingForOutside, had {_playerState}");
+                return;
+            }
+            _playerState = PlayerState.WaitingForPersonActivated;
+        }
+        ActivateMyModule<WalkModule>();
+    }
+
+
+    private void _onIsPersonActivated(Event ev)
+    {
+        lock (_lo)
+        {
+            if (_playerState != PlayerState.WaitingForPersonActivated)
+            {
+                Warning($"Expected state PlayerState.WaitingForPersonActivated, had {_playerState}");
                 return;
             }
             _playerState = PlayerState.Outside;
@@ -159,31 +190,36 @@ public class MainPlayModule : engine.AModule, IInputPart
                 Warning($"Expected state PlayerState.Outside, had {_playerState}");
                 return;
             }
-            _playerState = PlayerState.GettingInHover;
+            _playerState = PlayerState.WaitingForPersonDeactivated;
         }
-        ActivateMyModule<HoverModule>();
-        /*
-         * We will change state as soon we received the boarded event.
-         */
+        DeactivateMyModule<WalkModule>();
     }
 
 
-    private void _onIsInHover(Event ev)
+    private void _onIsPersonDeactivated(Event ev)
     {
-        Trace("Called.");
-
-        /*
-         * The module successfully has been activated,
-         * change state.
-         */
         lock (_lo)
         {
-            if (_playerState != PlayerState.GettingInHover && _playerState != PlayerState.Setup)
+            if (_playerState != PlayerState.WaitingForPersonDeactivated)
             {
-                Warning($"Expected state PlayerState.GettingInHover, had {_playerState}");
+                Warning($"Expected state PlayerState.WaitingForPersonDeactivated, had {_playerState}");
                 return;
             }
+            _playerState = PlayerState.WaitingForHoverActivated;
+        }
+        ActivateMyModule<HoverModule>();
+    }
 
+
+    private void _onIsHoverActivated(Event ev)
+    {
+        lock (_lo)
+        {
+            if (_playerState != PlayerState.WaitingForHoverActivated)
+            {
+                Warning($"Expected state PlayerState.WaitingForHoverActivated, had {_playerState}");
+                return;
+            }
             _playerState = PlayerState.InHover;
         }
     }
@@ -198,8 +234,10 @@ public class MainPlayModule : engine.AModule, IInputPart
         
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetIntoHover, _onGetIntoHover);
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsInHover, _onIsInHover);
-        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsOutOfHover, _onIsOutOfHover);
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsPersonDeactivated, _onIsPersonDeactivated);
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsHoverActivated, _onIsHoverActivated);
+        I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsPersonActivated, _onIsPersonActivated);
 
         _engine.RemoveModule(this);
 
@@ -231,7 +269,13 @@ public class MainPlayModule : engine.AModule, IInputPart
              */
             _playerViewer = new(_engine);
             I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
-            
+
+
+            lock (_lo)
+            {
+                _playerState = PlayerState.WaitingForHoverActivated;
+            }
+
             ActivateMyModule<HoverModule>();
             
             M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
@@ -248,8 +292,10 @@ public class MainPlayModule : engine.AModule, IInputPart
  
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
-        I.Get<SubscriptionManager>().Subscribe(EventCodeIsInHover, _onIsInHover);
-        I.Get<SubscriptionManager>().Subscribe(EventCodeIsOutOfHover, _onIsOutOfHover);
+        I.Get<SubscriptionManager>().Subscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);
+        I.Get<SubscriptionManager>().Subscribe(EventCodeIsPersonDeactivated, _onIsPersonDeactivated);
+        I.Get<SubscriptionManager>().Subscribe(EventCodeIsHoverActivated, _onIsHoverActivated);
+        I.Get<SubscriptionManager>().Subscribe(EventCodeIsPersonActivated, _onIsPersonActivated);
         
         _engine.Run(_setupPlayer);
     }

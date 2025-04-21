@@ -230,7 +230,7 @@ public class WalkModule : AModule, IInputPart
             /*
              * Finally, we are boarded.
              */
-            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsInHover, ""));
+            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsPersonActivated, ""));
         }); // End of queue mainthread action.
     }
 
