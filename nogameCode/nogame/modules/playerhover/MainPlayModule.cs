@@ -33,7 +33,7 @@ namespace nogame.modules.playerhover;
  */
 public class MainPlayModule : engine.AModule, IInputPart
 {
-    public static float MY_Z_ORDER = 24f;
+    public static float MY_Z_ORDER = 24.9f;
 
     static public readonly string PhysicsName = "nogame.playerhover";
 
@@ -45,6 +45,7 @@ public class MainPlayModule : engine.AModule, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>(),
+        new SharedModule<InputEventPipeline>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.ClusterMusicModule>(),
         new MyModule<nogame.modules.playerhover.HoverModule>() { ShallActivate =  false }
@@ -77,11 +78,6 @@ public class MainPlayModule : engine.AModule, IInputPart
 
                     if (ev.Code == "<change>")
                     {
-                        /*
-                         * We are supposed to get out of the car.
-                         */
-                        _playerState = PlayerState.GettingInHover;
-
                         I.Get<EventQueue>().Push(new Event(EventCodeGetIntoHover, ""));
                     }
 
@@ -125,6 +121,16 @@ public class MainPlayModule : engine.AModule, IInputPart
     private void _onGetOutOfHover(Event ev)
     {
         Trace("Called.");
+        lock (_lo)
+        {
+            if (_playerState != PlayerState.InHover)
+            {
+                Warning($"Expected state PlayerState.InHover, had {_playerState}");
+                return;
+            }
+
+            _playerState = PlayerState.GettingOut;
+        }
         DeactivateMyModule<HoverModule>();
     }
 
@@ -133,7 +139,11 @@ public class MainPlayModule : engine.AModule, IInputPart
     {
         lock (_lo)
         {
-            // Send is outside event?
+            if (_playerState != PlayerState.GettingOut)
+            {
+                Warning($"Expected state PlayerState.GettingOut, had {_playerState}");
+                return;
+            }
             _playerState = PlayerState.Outside;
         }
     }
@@ -142,7 +152,17 @@ public class MainPlayModule : engine.AModule, IInputPart
     private void _onGetIntoHover(Event ev)
     {
         Trace("Called.");
-        DeactivateMyModule<HoverModule>();
+ 
+        lock (_lo)  
+        {
+            if (_playerState != PlayerState.Outside)
+            {
+                Warning($"Expected state PlayerState.Outside, had {_playerState}");
+                return;
+            }
+            _playerState = PlayerState.GettingInHover;
+        }
+        ActivateMyModule<HoverModule>();
         /*
          * We will change state as soon we received the boarded event.
          */
@@ -152,12 +172,19 @@ public class MainPlayModule : engine.AModule, IInputPart
     private void _onIsInHover(Event ev)
     {
         Trace("Called.");
+
         /*
          * The module successfully has been activated,
          * change state.
          */
         lock (_lo)
         {
+            if (_playerState != PlayerState.GettingInHover && _playerState != PlayerState.Setup)
+            {
+                Warning($"Expected state PlayerState.GettingInHover, had {_playerState}");
+                return;
+            }
+
             _playerState = PlayerState.InHover;
         }
     }
@@ -165,8 +192,7 @@ public class MainPlayModule : engine.AModule, IInputPart
 
     public override void ModuleDeactivate()
     {
-        // TXWTODO: Deactivate player entity. But we don't remove the player entity at all...
-        // _engine.SetPlayerEntity(new DefaultEcs.Entity());
+        M<InputEventPipeline>().RemoveInputPart(this);
         I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
         
         _engine.OnLogicalFrame -= _onLogicalFrame;
@@ -208,6 +234,9 @@ public class MainPlayModule : engine.AModule, IInputPart
             I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
             
             ActivateMyModule<HoverModule>();
+            
+            M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+            
         }); // End of queue mainthread action.
     }
 
