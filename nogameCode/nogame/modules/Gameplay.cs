@@ -14,7 +14,7 @@ namespace nogame.modules;
 public class Gameplay : AModule, IInputPart
 {
     public float MY_Z_ORDER { get; set; } = 24f;
-
+    
     private builtin.controllers.FollowCameraController _ctrlFollowCamera;
 
     private Entity _eCurrentCamera;
@@ -101,10 +101,12 @@ public class Gameplay : AModule, IInputPart
 
     private void _killOldCameraController()
     {
-        DeactivateMyModule<FollowCameraController>();
-
-        _eCurrentTarget = default;
-        _eCurrentCamera = default;
+        if (IsMyModuleActive<FollowCameraController>())
+        {
+            DeactivateMyModule<FollowCameraController>();
+            _eCurrentTarget = default;
+            _eCurrentCamera = default;
+        }
     }
     
 
@@ -149,8 +151,7 @@ public class Gameplay : AModule, IInputPart
             _eCurrentCamera = _eDesiredCamera;
             _eCurrentTarget = _eDesiredTarget;
         }
-
-
+        
         _createFollowCameraController(eDesiredCamera, eDesiredTarget);
     }
 

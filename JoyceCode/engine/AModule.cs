@@ -32,6 +32,13 @@ public class ModuleTracker : IDisposable
             return null;
         }
     }
+
+    
+    public bool IsMyModuleActive<T>() where T : class, IModule
+    {
+        IModule myModule = M<T>();
+        return myModule.IsModuleActive();
+    }
     
     
     public void ActivateMyModule<T>() where T : class, IModule
@@ -162,7 +169,8 @@ public abstract class AModule : IModule
     protected T M<T>() where T : class => _moduleTracker.M<T>();
     protected void ActivateMyModule<T>() where T : class, IModule => _moduleTracker.ActivateMyModule<T>();
     protected void DeactivateMyModule<T>() where T : class, IModule => _moduleTracker.DeactivateMyModule<T>();
-
+    protected bool IsMyModuleActive<T>() where T : class, IModule => _moduleTracker.IsMyModuleActive<T>();
+    
 
     public virtual void ModuleDeactivate() => _moduleTracker.ModuleDeactivate();
 
