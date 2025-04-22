@@ -12,6 +12,13 @@ using static engine.Logger;
 
 namespace nogame.modules;
 
+
+/**
+ * Implements way of interaction on screen:
+ * - control of a playable device (controlled in MainPlayModule)
+ * - demo mode (controlled here, clean up)
+ * - (cut scene later on)
+ */
 public class Gameplay : AModule, IInputPart
 {
     public float MY_Z_ORDER { get; set; } = 24f;

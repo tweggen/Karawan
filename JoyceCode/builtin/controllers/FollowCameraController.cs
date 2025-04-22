@@ -39,8 +39,11 @@ public class FollowCameraController : AModule, IInputPart
     float _lastMouseMove = 0f;
     private bool _firstFrame = true;
     private bool _isInputEnabled = true;
+    private bool _mouseOffsetsCamera = false;
 
     private float _previousZoomDistance = 33f;
+    
+    public static string EventCodeRequestMode = "builtin.controllers.followCameraController.RequestMode";
 
     public float MY_Z_ORDER { get; set; } = 21f;
     
@@ -766,15 +769,19 @@ public class FollowCameraController : AModule, IInputPart
          * Look, how to deal with the mouse offset. If the camera quaternion is reasonably identical
          * to the object
          */
-        
-        // TXWTODO: Write me
-        
-        /*
-         * ramp down mouse offset after 1.5s of inactivity.
-         */
-        if (_lastMouseMove > MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT)
+
+        if (_mouseOffsetsCamera)
         {
-            _vMouseOffset *= MOUSE_RETURN_SLERP;
+            /*
+             * ramp down mouse offset after 1.5s of inactivity.
+             */
+            if (_lastMouseMove > MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT)
+            {
+                _vMouseOffset *= MOUSE_RETURN_SLERP;
+            }
+        }
+        else
+        {
         }
 
         _firstFrame = false;
@@ -810,8 +817,25 @@ public class FollowCameraController : AModule, IInputPart
     }
 
 
+    private void _onRequestMode(Event ev)
+    {
+        switch (ev.Type)
+        {
+            default:
+            case "MouseOffsetsCamera":
+                _mouseOffsetsCamera = true;
+                break;
+            case "MouseControlsCamera":
+                _mouseOffsetsCamera = false;
+                break;
+        }
+    }
+    
+    
     public override void ModuleDeactivate()
     {
+        I.Get<SubscriptionManager>().Subscribe(EventCodeRequestMode, _onRequestMode);
+
         _engine.OnLogicalFrame -= _onLogicalFrame;
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _destroyPhysics();
@@ -853,5 +877,7 @@ public class FollowCameraController : AModule, IInputPart
         _buildPhysics();
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.OnLogicalFrame += _onLogicalFrame;
+        
+        I.Get<SubscriptionManager>().Subscribe(EventCodeRequestMode, _onRequestMode);
     }
 }

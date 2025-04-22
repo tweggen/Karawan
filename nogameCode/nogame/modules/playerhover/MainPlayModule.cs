@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using builtin.controllers;
 using DefaultEcs;
 using engine;
 using engine.draw;
@@ -75,6 +76,7 @@ public class MainPlayModule : engine.AModule, IInputPart
         Deactivating
     }
 
+    
     private FigureState _hoverState = FigureState.Deactivated;
     private FigureState _personState = FigureState.Deactivated;
     
@@ -176,6 +178,7 @@ public class MainPlayModule : engine.AModule, IInputPart
             }
             _playerState = PlayerState.Outside;
         }
+        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventCodeRequestMode, "MouseControlsCamera"));
     }
 
 
@@ -222,6 +225,8 @@ public class MainPlayModule : engine.AModule, IInputPart
             }
             _playerState = PlayerState.InHover;
         }
+
+        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventCodeRequestMode, "MouseOffsetsCamera"));
     }
 
 
