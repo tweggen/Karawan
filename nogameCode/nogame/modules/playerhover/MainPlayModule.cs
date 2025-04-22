@@ -270,13 +270,21 @@ public class MainPlayModule : engine.AModule, IInputPart
             _playerViewer = new(_engine);
             I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
 
+#if true
+            lock (_lo)
+            {
+                _playerState = PlayerState.WaitingForPersonActivated;
+            }
 
+            ActivateMyModule<WalkModule>();
+#else
             lock (_lo)
             {
                 _playerState = PlayerState.WaitingForHoverActivated;
             }
 
             ActivateMyModule<HoverModule>();
+#endif
             
             M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
             

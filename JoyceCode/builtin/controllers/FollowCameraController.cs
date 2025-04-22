@@ -762,6 +762,13 @@ public class FollowCameraController : IInputPart
         _applyRealCamera(vCarrotPos, vRealCameraPosition, vPerfectCameraPos, qUserCameraOrientation);
 
         /*
+         * Look, how to deal with the mouse offset. If the camera quaternion is reasonably identical
+         * to the object
+         */
+        
+        // TXWTODO: Write me
+        
+        /*
          * ramp down mouse offset after 1.5s of inactivity.
          */
         if (_lastMouseMove > MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT)
