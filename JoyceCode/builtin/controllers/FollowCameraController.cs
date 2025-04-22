@@ -43,7 +43,7 @@ public class FollowCameraController : AModule, IInputPart
 
     private float _previousZoomDistance = 33f;
     
-    public static string EventCodeRequestMode = "builtin.controllers.followCameraController.RequestMode";
+    public static string EventTypeRequestMode = "builtin.controllers.followCameraController.RequestMode";
 
     public float MY_Z_ORDER { get; set; } = 21f;
     
@@ -819,7 +819,7 @@ public class FollowCameraController : AModule, IInputPart
 
     private void _onRequestMode(Event ev)
     {
-        switch (ev.Type)
+        switch (ev.Code)
         {
             default:
             case "MouseOffsetsCamera":
@@ -829,12 +829,13 @@ public class FollowCameraController : AModule, IInputPart
                 _mouseOffsetsCamera = false;
                 break;
         }
+        Trace($"Control mode switched to {_mouseOffsetsCamera}");
     }
     
     
     public override void ModuleDeactivate()
     {
-        I.Get<SubscriptionManager>().Subscribe(EventCodeRequestMode, _onRequestMode);
+        I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
 
         _engine.OnLogicalFrame -= _onLogicalFrame;
         I.Get<InputEventPipeline>().RemoveInputPart(this);
@@ -878,6 +879,6 @@ public class FollowCameraController : AModule, IInputPart
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.OnLogicalFrame += _onLogicalFrame;
         
-        I.Get<SubscriptionManager>().Subscribe(EventCodeRequestMode, _onRequestMode);
+        I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
     }
 }

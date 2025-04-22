@@ -178,7 +178,7 @@ public class MainPlayModule : engine.AModule, IInputPart
             }
             _playerState = PlayerState.Outside;
         }
-        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventCodeRequestMode, "MouseControlsCamera"));
+        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventTypeRequestMode, "MouseControlsCamera"));
     }
 
 
@@ -226,7 +226,7 @@ public class MainPlayModule : engine.AModule, IInputPart
             _playerState = PlayerState.InHover;
         }
 
-        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventCodeRequestMode, "MouseOffsetsCamera"));
+        I.Get<EventQueue>().Push(new Event(FollowCameraController.EventTypeRequestMode, "MouseOffsetsCamera"));
     }
 
 
