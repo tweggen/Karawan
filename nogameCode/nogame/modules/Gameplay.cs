@@ -6,6 +6,7 @@ using DefaultEcs;
 using engine;
 using engine.joyce.components;
 using engine.news;
+using nogame.modules.playerhover;
 using nogame.world;
 using static engine.Logger;
 
@@ -43,7 +44,9 @@ public class Gameplay : AModule, IInputPart
         /*
          * Modules to populate the world after world-building.
          */
-        new MyModule<DropCoinModule>()
+        new MyModule<DropCoinModule>(),
+        new MyModule<nogame.modules.playerhover.MainPlayModule>() { ShallActivate = false }
+
     };
 
 
@@ -51,6 +54,7 @@ public class Gameplay : AModule, IInputPart
     {
         M<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
+        ActivateMyModule<MainPlayModule>();
         if (_engine.Camera.TryGet(out var eCamera))
         {
             _onNewCamera(eCamera);
