@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using builtin.controllers;
 using DefaultEcs;
 using engine;
 using engine.joyce.components;
@@ -36,6 +37,8 @@ public class Gameplay : AModule, IInputPart
          * Global modules for generic behaviours
          */
         new MyModule<nogame.modules.daynite.FogColor>(),
+        
+        new MyModule<FollowCameraController>() { ShallActivate = false },
 
         /*
          * Modules to populate the world after world-building.
@@ -98,8 +101,8 @@ public class Gameplay : AModule, IInputPart
 
     private void _killOldCameraController()
     {
-        _ctrlFollowCamera?.DeactivateController();
-        _ctrlFollowCamera = null;
+        DeactivateMyModule<FollowCameraController>();
+
         _eCurrentTarget = default;
         _eCurrentCamera = default;
     }
@@ -116,12 +119,15 @@ public class Gameplay : AModule, IInputPart
          * Create a camera controller that directly controls the camera with wasd,
          * requires the playerhover.
          */
-        _ctrlFollowCamera = new(_engine, eCamera, ePlayer);
+        _ctrlFollowCamera = M<FollowCameraController>();
         if (_isDemoActive)
         {
             _ctrlFollowCamera.CameraDistance = 0.3f;
         }
-        _ctrlFollowCamera.ActivateController();
+        
+        _ctrlFollowCamera.Target = eCamera;
+        _ctrlFollowCamera.Carrot = ePlayer;
+        ActivateMyModule<FollowCameraController>();
     }
 
 

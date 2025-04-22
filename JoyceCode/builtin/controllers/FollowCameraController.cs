@@ -1,30 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
-using System.Security.Cryptography;
-using System.Text;
 using BepuPhysics;
 using BepuPhysics.Collidables;
-using BepuPhysics.Constraints;
 using engine;
 using engine.joyce.components;
 using engine.news;
 using engine.physics;
-using SkiaSharp;
 using static engine.Logger;
 
 namespace builtin.controllers;
 
-public class FollowCameraController : IInputPart
+public class FollowCameraController : AModule, IInputPart
 {
     private object _lo = new();
 
-    engine.Engine _engine;
     DefaultEcs.Entity _eTarget;
+    public DefaultEcs.Entity Target
+    {
+        get => _eTarget;
+        set => _eTarget = value;
+    }
+    
     DefaultEcs.Entity _eCarrot;
+    public DefaultEcs.Entity Carrot
+    {
+        get => _eCarrot;
+        set => _eCarrot = value;
+    }   
 
     private Vector3 _vPreviousCameraPosition;
     private Vector3 _vPreviousCameraOffset;
@@ -58,8 +63,6 @@ public class FollowCameraController : IInputPart
 
     public float YAngleDefault { get; set; } = 2f;
     
-    private long _frame = 0;
-
     public float CameraRadius { get; set; } = 0.5f;
     public float CameraMass { get; set; } = 0.5f;
 
@@ -648,8 +651,6 @@ public class FollowCameraController : IInputPart
 
     private void _onLogicalFrame(object sender, float dt)
     {
-        ++_frame;
-
         if (!_eCarrot.Has<engine.joyce.components.Transform3ToWorld>()
             || !_eCarrot.Has<engine.joyce.components.Transform3>())
         {
@@ -809,29 +810,25 @@ public class FollowCameraController : IInputPart
     }
 
 
-    public void DeactivateController()
+    public override void ModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _destroyPhysics();
+
+        _engine.RemoveModule(this);
+        base.ModuleDeactivate();
     }
 
 
-    public void ActivateController()
+    public override void ModuleActivate()
     {
-        _zoomState = CameraDistance;
-        _buildPhysics();
-        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-        _engine.OnLogicalFrame += _onLogicalFrame;
-    }
+        base.ModuleActivate();
+        _engine.AddModule(this);
 
-
-    public FollowCameraController(engine.Engine engine0, DefaultEcs.Entity eTarget, DefaultEcs.Entity eCarrot)
-    {
-        _engine = engine0;
-        _eTarget = eTarget;
-        _eCarrot = eCarrot;
-
+        Debug.Assert(_eTarget != default);
+        Debug.Assert(_eCarrot != default);
+        
         if (_eCarrot.Has<engine.physics.components.Body>())
         {
             _prefPlayer = _eCarrot.Get<engine.physics.components.Body>().Reference;
@@ -842,14 +839,19 @@ public class FollowCameraController : IInputPart
         }
         else
         {
-            ErrorThrow($"Entity {eCarrot} does not have physics attached.", m => new InvalidOperationException(m));
+            ErrorThrow<InvalidOperationException>($"Entity {_eCarrot} does not have physics attached.");
             return;
         }
 
 
         if (_eTarget.Has<engine.physics.components.Body>())
         {
-            ErrorThrow($"Entity {eTarget} already has physics attached.", m => new InvalidOperationException(m));
+            ErrorThrow<InvalidOperationException>($"Entity {_eTarget} already has physics attached.");
         }
+    
+        _zoomState = CameraDistance;
+        _buildPhysics();
+        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
+        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }
