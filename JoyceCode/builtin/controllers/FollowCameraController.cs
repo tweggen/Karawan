@@ -192,7 +192,8 @@ public class FollowCameraController : AModule, IInputPart
         }
     }
 
-    private void _computePerfectCameraOrientation(
+
+    private void _computePerfectCameraOrientationMouseOffsets(
         float dt,
         in Matrix4x4 cToParentMatrix,
         out Quaternion qPerfectCameraOrientation)
@@ -281,31 +282,7 @@ public class FollowCameraController : AModule, IInputPart
             }
         }
 
-        /*
-         * This case applies if we do not have a considerable velocity.
-         */
-#if false
-            if (_vPreviousCameraOffset != default)
-            {
-                /*
-                 * We do not have considerable velocity.
-                 * TODO: Slowly move towards the orientation of the ship.
-                 */
-                Vector2 vVelocity2 = new(_vPreviousCameraOffset.X, _vPreviousCameraOffset.Z);
-                l = vVelocity2.Length();
-                if (l > 0.5)
-                {
-                    var vFront2 = vVelocity2 / l;
-                    vuPreviousFront = new Vector3(vFront2.X, 0f, vFront2.Y);
-                    qPreviousFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuPreviousFront);
-                }
-                else
-                {
-                }
-            }
-#else
         qPreviousFront = _qPreviousCameraFront;
-#endif
 
         /*
          * Fallback: Use the front according to the transformation matrix.
@@ -376,6 +353,40 @@ public class FollowCameraController : AModule, IInputPart
         }
 
         qPerfectCameraOrientation = qFront;
+    }
+
+
+    private void _computePerfectCameraOrientationMouseControls(
+        float dt,
+        in Matrix4x4 cToParentMatrix,
+        out Quaternion qPerfectCameraOrientation)
+    {
+        _cameraAngle = CameraAngle.Orientation;
+        Quaternion qNewFront = _qPreviousCameraFront;
+        if (_mouseAngles.Y != 0)
+        {
+            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
+            qNewFront *= rotRight;
+            _mouseAngles.Y = 0f;
+        }
+
+        qPerfectCameraOrientation = qNewFront;
+    }
+    
+    
+    private void _computePerfectCameraOrientation(
+        float dt,
+        in Matrix4x4 cToParentMatrix,
+        out Quaternion qPerfectCameraOrientation)
+    {
+        if (_mouseOffsetsCamera)
+        {
+            _computePerfectCameraOrientationMouseOffsets(dt, cToParentMatrix, out qPerfectCameraOrientation);
+        }
+        else
+        {
+            _computePerfectCameraOrientationMouseControls(dt, cToParentMatrix, out qPerfectCameraOrientation);
+        }
 
     }
 
@@ -399,12 +410,16 @@ public class FollowCameraController : AModule, IInputPart
          * Derive front vector from Quaternion.
          */
         Vector3 vFront = Vector3.Transform(new Vector3(0f, 0f, -1f), qFront);
-        
-        /*
-         * Rotate the front vector by the mouse orientation.
-         */
-        var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
-        vFront = Vector3.Transform(vFront, rotRight);
+
+
+        if (_mouseOffsetsCamera)
+        {
+            /*
+             * Rotate the front vector by the mouse orientation.
+             */
+            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
+            vFront = Vector3.Transform(vFront, rotRight);
+        }
 
         /*
          * Derive right from front and the Y vector, up is straight up,
