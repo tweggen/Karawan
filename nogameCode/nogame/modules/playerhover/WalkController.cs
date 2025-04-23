@@ -39,6 +39,15 @@ public class WalkController : AModule
     private BepuPhysics.BodyReference _prefTarget;
     private DefaultEcs.Entity _eCamera = default;
 
+    enum CharacterAnimState
+    {
+        Unset,
+        Idle,
+        Walking,
+        Running
+    }
+
+    private CharacterAnimState _characterAnimState = CharacterAnimState.Idle;
     
     private void _onCameraEntityChanged(DefaultEcs.Entity entity)
     {
@@ -53,6 +62,7 @@ public class WalkController : AModule
         }
     }
     
+    public CharacterModelDescription CharacterModelDescription { get; set; }
     
     private void _onLogicalFrame(object sender, float dt)
     {
@@ -61,6 +71,7 @@ public class WalkController : AModule
         Vector3 vTargetPos;
         Vector3 vTargetVelocity;
         Quaternion qTargetOrientation;
+        Quaternion qOriginalTargetOrientation;
         Vector3 vTargetAngularVelocity;
         Vector3 vTargetPosAdjust = Vector3.Zero;
         lock (_engine.Simulation)
@@ -68,9 +79,11 @@ public class WalkController : AModule
             vTargetPos = _prefTarget.Pose.Position;
             vTargetVelocity = _prefTarget.Velocity.Linear;
             vTargetAngularVelocity = _prefTarget.Velocity.Angular;
-            qTargetOrientation = _prefTarget.Pose.Orientation;
+            qOriginalTargetOrientation = qTargetOrientation = _prefTarget.Pose.Orientation;
             //Trace($"vTargetVelocity = {vTargetVelocity}, vTargetPos = {vTargetPos}");
         }
+
+        CharacterAnimState newAnimState = _characterAnimState;
 
         var vuFront = -Vector3.UnitZ;
         var vuUp = Vector3.UnitY;
@@ -152,31 +165,94 @@ public class WalkController : AModule
         var upMotion = controllerState.UpMotion;
         var rightMotion = controllerState.RightMotion;
 
+        bool haveVelocity = false;
+
+        Vector3 vuWalkDirection = Vector3.Zero;
         /*
          * Set the movement velocity according to the inputs.
          */
         if (frontMotion > 0.2f)
         {
-            vTargetVelocity = vuFront * (8f / 3.6f);
+            vuWalkDirection += -Vector3.UnitZ;
+            haveVelocity = true;
         }
         else if (frontMotion < -0.2f)
         {
-            vTargetVelocity = -vuFront * (5f / 3.6f);
-        }
-        else
-        {
-            vTargetVelocity = Vector3.Zero;
+            vuWalkDirection += Vector3.UnitZ;
+            haveVelocity = true;
         }
 
         if (rightMotion > 0.2f)
         {
-            vTargetVelocity = 0.8f * Vector3.Dot(vTargetVelocity, vuFront) * vuFront + vuRight * (2f / 3.6f);
+            vuWalkDirection += Vector3.UnitX;
+            haveVelocity = true;
         }
         else if (rightMotion < -0.2f)
         {
-            vTargetVelocity = 0.8f * Vector3.Dot(vTargetVelocity, vuFront) * vuFront - vuRight * (2f / 3.6f);
+            vuWalkDirection += -Vector3.UnitX;
+            haveVelocity = true;
         }
 
+
+        Quaternion qWalkFront; 
+
+        if (haveVelocity)
+        {
+            vuWalkDirection = Vector3.Normalize(vuWalkDirection);
+            vTargetVelocity = (-vuWalkDirection.Z * vuFront + vuWalkDirection.X * vuRight) * (8f / 3.6f);
+            Vector3 vuWalkFront = Vector3.Normalize(vTargetVelocity);
+            qWalkFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuWalkFront);
+            newAnimState = CharacterAnimState.Walking;
+        }
+        else
+        {
+            vTargetVelocity = Vector3.Zero;
+            qWalkFront = qOriginalTargetOrientation;
+            newAnimState = CharacterAnimState.Idle;
+        }
+
+        if (newAnimState != _characterAnimState)
+        {
+            string strAnimation;
+            switch (newAnimState)
+            {
+                default:
+                case CharacterAnimState.Idle:
+                    strAnimation = CharacterModelDescription.IdleAnimName;
+                    break;
+                case CharacterAnimState.Walking:
+                    strAnimation = CharacterModelDescription.WalkAnimName;
+                    break;
+                case CharacterAnimState.Running:
+                    strAnimation = CharacterModelDescription.RunAnimName;
+                    break;
+            }
+            var mapAnimations = _model.MapAnimations;
+            if (mapAnimations != null && mapAnimations.Count > 0)
+            {
+                if (mapAnimations.TryGetValue(
+                        CharacterModelDescription.IdleAnimName, out var animation))
+                {
+
+                    _eAnimations.Set(new AnimationState
+                    {
+                        ModelAnimation = animation,
+                        ModelAnimationFrame = 0
+                    });
+                    Trace($"Setting up animation {animation.Name}");
+                }
+                else
+                {
+                    Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
+                }
+            }
+
+            _eTarget.Set(new AnimationState()
+            {
+                ModelAnimation = strAnimation, ModelAnimationFrame = 0
+            });
+        }
+        
         /*
          * Finally clip the height.
          *
@@ -219,7 +295,7 @@ public class WalkController : AModule
             _prefTarget.Velocity.Linear = vTargetVelocity;
             _prefTarget.Velocity.Angular = vTargetAngularVelocity;
             _prefTarget.Pose.Position += vTargetPosAdjust;
-            _prefTarget.Pose.Orientation = qTargetOrientation;
+            _prefTarget.Pose.Orientation = qWalkFront; // qTargetOrientation;
             _prefTarget.Awake = true;
         }
     }
@@ -245,6 +321,8 @@ public class WalkController : AModule
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 
         _engine.AddModule(this);
+
+        _characterAnimState = CharacterAnimState.Unset;
         
         _eCamera = _engine.Camera.Value;
         _engine.Camera.AddOnChange(_onCameraEntityChanged);

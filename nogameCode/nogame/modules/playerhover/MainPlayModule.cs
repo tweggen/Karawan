@@ -75,6 +75,8 @@ public class MainPlayModule : engine.AModule, IInputPart
         Activated,
         Deactivating
     }
+    
+    public CharacterModelDescription _characterModelDescription = new();
 
     
     private FigureState _hoverState = FigureState.Deactivated;
@@ -163,6 +165,7 @@ public class MainPlayModule : engine.AModule, IInputPart
             }
             _playerState = PlayerState.WaitingForPersonActivated;
         }
+        M<WalkModule>().CharacterModelDescription = _characterModelDescription;
         ActivateMyModule<WalkModule>();
     }
 
@@ -281,6 +284,7 @@ public class MainPlayModule : engine.AModule, IInputPart
                 _playerState = PlayerState.WaitingForPersonActivated;
             }
 
+            M<WalkModule>().CharacterModelDescription = _characterModelDescription;
             ActivateMyModule<WalkModule>();
 #else
             lock (_lo)

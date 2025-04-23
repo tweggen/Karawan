@@ -36,17 +36,16 @@ public class WalkModule : AModule, IInputPart
     private TransformApi _aTransform;
     
     private Model _model;
+
+    public CharacterModelDescription CharacterModelDescription{
+        get;
+        set;
+    }
     
     public float MassPerson { get; set; } = 100f;
 
     public Vector3 StartPosition { get; set; } = Vector3.Zero;
     public Quaternion StartOrientation { get; set; } = Quaternion.Identity;
-    
-    public string AnimName { get; set; } = "Walk_Loop";
-    public string ModelUrl { get; set; } = "player.glb";
-    public int ModelGeomFlags { get; set; } = 0
-        | InstantiateModelParams.ROTATE_Y180
-        ;
     
     /**
       * Sound API
@@ -104,11 +103,15 @@ public class WalkModule : AModule, IInputPart
 
         _aSound = I.Get<Boom.ISoundAPI>();
 
-        InstantiateModelParams instantiateModelParams = new() { GeomFlags = ModelGeomFlags, MaxDistance = 200f };
+        InstantiateModelParams instantiateModelParams = new()
+        {
+            GeomFlags = CharacterModelDescription.ModelGeomFlags, 
+            MaxDistance = 200f
+        };
 
         _model = await I.Get<ModelCache>().LoadModel( 
             new ModelCacheParams() {
-            Url = ModelUrl,
+            Url = CharacterModelDescription.ModelUrl,
             Params = instantiateModelParams});
 
         Vector3 v3Person = StartPosition;
@@ -137,7 +140,8 @@ public class WalkModule : AModule, IInputPart
                 var mapAnimations = _model.MapAnimations;
                 if (mapAnimations != null && mapAnimations.Count > 0)
                 {
-                    if (mapAnimations.TryGetValue(AnimName, out var animation))
+                    if (mapAnimations.TryGetValue(
+                            CharacterModelDescription.IdleAnimName, out var animation))
                     {
 
                         _eAnimations.Set(new AnimationState
@@ -149,9 +153,8 @@ public class WalkModule : AModule, IInputPart
                     }
                     else
                     {
-                        Trace($"Test animation {AnimName} not found.");
+                        Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
                     }
-                        
                 }
             }
 
