@@ -33,9 +33,10 @@ public class FollowCameraController : AModule, IInputPart
 
     private Vector3 _vPreviousCameraPosition;
     private Vector3 _vPreviousCameraOffset;
-    private Quaternion _qLastPerfectCameraRotation;
-    private Vector2 _vMouseOffset;
+    private Quaternion _qLastPerfectCameraRotation = Quaternion.Identity;
+    private Vector2 _vMouseOffseting;
     private Vector2 _vStickOffset;
+    private Vector2 _vMouseMove;
     float _lastMouseMove = 0f;
     private bool _firstFrame = true;
     private bool _isInputEnabled = true;
@@ -83,10 +84,10 @@ public class FollowCameraController : AModule, IInputPart
     /**
      * The angles that additionally are applied because of mouse movement
      */
-    private Vector2 _mouseAngles;
+    private Vector2 _vMouseAnglesOffseting;
     
     private static Vector3 _vuUp = new(0f, 1f, 0f);
-    private Quaternion _qPreviousCameraFront;
+    private Quaternion _qPreviousCameraFront = Quaternion.Identity;
 
     private enum CameraAngle
     {
@@ -119,7 +120,6 @@ public class FollowCameraController : AModule, IInputPart
             _prefCameraBall = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             _eTarget.Set(new engine.physics.components.Body(po, _prefCameraBall));
         }
-
     }
 
 
@@ -363,11 +363,13 @@ public class FollowCameraController : AModule, IInputPart
     {
         _cameraAngle = CameraAngle.Orientation;
         Quaternion qNewFront = _qPreviousCameraFront;
-        if (_mouseAngles.Y != 0)
+        if (_vMouseMove.Y != 0)
         {
-            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
-            qNewFront *= rotRight;
-            _mouseAngles.Y = 0f;
+            float mouseAngleOrientation = -(_vMouseMove.X) * (float)Math.PI / 180f;
+            //Trace($"_vMouseMove.Y = {_vMouseMove.X}");
+
+            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), mouseAngleOrientation);
+            qNewFront = Quaternion.Concatenate(qNewFront, rotRight);
         }
 
         qPerfectCameraOrientation = qNewFront;
@@ -387,8 +389,8 @@ public class FollowCameraController : AModule, IInputPart
         {
             _computePerfectCameraOrientationMouseControls(dt, cToParentMatrix, out qPerfectCameraOrientation);
         }
-
     }
+    
 
     /**
      * Compute the desired camera position.
@@ -417,7 +419,7 @@ public class FollowCameraController : AModule, IInputPart
             /*
              * Rotate the front vector by the mouse orientation.
              */
-            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
+            var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _vMouseAnglesOffseting.Y);
             vFront = Vector3.Transform(vFront, rotRight);
         }
 
@@ -440,7 +442,7 @@ public class FollowCameraController : AModule, IInputPart
          * Set up the vertical camera angle.
          * Our default is dx = 1 , dy = 0.25, which is about 15 degree (from the horizontal).
          */
-        float vertAngle = Single.Clamp(_mouseAngles.X,
+        float vertAngle = Single.Clamp(_vMouseAnglesOffseting.X,
             -85f * Single.Pi / 180f, 85f * Single.Pi / 180f);
         float dy = Single.Sin(vertAngle);
         float dz = Single.Cos(vertAngle);
@@ -675,8 +677,21 @@ public class FollowCameraController : AModule, IInputPart
             return;
         }
         
-        _mouseAngles.X = (_vStickOffset.Y*STICK_VERTICAL_SENSITIVITY + _vMouseOffset.Y + YAngleDefault) * (float)Math.PI / 180f;
-        _mouseAngles.Y = -(_vStickOffset.X*STICK_HORIZONTAL_SENSITIVITY + _vMouseOffset.X) * (float)Math.PI / 180f;
+        /*
+         * We allow the user to move the cam.
+         */
+        if (_isInputEnabled)
+        {
+            engine.I.Get<builtin.controllers.InputController>().GetMouseMove(out _vMouseMove);
+            engine.I.Get<builtin.controllers.InputController>().GetStickOffset(out _vStickOffset);
+        }
+        else
+        {
+            _vMouseMove = Vector2.Zero;
+        }
+
+        _vMouseAnglesOffseting.X = (_vStickOffset.Y*STICK_VERTICAL_SENSITIVITY + _vMouseOffseting.Y + YAngleDefault) * (float)Math.PI / 180f;
+        _vMouseAnglesOffseting.Y = -(_vStickOffset.X*STICK_HORIZONTAL_SENSITIVITY + _vMouseOffseting.X) * (float)Math.PI / 180f;
 
 
         var cToParent = _eCarrot.Get<engine.joyce.components.Transform3ToWorld>();
@@ -729,24 +744,10 @@ public class FollowCameraController : AModule, IInputPart
         _computeCameraVelocity(dt, vRealCameraPosition);
 
         /*
-         * We allow the user to move the cam.
-         */
-        Vector2 vMouseMove;
-        if (_isInputEnabled)
-        {
-            engine.I.Get<builtin.controllers.InputController>().GetMouseMove(out vMouseMove);
-            engine.I.Get<builtin.controllers.InputController>().GetStickOffset(out _vStickOffset);
-        }
-        else
-        {
-            vMouseMove = Vector2.Zero;
-        }
-
-        /*
          * Some up the relative mouse movement.
          */
-        _vMouseOffset += vMouseMove * MOUSE_RELATIVE_AMOUNT;
-        if (vMouseMove.X == 0f && vMouseMove.Y == 0f)
+        _vMouseOffseting += _vMouseMove * MOUSE_RELATIVE_AMOUNT;
+        if (_vMouseMove.X == 0f && _vMouseMove.Y == 0f)
         {
             _lastMouseMove += dt;
         }
@@ -769,11 +770,7 @@ public class FollowCameraController : AModule, IInputPart
         /*
          * Apply relative mouse movement
          */
-        //var rotUp = Quaternion.CreateFromAxisAngle(new Vector3(1f, 0f, 0f), _mouseAngles.X);
-        //var rotRight = Quaternion.CreateFromAxisAngle(new Vector3(0f, 1f, 0f), _mouseAngles.Y);
         var qUserCameraOrientation = qRealCameraOrientation;
-        // qUserCameraOrientation = Quaternion.Concatenate(qUserCameraOrientation, rotRight);
-        //  qUserCameraOrientation = Quaternion.Concatenate(qUserCameraOrientation, rotUp);
     
         /*
          * Now we have computed the position we want to target the camera object to.
@@ -792,7 +789,7 @@ public class FollowCameraController : AModule, IInputPart
              */
             if (_lastMouseMove > MOUSE_INACTIVE_BEFORE_RETURN_TIMEOUT)
             {
-                _vMouseOffset *= MOUSE_RETURN_SLERP;
+                _vMouseOffseting *= MOUSE_RETURN_SLERP;
             }
         }
         else
