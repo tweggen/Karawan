@@ -213,46 +213,51 @@ public class WalkController : AModule
 
         if (newAnimState != _characterAnimState)
         {
-            string strAnimation;
-            switch (newAnimState)
+            if (_eTarget.Has<Instance3>())
             {
-                default:
-                case CharacterAnimState.Idle:
-                    strAnimation = CharacterModelDescription.IdleAnimName;
-                    break;
-                case CharacterAnimState.Walking:
-                    strAnimation = CharacterModelDescription.WalkAnimName;
-                    break;
-                case CharacterAnimState.Running:
-                    strAnimation = CharacterModelDescription.RunAnimName;
-                    break;
-            }
-            var mapAnimations = _model.MapAnimations;
-            if (mapAnimations != null && mapAnimations.Count > 0)
-            {
-                if (mapAnimations.TryGetValue(
-                        CharacterModelDescription.IdleAnimName, out var animation))
+                var jModel = _eTarget.Get<Instance3>().InstanceDesc?.ModelNodes[0]?.Model;
+                if (jModel != null)
                 {
-
-                    _eAnimations.Set(new AnimationState
+                    string strAnimation;
+                    switch (newAnimState)
                     {
-                        ModelAnimation = animation,
-                        ModelAnimationFrame = 0
-                    });
-                    Trace($"Setting up animation {animation.Name}");
-                }
-                else
-                {
-                    Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
+                        default:
+                        case CharacterAnimState.Idle:
+                            strAnimation = CharacterModelDescription.IdleAnimName;
+                            break;
+                        case CharacterAnimState.Walking:
+                            strAnimation = CharacterModelDescription.WalkAnimName;
+                            break;
+                        case CharacterAnimState.Running:
+                            strAnimation = CharacterModelDescription.RunAnimName;
+                            break;
+                    }
+
+                    var mapAnimations = jModel.MapAnimations;
+                    if (mapAnimations != null && mapAnimations.Count > 0)
+                    {
+                        if (mapAnimations.TryGetValue(
+                                CharacterModelDescription.IdleAnimName, out var animation))
+                        {
+
+                            _eTarget.Set(new AnimationState
+                            {
+                                ModelAnimation = animation,
+                                ModelAnimationFrame = 0
+                            });
+                            Trace($"Setting up animation {animation.Name}");
+                        }
+                        else
+                        {
+                            Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
+                        }
+                    }
+                    
+                    _characterAnimState = newAnimState;
                 }
             }
-
-            _eTarget.Set(new AnimationState()
-            {
-                ModelAnimation = strAnimation, ModelAnimationFrame = 0
-            });
         }
-        
+
         /*
          * Finally clip the height.
          *
