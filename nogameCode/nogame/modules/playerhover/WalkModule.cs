@@ -137,6 +137,9 @@ public class WalkModule : AModule, IInputPart
 
             if (default != _eAnimations)
             {
+                CharacterModelDescription.EntityAnimations = _eAnimations;
+                CharacterModelDescription.Model = _model;
+                
                 var mapAnimations = _model.MapAnimations;
                 if (mapAnimations != null && mapAnimations.Count > 0)
                 {
@@ -192,7 +195,11 @@ public class WalkModule : AModule, IInputPart
             }
 
             _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
-            _ePerson.Set(new engine.behave.components.Behavior(new WalkBehavior() { MassTarget = MassPerson }));
+            _ePerson.Set(new engine.behave.components.Behavior(new WalkBehavior()
+            {
+                MassTarget = MassPerson,
+                CharacterModelDescription = CharacterModelDescription
+            }));
 
             /*
              * Now add an entity as a child that will display in the map

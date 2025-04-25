@@ -24,6 +24,7 @@ public class WalkBehavior : ABehavior
     private bool _cutCollisions = (bool) engine.Props.Get("nogame.CutCollision", false);
 
     public required float MassTarget { get; init; }
+    public CharacterModelDescription CharacterModelDescription { get; init; }
     
     public override void OnCollision(ContactEvent cev)
     {
@@ -84,7 +85,8 @@ public class WalkBehavior : ABehavior
         _controllerWalkController = new WalkController()
         {
             Target = _eTarget,
-            MassTarget = MassTarget
+            MassTarget = MassTarget,
+            CharacterModelDescription = CharacterModelDescription
         };
         _controllerWalkController.ModuleActivate();
     }

@@ -213,44 +213,42 @@ public class WalkController : AModule
 
         if (newAnimState != _characterAnimState)
         {
-            if (_eTarget.Has<Instance3>())
+            if (CharacterModelDescription != null && CharacterModelDescription.Model != null && CharacterModelDescription.EntityAnimations.IsAlive)
             {
-                var jModel = _eTarget.Get<Instance3>().InstanceDesc?.ModelNodes[0]?.Model;
-                if (jModel != null)
+                var jModel = CharacterModelDescription.Model;
+
+                string strAnimation;
+                switch (newAnimState)
                 {
-                    string strAnimation;
-                    switch (newAnimState)
+                    default:
+                    case CharacterAnimState.Idle:
+                        strAnimation = CharacterModelDescription.IdleAnimName;
+                        break;
+                    case CharacterAnimState.Walking:
+                        strAnimation = CharacterModelDescription.WalkAnimName;
+                        break;
+                    case CharacterAnimState.Running:
+                        strAnimation = CharacterModelDescription.RunAnimName;
+                        break;
+                }
+
+                var mapAnimations = jModel.MapAnimations;
+                if (mapAnimations != null && mapAnimations.Count > 0)
+                {
+                    if (mapAnimations.TryGetValue(
+                            strAnimation, out var animation))
                     {
-                        default:
-                        case CharacterAnimState.Idle:
-                            strAnimation = CharacterModelDescription.IdleAnimName;
-                            break;
-                        case CharacterAnimState.Walking:
-                            strAnimation = CharacterModelDescription.WalkAnimName;
-                            break;
-                        case CharacterAnimState.Running:
-                            strAnimation = CharacterModelDescription.RunAnimName;
-                            break;
+
+                        CharacterModelDescription.EntityAnimations.Set(new AnimationState
+                        {
+                            ModelAnimation = animation,
+                            ModelAnimationFrame = 0
+                        });
+                        Trace($"Setting up animation {animation.Name}");
                     }
-
-                    var mapAnimations = jModel.MapAnimations;
-                    if (mapAnimations != null && mapAnimations.Count > 0)
+                    else
                     {
-                        if (mapAnimations.TryGetValue(
-                                CharacterModelDescription.IdleAnimName, out var animation))
-                        {
-
-                            _eTarget.Set(new AnimationState
-                            {
-                                ModelAnimation = animation,
-                                ModelAnimationFrame = 0
-                            });
-                            Trace($"Setting up animation {animation.Name}");
-                        }
-                        else
-                        {
-                            Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
-                        }
+                        Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
                     }
                     
                     _characterAnimState = newAnimState;
