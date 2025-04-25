@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using BepuPhysics;
+using engine.physics;
 using static engine.Logger;
 
 namespace engine.streets;
@@ -36,7 +38,8 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         MatMesh matmesh,
         streets.Quarter quarter,
         float cx,
-        float cy
+        float cy,
+        in IList<Func<IList<StaticHandle>, Action>> listCreatePhysics
     )
     {
         List<Vector3> edges = new();
@@ -73,6 +76,22 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         {
             opExtrudePoly.BuildGeom(meshGround);
             matmesh.Add(I.Get<ObjectRegistry<Material>>().Get("engine.streets.materials.cluster"), meshGround);
+        }
+        catch (Exception e)
+        {
+            Trace($"Unknown exception applying fragment operator '{FragmentOperatorGetPath()}': {e}");
+        }
+
+        CollisionProperties props = new(){
+            Flags = 
+                CollisionProperties.CollisionFlags.IsTangible 
+                | CollisionProperties.CollisionFlags.IsDetectable,
+            Name = $"quarterfloor-{new Vector3(delimList[0].StartPoint.X, 0f, delimList[0].StartPoint.Y)+worldFragment.Position}",
+        };
+        try
+        {
+            var fCreatePhysics = opExtrudePoly.BuildStaticPhys(worldFragment, props);
+            listCreatePhysics.Add(fCreatePhysics);
         }
         catch (Exception e)
         {
@@ -129,6 +148,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
         if (_traceQuarters) Trace($"Cluster '{_clusterDesc.Name}' ({_clusterDesc.IdString}) in range");
 
         MatMesh matmesh = new();
+        List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
 
         /*
          * Now iterate through all quarters of this cluster.
@@ -156,7 +176,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
                 Warning($"Unknown exception: {e}");
             }
 
-            _generateQuarterFloor(worldFragment, matmesh, quarter, cx, cz);
+            _generateQuarterFloor(worldFragment, matmesh, quarter, cx, cz, listCreatePhysics);
         }
 
         if (matmesh.IsEmpty())
@@ -170,7 +190,7 @@ public class GenerateClusterQuartersOperator : world.IFragmentOperator
             // TXWTODO: Merge this, this is inefficient.
             var mmmerged = MatMesh.CreateMerged(matmesh);
             var id = engine.joyce.InstanceDesc.CreateFromMatMesh(mmmerged, 400f);
-            worldFragment.AddStaticInstance("engine.streets.quarters", id);
+            worldFragment.AddStaticInstance("engine.streets.quarters", id, listCreatePhysics);
         }
         catch (Exception e)
         {
