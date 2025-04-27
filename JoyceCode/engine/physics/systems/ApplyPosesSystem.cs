@@ -37,6 +37,9 @@ namespace engine.physics.systems
                      */
                     actions.DynamicSnapshot.Execute(_engine.PLog, _engine.Simulation, pref);
                 }
+
+                // TXWTODO: Apply inverse rotation.
+                vPosition -= po.BodyOffset;
                 _aTransform.SetTransform(entity, qOrientation, vPosition);
             }
         }

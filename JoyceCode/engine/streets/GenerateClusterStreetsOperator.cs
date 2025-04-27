@@ -1,9 +1,12 @@
 ﻿using engine.world;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks;
+using BepuPhysics;
+using BepuPhysics.Collidables;
 using BepuUtilities;
 using engine.joyce;
 using engine.joyce.components;
@@ -36,7 +39,6 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
 
     private string _myKey;
     private bool _traceStreets = false;
-
 
     public string FragmentOperatorGetPath()
     {
@@ -89,7 +91,7 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
             return true;
         }
 
-        float h = _clusterDesc.AverageHeight + 2.0f;
+        float h = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE;
 
         /*
          * First compute the center of the array, we need it for both
@@ -806,12 +808,61 @@ public class GenerateClusterStreetsOperator : world.IFragmentOperator
         engine.joyce.InstanceDesc instanceDesc = InstanceDesc.CreateFromMatMesh(matmesh, 100000f);
         
         /*
+         * Now create a flat street level box as street physics.
+         */
+
+        List<Func<IList<StaticHandle>, Action>> listCreatePhysics = new();
+
+        listCreatePhysics.Add((IList<StaticHandle> staticHandles) =>
+        {
+            lock (worldFragment.Engine.Simulation)
+            {
+                float floorHeight = 0.1f;
+                Vector3 v3BodyOffset = new(0f, floorHeight / 2f, 0f);
+
+                // TXWTODO: We create the full fragment, now only the part containing the city
+                Vector3 v3BoxPos = worldFragment.Position with
+                {
+                    Y = _clusterDesc.AverageHeight + world.MetaGen.CLUSTER_STREET_ABOVE_CLUSTER_AVERAGE
+                };
+
+                var shape = new TypedIndex()
+                {
+                    Packed = (uint)engine.physics.actions.CreateBoxShape.Execute(
+                        worldFragment.Engine.PLog,
+                        worldFragment.Engine.Simulation,
+                        world.MetaGen.FragmentSize,
+                        floorHeight,
+                        world.MetaGen.FragmentSize,
+                        out var pbody
+                    )
+                };
+
+                StaticHandle staticHandle = worldFragment.Engine.Simulation.Statics.Add(
+                    new StaticDescription(
+                        v3BoxPos - v3BodyOffset,
+                        Quaternion.Identity,
+                        shape
+                    ));
+
+                return () =>
+                {
+                    lock (worldFragment.Engine.Simulation)
+                    {
+                        worldFragment.Engine.Simulation.Statics.Remove(staticHandle);
+                    }
+                };
+            }
+        });
+
+        /*
          * Add the entity containing the instanceDesc.
          */
         worldFragment.AddStaticInstance(
             0x00800001, 
             "engine.streets.streets", 
-            instanceDesc);
+            instanceDesc,
+            listCreatePhysics);
     }
 
     

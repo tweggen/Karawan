@@ -78,10 +78,6 @@ public class API
                 case CollidableMobility.Static:
                     _mapStaticCollisionProperties.TryGetValue(pair.B.StaticHandle.Value, out propsB);
                     bhandle = (uint)0x80000000 | (uint) pair.B.StaticHandle.Value;
-                    if (propsB.Name == "nogame.inv.coin")
-                    {
-                        int a = 1;
-                    }
                     break;
             }
         }

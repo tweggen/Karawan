@@ -396,6 +396,15 @@ public class Fragment : IDisposable
         AddStaticInstance(0x00000001, staticName, jInstanceDesc, Vector3.Zero, Quaternion.Identity, listCreatePhysics);
     }
 
+    public void AddStaticInstance(
+        uint cameraMask,
+        string staticName,
+        engine.joyce.InstanceDesc jInstanceDesc,
+        IList<Func<IList<StaticHandle>, Action>> listCreatePhysics)
+    {
+        AddStaticInstance(cameraMask, staticName, jInstanceDesc, Vector3.Zero, Quaternion.Identity, listCreatePhysics);
+    }
+
     private int _meshesInFragment = 0;
 
     /**

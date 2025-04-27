@@ -268,9 +268,13 @@ public class HoverModule : AModule, IInputPart
             engine.physics.Object po;
             lock (_engine.Simulation)
             {
-                uint uintShape = (uint)engine.physics.actions.CreateSphereShape.Execute(
+                uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
                     _engine.PLog, _engine.Simulation,
-                    Single.Max(1.4f, bodyRadius), out var pbody);
+                    Single.Max(1.4f, bodyRadius), 
+                    _model.RootNode.InstanceDesc != null 
+                        ? _model.RootNode.InstanceDesc.AABBTransformed.BB.Y-_model.RootNode.InstanceDesc.AABBTransformed.BB.Y
+                        : 1.0f,
+                    out var pbody);
                 var inertia = pbody.ComputeInertia(MassShip);
                 po = new engine.physics.Object(_engine, _eShip,
                         v3Ship, qShip, inertia, new TypedIndex() { Packed = uintShape })

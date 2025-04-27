@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json.Serialization;
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using Silk.NET.Maths;
 using static engine.Logger;
 
 namespace engine.physics;
@@ -32,6 +33,8 @@ public class Object : IDisposable
     public int IntHandle = -1;
     public IList<Action>? ReleaseActions = null;
     
+    public Vector3 BodyOffset { get; set; } = Vector3.Zero;
+    public Quaternion BodyRotation { get; set; } = Quaternion.Identity;
     
     /*
      * Now, to create an actual physics object, we use these opcodes
@@ -52,7 +55,7 @@ public class Object : IDisposable
     /*
      * Whereas this is more class specific.
      */
-    [Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore]
     public Action<ContactEvent>? OnCollision { get; set; } = null;
     
     /**
@@ -314,7 +317,7 @@ public class Object : IDisposable
         BodyInertia inertia, BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
-        IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, v3Position, qOrientation, inertia, shape);
+        IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, v3Position+BodyOffset, qOrientation, inertia, shape);
     }
     
     
@@ -328,7 +331,7 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
-        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, v3Position, qOrientation, shape);
+        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, v3Position+BodyOffset, qOrientation, shape);
     }
 
     
@@ -341,6 +344,6 @@ public class Object : IDisposable
         BepuPhysics.Collidables.TypedIndex shape)
     {
         Entity = entity;
-        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Vector3.Zero, Quaternion.Identity, shape);
+        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, BodyOffset, Quaternion.Identity, shape);
     }
 }

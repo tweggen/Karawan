@@ -3,12 +3,13 @@ using System.Diagnostics;
 using System.Numerics;
 using engine;
 using engine.joyce.components;
+using engine.news;
 using engine.world;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
-public class WalkController : AModule
+public class WalkController : AModule, IInputPart
 {
     public static float MY_Z_ORDER = 25f;
 
@@ -63,6 +64,8 @@ public class WalkController : AModule
     }
     
     public CharacterModelDescription CharacterModelDescription { get; set; }
+
+    private bool _jumpTriggered = false; 
     
     private void _onLogicalFrame(object sender, float dt)
     {
@@ -193,7 +196,6 @@ public class WalkController : AModule
             haveVelocity = true;
         }
 
-
         Quaternion qWalkFront; 
 
         if (haveVelocity)
@@ -211,6 +213,12 @@ public class WalkController : AModule
             newAnimState = CharacterAnimState.Idle;
         }
 
+        if (_jumpTriggered)
+        {
+            _jumpTriggered = false;
+            vTargetVelocity += Vector3.UnitY;
+        }
+        
         if (newAnimState != _characterAnimState)
         {
             if (CharacterModelDescription != null && CharacterModelDescription.Model != null && CharacterModelDescription.EntityAnimations.IsAlive)
@@ -256,6 +264,7 @@ public class WalkController : AModule
             }
         }
 
+        #if false
         /*
          * Finally clip the height.
          *
@@ -292,6 +301,7 @@ public class WalkController : AModule
 
             // TXWTODO: Add jump.
         }
+        #endif
         
         lock (_engine.Simulation)
         {
@@ -304,6 +314,20 @@ public class WalkController : AModule
     }
 
 
+    public void InputPartOnInputEvent(Event ev)
+    {
+        if (ev.Type == Event.INPUT_BUTTON_PRESSED)
+        {
+            switch (ev.Code)
+            {
+                case "<jump>":
+                    _jumpTriggered = true;
+                    break;
+            }
+        }
+    }
+
+    
     public override void ModuleDeactivate()
     {
         _engine.RemoveModule(this);
