@@ -9,6 +9,11 @@ using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
+/**
+ * Walk is a kinematic physical object, so this one controls the position
+ * as opposed to controlling the velocity or giving impulse to a dynamic
+ * physical object.
+ */
 public class WalkController : AModule, IInputPart
 {
     public static float MY_Z_ORDER = 25f;
@@ -66,38 +71,28 @@ public class WalkController : AModule, IInputPart
 
     private bool _jumpTriggered = false; 
     
+    
     private void _onLogicalFrame(object sender, float dt)
     {
         if (_engine.State != Engine.EngineState.Running) return;
 
-        if (!_eTarget.Has<engine.joyce.components.Transform3ToParent>())
-        {
-            return;
-            
-        }
-        ref var cPO = ref _eTarget.Get<engine.physics.components.Body>();
-        var po = cPO.PhysicsObject;
-        if (null == po)
-        {
-            return;
-        }
-        ref var prefTarget = ref cPO.Reference;
-
         Vector3 vTargetPos;
-        Vector3 vTargetVelocity;
         Quaternion qTargetOrientation;
-        Quaternion qOriginalTargetOrientation;
-        Vector3 vTargetAngularVelocity;
-        Vector3 vTargetPosAdjust = Vector3.Zero;
-        lock (_engine.Simulation)
-        {
-            vTargetPos = prefTarget.Pose.Position - po.BodyOffset;
-            vTargetVelocity = prefTarget.Velocity.Linear;
-            vTargetAngularVelocity = prefTarget.Velocity.Angular;
-            qOriginalTargetOrientation = qTargetOrientation = prefTarget.Pose.Orientation;
-            //Trace($"vTargetVelocity = {vTargetVelocity}, vTargetPos = {vTargetPos}");
-        }
 
+        /*
+         * Read either from the object or take the initial position.
+         */
+        if (!_eTarget.Has<engine.joyce.components.Transform3>())
+        {
+            vTargetPos = 
+        }
+        else
+        {
+            ref var cTransform3 = ref _eTarget.Get<Transform3>();
+            vTargetPos = cTransform3.Position;
+            qTargetOrientation = cTransform3.Rotation;
+        }
+        
         CharacterAnimState newAnimState = _characterAnimState;
 
         var vuFront = -Vector3.UnitZ;
