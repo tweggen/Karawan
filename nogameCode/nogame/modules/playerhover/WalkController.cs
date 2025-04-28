@@ -70,7 +70,7 @@ public class WalkController : AModule, IInputPart
     {
         if (_engine.State != Engine.EngineState.Running) return;
 
-        if (!_eTarget.Has<engine.physics.components.Body>())
+        if (!_eTarget.Has<engine.joyce.components.Transform3ToParent>())
         {
             return;
             
