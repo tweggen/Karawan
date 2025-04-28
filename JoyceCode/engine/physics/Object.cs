@@ -33,7 +33,15 @@ public class Object : IDisposable
     public int IntHandle = -1;
     public IList<Action>? ReleaseActions = null;
     
+    
+    /**
+     * Offset of the physics object to the parent object.
+     */
     public Vector3 BodyOffset { get; set; } = Vector3.Zero;
+    
+    /**
+     * Additional rotation, before applying the offset, to the parent object.
+     */
     public Quaternion BodyRotation { get; set; } = Quaternion.Identity;
     
     /*
@@ -313,11 +321,14 @@ public class Object : IDisposable
     public Object(
         Engine engine,
         DefaultEcs.Entity entity,
-        Vector3 v3Position, Quaternion qOrientation,
-        BodyInertia inertia, BepuPhysics.Collidables.TypedIndex shape)
+        BodyInertia inertia,
+        BepuPhysics.Collidables.TypedIndex shape,
+        Vector3 Position, Quaternion Orientation,
+        Vector3 BodyOffset = default
+        )
     {
         Entity = entity;
-        IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, v3Position+BodyOffset, qOrientation, inertia, shape);
+        IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, inertia, shape);
     }
     
     
@@ -327,11 +338,13 @@ public class Object : IDisposable
     public Object(
         Engine engine,
         DefaultEcs.Entity entity,
-        Vector3 v3Position, Quaternion qOrientation,
-        BepuPhysics.Collidables.TypedIndex shape)
+        BepuPhysics.Collidables.TypedIndex shape,
+        Vector3 Position, Quaternion Orientation,
+        Vector3 BodyOffset = default
+        )
     {
         Entity = entity;
-        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, v3Position+BodyOffset, qOrientation, shape);
+        IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, shape);
     }
 
     
@@ -341,7 +354,8 @@ public class Object : IDisposable
     public Object(
         Engine engine,
         DefaultEcs.Entity entity,
-        BepuPhysics.Collidables.TypedIndex shape)
+        BepuPhysics.Collidables.TypedIndex shape,
+        Vector3 BodyOffset = default)
     {
         Entity = entity;
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, BodyOffset, Quaternion.Identity, shape);

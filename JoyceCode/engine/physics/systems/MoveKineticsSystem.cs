@@ -41,7 +41,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
             lock (_engine.Simulation)
             {
                 var oldPos = po.LastPosition;
-                var newPos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation;
+                var newPos = entity.Get<joyce.components.Transform3ToWorld>().Matrix.Translation + po.BodyOffset;
 
                 float maxDistance2 = po.MaxDistance * po.MaxDistance;
                 bool isInside = Vector3.DistanceSquared(newPos, _vPlayerPos) <= maxDistance2;

@@ -189,12 +189,10 @@ public class WalkModule : AModule, IInputPart
                     _engine.PLog, _engine.Simulation,
                     0.3f, 1.8f,
                     out var pbody);
-                var inertia = pbody.ComputeInertia(MassPerson);
-                po = new engine.physics.Object(_engine, _ePerson,
-                        v3Person, qPerson, inertia, new TypedIndex() { Packed = uintShape })
+                po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
+                        v3Person, qPerson, new(0f, personHeight / 2f, 0f)) 
                 {
-                    CollisionProperties = collisionProperties, 
-                    BodyOffset = new(0f, personHeight / 2f, 0f)
+                    CollisionProperties = collisionProperties
                 }.AddContactListener();
                 _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             }

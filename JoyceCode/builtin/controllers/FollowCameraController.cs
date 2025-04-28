@@ -115,8 +115,8 @@ public class FollowCameraController : AModule, IInputPart
                 )
             };  
             var inertia = pbody.ComputeInertia(CameraMass);
-            var po = new engine.physics.Object(_engine, _eTarget,
-                posShip, rotShip, inertia, shape).AddContactListener();
+            var po = new engine.physics.Object(_engine, _eTarget, inertia, shape,
+                posShip, rotShip).AddContactListener();
             _prefCameraBall = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             _eTarget.Set(new engine.physics.components.Body(po, _prefCameraBall));
         }

@@ -276,8 +276,9 @@ public class HoverModule : AModule, IInputPart
                         : 1.0f,
                     out var pbody);
                 var inertia = pbody.ComputeInertia(MassShip);
-                po = new engine.physics.Object(_engine, _eShip,
-                        v3Ship, qShip, inertia, new TypedIndex() { Packed = uintShape })
+                po = new engine.physics.Object(_engine, _eShip, 
+                        inertia, new TypedIndex() { Packed = uintShape },
+                        v3Ship, qShip)
                     { CollisionProperties = collisionProperties }.AddContactListener();
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
             }

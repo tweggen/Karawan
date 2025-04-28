@@ -37,7 +37,6 @@ public class WalkController : AModule, IInputPart
     }
 
 
-    private BepuPhysics.BodyReference _prefTarget;
     private DefaultEcs.Entity _eCamera = default;
 
     enum CharacterAnimState
@@ -71,6 +70,19 @@ public class WalkController : AModule, IInputPart
     {
         if (_engine.State != Engine.EngineState.Running) return;
 
+        if (!_eTarget.Has<engine.physics.components.Body>())
+        {
+            return;
+            
+        }
+        ref var cPO = ref _eTarget.Get<engine.physics.components.Body>();
+        var po = cPO.PhysicsObject;
+        if (null == po)
+        {
+            return;
+        }
+        ref var prefTarget = ref cPO.Reference;
+
         Vector3 vTargetPos;
         Vector3 vTargetVelocity;
         Quaternion qTargetOrientation;
@@ -79,10 +91,10 @@ public class WalkController : AModule, IInputPart
         Vector3 vTargetPosAdjust = Vector3.Zero;
         lock (_engine.Simulation)
         {
-            vTargetPos = _prefTarget.Pose.Position;
-            vTargetVelocity = _prefTarget.Velocity.Linear;
-            vTargetAngularVelocity = _prefTarget.Velocity.Angular;
-            qOriginalTargetOrientation = qTargetOrientation = _prefTarget.Pose.Orientation;
+            vTargetPos = prefTarget.Pose.Position - po.BodyOffset;
+            vTargetVelocity = prefTarget.Velocity.Linear;
+            vTargetAngularVelocity = prefTarget.Velocity.Angular;
+            qOriginalTargetOrientation = qTargetOrientation = prefTarget.Pose.Orientation;
             //Trace($"vTargetVelocity = {vTargetVelocity}, vTargetPos = {vTargetPos}");
         }
 
@@ -152,12 +164,12 @@ public class WalkController : AModule, IInputPart
         {
             lock (_engine.Simulation)
             {
-                _prefTarget.Pose.Orientation = Quaternion.Identity;
-                _prefTarget.Velocity.Angular = Vector3.Zero;
-                _prefTarget.Velocity.Linear = Vector3.Zero;
+                prefTarget.Pose.Orientation = Quaternion.Identity;
+                prefTarget.Velocity.Angular = Vector3.Zero;
+                prefTarget.Velocity.Linear = Vector3.Zero;
             }
 
-            _eTarget.Set(new engine.joyce.components.Motion(_prefTarget.Velocity.Linear));
+            _eTarget.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
 
             return;
         }
@@ -305,11 +317,11 @@ public class WalkController : AModule, IInputPart
         
         lock (_engine.Simulation)
         {
-            _prefTarget.Velocity.Linear = vTargetVelocity;
-            _prefTarget.Velocity.Angular = vTargetAngularVelocity;
-            _prefTarget.Pose.Position += vTargetPosAdjust;
-            _prefTarget.Pose.Orientation = qWalkFront; // qTargetOrientation;
-            _prefTarget.Awake = true;
+            prefTarget.Velocity.Linear = vTargetVelocity;
+            prefTarget.Velocity.Angular = vTargetAngularVelocity;
+            prefTarget.Pose.Position += vTargetPosAdjust;
+            prefTarget.Pose.Orientation = qWalkFront; // qTargetOrientation;
+            prefTarget.Awake = true;
         }
     }
 
@@ -344,8 +356,6 @@ public class WalkController : AModule, IInputPart
         Debug.Assert(_massTarget != 0f);
         
         base.ModuleActivate();
-
-        _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 
         _engine.AddModule(this);
 

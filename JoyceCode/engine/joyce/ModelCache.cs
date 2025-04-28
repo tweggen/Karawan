@@ -555,9 +555,8 @@ public class ModelCache
                     BodyReference prefSphere;
                     
                     var shape = shapeFactory.GetSphereShape(radius);
-                    po = new(_engine, default, v3Pos, Quaternion.Identity, shape)
+                    po = new(_engine, eRoot, shape, v3Pos, Quaternion.Identity)
                     {
-                        Entity = eRoot,
                         CollisionProperties = collisionProperties
                     };
                     
