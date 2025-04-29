@@ -220,7 +220,7 @@ public class WalkController : AModule, IInputPart
         if (_jumpTriggered)
         {
             _jumpTriggered = false;
-            vNewTargetVelocity += Vector3.UnitY;
+            vNewTargetPos += 10f * Vector3.UnitY;
         }
         
         if (newAnimState != _characterAnimState)
@@ -268,44 +268,38 @@ public class WalkController : AModule, IInputPart
             }
         }
 
-        #if false
         /*
          * Finally clip the height.
          *
          * If the player is above ground, let gravity do it's thing,
          * capping velocity to vFallMax.
          */
-        float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetWalkingHeightAt(vTargetPos);
+        float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetWalkingHeightAt(vNewTargetPos);
 
         {
             var properDeltaY = 0;
-            var deltaY = vTargetPos.Y - (heightAtTarget + properDeltaY);
+            var deltaY = vNewTargetPos.Y - (heightAtTarget + properDeltaY);
             const float threshDiff = 0.01f;
 
-            if (vTargetPos.Y < heightAtTarget)
+            if (vNewTargetPos.Y < heightAtTarget)
             {
                 /*
                  * Are we below ground?
                  */
                 // TXWTODO: Emit ground hit if I was above                
-                vTargetPosAdjust.Y = heightAtTarget - vTargetPos.Y;
-                vTargetVelocity.Y = 0;
+                vNewTargetPos.Y = heightAtTarget;
             }
             else
             {
                 /*
-                 * Are we above ground? Then limit falling speed.
-                 * If we are falling faster than 100km/h (20m/s), limit.
+                 * No? So fall down with constant 10m/s-1
                  */
-                if (vTargetVelocity.Y < -20f)
-                {
-                    vTargetVelocity.Y = -20f;
-                }
+                
+                vNewTargetPos.Y -= 10f / 60f;
             }
 
             // TXWTODO: Add jump.
         }
-        #endif
         
         lock (_engine.Simulation)
         {
