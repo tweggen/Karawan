@@ -42,6 +42,11 @@ public class WalkController : AModule, IInputPart
     }
 
 
+    public Vector3 StartPosition { get; set; }
+    public Quaternion StartOrientation { get; set; }
+    
+    public uint CameraMask { get; set; }
+    
     private DefaultEcs.Entity _eCamera = default;
 
     enum CharacterAnimState
@@ -76,21 +81,27 @@ public class WalkController : AModule, IInputPart
     {
         if (_engine.State != Engine.EngineState.Running) return;
 
-        Vector3 vTargetPos;
-        Quaternion qTargetOrientation;
+        Vector3 vOrgTargetPos;
+        Vector3 vOrgTargetVelocity;
+        Quaternion qOrgTargetOrientation;
 
+        Vector3 vNewTargetPos = Vector3.Zero;
+        Vector3 vNewTargetVelocity = Vector3.Zero;
+        Quaternion qNewTargetOrientation = Quaternion.Identity;
+        
         /*
          * Read either from the object or take the initial position.
          */
         if (!_eTarget.Has<engine.joyce.components.Transform3>())
         {
-            vTargetPos = 
+            vOrgTargetPos = StartPosition;
+            qOrgTargetOrientation = StartOrientation;
         }
         else
         {
             ref var cTransform3 = ref _eTarget.Get<Transform3>();
-            vTargetPos = cTransform3.Position;
-            qTargetOrientation = cTransform3.Rotation;
+            vOrgTargetPos = cTransform3.Position;
+            qOrgTargetOrientation = cTransform3.Rotation;
         }
         
         CharacterAnimState newAnimState = _characterAnimState;
@@ -103,19 +114,9 @@ public class WalkController : AModule, IInputPart
          * In a perfect world, front and up are derived from the camera.
          * If we have a camera, load the camera orientation.
          */
-        Quaternion qCameraOrientation = qTargetOrientation;
+        Quaternion qCameraOrientation = qOrgTargetOrientation;
         if (_eCamera != default && _eCamera.IsAlive && _eCamera.IsEnabled())
         {
-            if (_eCamera.Has<engine.physics.components.Body>())
-            {
-                ref var cBody = ref _eCamera.Get<engine.physics.components.Body>();
-                lock (_engine.Simulation)
-                {
-                    qCameraOrientation = cBody.Reference.Pose.Orientation;
-                    qTargetOrientation = qCameraOrientation;
-                }
-            }
-
             if (_eCamera.Has<Transform3ToWorld>())
             {
                 ref var cTransform = ref _eCamera.Get<Transform3ToWorld>();
@@ -155,17 +156,13 @@ public class WalkController : AModule, IInputPart
         /*
          * Keep player in bounds.
          */
-        if (!MetaGen.AABB.Contains(vTargetPos))
+        if (!MetaGen.AABB.Contains(vOrgTargetPos))
         {
             lock (_engine.Simulation)
             {
-                prefTarget.Pose.Orientation = Quaternion.Identity;
-                prefTarget.Velocity.Angular = Vector3.Zero;
-                prefTarget.Velocity.Linear = Vector3.Zero;
+                _eTarget.Set(new Transform3(true, CameraMask, StartOrientation, StartPosition));
             }
-
-            _eTarget.Set(new engine.joyce.components.Motion(prefTarget.Velocity.Linear));
-
+            _eTarget.Set(new engine.joyce.components.Motion(Vector3.Zero));
             return;
         }
 
@@ -208,22 +205,22 @@ public class WalkController : AModule, IInputPart
         if (haveVelocity)
         {
             vuWalkDirection = Vector3.Normalize(vuWalkDirection);
-            vTargetVelocity = (-vuWalkDirection.Z * vuFront + vuWalkDirection.X * vuRight) * (8f / 3.6f);
-            Vector3 vuWalkFront = Vector3.Normalize(vTargetVelocity);
+            vNewTargetVelocity += (-vuWalkDirection.Z * vuFront + vuWalkDirection.X * vuRight) * (8f / 3.6f);
+            Vector3 vuWalkFront = Vector3.Normalize(vNewTargetVelocity);
             qWalkFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuWalkFront);
             newAnimState = CharacterAnimState.Walking;
         }
         else
         {
-            vTargetVelocity = Vector3.Zero;
-            qWalkFront = qOriginalTargetOrientation;
+            vNewTargetVelocity += Vector3.Zero;
+            qWalkFront = qOrgTargetOrientation;
             newAnimState = CharacterAnimState.Idle;
         }
 
         if (_jumpTriggered)
         {
             _jumpTriggered = false;
-            vTargetVelocity += Vector3.UnitY;
+            vNewTargetVelocity += Vector3.UnitY;
         }
         
         if (newAnimState != _characterAnimState)
@@ -312,11 +309,7 @@ public class WalkController : AModule, IInputPart
         
         lock (_engine.Simulation)
         {
-            prefTarget.Velocity.Linear = vTargetVelocity;
-            prefTarget.Velocity.Angular = vTargetAngularVelocity;
-            prefTarget.Pose.Position += vTargetPosAdjust;
-            prefTarget.Pose.Orientation = qWalkFront; // qTargetOrientation;
-            prefTarget.Awake = true;
+            _eTarget.Set(new Transform3(true, CameraMask, qWalkFront, vNewTargetPos));
         }
     }
 
