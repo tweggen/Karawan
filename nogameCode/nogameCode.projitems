@@ -73,6 +73,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\IdentifyCameraFocusModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\MainPlayModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlayerPosition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\PlingPlayer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\UpdateEmissionContext.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverController.cs" />

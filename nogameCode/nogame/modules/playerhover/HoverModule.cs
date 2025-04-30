@@ -25,6 +25,7 @@ public class HoverModule : AModule, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<InputEventPipeline>(),
+        new SharedModule<PlayerPosition>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsModule>(),
     };
@@ -40,9 +41,6 @@ public class HoverModule : AModule, IInputPart
     
     public float MassShip { get; set; } = 500f;
 
-    public Vector3 StartPosition { get; set; } = Vector3.Zero;
-    public Quaternion StartOrientation { get; set; } = Quaternion.Identity;
-    
     
 #if true
     public string AnimName { get; set; } = "";
@@ -188,9 +186,8 @@ public class HoverModule : AModule, IInputPart
             Url = ModelUrl,
             Params = instantiateModelParams});
 
-        Vector3 v3Ship = StartPosition;
-        Quaternion qShip = StartOrientation;
-
+        M<PlayerPosition>().GetPlayerPosition(out var v3Ship, out var qShip);
+        
         /*
          * Create the ship entiiies. This needs to run in logical thread.
          */

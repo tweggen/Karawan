@@ -46,7 +46,6 @@ public class MainPlayModule : engine.AModule, IInputPart
     
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<InputEventPipeline>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.ClusterMusicModule>(),
@@ -104,35 +103,6 @@ public class MainPlayModule : engine.AModule, IInputPart
                 default:
                     break;
             }
-        }
-    }
-
-
-    private void _onLogicalFrame(object? sender, float dt)
-    {
-    }
-
-
-    /**
-     * Find and return a suitable start position for the player.
-     * We know there is a cluster around 0/0, so find it, and find an estate
-     * within without a house build upon it.
-     */
-    private void _findStartPosition(out Vector3 v3Start, out Quaternion qStart)
-    {
-        ClusterDesc startCluster = I.Get<ClusterList>().GetClusterAt(Vector3.Zero);
-        if (null != startCluster)
-        {
-            
-            startCluster.FindStartPosition(out v3Start, out qStart);
-            v3Start += startCluster.Pos;
-            Trace($"Startposition is {v3Start} {qStart}");
-        }
-        else
-        {
-            v3Start = new Vector3(0f, 200f, 0f);
-            qStart = Quaternion.Identity;
-            Trace($"No start cluster found, using default startposition is {v3Start} {qStart}");
         }
     }
 
@@ -238,8 +208,6 @@ public class MainPlayModule : engine.AModule, IInputPart
         M<InputEventPipeline>().RemoveInputPart(this);
         I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
         
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-        
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetIntoHover, _onGetIntoHover);
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);
@@ -255,22 +223,11 @@ public class MainPlayModule : engine.AModule, IInputPart
 
     private async Task _setupPlayer()
     {
-        var gameState = M<AutoSave>().GameState;
-        Vector3 v3Ship = gameState.PlayerPosition;
-        Quaternion qShip = Quaternion.Normalize(gameState.PlayerOrientation);
-        if (v3Ship == Vector3.Zero)
-        {
-            Error($"Unbelievably could not come up with a valid start position, so generate one here.");
-            _findStartPosition(out v3Ship, out qShip);
-        }
-
         /*
          * Create the ship entiiies. This needs to run in logical thread.
          */
         _engine.QueueMainThreadAction(() =>
         {
-            _engine.OnLogicalFrame += _onLogicalFrame;
-
             /*
              * Create a viewer for the player itself, defining what parts
              * of the world shall be loaded.
@@ -278,7 +235,7 @@ public class MainPlayModule : engine.AModule, IInputPart
             _playerViewer = new(_engine);
             I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
 
-#if true
+#if false
             lock (_lo)
             {
                 _playerState = PlayerState.WaitingForPersonActivated;

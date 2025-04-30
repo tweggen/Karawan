@@ -24,7 +24,7 @@ public class WalkModule : AModule, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<InputEventPipeline>(),
-        new SharedModule<nogame.modules.AutoSave>(),
+        new SharedModule<PlayerPosition>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsModule>(),
     };
@@ -45,9 +45,6 @@ public class WalkModule : AModule, IInputPart
     
     public float MassPerson { get; set; } = 100f;
 
-    public Vector3 StartPosition { get; set; } = Vector3.Zero;
-    public Quaternion StartOrientation { get; set; } = Quaternion.Identity;
-    
     /**
       * Sound API
       */
@@ -115,8 +112,7 @@ public class WalkModule : AModule, IInputPart
             Url = CharacterModelDescription.ModelUrl,
             Params = instantiateModelParams});
 
-        Vector3 v3Person = StartPosition;
-        Quaternion qPerson = StartOrientation;
+        M<PlayerPosition>().GetPlayerPosition(out var v3Person, out var qPerson);
 
         /*
          * Create the ship entities. This needs to run in logical thread.
