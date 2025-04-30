@@ -24,6 +24,7 @@ public class WalkModule : AModule, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<InputEventPipeline>(),
+        new SharedModule<nogame.modules.AutoSave>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsModule>(),
     };
