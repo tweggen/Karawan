@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using engine;
+using engine.joyce;
 using engine.joyce.components;
 using engine.news;
 using engine.world;
@@ -45,7 +46,7 @@ public class WalkController : AModule, IInputPart
     public Vector3 StartPosition { get; set; }
     public Quaternion StartOrientation { get; set; }
     
-    public uint CameraMask { get; set; }
+    public required uint CameraMask { get; set; }
     
     private DefaultEcs.Entity _eCamera = default;
 
@@ -217,6 +218,8 @@ public class WalkController : AModule, IInputPart
             newAnimState = CharacterAnimState.Idle;
         }
 
+        vNewTargetPos = vOrgTargetPos + vNewTargetVelocity * 1f / 60f;
+        
         if (_jumpTriggered)
         {
             _jumpTriggered = false;
@@ -278,8 +281,6 @@ public class WalkController : AModule, IInputPart
 
         {
             var properDeltaY = 0;
-            var deltaY = vNewTargetPos.Y - (heightAtTarget + properDeltaY);
-            const float threshDiff = 0.01f;
 
             if (vNewTargetPos.Y < heightAtTarget)
             {
@@ -301,10 +302,8 @@ public class WalkController : AModule, IInputPart
             // TXWTODO: Add jump.
         }
         
-        lock (_engine.Simulation)
-        {
-            _eTarget.Set(new Transform3(true, CameraMask, qWalkFront, vNewTargetPos));
-        }
+        I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qWalkFront, vNewTargetPos));
+        _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
     }
 
 

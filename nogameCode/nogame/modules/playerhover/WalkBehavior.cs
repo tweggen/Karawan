@@ -86,7 +86,8 @@ public class WalkBehavior : ABehavior
         {
             Target = _eTarget,
             MassTarget = MassTarget,
-            CharacterModelDescription = CharacterModelDescription
+            CharacterModelDescription = CharacterModelDescription,
+            CameraMask = 0x0000ffff
         };
         _controllerWalkController.ModuleActivate();
     }
