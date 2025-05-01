@@ -19,7 +19,7 @@ namespace engine.physics.systems
                 if (po == null) continue;
             
                 // TXWTODO: This is a workaround for addressing only the former dynamic objects.
-                if ((po.Flags & (physics.Object.HaveContactListener|physics.Object.IsStatic)) != physics.Object.HaveContactListener)
+                if ((po.Flags & (physics.Object.IsDynamic|physics.Object.IsStatic)) != physics.Object.IsDynamic)
                 {
                     continue;
                 }

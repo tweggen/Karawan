@@ -223,7 +223,7 @@ public class WalkController : AModule, IInputPart
         if (_jumpTriggered)
         {
             _jumpTriggered = false;
-            vNewTargetPos += 10f * Vector3.UnitY;
+            vNewTargetPos += 30f * Vector3.UnitY;
         }
         
         if (newAnimState != _characterAnimState)
@@ -296,13 +296,13 @@ public class WalkController : AModule, IInputPart
                  * No? So fall down with constant 10m/s-1
                  */
                 
-                vNewTargetPos.Y -= 10f / 60f;
+                vNewTargetPos.Y = float.Max(heightAtTarget, vNewTargetPos.Y - 20f / 60f);
             }
 
             // TXWTODO: Add jump.
         }
         
-        I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qWalkFront, vNewTargetPos));
+        I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qWalkFront, vNewTargetPos);
         _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
     }
 

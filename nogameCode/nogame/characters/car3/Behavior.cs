@@ -10,6 +10,7 @@ using engine.physics;
 using engine.world;
 using static engine.Logger;
 using engine.behave;
+using Object = engine.physics.Object;
 
 namespace nogame.characters.car3;
 
@@ -49,6 +50,8 @@ internal class Behavior :
             // TXWTODO: I would like to have the object stop more realistic. This is why I have a physics engine.
             cCarBody.Reference.MotionState.Velocity = Vector3.Zero;
         }
+
+        cCarBody.PhysicsObject.Flags |= engine.physics.Object.IsDynamic;
 
         /*
          * Replace the previous behavior with the after crash behavior.

@@ -26,6 +26,7 @@ public class Object : IDisposable
     public const uint IsActivated = 64;
     public const uint IsDeleted = 128;
     public const uint IsGenerated = 256;
+    public const uint IsDynamic = 512;
 
     public DefaultEcs.Entity Entity = default;
     [JsonInclude]
@@ -285,12 +286,14 @@ public class Object : IDisposable
     public void BecomeDynamic()
     {
         AddContactListener();
+        Flags |= IsDynamic;
     }
 
 
     public void BecomeKinematic()
     {
         RemoveContactListener();
+        Flags &= ~IsDynamic;
     }
 
 
@@ -307,12 +310,13 @@ public class Object : IDisposable
         IntHandle = sh.Value;
     }
 
-    
+    #if false
     public Object(DefaultEcs.Entity entity, BepuPhysics.BodyHandle bh)
     {
         Entity = entity;
         IntHandle = bh.Value;
     }
+    #endif
 
 
     /**
@@ -324,11 +328,13 @@ public class Object : IDisposable
         BodyInertia inertia,
         BepuPhysics.Collidables.TypedIndex shape,
         Vector3 Position, Quaternion Orientation,
-        Vector3 BodyOffset = default
+        Vector3 bodyOffset = default
         )
     {
         Entity = entity;
+        Flags = IsDynamic;
         IntHandle = actions.CreateDynamic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, inertia, shape);
+        BodyOffset = bodyOffset;
     }
     
     
@@ -340,11 +346,12 @@ public class Object : IDisposable
         DefaultEcs.Entity entity,
         BepuPhysics.Collidables.TypedIndex shape,
         Vector3 Position, Quaternion Orientation,
-        Vector3 BodyOffset = default
+        Vector3 bodyOffset = default
         )
     {
         Entity = entity;
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, Position+BodyOffset, Orientation, shape);
+        BodyOffset = bodyOffset;
     }
 
     
@@ -355,9 +362,10 @@ public class Object : IDisposable
         Engine engine,
         DefaultEcs.Entity entity,
         BepuPhysics.Collidables.TypedIndex shape,
-        Vector3 BodyOffset = default)
+        Vector3 bodyOffset = default)
     {
         Entity = entity;
         IntHandle = actions.CreateKinematic.Execute(engine.PLog, engine.Simulation, BodyOffset, Quaternion.Identity, shape);
+        BodyOffset = bodyOffset;
     }
 }

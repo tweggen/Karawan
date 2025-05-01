@@ -33,7 +33,7 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
             if (po == null) continue;
 
             // TXWTODO: This is a workaround for addressing only the former kinematic objects.
-            if ((po.Flags & (physics.Object.HaveContactListener|physics.Object.IsStatic)) != 0)
+            if ((po.Flags & (physics.Object.IsDynamic|physics.Object.IsStatic)) != 0)
             {
                 continue;
             }
