@@ -4,7 +4,10 @@ using System.Numerics;
 namespace engine.joyce.components;
 
 /**
- * This lists the Meshes for this navmesh component.
+ * This navmesh component can be attached to any other component.
+ * Different NavMesh components can be merged into one common navmesh.
+ *
+ * Usually, navmeshes would be computed while loading a fragment.
  */
 public struct NavMesh
 {
