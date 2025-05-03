@@ -60,7 +60,24 @@ public class WalkController : AModule, IInputPart
         Walking,
         Running
     }
+    
+    
+    /**
+     * The vertical impulse we have. Increased by gravitation, if not on ground.
+     */
+    private float _verticalImpulse = 0f;
 
+
+    enum JumpState
+    {
+        Grounded,
+        Starting,
+        InJump,
+    }
+
+    private JumpState _jumpState = JumpState.Grounded;
+    
+    
     private CharacterAnimState _characterAnimState = CharacterAnimState.Idle;
     
     private void _onCameraEntityChanged(DefaultEcs.Entity entity)
@@ -78,7 +95,8 @@ public class WalkController : AModule, IInputPart
     
     public CharacterModelDescription CharacterModelDescription { get; set; }
 
-    private bool _jumpTriggered = false; 
+    private bool _jumpTriggered = false;
+    private bool _isRunPressed = false;
     
     
     private void _onLogicalFrame(object sender, float dt)
@@ -209,10 +227,31 @@ public class WalkController : AModule, IInputPart
         if (haveVelocity)
         {
             vuWalkDirection = Vector3.Normalize(vuWalkDirection);
-            vNewTargetVelocity += (-vuWalkDirection.Z * vuFront + vuWalkDirection.X * vuRight) * (8f / 3.6f);
+            
+            /*
+             * Walking speed in km/h
+             */
+            float speed;
+            if (_isRunPressed)
+            {
+                speed = 15f;
+            }
+            else
+            {
+                speed = 8f;
+            }
+            vNewTargetVelocity += (-vuWalkDirection.Z * vuFront + vuWalkDirection.X * vuRight) * (speed / 3.6f);
             Vector3 vuWalkFront = Vector3.Normalize(vNewTargetVelocity);
             qWalkFront = engine.geom.Camera.CreateQuaternionFromPlaneFront(vuWalkFront);
-            newAnimState = CharacterAnimState.Walking;
+
+            if (_isRunPressed)
+            {
+                newAnimState = CharacterAnimState.Running;
+            }
+            else
+            {
+                newAnimState = CharacterAnimState.Walking;
+            }
         }
         else
         {
@@ -225,8 +264,18 @@ public class WalkController : AModule, IInputPart
         
         if (_jumpTriggered)
         {
+            switch (_jumpState)
+            {
+                case JumpState.Grounded:
+                    _jumpState = JumpState.Starting;
+                    
+                    /*
+                     * Add an impulse of a sudden acceleration up of 10m/s.
+                     */
+                    _verticalImpulse += 10;
+                    break;
+            }
             _jumpTriggered = false;
-            vNewTargetPos += 30f * Vector3.UnitY;
         }
         
         if (newAnimState != _characterAnimState)
@@ -450,21 +499,43 @@ public class WalkController : AModule, IInputPart
                     }
                 }
 
-                if (!isOnGround)
+
+                if (isOnGround)
+                {
+                    switch (_jumpState)
+                    {
+                        case JumpState.Starting:
+                            _jumpState = JumpState.InJump;
+                            break;
+                        case JumpState.InJump:
+                            _verticalImpulse = 0f;
+                            _jumpState = JumpState.Grounded;
+                            break;
+                    }
+                }
+                else
                 {
                     /*
-                     * no floor below my feet, start/continue to fall.
-                     * Note, that this height (at minimum 30cm) should be above of what we
-                     * would fall in this frame. check: after one second we would have
-                     * 10m/s, so we would be below 10/60m/s == 1/6 m/s == 16cm / sec in the first frame.
-                     * Matter of fact it is much less due to the acceleration curve (x^2 curve).
-                     * So we safely can have the character fall downward.
+                     * decrease the vertical velocity.
                      */
-                    vNewTargetPos.Y -= 10f * 1f / 60f;
+                    _verticalImpulse -= 10f * 1f / 60f;
                 }
+
+                /*
+                 * no floor below my feet, start/continue to fall.
+                 * Note, that this height (at minimum 30cm) should be above of what we
+                 * would fall in this frame. check: after one second we would have
+                 * 10m/s, so we would be below 10/60m/s == 1/6 m/s == 16cm / sec in the first frame.
+                 * Matter of fact it is much less due to the acceleration curve (x^2 curve).
+                 * So we safely can have the character fall downward.
+                 */
+                vNewTargetPos.Y += _verticalImpulse * 1f / 60f;
+                
             }
         }
 
+
+        // TXWTODO: Integrate acceleration to velocity to position only at this point.
 
         I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qWalkFront, vNewTargetPos);
         _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
@@ -473,14 +544,31 @@ public class WalkController : AModule, IInputPart
 
     public void InputPartOnInputEvent(Event ev)
     {
-        if (ev.Type == Event.INPUT_BUTTON_PRESSED)
+        switch (ev.Type)
         {
-            switch (ev.Code)
-            {
-                case "<jump>":
-                    _jumpTriggered = true;
-                    break;
-            }
+            case Event.INPUT_BUTTON_PRESSED:
+                switch (ev.Code)
+                {
+                    case "<jump>":
+                        _jumpTriggered = true;
+                        ev.IsHandled = true;
+                        break;
+                    case "<run>":
+                        _isRunPressed = true;
+                        ev.IsHandled = true;
+                        break;
+                }
+
+                break;
+            case Event.INPUT_BUTTON_RELEASED:
+                switch (ev.Code)
+                {
+                    case "<run>":
+                        _isRunPressed = false;
+                        ev.IsHandled = true;
+                        break;
+                }
+                break;
         }
     }
 
@@ -489,6 +577,7 @@ public class WalkController : AModule, IInputPart
     {
         _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
+        I.Get<InputEventPipeline>().RemoveInputPart(this);
 
         _engine.Camera.AddOnChange(_onCameraEntityChanged);
         base.ModuleDeactivate();
@@ -508,6 +597,7 @@ public class WalkController : AModule, IInputPart
         
         _eCamera = _engine.Camera.Value;
         _engine.Camera.AddOnChange(_onCameraEntityChanged);
+        I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _engine.OnLogicalFrame += _onLogicalFrame;
         
     }
