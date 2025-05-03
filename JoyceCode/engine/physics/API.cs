@@ -266,6 +266,10 @@ public class API
     }
 
 
+    /**
+     * Perform a raycast test from origin in direction of target, using maixmal test length length
+     * (as multiplicity of target), calling action in case of collision(s).
+     */
     public void RayCastSync(Vector3 origin, Vector3 target, float length,
         Action<CollidableReference, CollisionProperties, float, Vector3> action)
     {

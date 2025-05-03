@@ -1,10 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using BepuPhysics.Collidables;
 using engine;
 using engine.joyce;
 using engine.joyce.components;
 using engine.news;
+using engine.physics;
 using engine.world;
 using static engine.Logger;
 
@@ -270,18 +273,13 @@ public class WalkController : AModule, IInputPart
                 }
             }
         }
-
+        
         /*
-         * Finally clip the height.
-         *
-         * If the player is above ground, let gravity do it's thing,
-         * capping velocity to vFallMax.
+         * First clip the height to world ground. Anything covered by physics must be above.
          */
         float heightAtTarget = I.Get<engine.world.MetaGen>().Loader.GetWalkingHeightAt(vNewTargetPos);
 
         {
-            var properDeltaY = 0;
-
             if (vNewTargetPos.Y < heightAtTarget)
             {
                 /*
@@ -290,18 +288,184 @@ public class WalkController : AModule, IInputPart
                 // TXWTODO: Emit ground hit if I was above                
                 vNewTargetPos.Y = heightAtTarget;
             }
-            else
+        }
+
+        bool isOnGround = false;
+        
+        /*
+         * Use raycast in direction of motion to find how far we may go / fall.
+         */
+        lock (_engine.Simulation)
+        {
+            /*
+             * First raycast old position in direction of new front motion
+             */
+            var aPhysics = I.Get<engine.physics.API>();
+            float v2 = vNewTargetVelocity.LengthSquared(); 
+            if (v2 > 0.01f)
+            {
+                Vector3 vuPhysicsFront;
+                float v = Single.Sqrt(v2);
+
+                vuPhysicsFront = vNewTargetVelocity / v;
+                
+                /*
+                 * We look into physics front direction for only one physics frame, there's no need for more.
+                 * Plus we use a hardcoded radius of 30cm.
+                 * And we will collide with anything.
+                 */
+                float closestCollision = Single.MaxValue;
+                CollidableReference? closestCollidable = null;
+                CollisionProperties? collisionProperties = null;
+                Vector3 vCollision;
+                // TXWTODO: Workaround to raycast in eye line.
+                aPhysics.RayCastSync(vNewTargetPos + 1.7f*Vector3.UnitY, vuPhysicsFront * 1f/60f, v,
+                    (CollidableReference cRef, CollisionProperties props, float t, Vector3 vThisCollision) =>
+                    {
+                        bool isRelevant = false;
+                        bool isMe = false;
+
+                        if (props != null && props.Entity == _eTarget)
+                        {
+                            isMe = true;
+                        }
+                        
+                        if (!isMe)
+                        {
+                            switch (cRef.Mobility)
+                            {
+                                case CollidableMobility.Dynamic:
+                                case CollidableMobility.Kinematic:
+                                case CollidableMobility.Static:
+                                    isRelevant = true;
+                                    break;
+                            }
+                        }
+
+                        if (isRelevant)
+                        {
+                            if (t < closestCollision)
+                            {
+                                closestCollision = t;
+                                closestCollidable = cRef;
+                                collisionProperties = props;
+                                vCollision = vThisCollision;
+                            }
+                        }
+                    });
+
+                if (closestCollision < Single.MaxValue)
+                {
+                    // Trace($"Closest collision in {closestCollision} total {collisionDistance}");
+                    if (closestCollision < 0.3f)
+                    {
+                        /*
+                         * We would run into a collision, so refuse to walk too far.
+                         */
+
+                        float movement = closestCollision - 0.3f;
+                        vNewTargetVelocity = Vector3.Zero;
+                        vNewTargetPos += vuPhysicsFront * movement;
+                        // vNewTargetVelocity = vuPhysicsFront * movement;
+                    }
+                }
+            }
+            
+            /*
+             * Now look how far we could fall down. Again, use our head as a starting point.
+             */
             {
                 /*
-                 * No? So fall down with constant 10m/s-1
+                 * Look down 10m/s / 60frames/s, that should do for most falling.
                  */
-                
-                vNewTargetPos.Y = float.Max(heightAtTarget, vNewTargetPos.Y - 20f / 60f);
-            }
+                float closestCollision = Single.MaxValue;
+                CollidableReference? closestCollidable = null;
+                CollisionProperties? collisionProperties = null;
+                Vector3 vCollision;
+                // TXWTODO: Workaround to raycast in eye line.
+                aPhysics.RayCastSync(vNewTargetPos + 1.7f*Vector3.UnitY, -Vector3.UnitY, 1.7f + 10f * 1f/60f,
+                    (CollidableReference cRef, CollisionProperties props, float t, Vector3 vThisCollision) =>
+                    {
+                        bool isRelevant = false;
+                        bool isMe = false;
 
-            // TXWTODO: Add jump.
+                        if (props != null && props.Entity == _eTarget)
+                        {
+                            isMe = true;
+                        }
+                        
+                        if (!isMe)
+                        {
+                            switch (cRef.Mobility)
+                            {
+                                case CollidableMobility.Dynamic:
+                                case CollidableMobility.Kinematic:
+                                case CollidableMobility.Static:
+                                    isRelevant = true;
+                                    break;
+                            }
+                        }
+
+                        if (isRelevant)
+                        {
+                            if (t < closestCollision)
+                            {
+                                closestCollision = t;
+                                closestCollidable = cRef;
+                                collisionProperties = props;
+                                vCollision = vThisCollision;
+                            }
+                        }
+                    });
+
+                if (closestCollision < Single.MaxValue)
+                {
+                    if (closestCollision <= 1.7f)
+                    {
+                        /*
+                         * We have our feet below ground, adjust, upwards. Still, we are on the ground.
+                         * adjust, very fast.
+                         */
+                        isOnGround = true;
+                        vNewTargetPos.Y += 1.7f - closestCollision;
+                    }
+                    else
+                    {
+                        if (closestCollision <= 2f)
+                        {
+                            /*
+                             * Well, this is just stepping down, still we are on the ground, adjust, downwards,
+                             * gradually.
+                             */
+                            isOnGround = true;
+                            vNewTargetPos.Y += Single.Max(-10f * 1f / 60f, 1.7f - closestCollision);
+                        }
+                        else
+                        {
+                            /*
+                             * Nothing below us.
+                             */
+                            isOnGround = false;
+                        }
+                    }
+                }
+
+                if (!isOnGround)
+                {
+                    /*
+                     * no floor below my feet, start/continue to fall.
+                     * Note, that this height (at minimum 30cm) should be above of what we
+                     * would fall in this frame. check: after one second we would have
+                     * 10m/s, so we would be below 10/60m/s == 1/6 m/s == 16cm / sec in the first frame.
+                     * Matter of fact it is much less due to the acceleration curve (x^2 curve).
+                     * So we safely can have the character fall downward.
+                     */
+                    vNewTargetPos.Y -= 10f * 1f / 60f;
+                }
+            }
         }
-        
+
+
         I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qWalkFront, vNewTargetPos);
         _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
     }
