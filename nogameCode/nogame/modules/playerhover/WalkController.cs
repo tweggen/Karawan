@@ -58,7 +58,8 @@ public class WalkController : AModule, IInputPart
         Unset,
         Idle,
         Walking,
-        Running
+        Running,
+        Jumping
     }
     
     
@@ -277,10 +278,22 @@ public class WalkController : AModule, IInputPart
             }
             _jumpTriggered = false;
         }
-        
-        if (newAnimState != _characterAnimState)
+
+        bool forceFrameZero = false;
+        switch (_jumpState)
         {
-            if (CharacterModelDescription != null && CharacterModelDescription.Model != null && CharacterModelDescription.EntityAnimations.IsAlive)
+            case JumpState.Grounded:
+                break;
+            default:
+                newAnimState = CharacterAnimState.Jumping;
+                forceFrameZero = true;
+                break;
+        }
+        
+        if (forceFrameZero || newAnimState != _characterAnimState)
+        {
+            if (CharacterModelDescription != null && CharacterModelDescription.Model != null &&
+                CharacterModelDescription.EntityAnimations.IsAlive)
             {
                 var jModel = CharacterModelDescription.Model;
 
@@ -295,6 +308,9 @@ public class WalkController : AModule, IInputPart
                         strAnimation = CharacterModelDescription.WalkAnimName;
                         break;
                     case CharacterAnimState.Running:
+                        strAnimation = CharacterModelDescription.RunAnimName;
+                        break;
+                    case CharacterAnimState.Jumping:
                         strAnimation = CharacterModelDescription.RunAnimName;
                         break;
                 }
@@ -317,7 +333,7 @@ public class WalkController : AModule, IInputPart
                     {
                         Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
                     }
-                    
+
                     _characterAnimState = newAnimState;
                 }
             }
@@ -547,7 +563,8 @@ public class WalkController : AModule, IInputPart
 
         // TXWTODO: Integrate acceleration to velocity to position only at this point.
 
-        I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qWalkFront, vNewTargetPos);
+        var qFinalWalkFront = Quaternion.Slerp(qOrgTargetOrientation, qWalkFront, 0.2f);
+        I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qFinalWalkFront, vNewTargetPos);
         _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
     }
 
