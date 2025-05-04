@@ -6,9 +6,11 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using BepuPhysics;
+using BepuPhysics.Collidables;
 using builtin.loader;
 using builtin.tools;
 using engine;
+using engine.geom;
 using engine.joyce.components;
 using engine.physics;
 using static engine.Logger;
@@ -447,6 +449,13 @@ public class ModelCache
     }
 
 
+    enum ModelShape
+    {
+        Sphere,
+        Cylinder,
+        Cuboid
+    }
+
     public void BuildPerInstancePhysics(in DefaultEcs.Entity eRoot,
         ModelBuilder modelBuilder, Model model, ModelCacheParams mcp)
     {
@@ -475,10 +484,43 @@ public class ModelCache
             }
 
             // TXWTODO: Find a smart way to build the physics inside the modelbuilder.
+            ModelShape modelShape = ModelShape.Sphere;
             float radius = 1f;
+            float height = 1f;
+            AABB aabb = new();
             if (model.RootNode != null && model.RootNode.InstanceDesc != null)
             {
-                radius = model.RootNode.InstanceDesc.AABBTransformed.Radius;
+                /*
+                 * If we have aabbs, we can create a cuboid.
+                 */
+                modelShape = ModelShape.Cuboid;
+                aabb = model.RootNode.InstanceDesc.AABBTransformed;
+                Vector3 v3Size = aabb.BB - aabb.AA;
+
+                float rMin = Single.Min(v3Size.X, Single.Min(v3Size.Y, v3Size.Z));
+                float rMax = Single.Max(v3Size.X, Single.Max(v3Size.Y, v3Size.Z));
+
+                if (rMax > 0f)
+                {
+                    float ratio = rMin / rMax;
+                    if (0.8f < ratio && 1.2f > ratio)
+                    {
+                        radius = aabb.Radius;
+                        modelShape = ModelShape.Sphere;
+                    }
+                }
+
+                if (v3Size.X > 0f)
+                {
+                    float topviewratio = v3Size.Z / v3Size.X;
+
+                    if (0.5f < topviewratio && 1.85f > topviewratio)
+                    {
+                        radius = (v3Size.X+v3Size.Z)/2.0f;
+                        height = v3Size.Y;
+                        modelShape = ModelShape.Cylinder;
+                    }
+                }
             }
 
             var collisionProperties = new CollisionProperties
@@ -517,11 +559,28 @@ public class ModelCache
                         v3Pos = eRoot.Get<Transform3>().Position;
                     }
 
+                    TypedIndex shape;
+                    switch (modelShape)
+                    {
+                        default:
+                        case ModelShape.Cuboid:
+                            /*
+                             * TXWTODO: Create cuboids.
+                             */
+                            shape = shapeFactory.GetSphereShape(aabb.Radius);
+                            break;
+                        case ModelShape.Sphere:
+                            shape = shapeFactory.GetSphereShape(radius);
+                            break;
+                        case ModelShape.Cylinder:
+                            shape = shapeFactory.GetCylinderShape(radius, height);
+                            break;
+                    }
                     StaticHandle staticHandle = _engine.Simulation.Statics.Add(
                         new StaticDescription(
                             v3Pos,
                             Quaternion.Identity,
-                            shapeFactory.GetSphereShape(radius)
+                            shape
                         ));
                     
                     po = new(eRoot, staticHandle)
@@ -553,8 +612,24 @@ public class ModelCache
                     }
 
                     BodyReference prefSphere;
+                    TypedIndex shape;
+                    switch (modelShape)
+                    {
+                        default:
+                        case ModelShape.Cuboid:
+                            /*
+                             * TXWTODO: Create cuboids.
+                             */
+                            shape = shapeFactory.GetSphereShape(aabb.Radius);
+                            break;
+                        case ModelShape.Sphere:
+                            shape = shapeFactory.GetSphereShape(radius);
+                            break;
+                        case ModelShape.Cylinder:
+                            shape = shapeFactory.GetCylinderShape(radius, height);
+                            break;
+                    }
                     
-                    var shape = shapeFactory.GetSphereShape(radius);
                     po = new(_engine, eRoot, shape, v3Pos, Quaternion.Identity)
                     {
                         CollisionProperties = collisionProperties

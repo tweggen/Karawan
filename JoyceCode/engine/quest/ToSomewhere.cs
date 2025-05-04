@@ -354,7 +354,7 @@ public class ToSomewhere : AModule
         };
         lock (_engine.Simulation)
         {
-            var shape = I.Get<ShapeFactory>().GetCylinderShape(SensitiveRadius);
+            var shape = I.Get<ShapeFactory>().GetCylinderShape(SensitiveRadius, 1000f);
             po = new engine.physics.Object(_engine, _eGoal, shape);
             prefCylinder = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
         }

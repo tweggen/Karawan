@@ -46,15 +46,15 @@ public class ShapeFactory
     }
 
     
-    private SortedDictionary<float, BepuPhysics.Collidables.TypedIndex> _mapPshapeCylinder = new();
-    private SortedDictionary<float, BepuPhysics.Collidables.Cylinder> _mapPbodyCylinder = new();
-    public BepuPhysics.Collidables.TypedIndex GetCylinderShape(float radius)
+    private SortedDictionary<(float,float), BepuPhysics.Collidables.TypedIndex> _mapPshapeCylinder = new();
+    private SortedDictionary<(float,float), BepuPhysics.Collidables.Cylinder> _mapPbodyCylinder = new();
+    public BepuPhysics.Collidables.TypedIndex GetCylinderShape(float radius, float length)
     {
         lock (_classLock)
         {
             BepuPhysics.Collidables.Cylinder pbodyCylinder;
             BepuPhysics.Collidables.TypedIndex pshapeCylinder;
-            if (_mapPshapeCylinder.TryGetValue(radius, out pshapeCylinder))
+            if (_mapPshapeCylinder.TryGetValue((radius,length), out pshapeCylinder))
             {
                 return pshapeCylinder;
             }
@@ -64,13 +64,13 @@ public class ShapeFactory
                 pshapeCylinder = new TypedIndex()
                 {
                     Packed = (uint)engine.physics.actions.CreateCylinderShape.Execute(_engine.PLog, _engine.Simulation,
-                        radius, 1000f, 
+                        radius, length, 
                         out pbodyCylinder)
                 };
             }
 
-            _mapPbodyCylinder[radius] = pbodyCylinder;
-            _mapPshapeCylinder[radius] = pshapeCylinder;
+            _mapPbodyCylinder[(radius,length)] = pbodyCylinder;
+            _mapPshapeCylinder[(radius,length)] = pshapeCylinder;
             
             return pshapeCylinder;
         }
