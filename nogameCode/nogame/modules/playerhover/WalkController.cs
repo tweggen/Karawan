@@ -272,7 +272,7 @@ public class WalkController : AModule, IInputPart
                     /*
                      * Add an impulse of a sudden acceleration up of 10m/s.
                      */
-                    _verticalImpulse += 10;
+                    _verticalImpulse += 6f;
                     break;
             }
             _jumpTriggered = false;
@@ -482,12 +482,22 @@ public class WalkController : AModule, IInputPart
                     {
                         if (closestCollision <= 2f)
                         {
-                            /*
-                             * Well, this is just stepping down, still we are on the ground, adjust, downwards,
-                             * gradually.
-                             */
-                            isOnGround = true;
-                            vNewTargetPos.Y += Single.Max(-10f * 1f / 60f, 1.7f - closestCollision);
+                            if (_jumpState != JumpState.Grounded)
+                            {
+                                /*
+                                 * If we are about to trigger a jump, we would not glue ourselves to the ground.
+                                 */
+                                isOnGround = false;
+                            }
+                            else
+                            {
+                                /*
+                                 * Well, this is just stepping down, still we are on the ground, adjust, downwards,
+                                 * gradually.
+                                 */
+                                isOnGround = true;
+                                vNewTargetPos.Y += Single.Max(-10f * 1f / 60f, 1.7f - closestCollision);
+                            }
                         }
                         else
                         {
