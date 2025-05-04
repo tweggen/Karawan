@@ -234,7 +234,7 @@ public class Model
             m4Anim = me.Transform.Matrix;
         }
 
-        Matrix4x4.Invert(m4Anim, out var m4InverseAnim);
+        // Matrix4x4.Invert(m4Anim, out var m4InverseAnim);
         Matrix4x4.Invert(me.Transform.Matrix, out var m4InverseBone);
     
         Matrix4x4 m4MyBoneSpaceToModelSpace = m4Anim * m4BoneSpaceToModelSpace; 
