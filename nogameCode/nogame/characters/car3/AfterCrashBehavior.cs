@@ -110,6 +110,7 @@ public class AfterCrashBehavior : ABehavior
             {
                 ref engine.physics.components.Body cCarBody = ref entity.Get<engine.physics.components.Body>();
                 cCarBody.PhysicsObject.RemoveContactListener();
+                cCarBody.PhysicsObject.Flags &= ~Object.IsDynamic;
                 lock (_engine.Simulation)
                 {
                     var prefTarget = cCarBody.Reference;
