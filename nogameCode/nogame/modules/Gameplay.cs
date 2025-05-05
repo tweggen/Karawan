@@ -48,10 +48,6 @@ public class Gameplay : AModule, IInputPart
         
         new MyModule<FollowCameraController>() { ShallActivate = false },
 
-        /*
-         * Modules to populate the world after world-building.
-         */
-        new MyModule<DropCoinModule>(),
         new MyModule<nogame.modules.playerhover.MainPlayModule>() { ShallActivate = false }
 
     };

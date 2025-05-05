@@ -23,14 +23,14 @@ public class DropCoinModule : AModule, IWorldOperator
         List<Task> all = new();
         for (int i = 45; i < 100; i += 3)
         {
-            all.Add(M<nogame.inv.coin.Factory>().CreateAt(new Vector3(160, i, 190f))());
+            all.Add(M<nogame.inv.coin.Factory>().CreateAt(new Vector3(142, i, 152f))());
         }
 
         return Task.WhenAll(all);
     });
 
 
-public override void ModuleActivate()
+    public override void ModuleActivate()
     {
         base.ModuleActivate();
         _engine.AddModule(this);

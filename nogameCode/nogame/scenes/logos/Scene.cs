@@ -42,7 +42,7 @@ public class Scene : AModule, IScene
          * We will activate gameplay from startup.
          */
         new SharedModule<nogame.modules.Gameplay>() { ShallActivate = false },
-
+        new SharedModule<nogame.modules.GameSetup>() { ShallActivate = false },
         new SharedModule<nogame.modules.AutoSave>(),
         new SharedModule<builtin.jt.Factory>(),
         new SharedModule<nogame.modules.story.Narration>(),
@@ -183,6 +183,14 @@ public class Scene : AModule, IScene
 
     private void _startGame(bool reset)
     {
+        /*
+         * Before loading the game with the parameters given,
+         * setupup game state setup tools.
+         *
+         * TXWTODO: Shouldn't they be required on reset only?
+         */
+        M<GameSetup>().ModuleActivate();
+        
         /*
          * Give us a short delay to render some frames.
          */
