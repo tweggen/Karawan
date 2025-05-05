@@ -43,13 +43,10 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     private DefaultEcs.Entity _cameraEntity;
     private DefaultEcs.Entity _playerEntity;
 
+    private bool _haveCamera = false; 
     private Matrix4x4 _cameraMatrix;
     private Vector3 _cameraVelocity;
     private Vector3 _cameraPosition;
-
-    private Matrix4x4 _playerMatrix;
-    private Vector3 _playerVelocity;
-    private Vector3 _playerPosition;
 
     private readonly float[] _arrFloatOrientation = new float[6];
 
@@ -208,28 +205,37 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
 
     protected override unsafe void PreUpdate(float dt)
     {
-        _readCameraValues();
+        _haveCamera = _readCameraValues();
         
         
         _api.AL.SetListenerProperty(ListenerVector3.Position, Vector3.Zero);
-        _api.AL.SetListenerProperty(ListenerVector3.Velocity, _cameraVelocity);
-        
-        /*
-         * We use the direction from the camera but the position of the ship.
-         */
-        engine.geom.Camera.VectorsFromMatrix(_cameraMatrix, out var vFront, out var vUp, out var _);
-
-        _arrFloatOrientation[0] = vFront.X;
-        _arrFloatOrientation[1] = vFront.Y;
-        _arrFloatOrientation[2] = vFront.Z;
-        _arrFloatOrientation[3] = vUp.X;
-        _arrFloatOrientation[4] = vUp.Y;
-        _arrFloatOrientation[5] = vUp.Z;
-
-        fixed (float* pO = _arrFloatOrientation)
+        if (_haveCamera)
         {
-            _api.AL.SetListenerProperty(ListenerFloatArray.Orientation, pO);
+            _api.AL.SetListenerProperty(ListenerVector3.Velocity, _cameraVelocity);
+            /*
+             * We use the direction from the camera but the position of the ship.
+             */
+            engine.geom.Camera.VectorsFromMatrix(_cameraMatrix, out var vFront, out var vUp, out var _);
+
+            _arrFloatOrientation[0] = vFront.X;
+            _arrFloatOrientation[1] = vFront.Y;
+            _arrFloatOrientation[2] = vFront.Z;
+            _arrFloatOrientation[3] = vUp.X;
+            _arrFloatOrientation[4] = vUp.Y;
+            _arrFloatOrientation[5] = vUp.Z;
+
+            fixed (float* pO = _arrFloatOrientation)
+            {
+                _api.AL.SetListenerProperty(ListenerFloatArray.Orientation, pO);
+            }
         }
+        else
+        {
+            _api.AL.SetListenerProperty(ListenerVector3.Velocity, Vector3.Zero);
+            // Leave orientation as is.
+        }
+
+        
     }
     
 
@@ -280,7 +286,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                  * values to the audiosource at this point.
                  */
 
-                if (cMovingSound.MaxDistance < distance)
+                if (!_haveCamera || cMovingSound.MaxDistance < distance)
                 {
                     /*
                      * We do not want to hear that anymore due to the computed
@@ -310,7 +316,7 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                  * We did not have a boom sound but might want to have one. Add it to the sound
                  * entries, but do not physically trigger the loading yet.
                  */
-                if (cMovingSound.MaxDistance >= distance)
+                if (_haveCamera && cMovingSound.MaxDistance >= distance)
                 {
                     // Trace($"New SoundEntry for entity {entity}.");
                     SoundEntry seNew = new();
@@ -506,17 +512,15 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
     }
 
 
-    private void _readCameraValues()
+    private bool _readCameraValues()
     {
         DefaultEcs.Entity eCamera;
-        DefaultEcs.Entity ePlayer;
         lock (_lo)
         {
             eCamera = _cameraEntity;
-            ePlayer = _playerEntity;
-            if (!eCamera.IsAlive || !ePlayer.IsAlive)
+            if (!eCamera.IsAlive)
             {
-                return;
+                return false;
             }
             try {
                 if (eCamera.Has<Transform3ToWorld>() && eCamera.Has<Motion>())
@@ -525,22 +529,21 @@ sealed public class UpdateMovingSoundSystem : DefaultEcs.System.AEntitySetSystem
                     _cameraVelocity = eCamera.Get<engine.joyce.components.Motion>().Velocity;
                     _cameraPosition = _cameraMatrix.Translation;
                 }
-
-                if (ePlayer.Has<Transform3ToWorld>() && ePlayer.Has<Motion>())
+                else
                 {
-                    _playerMatrix = ePlayer.Get<engine.joyce.components.Transform3ToWorld>().Matrix;
-                    _playerVelocity = ePlayer.Get<engine.joyce.components.Motion>().Velocity;
-                    _playerPosition = _playerMatrix.Translation;
+                    return false;
                 }
             }
             catch (Exception e)
             {
-                Error($"{e} Camera and player entity {eCamera} does not of both Transform3ToWorld and Motion set.");
+                Error($"{e} Camera entity {eCamera} does not of both Transform3ToWorld and Motion set.");
+                return false;
             }
         }
         /*
          * Now we can use the values during the update cycle.
          */
+        return true;
     }
     
 

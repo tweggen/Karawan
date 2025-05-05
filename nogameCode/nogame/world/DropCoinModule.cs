@@ -23,7 +23,7 @@ public class DropCoinModule : AModule, IWorldOperator
         List<Task> all = new();
         for (int i = 45; i < 100; i += 3)
         {
-            all.Add(M<nogame.inv.coin.Factory>().CreateAt(new Vector3(142, i, 152f))());
+            all.Add(M<nogame.inv.coin.Factory>().CreateAt(new Vector3(164, i, 137f))());
         }
 
         return Task.WhenAll(all);
