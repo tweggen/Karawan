@@ -22,8 +22,11 @@ public class AudioSource : Boom.ISound
     {
         if(_traceAudio) Trace(msg);
     }
-    
-    private Vector3 _position = new();
+
+    /*
+     * Start with a far off position to avoid cranks in the beginning.
+     */
+    private Vector3 _position = new(0f, -10000f, 0f);
 
     public Vector3 Position
     {
