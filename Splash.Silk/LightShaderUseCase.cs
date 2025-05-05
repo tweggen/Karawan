@@ -69,7 +69,7 @@ public class LightShaderUseCaseLocs : ShaderLocs
 
         sh.SetUniform(AmbientLoc, lightCollector.ColAmbient);
         // CheckError(gl, $"Set Uniform ambient light");
-        for (int i = 0; i < lightCollector.LightsCount; i++)
+        for (int i = 0; i < LightCollector.MAX_LIGHTS; i++)
         {
             _applyLightValues(gl, sh, i, lightCollector.Lights[i]);
         }

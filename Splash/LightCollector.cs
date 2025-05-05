@@ -136,7 +136,7 @@ namespace Splash
         {
             lock (_lo)
             {
-                for (int i = 0; i < _lightsCount; i++)
+                for (int i = 0; i < MAX_LIGHTS; i++)
                 {
                     _lights[i].enabled = false;
                 }
