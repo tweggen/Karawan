@@ -108,18 +108,9 @@ public class InputMapper : AModule
     }
 
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleActivate()
     {
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
-    }
-    
-
-    public override void ModuleActivate()
-    {
-        base.ModuleActivate();
         _eq = I.Get<EventQueue>();
-        _engine.AddModule(this);
     }
 }
 

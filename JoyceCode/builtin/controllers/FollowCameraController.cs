@@ -845,24 +845,18 @@ public class FollowCameraController : AModule, IInputPart
     }
     
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
 
         _engine.OnLogicalFrame -= _onLogicalFrame;
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _destroyPhysics();
-
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         Debug.Assert(_eTarget != default);
         Debug.Assert(_eCarrot != default);
         

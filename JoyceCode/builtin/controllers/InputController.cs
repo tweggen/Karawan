@@ -822,19 +822,16 @@ public class InputController : engine.AModule, engine.IInputPart
     }
 
     
-    public void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         M<InputEventPipeline>().RemoveInputPart(this);
         I.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
         I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _refreshViewSize();

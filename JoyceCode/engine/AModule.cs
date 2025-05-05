@@ -170,12 +170,35 @@ public abstract class AModule : IModule
     protected void ActivateMyModule<T>() where T : class, IModule => _moduleTracker.ActivateMyModule<T>();
     protected void DeactivateMyModule<T>() where T : class, IModule => _moduleTracker.DeactivateMyModule<T>();
     protected bool IsMyModuleActive<T>() where T : class, IModule => _moduleTracker.IsMyModuleActive<T>();
-    
-
-    public virtual void ModuleDeactivate() => _moduleTracker.ModuleDeactivate();
 
     
-    public virtual void ModuleActivate()
+    protected virtual void OnModuleDeactivate()
+    {
+    }
+
+    protected virtual void OnModuleActivate()
+    {
+    }
+
+
+    public void ModuleDeactivate()
+    {
+        try
+        {
+            OnModuleDeactivate();
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception while executing Deactivate call for module: {e}.");
+        }
+
+        _engine.RemoveModule(this);
+        _moduleTracker.ModuleDeactivate();   
+    }
+
+    
+    
+    public void ModuleActivate()
     {
         _engine = I.Get<Engine>();
         
@@ -183,7 +206,17 @@ public abstract class AModule : IModule
          * Generate the dependencies on demand. This is not possible at construction time.
          */
         _moduleTracker.ModuleDependencies = ModuleDepends();
-        _moduleTracker.ModuleActivate();  
+        _moduleTracker.ModuleActivate();
+        _engine.AddModule(this);
+
+        try
+        {
+            OnModuleActivate();
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception while executing Activate call for module: {e}.");
+        }
     } 
     
     
@@ -199,5 +232,4 @@ public abstract class AModule : IModule
     {
         _moduleTracker = new() { Module = this };
     }
-
 }

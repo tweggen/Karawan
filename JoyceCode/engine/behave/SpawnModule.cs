@@ -345,7 +345,7 @@ public class SpawnModule : AModule
     }
     
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         
@@ -353,15 +353,11 @@ public class SpawnModule : AModule
          * Purge whatever spawns would have been scheduled.
          */
         _queueSpawnActions.Clear();
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
         _loader = _metaGen.Loader;
     }

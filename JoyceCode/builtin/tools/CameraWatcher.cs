@@ -203,23 +203,18 @@ public class CameraWatcher : AModule
     }
     
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         if (_subscriptions != null)
         {
             _subscriptions.Dispose();
             _subscriptions = null;
         }
-
-        base.ModuleDeactivate();
-        _engine.RemoveModule(this);
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-
         lock (_lo)
         {
             _mapCameras = new();
@@ -245,6 +240,5 @@ public class CameraWatcher : AModule
         }
 
         _subscriptions = GetSubscriptions(world).Merge();
-        _engine.AddModule(this);
     }
 }

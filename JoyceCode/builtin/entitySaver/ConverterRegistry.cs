@@ -130,18 +130,4 @@ public class ConverterRegistry : AModule
         
         _roConverters = _mapConverters.ToFrozenDictionary();
     }
-
-
-    public override void ModuleDeactivate()
-    {
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
-    }
-    
-    
-    public override void ModuleActivate()
-    {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-    }
 }

@@ -88,7 +88,7 @@ public class Stats : engine.AModule
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
@@ -97,24 +97,17 @@ public class Stats : engine.AModule
         I.Get<SubscriptionManager>().Unsubscribe(
             Event.RENDER_STATS, _onRenderStats);
 
-        _engine.RemoveModule(this);
         _ePhysDisplay.Dispose();
-
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        
         _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
         I.Get<SubscriptionManager>().Subscribe(
             Event.RENDER_STATS, _onRenderStats);
 
-        _engine.AddModule(this);
-        
         if (_engine.Player.TryGet(out var ePlayer))
         {
             _onPlayerEntityChanged(ePlayer);

@@ -40,22 +40,15 @@ public class ClickModule : AModule
     }
     
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
-
-        _engine.RemoveModule(this);
-        
-        base.ModuleDeactivate();
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-        
         /*
          * Setup osd interaction handler
          */

@@ -147,27 +147,21 @@ public class TitleModule : engine.AModule
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         foreach (var card in _cards)
         {
             _onCardStop(card);
         }
-        _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        base.ModuleDeactivate();
     }
 
 
     /**
      * Immediately after activation, the timepoints are registered.
      */
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-
-        _engine.AddModule(this);
-
         var timeline = I.Get<Timeline>();
 
         foreach (var card in _cards)

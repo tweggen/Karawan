@@ -365,20 +365,6 @@ public class DBStorage : engine.AModule
     }
     
     
-    public override void ModuleActivate()
-    {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-    }
-
-    
-    public override void ModuleDeactivate()
-    {
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
-    }
-    
-    
     public DBStorage()
     {
         Mapper = _createMappers();

@@ -87,18 +87,15 @@ public class Saver : AModule
         Save(ev.Code);
     }
 
-
-    public override void ModuleDeactivate()
-    {
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
-    }
     
-
-    public override void ModuleActivate()
+    protected override void OnModuleDeactivate()
     {
-        base.ModuleActivate();
+        I.Get<SubscriptionManager>().Unsubscribe("builtin.SaveGame.TriggerSave", _handleTriggerSave);
+    }
+
+
+    protected override void OnModuleActivate()
+    {
         I.Get<SubscriptionManager>().Subscribe("builtin.SaveGame.TriggerSave", _handleTriggerSave);
-        _engine.AddModule(this);
     }
 }

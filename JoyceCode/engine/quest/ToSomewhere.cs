@@ -391,21 +391,17 @@ public class ToSomewhere : AModule
     };
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _isStopped = true;
-        _engine.RemoveModule(this);
         _stopRoute();
         _destroyRoute();
         _destroyGoal();
-        base.ModuleDeactivate();
     }
     
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.ToSomewhere.materials.waypoint",
             name => new Material()
             {
@@ -422,6 +418,5 @@ public class ToSomewhere : AModule
             _createRouteLT();
             _startRouteLT();
         });
-        _engine.AddModule(this);
     }
 }

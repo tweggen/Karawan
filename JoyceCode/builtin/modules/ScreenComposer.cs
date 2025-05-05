@@ -96,13 +96,6 @@ public class ScreenComposer : AModule
     }
     
 
-    public override void ModuleDeactivate()
-    {
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
-    }
-
-
     public void SetLayerVisible(string name, bool isVisible)
     {
     }
@@ -127,12 +120,8 @@ public class ScreenComposer : AModule
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-
-        _engine.AddModule(this);
-
         _eCamera = _engine.CreateEntity("ScreenLayerCamera");
         _eCamera.Set(new engine.joyce.components.Camera3()
         {
