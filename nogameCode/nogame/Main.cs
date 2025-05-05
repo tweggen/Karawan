@@ -51,18 +51,8 @@ public class Main : AModule
         }
     }
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleActivate()
     {
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
-    }
-
-
-    public override void ModuleActivate()
-    {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         I.Register<engine.world.ClusterList>(() => new engine.world.ClusterList());
         // TXWTODO: Looks a bit out of place, looks more like platform specific.
         I.Get<Boom.ISoundAPI>().SetupDone();
@@ -71,7 +61,6 @@ public class Main : AModule
         I.Get<engine.gongzuo.API>().AddDefaultBinding("inv", () => new builtin.modules.inventory.InvLuaBindings());
         
         _setupScreenComposition();
-        
 
         I.Get<SceneSequencer>().Load();
         I.Get<SceneSequencer>().Run();

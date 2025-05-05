@@ -51,24 +51,18 @@ public class PauseMenuModule : AModule, IInputPart
     }
     
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
 
         M<Factory>().CloseAll(_layerDefinition.Name);
         
         _engine.DisablePause();
-        
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         _engine.EnablePause();
 
         try

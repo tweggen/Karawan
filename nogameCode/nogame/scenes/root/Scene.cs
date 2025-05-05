@@ -288,9 +288,8 @@ public class Scene : AModule, IScene, IInputPart
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
         M<InputEventPipeline>().RemoveInputPart(this);
 
         I.Get<SubscriptionManager>().Unsubscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
@@ -299,14 +298,11 @@ public class Scene : AModule, IScene, IInputPart
          * Null out everything we don't need when the scene is unloaded.
          */
         I.Get<SceneSequencer>().RemoveScene(this);
-
-        base.ModuleDeactivate();
     }
     
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
         _aTransform = I.Get<TransformApi>();
         
         _engine.SuggestBeginLoading();
@@ -326,7 +322,6 @@ public class Scene : AModule, IScene, IInputPart
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);
         I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.setAmbientLight", _onSetAmbientLight);
         
-        _engine.AddModule(this);
         ActivateMyModule<modules.map.Module>();
 
         _create3dEntites();

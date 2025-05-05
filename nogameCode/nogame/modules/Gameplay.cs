@@ -318,26 +318,20 @@ public class Gameplay : AModule, IInputPart
     }
 
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.Camera.RemoveOnChange(_onNewCamera);
         _engine.Player.RemoveOnChange(_onNewPlayer);
         
         I.Get<SubscriptionManager>().Unsubscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
-        _engine.RemoveModule(this);
         M<engine.news.InputEventPipeline>().RemoveInputPart(this);
         _killOldCameraController();
-        base.ModuleDeactivate();
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
-        
     }
 }

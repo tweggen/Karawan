@@ -17,20 +17,14 @@ public class Camera : AModule
     
     private DefaultEcs.Entity _eCamOSD;
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
-        
         _eCamOSD.Dispose();
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         /*
          * Create an osd camera
          */

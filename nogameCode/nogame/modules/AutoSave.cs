@@ -693,19 +693,15 @@ public class AutoSave : engine.AModule
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
+        _eSaveOnlineDisplay.Dispose();
         M<Saver>().SaveAction = default;        
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
     
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         M<Saver>().SaveAction = _handleTriggerSave;        
         
         _eSaveOnlineDisplay = _engine.CreateEntity("SaveOnlineDisplay");

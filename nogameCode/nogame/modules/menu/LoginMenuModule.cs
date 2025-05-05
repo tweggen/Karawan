@@ -22,21 +22,15 @@ public class LoginMenuModule : AModule
     };
 
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         M<Factory>().CloseOSD(_layerDefinition.Name, "menuLogin");
         _engine.DisablePause();
-        
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         _engine.EnablePause();
 
         try

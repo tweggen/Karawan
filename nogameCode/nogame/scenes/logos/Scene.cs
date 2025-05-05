@@ -263,10 +263,8 @@ public class Scene : AModule, IScene
     }
 
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
-
         _engine.AddDoomedEntity(_eCamera);
         _engine.AddDoomedEntity(_eLight);
         lock (_lo)
@@ -282,8 +280,6 @@ public class Scene : AModule, IScene
         I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginLocally", _onLoginLocally);
         I.Get<SubscriptionManager>().Unsubscribe("nogame.login.loginGlobally", _onLoginGlobally);
         I.Get<SubscriptionManager>().Unsubscribe("nogame.login.newGlobally", _onNewGlobally);
-
-        base.ModuleDeactivate();
     }
 
     
@@ -375,10 +371,8 @@ public class Scene : AModule, IScene
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-
         /*
          * Some local shortcuts
          */
@@ -422,9 +416,6 @@ public class Scene : AModule, IScene
             _aTransform.SetCameraMask(_eCamera, CameraMask);
             _aTransform.SetPosition(_eCamera, new Vector3(0f, 0f, 10f));
         }
-
-
-        _engine.AddModule(this);
 
         I.Get<Boom.ISoundAPI>().SoundMask = 0xffff0000;
         I.Get<SceneSequencer>().AddScene(5, this);

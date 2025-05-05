@@ -76,28 +76,20 @@ public class Module : AModule
     }
     
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
-
         I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.config.save", _onSave);
-        
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-
         {
             var gameConfig = _loadGameConfig();
             _gameConfig = gameConfig;
         }
      
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.config.save", _onSave);
-        
-        _engine.AddModule(this);
     }
 
 }

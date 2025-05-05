@@ -113,20 +113,15 @@ public class Module : AModule
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
         _eClockDisplay.Dispose();
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
     
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-        
         /*
          * Initialize the real world game start time with "now", which might or
          * might not be correct. Anyway, this represents the game starting in this very second.

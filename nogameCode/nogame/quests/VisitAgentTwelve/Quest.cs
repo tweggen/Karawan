@@ -127,23 +127,19 @@ public class Quest : AModule, IQuest, ICreator
     }
     
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _questTarget?.ModuleDeactivate();
         _questTarget?.Dispose();
         _questTarget = null;
         
-        _engine.RemoveModule(this);
         _isActive = false;
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
         _isActive = true;
-        _engine.AddModule(this);
         
         _engine.Player.CallWithEntity(e => 
             _engine.QueueMainThreadAction(() =>

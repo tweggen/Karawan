@@ -31,23 +31,19 @@ public class Module : AModule
     }
     
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         Props.Set("engine.editor.isOpen", false);
 
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onMousePressed);
         
-        _engine.RemoveModule(this);
         _engine.OnImGuiRender -= _onImGuiRender;
         _engine.DisableEntityIds();
-        base.ModuleDeactivate();
     }
 
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
         _engine.OnImGuiRender += _onImGuiRender;
         _engine.EnableEntityIds();
         

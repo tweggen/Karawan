@@ -43,10 +43,8 @@ public class Scene : AModule, IScene
     }
     
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
-
         _engine.AddDoomedEntity(_eCamera);
         _engine.AddDoomedEntity(_eLight);
         _engine.AddDoomedEntity(_eSpinner);
@@ -57,18 +55,13 @@ public class Scene : AModule, IScene
          * Null out everything we don't need when the scene is unloaded.
          */
         I.Get<SceneSequencer>().RemoveScene(this);
-        
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        
         _aTransform = I.Get<engine.joyce.TransformApi>();
         
-
         /*
          * Cube Spinner while loading.
          */
@@ -136,5 +129,4 @@ public class Scene : AModule, IScene
         }
 
     }
-
 }

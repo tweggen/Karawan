@@ -61,21 +61,16 @@ public class DebuggerToggle : AModule, IInputPart
         }
     }
 
-
-    public override void ModuleDeactivate()
+    
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
         M<InputEventPipeline>().RemoveInputPart(this);
-        base.ModuleDeactivate();
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-        _engine.AddModule(this);
-
     }
 
 }

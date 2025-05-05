@@ -130,19 +130,15 @@ public class Display : engine.AModule
         _textureFramebuffer.Framebuffer = _framebuffer.GetDisplayBuffer();
     }
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         DeactivateMyModule<RenderOSDSystem>();
-        _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogical;
-        base.ModuleDeactivate();
     }
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
         _aTransform = I.Get<engine.joyce.TransformApi>();
-        _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogical;
         _setupOSD();
         M<RenderOSDSystem>().SetFramebuffer(_framebuffer);
