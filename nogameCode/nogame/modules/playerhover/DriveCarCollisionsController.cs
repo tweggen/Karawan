@@ -14,7 +14,7 @@ using engine.world;
 
 namespace nogame.modules.playerhover;
 
-public class DriveCarCollisionsModule : AModule
+public class DriveCarCollisionsController : AController
 {
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -166,7 +166,7 @@ public class DriveCarCollisionsModule : AModule
     }
 
     
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         if (_ePlayer == default)
         {
@@ -190,8 +190,6 @@ public class DriveCarCollisionsModule : AModule
 
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-
         _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
         
         I.Get<SubscriptionManager>().Unsubscribe(
@@ -233,8 +231,6 @@ public class DriveCarCollisionsModule : AModule
         
         _engine.Camera.AddOnChange(_onPlayerEntityChanged);
         
-        _engine.OnLogicalFrame += _onLogicalFrame;
-
         _engine.Run(_setupModule);
     }
 }

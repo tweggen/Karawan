@@ -6,7 +6,7 @@ using engine.world;
 
 namespace builtin.modules;
 
-public class Stats : engine.AModule
+public class Stats : engine.AController
 {
     private object _lo = new();
     
@@ -24,7 +24,7 @@ public class Stats : engine.AModule
     }
 
 
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         string displayData = "";
 
@@ -90,7 +90,6 @@ public class Stats : engine.AModule
 
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
         _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
 
         
@@ -113,7 +112,5 @@ public class Stats : engine.AModule
             _onPlayerEntityChanged(ePlayer);
         }
         _engine.Player.AddOnChange(_onPlayerEntityChanged);
-        
-        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

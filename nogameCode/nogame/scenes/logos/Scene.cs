@@ -47,7 +47,7 @@ public class Scene : AModule, IScene
         new SharedModule<builtin.jt.Factory>(),
         new SharedModule<nogame.modules.story.Narration>(),
         new MyModule<nogame.modules.menu.LoginMenuModule> { ShallActivate = false },
-        new MyModule<TitleModule> { ShallActivate = false }
+        new MyModule<TitleController> { ShallActivate = false }
     };
   
   
@@ -312,7 +312,7 @@ public class Scene : AModule, IScene
                 _hideTitle);
 
             {
-                var modTitle = M<TitleModule>();
+                var modTitle = M<TitleController>();
 
                 /*
                  * We do not use the texture atlas because there is no need to waste previous atlas space
@@ -358,7 +358,7 @@ public class Scene : AModule, IScene
                 });
             }
 
-            ActivateMyModule<TitleModule>();
+            ActivateMyModule<TitleController>();
         });
     }
 

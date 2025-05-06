@@ -12,7 +12,7 @@ namespace nogame.modules.daynite;
  * We are responsible for the day night cycle but also for the
  * current in-game time.
  */
-public class Module : AModule
+public class Controller : AModule
 {
     private DefaultEcs.Entity _eClockDisplay;
     
@@ -142,7 +142,7 @@ public class Module : AModule
         
     }
 
-    public Module()
+    public Controller()
     {
         GameStart = GameState.GameT0;
     }

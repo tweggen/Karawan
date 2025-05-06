@@ -13,7 +13,7 @@ public class FogColor : AModule
 
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new SharedModule<nogame.modules.daynite.Module>(),
+        new SharedModule<nogame.modules.daynite.Controller>(),
         new SharedModule<nogame.modules.World>()
     };
 
@@ -113,7 +113,7 @@ public class FogColor : AModule
         /*
          * Read the current in-game time to set the day-night cycle color. 
          */
-        var gameNow = M<nogame.modules.daynite.Module>().GameNow;
+        var gameNow = M<nogame.modules.daynite.Controller>().GameNow;
         var now = gameNow.TimeOfDay;
 
         _updateFog(now);

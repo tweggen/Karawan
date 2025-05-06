@@ -14,7 +14,7 @@ namespace builtin.controllers;
  *
  * COnsumes input 
  */
-public class InputController : engine.AModule, engine.IInputPart
+public class InputController : engine.AController, engine.IInputPart
 {
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -461,7 +461,7 @@ public class InputController : engine.AModule, engine.IInputPart
     }
 
     
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         if (engine.GlobalSettings.Get("splash.touchControls") == "false")
         {
@@ -824,7 +824,6 @@ public class InputController : engine.AModule, engine.IInputPart
     
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
         M<InputEventPipeline>().RemoveInputPart(this);
         I.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
     }
@@ -835,6 +834,5 @@ public class InputController : engine.AModule, engine.IInputPart
         I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _refreshViewSize();
-        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

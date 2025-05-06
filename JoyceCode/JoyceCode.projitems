@@ -44,6 +44,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Value.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector2JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Vector4JsonConverter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\AController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\AnimationSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\EntityObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\gongzuo\CompiledCache.cs" />
@@ -149,7 +150,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerBehaviorStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\PerFragmentStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnBehavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\SpawnStatus.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\ParticleEmitterSystem.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)engine\behave\systems\ParticleSystem.cs" />

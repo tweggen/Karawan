@@ -3,9 +3,9 @@ using engine.joyce.components;
 
 namespace nogame.modules.playerhover;
 
-public class UpdateEmissionContext : AModule
+public class UpdateEmissionContext : AController
 {
-    void _onLogicalFrame(object? source, float dt)
+    protected override void OnLogicalFrame(object? source, float dt)
     {
         var ectx = new engine.news.EmissionContext();
         {
@@ -21,15 +21,5 @@ public class UpdateEmissionContext : AModule
             }
         }
         I.Get<engine.news.EmissionContext>()?.UpdateFrom(ectx);
-    }
-
-    protected override void OnModuleDeactivate()
-    {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-    }
-    
-    protected override void OnModuleActivate()
-    {
-        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

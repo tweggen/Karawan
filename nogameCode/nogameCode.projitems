@@ -55,7 +55,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\map\WorldMapTerrainProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\AutoSave.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\FogColor.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\Module.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\daynite\Controller.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\debugger\DebuggerToggle.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\Gameplay.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\GameSetup.cs" />
@@ -70,7 +70,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\CharacterModelDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\ClusterMusicModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverBehavior.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\DriveCarCollisionsModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\DriveCarCollisionsController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\IdentifyCameraFocusModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\MainPlayModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverModule.cs" />

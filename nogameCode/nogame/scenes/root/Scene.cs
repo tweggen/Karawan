@@ -38,7 +38,7 @@ public class Scene : AModule, IScene, IInputPart
         new SharedModule<AutoSave>(),
         new SharedModule<Saver>(),
         
-        new SharedModule<engine.behave.SpawnModule>(),
+        new SharedModule<engine.behave.SpawnController>(),
         new MyModule<nogame.modules.skybox.Module>("nogame.CreateSkybox"),
         new MyModule<nogame.modules.osd.Compass>("nogame.Compass"),
         new MyModule<nogame.modules.osd.Scores>(),
@@ -315,8 +315,8 @@ public class Scene : AModule, IScene, IInputPart
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         
         // TXWTODO: Generalize this.
-        M<SpawnModule>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
-        M<SpawnModule>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
+        M<SpawnController>().AddSpawnOperator(new nogame.characters.car3.SpawnOperator());
+        M<SpawnController>().AddSpawnOperator(new nogame.characters.citizen.SpawnOperator());
         
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.save", _triggerSave);
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.menu.toggleMenu", _triggerPauseMenu);

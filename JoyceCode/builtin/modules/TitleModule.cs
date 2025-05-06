@@ -22,7 +22,7 @@ class ActiveCardEntry
 /**
  * Implement a part that displays a title card.
  */
-public class TitleModule : engine.AModule
+public class TitleController : engine.AController
 {
     private List<TitleCard> _cards = new();
     private Dictionary<TitleCard, ActiveCardEntry> _dictCards = new();
@@ -100,7 +100,7 @@ public class TitleModule : engine.AModule
     }
 
 
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         List<ActiveCardEntry> activeCards = new();
         lock (_lo)
@@ -153,7 +153,6 @@ public class TitleModule : engine.AModule
         {
             _onCardStop(card);
         }
-        _engine.OnLogicalFrame -= _onLogicalFrame;
     }
 
 
@@ -175,9 +174,7 @@ public class TitleModule : engine.AModule
                 return true;
             });
         }
-
-        _engine.OnLogicalFrame += _onLogicalFrame;
-    }
+   }
 
     
     public void Add(TitleCard card)

@@ -13,7 +13,7 @@ using static engine.Logger;
 
 namespace builtin.controllers;
 
-public class FollowCameraController : AModule, IInputPart
+public class FollowCameraController : AController, IInputPart
 {
     private object _lo = new();
 
@@ -669,7 +669,7 @@ public class FollowCameraController : AModule, IInputPart
     }
 
 
-    private void _onLogicalFrame(object sender, float dt)
+    protected override void OnLogicalFrame(object sender, float dt)
     {
         if (!_eCarrot.Has<engine.joyce.components.Transform3ToWorld>()
             || !_eCarrot.Has<engine.joyce.components.Transform3>())
@@ -849,7 +849,6 @@ public class FollowCameraController : AModule, IInputPart
     {
         I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
 
-        _engine.OnLogicalFrame -= _onLogicalFrame;
         I.Get<InputEventPipeline>().RemoveInputPart(this);
         _destroyPhysics();
     }
@@ -883,7 +882,6 @@ public class FollowCameraController : AModule, IInputPart
         _zoomState = CameraDistance;
         _buildPhysics();
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-        _engine.OnLogicalFrame += _onLogicalFrame;
         
         I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
     }

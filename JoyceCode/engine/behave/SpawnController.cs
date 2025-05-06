@@ -15,7 +15,7 @@ namespace engine.behave;
  * This modules counts the behaviors per fragment. This allows
  * the actual spawn operators to bring characters to life.
  */
-public class SpawnModule : AModule
+public class SpawnController : AController
 {
     private SpawnSystem _spawnSystem = new();
     private MetaGen _metaGen = I.Get<world.MetaGen>();
@@ -85,7 +85,7 @@ public class SpawnModule : AModule
     private int _callCounter = 0;
     
 
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         if (--_callCounter > 0) return;
         _callCounter = Every;
@@ -347,8 +347,6 @@ public class SpawnModule : AModule
     
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-        
         /*
          * Purge whatever spawns would have been scheduled.
          */
@@ -358,7 +356,6 @@ public class SpawnModule : AModule
     
     protected override void OnModuleActivate()
     {
-        _engine.OnLogicalFrame += _onLogicalFrame;
         _loader = _metaGen.Loader;
     }
 }

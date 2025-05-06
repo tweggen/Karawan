@@ -87,7 +87,7 @@ namespace engine.world
 
             foreach (var frag in fragList)
             {
-                I.Get<engine.behave.SpawnModule>().PurgeFragment(frag.IdxFragment);
+                I.Get<engine.behave.SpawnController>().PurgeFragment(frag.IdxFragment);
                 frag.RemoveFragmentEntities();
                 frag.Dispose();
             }

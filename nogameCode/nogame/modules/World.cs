@@ -16,7 +16,7 @@ namespace nogame.modules;
  * we probably need to clean up and separate the triggerLoadWorld logic from the
  * creation of entities.
  */
-public class World : AModule
+public class World : AController
 {
     private engine.world.Loader _worldLoader;
     private engine.world.MetaGen _worldMetaGen;
@@ -57,15 +57,9 @@ public class World : AModule
     }
     
     
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         _triggerLoadWorld();
-    }
-    
-    
-    protected override void OnModuleDeactivate()
-    {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
     }
     
     
@@ -83,7 +77,5 @@ public class World : AModule
          * trigger generating the world at the starting point.
          */ 
         _triggerLoadWorld();
-        
-        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }
