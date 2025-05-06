@@ -728,19 +728,14 @@ public class Module : AModule, IInputPart
     }
 
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.map.toggleMap", _onClickMap);
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-        
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.map.toggleMap", _onClickMap);
 
         _viewSize = engine.GlobalSettings.ParseSize(engine.GlobalSettings.Get("view.size"));

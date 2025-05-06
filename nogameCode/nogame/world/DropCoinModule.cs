@@ -30,18 +30,14 @@ public class DropCoinModule : AModule, IWorldOperator
     });
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
         M<Saver>().OnCreateNewGame.Add(this);
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         M<Saver>().OnCreateNewGame.Remove(this);
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 }

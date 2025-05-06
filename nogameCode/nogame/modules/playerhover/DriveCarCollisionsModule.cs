@@ -188,7 +188,7 @@ public class DriveCarCollisionsModule : AModule
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
 
@@ -202,10 +202,6 @@ public class DriveCarCollisionsModule : AModule
             HoverBehavior.PLAYER_COLLISION_CAR3, _onCarCollision);
         I.Get<SubscriptionManager>().Unsubscribe(
             HoverBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
-
-        _engine.RemoveModule(this);
-
-        base.ModuleDeactivate();
     }
 
 
@@ -224,11 +220,8 @@ public class DriveCarCollisionsModule : AModule
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         I.Get<SubscriptionManager>().Subscribe(
             HoverBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
         I.Get<SubscriptionManager>().Subscribe(

@@ -82,16 +82,12 @@ public class WalkModule : AModule, IInputPart
     }
     
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
 
         _engine.QueueMainThreadAction(_cleanupPlayer);
-        
-        _engine.RemoveModule(this);
-
-        base.ModuleDeactivate();
     }
 
 
@@ -226,11 +222,8 @@ public class WalkModule : AModule, IInputPart
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         _engine.Run(_setupPlayer);
     }
 }

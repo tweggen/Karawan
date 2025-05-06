@@ -369,24 +369,19 @@ internal class HoverController : AModule
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
         Debug.Assert(_eTarget != default);
         Debug.Assert(_massTarget != 0f);
-        
-        base.ModuleActivate();
 
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
 
-        _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

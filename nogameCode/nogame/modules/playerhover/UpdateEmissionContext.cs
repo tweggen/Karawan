@@ -23,17 +23,13 @@ public class UpdateEmissionContext : AModule
         I.Get<engine.news.EmissionContext>()?.UpdateFrom(ectx);
     }
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

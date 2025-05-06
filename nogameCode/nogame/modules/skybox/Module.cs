@@ -11,18 +11,14 @@ namespace nogame.modules.skybox
         private DefaultEcs.Entity _eSkybox;
 
 
-        public override void ModuleDeactivate()
+        protected override void OnModuleDeactivate()
         {
-            _engine.RemoveModule(this);
             _eSkybox.Dispose();
-            base.ModuleDeactivate();
         }
 
 
-        public override void ModuleActivate()
+        protected override void OnModuleActivate()
         {
-            base.ModuleActivate();
-
             _eSkybox = _engine.CreateEntity("Skybox");
              var jMeshSkybox = engine.joyce.mesh.Tools.CreateSkyboxMesh(
                  "skybox",
@@ -34,8 +30,6 @@ namespace nogame.modules.skybox
             jMaterialSkybox.EmissiveTexture = new engine.joyce.Texture("skybox2noborder.png");
             var jInstanceDesc = InstanceDesc.CreateFromMatMesh(new MatMesh(jMaterialSkybox, jMeshSkybox), 5000f);
             _eSkybox.Set(new engine.joyce.components.Instance3(jInstanceDesc));
-
-            _engine.AddModule(this);
         }
     }
 }

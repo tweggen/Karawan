@@ -67,23 +67,18 @@ public class Scores : engine.AModule
     }
     
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogical;
         
         _eScoreDisplay.Dispose();
         _ePolytopeDisplay.Dispose();
         _eHealthDisplay.Dispose();
-        base.ModuleDeactivate();
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
         _eScoreDisplay.Set(new engine.behave.components.Clickable()
         {

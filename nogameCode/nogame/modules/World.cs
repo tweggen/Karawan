@@ -63,19 +63,14 @@ public class World : AModule
     }
     
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
-        _engine.RemoveModule(this);
-
-        base.ModuleDeactivate();
     }
     
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        
         _worldMetaGen = I.Get<MetaGen>();
         _worldLoader = _worldMetaGen.Loader;
         if (null == _worldLoader)
@@ -89,7 +84,6 @@ public class World : AModule
          */ 
         _triggerLoadWorld();
         
-        _engine.AddModule(this);
         _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

@@ -538,20 +538,15 @@ public class Narration : AModule, IInputPart
     }
     
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         I.Get<engine.news.SubscriptionManager>().Unsubscribe("nogame.modules.story.sentence.onClick",_onClickSentence);
         M<InputEventPipeline>().RemoveInputPart(this);
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         if (null == _soundTty)
         {
             _soundTty = I.Get<Boom.ISoundAPI>().FindSound("terminal.ogg");

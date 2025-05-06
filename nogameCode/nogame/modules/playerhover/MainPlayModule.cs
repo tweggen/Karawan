@@ -203,7 +203,7 @@ public class MainPlayModule : engine.AModule, IInputPart
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         M<InputEventPipeline>().RemoveInputPart(this);
         I.Get<MetaGen>().Loader.RemoveViewer(_playerViewer);
@@ -214,10 +214,6 @@ public class MainPlayModule : engine.AModule, IInputPart
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsPersonDeactivated, _onIsPersonDeactivated);
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsHoverActivated, _onIsHoverActivated);
         I.Get<SubscriptionManager>().Unsubscribe(EventCodeIsPersonActivated, _onIsPersonActivated);
-
-        _engine.RemoveModule(this);
-
-        base.ModuleDeactivate();
     }
 
 
@@ -258,12 +254,8 @@ public class MainPlayModule : engine.AModule, IInputPart
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
- 
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
         I.Get<SubscriptionManager>().Subscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);

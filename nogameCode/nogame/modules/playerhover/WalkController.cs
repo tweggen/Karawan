@@ -600,26 +600,20 @@ public class WalkController : AModule, IInputPart
     }
 
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
-        _engine.RemoveModule(this);
         _engine.OnLogicalFrame -= _onLogicalFrame;
         I.Get<InputEventPipeline>().RemoveInputPart(this);
 
         _engine.Camera.AddOnChange(_onCameraEntityChanged);
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
         Debug.Assert(_eTarget != default);
         Debug.Assert(_massTarget != 0f);
         
-        base.ModuleActivate();
-
-        _engine.AddModule(this);
-
         _characterAnimState = CharacterAnimState.Unset;
         
         _eCamera = _engine.Camera.Value;

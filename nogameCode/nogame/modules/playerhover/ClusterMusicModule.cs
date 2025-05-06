@@ -136,7 +136,7 @@ public class ClusterMusicModule : AModule
     }
 
     
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
 
@@ -149,19 +149,11 @@ public class ClusterMusicModule : AModule
             eClusterDisplay.Disable();
             _engine.AddDoomedEntity(eClusterDisplay);
         });
-
-       
-        _engine.RemoveModule(this);
-
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         _ePlayer = _engine.Player.Value;
         _engine.Player.AddOnChange(_onPlayerEntityChanged);
         

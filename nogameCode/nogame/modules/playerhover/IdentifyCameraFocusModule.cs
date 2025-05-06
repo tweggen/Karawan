@@ -125,7 +125,7 @@ public class IdentifyCameraFocusModule : engine.AModule
     }
 
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         _engine.OnLogicalFrame -= _onLogicalFrame;
 
@@ -138,18 +138,11 @@ public class IdentifyCameraFocusModule : engine.AModule
         });
         
         _engine.Camera.RemoveOnChange(_onCameraEntityChanged);
-
-        _engine.RemoveModule(this);
-        
-        base.ModuleDeactivate();
     }
 
     
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-        
         _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
 
         if (_engine.Camera.TryGet(out var eCam))

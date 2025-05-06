@@ -94,7 +94,7 @@ public class Module : AModule, IInputPart
     }
     
 
-    public override void ModuleDeactivate()
+    protected override void OnModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe("nogame.modules.shop.close", _closeShop);
 
@@ -102,17 +102,11 @@ public class Module : AModule, IInputPart
 
         M<Factory>().CloseOSD(_layerDefinition.Name, "shopFront");
         _engine.GamePlayState = GamePlayStates.Running;
-        
-        _engine.RemoveModule(this);
-        base.ModuleDeactivate();
     }
 
 
-    public override void ModuleActivate()
+    protected override void OnModuleActivate()
     {
-        base.ModuleActivate();
-        _engine.AddModule(this);
-
         _engine.GamePlayState = GamePlayStates.Paused;
 
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.shop.close", _closeShop);
