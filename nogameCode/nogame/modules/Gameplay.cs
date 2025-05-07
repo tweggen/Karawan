@@ -332,6 +332,8 @@ public class Gameplay : AModule, IInputPart
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         I.Get<SubscriptionManager>().Subscribe("nogame.scenes.root.Scene.kickoff", _onRootKickoff);
     }
 }

@@ -10,7 +10,7 @@ using static engine.Logger;
 
 namespace nogame.modules.osd;
 
-public class Display : engine.AModule
+public class Display : engine.AController
 {
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
@@ -106,7 +106,7 @@ public class Display : engine.AModule
     private uint _frameCounter = 0;
     private readonly uint _renderSubDiv = 2;
     private float _dtTotal = 0f;
-    private void _onLogical(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         ++_frameCounter;
         _dtTotal += dt;
@@ -133,13 +133,13 @@ public class Display : engine.AModule
     protected override void OnModuleDeactivate()
     {
         DeactivateMyModule<RenderOSDSystem>();
-        _engine.OnLogicalFrame -= _onLogical;
     }
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _aTransform = I.Get<engine.joyce.TransformApi>();
-        _engine.OnLogicalFrame += _onLogical;
         _setupOSD();
         M<RenderOSDSystem>().SetFramebuffer(_framebuffer);
         ActivateMyModule<RenderOSDSystem>();

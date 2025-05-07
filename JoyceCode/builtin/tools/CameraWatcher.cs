@@ -215,6 +215,8 @@ public class CameraWatcher : AModule
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         lock (_lo)
         {
             _mapCameras = new();

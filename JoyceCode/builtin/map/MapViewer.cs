@@ -99,6 +99,8 @@ public class MapViewer : AModule, IViewer
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         I.Get<SubscriptionManager>().Subscribe(Event.MAP_RANGE_EVENT, _handleMapRange);
         I.Get<engine.world.MetaGen>().Loader.AddViewer(this);
     }

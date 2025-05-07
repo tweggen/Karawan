@@ -84,6 +84,8 @@ public class Module : AModule
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         {
             var gameConfig = _loadGameConfig();
             _gameConfig = gameConfig;

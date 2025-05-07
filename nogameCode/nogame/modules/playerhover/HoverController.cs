@@ -13,7 +13,7 @@ using static engine.Logger;
 
 namespace nogame.modules.playerhover;
 
-internal class HoverController : AModule
+internal class HoverController : AController
 {
     public static float MY_Z_ORDER = 25f;
 
@@ -52,7 +52,7 @@ internal class HoverController : AModule
     private float _lastTurnMotion = 0f;
 
 
-    private void _onLogicalFrame(object sender, float dt)
+    protected override void OnLogicalFrame(object sender, float dt)
     {
         Vector3 vTotalImpulse = new Vector3(0f, 9.81f, 0f);
 
@@ -369,19 +369,13 @@ internal class HoverController : AModule
     }
 
 
-    protected override void OnModuleDeactivate()
-    {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-    }
-
-
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         Debug.Assert(_eTarget != default);
         Debug.Assert(_massTarget != 0f);
 
         _prefTarget = _eTarget.Get<engine.physics.components.Body>().Reference;
-
-        _engine.OnLogicalFrame += _onLogicalFrame;
-    }
+   }
 }

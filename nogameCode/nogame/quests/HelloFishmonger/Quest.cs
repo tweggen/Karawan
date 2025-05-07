@@ -126,6 +126,8 @@ public class Quest : AModule, IQuest, ICreator
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _isActive = true;
 
         _engine.Run(_startQuest);

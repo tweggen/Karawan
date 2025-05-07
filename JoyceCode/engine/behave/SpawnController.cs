@@ -356,6 +356,8 @@ public class SpawnController : AController
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _loader = _metaGen.Loader;
     }
 }

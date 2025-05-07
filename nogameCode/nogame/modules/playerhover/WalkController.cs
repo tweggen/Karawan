@@ -18,7 +18,7 @@ namespace nogame.modules.playerhover;
  * as opposed to controlling the velocity or giving impulse to a dynamic
  * physical object.
  */
-public class WalkController : AModule, IInputPart
+public class WalkController : AController, IInputPart
 {
     public static float MY_Z_ORDER = 25f;
 
@@ -100,7 +100,7 @@ public class WalkController : AModule, IInputPart
     private bool _isRunPressed = false;
     
     
-    private void _onLogicalFrame(object sender, float dt)
+    protected override void OnLogicalFrame(object sender, float dt)
     {
         if (_engine.State != Engine.EngineState.Running) return;
 
@@ -602,7 +602,6 @@ public class WalkController : AModule, IInputPart
     
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
         I.Get<InputEventPipeline>().RemoveInputPart(this);
 
         _engine.Camera.AddOnChange(_onCameraEntityChanged);
@@ -611,6 +610,8 @@ public class WalkController : AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         Debug.Assert(_eTarget != default);
         Debug.Assert(_massTarget != 0f);
         
@@ -619,7 +620,5 @@ public class WalkController : AModule, IInputPart
         _eCamera = _engine.Camera.Value;
         _engine.Camera.AddOnChange(_onCameraEntityChanged);
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-        _engine.OnLogicalFrame += _onLogicalFrame;
-        
     }
 }

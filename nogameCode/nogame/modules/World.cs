@@ -65,6 +65,8 @@ public class World : AController
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _worldMetaGen = I.Get<MetaGen>();
         _worldLoader = _worldMetaGen.Loader;
         if (null == _worldLoader)

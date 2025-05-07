@@ -7,7 +7,7 @@ using engine.news;
 
 namespace nogame.modules.daynite;
 
-public class FogColor : AModule
+public class FogColor : AController
 {
     public DefaultEcs.Entity EFogCamera = default;
 
@@ -108,7 +108,7 @@ public class FogColor : AModule
     }
     
 
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         /*
          * Read the current in-game time to set the day-night cycle color. 
@@ -118,17 +118,5 @@ public class FogColor : AModule
 
         _updateFog(now);
         _updateLights(now);
-    }
-
-    
-    protected override void OnModuleDeactivate()
-    {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-    }
-
-
-    protected override void OnModuleActivate()
-    {
-        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

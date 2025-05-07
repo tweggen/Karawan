@@ -102,6 +102,8 @@ public class Stats : engine.AController
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _ePhysDisplay = _engine.CreateEntity("OsdPhysDisplay");
 
         I.Get<SubscriptionManager>().Subscribe(

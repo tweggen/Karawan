@@ -12,7 +12,7 @@ namespace nogame.modules.playerhover;
  * If active, display something about the object right in the middle
  * of the display.
  */
-public class IdentifyCameraFocusModule : engine.AModule
+public class IdentifyCameraFocusModule : engine.AController
 {
     private DefaultEcs.Entity _eCamera;
     
@@ -78,7 +78,7 @@ public class IdentifyCameraFocusModule : engine.AModule
     }
     
 
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         /*
          * Look up the object we are facing.
@@ -127,8 +127,6 @@ public class IdentifyCameraFocusModule : engine.AModule
 
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-
         DefaultEcs.Entity eTargetDisplay = _eTargetDisplay;
         _eTargetDisplay = default;
         _engine.QueueCleanupAction(() =>
@@ -143,6 +141,8 @@ public class IdentifyCameraFocusModule : engine.AModule
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
 
         if (_engine.Camera.TryGet(out var eCam))
@@ -150,7 +150,5 @@ public class IdentifyCameraFocusModule : engine.AModule
             _onCameraEntityChanged(eCam);
         }
         _engine.Camera.AddOnChange(_onCameraEntityChanged);
-        
-        _engine.OnLogicalFrame += _onLogicalFrame;
     }
 }

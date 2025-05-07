@@ -6,7 +6,7 @@ using System.Numerics;
 
 namespace nogame.modules.osd;
 
-public class Compass : engine.AModule
+public class Compass : engine.AController
 {
     private DefaultEcs.Entity _eCompassDisplay;
 
@@ -15,7 +15,7 @@ public class Compass : engine.AModule
     private string _strCompass = "N  .  .  .  E  .  .  .  S  .  .  .  W  .  .  .  N  .  .  .  E .  .  .  S  .  .  .  W  .  .  .  ";
     private string _lastCompass = "";
     
-    private void _onLogical(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         DefaultEcs.Entity ePlayer;
         if (!_engine.Player.TryGet(out ePlayer) || !ePlayer.Has<Transform3ToWorld>())
@@ -59,15 +59,14 @@ public class Compass : engine.AModule
     
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogical;
-
         _disposeEntites();
     }
     
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _eCompassDisplay = _engine.CreateEntity("OsdCompassDisplay");
-        _engine.OnLogicalFrame += _onLogical;
     }
 }

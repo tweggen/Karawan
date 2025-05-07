@@ -110,6 +110,8 @@ public class InputMapper : AModule
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _eq = I.Get<EventQueue>();
     }
 }

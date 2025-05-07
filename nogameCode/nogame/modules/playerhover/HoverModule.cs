@@ -306,6 +306,8 @@ public class HoverModule : AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _engine.Run(_setupPlayer);
     }
 }

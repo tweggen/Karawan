@@ -10,7 +10,7 @@ namespace nogame.modules.osd;
 /**
  * Display content based on the game state.
  */
-public class Scores : engine.AModule
+public class Scores : engine.AController
 {
     public float YOffset { get; set; } = -5.0f;
     
@@ -36,7 +36,7 @@ public class Scores : engine.AModule
     private DefaultEcs.Entity _eHealthDisplay;
 
 
-    private void _onLogical(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         var gameState = M<AutoSave>().GameState;
 
@@ -69,8 +69,6 @@ public class Scores : engine.AModule
     
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogical;
-        
         _eScoreDisplay.Dispose();
         _ePolytopeDisplay.Dispose();
         _eHealthDisplay.Dispose();
@@ -79,6 +77,8 @@ public class Scores : engine.AModule
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
         _eScoreDisplay.Set(new engine.behave.components.Clickable()
         {
@@ -129,9 +129,5 @@ public class Scores : engine.AModule
             0x00000000,
             HAlign.Right
         ));
-
-
-
-        _engine.OnLogicalFrame += _onLogical;
-    }
+   }
 }

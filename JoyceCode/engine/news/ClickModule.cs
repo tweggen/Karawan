@@ -49,6 +49,8 @@ public class ClickModule : AModule
     
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         /*
          * Setup osd interaction handler
          */

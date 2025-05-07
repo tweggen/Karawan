@@ -6,7 +6,7 @@ using engine.world;
 
 namespace nogame.modules.playerhover;
 
-public class ClusterMusicModule : AModule
+public class ClusterMusicModule : AController
 {
     /**
      * Display the current cluster name.
@@ -53,7 +53,7 @@ public class ClusterMusicModule : AModule
     }
     
     
-    private void _onLogicalFrame(object? sender, float dt)
+    protected override void OnLogicalFrame(object? sender, float dt)
     {
         if (_ePlayer == default)
         {
@@ -138,8 +138,6 @@ public class ClusterMusicModule : AModule
     
     protected override void OnModuleDeactivate()
     {
-        _engine.OnLogicalFrame -= _onLogicalFrame;
-
         _engine.Player.RemoveOnChange(_onPlayerEntityChanged);
 
         var eClusterDisplay = _eClusterDisplay;
@@ -154,12 +152,12 @@ public class ClusterMusicModule : AModule
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _ePlayer = _engine.Player.Value;
         _engine.Player.AddOnChange(_onPlayerEntityChanged);
         
         _engine.QueueEntitySetupAction("OsdClusterDisplay", e => { _eClusterDisplay = e; });
-
-        _engine.OnLogicalFrame += _onLogicalFrame;
-    }
+   }
 
 }

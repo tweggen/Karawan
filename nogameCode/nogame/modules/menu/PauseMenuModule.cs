@@ -63,6 +63,8 @@ public class PauseMenuModule : AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _engine.EnablePause();
 
         try

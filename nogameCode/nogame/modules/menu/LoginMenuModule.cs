@@ -31,6 +31,8 @@ public class LoginMenuModule : AModule
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         _engine.EnablePause();
 
         try

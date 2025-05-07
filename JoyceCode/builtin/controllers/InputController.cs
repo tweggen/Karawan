@@ -831,6 +831,8 @@ public class InputController : engine.AController, engine.IInputPart
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _refreshViewSize();

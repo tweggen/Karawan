@@ -122,6 +122,8 @@ public class Controller : AModule
 
     protected override void OnModuleActivate()
     {
+        base.OnModuleActivate();
+        
         /*
          * Initialize the real world game start time with "now", which might or
          * might not be correct. Anyway, this represents the game starting in this very second.
