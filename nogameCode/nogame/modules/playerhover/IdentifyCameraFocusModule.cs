@@ -141,8 +141,6 @@ public class IdentifyCameraFocusModule : engine.AController
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
 
         if (_engine.Camera.TryGet(out var eCam))

@@ -76,8 +76,6 @@ public class InputEventPipeline : engine.AModule
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         I.Get<SubscriptionManager>().Subscribe("input.", _onInputEvent);
     }
 }

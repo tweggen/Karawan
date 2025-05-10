@@ -65,8 +65,6 @@ public class Compass : engine.AController
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _eCompassDisplay = _engine.CreateEntity("OsdCompassDisplay");
     }
 }

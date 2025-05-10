@@ -220,8 +220,6 @@ public class DriveCarCollisionsController : AController
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         I.Get<SubscriptionManager>().Subscribe(
             HoverBehavior.PLAYER_COLLISION_ANONYMOUS, _onAnonymousCollision);
         I.Get<SubscriptionManager>().Subscribe(

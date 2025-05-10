@@ -371,8 +371,6 @@ internal class HoverController : AController
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         Debug.Assert(_eTarget != default);
         Debug.Assert(_massTarget != 0f);
 

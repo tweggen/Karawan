@@ -25,8 +25,6 @@ public class Camera : AModule
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         /*
          * Create an osd camera
          */

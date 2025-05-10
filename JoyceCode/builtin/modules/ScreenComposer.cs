@@ -122,8 +122,6 @@ public class ScreenComposer : AModule
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _eCamera = _engine.CreateEntity("ScreenLayerCamera");
         _eCamera.Set(new engine.joyce.components.Camera3()
         {

@@ -373,8 +373,6 @@ public class Scene : AModule, IScene
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         /*
          * Some local shortcuts
          */

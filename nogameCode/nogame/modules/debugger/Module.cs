@@ -44,8 +44,6 @@ public class Module : AModule
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _engine.OnImGuiRender += _onImGuiRender;
         _engine.EnableEntityIds();
         

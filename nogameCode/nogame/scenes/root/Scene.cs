@@ -303,8 +303,6 @@ public class Scene : AModule, IScene, IInputPart
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _aTransform = I.Get<TransformApi>();
         
         _engine.SuggestBeginLoading();

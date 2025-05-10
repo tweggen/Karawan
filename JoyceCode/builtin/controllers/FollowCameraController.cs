@@ -847,7 +847,6 @@ public class FollowCameraController : AController, IInputPart
     
     protected override void OnModuleDeactivate()
     {
-        base
         I.Get<SubscriptionManager>().Subscribe(EventTypeRequestMode, _onRequestMode);
 
         I.Get<InputEventPipeline>().RemoveInputPart(this);
@@ -857,8 +856,6 @@ public class FollowCameraController : AController, IInputPart
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         Debug.Assert(_eTarget != default);
         Debug.Assert(_eCarrot != default);
         

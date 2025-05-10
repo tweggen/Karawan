@@ -547,8 +547,6 @@ public class Narration : AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         if (null == _soundTty)
         {
             _soundTty = I.Get<Boom.ISoundAPI>().FindSound("terminal.ogg");

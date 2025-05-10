@@ -19,8 +19,6 @@ namespace nogame.modules.skybox
 
         protected override void OnModuleActivate()
         {
-            base.OnModuleActivate();
-        
             _eSkybox = _engine.CreateEntity("Skybox");
              var jMeshSkybox = engine.joyce.mesh.Tools.CreateSkyboxMesh(
                  "skybox",

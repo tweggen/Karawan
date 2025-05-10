@@ -402,8 +402,6 @@ public class ToSomewhere : AModule
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         I.Get<ObjectRegistry<Material>>().RegisterFactory("nogame.characters.ToSomewhere.materials.waypoint",
             name => new Material()
             {

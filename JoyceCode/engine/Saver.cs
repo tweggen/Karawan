@@ -96,8 +96,6 @@ public class Saver : AModule
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         I.Get<SubscriptionManager>().Subscribe("builtin.SaveGame.TriggerSave", _handleTriggerSave);
     }
 }

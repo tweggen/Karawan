@@ -180,6 +180,14 @@ public abstract class AModule : IModule
     {
     }
 
+    protected virtual void _internalOnModuleDeactivate()
+    {
+    }
+
+    protected virtual void _internalOnModuleActivate()
+    {
+    }
+    
 
     public void ModuleDeactivate()
     {
@@ -191,6 +199,7 @@ public abstract class AModule : IModule
         {
             Warning($"Exception while executing Deactivate call for module: {e}.");
         }
+        _internalOnModuleDeactivate();
 
         _engine.RemoveModule(this);
         _moduleTracker.ModuleDeactivate();   
@@ -209,6 +218,7 @@ public abstract class AModule : IModule
         _moduleTracker.ModuleActivate();
         _engine.AddModule(this);
 
+        _internalOnModuleActivate();
         try
         {
             OnModuleActivate();

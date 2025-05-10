@@ -107,8 +107,6 @@ public class Module : AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _engine.GamePlayState = GamePlayStates.Paused;
 
         I.Get<SubscriptionManager>().Subscribe("nogame.modules.shop.close", _closeShop);

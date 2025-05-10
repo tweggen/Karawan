@@ -137,8 +137,6 @@ public class Display : engine.AController
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _aTransform = I.Get<engine.joyce.TransformApi>();
         _setupOSD();
         M<RenderOSDSystem>().SetFramebuffer(_framebuffer);

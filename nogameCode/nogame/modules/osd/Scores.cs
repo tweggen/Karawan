@@ -77,8 +77,6 @@ public class Scores : engine.AController
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
         _eScoreDisplay.Set(new engine.behave.components.Clickable()
         {

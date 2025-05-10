@@ -702,8 +702,6 @@ public class AutoSave : engine.AModule
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         M<Saver>().SaveAction = _handleTriggerSave;        
         
         _eSaveOnlineDisplay = _engine.CreateEntity("SaveOnlineDisplay");

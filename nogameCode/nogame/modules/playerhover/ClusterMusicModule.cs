@@ -152,8 +152,6 @@ public class ClusterMusicModule : AController
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _ePlayer = _engine.Player.Value;
         _engine.Player.AddOnChange(_onPlayerEntityChanged);
         

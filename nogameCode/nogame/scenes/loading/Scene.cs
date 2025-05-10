@@ -60,8 +60,6 @@ public class Scene : AModule, IScene
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         _aTransform = I.Get<engine.joyce.TransformApi>();
         
         /*

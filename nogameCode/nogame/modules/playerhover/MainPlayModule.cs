@@ -256,8 +256,6 @@ public class MainPlayModule : engine.AModule, IInputPart
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetIntoHover, _onGetIntoHover);
         I.Get<SubscriptionManager>().Subscribe(EventCodeGetOutOfHover, _onGetOutOfHover);
         I.Get<SubscriptionManager>().Subscribe(EventCodeIsHoverDeactivated, _onIsHoverDeactivated);

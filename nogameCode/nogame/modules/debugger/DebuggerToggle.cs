@@ -70,8 +70,6 @@ public class DebuggerToggle : AModule, IInputPart
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
     }
 

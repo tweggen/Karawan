@@ -161,8 +161,6 @@ public class TitleController : engine.AController
      */
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         var timeline = I.Get<Timeline>();
 
         foreach (var card in _cards)

@@ -610,8 +610,6 @@ public class WalkController : AController, IInputPart
 
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         Debug.Assert(_eTarget != default);
         Debug.Assert(_massTarget != 0f);
         

@@ -736,8 +736,6 @@ public class Module : AModule, IInputPart
     
     protected override void OnModuleActivate()
     {
-        base.OnModuleActivate();
-        
         I.Get<engine.news.SubscriptionManager>().Subscribe("nogame.modules.map.toggleMap", _onClickMap);
 
         _viewSize = engine.GlobalSettings.ParseSize(engine.GlobalSettings.Get("view.size"));
