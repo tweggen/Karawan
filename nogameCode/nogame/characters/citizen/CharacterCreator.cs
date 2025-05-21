@@ -115,9 +115,11 @@ public class CharacterCreator
             {
                 startIndex = i;
             }
-            
-            var v3This = new Vector3(dlThis.StartPoint.X, clusterDesc.AverageHeight + 2.5f, dlThis.StartPoint.Y );
-            var v3Next = new Vector3(dlNext.StartPoint.X, clusterDesc.AverageHeight + 2.5f, dlNext.StartPoint.Y);
+
+            float h = clusterDesc.AverageHeight + engine.world.MetaGen.ClusterStreetHeight +
+                      engine.world.MetaGen.QuaterSidewalkOffset;
+            var v3This = new Vector3(dlThis.StartPoint.X, h, dlThis.StartPoint.Y );
+            var v3Next = new Vector3(dlNext.StartPoint.X, h, dlNext.StartPoint.Y);
             var vu3Forward = Vector3.Normalize(v3Next - v3This);
             var vu3Up = Vector3.UnitY;
             var vu3Right = Vector3.Cross(vu3Forward, vu3Up);

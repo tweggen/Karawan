@@ -62,6 +62,8 @@ public class MetaGen
 
     public static float ClusterNavigationHeight = 3f;
     public static float VoidNavigationHeight = 3.5f;
+    public static float ClusterStreetHeight = 2.0f;
+    public static float QuaterSidewalkOffset = 0.15f;
 
     public Vector3 MaxPos;
     public Vector3 MinPos;
