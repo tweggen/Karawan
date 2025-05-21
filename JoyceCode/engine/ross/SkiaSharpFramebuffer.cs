@@ -415,6 +415,7 @@ public class SkiaSharpFramebuffer : IFramebuffer
         _skiaTypefacePrototype.Dispose();
     }
 
+    
     public SkiaSharpFramebuffer(string id, uint width, uint height)
     {
         _id = id;

@@ -352,7 +352,7 @@ public class TextWidgetImplementation : IWidgetImplementation
         osdText.Position = new Vector2((float)w["x"], (float)w["y"]);
         osdText.Size = new Vector2((float)w["width"], (float)w["height"]);
         osdText.Text = _text(w.GetAttr("text",""));
-        osdText.FontSize = 16;
+        osdText.FontSize = 17;
         osdText.TextColor = 0xffffff00;
         osdText.FillColor = 0xff0000ff;
         osdText.GaugeColor = 0xff22cccc;
