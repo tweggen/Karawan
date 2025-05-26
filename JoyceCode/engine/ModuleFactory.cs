@@ -34,7 +34,7 @@ public sealed class ModuleFactory
 
     public IModule FindModule(System.Type type, bool shallActivate)
     {
-        Trace($"Trying to find module {type.ToString()}");
+        // Trace($"Trying to find module {type.ToString()}");
         var keyLock = _keyLocks.GetOrAdd(type, x => new SemaphoreSlim(1));
         keyLock.Wait();
 

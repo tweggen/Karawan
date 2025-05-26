@@ -11,6 +11,11 @@ using static engine.Logger;
 namespace nogame.modules.osd;
 
 
+/**
+ * Define the camera displaying the OSD.
+ * This OSD is located on the X/Y plane, the camera having a distance
+ * of 14f (this is arbitrary) units away from the plane.
+ */
 public class Camera : AModule
 {
     private TransformApi _aTransform = I.Get<TransformApi>();

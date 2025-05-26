@@ -14,7 +14,9 @@ public class Display : engine.AController
 {
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
-        new MyModule<RenderOSDSystem>() { ShallActivate = false } 
+        new MyModule<RenderOSDSystem>() { ShallActivate = false },
+        new MyModule<nogame.modules.osd.Camera>() { ShallActivate = false },
+
     };
     
     private engine.joyce.TransformApi _aTransform;
@@ -32,6 +34,7 @@ public class Display : engine.AController
     private readonly uint _height = 768*9/16;
     public uint Height => _height;
 
+    
     private engine.news.Event _osdClickEventFactory(
         DefaultEcs.Entity e, 
         engine.news.Event cev, 
@@ -67,6 +70,7 @@ public class Display : engine.AController
         return null;
     }
 
+    
     private void _setupOSD()
     {
         _drawContext = new engine.draw.Context();
@@ -103,6 +107,7 @@ public class Display : engine.AController
         }
     }
     
+    
     private uint _frameCounter = 0;
     private readonly uint _renderSubDiv = 2;
     private float _dtTotal = 0f;
@@ -130,10 +135,12 @@ public class Display : engine.AController
         _textureFramebuffer.Framebuffer = _framebuffer.GetDisplayBuffer();
     }
     
+    
     protected override void OnModuleDeactivate()
     {
         DeactivateMyModule<RenderOSDSystem>();
     }
+    
     
     protected override void OnModuleActivate()
     {
@@ -141,5 +148,6 @@ public class Display : engine.AController
         _setupOSD();
         M<RenderOSDSystem>().SetFramebuffer(_framebuffer);
         ActivateMyModule<RenderOSDSystem>();
+        ActivateMyModule<nogame.modules.osd.Camera>();
     }
 }

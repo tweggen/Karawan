@@ -18,7 +18,6 @@ public class Main : AModule
         new SharedModule<builtin.tools.CameraWatcher>(),
         new SharedModule<builtin.modules.ScreenComposer>(),
         new SharedModule<nogame.modules.osd.Display>(),
-        new SharedModule<nogame.modules.osd.Camera>(),
         new SharedModule<engine.news.ClickModule>(),
         new MyModule<nogame.modules.debugger.DebuggerToggle>()
     };
@@ -66,6 +65,6 @@ public class Main : AModule
         I.Get<SceneSequencer>().Run();
 
         // TXWTODO: This is a nasty way to activate a first module.
-        M<modules.osd.Camera>().IsModuleActive();
+        M<modules.osd.Display>().IsModuleActive();
     }
 }
