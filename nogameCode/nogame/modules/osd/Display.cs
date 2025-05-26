@@ -10,6 +10,11 @@ using static engine.Logger;
 
 namespace nogame.modules.osd;
 
+/**
+ * Implement the actual OSD display.
+ * The OSD pixel framebuffer has a logical resolution of 1365*768 , and a 3d size
+ * of (4, 2.25).
+ */
 public class Display : engine.AController
 {
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
