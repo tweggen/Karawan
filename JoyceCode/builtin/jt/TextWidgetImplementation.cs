@@ -371,7 +371,11 @@ public class TextWidgetImplementation : IWidgetImplementation
         _eText.Set(cOsdText);
         _eText.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => new WidgetEvent($"builtin.jt.widget.{_widget.Id}.onClick", this._widget) { RelativePosition = v2RelPos}
+            ClickEventFactory = (e, cev, v2RelPos) =>
+                new WidgetEvent(
+                    cev.IsPressed?$"builtin.jt.widget.{_widget.Id}.onClick":$"builtin.jt.widget.{_widget.Id}.onReleased", 
+                    this._widget) { RelativePosition = v2RelPos}
+                 
         });
         foreach (var kvp in _mapAttributes)
         {

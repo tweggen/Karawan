@@ -6,6 +6,7 @@ using engine.behave.components;
 using engine.draw.systems;
 using engine.joyce;
 using engine.joyce.components;
+using engine.news;
 using static engine.Logger;
 
 namespace nogame.modules.osd;
@@ -102,6 +103,7 @@ public class Display : engine.AController
     private float ButtonOffsetX = 0.5f;
     private float ButtonOffsetY = 0.5f;
 
+    
     private void _setButtonTransforms(DefaultEcs.Entity e, int x, int y)
     {
         Vector3 v3StepX = Vector3.UnitX * (2f / ButtonsPerRow);
@@ -122,14 +124,16 @@ public class Display : engine.AController
     }
 
 
-    private void _createButton(string tagButton, int x, int y)
+    private void _createButton(string tagButton, int x, int y, 
+        Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event> func)
     {
         var eSettings = _engine.CreateEntity(tagButton);
         eSettings.Set(new Instance3(_createButtonMesh(tagButton)));
         _setButtonTransforms(eSettings, x, y);
+        eSettings.Set(new Clickable { CameraLayer = 24, ClickEventFactory = func });
     }
-    
-    
+
+
     private void _setupOSD()
     {
         _drawContext = new engine.draw.Context();
@@ -165,13 +169,19 @@ public class Display : engine.AController
                 new Vector3(0f, 0f, 1f));
         }
 
+        if (GlobalSettings.Get("Android") == "true")
         {
-            
-            _createButton("but_settings.png", ButtonsPerRow-2, 0);
-            _createButton("but_left.png",  0, ButtonsPerColumn-2);
-            _createButton("but_right.png", 1, ButtonsPerColumn-2);
-            _createButton("but_accel.png", ButtonsPerRow-2, ButtonsPerColumn-2);
-            _createButton("but_brake.png", ButtonsPerRow-3, ButtonsPerColumn-2);
+
+            // _createButton("but_settings.png", ButtonsPerRow - 2, 0,
+            //    (entity, ev, pos) => ev.IsPressed?new Event("nogame.modules.menu.toggleMenu", null):null);
+            _createButton("but_left.png",  0, ButtonsPerColumn-2,
+                (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "a"));
+            _createButton("but_right.png", 1, ButtonsPerColumn-2,
+                (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "d"));
+            _createButton("but_accel.png", ButtonsPerRow-2, ButtonsPerColumn-2,
+                (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "w"));
+            _createButton("but_brake.png", ButtonsPerRow-3, ButtonsPerColumn-2,
+                (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "s"));
         }
     }
     

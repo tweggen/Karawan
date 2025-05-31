@@ -154,8 +154,8 @@ public class ClickableHandler
             Trace($"Collision with {collisionProperties.Name}");
         }
     }
-
-    public void OnClick(engine.news.Event ev)
+    
+    public void OnClickRelease(engine.news.Event ev)
     {
         _vViewSize = ev.Size;
         
@@ -163,6 +163,12 @@ public class ClickableHandler
         {
             case engine.news.Event.INPUT_MOUSE_PRESSED:
             case engine.news.Event.INPUT_TOUCH_PRESSED:
+                /*
+                 * Continue to process it.
+                 */
+                break;
+            case engine.news.Event.INPUT_MOUSE_RELEASED:
+            case engine.news.Event.INPUT_TOUCH_RELEASED:
                 /*
                  * Continue to process it.
                  */
@@ -252,6 +258,18 @@ public class ClickableHandler
             Vector3 v3Target = -vZ + vX * xExtent * v2Pos.X - vY * yExtent * v2Pos.Y;
             I.Get<engine.physics.API>().RayCast(vCamPosition, v3Target, cCamera.FarFrustum, _onMainCameraRayHit);
         }
+    }
+
+
+    public void OnClick(engine.news.Event ev)
+    {
+        OnClickRelease(ev);
+    }
+
+
+    public void OnRelease(engine.news.Event ev)
+    {
+        OnClickRelease(ev);
     }
     
 

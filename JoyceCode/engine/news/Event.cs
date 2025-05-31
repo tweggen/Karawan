@@ -46,6 +46,16 @@ public class Event
             _isHandled = value;
         }
     }
+
+    public bool IsReleased
+    {
+        get => Type.EndsWith(".released");
+    }
+
+    public bool IsPressed
+    {
+        get => Type.EndsWith(".pressed");
+    }
     
     public string Type;
     public string Code;

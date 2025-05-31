@@ -22,6 +22,12 @@ public class ClickModule : AModule
     }
 
 
+    private void _handleReleaseEvent(Event ev)
+    {
+        _clickableHandler.OnRelease(ev);
+    }
+
+
     private void _onMousePress(Event ev)
     {
         if (GlobalSettings.Get("Android") != "true")
@@ -40,10 +46,30 @@ public class ClickModule : AModule
     }
     
     
+    private void _onMouseReleased(Event ev)
+    {
+        if (GlobalSettings.Get("Android") != "true")
+        {
+            _handleReleaseEvent(ev);
+        }
+    }
+    
+
+    private void _onTouchReleased(Event ev)
+    {
+        if (GlobalSettings.Get("Android") == "true")
+        {
+            _handleReleaseEvent(ev);
+        }
+    }
+    
+    
     protected override void OnModuleDeactivate()
     {
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_RELEASED, _onMouseReleased);
     }
     
     
@@ -56,6 +82,8 @@ public class ClickModule : AModule
         
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
+        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
+        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_RELEASED, _onMouseReleased);
     }
 
 }
