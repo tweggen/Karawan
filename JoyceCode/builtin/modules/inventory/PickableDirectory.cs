@@ -18,7 +18,7 @@ public class PickableDirectory : ObjectFactory<string, PickableDescription>, eng
         throw new System.NotImplementedException();
     }
 
-    public Func<Task> SetupFrom(JsonElement je) => new (async () =>
+    public Func<Task> SetupFrom(JsonElement je) 
     {
         foreach (var jp in je.EnumerateObject())
         {
@@ -38,5 +38,7 @@ public class PickableDirectory : ObjectFactory<string, PickableDescription>, eng
 
             FindAdd(path, pd);
         }
-    });
+
+        return () => Task.CompletedTask;
+    }
 }
