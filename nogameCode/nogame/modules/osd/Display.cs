@@ -53,7 +53,7 @@ public class Display : engine.AController
         Vector2 v2RelPos)
     {
         Vector2 v2OsdPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
-        Trace($"Handling osd pos click {v2OsdPos}");
+        // Trace($"Handling osd pos click {v2OsdPos}");
 
 
         switch (cev.Type)
@@ -192,7 +192,7 @@ public class Display : engine.AController
                 new Vector3(0f, 0f, 1f));
         }
 
-        if (true || GlobalSettings.Get("Android") == "true")
+        if (GlobalSettings.Get("Android") == "true")
         {
 
             // _createButton("but_settings.png", ButtonsPerRow - 2, 0,
