@@ -36,9 +36,8 @@ abstract class AInputControllerFingerState : AFingerState
         in Vector2 pos,
         InputController ic) : base(pos)
     {
+        _ic = ic;
         var cs = _ic.ControllerState;
         cs.LastInput = DateTime.UtcNow;
-
-        _ic = ic;
     }
 }
