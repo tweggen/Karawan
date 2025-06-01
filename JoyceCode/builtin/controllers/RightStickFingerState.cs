@@ -4,7 +4,7 @@ using engine.news;
 
 namespace builtin.controllers;
 
-class RightStickFingerState : AFingerState
+class RightStickFingerState : AInputControllerFingerState
 {
     public override void HandleMotion(Event ev)
     {

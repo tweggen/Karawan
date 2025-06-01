@@ -4,39 +4,34 @@ using engine.news;
 
 namespace builtin.controllers;
 
-abstract class AFingerState
+public abstract class AFingerState : IFingerState
 {
-    protected readonly InputController _ic;
     public Vector2 PressPosition;
     public Vector2 LastPosition;
     
+    
     public virtual void HandleMotion(Event ev)
     {
-        var cs = _ic.ControllerState;
-        cs.LastInput = DateTime.UtcNow;
         if (LastPosition == default) LastPosition = ev.Position;
         Vector2 vRel = ev.Position - LastPosition;
     }
 
+
     public virtual void HandleReleased(Event ev)
     {
-        var cs = _ic.ControllerState;
-        cs.LastInput = DateTime.UtcNow;
     }
+
 
     public virtual void HandlePressed(Event ev)
     {
-        var cs = _ic.ControllerState;
-        cs.LastInput = DateTime.UtcNow;
         PressPosition = ev.Position;
         LastPosition = ev.Position;
     }
 
+    
     public AFingerState(
-        in Vector2 pos,
-        InputController ic)
+        in Vector2 pos)
     {
-        _ic = ic;
         PressPosition = pos;
         LastPosition = pos;
     }

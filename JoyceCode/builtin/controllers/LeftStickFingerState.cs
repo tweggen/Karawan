@@ -4,7 +4,7 @@ using engine.news;
 
 namespace builtin.controllers;
 
-class LeftStickFingerState : AFingerState
+class LeftStickFingerState : AInputControllerFingerState
 {
     float _accuX = 0f;
 

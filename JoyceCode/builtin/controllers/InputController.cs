@@ -540,92 +540,24 @@ public class InputController : engine.AController, engine.IInputPart
     }
 
 
-    private SortedDictionary<uint, AFingerState> _mapFingerStates = new();
-
-    
-    private void _onFingerPressed(Event ev)
-    {
-        AFingerState? oldFingerState = null;
-        AFingerState aFingerState;
-        
-        lock (_lo)
+    private FingerStateHandler _fingerStateHandler = new(ev =>
         {
-            if (_mapFingerStates.TryGetValue(ev.Data2, out oldFingerState))
+            if (ev.Position.X < 0.5f)
             {
-                /*
-                 * This should not happen. Terminate the old one, start a new.
-                 */
-                _mapFingerStates.Remove(ev.Data2);
+                return new LeftStickFingerState(ev.Position, this);
+            }
+            else if (ev.Position.X < 0.9f)
+            {
+                return new RightStickFingerState(ev.Position, this);
+            }
+            else
+            {
+                return new ZoomStickFingerState(ev.Position, this);
             }
         }
+    );
 
-        if (oldFingerState != null)
-        {
-            oldFingerState.HandleReleased(ev);
-        }
-
-        if (ev.Position.X < 0.5f)
-        {
-            aFingerState = new LeftStickFingerState(ev.Position, this);
-        }
-        else if (ev.Position.X < 0.9f)
-        {
-            aFingerState = new RightStickFingerState(ev.Position, this);
-        }
-        else
-        {
-            aFingerState = new ZoomStickFingerState(ev.Position, this);
-        }
-
-        lock (_lo)
-        {
-            _mapFingerStates[ev.Data2] = aFingerState;
-        }
-        
-        aFingerState.HandlePressed(ev);
-    }
     
-    
-    private void _onFingerReleased(Event ev)
-    {
-        AFingerState? fingerState = null;
-        
-        lock (_lo)
-        {
-            if (_mapFingerStates.TryGetValue(ev.Data2, out fingerState))
-            {
-                /*
-                 * We better have an old one.
-                 */
-                _mapFingerStates.Remove(ev.Data2);
-            }
-        }
-
-        if (fingerState != null)
-        {
-            fingerState.HandleReleased(ev);
-        }
-    }
-    
-    
-    private void _onFingerMotion(Event ev)
-    {
-        AFingerState? fingerState = null;
-        
-        lock (_lo)
-        {
-            if (_mapFingerStates.TryGetValue(ev.Data2, out fingerState))
-            {
-            }
-        }
-
-        if (fingerState != null)
-        {
-            fingerState.HandleMotion(ev);
-        }
-    }
-
-
     public void _onStickMoved(Event ev)
     {
         Vector2 pos = StickTransfer(ev.Position);
@@ -809,9 +741,9 @@ public class InputController : engine.AController, engine.IInputPart
         if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
         if (ev.Type.StartsWith(Event.INPUT_KEY_RELEASED)) _onKeyUp(ev);
 
-        if (ev.Type.StartsWith(Event.INPUT_FINGER_PRESSED)) _onFingerPressed(ev);
-        if (ev.Type.StartsWith(Event.INPUT_FINGER_RELEASED)) _onFingerReleased(ev);
-        if (ev.Type.StartsWith(Event.INPUT_FINGER_MOVED)) _onFingerMotion(ev);
+        if (ev.Type.StartsWith(Event.INPUT_FINGER_PRESSED)) _fingerStateHandler.OnFingerPressed(ev);
+        if (ev.Type.StartsWith(Event.INPUT_FINGER_RELEASED)) _fingerStateHandler.OnFingerReleased(ev);
+        if (ev.Type.StartsWith(Event.INPUT_FINGER_MOVED)) _fingerStateHandler.OnFingerMotion(ev);
         
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_STICK_MOVED)) _onStickMoved(ev);
         if (ev.Type.StartsWith(Event.INPUT_GAMEPAD_TRIGGER_MOVED)) _onTriggerMoved(ev);
