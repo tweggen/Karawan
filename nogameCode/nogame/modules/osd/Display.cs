@@ -81,8 +81,9 @@ public class Display : engine.AController
                         && v2OsdPos.Y < (v2ScreenPos.Y + cOsdText.Size.Y))
                     {
                         Clickable cClickable = eCand.Get<Clickable>();
+                        // TXWTODO: Figure out, which of therse positions should be carried on.
                         _fingerStateHandler.OnFingerPressed(cev, ev =>
-                            new ClickableFingerState(v2OsdPos, eCand, cClickable));
+                            new ClickableFingerState(cev.Position, eCand, cClickable, v2OsdPos));
                         return null;
                     }
                 }

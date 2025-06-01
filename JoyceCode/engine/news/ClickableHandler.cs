@@ -12,6 +12,14 @@ using static engine.Logger;
 namespace engine.news;
 
 
+class ClickResult
+{
+    public DefaultEcs.Entity Entity;
+    public Vector2 RelPos;
+    public float Z;
+}
+
+
 /**
  * Scan all clickable objects for the object the user might have clicked on.
  *
@@ -33,7 +41,7 @@ public class ClickableHandler
     private FingerStateHandler _fingerStateHandler;
 
     
-    private void _findAt(in Vector2 pos, in Dictionary<DefaultEcs.Entity, Vector2> mapResultingEntities)
+    private void _findAt(in Vector2 pos, in List<ClickResult> listResults)
     {
         /*
          * We have two (+, see above) different version of Clickables: Those from 3d space
@@ -54,8 +62,6 @@ public class ClickableHandler
             .With<joyce.components.Instance3>()
             .AsEnumerable();
 
-        float maxZ = Single.MinValue;
-        
         /*
          * Iterate though all clickable entities by AABB boxes.
          *
@@ -119,20 +125,19 @@ public class ClickableHandler
                  * Now look, if we already found something that is closer.
                  */
                 Vector3 v3Center = Vector3.Transform(id.AABBTransformed.Center, mTransformView);
-                if (v3Center.Z < maxZ)
-                {
-                    Trace($"Discarding entity {entity} with z value {v3Center.Z}");
-                    continue;
-                }
 
-                maxZ = v3Center.Z;
                 Vector2 v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
 
                 /*
                  * This is a hit.
                  */
                 // Trace($"Clickable {entity} was clicked.");
-                mapResultingEntities[entity] = v2RelPos;
+                listResults.Add(new ClickResult()
+                {
+                    Entity = entity,
+                    RelPos = v2RelPos,
+                    Z = v3Center.Z,
+                });
             }
         }
     }
@@ -203,20 +208,28 @@ public class ClickableHandler
                         continue;
                     }
 
-                    Dictionary<DefaultEcs.Entity, Vector2> mapClickedEntities = new();
+                    List<ClickResult> clickResults = new();
+                    
                     /*
                      * Then find the entity somebody would have clicked on.
                      */
-                    _findAt(pos, in mapClickedEntities);
-                    foreach (var kvp in mapClickedEntities)
+                    _findAt(pos, in clickResults);
+                    clickResults.Sort((a, b) => -a.Z.CompareTo(b.Z));
+                    foreach (var cr in clickResults)
                     {
                         // TXWTODO: We better should set the event to IsHandled here.
-                        var eFound = kvp.Key;
-                        var v2RelPos = kvp.Value;
+                        var eFound = cr.Entity;
+                        var v2RelPos = cr.RelPos;
                         var cClickable = eFound.Get<engine.behave.components.Clickable>();
-
+                        
+                        // TXWTOOD: Decide, if we would carry on the actual ev.Position or use the v2RelPos instead.
                         _fingerStateHandler.OnFingerPressed(ev, ev => 
-                            new ClickableFingerState(v2RelPos, eFound, cClickable));
+                            new ClickableFingerState(ev.Position, eFound, cClickable, v2RelPos));
+
+                        if (ev.IsHandled)
+                        {
+                            break;
+                        }
                     }
                 }
 

@@ -10,6 +10,7 @@ public class ClickableFingerState : AFingerState
 {
     public DefaultEcs.Entity Entity;
     public Clickable Clickable;
+    public Vector2 RelPos;
 
 
     public override void HandleReleased(Event ev)
@@ -19,11 +20,13 @@ public class ClickableFingerState : AFingerState
         var factory = Clickable.ClickEventFactory;
         if (factory != null)
         {
-            var cev = factory(Entity, ev, PressPosition);
+            // TXWTODO: This is the relative position of the click. 
+            var cev = factory(Entity, ev, RelPos);
             if (cev != null)
             {
                 I.Get<EventQueue>().Push(cev);
             }
+            ev.IsHandled = true;
         }
     }
 
@@ -41,18 +44,20 @@ public class ClickableFingerState : AFingerState
         var factory = Clickable.ClickEventFactory;
         if (factory != null)
         {
-            var cev = factory(Entity, ev, PressPosition);
+            var cev = factory(Entity, ev, RelPos);
             if (cev != null)
             {
                 I.Get<EventQueue>().Push(cev);
             }
+            ev.IsHandled = true;
         }
     }
 
 
-    public ClickableFingerState(in Vector2 pos, Entity entity, Clickable clickable) : base(in pos)
+    public ClickableFingerState(in Vector2 evPos, Entity entity, Clickable clickable, Vector2 relPos) : base(in evPos)
     {
         Entity = entity;
         Clickable = clickable;
+        RelPos = relPos;
     }
 }
