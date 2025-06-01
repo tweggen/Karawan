@@ -21,13 +21,27 @@ public class ClickModule : AModule
     
     private void _handleClickEvent(Event ev)
     {
-        _clickableHandler.OnClick(new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code) { Data2 = ev.Data2 });
+        _clickableHandler.OnClick(new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code)
+        {
+            Position = ev.Position,
+            Size = ev.Size,
+            Data1 = ev.Data1,
+            Data2 = ev.Data2,
+            Data3 = ev.Data3,
+        });
     }
 
 
     private void _handleReleaseEvent(Event ev)
     {
-        _clickableHandler.OnRelease(new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code) { Data2 = ev.Data2 });
+        _clickableHandler.OnRelease(new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code)
+        {
+            Position = ev.Position,
+            Size = ev.Size,
+            Data1 = ev.Data1,
+            Data2 = ev.Data2,
+            Data3 = ev.Data3,
+        });
     }
 
 

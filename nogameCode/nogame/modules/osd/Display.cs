@@ -190,7 +190,7 @@ public class Display : engine.AController
                 new Vector3(0f, 0f, 1f));
         }
 
-        if (false && GlobalSettings.Get("Android") == "true")
+        if (true || GlobalSettings.Get("Android") == "true")
         {
 
             // _createButton("but_settings.png", ButtonsPerRow - 2, 0,
