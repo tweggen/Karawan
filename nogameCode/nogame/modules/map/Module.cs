@@ -90,7 +90,7 @@ public class Module : AModule, IInputPart
     
     static public uint MapCameraMask = 0x00800000;
 
-    private bool _trace = false;
+    private bool _trace = true;
 
     /**
      * Identifiers of the desired map modes.

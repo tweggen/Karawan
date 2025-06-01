@@ -53,7 +53,7 @@ public class Display : engine.AController
         Vector2 v2RelPos)
     {
         Vector2 v2OsdPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
-        Trace($"Handling relative click {v2OsdPos}");
+        Trace($"Handling osd pos click {v2OsdPos}");
 
 
         switch (cev.Type)
