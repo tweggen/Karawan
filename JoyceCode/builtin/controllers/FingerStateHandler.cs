@@ -56,7 +56,7 @@ public class FingerStateHandler
     }
     
     
-    public void OnFingerPressed(Event ev)
+    public void OnFingerPressed(Event ev, Func<Event, IFingerState> localFingerStateFactory = null)
     {        
         IFingerState? oldFingerState = null;
         IFingerState? iFingerState;
@@ -76,8 +76,15 @@ public class FingerStateHandler
         {
             oldFingerState.HandleReleased(ev);
         }
-        
-        iFingerState = _fingerStateFactory(ev);
+
+        if (null != localFingerStateFactory)
+        {
+            iFingerState = localFingerStateFactory(ev);
+        }
+        else
+        {
+            iFingerState = _fingerStateFactory(ev);
+        }
 
         if (null != iFingerState)
         {
@@ -105,7 +112,7 @@ public class FingerStateHandler
     }
 
 
-    public FingerStateHandler(Func<Event, IFingerState> fingerStateFactory)
+    public FingerStateHandler(Func<Event, IFingerState> fingerStateFactory = null)
     {
         _fingerStateFactory = fingerStateFactory;
     }

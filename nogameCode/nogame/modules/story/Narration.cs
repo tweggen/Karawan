@@ -65,7 +65,7 @@ public class Narration : AModule, IInputPart
             VAlign.Top));
         _eSentence.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => cev.IsPressed?new Event("nogame.modules.story.sentence.onClick", null):null
+            ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", null)
         });
     }
 
@@ -85,7 +85,7 @@ public class Narration : AModule, IInputPart
             VAlign.Top));
         eOption.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => cev.IsPressed?new Event("nogame.modules.story.sentence.onClick", $"{idx+1}"):null
+            ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.story.sentence.onClick", $"{idx+1}")
         });
         return eOption;
     }

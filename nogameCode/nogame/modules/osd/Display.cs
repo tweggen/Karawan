@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using builtin.controllers;
 using engine;
 using engine.behave.components;
 using engine.draw.systems;
@@ -43,36 +44,56 @@ public class Display : engine.AController
     public uint Height => _height;
 
     
+    private FingerStateHandler _fingerStateHandler;
+    
+    
     private engine.news.Event _osdClickEventFactory(
         DefaultEcs.Entity e, 
         engine.news.Event cev, 
         Vector2 v2RelPos)
     {
-        var clickableEntities = _engine.GetEcsWorld().GetEntities()
-            .With<Clickable>()
-            .With<engine.draw.components.OSDText>()
-            .AsEnumerable();
-        
         Vector2 v2OsdPos = new(v2RelPos.X * _width, v2RelPos.Y * _height);
-
         Trace($"Handling relative click {v2OsdPos}");
-        foreach (var eCand in clickableEntities)
+
+
+        switch (cev.Type)
         {
-            ref var cOsdText = ref eCand.Get<engine.draw.components.OSDText>();
+            case Event.INPUT_LOGICAL_PRESSED:
 
-            ref var v2ScreenPos = ref cOsdText.ScreenPos;
-            if (v2ScreenPos.X == -1000f)
-            {
-                continue;
-            }
+                var clickableEntities = _engine.GetEcsWorld().GetEntities()
+                    .With<Clickable>()
+                    .With<engine.draw.components.OSDText>()
+                    .AsEnumerable();
 
-            if (v2OsdPos.X >= v2ScreenPos.X
-                && v2OsdPos.Y >= v2ScreenPos.Y
-                && v2OsdPos.X < (v2ScreenPos.X + cOsdText.Size.X)
-                && v2OsdPos.Y < (v2ScreenPos.Y + cOsdText.Size.Y))
-            {
-                return eCand.Get<Clickable>().ClickEventFactory(e, cev, v2OsdPos);
-            }
+                foreach (var eCand in clickableEntities)
+                {
+                    ref var cOsdText = ref eCand.Get<engine.draw.components.OSDText>();
+
+                    ref var v2ScreenPos = ref cOsdText.ScreenPos;
+                    if (v2ScreenPos.X == -1000f)
+                    {
+                        continue;
+                    }
+
+                    if (v2OsdPos.X >= v2ScreenPos.X
+                        && v2OsdPos.Y >= v2ScreenPos.Y
+                        && v2OsdPos.X < (v2ScreenPos.X + cOsdText.Size.X)
+                        && v2OsdPos.Y < (v2ScreenPos.Y + cOsdText.Size.Y))
+                    {
+                        Clickable cClickable = eCand.Get<Clickable>();
+                        _fingerStateHandler.OnFingerPressed(cev, ev =>
+                            new ClickableFingerState(v2OsdPos, eCand, cClickable));
+                        return null;
+                    }
+                }
+
+                break;
+            case Event.INPUT_LOGICAL_MOVED:
+                _fingerStateHandler.OnFingerMotion(cev);
+                break;
+            case Event.INPUT_LOGICAL_RELEASED:
+                _fingerStateHandler.OnFingerReleased(cev);
+                break;
         }
 
         return null;
@@ -212,10 +233,11 @@ public class Display : engine.AController
         // Update texture after the render system has swapped buffers
         _textureFramebuffer.Framebuffer = _framebuffer.GetDisplayBuffer();
     }
-    
-    
+
+
     protected override void OnModuleDeactivate()
     {
+        _fingerStateHandler = null;
         DeactivateMyModule<RenderOSDSystem>();
     }
     
@@ -223,6 +245,7 @@ public class Display : engine.AController
     protected override void OnModuleActivate()
     {
         _aTransform = I.Get<engine.joyce.TransformApi>();
+        _fingerStateHandler = new();
         _setupOSD();
         M<RenderOSDSystem>().SetFramebuffer(_framebuffer);
         ActivateMyModule<RenderOSDSystem>();

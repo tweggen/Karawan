@@ -10,5 +10,12 @@ public struct Clickable
      */
     public byte CameraLayer;
 
+    [Flags]
+    public enum ClickableFlags : byte
+    {
+        AlsoOnRelease = 1
+    };
+    public ClickableFlags Flags;
+
     public Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event> ClickEventFactory;
 }

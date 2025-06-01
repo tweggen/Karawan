@@ -80,7 +80,7 @@ public class Scores : engine.AController
         _eScoreDisplay = _engine.CreateEntity("OsdScoreDisplay");
         _eScoreDisplay.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => cev.IsPressed?new engine.news.Event("nogame.modules.menu.toggleMenu", null):null
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
         });
         _eScoreDisplay.Set(new engine.draw.components.OSDText(
             new Vector2(786f-64f-32f, 48f+YOffset),
@@ -100,7 +100,7 @@ public class Scores : engine.AController
         _ePolytopeDisplay = _engine.CreateEntity("OsdPolytopeDisplay");
         _ePolytopeDisplay.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => cev.IsPressed?new engine.news.Event("nogame.modules.menu.toggleMenu", null):null
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
         });
         _ePolytopeDisplay.Set(new engine.draw.components.OSDText(
             new Vector2(786f-64f-32f-96f, 48f+YOffset),
@@ -116,7 +116,7 @@ public class Scores : engine.AController
         _eHealthDisplay = _engine.CreateEntity("OsdHealthDisplay");
         _eHealthDisplay.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => cev.IsPressed?new engine.news.Event("nogame.modules.menu.toggleMenu", null):null
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.menu.toggleMenu", null)
         });
         _eHealthDisplay.Set(new engine.draw.components.OSDText(
             new Vector2(786f-64f-32f-48f, 48f+48f+YOffset),

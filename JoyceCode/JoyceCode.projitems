@@ -14,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\AInputControllerFingerState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\ClickableFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\FingerStateHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\controllers\IFingerState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\entitySaver\Context.cs" />

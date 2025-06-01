@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using BepuPhysics.Collidables;
+using builtin.controllers;
 using engine.joyce.components;
 using engine.news;
 using engine.physics;
@@ -27,6 +28,9 @@ public class ClickableHandler
     private Vector2 _vViewSize;
     private Matrix4x4 _mProjection;
     private Matrix4x4 _mView;
+
+
+    private FingerStateHandler _fingerStateHandler;
 
     
     private void _findAt(in Vector2 pos, in Dictionary<DefaultEcs.Entity, Vector2> mapResultingEntities)
@@ -155,20 +159,14 @@ public class ClickableHandler
         }
     }
     
-    public void OnClickRelease(engine.news.Event ev)
+    private void _onClickOrRelease(engine.news.Event ev)
     {
         _vViewSize = ev.Size;
         
         switch (ev.Type)
         {
-            case engine.news.Event.INPUT_MOUSE_PRESSED:
-            case engine.news.Event.INPUT_TOUCH_PRESSED:
-                /*
-                 * Continue to process it.
-                 */
-                break;
-            case engine.news.Event.INPUT_MOUSE_RELEASED:
-            case engine.news.Event.INPUT_TOUCH_RELEASED:
+            case engine.news.Event.INPUT_LOGICAL_PRESSED:
+            case engine.news.Event.INPUT_LOGICAL_RELEASED:
                 /*
                  * Continue to process it.
                  */
@@ -177,104 +175,112 @@ public class ClickableHandler
                 return;
         }
 
-        /*
-         * Now iterate through all cameras.
-         * We need a copy because event handlers shall be able to create/remove entities.
-         * TXWTODO: This is at most 32 (plus dup'ped cams), why not sort it? So that we're
-         * having a defined order?
-         */
-        var cameras = new List<DefaultEcs.Entity>(_engine.GetEcsWorld().GetEntities()
-            .With<Camera3>()
-            .With<joyce.components.Transform3ToWorld>()
-            .AsEnumerable());
-        foreach (var eCamera in cameras)
+        switch (ev.Type)
         {
-            _updateFromCamera(eCamera);
+            case engine.news.Event.INPUT_LOGICAL_PRESSED:
 
-            Vector2 pos = ev.Position;
-
-            /*
-             * First check if the camera view is under that position.
-             */
-            if (!_cCamera3.ContainsScreenPosition(_vViewSize, pos))
-            {
-                continue;
-            }
-
-            Dictionary<DefaultEcs.Entity, Vector2> mapClickedEntities = new();
-            /*
-             * Then find the entity somebody would have clicked on.
-             */
-            _findAt(pos, in mapClickedEntities);
-            foreach (var kvp in mapClickedEntities)
-            {
-                // TXWTODO: We better should set the event to IsHandled here.
-                var eFound = kvp.Key;
-                var v2RelPos = kvp.Value;
-                var cClickable = eFound.Get<engine.behave.components.Clickable>();
-                var factory = cClickable.ClickEventFactory;
-                if (factory != null)
+                /*
+                 * Now iterate through all cameras.
+                 * We need a copy because event handlers shall be able to create/remove entities.
+                 * TXWTODO: This is at most 32 (plus dup'ped cams), why not sort it? So that we're
+                 * having a defined order?
+                 */
+                var cameras = new List<DefaultEcs.Entity>(_engine.GetEcsWorld().GetEntities()
+                    .With<Camera3>()
+                    .With<joyce.components.Transform3ToWorld>()
+                    .AsEnumerable());
+                foreach (var eCamera in cameras)
                 {
-                    var cev = factory(eFound, ev, v2RelPos);
-                    if (cev != null)
+                    _updateFromCamera(eCamera);
+
+                    Vector2 pos = ev.Position;
+
+                    /*
+                     * First check if the camera view is under that position.
+                     */
+                    if (!_cCamera3.ContainsScreenPosition(_vViewSize, pos))
                     {
-                        I.Get<EventQueue>().Push(cev);
+                        continue;
+                    }
+
+                    Dictionary<DefaultEcs.Entity, Vector2> mapClickedEntities = new();
+                    /*
+                     * Then find the entity somebody would have clicked on.
+                     */
+                    _findAt(pos, in mapClickedEntities);
+                    foreach (var kvp in mapClickedEntities)
+                    {
+                        // TXWTODO: We better should set the event to IsHandled here.
+                        var eFound = kvp.Key;
+                        var v2RelPos = kvp.Value;
+                        var cClickable = eFound.Get<engine.behave.components.Clickable>();
+
+                        _fingerStateHandler.OnFingerPressed(ev, ev => 
+                            new ClickableFingerState(v2RelPos, eFound, cClickable));
                     }
                 }
-            }
-        }
-        
-        /*
-         * Finally, using the real cam (that we just define to be the main view), to do raycasting.
-         * This, however, will consume the input event, so no other actions, like panning or moving,
-         * would be performed at all.
-         */
-        
-        if (false && _engine.Camera.TryGet(out var eMainCamera))
-        {
-            ref var cCamTransform = ref eMainCamera.Get<engine.joyce.components.Transform3ToWorld>();
-            ref var cCamera = ref eMainCamera.Get<engine.joyce.components.Camera3>();
-            ref var mCameraToWorld = ref cCamTransform.Matrix;
-            Vector3 vX = new Vector3(mCameraToWorld.M11, mCameraToWorld.M12, mCameraToWorld.M13);
-            Vector3 vY = new Vector3(mCameraToWorld.M21, mCameraToWorld.M22, mCameraToWorld.M23);
-            Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
-            float dist = vZ.Length();
-            var vCamPosition = mCameraToWorld.Translation;
-            
-            /*
-             * The virtual camera screen is "at" NearFrustum.
-             * However, for raycasting, the actual position (distance to the camera) does not matter,
-             * any direction is ok.
-             *
-             * The extent of the screen is defined by the angle of the projection, 
-             */
-            float xExtent = 2f * Single.Tan((cCamera.Angle*Single.Pi/180f)/2f) * dist;
-            float yExtent = xExtent * 9f / 16f;
-            float mainHeight = _vViewSize.X * 9f / 16f;
-            float mainTop = (_vViewSize.Y - mainHeight) / 2f; 
 
-            Vector2 v2Pos = new Vector2(ev.Position.X / _vViewSize.X - 0.5f,  (ev.Position.Y-mainTop) / mainHeight - 0.5f);
-            Trace($"v2Pos = {v2Pos}, xExtent = {xExtent}, yExtent = {yExtent}" );
-            Vector3 v3Target = -vZ + vX * xExtent * v2Pos.X - vY * yExtent * v2Pos.Y;
-            I.Get<engine.physics.API>().RayCast(vCamPosition, v3Target, cCamera.FarFrustum, _onMainCameraRayHit);
+                /*
+                 * Finally, using the real cam (that we just define to be the main view), to do raycasting.
+                 * This, however, will consume the input event, so no other actions, like panning or moving,
+                 * would be performed at all.
+                 */
+
+                if (false && _engine.Camera.TryGet(out var eMainCamera))
+                {
+                    ref var cCamTransform = ref eMainCamera.Get<engine.joyce.components.Transform3ToWorld>();
+                    ref var cCamera = ref eMainCamera.Get<engine.joyce.components.Camera3>();
+                    ref var mCameraToWorld = ref cCamTransform.Matrix;
+                    Vector3 vX = new Vector3(mCameraToWorld.M11, mCameraToWorld.M12, mCameraToWorld.M13);
+                    Vector3 vY = new Vector3(mCameraToWorld.M21, mCameraToWorld.M22, mCameraToWorld.M23);
+                    Vector3 vZ = new Vector3(mCameraToWorld.M31, mCameraToWorld.M32, mCameraToWorld.M33);
+                    float dist = vZ.Length();
+                    var vCamPosition = mCameraToWorld.Translation;
+
+                    /*6
+                     * The virtual camera screen is "at" NearFrustum.
+                     * However, for raycasting, the actual position (distance to the camera) does not matter,
+                     * any direction is ok.
+                     *
+                     * The extent of the screen is defined by the angle of the projection,
+                     */
+                    float xExtent = 2f * Single.Tan((cCamera.Angle * Single.Pi / 180f) / 2f) * dist;
+                    float yExtent = xExtent * 9f / 16f;
+                    float mainHeight = _vViewSize.X * 9f / 16f;
+                    float mainTop = (_vViewSize.Y - mainHeight) / 2f;
+
+                    Vector2 v2Pos = new Vector2(ev.Position.X / _vViewSize.X - 0.5f,
+                        (ev.Position.Y - mainTop) / mainHeight - 0.5f);
+                    Trace($"v2Pos = {v2Pos}, xExtent = {xExtent}, yExtent = {yExtent}");
+                    Vector3 v3Target = -vZ + vX * xExtent * v2Pos.X - vY * yExtent * v2Pos.Y;
+                    I.Get<engine.physics.API>()
+                        .RayCast(vCamPosition, v3Target, cCamera.FarFrustum, _onMainCameraRayHit);
+                }
+
+                break;
+            
+            case  engine.news.Event.INPUT_LOGICAL_RELEASED:
+                _fingerStateHandler.OnFingerReleased(ev);
+                break;
         }
     }
 
 
     public void OnClick(engine.news.Event ev)
     {
-        OnClickRelease(ev);
+        _onClickOrRelease(ev);
     }
 
 
     public void OnRelease(engine.news.Event ev)
     {
-        OnClickRelease(ev);
+        _onClickOrRelease(ev);
     }
     
 
     public ClickableHandler(Engine engine0)
     {
         _engine = engine0;
+        _fingerStateHandler = new();
     }
 }

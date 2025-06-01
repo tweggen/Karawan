@@ -366,7 +366,7 @@ public class Module : AModule, IInputPart
                 -MapY * Vector3.UnitY);
             _eMap.Set(new engine.behave.components.Clickable()
             {
-                ClickEventFactory = (e, cev, v2RelPos) => cev.IsPressed?new Event("nogame.modules.map.toggleMap", null) { Position = cev.Position }:null
+                ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.map.toggleMap", null) { Position = cev.Position }
             });
 
         }

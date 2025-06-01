@@ -5,6 +5,7 @@ using System.Numerics;
 using engine;
 using engine.draw;
 using engine.draw.components;
+using engine.news;
 
 namespace builtin.jt;
 
@@ -371,6 +372,7 @@ public class TextWidgetImplementation : IWidgetImplementation
         _eText.Set(cOsdText);
         _eText.Set(new engine.behave.components.Clickable()
         {
+            Flags = engine.behave.components.Clickable.ClickableFlags.AlsoOnRelease,
             ClickEventFactory = (e, cev, v2RelPos) =>
                 new WidgetEvent(
                     cev.IsPressed?$"builtin.jt.widget.{_widget.Id}.onClick":$"builtin.jt.widget.{_widget.Id}.onReleased", 

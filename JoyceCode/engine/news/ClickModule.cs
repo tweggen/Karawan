@@ -9,6 +9,8 @@ namespace engine.news;
  * through the clickable objects to find the matching object, calling
  * it's event factory to create the event desired by the owner of
  * the object.
+ *
+ * It emits logical pressed / moved / released events.
  */
 public class ClickModule : AModule
 {
@@ -16,15 +18,16 @@ public class ClickModule : AModule
     
     private ClickableHandler _clickableHandler;
 
+    
     private void _handleClickEvent(Event ev)
     {
-        _clickableHandler.OnClick(ev);
+        _clickableHandler.OnClick(new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code) { Data2 = ev.Data2 });
     }
 
 
     private void _handleReleaseEvent(Event ev)
     {
-        _clickableHandler.OnRelease(ev);
+        _clickableHandler.OnRelease(new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code) { Data2 = ev.Data2 });
     }
 
 
@@ -38,6 +41,15 @@ public class ClickModule : AModule
     
 
     private void _onTouchPress(Event ev)
+    {
+        if (GlobalSettings.Get("Android") == "true")
+        {
+            _handleClickEvent(ev);
+        }
+    }
+    
+    
+    private void _onFingerPress(Event ev)
     {
         if (GlobalSettings.Get("Android") == "true")
         {
@@ -64,11 +76,22 @@ public class ClickModule : AModule
     }
     
     
+    private void _onFingerReleased(Event ev)
+    {
+        if (GlobalSettings.Get("Android") == "true")
+        {
+            _handleReleaseEvent(ev);
+        }
+    }
+    
+    
     protected override void OnModuleDeactivate()
     {
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        // I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_FINGER_PRESSED, _onFingerPress);
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
+        // I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_RELEASED, _onFingerReleased);
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_RELEASED, _onMouseReleased);
     }
     
@@ -80,9 +103,11 @@ public class ClickModule : AModule
          */
         _clickableHandler = new(_engine);
         
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        // I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
+        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_FINGER_PRESSED, _onFingerPress);
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
+        // I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
+        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_FINGER_RELEASED, _onFingerReleased);
         I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_RELEASED, _onMouseReleased);
     }
 

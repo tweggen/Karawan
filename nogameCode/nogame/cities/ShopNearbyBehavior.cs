@@ -78,7 +78,7 @@ public class ShopNearbyBehavior : ABehavior
             0x00000000, engine.draw.HAlign.Center) { MaxDistance = 2f*Distance, CameraMask = 1});
         _eActionMarker.Set(new engine.behave.components.Clickable()
         {
-            ClickEventFactory = (e, cev, v2RelPos) => cev.IsPressed?new engine.news.Event("nogame.modules.shop.open", null):null
+            ClickEventFactory = (e, cev, v2RelPos) => new engine.news.Event("nogame.modules.shop.open", null)
         });
         I.Get<HierarchyApi>().SetParent(_eActionMarker, EPOI);
         I.Get<TransformApi>().SetTransforms(_eActionMarker, true,

@@ -23,6 +23,10 @@ public class Event
     public const string INPUT_GAMEPAD_BUTTON_PRESSED = "input.gamepad.button.pressed";
     public const string INPUT_GAMEPAD_BUTTON_RELEASED = "input.gamepad.button.released";
 
+    public const string INPUT_LOGICAL_PRESSED = "input.logical.pressed";
+    public const string INPUT_LOGICAL_MOVED = "input.logical.moved";
+    public const string INPUT_LOGICAL_RELEASED = "input.logical.released";
+    
     public const string INPUT_BUTTON_PRESSED = "input.button.pressed";
     public const string INPUT_BUTTON_RELEASED = "input.button.released";
 

@@ -540,22 +540,7 @@ public class InputController : engine.AController, engine.IInputPart
     }
 
 
-    private FingerStateHandler _fingerStateHandler = new(ev =>
-        {
-            if (ev.Position.X < 0.5f)
-            {
-                return new LeftStickFingerState(ev.Position, this);
-            }
-            else if (ev.Position.X < 0.9f)
-            {
-                return new RightStickFingerState(ev.Position, this);
-            }
-            else
-            {
-                return new ZoomStickFingerState(ev.Position, this);
-            }
-        }
-    );
+    private FingerStateHandler _fingerStateHandler;
 
     
     public void _onStickMoved(Event ev)
@@ -758,11 +743,28 @@ public class InputController : engine.AController, engine.IInputPart
     {
         M<InputEventPipeline>().RemoveInputPart(this);
         I.Get<SubscriptionManager>().Unsubscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
+        _fingerStateHandler = null;
     }
 
 
     protected override void OnModuleActivate()
     {
+        _fingerStateHandler = new(ev =>
+            {
+                if (ev.Position.X < 0.5f)
+                {
+                    return new LeftStickFingerState(ev.Position, this);
+                }
+                else if (ev.Position.X < 0.9f)
+                {
+                    return new RightStickFingerState(ev.Position, this);
+                }
+                else
+                {
+                    return new ZoomStickFingerState(ev.Position, this);
+                }
+            }
+        );
         I.Get<SubscriptionManager>().Subscribe(Event.VIEW_SIZE_CHANGED, _onViewSizeChanged);
         M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
         _refreshViewSize();
