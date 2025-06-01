@@ -20,12 +20,16 @@ public class ClickableFingerState : AFingerState
         var factory = Clickable.ClickEventFactory;
         if (factory != null)
         {
-            // TXWTODO: This is the relative position of the click. 
-            var cev = factory(Entity, ev, RelPos);
-            if (cev != null)
+            if ((Clickable.Flags & Clickable.ClickableFlags.AlsoOnRelease) != 0)
             {
-                I.Get<EventQueue>().Push(cev);
+                // TXWTODO: This is the relative position of the click. 
+                var cev = factory(Entity, ev, RelPos);
+                if (cev != null)
+                {
+                    I.Get<EventQueue>().Push(cev);
+                }
             }
+
             ev.IsHandled = true;
         }
     }

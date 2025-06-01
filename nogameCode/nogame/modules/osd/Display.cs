@@ -152,7 +152,7 @@ public class Display : engine.AController
         var eSettings = _engine.CreateEntity(tagButton);
         eSettings.Set(new Instance3(_createButtonMesh(tagButton)));
         _setButtonTransforms(eSettings, x, y);
-        eSettings.Set(new Clickable { CameraLayer = 24, ClickEventFactory = func });
+        eSettings.Set(new Clickable { CameraLayer = 24, ClickEventFactory = func, Flags = Clickable.ClickableFlags.AlsoOnRelease});
     }
 
 
@@ -183,7 +183,8 @@ public class Display : engine.AController
             _eFramebuffer.Set(new engine.joyce.components.Instance3(jInstanceDesc));
             _eFramebuffer.Set(new engine.behave.components.Clickable()
             {
-                ClickEventFactory = _osdClickEventFactory
+                ClickEventFactory = _osdClickEventFactory,
+                Flags = Clickable.ClickableFlags.AlsoOnRelease
             });
             _aTransform.SetTransforms(
                 _eFramebuffer, true, 0x01000000,
