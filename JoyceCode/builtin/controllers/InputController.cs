@@ -718,9 +718,19 @@ public class InputController : engine.AController, engine.IInputPart
     {
         if (engine.GlobalSettings.Get("splash.touchControls") == "false")
         {
-            if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
-            if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
-            if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
+            if (true)
+            {
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _handleMousePressed(ev);
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _handleMouseReleased(ev);
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _handleMouseMoved(ev);
+            }
+            else
+            {
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED)) _fingerStateHandler.OnFingerPressed(ev);
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED)) _fingerStateHandler.OnFingerReleased(ev);
+                if (ev.Type.StartsWith(Event.INPUT_MOUSE_MOVED)) _fingerStateHandler.OnFingerMotion(ev);
+        
+            }
         }
 
         if (ev.Type.StartsWith(Event.INPUT_KEY_PRESSED)) _onKeyDown(ev);
