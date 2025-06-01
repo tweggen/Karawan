@@ -65,6 +65,7 @@ public class ClickModule : AModule
     
     private void _onFingerPress(Event ev)
     {
+        // TXWTODO: Finger press positions are screen relative.
         if (GlobalSettings.Get("Android") == "true")
         {
             _handleClickEvent(ev);
@@ -92,6 +93,7 @@ public class ClickModule : AModule
     
     private void _onFingerReleased(Event ev)
     {
+        // TXWTODO: Finger press positions are screen relative.
         if (GlobalSettings.Get("Android") == "true")
         {
             _handleReleaseEvent(ev);
