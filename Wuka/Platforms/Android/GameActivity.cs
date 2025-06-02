@@ -1,4 +1,5 @@
-﻿using Android.App;
+﻿using System.Numerics;
+using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using Silk.NET.Windowing;
@@ -94,6 +95,7 @@ namespace Wuka
                         _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_PRESSED, "")
                         {
                             Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
+                            Size = new Vector2(1.0f, 1.0f),
                             Data1 = (uint) events[i].Tfinger.TouchId,
                             Data2 = (uint) events[i].Tfinger.FingerId
                         });
@@ -102,6 +104,7 @@ namespace Wuka
                         _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_RELEASED, "")
                         {
                             Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
+                            Size = new Vector2(1.0f, 1.0f),
                             Data1 = (uint) events[i].Tfinger.TouchId,
                             Data2 = (uint) events[i].Tfinger.FingerId
                         });
