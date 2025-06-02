@@ -287,7 +287,7 @@ public class Platform : engine.IPlatform
     {
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_MOVED, "")
         {
-            Position = position
+            PhysicalPosition = position
         });
     }
 
@@ -296,7 +296,7 @@ public class Platform : engine.IPlatform
     {
         I.Get<EventQueue>().Push(new Event(Event.INPUT_MOUSE_WHEEL, "")
         {
-            Position = new(scrollWheel.X, scrollWheel.Y)
+            PhysicalPosition = new(scrollWheel.X, scrollWheel.Y)
         });
     }
 
@@ -309,52 +309,57 @@ public class Platform : engine.IPlatform
         }
     }
 
-    private void _fullToViewPosition(in Vector2 i, out Vector2 o, out Vector2 s)
+    private void _fullToViewPosition(in Vector2 i, out Vector2 o, out Vector2 s, out Vector2 logical)
     {
         _getActualViewRectangle(out var ul, out var lr);
         o = i - ul;
         s = lr - ul + Vector2.One;
+        logical = (s.X != 0f && s.Y != 0f) ? new(o.X / s.X, o.Y / s.Y) : Vector2.Zero;
     }
 
 
     private void _onMouseDown(IMouse mouse, MouseButton mouseButton)
     {
-        _fullToViewPosition(mouse.Position, out var pos, out var size);
-
+        _fullToViewPosition(mouse.Position, out var pos, out var size, out var v2LogicalPosition);
+        
         // Trace($"Position is {mouse.Position}");
 
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_MOUSE_PRESSED, $"{(int)mouseButton}")
             {
-                Position = pos,
-                Size = size,
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition,
                 Data1 = (uint) mouseButton
             });
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_TOUCH_PRESSED, "")
             {
-                Position = pos,
-                Size = size
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition
             });
     }
 
 
     private void _onMouseUp(IMouse mouse, MouseButton mouseButton)
     {
-        _fullToViewPosition(mouse.Position, out var pos, out var size);
+        _fullToViewPosition(mouse.Position, out var pos, out var size, out var v2LogicalPosition);
 
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_MOUSE_RELEASED, $"{(int)mouseButton}")
             {
-                Position = pos,
-                Size = size,
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition,
                 Data1 = (uint) mouseButton
             });
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_TOUCH_RELEASED, "")
             {
-                Position = pos,
-                Size = size
+                PhysicalPosition = pos,
+                PhysicalSize = size,
+                LogicalPosition = v2LogicalPosition 
             });
     }
 
@@ -363,7 +368,7 @@ public class Platform : engine.IPlatform
     {
         _pushTranslate(new Event(Event.INPUT_GAMEPAD_STICK_MOVED, "")
             {
-                Position = new(thumbstick.X, thumbstick.Y),
+                PhysicalPosition = new(thumbstick.X, thumbstick.Y),
                 Data1 = (uint) thumbstick.Index
             });
     }
@@ -375,7 +380,7 @@ public class Platform : engine.IPlatform
         I.Get<EventQueue>().Push(
             new Event(Event.INPUT_GAMEPAD_TRIGGER_MOVED, "")
             {
-                Position = new(trigger.Position, 0f),
+                PhysicalPosition = new(trigger.Position, 0f),
                 Data1 = (uint) trigger.Index
             });
     }
@@ -687,7 +692,7 @@ public class Platform : engine.IPlatform
             engine.GlobalSettings.Set("view.size", $"{size.X}x{size.Y}");
             I.Get<EventQueue>().Push(new Event(Event.VIEW_SIZE_CHANGED, "")
             {
-                Position = new(size.X, size.Y)
+                PhysicalPosition = new(size.X, size.Y)
             });
         }
     }

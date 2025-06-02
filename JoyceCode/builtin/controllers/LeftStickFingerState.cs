@@ -12,9 +12,9 @@ class LeftStickFingerState : AInputControllerFingerState
     {
         base.HandleMotion(ev);
         var cs = _ic.ControllerState;
-        Vector2 vRel = ev.Position - PressPosition;
-        Vector2 vNow = ev.Position - LastPosition;
-        LastPosition = ev.Position;
+        Vector2 vRel = ev.PhysicalPosition - PressPosition;
+        Vector2 vNow = ev.PhysicalPosition - LastPosition;
+        LastPosition = ev.PhysicalPosition;
         vRel.X *= 16f/9f;
         vNow.X *= 16f/9f;
         vRel *= _ic.TouchMoveSensitivity;

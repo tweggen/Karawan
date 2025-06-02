@@ -83,7 +83,7 @@ public class Display : engine.AController
                         Clickable cClickable = eCand.Get<Clickable>();
                         // TXWTODO: Figure out, which of therse positions should be carried on.
                         _fingerStateHandler.OnFingerPressed(cev, ev =>
-                            new ClickableFingerState(cev.Position, eCand, cClickable, v2OsdPos));
+                            new ClickableFingerState(cev.PhysicalPosition, eCand, cClickable, v2OsdPos));
                         return null;
                     }
                 }

@@ -10,14 +10,14 @@ class ZoomStickFingerState : AInputControllerFingerState
     public override void HandleMotion(Event ev)
     {
         base.HandleMotion(ev);
-        Vector2 vRel = ev.Position - LastPosition;
-        LastPosition = ev.Position;
+        Vector2 vRel = ev.PhysicalPosition - LastPosition;
+        LastPosition = ev.PhysicalPosition;
         
         float zoomWay = vRel.Y / _ic.ControllerTouchZoomFull * (8);
                     
         I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
         {
-            Position = new Vector2(0f, zoomWay)
+            PhysicalPosition = new Vector2(0f, zoomWay)
         });
     }
 

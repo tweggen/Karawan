@@ -89,13 +89,16 @@ namespace Wuka
                 (uint) Silk.NET.SDL.EventType.Lastevent);
             for (int i = 0; i < nEvents; ++i)
             {
+                Vector2 v2PhysicalPosition = new(events[i].Tfinger.X, events[i].Tfinger.Y);
+                
                 switch ((EventType) events[i].Type)
                 {
                     case EventType.Fingerdown:
                         _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_PRESSED, "")
                         {
-                            Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
-                            Size = new Vector2(1.0f, 1.0f),
+                            PhysicalPosition = v2PhysicalPosition,
+                            PhysicalSize = Vector2.One,
+                            LogicalPosition = v2PhysicalPosition,
                             Data1 = (uint) events[i].Tfinger.TouchId,
                             Data2 = (uint) events[i].Tfinger.FingerId
                         });
@@ -103,8 +106,9 @@ namespace Wuka
                     case EventType.Fingerup:
                         _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_RELEASED, "")
                         {
-                            Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
-                            Size = new Vector2(1.0f, 1.0f),
+                            PhysicalPosition = v2PhysicalPosition,
+                            PhysicalSize = Vector2.One,
+                            LogicalPosition = v2PhysicalPosition,
                             Data1 = (uint) events[i].Tfinger.TouchId,
                             Data2 = (uint) events[i].Tfinger.FingerId
                         });
@@ -112,8 +116,11 @@ namespace Wuka
                     case EventType.Fingermotion:
                         _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_MOVED, "")
                         {
-                            Position = new (events[i].Tfinger.X, events[i].Tfinger.Y),
-                            Size = new (events[i].Tfinger.Dx, events[i].Tfinger.Dy),
+                            PhysicalPosition = new (events[i].Tfinger.X, events[i].Tfinger.Y),
+                            PhysicalSize = Vector2.One,
+                            LogicalPosition = v2PhysicalPosition,
+                            // TXWTODO: CHeck, if we need this size information.
+                            //  = new (events[i].Tfinger.Dx, events[i].Tfinger.Dy),
                             Data1 = (uint) events[i].Tfinger.TouchId,
                             Data2 = (uint) events[i].Tfinger.FingerId
                         });

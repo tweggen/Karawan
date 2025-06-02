@@ -23,8 +23,9 @@ public class ClickModule : AModule
     {
         _clickableHandler.OnClick(new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code)
         {
-            Position = ev.Position,
-            Size = ev.Size,
+            PhysicalPosition = ev.PhysicalPosition,
+            PhysicalSize = ev.PhysicalSize,
+            LogicalPosition = ev.LogicalPosition,
             Data1 = ev.Data1,
             Data2 = ev.Data2,
             Data3 = ev.Data3,
@@ -36,8 +37,9 @@ public class ClickModule : AModule
     {
         _clickableHandler.OnRelease(new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code)
         {
-            Position = ev.Position,
-            Size = ev.Size,
+            PhysicalPosition = ev.PhysicalPosition,
+            PhysicalSize = ev.PhysicalSize,
+            LogicalPosition = ev.LogicalPosition,
             Data1 = ev.Data1,
             Data2 = ev.Data2,
             Data3 = ev.Data3,

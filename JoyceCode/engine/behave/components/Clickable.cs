@@ -17,5 +17,9 @@ public struct Clickable
     };
     public ClickableFlags Flags;
 
+    /**
+     * A function that receives an original event, a logical relative position within the clickable entity
+     * and returns some other event to emit.
+     */
     public Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event> ClickEventFactory;
 }

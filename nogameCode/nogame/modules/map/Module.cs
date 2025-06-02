@@ -366,7 +366,7 @@ public class Module : AModule, IInputPart
                 -MapY * Vector3.UnitY);
             _eMap.Set(new engine.behave.components.Clickable()
             {
-                ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.map.toggleMap", null) { Position = cev.Position }
+                ClickEventFactory = (e, cev, v2RelPos) => new Event("nogame.modules.map.toggleMap", null) { PhysicalPosition = cev.PhysicalPosition }
             });
 
         }
@@ -454,7 +454,7 @@ public class Module : AModule, IInputPart
         /*
          * size y contains the delta.
          */
-        var dy = (float)ev.Position.Y;
+        var dy = (float)ev.PhysicalPosition.Y;
         lock (_lo)
         {
             int currentZoomState = (int)_requestedMapParams.CurrentZoomState;
@@ -686,7 +686,7 @@ public class Module : AModule, IInputPart
 
     private void _onClickMap(engine.news.Event ev)
     {
-        if (_trace) Trace($"{ev.Position}");
+        if (_trace) Trace($"{ev.PhysicalPosition}");
         Modes mode;
         lock (_lo)
         {
@@ -702,7 +702,7 @@ public class Module : AModule, IInputPart
                 break;
             case Modes.MapFullscreen:
                 // TXWTODO: Remove this workaround!
-                if ((ev.Position.X < _viewSize.X/10f) && (ev.Position.Y < _viewSize.Y/10f))
+                if ((ev.PhysicalPosition.X < _viewSize.X/10f) && (ev.PhysicalPosition.Y < _viewSize.Y/10f))
                 {
                     Mode = Modes.MapMini;
                 }

@@ -63,8 +63,25 @@ public class Event
     
     public string Type;
     public string Code;
-    public Vector2 Position = Vector2.Zero;
-    public Vector2 Size = Vector2.One;
+    
+    /**
+     * The position in original dimenstions.
+     * This may coincide with the logical position but does not have to.
+     */
+    public Vector2 PhysicalPosition = Vector2.Zero;
+    
+    /**
+     * The size in original dimensions.
+     */
+    public Vector2 PhysicalSize = Vector2.One;
+    
+    /**
+     * The position scaled to the 0...1 range.
+     * Note, that other positions are valid.
+     */
+    public Vector2 LogicalPosition = Vector2.Zero;
+    
+    
     public uint Data1;
     public uint Data2;
     public uint Data3;

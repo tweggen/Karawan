@@ -12,8 +12,8 @@ public abstract class AFingerState : IFingerState
     
     public virtual void HandleMotion(Event ev)
     {
-        if (LastPosition == default) LastPosition = ev.Position;
-        Vector2 vRel = ev.Position - LastPosition;
+        if (LastPosition == default) LastPosition = ev.PhysicalPosition;
+        Vector2 vRel = ev.PhysicalPosition - LastPosition;
     }
 
 
@@ -24,8 +24,8 @@ public abstract class AFingerState : IFingerState
 
     public virtual void HandlePressed(Event ev)
     {
-        PressPosition = ev.Position;
-        LastPosition = ev.Position;
+        PressPosition = ev.PhysicalPosition;
+        LastPosition = ev.PhysicalPosition;
     }
 
     

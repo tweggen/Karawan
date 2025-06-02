@@ -270,7 +270,7 @@ public class InputController : engine.AController, engine.IInputPart
 
                     I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
                     {
-                        Position = new Vector2(0f, virtualWheelY)
+                        PhysicalPosition = new Vector2(0f, virtualWheelY)
                     });
 #endif
                 }
@@ -336,7 +336,7 @@ public class InputController : engine.AController, engine.IInputPart
 
         lock (_lo)
         {
-            _currentMousePosition = ev.Position;
+            _currentMousePosition = ev.PhysicalPosition;
             _isMouseButtonClicked = false;
         }
 
@@ -354,7 +354,7 @@ public class InputController : engine.AController, engine.IInputPart
             var sinceFirst = _enableDebugStartTime - now;
             bool doResetDebug = false;
 
-            if (ev.Position.Y / _vViewSize.Y < _enableDebugYAbove)
+            if (ev.PhysicalPosition.Y / _vViewSize.Y < _enableDebugYAbove)
             {
                 doResetDebug = true;
             }
@@ -365,7 +365,7 @@ public class InputController : engine.AController, engine.IInputPart
                  */
                 if (sinceFirst > TimeSpan.FromMilliseconds(2000))
                 {
-                    if (ev.Position.X > _vViewSize.X / 2f)
+                    if (ev.PhysicalPosition.X > _vViewSize.X / 2f)
                     {
                         _enableDebugStartTime = now;
                         _enableDebugCounter = 1;
@@ -377,8 +377,8 @@ public class InputController : engine.AController, engine.IInputPart
                      * So this could be a continued click?
                      */
                     bool expectOnLeft = (_enableDebugCounter & 1) != 0;
-                    if (expectOnLeft && ev.Position.X <= _vViewSize.X / 2f
-                        || !expectOnLeft && ev.Position.X >= _vViewSize.X / 2f)
+                    if (expectOnLeft && ev.PhysicalPosition.X <= _vViewSize.X / 2f
+                        || !expectOnLeft && ev.PhysicalPosition.X >= _vViewSize.X / 2f)
                     {
                         /*
                          * This is inside the correct side of the screen.
@@ -424,12 +424,12 @@ public class InputController : engine.AController, engine.IInputPart
 
         lock (_lo)
         {
-            _mousePressPosition = ev.Position;
-            _currentMousePosition = ev.Position;
+            _mousePressPosition = ev.PhysicalPosition;
+            _currentMousePosition = ev.PhysicalPosition;
             _isMouseButtonClicked = true;
 
-            _lastMousePosition = ev.Position;
-            _lastTouchPosition = ev.Position;
+            _lastMousePosition = ev.PhysicalPosition;
+            _lastTouchPosition = ev.PhysicalPosition;
         }
 
     }
@@ -439,7 +439,7 @@ public class InputController : engine.AController, engine.IInputPart
     {
         lock (_lo)
         {
-            _currentMousePosition = ev.Position;
+            _currentMousePosition = ev.PhysicalPosition;
         }
     }
 
@@ -545,7 +545,7 @@ public class InputController : engine.AController, engine.IInputPart
     
     public void _onStickMoved(Event ev)
     {
-        Vector2 pos = StickTransfer(ev.Position);
+        Vector2 pos = StickTransfer(ev.PhysicalPosition);
         switch (ev.Data1)
         {
             case 0:
@@ -554,7 +554,7 @@ public class InputController : engine.AController, engine.IInputPart
                  */
                 lock (_lo)
                 {
-                    if (ev.Position.X > 0)
+                    if (ev.PhysicalPosition.X > 0)
                     {
                         _controllerState.AnalogRight = (int)(pos.X * 255f);
                         _controllerState.AnalogLeft = 0;
@@ -581,7 +581,7 @@ public class InputController : engine.AController, engine.IInputPart
                         float zoomWay = -pos.Y;
                         I.Get<EventQueue>().Push(new engine.news.Event(Event.INPUT_MOUSE_WHEEL, "(zoom)")
                         {
-                            Position = new Vector2(0f, zoomWay)
+                            PhysicalPosition = new Vector2(0f, zoomWay)
                         });
                     }
                     else
@@ -691,7 +691,7 @@ public class InputController : engine.AController, engine.IInputPart
                  */
                 lock (_lo)
                 {
-                    _controllerState.AnalogBackward = (int)(255f * (ev.Position.X+1f)/2f);
+                    _controllerState.AnalogBackward = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
                     _controllerState.AnalogToWalkControllerNoLock();
                 }
 
@@ -703,7 +703,7 @@ public class InputController : engine.AController, engine.IInputPart
                  */
                 lock (_lo)
                 {
-                    _controllerState.AnalogForward = (int)(255f * (ev.Position.X+1f)/2f);
+                    _controllerState.AnalogForward = (int)(255f * (ev.PhysicalPosition.X+1f)/2f);
                     _controllerState.AnalogToWalkControllerNoLock();
                 }
 
@@ -761,17 +761,17 @@ public class InputController : engine.AController, engine.IInputPart
     {
         _fingerStateHandler = new(ev =>
             {
-                if (ev.Position.X < 0.5f)
+                if (ev.PhysicalPosition.X < 0.5f)
                 {
-                    return new LeftStickFingerState(ev.Position, this);
+                    return new LeftStickFingerState(ev.PhysicalPosition, this);
                 }
-                else if (ev.Position.X < 0.9f)
+                else if (ev.PhysicalPosition.X < 0.9f)
                 {
-                    return new RightStickFingerState(ev.Position, this);
+                    return new RightStickFingerState(ev.PhysicalPosition, this);
                 }
                 else
                 {
-                    return new ZoomStickFingerState(ev.Position, this);
+                    return new ZoomStickFingerState(ev.PhysicalPosition, this);
                 }
             }
         );

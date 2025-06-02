@@ -815,7 +815,7 @@ public class FollowCameraController : AController, IInputPart
         /*
          * size y contains the delta.
          */
-        float deltaZoomStep = -ev.Position.Y / ZOOM_STEP_FRACTION;
+        float deltaZoomStep = -ev.PhysicalPosition.Y / ZOOM_STEP_FRACTION;
         lock (_lo)
         {
             _zoomState = Single.Clamp(_zoomState + deltaZoomStep, 0f, 1f);
