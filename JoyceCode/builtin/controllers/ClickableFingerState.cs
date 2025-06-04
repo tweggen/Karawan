@@ -58,6 +58,17 @@ public class ClickableFingerState : AFingerState
     }
 
 
+    /**
+     * @param evPos
+     *     The position used to track motion
+     * @param entity
+     *     The actual entity that is or is not movable.
+     * @param clickable
+     *     The description of the clickable
+     * @param relPos
+     *     The position relative to the clickable that is passed to
+     *     the handler.
+     */
     public ClickableFingerState(in Vector2 evPos, Entity entity, Clickable clickable, Vector2 relPos) : base(in evPos)
     {
         Entity = entity;
