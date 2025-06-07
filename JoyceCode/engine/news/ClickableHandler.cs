@@ -109,6 +109,11 @@ public class ClickableHandler
                 vBB2 = v2ScrUl + new Vector2(
                     (vBB4.X / vBB4.W + 1f) * size.X / 2f,
                     (-vBB4.Y / vBB4.W + 1f) * size.Y / 2f);
+                
+                /*
+                 * Note: if this is the 2d display canvas for the osd, vAA2 and vBB2 result
+                 * in a 16:9 extent within the (-1;-1)-(1:1) range.
+                 */
             }
 
             Vector2 ul = Vector2.Min(vAA2, vBB2);
@@ -127,7 +132,20 @@ public class ClickableHandler
                  */
                 Vector3 v3Center = Vector3.Transform(id.AABBTransformed.Center, mTransformView);
 
-                Vector2 v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
+                /*
+                 * Now compute the relative position of the click with reference range of the
+                 * object we click at. Check for non-zero size.
+                 */
+                Vector2 v2RelPos;
+
+                if (ul.X < lr.X && ul.Y < lr.Y)
+                {
+                    v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
+                }
+                else
+                {
+                    v2RelPos = Vector2.Zero;
+                }
 
                 /*
                  * This is a hit.
@@ -166,10 +184,32 @@ public class ClickableHandler
     }
     
     
+    /**
+     * OnClick is called with an INPUT_LOGICAL_XXX event.
+     * We consider the fields:
+     * - PhysicalSize: Excerpt the viewSize for ???
+     * - PHysicalPosition: Excerpt the position of the click.
+     *
+     * To understand what we clicked on and if we did, we ask the camera component
+     * for its view size and if the position as described by the physicalposition fits
+     * on the screen.
+     * // TXWTODO: How can that be an indicator if it fits on screen? viewSize and PhysicalSize of the event would need to correlate in the first place.
+     *
+     * In the end, we just need to check if the click event is inside the logical screen of the camera.
+     * THen, we need to compute the relative position with respect to the clickable object, passing
+     * on the event.
+     *
+     * However, click event source and camera are basically unrelated. So the camera needs to know
+     * its extent relative to the physical screen, and the click event needs to be related to the
+     * physical screen.
+     * 
+     */
     public void OnClick(engine.news.Event ev)
     {
         Debug.Assert(ev.Type == Event.INPUT_LOGICAL_PRESSED, "Expecting INPUT_LOGICAL_PRESSED event.");
+        // TXWTODO: The event defines the screen size as 1,1, whereas the viewSize logic expects a square pixel aspect ratio.
         _vViewSize = ev.PhysicalSize;
+        // TXWTODO: So let's please find all locations we assume a square pixel size in this context.
 
         /*
          * Now iterate through all cameras.
