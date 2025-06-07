@@ -62,12 +62,16 @@ public struct Camera3
     }
 
 
-    public bool ContainsScreenPosition(in Vector2 viewSize, in Vector2 cand)
+    /**
+     * Check, if the displayed screen actually contains thhe given position,
+     * given, htat v2ScreenPos and v2ViewSize are in the same coordinate system.
+     */
+    public bool ContainsScreenPosition(in Vector2 v2ViewSize, in Vector2 v2ScreenPos)
     {
-        var v2ScreenUL = new Vector2(viewSize.X * UL.X, viewSize.Y * UL.Y);
-        if (cand.X < v2ScreenUL.X || cand.Y < v2ScreenUL.Y) return false;
-        var v2ScreenLR = new Vector2(viewSize.X * LR.X, viewSize.Y * LR.Y);
-        if (cand.X > v2ScreenLR.X || cand.Y > v2ScreenLR.Y) return false;
+        var v2ScreenUL = new Vector2(v2ViewSize.X * UL.X, v2ViewSize.Y * UL.Y);
+        if (v2ScreenPos.X < v2ScreenUL.X || v2ScreenPos.Y < v2ScreenUL.Y) return false;
+        var v2ScreenLR = new Vector2(v2ViewSize.X * LR.X, v2ViewSize.Y * LR.Y);
+        if (v2ScreenPos.X > v2ScreenLR.X || v2ScreenPos.Y > v2ScreenLR.Y) return false;
         return true;
     }
     
@@ -126,6 +130,21 @@ public struct Camera3
         matView = Matrix4x4.CreateLookAt(vCameraPosition, vCameraPosition + vZ, vUp) * mScaleToViewWindow;
     }
 
+
+    public void GetViewSize(out Vector2 v2ViewSize)
+    {
+        Renderbuffer renderbuffer = Renderbuffer;
+
+        if (null != renderbuffer)
+        {
+            v2ViewSize = new(renderbuffer.Width, renderbuffer.Height);
+        }
+        else
+        {
+            v2ViewSize = engine.GlobalSettings.ParseSize(engine.GlobalSettings.Get("view.size"));
+        }
+    }
+    
 
     public void GetProjectionMatrix(out Matrix4x4 matProjection, in Vector2 vViewSize)
     {

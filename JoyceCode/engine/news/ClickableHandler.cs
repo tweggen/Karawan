@@ -42,7 +42,7 @@ public class ClickableHandler
     private FingerStateHandler _fingerStateHandler;
 
     
-    private void _findAt(in Vector2 pos, in List<ClickResult> listResults)
+    private void _findAt(in Vector2 v2EvPos, in Vector2 v2EvSize, in List<ClickResult> listResults)
     {
         /*
          * We have two (+, see above) different version of Clickables: Those from 3d space
@@ -101,7 +101,7 @@ public class ClickableHandler
             Vector2 vBB2;
 
             {
-                _cCamera3.ScreenExtent(_vViewSize, out var v2ScrUl, out var v2ScrLr);
+                _cCamera3.ScreenExtent(v2EvSize, out var v2ScrUl, out var v2ScrLr);
                 Vector2 size = v2ScrLr-v2ScrUl;
                 vAA2 = v2ScrUl + new Vector2(
                     (vAA4.X / vAA4.W + 1f) * size.X / 2f,
@@ -125,7 +125,7 @@ public class ClickableHandler
              * Is it within the bounds of the AABB?
              * Then out and done!
              */
-            if (pos.X >= ul.X && pos.X < lr.X && pos.Y >= ul.Y && pos.Y < lr.Y)
+            if (v2EvPos.X >= ul.X && v2EvPos.X < lr.X && v2EvPos.Y >= ul.Y && v2EvPos.Y < lr.Y)
             {
                 /*
                  * Now look, if we already found something that is closer.
@@ -140,7 +140,12 @@ public class ClickableHandler
 
                 if (ul.X < lr.X && ul.Y < lr.Y)
                 {
-                    v2RelPos = new((pos.X - ul.X) / (lr.X - ul.X), (pos.Y - ul.Y) / (lr.Y - ul.Y));
+                    /*
+                     * This looks right at first glance, however, when used on the framebuffer canvas, this
+                     * is wrong. The event comes in with a (-1;-1)-(1;1) range, while the visible extent
+                     * is (-1;-0.57) - (1;0.57)
+                     */
+                    v2RelPos = new((v2EvPos.X - ul.X) / (lr.X - ul.X), (v2EvPos.Y - ul.Y) / (lr.Y - ul.Y));
                 }
                 else
                 {
@@ -166,6 +171,7 @@ public class ClickableHandler
     {
         _cCamera3 = eCamera.Get<Camera3>();
         _cCamTransform = eCamera.Get<joyce.components.Transform3ToWorld>();
+        _cCamera3.GetViewSize(out _vViewSize);
         _cCamera3.GetProjectionMatrix(out _mProjection, _vViewSize);
         _cCamera3.GetViewMatrix(out _mView, _cCamTransform.Matrix);
     }
@@ -207,8 +213,7 @@ public class ClickableHandler
     public void OnClick(engine.news.Event ev)
     {
         Debug.Assert(ev.Type == Event.INPUT_LOGICAL_PRESSED, "Expecting INPUT_LOGICAL_PRESSED event.");
-        // TXWTODO: The event defines the screen size as 1,1, whereas the viewSize logic expects a square pixel aspect ratio.
-        _vViewSize = ev.PhysicalSize;
+
         // TXWTODO: So let's please find all locations we assume a square pixel size in this context.
 
         /*
@@ -225,12 +230,17 @@ public class ClickableHandler
         {
             _updateFromCamera(eCamera);
 
-            Vector2 pos = ev.PhysicalPosition;
+            Vector2 v2EvSize = ev.PhysicalSize;
+            Vector2 v2EvPos = ev.PhysicalPosition;
 
             /*
              * First check if the camera view is under that position.
+             * This checks for the selected camera window. Coordinate space
+             * used is event size coordinates.
+             *
+             * This method assumes, the v2EvSize matches the possible screen size.
              */
-            if (!_cCamera3.ContainsScreenPosition(_vViewSize, pos))
+            if (!_cCamera3.ContainsScreenPosition(v2EvSize, v2EvPos))
             {
                 continue;
             }
@@ -240,7 +250,7 @@ public class ClickableHandler
             /*
              * Then find the entity somebody would have clicked on.
              */
-            _findAt(pos, in clickResults);
+            _findAt(v2EvPos, v2EvSize, in clickResults);
             clickResults.Sort((a, b) => -a.Z.CompareTo(b.Z));
             foreach (var cr in clickResults)
             {
@@ -302,7 +312,6 @@ public class ClickableHandler
     public void OnRelease(engine.news.Event ev)
     {
         Debug.Assert(ev.Type == Event.INPUT_LOGICAL_RELEASED, "Expecting INPUT_LOGICAL_RELEASED event.");
-        _vViewSize = ev.PhysicalSize;
         _fingerStateHandler.OnFingerReleased(ev);
     }
     
