@@ -192,7 +192,7 @@ public class Display : engine.AController
                 new Vector3(0f, 0f, 1f));
         }
 
-        if (GlobalSettings.Get("Android") == "true")
+        if (GlobalSettings.Get("splash.touchControls") == "true")
         {
 
             // _createButton("but_settings.png", ButtonsPerRow - 2, 0,

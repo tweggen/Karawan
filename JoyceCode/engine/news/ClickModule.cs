@@ -49,7 +49,7 @@ public class ClickModule : AModule
 
     private void _onMousePress(Event ev)
     {
-        if (GlobalSettings.Get("Android") != "true")
+        if (GlobalSettings.Get("splash.touchControls") != "true")
         {
             _handleClickEvent(ev);
         }
@@ -58,7 +58,7 @@ public class ClickModule : AModule
 
     private void _onTouchPress(Event ev)
     {
-        if (GlobalSettings.Get("Android") == "true")
+        if (GlobalSettings.Get("splash.touchControls") == "true")
         {
             _handleClickEvent(ev);
         }
@@ -68,7 +68,7 @@ public class ClickModule : AModule
     private void _onFingerPress(Event ev)
     {
         // TXWTODO: Finger press positions are screen relative.
-        if (GlobalSettings.Get("Android") == "true")
+        if (GlobalSettings.Get("splash.touchControls") == "true")
         {
             _handleClickEvent(ev);
         }
@@ -77,7 +77,7 @@ public class ClickModule : AModule
     
     private void _onMouseReleased(Event ev)
     {
-        if (GlobalSettings.Get("Android") != "true")
+        if (GlobalSettings.Get("splash.touchControls") != "true")
         {
             _handleReleaseEvent(ev);
         }
@@ -86,7 +86,7 @@ public class ClickModule : AModule
 
     private void _onTouchReleased(Event ev)
     {
-        if (GlobalSettings.Get("Android") == "true")
+        if (GlobalSettings.Get("splash.touchControls") == "true")
         {
             _handleReleaseEvent(ev);
         }
@@ -96,7 +96,7 @@ public class ClickModule : AModule
     private void _onFingerReleased(Event ev)
     {
         // TXWTODO: Finger press positions are screen relative.
-        if (GlobalSettings.Get("Android") == "true")
+        if (GlobalSettings.Get("splash.touchControls") == "true")
         {
             _handleReleaseEvent(ev);
         }
