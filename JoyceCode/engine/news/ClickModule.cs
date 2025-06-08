@@ -109,7 +109,7 @@ public class ClickModule : AModule
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_FINGER_PRESSED, _onFingerPress);
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
         // I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_RELEASED, _onFingerReleased);
+        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_FINGER_RELEASED, _onFingerReleased);
         I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_RELEASED, _onMouseReleased);
     }
     
