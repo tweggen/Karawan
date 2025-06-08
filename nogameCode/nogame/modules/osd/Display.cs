@@ -119,9 +119,9 @@ public class Display : engine.AController
         return id;
     }
 
-    private float ButtonSize = 18f;
-    private int ButtonsPerRow = 14;
-    private int ButtonsPerColumn = (int) Single.Round(14f * 9f / 16f);
+    private float ButtonSize = 15f;
+    private int ButtonsPerRow = 12;
+    private int ButtonsPerColumn = (int) Single.Round(12f * 9f / 16f);
     private float ButtonOffsetX = 0.5f;
     private float ButtonOffsetY = 0.5f;
 
