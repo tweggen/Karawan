@@ -365,6 +365,7 @@
       "but_pause": { "emissive-trans": { "uri": "../models/osd/but_pause.png" } },
       "but_right": { "emissive-trans": { "uri": "../models/osd/but_right.png" } },
       "but_settings": { "emissive-trans": { "uri": "../models/osd/but_settings.png" } },
+      "but_getinout": { "emissive-trans": { "uri": "../models/osd/but_getinout.png" } },
       
       "StudioOchi_SpringPeople.001": { "albedo": { 
         "uri":  "../models/models/people/StudioOchi_SpringPeople.001.16.png",

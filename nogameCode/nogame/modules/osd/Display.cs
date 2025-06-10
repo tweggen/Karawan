@@ -194,13 +194,12 @@ public class Display : engine.AController
 
         if (GlobalSettings.Get("splash.touchControls") == "true")
         {
-
-            // _createButton("but_settings.png", ButtonsPerRow - 2, 0,
-            //    (entity, ev, pos) => ev.IsPressed?new Event("nogame.modules.menu.toggleMenu", null):null);
             _createButton("but_left.png",  0, ButtonsPerColumn-2,
                 (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "a"));
             _createButton("but_right.png", 1, ButtonsPerColumn-2,
                 (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "d"));
+            _createButton("but_getinout.png", ButtonsPerRow-2, ButtonsPerColumn-4,
+                (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "f"));
             _createButton("but_accel.png", ButtonsPerRow-2, ButtonsPerColumn-2,
                 (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "w"));
             _createButton("but_brake.png", ButtonsPerRow-3, ButtonsPerColumn-2,
