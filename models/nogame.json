@@ -13,8 +13,8 @@
     "nogame.CreateMiniMap": true,
     "nogame.LogosScene.PlayTitleMusic": "true",
     "engine.physics.TraceCalls": false,
-    "debug.option.forceTouchInterface": "true",
-    "debug.option.mouseEnabled": "true"
+    "debug.option.forceTouchInterface": "false",
+    "debug.option.mouseEnabled": "false"
   },
   "implementations":
   {
@@ -272,7 +272,7 @@
     "nogame.characters.tram.maxDistance": 1600.0,
     "nogame.CutCollision": false,
     "nogame.musicVolume": 1.0,
-    "nogame.volume": 0.0
+    "nogame.volume": 1.0
   },
   "quests":
   {

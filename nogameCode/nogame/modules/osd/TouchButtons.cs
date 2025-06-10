@@ -88,7 +88,7 @@ public class TouchButtons : AModule
         _buttons.Add(_createButton("but_right.png", 1, ButtonsPerColumn-2,
             (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "d")));
         _buttons.Add(_createButton("but_getinout.png", ButtonsPerRow-2, ButtonsPerColumn-4,
-            (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "f")));
+            (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_BUTTON_PRESSED:Event.INPUT_BUTTON_RELEASED, "<change>")));
         _buttons.Add(_createButton("but_accel.png", ButtonsPerRow-2, ButtonsPerColumn-2,
             (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "w")));
         _buttons.Add(_createButton("but_brake.png", ButtonsPerRow-3, ButtonsPerColumn-2,
