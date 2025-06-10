@@ -418,14 +418,16 @@ public class Platform : engine.IPlatform
          * We better not set the mouse to raw on android.
          */
         if (GlobalSettings.Get("Android") == "true") return;
-
+        if (
+                GlobalSettings.Get("debug.option.mouseEnabled") == "true"
 #if DEBUG
-        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform
-                .Linux))
+            || System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)
+#endif
+            )
         {
             value = true;
         }
-#endif
+
 
         _mouseEnabled = value;
         var maxMice = _iInputContext.Mice.Count;
