@@ -25,8 +25,6 @@ public class Display : engine.AController
     {
         new MyModule<RenderOSDSystem>() { ShallActivate = false },
         new MyModule<nogame.modules.osd.Camera>() { ShallActivate = false },
-        new MyModule<TouchButtons> { ShallActivate = false }
-
     };
     
     private engine.joyce.TransformApi _aTransform;
@@ -134,13 +132,6 @@ public class Display : engine.AController
                 new Quaternion(0f,0f,0f,1f),
                 new Vector3(0f, 0f, 1f));
         }
-
-        if (GlobalSettings.Get("debug.option.forceTouchInterface") == "true"
-            || GlobalSettings.Get("splash.touchControls") == "true")
-        {
-            ActivateMyModule<TouchButtons>();
-        }
-
     }
     
     

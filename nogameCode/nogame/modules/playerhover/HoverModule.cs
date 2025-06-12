@@ -12,6 +12,7 @@ using engine.joyce.components;
 using engine.news;
 using engine.physics;
 using engine.world;
+using nogame.modules.osd;
 using static engine.Logger;
 
 namespace nogame.modules.playerhover;
@@ -28,6 +29,7 @@ public class HoverModule : AModule, IInputPart
         new SharedModule<PlayerPosition>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.DriveCarCollisionsController>(),
+        new MyModule<CarTouchButtons>()
     };
 
     private DefaultEcs.Entity _eShip;

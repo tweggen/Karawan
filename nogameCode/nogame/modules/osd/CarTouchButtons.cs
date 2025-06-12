@@ -9,7 +9,7 @@ using engine.news;
 
 namespace nogame.modules.osd;
 
-public class TouchButtons : AModule
+public class CarTouchButtons : AModule
 {
     private engine.joyce.TransformApi _aTransform;
     
@@ -79,19 +79,28 @@ public class TouchButtons : AModule
     
     protected override void OnModuleActivate()
     {        
-        _aTransform = I.Get<engine.joyce.TransformApi>();
-
         _buttons = new();
-        
-        _buttons.Add(_createButton("but_left.png",  0, ButtonsPerColumn-2,
-            (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "a")));
-        _buttons.Add(_createButton("but_right.png", 1, ButtonsPerColumn-2,
-            (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "d")));
-        _buttons.Add(_createButton("but_getinout.png", ButtonsPerRow-2, ButtonsPerColumn-4,
-            (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_BUTTON_PRESSED:Event.INPUT_BUTTON_RELEASED, "<change>")));
-        _buttons.Add(_createButton("but_accel.png", ButtonsPerRow-2, ButtonsPerColumn-2,
-            (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "w")));
-        _buttons.Add(_createButton("but_brake.png", ButtonsPerRow-3, ButtonsPerColumn-2,
-            (entity, ev, pos) => new Event(ev.IsPressed?Event.INPUT_KEY_PRESSED:Event.INPUT_KEY_RELEASED, "s")));
+
+        if (GlobalSettings.Get("debug.option.forceTouchInterface") == "true"
+            || GlobalSettings.Get("splash.touchControls") == "true")
+        {
+            _aTransform = I.Get<engine.joyce.TransformApi>();
+
+            _buttons.Add(_createButton("but_left.png", 0, ButtonsPerColumn - 2,
+                (entity, ev, pos) =>
+                    new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "a")));
+            _buttons.Add(_createButton("but_right.png", 1, ButtonsPerColumn - 2,
+                (entity, ev, pos) =>
+                    new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "d")));
+            _buttons.Add(_createButton("but_getinout.png", ButtonsPerRow - 2, ButtonsPerColumn - 4,
+                (entity, ev, pos) => new Event(ev.IsPressed ? Event.INPUT_BUTTON_PRESSED : Event.INPUT_BUTTON_RELEASED,
+                    "<change>")));
+            _buttons.Add(_createButton("but_accel.png", ButtonsPerRow - 2, ButtonsPerColumn - 2,
+                (entity, ev, pos) =>
+                    new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "w")));
+            _buttons.Add(_createButton("but_brake.png", ButtonsPerRow - 3, ButtonsPerColumn - 2,
+                (entity, ev, pos) =>
+                    new Event(ev.IsPressed ? Event.INPUT_KEY_PRESSED : Event.INPUT_KEY_RELEASED, "s")));
+        }
     }
 }

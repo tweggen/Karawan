@@ -68,7 +68,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Compass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Display.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Scores.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\TouchButtons.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\CarTouchButtons.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\CharacterModelDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\ClusterMusicModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverBehavior.cs" />
