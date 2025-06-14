@@ -68,11 +68,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Compass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Display.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\Scores.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\CarTouchButtons.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\osd\TouchButtons.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\CharacterModelDescription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\ClusterMusicModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\DriveCarCollisionsController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverTouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\IdentifyCameraFocusModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\MainPlayModule.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\HoverModule.cs" />
@@ -83,6 +84,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WalkBehavior.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WalkController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WalkModule.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\playerhover\WalkTouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\shop\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\skybox\Module.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)nogame\modules\story\Narration.cs" />

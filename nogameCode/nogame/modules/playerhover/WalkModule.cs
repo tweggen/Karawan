@@ -25,8 +25,9 @@ public class WalkModule : AModule, IInputPart
     {
         new SharedModule<InputEventPipeline>(),
         new SharedModule<PlayerPosition>(),
-        new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
-        new MyModule<nogame.modules.playerhover.DriveCarCollisionsController>(),
+        new MyModule<UpdateEmissionContext>(),
+        new MyModule<DriveCarCollisionsController>(),
+        new MyModule<WalkTouchButton>()
     };
 
     private DefaultEcs.Entity _ePerson;

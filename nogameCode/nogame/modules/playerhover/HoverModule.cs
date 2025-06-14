@@ -27,9 +27,9 @@ public class HoverModule : AModule, IInputPart
     {
         new SharedModule<InputEventPipeline>(),
         new SharedModule<PlayerPosition>(),
-        new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
-        new MyModule<nogame.modules.playerhover.DriveCarCollisionsController>(),
-        new MyModule<CarTouchButtons>()
+        new MyModule<UpdateEmissionContext>(),
+        new MyModule<DriveCarCollisionsController>(),
+        new MyModule<HoverTouchButton>()
     };
 
     private DefaultEcs.Entity _eShip;
