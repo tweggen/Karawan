@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using engine.behave.systems;
 
 namespace engine.news;
@@ -12,8 +13,16 @@ namespace engine.news;
  *
  * It emits logical pressed / moved / released events.
  */
-public class ClickModule : AModule
+public class ClickModule : AModule, engine.IInputPart
 {
+    public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
+    {
+        new SharedModule<InputEventPipeline>()    
+    };
+
+
+    private float MY_Z_ORDER = 20f;
+    
     private object _lo = new();
     
     private ClickableHandler _clickableHandler;
@@ -47,70 +56,38 @@ public class ClickModule : AModule
     }
 
 
-    private void _onMousePress(Event ev)
+    public void InputPartOnInputEvent(Event ev)
     {
-        if (GlobalSettings.Get("splash.touchControls") != "true")
+        if (engine.GlobalSettings.Get("splash.touchControls") == "false")
         {
-            _handleClickEvent(ev);
+            if (ev.Type.StartsWith(Event.INPUT_MOUSE_PRESSED))
+            {
+                _handleClickEvent(ev);
+    
+            }
+            else if (ev.Type.StartsWith(Event.INPUT_MOUSE_RELEASED))
+            {
+                _handleReleaseEvent(ev);
+            }
+        }
+        else
+        {
+            if (ev.Type.StartsWith(Event.INPUT_FINGER_PRESSED))
+            {
+                _handleClickEvent(ev);
+            } 
+            else if (ev.Type.StartsWith(Event.INPUT_FINGER_RELEASED))
+            {
+                _handleReleaseEvent(ev);
+            }
+            
         }
     }
-    
 
-    private void _onTouchPress(Event ev)
-    {
-        if (GlobalSettings.Get("splash.touchControls") == "true")
-        {
-            _handleClickEvent(ev);
-        }
-    }
-    
-    
-    private void _onFingerPress(Event ev)
-    {
-        // TXWTODO: Finger press positions are screen relative.
-        if (GlobalSettings.Get("splash.touchControls") == "true")
-        {
-            _handleClickEvent(ev);
-        }
-    }
-    
-    
-    private void _onMouseReleased(Event ev)
-    {
-        if (GlobalSettings.Get("splash.touchControls") != "true")
-        {
-            _handleReleaseEvent(ev);
-        }
-    }
-    
 
-    private void _onTouchReleased(Event ev)
-    {
-        if (GlobalSettings.Get("splash.touchControls") == "true")
-        {
-            _handleReleaseEvent(ev);
-        }
-    }
-    
-    
-    private void _onFingerReleased(Event ev)
-    {
-        // TXWTODO: Finger press positions are screen relative.
-        if (GlobalSettings.Get("splash.touchControls") == "true")
-        {
-            _handleReleaseEvent(ev);
-        }
-    }
-    
-    
     protected override void OnModuleDeactivate()
     {
-        // I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_FINGER_PRESSED, _onFingerPress);
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
-        // I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_FINGER_RELEASED, _onFingerReleased);
-        I.Get<SubscriptionManager>().Unsubscribe(Event.INPUT_MOUSE_RELEASED, _onMouseReleased);
+        M<InputEventPipeline>().RemoveInputPart(this);
     }
     
     
@@ -120,13 +97,8 @@ public class ClickModule : AModule
          * Setup osd interaction handler
          */
         _clickableHandler = new(_engine);
-        
-        // I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_PRESSED, _onTouchPress);
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_FINGER_PRESSED, _onFingerPress);
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_PRESSED, _onMousePress);
-        // I.Get<SubscriptionManager>().Subscribe(Event.INPUT_TOUCH_RELEASED, _onTouchReleased);
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_FINGER_RELEASED, _onFingerReleased);
-        I.Get<SubscriptionManager>().Subscribe(Event.INPUT_MOUSE_RELEASED, _onMouseReleased);
+
+        M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
     }
 
 }

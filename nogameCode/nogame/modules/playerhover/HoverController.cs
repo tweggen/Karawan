@@ -15,8 +15,6 @@ namespace nogame.modules.playerhover;
 
 internal class HoverController : AController
 {
-    public static float MY_Z_ORDER = 25f;
-
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<nogame.modules.AutoSave>()

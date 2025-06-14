@@ -13,8 +13,8 @@
     "nogame.CreateMiniMap": true,
     "nogame.LogosScene.PlayTitleMusic": "true",
     "engine.physics.TraceCalls": false,
-    "debug.option.forceTouchInterface": "false",
-    "debug.option.mouseEnabled": "false"
+    "debug.option.forceTouchInterface": "true",
+    "debug.option.mouseEnabled": "true"
   },
   "implementations":
   {
