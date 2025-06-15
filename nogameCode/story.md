@@ -71,8 +71,6 @@ government in a public revolution.
 In the end we learn, this action is organized by the party of the current government,
 which is funded by international governments and domestic heavy industries.
 
-
-
 ### someone
 
 They started out by selling games to play if you are on the go. They are seriously
