@@ -24,7 +24,7 @@ namespace builtin.tools
         public bool PairedNormals { get; set; } = false;
         public bool TileToTexture { get; set; } = false;
 
-        public bool SkipSmall { get; set; } = false;
+        public bool SkipSmall { get; set; } = true;
 
         public bool TraceArea { get; set; } = false;
 
@@ -408,14 +408,14 @@ namespace builtin.tools
             var vh = _path[0];
             List<Vector3> listBreak = new()
             {
-                new Vector3(1923f, 91f, -5544f),
-                new Vector3(2201.7405f, 126.32393f, -6394.8325f),
-                new Vector3(1899.43f,63.84f,-5479.374f)
+//                new Vector3(1923f, 91f, -5544f),
+//                new Vector3(2201.7405f, 126.32393f, -6394.8325f),
+//                new Vector3(1899.43f,63.84f,-5479.374f)
             };
 
 
             float vhLength2 = vh.LengthSquared();
-            if (SkipSmall && vh.LengthSquared() < 0.1f)
+            if (SkipSmall && vhLength2 < 0.1f)
             {
                 if (TraceArea) Warning($"Very small polygon.");
                 return _emptyCreate;
@@ -513,8 +513,8 @@ namespace builtin.tools
                             var pBottom = worldFragment.Position + p3;
                             var pTop = worldFragment.Position + p3 + vh;
                             /*
-                           * Just add the bottom because we do not want to consider the height. 
-                           */
+                            * Just add the bottom because we do not want to consider the height. 
+                            */
                             if (SkipSmall) aabbVolumeTest.Add(pBottom);
                             pointsConvexHull.AllocateUnsafely() = pBottom;
                             pointsConvexHull.AllocateUnsafely() = pTop;
@@ -524,8 +524,8 @@ namespace builtin.tools
                         {
                             if (TraceArea) Warning($"Warning: Suspiciously small convex hull.");
                             /*
-                           * Do not add this as a complex hull. 
-                           */
+                            * Do not add this as a complex hull. 
+                            */
                             continue;
                         }
 
@@ -546,7 +546,7 @@ namespace builtin.tools
                         nConvex++;
                     }
 
-                    if (nConvex > 0)
+                    if (nConvex > 1)
                     {
                         builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
                         builder.Reset();
@@ -624,6 +624,11 @@ namespace builtin.tools
                 ErrorThrow("Got a null polygon.", le => new ArgumentNullException(le));
             }
 
+            if (poly.Count < 3)
+            {
+                ErrorThrow("Polygon needs to have at least 3 points.", le => new ArgumentException(le));
+            }
+            
             if (null==path)
             {
                 ErrorThrow("Got a null path", le => new ArgumentNullException(le));
