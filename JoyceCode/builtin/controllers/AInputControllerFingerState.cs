@@ -8,27 +8,30 @@ abstract class AInputControllerFingerState : AFingerState
 {
     protected readonly InputController _ic;
 
-    public virtual void HandleMotion(Event ev)
+    public override void HandleMotion(Event ev)
     {
         var cs = _ic.ControllerState;
         cs.LastInput = DateTime.UtcNow;
         base.HandleMotion(ev);
+        ev.IsHandled = true;
     }
 
 
-    public virtual void HandleReleased(Event ev)
+    public override void HandleReleased(Event ev)
     {
         var cs = _ic.ControllerState;
         cs.LastInput = DateTime.UtcNow;
         base.HandleReleased(ev);
+        ev.IsHandled = true;
     }
 
     
-    public virtual void HandlePressed(Event ev)
+    public override void HandlePressed(Event ev)
     {
         var cs = _ic.ControllerState;
         cs.LastInput = DateTime.UtcNow;
         base.HandlePressed(ev);
+        ev.IsHandled = true;
     }
 
 
