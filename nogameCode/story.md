@@ -14,6 +14,16 @@
 We are in a computer anyway, so everybody is an avatar, that's why we see no persons
 at all.
 
+## Gameplay
+
+you have debt with particular parties and goods.
+If your debt increases with a certain party, it will hunt you.
+Like an account with every other party in the game world.
+
+Debts with the city: The police will chase you.
+Kill a person of a certain fraction: The fraction will hunt you.
+
+
 ## Things
 
 ### Intercities
