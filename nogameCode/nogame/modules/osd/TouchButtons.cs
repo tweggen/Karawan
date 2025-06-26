@@ -16,6 +16,7 @@ public class TouchButtons
     public static float ButtonOffsetX = 0.5f;
     public static float ButtonOffsetY = 0.5f;
 
+    
     static private InstanceDesc _createButtonMesh(string tagTexture)
     {
         var mesh = engine.joyce.mesh.Tools.CreatePlaneMesh(tagTexture, 
@@ -60,7 +61,23 @@ public class TouchButtons
         var eSettings = I.Get<Engine>().CreateEntity(tagButton);
         eSettings.Set(new Instance3(_createButtonMesh(tagButton)));
         _setButtonTransforms(eSettings, x, y);
-        eSettings.Set(new Clickable { CameraLayer = 24, ClickEventFactory = func, Flags = Clickable.ClickableFlags.AlsoOnRelease});
+        eSettings.Set(new Clickable
+        {
+            CameraLayer = 24, 
+            ClickEventFactory = (e, ev, v2RelPos) =>
+            {
+                if (e.Has<Instance3>())
+                {
+                    ref var cInstance3 = ref e.Get<Instance3>();
+                    if (cInstance3.InstanceDesc?.Materials?.Count > 0)
+                    {
+                        cInstance3.InstanceDesc.Materials[0].EmissiveColor = ev.IsPressed?0xff334444:0x00000000;
+                    }
+                }
+                return func(e, ev, v2RelPos);
+            }, 
+            Flags = Clickable.ClickableFlags.AlsoOnRelease
+        });
         return eSettings;
     }
 
