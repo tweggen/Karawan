@@ -57,11 +57,10 @@ public class TouchButtons
     }
 
 
-    static public DefaultEcs.Entity CreateStandardLayer(string tagButton,
-        Func<)
+    static public DefaultEcs.Entity CreateLayer(string tagButton, bool isHighlighted )
     {
         var e = I.Get<Engine>().CreateEntity(tagButton);
-        e.Set(new Instance3(_createButtonMesh(tagButton, 0x00000000)));
+        e.Set(new Instance3(_createButtonMesh(tagButton, isHighlighted?0xff443333:0x00000000)));
         return e;
     }
 
@@ -70,25 +69,33 @@ public class TouchButtons
         Func<DefaultEcs.Entity, engine.news.Event, Vector2, engine.news.Event> func)
     {
         var eSettings = I.Get<Engine>().CreateEntity(tagButton);
-        eSettings.Set(new Instance3(_createButtonMesh(tagButton)));
-        _setButtonTransforms(eSettings, x, y);
-        eSettings.Set(new Clickable
+        var eNormal = CreateLayer(tagButton, false);
+        var eHighlighted = CreateLayer(tagButton, true);
+        var clickable = new Clickable
         {
-            CameraLayer = 24, 
+            CameraLayer = 24,
             ClickEventFactory = (e, ev, v2RelPos) =>
             {
-                if (e.Has<Instance3>())
-                {
-                    ref var cInstance3 = ref e.Get<Instance3>();
-                    if (cInstance3.InstanceDesc?.MeshMaterials?.Count > 0)
-                    {
-                        cInstance3.InstanceDesc.MeshMaterials = new ReadOnlyCollection<int>() { ev.IsPressed?1:0 };
-                    }
-                }
+                I.Get<TransformApi>().SetVisible(eNormal, !ev.IsPressed);
+                I.Get<TransformApi>().SetVisible(eHighlighted, ev.IsPressed);
+
                 return func(e, ev, v2RelPos);
-            }, 
+            },
             Flags = Clickable.ClickableFlags.AlsoOnRelease
-        });
+        }; 
+        _setButtonTransforms(eNormal, x, y);
+        _setButtonTransforms(eHighlighted, x, y);
+        eNormal.Set(clickable);
+        eHighlighted.Set(clickable);;
+        I.Get<TransformApi>().SetTransforms(
+            eSettings, true, 0, 
+            Quaternion.Identity,Vector3.Zero, Vector3.One
+        );
+        I.Get<HierarchyApi>().SetParent(eNormal, eSettings);
+        I.Get<HierarchyApi>().SetParent(eHighlighted, eSettings);;
+        I.Get<TransformApi>().SetVisible(eNormal, true);
+        I.Get<TransformApi>().SetVisible(eHighlighted, false);
+        
         return eSettings;
     }
 }

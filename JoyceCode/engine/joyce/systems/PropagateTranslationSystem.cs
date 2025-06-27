@@ -22,29 +22,35 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
      * (Over-)Write the child's object to world matrix.
      *
      * @param shallBeVisible
-     *     If parent allows its childEntity to be visible at all.
+     *     My parent allows me to be visible at all.
      */
     private bool _updateChildToWorld(
         in components.Transform3ToWorld cParentTransform3ToWorld,
-        DefaultEcs.Entity childEntity,
-        ref components.Transform3ToWorld cChildTransform3ToWorld,
+        DefaultEcs.Entity eMe,
+        ref components.Transform3ToWorld cMyTransformToWorld,
         bool shallBeVisible)
     {
-        ref var cTransform3 = ref childEntity.Get<Transform3ToParent>();
-        if (cTransform3.PassVisibility && !cTransform3.IsVisible)
-        {
-            shallBeVisible = false;
-        }
+        ref var cTransform3 = ref eMe.Get<Transform3ToParent>();
+        
+        /*
+         * Now I am visible if:
+         * - shallBeVisible && c.Transform3.IsVisible
+         * My child is supposed to be visible
+         * - if PassVisible
+         *    shallBeVisible && c.Transform3.IsVisible
+         * - if !PassVisible
+         *    true
+         */
         
         /*
          * New mode of operation: Child's camera is not affected by parents or children, just left as is.
          */
-        cChildTransform3ToWorld.CameraMask = cTransform3.CameraMask;
-        cChildTransform3ToWorld.IsVisible = shallBeVisible; 
-        cChildTransform3ToWorld.Matrix =
+        cMyTransformToWorld.CameraMask = cTransform3.CameraMask;
+        cMyTransformToWorld.IsVisible = shallBeVisible && cTransform3.IsVisible; 
+        cMyTransformToWorld.Matrix =
             cTransform3.Matrix * cParentTransform3ToWorld.Matrix;
-        childEntity.Set<Transform3ToWorld>(cChildTransform3ToWorld);
-        return shallBeVisible;
+        eMe.Set<Transform3ToWorld>(cMyTransformToWorld);
+        return !cTransform3.PassVisibility || cMyTransformToWorld.IsVisible ;
     }
 
 
@@ -112,11 +118,11 @@ sealed class PropagateTranslationSystem : DefaultEcs.System.AEntitySetSystem<eng
             /*
              * Update the root itself. The root's parent always is visible.
              */
-            var cChildTransform3ToWorld = new Transform3ToWorld();
-            _updateChildToWorld(cRootTransform3World, entity, ref cChildTransform3ToWorld, shallBeVisible);
+            var cMyTransformToWorld = new Transform3ToWorld();
+            _updateChildToWorld(cRootTransform3World, entity, ref cMyTransformToWorld, shallBeVisible);
             if (entity.Has<joyce.components.Children>())
             {
-                _recurseChildren(cChildTransform3ToWorld, entity, shallBeVisible);
+                _recurseChildren(cMyTransformToWorld, entity, shallBeVisible);
             }
         }
     }
