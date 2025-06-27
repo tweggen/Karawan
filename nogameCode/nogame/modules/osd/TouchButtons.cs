@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Numerics;
 using engine;
 using engine.behave.components;
@@ -17,14 +18,15 @@ public class TouchButtons
     public static float ButtonOffsetY = 0.5f;
 
     
-    static private InstanceDesc _createButtonMesh(string tagTexture)
+    static private InstanceDesc _createButtonMesh(string tagTexture, uint emissiveColor)
     {
         var mesh = engine.joyce.mesh.Tools.CreatePlaneMesh(tagTexture, 
             Vector2.One, Vector2.Zero, Vector2.One);
         var material = I.Get<ObjectRegistry<Material>>().FindLike(new Material()
         {
             EmissiveTexture = I.Get<TextureCatalogue>().FindTexture(tagTexture),
-            HasTransparency = true
+            HasTransparency = true,
+            EmissiveColor = emissiveColor
         });
         InstanceDesc id = new(
             new List<Mesh>() { mesh }, 
@@ -34,6 +36,7 @@ public class TouchButtons
             20f );
         return id;
     }
+    
 
     static private void _setButtonTransforms(DefaultEcs.Entity e, int x, int y)
     {
@@ -51,7 +54,15 @@ public class TouchButtons
             v3Pos0 + v3StepX * x + v3StepY * y,
             Vector3.One * (0.5f*4f/ButtonSize)
         );
-   
+    }
+
+
+    static public DefaultEcs.Entity CreateStandardLayer(string tagButton,
+        Func<)
+    {
+        var e = I.Get<Engine>().CreateEntity(tagButton);
+        e.Set(new Instance3(_createButtonMesh(tagButton, 0x00000000)));
+        return e;
     }
 
 
@@ -69,9 +80,9 @@ public class TouchButtons
                 if (e.Has<Instance3>())
                 {
                     ref var cInstance3 = ref e.Get<Instance3>();
-                    if (cInstance3.InstanceDesc?.Materials?.Count > 0)
+                    if (cInstance3.InstanceDesc?.MeshMaterials?.Count > 0)
                     {
-                        cInstance3.InstanceDesc.Materials[0].EmissiveColor = ev.IsPressed?0xff334444:0x00000000;
+                        cInstance3.InstanceDesc.MeshMaterials = new ReadOnlyCollection<int>() { ev.IsPressed?1:0 };
                     }
                 }
                 return func(e, ev, v2RelPos);
@@ -80,7 +91,4 @@ public class TouchButtons
         });
         return eSettings;
     }
-
-
-
 }
