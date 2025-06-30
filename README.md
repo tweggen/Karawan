@@ -7,10 +7,10 @@ This project consists of
 ## Build instructions
 
 Check out this repo to any directory. Directly next to this directory, check out the projects 
-- [BepuPhysics2] (https://github.com/tweggen/bepuphysics2.git) (312_workaround_assertion_raised_in_addunsafely),
-- [Default Ecs entity components system] (https://github.com/tweggen/DefaultEcs.git),
-- [3d obj file loader ObjLoader] (https://github.com/tweggen/ObjLoader.git),
-- [fbx model loader] (https://github.com/tweggen/FbxSharp.git) 
+- [BepuPhysics2] (https://github.com/bepu/bepuphysics2.git) 
+- [Default Ecs entity components system] (https://github.com/TimosForks/DefaultEcs.git),
+- [3d obj file loader ObjLoader] (https://github.com/TimosForks/ObjLoader.git),
+- [fbx model loader] (https://github.com/TimosForks/FbxSharp.git) 
 - [glTG model loader] (https://github.com/KhronosGroup/glTF-CSharp-Loader.git)
 
 Then, load the Karawan solution in the Karawan sub-directory of the Karawan repo and build it.
