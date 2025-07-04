@@ -397,15 +397,27 @@ public class WalkController : AController, IInputPart
                         
                         if (!isMe)
                         {
-                            switch (cRef.Mobility)
+                            if (props != null)
                             {
-                                case CollidableMobility.Dynamic:
-                                case CollidableMobility.Kinematic:
-                                case CollidableMobility.Static:
+                                Trace($"Walk against {props.Name} {props.Entity}");
+                                if (0 != (props.Flags & CollisionProperties.CollisionFlags.IsTangible))
+                                {
                                     isRelevant = true;
-                                    break;
+                                }
+                            }
+                            else
+                            {
+                                switch (cRef.Mobility)
+                                {
+                                    case CollidableMobility.Dynamic:
+                                    case CollidableMobility.Kinematic:
+                                    case CollidableMobility.Static:
+                                        isRelevant = true;
+                                        break;
+                                }
                             }
                         }
+
 
                         if (isRelevant)
                         {
@@ -461,13 +473,23 @@ public class WalkController : AController, IInputPart
                         
                         if (!isMe)
                         {
-                            switch (cRef.Mobility)
+                            if (props != null)
                             {
-                                case CollidableMobility.Dynamic:
-                                case CollidableMobility.Kinematic:
-                                case CollidableMobility.Static:
+                                if (0 != (props.Flags & CollisionProperties.CollisionFlags.IsTangible))
+                                {
                                     isRelevant = true;
-                                    break;
+                                }
+                            }
+                            else
+                            {
+                                switch (cRef.Mobility)
+                                {
+                                    case CollidableMobility.Dynamic:
+                                    case CollidableMobility.Kinematic:
+                                    case CollidableMobility.Static:
+                                        isRelevant = true;
+                                        break;
+                                }
                             }
                         }
 

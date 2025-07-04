@@ -66,7 +66,7 @@ public class FingerStateHandler
         {
             if (_mapFingerStates.TryGetValue(ev.Data2, out oldFingerState))
             {
-                Trace($"OnFingerPressed: finger {ev.Data2} already pressed. Terminating old state. {oldFingerState}.")
+                Trace($"OnFingerPressed: finger {ev.Data2} already pressed. Terminating old state. {oldFingerState}.");
                 /*
                  * This should not happen. Terminate the old one, start a new.
                  */

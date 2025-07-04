@@ -415,7 +415,7 @@ namespace builtin.tools
 
 
             float vhLength2 = vh.LengthSquared();
-            if (SkipSmall && vhLength2 < 0.1f)
+            if (SkipSmall && vhLength2 < 0.015f)
             {
                 if (TraceArea) Warning($"Very small polygon.");
                 return _emptyCreate;
