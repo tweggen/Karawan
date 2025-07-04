@@ -55,6 +55,9 @@ public class MainPlayModule : engine.AModule, IInputPart
     
     private PlayerViewer _playerViewer;
     
+    static public readonly string PhysicsStem = "nogame.playerhover.";
+
+    
     enum PlayerState {
         Setup,
         InHover,

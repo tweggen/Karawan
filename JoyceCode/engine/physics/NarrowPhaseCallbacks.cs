@@ -45,6 +45,7 @@ namespace engine.physics
 
         private bool _simpleShallDetect(CollidableReference a, CollidableReference b, bool alsoCollide)
         {
+            #if false
             /*
              * Short circuit, only care about collisions with the player (that is the
              * only dynamic object).
@@ -53,6 +54,7 @@ namespace engine.physics
             {
                 return false;
             }
+            #endif
 
             CollisionProperties propsA, propsB;
             

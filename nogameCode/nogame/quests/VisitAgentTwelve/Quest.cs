@@ -67,7 +67,7 @@ public class Quest : AModule, IQuest, ICreator
         _questTarget = new engine.quest.ToLocation()
         {
             RelativePosition = v3Target,
-            SensitivePhysicsName = nogame.modules.playerhover.HoverModule.PhysicsName,
+            SensitivePhysicsName = nogame.modules.playerhover.MainPlayModule.PhysicsStem,
             SensitiveRadius = 10f,
             MapCameraMask = nogame.modules.map.Module.MapCameraMask,
             OnReachTarget = _onReachTarget
