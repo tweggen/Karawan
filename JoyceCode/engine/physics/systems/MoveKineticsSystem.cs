@@ -37,7 +37,8 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
             {
                 continue;
             }
-            
+
+           
             lock (_engine.Simulation)
             {
                 var oldPos = po.LastPosition;
@@ -64,6 +65,10 @@ internal class MoveKineticsSystem : DefaultEcs.System.AEntitySetSystem<float>
                      */
                     if (isFirstPos || !wasInside || hasNewPos)
                     {
+                        if (po.CollisionProperties?.Name == "nogame.playerhover.person")
+                        {
+                            int a = 1;
+                        }
                         actions.SetBodyPosePosition.Execute(_engine.PLog, _engine.Simulation, ref bodyReference, newPos);
                         //actions.SetBodyAwake.Execute(_engine.PLog, _engine.Simulation, ref bodyReference,true);
                         po.LastPosition = newPos;

@@ -295,36 +295,38 @@ public class API
         _engine.QueueMainThreadAction(() => RayCastSync(origin, target, length, action));
     }
 
-    private SortedSet<int> _setRegisteredDynamics = new();
+    private SortedSet<int> _setRegisteredNonStatics = new();
     private SortedSet<int> _setRegisteredStatics = new();
     
     /**
      * Register a listener who is notified on callbacks.
      */
-    public void AddDynamicContactListener(in DefaultEcs.Entity entity)
+    public void AddNonstaticContactListener(in DefaultEcs.Entity entity)
     {
         if (!entity.Has<physics.components.Body>())
         {
             ErrorThrow<InvalidOperationException>($"entity {entity} does not have Body component.");
         }
         
-        var handle = entity.Get<physics.components.Body>().Reference.Handle;
+        ref var cBody = ref entity.Get<physics.components.Body>();
+        var handle = cBody.Reference.Handle;
+        bool isKinematic = cBody.Reference.Kinematic;
 
         lock (_lo)
         {
-            if (_setRegisteredDynamics.Contains(handle.Value))
+            if (_setRegisteredNonStatics.Contains(handle.Value))
             {
                 ErrorThrow<ArgumentException>($"Trying to add a contact that already is registered.");
             }
 
-            _setRegisteredDynamics.Add(handle.Value);
+            _setRegisteredNonStatics.Add(handle.Value);
         }
 
         lock (_engine.Simulation)
         {
             _contactEvents.RegisterListener(
                 new CollidableReference(
-                    CollidableMobility.Dynamic,
+                    isKinematic?CollidableMobility.Kinematic:CollidableMobility.Dynamic,
                     handle));
         }
     }
@@ -365,23 +367,24 @@ public class API
      * Unregister a notify listener.
      */
     public void RemoveDynamicContactListener(
+        CollidableMobility mobility,
         in BepuPhysics.BodyHandle bodyHandle)
     {
         lock (_lo)
         {
-            if (!_setRegisteredDynamics.Contains(bodyHandle.Value))
+            if (!_setRegisteredNonStatics.Contains(bodyHandle.Value))
             {
                 ErrorThrow<ArgumentException>($"Trying to remove a contact that already is registered.");
             }
 
-            _setRegisteredDynamics.Remove(bodyHandle.Value);
+            _setRegisteredNonStatics.Remove(bodyHandle.Value);
         }
 
         lock (_engine.Simulation)
         {
             _contactEvents.UnregisterListener(
                 new CollidableReference(
-                    CollidableMobility.Dynamic,
+                    mobility,
                     bodyHandle));
         }
     }

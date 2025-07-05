@@ -321,10 +321,7 @@ public class ToSomewhere : AModule
             };
         }
 
-        _wStart = new EntityWaypoint()
-        {
-            Carrot = ePlayer
-        };
+        _wStart = new PlayerWaypoint();
         
         /*
          * Finally, create a route from it.

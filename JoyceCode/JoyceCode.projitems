@@ -28,6 +28,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)builtin\Matrix4x4JsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\InvLuaBindings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\inventory\PickableDirectory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)builtin\modules\satnav\PlayerWaypoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\QuaternionJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\Api.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)builtin\tools\kanshu\BoundValue.cs" />

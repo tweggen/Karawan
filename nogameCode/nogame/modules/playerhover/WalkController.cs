@@ -399,7 +399,7 @@ public class WalkController : AController, IInputPart
                         {
                             if (props != null)
                             {
-                                Trace($"Walk against {props.Name} {props.Entity}");
+                                // Trace($"Walk against {props.Name} {props.Entity}");
                                 if (0 != (props.Flags & CollisionProperties.CollisionFlags.IsTangible))
                                 {
                                     isRelevant = true;

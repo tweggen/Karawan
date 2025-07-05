@@ -37,7 +37,6 @@ internal class Behavior :
         /*
          * Become a dynamic thing with the proper inertia.
          */
-        cCarBody.PhysicsObject.AddContactListener();
         lock (_engine.Simulation)
         {
             /*
@@ -52,6 +51,7 @@ internal class Behavior :
         }
 
         cCarBody.PhysicsObject.Flags |= engine.physics.Object.IsDynamic;
+        cCarBody.PhysicsObject.AddContactListener();
 
         /*
          * Replace the previous behavior with the after crash behavior.

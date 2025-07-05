@@ -81,7 +81,7 @@ public class Object : IDisposable
         {
             if ((Flags & IsStatic) == 0)
             {
-                I.Get<engine.physics.API>().AddDynamicContactListener(Entity);
+                I.Get<engine.physics.API>().AddNonstaticContactListener(Entity);
             }
             else
             {
@@ -101,7 +101,9 @@ public class Object : IDisposable
                 /*
                  * We do not pass the entity, because in many cases it might not exist any more.
                  */
-                I.Get<engine.physics.API>().RemoveDynamicContactListener(new BodyHandle(IntHandle));
+                I.Get<engine.physics.API>().RemoveDynamicContactListener(
+                    ((Flags & IsDynamic) != 0)?CollidableMobility.Dynamic:CollidableMobility.Kinematic,
+                    new BodyHandle(IntHandle));
             } else
             {
                 I.Get<engine.physics.API>().RemoveStaticsContactListener(Entity);
@@ -243,23 +245,55 @@ public class Object : IDisposable
             Flags |= IsDeleted;
         }
     }
+
+
+    /*
+     * If the body already is activated, we need to add the contact
+     * listener immediately. Or remove it, if no longer required.
+     *
+     * Otherwise, it will be added while activating the body.
+     */
+    private void _adjustContactListenerNoLock()
+    {
+        if (0 == (Flags & IsActivated))
+        {
+            return;
+        }
+        
+        if (0 != (Flags & NeedContactListener))
+        {
+            if (0 != (Flags & HaveContactListener))
+            {
+                
+            }
+            else
+            {
+                _doAddContactListenerNoLock();
+            }
+        }
+        else
+        {
+            if (0 != (Flags & HaveContactListener))
+            {
+                _doRemoveContactListenerNoLock();
+            }
+            else
+            {
+                
+            }
+        }
+    }
     
 
     public Object AddContactListener()
     {
         lock (this.Engine.Simulation)
         {
-            Flags |= NeedContactListener;
-            
-            /*
-             * If the body already is activated, we need to add the contact
-             * listener immediately.
-             *
-             * Otherwise, it will be added while activating the body.
-             */
-            if ((Flags & IsActivated) != 0)
+            if (0 == (Flags & NeedContactListener))
             {
-                _doAddContactListenerNoLock();                             
+                Flags |= NeedContactListener;
+
+                _adjustContactListenerNoLock();
             }
         }
 
@@ -271,32 +305,18 @@ public class Object : IDisposable
     {
         lock (this.Engine.Simulation)
         {
-            Flags &= ~NeedContactListener;
-
-            if ((Flags & IsActivated) != 0)
+            if (0 != (Flags & NeedContactListener))
             {
-                _doRemoveContactListenerNoLock();
+                Flags &= ~NeedContactListener;
+
+                _adjustContactListenerNoLock();
             }
         }
 
         return this;
     }
 
-
-    public void BecomeDynamic()
-    {
-        AddContactListener();
-        Flags |= IsDynamic;
-    }
-
-
-    public void BecomeKinematic()
-    {
-        RemoveContactListener();
-        Flags &= ~IsDynamic;
-    }
-
-
+    
     public Object()
     {
         Engine = I.Get<Engine>();
@@ -309,14 +329,6 @@ public class Object : IDisposable
         Flags |= IsStatic;
         IntHandle = sh.Value;
     }
-
-    #if false
-    public Object(DefaultEcs.Entity entity, BepuPhysics.BodyHandle bh)
-    {
-        Entity = entity;
-        IntHandle = bh.Value;
-    }
-    #endif
 
 
     /**
