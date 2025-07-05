@@ -546,7 +546,7 @@ namespace builtin.tools
                         nConvex++;
                     }
 
-                    if (nConvex > 1)
+                    if (nConvex > 0)
                     {
                         builder.BuildKinematicCompound(out var compoundChildren, out var vCompoundCenter);
                         builder.Reset();
