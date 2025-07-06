@@ -12,12 +12,17 @@ public class GameState
     static public Quaternion PlayerOrientation0 = Quaternion.CreateFromAxisAngle(Vector3.UnitY, Single.Pi);
 
     [LiteDB.BsonId]
-    public int Id { get; set; } = 1;
+    public int Id { get; set; } = 2;
     public SerializableVector3 PlayerPosition { get; set; } = SerializableVector3.Zero;
     public SerializableQuaternion PlayerOrientation { get; set; } = SerializableQuaternion.Identity;
     public int NumberCubes { get; set; } = 0;
     public int NumberPolytopes { get; set; } = 0;
     public int Health { get; set; } = 1000;
+    
+    /**
+     * 0 currently means hover, 1 means walk.
+     */
+    public int PlayerEntity { get; set; } = 0;
 
     public string Story { get; set; } = "";
     

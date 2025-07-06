@@ -229,7 +229,7 @@ public class DriveCarCollisionsController : AController
         I.Get<SubscriptionManager>().Subscribe(
             HoverBehavior.PLAYER_COLLISION_POLYTOPE, _onPolytopeCollision);
         
-        _engine.Camera.AddOnChange(_onPlayerEntityChanged);
+        _engine.Camera.AddNowOnChange(_onPlayerEntityChanged);
         
         _engine.Run(_setupModule);
     }

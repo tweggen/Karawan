@@ -107,10 +107,6 @@ public class Stats : engine.AController
         I.Get<SubscriptionManager>().Subscribe(
             Event.RENDER_STATS, _onRenderStats);
 
-        if (_engine.Player.TryGet(out var ePlayer))
-        {
-            _onPlayerEntityChanged(ePlayer);
-        }
-        _engine.Player.AddOnChange(_onPlayerEntityChanged);
+        _engine.Player.AddNowOnChange(_onPlayerEntityChanged);
     }
 }

@@ -153,7 +153,7 @@ public class ClusterMusicModule : AController
     protected override void OnModuleActivate()
     {
         _ePlayer = _engine.Player.Value;
-        _engine.Player.AddOnChange(_onPlayerEntityChanged);
+        _engine.Player.AddNowOnChange(_onPlayerEntityChanged);
         
         _engine.QueueEntitySetupAction("OsdClusterDisplay", e => { _eClusterDisplay = e; });
    }

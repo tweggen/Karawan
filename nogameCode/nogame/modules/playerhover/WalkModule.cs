@@ -94,132 +94,147 @@ public class WalkModule : AModule, IInputPart
 
     private async Task _setupPlayer()
     {
-        _aTransform = I.Get<engine.joyce.TransformApi>();
-
-        _aSound = I.Get<Boom.ISoundAPI>();
-
-        InstantiateModelParams instantiateModelParams = new()
+        try
         {
-            GeomFlags = CharacterModelDescription.ModelGeomFlags, 
-            MaxDistance = 200f
-        };
+            _aTransform = I.Get<engine.joyce.TransformApi>();
 
-        _model = await I.Get<ModelCache>().LoadModel( 
-            new ModelCacheParams() {
-            Url = CharacterModelDescription.ModelUrl,
-            Params = instantiateModelParams});
+            _aSound = I.Get<Boom.ISoundAPI>();
 
-        M<PlayerPosition>().GetPlayerPosition(out var v3Person, out var qPerson);
-
-        /*
-         * Create the ship entities. This needs to run in logical thread.
-         */
-        _engine.QueueMainThreadAction(() =>
-        {
-            _ePerson = _engine.CreateEntity("RootScene.playerperson");
-
-            _aTransform.SetPosition(_ePerson, v3Person);
-            _aTransform.SetRotation(_ePerson, qPerson);
-            _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
-            _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
-
+            InstantiateModelParams instantiateModelParams = new()
             {
-                builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, instantiateModelParams);
-                modelBuilder.BuildEntity(_ePerson);
-                _eAnimations = modelBuilder.GetAnimationsEntity();
-            }
+                GeomFlags = CharacterModelDescription.ModelGeomFlags,
+                MaxDistance = 200f
+            };
 
-            if (default != _eAnimations)
-            {
-                CharacterModelDescription.EntityAnimations = _eAnimations;
-                CharacterModelDescription.Model = _model;
-                
-                var mapAnimations = _model.MapAnimations;
-                if (mapAnimations != null && mapAnimations.Count > 0)
+            _model = await I.Get<ModelCache>().LoadModel(
+                new ModelCacheParams()
                 {
-                    if (mapAnimations.TryGetValue(
-                            CharacterModelDescription.IdleAnimName, out var animation))
-                    {
+                    Url = CharacterModelDescription.ModelUrl,
+                    Params = instantiateModelParams
+                });
 
-                        _eAnimations.Set(new AnimationState
-                        {
-                            ModelAnimation = animation,
-                            ModelAnimationFrame = 0
-                        });
-                        Trace($"Setting up animation {animation.Name}");
-                    }
-                    else
+            /*
+             * Read the current position.
+             * Note, that we need to apply the player's position to the entity for
+             * the walking figure, because it is kinematic as opposed to the ship,
+             * that is dynamic, and thus needs the position on the physics.
+             */
+            M<PlayerPosition>().GetPlayerPosition(out var v3Person, out var qPerson);
+
+            /*
+             * Create the ship entities. This needs to run in logical thread.
+             */
+            _engine.QueueMainThreadAction(() =>
+            {
+                _ePerson = _engine.CreateEntity("RootScene.playerperson");
+
+                _aTransform.SetPosition(_ePerson, v3Person);
+                _aTransform.SetRotation(_ePerson, qPerson);
+                _aTransform.SetVisible(_ePerson, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
+                _aTransform.SetCameraMask(_ePerson, 0x0000ffff);
+
+                {
+                    builtin.tools.ModelBuilder modelBuilder = new(_engine, _model, instantiateModelParams);
+                    modelBuilder.BuildEntity(_ePerson);
+                    _eAnimations = modelBuilder.GetAnimationsEntity();
+                }
+
+                if (default != _eAnimations)
+                {
+                    CharacterModelDescription.EntityAnimations = _eAnimations;
+                    CharacterModelDescription.Model = _model;
+
+                    var mapAnimations = _model.MapAnimations;
+                    if (mapAnimations != null && mapAnimations.Count > 0)
                     {
-                        Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
+                        if (mapAnimations.TryGetValue(
+                                CharacterModelDescription.IdleAnimName, out var animation))
+                        {
+
+                            _eAnimations.Set(new AnimationState
+                            {
+                                ModelAnimation = animation,
+                                ModelAnimationFrame = 0
+                            });
+                            Trace($"Setting up animation {animation.Name}");
+                        }
+                        else
+                        {
+                            Trace($"Test animation {CharacterModelDescription.IdleAnimName} not found.");
+                        }
                     }
                 }
-            }
 
-            /*
-             * I have absolutely no clue why, but with the real radius of the model (1.039f) the
-             * thing bounces away to nirvana very soon.
-             * Therefore we set the previously hard coded 1.4 as a lower limit.
-             */
-            float bodyRadius = _model.RootNode.InstanceDesc != null
-                ? _model.RootNode.InstanceDesc.AABBTransformed.Radius
-                : 1.4f;
+                /*
+                 * I have absolutely no clue why, but with the real radius of the model (1.039f) the
+                 * thing bounces away to nirvana very soon.
+                 * Therefore we set the previously hard coded 1.4 as a lower limit.
+                 */
+                float bodyRadius = _model.RootNode.InstanceDesc != null
+                    ? _model.RootNode.InstanceDesc.AABBTransformed.Radius
+                    : 1.4f;
 
-            engine.physics.CollisionProperties collisionProperties =
-                new engine.physics.CollisionProperties
+                engine.physics.CollisionProperties collisionProperties =
+                    new engine.physics.CollisionProperties
+                    {
+                        Entity = _ePerson,
+                        Flags =
+                            CollisionProperties.CollisionFlags.IsTangible
+                            | CollisionProperties.CollisionFlags.IsDetectable
+                            | CollisionProperties.CollisionFlags.TriggersCallbacks,
+                        Name = PhysicsName,
+                        LayerMask = 0x00ff,
+                    };
+                engine.physics.Object po;
+                lock (_engine.Simulation)
                 {
-                    Entity = _ePerson,
-                    Flags =
-                        CollisionProperties.CollisionFlags.IsTangible
-                        | CollisionProperties.CollisionFlags.IsDetectable
-                        | CollisionProperties.CollisionFlags.TriggersCallbacks,
-                    Name = PhysicsName,
-                    LayerMask = 0x00ff,
-                };
-            engine.physics.Object po;
-            lock (_engine.Simulation)
-            {
-                float personHeight = 1.8f;
-                uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
-                    _engine.PLog, _engine.Simulation,
-                    0.3f, 1.8f,
-                    out var pbody);
-                po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
-                        v3Person, qPerson, new(0f, personHeight / 2f, 0f)) 
+                    float personHeight = 1.8f;
+                    uint uintShape = (uint)engine.physics.actions.CreateCylinderShape.Execute(
+                        _engine.PLog, _engine.Simulation,
+                        0.3f, 1.8f,
+                        out var pbody);
+                    po = new engine.physics.Object(_engine, _ePerson, new TypedIndex() { Packed = uintShape },
+                        v3Person, qPerson, new(0f, personHeight / 2f, 0f))
+                    {
+                        CollisionProperties = collisionProperties
+                    }.AddContactListener();
+                    _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                }
+
+                _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
+                _ePerson.Set(new engine.behave.components.Behavior(new WalkBehavior()
                 {
-                    CollisionProperties = collisionProperties
-                }.AddContactListener();
-                _prefPerson = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
-            }
+                    MassTarget = MassPerson,
+                    CharacterModelDescription = CharacterModelDescription
+                }));
 
-            _ePerson.Set(new engine.physics.components.Body(po, _prefPerson));
-            _ePerson.Set(new engine.behave.components.Behavior(new WalkBehavior()
-            {
-                MassTarget = MassPerson,
-                CharacterModelDescription = CharacterModelDescription
-            }));
+                /*
+                 * Now add an entity as a child that will display in the map
+                 */
+                _eMapPerson = _engine.CreateEntity("RootScene.playership.map");
+                I.Get<HierarchyApi>().SetParent(_eMapPerson, _ePerson);
+                I.Get<TransformApi>().SetTransforms(_eMapPerson, true,
+                    nogame.modules.map.Module.MapCameraMask,
+                    Quaternion.Identity, new Vector3(0f, 0f, 0f));
+                _eMapPerson.Set(new engine.world.components.MapIcon()
+                    { Code = engine.world.components.MapIcon.IconCode.Player0 });
 
-            /*
-             * Now add an entity as a child that will display in the map
-             */
-            _eMapPerson = _engine.CreateEntity("RootScene.playership.map");
-            I.Get<HierarchyApi>().SetParent(_eMapPerson, _ePerson);
-            I.Get<TransformApi>().SetTransforms(_eMapPerson, true,
-                nogame.modules.map.Module.MapCameraMask,
-                Quaternion.Identity, new Vector3(0f, 0f, 0f));
-            _eMapPerson.Set(new engine.world.components.MapIcon()
-                { Code = engine.world.components.MapIcon.IconCode.Player0 });
+                _engine.OnLogicalFrame += _onLogicalFrame;
 
-            _engine.OnLogicalFrame += _onLogicalFrame;
+                _engine.Player.Value = _ePerson;
 
-            _engine.Player.Value = _ePerson;
+                M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
-            M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
-
-            /*
-             * Finally, we are boarded.
-             */
-            I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsPersonActivated, ""));
-        }); // End of queue mainthread action.
+                /*
+                 * Finally, we are boarded.
+                 */
+                I.Get<EventQueue>().Push(new Event(MainPlayModule.EventCodeIsPersonActivated, ""));
+            }); // End of queue mainthread action.
+        }
+        catch (Exception e)
+        {
+            Warning($"Exception in _setupPlayer main code: {e}");
+        }
     }
 
 

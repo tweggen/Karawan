@@ -47,6 +47,7 @@ public class MainPlayModule : engine.AModule, IInputPart
     public override IEnumerable<IModuleDependency> ModuleDepends() => new List<IModuleDependency>()
     {
         new SharedModule<InputEventPipeline>(),
+        new SharedModule<AutoSave>(),
         new MyModule<nogame.modules.playerhover.UpdateEmissionContext>(),
         new MyModule<nogame.modules.playerhover.ClusterMusicModule>(),
         new MyModule<nogame.modules.playerhover.HoverModule>() { ShallActivate =  false },
@@ -234,22 +235,29 @@ public class MainPlayModule : engine.AModule, IInputPart
             _playerViewer = new(_engine);
             I.Get<MetaGen>().Loader.AddViewer(_playerViewer);
 
-#if false
-            lock (_lo)
+            var gameState = M<AutoSave>().GameState;
+            switch (gameState.PlayerEntity)
             {
-                _playerState = PlayerState.WaitingForPersonActivated;
+                default:
+                case 0:
+                    lock (_lo)
+                    {
+                        _playerState = PlayerState.WaitingForHoverActivated;
+                    }
+
+                    ActivateMyModule<HoverModule>();
+                    break;
+                case 1:
+                    lock (_lo)
+                    {
+                        _playerState = PlayerState.WaitingForPersonActivated;
+                    }
+
+                    M<WalkModule>().CharacterModelDescription = _characterModelDescription;
+                    ActivateMyModule<WalkModule>();
+                    break;
             }
 
-            M<WalkModule>().CharacterModelDescription = _characterModelDescription;
-            ActivateMyModule<WalkModule>();
-#else
-            lock (_lo)
-            {
-                _playerState = PlayerState.WaitingForHoverActivated;
-            }
-
-            ActivateMyModule<HoverModule>();
-#endif
             
             M<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
             

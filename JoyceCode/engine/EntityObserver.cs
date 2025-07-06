@@ -54,7 +54,7 @@ public class EntityObserver
             {
                 return;
             }
-            Trace("New value for player set up.");
+            Trace("New value set up.");
             _currentValue = newValue;
             if (_listWithActions.Count > 0)
             {
@@ -106,6 +106,26 @@ public class EntityObserver
         lock (_lo)
         {
             _listOnChange.Add(func);
+        }
+    }
+    
+    
+    /**
+     * Add the given change callback.
+     * Also call the callback, if right now the value is non-default. 
+     */
+    public void AddNowOnChange(Action<Entity> func)
+    {
+        Entity currentValue = default;
+        lock (_lo)
+        {
+            _listOnChange.Add(func);
+            currentValue = _currentValue;
+        }
+
+        if (currentValue != default)
+        {
+            func(currentValue);
         }
     }
 

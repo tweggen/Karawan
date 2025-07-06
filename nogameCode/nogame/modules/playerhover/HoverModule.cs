@@ -184,6 +184,12 @@ public class HoverModule : AModule, IInputPart
             Url = ModelUrl,
             Params = instantiateModelParams});
 
+        /*
+         * Read the current position.
+         * Note, that we need to apply the player's position to the entity for
+         * the walking figure, because it is kinematic as opposed to the ship,
+         * that is dynamic, and thus needs the position on the physics.
+         */
         M<PlayerPosition>().GetPlayerPosition(out var v3Ship, out var qShip);
         
         /*
@@ -192,7 +198,11 @@ public class HoverModule : AModule, IInputPart
         _engine.QueueMainThreadAction(() =>
         {
             _eShip = _engine.CreateEntity("RootScene.playership");
-
+            
+            /*
+             * Note that this position is transient, it is for the initial display only,
+             * the position will be read from the physics and applied to the model.
+             */
             _aTransform.SetPosition(_eShip, v3Ship);
             _aTransform.SetRotation(_eShip, qShip);
             _aTransform.SetVisible(_eShip, engine.GlobalSettings.Get("nogame.PlayerVisible") != "false");
@@ -276,6 +286,13 @@ public class HoverModule : AModule, IInputPart
                         v3Ship, qShip)
                     { CollisionProperties = collisionProperties }.AddContactListener();
                 _prefShip = _engine.Simulation.Bodies.GetBodyReference(new BodyHandle(po.IntHandle));
+                /*
+                 * Now actually apply the position to the ship.
+                 */
+                _prefShip.Velocity.Linear = new Vector3(0f, 0f, 0f);
+                _prefShip.Pose.Position = v3Ship;
+                _prefShip.Pose.Orientation = qShip;
+                _prefShip.Velocity.Angular = new Vector3(0f, 0f, 0f);
             }
 
             _eShip.Set(new engine.physics.components.Body(po, _prefShip));

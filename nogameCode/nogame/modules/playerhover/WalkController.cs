@@ -588,6 +588,13 @@ public class WalkController : AController, IInputPart
         var qFinalWalkFront = Quaternion.Slerp(qOrgTargetOrientation, qWalkFront, 0.2f);
         I.Get<TransformApi>().SetTransforms(_eTarget, true, CameraMask, qFinalWalkFront, vNewTargetPos);
         _eTarget.Set(new engine.joyce.components.Motion(vNewTargetVelocity));
+        
+        {
+            var gameState = M<AutoSave>().GameState;
+            gameState.PlayerPosition = new(vNewTargetPos);
+            gameState.PlayerOrientation = new(qFinalWalkFront);
+            gameState.PlayerEntity = 1;
+        }
     }
 
 
@@ -626,7 +633,7 @@ public class WalkController : AController, IInputPart
     {
         I.Get<InputEventPipeline>().RemoveInputPart(this);
 
-        _engine.Camera.AddOnChange(_onCameraEntityChanged);
+        _engine.Camera.RemoveOnChange(_onCameraEntityChanged);
     }
 
 
@@ -638,7 +645,7 @@ public class WalkController : AController, IInputPart
         _characterAnimState = CharacterAnimState.Unset;
         
         _eCamera = _engine.Camera.Value;
-        _engine.Camera.AddOnChange(_onCameraEntityChanged);
+        _engine.Camera.AddNowOnChange(_onCameraEntityChanged);
         I.Get<InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
     }
 }

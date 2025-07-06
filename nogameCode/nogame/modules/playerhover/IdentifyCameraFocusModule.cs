@@ -143,10 +143,6 @@ public class IdentifyCameraFocusModule : engine.AController
     {
         _eTargetDisplay = _engine.CreateEntity("OsdTargetDisplay");
 
-        if (_engine.Camera.TryGet(out var eCam))
-        {
-            _onCameraEntityChanged(eCam);
-        }
-        _engine.Camera.AddOnChange(_onCameraEntityChanged);
+        _engine.Camera.AddNowOnChange(_onCameraEntityChanged);
     }
 }

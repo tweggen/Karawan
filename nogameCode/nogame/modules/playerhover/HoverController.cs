@@ -362,6 +362,7 @@ internal class HoverController : AController
             var gameState = M<AutoSave>().GameState;
             gameState.PlayerPosition = new(vTargetPos);
             gameState.PlayerOrientation = new(qFinalTargetOrientation);
+            gameState.PlayerEntity = 0;
         }
 
     }

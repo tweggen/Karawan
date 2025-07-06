@@ -57,7 +57,12 @@ public class Gameplay : AModule, IInputPart
     {
         M<engine.news.InputEventPipeline>().AddInputPart(MY_Z_ORDER, this);
 
+        _engine.Camera.AddNowOnChange(_onNewCamera);
+        _engine.Player.AddNowOnChange(_onNewPlayer);
+        
+
         ActivateMyModule<MainPlayModule>();
+        #if false
         if (_engine.Camera.TryGet(out var eCamera))
         {
             _onNewCamera(eCamera);
@@ -67,8 +72,7 @@ public class Gameplay : AModule, IInputPart
         {
             _onNewPlayer(ePlayer);
         }
-        _engine.Camera.AddOnChange(_onNewCamera);
-        _engine.Player.AddOnChange(_onNewPlayer);
+        #endif
         
         _engine.OnLogicalFrame += _onLogicalFrame;
 
