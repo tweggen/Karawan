@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using static engine.Logger;
 using engine.behave.systems;
 
 namespace engine.news;
@@ -30,6 +31,7 @@ public class ClickModule : AModule, engine.IInputPart
     
     private void _handleClickEvent(Event ev)
     {
+        Trace($"Handling {ev}");
         _clickableHandler.OnClick(new Event(Event.INPUT_LOGICAL_PRESSED, ev.Code)
         {
             PhysicalPosition = ev.PhysicalPosition,
@@ -44,6 +46,7 @@ public class ClickModule : AModule, engine.IInputPart
 
     private void _handleReleaseEvent(Event ev)
     {
+        Trace($"Handling {ev}");
         _clickableHandler.OnRelease(new Event(Event.INPUT_LOGICAL_RELEASED, ev.Code)
         {
             PhysicalPosition = ev.PhysicalPosition,

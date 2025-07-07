@@ -88,6 +88,12 @@ public class Event
 
 
     public string ToKey() => $"{Type}:{Code}";
+
+    public override string ToString()
+    {
+        return
+            $"{{ \"type\": \"{Type}\", \"code\": \"{Code}\", \"data1\": {Data1}, \"data2\": {Data2}, \"data3\": \"{Data3}\"}}";
+    }
     
     
     public Event(string type, string code)

@@ -100,7 +100,8 @@ namespace Wuka
                             PhysicalSize = Vector2.One,
                             LogicalPosition = v2PhysicalPosition,
                             Data1 = (uint) events[i].Tfinger.TouchId,
-                            Data2 = (uint) events[i].Tfinger.FingerId
+                            Data2 = (uint) events[i].Tfinger.FingerId,
+                            Data3 = (uint) events[i].Common.Timestamp
                         });
                         break;
                     case EventType.Fingerup:
@@ -110,7 +111,8 @@ namespace Wuka
                             PhysicalSize = Vector2.One,
                             LogicalPosition = v2PhysicalPosition,
                             Data1 = (uint) events[i].Tfinger.TouchId,
-                            Data2 = (uint) events[i].Tfinger.FingerId
+                            Data2 = (uint) events[i].Tfinger.FingerId,
+                            Data3 = (uint) events[i].Common.Timestamp
                         });
                         break;
                     case EventType.Fingermotion:

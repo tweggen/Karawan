@@ -1283,10 +1283,15 @@ public class Engine
 
     public Engine(engine.IPlatform platform)
     {
-        _taskScheduler = new LimitedConcurrencyLevelTaskScheduler(
-            Int32.Max(3, 
-                Environment.ProcessorCount - 2)
-            );
+        {
+            int nCpus = Int32.Max(5, Environment.ProcessorCount - 2);
+#if DEBUG
+            nCpus += 2;
+#endif
+            _taskScheduler = new LimitedConcurrencyLevelTaskScheduler(nCpus);
+        }
+
+        
         _taskFactory = new TaskFactory(_taskScheduler);
         
         engine.Unit u = new();

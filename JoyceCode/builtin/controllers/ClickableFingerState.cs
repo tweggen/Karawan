@@ -1,8 +1,10 @@
+using System;
 using System.Numerics;
 using DefaultEcs;
 using engine;
 using engine.behave.components;
 using engine.news;
+using static engine.Logger;
 
 namespace builtin.controllers;
 
@@ -22,11 +24,17 @@ public class ClickableFingerState : AFingerState
         {
             if ((Clickable.Flags & Clickable.ClickableFlags.AlsoOnRelease) != 0)
             {
-                // TXWTODO: This is the relative position of the click. 
-                var cev = factory(Entity, ev, RelPos);
-                if (cev != null)
+                try
                 {
-                    I.Get<EventQueue>().Push(cev);
+                    // TXWTODO: This is the relative position of the click. 
+                    var cev = factory(Entity, ev, RelPos);
+                    if (cev != null)
+                    {
+                        I.Get<EventQueue>().Push(cev);
+                    }
+                } catch (Exception e)
+                {
+                    Warning($"Caught exception while executing click event factory Release: {e}.");
                 }
             }
 
@@ -48,11 +56,19 @@ public class ClickableFingerState : AFingerState
         var factory = Clickable.ClickEventFactory;
         if (factory != null)
         {
-            var cev = factory(Entity, ev, RelPos);
-            if (cev != null)
+            try
             {
-                I.Get<EventQueue>().Push(cev);
+                var cev = factory(Entity, ev, RelPos);
+                if (cev != null)
+                {
+                    I.Get<EventQueue>().Push(cev);
+                }
             }
+            catch (Exception e)
+            {
+                Warning($"Caught exception while executing click event factory Press: {e}.");
+            }
+
             ev.IsHandled = true;
         }
     }
