@@ -69,6 +69,8 @@ namespace Wuka
         private Silk.NET.SDL.Sdl _sdl = null;
         private EventQueue _eq = null;
 
+        private int _eventIteration = 0;
+        
         private void _beforeDoEvents()
         {
             if (null == _sdl)
@@ -83,6 +85,7 @@ namespace Wuka
             }
 
             int maxEvents = 100;
+            ++_eventIteration;
             Silk.NET.SDL.Event[] events = new Silk.NET.SDL.Event[maxEvents];
             int nEvents = _sdl.PeepEvents(events.AsSpan(), maxEvents, Eventaction.Peekevent,
                 (uint) Silk.NET.SDL.EventType.Firstevent,
@@ -101,7 +104,8 @@ namespace Wuka
                             LogicalPosition = v2PhysicalPosition,
                             Data1 = (uint) events[i].Tfinger.TouchId,
                             Data2 = (uint) events[i].Tfinger.FingerId,
-                            Data3 = (uint) events[i].Common.Timestamp
+                            Data3 = (uint) events[i].Common.Timestamp,
+                            Data4 = (uint) _eventIteration
                         });
                         break;
                     case EventType.Fingerup:
@@ -112,7 +116,8 @@ namespace Wuka
                             LogicalPosition = v2PhysicalPosition,
                             Data1 = (uint) events[i].Tfinger.TouchId,
                             Data2 = (uint) events[i].Tfinger.FingerId,
-                            Data3 = (uint) events[i].Common.Timestamp
+                            Data3 = (uint) events[i].Common.Timestamp,
+                            Data4 = (uint) _eventIteration
                         });
                         break;
                     case EventType.Fingermotion:
@@ -124,7 +129,9 @@ namespace Wuka
                             // TXWTODO: CHeck, if we need this size information.
                             //  = new (events[i].Tfinger.Dx, events[i].Tfinger.Dy),
                             Data1 = (uint) events[i].Tfinger.TouchId,
-                            Data2 = (uint) events[i].Tfinger.FingerId
+                            Data2 = (uint) events[i].Tfinger.FingerId,
+                            Data3 = (uint) events[i].Common.Timestamp,
+                            Data4 = (uint) _eventIteration
                         });
                         break;
                     default: 

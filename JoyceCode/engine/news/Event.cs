@@ -85,14 +85,14 @@ public class Event
     public uint Data1;
     public uint Data2;
     public uint Data3;
-
+    public uint Data4;
 
     public string ToKey() => $"{Type}:{Code}";
 
     public override string ToString()
     {
         return
-            $"{{ \"type\": \"{Type}\", \"code\": \"{Code}\", \"data1\": {Data1}, \"data2\": {Data2}, \"data3\": \"{Data3}\"}}";
+            $"{{ \"type\": \"{Type}\", \"code\": \"{Code}\", \"data1\": {Data1}, \"data2\": {Data2}, \"data3\": \"{Data3}\", \"data4\": \"{Data4}\"}}";
     }
     
     

@@ -92,6 +92,7 @@ public class DesktopMain
             engine.GlobalSettings.Set("Engine.RWPath", appRWPath);
         }
         
+        // TXWTODO: How to know the underlying platform does have touch events?
         engine.GlobalSettings.Set("splash.touchControls", "false");
         engine.GlobalSettings.Set("platform.suspendOnUnfocus", "false");
         engine.GlobalSettings.Set("platform.initialZoomState", "0");
