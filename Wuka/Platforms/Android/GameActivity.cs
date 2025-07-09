@@ -7,6 +7,7 @@ using Silk.NET.Windowing.Sdl;
 using Silk.NET.Input.Sdl;
 
 using Android.Content.Res;
+using Android.Views;
 using engine;
 using AndroidX.Core.App;
 using engine.news;
@@ -52,6 +53,15 @@ namespace Wuka
             base.OnStop();
         }
 
+
+        /**
+         * Override on touch event to read finger events from the system.-
+         */
+        public override bool OnTouchEvent(MotionEvent e)
+        {
+            System.Console.WriteLine($"Motion event received.");
+            return base.OnTouchEvent(e);
+        }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
