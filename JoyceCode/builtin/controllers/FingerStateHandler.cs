@@ -23,6 +23,7 @@ public class FingerStateHandler
         {
             if (_mapFingerStates.TryGetValue(ev.Data2, out fingerState))
             {
+                Trace($"Removing finger {ev.Data2} from map.");
                 /*
                  * We better have an old one.
                  */
@@ -94,6 +95,7 @@ public class FingerStateHandler
             
             lock (_lo)
             {
+                Trace($"OnFingerPressed: adding finger {evKey} to map.");
                 _mapFingerStates[evKey] = iFingerState;
             }
             
@@ -105,6 +107,7 @@ public class FingerStateHandler
              */
             if (!ev.IsHandled)
             {
+                Warning($"Removing finger {evKey} from map because it was not handled.");
                 lock (_lo)
                 {
                     _mapFingerStates.Remove(evKey);

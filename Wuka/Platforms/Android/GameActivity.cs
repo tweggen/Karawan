@@ -10,8 +10,10 @@ using Android.Content.Res;
 using engine;
 using AndroidX.Core.App;
 using engine.news;
+using Org.Libsdl.App;
 using Silk.NET.SDL;
 using Silk.NET.Windowing.Sdl.Android;
+using static engine.Logger;
 
 namespace Wuka
 {
@@ -57,8 +59,8 @@ namespace Wuka
         {
             base.OnCreate(savedInstanceState);
         }
-
-
+        
+        
         protected override void OnRestart()
         {
             //_engine.Resume();
@@ -71,7 +73,7 @@ namespace Wuka
 
         private int _eventIteration = 0;
         
-        private void _beforeDoEvents()
+        private unsafe void _beforeDoEvents()
         {
             if (null == _sdl)
             {
@@ -93,6 +95,20 @@ namespace Wuka
             for (int i = 0; i < nEvents; ++i)
             {
                 Vector2 v2PhysicalPosition = new(events[i].Tfinger.X, events[i].Tfinger.Y);
+
+                /*
+                 * Dump finger states.
+                 */
+                if (false) {
+                    for (int fidx = 0; fidx < 9; ++fidx)
+                    {
+                        var f = _sdl.GetTouchFinger(4, fidx);
+                        if (null != f)
+                        {
+                            Trace($"Finger {fidx}: id: {f->Id}, pos: {{x: {f->X}, y: {f->Y}}}");
+                        }
+                    }
+                }
                 
                 switch ((EventType) events[i].Type)
                 {
@@ -120,6 +136,7 @@ namespace Wuka
                             Data4 = (uint) _eventIteration
                         });
                         break;
+                    
                     case EventType.Fingermotion:
                         _eq.Push(new engine.news.Event(engine.news.Event.INPUT_FINGER_MOVED, "")
                         {

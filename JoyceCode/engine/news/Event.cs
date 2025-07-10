@@ -92,7 +92,7 @@ public class Event
     public override string ToString()
     {
         return
-            $"{{ \"type\": \"{Type}\", \"code\": \"{Code}\", \"data1\": {Data1}, \"data2\": {Data2}, \"data3\": \"{Data3}\", \"data4\": \"{Data4}\"}}";
+            $"{{ \"type\": \"{Type}\", \"code\": \"{Code}\", \"logicalPosition\": {LogicalPosition}, \"data1\": {Data1}, \"data2\": {Data2}, \"data3\": \"{Data3}\", \"data4\": \"{Data4}\"}}";
     }
     
     
