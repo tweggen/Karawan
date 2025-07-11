@@ -14,6 +14,7 @@ using engine.news;
 using Org.Libsdl.App;
 using Silk.NET.SDL;
 using Silk.NET.Windowing.Sdl.Android;
+using View = Android.Views.View;
 
 namespace Wuka
 {
@@ -55,15 +56,6 @@ namespace Wuka
         }
 
 
-        /**
-         * Override on touch event to read finger events from the system.-
-         */
-        public override bool OnTouchEvent(MotionEvent e)
-        {
-            System.Console.WriteLine($"Motion event received.");
-            return base.OnTouchEvent(e);
-        }
-
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -84,7 +76,8 @@ namespace Wuka
 
         protected override unsafe Org.Libsdl.App.SDLSurface CreateSDLSurface(Android.Content.Context? context)
         {
-            return base.CreateSDLSurface(context);
+            var surface = new GameSurface(context);
+            return surface;
         }
         
         private void _beforeDoEvents()
