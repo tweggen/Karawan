@@ -11,6 +11,7 @@ using Android.Views;
 using engine;
 using AndroidX.Core.App;
 using engine.news;
+using Org.Libsdl.App;
 using Silk.NET.SDL;
 using Silk.NET.Windowing.Sdl.Android;
 
@@ -80,6 +81,11 @@ namespace Wuka
         private EventQueue _eq = null;
 
         private int _eventIteration = 0;
+
+        protected override unsafe Org.Libsdl.App.SDLSurface CreateSDLSurface(Android.Content.Context? context)
+        {
+            return base.CreateSDLSurface(context);
+        }
         
         private void _beforeDoEvents()
         {
