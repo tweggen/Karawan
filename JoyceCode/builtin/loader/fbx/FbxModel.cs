@@ -101,7 +101,11 @@ public class FbxModel : IDisposable
     }
 
     
-    unsafe public void Load(string path, out engine.joyce.Model model)
+    /**
+     * Load a given fbx file into this model.
+     * You can also pass additional files to add e.g. animation data.
+     */
+    public unsafe void Load(string path, List<string>? additionalUrls, out engine.joyce.Model model)
     {
         if (null != _model)
         {
@@ -128,7 +132,41 @@ public class FbxModel : IDisposable
 
         model.RootNode = ProcessNode(_scene->MRootNode);
 
-        _loadAnimations();
+        /*
+         * Now load all the animations. First the ones from the main file.
+         */
+        _loadAnimations(_scene);
+        
+        /*
+         * Now go through the extra fbx files and load the animations from
+         * them to this model.
+         */
+        if (additionalUrls != null)
+        {
+            foreach (var url in additionalUrls)
+            {
+                try
+                {
+                    Trace($"Import additional animation data from {url}...");
+                    var additionalScene = _assimp.ImportFileEx(
+                        url,
+                        (uint)PostProcessSteps.Triangulate,
+                        pFileIO
+                    );
+                    if (additionalScene == null || additionalScene->MFlags == Assimp.SceneFlagsIncomplete || additionalScene->MRootNode == null)
+                    {
+                        continue;
+                    }
+                    
+                    _loadAnimations(additionalScene);
+                    Trace($"Done importing additional animation data from {url}.");
+                }
+                catch (Exception e)
+                {
+                    Error($"Exception while loading additional animation data: {e}");
+                }
+            }
+        }
         
         var strUnitscale = GetMetadata("UnitScaleFactor", "1.");
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
@@ -145,14 +183,14 @@ public class FbxModel : IDisposable
     }
     
     
-    private unsafe void _loadAnimations()
+    private unsafe void _loadAnimations(Scene *scene)
     {
-        if (null == _scene->MAnimations)
+        if (null == scene->MAnimations)
         {
             return;
         }
         
-        uint nAnimations = _scene->MNumAnimations;
+        uint nAnimations = scene->MNumAnimations;
         if (0 == nAnimations)
         {
             return;
@@ -162,7 +200,7 @@ public class FbxModel : IDisposable
         
         for (int i = 0; i < nAnimations; ++i)
         {
-            var aiAnim = _scene->MAnimations[i];
+            var aiAnim = scene->MAnimations[i];
             if (null == aiAnim || 0 == aiAnim->MNumChannels)
             {
                 continue;

@@ -311,7 +311,7 @@ public class WalkController : AController, IInputPart
                         strAnimation = CharacterModelDescription.RunAnimName;
                         break;
                     case CharacterAnimState.Jumping:
-                        strAnimation = CharacterModelDescription.RunAnimName;
+                        strAnimation = CharacterModelDescription.JumpAnimName;
                         break;
                 }
 
