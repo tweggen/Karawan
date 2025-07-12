@@ -336,7 +336,18 @@ public class Model
         Trace($"Baking animations for {Name}");
 
         var skeleton = FindSkeleton();
-            
+
+        if (true)
+        {
+            /*
+             * Debugging: Write the bone names
+             */
+            foreach (var kvp in skeleton.MapBones)
+            {
+                Trace($"Bone {kvp.Key}");
+            }
+        }
+
         /*
          * We assume there is only one instancedesc. Don't know if this is true
          * for all formats.

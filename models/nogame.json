@@ -450,6 +450,8 @@
       { "uri": "../models/models/people/Studio Ochi Spring Boy_ANIM.fbx" },
       { "uri": "../models/models/people/Studio Ochi Spring Man B_ANIM.fbx" },
       { "uri": "../models/models/people/Studio Ochi Spring Woman C_ANIM.fbx" },
+      { "uri": "../models/models/people/mixamo/mixamo_ochi_man_b.fbx" },
+      { "uri": "../models/models/people/mixamo/jumping up.fbx" },
       { "uri": "../models/models/player.glb" }
     ]
   }
