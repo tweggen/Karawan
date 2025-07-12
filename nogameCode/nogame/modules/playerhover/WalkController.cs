@@ -286,7 +286,7 @@ public class WalkController : AController, IInputPart
                 break;
             default:
                 newAnimState = CharacterAnimState.Jumping;
-                forceFrameZero = true;
+                //forceFrameZero = true;
                 break;
         }
         

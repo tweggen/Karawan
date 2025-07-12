@@ -135,7 +135,7 @@ public class FbxModel : IDisposable
         /*
          * Now load all the animations. First the ones from the main file.
          */
-        _loadAnimations(_scene);
+        _loadAnimations(_scene, "");
         
         /*
          * Now go through the extra fbx files and load the animations from
@@ -153,12 +153,26 @@ public class FbxModel : IDisposable
                         (uint)PostProcessSteps.Triangulate,
                         pFileIO
                     );
-                    if (additionalScene == null || additionalScene->MFlags == Assimp.SceneFlagsIncomplete || additionalScene->MRootNode == null)
+                    if (additionalScene == null  || additionalScene->MRootNode == null)
                     {
                         continue;
                     }
-                    
-                    _loadAnimations(additionalScene);
+
+                    string strFallbackName = url;
+                    int idx = strFallbackName.LastIndexOf('/');
+                    if (-1 != idx)
+                    {
+                        if (idx + 1 < strFallbackName.Length)
+                        {
+                            strFallbackName = strFallbackName.Substring(idx + 1);
+                        }
+                    }
+                    idx = strFallbackName.LastIndexOf('.');
+                    if (0 < idx)
+                    {
+                        strFallbackName = strFallbackName.Substring(0, idx);
+                    }
+                    _loadAnimations(additionalScene, strFallbackName);
                     Trace($"Done importing additional animation data from {url}.");
                 }
                 catch (Exception e)
@@ -183,7 +197,7 @@ public class FbxModel : IDisposable
     }
     
     
-    private unsafe void _loadAnimations(Scene *scene)
+    private unsafe void _loadAnimations(Scene *scene, string strFallbackName)
     {
         if (null == scene->MAnimations)
         {
@@ -209,7 +223,8 @@ public class FbxModel : IDisposable
             uint nChannels = aiAnim->MNumChannels;
 
             ModelAnimation ma = _model.CreateAnimation();
-            ma.Name = aiAnim->MName.ToString();
+            ma.Name = String.IsNullOrWhiteSpace(strFallbackName)?aiAnim->MName.ToString():strFallbackName;
+            Trace($"Found channel {ma.Name} with {nChannels} channels.");
             ma.Duration = (float)aiAnim->MDuration / (float)aiAnim->MTicksPerSecond;
             ma.TicksPerSecond = (float)aiAnim->MTicksPerSecond;
             ma.NTicks = (aiAnim->MTicksPerSecond < 0.015f) ? 1 : (uint)(aiAnim->MDuration / aiAnim->MTicksPerSecond);
