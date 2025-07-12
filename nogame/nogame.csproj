@@ -6,7 +6,7 @@
   <UsingTask Condition=" '$(OS)' != 'Windows_NT' " TaskName="CmdLine.Res2TargetTask" AssemblyFile="..\Tooling\Cmdline\bin\Debug\netstandard2.0\linux-x64\joycecmd.dll" />
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>disable</Nullable>
     <CustomBuildAfterTargets />
   </PropertyGroup>
@@ -37,15 +37,15 @@
 
   <Target Condition=" '$(OS)' == 'Windows_NT' " Name="GatherTexturesWindowsHost" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\win-x64\publish\joycecmd.exe"/>
+    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\win-x64\publish\joycecmd.exe" />
   </Target>
   <Target Condition=" '$(OS)' != 'Windows_NT' " Name="GatherTexturesLinuxHost" BeforeTargets="GatherResources">
     <Message Text="gathering textures" />
-    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\linux-x64\publish\joycecmd"/>
+    <PackTexturesTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" Executable="..\Tooling\Cmdline\bin\Debug\net8.0\linux-x64\publish\joycecmd" />
   </Target>
   <Target Name="GatherResources" BeforeTargets="Compile">
     <Message Text="compiling resources" />
-    <Res2TargetTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json"/>
+    <Res2TargetTask OutputDirectory="../nogame/generated" GameJson="../models/nogame.json" />
   </Target>
 
 </Project>
