@@ -29,7 +29,7 @@ public class Fbx
         List<string>? additionalUrls = null;
         if (modelProperties.Properties.ContainsKey("AdditionalUrls"))
         {
-            additionalUrls = modelProperties.Properties["AdditionalUrls"].Split(';').ToList();
+            additionalUrls = modelProperties.Properties["AdditionalUrls"].Split(';',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).ToList();
         }
         
         using (var fbxModel = new fbx.FbxModel())

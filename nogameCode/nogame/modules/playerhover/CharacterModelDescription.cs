@@ -13,7 +13,7 @@ public class CharacterModelDescription
     public string ModelUrl { get; set; } = "player.glb";
     #endif
     
-    #if false
+    #if true
     public string WalkAnimName { get; set; } = "Metarig Man B|Child Walk Happy";
     public string RunAnimName { get; set; } = "Metarig Man B|Run Mid";
     public string IdleAnimName { get; set; } = "Metarig Man B|Idle 01";
@@ -23,7 +23,7 @@ public class CharacterModelDescription
     public string AdditionalUrls { get; set; } = "";
     #endif
     
-    #if true
+    #if false
     public string WalkAnimName { get; set; } = "walking";
     public string RunAnimName { get; set; } = "running";
     public string IdleAnimName { get; set; } = "idle";
