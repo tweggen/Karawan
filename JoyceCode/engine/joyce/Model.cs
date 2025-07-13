@@ -110,6 +110,11 @@ public class Model
             return mn;
         }
 
+        if (mn.Children == null)
+        {
+            return null;
+        }
+
         foreach (var mnChild in mn.Children)
         {
             var mnInstanceDescNode = _findInstanceDescNodeBelow(mnChild);

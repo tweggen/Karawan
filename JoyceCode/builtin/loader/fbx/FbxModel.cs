@@ -500,7 +500,6 @@ public class FbxModel : IDisposable
         bool verifyData = false;
         bool iHaveMesh = false;
         ModelNode mn = null; 
-        bool isNewNode = false;
         if (_model!.MapNodes.ContainsKey(strName))
         {
             mn = _model.MapNodes[strName];
@@ -514,7 +513,6 @@ public class FbxModel : IDisposable
         {
             mn = _model.CreateNode();
             mn.Name = strName;
-            isNewNode = true;
         }
         
         /*
@@ -559,15 +557,15 @@ public class FbxModel : IDisposable
             {
                 var mnChild = _processNode(mn, node->MChildren[i], loadMeshes, loadMainNodes, out var childOrBelowHasMesh);
                 meshInOrBelowMe |= childOrBelowHasMesh;
+                bool isChildNewNode = !_model.MapNodes.ContainsKey(mnChild.Name);
                 
                 /*
                  * If this is a new node,
                  * we want to add this node if it either contains a child with a
                  * mesh or we are in loadMainNodes mode.
                  */
-                if (isNewNode &&
-                    (childOrBelowHasMesh
-                     || loadMainNodes)
+                if (isChildNewNode &&
+                    (childOrBelowHasMesh || loadMainNodes)
                    )
                 {
                     mn.AddChild(mnChild);
