@@ -337,7 +337,7 @@ public class Model
 
         var skeleton = FindSkeleton();
 
-        if (true)
+        if (false)
         {
             /*
              * Debugging: Write the bone names
