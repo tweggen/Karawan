@@ -63,6 +63,8 @@ public class Model
     
     public float Scale = 1.0f;
     
+    public bool WorkAroundInverseRestPose = true;
+    
     /**
      * Convenience method to create a model from a single InstanceDesc
      */

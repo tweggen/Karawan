@@ -275,6 +275,15 @@ public class FbxModel : IDisposable
         float unitscale = float.Parse(strUnitscale, CultureInfo.InvariantCulture);
         model.Scale = unitscale / 100f;
 
+        if (GetMetadata("CustomFrameRate", "-1") == "24")
+        {
+            model.WorkAroundInverseRestPose = true;
+        }
+        else
+        {
+            model.WorkAroundInverseRestPose = false;
+        }
+
         /*
          * Baking animations must include the root matrix corrections.
          */
@@ -490,7 +499,8 @@ public class FbxModel : IDisposable
     {
         string strName = node->MName.ToString();
         meshInOrBelowMe = false;
-        
+        var skeleton = _model!.FindSkeleton(); 
+
         /*
          * We may be asked to load contents for a node that previously had been loaded.
          * Our job is to enrich the node, not to override it.
@@ -555,7 +565,8 @@ public class FbxModel : IDisposable
         {
             for (var i = 0; i < node->MNumChildren; i++)
             {
-                var mnChild = _processNode(mn, node->MChildren[i], loadMeshes, loadMainNodes, out var childOrBelowHasMesh);
+                var aiChild = node->MChildren[i];
+                var mnChild = _processNode(mn, aiChild, loadMeshes, loadMainNodes, out var childOrBelowHasMesh);
                 meshInOrBelowMe |= childOrBelowHasMesh;
                 bool isChildNewNode = !_model.MapNodes.ContainsKey(mnChild.Name);
                 
@@ -570,6 +581,15 @@ public class FbxModel : IDisposable
                 {
                     mn.AddChild(mnChild);
                     _model!.MapNodes[mnChild.Name] = mnChild;
+                    
+                    /*
+                     * Also look, if this node is known in the skeleton.
+                     * If not, add it.
+                     */
+                    if (!skeleton.MapBones.ContainsKey(mnChild.Name))
+                    {
+                        skeleton.FindBone(mnChild.Name);
+                    }
                 }
             }
         }
