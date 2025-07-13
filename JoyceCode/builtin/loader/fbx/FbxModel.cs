@@ -132,9 +132,11 @@ public class FbxModel : IDisposable
 
         model.RootNode = ProcessNode(_scene->MRootNode);
 
+        
         /*
          * Now load all the animations. First the ones from the main file.
          */
+        _model.MapAnimations = new();
         _loadAnimations(_scene, "");
         
         /*
@@ -210,8 +212,6 @@ public class FbxModel : IDisposable
             return;
         }
 
-        _model.MapAnimations = new();
-        
         for (int i = 0; i < nAnimations; ++i)
         {
             var aiAnim = scene->MAnimations[i];
