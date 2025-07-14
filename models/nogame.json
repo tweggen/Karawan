@@ -377,7 +377,11 @@
         "tag":  "StudioOchi_SpringPeople.002.png"  } },
       "StudioOchi_SpringPeople.003": { "albedo": {
         "uri":  "../models/models/people/StudioOchi_SpringPeople.003.16.png",
-        "tag":  "StudioOchi_SpringPeople.003.png" } }
+        "tag":  "StudioOchi_SpringPeople.003.png" } },
+      "color-atlas-gradient": { "albedo":  {
+        "uri":  "../models/models/people/polyperfect/color-atlas-gradient.png",
+        "tag":  "color-atlas-gradient.png" } }
+      
     }
   },
   "resources":

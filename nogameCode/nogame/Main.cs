@@ -22,7 +22,6 @@ public class Main : AModule
         new MyModule<nogame.modules.debugger.DebuggerToggle>()
     };
 
-
     private void _setupScreenComposition()
     {
         uint fbWidth, fbHeight;
