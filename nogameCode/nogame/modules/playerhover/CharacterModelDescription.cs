@@ -13,7 +13,10 @@ public class CharacterModelDescription
     public string ModelUrl { get; set; } = "player.glb";
     #endif
     
-    #if true
+    #if false
+    /*
+     * Studio Ochi
+     */
     public string WalkAnimName { get; set; } = "Metarig Man B|Child Walk Happy";
     public string RunAnimName { get; set; } = "Metarig Man B|Run Mid";
     public string IdleAnimName { get; set; } = "Metarig Man B|Idle 01";
@@ -24,6 +27,9 @@ public class CharacterModelDescription
     #endif
     
     #if false
+    /*
+     * mixamo
+     */
     public string WalkAnimName { get; set; } = "walking";
     public string RunAnimName { get; set; } = "running";
     public string IdleAnimName { get; set; } = "idle";
@@ -32,7 +38,23 @@ public class CharacterModelDescription
     
     public string ModelUrl { get; set;  } = "mixamo_ochi_man_b.fbx";
     #endif
-        
+
+    #if true
+    /*
+     * polyperfect
+     */
+    public string WalkAnimName { get; set; } = "Walk_Male";
+    public string RunAnimName { get; set; } = "Run_InPlace";
+    public string IdleAnimName { get; set; } = "Idle_Generic";
+    public string JumpAnimName { get; set; } = "Standing_Jump";
+
+    public string AnimationUrls { get; set; } =
+        "Idle_Generic.fbx;Idle_HardDay.fbx;Idle_Texting.fbx;Idle_Waving.fbx;Kick_LeftFoot.fbx;Punch_LeftHand.fbx;Punch_RightHand.fbx;Run_InPlace.fbx;Running_Jump.fbx;Standing_Jump.fbx;Walk_InPlace_Female.fbx;Walk_Left.fbx;Walk_Male.fbx"; 
+    
+    public string ModelUrl { get; set;  } = "man_casual_Rig.fbx";
+    
+    #endif
+    
     public int ModelGeomFlags { get; set; } = 0
                                               | InstantiateModelParams.ROTATE_Y180
                                               | InstantiateModelParams.ROTATE_X90

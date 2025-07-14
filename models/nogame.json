@@ -450,7 +450,20 @@
       { "uri": "../models/models/people/Studio Ochi Spring Boy_ANIM.fbx" },
       { "uri": "../models/models/people/Studio Ochi Spring Man B_ANIM.fbx" },
       { "uri": "../models/models/people/Studio Ochi Spring Woman C_ANIM.fbx" },
-      { "uri": "../models/models/player.glb" }
+      { "uri": "../models/models/people/polyperfect/Idle_Generic.fbx," },
+      { "uri": "../models/models/people/polyperfect/Idle_HardDay.fbx" },
+      { "uri": "../models/models/people/polyperfect/Idle_Texting.fbx" },
+      { "uri": "../models/models/people/polyperfect/Idle_Waving.fbx" },
+      { "uri": "../models/models/people/polyperfect/Kick_LeftFoot.fbx" },
+      { "uri": "../models/models/people/polyperfect/man_casual_Rig.fbx" },
+      { "uri": "../models/models/people/polyperfect/Punch_LeftHand.fbx" },
+      { "uri": "../models/models/people/polyperfect/Punch_RightHand.fbx" },
+      { "uri": "../models/models/people/polyperfect/Running_Jump.fbx" },
+      { "uri": "../models/models/people/polyperfect/Run_InPlace.fbx" },
+      { "uri": "../models/models/people/polyperfect/Standing_Jump.fbx" },
+      { "uri": "../models/models/people/polyperfect/Walk_InPlace_Female.fbx" },
+      { "uri": "../models/models/people/polyperfect/Walk_Left.fbx" },
+      { "uri": "../models/models/people/polyperfect/Walk_Male.fbx" },
     ]
   }
 }
