@@ -450,7 +450,7 @@
       { "uri": "../models/models/people/Studio Ochi Spring Boy_ANIM.fbx" },
       { "uri": "../models/models/people/Studio Ochi Spring Man B_ANIM.fbx" },
       { "uri": "../models/models/people/Studio Ochi Spring Woman C_ANIM.fbx" },
-      { "uri": "../models/models/people/polyperfect/Idle_Generic.fbx," },
+      { "uri": "../models/models/people/polyperfect/Idle_Generic.fbx" },
       { "uri": "../models/models/people/polyperfect/Idle_HardDay.fbx" },
       { "uri": "../models/models/people/polyperfect/Idle_Texting.fbx" },
       { "uri": "../models/models/people/polyperfect/Idle_Waving.fbx" },
@@ -463,7 +463,7 @@
       { "uri": "../models/models/people/polyperfect/Standing_Jump.fbx" },
       { "uri": "../models/models/people/polyperfect/Walk_InPlace_Female.fbx" },
       { "uri": "../models/models/people/polyperfect/Walk_Left.fbx" },
-      { "uri": "../models/models/people/polyperfect/Walk_Male.fbx" },
+      { "uri": "../models/models/people/polyperfect/Walk_Male.fbx" }
     ]
   }
 }
